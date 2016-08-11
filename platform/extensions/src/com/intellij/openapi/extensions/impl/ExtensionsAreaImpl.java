@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,8 @@ import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
 import java.util.*;
+
+import static com.intellij.openapi.extensions.Extensions.isComponentSuitableForOs;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class ExtensionsAreaImpl implements ExtensionsArea {
@@ -136,6 +138,10 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   @Override
   public void registerExtension(@NotNull final PluginDescriptor pluginDescriptor, @NotNull final Element extensionElement) {
     final PluginId pluginId = pluginDescriptor.getPluginId();
+
+    if (!isComponentSuitableForOs(extensionElement.getAttributeValue("os"))) {
+      return;
+    }
 
     String epName = extractEPName(extensionElement);
 

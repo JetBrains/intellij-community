@@ -40,7 +40,7 @@ public class NewRootBunch {
   public NewRootBunch(final Project project, ProgressManagerQueue branchesLoader) {
     myProject = project;
     myBranchesLoader = branchesLoader;
-    myMap = new HashMap<VirtualFile, InfoStorage<SvnBranchConfigurationNew>>();
+    myMap = new HashMap<>();
   }
 
   public void updateForRoot(@NotNull final VirtualFile root,
@@ -91,7 +91,7 @@ public class NewRootBunch {
       final SvnBranchConfigurationNew result;
       if (value == null) {
         result = new SvnBranchConfigurationNew();
-        myMap.put(root, new InfoStorage<SvnBranchConfigurationNew>(result, InfoReliability.empty));
+        myMap.put(root, new InfoStorage<>(result, InfoReliability.empty));
         myBranchesLoader.run(new DefaultBranchConfigInitializer(myProject, this, root));
       }
       else {
@@ -113,7 +113,7 @@ public class NewRootBunch {
   }
 
   public void reloadBranches(@NotNull VirtualFile root, @Nullable SvnBranchConfigurationNew prev, @NotNull SvnBranchConfigurationNew next) {
-    final Set<String> oldUrls = (prev == null) ? Collections.<String>emptySet() : new HashSet<String>(prev.getBranchUrls());
+    final Set<String> oldUrls = (prev == null) ? Collections.<String>emptySet() : new HashSet<>(prev.getBranchUrls());
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     if (!vcs.isVcsBackgroundOperationsAllowed(root)) return;
 
@@ -150,7 +150,7 @@ public class NewRootBunch {
 
   public Map<VirtualFile, SvnBranchConfigurationNew> getMapCopy() {
     synchronized (myLock) {
-      final Map<VirtualFile, SvnBranchConfigurationNew> result = new HashMap<VirtualFile, SvnBranchConfigurationNew>();
+      final Map<VirtualFile, SvnBranchConfigurationNew> result = new HashMap<>();
       for (VirtualFile vf : myMap.keySet()) {
         result.put(vf, myMap.get(vf).getValue());
       }

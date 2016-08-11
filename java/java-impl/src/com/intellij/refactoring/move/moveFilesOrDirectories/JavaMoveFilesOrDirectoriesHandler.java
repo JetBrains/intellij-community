@@ -69,7 +69,7 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
       return null;
     }
 
-    Set<PsiElement> result = new LinkedHashSet<PsiElement>();
+    Set<PsiElement> result = new LinkedHashSet<>();
     for (PsiElement sourceElement : sourceElements) {
       result.add(sourceElement instanceof PsiClass ? sourceElement.getContainingFile() : sourceElement);
     }
@@ -88,7 +88,7 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
               elements1 -> new WriteCommandAction<PsiElement[]>(project, "Regrouping ...") {
                 @Override
                 protected void run(@NotNull Result<PsiElement[]> result) throws Throwable {
-                  final List<PsiElement> adjustedElements = new ArrayList<PsiElement>();
+                  final List<PsiElement> adjustedElements = new ArrayList<>();
                   for (int i = 0, length = elements1.length; i < length; i++) {
                     PsiElement element = elements1[i];
                     if (element instanceof PsiClass) {
@@ -113,7 +113,7 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
   private static PsiFile obtainContainingFile(@NotNull PsiElement element, PsiElement[] elements) {
     final PsiFile containingFile = element.getContainingFile();
     final PsiClass[] classes = ((PsiClassOwner)containingFile).getClasses();
-    final Set<PsiClass> nonMovedClasses = new HashSet<PsiClass>();
+    final Set<PsiClass> nonMovedClasses = new HashSet<>();
     for (PsiClass aClass : classes) {
       if (ArrayUtilRt.find(elements, aClass) < 0) {
         nonMovedClasses.add(aClass);

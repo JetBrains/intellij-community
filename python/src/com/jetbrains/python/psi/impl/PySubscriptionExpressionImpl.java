@@ -70,7 +70,7 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PsiPolyVariantReference reference = getReference(PyResolveContext.noImplicits().withTypeEvalContext(context));
-    final List<PyType> members = new ArrayList<PyType>();
+    final List<PyType> members = new ArrayList<>();
     for (PsiElement resolved : PyUtil.multiResolveTopPriority(reference)) {
       PyType res = null;
       if (resolved instanceof PyCallable) {

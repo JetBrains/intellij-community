@@ -41,17 +41,17 @@ import static org.jetbrains.org.objectweb.asm.Opcodes.*;
 abstract class PResults {
   // SoP = sum of products
   static Set<Set<Key>> join(Set<Set<Key>> sop1, Set<Set<Key>> sop2) {
-    Set<Set<Key>> sop = new HashSet<Set<Key>>();
+    Set<Set<Key>> sop = new HashSet<>();
     sop.addAll(sop1);
     sop.addAll(sop2);
     return sop;
   }
 
   static Set<Set<Key>> meet(Set<Set<Key>> sop1, Set<Set<Key>> sop2) {
-    Set<Set<Key>> sop = new HashSet<Set<Key>>();
+    Set<Set<Key>> sop = new HashSet<>();
     for (Set<Key> prod1 : sop1) {
       for (Set<Key> prod2 : sop2) {
-        Set<Key> prod = new HashSet<Key>();
+        Set<Key> prod = new HashSet<>();
         prod.addAll(prod1);
         prod.addAll(prod2);
         sop.add(prod);
@@ -92,8 +92,8 @@ abstract class PResults {
     }
 
     public ConditionalNPE(Key key) {
-      sop = new HashSet<Set<Key>>();
-      Set<Key> prod = new HashSet<Key>();
+      sop = new HashSet<>();
+      Set<Key> prod = new HashSet<>();
       prod.add(key);
       sop.add(prod);
     }
@@ -203,7 +203,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
     }
     else {
       ConditionalNPE condNpe = (ConditionalNPE) result;
-      Set<Product> components = new HashSet<Product>();
+      Set<Product> components = new HashSet<>();
       for (Set<Key> prod : condNpe.sop) {
         components.add(new Product(Value.Top, prod));
       }
@@ -374,7 +374,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
       int nextInsnIndex = nextInsnIndices[i];
       Frame<BasicValue> nextFrame1 = nextFrame;
       if (controlFlow.errors[nextInsnIndex] && controlFlow.errorTransitions.contains(new Edge(insnIndex, nextInsnIndex))) {
-        nextFrame1 = new Frame<BasicValue>(frame);
+        nextFrame1 = new Frame<>(frame);
         nextFrame1.clearStack();
         nextFrame1.push(ASMUtils.THROWABLE_VALUE);
       }
@@ -401,7 +401,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
         subResult = Identity;
         break;
       default:
-        nextFrame = new Frame<BasicValue>(frame);
+        nextFrame = new Frame<>(frame);
         interpreter.reset(false);
         nextFrame.execute(insnNode, interpreter);
         subResult = interpreter.getSubResult();
@@ -429,7 +429,7 @@ class NullableInAnalysis extends Analysis<PResult> {
     }
     else {
       ConditionalNPE condNpe = (ConditionalNPE) result;
-      Set<Product> components = new HashSet<Product>();
+      Set<Product> components = new HashSet<>();
       for (Set<Key> prod : condNpe.sop) {
         components.add(new Product(Value.Top, prod));
       }
@@ -564,7 +564,7 @@ class NullableInAnalysis extends Analysis<PResult> {
     for (int nextInsnIndex : controlFlow.transitions[insnIndex]) {
       Frame<BasicValue> nextFrame1 = nextFrame;
       if (controlFlow.errors[nextInsnIndex] && controlFlow.errorTransitions.contains(new Edge(insnIndex, nextInsnIndex))) {
-        nextFrame1 = new Frame<BasicValue>(frame);
+        nextFrame1 = new Frame<>(frame);
         nextFrame1.clearStack();
         nextFrame1.push(ASMUtils.THROWABLE_VALUE);
       }
@@ -592,7 +592,7 @@ class NullableInAnalysis extends Analysis<PResult> {
         top = false;
         break;
       default:
-        nextFrame = new Frame<BasicValue>(frame);
+        nextFrame = new Frame<>(frame);
         interpreter.reset(taken);
         nextFrame.execute(insnNode, interpreter);
         subResult = interpreter.getSubResult();

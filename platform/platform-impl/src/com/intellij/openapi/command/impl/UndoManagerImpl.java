@@ -367,7 +367,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
       LOG.error("Must be called inside command");
       return;
     }
-    List<DocumentReference> refs = new ArrayList<DocumentReference>(docs.length);
+    List<DocumentReference> refs = new ArrayList<>(docs.length);
     for (Document each : docs) {
       // is document's file still valid
       VirtualFile file = FileDocumentManager.getInstance().getFile(each);
@@ -383,7 +383,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
       LOG.error("Must be called inside command");
       return;
     }
-    List<DocumentReference> refs = new ArrayList<DocumentReference>(files.length);
+    List<DocumentReference> refs = new ArrayList<>(files.length);
     for (VirtualFile each : files) {
       refs.add(DocumentReferenceManager.getInstance().create(each));
     }
@@ -488,7 +488,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
   @NotNull
   static Set<DocumentReference> getDocumentReferences(@NotNull FileEditor editor) {
-    Set<DocumentReference> result = new THashSet<DocumentReference>();
+    Set<DocumentReference> result = new THashSet<>();
 
     if (editor instanceof DocumentReferenceProvider) {
       result.addAll(((DocumentReferenceProvider)editor).getDocumentReferences());
@@ -584,7 +584,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   private void doCompact() {
     Collection<DocumentReference> refs = collectReferencesWithoutMergers();
 
-    Collection<DocumentReference> openDocs = new HashSet<DocumentReference>();
+    Collection<DocumentReference> openDocs = new HashSet<>();
     for (DocumentReference each : refs) {
       VirtualFile file = each.getFile();
       if (file == null) {
@@ -619,7 +619,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
   @NotNull
   private Collection<DocumentReference> collectReferencesWithoutMergers() {
-    Set<DocumentReference> result = new THashSet<DocumentReference>();
+    Set<DocumentReference> result = new THashSet<>();
     myUndoStacksHolder.collectAllAffectedDocuments(result);
     myRedoStacksHolder.collectAllAffectedDocuments(result);
     return result;

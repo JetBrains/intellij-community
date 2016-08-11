@@ -89,7 +89,7 @@ public class PyDictCreationInspection extends PyInspection {
   public static List<Pair<PyExpression, PyExpression>> getDictTargets(@NotNull final PyExpression target,
                                                                       @NotNull final String name,
                                                                       @NotNull final PyAssignmentStatement assignmentStatement) {
-    final List<Pair<PyExpression, PyExpression>> targets = new ArrayList<Pair<PyExpression, PyExpression>>();
+    final List<Pair<PyExpression, PyExpression>> targets = new ArrayList<>();
     for (Pair<PyExpression, PyExpression> targetToValue : assignmentStatement.getTargetsToValuesMapping()) {
       if (targetToValue.first instanceof PySubscriptionExpression) {
         final PySubscriptionExpression subscriptionExpression = (PySubscriptionExpression)targetToValue.first;
@@ -106,7 +106,7 @@ public class PyDictCreationInspection extends PyInspection {
   }
 
   private static boolean referencesTarget(@NotNull final PyExpression expression, @NotNull final PsiElement target) {
-    final List<PsiElement> refs = new ArrayList<PsiElement>();
+    final List<PsiElement> refs = new ArrayList<>();
     expression.accept(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyReferenceExpression(PyReferenceExpression node) {

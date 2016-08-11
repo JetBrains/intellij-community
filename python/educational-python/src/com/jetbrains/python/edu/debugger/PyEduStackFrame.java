@@ -64,7 +64,7 @@ public class PyEduStackFrame extends PyStackFrame {
       node.addChildren(XValueChildrenList.EMPTY, true);
       return;
     }
-    final Map<String, XValue> specialValues = new HashMap<String, XValue>();
+    final Map<String, XValue> specialValues = new HashMap<>();
     XValueChildrenList filteredChildren = new XValueChildrenList();
     for (int i = 0; i < children.size(); i++) {
       String name = children.getName(i);

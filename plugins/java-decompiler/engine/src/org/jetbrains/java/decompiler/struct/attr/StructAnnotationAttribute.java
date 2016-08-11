@@ -39,7 +39,7 @@ public class StructAnnotationAttribute extends StructGeneralAttribute {
   public static List<AnnotationExprent> parseAnnotations(ConstantPool pool, DataInputStream data) throws IOException {
     int len = data.readUnsignedShort();
     if (len > 0) {
-      List<AnnotationExprent> annotations = new ArrayList<AnnotationExprent>(len);
+      List<AnnotationExprent> annotations = new ArrayList<>(len);
       for (int i = 0; i < len; i++) {
         annotations.add(parseAnnotation(data, pool));
       }
@@ -57,8 +57,8 @@ public class StructAnnotationAttribute extends StructGeneralAttribute {
     List<Exprent> values;
     int len = data.readUnsignedShort();
     if (len > 0) {
-      names = new ArrayList<String>(len);
-      values = new ArrayList<Exprent>(len);
+      names = new ArrayList<>(len);
+      values = new ArrayList<>(len);
       for (int i = 0; i < len; i++) {
         names.add(pool.getPrimitiveConstant(data.readUnsignedShort()).getString());
         values.add(parseAnnotationElement(data, pool));
@@ -127,7 +127,7 @@ public class StructAnnotationAttribute extends StructGeneralAttribute {
         List<Exprent> elements = Collections.emptyList();
         int len = data.readUnsignedShort();
         if (len > 0) {
-          elements = new ArrayList<Exprent>(len);
+          elements = new ArrayList<>(len);
           for (int i = 0; i < len; i++) {
             elements.add(parseAnnotationElement(data, pool));
           }

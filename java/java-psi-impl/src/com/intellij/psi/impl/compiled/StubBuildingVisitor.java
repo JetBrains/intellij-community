@@ -65,7 +65,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   private static final String SYNTHETIC_CLASS_INIT_METHOD = "<clinit>";
   private static final String SYNTHETIC_INIT_METHOD = "<init>";
 
-  private static final int ASM_API = Opcodes.ASM5;
+  private static final int ASM_API = Opcodes.API_VERSION;
 
   private final T mySource;
   private final InnerClassSourceStrategy<T> myInnersStrategy;

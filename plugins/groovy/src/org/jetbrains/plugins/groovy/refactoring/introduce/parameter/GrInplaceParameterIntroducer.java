@@ -118,7 +118,7 @@ public class GrInplaceParameterIntroducer extends GrAbstractInplaceIntroducer<Gr
       final StringBuilder buf = new StringBuilder();
       buf.append(psiMethod.getName()).append(" (");
       boolean frst = true;
-      final List<TextRange> ranges2Remove = new ArrayList<TextRange>();
+      final List<TextRange> ranges2Remove = new ArrayList<>();
       TextRange addedRange = null;
 
       int i = 0;

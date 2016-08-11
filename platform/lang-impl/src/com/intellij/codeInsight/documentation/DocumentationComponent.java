@@ -99,8 +99,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private static final String QUICK_DOC_FONT_SIZE_PROPERTY = "quick.doc.font.size";
 
-  private final Stack<Context> myBackStack = new Stack<Context>();
-  private final Stack<Context> myForwardStack = new Stack<Context>();
+  private final Stack<Context> myBackStack = new Stack<>();
+  private final Stack<Context> myForwardStack = new Stack<>();
   private final ActionToolbar myToolBar;
   private volatile boolean myIsEmpty;
   private boolean myIsShown;
@@ -165,7 +165,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private JBPopup myHint;
 
-  private final Map<KeyStroke, ActionListener> myKeyboardActions = new HashMap<KeyStroke, ActionListener>();
+  private final Map<KeyStroke, ActionListener> myKeyboardActions = new HashMap<>();
 
   @Override
   public boolean requestFocusInWindow() {

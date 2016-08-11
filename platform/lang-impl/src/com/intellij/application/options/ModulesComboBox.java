@@ -39,7 +39,7 @@ public class ModulesComboBox extends ComboBox {
   private boolean myAllowEmptySelection;
 
   public ModulesComboBox() {
-    this(new SortedComboBoxModel<Module>(ModulesAlphaComparator.INSTANCE));
+    this(new SortedComboBoxModel<>(ModulesAlphaComparator.INSTANCE));
   }
 
   private ModulesComboBox(final SortedComboBoxModel<Module> model) {
@@ -82,7 +82,7 @@ public class ModulesComboBox extends ComboBox {
       setModules(Arrays.asList(allModules));
     }
     else {
-      List<Module> modules = new ArrayList<Module>();
+      List<Module> modules = new ArrayList<>();
       for (Module module : allModules) {
         if (moduleType.equals(ModuleType.get(module))) {
           modules.add(module);

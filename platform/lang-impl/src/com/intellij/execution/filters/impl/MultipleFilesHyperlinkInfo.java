@@ -55,7 +55,7 @@ class MultipleFilesHyperlinkInfo extends HyperlinkInfoBase implements FileHyperl
 
   @Override
   public void navigate(@NotNull final Project project, @Nullable RelativePoint hyperlinkLocationPoint) {
-    List<PsiFile> currentFiles = new ArrayList<PsiFile>();
+    List<PsiFile> currentFiles = new ArrayList<>();
 
     AccessToken accessToken = ReadAction.start();
     try {

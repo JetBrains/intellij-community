@@ -114,7 +114,7 @@ public class RootVisitorHost {
   }
 
   private static boolean visitOrderEntryRoots(RootVisitor visitor, OrderEntry entry) {
-    Set<VirtualFile> allRoots = new LinkedHashSet<VirtualFile>();
+    Set<VirtualFile> allRoots = new LinkedHashSet<>();
     Collections.addAll(allRoots, entry.getFiles(OrderRootType.SOURCES));
     Collections.addAll(allRoots, entry.getFiles(OrderRootType.CLASSES));
     Module module = entry instanceof ModuleOrderEntry ? ((ModuleOrderEntry) entry).getModule() : null;

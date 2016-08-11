@@ -138,7 +138,7 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
       //noinspection SuspiciousMethodCalls
       info.setChecked(elements.contains(info.getMember()));
     }
-    myModuleMemberModel.memberInfoChanged(new MemberInfoChange<PyElement, PyModuleMemberInfo>(symbolsInfos));
+    myModuleMemberModel.memberInfoChanged(new MemberInfoChange<>(symbolsInfos));
     myMemberSelectionTable = new TopLevelSymbolsSelectionTable(symbolsInfos, myModuleMemberModel);
     myMemberSelectionTable.addMemberInfoChangeListener(myModuleMemberModel);
     myMemberSelectionTable.getModel().addTableModelListener(new TableModelListener() {

@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ScalableIcon;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -95,7 +96,7 @@ public class LayeredIcon extends AbstractSizeAdjustingIcon {
     adjustSize();
   }
 
-  public void setIcon(Icon icon, int layer, int constraint) {
+  public void setIcon(Icon icon, int layer, @MagicConstant(valuesFromClass = SwingConstants.class) int constraint) {
     int width = getIconWidth();
     int height = getIconHeight();
     int w = icon.getIconWidth();

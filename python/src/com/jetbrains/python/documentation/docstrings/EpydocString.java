@@ -292,7 +292,7 @@ public class EpydocString extends TagBasedDocString {
   }
 
   public List<String> getAdditionalTags() {
-    List<String> list = new ArrayList<String>();
+    List<String> list = new ArrayList<>();
     for (String tagName : ADDITIONAL) {
       final Map<Substring, Substring> map = myArgTagValues.get(tagName);
       if (map != null) {

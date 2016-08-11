@@ -436,7 +436,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     ctrlD();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    Set<PsiReferenceExpression> refs = new THashSet<PsiReferenceExpression>();
+    Set<PsiReferenceExpression> refs = new THashSet<>();
     int offset=0;
     while (true) {
       offset = getEditor().getDocument().getText().indexOf("foo();", offset+1);
@@ -532,7 +532,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     SmartPsiFileRange pointer2 = manager.createSmartPsiFileRangePointer(psiFile, range2);
     assertNotNull(FileDocumentManager.getInstance().getCachedDocument(vfile));
 
-    SoftReference<PsiFile> ref = new SoftReference<PsiFile>(psiFile);
+    SoftReference<PsiFile> ref = new SoftReference<>(psiFile);
     psiFile = null;
     while (ref.get() != null) {
       PlatformTestUtil.tryGcSoftlyReachableObjects();

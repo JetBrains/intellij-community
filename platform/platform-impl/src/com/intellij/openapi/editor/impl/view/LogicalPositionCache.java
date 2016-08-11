@@ -37,7 +37,7 @@ import java.util.Collections;
 class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, Dumpable {
   private final Document myDocument;
   private final EditorView myView;
-  private ArrayList<LineData> myLines = new ArrayList<LineData>();
+  private ArrayList<LineData> myLines = new ArrayList<>();
   private int myTabSize = -1;
   private int myDocumentChangeOldEndLine;
 

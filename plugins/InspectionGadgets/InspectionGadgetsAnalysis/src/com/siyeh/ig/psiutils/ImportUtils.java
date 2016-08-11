@@ -426,7 +426,7 @@ public final class ImportUtils {
   }
 
   private static List<PsiImportStaticStatement> getMatchingImports(@NotNull PsiImportList importList, @NotNull String className) {
-    final List<PsiImportStaticStatement> imports = new ArrayList<PsiImportStaticStatement>();
+    final List<PsiImportStaticStatement> imports = new ArrayList<>();
     for (PsiImportStaticStatement staticStatement : importList.getImportStaticStatements()) {
       final PsiClass psiClass = staticStatement.resolveTargetClass();
       if (psiClass == null) {
@@ -524,8 +524,9 @@ public final class ImportUtils {
    */
   private static boolean containsConflictingReference(PsiFile element, String fullyQualifiedName) {
     final Map<String, Boolean> cachedValue =
-      CachedValuesManager.getCachedValue(element, () -> new CachedValueProvider.Result<Map<String, Boolean>>(Collections.synchronizedMap(new HashMap<String, Boolean>()),
-                                                                                                             PsiModificationTracker.MODIFICATION_COUNT));
+      CachedValuesManager.getCachedValue(element, () -> new CachedValueProvider.Result<>(Collections.synchronizedMap(
+        new HashMap<>()),
+                                                                                         PsiModificationTracker.MODIFICATION_COUNT));
     Boolean conflictingRef = cachedValue.get(fullyQualifiedName);
     if (conflictingRef != null) {
       return conflictingRef.booleanValue();

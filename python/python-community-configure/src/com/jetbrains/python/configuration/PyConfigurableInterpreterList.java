@@ -63,7 +63,7 @@ public class PyConfigurableInterpreterList {
   }
 
   public List<Sdk> getAllPythonSdks(@Nullable final Project project) {
-    List<Sdk> result = new ArrayList<Sdk>();
+    List<Sdk> result = new ArrayList<>();
     for (Sdk sdk : getModel().getSdks()) {
       if (sdk.getSdkType() instanceof PythonSdkType) {
         result.add(sdk);
@@ -77,7 +77,7 @@ public class PyConfigurableInterpreterList {
 
   private void addDetectedSdks(@NotNull final List<Sdk> result) {
     final PySdkService sdkService = PySdkService.getInstance();
-    final List<String> sdkHomes = new ArrayList<String>();
+    final List<String> sdkHomes = new ArrayList<>();
     sdkHomes.addAll(VirtualEnvSdkFlavor.INSTANCE.suggestHomePaths());
     for (PythonSdkFlavor flavor : PythonSdkFlavor.getApplicableFlavors()) {
       if (flavor instanceof VirtualEnvSdkFlavor) continue;

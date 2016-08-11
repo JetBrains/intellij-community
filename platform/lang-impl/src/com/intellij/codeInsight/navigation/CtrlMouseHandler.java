@@ -563,7 +563,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         @Override
         @NotNull
         protected PsiElement[] searchDefinitions(final PsiElement element, Editor editor) {
-          final List<PsiElement> found = new ArrayList<PsiElement>(2);
+          final List<PsiElement> found = new ArrayList<>(2);
           DefinitionsScopedSearch.search(element, getSearchScope(element, editor)).forEach(psiElement -> {
             found.add(psiElement);
             return found.size() != 2;
@@ -634,7 +634,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     PsiElement resolvedElement = ref.resolve();
 
     if (resolvedElement == null && ref instanceof PsiPolyVariantReference) {
-      List<PsiElement> result = new ArrayList<PsiElement>();
+      List<PsiElement> result = new ArrayList<>();
       final ResolveResult[] psiElements = ((PsiPolyVariantReference)ref).multiResolve(false);
       for (ResolveResult resolveResult : psiElements) {
         if (resolveResult.getElement() != null) {
@@ -664,8 +664,8 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   {
     myDocAlarm.cancelAllRequests();
     myDocAlarm.addRequest(() -> {
-      final Ref<String> fullTextRef = new Ref<String>();
-      final Ref<String> qualifiedNameRef = new Ref<String>();
+      final Ref<String> fullTextRef = new Ref<>();
+      final Ref<String> qualifiedNameRef = new Ref<>();
       ApplicationManager.getApplication().runReadAction(() -> {
         if (anchorElement.isValid() && originalElement.isValid()) {
           try {
@@ -891,7 +891,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       HyperlinkListener hyperlinkListener = docInfo.docProvider == null
                                    ? null
                                    : new QuickDocHyperlinkListener(docInfo.docProvider, info.myElementAtPointer);
-      final Ref<QuickDocInfoPane> quickDocPaneRef = new Ref<QuickDocInfoPane>();
+      final Ref<QuickDocInfoPane> quickDocPaneRef = new Ref<>();
       MouseListener mouseListener = new MouseAdapter() {
         @Override
         public void mouseEntered(MouseEvent e) {
@@ -913,7 +913,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         public void mouseClicked(MouseEvent e) {
         }
       };
-      Ref<Consumer<String>> newTextConsumerRef = new Ref<Consumer<String>>();
+      Ref<Consumer<String>> newTextConsumerRef = new Ref<>();
       JComponent label = HintUtil.createInformationLabel(docInfo.text, hyperlinkListener, mouseListener, newTextConsumerRef);
       Consumer<String> newTextConsumer = newTextConsumerRef.get();
       QuickDocInfoPane quickDocPane = null;
@@ -965,7 +965,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
     myFileEditorManager.addFileEditorManagerListener(myFileEditorManagerListener);
 
-    List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
+    List<RangeHighlighter> highlighters = new ArrayList<>();
     TextAttributes attributes = info.isNavigatable() 
                                 ? myEditorColorsManager.getGlobalScheme().getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR) 
                                 : new TextAttributes(null, HintUtil.INFORMATION_COLOR, null, null, Font.PLAIN);
@@ -1033,7 +1033,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   private class QuickDocInfoPane extends JBLayeredPane {
     private static final int BUTTON_HGAP = 5;
 
-    @NotNull private final List<JComponent> myButtons = new ArrayList<JComponent>();
+    @NotNull private final List<JComponent> myButtons = new ArrayList<>();
 
     @NotNull private final JComponent myBaseDocControl;
 

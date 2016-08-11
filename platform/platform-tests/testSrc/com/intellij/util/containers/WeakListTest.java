@@ -28,8 +28,8 @@ import static org.junit.Assert.*;
 public class WeakListTest {
   private static final String HARD_REFERENCED = "xxx";
 
-  private final WeakList<Object> myWeakList = new WeakList<Object>();
-  private final List<Object> myHolder = new ArrayList<Object>();
+  private final WeakList<Object> myWeakList = new WeakList<>();
+  private final List<Object> myHolder = new ArrayList<>();
 
   @Test
   public void testCompresses() {

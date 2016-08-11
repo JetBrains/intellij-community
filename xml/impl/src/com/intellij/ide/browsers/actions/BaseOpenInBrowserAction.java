@@ -200,7 +200,7 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
       }
     });
 
-    final AsyncPromise<Url> result = new AsyncPromise<Url>();
+    final AsyncPromise<Url> result = new AsyncPromise<>();
     JBPopupFactory.getInstance()
       .createListPopupBuilder(list)
       .setTitle("Choose Url")

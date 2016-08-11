@@ -70,7 +70,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     }
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    Set<VirtualFile> realFiles = new THashSet<VirtualFile>(files.length);
+    Set<VirtualFile> realFiles = new THashSet<>(files.length);
     for (VirtualFile file : files) {
       if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
       if (file != null) {
@@ -107,14 +107,14 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
       new ReadOnlyStatusDialog(myProject, fileInfos).show();
     }
     else {
-      processFiles(new ArrayList<FileInfo>(Arrays.asList(fileInfos)), null); // the collection passed is modified
+      processFiles(new ArrayList<>(Arrays.asList(fileInfos)), null); // the collection passed is modified
     }
     IdeEventQueue.getInstance().setEventCount(savedEventCount);
     return createResultStatus(files);
   }
 
   private static OperationStatus createResultStatus(final VirtualFile[] files) {
-    List<VirtualFile> readOnlyFiles = new ArrayList<VirtualFile>();
+    List<VirtualFile> readOnlyFiles = new ArrayList<>();
     for (VirtualFile file : files) {
       if (file.exists()) {
         if (!file.isWritable()) {
@@ -127,7 +127,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
   }
 
   private FileInfo[] createFileInfos(VirtualFile[] files) {
-    List<FileInfo> fileInfos = new ArrayList<FileInfo>();
+    List<FileInfo> fileInfos = new ArrayList<>();
     for (final VirtualFile file : files) {
       if (file != null && !file.isWritable() && file.isInLocalFileSystem()) {
         fileInfos.add(new FileInfo(file, myProject));
@@ -138,7 +138,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
 
   public static void processFiles(final List<FileInfo> fileInfos, @Nullable String changelist) {
     FileInfo[] copy = fileInfos.toArray(new FileInfo[fileInfos.size()]);
-    MultiValuesMap<HandleType, VirtualFile> handleTypeToFile = new MultiValuesMap<HandleType, VirtualFile>();
+    MultiValuesMap<HandleType, VirtualFile> handleTypeToFile = new MultiValuesMap<>();
     for (FileInfo fileInfo : copy) {
       handleTypeToFile.put(fileInfo.getSelectedHandleType(), fileInfo.getFile());
     }

@@ -40,7 +40,7 @@ class EditorSettingsStatisticsCollector extends UsagesCollector {
   @NotNull
   @Override
   public Set<UsageDescriptor> getUsages() throws CollectUsagesException {
-    Set<UsageDescriptor> set = new HashSet<UsageDescriptor>();
+    Set<UsageDescriptor> set = new HashSet<>();
     
     EditorSettingsExternalizable es = EditorSettingsExternalizable.getInstance();
     addIfDiffers(set, es.isVirtualSpace(), false, "caretAfterLineEnd");

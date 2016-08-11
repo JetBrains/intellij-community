@@ -51,8 +51,8 @@ public class UIDesignerFavoriteNodeProvider extends FavoriteNodeProvider {
     if (project == null) return null;
     Form[] forms = Form.DATA_KEY.getData(context);
     if (forms != null) {
-      Collection<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
-      Set<PsiClass> bindClasses = new HashSet<PsiClass>();
+      Collection<AbstractTreeNode> result = new ArrayList<>();
+      Set<PsiClass> bindClasses = new HashSet<>();
       for (Form form: forms) {
         final PsiClass classToBind = form.getClassToBind();
         if (classToBind != null) {

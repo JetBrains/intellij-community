@@ -134,14 +134,14 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
   }
 
   public static void invokeOnScope(final Project project, final Set<PsiMember> members, final AnalysisScope scope, boolean silent) {
-    final Map<PsiMember, List<Match>> duplicates = new HashMap<PsiMember, List<Match>>();
+    final Map<PsiMember, List<Match>> duplicates = new HashMap<>();
     final int fileCount = scope.getFileCount();
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if (progressIndicator != null) {
       progressIndicator.setIndeterminate(false);
     }
 
-    final Map<PsiMember, Set<Module>> memberWithModulesMap = new HashMap<PsiMember, Set<Module>>();
+    final Map<PsiMember, Set<Module>> memberWithModulesMap = new HashMap<>();
     for (final PsiMember member : members) {
       final Module module = ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
         @Override
@@ -150,7 +150,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
         }
       });
       if (module != null) {
-        final HashSet<Module> dependencies = new HashSet<Module>();
+        final HashSet<Module> dependencies = new HashSet<>();
         ApplicationManager.getApplication().runReadAction(() -> ModuleUtilCore.collectModulesDependsOn(module, dependencies));
         memberWithModulesMap.put(member, dependencies);
       }
@@ -190,7 +190,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
           if (!matchList.isEmpty()) {
             List<Match> matches = duplicates.get(method);
             if (matches == null) {
-              matches = new ArrayList<Match>();
+              matches = new ArrayList<>();
               duplicates.put(method, matches);
             }
             matches.addAll(matchList);
@@ -291,11 +291,11 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
       return null;
     }
     final List<? extends PsiVariable> inputVariables = 
-      member instanceof PsiMethod ? Arrays.asList(((PsiMethod)member).getParameterList().getParameters()) : new ArrayList<PsiVariable>();
+      member instanceof PsiMethod ? Arrays.asList(((PsiMethod)member).getParameterList().getParameters()) : new ArrayList<>();
     return new DuplicatesFinder(pattern,
                                 new InputVariables(inputVariables, member.getProject(), new LocalSearchScope(pattern), false),
                                 matchedReturnValue,
-                                new ArrayList<PsiVariable>());
+                                new ArrayList<>());
   }
 
   static String getStatusMessage(final int duplicatesNo) {

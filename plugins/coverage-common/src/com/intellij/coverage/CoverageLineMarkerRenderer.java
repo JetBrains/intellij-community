@@ -347,7 +347,7 @@ public class CoverageLineMarkerRenderer implements LineMarkerRendererEx, ActiveG
 
     @Nullable
     private Integer getLineEntry() {
-      final ArrayList<Integer> list = new ArrayList<Integer>(myLines.keySet());
+      final ArrayList<Integer> list = new ArrayList<>(myLines.keySet());
       Collections.sort(list);
       final LineData data = getLineData(myLineNumber);
       final int currentStatus = data != null ? data.getStatus() : LineCoverage.NONE;

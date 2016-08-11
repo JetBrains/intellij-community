@@ -35,7 +35,7 @@ public class TabbedRefreshablePanel implements RefreshablePanel {
   private final List<RefreshablePanel> myPanels;
 
   public TabbedRefreshablePanel() {
-    myPanels = new ArrayList<RefreshablePanel>();
+    myPanels = new ArrayList<>();
     myPane = new JBTabbedPane();
     myPanel = new JPanel(new BorderLayout());
     myPanel.add(myPane, BorderLayout.CENTER);

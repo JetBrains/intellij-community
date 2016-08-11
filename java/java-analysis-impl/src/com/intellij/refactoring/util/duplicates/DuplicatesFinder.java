@@ -113,7 +113,7 @@ public class DuplicatesFinder {
 
   public List<Match> findDuplicates(PsiElement scope) {
     annotatePattern();
-    final ArrayList<Match> result = new ArrayList<Match>();
+    final ArrayList<Match> result = new ArrayList<>();
     findPatternOccurrences(result, scope);
     deannotatePattern();
     return result;
@@ -178,7 +178,7 @@ public class DuplicatesFinder {
   private Match isDuplicateFragment(@NotNull PsiElement candidate, boolean ignoreParameterTypesAndPostVariableUsages) {
     if (isSelf(candidate)) return null;
     PsiElement sibling = candidate;
-    ArrayList<PsiElement> candidates = new ArrayList<PsiElement>();
+    ArrayList<PsiElement> candidates = new ArrayList<>();
     for (final PsiElement element : myPattern) {
       if (sibling == null) return null;
       if (!canBeEquivalent(element, sibling)) return null;
@@ -695,7 +695,7 @@ public class DuplicatesFinder {
 
   public static PsiElement[] getFilteredChildren(PsiElement element1) {
     PsiElement[] children1 = element1.getChildren();
-    ArrayList<PsiElement> array = new ArrayList<PsiElement>();
+    ArrayList<PsiElement> array = new ArrayList<>();
     for (PsiElement child : children1) {
       if (!(child instanceof PsiWhiteSpace) && !(child instanceof PsiComment) && !(child instanceof PsiEmptyStatement)) {
         if (child instanceof PsiBlockStatement) {

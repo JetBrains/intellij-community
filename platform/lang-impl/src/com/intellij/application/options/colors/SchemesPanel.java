@@ -97,7 +97,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
               new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new JBInsets(0, 0, 5, 5),
                                      0, 0));
 
-    mySchemeComboBox = new ComboBox<String>();
+    mySchemeComboBox = new ComboBox<>();
     panel.add(mySchemeComboBox,
               new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new JBInsets(0, 0, 5, 10),
                                      0, 0));
@@ -216,7 +216,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
   
   private void chooseAndImport() {
     ImportSourceChooserDialog<EditorColorsScheme> importSourceChooserDialog =
-      new ImportSourceChooserDialog<EditorColorsScheme>(this, EditorColorsScheme.class);
+      new ImportSourceChooserDialog<>(this, EditorColorsScheme.class);
     if (importSourceChooserDialog.showAndGet()) {
       final String selectedImporterName = importSourceChooserDialog.getSelectedSourceName();
       if (selectedImporterName != null) {

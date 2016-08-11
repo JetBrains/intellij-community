@@ -266,6 +266,20 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON35, false, false);
   }
 
+  // PY-19927
+  public void testMagicMethods() {
+    EditorColorsManager manager = EditorColorsManager.getInstance();
+    EditorColorsScheme scheme = (EditorColorsScheme)manager.getGlobalScheme().clone();
+    manager.addColorsScheme(scheme);
+    EditorColorsManager.getInstance().setGlobalScheme(scheme);
+
+    TextAttributesKey xKey = TextAttributesKey.find("PY.PREDEFINED_DEFINITION");
+    TextAttributes xAttributes = new TextAttributes(Color.green, Color.black, Color.white, EffectType.BOXED, Font.BOLD);
+    scheme.setAttributes(xKey, xAttributes);
+
+    doTest();
+  }
+
   // PY-19775
   public void testAsyncBuiltinMethods() {
     doTest(LanguageLevel.PYTHON35, true, false);

@@ -53,7 +53,7 @@ public class XIncludeProvider extends FileIncludeProvider {
   public FileIncludeInfo[] getIncludeInfos(FileContent content) {
     CharSequence contentAsText = content.getContentAsText();
     if (CharArrayUtil.indexOf(contentAsText, XmlUtil.XINCLUDE_URI, 0) == -1) return FileIncludeInfo.EMPTY;
-    final ArrayList<FileIncludeInfo> infos = new ArrayList<FileIncludeInfo>();
+    final ArrayList<FileIncludeInfo> infos = new ArrayList<>();
     NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(contentAsText), new NanoXmlUtil.IXMLBuilderAdapter() {
 
       boolean isXInclude;

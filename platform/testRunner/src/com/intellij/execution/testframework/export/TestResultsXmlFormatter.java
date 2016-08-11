@@ -91,7 +91,7 @@ public class TestResultsXmlFormatter {
   private void execute() throws SAXException {
     myResultHandler.startDocument();
 
-    TreeMap<String, Integer> counts = new TreeMap<String, Integer>((o1, o2) -> {
+    TreeMap<String, Integer> counts = new TreeMap<>((o1, o2) -> {
       if (TOTAL_STATUS.equals(o1) && !TOTAL_STATUS.equals(o2)) return -1;
       if (TOTAL_STATUS.equals(o2) && !TOTAL_STATUS.equals(o1)) return 1;
       return o1.compareTo(o2);
@@ -103,7 +103,7 @@ public class TestResultsXmlFormatter {
       increment(counts, TOTAL_STATUS);
     }
 
-    Map<String, String> runAttrs = new HashMap<String, String>();
+    Map<String, String> runAttrs = new HashMap<>();
     runAttrs.put(ATTR_NAME, myRuntimeConfiguration.getName());
     String footerText = ExecutionBundle.message("export.test.results.footer", ApplicationNamesInfo.getInstance().getFullProductName(),
                                                 new SimpleDateFormat().format(new Date()));
@@ -115,7 +115,7 @@ public class TestResultsXmlFormatter {
     startElement(ELEM_RUN, runAttrs);
 
     for (Map.Entry<String, Integer> entry : counts.entrySet()) {
-      Map<String, String> a = new HashMap<String, String>();
+      Map<String, String> a = new HashMap<>();
       a.put(ATTR_NAME, entry.getKey());
       a.put(ATTR_VALUE, String.valueOf(entry.getValue()));
       startElement(ELEM_COUNT, a);
@@ -146,7 +146,7 @@ public class TestResultsXmlFormatter {
     if (myTestRoot instanceof TestProxyRoot) {
       final String presentation = ((TestProxyRoot)myTestRoot).getPresentation();
       if (presentation != null) {
-        final LinkedHashMap<String, String> rootAttrs = new LinkedHashMap<String, String>();
+        final LinkedHashMap<String, String> rootAttrs = new LinkedHashMap<>();
         rootAttrs.put("name", presentation);
         final String comment = ((TestProxyRoot)myTestRoot).getComment();
         if (comment != null) {
@@ -176,7 +176,7 @@ public class TestResultsXmlFormatter {
 
   private void processJDomElement(Element config) throws SAXException {
     final String name = config.getName();
-    final LinkedHashMap<String, String> attributes = new LinkedHashMap<String, String>();
+    final LinkedHashMap<String, String> attributes = new LinkedHashMap<>();
     for (Attribute attribute : config.getAttributes()) {
       attributes.put(attribute.getName(), attribute.getValue());
     }
@@ -194,7 +194,7 @@ public class TestResultsXmlFormatter {
 
   private void processNode(AbstractTestProxy node, final Filter filter) throws SAXException {
     ProgressManager.checkCanceled();
-    Map<String, String> attrs = new HashMap<String, String>();
+    Map<String, String> attrs = new HashMap<>();
     attrs.put(ATTR_NAME, node.getName());
     attrs.put(ATTR_STATUS, getStatusString(node));
     Long duration = node.getDuration();
@@ -235,8 +235,8 @@ public class TestResultsXmlFormatter {
 
   private void writeOutput(AbstractTestProxy node, final Filter filter) throws SAXException {
     final StringBuilder buffer = new StringBuilder();
-    final Ref<ConsoleViewContentType> lastType = new Ref<ConsoleViewContentType>();
-    final Ref<SAXException> error = new Ref<SAXException>();
+    final Ref<ConsoleViewContentType> lastType = new Ref<>();
+    final Ref<SAXException> error = new Ref<>();
 
     final int bufferSize = ConsoleBuffer.useCycleBuffer() ? ConsoleBuffer.getCycleBufferSize() : -1;
     final Printer printer = new Printer() {
@@ -303,7 +303,7 @@ public class TestResultsXmlFormatter {
       }
     }
 
-    Map<String, String> a = new HashMap<String, String>();
+    Map<String, String> a = new HashMap<>();
     a.put(ATTR_OUTPUT_TYPE, getTypeString(type));
     startElement(ELEM_OUTPUT, a);
     writeText(output.toString());

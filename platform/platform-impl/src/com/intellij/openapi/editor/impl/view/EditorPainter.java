@@ -191,7 +191,7 @@ class EditorPainter implements TextDrawingCallback {
   }
 
   private Map<Integer, Couple<Integer>> createVirtualSelectionMap(int startVisualLine, int endVisualLine) {
-    HashMap<Integer, Couple<Integer>> map = new HashMap<Integer, Couple<Integer>>();
+    HashMap<Integer, Couple<Integer>> map = new HashMap<>();
     for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
       if (caret.hasSelection()) {
         VisualPosition selectionStart = caret.getSelectionStartPosition();

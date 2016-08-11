@@ -388,6 +388,8 @@ public class PyNames {
     .put("__setattr__", new BuiltinDescription("(self, key, value)"))
     .put("__setitem__", new BuiltinDescription("(self, key, value)"))
     .put("__setslice__", new BuiltinDescription("(self, i, j, sequence)"))
+    .put("__setstate__", new BuiltinDescription("(self, state)"))
+    .put(SIZEOF, _only_self_descr)
       //_BuiltinMethods.put("__self__", _only_self_descr);
       //_BuiltinMethods.put("__slots__", _only_self_descr);
     .put("__str__", _only_self_descr)

@@ -60,7 +60,7 @@ public class PackageVersionComparator implements Comparator<String> {
       return Collections.emptyList();
     }
     final Pattern COMPONENT_RE = Pattern.compile("\\d+|[a-z]+|\\.|-|.+");
-    final List<String> results = new ArrayList<String>();
+    final List<String> results = new ArrayList<>();
     final Matcher matcher = COMPONENT_RE.matcher(s);
     while (matcher.find()) {
       final String component = replace(matcher.group());

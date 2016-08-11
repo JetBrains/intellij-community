@@ -78,7 +78,7 @@ public abstract class PythonSdkFlavor {
   }
 
   public static List<PythonSdkFlavor> getApplicableFlavors(boolean addPlatformIndependent) {
-    List<PythonSdkFlavor> result = new ArrayList<PythonSdkFlavor>();
+    List<PythonSdkFlavor> result = new ArrayList<>();
 
     if (SystemInfo.isWindows) {
       result.add(WinPythonSdkFlavor.INSTANCE);

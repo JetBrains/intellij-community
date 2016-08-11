@@ -807,13 +807,12 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
 
   private static void inlineLiteralArgumentsNames(@NotNull PsiCallExpression expression,
                                                   @NotNull List<FoldingDescriptor> foldElements,
-                                                  boolean quick)
-  {
+                                                  boolean quick) {
     if (quick || !JavaCodeFoldingSettings.getInstance().isInlineParameterNamesForLiteralCallArguments()) {
       return;
     }
     ParameterNameFoldingManager manager = new ParameterNameFoldingManager(expression);
-    foldElements.addAll(manager.buildDescriptors());
+    foldElements.addAll(manager.getDescriptors());
   }
 
   private boolean addClosureFolding(@NotNull PsiClass aClass,

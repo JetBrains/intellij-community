@@ -10,20 +10,20 @@ public class FinalizeCallsSuperFinalize
     }
 
     @Override
-    protected void finalize()
+    protected void finalize() throws Throwable
     {
         System.out.println("something");
     }
 
     class X extends FinalizeCallsSuperFinalize {
         @Override
-        protected void <warning descr="Method 'finalize()' does not call 'super.finalize()'">finalize</warning>() throws <error descr="'finalize()' in 'com.siyeh.igtest.finalization.finalize_calls_super_finalize.FinalizeCallsSuperFinalize.X' clashes with 'finalize()' in 'com.siyeh.igtest.finalization.finalize_calls_super_finalize.FinalizeCallsSuperFinalize'; overridden method does not throw 'java.lang.Throwable'">Throwable</error> {
+        protected void <warning descr="Method 'finalize()' does not call 'super.finalize()'">finalize</warning>() throws Throwable {
             System.out.println("");
         }
     }
 
     class Y extends FinalizeCallsSuperFinalize {
-        protected void <warning descr="Method 'finalize()' does not call 'super.finalize()'">finalize</warning>() throws <error descr="'finalize()' in 'com.siyeh.igtest.finalization.finalize_calls_super_finalize.FinalizeCallsSuperFinalize.Y' clashes with 'finalize()' in 'com.siyeh.igtest.finalization.finalize_calls_super_finalize.FinalizeCallsSuperFinalize'; overridden method does not throw 'java.lang.Throwable'">Throwable</error> {
+        protected void <warning descr="Method 'finalize()' does not call 'super.finalize()'">finalize</warning>() throws Throwable {
             if (false) {
                 super.finalize(); // not reached, thus not called.
             }
@@ -41,4 +41,15 @@ class B extends A {
     protected void <warning descr="Method 'finalize()' does not call 'super.finalize()'">finalize</warning>() throws <error descr="'finalize()' in 'com.siyeh.igtest.finalization.finalize_calls_super_finalize.B' clashes with 'finalize()' in 'com.siyeh.igtest.finalization.finalize_calls_super_finalize.A'; overridden method does not throw 'java.lang.Throwable'">Throwable</error> {
         super.finalize(1);
     }
+}
+class C extends FinalizeCallsSuperFinalize {
+  @Override
+  protected void <warning descr="Method 'finalize()' does not call 'super.finalize()'">finalize</warning>() {
+    new Object() {
+      @Override
+      protected void finalize() throws Throwable {
+        super.finalize();
+      }
+    };
+  }
 }

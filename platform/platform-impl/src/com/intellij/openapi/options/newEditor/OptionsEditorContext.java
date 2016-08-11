@@ -30,14 +30,14 @@ public class OptionsEditorContext {
 
   ElementFilter.Active myFilter;
 
-  CopyOnWriteArraySet<OptionsEditorColleague> myColleagues = new CopyOnWriteArraySet<OptionsEditorColleague>();
+  CopyOnWriteArraySet<OptionsEditorColleague> myColleagues = new CopyOnWriteArraySet<>();
 
   Configurable myCurrentConfigurable;
-  Set<Configurable> myModified = new CopyOnWriteArraySet<Configurable>();
-  Map<Configurable, ConfigurationException> myErrors = new HashMap<Configurable, ConfigurationException>();
+  Set<Configurable> myModified = new CopyOnWriteArraySet<>();
+  Map<Configurable, ConfigurationException> myErrors = new HashMap<>();
   private boolean myHoldingFilter;
-  private final Map<Configurable,  Configurable> myConfigurableToParentMap = new HashMap<Configurable, Configurable>();
-  private final MultiValuesMap<Configurable, Configurable> myParentToChildrenMap = new MultiValuesMap<Configurable, Configurable>();
+  private final Map<Configurable,  Configurable> myConfigurableToParentMap = new HashMap<>();
+  private final MultiValuesMap<Configurable, Configurable> myParentToChildrenMap = new MultiValuesMap<>();
 
 
   public OptionsEditorContext(ElementFilter.Active filter) {
@@ -86,7 +86,7 @@ public class OptionsEditorContext {
   ActionCallback fireErrorsChanged(final Map<Configurable, ConfigurationException> errors, OptionsEditorColleague requestor) {
     if (myErrors.equals(errors)) return ActionCallback.REJECTED;
 
-    myErrors = errors != null ? errors : new HashMap<Configurable, ConfigurationException>();
+    myErrors = errors != null ? errors : new HashMap<>();
 
     return notify(new ColleagueAction() {
       public ActionCallback process(final OptionsEditorColleague colleague) {
@@ -113,7 +113,7 @@ public class OptionsEditorContext {
     }
 
     if (myErrors.containsKey(configurable)) {
-      final HashMap<Configurable, ConfigurationException> newErrors = new HashMap<Configurable, ConfigurationException>();
+      final HashMap<Configurable, ConfigurationException> newErrors = new HashMap<>();
       newErrors.remove(configurable);
       fireErrorsChanged(newErrors, null);
     }

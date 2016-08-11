@@ -216,7 +216,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   private int myShadowSize = Registry.intValue("ide.balloon.shadow.size");
   private ShadowBorderProvider myShadowBorderProvider;
 
-  private final CopyOnWriteArraySet<JBPopupListener> myListeners = new CopyOnWriteArraySet<JBPopupListener>();
+  private final CopyOnWriteArraySet<JBPopupListener> myListeners = new CopyOnWriteArraySet<>();
   private boolean myVisible;
   private PositionTracker<Balloon> myTracker;
   private final int myAnimationCycle;
@@ -421,7 +421,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   }
 
   private void show(RelativePoint target, AbstractPosition position) {
-    show(new PositionTracker.Static<Balloon>(target), position);
+    show(new PositionTracker.Static<>(target), position);
   }
 
   private void show(PositionTracker<Balloon> tracker, AbstractPosition position) {
@@ -443,9 +443,9 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     UIUtil.setFutureRootPane(myContent, root);
 
     myFocusManager = IdeFocusManager.findInstanceByComponent(myLayeredPane);
-    final Ref<Component> originalFocusOwner = new Ref<Component>();
-    final Ref<FocusRequestor> focusRequestor = new Ref<FocusRequestor>();
-    final Ref<ActionCallback> proxyFocusRequest = new Ref<ActionCallback>(ActionCallback.DONE);
+    final Ref<Component> originalFocusOwner = new Ref<>();
+    final Ref<FocusRequestor> focusRequestor = new Ref<>();
+    final Ref<ActionCallback> proxyFocusRequest = new Ref<>(ActionCallback.DONE);
 
     boolean mnemonicsFix = myDialogMode && SystemInfo.isMac && Registry.is("ide.mac.inplaceDialogMnemonicsFix");
     if (mnemonicsFix) {
@@ -1220,7 +1220,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     protected abstract Rectangle getPointlessContentRec(Rectangle bounds, int pointerLength);
 
     public Set<AbstractPosition> getOtherPositions() {
-      HashSet<AbstractPosition> all = new HashSet<AbstractPosition>();
+      HashSet<AbstractPosition> all = new HashSet<>();
       all.add(BELOW);
       all.add(ABOVE);
       all.add(AT_RIGHT);

@@ -141,7 +141,7 @@ public class SuppressActionSequentialTask implements SequentialTask {
         final RefElement containerRef = refEntity.getRefManager().getReference(container);
         final Set<Object> suppressedNodes = myContext.getView().getSuppressedNodes(wrapper.getShortName());
         if (containerRef != null) {
-          Queue<RefEntity> toIgnoreInView = new Queue<RefEntity>(1);
+          Queue<RefEntity> toIgnoreInView = new Queue<>(1);
           toIgnoreInView.addLast(containerRef);
           while (!toIgnoreInView.isEmpty()) {
             final RefEntity entity = toIgnoreInView.pullFirst();

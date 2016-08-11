@@ -71,9 +71,9 @@ public class GroovyGeneratePropertyMissingHandler extends GenerateMembersHandler
     final GrMethod getter = genGetter(aClass, template);
     final GrMethod setter = genSetter(aClass, template);
 
-    final ArrayList<GroovyGenerationInfo<GrMethod>> result = new ArrayList<GroovyGenerationInfo<GrMethod>>();
-    if (getter != null) result.add(new GroovyGenerationInfo<GrMethod>(getter, true));
-    if (setter != null) result.add(new GroovyGenerationInfo<GrMethod>(setter, true));
+    final ArrayList<GroovyGenerationInfo<GrMethod>> result = new ArrayList<>();
+    if (getter != null) result.add(new GroovyGenerationInfo<>(getter, true));
+    if (setter != null) result.add(new GroovyGenerationInfo<>(setter, true));
 
     return result;
   }

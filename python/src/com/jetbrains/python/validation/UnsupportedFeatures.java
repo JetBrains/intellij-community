@@ -37,7 +37,7 @@ import java.util.Arrays;
 public class UnsupportedFeatures extends CompatibilityVisitor {
 
   public UnsupportedFeatures() {
-    super(new ArrayList<LanguageLevel>());
+    super(new ArrayList<>());
   }
 
   @Override

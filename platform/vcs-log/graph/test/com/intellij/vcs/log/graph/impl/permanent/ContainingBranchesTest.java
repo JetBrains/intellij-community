@@ -40,7 +40,7 @@ public abstract class ContainingBranchesTest<CommitId> extends AbstractTestWithT
   }
 
   private static Set<Integer> parseBranchNodeIndex(String str) {
-    Set<Integer> result = new HashSet<Integer>();
+    Set<Integer> result = new HashSet<>();
     for (String subStr : str.split("\\s")) {
       result.add(Integer.parseInt(subStr));
     }

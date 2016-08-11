@@ -261,13 +261,13 @@ public class DirectoryEntryTest extends LocalHistoryTestCase {
   }
 
   private void assertHasNoUnavailableContent(Entry dir) {
-    List<Entry> ee = new ArrayList<Entry>();
+    List<Entry> ee = new ArrayList<>();
     assertFalse(dir.hasUnavailableContent(ee));
     assertTrue(ee.isEmpty());
   }
 
   private void assertHasUnavailableContent(Entry dir, Entry... entries) {
-    List<Entry> ee = new ArrayList<Entry>();
+    List<Entry> ee = new ArrayList<>();
 
     assertTrue(dir.hasUnavailableContent(ee));
     assertEquals(entries, ee);

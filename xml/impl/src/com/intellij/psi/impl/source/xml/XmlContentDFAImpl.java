@@ -59,7 +59,7 @@ class XmlContentDFAImpl extends XmlContentDFA {
 
   @Override
   public List<XmlElementDescriptor> getPossibleElements() {
-    ArrayList<XmlElementDescriptor> list = new ArrayList<XmlElementDescriptor>();
+    ArrayList<XmlElementDescriptor> list = new ArrayList<>();
     getPossibleElements(list);
     return list;
   }

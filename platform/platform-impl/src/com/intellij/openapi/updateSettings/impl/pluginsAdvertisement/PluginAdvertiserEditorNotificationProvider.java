@@ -41,7 +41,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
   private static final Key<EditorNotificationPanel> KEY = Key.create("file.type.associations.detected");
   private final Project myProject;
   private final EditorNotifications myNotifications;
-  private final Set<String> myEnabledExtensions = new HashSet<String>();
+  private final Set<String> myEnabledExtensions = new HashSet<>();
 
   public PluginAdvertiserEditorNotificationProvider(Project project, final EditorNotifications notifications) {
     myProject = project;
@@ -101,7 +101,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
       });
     } else if (hasNonBundledPlugin(plugins)) {
       panel.createActionLabel("Install plugins", () -> {
-        Set<String> pluginIds = new HashSet<String>();
+        Set<String> pluginIds = new HashSet<>();
         for (PluginsAdvertiser.Plugin plugin : plugins) {
           pluginIds.add(plugin.myPluginId);
         }

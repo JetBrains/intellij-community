@@ -72,7 +72,7 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
     LOG.assertTrue(psiField != null);
     final Query<PsiReference> refs = ReferencesSearch.search(psiField);
 
-    final Set<PsiElement> elements = new HashSet<PsiElement>();
+    final Set<PsiElement> elements = new HashSet<>();
     elements.add(element);
     for (PsiReference reference : refs) {
       elements.add(reference.getElement());

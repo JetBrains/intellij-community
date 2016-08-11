@@ -80,7 +80,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
   private final SimpleTree myTree = new SimpleTree();
   private AbstractTreeBuilder myBuilder;
   private List<Library> myResult;
-  private final Map<Object, Object> myParentsMap = new THashMap<Object, Object>();
+  private final Map<Object, Object> myParentsMap = new THashMap<>();
 
   protected ChooseLibrariesDialogBase(final JComponent parentComponent, final String title) {
     super(parentComponent, false);
@@ -117,12 +117,12 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    processSelection(new CommonProcessors.CollectProcessor<Library>(myResult = new ArrayList<Library>()));
+    processSelection(new CommonProcessors.CollectProcessor<>(myResult = new ArrayList<>()));
     super.doOKAction();
   }
 
   private void updateOKAction() {
-    setOKActionEnabled(!processSelection(new CommonProcessors.FindFirstProcessor<Library>()));
+    setOKActionEnabled(!processSelection(new CommonProcessors.FindFirstProcessor<>()));
   }
 
   @Override
@@ -349,7 +349,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
   }
 
   public boolean isEmpty() {
-    List<Object> children = new ArrayList<Object>();
+    List<Object> children = new ArrayList<>();
     collectChildren(myBuilder.getTreeStructure().getRootElement(), children);
     return children.isEmpty();
   }
@@ -368,7 +368,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
 
     @Override
     public Object[] getChildElements(Object element) {
-      final List<Object> result = new ArrayList<Object>();
+      final List<Object> result = new ArrayList<>();
       collectChildren(element, result);
       final Iterator<Object> it = result.iterator();
       while (it.hasNext()) {

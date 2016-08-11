@@ -233,7 +233,7 @@ public class JiraRepository extends BaseRepositoryImpl {
   private JiraLegacyApi createLegacyApi() {
     try {
       XmlRpcClient client = new XmlRpcClient(getUrl());
-      Vector<String> parameters = new Vector<String>(Collections.singletonList(""));
+      Vector<String> parameters = new Vector<>(Collections.singletonList(""));
       XmlRpcRequest request = new XmlRpcRequest("jira1.getServerInfo", parameters);
       @SuppressWarnings("unchecked") Hashtable<String, Object> response =
         (Hashtable<String, Object>)client.execute(request, new CommonsXmlRpcTransport(new URL(getUrl()), getHttpClient()));

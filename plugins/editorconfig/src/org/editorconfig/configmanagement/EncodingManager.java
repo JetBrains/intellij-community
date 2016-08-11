@@ -29,7 +29,7 @@ public class EncodingManager extends FileDocumentManagerAdapter {
   public static final Map<String, Charset> encodingMap;
 
   static {
-    Map<String, Charset> map = new HashMap<String, Charset>();
+    Map<String, Charset> map = new HashMap<>();
     map.put("latin1", Charset.forName("ISO-8859-1"));
     map.put("utf-8", CharsetToolkit.UTF8_CHARSET);
     map.put("utf-16be", CharsetToolkit.UTF_16BE_CHARSET);

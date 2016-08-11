@@ -26,7 +26,7 @@ import java.util.function.Function
  */
 @CompileStatic
 class ConsoleBuildMessageLogger extends BuildMessageLogger {
-  public static final Closure<? extends BuildMessageLogger> FACTORY = { String taskName -> new ConsoleBuildMessageLogger(taskName) }
+  public static final Function<String, BuildMessageLogger> FACTORY = { String taskName -> new ConsoleBuildMessageLogger(taskName) } as Function<String, BuildMessageLogger>
   private final String parallelTaskId
   private int indent
   private static final PrintStream out = BuildUtils.realSystemOut

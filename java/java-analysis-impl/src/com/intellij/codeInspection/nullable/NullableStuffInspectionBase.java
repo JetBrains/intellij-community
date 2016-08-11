@@ -64,7 +64,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
     super.writeSettings(node);
-    for (Element child : new ArrayList<Element>(node.getChildren())) {
+    for (Element child : new ArrayList<>(node.getChildren())) {
       String name = child.getAttributeValue("name");
       String value = child.getAttributeValue("value");
       if ("IGNORE_EXTERNAL_SUPER_NOTNULL".equals(name) && "false".equals(value) ||

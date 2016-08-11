@@ -62,7 +62,7 @@ public class OldReferenceResolver {
     myExpr = expr;
     myReplaceFieldsWithGetters = replaceFieldsWithGetters;
     myParameterInitializer = parameterInitializer;
-    myTempVars = new HashMap<PsiExpression, String>();
+    myTempVars = new HashMap<>();
     myActualArgs = myContext.getArgumentList().getExpressions();
     myMethodToReplaceIn = methodToReplaceIn;
     myProject = myContext.getProject();

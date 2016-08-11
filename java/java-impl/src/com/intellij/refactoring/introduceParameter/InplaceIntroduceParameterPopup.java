@@ -242,7 +242,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
       final StringBuilder buf = new StringBuilder();
       buf.append(psiMethod.getName()).append(" (");
       boolean frst = true;
-      final List<TextRange> ranges2Remove = new ArrayList<TextRange>();
+      final List<TextRange> ranges2Remove = new ArrayList<>();
       TextRange addedRange = null;
       for (PsiParameter parameter : psiMethod.getParameterList().getParameters()) {
         if (frst) {

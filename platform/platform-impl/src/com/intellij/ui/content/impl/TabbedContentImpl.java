@@ -34,7 +34,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class TabbedContentImpl extends ContentImpl implements TabbedContent {
-  private final List<Pair<String, JComponent>> myTabs = new ArrayList<Pair<String, JComponent>>();
+  private final List<Pair<String, JComponent>> myTabs = new ArrayList<>();
   private String myPrefix;
 
   public TabbedContentImpl(JComponent component, String displayName, boolean isPinnable, String titlePrefix) {
@@ -171,7 +171,7 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
 
   @Override
   public void split() {
-    List<Pair<String, JComponent>> copy = new ArrayList<Pair<String, JComponent>>(myTabs);
+    List<Pair<String, JComponent>> copy = new ArrayList<>(myTabs);
     int selectedTab = ContentUtilEx.getSelectedTab(this);
     ContentManager manager = getManager();
     String prefix = getTitlePrefix();

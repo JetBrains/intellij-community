@@ -32,9 +32,9 @@ final class FileTree {
   private final Map<VirtualFile, List<VirtualFile>> myStrictDirectory2Children;
 
   FileTree() {
-    myDirectory2Children = new HashMap<VirtualFile, List<VirtualFile>>();
-    myFiles = new HashSet<VirtualFile>();
-    myStrictDirectory2Children = new HashMap<VirtualFile, List<VirtualFile>>();
+    myDirectory2Children = new HashMap<>();
+    myFiles = new HashSet<>();
+    myStrictDirectory2Children = new HashMap<>();
   }
 
   void add(VirtualFile file) {
@@ -56,7 +56,7 @@ final class FileTree {
       children.add(file);
     }
     else {
-      children = new ArrayList<VirtualFile>(2);
+      children = new ArrayList<>(2);
       children.add(file);
       myStrictDirectory2Children.put(dir, children);
     }
@@ -68,7 +68,7 @@ final class FileTree {
       return;
     }
     else {
-      children = new ArrayList<VirtualFile>(2);
+      children = new ArrayList<>(2);
       children.add(file);
       myDirectory2Children.put(dir, children);
     }
@@ -83,7 +83,7 @@ final class FileTree {
         return;
       }
       else {
-        children = new ArrayList<VirtualFile>(2);
+        children = new ArrayList<>(2);
         children.add(dir);
         myDirectory2Children.put(parent, children);
       }
@@ -98,7 +98,7 @@ final class FileTree {
   }
 
   List<VirtualFile> getFilesUnderDirectory(VirtualFile dir) {
-    List<VirtualFile> filesList = new ArrayList<VirtualFile>();
+    List<VirtualFile> filesList = new ArrayList<>();
     List<VirtualFile> files = myStrictDirectory2Children.get(dir);
     if (files != null) {
       filesList.addAll(files);
@@ -120,7 +120,7 @@ final class FileTree {
         children.remove(file);
         if (children.size() == 0) {
           if (dirsToBeRemoved == null) {
-            dirsToBeRemoved = new ArrayList<VirtualFile>(2);
+            dirsToBeRemoved = new ArrayList<>(2);
           }
           dirsToBeRemoved.add(_directory); // we have to remove empty _directory
         }
@@ -167,7 +167,7 @@ final class FileTree {
         children.remove(psiDirectory);
         if (children.size() == 0) {
           if (dirsToBeRemoved == null) {
-            dirsToBeRemoved = new ArrayList<VirtualFile>(2);
+            dirsToBeRemoved = new ArrayList<>(2);
           }
           dirsToBeRemoved.add(_directory); // we have remove empty _directory
         }
@@ -203,7 +203,7 @@ final class FileTree {
    *         Please note that returned files can be invalid.
    */
   List<VirtualFile> getFiles(VirtualFile dir) {
-    List<VirtualFile> filesList = new ArrayList<VirtualFile>();
+    List<VirtualFile> filesList = new ArrayList<>();
     collectFiles(dir, filesList);
     return filesList;
   }

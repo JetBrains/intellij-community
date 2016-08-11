@@ -46,14 +46,14 @@ public class IssueNavigationConfiguration extends SimpleModificationTracker
     return PeriodicalTasksCloser.getInstance().safeGetService(project, IssueNavigationConfiguration.class);
   }
 
-  private List<IssueNavigationLink> myLinks = new ArrayList<IssueNavigationLink>();
+  private List<IssueNavigationLink> myLinks = new ArrayList<>();
 
   public List<IssueNavigationLink> getLinks() {
     return myLinks;
   }
 
   public void setLinks(final List<IssueNavigationLink> links) {
-    myLinks = new ArrayList<IssueNavigationLink>(links);
+    myLinks = new ArrayList<>(links);
     incModificationCount();
   }
 
@@ -91,7 +91,7 @@ public class IssueNavigationConfiguration extends SimpleModificationTracker
   }
 
   public List<LinkMatch> findIssueLinks(CharSequence text) {
-    final List<LinkMatch> result = new ArrayList<LinkMatch>();
+    final List<LinkMatch> result = new ArrayList<>();
     for (IssueNavigationLink link : myLinks) {
       Pattern issuePattern = link.getIssuePattern();
       Matcher m = issuePattern.matcher(text);

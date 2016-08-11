@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 * @author Max Medvedev
 */
 public interface ConstructorBodyGenerator {
-  LanguageExtension<ConstructorBodyGenerator> INSTANCE = new LanguageExtension<ConstructorBodyGenerator>("com.intellij.constructorBodyGenerator");
+  LanguageExtension<ConstructorBodyGenerator> INSTANCE = new LanguageExtension<>("com.intellij.constructorBodyGenerator");
 
   @Deprecated
   void generateFieldInitialization(@NotNull StringBuilder buffer, @NotNull PsiField[] fields, @NotNull PsiParameter[] parameters);

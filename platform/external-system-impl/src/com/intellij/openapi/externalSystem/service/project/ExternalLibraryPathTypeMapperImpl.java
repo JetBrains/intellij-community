@@ -30,7 +30,7 @@ import java.util.Map;
  */
 public class ExternalLibraryPathTypeMapperImpl implements ExternalLibraryPathTypeMapper {
 
-  private static final Map<LibraryPathType, OrderRootType> MAPPINGS = new EnumMap<LibraryPathType, OrderRootType>(LibraryPathType.class);
+  private static final Map<LibraryPathType, OrderRootType> MAPPINGS = new EnumMap<>(LibraryPathType.class);
 
   static {
     MAPPINGS.put(LibraryPathType.BINARY, OrderRootType.CLASSES);

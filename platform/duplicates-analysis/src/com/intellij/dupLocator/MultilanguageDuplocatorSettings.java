@@ -37,7 +37,7 @@ import java.util.TreeMap;
   storages = @Storage("duplocatorSettings.xml")
 )
 public class MultilanguageDuplocatorSettings implements PersistentStateComponent<Element> {
-  private final Map<String, ExternalizableDuplocatorState> mySettingsMap = new TreeMap<String, ExternalizableDuplocatorState>();
+  private final Map<String, ExternalizableDuplocatorState> mySettingsMap = new TreeMap<>();
 
   public static MultilanguageDuplocatorSettings getInstance() {
     return ServiceManager.getService(MultilanguageDuplocatorSettings.class);

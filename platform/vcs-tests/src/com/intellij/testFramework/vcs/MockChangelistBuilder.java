@@ -32,11 +32,11 @@ import java.util.List;
  * @author yole
  */
 public class MockChangelistBuilder implements ChangelistBuilder {
-  private final List<Change> myChanges = new ArrayList<Change>();
-  private final List<VirtualFile> myUnversionedFiles = new ArrayList<VirtualFile>();
-  private final List<FilePath> myLocallyDeletedFiles = new ArrayList<FilePath>();
-  private final List<VirtualFile> myHijackedFiles = new ArrayList<VirtualFile>();
-  private final List<VirtualFile> myIgnoredFiles = new ArrayList<VirtualFile>();
+  private final List<Change> myChanges = new ArrayList<>();
+  private final List<VirtualFile> myUnversionedFiles = new ArrayList<>();
+  private final List<FilePath> myLocallyDeletedFiles = new ArrayList<>();
+  private final List<VirtualFile> myHijackedFiles = new ArrayList<>();
+  private final List<VirtualFile> myIgnoredFiles = new ArrayList<>();
 
   @Override
   public void processChange(Change change, VcsKey vcsKey) {

@@ -34,7 +34,7 @@ public class SvnBranchConfiguration {
   private boolean myUserinfoInUrl;
 
   public SvnBranchConfiguration() {
-    myBranchUrls = new ArrayList<String>();
+    myBranchUrls = new ArrayList<>();
   }
 
   public SvnBranchConfiguration(String trunkUrl, @NotNull List<String> branchUrls, boolean userinfoInUrl) {

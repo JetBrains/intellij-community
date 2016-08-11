@@ -63,7 +63,7 @@ public interface PyType {
   /**
    * Context key for access to a set of names already found by variant search.
    */
-  Key<Set<String>> CTX_NAMES = new Key<Set<String>>("Completion variants names");
+  Key<Set<String>> CTX_NAMES = new Key<>("Completion variants names");
 
   /**
    * @return name of the type

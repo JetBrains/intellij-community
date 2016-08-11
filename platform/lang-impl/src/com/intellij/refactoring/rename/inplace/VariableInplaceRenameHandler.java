@@ -35,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class VariableInplaceRenameHandler implements RenameHandler {
-  private static final ThreadLocal<String> ourPreventInlineRenameFlag = new ThreadLocal<String>();
+  private static final ThreadLocal<String> ourPreventInlineRenameFlag = new ThreadLocal<>();
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler");
 
   @Override

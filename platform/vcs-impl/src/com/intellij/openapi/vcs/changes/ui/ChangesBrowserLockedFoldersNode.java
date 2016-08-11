@@ -72,13 +72,13 @@ public class ChangesBrowserLockedFoldersNode extends ChangesBrowserNode implemen
     public void run() {
       final List<VirtualFile> files = myParentNode.getAllFilesUnder();
       final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(myProject);
-      final Map<String, List<VirtualFile>> byVcs = new HashMap<String, List<VirtualFile>>();
+      final Map<String, List<VirtualFile>> byVcs = new HashMap<>();
       for (VirtualFile file : files) {
         final AbstractVcs vcs = plVcsManager.getVcsFor(file);
         if (vcs != null) {
           List<VirtualFile> list = byVcs.get(vcs.getName());
           if (list == null) {
-            list = new ArrayList<VirtualFile>();
+            list = new ArrayList<>();
             byVcs.put(vcs.getName(), list);
           }
           list.add(file);

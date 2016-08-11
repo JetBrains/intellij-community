@@ -75,7 +75,7 @@ public class ImplementAbstractMethodHandler {
         result[0] = getClassImplementations(psiClass);
       }
       else {
-        final List<PsiElement> enumConstants = new ArrayList<PsiElement>();
+        final List<PsiElement> enumConstants = new ArrayList<>();
         for (PsiField field : psiClass.getFields()) {
           if (field instanceof PsiEnumConstant) {
             final PsiEnumConstantInitializer initializingClass = ((PsiEnumConstant)field).getInitializingClass();
@@ -134,7 +134,7 @@ public class ImplementAbstractMethodHandler {
       if (!((PsiElement)o).isValid()) return;
     }
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
-      final LinkedHashSet<PsiClass> classes = new LinkedHashSet<PsiClass>();
+      final LinkedHashSet<PsiClass> classes = new LinkedHashSet<>();
       for (final Object o : selection) {
         if (o instanceof PsiEnumConstant) {
           classes.add(ApplicationManager.getApplication().runWriteAction(new Computable<PsiClass>(){
@@ -163,7 +163,7 @@ public class ImplementAbstractMethodHandler {
   }
 
   private PsiClass[] getClassImplementations(final PsiClass psiClass) {
-    ArrayList<PsiClass> list = new ArrayList<PsiClass>();
+    ArrayList<PsiClass> list = new ArrayList<>();
     for (PsiClass inheritor : ClassInheritorsSearch.search(psiClass)) {
       if (!inheritor.isInterface() || PsiUtil.isLanguageLevel8OrHigher(inheritor)) {
         final PsiSubstitutor classSubstitutor = TypeConversionUtil.getClassSubstitutor(psiClass, inheritor, PsiSubstitutor.EMPTY);

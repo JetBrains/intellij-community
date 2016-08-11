@@ -28,7 +28,7 @@ public class CredentialsManagerImpl extends CredentialsManager {
 
   @Override
   public List<CredentialsType> getAllTypes() {
-    List<CredentialsType> result = new ArrayList<CredentialsType>();
+    List<CredentialsType> result = new ArrayList<>();
     result.add(CredentialsType.SSH_HOST);
     result.add(CredentialsType.VAGRANT);
     result.add(CredentialsType.WEB_DEPLOYMENT);

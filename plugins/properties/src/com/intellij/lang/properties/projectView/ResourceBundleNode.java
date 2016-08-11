@@ -60,7 +60,7 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     List<PropertiesFile> propertiesFiles = getValue().getPropertiesFiles();
-    Collection<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
+    Collection<AbstractTreeNode> children = new ArrayList<>();
     for (PropertiesFile propertiesFile : propertiesFiles) {
       AbstractTreeNode node = new PsiFileNode(myProject, propertiesFile.getContainingFile(), getSettings());
       children.add(node);

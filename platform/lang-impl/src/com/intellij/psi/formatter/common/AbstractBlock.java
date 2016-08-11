@@ -19,16 +19,12 @@ package com.intellij.psi.formatter.common;
 import com.intellij.formatting.*;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.formatter.FormatterUtil;
-import com.intellij.psi.formatter.IndentRangesCalculator;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class AbstractBlock implements ASTBlock {
+public abstract class AbstractBlock implements ASTBlock, ExtraRangesProvider {
   public static final List<Block> EMPTY = Collections.emptyList();
   @NotNull protected final  ASTNode     myNode;
   @Nullable protected final Wrap        myWrap;
@@ -186,35 +182,14 @@ public abstract class AbstractBlock implements ASTBlock {
   /**
    * @return additional range to reformat, when this block if formatted
    */
+  @Override
   @Nullable
   public List<TextRange> getExtraRangesToFormat(@NotNull FormattingRangesInfo info) {
     int startOffset = getTextRange().getStartOffset();
     if (info.isOnInsertedLine(startOffset) && myNode.textContains('\n')) {
-      return calculateExtraRanges(myNode);
+      return new NodeIndentRangesCalculator(myNode).calculateExtraRanges();
     }
     return null;
-  }
-
-  @NotNull
-  private List<TextRange> calculateExtraRanges(@NotNull ASTNode node) {
-    Document document = retrieveDocument(node, getProject(node));
-    if (document != null) {
-      TextRange ranges = node.getTextRange();
-      return new IndentRangesCalculator(document, ranges).calcIndentRanges();
-    }
-
-    return ContainerUtil.newArrayList(myNode.getTextRange());
-  }
-  
-
-  private static Document retrieveDocument(@NotNull ASTNode node, @NotNull Project project) {
-    PsiFile file = node.getPsi().getContainingFile();
-    return PsiDocumentManager.getInstance(project).getDocument(file);
-  }
-
-  @NotNull
-  private static Project getProject(@NotNull ASTNode node) {
-    return node.getPsi().getProject();
   }
   
 }

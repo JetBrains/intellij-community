@@ -58,8 +58,8 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends Module
   public boolean isMultipleElementsSelected(ConfigurationContext context) {
     final DataContext dataContext = context.getDataContext();
     if (TestsUIUtil.isMultipleSelectionImpossible(dataContext)) return false;
-    final LinkedHashSet<String> classes = new LinkedHashSet<String>();
-    final PsiElementProcessor.CollectElementsWithLimit<PsiElement> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiElement>(2);
+    final LinkedHashSet<String> classes = new LinkedHashSet<>();
+    final PsiElementProcessor.CollectElementsWithLimit<PsiElement> processor = new PsiElementProcessor.CollectElementsWithLimit<>(2);
     final PsiElement[] locationElements = collectLocationElements(classes, dataContext);
     if (locationElements != null) {
       collectTestMembers(locationElements, false, false, processor);
@@ -71,14 +71,14 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends Module
   }
 
   public boolean isConfiguredFromContext(ConfigurationContext context, Set<String> patterns) {
-    final LinkedHashSet<String> classes = new LinkedHashSet<String>();
+    final LinkedHashSet<String> classes = new LinkedHashSet<>();
     final DataContext dataContext = context.getDataContext();
     if (TestsUIUtil.isMultipleSelectionImpossible(dataContext)) {
       return false;
     }
     final PsiElement[] locationElements = collectLocationElements(classes, dataContext);
     if (locationElements == null) {
-      collectContextElements(dataContext, true, false, classes, new PsiElementProcessor.CollectElements<PsiElement>());
+      collectContextElements(dataContext, true, false, classes, new PsiElementProcessor.CollectElements<>());
     }
     if (Comparing.equal(classes, patterns)) {
       if (patterns.size() == 1) {
@@ -100,7 +100,7 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends Module
       return null;
     }
     final PsiElement[] locationElements = collectLocationElements(classes, dataContext);
-    PsiElementProcessor.CollectElements<PsiElement> processor = new PsiElementProcessor.CollectElements<PsiElement>();
+    PsiElementProcessor.CollectElements<PsiElement> processor = new PsiElementProcessor.CollectElements<>();
     if (locationElements != null) {
       collectTestMembers(locationElements, false, true, processor);
       result = processor.toArray();
@@ -170,7 +170,7 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends Module
         if (allCarets.size() > 1) {
           final PsiFile editorFile = CommonDataKeys.PSI_FILE.getData(dataContext);
           if (editorFile != null) {
-            final Set<PsiMethod> methods = new LinkedHashSet<PsiMethod>();
+            final Set<PsiMethod> methods = new LinkedHashSet<>();
             for (Caret caret : allCarets) {
               ContainerUtil.addIfNotNull(methods, PsiTreeUtil.getParentOfType(editorFile.findElementAt(caret.getOffset()), PsiMethod.class));
             }
@@ -225,7 +225,7 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends Module
   private static PsiElement[] collectLocationElements(LinkedHashSet<String> classes, DataContext dataContext) {
     final Location<?>[] locations = Location.DATA_KEYS.getData(dataContext);
     if (locations != null) {
-      List<PsiElement> elements = new ArrayList<PsiElement>();
+      List<PsiElement> elements = new ArrayList<>();
       for (Location<?> location : locations) {
         final PsiElement psiElement = location.getPsiElement();
         classes.add(getQName(psiElement, location));

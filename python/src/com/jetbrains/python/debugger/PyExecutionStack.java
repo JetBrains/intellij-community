@@ -64,7 +64,7 @@ public class PyExecutionStack extends XExecutionStack {
 
     final List<PyStackFrameInfo> frames = myThreadInfo.getFrames();
     if (frames != null && firstFrameIndex <= frames.size()) {
-      final List<PyStackFrame> xFrames = new LinkedList<PyStackFrame>();
+      final List<PyStackFrame> xFrames = new LinkedList<>();
       for (int i = firstFrameIndex; i < frames.size(); i++) {
         xFrames.add(convert(myDebugProcess, frames.get(i)));
       }

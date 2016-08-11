@@ -52,7 +52,7 @@ public class TreeModelWrapper implements StructureViewModel, ProvidingTreeModel 
 
   @NotNull
   private <T extends TreeAction> List<T> filterActive(@NotNull T[] actions) {
-    List<T> filtered = new ArrayList<T>();
+    List<T> filtered = new ArrayList<>();
     for (T action : actions) {
       if (isFiltered(action)) filtered.add(action);
     }
@@ -61,7 +61,7 @@ public class TreeModelWrapper implements StructureViewModel, ProvidingTreeModel 
 
   @NotNull
   private List<NodeProvider> filterProviders(@NotNull Collection<NodeProvider> actions) {
-    List<NodeProvider> filtered = new ArrayList<NodeProvider>();
+    List<NodeProvider> filtered = new ArrayList<>();
     for (NodeProvider action : actions) {
       if (isFiltered(action)) filtered.add(action);
     }

@@ -131,7 +131,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
         final IdeFrameImpl frame = UIUtil.getParentOfType(IdeFrameImpl.class, ToolWindowsWidget.this);
         if (frame == null) return;
 
-        List<ToolWindow> toolWindows = new ArrayList<ToolWindow>();
+        List<ToolWindow> toolWindows = new ArrayList<>();
         final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(frame.getProject());
         for (String id : toolWindowManager.getToolWindowIds()) {
           final ToolWindow tw = toolWindowManager.getToolWindow(id);

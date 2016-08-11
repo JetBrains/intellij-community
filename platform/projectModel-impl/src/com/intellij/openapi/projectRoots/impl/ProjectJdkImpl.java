@@ -275,7 +275,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
     @NotNull
     public String[] getUrls(@NotNull OrderRootType rootType) {
       final ProjectRoot[] rootFiles = myRootContainer.getRoots(rootType);
-      final ArrayList<String> result = new ArrayList<String>();
+      final ArrayList<String> result = new ArrayList<>();
       for (ProjectRoot rootFile : rootFiles) {
         ContainerUtil.addAll(result, rootFile.getUrls());
       }
@@ -356,7 +356,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
   @Override
   public VirtualFile[] getRoots(OrderRootType rootType) {
     final ProjectRoot[] roots = myRootContainer.getRoots(rootType); // use getRoots() cause the data is most up-to-date there
-    final List<VirtualFile> files = new ArrayList<VirtualFile>(roots.length);
+    final List<VirtualFile> files = new ArrayList<>(roots.length);
     for (ProjectRoot root : roots) {
       ContainerUtil.addAll(files, root.getVirtualFiles());
     }

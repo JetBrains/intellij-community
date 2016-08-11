@@ -164,12 +164,12 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
 
     final PsiElement element = parameters.getElementToSearch();
 
-    return uniqueResults(new MergeQuery<PsiReference>(result, new SearchRequestQuery(PsiUtilCore.getProjectInReadAction(element), requests)));
+    return uniqueResults(new MergeQuery<>(result, new SearchRequestQuery(PsiUtilCore.getProjectInReadAction(element), requests)));
   }
 
   @NotNull
   private static Query<PsiReference> uniqueResults(@NotNull Query<PsiReference> composite) {
-    return new UniqueResultsQuery<PsiReference, ReferenceDescriptor>(composite, ContainerUtil.<ReferenceDescriptor>canonicalStrategy(), ReferenceDescriptor.MAPPER);
+    return new UniqueResultsQuery<>(composite, ContainerUtil.<ReferenceDescriptor>canonicalStrategy(), ReferenceDescriptor.MAPPER);
   }
 
   public static void searchOptimized(@NotNull PsiElement element,

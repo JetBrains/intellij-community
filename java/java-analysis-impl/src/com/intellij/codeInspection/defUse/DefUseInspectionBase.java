@@ -61,7 +61,7 @@ public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
                               final ProblemsHolder holder,
                               final boolean isOnTheFly) {
     if (body == null) return;
-    final Set<PsiVariable> usedVariables = new THashSet<PsiVariable>();
+    final Set<PsiVariable> usedVariables = new THashSet<>();
     List<DefUseUtil.Info> unusedDefs = DefUseUtil.getUnusedDefs(body, usedVariables);
 
     if (unusedDefs != null && !unusedDefs.isEmpty()) {
@@ -140,7 +140,7 @@ public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
   private static boolean isOnTheFlyOrNoSideEffects(boolean isOnTheFly,
                                                    PsiVariable psiVariable,
                                                    PsiExpression initializer) {
-    return isOnTheFly || !RemoveUnusedVariableUtil.checkSideEffects(initializer, psiVariable, new ArrayList<PsiElement>());
+    return isOnTheFly || !RemoveUnusedVariableUtil.checkSideEffects(initializer, psiVariable, new ArrayList<>());
   }
 
   protected LocalQuickFix createRemoveInitializerFix() {

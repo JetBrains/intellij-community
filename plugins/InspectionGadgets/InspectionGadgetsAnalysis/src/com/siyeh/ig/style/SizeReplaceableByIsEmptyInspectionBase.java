@@ -39,7 +39,7 @@ public class SizeReplaceableByIsEmptyInspectionBase extends BaseInspection {
   @SuppressWarnings({"PublicField"})
   public boolean ignoreNegations = false;
   @SuppressWarnings("PublicField")
-  public OrderedSet<String> ignoredTypes = new OrderedSet<String>();
+  public OrderedSet<String> ignoredTypes = new OrderedSet<>();
 
   @Override
   @NotNull

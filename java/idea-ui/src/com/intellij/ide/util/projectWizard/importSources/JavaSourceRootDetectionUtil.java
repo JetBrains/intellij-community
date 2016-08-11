@@ -50,7 +50,7 @@ public class JavaSourceRootDetectionUtil {
     final RootDetectionProcessor processor = new RootDetectionProcessor(dir, detectors.toArray(new JavaSourceRootDetector[detectors.size()]));
     final Map<ProjectStructureDetector,List<DetectedProjectRoot>> rootsMap = processor.runDetectors();
 
-    Map<File, JavaModuleSourceRoot> result = new HashMap<File, JavaModuleSourceRoot>();
+    Map<File, JavaModuleSourceRoot> result = new HashMap<>();
     for (List<DetectedProjectRoot> roots : rootsMap.values()) {
       for (DetectedProjectRoot root : roots) {
         if (root instanceof JavaModuleSourceRoot) {

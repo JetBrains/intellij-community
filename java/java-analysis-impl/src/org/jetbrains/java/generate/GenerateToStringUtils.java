@@ -43,7 +43,7 @@ public class GenerateToStringUtils {
     @NotNull
     public static PsiField[] filterAvailableFields(PsiClass clazz, FilterPattern pattern) {
         if (log.isDebugEnabled()) log.debug("Filtering fields using the pattern: " + pattern);
-        List<PsiField> availableFields = new ArrayList<PsiField>();
+        List<PsiField> availableFields = new ArrayList<>();
 
         // performs til filtering process
         PsiField[] fields = clazz.getFields();
@@ -73,7 +73,7 @@ public class GenerateToStringUtils {
     @NotNull
     public static PsiMethod[] filterAvailableMethods(PsiClass clazz, @NotNull FilterPattern pattern) {
         if (log.isDebugEnabled()) log.debug("Filtering methods using the pattern: " + pattern);
-        List<PsiMethod> availableMethods = new ArrayList<PsiMethod>();
+        List<PsiMethod> availableMethods = new ArrayList<>();
         PsiMethod[] methods = clazz.getMethods();
         for (PsiMethod method : methods) {
             // the method should be a getter

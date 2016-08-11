@@ -90,7 +90,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   }
 
   private static MultiMap<String, IdeaPlugin> getPluginMap(final Project project) {
-    MultiMap<String, IdeaPlugin> byId = new LinkedMultiMap<String, IdeaPlugin>();
+    MultiMap<String, IdeaPlugin> byId = new LinkedMultiMap<>();
     for (IdeaPlugin each : IdeaPluginConverter.getAllPlugins(project)) {
       byId.putValue(each.getPluginId(), each);
     }
@@ -326,12 +326,12 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   }
 
   public static Collection<String> getDependencies(IdeaPlugin ideaPlugin) {
-    Set<String> result = new HashSet<String>();
+    Set<String> result = new HashSet<>();
 
     result.add(PluginManagerCore.CORE_PLUGIN_ID);
 
     for (Dependency dependency : ideaPlugin.getDependencies()) {
-      ContainerUtil.addIfNotNull(dependency.getStringValue(), result);
+      ContainerUtil.addIfNotNull(result, dependency.getStringValue());
     }
 
     if (ideaPlugin.getPluginId() == null) {
@@ -347,9 +347,9 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
               final DomFileElement<IdeaPlugin> fileElement = ideaPlugin.getManager().getFileElement(xmlFile, IdeaPlugin.class);
               if (fileElement != null) {
                 final IdeaPlugin mainPlugin = fileElement.getRootElement();
-                ContainerUtil.addIfNotNull(mainPlugin.getPluginId(), result);
+                ContainerUtil.addIfNotNull(result, mainPlugin.getPluginId());
                 for (Dependency dependency : mainPlugin.getDependencies()) {
-                  ContainerUtil.addIfNotNull(dependency.getStringValue(), result);
+                  ContainerUtil.addIfNotNull(result, dependency.getStringValue());
                 }
               }
             }

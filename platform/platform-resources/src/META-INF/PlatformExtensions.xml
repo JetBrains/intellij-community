@@ -163,7 +163,7 @@
                         serviceImplementation="com.intellij.ide.passwordSafe.config.PasswordSafeSettings"/>
     <applicationService serviceInterface="com.intellij.ide.passwordSafe.PasswordSafe"
                         serviceImplementation="com.intellij.ide.passwordSafe.impl.PasswordSafeImpl"/>
-    <ApplicationLoadListener implementation="com.intellij.ide.passwordSafe.masterKey.PasswordDatabaseConvertor"/>
+    <ApplicationLoadListener implementation="com.intellij.ide.passwordSafe.PasswordDatabaseConvertor"/>
 
     <applicationConfigurable parentId="preferences.general" instance="com.intellij.ide.passwordSafe.config.PasswordSafeConfigurable" id="application.passwordSafe"
                              displayName="Passwords"/>
@@ -440,5 +440,10 @@
                         serviceImplementation="com.intellij.remote.ext.CredentialsManagerImpl"/>
 
     <postStartupActivity implementation="com.intellij.profile.codeInspection.ProjectInspectionProfileManager$ProjectInspectionProfileStartUpActivity"/>
+
+    <additionalTextAttributes scheme="Default" file="idea/FindViewColorsScheme.xml"/>
+    <additionalTextAttributes scheme="Darcula" file="idea/FindViewColorsScheme.xml"/>
+
+    <credentialStore implementation="com.intellij.ide.passwordSafe.MacOsCredentialStoreFactory" os="mac"/>
   </extensions>
 </idea-plugin>

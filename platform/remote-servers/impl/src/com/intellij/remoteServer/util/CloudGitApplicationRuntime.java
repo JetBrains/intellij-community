@@ -104,7 +104,7 @@ public class CloudGitApplicationRuntime extends CloudApplicationRuntime {
   }
 
   private boolean confirmUndeploy() {
-    final Ref<Boolean> confirmed = new Ref<Boolean>(false);
+    final Ref<Boolean> confirmed = new Ref<>(false);
     ApplicationManager.getApplication().invokeAndWait(() -> {
       String title = CloudBundle.getText("cloud.undeploy.confirm.title");
       while (true) {

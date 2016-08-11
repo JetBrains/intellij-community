@@ -243,7 +243,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     final Ref<CompilationLog> result = Ref.create(null);
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
-    final List<String> generatedFilePaths = new ArrayList<String>();
+    final List<String> generatedFilePaths = new ArrayList<>();
     getCompilerManager().addCompilationStatusListener(new CompilationStatusAdapter() {
       @Override
       public void fileGenerated(String outputRoot, String relativePath) {
@@ -415,7 +415,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
       myExternalBuildUpToDate = externalBuildUpToDate;
       myErrors = errors;
       myWarnings = warnings;
-      myGeneratedPaths = new THashSet<String>(generatedFilePaths, FileUtil.PATH_HASHING_STRATEGY);
+      myGeneratedPaths = new THashSet<>(generatedFilePaths, FileUtil.PATH_HASHING_STRATEGY);
     }
 
     public void assertUpToDate() {
@@ -437,7 +437,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     private static void assertSet(String name, Set<String> actual, String[] expected) {
       for (String path : expected) {
         if (!actual.remove(path)) {
-          Assert.fail("'" + path + "' is not " + name + ". " + name + ": " + new HashSet<String>(actual));
+          Assert.fail("'" + path + "' is not " + name + ". " + name + ": " + new HashSet<>(actual));
         }
       }
       if (!actual.isEmpty()) {

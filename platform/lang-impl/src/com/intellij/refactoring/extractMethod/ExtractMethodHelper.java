@@ -131,7 +131,7 @@ public class ExtractMethodHelper {
                            Messages.YES;
       if (exitCode == Messages.YES) {
         boolean replaceAll = false;
-        final Map<SimpleMatch, RangeHighlighter> highlighterMap = new HashMap<SimpleMatch, RangeHighlighter>();
+        final Map<SimpleMatch, RangeHighlighter> highlighterMap = new HashMap<>();
         for (SimpleMatch match : duplicates) {
           if (!match.getStartElement().isValid() || !match.getEndElement().isValid()) continue;
           final Pair<SimpleMatch, PsiElement> replacement = Pair.create(match, callElement);
@@ -178,7 +178,7 @@ public class ExtractMethodHelper {
 
   private static void highlightInEditor(@NotNull final Project project, @NotNull final SimpleMatch match,
                                  @NotNull final Editor editor, Map<SimpleMatch, RangeHighlighter> highlighterMap) {
-    final List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
+    final List<RangeHighlighter> highlighters = new ArrayList<>();
     final HighlightManager highlightManager = HighlightManager.getInstance(project);
     final EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     final TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);

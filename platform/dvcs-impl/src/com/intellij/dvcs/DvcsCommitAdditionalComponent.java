@@ -150,7 +150,7 @@ public abstract class DvcsCommitAdditionalComponent implements RefreshableOnComp
 
   @Nullable
   private Map<VirtualFile, String> getLastCommitMessages() throws VcsException {
-    Map<VirtualFile, String> messagesForRoots = new HashMap<VirtualFile, String>();
+    Map<VirtualFile, String> messagesForRoots = new HashMap<>();
     Collection<VirtualFile> roots = myCheckinPanel.getRoots(); //all committed vcs roots, not only selected
     final Ref<VcsException> exception = Ref.create();
     for (VirtualFile root : roots) {

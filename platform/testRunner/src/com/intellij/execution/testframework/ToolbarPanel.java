@@ -54,7 +54,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
   protected final ScrollToTestSourceAction myScrollToSource;
   private @Nullable ExportTestResultsAction myExportAction;
 
-  private final ArrayList<ToggleModelAction> myActions = new ArrayList<ToggleModelAction>();
+  private final ArrayList<ToggleModelAction> myActions = new ArrayList<>();
 
   public ToolbarPanel(final TestConsoleProperties properties,
                       final JComponent parent) {

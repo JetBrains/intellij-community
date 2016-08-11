@@ -252,7 +252,7 @@ public class DomImplUtil {
     }
 
     final DomGenericInfoEx info = handler.getGenericInfo();
-    final Set<XmlName> usedNames = new THashSet<XmlName>();
+    final Set<XmlName> usedNames = new THashSet<>();
     List<? extends DomCollectionChildDescription> collectionChildrenDescriptions = info.getCollectionChildrenDescriptions();
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, size = collectionChildrenDescriptions.size(); i < size; i++) {

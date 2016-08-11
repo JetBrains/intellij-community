@@ -58,7 +58,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
 
   public void testNotifications() throws Exception {
 
-    final Ref<Notification> notificationRef = new Ref<Notification>();
+    final Ref<Notification> notificationRef = new Ref<>();
     getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(Notifications.TOPIC, new NotificationsAdapter() {
       @Override
       public void notify(@NotNull Notification notification) {
@@ -108,7 +108,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
   }
 
   public void testIssuesCacheSurvival() throws Exception {
-    final Ref<Boolean> stopper = new Ref<Boolean>(Boolean.FALSE);
+    final Ref<Boolean> stopper = new Ref<>(Boolean.FALSE);
     TestRepository repository = new TestRepository(new LocalTaskImpl("foo", "bar")) {
       @Override
       public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {

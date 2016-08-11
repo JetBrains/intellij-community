@@ -42,7 +42,7 @@ public class BalloonTest {
     final JTree tree = new Tree();
     content.add(tree);
 
-    final Ref<BalloonImpl> balloon = new Ref<BalloonImpl>();
+    final Ref<BalloonImpl> balloon = new Ref<>();
 
     tree.addMouseListener(new MouseAdapter() {
       @Override

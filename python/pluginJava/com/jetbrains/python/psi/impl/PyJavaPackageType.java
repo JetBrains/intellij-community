@@ -76,7 +76,7 @@ public class PyJavaPackageType implements PyType {
 
   @Override
   public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
-    List<Object> variants = new ArrayList<Object>();
+    List<Object> variants = new ArrayList<>();
     final GlobalSearchScope scope = getScope(location.getProject());
     final PsiClass[] classes = myPackage.getClasses(scope);
     for (PsiClass psiClass : classes) {

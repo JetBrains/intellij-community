@@ -46,7 +46,7 @@ public class DockableEditorContainerFactory implements DockContainerFactory.Pers
   }
 
   private DockContainer createContainer(boolean loadingState) {
-    final Ref<DockableEditorTabbedContainer> containerRef = new Ref<DockableEditorTabbedContainer>();
+    final Ref<DockableEditorTabbedContainer> containerRef = new Ref<>();
     EditorsSplitters splitters = new EditorsSplitters(myFileEditorManager, myDockManager, false) {
       @Override
       protected void afterFileClosed(VirtualFile file) {

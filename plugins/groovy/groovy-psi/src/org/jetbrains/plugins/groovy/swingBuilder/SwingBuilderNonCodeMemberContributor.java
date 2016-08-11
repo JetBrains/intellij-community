@@ -50,13 +50,13 @@ public class SwingBuilderNonCodeMemberContributor extends NonCodeMembersContribu
 
   private static class MyBuilder {
     private final PsiManager myManager;
-    private final MultiMap<String, PsiMethod> myResult = new MultiMap<String, PsiMethod>();
+    private final MultiMap<String, PsiMethod> myResult = new MultiMap<>();
     private final GlobalSearchScope myResolveScope;
     private final PsiElementFactory myFactory;
     private final PsiClass mySwingBuilderClass;
     private final PsiType MANY_OBJECTS;
 
-    private final Map<String, PsiType> myTypeMap = new HashMap<String, PsiType>();
+    private final Map<String, PsiType> myTypeMap = new HashMap<>();
 
     private MyBuilder(PsiClass swingBuilderClass) {
       myManager = swingBuilderClass.getManager();

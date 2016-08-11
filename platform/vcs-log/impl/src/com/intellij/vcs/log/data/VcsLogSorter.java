@@ -27,6 +27,6 @@ public class VcsLogSorter {
 
   @NotNull
   public static <Commit extends TimedVcsCommit> List<Commit> sortByDateTopoOrder(@NotNull Collection<Commit> commits) {
-    return new VcsLogJoiner.NewCommitIntegrator<Hash, Commit>(new ArrayList<Commit>(), commits).getResultList();
+    return new VcsLogJoiner.NewCommitIntegrator<>(new ArrayList<>(), commits).getResultList();
   }
 }

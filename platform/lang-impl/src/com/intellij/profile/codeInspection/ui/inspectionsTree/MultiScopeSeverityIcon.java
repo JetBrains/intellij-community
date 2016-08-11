@@ -38,8 +38,8 @@ public class MultiScopeSeverityIcon implements Icon {
                                 final String defaultScopeName,
                                 final InspectionProfileImpl inspectionProfile) {
     myDefaultScopeName = defaultScopeName;
-    final List<String> sortedScopeNames = new ArrayList<String>(scopeToAverageSeverityMap.keySet());
-    myScopeToAverageSeverityMap = new LinkedHashMap<String, HighlightDisplayLevel>();
+    final List<String> sortedScopeNames = new ArrayList<>(scopeToAverageSeverityMap.keySet());
+    myScopeToAverageSeverityMap = new LinkedHashMap<>();
     Collections.sort(sortedScopeNames, new ScopeOrderComparator(inspectionProfile));
     sortedScopeNames.remove(defaultScopeName);
     sortedScopeNames.add(defaultScopeName);

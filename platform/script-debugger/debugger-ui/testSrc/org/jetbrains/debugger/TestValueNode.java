@@ -27,7 +27,7 @@ import org.jetbrains.concurrency.Promise;
 import javax.swing.*;
 
 public class TestValueNode extends XTestValueNode {
-  private final AsyncPromise<XTestValueNode> result = new AsyncPromise<XTestValueNode>();
+  private final AsyncPromise<XTestValueNode> result = new AsyncPromise<>();
 
   private volatile Content children;
 

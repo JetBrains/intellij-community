@@ -490,10 +490,10 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   }
 
   private void createUIComponents() {
-    myPackage = new LabeledComponent<EditorTextFieldWithBrowseButton>();
+    myPackage = new LabeledComponent<>();
     myPackage.setComponent(new EditorTextFieldWithBrowseButton(myProject, false));
 
-    myClass = new LabeledComponent<EditorTextFieldWithBrowseButton>();
+    myClass = new LabeledComponent<>();
     final TestClassBrowser classBrowser = new TestClassBrowser(myProject);
     myClass.setComponent(new EditorTextFieldWithBrowseButton(myProject, true, new JavaCodeFragment.VisibilityChecker() {
       @Override
@@ -510,7 +510,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       }
     }));
 
-    myCategory = new LabeledComponent<EditorTextFieldWithBrowseButton>();
+    myCategory = new LabeledComponent<>();
     myCategory.setComponent(new EditorTextFieldWithBrowseButton(myProject, true, new JavaCodeFragment.VisibilityChecker() {
       @Override
       public Visibility isDeclarationVisible(PsiElement declaration, PsiElement place) {
@@ -521,7 +521,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       }
     }));
 
-    myMethod = new LabeledComponent<EditorTextFieldWithBrowseButton>();
+    myMethod = new LabeledComponent<>();
     final EditorTextFieldWithBrowseButton textFieldWithBrowseButton = new EditorTextFieldWithBrowseButton(myProject, true,
                                                                                                           JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE,
                                                                                                           PlainTextLanguage.INSTANCE.getAssociatedFileType());

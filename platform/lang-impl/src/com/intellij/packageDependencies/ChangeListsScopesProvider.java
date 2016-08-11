@@ -51,7 +51,7 @@ public class ChangeListsScopesProvider extends CustomScopesProviderEx {
     if (myProject.isDefault() || ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss().length == 0) return Collections.emptyList();
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
 
-    final List<NamedScope> result = new ArrayList<NamedScope>();
+    final List<NamedScope> result = new ArrayList<>();
     result.add(createScope(changeListManager.getAffectedFiles(), IdeBundle.message("scope.modified.files")));
     for (ChangeList list : changeListManager.getChangeListsCopy()) {
       result.add(createChangeListScope(list));
@@ -60,7 +60,7 @@ public class ChangeListsScopesProvider extends CustomScopesProviderEx {
   }
 
   private static NamedScope createChangeListScope(@NotNull ChangeList list) {
-    final List<VirtualFile> files = new ArrayList<VirtualFile>();
+    final List<VirtualFile> files = new ArrayList<>();
     final Collection<Change> changes = list.getChanges();
     for (Change change : changes) {
       final ContentRevision afterRevision = change.getAfterRevision();

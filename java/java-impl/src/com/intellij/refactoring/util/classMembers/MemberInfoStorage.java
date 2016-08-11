@@ -55,7 +55,7 @@ public class MemberInfoStorage extends AbstractMemberInfoStorage<PsiMember, PsiC
 
   @Override
   protected void buildSubClassesMap(PsiClass aClass) {
-    buildSubClassesMap(aClass, new HashSet<PsiClass>());
+    buildSubClassesMap(aClass, new HashSet<>());
   }
 
   private void buildSubClassesMap(PsiClass aClass, Set<PsiClass> visited) {

@@ -342,7 +342,7 @@ public class GroovyPositionManager implements PositionManager {
           if (enclosingName == null) return null;
 
           final List<ReferenceType> outers = myDebugProcess.getVirtualMachineProxy().classesByName(enclosingName);
-          final List<ReferenceType> result = new ArrayList<ReferenceType>(outers.size());
+          final List<ReferenceType> result = new ArrayList<>(outers.size());
           for (ReferenceType outer : outers) {
             final ReferenceType nested = findNested(outer, sourceImage, position);
             if (nested != null) {

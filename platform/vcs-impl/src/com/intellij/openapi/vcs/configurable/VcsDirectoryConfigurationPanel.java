@@ -297,19 +297,19 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     myIsDisabled = myProject.isDefault();
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
     final VcsDescriptor[] vcsDescriptors = myVcsManager.getAllVcss();
-    myAllVcss = new HashMap<String, VcsDescriptor>();
+    myAllVcss = new HashMap<>();
     for (VcsDescriptor vcsDescriptor : vcsDescriptors) {
       myAllVcss.put(vcsDescriptor.getName(), vcsDescriptor);
     }
 
-    myDirectoryMappingTable = new TableView<MapInfo>();
+    myDirectoryMappingTable = new TableView<>();
     myDirectoryMappingTable.setIntercellSpacing(JBUI.emptySize());
 
     myBaseRevisionTexts = new JCheckBox("Store on shelf base revision texts for files under DVCS");
     myLimitHistory = new VcsLimitHistoryConfigurable(myProject);
     myScopeFilterConfig = new VcsUpdateInfoScopeFilterConfigurable(myProject, myVcsConfiguration);
 
-    myCheckers = new HashMap<String, VcsRootChecker>();
+    myCheckers = new HashMap<>();
     updateRootCheckers();
 
     setLayout(new BorderLayout());
@@ -367,7 +367,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   }
 
   private void initializeModel() {
-    List<MapInfo> mappings = new ArrayList<MapInfo>();
+    List<MapInfo> mappings = new ArrayList<>();
     for (VcsDirectoryMapping mapping : ProjectLevelVcsManager.getInstance(myProject).getDirectoryMappings()) {
       mappings.add(MapInfo.registered(new VcsDirectoryMapping(mapping.getDirectory(), mapping.getVcs(), mapping.getRootSettings()),
                                       isMappingValid(mapping)));
@@ -381,7 +381,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       }
     }
 
-    myModel = new ListTableModel<MapInfo>(new ColumnInfo[]{DIRECTORY, VCS_SETTING}, mappings, 0);
+    myModel = new ListTableModel<>(new ColumnInfo[]{DIRECTORY, VCS_SETTING}, mappings, 0);
     myDirectoryMappingTable.setModelAndUpdateColumns(myModel);
 
     myRecentlyChangedConfigurable.reset();
@@ -429,7 +429,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   }
 
   private void addMapping(VcsDirectoryMapping mapping) {
-    List<MapInfo> items = new ArrayList<MapInfo>(myModel.getItems());
+    List<MapInfo> items = new ArrayList<>(myModel.getItems());
     items.add(MapInfo.registered(new VcsDirectoryMapping(mapping.getDirectory(), mapping.getVcs(), mapping.getRootSettings()),
                                  isMappingValid(mapping)));
     Collections.sort(items, MapInfo.COMPARATOR);
@@ -439,7 +439,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
 
 
   private void addSelectedUnregisteredMappings(List<MapInfo> infos) {
-    List<MapInfo> items = new ArrayList<MapInfo>(myModel.getItems());
+    List<MapInfo> items = new ArrayList<>(myModel.getItems());
     for (MapInfo info : infos) {
       items.remove(info);
       items.add(MapInfo.registered(info.mapping, isMappingValid(info.mapping)));
@@ -490,7 +490,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
 
   private void removeMapping() {
     Collection<AbstractVcs> activeVcses = getActiveVcses();
-    ArrayList<MapInfo> mappings = new ArrayList<MapInfo>(myModel.getItems());
+    ArrayList<MapInfo> mappings = new ArrayList<>(myModel.getItems());
     int index = myDirectoryMappingTable.getSelectionModel().getMinSelectionIndex();
     Collection<MapInfo> selection = myDirectoryMappingTable.getSelection();
     mappings.removeAll(selection);
@@ -739,7 +739,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   }
 
   public Collection<AbstractVcs> getActiveVcses() {
-    Set<AbstractVcs> vcses = new HashSet<AbstractVcs>();
+    Set<AbstractVcs> vcses = new HashSet<>();
     for (VcsDirectoryMapping mapping : getModelMappings()) {
       if (mapping.getVcs().length() > 0) {
         vcses.add(myVcsManager.findVcsByName(mapping.getVcs()));

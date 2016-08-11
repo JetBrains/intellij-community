@@ -37,7 +37,7 @@ public class CommonMoveUtil {
       if (file2 == null) return 1;
       return Comparing.compare(file1.getPath(), file2.getPath());
     });
-    List<NonCodeUsageInfo> nonCodeUsages = new ArrayList<NonCodeUsageInfo>();
+    List<NonCodeUsageInfo> nonCodeUsages = new ArrayList<>();
     for (UsageInfo usage : usages) {
       if (usage instanceof NonCodeUsageInfo) {
         nonCodeUsages.add((NonCodeUsageInfo)usage);

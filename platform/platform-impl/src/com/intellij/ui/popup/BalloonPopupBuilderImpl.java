@@ -264,7 +264,7 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
     if (myStorage != null && myAnchor != null) {
       List<Balloon> balloons = myStorage.get(myAnchor);
       if (balloons == null) {
-        myStorage.put(myAnchor, balloons = new ArrayList<Balloon>());
+        myStorage.put(myAnchor, balloons = new ArrayList<>());
         Disposer.register(myAnchor, new Disposable() {
           @Override
           public void dispose() {

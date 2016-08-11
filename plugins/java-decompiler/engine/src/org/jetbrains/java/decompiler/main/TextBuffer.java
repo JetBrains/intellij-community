@@ -105,7 +105,7 @@ public class TextBuffer {
       int currentLine = 0;
       int previousMarkLine = 0;
       int dumpedLines = 0;
-      ArrayList<Integer> linesWithMarks = new ArrayList<Integer>(myLineToOffsetMapping.keySet());
+      ArrayList<Integer> linesWithMarks = new ArrayList<>(myLineToOffsetMapping.keySet());
       Collections.sort(linesWithMarks);
       for (Integer markLine : linesWithMarks) {
         Integer markOffset = myLineToOffsetMapping.get(markLine);
@@ -194,7 +194,7 @@ public class TextBuffer {
   public void setLength(int position) {
     myStringBuilder.setLength(position);
     if (myLineToOffsetMapping != null) {
-      HashMap<Integer, Integer> newMap = new HashMap<Integer, Integer>();
+      HashMap<Integer, Integer> newMap = new HashMap<>();
       for (Map.Entry<Integer, Integer> entry : myLineToOffsetMapping.entrySet()) {
         if (entry.getValue() <= position) {
           newMap.put(entry.getKey(), entry.getValue());
@@ -217,7 +217,7 @@ public class TextBuffer {
 
   private void shiftMapping(int startOffset, int shiftOffset) {
     if (myLineToOffsetMapping != null) {
-      HashMap<Integer, Integer> newMap = new HashMap<Integer, Integer>();
+      HashMap<Integer, Integer> newMap = new HashMap<>();
       for (Map.Entry<Integer, Integer> entry : myLineToOffsetMapping.entrySet()) {
         int newValue = entry.getValue();
         if (newValue >= startOffset) {
@@ -233,7 +233,7 @@ public class TextBuffer {
 
   private void checkMapCreated() {
     if (myLineToOffsetMapping == null) {
-      myLineToOffsetMapping = new HashMap<Integer, Integer>();
+      myLineToOffsetMapping = new HashMap<>();
     }
   }
 
@@ -264,7 +264,7 @@ public class TextBuffer {
     if (srcLines.size() < 2 || srcLines.size() <= requiredLineNumber) {
       return srcLines;
     }
-    List<String> res = new LinkedList<String>(srcLines);
+    List<String> res = new LinkedList<>(srcLines);
     // first join lines with a single { or }
     for (int i = res.size()-1; i > 0 ; i--) {
       String s = res.get(i);
@@ -294,12 +294,12 @@ public class TextBuffer {
 
   public void dumpOriginalLineNumbers(int[] lineMapping) {
     if (lineMapping.length > 0) {
-      myLineMapping = new HashMap<Integer, Set<Integer>>();
+      myLineMapping = new HashMap<>();
       for (int i = 0; i < lineMapping.length; i += 2) {
         int key = lineMapping[i + 1];
         Set<Integer> existing = myLineMapping.get(key);
         if (existing == null) {
-          existing = new TreeSet<Integer>();
+          existing = new TreeSet<>();
           myLineMapping.put(key, existing);
         }
         existing.add(lineMapping[i]);

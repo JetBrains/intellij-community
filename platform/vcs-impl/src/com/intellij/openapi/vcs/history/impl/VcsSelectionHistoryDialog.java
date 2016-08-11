@@ -107,7 +107,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
   @NotNull private final AbstractVcs myActiveVcs;
   @NonNls private final String myHelpId;
 
-  private final List<VcsFileRevision> myRevisions = new ArrayList<VcsFileRevision>();
+  private final List<VcsFileRevision> myRevisions = new ArrayList<>();
   private final CurrentRevision myLocalRevision;
 
   private final ListTableModel<VcsFileRevision> myListModel;
@@ -155,9 +155,9 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
       new FileHistoryPanelImpl.AuthorColumnInfo(),
       new FileHistoryPanelImpl.MessageColumnInfo(project)};
     ColumnInfo[] additionalColumns = notNull(components.getColumns(), ColumnInfo.EMPTY_ARRAY);
-    myListModel = new ListTableModel<VcsFileRevision>(ArrayUtil.mergeArrays(defaultColumns, additionalColumns));
+    myListModel = new ListTableModel<>(ArrayUtil.mergeArrays(defaultColumns, additionalColumns));
     myListModel.setSortable(false);
-    myList = new TableView<VcsFileRevision>(myListModel);
+    myList = new TableView<>(myListModel);
     new TableLinkMouseListener().installOn(myList);
 
     myList.getEmptyText().setText(VcsBundle.message("history.empty"));
@@ -330,7 +330,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
   }
 
   private List<VcsFileRevision> filteredRevisions() {
-    ArrayList<VcsFileRevision> result = new ArrayList<VcsFileRevision>();
+    ArrayList<VcsFileRevision> result = new ArrayList<>();
     BlockData data = myBlockLoader.getLoadedData();
 
     int firstRevision;
@@ -535,7 +535,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     @NotNull private final List<VcsFileRevision> myRevisions;
     @NotNull private final Charset myCharset;
 
-    @NotNull private final List<Block> myBlocks = new ArrayList<Block>();
+    @NotNull private final List<Block> myBlocks = new ArrayList<>();
     @Nullable private VcsException myException;
     private boolean myIsLoading = true;
     private VcsFileRevision myCurrentLoadingRevision;

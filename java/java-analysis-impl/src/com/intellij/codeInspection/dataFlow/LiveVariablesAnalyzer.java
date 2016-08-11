@@ -237,7 +237,7 @@ public class LiveVariablesAnalyzer {
       entryPoints.addAll(ContainerUtil.findAll(myInstructions, FilteringIterator.instanceOf(ReturnInstruction.class)));
     }
 
-    Queue<InstructionState> queue = new Queue<InstructionState>(10);
+    Queue<InstructionState> queue = new Queue<>(10);
     for (Instruction i : entryPoints) {
       queue.addLast(new InstructionState(i, new BitSet()));
     }

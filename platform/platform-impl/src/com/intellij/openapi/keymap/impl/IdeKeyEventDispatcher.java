@@ -379,7 +379,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     return inInitState();
   }
 
-  @NonNls private static final Set<String> ALT_GR_LAYOUTS = new HashSet<String>(Arrays.asList(
+  @NonNls private static final Set<String> ALT_GR_LAYOUTS = new HashSet<>(Arrays.asList(
     "pl", "de", "fi", "fr", "no", "da", "se", "pt", "nl", "tr", "sl", "hu", "bs", "hr", "sr", "sk", "lv"
   ));
 
@@ -479,7 +479,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   private ArrayList<Pair<AnAction, KeyStroke>> getSecondKeystrokeActions() {
-    ArrayList<Pair<AnAction, KeyStroke>> secondKeyStrokes = new ArrayList<Pair<AnAction,KeyStroke>>();
+    ArrayList<Pair<AnAction, KeyStroke>> secondKeyStrokes = new ArrayList<>();
     for (AnAction action : myContext.getActions()) {
       Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
       for (Shortcut shortcut : shortcuts) {
@@ -597,7 +597,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     final Project project = CommonDataKeys.PROJECT.getData(myContext.getDataContext());
     final boolean dumb = project != null && DumbService.getInstance(project).isDumb();
-    List<AnActionEvent> nonDumbAwareAction = new ArrayList<AnActionEvent>();
+    List<AnActionEvent> nonDumbAwareAction = new ArrayList<>();
     List<AnAction> actions = myContext.getActions();
     for (final AnAction action : actions.toArray(new AnAction[actions.size()])) {
       Presentation presentation = myPresentationFactory.getPresentation(action);

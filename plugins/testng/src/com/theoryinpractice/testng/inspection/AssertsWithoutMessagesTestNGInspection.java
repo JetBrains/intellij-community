@@ -40,7 +40,7 @@ public class AssertsWithoutMessagesTestNGInspection extends BaseJavaLocalInspect
 
   private static class AssertionsWithoutMessagesVisitor extends JavaElementVisitor {
 
-    @NonNls private static final Set<String> ourAssertMethods = new HashSet<String>(10);
+    @NonNls private static final Set<String> ourAssertMethods = new HashSet<>(10);
     private final ProblemsHolder myProblemsHolder;
 
     public AssertionsWithoutMessagesVisitor(ProblemsHolder problemsHolder) {

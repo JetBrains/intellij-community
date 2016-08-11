@@ -58,7 +58,7 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
       return PsiFile.EMPTY_ARRAY;
     }
     final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
-    final Set<PsiFile> allFiles = new HashSet<PsiFile>();
+    final Set<PsiFile> allFiles = new HashSet<>();
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     for (IndexPattern indexPattern : IndexPatternUtil.getIndexPatterns()) {
       final Collection<VirtualFile> files = fileBasedIndex.getContainingFiles(

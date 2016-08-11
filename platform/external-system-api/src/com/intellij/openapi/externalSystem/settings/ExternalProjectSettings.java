@@ -33,7 +33,7 @@ import java.util.Set;
 public abstract class ExternalProjectSettings implements Comparable<ExternalProjectSettings>, Cloneable {
 
   private String  myExternalProjectPath;
-  @Nullable private Set<String> myModules = new HashSet<String>();
+  @Nullable private Set<String> myModules = new HashSet<>();
 
   @NotNull
   public Set<String> getModules() {
@@ -101,7 +101,7 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
 
   protected void copyTo(@NotNull ExternalProjectSettings receiver) {
     receiver.myExternalProjectPath = myExternalProjectPath;
-    receiver.myModules = new HashSet<String>(myModules);
+    receiver.myModules = new HashSet<>(myModules);
     receiver.myUseAutoImport = myUseAutoImport;
     receiver.myCreateEmptyContentRootDirectories = myCreateEmptyContentRootDirectories;
   }

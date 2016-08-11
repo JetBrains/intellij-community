@@ -116,7 +116,7 @@ public class CommitMessage extends AbstractDataProviderPanel implements Disposab
    * @return a commit message editor
    */
   public static EditorTextField createCommitTextEditor(final Project project, boolean forceSpellCheckOn) {
-    Set<EditorCustomization> features = new HashSet<EditorCustomization>();
+    Set<EditorCustomization> features = new HashSet<>();
 
     VcsConfiguration configuration = VcsConfiguration.getInstance(project);
     if (configuration != null) {

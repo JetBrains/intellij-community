@@ -156,7 +156,7 @@ public class PyStringFormatParser {
   }
 
   @NotNull private final String myLiteral;
-  @NotNull private final List<FormatStringChunk> myResult = new ArrayList<FormatStringChunk>();
+  @NotNull private final List<FormatStringChunk> myResult = new ArrayList<>();
   private int myPos;
 
   private static final String CONVERSION_FLAGS = "#0- +";
@@ -175,7 +175,7 @@ public class PyStringFormatParser {
 
   @NotNull
   public static List<FormatStringChunk> parseNewStyleFormat(@NotNull String s) {
-    final List<FormatStringChunk> results = new ArrayList<FormatStringChunk>();
+    final List<FormatStringChunk> results = new ArrayList<>();
     final Matcher matcher = NEW_STYLE_FORMAT_TOKENS.matcher(s);
     while (matcher.find()) {
       final String group = matcher.group();
@@ -291,7 +291,7 @@ public class PyStringFormatParser {
 
   @NotNull
   public static List<SubstitutionChunk> filterSubstitutions(@NotNull List<FormatStringChunk> chunks) {
-    final List<SubstitutionChunk> results = new ArrayList<SubstitutionChunk>();
+    final List<SubstitutionChunk> results = new ArrayList<>();
     for (FormatStringChunk chunk : chunks) {
       if (chunk instanceof SubstitutionChunk) {
         results.add((SubstitutionChunk)chunk);
@@ -303,7 +303,7 @@ public class PyStringFormatParser {
   @SuppressWarnings("UnusedDeclaration")
   @NotNull
   public static List<SubstitutionChunk> getPositionalSubstitutions(@NotNull List<SubstitutionChunk> substitutions) {
-    final ArrayList<SubstitutionChunk> result = new ArrayList<SubstitutionChunk>();
+    final ArrayList<SubstitutionChunk> result = new ArrayList<>();
     for (SubstitutionChunk s : substitutions) {
       if (s.getMappingKey() == null) {
         result.add(s);
@@ -315,7 +315,7 @@ public class PyStringFormatParser {
   @SuppressWarnings("UnusedDeclaration")
   @NotNull
   public static Map<String, SubstitutionChunk> getKeywordSubstitutions(@NotNull List<SubstitutionChunk> substitutions) {
-    final Map<String, SubstitutionChunk> result = new HashMap<String, SubstitutionChunk>();
+    final Map<String, SubstitutionChunk> result = new HashMap<>();
     for (SubstitutionChunk s : substitutions) {
       final String key = s.getMappingKey();
       if (key != null) {
@@ -327,7 +327,7 @@ public class PyStringFormatParser {
 
   @NotNull
   public static List<TextRange> substitutionsToRanges(@NotNull List<SubstitutionChunk> substitutions) {
-    final List<TextRange> ranges = new ArrayList<TextRange>();
+    final List<TextRange> ranges = new ArrayList<>();
     for (SubstitutionChunk substitution : substitutions) {
       ranges.add(TextRange.create(substitution.getStartIndex(), substitution.getEndIndex()));
     }
@@ -375,7 +375,7 @@ public class PyStringFormatParser {
 
   @NotNull
   public static List<TextRange> getEscapeRanges(@NotNull String s) {
-    final List<TextRange> ranges = new ArrayList<TextRange>();
+    final List<TextRange> ranges = new ArrayList<>();
     Matcher matcher = PyStringLiteralExpressionImpl.PATTERN_ESCAPE.matcher(s);
     while (matcher.find()) {
       ranges.add(TextRange.create(matcher.start(), matcher.end()));

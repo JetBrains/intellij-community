@@ -444,7 +444,7 @@ public class GriffonFramework extends MvcFramework {
 
     @Override
     public MultiMap<JpsModuleSourceRootType<?>, String> getSourceFolders() {
-      MultiMap<JpsModuleSourceRootType<?>, String> res = new MultiMap<JpsModuleSourceRootType<?>, String>();
+      MultiMap<JpsModuleSourceRootType<?>, String> res = new MultiMap<>();
 
       for (VirtualFile root : ModuleRootManager.getInstance(myModule).getContentRoots()) {
         VirtualFile srcDir = root.findChild("src");

@@ -309,7 +309,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
 
     List<TextRange> hostRangesToDelete;
     synchronized (myLock) {
-      hostRangesToDelete = new ArrayList<TextRange>(myShreds.size());
+      hostRangesToDelete = new ArrayList<>(myShreds.size());
 
       int offset = startOffset;
       int curRangeStart = 0;
@@ -362,7 +362,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
 
     List<Pair<TextRange,CharSequence>> hostRangesToModify;
     synchronized (myLock) {
-      hostRangesToModify = new ArrayList<Pair<TextRange, CharSequence>>(myShreds.size());
+      hostRangesToModify = new ArrayList<>(myShreds.size());
 
       int offset = startOffset;
       int curRangeStart = 0;
@@ -542,7 +542,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   @NotNull
   public Segment[] getHostRanges() {
     synchronized (myLock) {
-      List<Segment> markers = new ArrayList<Segment>(myShreds.size());
+      List<Segment> markers = new ArrayList<>(myShreds.size());
       for (PsiLanguageInjectionHost.Shred shred : myShreds) {
         Segment hostMarker = shred.getHostRangeMarker();
         if (hostMarker != null) {

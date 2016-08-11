@@ -59,7 +59,7 @@ public abstract class ChooseOneOrAllRunnable<T extends PsiElement> implements Ru
         selected(myClasses);
         return;
       }
-      Vector<Object> model = new Vector<Object>(Arrays.asList(myClasses));
+      Vector<Object> model = new Vector<>(Arrays.asList(myClasses));
       model.insertElementAt(CodeInsightBundle.message("highlight.thrown.exceptions.chooser.all.entry"), 0);
 
       myList = new JBList(model);

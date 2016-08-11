@@ -62,8 +62,8 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
   }
 
   private THashSet<VirtualFile> collectFilesAndDirectories() {
-    THashSet<VirtualFile> files = new THashSet<VirtualFile>();
-    THashSet<VirtualFile> directories = new THashSet<VirtualFile>();
+    THashSet<VirtualFile> files = new THashSet<>();
+    THashSet<VirtualFile> directories = new THashSet<>();
     if (myExtensions == null) {
       myExtensions = Extensions.getExtensions(IndexableSetContributor.EP_NAME);
     }

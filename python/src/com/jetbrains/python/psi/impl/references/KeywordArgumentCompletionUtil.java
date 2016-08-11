@@ -120,7 +120,7 @@ public class KeywordArgumentCompletionUtil {
   private static void fetchCallablesFromCallableType(@NotNull final List<LookupElement> ret,
                                                      @NotNull final PyCallExpression callExpr,
                                                      @NotNull final Iterable<PyCallableParameter> callableParameters) {
-    final List<String> parameterNames = new ArrayList<String>();
+    final List<String> parameterNames = new ArrayList<>();
     for (final PyCallableParameter callableParameter : callableParameters) {
       final String name = callableParameter.getName();
       if (name != null) {
@@ -131,7 +131,7 @@ public class KeywordArgumentCompletionUtil {
   }
 
   public static void addKeywordArgumentVariants(PyCallable callable, PyCallExpression callExpr, final List<LookupElement> ret) {
-    addKeywordArgumentVariants(callable, callExpr, ret, new HashSet<PyCallable>());
+    addKeywordArgumentVariants(callable, callExpr, ret, new HashSet<>());
   }
 
   public static void addKeywordArgumentVariants(PyCallable callable, PyCallExpression callExpr, List<LookupElement> ret,
@@ -153,7 +153,7 @@ public class KeywordArgumentCompletionUtil {
       addKeywordArgumentVariantsForFunction(callExpr, ret, visited, (PyFunction)callable, parameters, context);
     }
     else {
-      final Collection<String> parameterNames = new ArrayList<String>();
+      final Collection<String> parameterNames = new ArrayList<>();
       for (final PyParameter parameter : parameters) {
         final String name = parameter.getName();
         if (name != null) {

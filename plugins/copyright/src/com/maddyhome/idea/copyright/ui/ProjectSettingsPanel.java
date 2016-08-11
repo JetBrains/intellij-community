@@ -70,7 +70,7 @@ public class ProjectSettingsPanel {
         final Object selectedItem = myProfilesComboBox.getSelectedItem();
         reloadCopyrightProfiles();
         myProfilesComboBox.setSelectedItem(selectedItem);
-        final ArrayList<ScopeSetting> toRemove = new ArrayList<ScopeSetting>();
+        final ArrayList<ScopeSetting> toRemove = new ArrayList<>();
         for (ScopeSetting setting : myScopeMappingModel.getItems()) {
           if (setting.getProfile() == null) {
             toRemove.add(setting);
@@ -84,8 +84,8 @@ public class ProjectSettingsPanel {
     myManager = CopyrightManager.getInstance(project);
 
     ColumnInfo[] columns = {new ScopeColumn(), new SettingColumn()};
-    myScopeMappingModel = new ListTableModel<ScopeSetting>(columns, new ArrayList<ScopeSetting>(), 0);
-    myScopeMappingTable = new TableView<ScopeSetting>(myScopeMappingModel);
+    myScopeMappingModel = new ListTableModel<>(columns, new ArrayList<>(), 0);
+    myScopeMappingTable = new TableView<>(myScopeMappingModel);
 
     reloadCopyrightProfiles();
     myProfilesComboBox.setRenderer(new ListCellRendererWrapper<CopyrightProfile>() {
@@ -128,7 +128,7 @@ public class ProjectSettingsPanel {
 
   public JComponent getMainComponent() {
 
-    final LabeledComponent<JComboBox> component = new LabeledComponent<JComboBox>();
+    final LabeledComponent<JComboBox> component = new LabeledComponent<>();
     component.setText("Default &project copyright:");
     component.setLabelLocation(BorderLayout.WEST);
     component.setComponent(myProfilesComboBox);
@@ -174,7 +174,7 @@ public class ProjectSettingsPanel {
   }
 
   public void apply() {
-    Collection<CopyrightProfile> profiles = new ArrayList<CopyrightProfile>(myManager.getCopyrights());
+    Collection<CopyrightProfile> profiles = new ArrayList<>(myManager.getCopyrights());
     myManager.clearCopyrights();
     for (CopyrightProfile profile : profiles) {
       myManager.addCopyright(profile);
@@ -188,10 +188,10 @@ public class ProjectSettingsPanel {
 
   public void reset() {
     myProfilesComboBox.setSelectedItem(myManager.getDefaultCopyright());
-    final List<ScopeSetting> mappings = new ArrayList<ScopeSetting>();
+    final List<ScopeSetting> mappings = new ArrayList<>();
     final Map<String, String> copyrights = myManager.getCopyrightsMapping();
     final DependencyValidationManager manager = DependencyValidationManager.getInstance(myProject);
-    final Set<String> scopes2Unmap = new HashSet<String>();
+    final Set<String> scopes2Unmap = new HashSet<>();
     for (final String scopeName : copyrights.keySet()) {
       final NamedScope scope = manager.getScope(scopeName);
       if (scope != null) {
@@ -279,7 +279,7 @@ public class ProjectSettingsPanel {
         }
 
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-          final List<CopyrightProfile> copyrights = new ArrayList<CopyrightProfile>(myProfilesModel.getAllProfiles().values());
+          final List<CopyrightProfile> copyrights = new ArrayList<>(myProfilesModel.getAllProfiles().values());
           Collections.sort(copyrights, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
           myProfilesChooser.setCell(table, row, column);
           myProfilesChooser.setOptions(copyrights.toArray());
@@ -340,7 +340,7 @@ public class ProjectSettingsPanel {
             @Override
             protected NamedScope[] createModel() {
               final NamedScope[] model = super.createModel();
-              final ArrayList<NamedScope> filteredScopes = new ArrayList<NamedScope>(Arrays.asList(model));
+              final ArrayList<NamedScope> filteredScopes = new ArrayList<>(Arrays.asList(model));
               CustomScopesProviderEx.filterNoSettingsScopes(myProject, filteredScopes);
               return filteredScopes.toArray(new NamedScope[filteredScopes.size()]);
             }

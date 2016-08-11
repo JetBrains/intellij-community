@@ -122,9 +122,9 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
    * @param function
    */
   private static List<PySubscriptionExpression> fillSubscriptions(PyFunction function) {
-    List<PySubscriptionExpression> subscriptions = new ArrayList<PySubscriptionExpression>();
+    List<PySubscriptionExpression> subscriptions = new ArrayList<>();
     PyStatementList statementList = function.getStatementList();
-    Stack<PsiElement> stack = new Stack<PsiElement>();
+    Stack<PsiElement> stack = new Stack<>();
     PyParameter keywordContainer = getKeywordContainer(function);
     if (keywordContainer != null) {
       String keywordContainerName = keywordContainer.getName();
@@ -156,9 +156,9 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
   }
 
   private static List<PyCallExpression> fillCallExpressions(PyFunction function) {
-    List<PyCallExpression> callElements = new ArrayList<PyCallExpression>();
+    List<PyCallExpression> callElements = new ArrayList<>();
     PyStatementList statementList = function.getStatementList();
-    Stack<PsiElement> stack = new Stack<PsiElement>();
+    Stack<PsiElement> stack = new Stack<>();
     PyParameter keywordContainer = getKeywordContainer(function);
     if (keywordContainer != null) {
       String keywordContainerName = keywordContainer.getName();

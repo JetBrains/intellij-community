@@ -2,6 +2,7 @@ package com.jetbrains.edu.learning.courseFormat;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,12 +16,13 @@ import java.util.List;
  */
 
 public class AnswerPlaceholder {
+  private static final Logger LOG = Logger.getInstance(AnswerPlaceholder.class);
   
   @SerializedName("hint")
   @Expose private String myHint = "";
 
   @SerializedName("additional_hints")
-  @Expose private List<String> myAdditionalHints = new ArrayList<String>();
+  @Expose private List<String> myAdditionalHints = new ArrayList<>();
 
   @SerializedName("possible_answer")
   @Expose private String possibleAnswer = "";
@@ -224,7 +226,12 @@ public class AnswerPlaceholder {
       myHint = "";
     }
     else {
-      myAdditionalHints.remove(i);
+      if (i - 1 <myAdditionalHints.size()) {
+        myAdditionalHints.remove(i - 1);
+      }
+      else {
+        LOG.warn("Trying to remove nonexistent hint. Hint to remove number: " + (i - 1) + "number of hints: " + getHints().size());
+      }
     }
   }
 

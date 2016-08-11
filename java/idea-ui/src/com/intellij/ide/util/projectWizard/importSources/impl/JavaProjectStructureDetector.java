@@ -51,7 +51,7 @@ public class JavaProjectStructureDetector extends JavaSourceRootDetector {
   public List<ModuleWizardStep> createWizardSteps(ProjectFromSourcesBuilder builder,
                                                   ProjectDescriptor projectDescriptor,
                                                   Icon stepIcon) {
-    final List<ModuleWizardStep> steps = new ArrayList<ModuleWizardStep>();
+    final List<ModuleWizardStep> steps = new ArrayList<>();
     final ModuleInsight moduleInsight = new JavaModuleInsight(new DelegatingProgressIndicator(), builder.getExistingModuleNames(), builder.getExistingProjectLibraryNames());
     steps.add(new LibrariesDetectionStep(builder, projectDescriptor, moduleInsight, stepIcon, "reference.dialogs.new.project.fromCode.page1"));
     steps.add(new ModulesDetectionStep(this, builder, projectDescriptor, moduleInsight, stepIcon, "reference.dialogs.new.project.fromCode.page2"));

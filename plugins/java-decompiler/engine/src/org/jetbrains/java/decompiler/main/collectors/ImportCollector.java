@@ -26,8 +26,8 @@ import java.util.Map.Entry;
 public class ImportCollector {
   private static final String JAVA_LANG_PACKAGE = "java.lang";
 
-  private final Map<String, String> mapSimpleNames = new HashMap<String, String>();
-  private final Set<String> setNotImportedNames = new HashSet<String>();
+  private final Map<String, String> mapSimpleNames = new HashMap<>();
+  private final Set<String> setNotImportedNames = new HashSet<>();
   private final String currentPackageSlash;
   private final String currentPackagePoint;
 
@@ -124,7 +124,7 @@ public class ImportCollector {
   }
 
   private List<String> packImports() {
-    List<Entry<String, String>> lst = new ArrayList<Entry<String, String>>(mapSimpleNames.entrySet());
+    List<Entry<String, String>> lst = new ArrayList<>(mapSimpleNames.entrySet());
 
     Collections.sort(lst, (par0, par1) -> {
       int res = par0.getValue().compareTo(par1.getValue());
@@ -134,7 +134,7 @@ public class ImportCollector {
       return res;
     });
 
-    List<String> res = new ArrayList<String>();
+    List<String> res = new ArrayList<>();
     for (Entry<String, String> ent : lst) {
       // exclude a current class or one of the nested ones, java.lang and empty packages
       if (!setNotImportedNames.contains(ent.getKey()) &&

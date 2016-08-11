@@ -76,7 +76,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
   @NotNull
   public static Collection<GenerateBinaryStubsFix> generateFixes(@NotNull final PyImportStatementBase importStatementBase) {
     final List<String> names = importStatementBase.getFullyQualifiedObjectNames();
-    final List<GenerateBinaryStubsFix> result = new ArrayList<GenerateBinaryStubsFix>(names.size());
+    final List<GenerateBinaryStubsFix> result = new ArrayList<>(names.size());
     if (importStatementBase instanceof PyFromImportStatement && names.isEmpty()) {
       final QualifiedName qName = ((PyFromImportStatement)importStatementBase).getImportSourceQName();
       if (qName != null) {
@@ -192,7 +192,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
           final PySkeletonRefresher.PyBinaryItem item = binaries.modules.get(name);
           final String modulePath = item != null ? item.getPath() : "";
           //noinspection unchecked
-          refresher.generateSkeleton(name, modulePath, new ArrayList<String>(), Consumer.EMPTY_CONSUMER);
+          refresher.generateSkeleton(name, modulePath, new ArrayList<>(), Consumer.EMPTY_CONSUMER);
         }
       }
     }
@@ -207,7 +207,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
     if (!(PythonSdkFlavor.getFlavor(mySdk) instanceof IronPythonSdkFlavor)) {
       return Collections.emptyList();
     }
-    final List<String> result = new ArrayList<String>();
+    final List<String> result = new ArrayList<>();
     file.accept(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyCallExpression(PyCallExpression node) {

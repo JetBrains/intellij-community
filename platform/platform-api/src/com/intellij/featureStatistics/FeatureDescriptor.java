@@ -95,7 +95,7 @@ public class FeatureDescriptor{
     myMinUsageCount = minUsageCount == null ? 1 : Integer.parseInt(minUsageCount);
     List dependencies = element.getChildren(ELEMENT_DEPENDENCY);
     if (dependencies != null && !dependencies.isEmpty()) {
-      myDependencies = new HashSet<String>();
+      myDependencies = new HashSet<>();
       for (Object dependency : dependencies) {
         Element dependencyElement = (Element)dependency;
         myDependencies.add(dependencyElement.getAttributeValue(ATTRIBUTE_ID));

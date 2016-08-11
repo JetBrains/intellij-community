@@ -59,7 +59,7 @@ public class PluginInstaller {
                                          List<PluginId> allPlugins,
                                          @NotNull ProgressIndicator indicator) {
     updateUrls(pluginsToInstall, indicator);
-    Set<PluginNode> dependant = new THashSet<PluginNode>();
+    Set<PluginNode> dependant = new THashSet<>();
     boolean install = prepareToInstall(pluginsToInstall, allPlugins, dependant, indicator);
     for (PluginNode node : dependant) {
       if (!pluginsToInstall.contains(node)) {
@@ -111,7 +111,7 @@ public class PluginInstaller {
                                           List<PluginId> allPlugins,
                                           Set<PluginNode> installedDependant,
                                           @NotNull ProgressIndicator indicator) {
-    List<PluginId> pluginIds = new SmartList<PluginId>();
+    List<PluginId> pluginIds = new SmartList<>();
     for (PluginNode pluginNode : pluginsToInstall) {
       pluginIds.add(pluginNode.getPluginId());
     }
@@ -143,8 +143,8 @@ public class PluginInstaller {
     if (pluginNode.getDepends() != null && pluginNode.getDepends().size() > 0) {
       // prepare plugins list for install
       final PluginId[] optionalDependentPluginIds = pluginNode.getOptionalDependentPluginIds();
-      final List<PluginNode> depends = new ArrayList<PluginNode>();
-      final List<PluginNode> optionalDeps = new ArrayList<PluginNode>();
+      final List<PluginNode> depends = new ArrayList<>();
+      final List<PluginNode> optionalDeps = new ArrayList<>();
       for (int i = 0; i < pluginNode.getDepends().size(); i++) {
         PluginId depPluginId = pluginNode.getDepends().get(i);
         if (PluginManager.isPluginInstalled(depPluginId) || PluginManagerCore.isModuleDependency(depPluginId) ||

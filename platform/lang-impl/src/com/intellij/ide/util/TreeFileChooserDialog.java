@@ -411,7 +411,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       else {
         fileNames = FilenameIndex.getAllFilenames(myProject);
       }
-      final Set<String> array = new THashSet<String>();
+      final Set<String> array = new THashSet<>();
       for (String fileName : fileNames) {
         if (!array.contains(fileName)) {
           array.add(fileName);
@@ -482,7 +482,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       }
       return accepted;
     };
-    final List<Object> result = new ArrayList<Object>(list.length);
+    final List<Object> result = new ArrayList<>(list.length);
     for (Object o : list) {
       final PsiFile psiFile;
       if (o instanceof PsiFile) {

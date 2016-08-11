@@ -133,7 +133,7 @@ public class TestNGConfigurationModel
             data.METHOD_NAME = "";
         }
         else if (TestType.PATTERN == type) {
-          final LinkedHashSet<String> set = new LinkedHashSet<String>();
+          final LinkedHashSet<String> set = new LinkedHashSet<>();
           final String[] patterns = getText(TestType.PATTERN).split("\\|\\|");
           for (String pattern : patterns) {
             if (pattern.length() > 0) {

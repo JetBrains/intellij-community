@@ -79,7 +79,7 @@ public abstract class GroovyRefactoringUtil {
   private static final String[] finalModifiers = new String[]{PsiModifier.FINAL};
 
   public static PsiElement[] getExpressionOccurrences(@NotNull PsiElement expr, @NotNull PsiElement scope) {
-    ArrayList<PsiElement> occurrences = new ArrayList<PsiElement>();
+    ArrayList<PsiElement> occurrences = new ArrayList<>();
     Comparator<PsiElement> comparator = (element1, element2) -> {
       if (element1 != null && element1.equals(element2)) return 0;
 
@@ -143,7 +143,7 @@ public abstract class GroovyRefactoringUtil {
 
   public static void highlightOccurrences(Project project, @Nullable Editor editor, PsiElement[] elements) {
     if (editor == null) return;
-    ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
+    ArrayList<RangeHighlighter> highlighters = new ArrayList<>();
     HighlightManager highlightManager = HighlightManager.getInstance(project);
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
@@ -154,7 +154,7 @@ public abstract class GroovyRefactoringUtil {
 
   public static void highlightOccurrencesByRanges(Project project, Editor editor, TextRange[] ranges) {
     if (editor == null) return;
-    ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
+    ArrayList<RangeHighlighter> highlighters = new ArrayList<>();
     HighlightManager highlightManager = HighlightManager.getInstance(project);
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
@@ -240,7 +240,7 @@ public abstract class GroovyRefactoringUtil {
     PsiElement[] children = PsiElement.EMPTY_ARRAY;
     PsiElement psiChild = parent.getFirstChild();
     if (psiChild != null) {
-      List<PsiElement> result = new ArrayList<PsiElement>();
+      List<PsiElement> result = new ArrayList<>();
       while (psiChild != null) {
         result.add(psiChild);
         psiChild = psiChild.getNextSibling();
@@ -249,7 +249,7 @@ public abstract class GroovyRefactoringUtil {
     }
 
 
-    ArrayList<PsiElement> possibleStatements = new ArrayList<PsiElement>();
+    ArrayList<PsiElement> possibleStatements = new ArrayList<>();
     boolean flag = false;
     for (PsiElement child : children) {
       if (child == element1) {
@@ -282,7 +282,7 @@ public abstract class GroovyRefactoringUtil {
   }
 
   public static boolean hasWrongBreakStatements(PsiElement element) {
-    ArrayList<GrBreakStatement> vector = new ArrayList<GrBreakStatement>();
+    ArrayList<GrBreakStatement> vector = new ArrayList<>();
     addBreakStatements(element, vector);
     return !vector.isEmpty();
   }
@@ -300,7 +300,7 @@ public abstract class GroovyRefactoringUtil {
   }
 
   public static boolean hasWrongContinueStatements(PsiElement element) {
-    ArrayList<GrContinueStatement> vector = new ArrayList<GrContinueStatement>();
+    ArrayList<GrContinueStatement> vector = new ArrayList<>();
     addContinueStatements(element, vector);
     return !vector.isEmpty();
   }
@@ -495,7 +495,7 @@ public abstract class GroovyRefactoringUtil {
   }
 
   public static boolean hasSideEffect(@NotNull GroovyPsiElement statement) {
-    final Ref<Boolean> hasSideEffect = new Ref<Boolean>(false);
+    final Ref<Boolean> hasSideEffect = new Ref<>(false);
     statement.accept(new GroovyRecursiveElementVisitor() {
       @Override
       public void visitMethodCallExpression(GrMethodCallExpression methodCallExpression) {
@@ -633,7 +633,7 @@ public abstract class GroovyRefactoringUtil {
     final PsiClassType.ClassResolveResult result = PsiUtil.resolveGenericsClassInType(type);
     final PsiClass psiClass = result.getElement();
     if (psiClass == null) return type;
-    final HashSet<PsiTypeParameter> usedTypeParameters = new HashSet<PsiTypeParameter>();
+    final HashSet<PsiTypeParameter> usedTypeParameters = new HashSet<>();
     collectTypeParameters(usedTypeParameters, parameter);
     for (Iterator<PsiTypeParameter> iterator = usedTypeParameters.iterator(); iterator.hasNext(); ) {
       PsiTypeParameter usedTypeParameter = iterator.next();
@@ -687,7 +687,7 @@ public abstract class GroovyRefactoringUtil {
       }
 
       class TypeParameterSearcher extends PsiTypeVisitor<Boolean> {
-        private final Set<PsiTypeParameter> myTypeParams = new HashSet<PsiTypeParameter>();
+        private final Set<PsiTypeParameter> myTypeParams = new HashSet<>();
 
         @Override
         public Boolean visitType(final PsiType type) {

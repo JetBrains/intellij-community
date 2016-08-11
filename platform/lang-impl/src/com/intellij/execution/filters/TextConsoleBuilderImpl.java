@@ -31,7 +31,7 @@ import java.util.List;
 public class TextConsoleBuilderImpl extends TextConsoleBuilder {
   private final Project myProject;
   private final GlobalSearchScope myScope;
-  private final ArrayList<Filter> myFilters = new ArrayList<Filter>();
+  private final ArrayList<Filter> myFilters = new ArrayList<>();
   private boolean myViewer;
   private boolean myUsePredefinedMessageFilter = true;
 

@@ -25,7 +25,7 @@ import com.intellij.util.containers.hash.LinkedHashMap;
 public class TemplateImplUtil {
 
   public static LinkedHashMap<String, Variable> parseVariables(CharSequence text) {
-    LinkedHashMap<String, Variable> variables = new LinkedHashMap<String, Variable>();
+    LinkedHashMap<String, Variable> variables = new LinkedHashMap<>();
     TemplateTextLexer lexer = new TemplateTextLexer();
     lexer.start(text);
 

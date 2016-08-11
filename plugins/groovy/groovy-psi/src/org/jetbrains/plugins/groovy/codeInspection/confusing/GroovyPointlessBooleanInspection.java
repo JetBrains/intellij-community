@@ -200,7 +200,7 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
       extends BaseInspectionVisitor {
 
     private final Set<IElementType> booleanTokens =
-        new HashSet<IElementType>(5);
+      new HashSet<>(5);
 
     {
       booleanTokens.add(GroovyTokenTypes.mLAND);

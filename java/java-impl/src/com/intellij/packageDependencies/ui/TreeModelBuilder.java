@@ -66,11 +66,11 @@ public class TreeModelBuilder {
   private final Marker myMarker;
   private final boolean myAddUnmarkedFiles;
   private final PackageDependenciesNode myRoot;
-  private final Map<ScopeType, Map<Pair<Module, PsiPackage>, PackageNode>> myModulePackageNodes = new HashMap<ScopeType, Map<Pair<Module, PsiPackage>, PackageNode>>();
-  private final Map<ScopeType, Map<Pair<OrderEntry, PsiPackage>, PackageNode>> myLibraryPackageNodes = new HashMap<ScopeType, Map<Pair<OrderEntry, PsiPackage>, PackageNode>>();
-  private final Map<ScopeType, Map<Module, ModuleNode>> myModuleNodes = new HashMap<ScopeType, Map<Module, ModuleNode>>();
-  private final Map<ScopeType, Map<String, ModuleGroupNode>> myModuleGroupNodes = new HashMap<ScopeType, Map<String, ModuleGroupNode>>();
-  private final Map<ScopeType, Map<OrderEntry, LibraryNode>> myLibraryNodes = new HashMap<ScopeType, Map<OrderEntry, LibraryNode>>();
+  private final Map<ScopeType, Map<Pair<Module, PsiPackage>, PackageNode>> myModulePackageNodes = new HashMap<>();
+  private final Map<ScopeType, Map<Pair<OrderEntry, PsiPackage>, PackageNode>> myLibraryPackageNodes = new HashMap<>();
+  private final Map<ScopeType, Map<Module, ModuleNode>> myModuleNodes = new HashMap<>();
+  private final Map<ScopeType, Map<String, ModuleGroupNode>> myModuleGroupNodes = new HashMap<>();
+  private final Map<ScopeType, Map<OrderEntry, LibraryNode>> myLibraryNodes = new HashMap<>();
   private int myScannedFileCount;
   private int myTotalFileCount;
   private int myMarkedFileCount;
@@ -114,11 +114,11 @@ public class TreeModelBuilder {
   }
 
   private void createMaps(ScopeType scopeType) {
-    myModulePackageNodes.put(scopeType, new HashMap<Pair<Module, PsiPackage>, PackageNode>());
-    myLibraryPackageNodes.put(scopeType, new HashMap<Pair<OrderEntry, PsiPackage>, PackageNode>());
-    myModuleGroupNodes.put(scopeType, new HashMap<String, ModuleGroupNode>());
-    myModuleNodes.put(scopeType, new HashMap<Module, ModuleNode>());
-    myLibraryNodes.put(scopeType, new HashMap<OrderEntry, LibraryNode>());
+    myModulePackageNodes.put(scopeType, new HashMap<>());
+    myLibraryPackageNodes.put(scopeType, new HashMap<>());
+    myModuleGroupNodes.put(scopeType, new HashMap<>());
+    myModuleNodes.put(scopeType, new HashMap<>());
+    myLibraryNodes.put(scopeType, new HashMap<>());
   }
 
   public static synchronized TreeModel createTreeModel(Project project, boolean showProgress, Set<PsiFile> files, Marker marker, DependenciesPanel.DependencyPanelSettings settings) {

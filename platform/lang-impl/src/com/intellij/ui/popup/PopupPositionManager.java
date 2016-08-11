@@ -216,7 +216,7 @@ public class PopupPositionManager {
       }
       else {
         // ok, popup does not fit, will try to resize it
-        final java.util.List<Rectangle> boxes = new ArrayList<Rectangle>();
+        final java.util.List<Rectangle> boxes = new ArrayList<>();
         // right
         boxes.add(crop(myScreenRect, new Rectangle(myRelativeOnScreen.x + myRelativeTo.getWidth() + myGap, myRelativeOnScreen.y,
                                                    myScreenRect.width, myScreenRect.height)));

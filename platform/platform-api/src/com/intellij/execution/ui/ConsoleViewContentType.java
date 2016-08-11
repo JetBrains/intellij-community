@@ -36,7 +36,7 @@ public class ConsoleViewContentType {
   private final TextAttributes myTextAttributes;
   private final TextAttributesKey myTextAttributesKey;
 
-  private static final Map<Key, ConsoleViewContentType> ourRegisteredTypes = new HashMap<Key, ConsoleViewContentType>();
+  private static final Map<Key, ConsoleViewContentType> ourRegisteredTypes = new HashMap<>();
 
   public static final ColorKey CONSOLE_BACKGROUND_KEY = ColorKey.createColorKey("CONSOLE_BACKGROUND_KEY");
 

@@ -263,7 +263,7 @@ public class GitCherryPicker extends VcsCherryPicker {
   private LocalChangeList createChangeListAfterUpdate(@NotNull final VcsFullCommitDetails commit, @NotNull final Collection<FilePath> paths,
                                                       @NotNull final String commitMessage) {
     final CountDownLatch waiter = new CountDownLatch(1);
-    final AtomicReference<LocalChangeList> changeList = new AtomicReference<LocalChangeList>();
+    final AtomicReference<LocalChangeList> changeList = new AtomicReference<>();
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
       public void run() {
@@ -486,7 +486,7 @@ public class GitCherryPicker extends VcsCherryPicker {
     // 1. We have to listen to CLM changes, because moveChangesTo is asynchronous
     // 2. We have to collect the real target change list, because the original target list (passed to moveChangesTo) is not updated in time.
     final CountDownLatch moveChangesWaiter = new CountDownLatch(1);
-    final AtomicReference<LocalChangeList> resultingChangeList = new AtomicReference<LocalChangeList>();
+    final AtomicReference<LocalChangeList> resultingChangeList = new AtomicReference<>();
     ChangeListAdapter listener = new ChangeListAdapter() {
       @Override
       public void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {

@@ -147,7 +147,7 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
   @Override
   @Nullable
   public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
-    Map<String, TextAttributesKey> map = new HashMap<String, TextAttributesKey>();
+    Map<String, TextAttributesKey> map = new HashMap<>();
     map.put("keyword", GroovySyntaxHighlighter.KEYWORD);
     map.put("annotation", GroovySyntaxHighlighter.ANNOTATION);
     map.put("statmet", GroovySyntaxHighlighter.STATIC_METHOD_ACCESS);

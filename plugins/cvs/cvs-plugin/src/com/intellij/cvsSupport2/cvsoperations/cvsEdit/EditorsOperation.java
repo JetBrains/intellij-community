@@ -29,7 +29,7 @@ import java.util.List;
  * author: lesya
  */
 public class EditorsOperation extends CvsOperationOnFiles{
-  private final List<EditorInfo> myEditorInfos = new ArrayList<EditorInfo>();
+  private final List<EditorInfo> myEditorInfos = new ArrayList<>();
 
   public EditorsOperation(VirtualFile[] files){
     for (VirtualFile file : files) {

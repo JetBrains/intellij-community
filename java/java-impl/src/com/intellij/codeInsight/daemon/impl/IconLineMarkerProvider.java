@@ -128,7 +128,7 @@ public class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
     };
 
     return new LineMarkerInfo<PsiElement>(bindingElement, bindingElement.getTextRange(), icon,
-                                          Pass.UPDATE_ALL, null, navHandler,
+                                          Pass.LINE_MARKERS, null, navHandler,
                                           GutterIconRenderer.Alignment.LEFT);
   }
 

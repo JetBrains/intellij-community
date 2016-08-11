@@ -28,7 +28,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.*;
-import com.intellij.util.Producer;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -91,7 +91,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
                                 mySplitterDefaultProportion,
                                 splitVertically);
     if (mySplitter instanceof OnePixelSplitter) {
-      ((OnePixelSplitter)mySplitter).setBlindZone(() -> new Insets(myToolbarPanel.getHeight(), 0, 0, 0));
+      ((OnePixelSplitter)mySplitter).setBlindZone(() -> JBUI.insetsTop(myToolbarPanel.getHeight()));
     }
     Disposer.register(this, new Disposable(){
       @Override
@@ -126,11 +126,6 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     return splitVertically;
   }
 
-  @Deprecated
-  protected JComponent createStatisticsPanel() {
-    return null;
-  }
-
   protected ToolbarPanel createToolbarPanel() {
     return new ToolbarPanel(myProperties, this);
   }
@@ -156,8 +151,8 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     return null;
   }
 
-  private JComponent createOutputTab(JComponent console,
-                                     AnAction[] consoleActions) {
+  private static JComponent createOutputTab(JComponent console,
+                                            AnAction[] consoleActions) {
     JPanel outputTab = new JPanel(new BorderLayout());
     console.setFocusable(true);
     final Color editorBackground = EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();

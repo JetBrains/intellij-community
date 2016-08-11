@@ -58,7 +58,7 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
   }
 
   public final void addCustomAnnotation(@NotNull Annotation annotation) {
-    if (myCustomAnnotations == null) myCustomAnnotations = new THashMap<Class, Annotation>();
+    if (myCustomAnnotations == null) myCustomAnnotations = new THashMap<>();
     myCustomAnnotations.put(annotation.annotationType(), annotation);
   }
 
@@ -111,7 +111,7 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
   @NotNull
   public final List<? extends DomElement> getStableValues(@NotNull final DomElement parent) {
     final List<? extends DomElement> list = getValues(parent);
-    final ArrayList<DomElement> result = new ArrayList<DomElement>(list.size());
+    final ArrayList<DomElement> result = new ArrayList<>(list.size());
     final DomManager domManager = parent.getManager();
     for (int i = 0; i < list.size(); i++) {
       final int i1 = i;

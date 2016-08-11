@@ -49,7 +49,7 @@ public class PlatformProjectViewStructureProvider implements TreeStructureProvid
       final VirtualFile vFile = ((PsiDirectoryNode)parent).getVirtualFile();
       if (vFile != null && Comparing.equal(ProjectFileIndex.SERVICE.getInstance(myProject).getContentRootForFile(vFile), vFile)) {
         final Collection<AbstractTreeNode> moduleChildren = ((PsiDirectoryNode) parent).getChildren();
-        Collection<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+        Collection<AbstractTreeNode> result = new ArrayList<>();
         for (AbstractTreeNode moduleChild : moduleChildren) {
           if (moduleChild instanceof PsiDirectoryNode) {
             final PsiDirectory value = ((PsiDirectoryNode)moduleChild).getValue();

@@ -55,8 +55,8 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   private volatile ConnectionStatus myStatus = ConnectionStatus.DISCONNECTED;
   private volatile String myStatusText;
   private volatile ServerRuntimeInstance<D> myRuntimeInstance;
-  private final Map<String, DeploymentImpl> myRemoteDeployments = new HashMap<String, DeploymentImpl>();
-  private final Map<String, LocalDeploymentImpl> myLocalDeployments = new HashMap<String, LocalDeploymentImpl>();
+  private final Map<String, DeploymentImpl> myRemoteDeployments = new HashMap<>();
+  private final Map<String, LocalDeploymentImpl> myLocalDeployments = new HashMap<>();
   private final Map<String, DeploymentLogManagerImpl> myLogManagers = ContainerUtil.newConcurrentMap();
 
   public ServerConnectionImpl(RemoteServer<?> server,
@@ -179,7 +179,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
   private void computeDeployments(ServerRuntimeInstance<D> instance, final Runnable onFinished) {
     instance.computeDeployments(new ServerRuntimeInstance.ComputeDeploymentsCallback() {
-      private final List<DeploymentImpl> myDeployments = new ArrayList<DeploymentImpl>();
+      private final List<DeploymentImpl> myDeployments = new ArrayList<>();
 
       @Override
       public void addDeployment(@NotNull String deploymentName) {
@@ -320,9 +320,9 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   @NotNull
   @Override
   public Collection<Deployment> getDeployments() {
-    Set<Deployment> result = new LinkedHashSet<Deployment>();
+    Set<Deployment> result = new LinkedHashSet<>();
     Map<Deployment, DeploymentImpl> orderedDeployments
-      = new TreeMap<Deployment, DeploymentImpl>(getServer().getType().getDeploymentComparator());
+      = new TreeMap<>(getServer().getType().getDeploymentComparator());
     synchronized (myLocalDeployments) {
       synchronized (myRemoteDeployments) {
 

@@ -34,18 +34,18 @@ import java.util.*;
  */
 public class JavaArrangementParseInfo {
 
-  private final List<JavaElementArrangementEntry> myEntries = new ArrayList<JavaElementArrangementEntry>();
+  private final List<JavaElementArrangementEntry> myEntries = new ArrayList<>();
 
-  private final Map<Pair<String/* property name */, String/* class name */>, JavaArrangementPropertyInfo> myProperties = new HashMap<Pair<String, String>, JavaArrangementPropertyInfo>();
+  private final Map<Pair<String/* property name */, String/* class name */>, JavaArrangementPropertyInfo> myProperties = new HashMap<>();
 
-  private final List<ArrangementEntryDependencyInfo> myMethodDependencyRoots = new ArrayList<ArrangementEntryDependencyInfo>();
-  private final Map<PsiMethod /* anchor */, Set<PsiMethod /* dependencies */>> myMethodDependencies = new HashMap<PsiMethod, Set<PsiMethod>>();
+  private final List<ArrangementEntryDependencyInfo> myMethodDependencyRoots = new ArrayList<>();
+  private final Map<PsiMethod /* anchor */, Set<PsiMethod /* dependencies */>> myMethodDependencies = new HashMap<>();
 
-  private final Map<PsiMethod, JavaElementArrangementEntry> myMethodEntriesMap = new HashMap<PsiMethod, JavaElementArrangementEntry>();
-  private final Map<PsiClass, List<Pair<PsiMethod/*overridden*/, PsiMethod/*overriding*/>>> myOverriddenMethods = new LinkedHashMap<PsiClass, List<Pair<PsiMethod, PsiMethod>>>();
+  private final Map<PsiMethod, JavaElementArrangementEntry> myMethodEntriesMap = new HashMap<>();
+  private final Map<PsiClass, List<Pair<PsiMethod/*overridden*/, PsiMethod/*overriding*/>>> myOverriddenMethods = new LinkedHashMap<>();
 
-  private final Set<PsiMethod> myTmpMethodDependencyRoots = new LinkedHashSet<PsiMethod>();
-  private final Set<PsiMethod> myDependentMethods = new HashSet<PsiMethod>();
+  private final Set<PsiMethod> myTmpMethodDependencyRoots = new LinkedHashSet<>();
+  private final Set<PsiMethod> myDependentMethods = new HashSet<>();
   private boolean myRebuildMethodDependencies;
 
   private final HashMap<PsiField, JavaElementArrangementEntry> myFields = ContainerUtil.newLinkedHashMap();
@@ -74,7 +74,7 @@ public class JavaArrangementParseInfo {
   public List<ArrangementEntryDependencyInfo> getMethodDependencyRoots() {
     if (myRebuildMethodDependencies) {
       myMethodDependencyRoots.clear();
-      Map<PsiMethod, ArrangementEntryDependencyInfo> cache = new HashMap<PsiMethod, ArrangementEntryDependencyInfo>();
+      Map<PsiMethod, ArrangementEntryDependencyInfo> cache = new HashMap<>();
       for (PsiMethod method : myTmpMethodDependencyRoots) {
         ArrangementEntryDependencyInfo info = buildMethodDependencyInfo(method, cache);
         if (info != null) {
@@ -95,7 +95,7 @@ public class JavaArrangementParseInfo {
     }
     ArrangementEntryDependencyInfo result = new ArrangementEntryDependencyInfo(entry);
     Stack<Pair<PsiMethod, ArrangementEntryDependencyInfo>> toProcess
-      = new Stack<Pair<PsiMethod, ArrangementEntryDependencyInfo>>();
+      = new Stack<>();
     toProcess.push(Pair.create(method, result));
     Set<PsiMethod> usedMethods = ContainerUtilRt.newHashSet();
     while (!toProcess.isEmpty()) {
@@ -159,15 +159,15 @@ public class JavaArrangementParseInfo {
     }
     List<Pair<PsiMethod, PsiMethod>> methods = myOverriddenMethods.get(clazz);
     if (methods == null) {
-      myOverriddenMethods.put(clazz, methods = new ArrayList<Pair<PsiMethod, PsiMethod>>());
+      myOverriddenMethods.put(clazz, methods = new ArrayList<>());
     }
     methods.add(Pair.create(baseMethod, overridingMethod));
   }
 
   @NotNull
   public List<JavaArrangementOverriddenMethodsInfo> getOverriddenMethods() {
-    List<JavaArrangementOverriddenMethodsInfo> result = new ArrayList<JavaArrangementOverriddenMethodsInfo>();
-    final TObjectIntHashMap<PsiMethod> weights = new TObjectIntHashMap<PsiMethod>();
+    List<JavaArrangementOverriddenMethodsInfo> result = new ArrayList<>();
+    final TObjectIntHashMap<PsiMethod> weights = new TObjectIntHashMap<>();
     Comparator<Pair<PsiMethod, PsiMethod>> comparator = (o1, o2) -> weights.get(o1.first) - weights.get(o2.first);
     for (Map.Entry<PsiClass, List<Pair<PsiMethod, PsiMethod>>> entry : myOverriddenMethods.entrySet()) {
       JavaArrangementOverriddenMethodsInfo info = new JavaArrangementOverriddenMethodsInfo(entry.getKey().getName());
@@ -203,7 +203,7 @@ public class JavaArrangementParseInfo {
     myDependentMethods.add(callee);
     Set<PsiMethod> methods = myMethodDependencies.get(caller);
     if (methods == null) {
-      myMethodDependencies.put(caller, methods = new LinkedHashSet<PsiMethod>());
+      myMethodDependencies.put(caller, methods = new LinkedHashSet<>());
     }
     if (!methods.contains(callee)) {
       methods.add(callee);

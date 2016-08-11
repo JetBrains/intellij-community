@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 public class DomPatterns {
 
   public static <T extends DomElement> DomElementPattern.Capture<T> domElement(Class<T> aClass) {
-    return new DomElementPattern.Capture<T>(aClass);
+    return new DomElementPattern.Capture<>(aClass);
   }
 
   public static DomElementPattern.Capture<DomElement> domElement() {
@@ -47,7 +47,7 @@ public class DomPatterns {
   }
 
   public static <T> GenericDomValuePattern<T> genericDomValue(Class<T> aClass) {
-    return new GenericDomValuePattern<T>(aClass);
+    return new GenericDomValuePattern<>(aClass);
   }
 
   /**
@@ -87,7 +87,7 @@ public class DomPatterns {
   }
 
   public static ElementPattern<DomTarget> withDomTarget(final ElementPattern<? extends DomElement> pattern) {
-    return new ObjectPattern.Capture<DomTarget>(DomTarget.class).with(new PatternCondition<DomTarget>("withDomTarget") {
+    return new ObjectPattern.Capture<>(DomTarget.class).with(new PatternCondition<DomTarget>("withDomTarget") {
       @Override
       public boolean accepts(@NotNull final DomTarget target, final ProcessingContext context) {
         return pattern.accepts(target.getDomElement(), context);

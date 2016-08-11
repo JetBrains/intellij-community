@@ -55,7 +55,7 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
     if (element == null) return;
 
     PsiTryStatement tryStatement = (PsiTryStatement)element.getParent();
-    List<PsiClassType> unhandledExceptions = new ArrayList<PsiClassType>(ExceptionUtil.collectUnhandledExceptions(element, null));
+    List<PsiClassType> unhandledExceptions = new ArrayList<>(ExceptionUtil.collectUnhandledExceptions(element, null));
     if (unhandledExceptions.isEmpty()) return;
 
     ExceptionUtil.sortExceptionsByHierarchy(unhandledExceptions);

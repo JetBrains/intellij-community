@@ -18,14 +18,23 @@ package com.intellij.history.integration.ui.actions;
 
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.util.ObjectUtils.notNull;
 
 public abstract class LocalHistoryActionWithDialog extends LocalHistoryAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    showDialog(getEventProject(e), getGateway(), getFile(e), e);
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    showDialog(e.getRequiredData(CommonDataKeys.PROJECT), notNull(getGateway()), e);
   }
 
-  protected abstract void showDialog(Project p, IdeaGateway gw, VirtualFile f, AnActionEvent e);
+  protected void showDialog(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull AnActionEvent e) {
+    showDialog(p, gw, notNull(getFile(e)), e);
+  }
+
+  protected void showDialog(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull VirtualFile f, @NotNull AnActionEvent e) {
+  }
 }

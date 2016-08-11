@@ -98,7 +98,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
           selectedChane = convertedChanges[0];
           ChangeList changeList = ((ChangeListManagerImpl)ChangeListManager.getInstance(project)).getIdentityChangeList(selectedChane);
           if (changeList != null) {
-            result = changesInList != null ? changesInList : new ArrayList<Change>(changeList.getChanges());
+            result = changesInList != null ? changesInList : new ArrayList<>(changeList.getChanges());
           }
         }
         if (result == null) result = ContainerUtil.newArrayList(convertedChanges);
@@ -138,7 +138,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
 
   @Nullable
   private static Change[] loadFakeRevisions(@NotNull Project project, @NotNull Change[] changes) {
-    List<Change> matchingChanges = new ArrayList<Change>();
+    List<Change> matchingChanges = new ArrayList<>();
     for (Change change : changes) {
       matchingChanges.addAll(ChangeListManager.getInstance(project).getChangesIn(ChangesUtil.getFilePath(change)));
     }
@@ -162,7 +162,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
                                        @NotNull Condition<Change> condition,
                                        @NotNull ShowDiffContext context) {
     int index = 0;
-    List<ChangeDiffRequestProducer> presentables = new ArrayList<ChangeDiffRequestProducer>();
+    List<ChangeDiffRequestProducer> presentables = new ArrayList<>();
     for (Change change : changes) {
       if (condition.value(change)) index = presentables.size();
       ChangeDiffRequestProducer presentable = ChangeDiffRequestProducer.create(project, change, context.getChangeContext(change));
@@ -178,7 +178,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
                                        @NotNull ShowDiffContext context) {
     int i = 0;
     int newIndex = 0;
-    List<ChangeDiffRequestProducer> presentables = new ArrayList<ChangeDiffRequestProducer>();
+    List<ChangeDiffRequestProducer> presentables = new ArrayList<>();
     for (Change change : changes) {
       if (i == index) newIndex = presentables.size();
       ChangeDiffRequestProducer presentable = ChangeDiffRequestProducer.create(project, change, context.getChangeContext(change));

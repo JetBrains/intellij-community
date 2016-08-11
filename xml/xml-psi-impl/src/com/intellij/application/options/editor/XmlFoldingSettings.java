@@ -21,6 +21,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.NotNull;
 
 @State(name = "XmlFoldingSettings", storages = @Storage("editor.codeinsight.xml"))
 public class XmlFoldingSettings implements XmlCodeFoldingSettings, PersistentStateComponent<XmlFoldingSettings.State> {
@@ -48,6 +49,7 @@ public class XmlFoldingSettings implements XmlCodeFoldingSettings, PersistentSta
     return myState.COLLAPSE_HTML_STYLE_ATTRIBUTE;
   }
 
+  @Override
   public boolean isCollapseEntities() {
     return myState.COLLAPSE_ENTITIES;
   }
@@ -58,6 +60,7 @@ public class XmlFoldingSettings implements XmlCodeFoldingSettings, PersistentSta
   }
 
   @Override
+  @NotNull
   public State getState() {
     return myState;
   }
@@ -68,7 +71,7 @@ public class XmlFoldingSettings implements XmlCodeFoldingSettings, PersistentSta
   }
 
   public static final class State {
-    public boolean COLLAPSE_XML_TAGS = false;
+    public boolean COLLAPSE_XML_TAGS;
     public boolean COLLAPSE_HTML_STYLE_ATTRIBUTE = true;
     public boolean COLLAPSE_ENTITIES = true;
     public boolean COLLAPSE_DATA_URI = true;

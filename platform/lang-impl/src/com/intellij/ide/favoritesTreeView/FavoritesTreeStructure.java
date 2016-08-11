@@ -83,7 +83,7 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
         return ArrayUtil.toObjectArray(myNonProjectProvider.modify(favTreeElement, new ArrayList<>(), settings));
       }
 
-      final List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+      final List<AbstractTreeNode> result = new ArrayList<>();
       final FavoritesListNode listNode = (FavoritesListNode)element;
       if (listNode.getProvider() != null) {
         return ArrayUtil.toObjectArray(listNode.getChildren());

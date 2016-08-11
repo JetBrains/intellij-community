@@ -152,7 +152,7 @@ public class AllClassesGetter {
                                         @NotNull Project project,
                                         @NotNull GlobalSearchScope scope,
                                         @NotNull Processor<PsiClass> processor) {
-    final Set<String> names = new THashSet<String>(10000);
+    final Set<String> names = new THashSet<>(10000);
     AllClassesSearchExecutor.processClassNames(project, scope, s -> {
       if (prefixMatcher.prefixMatches(s)) {
         names.add(s);

@@ -26,7 +26,7 @@ import java.util.Set;
  * @author Max Medvedev
  */
 public class ConditionInstruction extends InstructionImpl implements Instruction {
-  private final Set<ConditionInstruction> myDependent = new HashSet<ConditionInstruction>();
+  private final Set<ConditionInstruction> myDependent = new HashSet<>();
 
   public ConditionInstruction(@NotNull PsiElement element) {
     super(element);

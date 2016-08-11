@@ -122,7 +122,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   @NotNull
   @Override
   protected Collection<? extends ProjectStructureElement> getProjectStructureElements() {
-    final List<ProjectStructureElement> result = new ArrayList<ProjectStructureElement>();
+    final List<ProjectStructureElement> result = new ArrayList<>();
     for (LibraryConfigurable libraryConfigurable : getLibraryConfigurables()) {
       result.add(new LibraryProjectStructureElement(myContext, libraryConfigurable.getEditableObject()));
     }
@@ -131,7 +131,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
 
   private List<LibraryConfigurable> getLibraryConfigurables() {
     //todo[nik] improve
-    List<LibraryConfigurable> libraryConfigurables = new ArrayList<LibraryConfigurable>();
+    List<LibraryConfigurable> libraryConfigurables = new ArrayList<>();
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final TreeNode node = myRoot.getChildAt(i);
       if (node instanceof MyNode) {
@@ -197,7 +197,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   @Override
   @NotNull
   protected List<? extends AnAction> createCopyActions(boolean fromPopup) {
-    final ArrayList<AnAction> actions = new ArrayList<AnAction>();
+    final ArrayList<AnAction> actions = new ArrayList<>();
     actions.add(new CopyLibraryAction());
     if (fromPopup) {
       final BaseLibrariesConfigurable targetGroup = getOppositeGroup();
@@ -255,7 +255,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   }
 
   public void removeLibraries(@NotNull List<LibraryProjectStructureElement> libraries) {
-    List<TreePath> pathsToRemove = new ArrayList<TreePath>();
+    List<TreePath> pathsToRemove = new ArrayList<>();
     for (LibraryProjectStructureElement element : libraries) {
       getModelProvider().getModifiableModel().removeLibrary(element.getLibrary());
       MyNode node = findNodeByObject(myRoot, element.getLibrary());
@@ -272,7 +272,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     return Collections.singletonList(new RemoveConfigurableHandler<Library>(LibraryConfigurable.class) {
       @Override
       public boolean remove(@NotNull Collection<Library> libraries) {
-        List<Pair<LibraryProjectStructureElement, Collection<ProjectStructureElementUsage>>> toRemove = new ArrayList<Pair<LibraryProjectStructureElement, Collection<ProjectStructureElementUsage>>>();
+        List<Pair<LibraryProjectStructureElement, Collection<ProjectStructureElementUsage>>> toRemove = new ArrayList<>();
 
         String firstLibraryUsageDescription = null;
         String firstLibraryWithUsageName = null;
@@ -283,15 +283,15 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
 
           final LibraryProjectStructureElement libraryElement = new LibraryProjectStructureElement(myContext, library);
           final Collection<ProjectStructureElementUsage> usages =
-            new ArrayList<ProjectStructureElementUsage>(myContext.getDaemonAnalyzer().getUsages(libraryElement));
+            new ArrayList<>(myContext.getDaemonAnalyzer().getUsages(libraryElement));
           if (usages.size() > 0) {
             if (librariesWithUsages == 0) {
-              final MultiMap<String, ProjectStructureElementUsage> containerType2Usage = new MultiMap<String, ProjectStructureElementUsage>();
+              final MultiMap<String, ProjectStructureElementUsage> containerType2Usage = new MultiMap<>();
               for (final ProjectStructureElementUsage usage : usages) {
                 containerType2Usage.putValue(usage.getContainingElement().getTypeName(), usage);
               }
 
-              List<String> types = new ArrayList<String>(containerType2Usage.keySet());
+              List<String> types = new ArrayList<>(containerType2Usage.keySet());
               Collections.sort(types);
 
               final StringBuilder sb = new StringBuilder("Library '");

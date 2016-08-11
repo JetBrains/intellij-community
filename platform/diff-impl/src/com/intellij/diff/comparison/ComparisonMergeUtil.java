@@ -42,8 +42,8 @@ public class ComparisonMergeUtil {
     @NotNull
     public List<MergeRange> execute(@NotNull FairDiffIterable fragments1,
                                     @NotNull FairDiffIterable fragments2) {
-      PeekIterator<Range> unchanged1 = new PeekIterator<Range>(fragments1.unchanged());
-      PeekIterator<Range> unchanged2 = new PeekIterator<Range>(fragments2.unchanged());
+      PeekIterator<Range> unchanged1 = new PeekIterator<>(fragments1.unchanged());
+      PeekIterator<Range> unchanged2 = new PeekIterator<>(fragments2.unchanged());
 
       while (!unchanged1.atEnd() && !unchanged2.atEnd()) {
         Side side = add(unchanged1.peek(), unchanged2.peek());

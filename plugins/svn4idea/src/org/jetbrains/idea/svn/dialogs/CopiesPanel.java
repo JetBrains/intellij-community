@@ -125,7 +125,7 @@ public class CopiesPanel {
                 ObjectsConvertor.convert(infoList, new Convertor<WCInfo, OverrideEqualsWrapper<WCInfo>>() {
                   @Override
                   public OverrideEqualsWrapper<WCInfo> convert(WCInfo o) {
-                    return new OverrideEqualsWrapper<WCInfo>(InfoEqualityPolicy.getInstance(), o);
+                    return new OverrideEqualsWrapper<>(InfoEqualityPolicy.getInstance(), o);
                   }
                 }, ObjectsConvertor.NOT_NULL);
 

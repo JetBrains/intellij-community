@@ -94,7 +94,7 @@ public class ExternalSystemTaskActivator {
   }
 
   public String getDescription(ProjectSystemId systemId, String projectPath, String taskName) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     final ExternalProjectsStateProvider stateProvider =
       ExternalProjectsManager.getInstance(myProject).getStateProvider();
     final TaskActivationState taskActivationState = stateProvider.getTasksActivation(systemId, projectPath);
@@ -136,7 +136,7 @@ public class ExternalSystemTaskActivator {
     final ExternalProjectsStateProvider stateProvider = ExternalProjectsManager.getInstance(myProject).getStateProvider();
 
     final Queue<Pair<ProjectSystemId, ExternalSystemTaskExecutionSettings>> tasksQueue =
-      new LinkedList<Pair<ProjectSystemId, ExternalSystemTaskExecutionSettings>>();
+      new LinkedList<>();
 
     //noinspection MismatchedQueryAndUpdateOfCollection
     Map<ProjectSystemId, Map<String, RunnerAndConfigurationSettings>> lazyConfigurationsMap =
@@ -219,7 +219,7 @@ public class ExternalSystemTaskActivator {
 
     final Semaphore targetDone = new Semaphore();
     targetDone.down();
-    final Ref<Boolean> result = new Ref<Boolean>(false);
+    final Ref<Boolean> result = new Ref<>(false);
     ExternalSystemUtil.runTask(executionSettings, DefaultRunExecutor.EXECUTOR_ID, myProject, systemId,
                                new TaskCallback() {
                                  @Override

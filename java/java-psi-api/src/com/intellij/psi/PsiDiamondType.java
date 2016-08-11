@@ -19,6 +19,7 @@ import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -180,5 +181,6 @@ public abstract class PsiDiamondType extends PsiType {
     return null;
   }
 
+  @Nullable
   public abstract JavaResolveResult getStaticFactory();
 }

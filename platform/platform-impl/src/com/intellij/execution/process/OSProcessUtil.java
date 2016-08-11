@@ -123,7 +123,7 @@ public class OSProcessUtil {
   
   @Nullable
   public static List<String> getCommandLinesOfRunningProcesses() {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     for (ProcessInfo each : getProcessList()) {
       result.add(each.getCommandLine());
     }

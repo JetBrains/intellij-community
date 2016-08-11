@@ -37,7 +37,7 @@ public class MarkAsOriginalTypeAction extends DumbAwareAction {
     final VirtualFile[] selectedFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (selectedFiles == null || selectedFiles.length == 0) return;
-    Collection<VirtualFile> filesToUnmark = new ArrayList<VirtualFile>();
+    Collection<VirtualFile> filesToUnmark = new ArrayList<>();
     for (VirtualFile file : selectedFiles) {
       if (file != null && !file.isDirectory()) {
         filesToUnmark.add(file);

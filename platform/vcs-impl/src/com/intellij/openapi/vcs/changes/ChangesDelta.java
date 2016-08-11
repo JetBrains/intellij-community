@@ -40,9 +40,9 @@ public class ChangesDelta {
       return true;  //+-
     }
 
-    final Set<BaseRevision> toRemove = new HashSet<BaseRevision>();
-    final Set<BaseRevision> toAdd = new HashSet<BaseRevision>();
-    final Set<BeforeAfter<BaseRevision>> toModify = new HashSet<BeforeAfter<BaseRevision>>();
+    final Set<BaseRevision> toRemove = new HashSet<>();
+    final Set<BaseRevision> toAdd = new HashSet<>();
+    final Set<BeforeAfter<BaseRevision>> toModify = new HashSet<>();
     was.getDelta(became, toRemove, toAdd, toModify);
 
     for (BaseRevision pair : toRemove) {

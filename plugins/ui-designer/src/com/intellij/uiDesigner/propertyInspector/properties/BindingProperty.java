@@ -295,7 +295,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
     if (StringUtil.startsWithIgnoreCase(text, PREFIX_HTML)) {
       text = Pattern.compile("<.+?>").matcher(text).replaceAll("");
     }
-    ArrayList<String> words = new ArrayList<String>(StringUtil.getWordsIn(text));
+    ArrayList<String> words = new ArrayList<>(StringUtil.getWordsIn(text));
     if (words.size() > 0) {
       StringBuilder nameBuilder = new StringBuilder(StringUtil.decapitalize(words.get(0)));
       for(int i=1; i<words.size() && i < 4; i++) {

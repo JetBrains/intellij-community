@@ -437,7 +437,7 @@ public class GitLogParserTest extends GitPlatformTest {
     }
 
     public List<String> paths() {
-      List<String> paths = new ArrayList<String>();
+      List<String> paths = new ArrayList<>();
       for (GitTestChange change : getChanges()) {
         switch (change.myType) {
           case MODIFICATION:

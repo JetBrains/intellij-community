@@ -108,7 +108,7 @@ public class JumpToObjectAction extends DebuggerAction{
           List<Method> notConstructorMethods = ContainerUtil.filter(clsType.methods(), m -> !m.isConstructor());
           if (notConstructorMethods.size() == 1) {
             AtomicReference<Location> locationRef = new AtomicReference<>();
-            MethodBytecodeUtil.visit(clsType, notConstructorMethods.get(0), new MethodVisitor(Opcodes.ASM5) {
+            MethodBytecodeUtil.visit(clsType, notConstructorMethods.get(0), new MethodVisitor(Opcodes.API_VERSION) {
               @Override
               public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
                 ReferenceType cls = ContainerUtil.getFirstItem(clsType.virtualMachine().classesByName(owner));

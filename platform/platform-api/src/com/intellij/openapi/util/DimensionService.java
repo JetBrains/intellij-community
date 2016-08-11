@@ -71,9 +71,9 @@ public class DimensionService implements PersistentStateComponent<Element> {
    * Invoked by reflection
    */
   private DimensionService() {
-    myKey2Location = new LinkedHashMap<String, Point>();
-    myKey2Size = new LinkedHashMap<String, Dimension>();
-    myKey2ExtendedState = new TObjectIntHashMap<String>();
+    myKey2Location = new LinkedHashMap<>();
+    myKey2Size = new LinkedHashMap<>();
+    myKey2ExtendedState = new TObjectIntHashMap<>();
   }
 
   /**

@@ -68,7 +68,7 @@ public class CreatePatchFromChangesAction extends AnAction implements DumbAware 
     if (commitMessage == null) {
       commitMessage = "";
     }
-    List<Change> changeCollection = new ArrayList<Change>();
+    List<Change> changeCollection = new ArrayList<>();
     Collections.addAll(changeCollection, changes);
     createPatch(project, commitMessage, changeCollection);
   }

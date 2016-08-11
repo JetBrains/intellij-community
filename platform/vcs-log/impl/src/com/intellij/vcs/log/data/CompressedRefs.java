@@ -61,6 +61,8 @@ public class CompressedRefs {
         putRefIndex(myTags, ref, myHashMap);
       }
     });
+
+    myHashMap.flush();
   }
 
   @NotNull

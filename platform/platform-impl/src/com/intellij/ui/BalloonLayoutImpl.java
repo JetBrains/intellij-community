@@ -52,8 +52,8 @@ public class BalloonLayoutImpl implements BalloonLayout {
   protected JLayeredPane myLayeredPane;
   private final Insets myInsets;
 
-  protected final List<Balloon> myBalloons = new ArrayList<Balloon>();
-  private final Map<Balloon, BalloonLayoutData> myLayoutData = new HashMap<Balloon, BalloonLayoutData>();
+  protected final List<Balloon> myBalloons = new ArrayList<>();
+  private final Map<Balloon, BalloonLayoutData> myLayoutData = new HashMap<>();
   private Integer myWidth;
 
   private final Alarm myRelayoutAlarm = new Alarm();
@@ -64,7 +64,7 @@ public class BalloonLayoutImpl implements BalloonLayout {
   private JRootPane myParent;
 
   private final Runnable myCloseAll = () -> {
-    for (Balloon balloon : new ArrayList<Balloon>(myBalloons)) {
+    for (Balloon balloon : new ArrayList<>(myBalloons)) {
       remove(balloon, true);
     }
   };
@@ -426,7 +426,7 @@ public class BalloonLayoutImpl implements BalloonLayout {
   }
 
   private List<Integer> computeWidths(List<ArrayList<Balloon>> columns) {
-    List<Integer> columnWidths = new ArrayList<Integer>();
+    List<Integer> columnWidths = new ArrayList<>();
     for (ArrayList<Balloon> eachColumn : columns) {
       int maxWidth = 0;
       for (Balloon each : eachColumn) {
@@ -438,16 +438,16 @@ public class BalloonLayoutImpl implements BalloonLayout {
   }
 
   private List<ArrayList<Balloon>> createColumns(Rectangle layoutRec) {
-    List<ArrayList<Balloon>> columns = new ArrayList<ArrayList<Balloon>>();
+    List<ArrayList<Balloon>> columns = new ArrayList<>();
 
-    ArrayList<Balloon> eachColumn = new ArrayList<Balloon>();
+    ArrayList<Balloon> eachColumn = new ArrayList<>();
     columns.add(eachColumn);
 
     int eachColumnHeight = 0;
     for (Balloon each : myBalloons) {
       final Dimension eachSize = getSize(each);
       if (eachColumnHeight + eachSize.height > layoutRec.getHeight()) {
-        eachColumn = new ArrayList<Balloon>();
+        eachColumn = new ArrayList<>();
         columns.add(eachColumn);
         eachColumnHeight = 0;
       }

@@ -26,7 +26,7 @@ import java.util.Map;
  * @author Sergey.Malenkov
  */
 final class Option {
-  private final HashMap<String, String> myMap = new HashMap<String, String>();
+  private final HashMap<String, String> myMap = new HashMap<>();
 
   Option(String value) {
     if (value != null) {

@@ -81,7 +81,7 @@ public class ImportSourceChooserDialog <S extends Scheme> extends DialogWrapper 
   }
   
   private class SourceListModel extends DefaultListModel {
-    private final List<String> mySourceNames = new ArrayList<String>();
+    private final List<String> mySourceNames = new ArrayList<>();
     
     public SourceListModel(Collection<SchemeImporterEP<S>> extensions) {
       for (SchemeImporterEP extension : extensions) {

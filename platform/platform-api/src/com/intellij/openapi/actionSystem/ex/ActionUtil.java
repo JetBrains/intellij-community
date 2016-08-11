@@ -46,7 +46,7 @@ public class ActionUtil {
 
   public static void showDumbModeWarning(@NotNull AnActionEvent... events) {
     Project project = null;
-    List<String> actionNames = new ArrayList<String>();
+    List<String> actionNames = new ArrayList<>();
     for (final AnActionEvent event : events) {
       final String s = event.getPresentation().getText();
       if (StringUtil.isNotEmpty(s)) {

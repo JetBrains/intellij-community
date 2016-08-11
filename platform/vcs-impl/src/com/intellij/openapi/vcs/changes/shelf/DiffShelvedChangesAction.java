@@ -93,7 +93,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
     final List<ShelvedChange> textChanges = changeLists[0].getChanges(project);
     final List<ShelvedBinaryFile> binaryChanges = changeLists[0].getBinaryFiles();
 
-    final List<MyDiffRequestProducer> diffRequestProducers = new ArrayList<MyDiffRequestProducer>();
+    final List<MyDiffRequestProducer> diffRequestProducers = new ArrayList<>();
 
     processTextChanges(project, textChanges, diffRequestProducers);
     processBinaryFiles(project, binaryChanges, diffRequestProducers);
@@ -101,7 +101,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
     Collections.sort(diffRequestProducers, ChangeDiffRequestComparator.getInstance());
 
     // selected changes inside lists
-    final Set<Object> selectedChanges = new HashSet<Object>();
+    final Set<Object> selectedChanges = new HashSet<>();
     selectedChanges.addAll(ContainerUtil.notNullize(ShelvedChangesViewManager.SHELVED_CHANGE_KEY.getData(dc)));
     selectedChanges.addAll(ContainerUtil.notNullize(ShelvedChangesViewManager.SHELVED_BINARY_FILE_KEY.getData(dc)));
 
@@ -233,7 +233,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
 
     private PatchesPreloader(final Project project) {
       myProject = project;
-      myFilePatchesMap = new HashMap<String, List<TextFilePatch>>();
+      myFilePatchesMap = new HashMap<>();
     }
 
     @NotNull

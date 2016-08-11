@@ -89,7 +89,7 @@ public class DomUtil {
 
   @NotNull
   public static String[] getElementNames(@NotNull Collection<? extends DomElement> list) {
-    ArrayList<String> result = new ArrayList<String>(list.size());
+    ArrayList<String> result = new ArrayList<>(list.size());
     if (list.size() > 0) {
       for (DomElement element: list) {
         String name = element.getGenericInfo().getElementName(element);
@@ -103,7 +103,7 @@ public class DomUtil {
 
   @NotNull
   public static List<XmlTag> getElementTags(@NotNull Collection<? extends DomElement> list) {
-    ArrayList<XmlTag> result = new ArrayList<XmlTag>(list.size());
+    ArrayList<XmlTag> result = new ArrayList<>(list.size());
     for (DomElement element: list) {
       XmlTag tag = element.getXmlTag();
       if (tag != null) {
@@ -129,7 +129,7 @@ public class DomUtil {
   @Nullable
   public static List<JavaMethod> getFixedPath(DomElement element) {
     assert element.isValid();
-    final LinkedList<JavaMethod> methods = new LinkedList<JavaMethod>();
+    final LinkedList<JavaMethod> methods = new LinkedList<>();
     while (true) {
       final DomElement parent = element.getParent();
       if (parent instanceof DomFileElement) {
@@ -200,7 +200,7 @@ public class DomUtil {
     final DomCollectionChildDescription childDescription =
       domGenericInfo.getCollectionChildDescription(tagName, element.getXmlElementNamespaceKey());
     if (childDescription != null) {
-      final ArrayList<DomElement> list = new ArrayList<DomElement>(childDescription.getValues(scope));
+      final ArrayList<DomElement> list = new ArrayList<>(childDescription.getValues(scope));
       list.remove(element);
       return list;
     }
@@ -208,7 +208,7 @@ public class DomUtil {
   }
 
   public static <T> List<T> getChildrenOfType(@NotNull final DomElement parent, final Class<T> type) {
-    final List<T> result = new SmartList<T>();
+    final List<T> result = new SmartList<>();
     parent.acceptChildren(new DomElementVisitor() {
       @Override
       public void visitDomElement(final DomElement element) {
@@ -222,7 +222,7 @@ public class DomUtil {
 
   public static List<DomElement> getDefinedChildren(@NotNull final DomElement parent, final boolean tags, final boolean attributes) {
     if (parent instanceof MergedObject) {
-      final SmartList<DomElement> result = new SmartList<DomElement>();
+      final SmartList<DomElement> result = new SmartList<>();
       parent.acceptChildren(new DomElementVisitor() {
         @Override
         public void visitDomElement(final DomElement element) {
@@ -247,7 +247,7 @@ public class DomUtil {
     if (xmlElement instanceof XmlTag) {
       XmlTag tag = (XmlTag) xmlElement;
       final DomManager domManager = parent.getManager();
-      final SmartList<DomElement> result = new SmartList<DomElement>();
+      final SmartList<DomElement> result = new SmartList<>();
       if (attributes) {
         for (final XmlAttribute attribute : tag.getAttributes()) {
           if (!attribute.isValid()) {
@@ -256,7 +256,7 @@ public class DomUtil {
           }
           GenericAttributeValue element = domManager.getDomElement(attribute);
           if (checkHasXml(attribute, element)) {
-            ContainerUtil.addIfNotNull(element, result);
+            ContainerUtil.addIfNotNull(result, element);
           }
         }
       }
@@ -268,7 +268,7 @@ public class DomUtil {
           }
           DomElement element = domManager.getDomElement(subTag);
           if (checkHasXml(subTag, element)) {
-            ContainerUtil.addIfNotNull(element, result);
+            ContainerUtil.addIfNotNull(result, element);
           }
         }
       }
@@ -496,7 +496,7 @@ public class DomUtil {
 
   @SuppressWarnings("ForLoopReplaceableByForEach")
   public static <T extends DomElement> List<T> getChildrenOf(DomElement parent, final Class<T> type) {
-    final List<T> list = new SmartList<T>();
+    final List<T> list = new SmartList<>();
     List<? extends AbstractDomChildrenDescription> descriptions = parent.getGenericInfo().getChildrenDescriptions();
     for (int i = 0, descriptionsSize = descriptions.size(); i < descriptionsSize; i++) {
       AbstractDomChildrenDescription description = descriptions.get(i);

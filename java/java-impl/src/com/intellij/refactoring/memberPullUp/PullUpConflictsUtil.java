@@ -70,8 +70,8 @@ public class PullUpConflictsUtil {
                                                             @NotNull PsiDirectory targetDirectory,
                                                             final InterfaceContainmentVerifier interfaceContainmentVerifier,
                                                             boolean movedMembers2Super) {
-    final Set<PsiMember> movedMembers = new HashSet<PsiMember>();
-    final Set<PsiMethod> abstractMethods = new HashSet<PsiMethod>();
+    final Set<PsiMember> movedMembers = new HashSet<>();
+    final Set<PsiMethod> abstractMethods = new HashSet<>();
     final boolean isInterfaceTarget;
     final PsiElement targetRepresentativeElement;
     if (superClass != null) {
@@ -96,8 +96,8 @@ public class PullUpConflictsUtil {
         movedMembers.add(member);
       }
     }
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
-    final Set<PsiMethod> abstrMethods = new HashSet<PsiMethod>(abstractMethods);
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    final Set<PsiMethod> abstrMethods = new HashSet<>(abstractMethods);
     if (superClass != null) {
       for (PsiMethod method : subclass.getMethods()) {
         if (!movedMembers.contains(method) && !method.hasModifierProperty(PsiModifier.PRIVATE)) {
@@ -137,7 +137,7 @@ public class PullUpConflictsUtil {
       }
     }
     // check if moved methods use other members in the classes between Subclass and Superclass
-    List<PsiElement> checkModuleConflictsList = new ArrayList<PsiElement>();
+    List<PsiElement> checkModuleConflictsList = new ArrayList<>();
     for (PsiMember member : movedMembers) {
       if (member instanceof PsiMethod || member instanceof PsiClass && !(member instanceof PsiCompiledElement)) {
         ClassMemberReferencesVisitor visitor =

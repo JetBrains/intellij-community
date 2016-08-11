@@ -16,6 +16,7 @@
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
+import groovy.transform.Immutable
 
 
 /**
@@ -43,21 +44,22 @@ import groovy.transform.CompileStatic
  *     http://apple.stackexchange.com/questions/83109/macosx-10-8-and-32-bit-perl-modules
  */
 @CompileStatic
+@Immutable
 public class MacHostProperties {
   /**
    * Mac host host name.
    */
-  String host
+  final String host
 
   /**
    * userName and password for access to Mac host via FTP
    */
-  String userName
-  String password
+  final String userName
+  final String password
 
   /**
    * Full name of a keychain identity (Applications > Utilities > Keychain Access).
    * More info in SIGNING IDENTITIES (https://developer.apple.com/legacy/library/documentation/Darwin/Reference/ManPages/man1/codesign.1.html)
    */
-  String codesignString
+  final String codesignString
 }

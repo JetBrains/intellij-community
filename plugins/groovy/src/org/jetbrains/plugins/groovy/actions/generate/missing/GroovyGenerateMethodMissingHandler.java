@@ -70,7 +70,7 @@ public class GroovyGenerateMethodMissingHandler extends GenerateMembersHandlerBa
 
     final GrMethod method = genMethod(aClass, template);
     return method != null
-           ? Collections.singletonList(new GroovyGenerationInfo<GrMethod>(method, true))
+           ? Collections.singletonList(new GroovyGenerationInfo<>(method, true))
            : Collections.<GenerationInfo>emptyList();
   }
 

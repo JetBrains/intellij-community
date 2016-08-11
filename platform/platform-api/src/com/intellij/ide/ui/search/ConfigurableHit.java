@@ -22,10 +22,10 @@ import java.util.LinkedHashSet;
 
 public final class ConfigurableHit {
 
-  private final Set<Configurable> myNameHits = new LinkedHashSet<Configurable>();
-  private final Set<Configurable> myContentHits = new LinkedHashSet<Configurable>();
+  private final Set<Configurable> myNameHits = new LinkedHashSet<>();
+  private final Set<Configurable> myContentHits = new LinkedHashSet<>();
 
-  private final Set<Configurable> myNameFullHit = new LinkedHashSet<Configurable>();
+  private final Set<Configurable> myNameFullHit = new LinkedHashSet<>();
 
   ConfigurableHit() {
   }
@@ -43,7 +43,7 @@ public final class ConfigurableHit {
   }
 
   public Set<Configurable> getAll() {
-    final LinkedHashSet<Configurable> all = new LinkedHashSet<Configurable>(myNameHits.size() + myContentHits.size());
+    final LinkedHashSet<Configurable> all = new LinkedHashSet<>(myNameHits.size() + myContentHits.size());
     all.addAll(myNameHits);
     all.addAll(myContentHits);
     return all;

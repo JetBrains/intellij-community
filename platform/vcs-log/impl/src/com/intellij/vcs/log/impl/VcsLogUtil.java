@@ -49,7 +49,7 @@ public class VcsLogUtil {
   @NotNull
   private static <T> Map<VirtualFile, Set<T>> groupByRoot(@NotNull Collection<T> items, @NotNull Function<T, VirtualFile> rootGetter) {
     Map<VirtualFile, Set<T>> map =
-      new TreeMap<VirtualFile, Set<T>>((o1, o2) -> o1.getPresentableUrl().compareTo(o2.getPresentableUrl()));
+      new TreeMap<>((o1, o2) -> o1.getPresentableUrl().compareTo(o2.getPresentableUrl()));
     for (T item : items) {
       VirtualFile root = rootGetter.fun(item);
       Set<T> set = map.get(root);
@@ -83,7 +83,7 @@ public class VcsLogUtil {
 
   @NotNull
   private static Set<VirtualFile> collectRoots(@NotNull Collection<FilePath> files, @NotNull Set<VirtualFile> roots) {
-    Set<VirtualFile> selectedRoots = new HashSet<VirtualFile>();
+    Set<VirtualFile> selectedRoots = new HashSet<>();
 
     List<VirtualFile> sortedRoots = ContainerUtil.sorted(roots, (root1, root2) -> root1.getPath().compareTo(root2.getPath()));
 
@@ -126,7 +126,7 @@ public class VcsLogUtil {
   public static Set<VirtualFile> getAllVisibleRoots(@NotNull Collection<VirtualFile> roots,
                                                     @Nullable VcsLogRootFilter rootFilter,
                                                     @Nullable VcsLogStructureFilter structureFilter) {
-    if (rootFilter == null && structureFilter == null) return new HashSet<VirtualFile>(roots);
+    if (rootFilter == null && structureFilter == null) return new HashSet<>(roots);
 
     Collection<VirtualFile> fromRootFilter;
     if (rootFilter != null) {
@@ -138,13 +138,13 @@ public class VcsLogUtil {
 
     Collection<VirtualFile> fromStructureFilter;
     if (structureFilter != null) {
-      fromStructureFilter = collectRoots(structureFilter.getFiles(), new HashSet<VirtualFile>(roots));
+      fromStructureFilter = collectRoots(structureFilter.getFiles(), new HashSet<>(roots));
     }
     else {
       fromStructureFilter = roots;
     }
 
-    return new HashSet<VirtualFile>(ContainerUtil.intersection(fromRootFilter, fromStructureFilter));
+    return new HashSet<>(ContainerUtil.intersection(fromRootFilter, fromStructureFilter));
   }
 
   // for given root returns files that are selected in it
@@ -156,7 +156,7 @@ public class VcsLogUtil {
     if (filterCollection.getStructureFilter() == null) return Collections.emptySet();
     Collection<FilePath> files = filterCollection.getStructureFilter().getFiles();
 
-    return new HashSet<FilePath>(ContainerUtil.filter(files, filePath -> {
+    return new HashSet<>(ContainerUtil.filter(files, filePath -> {
       VirtualFile virtualFile = filePath.getVirtualFile();
       return root.equals(virtualFile) || FileUtil.isAncestor(VfsUtilCore.virtualToIoFile(root), filePath.getIOFile(), false);
     }));

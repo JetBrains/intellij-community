@@ -119,7 +119,7 @@ public class PyHighlighter extends SyntaxHighlighterBase {
    */
   public PyHighlighter(LanguageLevel languageLevel) {
     myLanguageLevel = languageLevel;
-    keys = new HashMap<IElementType, TextAttributesKey>();
+    keys = new HashMap<>();
 
     fillMap(keys, PythonDialectsTokenSetProvider.INSTANCE.getKeywordTokens(), PY_KEYWORD);
     fillMap(keys, PyTokenTypes.OPERATIONS, PY_OPERATION_SIGN);

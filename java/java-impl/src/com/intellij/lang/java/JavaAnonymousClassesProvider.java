@@ -34,7 +34,7 @@ public class JavaAnonymousClassesProvider implements AnonymousElementProvider {
         parent = parent.getNavigationElement();
       }
       if (suite(parent) && !(parent instanceof PsiCompiledElement)) {
-        final List<PsiElement> elements = new ArrayList<PsiElement>();
+        final List<PsiElement> elements = new ArrayList<>();
         final PsiElement element = parent;
         element.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override

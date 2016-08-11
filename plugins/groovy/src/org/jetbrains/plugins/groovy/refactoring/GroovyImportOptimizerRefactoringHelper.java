@@ -45,7 +45,7 @@ import java.util.Set;
 public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper<Set<GroovyFile>> {
   @Override
   public Set<GroovyFile> prepareOperation(UsageInfo[] usages) {
-    Set<GroovyFile> files = new HashSet<GroovyFile>();
+    Set<GroovyFile> files = new HashSet<>();
     for (UsageInfo usage : usages) {
       if (usage.isNonCodeUsage) continue;
       PsiFile file = usage.getFile();
@@ -59,7 +59,7 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
   @Override
   public void performOperation(final Project project, final Set<GroovyFile> files) {
     final ProgressManager progressManager = ProgressManager.getInstance();
-    final Map<GroovyFile, Pair<List<GrImportStatement>, Set<GrImportStatement>>> redundants = new HashMap<GroovyFile, Pair<List<GrImportStatement>, Set<GrImportStatement>>>();
+    final Map<GroovyFile, Pair<List<GrImportStatement>, Set<GrImportStatement>>> redundants = new HashMap<>();
     final Runnable findUnusedImports = () -> {
       final ProgressIndicator progressIndicator = progressManager.getProgressIndicator();
       final int total = files.size();

@@ -100,9 +100,9 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private final PyDebuggerEditorsProvider myEditorsProvider;
   private final ProcessHandler myProcessHandler;
   private final ExecutionConsole myExecutionConsole;
-  private final Map<PySourcePosition, XLineBreakpoint> myRegisteredBreakpoints = new ConcurrentHashMap<PySourcePosition, XLineBreakpoint>();
+  private final Map<PySourcePosition, XLineBreakpoint> myRegisteredBreakpoints = new ConcurrentHashMap<>();
   private final Map<String, XBreakpoint<? extends ExceptionBreakpointProperties>> myRegisteredExceptionBreakpoints =
-    new ConcurrentHashMap<String, XBreakpoint<? extends ExceptionBreakpointProperties>>();
+    new ConcurrentHashMap<>();
 
   private final List<PyThreadInfo> mySuspendedThreads = Collections.synchronizedList(Lists.<PyThreadInfo>newArrayList());
   private final Map<String, XValueChildrenList> myStackFrameCache = Maps.newHashMap();
@@ -130,7 +130,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       myDebugger = new RemoteDebugger(this, serverSocket, getConnectTimeout());
     }
 
-    List<XBreakpointHandler> breakpointHandlers = new ArrayList<XBreakpointHandler>();
+    List<XBreakpointHandler> breakpointHandlers = new ArrayList<>();
     breakpointHandlers.add(new PyLineBreakpointHandler(this));
     breakpointHandlers.add(new PyExceptionBreakpointHandler(this));
     for (PyBreakpointHandlerFactory factory : Extensions.getExtensions(PyBreakpointHandlerFactory.EP_NAME)) {
@@ -791,10 +791,15 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       final String logExpression = breakpoint.getLogExpressionObject() == null
                                    ? null
                                    : breakpoint.getLogExpressionObject().getExpression();
-      myDebugger.setBreakpointWithFuncName(breakpoint.getType().getId(), position.getFile(), position.getLine(),
-                                           conditionExpression,
-                                           logExpression,
-                                           getFunctionName(breakpoint));
+      SuspendPolicy policy = breakpoint.getType().isSuspendThreadSupported()? breakpoint.getSuspendPolicy(): SuspendPolicy.NONE;
+      myDebugger.setBreakpoint(breakpoint.getType().getId(),
+                               position.getFile(),
+                               position.getLine(),
+                               conditionExpression,
+                               logExpression,
+                               getFunctionName(breakpoint),
+                               policy
+      );
     }
   }
 

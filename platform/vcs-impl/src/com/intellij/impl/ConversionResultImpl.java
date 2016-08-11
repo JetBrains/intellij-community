@@ -43,8 +43,8 @@ public class ConversionResultImpl implements ConversionResult {
   private final boolean myConversionNeeded;
   private final boolean myConversionCanceled;
   private final boolean myErrorOccurred;
-  private final Set<File> myChangedFiles = new HashSet<File>();
-  private final Set<File> myCreatedFiles = new HashSet<File>();
+  private final Set<File> myChangedFiles = new HashSet<>();
+  private final Set<File> myCreatedFiles = new HashSet<>();
 
   public ConversionResultImpl(boolean conversionNeeded, boolean conversionCanceled, boolean errorOccurred) {
     myConversionNeeded = conversionNeeded;
@@ -89,7 +89,7 @@ public class ConversionResultImpl implements ConversionResult {
         .selectFilesToProcess(createdFiles, "Files Created", "Select files to be added to version control", null, null, option);
       if (selected != null && !selected.isEmpty()) {
         final ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(project);
-        changeListManager.addUnversionedFiles(changeListManager.getDefaultChangeList(), new ArrayList<VirtualFile>(selected));
+        changeListManager.addUnversionedFiles(changeListManager.getDefaultChangeList(), new ArrayList<>(selected));
       }
     }
   }
@@ -104,9 +104,9 @@ public class ConversionResultImpl implements ConversionResult {
   }
 
   private static List<VirtualFile> findVirtualFiles(Collection<File> ioFiles) {
-    List<VirtualFile> files = new ArrayList<VirtualFile>();
+    List<VirtualFile> files = new ArrayList<>();
     for (File file : ioFiles) {
-      ContainerUtil.addIfNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file), files);
+      ContainerUtil.addIfNotNull(files, LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
     }
     return files;
   }

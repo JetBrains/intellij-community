@@ -48,14 +48,14 @@ public class ExtensionPointLocator {
   }
 
   public List<ExtensionPointCandidate> findDirectCandidates() {
-    final List<ExtensionPointCandidate> candidates = new SmartList<ExtensionPointCandidate>();
+    final List<ExtensionPointCandidate> candidates = new SmartList<>();
     findExtensionPointCandidates(myPsiClass, candidates);
     return candidates;
   }
 
   public List<ExtensionPointCandidate> findSuperCandidates() {
-    final List<ExtensionPointCandidate> candidates = new SmartList<ExtensionPointCandidate>();
-    findExtensionPointCandidatesInHierarchy(myPsiClass, candidates, new HashSet<PsiClass>());
+    final List<ExtensionPointCandidate> candidates = new SmartList<>();
+    findExtensionPointCandidatesInHierarchy(myPsiClass, candidates, new HashSet<>());
     return candidates;
   }
 

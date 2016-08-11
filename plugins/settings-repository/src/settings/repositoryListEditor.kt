@@ -19,6 +19,7 @@ import com.intellij.configurationStore.ComponentStoreImpl
 import com.intellij.configurationStore.SchemeManagerFactoryBase
 import com.intellij.configurationStore.StateStorageManagerImpl
 import com.intellij.configurationStore.reloadAppStore
+import com.intellij.layout.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.options.ConfigurableUi
@@ -27,6 +28,7 @@ import com.intellij.openapi.progress.runModalTask
 import com.intellij.util.ui.ComboBoxModelEditor
 import com.intellij.util.ui.ListItemEditor
 import java.util.*
+import javax.swing.JButton
 
 internal class RepositoryItem(var url: String? = null) {
   override fun toString() = url ?: ""
@@ -39,19 +41,22 @@ internal fun createRepositoryListEditor(): ConfigurableUi<IcsSettings> {
     override fun clone(item: RepositoryItem, forInPlaceEditing: Boolean) = RepositoryItem(item.url)
   })
 
-  val editorForm = RepositoryListEditorForm(editor.comboBox)
-
-  editorForm.deleteButton.addActionListener {
+  val deleteButton = JButton("Delete")
+  deleteButton.addActionListener {
     editor.model.selected?.let {
       editor.model.remove(it)
-      editorForm.deleteButton.isEnabled = editor.model.selected != null
+      deleteButton.isEnabled = editor.model.selected != null
     }
   }
 
   return object: ConfigurableUi<IcsSettings> {
     override fun isModified(settings: IcsSettings) = editor.isModified
 
-    override fun getComponent() = editorForm.component
+    override fun getComponent() = panel {
+      label("Repository:")
+      editor.comboBox()
+      deleteButton()
+    }
 
     override fun apply(settings: IcsSettings) {
       val newList = editor.apply()
@@ -71,7 +76,7 @@ internal fun createRepositoryListEditor(): ConfigurableUi<IcsSettings> {
       editor.reset(list)
       editor.model.selectedItem = upstream
 
-      editorForm.deleteButton.isEnabled = editor.model.selectedItem != null
+      deleteButton.isEnabled = editor.model.selectedItem != null
     }
   }
 }

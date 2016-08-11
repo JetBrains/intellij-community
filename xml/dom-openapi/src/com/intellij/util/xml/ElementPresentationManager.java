@@ -86,9 +86,9 @@ public abstract class ElementPresentationManager {
   public abstract <T> Object[] createVariants(Collection<T> elements, Function<T, String> namer, int iconFlags);
 
 
-  private static final List<Function<Object, String>> ourNameProviders = new ArrayList<Function<Object, String>>();
-  private static final List<Function<Object, String>> ourDocumentationProviders = new ArrayList<Function<Object, String>>();
-  private static final List<Function<Object, Icon>> ourIconProviders = new ArrayList<Function<Object, Icon>>();
+  private static final List<Function<Object, String>> ourNameProviders = new ArrayList<>();
+  private static final List<Function<Object, String>> ourDocumentationProviders = new ArrayList<>();
+  private static final List<Function<Object, Icon>> ourIconProviders = new ArrayList<>();
 
   static {
     ourIconProviders.add(

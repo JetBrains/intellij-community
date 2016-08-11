@@ -136,8 +136,8 @@ public class CommonRefactoringUtil {
                                              @NotNull Collection<? extends PsiElement> flat,
                                              @NotNull String messagePrefix,
                                              boolean notifyOnFail) {
-    Collection<VirtualFile> readonly = new THashSet<VirtualFile>();  // not writable, but could be checked out
-    Collection<VirtualFile> failed = new THashSet<VirtualFile>();  // those located in read-only filesystem
+    Collection<VirtualFile> readonly = new THashSet<>();  // not writable, but could be checked out
+    Collection<VirtualFile> failed = new THashSet<>();  // those located in read-only filesystem
 
     boolean seenNonWritablePsiFilesWithoutVirtualFile =
       checkReadOnlyStatus(flat, false, readonly, failed) || checkReadOnlyStatus(recursive, true, readonly, failed);

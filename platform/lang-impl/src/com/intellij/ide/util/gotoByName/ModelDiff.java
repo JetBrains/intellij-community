@@ -38,18 +38,18 @@ public class ModelDiff {
       return null;
     }
 
-    List<Cmd> commands = new ArrayList<Cmd>();
+    List<Cmd> commands = new ArrayList<>();
     int inserted = 0;
     int deleted = 0;
     while (change != null) {
       if (change.deleted > 0) {
         final int start = change.line0 + inserted - deleted;
-        commands.add(new RemoveCmd<Object>(listModel, start, start + change.deleted - 1));
+        commands.add(new RemoveCmd<>(listModel, start, start + change.deleted - 1));
       }
 
       if (change.inserted > 0) {
         for (int i = 0; i < change.inserted; i++) {
-          commands.add(new InsertCmd<Object>(listModel, change.line0 + i + inserted - deleted, newElements[change.line1 + i]));
+          commands.add(new InsertCmd<>(listModel, change.line0 + i + inserted - deleted, newElements[change.line1 + i]));
         }
       }
 

@@ -188,7 +188,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
                                                 @NotNull final TreeNode targetNode,
                                                 final int dropAction) {
     final DropHandler dropHandler = getDropHandler(dropAction);
-    List<TreeNode> result = new ArrayList<TreeNode>(sourceNodes.length);
+    List<TreeNode> result = new ArrayList<>(sourceNodes.length);
     for (TreeNode sourceNode : sourceNodes) {
       if (!dropHandler.isDropRedundant(sourceNode, targetNode)) {
         result.add(sourceNode);
@@ -239,7 +239,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
 
     @NotNull
     protected PsiElement[] getPsiElements(@NotNull TreeNode[] nodes) {
-      List<PsiElement> psiElements = new ArrayList<PsiElement>(nodes.length);
+      List<PsiElement> psiElements = new ArrayList<>(nodes.length);
       for (TreeNode node : nodes) {
         PsiElement psiElement = getPsiElement(node);
         if (psiElement != null) {
@@ -258,7 +258,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
   @Nullable
   protected PsiFileSystemItem[] getPsiFiles(@Nullable List<File> fileList) {
     if (fileList == null) return null;
-    List<PsiFileSystemItem> sourceFiles = new ArrayList<PsiFileSystemItem>();
+    List<PsiFileSystemItem> sourceFiles = new ArrayList<>();
     for (File file : fileList) {
       final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
       if (vFile != null) {

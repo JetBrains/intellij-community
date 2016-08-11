@@ -31,7 +31,7 @@ class FoldingAnchorsOverlayStrategy {
   }
 
   public Collection<DisplayedFoldingAnchor> getAnchorsToDisplay(int firstVisibleOffset, int lastVisibleOffset, FoldRegion activeFoldRegion) {
-    Map<Integer, DisplayedFoldingAnchor> result = new HashMap<Integer, DisplayedFoldingAnchor>();
+    Map<Integer, DisplayedFoldingAnchor> result = new HashMap<>();
     FoldRegion[] visibleFoldRegions = myEditor.getFoldingModel().fetchVisible();
     for (FoldRegion region : visibleFoldRegions) {
       if (!region.isValid()) continue;

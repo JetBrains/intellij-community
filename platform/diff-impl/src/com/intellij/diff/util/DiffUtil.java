@@ -638,9 +638,9 @@ public class DiffUtil {
       List<DiffFragment> fragments1 = ByWord.compare(chunks.get(1), chunks.get(0), comparisonPolicy, indicator);
       List<DiffFragment> fragments2 = ByWord.compare(chunks.get(1), chunks.get(2), comparisonPolicy, indicator);
 
-      List<TextRange> left = new ArrayList<TextRange>();
-      List<TextRange> base = new ArrayList<TextRange>();
-      List<TextRange> right = new ArrayList<TextRange>();
+      List<TextRange> left = new ArrayList<>();
+      List<TextRange> base = new ArrayList<>();
+      List<TextRange> right = new ArrayList<>();
 
       for (DiffFragment wordFragment : fragments1) {
         base.add(new TextRange(wordFragment.getStartOffset1(), wordFragment.getEndOffset1()));

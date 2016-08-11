@@ -128,7 +128,7 @@ public abstract class JavaStatisticsManager {
   public static String[] getAllVariableNamesUsed(VariableKind variableKind, String propertyName, PsiType type) {
     StatisticsInfo[] keys2 = StatisticsManager.getInstance().getAllValues(getVariableNameUseKey1(propertyName, type));
 
-    ArrayList<String> list = new ArrayList<String>();
+    ArrayList<String> list = new ArrayList<>();
 
     for (StatisticsInfo key2 : keys2) {
       VariableKind variableKind1 = getVariableKindFromKey2(key2.getValue());

@@ -38,7 +38,7 @@ public abstract class CvsOperation {
     @NotNull
     @Override
     protected Map<String, String> compute() {
-      Map<String, String> cvsEnv = new HashMap<String, String>();
+      Map<String, String> cvsEnv = new HashMap<>();
 
       Map<String, String> knownToCvs = EnvironmentUtil.getEnvironmentMap();
       @SuppressWarnings("SpellCheckingInspection") String[] toCvs = {
@@ -59,7 +59,7 @@ public abstract class CvsOperation {
     }
   };
 
-  private final Collection<Runnable> myFinishActions = new ArrayList<Runnable>();
+  private final Collection<Runnable> myFinishActions = new ArrayList<>();
 
   public abstract void execute(CvsExecutionEnvironment executionEnvironment, boolean underReadAction) throws VcsException, CommandAbortedException;
 

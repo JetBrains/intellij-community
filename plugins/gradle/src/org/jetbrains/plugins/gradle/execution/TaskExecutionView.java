@@ -221,7 +221,7 @@ public class TaskExecutionView implements ConsoleView, DataProvider {
     if (Location.DATA_KEYS.is(dataId)) {
       TreePath[] paths = tree.getSelectionModel().getSelectionPaths();
       if (paths != null && paths.length > 1) {
-        final List<Location<?>> locations = new ArrayList<Location<?>>(paths.length);
+        final List<Location<?>> locations = new ArrayList<>(paths.length);
         for (TreePath path : paths) {
           if (tree.isPathSelected(path.getParentPath())) continue;
           ExecutionInfo executionInfo = getSelectedExecution(path);
@@ -243,7 +243,7 @@ public class TaskExecutionView implements ConsoleView, DataProvider {
         for (TreePath path : paths) {
           if (tree.isPathSelected(path.getParentPath())) continue;
           ExecutionInfo executionInfo = getSelectedExecution(path);
-          ContainerUtil.addIfNotNull(executionInfo, executionInfos);
+          ContainerUtil.addIfNotNull(executionInfos, executionInfo);
         }
         return executionInfos.isEmpty()
                ? null

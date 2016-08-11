@@ -58,8 +58,8 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
   }
 
   private Collection<String> getBranchList(final boolean includeRevisionNumbers) {
-    final ArrayList<String> result = new ArrayList<String>();
-    final Set<SymbolicName> processedSymbolicNames = new HashSet<SymbolicName>();
+    final ArrayList<String> result = new ArrayList<>();
+    final Set<SymbolicName> processedSymbolicNames = new HashSet<>();
 
     final String branches = myCvsRevision.getBranches();
     if (branches != null && branches.length() != 0) {
@@ -140,7 +140,7 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
   }
 
   private List<String> collectSymNamesForRevision() {
-    ArrayList<String> result = new ArrayList<String>();
+    ArrayList<String> result = new ArrayList<>();
     //noinspection unchecked
     List<SymbolicName> symNames = myLogInformation.getSymNamesForRevision(myCvsRevision.getNumber());
     for (final SymbolicName symName : symNames) {

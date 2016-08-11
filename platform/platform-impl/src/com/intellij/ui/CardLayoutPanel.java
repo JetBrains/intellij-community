@@ -39,7 +39,7 @@ import java.util.Map.Entry;
  * @author Sergey.Malenkov
  */
 public abstract class CardLayoutPanel<K, UI, V extends Component> extends JComponent implements Accessible, Disposable {
-  private final IdentityHashMap<K, V> myContent = new IdentityHashMap<K, V>();
+  private final IdentityHashMap<K, V> myContent = new IdentityHashMap<>();
   private volatile boolean myDisposed;
   private K myKey;
 

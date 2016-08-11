@@ -25,12 +25,12 @@ import java.awt.event.MouseEvent;
 public class StepicAdaptiveReactionsPanel extends JPanel {
   private final ReactionButtonPanel myHardPanel;
   private final ReactionButtonPanel myBoringPanel;
-  private final Project myProject;
+  @NotNull private final Project myProject;
   private static final int TOO_HARD_REACTION = 0;
   private static final int TOO_BORING_REACTION = -1;
   private static final String HARD_REACTION = "Too Hard";
   private static final String BORING_REACTION = "Too Boring";
-  private static final String SOLVED_TASK_TOOLTIP = "Task Is Solved";
+  private static final String SOLVED_TASK_TOOLTIP = "Reaction Disabled Due To Task Is Solved";
   private static final String HARD_LABEL_TOOLTIP = "Click To Get An Easier Task";
   private static final String BORING_LABEL_TOOLTIP = "Click To Get A More Challenging Task";
 
@@ -108,7 +108,7 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
 
       myButtonPanel = new JPanel();
       myButtonPanel.setLayout(new BoxLayout(myButtonPanel, BoxLayout.PAGE_AXIS));
-      myButtonPanel.setToolTipText(isEnabled ? enabledTooltip : SOLVED_TASK_TOOLTIP);
+      myButtonPanel.setToolTipText(isEnabled && task.getStatus() == StudyStatus.Solved ? enabledTooltip : SOLVED_TASK_TOOLTIP);
       myButtonPanel.add(Box.createVerticalStrut(5));
       myButtonPanel.add(myLabel);
       myButtonPanel.add(Box.createVerticalStrut(5));
@@ -118,16 +118,15 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
       setLayout(new GridBagLayout());
       setBorder(BorderFactory.createEtchedBorder());
       add(myButtonPanel);
-      addMouseListener(() -> EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, reaction));
+      addMouseListener(reaction);
     }
 
-    private void addMouseListener(@NotNull Runnable onClickAction) {
-      final ReactionMouseAdapter mouseAdapter = new ReactionMouseAdapter(onClickAction, this);
+    private void addMouseListener(int reaction) {
+      final ReactionMouseAdapter mouseAdapter = new ReactionMouseAdapter(this, reaction);
       this.addMouseListener(mouseAdapter);
       myButtonPanel.addMouseListener(mouseAdapter);
       myLabel.addMouseListener(mouseAdapter);
     }
-
 
     public void setEnabledRecursive(final boolean isEnabled) {
       ApplicationManager.getApplication().invokeLater(() -> {
@@ -138,17 +137,17 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
     }
 
     private class ReactionMouseAdapter extends MouseAdapter {
-      private final Runnable myClickAction;
       private final ReactionButtonPanel myPanel;
+      private final int myReaction;
 
-      public ReactionMouseAdapter(@NotNull final Runnable onClickAction, @NotNull final ReactionButtonPanel mainPanel) {
-        myClickAction = onClickAction;
+      public ReactionMouseAdapter(@NotNull final ReactionButtonPanel mainPanel, int reaction) {
+        myReaction = reaction;
         myPanel = mainPanel;
       }
 
       @Override
       public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 1) {
+        if (e.getClickCount() == 1 && isEnabled()) {
           final com.jetbrains.edu.learning.courseFormat.Task task = StudyUtils.getCurrentTask(myProject);
           if (task != null && task.getStatus() != StudyStatus.Solved) {
             final ProgressIndicatorBase progress = new ProgressIndicatorBase();
@@ -158,11 +157,8 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
               @Override
               public void run(@NotNull ProgressIndicator indicator) {
                 StepicAdaptiveReactionsPanel.this.setEnabledRecursive(false);
-                myClickAction.run();
-              }
-
-              @Override
-              public void onFinished() {
+                ApplicationManager.getApplication().invokeLater(()->setBackground(UIUtil.getLabelBackground()));
+                EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, myReaction, indicator);
                 StepicAdaptiveReactionsPanel.this.setEnabledRecursive(true);
               }
             });

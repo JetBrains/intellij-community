@@ -92,7 +92,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
                                             Class<? extends AbstractTreeNode> nodeClass,
                                             ViewSettings settings) {
     try {
-      ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+      ArrayList<AbstractTreeNode> result = new ArrayList<>();
       for (Object object : objects) {
         result.add(createTreeNode(nodeClass, project, object, settings));
       }
@@ -100,7 +100,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
     }
     catch (Exception e) {
       LOG.error(e);
-      return new ArrayList<AbstractTreeNode>();
+      return new ArrayList<>();
     }
   }
 

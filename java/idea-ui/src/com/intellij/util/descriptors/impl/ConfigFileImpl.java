@@ -97,7 +97,7 @@ public class ConfigFileImpl extends SimpleModificationTracker implements ConfigF
 
     psiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
 
-    myPsiFile = new SoftReference<PsiFile>(psiFile);
+    myPsiFile = new SoftReference<>(psiFile);
 
     return psiFile;
   }

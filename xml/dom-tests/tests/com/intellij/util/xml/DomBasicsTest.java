@@ -158,7 +158,7 @@ public class DomBasicsTest extends DomTestCase {
 
   public void testAcceptChildren() throws Throwable {
     final MyElement element = createElement("<a><child-element/><child/><child-element/></a>");
-    final Set<DomElement> visited = new HashSet<DomElement>();
+    final Set<DomElement> visited = new HashSet<>();
     element.acceptChildren(new DomElementVisitor() {
       @Override
       public void visitDomElement(DomElement element) {

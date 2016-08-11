@@ -381,7 +381,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
       return PsiElement.EMPTY_ARRAY;
     }
 
-    final List<PsiElement> result = new ArrayList<PsiElement>();
+    final List<PsiElement> result = new ArrayList<>();
 
     PsiElement element = file.findElementAt(offset);
     if (element == null) {
@@ -655,7 +655,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
 
     public MySubstitutionHandler(String name, boolean target, int minOccurs, int maxOccurs, boolean greedy) {
       super(name, target, minOccurs, maxOccurs, greedy);
-      myExceptedNodes = new HashSet<PsiElement>();
+      myExceptedNodes = new HashSet<>();
     }
 
     @Override

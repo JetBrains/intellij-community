@@ -45,7 +45,7 @@ public class DomNamespaceKeyIndex extends StringStubIndexExtension<PsiFile> {
     if (!(file instanceof VirtualFileWithId)) return false;
 
     final int virtualFileId = ((VirtualFileWithId)file).getId();
-    CommonProcessors.FindFirstProcessor<PsiFile> processor = new CommonProcessors.FindFirstProcessor<PsiFile>();
+    CommonProcessors.FindFirstProcessor<PsiFile> processor = new CommonProcessors.FindFirstProcessor<>();
     StubIndex.getInstance().processElements(
       KEY,
       namespaceKey,

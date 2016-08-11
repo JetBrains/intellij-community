@@ -19,7 +19,7 @@ import java.util.Map;
  */
 public class StudyEditor extends PsiAwareTextEditorImpl {
   private final TaskFile myTaskFile;
-  private static final Map<Document, EduDocumentListener> myDocumentListeners = new HashMap<Document, EduDocumentListener>();
+  private static final Map<Document, EduDocumentListener> myDocumentListeners = new HashMap<>();
 
   public StudyEditor(@NotNull final Project project, @NotNull final VirtualFile file) {
     super(project, file, TextEditorProvider.getInstance());

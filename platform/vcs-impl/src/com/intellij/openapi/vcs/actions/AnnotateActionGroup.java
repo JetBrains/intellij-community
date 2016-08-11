@@ -37,7 +37,7 @@ public class AnnotateActionGroup extends ActionGroup {
                              @NotNull EditorGutterComponentEx gutterComponent,
                              @Nullable Couple<Map<VcsRevisionNumber, Color>> bgColorMap) {
     super("View", true);
-    final List<AnAction> actions = new ArrayList<AnAction>();
+    final List<AnAction> actions = new ArrayList<>();
     for (AnnotationFieldGutter g : gutters) {
       if (g.getID() != null) {
         actions.add(new ShowHideAspectAction(g, gutterComponent));

@@ -205,7 +205,7 @@ public class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<GitFil
     // the file could be renamed in one of the branches, i.e. the name in one of the parent revisions may be different from the name
     // in currentRevision. It can be different even in both parents, but it would a rename-rename conflict, and we don't handle such anyway.
 
-    Collection<GitFileRevision> parents = new ArrayList<GitFileRevision>(parentHashes.size());
+    Collection<GitFileRevision> parents = new ArrayList<>(parentHashes.size());
     for (String parentHash : parentHashes) {
       parents.add(createParentRevision(repository, currentRevision, parentHash, revisions));
     }
@@ -272,7 +272,7 @@ public class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<GitFil
 
   @NotNull
   private ActionGroup createActionGroup(@NotNull GitFileRevision rev, @NotNull FilePath filePath, @NotNull Collection<GitFileRevision> parents) {
-    Collection<AnAction> actions = new ArrayList<AnAction>(2);
+    Collection<AnAction> actions = new ArrayList<>(2);
     for (GitFileRevision parent : parents) {
       actions.add(createParentAction(rev, filePath, parent));
     }

@@ -318,7 +318,7 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   public List<SMTestProxy> getAllTests() {
-    final List<SMTestProxy> allTests = new ArrayList<SMTestProxy>();
+    final List<SMTestProxy> allTests = new ArrayList<>();
 
     allTests.add(this);
 
@@ -534,7 +534,7 @@ public class SMTestProxy extends AbstractTestProxy {
       return allChildren;
     }
 
-    final List<SMTestProxy> selectedChildren = new ArrayList<SMTestProxy>();
+    final List<SMTestProxy> selectedChildren = new ArrayList<>();
     for (SMTestProxy child : allChildren) {
       if (filter.shouldAccept(child)) {
         selectedChildren.add(child);

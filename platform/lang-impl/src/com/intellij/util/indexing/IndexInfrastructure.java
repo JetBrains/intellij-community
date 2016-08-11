@@ -155,7 +155,7 @@ public class IndexInfrastructure {
   }
 
   public static abstract class DataInitialization<T> implements Callable<T> {
-    private final List<ThrowableRunnable> myNestedInitializationTasks = new ArrayList<ThrowableRunnable>();
+    private final List<ThrowableRunnable> myNestedInitializationTasks = new ArrayList<>();
 
     @Override
     public final T call() throws Exception {

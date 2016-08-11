@@ -66,7 +66,7 @@ public class ResolverProcessorImpl extends ResolverProcessor<GroovyResolveResult
 
       if (namedElement instanceof PsiClass  && !(namedElement instanceof PsiTypeParameter)) {
         final PsiClass aClass = (PsiClass)namedElement;
-        if (myProcessedClasses == null) myProcessedClasses = new HashSet<String>();
+        if (myProcessedClasses == null) myProcessedClasses = new HashSet<>();
         if (!myProcessedClasses.add(aClass.getQualifiedName())) {
           return true;
         }

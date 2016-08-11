@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 public interface OutOfSourcesChecker {
 
-  ExtensionPointName<OutOfSourcesChecker> EP_NAME = new ExtensionPointName<OutOfSourcesChecker>("com.intellij.outOfSourcesChecker");
+  ExtensionPointName<OutOfSourcesChecker> EP_NAME = new ExtensionPointName<>("com.intellij.outOfSourcesChecker");
 
   @NotNull
   FileType getFileType();

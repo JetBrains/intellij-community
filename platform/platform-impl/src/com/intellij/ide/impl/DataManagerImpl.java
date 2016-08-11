@@ -54,7 +54,7 @@ import java.util.concurrent.ConcurrentMap;
 
 public class DataManagerImpl extends DataManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.impl.DataManagerImpl");
-  private final ConcurrentMap<String, GetDataRule> myDataConstantToRuleMap = new ConcurrentHashMap<String, GetDataRule>();
+  private final ConcurrentMap<String, GetDataRule> myDataConstantToRuleMap = new ConcurrentHashMap<>();
   private WindowManagerEx myWindowManager;
 
   public DataManagerImpl() {
@@ -83,7 +83,7 @@ public class DataManagerImpl extends DataManager {
 
       GetDataRule dataRule = getDataRule(dataId);
       if (dataRule != null) {
-        final Set<String> ids = alreadyComputedIds == null ? new THashSet<String>() : alreadyComputedIds;
+        final Set<String> ids = alreadyComputedIds == null ? new THashSet<>() : alreadyComputedIds;
         ids.add(dataId);
         data = dataRule.getData(new DataProvider() {
           @Override
@@ -209,7 +209,7 @@ public class DataManagerImpl extends DataManager {
 
   @Override
   public AsyncResult<DataContext> getDataContextFromFocus() {
-    final AsyncResult<DataContext> context = new AsyncResult<DataContext>();
+    final AsyncResult<DataContext> context = new AsyncResult<>();
 
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> context.setDone(getDataContext()));
 
@@ -320,7 +320,7 @@ public class DataManagerImpl extends DataManager {
     public static final NullResult INSTANCE = new NullResult();
   }
   
-  private static final Set<String> ourSafeKeys = new HashSet<String>(Arrays.asList(
+  private static final Set<String> ourSafeKeys = new HashSet<>(Arrays.asList(
     CommonDataKeys.PROJECT.getName(),
     CommonDataKeys.EDITOR.getName(),
     PlatformDataKeys.IS_MODAL_CONTEXT.getName(),
@@ -335,11 +335,11 @@ public class DataManagerImpl extends DataManager {
     // that have DataContext as a field.
     private final Reference<Component> myRef;
     private Map<Key, Object> myUserData;
-    private final Map<String, Object> myCachedData = new WeakValueHashMap<String, Object>();
+    private final Map<String, Object> myCachedData = new WeakValueHashMap<>();
 
     public MyDataContext(final Component component) {
       myEventCount = -1;
-      myRef = component == null ? null : new WeakReference<Component>(component);
+      myRef = component == null ? null : new WeakReference<>(component);
     }
 
     public void setEventCount(int eventCount, Object caller) {
@@ -413,7 +413,7 @@ public class DataManagerImpl extends DataManager {
     private Map<Key, Object> getOrCreateMap() {
       Map<Key, Object> userData = myUserData;
       if (userData == null) {
-        myUserData = userData = new WeakValueHashMap<Key, Object>();
+        myUserData = userData = new WeakValueHashMap<>();
       }
       return userData;
     }

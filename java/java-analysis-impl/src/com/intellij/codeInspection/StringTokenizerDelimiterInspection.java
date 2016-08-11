@@ -66,7 +66,7 @@ public class StringTokenizerDelimiterInspection extends BaseJavaBatchLocalInspec
       final Object value = ((PsiLiteralExpression)delimiterArgument).getValue();
       if (value instanceof String) {
         String delimiters = (String)value;
-        final Set<Character> chars = new THashSet<Character>();
+        final Set<Character> chars = new THashSet<>();
         for (char c : delimiters.toCharArray()) {
           if (!chars.add(c)) {
             holder.registerProblem(delimiterArgument, "Delimiters argument contains duplicated characters", new ReplaceDelimitersWithUnique(delimiterArgument));
@@ -96,7 +96,7 @@ public class StringTokenizerDelimiterInspection extends BaseJavaBatchLocalInspec
 
     @Override
     public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
-      final Set<Character> uniqueChars = new LinkedHashSet<Character>();
+      final Set<Character> uniqueChars = new LinkedHashSet<>();
       final PsiLiteralExpression delimiterArgument = (PsiLiteralExpression)startElement;
       for (char c : ((String)delimiterArgument.getValue()).toCharArray()) {
         uniqueChars.add(c);

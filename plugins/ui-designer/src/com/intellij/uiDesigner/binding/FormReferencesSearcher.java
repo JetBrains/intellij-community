@@ -63,15 +63,21 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     if (psiFile == null) return true;
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return true;
+    final GlobalSearchScope[] scope = new GlobalSearchScope[1];
     Project project = ApplicationManager.getApplication().runReadAction(new Computable<Project>() {
       @Override
       public Project compute() {
-        return psiFile.getProject();
+        Project project = psiFile.getProject();
+        Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(virtualFile);
+        if (module != null) {
+          scope[0] = GlobalSearchScope.moduleWithDependenciesScope(module);
+        }
+        return project;
       }
     });
-    Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(virtualFile);
-    if (module == null) return true;
-    final GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesScope(module);
+    if (scope[0] == null) {
+      return true;
+    }
     final LocalSearchScope filterScope = userScope instanceof LocalSearchScope ? (LocalSearchScope)userScope : null;
 
     PsiManager psiManager = PsiManager.getInstance(project);
@@ -80,19 +86,19 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
       //if (!UIFormUtil.processReferencesInUIForms(consumer, (PsiPackage)refElement, scope)) return false;
     }
     else if (refElement instanceof PsiClass) {
-      if (!processReferencesInUIForms(consumer, psiManager,(PsiClass)refElement, scope, filterScope)) return false;
+      if (!processReferencesInUIForms(consumer, psiManager,(PsiClass)refElement, scope[0], filterScope)) return false;
     }
     else if (refElement instanceof PsiEnumConstant) {
-      if (!processReferencesInUIForms(consumer, psiManager, (PsiEnumConstant)refElement, scope, filterScope)) return false;
+      if (!processEnumReferencesInUIForms(consumer, psiManager, (PsiEnumConstant)refElement, scope[0], filterScope)) return false;
     }
     else if (refElement instanceof PsiField) {
-      if (!processReferencesInUIForms(consumer, psiManager, (PsiField)refElement, scope, filterScope)) return false;
+      if (!processReferencesInUIForms(consumer, psiManager, (PsiField)refElement, scope[0], filterScope)) return false;
     }
     else if (refElement instanceof IProperty) {
-      if (!processReferencesInUIForms(consumer, psiManager, (Property)refElement, scope, filterScope)) return false;
+      if (!processReferencesInUIForms(consumer, psiManager, (Property)refElement, scope[0], filterScope)) return false;
     }
     else if (refElement instanceof PropertiesFile) {
-      if (!processReferencesInUIForms(consumer, psiManager, (PropertiesFile)refElement, scope, filterScope)) return false;
+      if (!processReferencesInUIForms(consumer, psiManager, (PropertiesFile)refElement, scope[0], filterScope)) return false;
     }
 
     return true;
@@ -140,9 +146,9 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     });
   }
 
-  private static boolean processReferencesInUIForms(Processor<PsiReference> processor,
-                                                    PsiManager psiManager, final PsiEnumConstant enumConstant,
-                                                   GlobalSearchScope scope, final LocalSearchScope filterScope) {
+  private static boolean processEnumReferencesInUIForms(Processor<PsiReference> processor,
+                                                        PsiManager psiManager, final PsiEnumConstant enumConstant,
+                                                        GlobalSearchScope scope, final LocalSearchScope filterScope) {
     String className = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       @Override
       public String compute() {

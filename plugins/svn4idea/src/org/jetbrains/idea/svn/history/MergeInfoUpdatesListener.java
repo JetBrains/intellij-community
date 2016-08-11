@@ -49,7 +49,7 @@ public class MergeInfoUpdatesListener {
 
   public void addPanel(final RootsAndBranches action) {
     if (myMergeInfoRefreshActions == null) {
-      myMergeInfoRefreshActions = new ArrayList<RootsAndBranches>();
+      myMergeInfoRefreshActions = new ArrayList<>();
       myMergeInfoRefreshActions.add(action);
 
       myConnection.subscribe(VcsConfigurationChangeListener.BRANCHES_CHANGED, new VcsConfigurationChangeListener.Notification() {

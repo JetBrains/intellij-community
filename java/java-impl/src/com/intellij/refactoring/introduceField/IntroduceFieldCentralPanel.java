@@ -93,8 +93,8 @@ public abstract class IntroduceFieldCentralPanel {
   }
 
   protected boolean setEnabledInitializationPlaces(@NotNull final PsiElement initializer) {
-    final Set<PsiField> fields = new HashSet<PsiField>();
-    final Ref<Boolean> refsLocal = new Ref<Boolean>(false);
+    final Set<PsiField> fields = new HashSet<>();
+    final Ref<Boolean> refsLocal = new Ref<>(false);
     initializer.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {

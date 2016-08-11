@@ -403,19 +403,15 @@ public class GithubConnection {
     }
   }
 
-  public static class PagedRequest<T> {
+  public static abstract class PagedRequestBase<T> implements PagedRequest<T> {
     @NotNull private String myPath;
     @NotNull private final Collection<Header> myHeaders;
-    @NotNull private final Class<? extends T[]> myTypeArray;
 
     private boolean myFirstRequest = true;
     @Nullable private String myNextPage;
 
-    public PagedRequest(@NotNull String path,
-                        @NotNull Class<? extends T[]> typeArray,
-                        @NotNull Header... headers) {
+    public PagedRequestBase(@NotNull String path, @NotNull Header... headers) {
       myPath = path;
-      myTypeArray = typeArray;
       myHeaders = Arrays.asList(headers);
     }
 
@@ -433,32 +429,57 @@ public class GithubConnection {
       }
 
       ResponsePage response = connection.doRequest(url, null, myHeaders, HttpVerb.GET);
+      myNextPage = response.getNextPage();
 
       if (response.getJsonElement() == null) {
         throw new GithubConfusingException("Empty response");
       }
 
-      if (!response.getJsonElement().isJsonArray()) {
-        throw new GithubJsonException("Wrong json type: expected JsonArray", new Exception(response.getJsonElement().toString()));
-      }
-
-      myNextPage = response.getNextPage();
-
-      T[] result = fromJson(response.getJsonElement().getAsJsonArray(), myTypeArray);
-      return Arrays.asList(result);
+      return parse(response.getJsonElement());
     }
 
     public boolean hasNext() {
       return myFirstRequest || myNextPage != null;
     }
 
-    @NotNull
-    public List<T> getAll(@NotNull GithubConnection connection) throws IOException {
-      List<T> result = new ArrayList<>();
-      while (hasNext()) {
-        result.addAll(next(connection));
+    protected abstract List<T> parse(@NotNull JsonElement response) throws IOException;
+  }
+
+  public static class ArrayPagedRequest<T> extends PagedRequestBase<T> {
+    @NotNull private final Class<? extends T[]> myTypeArray;
+
+    public ArrayPagedRequest(@NotNull String path,
+                             @NotNull Class<? extends T[]> typeArray,
+                             @NotNull Header... headers) {
+      super(path, headers);
+      myTypeArray = typeArray;
+    }
+
+    @Override
+    protected List<T> parse(@NotNull JsonElement response) throws IOException {
+      if (!response.isJsonArray()) {
+        throw new GithubJsonException("Wrong json type: expected JsonArray", new Exception(response.toString()));
       }
-      return result;
+
+      T[] result = fromJson(response.getAsJsonArray(), myTypeArray);
+      return Arrays.asList(result);
+    }
+  }
+
+  public static class SingleValuePagedRequest<T> extends PagedRequestBase<T> {
+    @NotNull private final Class<? extends T> myType;
+
+    public SingleValuePagedRequest(@NotNull String path,
+                                   @NotNull Class<? extends T> type,
+                                   @NotNull Header... headers) {
+      super(path, headers);
+      myType = type;
+    }
+
+    @Override
+    protected List<T> parse(@NotNull JsonElement response) throws IOException {
+      T result = fromJson(response, myType);
+      return Collections.singletonList(result);
     }
   }
 
@@ -510,6 +531,22 @@ public class GithubConnection {
       if (credentials != null) {
         request.addHeader(new BasicScheme(Consts.UTF_8).authenticate(credentials, request, context));
       }
+    }
+  }
+
+  public interface PagedRequest<T> {
+    @NotNull
+    List<T> next(@NotNull GithubConnection connection) throws IOException;
+
+    boolean hasNext();
+
+    @NotNull
+    default List<T> getAll(@NotNull GithubConnection connection) throws IOException {
+      List<T> result = new ArrayList<>();
+      while (hasNext()) {
+        result.addAll(next(connection));
+      }
+      return result;
     }
   }
 }

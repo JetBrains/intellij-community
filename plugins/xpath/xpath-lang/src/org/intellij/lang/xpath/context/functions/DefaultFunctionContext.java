@@ -38,7 +38,7 @@ public class DefaultFunctionContext extends AbstractFunctionContext {
 
     // XPath 1.0
 
-    final Map<Pair<QName, Integer>, Function> decls1 = new HashMap<Pair<QName, Integer>, Function>();
+    final Map<Pair<QName, Integer>, Function> decls1 = new HashMap<>();
 
     addFunction(decls1, new FunctionImpl("last", XPathType.NUMBER));
     addFunction(decls1, new FunctionImpl("position", XPathType.NUMBER));
@@ -113,7 +113,7 @@ public class DefaultFunctionContext extends AbstractFunctionContext {
 
     // XPath 2.0
 
-    final Map<Pair<QName, Integer>, Function> decls2 = new HashMap<Pair<QName, Integer>, Function>();
+    final Map<Pair<QName, Integer>, Function> decls2 = new HashMap<>();
 
     addFunction(decls2, "fn:base-uri() as xs:anyURI?");
     addFunction(decls2, "fn:base-uri($arg as node()?) as xs:anyURI?");

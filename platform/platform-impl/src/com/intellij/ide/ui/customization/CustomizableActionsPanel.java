@@ -277,7 +277,7 @@ public class CustomizableActionsPanel {
     myRestoreDefaultButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final List<ActionUrl> otherActions = new ArrayList<ActionUrl>(mySelectedSchema.getActions());
+        final List<ActionUrl> otherActions = new ArrayList<>(mySelectedSchema.getActions());
         otherActions.removeAll(findActionsUnderSelection());
         mySelectedSchema.copyFrom(new CustomActionsSchema());
         for (ActionUrl otherAction : otherActions) {
@@ -296,12 +296,12 @@ public class CustomizableActionsPanel {
   }
 
   private List<ActionUrl> findActionsUnderSelection() {
-    final ArrayList<ActionUrl> actions = new ArrayList<ActionUrl>();
+    final ArrayList<ActionUrl> actions = new ArrayList<>();
     final TreePath[] selectionPaths = myActionsTree.getSelectionPaths();
     if (selectionPaths != null) {
       for (TreePath path : selectionPaths) {
         final ActionUrl selectedUrl = CustomizationUtil.getActionUrl(path, ActionUrl.MOVE);
-        final ArrayList<String> selectedGroupPath = new ArrayList<String>(selectedUrl.getGroupPath());
+        final ArrayList<String> selectedGroupPath = new ArrayList<>(selectedUrl.getGroupPath());
         final Object component = selectedUrl.getComponent();
         if (component instanceof Group) {
           selectedGroupPath.add(((Group)component).getName());
@@ -773,7 +773,7 @@ public class CustomizableActionsPanel {
       TreePath[] paths = myTree.getSelectionPaths();
       if (paths == null) return null;
 
-      Set<Object> actions = new HashSet<Object>();
+      Set<Object> actions = new HashSet<>();
       for (TreePath path : paths) {
         Object node = path.getLastPathComponent();
         if (node instanceof DefaultMutableTreeNode) {

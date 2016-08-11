@@ -66,7 +66,7 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
     final DuplicatesProfile profile = DuplicatesIndex.findDuplicatesProfile(psiFile.getFileType());
     if (profile == null) return ProblemDescriptor.EMPTY_ARRAY;
 
-    final Ref<DuplicatedCodeProcessor> myProcessorRef = new Ref<DuplicatedCodeProcessor>();
+    final Ref<DuplicatedCodeProcessor> myProcessorRef = new Ref<>();
 
     final FileASTNode node = psiFile.getNode();
     boolean usingLightProfile = profile instanceof LightDuplicateProfile &&
@@ -181,7 +181,7 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
 
     DuplicatedCodeProcessor<?> processor = myProcessorRef.get();
 
-    final SmartList<ProblemDescriptor> descriptors = new SmartList<ProblemDescriptor>();
+    final SmartList<ProblemDescriptor> descriptors = new SmartList<>();
 
     if (processor != null) {
       final VirtualFile baseDir = psiFile.getProject().getBaseDir();
@@ -226,9 +226,9 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
   }
 
   static abstract class DuplicatedCodeProcessor<T> implements FileBasedIndex.ValueProcessor<TIntArrayList> {
-    final TreeMap<Integer, TextRange> reportedRanges = new TreeMap<Integer, TextRange>();
-    final TIntObjectHashMap<VirtualFile> reportedFiles = new TIntObjectHashMap<VirtualFile>();
-    final TIntObjectHashMap<PsiElement> reportedPsi = new TIntObjectHashMap<PsiElement>();
+    final TreeMap<Integer, TextRange> reportedRanges = new TreeMap<>();
+    final TIntObjectHashMap<VirtualFile> reportedFiles = new TIntObjectHashMap<>();
+    final TIntObjectHashMap<PsiElement> reportedPsi = new TIntObjectHashMap<>();
     final TIntIntHashMap reportedOffsetInOtherFiles = new TIntIntHashMap();
     final TIntIntHashMap fragmentSize = new TIntIntHashMap();
     final TIntLongHashMap fragmentHash = new TIntLongHashMap();

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.folding.impl;
 
+import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.folding.NamedFoldingDescriptor;
 import com.intellij.openapi.util.Couple;
@@ -27,12 +28,11 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-public class ParameterNameFoldingManager {
-  private static final int MIN_NAME_LENGTH_THRESHOLD = 3;
-  private static final int MIN_ARGS_TO_FOLD = 2;
-
+class ParameterNameFoldingManager {
   private static final List<Couple<String>> COMMONLY_USED_PARAMETER_PAIR = ContainerUtil.newArrayList(
     Couple.of("begin", "end"),
     Couple.of("start", "end"),
@@ -43,16 +43,27 @@ public class ParameterNameFoldingManager {
     Couple.of("min", "max")
   );
 
-  private final PsiCallExpression myCallExpression;
+  @NotNull
+  private final List<FoldingDescriptor> myDescriptors;
 
-  private PsiExpression[] myCallArguments;
-  private PsiParameter[] myParameters;
+  ParameterNameFoldingManager(@NotNull PsiCallExpression callExpression) {
+    PsiExpression[] callArguments = getArguments(callExpression);
+    JavaResolveResult resolveResult = callExpression.resolveMethodGenerics();
 
-  public ParameterNameFoldingManager(@NotNull PsiCallExpression callExpression) {
-    myCallExpression = callExpression;
+    JavaCodeFoldingSettings settings = JavaCodeFoldingSettings.getInstance();
+    List<FoldingDescriptor> descriptors = Collections.emptyList();
+    if (callArguments.length >= settings.getInlineLiteralParameterMinArgumentsToFold() &&
+        hasLiteralExpression(callArguments) &&
+        resolveResult.getElement() instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)resolveResult.getElement();
+      PsiParameter[] parameters = method.getParameterList().getParameters();
+      descriptors = buildDescriptorsForLiteralArguments(callArguments, parameters, resolveResult);
+    }
+
+    myDescriptors = descriptors;
   }
 
-  public static boolean isLiteralExpression(@Nullable PsiElement callArgument) {
+  static boolean isLiteralExpression(@Nullable PsiElement callArgument) {
     if (callArgument instanceof PsiLiteralExpression)
       return true;
 
@@ -66,43 +77,32 @@ public class ParameterNameFoldingManager {
     return false;
   }
 
-  @Nullable
-  public PsiExpression[] getArguments(@NotNull PsiCallExpression call) {
+  @NotNull
+  private static PsiExpression[] getArguments(@NotNull PsiCallExpression call) {
     PsiExpressionList callArgumentsList = call.getArgumentList();
-    return callArgumentsList != null ? callArgumentsList.getExpressions() : null;
+    return callArgumentsList == null ? PsiExpression.EMPTY_ARRAY : callArgumentsList.getExpressions();
   }
 
   @NotNull
-  public List<FoldingDescriptor> buildDescriptors() {
-    myCallArguments = getArguments(myCallExpression);
-
-    if (myCallArguments != null && myCallArguments.length >= MIN_ARGS_TO_FOLD && hasLiteralExpression(myCallArguments)) {
-      PsiMethod method = myCallExpression.resolveMethod();
-
-      if (method != null) {
-        myParameters = method.getParameterList().getParameters();
-        if (myParameters.length == myCallArguments.length) {
-          return buildDescriptorsForLiteralArguments();
-        }
-      }
-    }
-
-    return ContainerUtil.emptyList();
+  List<FoldingDescriptor> getDescriptors() {
+    return myDescriptors;
   }
 
   @NotNull
-  private List<FoldingDescriptor> buildDescriptorsForLiteralArguments() {
-    List<FoldingDescriptor> descriptors = ContainerUtil.newArrayList();
+  private static List<FoldingDescriptor> buildDescriptorsForLiteralArguments(@NotNull PsiExpression[] callArguments,
+                                                                             @NotNull PsiParameter[] parameters,
+                                                                             @NotNull JavaResolveResult resolveResult) {
+    List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
 
     int i = 0;
-    while (i < myCallArguments.length) {
-      if (i + 1 < myCallArguments.length && isCommonlyNamedParameterPair(i, i + 1)) {
+    while (i < callArguments.length && i < parameters.length) {
+      if (i + 1 < callArguments.length && isCommonlyNamedParameterPair(i, i + 1, parameters)) {
         i += 2;
         continue;
       }
 
-      if (shouldInlineParameterName(i)) {
-        descriptors.add(createFoldingDescriptor(myCallArguments[i], myParameters[i]));
+      if (!(parameters[i].getType() instanceof PsiEllipsisType) && shouldInlineParameterName(i, callArguments, parameters, resolveResult)) {
+        descriptors.add(createFoldingDescriptor(callArguments[i], parameters[i]));
       }
       i++;
     }
@@ -112,16 +112,17 @@ public class ParameterNameFoldingManager {
 
   @NotNull
   private static NamedFoldingDescriptor createFoldingDescriptor(@NotNull PsiExpression callArgument, @NotNull PsiParameter methodParam) {
-    TextRange range = callArgument.getTextRange();
-    String placeholderText = methodParam.getName() + ": " + callArgument.getText();
-    return new NamedFoldingDescriptor(callArgument, range.getStartOffset(), range.getEndOffset(), null, placeholderText);
+    PsiElement lParenOrCommaOrWhitespaceOrComment = callArgument.getPrevSibling();
+    TextRange range = lParenOrCommaOrWhitespaceOrComment.getTextRange();
+    String placeholderText = StringUtil.last(lParenOrCommaOrWhitespaceOrComment.getText(), 1, false) + methodParam.getName() + ": ";
+    return new NamedFoldingDescriptor(callArgument, range.getEndOffset()-1, range.getEndOffset(), null, placeholderText);
   }
 
-  private boolean isCommonlyNamedParameterPair(int first, int second) {
-    assert first < myParameters.length && second < myParameters.length;
+  private static boolean isCommonlyNamedParameterPair(int first, int second, PsiParameter[] parameters) {
+    if (!(first < parameters.length && second < parameters.length)) return false;
 
-    String firstParamName = myParameters[first].getName();
-    String secondParamName = myParameters[second].getName();
+    String firstParamName = parameters[first].getName();
+    String secondParamName = parameters[second].getName();
     if (firstParamName == null || secondParamName == null) return false;
 
     for (Couple<String> knownPair : COMMONLY_USED_PARAMETER_PAIR) {
@@ -134,13 +135,18 @@ public class ParameterNameFoldingManager {
     return false;
   }
 
-  private boolean shouldInlineParameterName(int paramIndex) {
-    PsiExpression argument = myCallArguments[paramIndex];
+  private static boolean shouldInlineParameterName(int paramIndex,
+                                                   @NotNull PsiExpression[] callArguments,
+                                                   @NotNull PsiParameter[] parameters,
+                                                   @NotNull JavaResolveResult resolveResult) {
+    PsiExpression argument = callArguments[paramIndex];
     if (isLiteralExpression(argument) && argument.getType() != null) {
-      PsiParameter parameter = myParameters[paramIndex];
+      PsiParameter parameter = parameters[paramIndex];
       String paramName = parameter.getName();
-      if (paramName != null && paramName.length() >= MIN_NAME_LENGTH_THRESHOLD) {
-        return TypeConversionUtil.isAssignable(parameter.getType(), argument.getType());
+      JavaCodeFoldingSettings settings = JavaCodeFoldingSettings.getInstance();
+      if (paramName != null && paramName.length() >= settings.getInlineLiteralParameterMinNameLength()) {
+        PsiType parameterType = resolveResult.getSubstitutor().substitute(parameter.getType());
+        return TypeConversionUtil.isAssignable(parameterType, argument.getType());
       }
     }
     return false;

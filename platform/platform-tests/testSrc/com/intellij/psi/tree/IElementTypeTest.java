@@ -48,9 +48,9 @@ public class IElementTypeTest extends LightPlatformCodeInsightFixtureTestCase {
     LanguageExtensionPoint[] extensions = Extensions.getExtensions(new ExtensionPointName<LanguageExtensionPoint>("com.intellij.lang.parserDefinition"));
     System.out.println("ParserDefinitions: " + extensions.length);
 
-    THashMap<Language, String> languageMap = new THashMap<Language, String>();
+    THashMap<Language, String> languageMap = new THashMap<>();
     languageMap.put(Language.ANY, "platform");
-    final TObjectIntHashMap<String> map = new TObjectIntHashMap<String>();
+    final TObjectIntHashMap<String> map = new TObjectIntHashMap<>();
     for (LanguageExtensionPoint e : extensions) {
       String key = e.getPluginDescriptor().getPluginId().getIdString();
       int curCount = IElementType.getAllocatedTypesCount();
@@ -122,8 +122,8 @@ public class IElementTypeTest extends LightPlatformCodeInsightFixtureTestCase {
   public void testManipulatorRegistered() {
     LanguageExtensionPoint[] extensions =
       Extensions.getExtensions(new ExtensionPointName<LanguageExtensionPoint>("com.intellij.lang.parserDefinition"));
-    Set<String> classes = new HashSet<String>();
-    List<String> failures = new ArrayList<String>();
+    Set<String> classes = new HashSet<>();
+    List<String> failures = new ArrayList<>();
     int total = 0;
     for (LanguageExtensionPoint e : extensions) {
       ParserDefinition definition = (ParserDefinition)e.getInstance();

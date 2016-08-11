@@ -60,7 +60,7 @@ public class MavenFoldersImporter {
 
     AccessToken accessToken = WriteAction.start();
     try {
-      List<ModifiableRootModel> rootModels = new ArrayList<ModifiableRootModel>();
+      List<ModifiableRootModel> rootModels = new ArrayList<>();
       for (Module each : ModuleManager.getInstance(project).getModules()) {
         MavenProject mavenProject = manager.findProject(each);
         if (mavenProject == null) continue;
@@ -111,7 +111,7 @@ public class MavenFoldersImporter {
   }
 
   private void configSourceFolders() {
-    final MultiMap<JpsModuleSourceRootType<?>, String> roots = new LinkedMultiMap<JpsModuleSourceRootType<?>, String>();
+    final MultiMap<JpsModuleSourceRootType<?>, String> roots = new LinkedMultiMap<>();
 
     roots.putValues(JavaSourceRootType.SOURCE, myMavenProject.getSources());
     roots.putValues(JavaSourceRootType.TEST_SOURCE, myMavenProject.getTestSources());
@@ -130,7 +130,7 @@ public class MavenFoldersImporter {
     addBuilderHelperPaths("add-source", roots.getModifiable(JavaSourceRootType.SOURCE));
     addBuilderHelperPaths("add-test-source", roots.getModifiable(JavaSourceRootType.TEST_SOURCE));
 
-    List<String> addedPaths = new ArrayList<String>();
+    List<String> addedPaths = new ArrayList<>();
     for (JpsModuleSourceRootType<?> type : roots.keySet()) {
       for (String path : roots.get(type)) {
         addSourceFolderIfNotOverlap(path, type, addedPaths);
@@ -216,7 +216,7 @@ public class MavenFoldersImporter {
       }
     }
 
-    List<String> facetExcludes = new ArrayList<String>();
+    List<String> facetExcludes = new ArrayList<>();
     for (MavenImporter each : MavenImporter.getSuitableImporters(myMavenProject)) {
       each.collectExcludedFolders(myMavenProject, facetExcludes);
     }

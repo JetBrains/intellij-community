@@ -63,11 +63,11 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
                             final UsageInfo[] usages,
                             @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
     PsiMethod method = (PsiMethod) psiElement;
-    Set<PsiMethod> methodAndOverriders = new HashSet<PsiMethod>();
-    Set<PsiClass> containingClasses = new HashSet<PsiClass>();
-    LinkedHashSet<PsiElement> renamedReferences = new LinkedHashSet<PsiElement>();
-    List<MemberHidesOuterMemberUsageInfo> outerHides = new ArrayList<MemberHidesOuterMemberUsageInfo>();
-    List<MemberHidesStaticImportUsageInfo> staticImportHides = new ArrayList<MemberHidesStaticImportUsageInfo>();
+    Set<PsiMethod> methodAndOverriders = new HashSet<>();
+    Set<PsiClass> containingClasses = new HashSet<>();
+    LinkedHashSet<PsiElement> renamedReferences = new LinkedHashSet<>();
+    List<MemberHidesOuterMemberUsageInfo> outerHides = new ArrayList<>();
+    List<MemberHidesStaticImportUsageInfo> staticImportHides = new ArrayList<>();
 
     methodAndOverriders.add(method);
     containingClasses.add(method.getContainingClass());

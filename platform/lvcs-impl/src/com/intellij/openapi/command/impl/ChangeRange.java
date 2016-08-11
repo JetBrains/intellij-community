@@ -44,8 +44,8 @@ public class ChangeRange {
   }
 
   public ChangeRange revert(ChangeRange reverse) throws IOException {
-    final Ref<Long> first = new Ref<Long>();
-    final Ref<Long> last = new Ref<Long>();
+    final Ref<Long> first = new Ref<>();
+    final Ref<Long> last = new Ref<>();
     LocalHistoryFacade.Listener l = new LocalHistoryFacade.Listener() {
       public void changeAdded(Change c) {
         if (first.isNull()) first.set(c.getId());

@@ -64,7 +64,7 @@ public class GroovyImportHelper {
   }
 
   public static LinkedHashSet<String> getImplicitlyImportedPackages(@NotNull GroovyFile file) {
-    final LinkedHashSet<String> result = new LinkedHashSet<String>();
+    final LinkedHashSet<String> result = new LinkedHashSet<>();
     ContainerUtil.addAll(result, GroovyFileBase.IMPLICITLY_IMPORTED_PACKAGES);
 
     for (GrImportContributor contributor : GrImportContributor.EP_NAME.getExtensions()) {

@@ -110,7 +110,7 @@ public class EditorHyperlinkSupport {
 
   @Deprecated
   public Map<RangeHighlighter, HyperlinkInfo> getHyperlinks() {
-    LinkedHashMap<RangeHighlighter, HyperlinkInfo> result = new LinkedHashMap<RangeHighlighter, HyperlinkInfo>();
+    LinkedHashMap<RangeHighlighter, HyperlinkInfo> result = new LinkedHashMap<>();
     for (RangeHighlighter highlighter : getHyperlinks(0, myEditor.getDocument().getTextLength(), myEditor)) {
       HyperlinkInfo info = getHyperlinkInfo(highlighter);
       if (info != null) {
@@ -175,14 +175,14 @@ public class EditorHyperlinkSupport {
 
   public static List<RangeHighlighter> getHyperlinks(int startOffset, int endOffset, final Editor editor) {
     final MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
-    final CommonProcessors.CollectProcessor<RangeHighlighterEx> processor = new CommonProcessors.CollectProcessor<RangeHighlighterEx>();
+    final CommonProcessors.CollectProcessor<RangeHighlighterEx> processor = new CommonProcessors.CollectProcessor<>();
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset,
-                                                        new FilteringProcessor<RangeHighlighterEx>(
+                                                        new FilteringProcessor<>(
                                                           rangeHighlighterEx -> HYPERLINK_LAYER == rangeHighlighterEx.getLayer() &&
-                                                                              rangeHighlighterEx.isValid() &&
-                                                                 getHyperlinkInfo(rangeHighlighterEx) != null, processor)
+                                                                                rangeHighlighterEx.isValid() &&
+                                                                                getHyperlinkInfo(rangeHighlighterEx) != null, processor)
     );
-    return new ArrayList<RangeHighlighter>(processor.getResults());
+    return new ArrayList<>(processor.getResults());
   }
 
   public void removeHyperlink(@NotNull RangeHighlighter hyperlink) {

@@ -172,14 +172,8 @@ public final class LanguageConsoleBuilder {
 
   @NotNull
   public LanguageConsoleView build(@NotNull Project project, @NotNull Language language) {
-    return build(project, language, null);
-  }
-
-  @NotNull
-  public LanguageConsoleView build(@NotNull Project project, @NotNull Language language, @Nullable VirtualFile virtualFileToReuse) {
-    final VirtualFile virtualFile =
-      virtualFileToReuse != null ? virtualFileToReuse : new LightVirtualFile(language.getDisplayName() + " Console", language, "");
-    GutteredLanguageConsole consoleView = new GutteredLanguageConsole(new MyHelper(project, virtualFile, psiFileFactory), gutterContentProvider);
+    final MyHelper helper = new MyHelper(project, language.getDisplayName() + " Console", language, psiFileFactory);
+    GutteredLanguageConsole consoleView = new GutteredLanguageConsole(helper, gutterContentProvider);
     if (oneLineInput) {
       consoleView.getConsoleEditor().setOneLineMode(true);
     }
@@ -205,10 +199,11 @@ public final class LanguageConsoleBuilder {
 
     GutteredLanguageConsole console;
 
-    public MyHelper(@NotNull Project project,
-                    @NotNull VirtualFile virtualFile,
+    public MyHelper(@NotNull  Project project,
+                    @NotNull String title,
+                    @NotNull Language language,
                     @Nullable PairFunction<VirtualFile, Project, PsiFile> psiFileFactory) {
-      super(project, virtualFile);
+      super(project, new LightVirtualFile(title, language, ""));
       this.psiFileFactory = psiFileFactory;
     }
 
@@ -321,6 +316,14 @@ public final class LanguageConsoleBuilder {
     @Override
     protected void doAddPromptToHistory() {
       gutterContentProvider.beforeEvaluate(getHistoryViewer());
+    }
+
+    @Override
+    public void dispose() {
+      final PsiFile file = getFile();
+      DaemonCodeAnalyzer.getInstance(file.getProject()).setHighlightingEnabled(file, true);
+
+      super.dispose();
     }
 
     private final class GutterUpdateScheduler extends DocumentAdapter implements DocumentBulkUpdateListener {

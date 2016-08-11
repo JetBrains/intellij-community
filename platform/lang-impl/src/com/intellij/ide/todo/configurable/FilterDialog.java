@@ -57,7 +57,7 @@ class FilterDialog extends DialogWrapper {
     myFilterIndex = filterIndex;
     myFilters = filters;
     myNameField = new JBTextField(filter.getName());
-    CheckBoxList<TodoPattern> patternsList = new CheckBoxList<TodoPattern>();
+    CheckBoxList<TodoPattern> patternsList = new CheckBoxList<>();
     patternsList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     patternsList.setCheckBoxListListener((int index, boolean value) -> {
       if (value) {

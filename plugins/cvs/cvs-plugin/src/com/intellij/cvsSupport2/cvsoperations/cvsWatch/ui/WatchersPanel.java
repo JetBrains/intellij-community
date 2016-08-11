@@ -32,8 +32,8 @@ import java.util.List;
  */
 public class WatchersPanel extends JPanel{
 
-  private final ListTableModel<WatcherInfo> myModel = new ListTableModel<WatcherInfo>(COLUMNS);
-  private final TableView<WatcherInfo> myTable = new TableView<WatcherInfo>(myModel);
+  private final ListTableModel<WatcherInfo> myModel = new ListTableModel<>(COLUMNS);
+  private final TableView<WatcherInfo> myTable = new TableView<>(myModel);
 
   private final static ColumnInfo<WatcherInfo, String> USER = new ColumnInfo<WatcherInfo, String>(CvsBundle.message("view.watchers.user.column.name")){
     public String valueOf(WatcherInfo object) {

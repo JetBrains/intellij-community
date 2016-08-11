@@ -47,7 +47,7 @@ public class JavaFxUnusedImportsInspection extends XmlSuppressableInspectionTool
     if (!JavaFxFileTypeFactory.isFxml(file)) return null;
     final XmlDocument document = ((XmlFile)file).getDocument();
     if (document == null) return null;
-    final Set<String> usedNames = new HashSet<String>();
+    final Set<String> usedNames = new HashSet<>();
     file.accept(new JavaFxImportsOptimizer.JavaFxUsedClassesVisitor() {
       @Override
       protected void appendClassName(String fqn) {
@@ -66,10 +66,10 @@ public class JavaFxUnusedImportsInspection extends XmlSuppressableInspectionTool
 
     final InspectionManager inspectionManager = InspectionManager.getInstance(file.getProject());
 
-    final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
+    final List<ProblemDescriptor> problems = new ArrayList<>();
     final Collection<XmlProcessingInstruction> instructions =
       PsiTreeUtil.findChildrenOfType(document.getProlog(), XmlProcessingInstruction.class);
-    final Map<String, XmlProcessingInstruction> targetProcessingInstructions = new LinkedHashMap<String, XmlProcessingInstruction>();
+    final Map<String, XmlProcessingInstruction> targetProcessingInstructions = new LinkedHashMap<>();
     for (XmlProcessingInstruction instruction : instructions) {
       final String target = JavaFxPsiUtil.getInstructionTarget("import", instruction);
       if (target != null) {

@@ -64,8 +64,8 @@ public abstract class ScopesChooser extends ComboBoxAction implements DumbAware 
   public DefaultActionGroup createPopupActionGroup(final JComponent component) {
     final DefaultActionGroup group = new DefaultActionGroup();
 
-    final List<NamedScope> predefinedScopes = new ArrayList<NamedScope>();
-    final List<NamedScope> customScopes = new ArrayList<NamedScope>();
+    final List<NamedScope> predefinedScopes = new ArrayList<>();
+    final List<NamedScope> customScopes = new ArrayList<>();
     for (final NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(myProject)) {
       Collections.addAll(customScopes, holder.getEditableScopes());
       predefinedScopes.addAll(holder.getPredefinedScopes());

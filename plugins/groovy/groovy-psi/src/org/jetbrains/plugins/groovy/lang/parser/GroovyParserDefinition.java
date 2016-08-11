@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,7 +108,10 @@ public class GroovyParserDefinition implements ParserDefinition {
     else if (lType == MODIFIERS && rType == MODIFIERS) {
       return SpaceRequirements.MUST;
     }
-    if (lType == GroovyTokenTypes.mSEMI || lType == GroovyTokenTypes.mSL_COMMENT) {
+    if (lType == GroovyTokenTypes.mSEMI) {
+      return SpaceRequirements.MAY;
+    }
+    if (lType == GroovyTokenTypes.mSL_COMMENT) {
       return SpaceRequirements.MUST_LINE_BREAK;
     }
     if (lType == GroovyTokenTypes.mNLS || lType == GroovyDocTokenTypes.mGDOC_COMMENT_START) {

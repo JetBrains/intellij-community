@@ -332,7 +332,7 @@ public class MavenDomUtil {
         if (resourceDir == null) continue;
 
         if (set == null) {
-          set = new HashSet<VirtualFile>();
+          set = new HashSet<>();
         }
 
         set.add(resourceDir);

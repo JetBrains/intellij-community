@@ -53,7 +53,7 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
   /**
    * The task delayed until end of the primary action. These tasks happen after repository refresh.
    */
-  final List<TransactionRunnable> myDelayedTasks = new ArrayList<TransactionRunnable>();
+  final List<TransactionRunnable> myDelayedTasks = new ArrayList<>();
 
   public void actionPerformed(@NotNull final AnActionEvent e) {
     myDelayedTasks.clear();
@@ -64,10 +64,10 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
     if (roots == null) return;
 
     final VirtualFile defaultRoot = getDefaultRoot(project, roots, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
-    final Set<VirtualFile> affectedRoots = new HashSet<VirtualFile>();
+    final Set<VirtualFile> affectedRoots = new HashSet<>();
     String actionName = getActionName();
 
-    List<VcsException> exceptions = new ArrayList<VcsException>();
+    List<VcsException> exceptions = new ArrayList<>();
     try {
       perform(project, roots, defaultRoot, affectedRoots, exceptions);
     }

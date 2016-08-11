@@ -324,7 +324,7 @@ public class SubstitutionHandler extends MatchingHandler {
 
             if (handler.match(patternNode, matchedNode, context)) {
               ++matchedOccurs;
-              if (matchedElements == null) matchedElements = new HashSet<PsiElement>();
+              if (matchedElements == null) matchedElements = new HashSet<>();
               matchedElements.add(matchedNode);
               if (handler.shouldAdvanceThePatternFor(patternNode, matchedNode)) {
                 break;

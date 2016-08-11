@@ -51,7 +51,7 @@ public class ExtensionPointBeanClassInspection extends BasicDomElementsInspectio
   }
 
   public static List<PsiField> collectMissingWithTags(ExtensionPoint element) {
-    final List<PsiField> result = new ArrayList<PsiField>();
+    final List<PsiField> result = new ArrayList<>();
     PsiClass beanClass = element.getBeanClass().getValue();
     if (beanClass != null) {
       for (PsiField field : beanClass.getAllFields()) {

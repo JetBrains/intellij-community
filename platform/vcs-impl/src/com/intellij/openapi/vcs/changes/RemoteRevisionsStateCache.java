@@ -43,9 +43,9 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
 
   RemoteRevisionsStateCache(final Project project) {
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
-    myChanged = new HashMap<String, Pair<Boolean, VcsRoot>>();
-    myQueries = new MultiMap<VcsRoot, String>();
-    myTs = new HashMap<VcsRoot, Long>();
+    myChanged = new HashMap<>();
+    myQueries = new MultiMap<>();
+    myTs = new HashMap<>();
     myLock = new Object();
     myVcsConfiguration = VcsConfiguration.getInstance(project);
   }
@@ -104,7 +104,7 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
   }
 
   public boolean updateStep() {
-    final MultiMap<VcsRoot, String> dirty = new MultiMap<VcsRoot, String>();
+    final MultiMap<VcsRoot, String> dirty = new MultiMap<>();
     final long oldPoint = System.currentTimeMillis() - (myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL > 0 ?
                                                         myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL * 60000 : DISCRETE);
 
@@ -119,7 +119,7 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
       myQueries.clear();
 
       // collect roots for which cache update should be performed (by timestamp)
-      final Set<VcsRoot> roots = new HashSet<VcsRoot>();
+      final Set<VcsRoot> roots = new HashSet<>();
       for (Map.Entry<VcsRoot, Long> entry : myTs.entrySet()) {
         // ignore timestamp, as still remote changes checking is required
         // TODO: why not to add in roots anyway??? - as dirty is still checked when adding myChanged files.
@@ -145,7 +145,7 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
 
     if (dirty.isEmpty()) return false;
 
-    final Map<String, Pair<Boolean, VcsRoot>> results = new HashMap<String, Pair<Boolean, VcsRoot>>();
+    final Map<String, Pair<Boolean, VcsRoot>> results = new HashMap<>();
     for (VcsRoot vcsRoot : dirty.keySet()) {
       // todo - actually it means nothing since the only known VCS to use this scheme is Git and now it always allow
       // todo - background operations. when it changes, develop more flexible behavior here
@@ -158,7 +158,7 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
       for (String path : paths) {
         // TODO: Contains invoked for each file - better to use Set (implementations just use List)
         // TODO: Why to store boolean for changed or not - why not just remove such values from myChanged???
-        results.put(path, new Pair<Boolean, VcsRoot>(remotelyChanged.contains(path), vcsRoot));
+        results.put(path, new Pair<>(remotelyChanged.contains(path), vcsRoot));
       }
     }
 

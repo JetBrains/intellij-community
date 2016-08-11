@@ -53,7 +53,7 @@ public class ExternalDependenciesManagerImpl extends ExternalDependenciesManager
     //noinspection unchecked
     return ((Comparable)o1).compareTo(o2);
   };
-  private List<ProjectExternalDependency> myDependencies = new ArrayList<ProjectExternalDependency>();
+  private List<ProjectExternalDependency> myDependencies = new ArrayList<>();
   
   @NotNull
   @Override
@@ -86,7 +86,7 @@ public class ExternalDependenciesManagerImpl extends ExternalDependenciesManager
 
   @Override
   public void loadState(ExternalDependenciesState state) {
-    ArrayList<ProjectExternalDependency> oldDependencies = new ArrayList<ProjectExternalDependency>(myDependencies);
+    ArrayList<ProjectExternalDependency> oldDependencies = new ArrayList<>(myDependencies);
     myDependencies.clear();
     for (DependencyOnPluginState dependency : state.myDependencies) {
       myDependencies.add(new DependencyOnPlugin(dependency.myId, dependency.myMinVersion, dependency.myMaxVersion, dependency.myChannel));
@@ -104,6 +104,6 @@ public class ExternalDependenciesManagerImpl extends ExternalDependenciesManager
   public static class ExternalDependenciesState {
     @Property(surroundWithTag = false)
     @AbstractCollection(surroundWithTag = false)
-    public List<DependencyOnPluginState> myDependencies = new ArrayList<DependencyOnPluginState>();
+    public List<DependencyOnPluginState> myDependencies = new ArrayList<>();
   }
 }

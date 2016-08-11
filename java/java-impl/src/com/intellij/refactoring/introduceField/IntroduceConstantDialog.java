@@ -195,7 +195,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     myNameSuggestionPanel.add(myNameField.getComponent(), BorderLayout.CENTER);
     myNameSuggestionLabel.setLabelFor(myNameField.getFocusableComponent());
 
-    Set<String> possibleClassNames = new LinkedHashSet<String>();
+    Set<String> possibleClassNames = new LinkedHashSet<>();
     for (final PsiExpression occurrence : myOccurrences) {
       final PsiClass parentClass = new IntroduceConstantHandler().getParentClass(occurrence);
       if (parentClass != null && parentClass.getQualifiedName() != null) {
@@ -387,7 +387,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     else {
       UIUtil.setEnabled(myVisibilityPanel, true, true);
       // exclude all modifiers not visible from all occurrences
-      final Set<String> visible = new THashSet<String>();
+      final Set<String> visible = new THashSet<>();
       visible.add(PsiModifier.PRIVATE);
       visible.add(PsiModifier.PROTECTED);
       visible.add(PsiModifier.PACKAGE_LOCAL);

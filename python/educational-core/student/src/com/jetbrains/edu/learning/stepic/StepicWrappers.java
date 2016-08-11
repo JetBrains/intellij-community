@@ -55,7 +55,7 @@ public class StepicWrappers {
     public static StepOptions fromTask(final Project project, @NotNull final Task task) {
       final StepOptions source = new StepOptions();
       setTests(task, source, project);
-      source.files = new ArrayList<TaskFile>();
+      source.files = new ArrayList<>();
       source.title = task.getName();
       for (final Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
         ApplicationManager.getApplication().runWriteAction(() -> {
@@ -106,7 +106,7 @@ public class StepicWrappers {
         });
       }
       else {
-        source.test = new ArrayList<TestFileWrapper>();
+        source.test = new ArrayList<>();
         for (Map.Entry<String, String> entry : testsText.entrySet()) {
           source.test.add(new TestFileWrapper(entry.getKey(), entry.getValue()));
         }
@@ -120,7 +120,7 @@ public class StepicWrappers {
 
     @Nullable
     public String getTemplateForLanguage(@NotNull final String langauge) {
-      if (langauge.equals(EduAdaptiveStepicConnector.PYTHON27)) {
+      if (langauge.equals(EduAdaptiveStepicConnector.PYTHON2)) {
         return python27;
       }
 
@@ -164,7 +164,7 @@ public class StepicWrappers {
       this.lesson = new Lesson();
       this.lesson.setName(lesson.getName());
       this.lesson.setId(lesson.getId());
-      this.lesson.steps = new ArrayList<Integer>();
+      this.lesson.steps = new ArrayList<>();
     }
   }
 

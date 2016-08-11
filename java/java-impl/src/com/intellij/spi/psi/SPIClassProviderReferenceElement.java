@@ -47,7 +47,7 @@ public class SPIClassProviderReferenceElement extends SPIPackageOrClassReference
     final String name = getContainingFile().getName();
     final PsiClass superProvider = JavaPsiFacade.getInstance(getProject()).findClass(name, getResolveScope());
     if (superProvider != null) {
-      final List<Object> result = new ArrayList<Object>();
+      final List<Object> result = new ArrayList<>();
       ClassInheritorsSearch.search(superProvider).forEach(psiClass -> {
         if (!psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
           final String jvmClassName = ClassUtil.getJVMClassName(psiClass);

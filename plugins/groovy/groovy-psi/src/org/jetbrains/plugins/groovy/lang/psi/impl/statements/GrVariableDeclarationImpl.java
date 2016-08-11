@@ -179,7 +179,7 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> impl
 
   @Override
   public GrMember[] getMembers() {
-    List<GrMember> result = new ArrayList<GrMember>();
+    List<GrMember> result = new ArrayList<>();
     for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (cur instanceof GrMember) result.add((GrMember)cur);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags;
@@ -35,7 +36,7 @@ import java.util.List;
 public class GrLightModifierList extends LightElement implements GrModifierList {
 
   private int myModifiers;
-  private final List<GrAnnotation> myAnnotations = new ArrayList<GrAnnotation>();
+  private final List<GrAnnotation> myAnnotations = new ArrayList<>();
 
   private final PsiElement myParent;
 
@@ -169,6 +170,12 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
   @NotNull
   public PsiElement[] getModifiers() {
     return PsiElement.EMPTY_ARRAY;
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getModifier(@GrModifier.GrModifierConstant @NotNull @NonNls String name) {
+    return null;
   }
 
   @Override

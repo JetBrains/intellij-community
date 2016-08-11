@@ -91,7 +91,7 @@ public class HgVFSListener extends VcsVFSListener {
     }
     // exclude files which are ignored in .hgignore in background and execute adding after that
     final Map<VirtualFile, Collection<VirtualFile>> sortedFiles = HgUtil.sortByHgRoots(myProject, addedFiles);
-    final HashSet<VirtualFile> untrackedFiles = new HashSet<VirtualFile>();
+    final HashSet<VirtualFile> untrackedFiles = new HashSet<>();
     new Task.Backgroundable(myProject, HgVcsMessages.message("hg4idea.progress.checking.ignored"), false) {
       @Override
       public void run(@NotNull ProgressIndicator pi) {
@@ -102,7 +102,7 @@ public class HgVFSListener extends VcsVFSListener {
           try {
             untrackedFiles
               .addAll(new HgStatusCommand.Builder(false).unknown(true).removed(true).build(myProject)
-                        .getHgUntrackedFiles(repo, new ArrayList<VirtualFile>(files)));
+                        .getHgUntrackedFiles(repo, new ArrayList<>(files)));
           }
           catch (final VcsException ex) {
             UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -144,11 +144,11 @@ public class HgVFSListener extends VcsVFSListener {
                                false,
                                VcsConfiguration.getInstance(myProject).getAddRemoveOption() ) {
       @Override public void run(@NotNull ProgressIndicator aProgressIndicator) {
-        final ArrayList<VirtualFile> adds = new ArrayList<VirtualFile>();
-        final HashMap<VirtualFile, VirtualFile> copies = new HashMap<VirtualFile, VirtualFile>(); // from -> to
+        final ArrayList<VirtualFile> adds = new ArrayList<>();
+        final HashMap<VirtualFile, VirtualFile> copies = new HashMap<>(); // from -> to
         //delete unversioned and ignored files from copy source
         LOG.assertTrue(myProject != null, "Project is null");
-        Collection<VirtualFile> unversionedAndIgnoredFiles = new ArrayList<VirtualFile>();
+        Collection<VirtualFile> unversionedAndIgnoredFiles = new ArrayList<>();
         final Map<VirtualFile, Collection<VirtualFile>> sortedSourceFilesByRepos = HgUtil.sortByHgRoots(myProject, copyFromMap.values());
         HgStatusCommand statusCommand = new HgStatusCommand.Builder(false).unknown(true).ignored(true).build(myProject);
         for (Map.Entry<VirtualFile, Collection<VirtualFile>> entry : sortedSourceFilesByRepos.entrySet()) {
@@ -221,8 +221,8 @@ public class HgVFSListener extends VcsVFSListener {
   }
 
   protected void executeDelete() {
-    final List<FilePath> filesToDelete = new ArrayList<FilePath>(myDeletedWithoutConfirmFiles);
-    final List<FilePath> filesToConfirmDeletion = new ArrayList<FilePath>(myDeletedFiles);
+    final List<FilePath> filesToDelete = new ArrayList<>(myDeletedWithoutConfirmFiles);
+    final List<FilePath> filesToConfirmDeletion = new ArrayList<>(myDeletedFiles);
     myDeletedWithoutConfirmFiles.clear();
     myDeletedFiles.clear();
 
@@ -252,7 +252,7 @@ public class HgVFSListener extends VcsVFSListener {
             filesToDelete.addAll(filesToConfirmDeletion);
           }
           else {
-            final AtomicReference<Collection<FilePath>> filePaths = new AtomicReference<Collection<FilePath>>();
+            final AtomicReference<Collection<FilePath>> filePaths = new AtomicReference<>();
             ApplicationManager.getApplication().invokeAndWait(new Runnable() {
                 @Override public void run() {
                   filePaths.set(selectFilePathsToDelete(filesToConfirmDeletion));
@@ -288,7 +288,7 @@ public class HgVFSListener extends VcsVFSListener {
 
   @Override
   protected void performDeletion( final List<FilePath> filesToDelete) {
-    final ArrayList<HgFile> deletes = new ArrayList<HgFile>();
+    final ArrayList<HgFile> deletes = new ArrayList<>();
     for (FilePath file : filesToDelete) {
       if (file.isDirectory()) {
         continue;

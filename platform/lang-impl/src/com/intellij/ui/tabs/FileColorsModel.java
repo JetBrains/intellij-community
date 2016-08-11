@@ -55,14 +55,14 @@ public class FileColorsModel implements Cloneable {
   private static final Map<String, String> predefinedScopeNameToColor;
 
   static {
-    predefinedScopeNameToPropertyKey = new THashMap<String, String>();
+    predefinedScopeNameToPropertyKey = new THashMap<>();
     predefinedScopeNameToPropertyKey.put(NonProjectFilesScope.NAME, "file.colors.enable.non.project");
     // These IDEs have TestScope registered (via PackagesScopesProvider or TestScopeProvider)
     if (PlatformUtils.isIntelliJ() || PlatformUtils.isRubyMine() || PlatformUtils.isPhpStorm() || PlatformUtils.isWebStorm()) {
         predefinedScopeNameToPropertyKey.put(TestsScope.NAME, "file.colors.enable.tests");
     }
 
-    predefinedScopeNameToColor = new THashMap<String, String>();
+    predefinedScopeNameToColor = new THashMap<>();
   }
 
   @NotNull
@@ -70,8 +70,8 @@ public class FileColorsModel implements Cloneable {
 
   FileColorsModel(@NotNull final Project project) {
     myProject = project;
-    myApplicationLevelConfigurations = new ArrayList<FileColorConfiguration>();
-    myProjectLevelConfigurations = new ArrayList<FileColorConfiguration>();
+    myApplicationLevelConfigurations = new ArrayList<>();
+    myProjectLevelConfigurations = new ArrayList<>();
 
     if (predefinedScopeNameToColor.size() < predefinedScopeNameToPropertyKey.size()) {
       DefaultScopesProvider defaultScopesProvider = DefaultScopesProvider.getInstance(project);
@@ -91,8 +91,8 @@ public class FileColorsModel implements Cloneable {
                           @NotNull List<FileColorConfiguration> applicationLevel,
                           @NotNull List<FileColorConfiguration> projectLevel) {
     myProject = project;
-    myApplicationLevelConfigurations = new ArrayList<FileColorConfiguration>();
-    myProjectLevelConfigurations = new ArrayList<FileColorConfiguration>();
+    myApplicationLevelConfigurations = new ArrayList<>();
+    myProjectLevelConfigurations = new ArrayList<>();
     myApplicationLevelConfigurations.addAll(applicationLevel);
     myProjectLevelConfigurations.addAll(projectLevel);
     initGlobalScopes();
@@ -142,7 +142,7 @@ public class FileColorsModel implements Cloneable {
 
     configurations.clear();
 
-    Map<String, String> predefinedScopeNameToPropertyKey = new THashMap<String, String>(FileColorsModel.predefinedScopeNameToPropertyKey);
+    Map<String, String> predefinedScopeNameToPropertyKey = new THashMap<>(FileColorsModel.predefinedScopeNameToPropertyKey);
     for (Element child : e.getChildren(FILE_COLOR)) {
       FileColorConfiguration configuration = FileColorConfiguration.load(child);
       if (configuration != null) {
@@ -176,12 +176,12 @@ public class FileColorsModel implements Cloneable {
 
   @Override
   public FileColorsModel clone() throws CloneNotSupportedException {
-    List<FileColorConfiguration> applicationLevel = new ArrayList<FileColorConfiguration>();
+    List<FileColorConfiguration> applicationLevel = new ArrayList<>();
     for (FileColorConfiguration configuration : myApplicationLevelConfigurations) {
       applicationLevel.add(configuration.clone());
     }
 
-    List<FileColorConfiguration> projectLevel = new ArrayList<FileColorConfiguration>();
+    List<FileColorConfiguration> projectLevel = new ArrayList<>();
     for (FileColorConfiguration configuration : myProjectLevelConfigurations) {
       projectLevel.add(configuration.clone());
     }
@@ -282,7 +282,7 @@ public class FileColorsModel implements Cloneable {
     }
     else {
       myApplicationLevelConfigurations.clear();
-      Map<String, String> predefinedScopeNameToPropertyKey = new THashMap<String, String>(FileColorsModel.predefinedScopeNameToPropertyKey);
+      Map<String, String> predefinedScopeNameToPropertyKey = new THashMap<>(FileColorsModel.predefinedScopeNameToPropertyKey);
       PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
       for (FileColorConfiguration configuration : configurations) {
         myApplicationLevelConfigurations.add(configuration);

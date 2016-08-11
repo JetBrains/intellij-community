@@ -63,7 +63,7 @@ public class FacetTypeEditor extends UnnamedConfigurableGroup {
       C configuration = ProjectFacetManager.getInstance(project).createDefaultConfiguration(facetType);
       DefaultFacetSettingsEditor defaultSettingsEditor = facetType.createDefaultConfigurationEditor(project, configuration);
       if (defaultSettingsEditor != null) {
-        myDefaultSettingsConfigurable = new DefaultFacetSettingsConfigurable<C>(facetType, project, defaultSettingsEditor, configuration);
+        myDefaultSettingsConfigurable = new DefaultFacetSettingsConfigurable<>(facetType, project, defaultSettingsEditor, configuration);
         add(myDefaultSettingsConfigurable);
       }
     }
@@ -76,7 +76,7 @@ public class FacetTypeEditor extends UnnamedConfigurableGroup {
   @Nullable
   private MultipleFacetSettingsEditor createAllFacetsEditor() {
     ProjectFacetsConfigurator facetsConfigurator = myContext.myModulesConfigurator.getFacetsConfigurator();
-    List<Facet> facets = new ArrayList<Facet>();
+    List<Facet> facets = new ArrayList<>();
     for (Module module : myContext.getModules()) {
       facets.addAll(facetsConfigurator.getFacetsByType(module, myFacetType.getId()));
     }
@@ -103,7 +103,7 @@ public class FacetTypeEditor extends UnnamedConfigurableGroup {
     }
     myAllFacetsEditor = allFacetsEditor;
 
-    myCurrentConfigurables = new ArrayList<Configurable>();
+    myCurrentConfigurables = new ArrayList<>();
     if (myDefaultSettingsConfigurable != null) {
       myCurrentConfigurables.add(myDefaultSettingsConfigurable);
     }

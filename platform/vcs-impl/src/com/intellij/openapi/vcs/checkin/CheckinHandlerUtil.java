@@ -41,7 +41,7 @@ import java.util.List;
 public class CheckinHandlerUtil {
   public static List<VirtualFile> filterOutGeneratedAndExcludedFiles(@NotNull Collection<VirtualFile> files, @NotNull Project project) {
     ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(project);
-    List<VirtualFile> result = new ArrayList<VirtualFile>(files.size());
+    List<VirtualFile> result = new ArrayList<>(files.size());
     for (VirtualFile file : files) {
       if (!fileIndex.isExcluded(file) && !GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, project)) {
         result.add(file);
@@ -51,7 +51,7 @@ public class CheckinHandlerUtil {
   }
 
   public static PsiFile[] getPsiFiles(final Project project, final Collection<VirtualFile> selectedFiles) {
-    ArrayList<PsiFile> result = new ArrayList<PsiFile>();
+    ArrayList<PsiFile> result = new ArrayList<>();
     PsiManager psiManager = PsiManager.getInstance(project);
 
     VirtualFile projectFileDir = null;

@@ -52,7 +52,7 @@ import static com.intellij.ui.mac.foundation.Foundation.invoke;
 public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettingsListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.mac.MacMainFrameDecorator");
 
-  private final FullscreenQueue<Runnable> myFullscreenQueue = new FullscreenQueue<Runnable>();
+  private final FullscreenQueue<Runnable> myFullscreenQueue = new FullscreenQueue<>();
 
   private final EventDispatcher<FSListener> myDispatcher = EventDispatcher.create(FSListener.class);
 
@@ -61,7 +61,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
 
   private static class FullscreenQueue <T extends Runnable> {
     private boolean waitingForAppKit = false;
-    private LinkedList<Runnable> queueModel = new LinkedList<Runnable>();
+    private LinkedList<Runnable> queueModel = new LinkedList<>();
 
     synchronized void runOrEnqueue (final T runnable) {
       if (waitingForAppKit) {

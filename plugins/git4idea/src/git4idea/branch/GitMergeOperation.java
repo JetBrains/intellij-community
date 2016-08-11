@@ -53,7 +53,7 @@ class GitMergeOperation extends GitBranchOperation {
   private final GitBrancher.DeleteOnMergeOption myDeleteOnMerge;
 
   // true in value, if we've stashed local changes before merge and will need to unstash after resolving conflicts.
-  @NotNull private final Map<GitRepository, Boolean> myConflictedRepositories = new HashMap<GitRepository, Boolean>();
+  @NotNull private final Map<GitRepository, Boolean> myConflictedRepositories = new HashMap<>();
   private GitPreservingProcess myPreservingProcess;
 
   GitMergeOperation(@NotNull Project project, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
@@ -164,7 +164,7 @@ class GitMergeOperation extends GitBranchOperation {
           @Override
           public void run() {
             GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
-            brancher.deleteBranch(myBranchToMerge, new ArrayList<GitRepository>(getRepositories()));
+            brancher.deleteBranch(myBranchToMerge, new ArrayList<>(getRepositories()));
           }
         });
         break;
@@ -269,9 +269,9 @@ class GitMergeOperation extends GitBranchOperation {
   @Override
   protected void rollback() {
     LOG.info("starting rollback...");
-    Collection<GitRepository> repositoriesForSmartRollback = new ArrayList<GitRepository>();
-    Collection<GitRepository> repositoriesForSimpleRollback = new ArrayList<GitRepository>();
-    Collection<GitRepository> repositoriesForMergeRollback = new ArrayList<GitRepository>();
+    Collection<GitRepository> repositoriesForSmartRollback = new ArrayList<>();
+    Collection<GitRepository> repositoriesForSimpleRollback = new ArrayList<>();
+    Collection<GitRepository> repositoriesForMergeRollback = new ArrayList<>();
     for (GitRepository repository : getSuccessfulRepositories()) {
       if (myConflictedRepositories.containsKey(repository)) {
         repositoriesForMergeRollback.add(repository);
@@ -387,7 +387,7 @@ class GitMergeOperation extends GitBranchOperation {
                                 @NotNull HyperlinkEvent event) {
       if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equalsIgnoreCase("delete")) {
         GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
-        brancher.deleteBranch(myBranchToMerge, new ArrayList<GitRepository>(getRepositories()));
+        brancher.deleteBranch(myBranchToMerge, new ArrayList<>(getRepositories()));
       }
     }
   }

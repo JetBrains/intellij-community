@@ -165,7 +165,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
   @NotNull
   public String[] getSchemeNames() {
-    List<MyColorScheme> schemes = new ArrayList<MyColorScheme>(mySchemes.values());
+    List<MyColorScheme> schemes = new ArrayList<>(mySchemes.values());
     Collections.sort(schemes, (o1, o2) -> {
       if (isReadOnly(o1) && !isReadOnly(o2)) return -1;
       if (!isReadOnly(o1) && isReadOnly(o2)) return 1;
@@ -173,7 +173,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       return o1.getName().compareToIgnoreCase(o2.getName());
     });
 
-    List<String> names = new ArrayList<String>(schemes.size());
+    List<String> names = new ArrayList<>(schemes.size());
     for (MyColorScheme scheme : schemes) {
       names.add(scheme.getName());
     }
@@ -183,7 +183,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
   @NotNull
   public Collection<EditorColorsScheme> getSchemes() {
-    return new ArrayList<EditorColorsScheme>(mySchemes.values());
+    return new ArrayList<>(mySchemes.values());
   }
 
   public void saveSchemeAs(String name) {
@@ -243,7 +243,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       EditorColorsManager myColorsManager = EditorColorsManager.getInstance();
       SchemeManager<EditorColorsScheme> schemeManager = ((EditorColorsManagerImpl)myColorsManager).getSchemeManager();
 
-      List<EditorColorsScheme> result = new ArrayList<EditorColorsScheme>(mySchemes.values().size());
+      List<EditorColorsScheme> result = new ArrayList<>(mySchemes.values().size());
       boolean activeSchemeModified = false;
       EditorColorsScheme activeOriginalScheme = mySelectedScheme.getOriginalScheme();
       for (MyColorScheme scheme : mySchemes.values()) {
@@ -359,8 +359,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     List<ColorAndFontPanelFactory> panelFactories = createPanelFactories();
 
-    List<Configurable> result = new ArrayList<Configurable>();
-    mySubPanelFactories = new LinkedHashMap<ColorAndFontPanelFactory, InnerSearchableConfigurable>(panelFactories.size());
+    List<Configurable> result = new ArrayList<>();
+    mySubPanelFactories = new LinkedHashMap<>(panelFactories.size());
     for (ColorAndFontPanelFactory panelFactory : panelFactories) {
       mySubPanelFactories.put(panelFactory, new InnerSearchableConfigurable(panelFactory));
     }
@@ -371,7 +371,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
   @NotNull
   private Set<NewColorAndFontPanel> getPanels() {
-    Set<NewColorAndFontPanel> result = new HashSet<NewColorAndFontPanel>();
+    Set<NewColorAndFontPanel> result = new HashSet<>();
     for (InnerSearchableConfigurable configurable : mySubPanelFactories.values()) {
       NewColorAndFontPanel panel = configurable.getSubPanelIfInitialized();
       if (panel != null) {
@@ -382,10 +382,10 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   protected List<ColorAndFontPanelFactory> createPanelFactories() {
-    List<ColorAndFontPanelFactory> result = new ArrayList<ColorAndFontPanelFactory>();
+    List<ColorAndFontPanelFactory> result = new ArrayList<>();
     result.add(new FontConfigurableFactory());
 
-    List<ColorAndFontPanelFactory> extensions = new ArrayList<ColorAndFontPanelFactory>();
+    List<ColorAndFontPanelFactory> extensions = new ArrayList<>();
     extensions.add(new ConsoleFontConfigurableFactory());
     ColorSettingsPage[] pages = ColorSettingsPages.getInstance().getRegisteredPages();
     for (final ColorSettingsPage page : pages) {
@@ -488,7 +488,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
    }
 
   private void initAll() {
-    mySchemes = new THashMap<String, MyColorScheme>();
+    mySchemes = new THashMap<>();
     for (EditorColorsScheme allScheme : EditorColorsManager.getInstance().getAllSchemes()) {
       MyColorScheme schemeDelegate = new MyColorScheme(allScheme);
       initScheme(schemeDelegate);
@@ -500,7 +500,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   private static void initScheme(@NotNull MyColorScheme scheme) {
-    List<EditorSchemeAttributeDescriptor> descriptions = new ArrayList<EditorSchemeAttributeDescriptor>();
+    List<EditorSchemeAttributeDescriptor> descriptions = new ArrayList<>();
     initPluggedDescriptions(descriptions, scheme);
     initFileStatusDescriptors(descriptions, scheme);
     initScopesDescriptors(descriptions, scheme);
@@ -550,7 +550,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
   }
   private static void initScopesDescriptors(@NotNull List<EditorSchemeAttributeDescriptor> descriptions, @NotNull MyColorScheme scheme) {
-    Set<Pair<NamedScope,NamedScopesHolder>> namedScopes = new THashSet<Pair<NamedScope,NamedScopesHolder>>(new TObjectHashingStrategy<Pair<NamedScope,NamedScopesHolder>>() {
+    Set<Pair<NamedScope,NamedScopesHolder>> namedScopes = new THashSet<>(new TObjectHashingStrategy<Pair<NamedScope, NamedScopesHolder>>() {
       @Override
       public int computeHashCode(@NotNull final Pair<NamedScope, NamedScopesHolder> object) {
         return object.getFirst().getName().hashCode();
@@ -568,7 +568,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       namedScopes.addAll(cachedScopes);
     }
 
-    List<Pair<NamedScope, NamedScopesHolder>> list = new ArrayList<Pair<NamedScope, NamedScopesHolder>>(namedScopes);
+    List<Pair<NamedScope, NamedScopesHolder>> list = new ArrayList<>(namedScopes);
 
     Collections.sort(list, (o1, o2) -> o1.getFirst().getName().compareToIgnoreCase(o2.getFirst().getName()));
     for (Pair<NamedScope,NamedScopesHolder> pair : list) {
@@ -750,7 +750,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
         myBaseAttributeDescriptor = ColorSettingsPages.getInstance().getAttributeDescriptor(fallbackKey);
         if (myBaseAttributeDescriptor == null) {
           myBaseAttributeDescriptor =
-            new Pair<ColorSettingsPage, AttributesDescriptor>(null, new AttributesDescriptor(fallbackKey.getExternalName(), fallbackKey));
+            new Pair<>(null, new AttributesDescriptor(fallbackKey.getExternalName(), fallbackKey));
         }
       }
       myIsInheritedInitial = scheme.isInherited(key);

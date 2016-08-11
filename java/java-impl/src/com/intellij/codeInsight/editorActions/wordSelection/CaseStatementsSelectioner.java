@@ -32,7 +32,7 @@ public class CaseStatementsSelectioner extends BasicSelectioner {
 
     @Override
     public List<TextRange> select(PsiElement statement, CharSequence editorText, int cursorOffset, Editor editor) {
-      List<TextRange> result = new ArrayList<TextRange>();
+      List<TextRange> result = new ArrayList<>();
       PsiElement caseStart = statement;
       PsiElement caseEnd = statement;
 

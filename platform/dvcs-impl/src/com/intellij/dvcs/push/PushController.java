@@ -71,7 +71,7 @@ public class PushController implements Disposable {
   private static final int DEFAULT_CHILDREN_PRESENTATION_NUMBER = 20;
   private final ExecutorService myExecutorService = ConcurrencyUtil.newSingleThreadExecutor("DVCS Push");
 
-  private final Map<RepositoryNode, MyRepoModel<?, ?, ?>> myView2Model = new TreeMap<RepositoryNode, MyRepoModel<?, ?, ?>>();
+  private final Map<RepositoryNode, MyRepoModel<?, ?, ?>> myView2Model = new TreeMap<>();
 
   public PushController(@NotNull Project project,
                         @NotNull VcsPushDialog dialog,
@@ -237,15 +237,15 @@ public class PushController implements Disposable {
     T target = support.getDefaultTarget(repository);
     String repoName = getDisplayedRepoName(repository);
     S source = support.getSource(repository);
-    final MyRepoModel<R, S, T> model = new MyRepoModel<R, S, T>(repository, support, mySingleRepoProject,
-                                                                source, target);
+    final MyRepoModel<R, S, T> model = new MyRepoModel<>(repository, support, mySingleRepoProject,
+                                                         source, target);
     if (target == null) {
       model.setError(VcsError.createEmptyTargetError(repoName));
     }
 
     final PushTargetPanel<T> pushTargetPanel = support.createTargetPanel(repository, target);
-    final RepositoryWithBranchPanel<T> repoPanel = new RepositoryWithBranchPanel<T>(myProject, repoName,
-                                                                                    source.getPresentation(), pushTargetPanel);
+    final RepositoryWithBranchPanel<T> repoPanel = new RepositoryWithBranchPanel<>(myProject, repoName,
+                                                                                   source.getPresentation(), pushTargetPanel);
     CheckBoxModel checkBoxModel = model.getCheckBoxModel();
     final RepositoryNode repoNode = mySingleRepoProject
                                     ? new SingleRepositoryNode(repoPanel, checkBoxModel)
@@ -384,13 +384,13 @@ public class PushController implements Disposable {
     }
     node.setEnabled(true);
     final PushSupport<R, S, T> support = model.getSupport();
-    final AtomicReference<OutgoingResult> result = new AtomicReference<OutgoingResult>();
+    final AtomicReference<OutgoingResult> result = new AtomicReference<>();
     Runnable task = new Runnable() {
       @Override
       public void run() {
         final R repository = model.getRepository();
         OutgoingResult outgoing = support.getOutgoingCommitsProvider()
-          .getOutgoingCommits(repository, new PushSpec<S, T>(model.getSource(), model.getTarget()), initial);
+          .getOutgoingCommits(repository, new PushSpec<>(model.getSource(), model.getTarget()), initial);
         result.compareAndSet(null, outgoing);
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           @Override
@@ -511,7 +511,7 @@ public class PushController implements Disposable {
         //todo improve generics: unchecked casts
         T target = (T)repoModel.getTarget();
         if (target != null) {
-          pushSpecs.put((R)repoModel.getRepository(), new PushSpec<S, T>((S)repoModel.getSource(), target));
+          pushSpecs.put((R)repoModel.getRepository(), new PushSpec<>((S)repoModel.getSource(), target));
         }
       }
     }
@@ -567,7 +567,7 @@ public class PushController implements Disposable {
         return new CommitNode(project, commit);
       }
     };
-    List<DefaultMutableTreeNode> childrenToShown = new ArrayList<DefaultMutableTreeNode>();
+    List<DefaultMutableTreeNode> childrenToShown = new ArrayList<>();
     for (int i = 0; i < commits.size(); ++i) {
       if (i >= commitsNum) {
         final VcsLinkedTextComponent moreCommitsLink = new VcsLinkedTextComponent("<a href='loadMore'>...</a>", new VcsLinkListener() {

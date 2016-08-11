@@ -95,8 +95,8 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   public IdeMenuBar(ActionManagerEx actionManager, DataManager dataManager) {
     myActionManager = actionManager;
     myTimerListener = new MyTimerListener();
-    myVisibleActions = new ArrayList<AnAction>();
-    myNewVisibleActions = new ArrayList<AnAction>();
+    myVisibleActions = new ArrayList<>();
+    myNewVisibleActions = new ArrayList<>();
     myPresentationFactory = new MenuItemPresentationFactory();
     myDataManager = dataManager;
 

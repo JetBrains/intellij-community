@@ -109,7 +109,7 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
 
   @SuppressWarnings({"ConstantConditions"})
   private static void closeUnclosingTags(@NotNull XmlTag root) {
-    final List<SmartPsiElementPointer<XmlTag>> tagToClose = new ArrayList<SmartPsiElementPointer<XmlTag>>();
+    final List<SmartPsiElementPointer<XmlTag>> tagToClose = new ArrayList<>();
     Project project = root.getProject();
     final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
     root.accept(new XmlRecursiveElementVisitor() {

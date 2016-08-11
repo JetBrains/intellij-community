@@ -276,7 +276,7 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
     @Override
     public AccessibleIcon[] getAccessibleIcon() {
       Icon[] icons = {myRegular, myInactive, myHovered};
-      ArrayList<AccessibleIcon> accessibleIconList = new ArrayList<AccessibleIcon>();
+      ArrayList<AccessibleIcon> accessibleIconList = new ArrayList<>();
       for (Icon icon : icons) {
         if (icon instanceof Accessible) {
           AccessibleContext ac = ((Accessible)icon).getAccessibleContext();

@@ -54,7 +54,7 @@ public class BaseFilterLexerUtil {
       for (IndexPattern indexPattern : IndexPatternUtil.getIndexPatterns()) {
           final int count = todoOccurrenceConsumer.getOccurrenceCount(indexPattern);
           if (count > 0) {
-            if (todoMap == null) todoMap = new THashMap<TodoIndexEntry, Integer>();
+            if (todoMap == null) todoMap = new THashMap<>();
             todoMap.put(new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), count);
           }
         }

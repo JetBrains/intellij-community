@@ -43,9 +43,9 @@ public class MockDirtyScope extends VcsModifiableDirtyScope {
   private final AbstractVcs myVcs;
   private final ProjectLevelVcsManager myVcsManager;
 
-  private final Set<FilePath> myDirtyFiles = new HashSet<FilePath>();
-  private final Set<FilePath> myDirtyDirs = new HashSet<FilePath>();
-  private final Set<VirtualFile> myContentRoots = new HashSet<VirtualFile>();
+  private final Set<FilePath> myDirtyFiles = new HashSet<>();
+  private final Set<FilePath> myDirtyDirs = new HashSet<>();
+  private final Set<VirtualFile> myContentRoots = new HashSet<>();
 
   public MockDirtyScope(@NotNull Project project, @NotNull AbstractVcs vcs) {
     myProject = project;

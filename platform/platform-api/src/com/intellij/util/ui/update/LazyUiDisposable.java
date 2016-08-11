@@ -84,7 +84,7 @@ public abstract class LazyUiDisposable<T extends Disposable> implements Activata
   private static Promise<Disposable> findDisposable(Disposable defaultValue, final DataKey<? extends Disposable> key) {
     if (defaultValue == null) {
       if (ApplicationManager.getApplication() != null) {
-        final AsyncPromise<Disposable> result = new AsyncPromise<Disposable>();
+        final AsyncPromise<Disposable> result = new AsyncPromise<>();
         DataManager.getInstance().getDataContextFromFocus()
           .doWhenDone(new Consumer<DataContext>() {
             @Override

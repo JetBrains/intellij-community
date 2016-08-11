@@ -20,6 +20,7 @@
 package com.intellij.lang.properties.editor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.ide.FileEditorProvider;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.structureView.StructureViewBuilder;
@@ -37,6 +38,7 @@ import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.inspections.incomplete.IncompletePropertyInspection;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertiesResourceBundleUtil;
+import com.intellij.lang.properties.xml.XmlPropertiesFile;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -61,7 +63,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileListener;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.pom.Navigatable;
@@ -72,7 +77,10 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.EditorPopupHandler;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Stack;
@@ -124,6 +132,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   private VirtualFileListener myVfsListener;
   private Editor              mySelectedEditor;
   private String              myPropertyToSelectWhenVisible;
+  private ResourceBundleEditorHighlighter myHighlighter;
 
   public ResourceBundleEditor(@NotNull ResourceBundle resourceBundle) {
     myProject = resourceBundle.getProject();
@@ -216,6 +225,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
         onSelectionChanged(event);
       }
     });
+    myHighlighter = myResourceBundle.getDefaultPropertiesFile() instanceof XmlPropertiesFile ? null : new ResourceBundleEditorHighlighter(this);
   }
 
   public ResourceBundle getResourceBundle() {
@@ -374,7 +384,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
 
         if (currentValue.isEmpty() &&
             ResourceBundleEditorKeepEmptyValueToggleAction.keepEmptyProperties() &&
-            propertiesFile.equals(myResourceBundle.getDefaultPropertiesFile().getVirtualFile())) {
+            !propertiesFile.equals(myResourceBundle.getDefaultPropertiesFile().getVirtualFile())) {
           myPropertiesInsertDeleteManager.deletePropertyIfExist(currentSelectedProperty, PropertiesImplUtil.getPropertiesFile(propertiesFile, myProject));
         } else {
           myPropertiesInsertDeleteManager.insertOrUpdateTranslation(currentSelectedProperty, currentValue, PropertiesImplUtil.getPropertiesFile(propertiesFile, myProject));
@@ -527,7 +537,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       ((TitledBorder)titledPanel.getBorder()).setTitleColor(property == null ? JBColor.RED : UIUtil.getLabelTextForeground());
       titledPanel.repaint();
     }
-    undoManager.flushCurrentCommandMerger();
   }
 
   private void installPropertiesChangeListeners() {
@@ -653,7 +662,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       (ResourceBundleFileStructureViewElement)myStructureViewComponent.getTreeModel().getRoot();
     final Set<String> propertyKeys = ResourceBundleFileStructureViewElement.getPropertiesMap(myResourceBundle, root.isShowOnlyIncomplete()).keySet();
     final boolean isAlphaSorted = myStructureViewComponent.isActionActive(Sorter.ALPHA_SORTER_ID);
-    final List<String> keysOrder = new ArrayList<String>(propertyKeys);
+    final List<String> keysOrder = new ArrayList<>(propertyKeys);
     if (isAlphaSorted) {
       Collections.sort(keysOrder);
     }
@@ -677,6 +686,10 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   @NotNull
   public JComponent getComponent() {
     return myDataProviderPanel;
+  }
+
+  public StructureViewComponent getStructureViewComponent() {
+    return myStructureViewComponent;
   }
 
   private Object getData(final String dataId) {
@@ -816,7 +829,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
 
   @Override
   public BackgroundEditorHighlighter getBackgroundHighlighter() {
-    return null;
+    return myHighlighter;
   }
 
   @Override
@@ -924,13 +937,16 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
                   }
                   ApplicationManager.getApplication().runWriteAction(() -> WriteCommandAction.runWriteCommandAction(myProject, () -> {
                     try {
-                      for (Map.Entry<VirtualFile, EditorEx> entry : myEditors.entrySet()) {
-                        final Editor translationEditor = entry.getValue();
-                        if (translationEditor != editor) {
-                          final VirtualFile propertiesFile = entry.getKey();
-                          myPropertiesInsertDeleteManager.insertOrUpdateTranslation(currentSelectedProperty, valueToPropagate, PropertiesImplUtil.getPropertiesFile(propertiesFile, myProject));
-                          translationEditor.getDocument().setText(valueToPropagate);
+                      final PropertiesFile[] propertiesFiles = myResourceBundle.getPropertiesFiles().stream().filter(f -> {
+                        final IProperty property = f.findPropertyByKey(currentSelectedProperty);
+                        return property == null || !valueToPropagate.equals(property.getValue());
+                      }).toArray(PropertiesFile[]::new);
+                      final PsiFile[] filesToPrepare = Arrays.stream(propertiesFiles).map(PropertiesFile::getContainingFile).toArray(PsiFile[]::new);
+                      if (FileModificationService.getInstance().preparePsiElementsForWrite(filesToPrepare)) {
+                        for (PropertiesFile file : propertiesFiles) {
+                          myPropertiesInsertDeleteManager.insertOrUpdateTranslation(currentSelectedProperty, valueToPropagate, file);
                         }
+                        recreateEditorsPanel();
                       }
                     }
                     catch (final IncorrectOperationException e1) {

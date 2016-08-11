@@ -29,7 +29,7 @@ public class RecentTasks {
     new AtomicBoolean(false);
 
   private final static WeakReference<Thread> openerThread =
-    new WeakReference<Thread>(Thread.currentThread());
+    new WeakReference<>(Thread.currentThread());
 
   private final static String openerThreadName =
     Thread.currentThread().getName();

@@ -46,7 +46,7 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
   public boolean m_ignoreExpressionsContainingConstants = false;
 
   static final Set<IElementType> bitwiseTokens =
-    new HashSet<IElementType>(6);
+    new HashSet<>(6);
 
   static {
     bitwiseTokens.add(JavaTokenType.AND);

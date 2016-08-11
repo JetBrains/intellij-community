@@ -64,7 +64,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.XmlResourceResolver");
   private final XmlFile myFile;
   private final Project myProject;
-  private final Map<String,String> myExternalResourcesMap = new HashMap<String, String>(1);
+  private final Map<String,String> myExternalResourcesMap = new HashMap<>(1);
   private boolean myStopOnUnDeclaredResource;
   @NonNls
   public static final String HONOUR_ALL_SCHEMA_LOCATIONS_PROPERTY_KEY = "idea.xml.honour.all.schema.locations";

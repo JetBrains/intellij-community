@@ -40,8 +40,8 @@ public class MapIgnoredFilesHolder extends AbstractIgnoredFilesHolder {
   public MapIgnoredFilesHolder(Project project) {
     super(project);
     myProject = project;
-    mySet = new THashSet<VirtualFile>();
-    myVcsIgnoredSet = new THashSet<VirtualFile>();    //collect ignored files from VcsChangeProvider -> processIgnored
+    mySet = new THashSet<>();
+    myVcsIgnoredSet = new THashSet<>();    //collect ignored files from VcsChangeProvider -> processIgnored
   }
 
   @Override

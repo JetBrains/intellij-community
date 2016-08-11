@@ -73,13 +73,13 @@ public class FileSystemTreeImpl implements FileSystemTree {
   private final FileTreeStructure myTreeStructure;
   private final AbstractTreeBuilder myTreeBuilder;
   private final Project myProject;
-  private final ArrayList<Runnable> myOkActions = new ArrayList<Runnable>(2);
+  private final ArrayList<Runnable> myOkActions = new ArrayList<>(2);
   private final FileChooserDescriptor myDescriptor;
 
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final MyExpansionListener myExpansionListener = new MyExpansionListener();
 
-  private final Set<VirtualFile> myEverExpanded = new THashSet<VirtualFile>();
+  private final Set<VirtualFile> myEverExpanded = new THashSet<>();
 
   public FileSystemTreeImpl(@Nullable final Project project, final FileChooserDescriptor descriptor) {
     this(project, descriptor, new Tree(), null, null, null);
@@ -425,7 +425,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
 
   private void processSelectionChange() {
     if (myListeners.size() == 0) return;
-    List<VirtualFile> selection = new ArrayList<VirtualFile>();
+    List<VirtualFile> selection = new ArrayList<>();
 
     final TreePath[] paths = myTree.getSelectionPaths();
     if (paths != null) {

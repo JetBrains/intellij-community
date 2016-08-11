@@ -32,7 +32,7 @@ public class GithubSelectForkPanel {
   private ComboBox myComboBox;
 
   public GithubSelectForkPanel() {
-    myModel = new SortedComboBoxModel<String>(StringUtil::naturalCompare);
+    myModel = new SortedComboBoxModel<>(StringUtil::naturalCompare);
 
     myComboBox.setModel(myModel);
   }

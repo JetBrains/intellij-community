@@ -207,12 +207,12 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Bytes, HEquat
     public HEquations read(@NotNull DataInput in) throws IOException {
       boolean stable = in.readBoolean();
       int size = DataInputOutputUtil.readINT(in);
-      ArrayList<DirectionResultPair> results = new ArrayList<DirectionResultPair>(size);
+      ArrayList<DirectionResultPair> results = new ArrayList<>(size);
       for (int k = 0; k < size; k++) {
         int directionKey = DataInputOutputUtil.readINT(in);
         Direction direction = BytecodeAnalysisConverter.extractDirection(directionKey);
         if (direction == Direction.Pure) {
-          Set<HEffectQuantum> effects = new HashSet<HEffectQuantum>();
+          Set<HEffectQuantum> effects = new HashSet<>();
           int effectsSize = DataInputOutputUtil.readINT(in);
           for (int i = 0; i < effectsSize; i++) {
             int effectMask = DataInputOutputUtil.readINT(in);

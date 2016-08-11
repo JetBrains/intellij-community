@@ -101,7 +101,7 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
 
   private void chooseAndImport() {
     ImportSourceChooserDialog<CodeStyleScheme> importSourceChooserDialog =
-      new ImportSourceChooserDialog<CodeStyleScheme>(myContentPane, CodeStyleScheme.class);
+      new ImportSourceChooserDialog<>(myContentPane, CodeStyleScheme.class);
     if (importSourceChooserDialog.showAndGet()) {
       if (importSourceChooserDialog.isImportFromSharedSelected()) {
         new SchemesToImportPopup<CodeStyleScheme>(myContentPane) {
@@ -262,7 +262,7 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
 
     public MySchemesTableModel(CodeStyleSchemesModel schemesModel) {
       mySchemesModel = schemesModel;
-      mySchemes = new ArrayList<CodeStyleScheme>();
+      mySchemes = new ArrayList<>();
       updateSchemes();
     }
 

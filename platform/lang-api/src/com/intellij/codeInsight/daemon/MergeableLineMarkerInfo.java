@@ -79,10 +79,10 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
 
   @NotNull
   public static List<LineMarkerInfo> merge(@NotNull List<MergeableLineMarkerInfo> markers) {
-    List<LineMarkerInfo> result = new SmartList<LineMarkerInfo>();
+    List<LineMarkerInfo> result = new SmartList<>();
     for (int i = 0; i < markers.size(); i++) {
       MergeableLineMarkerInfo marker = markers.get(i);
-      List<MergeableLineMarkerInfo> toMerge = new SmartList<MergeableLineMarkerInfo>();
+      List<MergeableLineMarkerInfo> toMerge = new SmartList<>();
       for (int k = markers.size() - 1; k > i; k--) {
         MergeableLineMarkerInfo current = markers.get(k);
         if (marker.canMergeWith(current)) {
@@ -131,7 +131,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
       return new GutterIconNavigationHandler<PsiElement>() {
         @Override
         public void navigate(final MouseEvent e, PsiElement elt) {
-          final List<LineMarkerInfo> infos = new ArrayList<LineMarkerInfo>(markers);
+          final List<LineMarkerInfo> infos = new ArrayList<>(markers);
           Collections.sort(infos, (o1, o2) -> o1.startOffset - o2.startOffset);
           final JBList list = new JBList(infos);
           list.setFixedCellHeight(UIUtil.LIST_FIXED_CELL_HEIGHT);

@@ -40,7 +40,7 @@ public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<P
 
   @Override
   public Set<PsiJavaFile> prepareOperation(final UsageInfo[] usages) {
-    Set<PsiJavaFile> javaFiles = new HashSet<PsiJavaFile>();
+    Set<PsiJavaFile> javaFiles = new HashSet<>();
     for (UsageInfo usage : usages) {
       if (usage.isNonCodeUsage) continue;
       final PsiFile file = usage.getFile();
@@ -60,7 +60,7 @@ public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<P
       }
     });
 
-    final Set<SmartPsiElementPointer<PsiImportStatementBase>> redundants = new HashSet<SmartPsiElementPointer<PsiImportStatementBase>>();
+    final Set<SmartPsiElementPointer<PsiImportStatementBase>> redundants = new HashSet<>();
     final Runnable findRedundantImports = () -> DumbService.getInstance(project).runReadActionInSmartMode(() -> {
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
       final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();

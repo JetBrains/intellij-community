@@ -96,7 +96,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
     final ActionManager actionManager = ActionManager.getInstance();
     String[] actionIds = actionManager.getActionIds("");
     Arrays.sort(actionIds);
-    List<ActionGroup> actionGroups = new ArrayList<ActionGroup>();
+    List<ActionGroup> actionGroups = new ArrayList<>();
     for(String actionId: actionIds) {
       if (actionManager.isGroup(actionId)) {
         AnAction anAction = actionManager.getAction(actionId);
@@ -116,7 +116,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
         else {
           AnAction[] actions = group.getChildren(null);
           // filter out actions that don't have IDs - they can't be used for anchoring in plugin.xml
-          List<AnAction> realActions = new ArrayList<AnAction>();
+          List<AnAction> realActions = new ArrayList<>();
           for(AnAction action: actions) {
             if (actionManager.getId(action) != null) {
               realActions.add(action);

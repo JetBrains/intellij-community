@@ -41,24 +41,24 @@ public class CommonProxy extends ProxySelector {
   private final static CommonProxy ourInstance = new CommonProxy();
   private final CommonAuthenticator myAuthenticator = new CommonAuthenticator();
 
-  private final static ThreadLocal<Boolean> ourReenterDefence = new ThreadLocal<Boolean>();
+  private final static ThreadLocal<Boolean> ourReenterDefence = new ThreadLocal<>();
 
   public final static List<Proxy> NO_PROXY_LIST = Collections.singletonList(Proxy.NO_PROXY);
   private final static long ourErrorInterval = TimeUnit.MINUTES.toMillis(3);
   private static volatile int ourNotificationCount;
   private volatile static long ourErrorTime;
   private volatile static ProxySelector ourWrong;
-  private static final AtomicReference<Map<String, String>> ourProps = new AtomicReference<Map<String, String>>();
+  private static final AtomicReference<Map<String, String>> ourProps = new AtomicReference<>();
 
   static {
     ProxySelector.setDefault(ourInstance);
   }
 
   private final Object myLock = new Object();
-  private final Set<Pair<HostInfo, Thread>> myNoProxy = new THashSet<Pair<HostInfo, Thread>>();
+  private final Set<Pair<HostInfo, Thread>> myNoProxy = new THashSet<>();
 
-  private final Map<String, ProxySelector> myCustom = new THashMap<String, ProxySelector>();
-  private final Map<String, NonStaticAuthenticator> myCustomAuth = new THashMap<String, NonStaticAuthenticator>();
+  private final Map<String, ProxySelector> myCustom = new THashMap<>();
+  private final Map<String, NonStaticAuthenticator> myCustomAuth = new THashMap<>();
 
   public static CommonProxy getInstance() {
     return ourInstance;
@@ -121,7 +121,7 @@ public class CommonProxy extends ProxySelector {
   }
 
   public static Map<String, String> getOldStyleProperties() {
-    final Map<String, String> props = new HashMap<String, String>();
+    final Map<String, String> props = new HashMap<>();
     props.put(JavaProxyProperty.HTTP_HOST, System.getProperty(JavaProxyProperty.HTTP_HOST));
     props.put(JavaProxyProperty.HTTPS_HOST, System.getProperty(JavaProxyProperty.HTTPS_HOST));
     props.put(JavaProxyProperty.SOCKS_HOST, System.getProperty(JavaProxyProperty.SOCKS_HOST));
@@ -218,7 +218,7 @@ public class CommonProxy extends ProxySelector {
           LOG.debug("CommonProxy.select returns no proxy (in no proxy list) for " + uri.toString());
           return NO_PROXY_LIST;
         }
-        copy = new THashMap<String, ProxySelector>(myCustom);
+        copy = new THashMap<>(myCustom);
       }
       for (Map.Entry<String, ProxySelector> entry : copy.entrySet()) {
         final List<Proxy> proxies = entry.getValue().select(uri);
@@ -252,7 +252,7 @@ public class CommonProxy extends ProxySelector {
 
     final Map<String, ProxySelector> copy;
     synchronized (myLock) {
-      copy = new THashMap<String, ProxySelector>(myCustom);
+      copy = new THashMap<>(myCustom);
     }
     for (Map.Entry<String, ProxySelector> entry : copy.entrySet()) {
       entry.getValue().connectFailed(uri, sa, ioe);
@@ -276,7 +276,7 @@ public class CommonProxy extends ProxySelector {
           LOG.debug("CommonAuthenticator.getPasswordAuthentication found host in no proxies set (" + siteStr + ")");
           return null;
         }
-        copy = new HashMap<String, NonStaticAuthenticator>(myCustomAuth);
+        copy = new HashMap<>(myCustomAuth);
       }
 
       if (! copy.isEmpty()) {

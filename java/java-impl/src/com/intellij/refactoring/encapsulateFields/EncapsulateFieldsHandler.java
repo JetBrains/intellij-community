@@ -71,7 +71,7 @@ public class EncapsulateFieldsHandler implements RefactoringActionHandler {
    */
   public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, DataContext dataContext) {
     PsiClass aClass = null;
-    final HashSet<PsiField> preselectedFields = new HashSet<PsiField>();
+    final HashSet<PsiField> preselectedFields = new HashSet<>();
     if (elements.length == 1) {
       if (elements[0] instanceof PsiClass) {
         aClass = (PsiClass) elements[0];

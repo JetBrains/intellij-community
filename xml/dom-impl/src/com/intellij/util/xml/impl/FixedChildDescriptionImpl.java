@@ -82,7 +82,7 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
   @Override
   @NotNull
   public List<? extends DomElement> getValues(@NotNull final DomElement element) {
-    final List<DomElement> result = new SmartList<DomElement>();
+    final List<DomElement> result = new SmartList<>();
     final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(element);
     if (handler != null) {
       for (int i = 0; i < myCount; i++) {

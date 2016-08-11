@@ -39,9 +39,9 @@ public class MavenRunnerSettings implements Cloneable {
   @NotNull private String jreName = USE_PROJECT_JDK;
   @NotNull private String vmOptions = "";
   private boolean skipTests = false;
-  private Map<String, String> mavenProperties = new LinkedHashMap<String, String>();
+  private Map<String, String> mavenProperties = new LinkedHashMap<>();
 
-  private Map<String, String> environmentProperties = new HashMap<String, String>();
+  private Map<String, String> environmentProperties = new HashMap<>();
   private boolean passParentEnv = true;
 
   private List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -166,7 +166,7 @@ public class MavenRunnerSettings implements Cloneable {
       final MavenRunnerSettings clone = (MavenRunnerSettings)super.clone();
       clone.mavenProperties = cloneMap(mavenProperties);
       clone.myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-      clone.environmentProperties = new HashMap<String, String>(environmentProperties);
+      clone.environmentProperties = new HashMap<>(environmentProperties);
       return clone;
     }
     catch (CloneNotSupportedException e) {
@@ -175,7 +175,7 @@ public class MavenRunnerSettings implements Cloneable {
   }
 
   private static <K, V> Map<K, V> cloneMap(final Map<K, V> source) {
-    final Map<K, V> clone = new LinkedHashMap<K, V>();
+    final Map<K, V> clone = new LinkedHashMap<>();
     for (Map.Entry<K, V> entry : source.entrySet()) {
       clone.put(entry.getKey(), entry.getValue());
     }

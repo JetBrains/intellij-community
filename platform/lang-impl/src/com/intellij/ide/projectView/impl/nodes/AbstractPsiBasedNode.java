@@ -79,7 +79,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   public final Collection<AbstractTreeNode> getChildren() {
     final PsiElement psiElement = extractPsiFromValue();
     if (psiElement == null) {
-      return new ArrayList<AbstractTreeNode>();
+      return new ArrayList<>();
     }
     final boolean valid = psiElement.isValid();
     if (!LOG.assertTrue(valid)) {

@@ -53,11 +53,11 @@ public class HgRepoInfo {
     myTipRevision = currentTipRevision;
     myState = state;
     myBranches = branches;
-    myBookmarks = new LinkedHashSet<HgNameWithHashInfo>(bookmarks);
+    myBookmarks = new LinkedHashSet<>(bookmarks);
     myCurrentBookmark = currentBookmark;
-    myTags = new LinkedHashSet<HgNameWithHashInfo>(tags);
-    myLocalTags = new LinkedHashSet<HgNameWithHashInfo>(localTags);
-    mySubrepos = new HashSet<HgNameWithHashInfo>(subrepos);
+    myTags = new LinkedHashSet<>(tags);
+    myLocalTags = new LinkedHashSet<>(localTags);
+    mySubrepos = new HashSet<>(subrepos);
     myMQApplied = mqApplied;
     myMqNames = mqNames;
   }

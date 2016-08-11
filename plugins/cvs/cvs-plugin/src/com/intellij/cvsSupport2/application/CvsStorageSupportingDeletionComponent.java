@@ -44,7 +44,7 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
   private int myCommandLevel = 0;
 
   private boolean myAnotherProjectCommand = false;
-  static final Key<AbstractVcs> FILE_VCS = new Key<AbstractVcs>("File VCS");
+  static final Key<AbstractVcs> FILE_VCS = new Key<>("File VCS");
 
   public void commandStarted(CommandEvent event) {
     myCommandLevel++;

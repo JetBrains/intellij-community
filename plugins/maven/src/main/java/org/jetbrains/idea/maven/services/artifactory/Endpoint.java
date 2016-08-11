@@ -69,14 +69,14 @@ public class Endpoint {
                 _matrixParamSet = _uriBuilder.addPathSegment(url);
                 _matrixParamSet = _uriBuilder.addPathSegment("search");
                 _matrixParamSet = _uriBuilder.addPathSegment("artifact");
-                _templateAndMatrixParameterValues = new HashMap<String, Object>();
+                _templateAndMatrixParameterValues = new HashMap<>();
             }
 
             public DataSource getArtifactSearchResultJson(String name, String repos)
                 throws IOException, MalformedURLException
             {
-                HashMap<String, Object> _queryParameterValues = new HashMap<String, Object>();
-                HashMap<String, Object> _headerParameterValues = new HashMap<String, Object>();
+                HashMap<String, Object> _queryParameterValues = new HashMap<>();
+                HashMap<String, Object> _headerParameterValues = new HashMap<>();
                 _queryParameterValues.put("name", name);
                 _queryParameterValues.put("repos", repos);
                 String _url = _uriBuilder.buildUri(_templateAndMatrixParameterValues, _queryParameterValues);
@@ -108,14 +108,14 @@ public class Endpoint {
                 _matrixParamSet = _uriBuilder.addPathSegment(url);
                 _matrixParamSet = _uriBuilder.addPathSegment("search");
                 _matrixParamSet = _uriBuilder.addPathSegment("gavc");
-                _templateAndMatrixParameterValues = new HashMap<String, Object>();
+                _templateAndMatrixParameterValues = new HashMap<>();
             }
 
             public DataSource getGavcSearchResultJson(String g, String a, String v, String c, String repos)
                 throws IOException, MalformedURLException
             {
-                HashMap<String, Object> _queryParameterValues = new HashMap<String, Object>();
-                HashMap<String, Object> _headerParameterValues = new HashMap<String, Object>();
+                HashMap<String, Object> _queryParameterValues = new HashMap<>();
+                HashMap<String, Object> _headerParameterValues = new HashMap<>();
                 _queryParameterValues.put("g", g);
                 _queryParameterValues.put("a", a);
                 _queryParameterValues.put("v", v);
@@ -149,14 +149,14 @@ public class Endpoint {
                 _matrixParamSet = _uriBuilder.addPathSegment(url);
                 _matrixParamSet = _uriBuilder.addPathSegment("search");
                 _matrixParamSet = _uriBuilder.addPathSegment("archive");
-                _templateAndMatrixParameterValues = new HashMap<String, Object>();
+                _templateAndMatrixParameterValues = new HashMap<>();
             }
 
             public DataSource getArchiveSearchResultJson(String className, String repos)
                 throws IOException, MalformedURLException
             {
-                HashMap<String, Object> _queryParameterValues = new HashMap<String, Object>();
-                HashMap<String, Object> _headerParameterValues = new HashMap<String, Object>();
+                HashMap<String, Object> _queryParameterValues = new HashMap<>();
+                HashMap<String, Object> _headerParameterValues = new HashMap<>();
                 _queryParameterValues.put("name", className);
                 _queryParameterValues.put("repos", repos);
                 String _url = _uriBuilder.buildUri(_templateAndMatrixParameterValues, _queryParameterValues);
@@ -189,14 +189,14 @@ public class Endpoint {
             List<String> _matrixParamSet;
             _matrixParamSet = _uriBuilder.addPathSegment(url);
             _matrixParamSet = _uriBuilder.addPathSegment("system");
-            _templateAndMatrixParameterValues = new HashMap<String, Object>();
+            _templateAndMatrixParameterValues = new HashMap<>();
         }
 
         public DataSource getAsApplicationXml()
             throws IOException, MalformedURLException
         {
-            HashMap<String, Object> _queryParameterValues = new HashMap<String, Object>();
-            HashMap<String, Object> _headerParameterValues = new HashMap<String, Object>();
+            HashMap<String, Object> _queryParameterValues = new HashMap<>();
+            HashMap<String, Object> _headerParameterValues = new HashMap<>();
             String _url = _uriBuilder.buildUri(_templateAndMatrixParameterValues, _queryParameterValues);
             DataSource _retVal = _dsDispatcher.doGET(_url, _headerParameterValues, "application/xml");
             return _retVal;
@@ -224,14 +224,14 @@ public class Endpoint {
                 _matrixParamSet = _uriBuilder.addPathSegment(url);
                 _matrixParamSet = _uriBuilder.addPathSegment("system");
                 _matrixParamSet = _uriBuilder.addPathSegment("configuration");
-                _templateAndMatrixParameterValues = new HashMap<String, Object>();
+                _templateAndMatrixParameterValues = new HashMap<>();
             }
 
             public DataSource postAsTextPlain(DataSource input)
                 throws IOException, MalformedURLException
             {
-                HashMap<String, Object> _queryParameterValues = new HashMap<String, Object>();
-                HashMap<String, Object> _headerParameterValues = new HashMap<String, Object>();
+                HashMap<String, Object> _queryParameterValues = new HashMap<>();
+                HashMap<String, Object> _headerParameterValues = new HashMap<>();
                 String _url = _uriBuilder.buildUri(_templateAndMatrixParameterValues, _queryParameterValues);
                 DataSource _retVal = _dsDispatcher.doPOST(input, "application/xml", _url, _headerParameterValues, "text/plain");
                 return _retVal;
@@ -240,8 +240,8 @@ public class Endpoint {
             public DataSource getAsApplicationXml()
                 throws IOException, MalformedURLException
             {
-                HashMap<String, Object> _queryParameterValues = new HashMap<String, Object>();
-                HashMap<String, Object> _headerParameterValues = new HashMap<String, Object>();
+                HashMap<String, Object> _queryParameterValues = new HashMap<>();
+                HashMap<String, Object> _headerParameterValues = new HashMap<>();
                 String _url = _uriBuilder.buildUri(_templateAndMatrixParameterValues, _queryParameterValues);
                 DataSource _retVal = _dsDispatcher.doGET(_url, _headerParameterValues, "application/xml");
                 return _retVal;
@@ -270,14 +270,14 @@ public class Endpoint {
                     _matrixParamSet = _uriBuilder.addPathSegment("system");
                     _matrixParamSet = _uriBuilder.addPathSegment("configuration");
                     _matrixParamSet = _uriBuilder.addPathSegment("remoteRepositories");
-                    _templateAndMatrixParameterValues = new HashMap<String, Object>();
+                    _templateAndMatrixParameterValues = new HashMap<>();
                 }
 
                 public void put(DataSource input)
                     throws IOException, MalformedURLException
                 {
-                    HashMap<String, Object> _queryParameterValues = new HashMap<String, Object>();
-                    HashMap<String, Object> _headerParameterValues = new HashMap<String, Object>();
+                    HashMap<String, Object> _queryParameterValues = new HashMap<>();
+                    HashMap<String, Object> _headerParameterValues = new HashMap<>();
                     String _url = _uriBuilder.buildUri(_templateAndMatrixParameterValues, _queryParameterValues);
                     DataSource _retVal = _dsDispatcher.doPUT(input, "application/xml", _url, _headerParameterValues, null);
                     return ;
@@ -310,14 +310,14 @@ public class Endpoint {
             List<String> _matrixParamSet;
             _matrixParamSet = _uriBuilder.addPathSegment(url);
             _matrixParamSet = _uriBuilder.addPathSegment("system/version");
-            _templateAndMatrixParameterValues = new HashMap<String, Object>();
+            _templateAndMatrixParameterValues = new HashMap<>();
         }
 
         public DataSource getSystemVersionJson()
             throws IOException, MalformedURLException
         {
-            HashMap<String, Object> _queryParameterValues = new HashMap<String, Object>();
-            HashMap<String, Object> _headerParameterValues = new HashMap<String, Object>();
+            HashMap<String, Object> _queryParameterValues = new HashMap<>();
+            HashMap<String, Object> _headerParameterValues = new HashMap<>();
             String _url = _uriBuilder.buildUri(_templateAndMatrixParameterValues, _queryParameterValues);
             DataSource _retVal = _dsDispatcher.doGET(_url, _headerParameterValues, "application/vnd.org.jfrog.artifactory.system.Version+json");
             return _retVal;
@@ -349,14 +349,14 @@ public class Endpoint {
           List<String> _matrixParamSet;
           _matrixParamSet = _uriBuilder.addPathSegment(url);
           _matrixParamSet = _uriBuilder.addPathSegment("repositories");
-          _templateAndMatrixParameterValues = new HashMap<String, Object>();
+          _templateAndMatrixParameterValues = new HashMap<>();
       }
 
       public DataSource getRepositoryDetailsListJson(String type)
           throws IOException, MalformedURLException
       {
-          HashMap<String, Object> _queryParameterValues = new HashMap<String, Object>();
-          HashMap<String, Object> _headerParameterValues = new HashMap<String, Object>();
+          HashMap<String, Object> _queryParameterValues = new HashMap<>();
+          HashMap<String, Object> _headerParameterValues = new HashMap<>();
           _queryParameterValues.put("type", type);
           String _url = _uriBuilder.buildUri(_templateAndMatrixParameterValues, _queryParameterValues);
           DataSource _retVal = _dsDispatcher.doGET(_url, _headerParameterValues, "application/vnd.org.jfrog.artifactory.repositories.RepositoryDetailsList+json");
@@ -384,7 +384,7 @@ public class Endpoint {
               _matrixParamSet = _uriBuilder.addPathSegment(url);
               _matrixParamSet = _uriBuilder.addPathSegment("repositories");
               _matrixParamSet = _uriBuilder.addPathSegment("{repoKey}/configuration");
-              _templateAndMatrixParameterValues = new HashMap<String, Object>();
+              _templateAndMatrixParameterValues = new HashMap<>();
               _templateAndMatrixParameterValues.put("repoKey", repokey);
           }
 
@@ -407,8 +407,8 @@ public class Endpoint {
           public DataSource getAsApplicationVndOrgJfrogArtifactoryRepositoriesRepositoryConfigurationJson()
               throws IOException, MalformedURLException
           {
-              HashMap<String, Object> _queryParameterValues = new HashMap<String, Object>();
-              HashMap<String, Object> _headerParameterValues = new HashMap<String, Object>();
+              HashMap<String, Object> _queryParameterValues = new HashMap<>();
+              HashMap<String, Object> _headerParameterValues = new HashMap<>();
               String _url = _uriBuilder.buildUri(_templateAndMatrixParameterValues, _queryParameterValues);
               DataSource _retVal = _dsDispatcher.doGET(_url, _headerParameterValues, "application/vnd.org.jfrog.artifactory.repositories.RepositoryConfiguration+json");
               return _retVal;

@@ -157,8 +157,8 @@ public class PackageAnnotator {
 
     if (modules == null) return;
 
-    Map<String, PackageCoverageInfo> packageCoverageMap = new HashMap<String, PackageCoverageInfo>();
-    Map<String, PackageCoverageInfo> flattenPackageCoverageMap = new HashMap<String, PackageCoverageInfo>();
+    Map<String, PackageCoverageInfo> packageCoverageMap = new HashMap<>();
+    Map<String, PackageCoverageInfo> flattenPackageCoverageMap = new HashMap<>();
     for (final Module module : modules) {
       if (!scope.isSearchInModuleContent(module)) continue;
       final String rootPackageVMName = qualifiedName.replaceAll("\\.", "/");
@@ -224,7 +224,7 @@ public class PackageAnnotator {
         final String packageVMName = StringUtil.getPackageName(qualifiedName).replace('.', '/');
         final File packageRoot = findRelativeFile(packageVMName, outputPath);
         if (packageRoot != null && packageRoot.exists()) {
-          Map<String, ClassCoverageInfo> toplevelClassCoverage = new HashMap<String, ClassCoverageInfo>();
+          Map<String, ClassCoverageInfo> toplevelClassCoverage = new HashMap<>();
           final File[] files = packageRoot.listFiles();
           if (files != null) {
             for (File child : files) {
@@ -256,7 +256,7 @@ public class PackageAnnotator {
                                                        final Module module,
                                                        final boolean trackTestFolders,
                                                        final boolean isTestHierarchy) {
-    final List<DirCoverageInfo> dirs = new ArrayList<DirCoverageInfo>();
+    final List<DirCoverageInfo> dirs = new ArrayList<>();
     final ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
     for (ContentEntry contentEntry : contentEntries) {
       for (SourceFolder folder : contentEntry.getSourceFolders(isTestHierarchy ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE)) {
@@ -273,7 +273,7 @@ public class PackageAnnotator {
 
     if (children == null) return null;
 
-    Map<String, ClassCoverageInfo> toplevelClassCoverage = new HashMap<String, ClassCoverageInfo>();
+    Map<String, ClassCoverageInfo> toplevelClassCoverage = new HashMap<>();
     for (File child : children) {
       if (child.isDirectory()) {
         final String childName = child.getName();
@@ -299,8 +299,8 @@ public class PackageAnnotator {
           final String childName = getClassName(child);
           final String classFqVMName = packageVMName.length() > 0 ? packageVMName + "/" + childName : childName;
           final String toplevelClassSrcFQName = getSourceToplevelFQName(classFqVMName);
-          final Ref<VirtualFile> containingFileRef = new Ref<VirtualFile>();
-          final Ref<PsiClass> psiClassRef = new Ref<PsiClass>();
+          final Ref<VirtualFile> containingFileRef = new Ref<>();
+          final Ref<PsiClass> psiClassRef = new Ref<>();
           final CoverageSuitesBundle suitesBundle = myCoverageManager.getCurrentSuitesBundle();
           if (suitesBundle == null) continue;
           final Boolean isInSource = DumbService.getInstance(myProject).runReadActionInSmartMode(() -> {

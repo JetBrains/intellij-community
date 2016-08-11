@@ -60,7 +60,7 @@ public final class CustomFileTypeLexer extends AbstractCustomLexer {
         table.isHasStringEscapes()
     );
 
-    ArrayList<TokenParser> tokenParsers = new ArrayList<TokenParser>();
+    ArrayList<TokenParser> tokenParsers = new ArrayList<>();
     tokenParsers.add(new WhitespaceParser());
     if (lineCommentParser != null) {
       tokenParsers.add(lineCommentParser);

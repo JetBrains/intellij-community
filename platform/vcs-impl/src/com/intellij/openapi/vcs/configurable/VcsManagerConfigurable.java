@@ -117,7 +117,7 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
   protected Configurable[] buildConfigurables() {
     myGeneralPanel = new VcsGeneralConfigurationConfigurable(myProject, this);
 
-    List<Configurable> result = new ArrayList<Configurable>();
+    List<Configurable> result = new ArrayList<>();
 
     result.add(myGeneralPanel);
     result.add(new VcsBackgroundOperationsConfigurable(myProject));

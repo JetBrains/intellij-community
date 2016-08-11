@@ -34,7 +34,7 @@ public class FileNameCache {
     final int protectedSize = 40000 / ourNameCache.length;
     final int probationalSize = 20000 / ourNameCache.length;
     for(int i = 0; i < ourNameCache.length; ++i) {
-      ourNameCache[i] = new IntSLRUCache<IntObjectLinkedMap.MapEntry<CharSequence>>(protectedSize, probationalSize);
+      ourNameCache[i] = new IntSLRUCache<>(protectedSize, probationalSize);
     }
   }
 
@@ -52,7 +52,7 @@ public class FileNameCache {
     }
 
     CharSequence rawName = ByteArrayCharSequence.convertToBytesIfAsciiString(name);
-    IntObjectLinkedMap.MapEntry<CharSequence> entry = new IntObjectLinkedMap.MapEntry<CharSequence>(id, rawName);
+    IntObjectLinkedMap.MapEntry<CharSequence> entry = new IntObjectLinkedMap.MapEntry<>(id, rawName);
     IntSLRUCache<IntObjectLinkedMap.MapEntry<CharSequence>> cache = ourNameCache[stripe];
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (cache) {

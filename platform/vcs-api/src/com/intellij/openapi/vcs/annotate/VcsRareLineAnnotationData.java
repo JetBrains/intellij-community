@@ -31,7 +31,7 @@ public class VcsRareLineAnnotationData implements VcsLineAnnotationData {
 
   public VcsRareLineAnnotationData(final int size) {
     mySize = size;
-    myMap = new HashMap<Integer, VcsRevisionNumber>();
+    myMap = new HashMap<>();
   }
 
   @Override

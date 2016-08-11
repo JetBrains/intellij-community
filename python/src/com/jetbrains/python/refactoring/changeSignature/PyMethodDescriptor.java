@@ -43,7 +43,7 @@ public class PyMethodDescriptor implements MethodDescriptor<PyParameterInfo, Str
 
   @Override
   public List<PyParameterInfo> getParameters() {
-    List<PyParameterInfo> parameterInfos = new ArrayList<PyParameterInfo>();
+    List<PyParameterInfo> parameterInfos = new ArrayList<>();
     PyParameter[] parameters = myFunction.getParameterList().getParameters();
     for (int i = 0; i < parameters.length; i++) {
       PyParameter parameter = parameters[i];

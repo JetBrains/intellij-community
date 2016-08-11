@@ -123,7 +123,7 @@ public class EditorTestUtil {
   }
 
   public static List<IElementType> getAllTokens(EditorHighlighter highlighter) {
-    List<IElementType> tokens = new ArrayList<IElementType>();
+    List<IElementType> tokens = new ArrayList<>();
     HighlighterIterator iterator = highlighter.createIterator(0);
     while (!iterator.atEnd()) {
       tokens.add(iterator.getTokenType());
@@ -368,7 +368,7 @@ public class EditorTestUtil {
   public static void setCaretsAndSelection(Editor editor, CaretAndSelectionState caretsState) {
     CaretModel caretModel = editor.getCaretModel();
     if (caretModel.supportsMultipleCarets()) {
-      List<CaretState> states = new ArrayList<CaretState>(caretsState.carets.size());
+      List<CaretState> states = new ArrayList<>(caretsState.carets.size());
       for (CaretInfo caret : caretsState.carets) {
         states.add(new CaretState(caret.position == null ? null : editor.offsetToLogicalPosition(caret.getCaretOffset(editor.getDocument())),
                                   caret.selection == null ? null : editor.offsetToLogicalPosition(caret.selection.getStartOffset()),
@@ -413,7 +413,7 @@ public class EditorTestUtil {
     }
     String messageSuffix = message == null ? "" : (message + ": ");
     CaretModel caretModel = editor.getCaretModel();
-    List<Caret> allCarets = new ArrayList<Caret>(caretModel.getAllCarets());
+    List<Caret> allCarets = new ArrayList<>(caretModel.getAllCarets());
     assertEquals(messageSuffix + " Unexpected number of carets", caretState.carets.size(), allCarets.size());
     for (int i = 0; i < caretState.carets.size(); i++) {
       String caretDescription = caretState.carets.size() == 1 ? "" : "caret " + (i + 1) + "/" + caretState.carets.size() + " ";
@@ -445,7 +445,7 @@ public class EditorTestUtil {
 
   public static FoldRegion addFoldRegion(@NotNull Editor editor, final int startOffset, final int endOffset, final String placeholder, final boolean collapse) {
     final FoldingModel foldingModel = editor.getFoldingModel();
-    final Ref<FoldRegion> ref = new Ref<FoldRegion>();
+    final Ref<FoldRegion> ref = new Ref<>();
     foldingModel.runBatchFoldingOperation(() -> {
       FoldRegion region = foldingModel.addFoldRegion(startOffset, endOffset, placeholder);
       assertNotNull(region);

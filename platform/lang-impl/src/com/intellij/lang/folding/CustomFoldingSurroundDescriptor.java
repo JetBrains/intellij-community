@@ -53,7 +53,7 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
   private final static String DEFAULT_DESC_TEXT = "Description";
 
   static {
-    List<CustomFoldingRegionSurrounder> surrounderList = new ArrayList<CustomFoldingRegionSurrounder>();
+    List<CustomFoldingRegionSurrounder> surrounderList = new ArrayList<>();
     for (CustomFoldingProvider provider : CustomFoldingProvider.getAllProviders()) {
       surrounderList.add(new CustomFoldingRegionSurrounder(provider));
     }

@@ -82,7 +82,7 @@ public class ShowSelectedChangeAction extends ShowChangeAbstractAction {
 
   @NotNull
   private static List<Change> getChangesFromRequests(@NotNull List<DiffRequestPresentable> requests) {
-    List<Change> changes = new ArrayList<Change>();
+    List<Change> changes = new ArrayList<>();
     for (DiffRequestPresentable step : requests) {
       Change change = getChange(step);
       if (change != null) {

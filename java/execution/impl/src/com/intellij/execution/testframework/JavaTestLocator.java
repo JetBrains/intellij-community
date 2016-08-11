@@ -57,7 +57,7 @@ public class JavaTestLocator implements SMTestLocator {
       if (aClass != null) {
         results = ContainerUtil.newSmartList();
         results.add(paramName != null ? PsiMemberParameterizedLocation.getParameterizedLocation(aClass, paramName)
-                                      : new PsiLocation<PsiClass>(project, aClass));
+                                      : new PsiLocation<>(project, aClass));
       }
     }
     else if (TEST_PROTOCOL.equals(protocol)) {

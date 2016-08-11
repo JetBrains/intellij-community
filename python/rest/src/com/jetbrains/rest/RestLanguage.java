@@ -28,7 +28,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
  */
 public class RestLanguage extends Language implements TemplateLanguage  {
   public static final RestLanguage INSTANCE = new RestLanguage();
-  private final Set<Class<? extends RestAnnotator>> _annotators = new CopyOnWriteArraySet<Class<? extends RestAnnotator>>();
+  private final Set<Class<? extends RestAnnotator>> _annotators = new CopyOnWriteArraySet<>();
   private RestLanguage() {
     super("ReST");
   }

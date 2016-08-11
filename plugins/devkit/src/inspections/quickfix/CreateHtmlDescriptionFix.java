@@ -77,7 +77,7 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
 
   private static List<VirtualFile> getPotentialRoots(Module module, PsiDirectory[] dirs) {
     if (dirs.length != 0) {
-      final List<VirtualFile> result = new ArrayList<VirtualFile>();
+      final List<VirtualFile> result = new ArrayList<>();
       for (PsiDirectory dir : dirs) {
         final PsiDirectory parent = dir.getParentDirectory();
         if (parent != null) result.add(parent.getVirtualFile());
@@ -116,7 +116,7 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
       ApplicationManager.getApplication().runWriteAction(() -> createDescription(roots[0]));
     }
     else {
-      List<String> options = new ArrayList<String>();
+      List<String> options = new ArrayList<>();
       for (VirtualFile file : roots) {
         String path = getPath(file);
         options.add(path);
@@ -194,7 +194,7 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
   }
 
   private VirtualFile[] prepare(VirtualFile[] roots) {
-    List<VirtualFile> found = new ArrayList<VirtualFile>();
+    List<VirtualFile> found = new ArrayList<>();
     for (VirtualFile root : roots) {
       if (containsDescriptionDir(root)) {
         found.add(root);

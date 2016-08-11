@@ -209,8 +209,8 @@ public class ImportFromToImportIntention implements IntentionAction {
       // find all unqualified references that lead to one of our import elements
       final PyImportElement[] ielts = info.myFromImportStatement.getImportElements();
       final PyStarImportElement star_ielt = info.myFromImportStatement.getStarImportElement();
-      final Map<PsiReference, PyImportElement> references = new HashMap<PsiReference, PyImportElement>();
-      final List<PsiReference> star_references = new ArrayList<PsiReference>();
+      final Map<PsiReference, PyImportElement> references = new HashMap<>();
+      final List<PsiReference> star_references = new ArrayList<>();
       PsiTreeUtil.processElements(file, new PsiElementProcessor() {
         public boolean execute(@NotNull PsiElement element) {
           PyPsiUtils.assertValid(element);
@@ -243,7 +243,7 @@ public class ImportFromToImportIntention implements IntentionAction {
       String top_name = top_qualifier.getName();
       Collection<PsiReference> possible_targets = references.keySet();
       if (star_references.size() > 0) {
-        possible_targets = new ArrayList<PsiReference>(references.keySet().size() + star_references.size());
+        possible_targets = new ArrayList<>(references.keySet().size() + star_references.size());
         possible_targets.addAll(references.keySet());
         possible_targets.addAll(star_references);
       }

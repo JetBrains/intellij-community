@@ -33,16 +33,16 @@ import java.util.Map;
 * Date: 08.01.11
 */
 public abstract class AbstractFunctionContext implements FunctionContext {
-  private static final Map<ContextType, FunctionContext> ourInstances = new HashMap<ContextType, FunctionContext>();
+  private static final Map<ContextType, FunctionContext> ourInstances = new HashMap<>();
 
   private final Map<Pair<QName, Integer>, Function> myFunctions;
-  private final Map<QName, Function> myDefaultMap = new HashMap<QName, Function>();
+  private final Map<QName, Function> myDefaultMap = new HashMap<>();
 
   protected AbstractFunctionContext(ContextType contextType) {
     assert !ourInstances.containsKey(contextType);
 
     //noinspection AbstractMethodCallInConstructor
-    myFunctions = Collections.unmodifiableMap(new HashMap<Pair<QName, Integer>, Function>(
+    myFunctions = Collections.unmodifiableMap(new HashMap<>(
       ContainerUtil.union(createFunctionMap(contextType), getProvidedFunctions(contextType))));
 
     for (Map.Entry<Pair<QName, Integer>, Function> entry : myFunctions.entrySet()) {
@@ -63,7 +63,7 @@ public abstract class AbstractFunctionContext implements FunctionContext {
   protected abstract Map<Pair<QName, Integer>, Function> createFunctionMap(ContextType contextType);
 
   private static Map<Pair<QName, Integer>, Function> getProvidedFunctions(ContextType contextType) {
-    final Map<Pair<QName, Integer>, Function> map = new HashMap<Pair<QName, Integer>, Function>();
+    final Map<Pair<QName, Integer>, Function> map = new HashMap<>();
     final List<Pair<QName, ? extends Function>> availableFunctions = XPathFunctionProvider.getAvailableFunctions(contextType);
     for (Pair<QName, ? extends Function> pair : availableFunctions) {
       map.put(Pair.create(pair.first, pair.second.getParameters().length), pair.second);

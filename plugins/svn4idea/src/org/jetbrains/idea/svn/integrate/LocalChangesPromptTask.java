@@ -126,7 +126,7 @@ public class LocalChangesPromptTask extends BaseMergeTask {
 
   @NotNull
   private Set<FilePath> collectPaths(@NotNull List<CommittedChangeList> lists) {
-    Set<FilePath> result = new HashSet<FilePath>();
+    Set<FilePath> result = new HashSet<>();
 
     for (CommittedChangeList list : lists) {
       SvnChangeList svnList = (SvnChangeList)list;

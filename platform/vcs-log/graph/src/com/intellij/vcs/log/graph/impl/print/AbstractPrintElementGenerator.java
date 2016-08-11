@@ -45,7 +45,7 @@ public abstract class AbstractPrintElementGenerator implements PrintElementGener
 
   @NotNull
   public Collection<PrintElementWithGraphElement> getPrintElements(int rowIndex) {
-    Collection<PrintElementWithGraphElement> result = new ArrayList<PrintElementWithGraphElement>();
+    Collection<PrintElementWithGraphElement> result = new ArrayList<>();
 
     Map<GraphEdge, SimpleRowElement> arrows = ContainerUtil.newHashMap();
 

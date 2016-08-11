@@ -93,8 +93,8 @@ class RunConfigurable extends BaseConfigurable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.RunConfigurable");
   private final JTextField myRecentsLimit = new JTextField("5", 2);
   private final JCheckBox myConfirmation = new JCheckBox(ExecutionBundle.message("rerun.confirmation.checkbox"), true);
-  private final List<Pair<UnnamedConfigurable, JComponent>> myAdditionalSettings = new ArrayList<Pair<UnnamedConfigurable, JComponent>>();
-  private Map<ConfigurationFactory, Configurable> myStoredComponents = new HashMap<ConfigurationFactory, Configurable>();
+  private final List<Pair<UnnamedConfigurable, JComponent>> myAdditionalSettings = new ArrayList<>();
+  private Map<ConfigurationFactory, Configurable> myStoredComponents = new HashMap<>();
   private ToolbarDecorator myToolbarDecorator;
   private boolean isFolderCreating;
   private RunConfigurable.MyToolbarAddAction myAddAction = new MyToolbarAddAction();
@@ -208,7 +208,7 @@ class RunConfigurable extends BaseConfigurable {
       if (!configurations.isEmpty()) {
         final DefaultMutableTreeNode typeNode = new DefaultMutableTreeNode(type);
         myRoot.add(typeNode);
-        Map<String, DefaultMutableTreeNode> folderMapping = new HashMap<String, DefaultMutableTreeNode>();
+        Map<String, DefaultMutableTreeNode> folderMapping = new HashMap<>();
         int folderCounter = 0;
         for (RunnerAndConfigurationSettings configuration : configurations) {
           String folder = configuration.getFolderName();
@@ -659,7 +659,7 @@ class RunConfigurable extends BaseConfigurable {
 
       final RunManagerImpl manager = getRunManager();
       final ConfigurationType[] types = manager.getConfigurationFactories();
-      List<ConfigurationType> configurationTypes = new ArrayList<ConfigurationType>();
+      List<ConfigurationType> configurationTypes = new ArrayList<>();
       for (int i = 0; i < myRoot.getChildCount(); i++) {
         final DefaultMutableTreeNode node = (DefaultMutableTreeNode)myRoot.getChildAt(i);
         Object userObject = node.getUserObject();
@@ -724,10 +724,10 @@ class RunConfigurable extends BaseConfigurable {
 
     DefaultMutableTreeNode typeNode = getConfigurationTypeNode(type);
     final RunManagerImpl manager = getRunManager();
-    final ArrayList<RunConfigurationBean> stableConfigurations = new ArrayList<RunConfigurationBean>();
+    final ArrayList<RunConfigurationBean> stableConfigurations = new ArrayList<>();
     if (typeNode != null) {
-      final Set<String> names = new HashSet<String>();
-      List<DefaultMutableTreeNode> configurationNodes = new ArrayList<DefaultMutableTreeNode>();
+      final Set<String> names = new HashSet<>();
+      List<DefaultMutableTreeNode> configurationNodes = new ArrayList<>();
       collectNodesRecursively(typeNode, configurationNodes, CONFIGURATION, TEMPORARY_CONFIGURATION);
       for (DefaultMutableTreeNode node : configurationNodes) {
         final Object userObject = node.getUserObject();
@@ -761,7 +761,7 @@ class RunConfigurable extends BaseConfigurable {
           }
         }
       }
-      List<DefaultMutableTreeNode> folderNodes = new ArrayList<DefaultMutableTreeNode>();
+      List<DefaultMutableTreeNode> folderNodes = new ArrayList<>();
       collectNodesRecursively(typeNode, folderNodes, FOLDER);
       names.clear();
       for (DefaultMutableTreeNode node : folderNodes) {
@@ -785,7 +785,7 @@ class RunConfigurable extends BaseConfigurable {
     }
 
     // if apply succeeded, update the list of configurations in RunManager
-    Set<RunnerAndConfigurationSettings> toDeleteSettings = new THashSet<RunnerAndConfigurationSettings>();
+    Set<RunnerAndConfigurationSettings> toDeleteSettings = new THashSet<>();
     for (RunConfiguration each : manager.getConfigurationsList(type)) {
       ContainerUtil.addIfNotNull(toDeleteSettings, manager.getSettings(each));
     }
@@ -851,14 +851,14 @@ class RunConfigurable extends BaseConfigurable {
     if (super.isModified()) return true;
     final RunManagerImpl runManager = getRunManager();
     final List<RunConfiguration> allConfigurations = runManager.getAllConfigurationsList();
-    final List<RunConfiguration> currentConfigurations = new ArrayList<RunConfiguration>();
+    final List<RunConfiguration> currentConfigurations = new ArrayList<>();
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       DefaultMutableTreeNode typeNode = (DefaultMutableTreeNode)myRoot.getChildAt(i);
       final Object object = typeNode.getUserObject();
       if (object instanceof ConfigurationType) {
         final List<RunnerAndConfigurationSettings> configurationSettings = runManager.getConfigurationSettingsList(
           (ConfigurationType)object);
-        List<DefaultMutableTreeNode> configurationNodes = new ArrayList<DefaultMutableTreeNode>();
+        List<DefaultMutableTreeNode> configurationNodes = new ArrayList<>();
         collectNodesRecursively(typeNode, configurationNodes, CONFIGURATION, TEMPORARY_CONFIGURATION);
         if (configurationSettings.size() != configurationNodes.size()) return true;
         for (int j = 0; j < configurationNodes.size(); j++) {
@@ -1053,9 +1053,9 @@ class RunConfigurable extends BaseConfigurable {
   @NotNull
   private static String createUniqueName(DefaultMutableTreeNode typeNode, @Nullable String baseName, NodeKind...kinds) {
     String str = (baseName == null) ? ExecutionBundle.message("run.configuration.unnamed.name.prefix") : baseName;
-    List<DefaultMutableTreeNode> configurationNodes = new ArrayList<DefaultMutableTreeNode>();
+    List<DefaultMutableTreeNode> configurationNodes = new ArrayList<>();
     collectNodesRecursively(typeNode, configurationNodes, kinds);
-    final ArrayList<String> currentNames = new ArrayList<String>();
+    final ArrayList<String> currentNames = new ArrayList<>();
     for (DefaultMutableTreeNode node : configurationNodes) {
       final Object userObject = node.getUserObject();
       if (userObject instanceof SingleConfigurationConfigurable) {
@@ -1145,7 +1145,7 @@ class RunConfigurable extends BaseConfigurable {
 
     private List<ConfigurationType> getTypesToShow(boolean showApplicableTypesOnly, ConfigurationType[] allTypes) {
       if (showApplicableTypesOnly) {
-        List<ConfigurationType> applicableTypes = new ArrayList<ConfigurationType>();
+        List<ConfigurationType> applicableTypes = new ArrayList<>();
         for (ConfigurationType type : allTypes) {
           if (isApplicable(type)) {
             applicableTypes.add(type);
@@ -1155,7 +1155,7 @@ class RunConfigurable extends BaseConfigurable {
           return applicableTypes;
         }
       }
-      return new ArrayList<ConfigurationType>(Arrays.asList(allTypes));
+      return new ArrayList<>(Arrays.asList(allTypes));
     }
 
     private boolean isApplicable(ConfigurationType type) {
@@ -1193,7 +1193,7 @@ class RunConfigurable extends BaseConfigurable {
       int nodeIndexToSelect = -1;
       DefaultMutableTreeNode parentToSelect = null;
 
-      Set<DefaultMutableTreeNode> changedParents = new HashSet<DefaultMutableTreeNode>();
+      Set<DefaultMutableTreeNode> changedParents = new HashSet<>();
       boolean wasRootChanged = false;
 
       for (TreePath each : selections) {
@@ -1213,7 +1213,7 @@ class RunConfigurable extends BaseConfigurable {
         changedParents.add(parent);
 
         if (kind == FOLDER) {
-          List<DefaultMutableTreeNode> children = new ArrayList<DefaultMutableTreeNode>();
+          List<DefaultMutableTreeNode> children = new ArrayList<>();
           for (int i = 0; i < node.getChildCount(); i++) {
             DefaultMutableTreeNode child = (DefaultMutableTreeNode)node.getChildAt(i);
             Object userObject = getSafeUserObject(child);
@@ -1515,7 +1515,7 @@ class RunConfigurable extends BaseConfigurable {
         return;
       }
       String folderName = createUniqueName(typeNode, "New Folder", FOLDER);
-      List<DefaultMutableTreeNode> folders = new ArrayList<DefaultMutableTreeNode>();
+      List<DefaultMutableTreeNode> folders = new ArrayList<>();
       collectNodesRecursively(getConfigurationTypeNode(type), folders, FOLDER);
       final DefaultMutableTreeNode folderNode = new DefaultMutableTreeNode(folderName);
       myTreeModel.insertNodeInto(folderNode, typeNode, folders.size());
@@ -1594,7 +1594,7 @@ class RunConfigurable extends BaseConfigurable {
     @Override
     public void actionPerformed(AnActionEvent e) {
       final DefaultMutableTreeNode[] selectedNodes = getSelectedNodes();
-      List<DefaultMutableTreeNode> foldersToSort = new ArrayList<DefaultMutableTreeNode>();
+      List<DefaultMutableTreeNode> foldersToSort = new ArrayList<>();
       for (DefaultMutableTreeNode node : selectedNodes) {
         NodeKind kind = getKind(node);
         if (kind == CONFIGURATION_TYPE || kind == FOLDER) {
@@ -1602,7 +1602,7 @@ class RunConfigurable extends BaseConfigurable {
         }
       }
       for (DefaultMutableTreeNode folderNode : foldersToSort) {
-        List<DefaultMutableTreeNode> children = new ArrayList<DefaultMutableTreeNode>();
+        List<DefaultMutableTreeNode> children = new ArrayList<>();
         for (int i = 0; i < folderNode.getChildCount(); i++) {
           DefaultMutableTreeNode child = (DefaultMutableTreeNode)folderNode.getChildAt(i);
           children.add(child);

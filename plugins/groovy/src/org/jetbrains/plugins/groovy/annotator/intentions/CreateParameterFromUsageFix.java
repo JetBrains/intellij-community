@@ -102,7 +102,7 @@ public class CreateParameterFromUsageFix extends Intention implements MethodOrCl
 
   private void findScope(@NotNull final GrReferenceExpression ref, @NotNull final Editor editor, final Project project) {
     PsiElement place = ref;
-    final List<GrMethod> scopes = new ArrayList<GrMethod>();
+    final List<GrMethod> scopes = new ArrayList<>();
     while (true) {
       final GrMethod parent = PsiTreeUtil.getParentOfType(place, GrMethod.class);
       if (parent == null) break;
@@ -144,7 +144,7 @@ public class CreateParameterFromUsageFix extends Intention implements MethodOrCl
     }
     else if (method != null) {
       JavaChangeSignatureDialog dialog = new JavaChangeSignatureDialog(project, method, false, ref);
-      final List<ParameterInfoImpl> parameterInfos = new ArrayList<ParameterInfoImpl>(Arrays.asList(ParameterInfoImpl.fromMethod(method)));
+      final List<ParameterInfoImpl> parameterInfos = new ArrayList<>(Arrays.asList(ParameterInfoImpl.fromMethod(method)));
       ParameterInfoImpl parameterInfo = new ParameterInfoImpl(-1, name, type, PsiTypesUtil.getDefaultValueOfType(type), false);
       if (!method.isVarArgs()) {
         parameterInfos.add(parameterInfo);

@@ -41,8 +41,8 @@ public class ExternalSystemDataKeys {
   @NotNull public static final DataKey<ExternalSystemUiAware> UI_AWARE = DataKey.create("external.system.ui.aware");
   @NotNull public static final DataKey<JTree> PROJECTS_TREE = DataKey.create("external.system.tree");
 
-  @NotNull public static final Key<Boolean> NEWLY_IMPORTED_PROJECT = new Key<Boolean>("external.system.newly.imported");
-  @NotNull public static final Key<Boolean> NEWLY_CREATED_PROJECT = new Key<Boolean>("external.system.newly.created");
+  @NotNull public static final Key<Boolean> NEWLY_IMPORTED_PROJECT = new Key<>("external.system.newly.imported");
+  @NotNull public static final Key<Boolean> NEWLY_CREATED_PROJECT = new Key<>("external.system.newly.created");
 
   private ExternalSystemDataKeys() {
   }

@@ -35,7 +35,7 @@ import java.util.List;
 public class CompositePrintable implements Printable, Disposable {
   public static final String NEW_LINE = "\n";
 
-  protected final List<Printable> myNestedPrintables = new ArrayList<Printable>();
+  protected final List<Printable> myNestedPrintables = new ArrayList<>();
   private final PrintablesWrapper myWrapper = new PrintablesWrapper();
   protected int myExceptionMark;
   private int myCurrentSize = 0;
@@ -66,13 +66,13 @@ public class CompositePrintable implements Printable, Disposable {
   public void printOn(final Printer printer) {
     final ArrayList<Printable> printables;
     synchronized (myNestedPrintables) {
-      printables = new ArrayList<Printable>(myNestedPrintables);
+      printables = new ArrayList<>(myNestedPrintables);
     }
     myWrapper.printOn(printer, printables);
   }
   
   public void printOwnPrintablesOn(final Printer printer) {
-    final ArrayList<Printable> printables = new ArrayList<Printable>();
+    final ArrayList<Printable> printables = new ArrayList<>();
     synchronized (myNestedPrintables) {
       for (Printable printable : myNestedPrintables) {
         if (printable instanceof AbstractTestProxy) continue;
@@ -197,7 +197,7 @@ public class CompositePrintable implements Printable, Disposable {
 
     public void flush(final List<Printable> printables) {
       if (printables.isEmpty()) return;
-      final ArrayList<Printable> currentPrintables = new ArrayList<Printable>(printables);
+      final ArrayList<Printable> currentPrintables = new ArrayList<>(printables);
       //move out from AWT thread
       final Runnable request = () -> {
         synchronized (myFileLock) {

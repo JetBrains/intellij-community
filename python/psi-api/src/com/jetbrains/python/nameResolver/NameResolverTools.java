@@ -123,7 +123,7 @@ public final class NameResolverTools {
 
     final String callableName = callee.getName();
 
-    final Collection<String> possibleNames = new LinkedList<String>();
+    final Collection<String> possibleNames = new LinkedList<>();
     for (final String lastComponent : getLastComponents(function)) {
       possibleNames.add(lastComponent);
     }
@@ -132,7 +132,7 @@ public final class NameResolverTools {
 
   @NotNull
   private static List<String> getLastComponents(@NotNull final FQNamesProvider provider) {
-    final List<String> result = new ArrayList<String>();
+    final List<String> result = new ArrayList<>();
     for (final String name : provider.getNames()) {
       final String component = QualifiedName.fromDottedString(name).getLastComponent();
       if (component != null) {

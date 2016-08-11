@@ -17,6 +17,7 @@ package com.jetbrains.python.codeInsight.stdlib;
 
 import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
@@ -144,7 +145,16 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   @Override
-  public PyType getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+  public Ref<PyType> getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+    if (callSite != null && isListGetItem(function)) {
+      final PyExpression receiver = PyTypeChecker.getReceiver(callSite, function);
+      final Map<PyExpression, PyNamedParameter> mapping = PyCallExpressionHelper.mapArguments(callSite, function, context);
+      final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(receiver, mapping, context);
+      if (substitutions != null) {
+        return analyzeListGetItemCallType(receiver, mapping, substitutions, context);
+      }
+    }
+
     final String qname = getQualifiedName(function, callSite);
     if (qname != null) {
       if (OPEN_FUNCTIONS.contains(qname) && callSite instanceof PyCallExpression) {
@@ -152,10 +162,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
         final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
         final PyCallExpression.PyArgumentsMapping mapping = callExpr.mapArguments(resolveContext);
         if (mapping.getMarkedCallee() != null) {
-          final PyType type = getOpenFunctionType(qname, mapping.getMappedParameters(), callSite);
-          if (type != null) {
-            return type;
-          }
+          return getOpenFunctionType(qname, mapping.getMappedParameters(), callSite);
         }
       }
       else if ("__builtin__.tuple.__add__".equals(qname) && callSite instanceof PyBinaryExpression) {
@@ -164,15 +171,8 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       else if ("__builtin__.tuple.__mul__".equals(qname) && callSite instanceof PyBinaryExpression) {
         return getTupleMultiplicationResultType((PyBinaryExpression)callSite, context);
       }
-      else if (callSite != null && isListGetItem(function)) {
-        final PyExpression receiver = PyTypeChecker.getReceiver(callSite, function);
-        final Map<PyExpression, PyNamedParameter> mapping = PyCallExpressionHelper.mapArguments(callSite, function, context);
-        final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(receiver, mapping, context);
-        if (substitutions != null) {
-          return analyzeListGetItemCallType(receiver, mapping, substitutions, context);
-        }
-      }
     }
+
     return null;
   }
 
@@ -186,11 +186,11 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static PyType analyzeListGetItemCallType(@Nullable PyExpression receiver,
-                                                   @NotNull Map<PyExpression, PyNamedParameter> parameters,
-                                                   @NotNull Map<PyGenericType, PyType> substitutions,
-                                                   @NotNull TypeEvalContext context) {
-    if (parameters.size() != 1 || substitutions.size() != 1) {
+  private static Ref<PyType> analyzeListGetItemCallType(@Nullable PyExpression receiver,
+                                                        @NotNull Map<PyExpression, PyNamedParameter> parameters,
+                                                        @NotNull Map<PyGenericType, PyType> substitutions,
+                                                        @NotNull TypeEvalContext context) {
+    if (parameters.size() != 1 || substitutions.size() > 1) {
       return null;
     }
 
@@ -204,25 +204,29 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     }
 
     if (PyABCUtil.isSubtype(firstArgumentType, PyNames.ABC_INTEGRAL, context)) {
-      return substitutions.values().iterator().next();
+      final PyType result = substitutions.isEmpty() ? null : substitutions.values().iterator().next();
+      return Ref.create(result);
     }
 
     if (PyNames.SLICE.equals(firstArgumentType.getName()) && firstArgumentType.isBuiltin()) {
-      return Optional
-        .ofNullable(receiver)
-        .map(context::getType)
-        .orElseGet(() -> PyTypeChecker.substitute(PyBuiltinCache.getInstance(receiver).getListType(), substitutions, context));
+      return Ref.create(
+        Optional
+          .ofNullable(receiver)
+          .map(context::getType)
+          .orElseGet(() -> PyTypeChecker.substitute(PyBuiltinCache.getInstance(receiver).getListType(), substitutions, context))
+      );
     }
 
     return null;
   }
 
   @Nullable
-  private static PyType getTupleMultiplicationResultType(@NotNull PyBinaryExpression multiplication, @NotNull TypeEvalContext context) {
+  private static Ref<PyType> getTupleMultiplicationResultType(@NotNull PyBinaryExpression multiplication, @NotNull TypeEvalContext context) {
     final PyTupleType leftTupleType = as(context.getType(multiplication.getLeftExpression()), PyTupleType.class);
     if (leftTupleType == null) {
       return null;
     }
+
     PyExpression rightExpression = multiplication.getRightExpression();
     if (rightExpression instanceof PyReferenceExpression) {
       final PsiElement target = ((PyReferenceExpression)rightExpression).getReference().resolve();
@@ -230,10 +234,12 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
         rightExpression = ((PyTargetExpression)target).findAssignedValue();
       }
     }
+
     if (rightExpression instanceof PyNumericLiteralExpression && ((PyNumericLiteralExpression)rightExpression).isIntegerLiteral()) {
       if (leftTupleType.isHomogeneous()) {
-        return leftTupleType;
+        return Ref.create(leftTupleType);
       }
+
       final int multiplier = ((PyNumericLiteralExpression)rightExpression).getBigIntegerValue().intValue();
       final int originalSize = leftTupleType.getElementCount();
       // Heuristic
@@ -244,17 +250,19 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
             elementTypes[i * originalSize + j] = leftTupleType.getElementType(j);
           }
         }
-        return PyTupleType.create(multiplication, elementTypes);
+        return Ref.create(PyTupleType.create(multiplication, elementTypes));
       }
     }
+
     return null;
   }
 
   @Nullable
-  private static PyType getTupleConcatenationResultType(@NotNull PyBinaryExpression addition, @NotNull TypeEvalContext context) {
-    final PyTupleType leftTupleType = as(context.getType(addition.getLeftExpression()), PyTupleType.class);
+  private static Ref<PyType> getTupleConcatenationResultType(@NotNull PyBinaryExpression addition, @NotNull TypeEvalContext context) {
     if (addition.getRightExpression() != null) {
+      final PyTupleType leftTupleType = as(context.getType(addition.getLeftExpression()), PyTupleType.class);
       final PyTupleType rightTupleType = as(context.getType(addition.getRightExpression()), PyTupleType.class);
+
       if (leftTupleType != null && rightTupleType != null) {
         if (leftTupleType.isHomogeneous() || rightTupleType.isHomogeneous()) {
           // We may try to find the common type of elements of two homogeneous tuple as an alternative
@@ -268,9 +276,11 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
         for (int i = 0; i < rightTupleType.getElementCount(); i++) {
           elementTypes[i + leftTupleType.getElementCount()] = rightTupleType.getElementType(i);
         }
-        return PyTupleType.create(addition, elementTypes);
+
+        return Ref.create(PyTupleType.create(addition, elementTypes));
       }
     }
+
     return null;
   }
 
@@ -310,10 +320,10 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  @Nullable
-  private static PyType getOpenFunctionType(@NotNull String callQName,
-                                            @NotNull Map<PyExpression, PyNamedParameter> arguments,
-                                            @NotNull PsiElement anchor) {
+  @NotNull
+  private static Ref<PyType> getOpenFunctionType(@NotNull String callQName,
+                                                 @NotNull Map<PyExpression, PyNamedParameter> arguments,
+                                                 @NotNull PsiElement anchor) {
     String mode = "r";
     for (Map.Entry<PyExpression, PyNamedParameter> entry : arguments.entrySet()) {
       final PyNamedParameter parameter = entry.getValue();
@@ -328,17 +338,17 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
         }
       }
     }
-    final LanguageLevel level = LanguageLevel.forElement(anchor);
 
-    if (level.isPy3K() || "io.open".equals(callQName)) {
+    if (LanguageLevel.forElement(anchor).isAtLeast(LanguageLevel.PYTHON30) || "io.open".equals(callQName)) {
       if (mode.contains("b")) {
-        return PyTypeParser.getTypeByName(anchor, PY3K_BINARY_FILE_TYPE);
-      } else {
-        return PyTypeParser.getTypeByName(anchor, PY3K_TEXT_FILE_TYPE);
+        return Ref.create(PyTypeParser.getTypeByName(anchor, PY3K_BINARY_FILE_TYPE));
+      }
+      else {
+        return Ref.create(PyTypeParser.getTypeByName(anchor, PY3K_TEXT_FILE_TYPE));
       }
     }
 
-    return PyTypeParser.getTypeByName(anchor, PY2K_FILE_TYPE);
+    return Ref.create(PyTypeParser.getTypeByName(anchor, PY2K_FILE_TYPE));
   }
 
   @Nullable

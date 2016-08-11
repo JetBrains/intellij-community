@@ -36,7 +36,7 @@ public class GitCheckAttrParser {
   @NotNull private final Map<String, Collection<GitAttribute>> myAttributes;
 
   private GitCheckAttrParser(@NotNull List<String> output) {
-    myAttributes = new HashMap<String, Collection<GitAttribute>>();
+    myAttributes = new HashMap<>();
 
     for (String line : output) {
       if (line.isEmpty()) {
@@ -56,7 +56,7 @@ public class GitCheckAttrParser {
       }
 
       if (myAttributes.get(file) == null) {
-        myAttributes.put(file, new ArrayList<GitAttribute>());
+        myAttributes.put(file, new ArrayList<>());
       }
       myAttributes.get(file).add(attr);
     }

@@ -238,8 +238,8 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
         throw new ProcessCanceledException();
       }
     };
-    final CheckedTreeNode root = createTreeNode(null, new HashSet<M>(), cancelCallback);
-    myRoot = createTreeNode(myMethod, new HashSet<M>(), cancelCallback);
+    final CheckedTreeNode root = createTreeNode(null, new HashSet<>(), cancelCallback);
+    myRoot = createTreeNode(myMethod, new HashSet<>(), cancelCallback);
     root.add(myRoot);
     final CheckboxTree.CheckboxTreeCellRenderer cellRenderer = new CheckboxTree.CheckboxTreeCellRenderer(true, false) {
       @Override
@@ -291,7 +291,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
   }
 
   protected Set<MethodNodeBase<M>> getSelectedNodes() {
-    final Set<MethodNodeBase<M>> nodes = new LinkedHashSet<MethodNodeBase<M>>();
+    final Set<MethodNodeBase<M>> nodes = new LinkedHashSet<>();
     collectSelectedNodes(myRoot, nodes);
     return nodes;
   }
@@ -308,7 +308,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
 
   @Override
   protected void doOKAction() {
-    final Set<M> selectedMethods = new HashSet<M>();
+    final Set<M> selectedMethods = new HashSet<>();
     getSelectedMethods(selectedMethods);
     myCallback.consume(selectedMethods);
     super.doOKAction();

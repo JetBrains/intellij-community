@@ -34,7 +34,7 @@ class IdeaClassFinder extends ClassFinder {
   }
 
   private static List<Pattern> obtainPatternsFromSuite(CoverageSuitesBundle currentSuiteBundle) {
-    final List<Pattern> includePatterns = new ArrayList<Pattern>();
+    final List<Pattern> includePatterns = new ArrayList<>();
     for (CoverageSuite currentSuite : currentSuiteBundle.getSuites()) {
       for (String pattern : ((JavaCoverageSuite)currentSuite).getFilteredPackageNames()) {
         includePatterns.add(Pattern.compile(pattern + ".*"));

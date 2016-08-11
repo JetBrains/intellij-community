@@ -46,7 +46,7 @@ import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.GlobalContextKey;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -112,6 +112,7 @@ public class ExternalJavacManager {
   public boolean forkJavac(final String javaHome, final int heapSize, List<String> vmOptions, List<String> options,
                            Collection<File> platformCp,
                            Collection<File> classpath,
+                           Collection<File> modulePath,
                            Collection<File> sourcePath,
                            Collection<File> files,
                            Map<File, Set<File>> outs,
@@ -119,7 +120,7 @@ public class ExternalJavacManager {
                            final JavaCompilingTool compilingTool,
                            final CanceledStatus cancelStatus) {
     final ExternalJavacMessageHandler rh = new ExternalJavacMessageHandler(diagnosticSink, outputSink, getEncodingName(options));
-    final JavacRemoteProto.Message.Request request = JavacProtoUtil.createCompilationRequest(options, files, classpath, platformCp, sourcePath, outs);
+    final JavacRemoteProto.Message.Request request = JavacProtoUtil.createCompilationRequest(options, files, classpath, platformCp, modulePath, sourcePath, outs);
     final UUID uuid = UUID.randomUUID();
     final JavacProcessDescriptor processDescriptor = new JavacProcessDescriptor(uuid, rh, request);
     synchronized (myMessageHandlers) {

@@ -204,7 +204,7 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
       return null;
     }
 
-    List<HandlerItem> items = new ArrayList<HandlerItem>(tasks.size() + descriptors.size());
+    List<HandlerItem> items = new ArrayList<>(tasks.size() + descriptors.size());
     HandlerItem selected = null;
     for (final RunContentDescriptor descriptor : descriptors) {
       final ProcessHandler handler = descriptor.getProcessHandler();
@@ -275,7 +275,7 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
     if (runningProcesses.isEmpty()) {
       return Collections.emptyList();
     }
-    final List<RunContentDescriptor> activeDescriptors = new ArrayList<RunContentDescriptor>();
+    final List<RunContentDescriptor> activeDescriptors = new ArrayList<>();
     for (RunContentDescriptor descriptor : runningProcesses) {
       if (canBeStopped(descriptor)) {
         activeDescriptors.add(descriptor);

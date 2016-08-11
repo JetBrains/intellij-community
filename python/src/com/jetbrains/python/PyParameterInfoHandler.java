@@ -159,12 +159,12 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     final PyCallable callable = marked.getCallable();
 
     final List<PyParameter> parameterList = PyUtil.getParameters(callable, typeEvalContext);
-    final List<PyNamedParameter> namedParameters = new ArrayList<PyNamedParameter>(parameterList.size());
+    final List<PyNamedParameter> namedParameters = new ArrayList<>(parameterList.size());
 
     // param -> hint index. indexes are not contiguous, because some hints are parentheses.
-    final Map<PyNamedParameter, Integer> parameterToIndex = new HashMap<PyNamedParameter, Integer>();
+    final Map<PyNamedParameter, Integer> parameterToIndex = new HashMap<>();
     // formatting of hints: hint index -> flags. this includes flags for parens.
-    final Map<Integer, EnumSet<ParameterInfoUIContextEx.Flag>> hintFlags = new HashMap<Integer, EnumSet<ParameterInfoUIContextEx.Flag>>();
+    final Map<Integer, EnumSet<ParameterInfoUIContextEx.Flag>> hintFlags = new HashMap<>();
 
     final List<String> hintsList = buildParameterListHint(parameterList, namedParameters, parameterToIndex, hintFlags);
 
@@ -299,7 +299,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
 
   @NotNull
   private static List<PyNamedParameter> getFlattenedTupleParameterComponents(@NotNull PyTupleParameter parameter) {
-    final List<PyNamedParameter> results = new ArrayList<PyNamedParameter>();
+    final List<PyNamedParameter> results = new ArrayList<>();
     for (PyParameter component : parameter.getContents()) {
       if (component instanceof PyNamedParameter) {
         results.add((PyNamedParameter)component);
@@ -333,7 +333,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
                                                      @NotNull final List<PyNamedParameter> namedParameters,
                                                      @NotNull final Map<PyNamedParameter, Integer> parameterToIndex,
                                                      @NotNull final Map<Integer, EnumSet<ParameterInfoUIContextEx.Flag>> hintFlags) {
-    final List<String> hintsList = new ArrayList<String>();
+    final List<String> hintsList = new ArrayList<>();
     ParamHelper.walkDownParamArray(
       parameters.toArray(new PyParameter[parameters.size()]),
       new ParamHelper.ParamWalker() {

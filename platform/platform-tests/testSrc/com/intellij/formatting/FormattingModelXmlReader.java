@@ -15,8 +15,8 @@ import java.util.Map;
 
 @NonNls public class FormattingModelXmlReader {
 
-  private final Map<String, Alignment> myIdToAlignemt = new HashMap<String, Alignment>();
-  private final Map<String, Wrap> myIdToWrap = new HashMap<String, Wrap>();
+  private final Map<String, Alignment> myIdToAlignemt = new HashMap<>();
+  private final Map<String, Wrap> myIdToWrap = new HashMap<>();
   private final FormattingDocumentModel myModel;
 
   public FormattingModelXmlReader(final FormattingDocumentModel model) {

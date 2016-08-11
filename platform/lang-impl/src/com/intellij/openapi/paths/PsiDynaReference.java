@@ -40,7 +40,7 @@ import java.util.List;
 public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   implements FileReferenceOwner, PsiPolyVariantReference, LocalQuickFixProvider, EmptyResolveMessageProvider {
 
-  private final List<PsiReference> myReferences = new ArrayList<PsiReference>();
+  private final List<PsiReference> myReferences = new ArrayList<>();
   private int myChosenOne = -1;
   private ResolveResult[] myCachedResult;
 
@@ -156,7 +156,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   }
 
   protected ResolveResult[] innerResolve(final boolean incompleteCode) {
-    List<ResolveResult> result = new ArrayList<ResolveResult>();
+    List<ResolveResult> result = new ArrayList<>();
     for (PsiReference reference : myReferences) {
       if (reference instanceof PsiPolyVariantReference) {
         for (ResolveResult rr: ((PsiPolyVariantReference)reference).multiResolve(incompleteCode)) {
@@ -210,7 +210,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
 
   @Override
   public LocalQuickFix[] getQuickFixes() {
-    final ArrayList<LocalQuickFix> list = new ArrayList<LocalQuickFix>();
+    final ArrayList<LocalQuickFix> list = new ArrayList<>();
     for (Object ref: myReferences) {
       if (ref instanceof LocalQuickFixProvider) {
         ContainerUtil.addAll(list, ((LocalQuickFixProvider)ref).getQuickFixes());

@@ -81,7 +81,7 @@ public class ChildGenericValueColumnInfo<T extends DomElement> extends DomColumn
   }
 
   public DefaultTableCellRenderer getErrorableCellRenderer(final TableCellRenderer renderer, final T domElement) {
-    return new ErrorableTableCellRenderer<GenericDomValue>(getGenericValue(domElement), renderer, domElement);
+    return new ErrorableTableCellRenderer<>(getGenericValue(domElement), renderer, domElement);
   }
 
   @Override

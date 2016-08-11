@@ -52,7 +52,7 @@ public class IdeScriptBindings {
     }
 
     static <T> Binding<T> create(@NotNull String name, @NotNull Class<T> clazz) {
-      return new Binding<T>(name, clazz);
+      return new Binding<>(name, clazz);
     }
   }
 }

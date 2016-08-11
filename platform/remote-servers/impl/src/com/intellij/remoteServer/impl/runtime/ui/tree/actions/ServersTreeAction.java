@@ -58,7 +58,7 @@ public abstract class ServersTreeAction<T extends ServersTreeNode> extends AnAct
       return null;
     }
     Class<T> targetNodeClass = getTargetNodeClass();
-    List<T> result = new ArrayList<T>();
+    List<T> result = new ArrayList<>();
     for (Object selectedElement : selectedElements) {
       ServersTreeNode node = (ServersTreeNode)selectedElement;
       if (!targetNodeClass.isInstance(node)) {

@@ -240,7 +240,7 @@ public class NanoXmlUtil {
   }
 
   public static class BaseXmlBuilder extends IXMLBuilderAdapter {
-    private final Stack<String> myLocation = new Stack<String>();
+    private final Stack<String> myLocation = new Stack<>();
 
     @Override
     public void startBuilding(String systemID, int lineNr) throws Exception {

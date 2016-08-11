@@ -54,7 +54,7 @@ public class DeclarationStatementHandler extends MatchingHandler {
       if (PsiUtil.isJavaToken(sibling, JavaTokenType.COMMA)) {
         return false;
       }
-      final List<PsiElement> matchNodes = new ArrayList<PsiElement>();
+      final List<PsiElement> matchNodes = new ArrayList<>();
       matchNodes.add(matchedNode);
       PsiElement node = matchedNode;
       node = PsiTreeUtil.skipSiblingsForward(node, PsiWhiteSpace.class);

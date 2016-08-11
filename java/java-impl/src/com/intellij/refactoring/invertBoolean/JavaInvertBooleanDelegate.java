@@ -206,7 +206,7 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
         }
       }
 
-      Collection<PsiMethod> allMethods = new HashSet<PsiMethod>(overriders);
+      Collection<PsiMethod> allMethods = new HashSet<>(overriders);
       allMethods.add((PsiMethod)element);
 
       for (PsiMethod method : allMethods) {

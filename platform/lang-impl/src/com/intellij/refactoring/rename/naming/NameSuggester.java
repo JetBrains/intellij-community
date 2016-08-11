@@ -43,7 +43,7 @@ public class NameSuggester {
     myOldClassName = NameUtil.splitNameIntoWords(oldClassName);
     myNewClassName = NameUtil.splitNameIntoWords(newClassName);
 
-    myChanges = new ArrayList<OriginalToNewChange>();
+    myChanges = new ArrayList<>();
     int oldIndex = myOldClassName.length - 1;
     int oldLastMatch = myOldClassName.length;
     int newLastMatch = myNewClassName.length;
@@ -79,7 +79,7 @@ public class NameSuggester {
   }
 
   List<Pair<String,String>> getChanges() {
-    final ArrayList<Pair<String,String>> result = new ArrayList<Pair<String,String>>();
+    final ArrayList<Pair<String,String>> result = new ArrayList<>();
     for (int i = myChanges.size() - 1; i >=0; i--) {
       final OriginalToNewChange change = myChanges.get(i);
       result.add(Pair.create(change.getOldString(), change.getNewString()));
@@ -171,7 +171,7 @@ public class NameSuggester {
    * @return
    */
   private TreeMap<Pair<Integer, Integer>, String> calculateReplacements(String[] propertyWords, TIntIntHashMap matches) {
-    TreeMap<Pair<Integer,Integer>, String> replacements = new TreeMap<Pair<Integer,Integer>, String>((pair, pair1) -> pair.getFirst().compareTo(pair1.getFirst()));
+    TreeMap<Pair<Integer,Integer>, String> replacements = new TreeMap<>((pair, pair1) -> pair.getFirst().compareTo(pair1.getFirst()));
     for (final OriginalToNewChange change : myChanges) {
       final int first = change.oldFirst;
       final int last = change.oldLast;

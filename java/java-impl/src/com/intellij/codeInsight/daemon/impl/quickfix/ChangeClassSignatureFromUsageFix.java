@@ -91,7 +91,7 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
                                                                   @NotNull List<PsiTypeElement> typeElements) {
     final TypeParameterNameSuggester suggester = new TypeParameterNameSuggester(classTypeParameters);
 
-    List<TypeParameterInfoView> result = new ArrayList<TypeParameterInfoView>();
+    List<TypeParameterInfoView> result = new ArrayList<>();
     int listIndex = 0;
     for (PsiTypeElement typeElement : typeElements) {
       if (listIndex < classTypeParameters.size()) {
@@ -149,7 +149,7 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
 
 
   private static class TypeParameterNameSuggester {
-    private final Set<String> usedNames = new HashSet<String>();
+    private final Set<String> usedNames = new HashSet<>();
 
     public TypeParameterNameSuggester(@NotNull PsiTypeParameter... typeParameters) {
       this(Arrays.asList(typeParameters));

@@ -45,7 +45,7 @@ public class HgChangeProvider implements ChangeProvider {
                                                                                             JBColor.CYAN.darker().darker());
 
   private static final EnumMap<HgFileStatusEnum, HgChangeProcessor> PROCESSORS =
-    new EnumMap<HgFileStatusEnum, HgChangeProcessor>(HgFileStatusEnum.class);
+    new EnumMap<>(HgFileStatusEnum.class);
 
   static {
     PROCESSORS.put(HgFileStatusEnum.ADDED, HgChangeProcessor.ADDED);
@@ -73,14 +73,14 @@ public class HgChangeProvider implements ChangeProvider {
   public void getChanges(@NotNull VcsDirtyScope dirtyScope, @NotNull ChangelistBuilder builder,
                          @NotNull ProgressIndicator progress, @NotNull ChangeListManagerGate addGate) throws VcsException {
     if (myProject.isDisposed()) return;
-    final Collection<HgChange> changes = new HashSet<HgChange>();
+    final Collection<HgChange> changes = new HashSet<>();
     changes.addAll(process(builder, dirtyScope.getRecursivelyDirtyDirectories()));
     changes.addAll(process(builder, dirtyScope.getDirtyFiles()));
     processUnsavedChanges(builder, dirtyScope.getDirtyFilesNoExpand(), changes);
   }
 
   private Collection<HgChange> process(ChangelistBuilder builder, Collection<FilePath> files) {
-    final Set<HgChange> hgChanges = new HashSet<HgChange>();
+    final Set<HgChange> hgChanges = new HashSet<>();
     for (Map.Entry<VirtualFile, Collection<FilePath>> entry : HgUtil.groupFilePathsByHgRoots(myProject, files).entrySet()) {
       VirtualFile repo = entry.getKey();
 

@@ -263,7 +263,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
 
   public static PsiFile[] convertToPsiFiles(final VirtualFile[] files,Project project) {
     final PsiManager manager = PsiManager.getInstance(project);
-    final ArrayList<PsiFile> result = new ArrayList<PsiFile>();
+    final ArrayList<PsiFile> result = new ArrayList<>();
     for (VirtualFile virtualFile : files) {
       final PsiFile psiFile = manager.findFile(virtualFile);
       if (psiFile != null) result.add(psiFile);

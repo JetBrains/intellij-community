@@ -85,7 +85,7 @@ public class ExternalAnnotationsLineMarkerProvider extends LineMarkerProviderDes
 
     return new LineMarkerInfo<PsiElement>(element, element.getTextRange(),
                                           AllIcons.Gutter.ExtAnnotation,
-                                          Pass.UPDATE_ALL,
+                                          Pass.LINE_MARKERS,
                                           ourTooltipProvider, MyIconGutterHandler.INSTANCE,
                                           GutterIconRenderer.Alignment.RIGHT);
   }

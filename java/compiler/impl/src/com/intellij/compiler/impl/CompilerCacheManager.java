@@ -40,9 +40,9 @@ import java.util.Map;
  */
 public class CompilerCacheManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompilerCacheManager");
-  private final Map<Compiler, Object> myCompilerToCacheMap = new HashMap<Compiler, Object>();
-  private final Map<GenericCompiler<?,?,?>, GenericCompilerCache<?,?,?>> myGenericCachesMap = new HashMap<GenericCompiler<?,?,?>, GenericCompilerCache<?,?,?>>();
-  private final List<Disposable> myCacheDisposables = new ArrayList<Disposable>();
+  private final Map<Compiler, Object> myCompilerToCacheMap = new HashMap<>();
+  private final Map<GenericCompiler<?,?,?>, GenericCompilerCache<?,?,?>> myGenericCachesMap = new HashMap<>();
+  private final List<Disposable> myCacheDisposables = new ArrayList<>();
   private final File myCachesRoot;
   private final Project myProject;
 
@@ -83,7 +83,7 @@ public class CompilerCacheManager implements ProjectComponent {
                                  getGenericCompilerCache(final GenericCompiler<Key, SourceState, OutputState> compiler) throws IOException {
     GenericCompilerCache<?,?,?> cache = myGenericCachesMap.get(compiler);
     if (cache == null) {
-      final GenericCompilerCache<?,?,?> genericCache = new GenericCompilerCache<Key, SourceState, OutputState>(compiler, GenericCompilerRunner
+      final GenericCompilerCache<?,?,?> genericCache = new GenericCompilerCache<>(compiler, GenericCompilerRunner
         .getGenericCompilerCacheDir(myProject, compiler));
       myGenericCachesMap.put(compiler, genericCache);
       myCacheDisposables.add(new Disposable() {

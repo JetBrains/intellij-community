@@ -61,8 +61,8 @@ class InlineToAnonymousConstructorProcessor {
   private final PsiClass myClass;
   private PsiNewExpression myNewExpression;
   private final PsiType mySuperType;
-  private final Map<String, PsiExpression> myFieldInitializers = new HashMap<String, PsiExpression>();
-  private final Map<PsiParameter, PsiVariable> myLocalsForParameters = new HashMap<PsiParameter, PsiVariable>();
+  private final Map<String, PsiExpression> myFieldInitializers = new HashMap<>();
+  private final Map<PsiParameter, PsiVariable> myLocalsForParameters = new HashMap<>();
   private PsiStatement myNewStatement;
   private final PsiElementFactory myElementFactory;
   private PsiMethod myConstructor;
@@ -190,7 +190,7 @@ class InlineToAnonymousConstructorProcessor {
           }
         }
         else if (!ourSuperCallPattern.accepts(stmt) && !ourThisCallPattern.accepts(stmt)) {
-          replaceParameterReferences(stmt, new ArrayList<PsiReferenceExpression>(), false);
+          replaceParameterReferences(stmt, new ArrayList<>(), false);
           initializerBlock.addBefore(stmt, initializerBlock.getRBrace());
         }
       }
@@ -212,7 +212,7 @@ class InlineToAnonymousConstructorProcessor {
       if (psiElement instanceof PsiField) {
         PsiField field = (PsiField) psiElement;
         if (myClass.getManager().areElementsEquivalent(field.getContainingClass(), myClass)) {
-          final List<PsiReferenceExpression> localVarRefs = new ArrayList<PsiReferenceExpression>();
+          final List<PsiReferenceExpression> localVarRefs = new ArrayList<>();
           final PsiExpression initializer;
           try {
             initializer = (PsiExpression) replaceParameterReferences(rExpr.copy(), localVarRefs, false);
@@ -342,7 +342,7 @@ class InlineToAnonymousConstructorProcessor {
     PsiExpressionList superArguments = context.get(ourCallKey).getArgumentList();
     if (superArguments != null) {
       for(PsiExpression argument: superArguments.getExpressions()) {
-        final PsiElement superArgument = replaceParameterReferences(argument.copy(), new ArrayList<PsiReferenceExpression>(), true);
+        final PsiElement superArgument = replaceParameterReferences(argument.copy(), new ArrayList<>(), true);
         argumentList.add(superArgument);
       }
     }
@@ -363,8 +363,8 @@ class InlineToAnonymousConstructorProcessor {
       }
     }
 
-    final List<Pair<PsiReferenceExpression, PsiParameter>> parameterReferences = new ArrayList<Pair<PsiReferenceExpression, PsiParameter>>();
-    final Map<PsiElement, PsiElement> elementsToReplace = new HashMap<PsiElement, PsiElement>();
+    final List<Pair<PsiReferenceExpression, PsiParameter>> parameterReferences = new ArrayList<>();
+    final Map<PsiElement, PsiElement> elementsToReplace = new HashMap<>();
     argument.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
@@ -426,7 +426,7 @@ class InlineToAnonymousConstructorProcessor {
 
   private void replaceReferences(final PsiMember method,
                                  final PsiType[] substitutedParameters, final PsiVariable outerClassLocal) throws IncorrectOperationException {
-    final Map<PsiElement, PsiElement> elementsToReplace = new HashMap<PsiElement, PsiElement>();
+    final Map<PsiElement, PsiElement> elementsToReplace = new HashMap<>();
     method.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);

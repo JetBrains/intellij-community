@@ -95,7 +95,7 @@ public class FoldingAnchorsOverlayStrategyTest extends LightPlatformCodeInsightF
   private void verifyAnchors(FoldRegion activeFoldRegion, Object... expectedAnchorParameters) {
     Collection<DisplayedFoldingAnchor> actualAnchors = new FoldingAnchorsOverlayStrategy((EditorImpl)myFixture.getEditor())
       .getAnchorsToDisplay(0, myFixture.getEditor().getDocument().getTextLength(), activeFoldRegion);
-    List<DisplayedFoldingAnchor> sortedActualAnchors = new ArrayList<DisplayedFoldingAnchor>(actualAnchors);
+    List<DisplayedFoldingAnchor> sortedActualAnchors = new ArrayList<>(actualAnchors);
     Collections.sort(sortedActualAnchors, (o1, o2) -> o1.visualLine - o2.visualLine);
 
     assertEquals("Wrong number of anchors", expectedAnchorParameters.length / 2, sortedActualAnchors.size());

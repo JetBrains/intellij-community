@@ -59,7 +59,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
 
     PsiMethod method = PsiTreeUtil.getParentOfType(psiElement, PsiMethod.class);
     if (method == null) return;
-    final List<PsiMethod> toAnnotate = new ArrayList<PsiMethod>();
+    final List<PsiMethod> toAnnotate = new ArrayList<>();
     toAnnotate.add(method);
     List<MethodSignatureBackedByPsiMethod> superMethodSignatures = method.findSuperMethodSignaturesIncludingStatic(true);
     for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {

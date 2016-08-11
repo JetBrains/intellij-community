@@ -46,7 +46,7 @@ public class GitRebaseEditorService {
   /**
    * The handlers to use
    */
-  private final Map<Integer, GitRebaseEditorHandler> myHandlers = new THashMap<Integer, GitRebaseEditorHandler>();
+  private final Map<Integer, GitRebaseEditorHandler> myHandlers = new THashMap<>();
   /**
    * The lock for the handlers
    */

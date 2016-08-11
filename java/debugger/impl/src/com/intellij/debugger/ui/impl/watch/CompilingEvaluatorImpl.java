@@ -103,7 +103,7 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
       final List<File> sourcePath = Collections.emptyList();
       final Set<File> sources = Collections.singleton(sourceFile);
 
-      return compilerManager.compileJavaCode(options, platformClasspath, classpath, sourcePath, sources, srcDir);
+      return compilerManager.compileJavaCode(options, platformClasspath, classpath, Collections.emptyList(), sourcePath, sources, srcDir);
     }
     catch (CompilationException e) {
       final StringBuilder res = new StringBuilder("Compilation failed:\n");

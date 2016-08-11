@@ -47,11 +47,11 @@ public class ConfigFilesTreeBuilder {
   }
 
   public Set<PsiFile> buildTree(DefaultMutableTreeNode root, ConfigFileSearcher... searchers) {
-    final Set<PsiFile> psiFiles = new com.intellij.util.containers.HashSet<PsiFile>();
+    final Set<PsiFile> psiFiles = new com.intellij.util.containers.HashSet<>();
 
-    final MultiMap<Module, PsiFile> files = new MultiMap<Module, PsiFile>();
-    final MultiMap<VirtualFile, PsiFile> jars = new MultiMap<VirtualFile, PsiFile>();
-    final MultiMap<VirtualFile, PsiFile> virtualFiles = new MultiMap<VirtualFile, PsiFile>();
+    final MultiMap<Module, PsiFile> files = new MultiMap<>();
+    final MultiMap<VirtualFile, PsiFile> jars = new MultiMap<>();
+    final MultiMap<VirtualFile, PsiFile> virtualFiles = new MultiMap<>();
 
     for (ConfigFileSearcher searcher : searchers) {
       files.putAllValues(searcher.getFilesByModules());
@@ -63,7 +63,7 @@ public class ConfigFilesTreeBuilder {
 
     for (Map.Entry<VirtualFile, Collection<PsiFile>> entry : virtualFiles.entrySet()) {
       DefaultMutableTreeNode node = createFileNode(entry.getKey());
-      List<PsiFile> list = new ArrayList<PsiFile>(entry.getValue());
+      List<PsiFile> list = new ArrayList<>(entry.getValue());
       Collections.sort(list, FILE_COMPARATOR);
       for (PsiFile file : list) {
         node.add(createFileNode(file));
@@ -89,16 +89,16 @@ public class ConfigFilesTreeBuilder {
                                        final MultiMap<VirtualFile, PsiFile> jars,
                                        DefaultMutableTreeNode root) {
 
-    final HashSet<PsiFile> psiFiles = new HashSet<PsiFile>();
-    final List<Module> modules = new ArrayList<Module>(files.keySet());
+    final HashSet<PsiFile> psiFiles = new HashSet<>();
+    final List<Module> modules = new ArrayList<>(files.keySet());
     Collections.sort(modules, ModulesAlphaComparator.INSTANCE);
     for (Module module : modules) {
       DefaultMutableTreeNode moduleNode = createFileNode(module);
       root.add(moduleNode);
       if (files.containsKey(module)) {
-        List<PsiFile> moduleFiles = new ArrayList<PsiFile>(files.get(module));
+        List<PsiFile> moduleFiles = new ArrayList<>(files.get(module));
 
-        MultiMap<FileType, PsiFile> filesByType = new MultiMap<FileType, PsiFile>();
+        MultiMap<FileType, PsiFile> filesByType = new MultiMap<>();
         for (PsiFile file : moduleFiles) {
           filesByType.putValue(file.getFileType(), file);
         }
@@ -106,7 +106,7 @@ public class ConfigFilesTreeBuilder {
           for (Map.Entry<FileType, Collection<PsiFile>> entry : filesByType.entrySet()) {
             DefaultMutableTreeNode fileTypeNode = createFileNode(entry.getKey());
             moduleNode.add(fileTypeNode);
-            addChildrenFiles(psiFiles, fileTypeNode, new ArrayList<PsiFile>(entry.getValue()));
+            addChildrenFiles(psiFiles, fileTypeNode, new ArrayList<>(entry.getValue()));
           }
         }  else {
           addChildrenFiles(psiFiles, moduleNode, moduleFiles);
@@ -114,10 +114,10 @@ public class ConfigFilesTreeBuilder {
       }
     }
 
-    List<VirtualFile> sortedJars = new ArrayList<VirtualFile>(jars.keySet());
+    List<VirtualFile> sortedJars = new ArrayList<>(jars.keySet());
     Collections.sort(sortedJars, (o1, o2) -> StringUtil.naturalCompare(o1.getName(), o2.getName()));
     for (VirtualFile file : sortedJars) {
-      final List<PsiFile> list = new ArrayList<PsiFile>(jars.get(file));
+      final List<PsiFile> list = new ArrayList<>(jars.get(file));
       final PsiFile jar = list.get(0).getManager().findFile(file);
       if (jar != null) {
         final DefaultMutableTreeNode jarNode = createFileNode(jar);

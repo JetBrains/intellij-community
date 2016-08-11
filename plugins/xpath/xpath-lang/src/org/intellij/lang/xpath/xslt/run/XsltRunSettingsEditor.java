@@ -347,7 +347,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
 
     @SuppressWarnings({"UseOfObsoleteCollectionType"})
     private static Vector<FileType> getFileTypes(Project project) {
-      final Vector<FileType> v = new Vector<FileType>();
+      final Vector<FileType> v = new Vector<>();
 
       final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
       for (FileType fileType : fileTypes) {
@@ -517,7 +517,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
         }
       }
 
-      private final List<Param> myParams = new ArrayList<Param>();
+      private final List<Param> myParams = new ArrayList<>();
 
       public ParamTableModel() {
       }
@@ -579,7 +579,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
       }
 
       public List<Pair<String, String>> getParams() {
-        final ArrayList<Pair<String, String>> pairs = new ArrayList<Pair<String, String>>(myParams.size());
+        final ArrayList<Pair<String, String>> pairs = new ArrayList<>(myParams.size());
         for (Param param : myParams) {
           pairs.add(Pair.create(param.name, param.value));
         }

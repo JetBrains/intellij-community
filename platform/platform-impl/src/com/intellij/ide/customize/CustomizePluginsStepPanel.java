@@ -254,8 +254,8 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
       gbc.insets.right = 25;
       gbc.gridy = 0;
       buttonPanel.add(mySaveButton, gbc);
-      buttonPanel.add(new LinkLabel<String>("Enable All", null, this, "enable"), gbc);
-      buttonPanel.add(new LinkLabel<String>("Disable All", null, this, "disable"), gbc);
+      buttonPanel.add(new LinkLabel<>("Enable All", null, this, "enable"), gbc);
+      buttonPanel.add(new LinkLabel<>("Disable All", null, this, "disable"), gbc);
       gbc.weightx = 1;
       buttonPanel.add(Box.createHorizontalGlue(), gbc);
       add(buttonPanel);

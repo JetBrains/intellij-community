@@ -47,7 +47,7 @@ public class SvnLogUtil implements SvnLogLoader {
   public List<CommittedChangeList> loadInterval(final SVNRevision fromIncluding, final SVNRevision toIncluding,
                                                 final int maxCount, final boolean includingYoungest, final boolean includeOldest)
     throws VcsException {
-    final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
+    final List<CommittedChangeList> result = new ArrayList<>();
     LogEntryConsumer handler = createLogHandler(fromIncluding, toIncluding, includingYoungest, includeOldest, result);
     SvnTarget target = SvnTarget.fromURL(myLocation.toSvnUrl());
 

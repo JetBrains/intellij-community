@@ -651,7 +651,7 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
     String text = myDocument.getCharsSequence().subSequence(range.getStartOffset(), range.getEndOffset()).toString();
     int startOffset = range.getStartOffset();
     //boolean endsProperly = CharArrayUtil.regionMatches(chars, range.getEndOffset() - commentSuffix.length(), commentSuffix);
-    List<Couple<TextRange>> ranges = new ArrayList<Couple<TextRange>>();
+    List<Couple<TextRange>> ranges = new ArrayList<>();
 
 
     if (commenter instanceof CustomUncommenter) {

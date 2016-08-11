@@ -78,7 +78,7 @@ public class PyPep8NamingInspection extends PyInspection {
     .put("N814", "CamelCase variable imported as constant")
     .build();
 
-  public final List<String> ignoredErrors = new ArrayList<String>();
+  public final List<String> ignoredErrors = new ArrayList<>();
 
   public boolean ignoreOverriddenFunctions = true;
   public final List<String> ignoredBaseClasses = Lists.newArrayList("unittest.TestCase", "unittest.case.TestCase");
@@ -260,7 +260,7 @@ public class PyPep8NamingInspection extends PyInspection {
     private final List<String> myBaseClassNames;
 
     public IgnoreBaseClassQuickFix(@NotNull PyClass baseClass, @NotNull TypeEvalContext context) {
-      myBaseClassNames = new ArrayList<String>();
+      myBaseClassNames = new ArrayList<>();
       ContainerUtil.addIfNotNull(getBaseClassNames(), baseClass.getQualifiedName());
       for (PyClass ancestor : baseClass.getAncestorClasses(context)) {
         ContainerUtil.addIfNotNull(getBaseClassNames(), ancestor.getQualifiedName());

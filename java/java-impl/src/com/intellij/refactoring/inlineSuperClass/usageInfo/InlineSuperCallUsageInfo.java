@@ -81,7 +81,7 @@ public class InlineSuperCallUsageInfo extends FixableUsageInfo {
 
   @Override
   public String getConflictMessage() {
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     final PsiElement element = getElement();
     if (element instanceof PsiMethodCallExpression) {
       PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;

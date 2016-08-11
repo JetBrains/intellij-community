@@ -125,9 +125,9 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
       @Override
       public void each(@NotNull VirtualFile root, @NotNull VcsLogProvider provider) throws VcsException {
         VcsLogProvider.DetailedLogData data = provider.readFirstBlock(root, requirements.get(root));
-        storeUsersAndDetails(data.getCommits());
         logInfo.put(root, compactCommits(data.getCommits(), root));
         logInfo.put(root, data.getRefs());
+        storeUsersAndDetails(data.getCommits());
         sw.rootCompleted(root);
       }
     }.iterate(getProvidersForRoots(requirements.keySet()));
@@ -176,7 +176,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
   private GraphCommitImpl<Integer> compactCommit(@NotNull TimedVcsCommit commit, @NotNull final VirtualFile root) {
     List<Integer> parents = ContainerUtil.map(commit.getParents(),
                                               (NotNullFunction<Hash, Integer>)hash -> myHashMap.getCommitIndex(hash, root));
-    return new GraphCommitImpl<Integer>(myHashMap.getCommitIndex(commit.getId(), root), parents, commit.getTimestamp());
+    return new GraphCommitImpl<>(myHashMap.getCommitIndex(commit.getId(), root), parents, commit.getTimestamp());
   }
 
   private void storeUsersAndDetails(@NotNull List<? extends VcsCommitMetadata> metadatas) {

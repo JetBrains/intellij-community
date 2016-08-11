@@ -32,7 +32,7 @@ import java.util.Set;
 public class AlignmentHelper {
   private static final Logger LOG = Logger.getInstance(AlignmentHelper.class);
 
-  private static final Map<Alignment.Anchor, BlockAlignmentProcessor> ALIGNMENT_PROCESSORS = new EnumMap<Alignment.Anchor, BlockAlignmentProcessor>(Alignment.Anchor.class);
+  private static final Map<Alignment.Anchor, BlockAlignmentProcessor> ALIGNMENT_PROCESSORS = new EnumMap<>(Alignment.Anchor.class);
   static {
     ALIGNMENT_PROCESSORS.put(Alignment.Anchor.LEFT, new LeftEdgeAlignmentProcessor());
     ALIGNMENT_PROCESSORS.put(Alignment.Anchor.RIGHT, new RightEdgeAlignmentProcessor());
@@ -85,7 +85,7 @@ public class AlignmentHelper {
         if (offsetResponsibleBlock == null) {
           return null;
         }
-        Set<LeafBlockWrapper> blocksCausedRealignment = new HashSet<LeafBlockWrapper>();
+        Set<LeafBlockWrapper> blocksCausedRealignment = new HashSet<>();
         myBackwardShiftedAlignedBlocks.clear();
         myBackwardShiftedAlignedBlocks.put(offsetResponsibleBlock, blocksCausedRealignment);
         blocksCausedRealignment.add(currentBlock);
@@ -119,7 +119,7 @@ public class AlignmentHelper {
   private void doStoreAlignmentMapping(AbstractBlockWrapper key, AbstractBlockWrapper value) {
     Set<AbstractBlockWrapper> wrappers = myAlignmentMappings.get(key);
     if (wrappers == null) {
-      myAlignmentMappings.put(key, wrappers = new HashSet<AbstractBlockWrapper>());
+      myAlignmentMappings.put(key, wrappers = new HashSet<>());
     }
     wrappers.add(value);
   }

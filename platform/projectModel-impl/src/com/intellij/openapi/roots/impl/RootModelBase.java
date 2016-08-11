@@ -35,7 +35,7 @@ public abstract class RootModelBase implements ModuleRootModel {
   @Override
   @NotNull
   public VirtualFile[] getContentRoots() {
-    final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
+    final ArrayList<VirtualFile> result = new ArrayList<>();
 
     for (ContentEntry contentEntry : getContent()) {
       final VirtualFile file = contentEntry.getFile();
@@ -50,7 +50,7 @@ public abstract class RootModelBase implements ModuleRootModel {
   @NotNull
   public String[] getContentRootUrls() {
     if (getContent().isEmpty()) return ArrayUtil.EMPTY_STRING_ARRAY;
-    final ArrayList<String> result = new ArrayList<String>(getContent().size());
+    final ArrayList<String> result = new ArrayList<>(getContent().size());
 
     for (ContentEntry contentEntry : getContent()) {
       result.add(contentEntry.getUrl());
@@ -62,7 +62,7 @@ public abstract class RootModelBase implements ModuleRootModel {
   @Override
   @NotNull
   public String[] getExcludeRootUrls() {
-    final List<String> result = new SmartList<String>();
+    final List<String> result = new SmartList<>();
     for (ContentEntry contentEntry : getContent()) {
       result.addAll(contentEntry.getExcludeFolderUrls());
     }
@@ -72,7 +72,7 @@ public abstract class RootModelBase implements ModuleRootModel {
   @Override
   @NotNull
   public VirtualFile[] getExcludeRoots() {
-    final List<VirtualFile> result = new SmartList<VirtualFile>();
+    final List<VirtualFile> result = new SmartList<>();
     for (ContentEntry contentEntry : getContent()) {
       Collections.addAll(result, contentEntry.getExcludeFolderFiles());
     }
@@ -88,7 +88,7 @@ public abstract class RootModelBase implements ModuleRootModel {
   @Override
   @NotNull
   public String[] getSourceRootUrls(boolean includingTests) {
-    List<String> result = new SmartList<String>();
+    List<String> result = new SmartList<>();
     for (ContentEntry contentEntry : getContent()) {
       final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
       for (SourceFolder sourceFolder : sourceFolders) {
@@ -109,7 +109,7 @@ public abstract class RootModelBase implements ModuleRootModel {
   @Override
   @NotNull
   public VirtualFile[] getSourceRoots(final boolean includingTests) {
-    List<VirtualFile> result = new SmartList<VirtualFile>();
+    List<VirtualFile> result = new SmartList<>();
     for (ContentEntry contentEntry : getContent()) {
       final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
       for (SourceFolder sourceFolder : sourceFolders) {
@@ -131,7 +131,7 @@ public abstract class RootModelBase implements ModuleRootModel {
   @NotNull
   @Override
   public List<VirtualFile> getSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
-    List<VirtualFile> result = new SmartList<VirtualFile>();
+    List<VirtualFile> result = new SmartList<>();
     for (ContentEntry contentEntry : getContent()) {
       final List<SourceFolder> sourceFolders = contentEntry.getSourceFolders(rootTypes);
       for (SourceFolder sourceFolder : sourceFolders) {
@@ -192,7 +192,7 @@ public abstract class RootModelBase implements ModuleRootModel {
   @NotNull
   public String[] getDependencyModuleNames() {
     List<String> result = orderEntries().withoutSdk().withoutLibraries().withoutModuleSourceEntries()
-      .process(new CollectDependentModules(), new ArrayList<String>());
+      .process(new CollectDependentModules(), new ArrayList<>());
     return ArrayUtil.toStringArray(result);
   }
 
@@ -206,7 +206,7 @@ public abstract class RootModelBase implements ModuleRootModel {
   @NotNull
   public Module[] getModuleDependencies(boolean includeTests) {
     OrderEntry[] entries = getOrderEntries();
-    List<Module> result = new ArrayList<Module>(entries.length);
+    List<Module> result = new ArrayList<>(entries.length);
 
     for (OrderEntry entry : entries) {
       if (entry instanceof ModuleOrderEntry) {

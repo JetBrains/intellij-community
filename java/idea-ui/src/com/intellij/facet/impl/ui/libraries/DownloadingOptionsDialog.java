@@ -175,7 +175,7 @@ public class DownloadingOptionsDialog extends DialogWrapper {
 
     if (version != null) {
       final List<? extends DownloadableLibraryFileDescription> downloads = version.getFiles();
-      myFilesList.setModel(new CollectionListModel<JCheckBox>(
+      myFilesList.setModel(new CollectionListModel<>(
         ContainerUtil.map2Array(downloads, JCheckBox.class, new Function<DownloadableLibraryFileDescription, JCheckBox>() {
           @Override
           public JCheckBox fun(DownloadableLibraryFileDescription description) {
@@ -220,7 +220,7 @@ public class DownloadingOptionsDialog extends DialogWrapper {
   }
 
   private List<DownloadableLibraryFileDescription> getSelectedDownloads(FrameworkLibraryVersion version) {
-    List<DownloadableLibraryFileDescription> selected = new ArrayList<DownloadableLibraryFileDescription>();
+    List<DownloadableLibraryFileDescription> selected = new ArrayList<>();
     List<? extends DownloadableLibraryFileDescription> downloads = version.getFiles();
     for (int i = 0; i < downloads.size(); i++) {
       if (myFilesList.isItemSelected(i)) {

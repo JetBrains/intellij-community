@@ -200,6 +200,7 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
 
   public void addRenderer(NodeRenderer renderer) {
     myRendererChooser.addElement(renderer, renderer.isEnabled());
+    myRendererChooser.moveElement(renderer, 0);
   }
 
   private class AddAction implements AnActionButtonRunnable {
@@ -212,7 +213,6 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
       NodeRenderer renderer = (NodeRenderer)NodeRendererSettings.getInstance().createRenderer(CompoundTypeRenderer.UNIQUE_ID);
       renderer.setEnabled(true);
       addRenderer(renderer);
-      SwingUtilities.invokeLater(myNameField::requestFocus);
     }
   }
 

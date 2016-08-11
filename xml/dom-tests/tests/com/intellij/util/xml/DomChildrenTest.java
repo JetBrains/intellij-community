@@ -201,7 +201,7 @@ public class DomChildrenTest extends DomTestCase {
     final MyElement child2 = element.getChildElements().get(1);
     final MyElement child3 = element.getChildElements().get(2);
 
-    final List<XmlTag> oldChildren = new ArrayList<XmlTag>(Arrays.asList(element.getXmlTag().getSubTags()));
+    final List<XmlTag> oldChildren = new ArrayList<>(Arrays.asList(element.getXmlTag().getSubTags()));
 
     assertTrue(child2.isValid());
     assertEquals(element, child2.getParent());

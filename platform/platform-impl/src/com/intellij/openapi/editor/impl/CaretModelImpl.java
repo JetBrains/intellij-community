@@ -53,7 +53,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   boolean myIsInUpdate;
   boolean isDocumentChanged;
 
-  private final LinkedList<CaretImpl> myCarets = new LinkedList<CaretImpl>();
+  private final LinkedList<CaretImpl> myCarets = new LinkedList<>();
   private CaretImpl myCurrentCaret; // active caret in the context of 'runForEachCaret' call
   private boolean myPerformCaretMergingAfterCurrentOperation;
 
@@ -238,7 +238,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   public List<Caret> getAllCarets() {
     List<Caret> carets;
     synchronized (myCarets) {
-      carets = new ArrayList<Caret>(myCarets);
+      carets = new ArrayList<>(myCarets);
     }
     Collections.sort(carets, CaretPositionComparator.INSTANCE);
     return carets;
@@ -364,7 +364,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     if (myCarets.size() <= 1) {
       return;
     }
-    LinkedList<CaretImpl> carets = new LinkedList<CaretImpl>(myCarets);
+    LinkedList<CaretImpl> carets = new LinkedList<>(myCarets);
     Collections.sort(carets, CaretPositionComparator.INSTANCE);
     ListIterator<CaretImpl> it = carets.listIterator();
     CaretImpl keepPrimary = getPrimaryCaret();
@@ -503,7 +503,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   @Override
   public List<CaretState> getCaretsAndSelections() {
     synchronized (myCarets) {
-      List<CaretState> states = new ArrayList<CaretState>(myCarets.size());
+      List<CaretState> states = new ArrayList<>(myCarets.size());
       for (CaretImpl caret : myCarets) {
         states.add(new CaretState(caret.getLogicalPosition(),
                                   myEditor.visualToLogicalPosition(caret.getSelectionStartPosition()),

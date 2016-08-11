@@ -177,7 +177,7 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
 
   @Override
   public Set<String> processListOptions() {
-    HashSet<String> result = new HashSet<String>();
+    HashSet<String> result = new HashSet<>();
     EditorSchemeAttributeDescriptor[] descriptions = myOptions.getCurrentDescriptions();
     for (EditorSchemeAttributeDescriptor description : descriptions) {
       if (description.getGroup().equals(myCategoryName)) {

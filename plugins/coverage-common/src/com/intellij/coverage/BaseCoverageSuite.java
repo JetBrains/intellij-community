@@ -46,7 +46,7 @@ public abstract class BaseCoverageSuite  implements CoverageSuite, JDOMExternali
   @NonNls
   private static final String TRACING_ENABLED_ATTRIBUTE_NAME = "COVERAGE_TRACING_ENABLED";
 
-  private SoftReference<ProjectData> myCoverageData = new SoftReference<ProjectData>(null);
+  private SoftReference<ProjectData> myCoverageData = new SoftReference<>(null);
 
   private String myName;
   private long myLastCoverageTimeStamp;
@@ -189,7 +189,7 @@ public abstract class BaseCoverageSuite  implements CoverageSuite, JDOMExternali
   }
 
   public void setCoverageData(final ProjectData projectData) {
-    myCoverageData = new SoftReference<ProjectData>(projectData);
+    myCoverageData = new SoftReference<>(projectData);
   }
 
   public ProjectData getCoverageData() {

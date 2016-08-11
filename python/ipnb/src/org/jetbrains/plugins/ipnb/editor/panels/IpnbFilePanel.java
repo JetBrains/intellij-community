@@ -211,7 +211,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   }
 
   public void createAndAddCell(final boolean below) {
-    final IpnbCodeCell cell = new IpnbCodeCell("python", Collections.emptyList(), null, new ArrayList<IpnbOutputCell>(),
+    final IpnbCodeCell cell = new IpnbCodeCell("python", Collections.emptyList(), null, new ArrayList<>(),
                                                null);
     final IpnbCodePanel codePanel = new IpnbCodePanel(myProject, myParent, cell);
 

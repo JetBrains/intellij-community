@@ -67,9 +67,9 @@ class LocalVarAnalyzer extends GroovyRecursiveElementVisitor {
     LocalVarAnalyzer visitor = new LocalVarAnalyzer();
     root.accept(visitor);
 
-    Map<PsiVariable, String> varToName = analyzedVars == null ? new HashMap<PsiVariable, String>() : analyzedVars.varToName;
-    Set<PsiVariable> toWrap = analyzedVars == null ? new HashSet<PsiVariable>() : analyzedVars.toWrap;
-    Set<PsiVariable> toMakeFinal = analyzedVars == null ? new HashSet<PsiVariable>() : analyzedVars.toMakeFinal;
+    Map<PsiVariable, String> varToName = analyzedVars == null ? new HashMap<>() : analyzedVars.varToName;
+    Set<PsiVariable> toWrap = analyzedVars == null ? new HashSet<>() : analyzedVars.toWrap;
+    Set<PsiVariable> toMakeFinal = analyzedVars == null ? new HashSet<>() : analyzedVars.toMakeFinal;
     for (PsiVariable v : visitor.touched) {
       if (visitor.rewritten.contains(v)) {
         toWrap.add(v);
@@ -89,12 +89,12 @@ class LocalVarAnalyzer extends GroovyRecursiveElementVisitor {
   }
 
   public static Result initialResult() {
-    return new Result(new HashSet<PsiVariable>(), new HashSet<PsiVariable>(), new HashMap<PsiVariable, String>());
+    return new Result(new HashSet<>(), new HashSet<>(), new HashMap<>());
   }
 
-  private final Set<PsiVariable> touched = new HashSet<PsiVariable>();
-  private final Set<PsiVariable> rewritten = new HashSet<PsiVariable>();
-  private final TObjectIntHashMap<PsiVariable> allVars = new TObjectIntHashMap<PsiVariable>();
+  private final Set<PsiVariable> touched = new HashSet<>();
+  private final Set<PsiVariable> rewritten = new HashSet<>();
+  private final TObjectIntHashMap<PsiVariable> allVars = new TObjectIntHashMap<>();
 
   private int grade = 0;
 

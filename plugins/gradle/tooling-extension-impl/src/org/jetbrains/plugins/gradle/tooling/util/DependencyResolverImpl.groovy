@@ -143,8 +143,10 @@ class DependencyResolverImpl implements DependencyResolver {
         Map<ComponentIdentifier, ComponentArtifactsResult> componentResultsMap = [:];
         componentResults.each { componentResultsMap.put(it.id, it) }
 
+        Set<Configuration> processedConfigurations = new HashSet<>()
         def projectDeps
         projectDeps = { Configuration conf, map = ArrayListMultimap.create() ->
+          if(!processedConfigurations.add(conf)) return map
           conf.incoming.dependencies.findAll { it instanceof ProjectDependency }.each { it ->
             map.put(toComponentIdentifier(it.group, it.name, it.version), it as ProjectDependency)
             projectDeps((it as ProjectDependency).projectConfiguration, map)
@@ -155,9 +157,18 @@ class DependencyResolverImpl implements DependencyResolver {
 
         ResolutionResult resolutionResult = configuration.incoming.resolutionResult
         if(!configuration.resolvedConfiguration.hasError()) {
-          def fileDeps = new LinkedHashSet<File>(configuration.incoming.files.files);
+          Collection<File> fileDeps = new LinkedHashSet<File>(configuration.incoming.files.files);
           artifactMap.values().each {
             fileDeps.remove(it.file)
+          }
+          configurationProjectDependencies.values().each {
+            def intersect = fileDeps.intersect(it.resolve())
+            if(!intersect.isEmpty()) {
+              def fileCollectionDependency = new DefaultFileCollectionDependency(intersect)
+              fileCollectionDependency.scope = scope
+              result.add(fileCollectionDependency)
+              fileDeps.removeAll(intersect)
+            }
           }
           fileDeps.each {
             def fileCollectionDependency = new DefaultFileCollectionDependency([it])

@@ -43,7 +43,7 @@ public class PyOperatorReference extends PyReferenceImpl {
   @NotNull
   @Override
   protected List<RatedResolveResult> resolveInner() {
-    List<RatedResolveResult> res = new ArrayList<RatedResolveResult>();
+    List<RatedResolveResult> res = new ArrayList<>();
     if (myElement instanceof PyBinaryExpression) {
       final PyBinaryExpression expr = (PyBinaryExpression)myElement;
       final String name = expr.getReferencedName();
@@ -140,7 +140,7 @@ public class PyOperatorReference extends PyReferenceImpl {
 
   @NotNull
   private List<RatedResolveResult> resolveMember(@Nullable PyExpression object, @Nullable String name) {
-    final ArrayList<RatedResolveResult> results = new ArrayList<RatedResolveResult>();
+    final ArrayList<RatedResolveResult> results = new ArrayList<>();
     if (object != null && name != null) {
       final TypeEvalContext typeEvalContext = myContext.getTypeEvalContext();
       PyType type = typeEvalContext.getType(object);

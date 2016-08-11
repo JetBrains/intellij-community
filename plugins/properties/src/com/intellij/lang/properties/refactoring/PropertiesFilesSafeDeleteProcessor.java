@@ -42,7 +42,7 @@ public class PropertiesFilesSafeDeleteProcessor implements SafeDeleteProcessorDe
 
   public NonCodeUsageSearchInfo findUsages(@NotNull final PsiElement element, @NotNull final PsiElement[] allElementsToDelete, @NotNull final List<UsageInfo> result) {
     PropertiesFile file = (PropertiesFile) element;
-    List<PsiElement> elements = new ArrayList<PsiElement>();
+    List<PsiElement> elements = new ArrayList<>();
     elements.add(file.getContainingFile());
     for (IProperty property : file.getProperties()) {
       elements.add(property.getPsiElement());

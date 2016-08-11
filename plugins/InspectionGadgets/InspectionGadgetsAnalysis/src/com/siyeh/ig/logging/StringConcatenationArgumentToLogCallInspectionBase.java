@@ -47,7 +47,7 @@ import java.util.Set;
 public class StringConcatenationArgumentToLogCallInspectionBase extends BaseInspection {
 
   @NonNls
-  private static final Set<String> logNames = new THashSet<String>();
+  private static final Set<String> logNames = new THashSet<>();
   static {
     logNames.add("trace");
     logNames.add("debug");

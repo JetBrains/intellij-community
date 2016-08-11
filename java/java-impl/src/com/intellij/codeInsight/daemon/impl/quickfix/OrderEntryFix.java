@@ -94,7 +94,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
       return result;
     }
 
-    Set<Object> librariesToAdd = new THashSet<Object>();
+    Set<Object> librariesToAdd = new THashSet<>();
     PsiClass[] classes = PsiShortNamesCache.getInstance(project).getClassesByName(shortReferenceName, GlobalSearchScope.allScope(project));
     List<PsiClass> allowedDependencies = filterAllowedDependencies(psiElement, classes);
     if (allowedDependencies.isEmpty()) {
@@ -170,7 +170,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
   private static List<PsiClass> filterAllowedDependencies(PsiElement element, PsiClass[] classes) {
     DependencyValidationManager dependencyValidationManager = DependencyValidationManager.getInstance(element.getProject());
     PsiFile fromFile = element.getContainingFile();
-    List<PsiClass> result = new ArrayList<PsiClass>();
+    List<PsiClass> result = new ArrayList<>();
     for (PsiClass psiClass : classes) {
       PsiFile containingFile = psiClass.getContainingFile();
       if (containingFile != null && dependencyValidationManager.getViolatorDependencyRule(fromFile, containingFile) == null) {

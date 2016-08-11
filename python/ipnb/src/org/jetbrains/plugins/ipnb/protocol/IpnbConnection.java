@@ -44,7 +44,7 @@ public class IpnbConnection {
   private volatile boolean myIsIOPubOpen = false;
   protected volatile boolean myIsOpened = false;
 
-  private ArrayList<IpnbOutputCell> myOutput = new ArrayList<IpnbOutputCell>();
+  private ArrayList<IpnbOutputCell> myOutput = new ArrayList<>();
   private int myExecCount;
 
 

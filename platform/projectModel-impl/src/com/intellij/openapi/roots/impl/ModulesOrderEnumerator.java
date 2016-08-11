@@ -49,7 +49,7 @@ public class ModulesOrderEnumerator extends OrderEnumeratorBase {
   protected void forEach(@NotNull PairProcessor<OrderEntry, List<OrderEnumerationHandler>> processor) {
     myRecursivelyExportedOnly = false;
 
-    final THashSet<Module> processed = new THashSet<Module>();
+    final THashSet<Module> processed = new THashSet<>();
     for (Module module : myModules) {
       processEntries(getRootModel(module), processor, processed, true, getCustomHandlers(module));
     }

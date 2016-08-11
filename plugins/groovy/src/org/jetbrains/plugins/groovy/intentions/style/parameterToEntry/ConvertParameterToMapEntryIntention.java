@@ -92,7 +92,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
   protected void processIntention(@NotNull final PsiElement element, final Project project, Editor editor) throws IncorrectOperationException {
     // Method or closure to be refactored
     final GrParametersOwner owner = PsiTreeUtil.getParentOfType(element, GrParametersOwner.class);
-    final Collection<PsiElement> occurrences = new ArrayList<PsiElement>();
+    final Collection<PsiElement> occurrences = new ArrayList<>();
     // Find all referenced expressions
     final boolean success = collectOwnerOccurrences(project, owner, occurrences);
     if (!success) return;
@@ -130,7 +130,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
             @Override
             protected void doOKAction() {
               String name = getEnteredName();
-              MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+              MultiMap<PsiElement, String> conflicts = new MultiMap<>();
               assert name != null;
               GroovyValidationUtil.validateNewParameterName(firstParam, conflicts, name);
               if (isClosure) {
@@ -428,7 +428,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
                                                  final Collection<PsiElement> occurrences) {
     final PsiElement namedElem = getReferencedElement(owner);
     if (namedElem == null) return true;
-    final Ref<Boolean> result = new Ref<Boolean>(true);
+    final Ref<Boolean> result = new Ref<>(true);
     final Task task = new Task.Modal(project, GroovyIntentionsBundle
       .message("find.method.ro.closure.usages.0", owner instanceof GrClosableBlock ? CLOSURE_CAPTION : METHOD_CAPTION), true) {
       @Override

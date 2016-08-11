@@ -53,15 +53,15 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
   AbstractTreeBuilderTest.Node myFabrique;
 
 
-  Map<NodeElement, ElementEntry> myElementUpdate = new TreeMap<NodeElement, ElementEntry>();
+  Map<NodeElement, ElementEntry> myElementUpdate = new TreeMap<>();
   ElementUpdateHook myElementUpdateHook;
 
-  Map<String, Integer> mySortedParent = new TreeMap<String, Integer>();
+  Map<String, Integer> mySortedParent = new TreeMap<>();
 
   NodeDescriptor.NodeComparator.Delegate<NodeDescriptor> myComparator;
   Node myIntellij;
 
-  protected final Set<NodeElement> myChanges = new HashSet<NodeElement>();
+  protected final Set<NodeElement> myChanges = new HashSet<>();
 
   protected AbstractTreeBuilderTest(boolean passThrough) {
     super(passThrough);
@@ -75,7 +75,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
   protected void setUp() throws Exception {
     super.setUp();
 
-    myComparator = new NodeDescriptor.NodeComparator.Delegate<NodeDescriptor>(new NodeDescriptor.NodeComparator<NodeDescriptor>() {
+    myComparator = new NodeDescriptor.NodeComparator.Delegate<>(new NodeDescriptor.NodeComparator<NodeDescriptor>() {
       @Override
       public int compare(NodeDescriptor o1, NodeDescriptor o2) {
         return AlphaComparator.INSTANCE.compare(o1, o2);
@@ -296,7 +296,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
   class Node  {
 
     final NodeElement myElement;
-    final ArrayList<Node> myChildElements = new ArrayList<Node>();
+    final ArrayList<Node> myChildElements = new ArrayList<>();
 
     Node(Node parent, String textName) {
       this(parent, new NodeElement(textName));
@@ -388,9 +388,9 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
   }
 
   class MyStructure extends BaseStructure {
-    private final Map<NodeElement, NodeElement> myChild2Parent = new HashMap<NodeElement, NodeElement>();
-    private final Map<NodeElement, Node> myElement2Node = new HashMap<NodeElement, Node>();
-    private final Set<NodeElement> myLeaves = new HashSet<NodeElement>();
+    private final Map<NodeElement, NodeElement> myChild2Parent = new HashMap<>();
+    private final Map<NodeElement, Node> myElement2Node = new HashMap<>();
+    private final Set<NodeElement> myLeaves = new HashSet<>();
     private ReValidator myReValidator;
 
     @Override

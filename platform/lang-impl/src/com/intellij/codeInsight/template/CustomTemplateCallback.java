@@ -94,7 +94,7 @@ public class CustomTemplateCallback {
 
   @NotNull
   public List<TemplateImpl> findApplicableTemplates(@NotNull String key) {
-    List<TemplateImpl> result = new ArrayList<TemplateImpl>();
+    List<TemplateImpl> result = new ArrayList<>();
     for (TemplateImpl candidate : getMatchingTemplates(key)) {
       if (isAvailableTemplate(candidate)) {
         result.add(candidate);
@@ -120,7 +120,7 @@ public class CustomTemplateCallback {
   @NotNull
   private static List<TemplateImpl> getMatchingTemplates(@NotNull String templateKey) {
     TemplateSettings settings = TemplateSettings.getInstance();
-    List<TemplateImpl> candidates = new ArrayList<TemplateImpl>();
+    List<TemplateImpl> candidates = new ArrayList<>();
     for (TemplateImpl template : settings.getTemplates(templateKey)) {
       if (!template.isDeactivated()) {
         candidates.add(template);

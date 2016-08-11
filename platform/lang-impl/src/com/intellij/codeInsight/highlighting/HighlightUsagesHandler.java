@@ -253,8 +253,8 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     ReadWriteAccessDetector detector = ReadWriteAccessDetector.findDetector(element);
 
     if (detector != null) {
-      List<PsiReference> readRefs = new ArrayList<PsiReference>();
-      List<PsiReference> writeRefs = new ArrayList<PsiReference>();
+      List<PsiReference> readRefs = new ArrayList<>();
+      List<PsiReference> writeRefs = new ArrayList<>();
 
       for (PsiReference ref : refs) {
         if (detector.getReferenceAccess(element, ref) == ReadWriteAccessDetector.Access.Read) {
@@ -314,7 +314,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
   public static void doHighlightElements(Editor editor, PsiElement[] elements, TextAttributes attributes, boolean clearHighlights) {
     HighlightManager highlightManager = HighlightManager.getInstance(editor.getProject());
-    List<TextRange> textRanges = new ArrayList<TextRange>(elements.length);
+    List<TextRange> textRanges = new ArrayList<>(elements.length);
     for (PsiElement element : elements) {
       TextRange range = element.getTextRange();
       // injection occurs
@@ -331,7 +331,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       clearHighlights(editor, highlightManager, textRanges, attributes);
       return;
     }
-    ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
+    ArrayList<RangeHighlighter> highlighters = new ArrayList<>();
     for (TextRange range : textRanges) {
       highlightManager.addRangeHighlight(editor, range.getStartOffset(), range.getEndOffset(), attributes, false, highlighters);
     }
@@ -388,7 +388,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
   private static void doHighlightRefs(HighlightManager highlightManager, @NotNull Editor editor, @NotNull List<PsiReference> refs,
                                       TextAttributes attributes, boolean clearHighlights) {
-    List<TextRange> textRanges = new ArrayList<TextRange>(refs.size());
+    List<TextRange> textRanges = new ArrayList<>(refs.size());
     for (PsiReference ref : refs) {
       collectRangesToHighlight(ref, textRanges);
     }
@@ -402,7 +402,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
   @NotNull
   @Deprecated
   public static List<TextRange> getRangesToHighlight(@NotNull PsiReference ref) {
-    return collectRangesToHighlight(ref, new ArrayList<TextRange>());
+    return collectRangesToHighlight(ref, new ArrayList<>());
   }
 
   @NotNull

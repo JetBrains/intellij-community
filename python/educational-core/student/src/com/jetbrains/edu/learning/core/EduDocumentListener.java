@@ -18,7 +18,7 @@ import java.util.List;
 public class EduDocumentListener extends DocumentAdapter {
   private final TaskFile myTaskFile;
   private final boolean myTrackLength;
-  private final List<AnswerPlaceholderWrapper> myAnswerPlaceholders = new ArrayList<AnswerPlaceholderWrapper>();
+  private final List<AnswerPlaceholderWrapper> myAnswerPlaceholders = new ArrayList<>();
 
 
   public EduDocumentListener(TaskFile taskFile) {

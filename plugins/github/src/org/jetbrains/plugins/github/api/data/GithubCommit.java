@@ -33,6 +33,7 @@ public class GithubCommit extends GithubCommitSha {
 
   @Mandatory private List<GithubCommitSha> parents;
 
+  @RestModel
   public static class GitCommit {
     private String url;
     @Mandatory private String message;
@@ -56,6 +57,7 @@ public class GithubCommit extends GithubCommitSha {
     }
   }
 
+  @RestModel
   public static class GitUser {
     @Mandatory private String name;
     @Mandatory private String email;

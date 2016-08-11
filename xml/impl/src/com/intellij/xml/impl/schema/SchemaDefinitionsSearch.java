@@ -78,13 +78,13 @@ public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiEle
           thisNs = thisNs == null ? getDefaultNs(file) : thisNs;
           // so thisNs can be null
           if (thisNs == null) return false;
-          final ArrayList<SchemaTypeInfo> infosLst = new ArrayList<SchemaTypeInfo>(infos);
+          final ArrayList<SchemaTypeInfo> infosLst = new ArrayList<>(infos);
           Collections.sort(infosLst);
-          final Map<String, Set<XmlFile>> nsMap = new HashMap<String, Set<XmlFile>>();
+          final Map<String, Set<XmlFile>> nsMap = new HashMap<>();
           for (final SchemaTypeInfo info : infosLst) {
             Set<XmlFile> targetFiles = nsMap.get(info.getNamespaceUri());
             if (targetFiles == null) {
-              targetFiles = new HashSet<XmlFile>();
+              targetFiles = new HashSet<>();
               if (Comparing.equal(info.getNamespaceUri(), thisNs)) {
                 targetFiles.add(file);
               }
@@ -191,8 +191,8 @@ public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiEle
     final Project project = file.getProject();
     if (project == null) return null;
 
-    final Set<SchemaTypeInfo> result = new HashSet<SchemaTypeInfo>();
-    final ArrayDeque<SchemaTypeInfo> queue = new ArrayDeque<SchemaTypeInfo>();
+    final Set<SchemaTypeInfo> result = new HashSet<>();
+    final ArrayDeque<SchemaTypeInfo> queue = new ArrayDeque<>();
 
     String nsUri;
     if (! hasPrefix) {

@@ -17,6 +17,7 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+import org.jetbrains.annotations.TestOnly
 import java.io.InputStream
 
 interface StreamProvider {
@@ -42,6 +43,7 @@ interface StreamProvider {
   fun delete(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT)
 }
 
+@TestOnly
 fun StreamProvider.write(path: String, content: String) {
   write(path, content.toByteArray())
 }

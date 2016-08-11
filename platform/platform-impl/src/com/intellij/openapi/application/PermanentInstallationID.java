@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.application;
 
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,6 +24,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.prefs.Preferences;
 
@@ -39,14 +42,21 @@ public class PermanentInstallationID {
   }
 
   private static String calculateInstallationId() {
+    final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     final Preferences oldPrefs = Preferences.userRoot();
-    final String oldValue = oldPrefs.get(OLD_USER_ON_MACHINE_ID_KEY, null); // compatibility with previous versions
-    final Preferences prefs = Preferences.userRoot().node("jetbrains");
+    final String oldValue = appInfo.isVendorJetBrains()? oldPrefs.get(OLD_USER_ON_MACHINE_ID_KEY, null) : null; // compatibility with previous versions
+
+    final String companyName = appInfo.getShortCompanyName();
+    final Preferences prefs = Preferences.userRoot().node(StringUtil.isEmptyOrSpaces(companyName)? "jetbrains" : companyName.toLowerCase(Locale.US));
 
     String installationId = prefs.get(INSTALLATION_ID_KEY, null);
-    if (StringUtil.isEmpty(installationId)) {
-      installationId = !StringUtil.isEmpty(oldValue) ? oldValue : UUID.randomUUID().toString();
+    if (StringUtil.isEmptyOrSpaces(installationId)) {
+      installationId = !StringUtil.isEmptyOrSpaces(oldValue) ? oldValue : UUID.randomUUID().toString();
       prefs.put(INSTALLATION_ID_KEY, installationId);
+    }
+
+    if (!appInfo.isVendorJetBrains()) {
+      return installationId;
     }
 
     // for Windows attempt to use PermanentUserId, so that DotNet products and IDEA would use the same ID.

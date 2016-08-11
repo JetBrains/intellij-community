@@ -62,7 +62,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
   private boolean myInsideCommit = false;
   private boolean myLoaded;
   private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
-  private final Map<String, LocalFileSystem.WatchRequest> myWatchedOutputs = new HashMap<String, LocalFileSystem.WatchRequest>();
+  private final Map<String, LocalFileSystem.WatchRequest> myWatchedOutputs = new HashMap<>();
 
   public ArtifactManagerImpl(Project project) {
     myProject = project;
@@ -183,7 +183,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
   @Override
   public void loadState(ArtifactManagerState managerState) {
     List<ArtifactState> artifactStates = managerState.getArtifacts();
-    final List<ArtifactImpl> artifacts = new ArrayList<ArtifactImpl>(artifactStates.size());
+    final List<ArtifactImpl> artifacts = new ArrayList<>(artifactStates.size());
     if (!artifactStates.isEmpty()) {
       AccessToken token = ReadAction.start();
       try {
@@ -278,8 +278,8 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
   }
 
   private void updateWatchedRoots() {
-    Set<String> pathsToRemove = new HashSet<String>(myWatchedOutputs.keySet());
-    Set<String> toAdd = new HashSet<String>();
+    Set<String> pathsToRemove = new HashSet<>(myWatchedOutputs.keySet());
+    Set<String> toAdd = new HashSet<>();
     for (Artifact artifact : getArtifacts()) {
       final String path = artifact.getOutputPath();
       if (path != null && path.length() > 0) {
@@ -290,10 +290,10 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
       }
     }
 
-    List<LocalFileSystem.WatchRequest> requestsToRemove = new ArrayList<LocalFileSystem.WatchRequest>();
+    List<LocalFileSystem.WatchRequest> requestsToRemove = new ArrayList<>();
     for (String path : pathsToRemove) {
       final LocalFileSystem.WatchRequest request = myWatchedOutputs.remove(path);
-      ContainerUtil.addIfNotNull(request, requestsToRemove);
+      ContainerUtil.addIfNotNull(requestsToRemove, request);
     }
 
     Set<LocalFileSystem.WatchRequest> newRequests = LocalFileSystem.getInstance().replaceWatchedRoots(requestsToRemove, toAdd, null);
@@ -343,9 +343,9 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
 
       final List<ArtifactImpl> allArtifacts = artifactModel.getOriginalArtifacts();
 
-      final Set<ArtifactImpl> removed = new THashSet<ArtifactImpl>(myModel.myArtifactsList);
-      final List<ArtifactImpl> added = new ArrayList<ArtifactImpl>();
-      final List<Pair<ArtifactImpl, String>> changed = new ArrayList<Pair<ArtifactImpl, String>>();
+      final Set<ArtifactImpl> removed = new THashSet<>(myModel.myArtifactsList);
+      final List<ArtifactImpl> added = new ArrayList<>();
+      final List<Pair<ArtifactImpl, String>> changed = new ArrayList<>();
 
       for (ArtifactImpl artifact : allArtifacts) {
         final boolean isAdded = !removed.remove(artifact);
@@ -432,7 +432,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
   }
 
   private static class ArtifactManagerModel extends ArtifactModelBase {
-    private List<ArtifactImpl> myArtifactsList = new ArrayList<ArtifactImpl>();
+    private List<ArtifactImpl> myArtifactsList = new ArrayList<>();
     private Artifact[] mySortedArtifacts;
 
     public void setArtifactsList(List<ArtifactImpl> artifactsList) {

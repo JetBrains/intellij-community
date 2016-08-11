@@ -34,7 +34,7 @@ public class ExternalSystemExecutionSettings implements Serializable {
   @NotNull private final AtomicBoolean myVerboseProcessing        = new AtomicBoolean();
 
   @NotNull private final AtomicReference<ExternalSystemTaskNotificationListener> myNotificationListener =
-    new AtomicReference<ExternalSystemTaskNotificationListener>();
+    new AtomicReference<>();
 
   public ExternalSystemExecutionSettings() {
     int ttl = SystemProperties.getIntProperty(REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY, DEFAULT_REMOTE_PROCESS_TTL_MS);

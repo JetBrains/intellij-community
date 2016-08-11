@@ -60,7 +60,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
     for (OrderEnumerationHandler.Factory handlerFactory : OrderEnumerationHandler.EP_NAME.getExtensions()) {
       if (handlerFactory.isApplicable(module)) {
         if (customHandlers == null) {
-          customHandlers = new SmartList<OrderEnumerationHandler>();
+          customHandlers = new SmartList<>();
         }
         customHandlers.add(handlerFactory.createHandler(module));
       }
@@ -362,7 +362,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
 
   @Override
   public <R> R process(@NotNull final RootPolicy<R> policy, final R initialValue) {
-    final OrderEntryProcessor<R> processor = new OrderEntryProcessor<R>(policy, initialValue);
+    final OrderEntryProcessor<R> processor = new OrderEntryProcessor<>(policy, initialValue);
     forEach(processor);
     return processor.myValue;
   }
@@ -379,11 +379,11 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
   boolean addCustomRootsForLibrary(OrderEntry forOrderEntry, OrderRootType type, Collection<VirtualFile> result,
                                    List<OrderEnumerationHandler> customHandlers) {
     for (OrderEnumerationHandler handler : customHandlers) {
-      final List<String> urls = new ArrayList<String>();
+      final List<String> urls = new ArrayList<>();
       final boolean added =
         handler.addCustomRootsForLibrary(forOrderEntry, type, urls);
       for (String url : urls) {
-        ContainerUtil.addIfNotNull(VirtualFileManager.getInstance().findFileByUrl(url), result);
+        ContainerUtil.addIfNotNull(result, VirtualFileManager.getInstance().findFileByUrl(url));
       }
       if (added) {
         return true;
@@ -395,7 +395,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
   boolean addCustomRootUrlsForLibrary(OrderEntry forOrderEntry, OrderRootType type, Collection<String> result,
                                       List<OrderEnumerationHandler> customHandlers) {
     for (OrderEnumerationHandler handler : customHandlers) {
-      final List<String> urls = new ArrayList<String>();
+      final List<String> urls = new ArrayList<>();
       final boolean added =
         handler.addCustomRootsForLibrary(forOrderEntry, type, urls);
       result.addAll(urls);
@@ -413,10 +413,10 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
                                   boolean includeTests,
                                   final List<OrderEnumerationHandler> customHandlers) {
     for (OrderEnumerationHandler handler : customHandlers) {
-      final List<String> urls = new ArrayList<String>();
+      final List<String> urls = new ArrayList<>();
       final boolean added = handler.addCustomModuleRoots(type, rootModel, urls, includeProduction, includeTests);
       for (String url : urls) {
-        ContainerUtil.addIfNotNull(VirtualFileManager.getInstance().findFileByUrl(url), result);
+        ContainerUtil.addIfNotNull(result, VirtualFileManager.getInstance().findFileByUrl(url));
       }
 
       if (added) return true;
@@ -431,7 +431,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
                                      boolean includeTests,
                                      List<OrderEnumerationHandler> customHandlers) {
     for (OrderEnumerationHandler handler : customHandlers) {
-      final List<String> urls = new ArrayList<String>();
+      final List<String> urls = new ArrayList<>();
       final boolean added = handler.addCustomModuleRoots(type, rootModel, urls, includeProduction, includeTests);
       result.addAll(urls);
 

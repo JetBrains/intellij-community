@@ -46,17 +46,17 @@ import java.util.List;
  */
 public class CompositeCommittedChangesProvider implements CommittedChangesProvider<CommittedChangeList, CompositeCommittedChangesProvider.CompositeChangeBrowserSettings> {
   private final Project myProject;
-  private List<AbstractVcs> myBaseVcss = new ArrayList<AbstractVcs>();
+  private List<AbstractVcs> myBaseVcss = new ArrayList<>();
 
   public CompositeCommittedChangesProvider(final Project project, final AbstractVcs... baseVcss) {
     myProject = project;
-    myBaseVcss = new ArrayList<AbstractVcs>();
+    myBaseVcss = new ArrayList<>();
     Collections.addAll(myBaseVcss, baseVcss);
   }
 
   @NotNull
   public CompositeCommittedChangesProvider.CompositeChangeBrowserSettings createDefaultSettings() {
-    Map<AbstractVcs, ChangeBrowserSettings> map = new HashMap<AbstractVcs, ChangeBrowserSettings>();
+    Map<AbstractVcs, ChangeBrowserSettings> map = new HashMap<>();
     for(AbstractVcs vcs: myBaseVcss) {
       final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
       assert provider != null;
@@ -103,7 +103,7 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
   }
 
   public ChangeListColumn[] getColumns() {
-    Set<ChangeListColumn> columns = new LinkedHashSet<ChangeListColumn>();
+    Set<ChangeListColumn> columns = new LinkedHashSet<>();
     for(AbstractVcs vcs: myBaseVcss) {
       final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
       assert provider != null;
@@ -124,7 +124,7 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
     List<AnAction> actions = null;
     List<AnAction> toolbarActions = null;
 
-    final List<Runnable> calledOnDispose = new ArrayList<Runnable>();
+    final List<Runnable> calledOnDispose = new ArrayList<>();
     for (AbstractVcs baseVcs : myBaseVcss) {
       final CommittedChangesProvider provider = baseVcs.getCommittedChangesProvider();
       if (provider != null) {
@@ -132,8 +132,8 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
         if (auxiliary != null) {
           if (tabbedPane == null) {
             tabbedPane = new JBTabbedPane();
-            actions = new ArrayList<AnAction>();
-            toolbarActions = new ArrayList<AnAction>();
+            actions = new ArrayList<>();
+            toolbarActions = new ArrayList<>();
           }
           actions.addAll(auxiliary.getPopupActions());
           toolbarActions.addAll(auxiliary.getToolbarActions());
@@ -176,7 +176,7 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
 
   public static class CompositeChangeBrowserSettings extends ChangeBrowserSettings {
     private final Map<AbstractVcs, ChangeBrowserSettings> myMap;
-    private final Set<AbstractVcs> myEnabledVcs = new HashSet<AbstractVcs>();
+    private final Set<AbstractVcs> myEnabledVcs = new HashSet<>();
 
     public CompositeChangeBrowserSettings(final Map<AbstractVcs, ChangeBrowserSettings> map) {
       myMap = map;
@@ -205,8 +205,8 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
     private final JPanel myCompositePanel;
     private final DateFilterComponent myDateFilter;
     private CompositeChangeBrowserSettings mySettings;
-    private final Map<AbstractVcs, ChangesBrowserSettingsEditor> myEditors = new HashMap<AbstractVcs, ChangesBrowserSettingsEditor>();
-    private final Map<AbstractVcs, JCheckBox> myEnabledCheckboxes = new HashMap<AbstractVcs, JCheckBox>();
+    private final Map<AbstractVcs, ChangesBrowserSettingsEditor> myEditors = new HashMap<>();
+    private final Map<AbstractVcs, JCheckBox> myEnabledCheckboxes = new HashMap<>();
 
     public CompositeChangesBrowserSettingsEditor() {
       myCompositePanel = new JPanel();
@@ -246,7 +246,7 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
     }
 
     public CompositeChangeBrowserSettings getSettings() {
-      Set<AbstractVcs> enabledVcss = new HashSet<AbstractVcs>();
+      Set<AbstractVcs> enabledVcss = new HashSet<>();
       for(AbstractVcs vcs: myEditors.keySet()) {
         ChangeBrowserSettings settings = myEditors.get(vcs).getSettings();
         myDateFilter.saveValues(settings);

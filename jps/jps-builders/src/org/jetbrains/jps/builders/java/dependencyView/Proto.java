@@ -16,6 +16,8 @@
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataInputOutputUtil;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
@@ -23,6 +25,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Set;
 
 /**
  * @author: db
@@ -32,18 +35,22 @@ class Proto implements RW.Savable, Streamable {
   public final int access;
   public final int signature;
   public final int name;
+  @NotNull
+  public final Set<TypeRepr.ClassType> annotations;
 
-  protected Proto(final int access, final int signature, final int name) {
+  protected Proto(final int access, final int signature, final int name, Set<TypeRepr.ClassType> annotations) {
     this.access = access;
     this.signature = signature;
     this.name = name;
+    this.annotations = annotations;
   }
 
-  protected Proto(final DataInput in) {
+  protected Proto(final DependencyContext context, final DataInput in) {
     try {
       access = DataInputOutputUtil.readINT(in);
       signature = DataInputOutputUtil.readINT(in);
       name = DataInputOutputUtil.readINT(in);
+      annotations = (Set<TypeRepr.ClassType>)RW.read(TypeRepr.classTypeExternalizer(context), new THashSet<TypeRepr.ClassType>(), in);
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
@@ -56,6 +63,7 @@ class Proto implements RW.Savable, Streamable {
       DataInputOutputUtil.writeINT(out, access);
       DataInputOutputUtil.writeINT(out, signature);
       DataInputOutputUtil.writeINT(out, name);
+      RW.save(annotations, out);
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
@@ -131,6 +139,12 @@ class Proto implements RW.Savable, Streamable {
       diff |= Difference.SIGNATURE;
     }
 
+    final Difference.Specifier<TypeRepr.ClassType, Difference> ann = Difference.make(past.annotations, annotations);
+
+    if (!ann.unchanged()) {
+      diff |= Difference.ANNOTATIONS;
+    }
+
     final int base = diff;
 
     return new Difference() {
@@ -167,6 +181,11 @@ class Proto implements RW.Savable, Streamable {
       @Override
       public boolean weakedAccess() {
         return Difference.weakerAccess(past.access, access);
+      }
+
+      @Override
+      public Specifier<TypeRepr.ClassType, Difference> annotations() {
+        return ann;
       }
     };
   }

@@ -31,15 +31,15 @@ public class IrreducibleCFGDeobfuscator {
 
     class Node {
       public Integer id;
-      public final Set<Node> preds = new HashSet<Node>();
-      public final Set<Node> succs = new HashSet<Node>();
+      public final Set<Node> preds = new HashSet<>();
+      public final Set<Node> succs = new HashSet<>();
 
       public Node(Integer id) {
         this.id = id;
       }
     }
 
-    HashMap<Integer, Node> mapNodes = new HashMap<Integer, Node>();
+    HashMap<Integer, Node> mapNodes = new HashMap<>();
 
     // checking exceptions and creating nodes
     for (Statement stat : statement.getStats()) {
@@ -145,7 +145,7 @@ public class IrreducibleCFGDeobfuscator {
     StatEdge enteredge = splitnode.getPredecessorEdges(StatEdge.TYPE_REGULAR).iterator().next();
 
     // copy the smallest statement
-    Statement splitcopy = copyStatement(splitnode, null, new HashMap<Statement, Statement>());
+    Statement splitcopy = copyStatement(splitnode, null, new HashMap<>());
     initCopiedStatement(splitcopy);
 
     // insert the copy

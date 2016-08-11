@@ -212,7 +212,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     if (!(expression instanceof PsiConditionalExpression) && !PsiType.BOOLEAN.equals(expression.getType())) return false;
 
     final ExpressionVisitor expressionVisitor = new ExpressionVisitor(expression.getManager(), false);
-    final Ref<Boolean> canBeSimplified = new Ref<Boolean>(Boolean.FALSE);
+    final Ref<Boolean> canBeSimplified = new Ref<>(Boolean.FALSE);
     expression.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
@@ -275,7 +275,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
       if (JavaTokenType.XOR == tokenType) {
 
         boolean negate = false;
-        List<PsiExpression> expressions = new ArrayList<PsiExpression>();
+        List<PsiExpression> expressions = new ArrayList<>();
         for (PsiExpression operand : operands) {
           final Boolean constBoolean = getConstBoolean(operand);
           if (constBoolean != null) {

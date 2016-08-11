@@ -30,6 +30,8 @@ import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.ui.tree.UserExpressionDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiType;
@@ -40,16 +42,23 @@ public class UserExpressionDescriptorImpl extends EvaluationDescriptor implement
   private final ValueDescriptorImpl myParentDescriptor;
   private final String myTypeName;
   private final String myName;
+  private final int myEnumerationIndex;
 
-  public UserExpressionDescriptorImpl(Project project, ValueDescriptorImpl parent, String typeName, String name, TextWithImports text) {
+  public UserExpressionDescriptorImpl(Project project,
+                                      ValueDescriptorImpl parent,
+                                      String typeName,
+                                      String name,
+                                      TextWithImports text,
+                                      int enumerationIndex) {
     super(text, project);
     myParentDescriptor = parent;
     myTypeName = typeName;
     myName = name;
+    myEnumerationIndex = enumerationIndex;
   }
 
   public String getName() {
-    return myName;
+    return StringUtil.isEmpty(myName) ? myText.getText() : myName;
   }
 
   @Nullable
@@ -64,7 +73,11 @@ public class UserExpressionDescriptorImpl extends EvaluationDescriptor implement
     if (psiClassAndType.first == null) {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.type.name", myTypeName));
     }
-    return createCodeFragment(psiClassAndType.first);
+    PsiCodeFragment fragment = createCodeFragment(psiClassAndType.first);
+    if (fragment instanceof JavaCodeFragment) {
+      ((JavaCodeFragment)fragment).setThisType(psiClassAndType.second);
+    }
+    return fragment;
   }
 
   public ValueDescriptorImpl getParentDescriptor() {
@@ -73,5 +86,9 @@ public class UserExpressionDescriptorImpl extends EvaluationDescriptor implement
 
   protected EvaluationContextImpl getEvaluationContext(final EvaluationContextImpl evaluationContext) {
     return evaluationContext.createEvaluationContext(myParentDescriptor.getValue());
+  }
+
+  public int getEnumerationIndex() {
+    return myEnumerationIndex;
   }
 }

@@ -67,15 +67,15 @@ public class ReplaceAbstractClassInstanceByMapIntention extends Intention {
     GrTypeDefinitionBody body = anonymous.getBody();
     assert body != null;
 
-    List<Pair<PsiMethod, GrOpenBlock>> methods = new ArrayList<Pair<PsiMethod, GrOpenBlock>>();
+    List<Pair<PsiMethod, GrOpenBlock>> methods = new ArrayList<>();
     for (GrMethod method : body.getMethods()) {
-      methods.add(new Pair<PsiMethod, GrOpenBlock>(method, method.getBlock()));
+      methods.add(new Pair<>(method, method.getBlock()));
     }
 
     final PsiClass iface = (PsiClass)resolved;
     final Collection<CandidateInfo> collection = OverrideImplementExploreUtil.getMethodsToOverrideImplement(anonymous, true);
     for (CandidateInfo info : collection) {
-      methods.add(new Pair<PsiMethod, GrOpenBlock>((PsiMethod)info.getElement(), null));
+      methods.add(new Pair<>((PsiMethod)info.getElement(), null));
     }
 
     StringBuilder buffer = new StringBuilder();
@@ -122,7 +122,7 @@ public class ReplaceAbstractClassInstanceByMapIntention extends Intention {
     final PsiParameterList list = method.getParameterList();
     buffer.append("{ ");
     final PsiParameter[] parameters = list.getParameters();
-    Set<String> generatedNames = new HashSet<String>();
+    Set<String> generatedNames = new HashSet<>();
     if (parameters.length > 0) {
       final PsiParameter first = parameters[0];
       final PsiType type = first.getType();

@@ -63,7 +63,7 @@ public class SvnLoadedBranchesStorage {
   
   public void activate() {
     synchronized (myLock) {
-      myState = new SmallMapSerializer<String, Map<String, Collection<SvnBranchItem>>>(myFile, EnumeratorStringDescriptor.INSTANCE, createExternalizer());
+      myState = new SmallMapSerializer<>(myFile, EnumeratorStringDescriptor.INSTANCE, createExternalizer());
     }
   }
 
@@ -92,11 +92,11 @@ public class SvnLoadedBranchesStorage {
       @Override
       public void save(@NotNull DataOutput out, Map<String, Collection<SvnBranchItem>> value) throws IOException {
         out.writeInt(value.size());
-        ArrayList<String> keys = new ArrayList<String>(value.keySet());
+        ArrayList<String> keys = new ArrayList<>(value.keySet());
         Collections.sort(keys);
         for (String key : keys) {
           out.writeUTF(key);
-          List<SvnBranchItem> list = new ArrayList<SvnBranchItem>(value.get(key));
+          List<SvnBranchItem> list = new ArrayList<>(value.get(key));
           Collections.sort(list, SerializationComparator.getInstance());
           out.writeInt(list.size());
           for (SvnBranchItem item : list) {
@@ -109,12 +109,12 @@ public class SvnLoadedBranchesStorage {
 
       @Override
       public Map<String, Collection<SvnBranchItem>> read(@NotNull DataInput in) throws IOException {
-        final HashMap<String, Collection<SvnBranchItem>> map = new HashMap<String, Collection<SvnBranchItem>>();
+        final HashMap<String, Collection<SvnBranchItem>> map = new HashMap<>();
         int mapSize = in.readInt();
         for (int i = 0; i < mapSize; i++) {
           final String key = in.readUTF();
           final int size = in.readInt();
-          final ArrayList<SvnBranchItem> list = new ArrayList<SvnBranchItem>(size);
+          final ArrayList<SvnBranchItem> list = new ArrayList<>(size);
           for (int j = 0; j < size; j++) {
             String url = in.readUTF();
             long creation = in.readLong();

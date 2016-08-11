@@ -18,6 +18,7 @@ package org.jetbrains.settingsRepository
 import com.intellij.configurationStore.StateStorageManagerImpl
 import com.intellij.configurationStore.StreamProvider
 import com.intellij.ide.ApplicationLoadListener
+import com.intellij.ide.passwordSafe.macOs.isMacOsCredentialStoreSupported
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
@@ -36,7 +37,6 @@ import com.intellij.util.move
 import org.jetbrains.keychain.CredentialsStore
 import org.jetbrains.keychain.FileCredentialsStore
 import org.jetbrains.keychain.OsXCredentialsStore
-import org.jetbrains.keychain.isOSXCredentialsStoreSupported
 import org.jetbrains.settingsRepository.git.GitRepositoryManager
 import org.jetbrains.settingsRepository.git.GitRepositoryService
 import org.jetbrains.settingsRepository.git.processChildren
@@ -56,7 +56,7 @@ val icsManager by lazy(LazyThreadSafetyMode.NONE) {
 class IcsManager(dir: Path) {
   val credentialsStore = object : AtomicNotNullLazyValue<CredentialsStore>() {
     override fun compute(): CredentialsStore {
-      if (isOSXCredentialsStoreSupported && SystemProperties.getBooleanProperty("ics.use.osx.keychain", true)) {
+      if (isMacOsCredentialStoreSupported && SystemProperties.getBooleanProperty("use.osx.keychain", true)) {
         catchAndLog {
           return OsXCredentialsStore("IntelliJ Platform Settings Repository")
         }
@@ -152,10 +152,18 @@ class IcsManager(dir: Path) {
     }
   }
 
+  fun newStreamProvider() {
+    val application = ApplicationManager.getApplication()
+    (application.stateStore.stateStorageManager as StateStorageManagerImpl).streamProvider = ApplicationLevelProvider()
+  }
+
   fun beforeApplicationLoaded(application: Application) {
     repositoryActive = repositoryManager.isRepositoryExists()
 
-    (application.stateStore.stateStorageManager as StateStorageManagerImpl).streamProvider = ApplicationLevelProvider()
+    val storage = application.stateStore.stateStorageManager as StateStorageManagerImpl
+    if (storage.streamProvider == null || !storage.streamProvider!!.enabled) {
+      storage.streamProvider = ApplicationLevelProvider()
+    }
 
     autoSyncManager.registerListeners(application)
 
@@ -178,6 +186,8 @@ class IcsManager(dir: Path) {
   open inner class IcsStreamProvider(protected val projectId: String?) : StreamProvider {
     override val enabled: Boolean
       get() = repositoryActive
+
+    override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean = enabled
 
     override fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean) {
       val fullPath = toRepositoryPath(path, roamingType, null)

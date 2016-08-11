@@ -228,19 +228,21 @@ public class StudyBrowserWindow extends JFrame {
         if (domEventType.equals(EVENT_TYPE_CLICK)) {
           Element target = (Element)ev.getTarget();
           String hrefAttribute = target.getAttribute("href");
-          final Matcher matcher = IN_COURSE_LINK.matcher(hrefAttribute);
-          if (matcher.matches()) {
-            final String lessonName = matcher.group(1);
-            final String taskName = matcher.group(2);
-            StudyNavigator.navigateToTask(myProject, lessonName, taskName);
-          }
-          else {
-            myEngine.setJavaScriptEnabled(true);
-            myEngine.getLoadWorker().cancel();
-            ev.preventDefault();
-            final String href = getLink(target);
-            if (href == null) return;
-            BrowserUtil.browse(href);
+          if (hrefAttribute != null) {
+            final Matcher matcher = IN_COURSE_LINK.matcher(hrefAttribute);
+            if (matcher.matches()) {
+              final String lessonName = matcher.group(1);
+              final String taskName = matcher.group(2);
+              StudyNavigator.navigateToTask(myProject, lessonName, taskName);
+            }
+            else {
+              myEngine.setJavaScriptEnabled(true);
+              myEngine.getLoadWorker().cancel();
+              ev.preventDefault();
+              final String href = getLink(target);
+              if (href == null) return;
+              BrowserUtil.browse(href);
+            }
           }
         }
       }

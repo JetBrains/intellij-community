@@ -109,7 +109,7 @@ public class OrderRootType {
   }
 
   public static List<PersistentOrderRootType> getSortedRootTypes() {
-    List<PersistentOrderRootType> allTypes = new ArrayList<PersistentOrderRootType>();
+    List<PersistentOrderRootType> allTypes = new ArrayList<>();
     Collections.addAll(allTypes, getAllPersistentTypes());
     Collections.sort(allTypes, (o1, o2) -> o1.name().compareToIgnoreCase(o2.name()));
     return allTypes;

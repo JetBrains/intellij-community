@@ -50,7 +50,7 @@ public abstract class AntDomFileSet extends AntDomFilesProviderImpl{
       // if singleFile is specified, there are no implicit includes
       final File root = getCanonicalFile(getDir().getStringValue());
       if (root != null) {
-        final ArrayList<File> files = new ArrayList<File>();
+        final ArrayList<File> files = new ArrayList<>();
         if (singleFile != null) {
           files.add(singleFile);
         }

@@ -92,14 +92,14 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
     final VirtualFile repositoryFile = createExternalRepository();
     assertNotNull(myGlobalRepositoryManager.getRepositoryForRoot(repositoryFile));
 
-    FutureTask<Repository> readExistingRepo = new FutureTask<Repository>(new Callable<Repository>() {
+    FutureTask<Repository> readExistingRepo = new FutureTask<>(new Callable<Repository>() {
       @Override
       public Repository call() throws Exception {
         return myGlobalRepositoryManager.getRepositoryForRoot(repositoryFile);
       }
     });
 
-    FutureTask<Boolean> modifyRepositoryMapping = new FutureTask<Boolean>(new Callable<Boolean>() {
+    FutureTask<Boolean> modifyRepositoryMapping = new FutureTask<>(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
         myProjectLevelVcsManager

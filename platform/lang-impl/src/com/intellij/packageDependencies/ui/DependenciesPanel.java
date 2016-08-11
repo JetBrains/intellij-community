@@ -85,13 +85,13 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   private final MyTree myRightTree = new MyTree();
   private final DependenciesUsagesPanel myUsagesPanel;
 
-  private static final HashSet<PsiFile> EMPTY_FILE_SET = new HashSet<PsiFile>(0);
+  private static final HashSet<PsiFile> EMPTY_FILE_SET = new HashSet<>(0);
   private final TreeExpansionMonitor myRightTreeExpansionMonitor;
   private final TreeExpansionMonitor myLeftTreeExpansionMonitor;
 
   private final Marker myRightTreeMarker;
   private final Marker myLeftTreeMarker;
-  private Set<VirtualFile> myIllegalsInRightTree = new HashSet<VirtualFile>();
+  private Set<VirtualFile> myIllegalsInRightTree = new HashSet<>();
 
   private final Project myProject;
   private final List<DependenciesBuilder> myBuilders;
@@ -105,7 +105,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   private final int myTransitiveBorder;
 
   public DependenciesPanel(Project project, final DependenciesBuilder builder){
-    this(project, Collections.singletonList(builder), new HashSet<PsiFile>());
+    this(project, Collections.singletonList(builder), new HashSet<>());
   }
 
   public DependenciesPanel(Project project, final List<DependenciesBuilder> builders, final Set<PsiFile> excluded) {
@@ -116,8 +116,8 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     myForward = !main.isBackward();
     myScopeOfInterest = main.getScopeOfInterest();
     myTransitiveBorder = main.getTransitiveBorder();
-    myDependencies = new HashMap<PsiFile, Set<PsiFile>>();
-    myIllegalDependencies = new HashMap<VirtualFile, Map<DependencyRule, Set<PsiFile>>>();
+    myDependencies = new HashMap<>();
+    myIllegalDependencies = new HashMap<>();
     for (DependenciesBuilder builder : builders) {
       myDependencies.putAll(builder.getDependencies());
       putAllDependencies(builder);
@@ -242,7 +242,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private void processDependencies(final Set<PsiFile> searchIn, final Set<PsiFile> searchFor, Processor<List<PsiFile>> processor) {
     if (myTransitiveBorder == 0) return;
-    Set<PsiFile> initialSearchFor = new HashSet<PsiFile>(searchFor);
+    Set<PsiFile> initialSearchFor = new HashSet<>(searchFor);
     for (DependenciesBuilder builder : myBuilders) {
       for (PsiFile from : searchIn) {
         for (PsiFile to : initialSearchFor) {
@@ -315,7 +315,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   }
 
   private void rebuild() {
-    myIllegalDependencies = new HashMap<VirtualFile, Map<DependencyRule, Set<PsiFile>>>();
+    myIllegalDependencies = new HashMap<>();
     for (DependenciesBuilder builder : myBuilders) {
       putAllDependencies(builder);
     }
@@ -340,9 +340,9 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   }
 
   private void updateRightTreeModel() {
-    Set<PsiFile> deps = new HashSet<PsiFile>();
+    Set<PsiFile> deps = new HashSet<>();
     Set<PsiFile> scope = getSelectedScope(myLeftTree);
-    myIllegalsInRightTree = new HashSet<VirtualFile>();
+    myIllegalsInRightTree = new HashSet<>();
     for (PsiFile psiFile : scope) {
       Map<DependencyRule, Set<PsiFile>> illegalDeps = myIllegalDependencies.get(psiFile.getVirtualFile());
       if (illegalDeps != null) {
@@ -424,7 +424,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   private Set<PsiFile> getSelectedScope(final Tree tree) {
     TreePath[] paths = tree.getSelectionPaths();
     if (paths == null ) return EMPTY_FILE_SET;
-    Set<PsiFile> result = new HashSet<PsiFile>();
+    Set<PsiFile> result = new HashSet<>();
     for (TreePath path : paths) {
       PackageDependenciesNode node = (PackageDependenciesNode)path.getLastPathComponent();
       node.fillFiles(result, !mySettings.UI_FLATTEN_PACKAGES);
@@ -691,7 +691,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     public String getReportText() {
       final Element rootElement = new Element("root");
       rootElement.setAttribute("isBackward", String.valueOf(!myForward));
-      final List<PsiFile> files = new ArrayList<PsiFile>(myDependencies.keySet());
+      final List<PsiFile> files = new ArrayList<>(myDependencies.keySet());
       Collections.sort(files, (f1, f2) -> {
         final VirtualFile virtualFile1 = f1.getVirtualFile();
         final VirtualFile virtualFile2 = f2.getVirtualFile();
@@ -751,7 +751,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       DependenciesToolWindow.getInstance(myProject).closeContent(myContent);
       mySettings.copyToApplicationDependencySettings();
       SwingUtilities.invokeLater(() -> {
-        final List<AnalysisScope> scopes = new ArrayList<AnalysisScope>();
+        final List<AnalysisScope> scopes = new ArrayList<>();
         for (DependenciesBuilder builder : myBuilders) {
           final AnalysisScope scope = builder.getScope();
           scope.invalidate();
@@ -883,11 +883,11 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     @Nullable
     private AnalysisScope getScope() {
       final Set<PsiFile> selectedScope = getSelectedScope(myRightTree);
-      Set<PsiFile> result = new HashSet<PsiFile>();
+      Set<PsiFile> result = new HashSet<>();
       ((PackageDependenciesNode)myLeftTree.getModel().getRoot()).fillFiles(result, !mySettings.UI_FLATTEN_PACKAGES);
       selectedScope.removeAll(result);
       if (selectedScope.isEmpty()) return null;
-      List<VirtualFile> files = new ArrayList<VirtualFile>();
+      List<VirtualFile> files = new ArrayList<>();
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
       for (PsiFile psiFile : selectedScope) {
         final VirtualFile file = psiFile.getVirtualFile();

@@ -18,6 +18,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,7 +26,6 @@ import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.edu.learning.actions.StudyActionWithShortcut;
@@ -42,7 +42,6 @@ import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import javafx.application.Platform;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -60,20 +59,20 @@ public class StudyProjectComponent implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance(StudyProjectComponent.class.getName());
   private final Project myProject;
   private FileCreatedByUserListener myListener;
-  private Map<Keymap, List<Pair<String, String>>> myDeletedShortcuts = new HashMap<Keymap, List<Pair<String, String>>>();
+  private Map<Keymap, List<Pair<String, String>>> myDeletedShortcuts = new HashMap<>();
   private StudyProjectComponent(@NotNull final Project project) {
     myProject = project;
   }
 
   @Override
   public void projectOpened() {
-    final Course course = StudyTaskManager.getInstance(myProject).getCourse();
+    Course course = StudyTaskManager.getInstance(myProject).getCourse();
     // Check if user has javafx lib in his JDK. Now bundled JDK doesn't have this lib inside.
     if (StudyUtils.hasJavaFx()) {
       Platform.setImplicitExit(false);
     }
 
-    if (course != null && !course.isUpToDate()) {
+    if (course != null && !course.isAdaptive() && !course.isUpToDate()) {
       final Notification notification =
         new Notification("Update.course", "Course Updates", "Course is ready to <a href=\"update\">update</a>", NotificationType.INFORMATION,
                          new NotificationListener() {
@@ -97,13 +96,14 @@ public class StudyProjectComponent implements ProjectComponent {
 
     }
 
-    registerStudyToolWindow(course);
-    ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
+    StudyUtils.registerStudyToolWindow(course, myProject);
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
       @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new DumbAwareRunnable() {
           @Override
           public void run() {
+            Course course = StudyTaskManager.getInstance(myProject).getCourse();
             if (course != null) {
               final UISettings instance = UISettings.getInstance();
               if (instance != null) {
@@ -116,19 +116,7 @@ public class StudyProjectComponent implements ProjectComponent {
           }
         });
       }
-    });
-  }
-
-  public void registerStudyToolWindow(@Nullable final Course course) {
-    if (course != null && "PyCharm".equals(course.getCourseType())) {
-      final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-      registerToolWindows(toolWindowManager);
-      final ToolWindow studyToolWindow = toolWindowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
-      if (studyToolWindow != null) {
-        studyToolWindow.show(null);
-        StudyUtils.initToolWindows(myProject);
-      }
-    }
+    }));
   }
 
   private void registerShortcuts() {
@@ -151,13 +139,6 @@ public class StudyProjectComponent implements ProjectComponent {
       else {
         LOG.warn("Actions on toolbar are nulls");
       }
-    }
-  }
-
-  private void registerToolWindows(@NotNull final ToolWindowManager toolWindowManager) {
-    final ToolWindow toolWindow = toolWindowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
-    if (toolWindow == null) {
-      toolWindowManager.registerToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW, true, ToolWindowAnchor.RIGHT, myProject, true);
     }
   }
 
@@ -263,7 +244,7 @@ public class StudyProjectComponent implements ProjectComponent {
     for (Keymap keymap : keymapManager.getAllKeymaps()) {
       List<Pair<String, String>> pairs = myDeletedShortcuts.get(keymap);
       if (pairs == null) {
-        pairs = new ArrayList<Pair<String, String>>();
+        pairs = new ArrayList<>();
         myDeletedShortcuts.put(keymap, pairs);
       }
       for (String shortcutString : shortcuts) {

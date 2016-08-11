@@ -140,7 +140,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     final ProjectImportAction projectImportAction = new ProjectImportAction(resolverCtx.isPreviewMode());
 
-    final List<KeyValue<String, String>> extraJvmArgs = new ArrayList<KeyValue<String, String>>();
+    final List<KeyValue<String, String>> extraJvmArgs = new ArrayList<>();
     final List<String> commandLineArgs = ContainerUtil.newArrayList();
     final Set<Class> toolingExtensionClasses = ContainerUtil.newHashSet();
 
@@ -254,7 +254,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     // import project data
     ProjectData projectData = projectResolverChain.createProject();
-    DataNode<ProjectData> projectDataNode = new DataNode<ProjectData>(ProjectKeys.PROJECT, projectData, null);
+    DataNode<ProjectData> projectDataNode = new DataNode<>(ProjectKeys.PROJECT, projectData, null);
 
     // import java project data
     JavaProjectData javaProjectData = projectResolverChain.createJavaProjectData();
@@ -438,13 +438,12 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
           }
           else {
             final Set<String> testSet = ContainerUtil.newHashSet();
-            Map<ExternalSystemSourceType, String> gradleTestOutputs = pair.first.getUserData(GRADLE_OUTPUTS);
-            if(gradleTestOutputs != null) {
-              ContainerUtil.addAllNotNull(compileSet,
-                                          gradleTestOutputs.get(ExternalSystemSourceType.TEST),
-                                          gradleTestOutputs.get(ExternalSystemSourceType.TEST_RESOURCE));
+            if(gradleOutputs != null) {
+              ContainerUtil.addAllNotNull(testSet,
+                                          gradleOutputs.get(ExternalSystemSourceType.TEST),
+                                          gradleOutputs.get(ExternalSystemSourceType.TEST_RESOURCE));
             }
-            if (compileSet.isEmpty() && ContainerUtil.intersects(libraryPaths, testSet)) {
+            if (!testSet.isEmpty() && ContainerUtil.intersects(libraryPaths, testSet)) {
               targetModuleOutputPaths = testSet;
             }
           }
@@ -560,7 +559,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     if (rootExternalProject == null) return externalProjectMap;
 
-    Queue<ExternalProject> queue = new LinkedList<ExternalProject>();
+    Queue<ExternalProject> queue = new LinkedList<>();
     queue.add(rootExternalProject);
 
     while (!queue.isEmpty()) {
@@ -778,7 +777,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     if (settings != null) {
       List<ClassHolder<? extends GradleProjectResolverExtension>> extensionClasses = settings.getResolverExtensions();
 
-      Deque<GradleProjectResolverExtension> extensions = new ArrayDeque<GradleProjectResolverExtension>();
+      Deque<GradleProjectResolverExtension> extensions = new ArrayDeque<>();
       for (ClassHolder<? extends GradleProjectResolverExtension> holder : extensionClasses) {
         final GradleProjectResolverExtension extension;
         try {

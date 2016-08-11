@@ -100,7 +100,7 @@ public class GenerateManagedDependencyAction extends GenerateDomElementAction {
   }
 
   private static Set<DependencyConflictId> collectExistingDependencies(@NotNull final MavenDomProjectModel model) {
-    final Set<DependencyConflictId> existingDependencies = new HashSet<DependencyConflictId>();
+    final Set<DependencyConflictId> existingDependencies = new HashSet<>();
     for (MavenDomDependency dependency : model.getDependencies().getDependencies()) {
       DependencyConflictId id = DependencyConflictId.create(dependency);
       if (id != null) {
@@ -113,7 +113,7 @@ public class GenerateManagedDependencyAction extends GenerateDomElementAction {
 
   @NotNull
   public static Map<DependencyConflictId, MavenDomDependency> collectManagingDependencies(@NotNull final MavenDomProjectModel model) {
-    final Map<DependencyConflictId, MavenDomDependency> dependencies = new HashMap<DependencyConflictId, MavenDomDependency>();
+    final Map<DependencyConflictId, MavenDomDependency> dependencies = new HashMap<>();
 
     Processor<MavenDomDependency> collectProcessor = dependency -> {
       DependencyConflictId id = DependencyConflictId.create(dependency);

@@ -186,7 +186,7 @@ public class MigrationPanel extends JPanel implements Disposable {
           final Object userObject = ((DefaultMutableTreeNode)root).getUserObject();
           if (userObject instanceof MigrationRootNode) {
             ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-              final HashSet<VirtualFile> files = new HashSet<VirtualFile>();
+              final HashSet<VirtualFile> files = new HashSet<>();
               final TypeMigrationUsageInfo[] usages = ApplicationManager.getApplication().runReadAction(new Computable<TypeMigrationUsageInfo[]>() {
                 @Override
                 public TypeMigrationUsageInfo[] compute() {
@@ -313,7 +313,7 @@ public class MigrationPanel extends JPanel implements Disposable {
       }
       if (MIGRATION_USAGES.equals(dataId)) {
         DefaultMutableTreeNode[] selectedNodes = getSelectedNodes(DefaultMutableTreeNode.class, null);
-        final Set<TypeMigrationUsageInfo> usageInfos = new HashSet<TypeMigrationUsageInfo>();
+        final Set<TypeMigrationUsageInfo> usageInfos = new HashSet<>();
         for (DefaultMutableTreeNode selectedNode : selectedNodes) {
           final Object userObject = selectedNode.getUserObject();
           if (userObject instanceof MigrationNode) {

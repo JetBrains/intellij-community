@@ -165,8 +165,8 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
   private static void checkInstalledPluginDependencies(@NotNull InstalledPluginsTableModel model,
                                                        @NotNull IdeaPluginDescriptorImpl pluginDescriptor,
                                                        @Nullable Component parent) {
-    final Set<PluginId> notInstalled = new HashSet<PluginId>();
-    final Set<PluginId> disabledIds = new HashSet<PluginId>();
+    final Set<PluginId> notInstalled = new HashSet<>();
+    final Set<PluginId> disabledIds = new HashSet<>();
     final PluginId[] dependentPluginIds = pluginDescriptor.getDependentPluginIds();
     final PluginId[] optionalDependentPluginIds = pluginDescriptor.getOptionalDependentPluginIds();
     for (PluginId id : dependentPluginIds) {
@@ -186,7 +186,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       MessagesEx.showWarningDialog(parent, message, CommonBundle.getWarningTitle());
     }
     if (!disabledIds.isEmpty()) {
-      final Set<IdeaPluginDescriptor> dependencies = new HashSet<IdeaPluginDescriptor>();
+      final Set<IdeaPluginDescriptor> dependencies = new HashSet<>();
       for (IdeaPluginDescriptor ideaPluginDescriptor : model.getAllPlugins()) {
         if (disabledIds.contains(ideaPluginDescriptor.getPluginId())) {
           dependencies.add(ideaPluginDescriptor);
@@ -335,7 +335,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       descriptor.setEnabled(((InstalledPluginsTableModel)pluginsModel).isEnabled(descriptor.getPluginId()));
     }
     try {
-      final ArrayList<String> ids = new ArrayList<String>();
+      final ArrayList<String> ids = new ArrayList<>();
       for (Map.Entry<PluginId, Boolean> entry : ((InstalledPluginsTableModel)pluginsModel).getEnabledMap().entrySet()) {
         final Boolean value = entry.getValue();
         if (value != null && !value.booleanValue()) {
@@ -354,7 +354,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
   @Override
   protected String canApply() {
     final Map<PluginId, Set<PluginId>> dependentToRequiredListMap =
-      new HashMap<PluginId, Set<PluginId>>(((InstalledPluginsTableModel)pluginsModel).getDependentToRequiredListMap());
+      new HashMap<>(((InstalledPluginsTableModel)pluginsModel).getDependentToRequiredListMap());
     for (Iterator<PluginId> iterator = dependentToRequiredListMap.keySet().iterator(); iterator.hasNext(); ) {
       final PluginId id = iterator.next();
       boolean hasNonModuleDeps = false;

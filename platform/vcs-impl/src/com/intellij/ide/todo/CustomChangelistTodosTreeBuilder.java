@@ -52,8 +52,8 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
     super(tree, treeModel, project);
     myProject = project;
     myTitle = title;
-    myMap = new MultiMap<PsiFile, TodoItem>();
-    myIncludedFiles = new HashSet<PsiFile>();
+    myMap = new MultiMap<>();
+    myIncludedFiles = new HashSet<>();
     myChangeListManager = ChangeListManager.getInstance(myProject);
     initMap(list);
     initHelper();
@@ -75,9 +75,9 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
       @NotNull
       @Override
       public PsiFile[] findFilesWithTodoItems() {
-        final List<Change> changes = new ArrayList<Change>();
+        final List<Change> changes = new ArrayList<>();
         final List<LocalChangeList> changeLists = myChangeListManager.getChangeLists();
-        final Map<VirtualFile, Change> allChanges = new HashMap<VirtualFile, Change>();
+        final Map<VirtualFile, Change> allChanges = new HashMap<>();
         for (LocalChangeList changeList : changeLists) {
           final Collection<Change> currChanges = changeList.getChanges();
           for (Change currChange : currChanges) {
@@ -128,7 +128,7 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
           return todoItems;
         }
         final TextRange textRange = new TextRange(startOffset, endOffset);
-        final List<TodoItem> result = new ArrayList<TodoItem>();
+        final List<TodoItem> result = new ArrayList<>();
         for (TodoItem todoItem : todoItems) {
           if (todoItem.getTextRange().contains(textRange)) {
             result.add(todoItem);

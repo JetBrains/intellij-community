@@ -81,6 +81,10 @@ fun createMergeActions(project: Project?, urlTextField: TextFieldWithBrowseButto
           }
           upstreamSet = true
 
+          if (repositoryWillBeCreated) {
+            icsManager.newStreamProvider()
+          }
+
           if (repositoryWillBeCreated && syncType != SyncType.OVERWRITE_LOCAL) {
             ApplicationManager.getApplication().saveSettings()
 

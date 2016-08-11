@@ -41,8 +41,8 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> {
   protected final Editor myEditor;
   protected final PsiFile myFile;
 
-  protected List<TextRange> myReadUsages = new ArrayList<TextRange>();
-  protected List<TextRange> myWriteUsages = new ArrayList<TextRange>();
+  protected List<TextRange> myReadUsages = new ArrayList<>();
+  protected List<TextRange> myWriteUsages = new ArrayList<>();
   protected String myStatusText;
   protected String myHintText;
 

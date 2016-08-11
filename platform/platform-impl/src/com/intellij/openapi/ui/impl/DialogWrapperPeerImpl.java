@@ -76,7 +76,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
   private AbstractDialog myDialog;
   private boolean myCanBeParent = true;
   private WindowManagerEx myWindowManager;
-  private final List<Runnable> myDisposeActions = new ArrayList<Runnable>();
+  private final List<Runnable> myDisposeActions = new ArrayList<>();
   private Project myProject;
 
   private final ActionCallback myWindowFocusedCallback = new ActionCallback("DialogFocusedCallback");
@@ -557,8 +557,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
                     @NotNull ActionCallback typeAheadDone,
                     ActionCallback typeAheadCallback) {
       super(owner);
-      myDialogWrapper = new WeakReference<DialogWrapper>(dialogWrapper);
-      myProject = project != null ? new WeakReference<Project>(project) : null;
+      myDialogWrapper = new WeakReference<>(dialogWrapper);
+      myProject = project != null ? new WeakReference<>(project) : null;
 
       setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt() {
         @Override
@@ -725,7 +725,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         @Override
         public void windowDeactivated(WindowEvent e) {
           if (!isModal()) {
-            final Ref<IdeFocusManager> focusManager = new Ref<IdeFocusManager>(null);
+            final Ref<IdeFocusManager> focusManager = new Ref<>(null);
             Project project = getProject();
             if (project != null && !project.isDisposed()) {
               focusManager.set(getFocusManager());

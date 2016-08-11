@@ -39,10 +39,10 @@ public abstract class VcsCommittedListsZipperAdapter implements VcsCommittedList
   }
 
   public Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(final List<RepositoryLocation> in) {
-    final List<RepositoryLocationGroup> groups = new ArrayList<RepositoryLocationGroup>();
-    final List<RepositoryLocation> singles = new ArrayList<RepositoryLocation>();
+    final List<RepositoryLocationGroup> groups = new ArrayList<>();
+    final List<RepositoryLocation> singles = new ArrayList<>();
 
-    final MultiMap<Object, RepositoryLocation> map = new MultiMap<Object, RepositoryLocation>();
+    final MultiMap<Object, RepositoryLocation> map = new MultiMap<>();
 
     for (RepositoryLocation location : in) {
       final Object key = myGroupCreator.createKey(location);

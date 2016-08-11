@@ -31,7 +31,7 @@ import java.awt.event.KeyEvent;
 import java.util.Set;
 
 final class SwitchManagerAppComponent extends AnActionListener.Adapter implements KeyEventDispatcher {
-  private final Set<AnAction> switchActions = new THashSet<AnAction>();
+  private final Set<AnAction> switchActions = new THashSet<>();
 
   public SwitchManagerAppComponent(@NotNull ActionManager actionManager) {
     switchActions.add(actionManager.getAction(QuickAccessSettings.SWITCH_UP));

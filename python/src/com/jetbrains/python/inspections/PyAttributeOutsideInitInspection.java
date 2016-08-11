@@ -78,7 +78,7 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
       if (modifier != null) return;
       final List<PyTargetExpression> classAttributes = containingClass.getClassAttributes();
 
-      Map<String, PyTargetExpression> attributesInInit = new HashMap<String, PyTargetExpression>();
+      Map<String, PyTargetExpression> attributesInInit = new HashMap<>();
       for (PyTargetExpression classAttr : classAttributes) {
         attributesInInit.put(classAttr.getName(), classAttr);
       }
@@ -97,7 +97,7 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
         }
       }
 
-      Map<String, PyTargetExpression> attributes = new HashMap<String, PyTargetExpression>();
+      Map<String, PyTargetExpression> attributes = new HashMap<>();
       PyClassImpl.collectInstanceAttributes(node, attributes);
 
       for (Map.Entry<String, PyTargetExpression> attribute : attributes.entrySet()) {

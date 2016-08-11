@@ -573,7 +573,7 @@ public class CodeCompletionHandlerBase {
 
     CompletionAssertions.WatchingInsertionContext context;
     if (editor.getCaretModel().supportsMultipleCarets()) {
-      final List<CompletionAssertions.WatchingInsertionContext> contexts = new ArrayList<CompletionAssertions.WatchingInsertionContext>();
+      final List<CompletionAssertions.WatchingInsertionContext> contexts = new ArrayList<>();
       final Editor hostEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
       final PsiFile originalFile = indicator.getParameters().getOriginalFile();
       final PsiFile hostFile = InjectedLanguageUtil.getTopLevelFile(originalFile);

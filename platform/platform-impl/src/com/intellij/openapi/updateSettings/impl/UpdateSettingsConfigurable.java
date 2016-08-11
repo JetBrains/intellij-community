@@ -186,7 +186,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
 
       UpdateStrategyCustomization tweaker = UpdateStrategyCustomization.getInstance();
       ChannelStatus current = mySettings.getSelectedActiveChannel();
-      myUpdateChannels.setModel(new CollectionComboBoxModel<ChannelStatus>(mySettings.getActiveChannels(), current));
+      myUpdateChannels.setModel(new CollectionComboBoxModel<>(mySettings.getActiveChannels(), current));
       myUpdateChannels.setEnabled(!ApplicationInfoEx.getInstanceEx().isEAP() || !tweaker.forceEapUpdateChannelForEapBuilds());
       myUpdateChannels.addActionListener(e -> {
         boolean lessStable = current.compareTo(getSelectedChannelType()) > 0;

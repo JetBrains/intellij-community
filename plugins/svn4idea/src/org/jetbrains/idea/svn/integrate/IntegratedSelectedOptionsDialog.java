@@ -84,7 +84,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
     });
     setOKActionEnabled((! myMustSelectBeforeOk) || (myWorkingCopiesList.getSelectedIndex() != -1));
 
-    final List<WorkingCopyInfo> workingCopyInfoList = new ArrayList<WorkingCopyInfo>();
+    final List<WorkingCopyInfo> workingCopyInfoList = new ArrayList<>();
     final Set<String> workingCopies = SvnBranchMapperManager.getInstance().get(mySelectedBranchUrl);
     if (workingCopies != null) {
       for (String workingCopy : workingCopies) {

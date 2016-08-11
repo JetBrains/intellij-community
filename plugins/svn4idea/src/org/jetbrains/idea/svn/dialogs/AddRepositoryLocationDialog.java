@@ -40,7 +40,7 @@ public class AddRepositoryLocationDialog extends DialogWrapper {
 
   public AddRepositoryLocationDialog(final Project project, final List<String> values) {
     super(project, true);
-    myPreviousLocations = new ArrayList<String>(values);
+    myPreviousLocations = new ArrayList<>(values);
     Collections.sort(myPreviousLocations);
 
     setTitle(getTitle());

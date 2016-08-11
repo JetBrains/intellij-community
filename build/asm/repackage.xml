@@ -42,6 +42,7 @@
     <patch dir="${src.dir}" strip="0" patchfile="1_version_check.patch" failonerror="true"/>
     <patch dir="${src.dir}" strip="0" patchfile="2_coverage_fix.patch" failonerror="true"/>
     <patch dir="${src.dir}" strip="0" patchfile="3_317621_fix_temp_revert.patch" failonerror="true"/>
+    <patch dir="${src.dir}" strip="0" patchfile="4_api_version.patch" failonerror="true"/>
     <delete file="${src.dir}/org/objectweb/asm/optimizer/ModuleInfoBndPlugin.java" quiet="true"/>
   </target>
 

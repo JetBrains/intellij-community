@@ -247,7 +247,7 @@ public class JavaSdkImpl extends JavaSdk {
     if (javaHome == null || !javaHome.isDirectory() || javaHome.getParentFile() == null) {
       return Collections.emptyList();
     }
-    ArrayList<String> result = new ArrayList<String>();
+    ArrayList<String> result = new ArrayList<>();
     File javasFolder = javaHome.getParentFile();
     scanFolder(javasFolder, result);
     File parentFile = javasFolder.getParentFile();
@@ -379,9 +379,9 @@ public class JavaSdkImpl extends JavaSdk {
     VirtualFile docs = findDocs(jdkHome, "docs/api");
     SdkModificator sdkModificator = sdk.getSdkModificator();
 
-    Set<VirtualFile> previousRoots = new LinkedHashSet<VirtualFile>(Arrays.asList(sdkModificator.getRoots(OrderRootType.CLASSES)));
+    Set<VirtualFile> previousRoots = new LinkedHashSet<>(Arrays.asList(sdkModificator.getRoots(OrderRootType.CLASSES)));
     sdkModificator.removeRoots(OrderRootType.CLASSES);
-    previousRoots.removeAll(new HashSet<VirtualFile>(classes));
+    previousRoots.removeAll(new HashSet<>(classes));
     for (VirtualFile aClass : classes) {
       sdkModificator.addRoot(aClass, OrderRootType.CLASSES);
     }
@@ -439,7 +439,7 @@ public class JavaSdkImpl extends JavaSdk {
 
   public static void attachJdkAnnotations(@NotNull SdkModificator modificator) {
     LocalFileSystem lfs = LocalFileSystem.getInstance();
-    List<String> pathsChecked = new ArrayList<String>();
+    List<String> pathsChecked = new ArrayList<>();
     // community idea under idea
     String path = FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/java/jdkAnnotations";
     VirtualFile root = lfs.findFileByPath(path);

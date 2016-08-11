@@ -459,7 +459,7 @@ public class PyCallExpressionHelper {
         // normal cases
         final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
         final PsiPolyVariantReference reference = ((PyReferenceExpression)callee).getReference(resolveContext);
-        final List<PyType> members = new ArrayList<PyType>();
+        final List<PyType> members = new ArrayList<>();
         for (PsiElement target : PyUtil.multiResolveTopPriority(reference)) {
           PyUtil.verboseOnly(() ->PyPsiUtils.assertValid(target));
           if (target != null) {
@@ -500,7 +500,7 @@ public class PyCallExpressionHelper {
   private static PyType getCallResultTypeFromUnion(@NotNull final PyCallSiteExpression call,
                                                    @NotNull final TypeEvalContext context,
                                                    @NotNull final PyUnionType type) {
-    final Collection<PyType> callResultTypes = new HashSet<PyType>();
+    final Collection<PyType> callResultTypes = new HashSet<>();
 
     for (final PyType memberType : type.getMembers()) {
       final Boolean callable = PyTypeChecker.isCallable(memberType);
@@ -595,27 +595,27 @@ public class PyCallExpressionHelper {
                   if (element instanceof PyParameter) {
                     final PyParameterList parameterList = PsiTreeUtil.getParentOfType(element, PyParameterList.class);
                     if (parameterList != null && element == parameterList.getParameters()[0]) {
-                      return new Maybe<PyType>(getSuperCallTypeForArguments(context, containingClass, args[1]));
+                      return new Maybe<>(getSuperCallTypeForArguments(context, containingClass, args[1]));
                     }
                   }
                 }
                 PsiElement possible_class = firstArgRef.getReference().resolve();
                 if (possible_class instanceof PyClass && ((PyClass)possible_class).isNewStyleClass(context)) {
                   final PyClass first_class = (PyClass)possible_class;
-                  return new Maybe<PyType>(getSuperCallTypeForArguments(context, first_class, args[1]));
+                  return new Maybe<>(getSuperCallTypeForArguments(context, first_class, args[1]));
                 }
               }
             }
             else if ((call.getContainingFile() instanceof PyFile) &&
                      ((PyFile)call.getContainingFile()).getLanguageLevel().isPy3K() &&
                      (containingClass != null)) {
-              return new Maybe<PyType>(getSuperClassUnionType(containingClass, context));
+              return new Maybe<>(getSuperClassUnionType(containingClass, context));
             }
           }
         }
       }
     }
-    return new Maybe<PyType>();
+    return new Maybe<>();
   }
 
   @Nullable
@@ -650,7 +650,7 @@ public class PyCallExpressionHelper {
       if (supers.length == 1) {
         return new PyClassTypeImpl(supers[0], false);
       }
-      List<PyType> superTypes = new ArrayList<PyType>();
+      List<PyType> superTypes = new ArrayList<>();
       for (PyClass aSuper : supers) {
         superTypes.add(new PyClassTypeImpl(aSuper, false));
       }
@@ -688,7 +688,7 @@ public class PyCallExpressionHelper {
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
     final List<PyParameter> parameters = PyUtil.getParameters(markedCallee.getCallable(), context);
     final List<PyParameter> explicitParameters = dropImplicitParameters(parameters, markedCallee.getImplicitOffset());
-    final List<PyExpression> arguments = new ArrayList<PyExpression>(Arrays.asList(argumentList.getArguments()));
+    final List<PyExpression> arguments = new ArrayList<>(Arrays.asList(argumentList.getArguments()));
     final ArgumentMappingResults mappingResults = analyzeArguments(arguments, explicitParameters);
     return new PyCallExpression.PyArgumentsMapping(callExpression, markedCallee,
                                                    mappingResults.getMappedParameters(), mappingResults.getUnmappedParameters(),
@@ -721,18 +721,18 @@ public class PyCallExpressionHelper {
   private static ArgumentMappingResults analyzeArguments(@NotNull List<PyExpression> arguments, @NotNull List<PyParameter> parameters) {
     boolean seenSingleStar = false;
     boolean mappedVariadicArgumentsToParameters = false;
-    final Map<PyExpression, PyNamedParameter> mappedParameters = new LinkedHashMap<PyExpression, PyNamedParameter>();
-    final List<PyParameter> unmappedParameters = new ArrayList<PyParameter>();
-    final List<PyExpression> unmappedArguments = new ArrayList<PyExpression>();
-    final List<PyNamedParameter> parametersMappedToVariadicKeywordArguments = new ArrayList<PyNamedParameter>();
-    final List<PyNamedParameter> parametersMappedToVariadicPositionalArguments = new ArrayList<PyNamedParameter>();
-    final Map<PyExpression, PyTupleParameter> tupleMappedParameters = new LinkedHashMap<PyExpression, PyTupleParameter>();
+    final Map<PyExpression, PyNamedParameter> mappedParameters = new LinkedHashMap<>();
+    final List<PyParameter> unmappedParameters = new ArrayList<>();
+    final List<PyExpression> unmappedArguments = new ArrayList<>();
+    final List<PyNamedParameter> parametersMappedToVariadicKeywordArguments = new ArrayList<>();
+    final List<PyNamedParameter> parametersMappedToVariadicPositionalArguments = new ArrayList<>();
+    final Map<PyExpression, PyTupleParameter> tupleMappedParameters = new LinkedHashMap<>();
 
     final PositionalArgumentsAnalysisResults positionalResults = filterPositionalAndVariadicArguments(arguments);
     final List<PyKeywordArgument> keywordArguments = filterKeywordArguments(arguments);
     final List<PyExpression> variadicPositionalArguments = positionalResults.variadicPositionalArguments;
     final Set<PyExpression> positionalComponentsOfVariadicArguments =
-      new LinkedHashSet<PyExpression>(positionalResults.componentsOfVariadicPositionalArguments);
+      new LinkedHashSet<>(positionalResults.componentsOfVariadicPositionalArguments);
     final List<PyExpression> variadicKeywordArguments = filterVariadicKeywordArguments(arguments);
 
     final List<PyExpression> allPositionalArguments = positionalResults.allPositionalArguments;
@@ -935,9 +935,9 @@ public class PyCallExpressionHelper {
 
   @NotNull
   private static TupleMappingResults mapComponentsOfTupleParameter(@Nullable PyExpression argument, @NotNull PyTupleParameter parameter) {
-    final List<PyParameter> unmappedParameters = new ArrayList<PyParameter>();
-    final List<PyExpression> unmappedArguments = new ArrayList<PyExpression>();
-    final Map<PyExpression, PyNamedParameter> mappedParameters = new LinkedHashMap<PyExpression, PyNamedParameter>();
+    final List<PyParameter> unmappedParameters = new ArrayList<>();
+    final List<PyExpression> unmappedArguments = new ArrayList<>();
+    final Map<PyExpression, PyNamedParameter> mappedParameters = new LinkedHashMap<>();
     argument = PyPsiUtils.flattenParens(argument);
     if (argument instanceof PySequenceExpression) {
       final PySequenceExpression sequenceExpr = (PySequenceExpression)argument;
@@ -999,7 +999,7 @@ public class PyCallExpressionHelper {
 
   @NotNull
   private static List<PyKeywordArgument> filterKeywordArguments(@NotNull List<PyExpression> arguments) {
-    final List<PyKeywordArgument> results = new ArrayList<PyKeywordArgument>();
+    final List<PyKeywordArgument> results = new ArrayList<>();
     for (PyExpression argument : arguments) {
       if (argument instanceof PyKeywordArgument) {
         results.add((PyKeywordArgument)argument);
@@ -1024,9 +1024,9 @@ public class PyCallExpressionHelper {
 
   @NotNull
   private static PositionalArgumentsAnalysisResults filterPositionalAndVariadicArguments(@NotNull List<PyExpression> arguments) {
-    final List<PyExpression> variadicArguments = new ArrayList<PyExpression>();
-    final List<PyExpression> allPositionalArguments = new ArrayList<PyExpression>();
-    final List<PyExpression> componentsOfVariadicPositionalArguments = new ArrayList<PyExpression>();
+    final List<PyExpression> variadicArguments = new ArrayList<>();
+    final List<PyExpression> allPositionalArguments = new ArrayList<>();
+    final List<PyExpression> componentsOfVariadicPositionalArguments = new ArrayList<>();
     boolean seenVariadicPositionalArgument = false;
     boolean seenVariadicKeywordArgument = false;
     boolean seenKeywordArgument = false;
@@ -1066,7 +1066,7 @@ public class PyCallExpressionHelper {
 
   @NotNull
   private static List<PyExpression> filterVariadicKeywordArguments(@NotNull List<PyExpression> arguments) {
-    final List<PyExpression> results = new ArrayList<PyExpression>();
+    final List<PyExpression> results = new ArrayList<>();
     for (PyExpression argument : arguments) {
       if (argument != null && isVariadicKeywordArgument(argument)) {
         results.add(argument);
@@ -1090,7 +1090,7 @@ public class PyCallExpressionHelper {
 
   @NotNull
   private static List<PyParameter> dropImplicitParameters(@NotNull List<PyParameter> parameters, int offset) {
-    final ArrayList<PyParameter> results = new ArrayList<PyParameter>(parameters);
+    final ArrayList<PyParameter> results = new ArrayList<>(parameters);
     for (int i = 0; i < offset && !results.isEmpty(); i++) {
       results.remove(0);
     }

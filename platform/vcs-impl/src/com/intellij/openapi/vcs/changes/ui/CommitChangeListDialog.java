@@ -214,7 +214,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   public static void commitPaths(final Project project, Collection<FilePath> paths, final LocalChangeList initialSelection,
                                  @Nullable final CommitExecutor executor, final String comment) {
     final ChangeListManager manager = ChangeListManager.getInstance(project);
-    final Collection<Change> changes = new HashSet<Change>();
+    final Collection<Change> changes = new HashSet<>();
     for (FilePath path : paths) {
       changes.addAll(manager.getChangesIn(path));
     }
@@ -233,7 +233,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   public static List<CommitExecutor> collectExecutors(@NotNull Project project, @NotNull Collection<Change> changes) {
-    List<CommitExecutor> result = new ArrayList<CommitExecutor>();
+    List<CommitExecutor> result = new ArrayList<>();
     for (AbstractVcs<?> vcs : ChangesUtil.getAffectedVcses(changes, project)) {
       result.addAll(vcs.getCommitExecutors());
     }
@@ -250,7 +250,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   public static boolean commitChanges(final Project project, final Collection<Change> changes, final LocalChangeList initialSelection,
                                       final List<CommitExecutor> executors, final boolean showVcsCommit, final String comment,
                                       @Nullable CommitResultHandler customResultHandler) {
-    return commitChanges(project, new ArrayList<Change>(changes), initialSelection, executors, showVcsCommit, comment,
+    return commitChanges(project, new ArrayList<>(changes), initialSelection, executors, showVcsCommit, comment,
                          customResultHandler, true);
   }
 
@@ -280,8 +280,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myShowVcsCommit = showVcsCommit;
     myVcs = singleVcs;
     myResultHandler = customResultHandler;
-    myListComments = new HashMap<String, String>();
-    myAdditionalData = new PseudoMap<Object, Object>();
+    myListComments = new HashMap<>();
+    myAdditionalData = new PseudoMap<>();
     myDiffDetails = new MyChangeProcessor(myProject);
 
     if (!myShowVcsCommit && ContainerUtil.isEmpty(myExecutors)) {
@@ -629,7 +629,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @Override
   @NotNull
   protected Action[] createActions() {
-    final List<Action> actions = new ArrayList<Action>();
+    final List<Action> actions = new ArrayList<>();
 
     myCommitAction = null;
     if (myShowVcsCommit) {
@@ -741,7 +741,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @Nullable
   private String getInitialMessageFromVcs() {
     final List<Change> list = getIncludedChanges();
-    final Ref<String> result = new Ref<String>();
+    final Ref<String> result = new Ref<>();
     ChangesUtil.processChangesByVcs(myProject, list, new ChangesUtil.PerVcsProcessor<Change>() {
       @Override
       public void process(final AbstractVcs vcs, final List<Change> items) {

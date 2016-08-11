@@ -39,7 +39,7 @@ public class MethodListDlg extends DialogWrapper {
   private final PsiClass myClass;
   private static final Comparator<PsiMethod> METHOD_NAME_COMPARATOR =
     (psiMethod, psiMethod1) -> psiMethod.getName().compareToIgnoreCase(psiMethod1.getName());
-  private final SortedListModel<PsiMethod> myListModel = new SortedListModel<PsiMethod>(METHOD_NAME_COMPARATOR);
+  private final SortedListModel<PsiMethod> myListModel = new SortedListModel<>(METHOD_NAME_COMPARATOR);
   private final JList myList = new JBList(myListModel);
   private final JPanel myWholePanel = new JPanel(new BorderLayout());
 

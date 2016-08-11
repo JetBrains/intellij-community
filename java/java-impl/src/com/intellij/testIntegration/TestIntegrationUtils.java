@@ -120,7 +120,7 @@ public class TestIntegrationUtils {
   }
 
   public static List<MemberInfo> extractClassMethods(PsiClass clazz, boolean includeInherited) {
-    List<MemberInfo> result = new ArrayList<MemberInfo>();
+    List<MemberInfo> result = new ArrayList<>();
 
     do {
       MemberInfo.extractClassMembers(clazz, result, new MemberInfo.Filter<PsiMember>() {
@@ -298,7 +298,7 @@ public class TestIntegrationUtils {
       }
     }
 
-    List<TestFramework> result = new SmartList<TestFramework>();
+    List<TestFramework> result = new SmartList<>();
     for (TestFramework each : frameworks) {
       if (each.isPotentialTestClass(targetClass)) {
         result.add(each);

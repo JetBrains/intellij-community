@@ -24,7 +24,7 @@ public class JsonFoldingBuilder implements FoldingBuilder, DumbAware {
   @NotNull
   @Override
   public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
-    final List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
+    final List<FoldingDescriptor> descriptors = new ArrayList<>();
     collectDescriptorsRecursively(node, document, descriptors);
     return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
   }

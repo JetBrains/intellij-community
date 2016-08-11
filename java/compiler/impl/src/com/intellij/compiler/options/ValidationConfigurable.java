@@ -74,7 +74,7 @@ public class ValidationConfigurable implements SearchableConfigurable, Configura
       }
     };
 
-    List<VirtualFile> allContentRoots = new ArrayList<VirtualFile>();
+    List<VirtualFile> allContentRoots = new ArrayList<>();
     for (final Module module: ModuleManager.getInstance(project).getModules()) {
       final VirtualFile[] moduleContentRoots = ModuleRootManager.getInstance(module).getContentRoots();
       Collections.addAll(allContentRoots, moduleContentRoots);
@@ -109,7 +109,7 @@ public class ValidationConfigurable implements SearchableConfigurable, Configura
     if (markedValidators.size() != selectedElements.size()) {
       return true;
     }
-    Set<Compiler> set = new THashSet<Compiler>(selectedElements, new TObjectHashingStrategy<Compiler>() {
+    Set<Compiler> set = new THashSet<>(selectedElements, new TObjectHashingStrategy<Compiler>() {
       public int computeHashCode(Compiler object) {
         return object.getDescription().hashCode();
       }
@@ -148,7 +148,7 @@ public class ValidationConfigurable implements SearchableConfigurable, Configura
 
   private List<Compiler> getValidators() {
     final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-    final List<Compiler> validators = new ArrayList<Compiler>();
+    final List<Compiler> validators = new ArrayList<>();
     validators.addAll(Arrays.asList(compilerManager.getCompilers(Validator.class)));
     for (GenericCompiler compiler : compilerManager.getCompilers(GenericCompiler.class)) {
       if (compiler.getOrderPlace() == GenericCompiler.CompileOrderPlace.VALIDATING) {

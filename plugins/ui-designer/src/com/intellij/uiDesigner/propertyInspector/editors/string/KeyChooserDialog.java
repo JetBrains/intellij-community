@@ -146,7 +146,7 @@ public final class KeyChooserDialog extends DialogWrapper{
   }
 
   private void fillPropertyList() {
-    myPairs = new ArrayList<Couple<String>>();
+    myPairs = new ArrayList<>();
 
     final List<IProperty> properties = myBundle.getProperties();
     for (IProperty property : properties) {
@@ -289,7 +289,7 @@ public final class KeyChooserDialog extends DialogWrapper{
 
     public Object[] getAllElements() {
       if (myElements == null) {
-        myElements = new TObjectIntHashMap<Object>();
+        myElements = new TObjectIntHashMap<>();
         myElementsArray = myPairs.toArray();
         for (int idx = 0; idx < myElementsArray.length; idx++) {
           Object element = myElementsArray[idx];

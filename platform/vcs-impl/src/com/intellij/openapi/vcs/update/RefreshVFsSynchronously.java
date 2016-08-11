@@ -168,8 +168,8 @@ public class RefreshVFsSynchronously {
   }
 
   private static class FilesToRefreshCollector implements UpdateFilesHelper.Callback {
-    private final Collection<File> myToRefresh = new THashSet<File>();
-    private final Collection<File> myToRefreshDeletedOrReplaced = new THashSet<File>();
+    private final Collection<File> myToRefresh = new THashSet<>();
+    private final Collection<File> myToRefreshDeletedOrReplaced = new THashSet<>();
 
     @Override
     public void onFile(String filePath, String groupId) {

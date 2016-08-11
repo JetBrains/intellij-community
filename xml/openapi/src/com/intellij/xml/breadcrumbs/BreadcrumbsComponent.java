@@ -69,7 +69,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
   private List<BreadcrumbsItemListener<T>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private Crumb myHovered;
   private PagedImage myBuffer;
-  private List<Crumb> myCrumbs = new ArrayList<Crumb>();
+  private List<Crumb> myCrumbs = new ArrayList<>();
   private final CrumbLineMouseListener myMouseListener;
   private List<T> myItems;
   private int myOffset;
@@ -219,7 +219,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
   private void setSelectedCrumb(@NotNull final Crumb<T> c, final int modifiers) {
     final T selectedElement = c.getItem();
 
-    final Set<BreadcrumbsItem> items = new HashSet<BreadcrumbsItem>();
+    final Set<BreadcrumbsItem> items = new HashSet<>();
     boolean light = false;
     for (final Crumb each : myCrumbs) {
       final BreadcrumbsItem item = each.getItem();
@@ -262,7 +262,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
       return null;
     }
 
-    final LinkedList<Crumb> result = new LinkedList<Crumb>();
+    final LinkedList<Crumb> result = new LinkedList<>();
     int screenWidth = 0;
     Crumb rightmostCrumb = null;
 

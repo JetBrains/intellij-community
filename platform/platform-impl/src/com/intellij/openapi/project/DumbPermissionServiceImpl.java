@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public class DumbPermissionServiceImpl implements DumbPermissionService {
-  private final ThreadLocal<DumbModePermission> myPermission = new ThreadLocal<DumbModePermission>();
+  private final ThreadLocal<DumbModePermission> myPermission = new ThreadLocal<>();
 
   @Override
   public void allowStartingDumbModeInside(@NotNull DumbModePermission permission, @NotNull Runnable runnable) {

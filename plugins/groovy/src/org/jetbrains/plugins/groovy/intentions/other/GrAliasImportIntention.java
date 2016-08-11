@@ -245,7 +245,7 @@ public class GrAliasImportIntention extends Intention {
   private static List<UsageInfo> findUsages(PsiMember member, GroovyFileBase file) {
     LocalSearchScope scope = new LocalSearchScope(file);
 
-    final ArrayList<UsageInfo> infos = new ArrayList<UsageInfo>();
+    final ArrayList<UsageInfo> infos = new ArrayList<>();
     final HashSet<Object> usedRefs = ContainerUtil.newHashSet();
 
     final Processor<PsiReference> consumer = reference -> {
@@ -278,7 +278,7 @@ public class GrAliasImportIntention extends Intention {
   }
 
   public static LinkedHashSet<String> getSuggestedNames(PsiElement psiElement, final PsiElement nameSuggestionContext) {
-    final LinkedHashSet<String> result = new LinkedHashSet<String>();
+    final LinkedHashSet<String> result = new LinkedHashSet<>();
     result.add(UsageViewUtil.getShortName(psiElement));
     final NameSuggestionProvider[] providers = Extensions.getExtensions(NameSuggestionProvider.EP_NAME);
     for (NameSuggestionProvider provider : providers) {

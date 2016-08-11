@@ -43,7 +43,7 @@ public abstract class StateSplitterEx implements StateSplitter {
   @NotNull
   protected static List<Pair<Element, String>> splitState(@NotNull Element state, @NotNull String attributeName) {
     UniqueNameGenerator generator = new UniqueNameGenerator();
-    List<Pair<Element, String>> result = new SmartList<Pair<Element, String>>();
+    List<Pair<Element, String>> result = new SmartList<>();
     for (Element subState : state.getChildren()) {
       result.add(createItem(generator, subState, attributeName));
     }

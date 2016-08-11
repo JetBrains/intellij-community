@@ -237,7 +237,7 @@ public class GitUncommitAction extends DumbAwareAction {
   @NotNull
   private static Collection<Change> findLocalChangesFromCommit(@NotNull ChangeListManager changeListManager,
                                                                @NotNull Collection<Change> changesInCommit) {
-    OpenTHashSet<Change> allChanges = new OpenTHashSet<Change>(changeListManager.getAllChanges());
+    OpenTHashSet<Change> allChanges = new OpenTHashSet<>(changeListManager.getAllChanges());
     return ContainerUtil.map(changesInCommit, allChanges::get);
   }
 }

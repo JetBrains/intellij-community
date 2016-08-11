@@ -19,6 +19,8 @@ import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildMessageLogger
 import org.jetbrains.intellij.build.LogMessage
 
+import java.util.function.Function
+
 /**
  * todo[nik] this is replacement for BuildInfoPrinter. BuildInfoPrinter should be deleted after we move its remaining methods to this class.
  *
@@ -26,7 +28,7 @@ import org.jetbrains.intellij.build.LogMessage
  */
 @CompileStatic
 class TeamCityBuildMessageLogger extends BuildMessageLogger {
-  public static final Closure<? extends BuildMessageLogger> FACTORY = { String taskName -> new TeamCityBuildMessageLogger(taskName) }
+  public static final Function<String, BuildMessageLogger> FACTORY = { String taskName -> new TeamCityBuildMessageLogger(taskName) } as Function<String, BuildMessageLogger>
   private static final PrintStream out = BuildUtils.realSystemOut
   private final String parallelTaskId
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.FactoryMap;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
@@ -26,52 +27,18 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author yole
  */
 public class PyTypeProviderBase implements PyTypeProvider {
-  public PyTypeProviderBase() {
-  }
 
-  protected interface ReturnTypeCallback {
-    @Nullable
-    PyType getType(@Nullable PyCallSiteExpression callSite, @Nullable PyType qualifierType, TypeEvalContext context);
-  }
-
-  private static class ReturnTypeDescriptor {
-    private final Map<String, ReturnTypeCallback> myStringToReturnTypeMap = new HashMap<String, ReturnTypeCallback>();
-
-    void put(String className, ReturnTypeCallback callback) {
-      myStringToReturnTypeMap.put(className, callback);
-    }
-
-    @Nullable
-    public PyType get(PyFunction function, @Nullable PyCallSiteExpression callSite, TypeEvalContext context) {
-      PyClass containingClass = function.getContainingClass();
-      if (containingClass != null) {
-        final ReturnTypeCallback typeCallback = myStringToReturnTypeMap.get(containingClass.getQualifiedName());
-        if (typeCallback != null) {
-          final PyExpression callee = callSite instanceof PyCallExpression ? ((PyCallExpression)callSite).getCallee() : null;
-          final PyExpression qualifier = callee instanceof PyQualifiedExpression ? ((PyQualifiedExpression)callee).getQualifier() : null;
-          PyType qualifierType = qualifier != null ? context.getType(qualifier) : null;
-          return typeCallback.getType(callSite, qualifierType, context);
-        }
-      }
-      return null;
-    }
-  }
-
-  private final ReturnTypeCallback mySelfTypeCallback = new ReturnTypeCallback() {
-    @Override
-    public PyType getType(@Nullable PyCallSiteExpression callSite, @Nullable PyType qualifierType, TypeEvalContext context) {
-      if (qualifierType instanceof PyClassType) {
-        PyClass aClass = ((PyClassType)qualifierType).getPyClass();
-        return PyPsiFacade.getInstance(aClass.getProject()).createClassType(aClass, false);
-      }
-      return null;
-    }
-  };
+  private final ReturnTypeCallback mySelfTypeCallback = (callSite, qualifierType, context) -> Optional
+    .ofNullable(ObjectUtils.tryCast(qualifierType, PyClassType.class))
+    .map(PyClassType::getPyClass)
+    .map(pyClass -> PyPsiFacade.getInstance(pyClass.getProject()).createClassType(pyClass, false))
+    .orElse(null);
 
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
   private final Map<String, ReturnTypeDescriptor> myMethodToReturnTypeMap = new FactoryMap<String, ReturnTypeDescriptor>() {
@@ -105,8 +72,8 @@ public class PyTypeProviderBase implements PyTypeProvider {
 
   @Nullable
   @Override
-  public PyType getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
-    ReturnTypeDescriptor descriptor;
+  public Ref<PyType> getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+    final ReturnTypeDescriptor descriptor;
     synchronized (myMethodToReturnTypeMap) {
       descriptor = myMethodToReturnTypeMap.get(function.getName());
     }
@@ -128,17 +95,50 @@ public class PyTypeProviderBase implements PyTypeProvider {
     return null;
   }
 
-  protected void registerSelfReturnType(String classQualifiedName, Collection<String> methods) {
+  protected void registerSelfReturnType(@NotNull String classQualifiedName, @NotNull Collection<String> methods) {
     registerReturnType(classQualifiedName, methods, mySelfTypeCallback);
   }
 
-  protected void registerReturnType(String classQualifiedName,
-                                    Collection<String> methods,
-                                    final ReturnTypeCallback callback) {
+  protected void registerReturnType(@NotNull String classQualifiedName,
+                                    @NotNull Collection<String> methods,
+                                    @NotNull ReturnTypeCallback callback) {
     synchronized (myMethodToReturnTypeMap) {
       for (String method : methods) {
         myMethodToReturnTypeMap.get(method).put(classQualifiedName, callback);
       }
+    }
+  }
+
+  protected interface ReturnTypeCallback {
+
+    @Nullable
+    PyType getType(@Nullable PyCallSiteExpression callSite, @Nullable PyType qualifierType, @NotNull TypeEvalContext context);
+  }
+
+  private static class ReturnTypeDescriptor {
+
+    private final Map<String, ReturnTypeCallback> myStringToReturnTypeMap = new HashMap<>();
+
+    public void put(@NotNull String classQualifiedName, @NotNull ReturnTypeCallback callback) {
+      myStringToReturnTypeMap.put(classQualifiedName, callback);
+    }
+
+    @Nullable
+    public Ref<PyType> get(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+      return Optional
+        .ofNullable(function.getContainingClass())
+        .map(pyClass -> myStringToReturnTypeMap.get(pyClass.getQualifiedName()))
+        .map(typeCallback -> typeCallback.getType(callSite, getQualifierType(callSite, context), context))
+        .map(Ref::create)
+        .orElse(null);
+    }
+
+    @Nullable
+    private static PyType getQualifierType(@Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+      final PyExpression callee = callSite instanceof PyCallExpression ? ((PyCallExpression)callSite).getCallee() : null;
+      final PyExpression qualifier = callee instanceof PyQualifiedExpression ? ((PyQualifiedExpression)callee).getQualifier() : null;
+
+      return qualifier != null ? context.getType(qualifier) : null;
     }
   }
 }

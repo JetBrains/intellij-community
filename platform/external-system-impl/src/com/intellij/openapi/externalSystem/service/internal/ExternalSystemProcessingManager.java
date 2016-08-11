@@ -108,7 +108,7 @@ public class ExternalSystemProcessingManager implements ExternalSystemTaskNotifi
   @NotNull
   public List<ExternalSystemTask> findTasksOfState(@NotNull ProjectSystemId projectSystemId,
                                                    @NotNull final ExternalSystemTaskState... taskStates) {
-    List<ExternalSystemTask> result = new SmartList<ExternalSystemTask>();
+    List<ExternalSystemTask> result = new SmartList<>();
     for (ExternalSystemTask task : myTasksDetails.values()) {
       if (task instanceof AbstractExternalSystemTask) {
         AbstractExternalSystemTask externalSystemTask = (AbstractExternalSystemTask)task;

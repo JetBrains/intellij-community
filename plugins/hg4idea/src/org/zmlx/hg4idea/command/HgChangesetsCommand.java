@@ -47,7 +47,7 @@ public abstract class HgChangesetsCommand {
   }
 
   protected List<HgRevisionNumber> getRevisions(VirtualFile repo) {
-    List<String> args = new ArrayList<String>(Arrays.asList(
+    List<String> args = new ArrayList<>(Arrays.asList(
       "--template",
       HgChangesetUtil.makeTemplate("{rev}", "{node}", "{author}", "{desc|firstline}"),
       "--quiet"
@@ -67,7 +67,7 @@ public abstract class HgChangesetsCommand {
     }
     
     String[] changesets = output.split(HgChangesetUtil.CHANGESET_SEPARATOR);
-    List<HgRevisionNumber> revisions = new ArrayList<HgRevisionNumber>(changesets.length);
+    List<HgRevisionNumber> revisions = new ArrayList<>(changesets.length);
     
     for(String changeset: changesets) {
       List<String> parts = StringUtil.split(changeset, HgChangesetUtil.ITEM_SEPARATOR);

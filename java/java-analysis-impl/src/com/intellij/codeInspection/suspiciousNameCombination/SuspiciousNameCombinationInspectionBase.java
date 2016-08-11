@@ -39,8 +39,8 @@ import java.util.Map;
 public class SuspiciousNameCombinationInspectionBase extends BaseJavaBatchLocalInspectionTool {
   @NonNls private static final String ELEMENT_GROUPS = "group";
   @NonNls private static final String ATTRIBUTE_NAMES = "names";
-  protected final List<String> myNameGroups = new ArrayList<String>();
-  private final Map<String, String> myWordToGroupMap = new HashMap<String, String>();
+  protected final List<String> myNameGroups = new ArrayList<>();
+  private final Map<String, String> myWordToGroupMap = new HashMap<>();
 
   public SuspiciousNameCombinationInspectionBase() {
     addNameGroup("x,width,left,right");

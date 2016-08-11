@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.*;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.ui.DocumentAdapter;
@@ -174,14 +175,18 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
         String frameworkName = frameworkProjectGenerator.getFrameworkTitle();
         if (!isFrameworkInstalled(sdk)) {
           if (PyPackageUtil.packageManagementEnabled(sdk)) {
-            warningList.add(frameworkName + " will be installed on the selected interpreter");
             myInstallFramework = true;
             final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
             if (packages == null) {
+              warningList.add(frameworkName + " will be installed on the selected interpreter");
               return false;
             }
             if (!PyPackageUtil.hasManagement(packages)) {
               warningList.add("Python packaging tools and " + frameworkName + " will be installed on the selected interpreter");
+            }
+            else {
+              warningList.add(frameworkName + " will be installed on the selected interpreter");
+
             }
           } else {
             warningList.add(frameworkName + " is not installed on the selected interpreter");
@@ -243,6 +248,8 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
 
   private void addInterpreterButton(final JPanel locationPanel, final LabeledComponent<TextFieldWithBrowseButton> location) {
     final JButton interpreterButton = new FixedSizeButton(location);
+    if (SystemInfo.isMac && !UIUtil.isUnderDarcula())
+      interpreterButton.putClientProperty("JButton.buttonType", null);
     interpreterButton.setIcon(PythonIcons.Python.Python);
     interpreterButton.addActionListener(new ActionListener() {
       @Override
@@ -282,6 +289,8 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
 
     final Sdk preferred = compatibleSdk;
     mySdkCombo = new PythonSdkChooserCombo(project, sdks, sdk -> sdk == preferred);
+    if (SystemInfo.isMac && !UIUtil.isUnderDarcula())
+      mySdkCombo.putClientProperty("JButton.buttonType", null);
     mySdkCombo.setButtonIcon(PythonIcons.Python.InterpreterGear);
 
     return LabeledComponent.create(mySdkCombo, "Interpreter", BorderLayout.WEST);

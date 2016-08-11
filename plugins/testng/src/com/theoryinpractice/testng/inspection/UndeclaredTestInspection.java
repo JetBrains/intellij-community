@@ -81,7 +81,7 @@ public class UndeclaredTestInspection extends BaseJavaLocalInspectionTool {
       final String qName = aClass.getQualifiedName();
       if (qName == null) return null;
       final String packageQName = StringUtil.getPackageName(qName);
-      final List<String> names = new ArrayList<String>();
+      final List<String> names = new ArrayList<>();
       for(int i = 0; i < qName.length(); i++) {
         if (qName.charAt(i) == '.') {
           names.add(qName.substring(0, i));

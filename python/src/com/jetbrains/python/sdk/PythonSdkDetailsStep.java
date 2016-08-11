@@ -98,7 +98,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   }
 
   private static List<String> getAvailableOptions(boolean showMore) {
-    final List<String> options = new ArrayList<String>();
+    final List<String> options = new ArrayList<>();
     options.add(LOCAL);
     if (PythonRemoteInterpreterManager.getInstance() != null) {
       options.add(REMOTE);

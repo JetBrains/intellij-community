@@ -47,8 +47,8 @@ public abstract class DiffRequest {
 
   protected DiffRequest(@Nullable Project project) {
     myProject = project;
-    myGenericData = new HashMap<String, Object>(2);
-    myAdditional = new SmartList<Pair<String, DiffRequest>>();
+    myGenericData = new HashMap<>(2);
+    myAdditional = new SmartList<>();
   }
 
   public void setToolbarAddons(@NotNull ToolbarAddons toolbarAddons) {

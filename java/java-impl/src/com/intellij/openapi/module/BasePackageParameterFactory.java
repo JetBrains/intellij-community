@@ -73,7 +73,7 @@ public class BasePackageParameterFactory extends ProjectTemplateParameterFactory
 
       @Override
       public Map<String, String> getValues() {
-        HashMap<String, String> map = new HashMap<String, String>(2);
+        HashMap<String, String> map = new HashMap<>(2);
         map.put(getId(), getValue());
         map.put("IJ_BASE_PACKAGE_DIR", getValue().replace('.', '/'));
         map.put("IJ_BASE_PACKAGE_PREFIX", StringUtil.isEmpty(getValue()) ? "" : getValue() + ".");

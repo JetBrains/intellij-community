@@ -250,7 +250,7 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
 
   @NotNull
   protected <T> T[] findChildrenByClass(Class<T> aClass) {
-    List<T> result = new ArrayList<T>();
+    List<T> result = new ArrayList<>();
     for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (aClass.isInstance(cur)) result.add((T)cur);
     }

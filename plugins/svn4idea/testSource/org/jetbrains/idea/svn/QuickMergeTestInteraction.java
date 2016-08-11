@@ -44,7 +44,7 @@ public class QuickMergeTestInteraction implements QuickMergeInteraction {
   private final List<Exception> myExceptions;
 
   public QuickMergeTestInteraction() {
-    myExceptions = new ArrayList<Exception>();
+    myExceptions = new ArrayList<>();
   }
 
   @Override

@@ -98,7 +98,7 @@ public class PsiElementListNavigator {
       consumer.consume(targets);
       return null;
     }
-    final CollectionListModel<NavigatablePsiElement> model = new CollectionListModel<NavigatablePsiElement>(targets);
+    final CollectionListModel<NavigatablePsiElement> model = new CollectionListModel<>(targets);
     final JBListWithHintProvider list = new JBListWithHintProvider(model) {
       @Override
       protected PsiElement getPsiElementForHint(final Object selectedValue) {
@@ -149,7 +149,7 @@ public class PsiElementListNavigator {
         }
         return true;
       });
-    final Ref<UsageView> usageView = new Ref<UsageView>();
+    final Ref<UsageView> usageView = new Ref<>();
     if (findUsagesTitle != null) {
       popupChooserBuilder = popupChooserBuilder.setCouldPin(popup -> {
         final List<NavigatablePsiElement> items = model.getItems();

@@ -183,6 +183,11 @@ public class ContentEntryTreeEditor {
     return myContentEntryEditor;
   }
 
+  @NotNull
+  public Project getProject() {
+    return myProject;
+  }
+
   public JComponent createComponent() {
     createEditingActions();
     return myTreePanel;

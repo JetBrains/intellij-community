@@ -49,7 +49,7 @@ public class ConvertClosureArgToItIntention extends Intention {
 
         final GrParameterList parameterList = closure.getParameterList();
         final GrParameter parameter = parameterList.getParameters()[0];
-        final Set<GrReferenceExpression> referencesToChange = new HashSet<GrReferenceExpression>();
+        final Set<GrReferenceExpression> referencesToChange = new HashSet<>();
         final GroovyRecursiveElementVisitor visitor = new GroovyRecursiveElementVisitor() {
             @Override
             public void visitReferenceExpression(GrReferenceExpression referenceExpression) {

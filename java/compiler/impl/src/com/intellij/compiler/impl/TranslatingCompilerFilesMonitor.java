@@ -135,7 +135,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           if (parent != null) {
             final String oldName = (String)event.getOldValue();
             final String root = parent.getPath() + "/" + oldName;
-            final Set<File> toMark = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+            final Set<File> toMark = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
             if (eventFile.isDirectory()) {
               VfsUtilCore.visitChildrenRecursively(eventFile, new VirtualFileVisitor() {
                 private StringBuilder filePath = new StringBuilder(root);
@@ -212,7 +212,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   };
   
   private static void collectPathsAndNotify(final VirtualFile file, final Function<Collection<File>, Void> notification) {
-    final Set<File> pathsToMark = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+    final Set<File> pathsToMark = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
     if (!isIgnoredOrUnderIgnoredDirectory(file)) {
       final boolean inContent = isInContentOfOpenedProject(file);
       processRecursively(file, !inContent, new FileProcessor() {

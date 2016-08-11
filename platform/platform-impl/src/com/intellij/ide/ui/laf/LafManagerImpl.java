@@ -745,7 +745,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     UIManager.LookAndFeelInfo lf = getCurrentLookAndFeel();
     HashMap<String, Object> lfDefaults = myStoredDefaults.get(lf);
     if (lfDefaults == null) {
-      lfDefaults = new HashMap<String, Object>();
+      lfDefaults = new HashMap<>();
       for (String resource : ourPatchableFontResources) {
         lfDefaults.put(resource, defaults.get(resource));
       }

@@ -144,7 +144,7 @@ public class GroovyCreateClassDialog extends DialogWrapper {
   protected void doOKAction() {
     final String packageName = getPackageName();
 
-    final Ref<String> errorStringRef = new Ref<String>();
+    final Ref<String> errorStringRef = new Ref<>();
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       try {
         final PsiDirectory baseDir = myModule == null ? null : PackageUtil.findPossiblePackageDirectoryInModule(myModule, packageName);

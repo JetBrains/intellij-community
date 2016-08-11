@@ -195,7 +195,7 @@ public class CoreFormatterUtil {
   public static boolean allowBackwardAlignment(@NotNull LeafBlockWrapper first, @NotNull LeafBlockWrapper second,
                                                @NotNull Map<AbstractBlockWrapper, Set<AbstractBlockWrapper>> alignmentMappings)
   {
-    Set<AbstractBlockWrapper> blocksBeforeCurrent = new HashSet<AbstractBlockWrapper>();
+    Set<AbstractBlockWrapper> blocksBeforeCurrent = new HashSet<>();
     for (
       LeafBlockWrapper previousBlock = second.getPreviousBlock();
       previousBlock != null;

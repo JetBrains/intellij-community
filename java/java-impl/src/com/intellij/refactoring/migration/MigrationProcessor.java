@@ -79,7 +79,7 @@ class MigrationProcessor extends BaseRefactoringProcessor {
 
   @NotNull
   protected UsageInfo[] findUsages() {
-    ArrayList<UsageInfo> usagesVector = new ArrayList<UsageInfo>();
+    ArrayList<UsageInfo> usagesVector = new ArrayList<>();
     try {
       if (myMigrationMap == null) {
         return UsageInfo.EMPTY_ARRAY;

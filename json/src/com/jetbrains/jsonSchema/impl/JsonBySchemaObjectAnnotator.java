@@ -41,12 +41,12 @@ class JsonBySchemaObjectAnnotator implements Annotator {
     }
     if (checkIfAlreadyProcessed(holder, firstProp)) return;
 
-    final List<BySchemaChecker> checkers = new ArrayList<BySchemaChecker>();
+    final List<BySchemaChecker> checkers = new ArrayList<>();
     JsonSchemaWalker.findSchemasForAnnotation(firstProp, new JsonSchemaWalker.CompletionSchemesConsumer() {
       @Override
       public void consume(boolean isName, @NotNull JsonSchemaObject schema) {
         final BySchemaChecker checker = new BySchemaChecker();
-        final Set<String> validatedProperties = new HashSet<String>();
+        final Set<String> validatedProperties = new HashSet<>();
         checker.checkByScheme(firstProp.getValue(), schema, validatedProperties);
         checkers.add(checker);
       }
@@ -80,7 +80,7 @@ class JsonBySchemaObjectAnnotator implements Annotator {
     if (object != null) {
       final BySchemaChecker rootChecker = new BySchemaChecker();
 
-      final Set<String> validatedProperties = new HashSet<String>();
+      final Set<String> validatedProperties = new HashSet<>();
       rootChecker.checkByScheme(object, myRootSchema, validatedProperties);
       processCheckerResults(holder, rootChecker);
     }
@@ -90,7 +90,7 @@ class JsonBySchemaObjectAnnotator implements Annotator {
     final AnnotationSession session = holder.getCurrentAnnotationSession();
     Set<PsiElement> data = session.getUserData(ANNOTATED_PROPERTIES);
     if (data == null) {
-      data = new HashSet<PsiElement>();
+      data = new HashSet<>();
       session.putUserData(ANNOTATED_PROPERTIES, data);
     }
     if (data.contains(property)) return true;
@@ -114,7 +114,7 @@ class JsonBySchemaObjectAnnotator implements Annotator {
     private boolean myHadTypeError;
 
     public BySchemaChecker() {
-      myErrors = new HashMap<PsiElement, String>();
+      myErrors = new HashMap<>();
     }
 
     public Map<PsiElement, String> getErrors() {
@@ -192,14 +192,14 @@ class JsonBySchemaObjectAnnotator implements Annotator {
       final JsonObject object = ObjectUtils.tryCast(value, JsonObject.class);
       //noinspection ConstantConditions
       final List<JsonProperty> propertyList = object.getPropertyList();
-      final Map<String, JsonProperty> map = new HashMap<String, JsonProperty>();
+      final Map<String, JsonProperty> map = new HashMap<>();
       for (JsonProperty property : propertyList) {
         map.put(property.getName(), property);
         final JsonSchemaObject propertySchema = properties.get(property.getName());
         if (propertySchema != null) {
-          checkByScheme(property.getValue(), propertySchema, new HashSet<String>());
+          checkByScheme(property.getValue(), propertySchema, new HashSet<>());
         } else if (schema.getAdditionalPropertiesSchema() != null) {
-          checkByScheme(property.getValue(), schema.getAdditionalPropertiesSchema(), new HashSet<String>());
+          checkByScheme(property.getValue(), schema.getAdditionalPropertiesSchema(), new HashSet<>());
         } else if (!Boolean.TRUE.equals(schema.getAdditionalPropertiesAllowed()) && !validatedProperties.contains(property.getName())) {
           error("Property '" + property.getName() + "' is not allowed", property);
         }
@@ -237,7 +237,7 @@ class JsonBySchemaObjectAnnotator implements Annotator {
       if (schemaDependencies != null) {
         for (Map.Entry<String, JsonSchemaObject> entry : schemaDependencies.entrySet()) {
           if (map.containsKey(entry.getKey())) {
-            checkByScheme(value, entry.getValue(), new HashSet<String>());
+            checkByScheme(value, entry.getValue(), new HashSet<>());
           }
         }
       }
@@ -266,7 +266,7 @@ class JsonBySchemaObjectAnnotator implements Annotator {
     }
 
     private class ArrayItemsChecker {
-      private final Set<String> myValueTexts = new HashSet<String>();
+      private final Set<String> myValueTexts = new HashSet<>();
       private JsonValue myFirstNonUnique;
       private boolean myCheckUnique;
 
@@ -274,14 +274,14 @@ class JsonBySchemaObjectAnnotator implements Annotator {
         myCheckUnique = schema.isUniqueItems();
         if (schema.getItemsSchema() != null) {
           for (JsonValue arrayValue : list) {
-            checkByScheme(arrayValue, schema.getItemsSchema(), new HashSet<String>());
+            checkByScheme(arrayValue, schema.getItemsSchema(), new HashSet<>());
             checkUnique(arrayValue);
           }
         } else if (schema.getItemsSchemaList() != null) {
           final Iterator<JsonSchemaObject> iterator = schema.getItemsSchemaList().iterator();
           for (JsonValue arrayValue : list) {
             if (iterator.hasNext()) {
-              checkByScheme(arrayValue, iterator.next(), new HashSet<String>());
+              checkByScheme(arrayValue, iterator.next(), new HashSet<>());
             } else {
               if (!Boolean.TRUE.equals(schema.getAdditionalItemsAllowed())) {
                 error("Additional items are not allowed", arrayValue);
@@ -435,12 +435,12 @@ class JsonBySchemaObjectAnnotator implements Annotator {
 
     private void processOneOf(JsonValue value, JsonSchemaObject schema, Set<String> validatedProperties) {
       final List<JsonSchemaObject> oneOf = schema.getOneOf();
-      final Map<PsiElement, String> errors = new HashMap<PsiElement, String>();
+      final Map<PsiElement, String> errors = new HashMap<>();
       int cntCorrect = 0;
       boolean validatedPropertiesAdded = false;
       for (JsonSchemaObject object : oneOf) {
         final BySchemaChecker checker = new BySchemaChecker();
-        final HashSet<String> local = new HashSet<String>();
+        final HashSet<String> local = new HashSet<>();
         checker.checkByScheme(value, object, local);
         if (checker.isCorrect()) {
           if (!validatedPropertiesAdded) {
@@ -474,10 +474,10 @@ class JsonBySchemaObjectAnnotator implements Annotator {
 
     private void processAnyOf(JsonValue value, JsonSchemaObject schema, Set<String> validatedProperties) {
       final List<JsonSchemaObject> anyOf = schema.getAnyOf();
-      final Map<PsiElement, String> errors = new HashMap<PsiElement, String>();
+      final Map<PsiElement, String> errors = new HashMap<>();
       for (JsonSchemaObject object : anyOf) {
         final BySchemaChecker checker = new BySchemaChecker();
-        final HashSet<String> local = new HashSet<String>();
+        final HashSet<String> local = new HashSet<>();
         checker.checkByScheme(value, object, local);
         if (checker.isCorrect()) {
           validatedProperties.addAll(local);

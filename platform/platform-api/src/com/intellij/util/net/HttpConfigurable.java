@@ -96,8 +96,8 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public boolean KEEP_PROXY_PASSWORD;
   public transient String LAST_ERROR;
 
-  private final THashMap<CommonProxy.HostInfo, ProxyInfo> myGenericPasswords = new THashMap<CommonProxy.HostInfo, ProxyInfo>();
-  private final Set<CommonProxy.HostInfo> myGenericCancelled = new THashSet<CommonProxy.HostInfo>();
+  private final THashMap<CommonProxy.HostInfo, ProxyInfo> myGenericPasswords = new THashMap<>();
+  private final Set<CommonProxy.HostInfo> myGenericCancelled = new THashSet<>();
 
   public String PROXY_EXCEPTIONS;
   public boolean USE_PAC_URL;
@@ -123,8 +123,8 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   });
 
   @SuppressWarnings("UnusedDeclaration")
-  public transient Getter<PasswordAuthentication> myTestAuthRunnable = new StaticGetter<PasswordAuthentication>(null);
-  public transient Getter<PasswordAuthentication> myTestGenericAuthRunnable = new StaticGetter<PasswordAuthentication>(null);
+  public transient Getter<PasswordAuthentication> myTestAuthRunnable = new StaticGetter<>(null);
+  public transient Getter<PasswordAuthentication> myTestGenericAuthRunnable = new StaticGetter<>(null);
 
   public static HttpConfigurable getInstance() {
     return ApplicationManager.getApplication().getComponent(HttpConfigurable.class);
@@ -546,7 +546,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     if (! me.USE_HTTP_PROXY && ! me.USE_PROXY_PAC) {
       return Collections.emptyList();
     }
-    final List<KeyValue<String, String>> result = new ArrayList<KeyValue<String, String>>();
+    final List<KeyValue<String, String>> result = new ArrayList<>();
     if (me.USE_HTTP_PROXY) {
       final boolean putCredentials = me.KEEP_PROXY_PASSWORD && StringUtil.isNotEmpty(me.getProxyLogin());
       if (me.PROXY_TYPE_IS_SOCKS) {
@@ -602,7 +602,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     if (list.isEmpty()) {
       return Collections.emptyList();
     }
-    final List<String> result = new ArrayList<String>(list.size());
+    final List<String> result = new ArrayList<>(list.size());
     for (KeyValue<String, String> value : list) {
       result.add("-D" + value.getKey() + "=" + value.getValue());
     }

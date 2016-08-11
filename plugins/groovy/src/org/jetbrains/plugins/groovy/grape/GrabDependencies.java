@@ -182,7 +182,7 @@ public class GrabDependencies implements IntentionAction {
     assert sdkType instanceof JavaSdkType;
     final String exePath = ((JavaSdkType)sdkType).getVMExecutablePath(sdk);
 
-    final Map<String, GeneralCommandLine> lines = new HashMap<String, GeneralCommandLine>();
+    final Map<String, GeneralCommandLine> lines = new HashMap<>();
     for (String grabText : queries.keySet()) {
       final JavaParameters javaParameters = GroovyScriptRunConfiguration.createJavaParametersWithSdk(module);
       //debug
@@ -231,9 +231,9 @@ public class GrabDependencies implements IntentionAction {
   }
 
   static Map<String, String> prepareQueries(PsiFile file) {
-    final Set<GrAnnotation> grabs = new LinkedHashSet<GrAnnotation>();
-    final Set<GrAnnotation> excludes = new THashSet<GrAnnotation>();
-    final Set<GrAnnotation> resolvers = new THashSet<GrAnnotation>();
+    final Set<GrAnnotation> grabs = new LinkedHashSet<>();
+    final Set<GrAnnotation> excludes = new THashSet<>();
+    final Set<GrAnnotation> resolvers = new THashSet<>();
     file.acceptChildren(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
@@ -250,7 +250,7 @@ public class GrabDependencies implements IntentionAction {
 
     Function<GrAnnotation, String> mapper = grAnnotation -> grAnnotation.getText();
     String common = StringUtil.join(excludes, mapper, " ") + " " + StringUtil.join(resolvers, mapper, " ");
-    LinkedHashMap<String, String> result = new LinkedHashMap<String, String>();
+    LinkedHashMap<String, String> result = new LinkedHashMap<>();
     for (GrAnnotation grab : grabs) {
       String grabText = grab.getText();
       result.put(grabText, (grabText + " " + common).trim());
@@ -325,7 +325,7 @@ public class GrabDependencies implements IntentionAction {
     @Override
     protected void notifyProcessTerminated(int exitCode) {
       try {
-        final List<VirtualFile> jars = new ArrayList<VirtualFile>();
+        final List<VirtualFile> jars = new ArrayList<>();
         for (String line : myStdOut.toString().split("\n")) {
           if (line.startsWith(GrapeRunner.URL_PREFIX)) {
             try {

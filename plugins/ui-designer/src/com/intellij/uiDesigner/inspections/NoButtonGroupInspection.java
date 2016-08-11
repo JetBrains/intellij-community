@@ -117,7 +117,7 @@ public class NoButtonGroupInspection extends BaseFormInspection {
 
     public void run() {
       RadContainer parent = myComponent.getParent();
-      ArrayList<RadComponent> buttonsToGroup = new ArrayList<RadComponent>();
+      ArrayList<RadComponent> buttonsToGroup = new ArrayList<>();
       for(RadComponent component: parent.getComponents()) {
         if (FormInspectionUtil.isComponentClass(myComponent.getModule(), component, JRadioButton.class)) {
           if (component.getConstraints().getCell(!myVerticalGroup) == myComponent.getConstraints().getCell(!myVerticalGroup))

@@ -61,7 +61,7 @@ public class ConvertProjectDialog extends DialogWrapper {
     setModal(true);
     myContext = context;
     myConversionRunners = conversionRunners;
-    myAffectedFiles = new HashSet<File>();
+    myAffectedFiles = new HashSet<>();
     for (ConversionRunner conversionRunner : conversionRunners) {
       myAffectedFiles.addAll(conversionRunner.getAffectedFiles());
     }
@@ -122,7 +122,7 @@ public class ConvertProjectDialog extends DialogWrapper {
       }
 
       ProjectConversionUtil.backupFiles(myAffectedFiles, myContext.getProjectBaseDir(), myBackupDir);
-      List<ConversionRunner> usedRunners = new ArrayList<ConversionRunner>();
+      List<ConversionRunner> usedRunners = new ArrayList<>();
       for (ConversionRunner runner : myConversionRunners) {
         if (runner.isConversionNeeded()) {
           runner.preProcess();

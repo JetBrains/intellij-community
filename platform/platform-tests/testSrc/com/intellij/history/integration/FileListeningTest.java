@@ -80,12 +80,12 @@ public class FileListeningTest extends IntegrationTestCase {
     myRoot.refresh(false, true);
 
     List<Change> changes = getVcs().getChangeListInTests().getChangesInTests().get(0).getChanges();
-    List<String> actual = new SmartList<String>();
+    List<String> actual = new SmartList<>();
     for (Change each : changes) {
       actual.add(((StructuralChange)each).getPath());
     }
 
-    List<String> expected = new ArrayList<String>(Arrays.asList(dir, subsubdir1, dir1_file, subsubdir1_file));
+    List<String> expected = new ArrayList<>(Arrays.asList(dir, subsubdir1, dir1_file, subsubdir1_file));
 
     Collections.sort(actual);
     Collections.sort(expected);

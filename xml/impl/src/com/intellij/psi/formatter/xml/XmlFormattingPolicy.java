@@ -30,7 +30,7 @@ import java.util.Map;
 
 public abstract class XmlFormattingPolicy {
 
-  private Map<Pair<PsiElement, Language>, Block> myRootToBlockMap = new HashMap<Pair<PsiElement, Language>, Block>();
+  private Map<Pair<PsiElement, Language>, Block> myRootToBlockMap = new HashMap<>();
   private boolean myProcessJsp = true;
   protected final FormattingDocumentModel myDocumentModel;
   private boolean myProcessJavaTree = true;

@@ -37,6 +37,7 @@ public class GithubUserDetailed extends GithubUser {
 
   private UserPlan plan;
 
+  @RestModel
   public static class UserPlan {
     private String name;
     private Long space;

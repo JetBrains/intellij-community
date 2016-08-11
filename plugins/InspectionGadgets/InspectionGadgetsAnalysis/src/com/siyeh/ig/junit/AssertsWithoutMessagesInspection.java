@@ -54,7 +54,7 @@ public class AssertsWithoutMessagesInspection extends BaseInspection {
 
   private static class AssertionsWithoutMessagesVisitor extends BaseInspectionVisitor {
 
-    @NonNls private static final Set<String> s_assertMethods = new HashSet<String>(8);
+    @NonNls private static final Set<String> s_assertMethods = new HashSet<>(8);
 
     static {
       s_assertMethods.add("assertArrayEquals");

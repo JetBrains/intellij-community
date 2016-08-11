@@ -33,7 +33,7 @@ import java.util.Set;
  */
 public class UseOfObsoleteDateTimeApiInspection extends BaseInspection {
 
-  private static final Set<String> dateTimeNames = new HashSet<String>(
+  private static final Set<String> dateTimeNames = new HashSet<>(
     Arrays.asList("java.util.Date", "java.util.Calendar", "java.util.GregorianCalendar", "java.util.TimeZone", "java.util.SimpleTimeZone"));
 
   @Nls

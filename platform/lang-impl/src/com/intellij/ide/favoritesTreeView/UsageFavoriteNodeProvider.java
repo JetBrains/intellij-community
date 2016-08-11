@@ -54,9 +54,9 @@ import java.util.*;
  */
 public class UsageFavoriteNodeProvider extends FavoriteNodeProvider {
   private final static Map<String, TreeSet<WorkingSetSerializable>> ourSerializables =
-    new HashMap<String, TreeSet<WorkingSetSerializable>>();
+    new HashMap<>();
   private final static Comparator<VirtualFile> VIRTUAL_FILE_COMPARATOR =
-    new ProxyComparator<String, VirtualFile>(new Convertor<VirtualFile, String>() {
+    new ProxyComparator<>(new Convertor<VirtualFile, String>() {
       @Override
       public String convert(VirtualFile o) {
         return o.getPath();
@@ -82,7 +82,7 @@ public class UsageFavoriteNodeProvider extends FavoriteNodeProvider {
   }
 
   private static TreeSet<WorkingSetSerializable> createSet() {
-    return new TreeSet<WorkingSetSerializable>((o1, o2) -> {
+    return new TreeSet<>((o1, o2) -> {
       assert o1.getId().equals(o1.getId());
       return Comparing.compare(o1.getVersion(), o2.getVersion());
     });
@@ -97,9 +97,9 @@ public class UsageFavoriteNodeProvider extends FavoriteNodeProvider {
     final Usage[] usages = UsageView.USAGES_KEY.getData(context);
     if (usages != null) {
 
-      final List<AbstractTreeNode> result = new SmartList<AbstractTreeNode>();
-      final MultiMap<VirtualFile, Usage> map = new MultiMap<VirtualFile, Usage>();
-      final List<Usage> nonMapped = new ArrayList<Usage>();
+      final List<AbstractTreeNode> result = new SmartList<>();
+      final MultiMap<VirtualFile, Usage> map = new MultiMap<>();
+      final List<Usage> nonMapped = new ArrayList<>();
       for (Usage usage : usages) {
         if (usage instanceof UsageInFile) {
           map.putValue(((UsageInFile)usage).getFile(), usage);
@@ -115,7 +115,7 @@ public class UsageFavoriteNodeProvider extends FavoriteNodeProvider {
         }
       }
 
-      final TreeSet<VirtualFile> keys = new TreeSet<VirtualFile>(VIRTUAL_FILE_COMPARATOR);
+      final TreeSet<VirtualFile> keys = new TreeSet<>(VIRTUAL_FILE_COMPARATOR);
       keys.addAll(map.keySet());
       for (VirtualFile key : keys) {
         final FileGroupingProjectNode grouping = new FileGroupingProjectNode(project, new File(key.getPath()), viewSettings);

@@ -244,7 +244,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   private Instruction getPrevInstruction(final PyElement condition) {
-    final Ref<Instruction> head = new Ref<Instruction>(myBuilder.prevInstruction);
+    final Ref<Instruction> head = new Ref<>(myBuilder.prevInstruction);
     myBuilder.processPending(new ControlFlowBuilder.PendingProcessor() {
       public void process(final PsiElement pendingScope, final Instruction instruction) {
         if (pendingScope != null && PsiTreeUtil.isAncestor(condition, pendingScope, false)) {
@@ -569,7 +569,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       myBuilder.addPendingEdge(pair.first, pair.second);
     }
 
-    final List<Instruction> normalExits = new ArrayList<Instruction>();
+    final List<Instruction> normalExits = new ArrayList<>();
     final PyFinallyPart finallyPart = node.getFinallyPart();
     final Instruction finallyFailInstruction;
 
@@ -681,14 +681,14 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   private static <T> List<T> emptyMutableList() {
-    return new ArrayList<T>();
+    return new ArrayList<>();
   }
 
   @Override
   public void visitPyComprehensionElement(final PyComprehensionElement node) {
     PyExpression prevCondition = null;
     myBuilder.startNode(node);
-    List<Instruction> iterators = new ArrayList<Instruction>();
+    List<Instruction> iterators = new ArrayList<>();
 
     for (ComprehensionComponent component : node.getComponents()) {
       if (component instanceof ComprhForComponent) {

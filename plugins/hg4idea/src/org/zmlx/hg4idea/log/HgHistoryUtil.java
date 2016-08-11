@@ -86,7 +86,7 @@ public class HgHistoryUtil {
                                                  @NotNull List<String> attributes) {
         String message = parseAdditionalStringAttribute(attributes, MESSAGE_INDEX);
         String subject = extractSubject(message);
-        List<Hash> parentsHash = new SmartList<Hash>();
+        List<Hash> parentsHash = new SmartList<>();
         for (HgRevisionNumber parent : parents) {
           parentsHash.add(factory.createHash(parent.getChangeset()));
         }
@@ -143,18 +143,18 @@ public class HgHistoryUtil {
     }
     List<HgFileRevision> hgRevisions =
       getCommitRecords(project, result, new HgFileRevisionLogParser(project, getOriginalHgFile(project, root), version), silent);
-    List<VcsFullCommitDetails> vcsFullCommitDetailsList = new ArrayList<VcsFullCommitDetails>();
+    List<VcsFullCommitDetails> vcsFullCommitDetailsList = new ArrayList<>();
     for (HgFileRevision revision : hgRevisions) {
 
       HgRevisionNumber vcsRevisionNumber = revision.getRevisionNumber();
       List<HgRevisionNumber> parents = vcsRevisionNumber.getParents();
       HgRevisionNumber firstParent = parents.isEmpty() ? null : parents.get(0); // can have no parents if it is a root
-      List<Hash> parentsHash = new SmartList<Hash>();
+      List<Hash> parentsHash = new SmartList<>();
       for (HgRevisionNumber parent : parents) {
         parentsHash.add(factory.createHash(parent.getChangeset()));
       }
 
-      final Collection<Change> changes = new ArrayList<Change>();
+      final Collection<Change> changes = new ArrayList<>();
       for (String file : revision.getModifiedFiles()) {
         changes.add(createChange(project, root, file, firstParent, file, vcsRevisionNumber, FileStatus.MODIFIED));
       }
@@ -193,7 +193,7 @@ public class HgHistoryUtil {
                                               @NotNull List<String> parameters, @NotNull String template) {
     HgFile originalHgFile = getOriginalHgFile(project, root);
     HgLogCommand hgLogCommand = new HgLogCommand(project);
-    List<String> args = new ArrayList<String>(parameters);
+    List<String> args = new ArrayList<>(parameters);
     hgLogCommand.setLogFile(false);
     if (!version.isParentRevisionTemplateSupported()) {
       args.add("--debug");
@@ -221,7 +221,7 @@ public class HgHistoryUtil {
   public static <CommitInfo> List<CommitInfo> getCommitRecords(@NotNull Project project,
                                                                @Nullable HgCommandResult result,
                                                                @NotNull Function<String, CommitInfo> converter, boolean silent) {
-    final List<CommitInfo> revisions = new LinkedList<CommitInfo>();
+    final List<CommitInfo> revisions = new LinkedList<>();
     if (result == null) {
       return revisions;
     }
@@ -280,7 +280,7 @@ public class HgHistoryUtil {
                                                                                          @NotNull List<String> attributes) {
                                             String message = parseAdditionalStringAttribute(attributes, MESSAGE_INDEX);
                                             String subject = extractSubject(message);
-                                            List<Hash> parentsHash = new SmartList<Hash>();
+                                            List<Hash> parentsHash = new SmartList<>();
                                             for (HgRevisionNumber parent : parents) {
                                               parentsHash.add(factory.createHash(parent.getChangeset()));
                                             }
@@ -317,7 +317,7 @@ public class HgHistoryUtil {
                                               @NotNull String author,
                                               @NotNull String email,
                                               @NotNull List<String> attributes) {
-        List<Hash> parentsHash = new SmartList<Hash>();
+        List<Hash> parentsHash = new SmartList<>();
         for (HgRevisionNumber parent : parents) {
           parentsHash.add(factory.createHash(parent.getChangeset()));
         }
@@ -365,7 +365,7 @@ public class HgHistoryUtil {
 
   @NotNull
   public static List<String> prepareHashes(@NotNull List<String> hashes) {
-    List<String> hashArgs = new ArrayList<String>();
+    List<String> hashArgs = new ArrayList<>();
     for (String hash : hashes) {
       hashArgs.add("-r");
       hashArgs.add(hash);
@@ -377,8 +377,8 @@ public class HgHistoryUtil {
   public static Collection<String> getDescendingHeadsOfBranches(@NotNull Project project, @NotNull VirtualFile root, @NotNull Hash hash)
     throws VcsException {
     //hg log -r "descendants(659db54c1b6865c97c4497fa867194bcd759ca76) and head()" --template "{branch}{bookmarks}"
-    Set<String> branchHeads = new HashSet<String>();
-    List<String> params = new ArrayList<String>();
+    Set<String> branchHeads = new HashSet<>();
+    List<String> params = new ArrayList<>();
     params.add("-r");
     params.add("descendants(" + hash.asString() + ") and head()");
     HgLogCommand hgLogCommand = new HgLogCommand(project);

@@ -37,7 +37,7 @@ import java.util.List;
 public class InternalTestDiscoveryListener implements TestListener, Closeable {
   private final String myModuleName;
   private final String myTracesDirectory;
-  private List<String> myCompletedMethodNames = new ArrayList<String>();
+  private List<String> myCompletedMethodNames = new ArrayList<>();
   private final Alarm myProcessTracesAlarm;
   private Object myDiscoveryIndex;
   private Class<?> myDiscoveryIndexClass;

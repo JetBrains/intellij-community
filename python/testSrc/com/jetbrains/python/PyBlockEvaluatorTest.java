@@ -61,7 +61,7 @@ public class PyBlockEvaluatorTest extends PyTestCase {
     List list = (List)eval.getValue("a");
     assertEquals(2, list.size());
     assertEquals("b", list.get(0));
-    assertEquals(new ArrayList<String>(Arrays.asList("c", "d")), list.get(1));
+    assertEquals(new ArrayList<>(Arrays.asList("c", "d")), list.get(1));
   }
 
   public void testDict() {

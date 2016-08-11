@@ -16,10 +16,10 @@
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -423,7 +423,7 @@ public class DebuggerUIUtil {
     modifier.setValue(text, new XValueModifier.XModificationCallback() {
       @Override
       public void valueModified() {
-        if (isDetachedTree(tree)) {
+        if (tree.isDetached()) {
           AppUIUtil.invokeOnEdt(() -> tree.rebuildAndRestore(treeState));
         }
         XDebuggerUtilImpl.rebuildAllSessionsViews(project);
@@ -437,10 +437,10 @@ public class DebuggerUIUtil {
         });
         XDebuggerUtilImpl.rebuildAllSessionsViews(project);
       }
-
-      boolean isDetachedTree(XDebuggerTree tree) {
-        return XDebugSessionTab.TAB_KEY.getData(DataManager.getInstance().getDataContext(tree)) == null;
-      }
     });
+  }
+
+  public static boolean isInDetachedTree(AnActionEvent event) {
+    return event.getData(XDebugSessionTab.TAB_KEY) == null;
   }
 }

@@ -79,7 +79,7 @@ public class CustomizationUtil {
                                           AnActionEvent e) {
     String text = group.getTemplatePresentation().getText();
     ActionManager actionManager = ActionManager.getInstance();
-    final ArrayList<AnAction> reorderedChildren = new ArrayList<AnAction>();
+    final ArrayList<AnAction> reorderedChildren = new ArrayList<>();
     ContainerUtil.addAll(reorderedChildren, group.getChildren(e));
     final List<ActionUrl> actions = schema.getActions();
     for (ActionUrl actionUrl : actions) {
@@ -132,7 +132,7 @@ public class CustomizationUtil {
     schema.fillActionGroups(root);
     final JTree defaultTree = new Tree(new DefaultTreeModel(root));
 
-    final List<ActionUrl> actions = new ArrayList<ActionUrl>();
+    final List<ActionUrl> actions = new ArrayList<>();
     TreeUtil.traverseDepth((TreeNode)tree.getModel().getRoot(), new TreeUtil.Traverse() {
       @Override
       public boolean accept(Object node) {
@@ -192,7 +192,7 @@ public class CustomizationUtil {
   }
 
   public static TreePath getPathByUserObjects(JTree tree, TreePath treePath){
-    List<String>  path = new ArrayList<String>();
+    List<String>  path = new ArrayList<>();
     for (int i = 0; i < treePath.getPath().length; i++) {
       Object o = ((DefaultMutableTreeNode)treePath.getPath()[i]).getUserObject();
       if (o instanceof Group) {
@@ -267,8 +267,8 @@ public class CustomizationUtil {
 
 
   private static ActionUrl[] getChildUserObjects(DefaultMutableTreeNode node, ActionUrl parent) {
-    ArrayList<ActionUrl> result = new ArrayList<ActionUrl>();
-    ArrayList<String> groupPath = new ArrayList<String>();
+    ArrayList<ActionUrl> result = new ArrayList<>();
+    ArrayList<String> groupPath = new ArrayList<>();
     groupPath.addAll(parent.getGroupPath());
     for (int i = 0; i < node.getChildCount(); i++) {
       DefaultMutableTreeNode child = (DefaultMutableTreeNode)node.getChildAt(i);

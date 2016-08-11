@@ -51,8 +51,8 @@ public class TestCaseLoader {
   public static final String INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG = "idea.include.unconventionally.named.tests";
   public static final String SKIP_COMMUNITY_TESTS = "idea.skip.community.tests";
 
-  private final List<Class> myClassList = new ArrayList<Class>();
-  private final List<Throwable> myClassLoadingErrors = new ArrayList<Throwable>();
+  private final List<Class> myClassList = new ArrayList<>();
+  private final List<Throwable> myClassLoadingErrors = new ArrayList<>();
   private Class myFirstTestClass;
   private Class myLastTestClass;
   private final TestClassesFilter myTestClassesFilter;
@@ -205,7 +205,7 @@ public class TestCaseLoader {
   }
 
   public List<Class> getClasses() {
-    List<Class> result = new ArrayList<Class>(myClassList.size());
+    List<Class> result = new ArrayList<>(myClassList.size());
     if (myFirstTestClass != null) {
       result.add(myFirstTestClass);
     }

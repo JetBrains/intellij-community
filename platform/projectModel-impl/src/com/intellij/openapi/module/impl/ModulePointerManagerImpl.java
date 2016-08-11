@@ -35,8 +35,8 @@ import java.util.Map;
  * @author nik
  */
 public class ModulePointerManagerImpl extends ModulePointerManager {
-  private final Map<String, ModulePointerImpl> myUnresolved = new HashMap<String, ModulePointerImpl>();
-  private final Map<Module, ModulePointerImpl> myPointers = new HashMap<Module, ModulePointerImpl>();
+  private final Map<String, ModulePointerImpl> myUnresolved = new HashMap<>();
+  private final Map<Module, ModulePointerImpl> myPointers = new HashMap<>();
   private final Project myProject;
 
   public ModulePointerManagerImpl(Project project) {

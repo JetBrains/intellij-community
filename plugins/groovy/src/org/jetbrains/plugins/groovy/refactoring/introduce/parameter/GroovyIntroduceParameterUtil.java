@@ -301,7 +301,7 @@ public class GroovyIntroduceParameterUtil {
   }
 
   public static TObjectIntHashMap<GrParameter> findParametersToRemove(IntroduceParameterInfo helper) {
-    final TObjectIntHashMap<GrParameter> result = new TObjectIntHashMap<GrParameter>();
+    final TObjectIntHashMap<GrParameter> result = new TObjectIntHashMap<>();
 
     final TextRange range = ExtractUtil.getRangeOfRefactoring(helper);
 
@@ -402,18 +402,18 @@ public class GroovyIntroduceParameterUtil {
       final GrIntroduceContext
         introduceContext = new GrIntroduceContextImpl(project, null, expr, var, stringPart, PsiElement.EMPTY_ARRAY, scope);
       final GroovyFieldValidator validator = new GroovyFieldValidator(introduceContext);
-      return new LinkedHashSet<String>(Arrays.asList(GroovyNameSuggestionUtil.suggestVariableNames(expr, validator, true)));
+      return new LinkedHashSet<>(Arrays.asList(GroovyNameSuggestionUtil.suggestVariableNames(expr, validator, true)));
     }
     else if (var != null) {
       final GrIntroduceContext introduceContext = new GrIntroduceContextImpl(project, null, expr, var, stringPart, PsiElement.EMPTY_ARRAY, scope);
       final GroovyFieldValidator validator = new GroovyFieldValidator(introduceContext);
-      LinkedHashSet<String> names = new LinkedHashSet<String>();
+      LinkedHashSet<String> names = new LinkedHashSet<>();
       names.add(var.getName());
       ContainerUtil.addAll(names, GroovyNameSuggestionUtil.suggestVariableNameByType(var.getType(), validator));
       return names;
     }
     else {
-      LinkedHashSet<String> names = new LinkedHashSet<String>();
+      LinkedHashSet<String> names = new LinkedHashSet<>();
       names.add("closure");
       return names;
     }
@@ -421,7 +421,7 @@ public class GroovyIntroduceParameterUtil {
 
   private static class FieldSearcher extends GroovyRecursiveElementVisitor {
     PsiClass myClass;
-    private final List<PsiField> result = new ArrayList<PsiField>();
+    private final List<PsiField> result = new ArrayList<>();
 
     private FieldSearcher(PsiClass aClass) {
       myClass = aClass;

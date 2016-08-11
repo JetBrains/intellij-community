@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.actions.OpenRepositoryVersionAction;
 import com.intellij.openapi.vcs.changes.actions.RevertSelectedChangesAction;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffWithLocalAction;
@@ -35,10 +34,12 @@ import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
+
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterRevisionsFiles;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
 
 /**
  * @author yole
@@ -127,11 +128,7 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
 
     protected Navigatable[] getNavigatables(final DataContext dataContext) {
       Change[] changes = VcsDataKeys.SELECTED_CHANGES.getData(dataContext);
-      if (changes != null) {
-        Collection<Change> changeCollection = Arrays.asList(changes);
-        return ChangesUtil.getNavigatableArray(myProject, ChangesUtil.getFilesFromChanges(changeCollection));
-      }
-      return null;
+      return changes != null ? getNavigatableArray(myProject, getAfterRevisionsFiles(Stream.of(changes))) : null;
     }
   }
 }

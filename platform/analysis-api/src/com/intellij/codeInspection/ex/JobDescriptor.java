@@ -16,19 +16,23 @@
 
 package com.intellij.codeInspection.ex;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author max
  */
 public class JobDescriptor {
+  @NotNull
   private final String myDisplayName;
   private int myTotalAmount;
   private int myDoneAmount;
   public static final JobDescriptor[] EMPTY_ARRAY = new JobDescriptor[0];
 
-  public JobDescriptor(String displayName) {
+  public JobDescriptor(@NotNull String displayName) {
     myDisplayName = displayName;
   }
 
+  @NotNull
   public String getDisplayName() {
     return myDisplayName;
   }
@@ -47,12 +51,6 @@ public class JobDescriptor {
   }
 
   public void setDoneAmount(int doneAmount) {
-    if (doneAmount > getTotalAmount()) {
-      int i = 0;
-    }
-    if (doneAmount < getDoneAmount()) {
-      int i = 0;
-    }
     myDoneAmount = doneAmount;
   }
 

@@ -26,6 +26,7 @@ import org.apache.http.HeaderElement;
 import org.apache.http.message.BasicHeader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.api.GithubConnection.ArrayPagedRequest;
 import org.jetbrains.plugins.github.api.GithubConnection.PagedRequest;
 import org.jetbrains.plugins.github.api.data.*;
 import org.jetbrains.plugins.github.api.requests.*;
@@ -73,6 +74,34 @@ public class GithubApiUtil {
     catch (ClassCastException | JsonParseException e) {
       throw new GithubJsonException("Parse exception while converting JSON to object " + classT.toString(), e);
     }
+  }
+
+  @NotNull
+  private static <T> List<T> loadAll(@NotNull GithubConnection connection,
+                                     @NotNull String path,
+                                     @NotNull Class<? extends T[]> type,
+                                     @NotNull Header... headers) throws IOException {
+    PagedRequest<T> request = new ArrayPagedRequest<>(path, type, headers);
+    return request.getAll(connection);
+  }
+
+  @NotNull
+  private static <T> T load(@NotNull GithubConnection connection,
+                            @NotNull String path,
+                            @NotNull Class<? extends T> type,
+                            @NotNull Header... headers) throws IOException {
+    JsonElement result = connection.getRequest(path, headers);
+    return fromJson(result, type);
+  }
+
+  @NotNull
+  private static <T> T post(@NotNull GithubConnection connection,
+                            @NotNull String path,
+                            @NotNull Object request,
+                            @NotNull Class<? extends T> type,
+                            @NotNull Header... headers) throws IOException {
+    JsonElement result = connection.postRequest(path, gson.toJson(request), headers);
+    return fromJson(result, type);
   }
 
   /*
@@ -160,8 +189,7 @@ public class GithubApiUtil {
       String path = "/authorizations";
 
       GithubAuthorizationCreateRequest request = new GithubAuthorizationCreateRequest(new ArrayList<>(scopes), note, null);
-
-      return fromJson(connection.postRequest(path, gson.toJson(request), ACCEPT_V3_JSON), GithubAuthorization.class);
+      return post(connection, path, request, GithubAuthorization.class, ACCEPT_V3_JSON);
     }
     catch (GithubConfusingException e) {
       e.setDetails("Can't create token: scopes - " + scopes + " - note " + note);
@@ -173,10 +201,7 @@ public class GithubApiUtil {
   private static List<GithubAuthorization> getAllTokens(@NotNull GithubConnection connection) throws IOException {
     try {
       String path = "/authorizations";
-
-      PagedRequest<GithubAuthorization> request = new PagedRequest<>(path, GithubAuthorization[].class, ACCEPT_V3_JSON);
-
-      return request.getAll(connection);
+      return loadAll(connection, path, GithubAuthorization[].class, ACCEPT_V3_JSON);
     }
     catch (GithubConfusingException e) {
       e.setDetails("Can't get available tokens");
@@ -207,22 +232,9 @@ public class GithubApiUtil {
   }
 
   @NotNull
-  public static GithubUser getCurrentUser(@NotNull GithubConnection connection) throws IOException {
+  public static GithubUserDetailed getCurrentUser(@NotNull GithubConnection connection) throws IOException {
     try {
-      JsonElement result = connection.getRequest("/user", ACCEPT_V3_JSON);
-      return fromJson(result, GithubUser.class);
-    }
-    catch (GithubConfusingException e) {
-      e.setDetails("Can't get user info");
-      throw e;
-    }
-  }
-
-  @NotNull
-  public static GithubUserDetailed getCurrentUserDetailed(@NotNull GithubConnection connection) throws IOException {
-    try {
-      JsonElement result = connection.getRequest("/user", ACCEPT_V3_JSON);
-      return fromJson(result, GithubUserDetailed.class);
+      return load(connection, "/user", GithubUserDetailed.class, ACCEPT_V3_JSON);
     }
     catch (GithubConfusingException e) {
       e.setDetails("Can't get user info");
@@ -234,10 +246,7 @@ public class GithubApiUtil {
   public static List<GithubRepo> getUserRepos(@NotNull GithubConnection connection) throws IOException {
     try {
       String path = "/user/repos?" + PER_PAGE;
-
-      PagedRequest<GithubRepo> request = new PagedRequest<>(path, GithubRepo[].class, ACCEPT_V3_JSON);
-
-      return request.getAll(connection);
+      return loadAll(connection, path, GithubRepo[].class, ACCEPT_V3_JSON);
     }
     catch (GithubConfusingException e) {
       e.setDetails("Can't get user repositories");
@@ -249,10 +258,7 @@ public class GithubApiUtil {
   public static List<GithubRepo> getUserRepos(@NotNull GithubConnection connection, @NotNull String user) throws IOException {
     try {
       String path = "/users/" + user + "/repos?" + PER_PAGE;
-
-      PagedRequest<GithubRepo> request = new PagedRequest<>(path, GithubRepo[].class, ACCEPT_V3_JSON);
-
-      return request.getAll(connection);
+      return loadAll(connection, path, GithubRepo[].class, ACCEPT_V3_JSON);
     }
     catch (GithubConfusingException e) {
       e.setDetails("Can't get user repositories: " + user);
@@ -291,13 +297,12 @@ public class GithubApiUtil {
   @NotNull
   public static List<GithubRepoOrg> getMembershipRepos(@NotNull GithubConnection connection) throws IOException {
     String orgsPath = "/user/orgs?" + PER_PAGE;
-    PagedRequest<GithubOrg> orgsRequest = new PagedRequest<>(orgsPath, GithubOrg[].class);
+    List<GithubOrg> orgs = loadAll(connection, orgsPath, GithubOrg[].class);
 
     List<GithubRepoOrg> repos = new ArrayList<>();
-    for (GithubOrg org : orgsRequest.getAll(connection)) {
+    for (GithubOrg org : orgs) {
       String path = "/orgs/" + org.getLogin() + "/repos?type=member&" + PER_PAGE;
-      PagedRequest<GithubRepoOrg> request = new PagedRequest<>(path, GithubRepoOrg[].class, ACCEPT_V3_JSON);
-      repos.addAll(request.getAll(connection));
+      repos.addAll(loadAll(connection, path, GithubRepoOrg[].class, ACCEPT_V3_JSON));
     }
 
     return repos;
@@ -306,8 +311,7 @@ public class GithubApiUtil {
   @NotNull
   public static List<GithubRepo> getWatchedRepos(@NotNull GithubConnection connection) throws IOException {
     String pathWatched = "/user/subscriptions?" + PER_PAGE;
-    PagedRequest<GithubRepo> requestWatched = new PagedRequest<>(pathWatched, GithubRepo[].class, ACCEPT_V3_JSON);
-    return requestWatched.getAll(connection);
+    return loadAll(connection, pathWatched, GithubRepo[].class, ACCEPT_V3_JSON);
   }
 
   @NotNull
@@ -315,10 +319,7 @@ public class GithubApiUtil {
     throws IOException {
     try {
       final String request = "/repos/" + owner + "/" + name;
-
-      JsonElement jsonObject = connection.getRequest(request, ACCEPT_V3_JSON);
-
-      return fromJson(jsonObject, GithubRepoDetailed.class);
+      return load(connection, request, GithubRepoDetailed.class, ACCEPT_V3_JSON);
     }
     catch (GithubConfusingException e) {
       e.setDetails("Can't get repository info: " + owner + "/" + name);
@@ -353,9 +354,7 @@ public class GithubApiUtil {
   public static GithubGist getGist(@NotNull GithubConnection connection, @NotNull String id) throws IOException {
     try {
       String path = "/gists/" + id;
-      JsonElement result = connection.getRequest(path, ACCEPT_V3_JSON);
-
-      return fromJson(result, GithubGist.class);
+      return load(connection, path, GithubGist.class, ACCEPT_V3_JSON);
     }
     catch (GithubConfusingException e) {
       e.setDetails("Can't get gist info: id " + id);
@@ -369,8 +368,8 @@ public class GithubApiUtil {
                                       @NotNull String description,
                                       boolean isPrivate) throws IOException {
     try {
-      String request = gson.toJson(new GithubGistRequest(contents, description, !isPrivate));
-      return fromJson(connection.postRequest("/gists", request, ACCEPT_V3_JSON), GithubGist.class);
+      GithubGistRequest request = new GithubGistRequest(contents, description, !isPrivate);
+      return post(connection, "/gists", request, GithubGist.class, ACCEPT_V3_JSON);
     }
     catch (GithubConfusingException e) {
       e.setDetails("Can't create gist");
@@ -379,11 +378,11 @@ public class GithubApiUtil {
   }
 
   @NotNull
-  public static List<GithubRepo> getForks(@NotNull GithubConnection connection, @NotNull String owner, @NotNull String name)
-    throws IOException {
+  public static List<GithubRepo> getForks(@NotNull GithubConnection connection,
+                                          @NotNull String owner,
+                                          @NotNull String name) throws IOException {
     String path = "/repos/" + owner + "/" + name + "/forks?" + PER_PAGE;
-    PagedRequest<GithubRepo> requestWatched = new PagedRequest<>(path, GithubRepo[].class, ACCEPT_V3_JSON);
-    return requestWatched.getAll(connection);
+    return loadAll(connection, path, GithubRepo[].class, ACCEPT_V3_JSON);
   }
 
   @NotNull
@@ -396,8 +395,8 @@ public class GithubApiUtil {
                                                     @NotNull String base) throws IOException {
     try {
       String path = "/repos/" + user + "/" + repo + "/pulls";
-      String request = gson.toJson(new GithubPullRequestRequest(title, description, head, base));
-      return fromJson(connection.postRequest(path, request, ACCEPT_V3_JSON), GithubPullRequest.class);
+      GithubPullRequestRequest request = new GithubPullRequestRequest(title, description, head, base);
+      return post(connection, path, request, GithubPullRequest.class, ACCEPT_V3_JSON);
     }
     catch (GithubConfusingException e) {
       e.setDetails("Can't create pull request");
@@ -415,8 +414,7 @@ public class GithubApiUtil {
       String path = "/user/repos";
 
       GithubRepoRequest request = new GithubRepoRequest(name, description, isPrivate);
-
-      return fromJson(connection.postRequest(path, gson.toJson(request), ACCEPT_V3_JSON), GithubRepo.class);
+      return post(connection, path, request, GithubRepo.class, ACCEPT_V3_JSON);
     }
     catch (GithubConfusingException e) {
       e.setDetails("Can't create repository: " + name);
@@ -444,7 +442,7 @@ public class GithubApiUtil {
         path = "/repos/" + user + "/" + repo + "/issues?assignee=" + assigned + "&" + PER_PAGE + "&" + state;
       }
 
-      PagedRequest<GithubIssue> request = new PagedRequest<>(path, GithubIssue[].class, ACCEPT_V3_JSON);
+      PagedRequest<GithubIssue> request = new ArrayPagedRequest<>(path, GithubIssue[].class, ACCEPT_V3_JSON);
 
       List<GithubIssue> result = new ArrayList<>();
       while (request.hasNext() && max > result.size()) {
@@ -459,9 +457,6 @@ public class GithubApiUtil {
   }
 
   @NotNull
-  /*
-   * All issues - open and closed
-   */
   public static List<GithubIssue> getIssuesQueried(@NotNull GithubConnection connection,
                                                    @NotNull String user,
                                                    @NotNull String repo,
@@ -475,9 +470,7 @@ public class GithubApiUtil {
       String path = "/search/issues?q=" + query;
 
       //TODO: Use bodyHtml for issues - GitHub does not support this feature for SearchApi yet
-      JsonElement result = connection.getRequest(path, ACCEPT_V3_JSON);
-
-      return fromJson(result, GithubIssuesSearchResult.class).getIssues();
+      return load(connection, path, GithubIssuesSearchResult.class, ACCEPT_V3_JSON).getIssues();
     }
     catch (GithubConfusingException e) {
       e.setDetails("Can't get queried issues: " + user + "/" + repo + " - " + query);
@@ -490,10 +483,7 @@ public class GithubApiUtil {
     throws IOException {
     try {
       String path = "/repos/" + user + "/" + repo + "/issues/" + id;
-
-      JsonElement result = connection.getRequest(path, ACCEPT_V3_JSON);
-
-      return fromJson(result, GithubIssue.class);
+      return load(connection, path, GithubIssue.class, ACCEPT_V3_JSON);
     }
     catch (GithubConfusingException e) {
       e.setDetails("Can't get issue info: " + user + "/" + repo + " - " + id);
@@ -509,10 +499,7 @@ public class GithubApiUtil {
     throws IOException {
     try {
       String path = "/repos/" + user + "/" + repo + "/issues/" + id + "/comments?" + PER_PAGE;
-
-      PagedRequest<GithubIssueComment> request = new PagedRequest<>(path, GithubIssueComment[].class, ACCEPT_V3_JSON_HTML_MARKUP);
-
-      return request.getAll(connection);
+      return loadAll(connection, path, GithubIssueComment[].class, ACCEPT_V3_JSON_HTML_MARKUP);
     }
     catch (GithubConfusingException e) {
       e.setDetails("Can't get issue comments: " + user + "/" + repo + " - " + id);
@@ -549,9 +536,7 @@ public class GithubApiUtil {
                                                @NotNull String sha) throws IOException {
     try {
       String path = "/repos/" + user + "/" + repo + "/commits/" + sha;
-
-      JsonElement result = connection.getRequest(path, ACCEPT_V3_JSON);
-      return fromJson(result, GithubCommitDetailed.class);
+      return load(connection, path, GithubCommitDetailed.class, ACCEPT_V3_JSON);
     }
     catch (GithubConfusingException e) {
       e.setDetails("Can't get commit info: " + user + "/" + repo + " - " + sha);
@@ -566,10 +551,7 @@ public class GithubApiUtil {
                                                             @NotNull String sha) throws IOException {
     try {
       String path = "/repos/" + user + "/" + repo + "/commits/" + sha + "/comments";
-
-      PagedRequest<GithubCommitComment> request = new PagedRequest<>(path, GithubCommitComment[].class, ACCEPT_V3_JSON_HTML_MARKUP);
-
-      return request.getAll(connection);
+      return loadAll(connection, path, GithubCommitComment[].class, ACCEPT_V3_JSON_HTML_MARKUP);
     }
     catch (GithubConfusingException e) {
       e.setDetails("Can't get commit comments: " + user + "/" + repo + " - " + sha);
@@ -584,10 +566,7 @@ public class GithubApiUtil {
                                                                  long id) throws IOException {
     try {
       String path = "/repos/" + user + "/" + repo + "/pulls/" + id + "/comments";
-
-      PagedRequest<GithubCommitComment> request = new PagedRequest<>(path, GithubCommitComment[].class, ACCEPT_V3_JSON_HTML_MARKUP);
-
-      return request.getAll(connection);
+      return loadAll(connection, path, GithubCommitComment[].class, ACCEPT_V3_JSON_HTML_MARKUP);
     }
     catch (GithubConfusingException e) {
       e.setDetails("Can't get pull request comments: " + user + "/" + repo + " - " + id);
@@ -600,7 +579,7 @@ public class GithubApiUtil {
     throws IOException {
     try {
       String path = "/repos/" + user + "/" + repo + "/pulls/" + id;
-      return fromJson(connection.getRequest(path, ACCEPT_V3_JSON_HTML_MARKUP), GithubPullRequest.class);
+      return load(connection, path, GithubPullRequest.class, ACCEPT_V3_JSON_HTML_MARKUP);
     }
     catch (GithubConfusingException e) {
       e.setDetails("Can't get pull request info: " + user + "/" + repo + " - " + id);
@@ -613,10 +592,7 @@ public class GithubApiUtil {
     throws IOException {
     try {
       String path = "/repos/" + user + "/" + repo + "/pulls?" + PER_PAGE;
-
-      PagedRequest<GithubPullRequest> request = new PagedRequest<>(path, GithubPullRequest[].class, ACCEPT_V3_JSON_HTML_MARKUP);
-
-      return request.getAll(connection);
+      return loadAll(connection, path, GithubPullRequest[].class, ACCEPT_V3_JSON_HTML_MARKUP);
     }
     catch (GithubConfusingException e) {
       e.setDetails("Can't get pull requests" + user + "/" + repo);
@@ -626,9 +602,8 @@ public class GithubApiUtil {
 
   @NotNull
   public static PagedRequest<GithubPullRequest> getPullRequests(@NotNull String user, @NotNull String repo) {
-    String path = "/repos/" + user + "/" + repo + "/pulls?" + PER_PAGE;
-
-    return new PagedRequest<>(path, GithubPullRequest[].class, ACCEPT_V3_JSON_HTML_MARKUP);
+    String path = "/repos/" + user + "/" + repo + "/pulls?state=all&" + PER_PAGE;
+    return new ArrayPagedRequest<>(path, GithubPullRequest[].class, ACCEPT_V3_JSON_HTML_MARKUP);
   }
 
   @NotNull
@@ -639,10 +614,7 @@ public class GithubApiUtil {
     throws IOException {
     try {
       String path = "/repos/" + user + "/" + repo + "/pulls/" + id + "/commits?" + PER_PAGE;
-
-      PagedRequest<GithubCommit> request = new PagedRequest<>(path, GithubCommit[].class, ACCEPT_V3_JSON);
-
-      return request.getAll(connection);
+      return loadAll(connection, path, GithubCommit[].class, ACCEPT_V3_JSON);
     }
     catch (GithubConfusingException e) {
       e.setDetails("Can't get pull request commits: " + user + "/" + repo + " - " + id);
@@ -658,10 +630,7 @@ public class GithubApiUtil {
     throws IOException {
     try {
       String path = "/repos/" + user + "/" + repo + "/pulls/" + id + "/files?" + PER_PAGE;
-
-      PagedRequest<GithubFile> request = new PagedRequest<>(path, GithubFile[].class, ACCEPT_V3_JSON);
-
-      return request.getAll(connection);
+      return loadAll(connection, path, GithubFile[].class, ACCEPT_V3_JSON);
     }
     catch (GithubConfusingException e) {
       e.setDetails("Can't get pull request files: " + user + "/" + repo + " - " + id);
@@ -674,10 +643,7 @@ public class GithubApiUtil {
     throws IOException {
     try {
       String path = "/repos/" + user + "/" + repo + "/branches?" + PER_PAGE;
-
-      PagedRequest<GithubBranch> request = new PagedRequest<>(path, GithubBranch[].class, ACCEPT_V3_JSON);
-
-      return request.getAll(connection);
+      return loadAll(connection, path, GithubBranch[].class, ACCEPT_V3_JSON);
     }
     catch (GithubConfusingException e) {
       e.setDetails("Can't get repository branches: " + user + "/" + repo);
@@ -693,7 +659,7 @@ public class GithubApiUtil {
     try {
       String path = "/repos/" + user + "/" + repo + "/forks?" + PER_PAGE;
 
-      PagedRequest<GithubRepo> request = new PagedRequest<>(path, GithubRepo[].class, ACCEPT_V3_JSON);
+      PagedRequest<GithubRepo> request = new ArrayPagedRequest<>(path, GithubRepo[].class, ACCEPT_V3_JSON);
 
       while (request.hasNext()) {
         for (GithubRepo fork : request.next(connection)) {

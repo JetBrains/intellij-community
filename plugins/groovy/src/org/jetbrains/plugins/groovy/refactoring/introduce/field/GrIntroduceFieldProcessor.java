@@ -380,7 +380,7 @@ public class GrIntroduceFieldProcessor {
     final PsiType type = mySettings.getSelectedType();
     final String modifier = mySettings.getVisibilityModifier();
 
-    List<String> modifiers = new ArrayList<String>();
+    List<String> modifiers = new ArrayList<>();
     if (targetClass instanceof GroovyScriptClass) {
       modifiers.add("@" + GroovyCommonClassNames.GROOVY_TRANSFORM_FIELD);
     }

@@ -133,7 +133,7 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
   @Override
   protected void analyze(@NotNull final Project project, @NotNull final AnalysisScope scope) {
     PropertiesComponent.getInstance().setValue(UPDATE_EXISTING_COPYRIGHTS, String.valueOf(myUpdateExistingCopyrightsCb.isSelected()), "true");
-    final Map<PsiFile, Runnable> preparations = new LinkedHashMap<PsiFile, Runnable>();
+    final Map<PsiFile, Runnable> preparations = new LinkedHashMap<>();
     Task.Backgroundable task = new Task.Backgroundable(project, "Prepare Copyright...", true) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {

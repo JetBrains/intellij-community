@@ -45,7 +45,7 @@
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="&lt;html&gt;&lt;a href=&quot;https://stepic.org/accounts/signup/?next=/users/16516293/learn&quot;&gt;Do not have Stepik account?&lt;/a&gt;&lt;/html&gt;"/>
+          <text value="&lt;html&gt;&lt;a href=&quot;https://stepic.org/registration?next=%2Fexplore%2Fcourses&quot;&gt;Do not have Stepik account?&lt;/a&gt;&lt;/html&gt;"/>
           <toolTipText value="Click To Sign Up To Stepik"/>
         </properties>
       </component>

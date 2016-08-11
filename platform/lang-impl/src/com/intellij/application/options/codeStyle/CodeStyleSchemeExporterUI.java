@@ -67,7 +67,7 @@ class CodeStyleSchemeExporterUI {
   }
 
   private static String[] enumExporters() {
-    List<String> names = new ArrayList<String>();
+    List<String> names = new ArrayList<>();
     Collection<SchemeExporterEP<CodeStyleScheme>> extensions = SchemeExporterEP.getExtensions(CodeStyleScheme.class);
     for (SchemeExporterEP<CodeStyleScheme> extension : extensions) {
       names.add(extension.name);

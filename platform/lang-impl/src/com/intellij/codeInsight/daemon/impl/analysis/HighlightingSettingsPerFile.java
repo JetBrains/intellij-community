@@ -47,7 +47,7 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
     return (HighlightingSettingsPerFile)ServiceManager.getService(project, HighlightingLevelManager.class);
   }
 
-  private final Map<VirtualFile, FileHighlightingSetting[]> myHighlightSettings = new HashMap<VirtualFile, FileHighlightingSetting[]>();
+  private final Map<VirtualFile, FileHighlightingSetting[]> myHighlightSettings = new HashMap<>();
 
   private static int getRootIndex(PsiFile file) {
     FileViewProvider provider = file.getViewProvider();
@@ -55,7 +55,7 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
     if (languages.size() == 1) {
       return 0;
     }
-    List<Language> array = new ArrayList<Language>(languages);
+    List<Language> array = new ArrayList<>(languages);
     Collections.sort(array, PsiUtilBase.LANGUAGE_COMPARATOR);
     for (int i = 0; i < array.size(); i++) {
       Language language = array.get(i);
@@ -132,7 +132,7 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
       if (url == null) continue;
       final VirtualFile fileByUrl = VirtualFileManager.getInstance().findFileByUrl(url);
       if (fileByUrl != null) {
-        final List<FileHighlightingSetting> settings = new ArrayList<FileHighlightingSetting>();
+        final List<FileHighlightingSetting> settings = new ArrayList<>();
         int index = 0;
         while (child.getAttributeValue(ROOT_ATT_PREFIX + index) != null) {
           final String attributeValue = child.getAttributeValue(ROOT_ATT_PREFIX + index++);

@@ -100,8 +100,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private MavenMergingUpdateQueue myImportingQueue;
   private final Object myImportingDataLock = new Object();
-  private final Map<MavenProject, MavenProjectChanges> myProjectsToImport = new LinkedHashMap<MavenProject, MavenProjectChanges>();
-  private final Set<MavenProject> myProjectsToResolve = new LinkedHashSet<MavenProject>();
+  private final Map<MavenProject, MavenProjectChanges> myProjectsToImport = new LinkedHashMap<>();
+  private final Set<MavenProject> myProjectsToResolve = new LinkedHashSet<>();
 
   private boolean myImportModuleGroupsRequired = false;
 
@@ -307,7 +307,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private void applyTreeToState() {
     myState.originalFiles = myProjectsTree.getManagedFilesPaths();
-    myState.ignoredFiles = new THashSet<String>(myProjectsTree.getIgnoredFilesPaths());
+    myState.ignoredFiles = new THashSet<>(myProjectsTree.getIgnoredFilesPaths());
     myState.ignoredPathMasks = myProjectsTree.getIgnoredFilesPatterns();
   }
 
@@ -315,7 +315,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     MavenWorkspaceSettings settings = getWorkspaceSettings();
     MavenExplicitProfiles explicitProfiles = new MavenExplicitProfiles(settings.enabledProfiles, settings.disabledProfiles);
     myProjectsTree.resetManagedFilesPathsAndProfiles(myState.originalFiles, explicitProfiles);
-    myProjectsTree.setIgnoredFilesPaths(new ArrayList<String>(myState.ignoredFiles));
+    myProjectsTree.setIgnoredFilesPaths(new ArrayList<>(myState.ignoredFiles));
     myProjectsTree.setIgnoredFilesPatterns(myState.ignoredPathMasks);
   }
 
@@ -396,14 +396,14 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         List<MavenProject> updatedProjects = MavenUtil.collectFirsts(updated);
 
         // import only updated projects and dependents of them (we need to update faced-deps, packaging etc);
-        List<Pair<MavenProject, MavenProjectChanges>> toImport = new ArrayList<Pair<MavenProject, MavenProjectChanges>>(updated);
+        List<Pair<MavenProject, MavenProjectChanges>> toImport = new ArrayList<>(updated);
 
         for (MavenProject eachDependent : myProjectsTree.getDependentProjects(updatedProjects)) {
           toImport.add(Pair.create(eachDependent, MavenProjectChanges.DEPENDENCIES));
         }
 
         // resolve updated, theirs dependents, and dependents of deleted
-        Set<MavenProject> toResolve = new THashSet<MavenProject>(updatedProjects);
+        Set<MavenProject> toResolve = new THashSet<>(updatedProjects);
         toResolve.addAll(myProjectsTree.getDependentProjects(ContainerUtil.concat(updatedProjects, deleted)));
 
         // do not try to resolve projects with syntactic errors
@@ -776,7 +776,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public Set<MavenRemoteRepository> getRemoteRepositories() {
-    Set<MavenRemoteRepository> result = new THashSet<MavenRemoteRepository>();
+    Set<MavenRemoteRepository> result = new THashSet<>();
     for (MavenProject each : getProjects()) {
       for (MavenRemoteRepository eachRepository : each.getRemoteRepositories()) {
         result.add(eachRepository);
@@ -808,7 +808,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private AsyncPromise<Void> doScheduleUpdateProjects(final Collection<MavenProject> projects,
                                                       final boolean forceUpdate,
                                                       final boolean forceImportAndResolve) {
-    final AsyncPromise<Void> promise = new AsyncPromise<Void>();
+    final AsyncPromise<Void> promise = new AsyncPromise<>();
     MavenUtil.runWhenInitialized(myProject, new DumbAwareRunnable() {
       public void run() {
         if (projects == null) {
@@ -836,11 +836,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private AsyncPromise<List<Module>> scheduleResolve() {
-    final AsyncPromise<List<Module>> result = new AsyncPromise<List<Module>>();
+    final AsyncPromise<List<Module>> result = new AsyncPromise<>();
     runWhenFullyOpen(() -> {
       LinkedHashSet<MavenProject> toResolve;
       synchronized (myImportingDataLock) {
-        toResolve = new LinkedHashSet<MavenProject>(myProjectsToResolve);
+        toResolve = new LinkedHashSet<>(myProjectsToResolve);
         myProjectsToResolve.clear();
       }
       if(toResolve.isEmpty()) return;
@@ -963,7 +963,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private Promise<List<Module>> scheduleImport() {
-    final AsyncPromise<List<Module>> result = new AsyncPromise<List<Module>>();
+    final AsyncPromise<List<Module>> result = new AsyncPromise<>();
     runWhenFullyOpen(() -> myImportingQueue.queue(new Update(MavenProjectsManager.this) {
       public void run() {
         result.setResult(importProjects());
@@ -974,7 +974,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @TestOnly
   public void scheduleImportInTests(List<VirtualFile> projectFiles) {
-    List<Pair<MavenProject, MavenProjectChanges>> toImport = new ArrayList<Pair<MavenProject, MavenProjectChanges>>();
+    List<Pair<MavenProject, MavenProjectChanges>> toImport = new ArrayList<>();
     for (VirtualFile each : projectFiles) {
       MavenProject project = findProject(each);
       if (project != null) {
@@ -1031,7 +1031,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       return;
     }
 
-    final Ref<Runnable> wrapper = new Ref<Runnable>();
+    final Ref<Runnable> wrapper = new Ref<>();
     wrapper.set(() -> {
       if (!StartupManagerEx.getInstanceEx(myProject).postStartupActivityPassed()) {
         myInitializationAlarm.addRequest(() -> wrapper.get().run(), 1000);
@@ -1117,14 +1117,14 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     final Map<MavenProject, MavenProjectChanges> projectsToImportWithChanges;
     final boolean importModuleGroupsRequired;
     synchronized (myImportingDataLock) {
-      projectsToImportWithChanges = new LinkedHashMap<MavenProject, MavenProjectChanges>(myProjectsToImport);
+      projectsToImportWithChanges = new LinkedHashMap<>(myProjectsToImport);
       myProjectsToImport.clear();
       importModuleGroupsRequired = myImportModuleGroupsRequired;
       myImportModuleGroupsRequired = false;
     }
 
-    final Ref<MavenProjectImporter> importer = new Ref<MavenProjectImporter>();
-    final Ref<List<MavenProjectsProcessorTask>> postTasks = new Ref<List<MavenProjectsProcessorTask>>();
+    final Ref<MavenProjectImporter> importer = new Ref<>();
+    final Ref<List<MavenProjectsProcessorTask>> postTasks = new Ref<>();
 
     final Runnable r = () -> {
       MavenProjectImporter projectImporter = new MavenProjectImporter(myProject,
@@ -1183,7 +1183,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private static Map<VirtualFile, Module> getFileToModuleMapping(MavenModelsProvider modelsProvider) {
-    Map<VirtualFile, Module> result = new THashMap<VirtualFile, Module>();
+    Map<VirtualFile, Module> result = new THashMap<>();
     for (Module each : modelsProvider.getModules()) {
       VirtualFile f = findPomFile(each, modelsProvider);
       if (f != null) result.put(f, each);
@@ -1192,7 +1192,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private List<VirtualFile> collectAllAvailablePomFiles() {
-    List<VirtualFile> result = new ArrayList<VirtualFile>(getFileToModuleMapping(new MavenDefaultModelsProvider(myProject)).keySet());
+    List<VirtualFile> result = new ArrayList<>(getFileToModuleMapping(new MavenDefaultModelsProvider(myProject)).keySet());
 
     VirtualFile pom = myProject.getBaseDir().findChild(MavenConstants.POM_XML);
     if (pom != null) result.add(pom);

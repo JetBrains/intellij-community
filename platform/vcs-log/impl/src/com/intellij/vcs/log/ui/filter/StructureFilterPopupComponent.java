@@ -57,7 +57,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
   public static final FilePathByNameComparator FILE_PATH_BY_NAME_COMPARATOR = new FilePathByNameComparator();
   public static final FilePathByPathComparator FILE_PATH_BY_PATH_COMPARATOR = new FilePathByPathComparator();
   @NotNull private final VcsLogColorManager myColorManager;
-  private final FixedSizeQueue<VcsLogStructureFilter> myHistory = new FixedSizeQueue<VcsLogStructureFilter>(5);
+  private final FixedSizeQueue<VcsLogStructureFilter> myHistory = new FixedSizeQueue<>(5);
 
   public StructureFilterPopupComponent(@NotNull FilterModel<VcsLogFileFilter> filterModel, @NotNull VcsLogColorManager colorManager) {
     super("Paths", filterModel);
@@ -173,13 +173,13 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
   protected ActionGroup createActionGroup() {
     Set<VirtualFile> roots = getAllRoots();
 
-    List<AnAction> rootActions = new ArrayList<AnAction>();
+    List<AnAction> rootActions = new ArrayList<>();
     if (myColorManager.isMultipleRoots()) {
       for (VirtualFile root : ContainerUtil.sorted(roots, FILE_BY_NAME_COMPARATOR)) {
         rootActions.add(new SelectVisibleRootAction(root));
       }
     }
-    List<AnAction> structureActions = new ArrayList<AnAction>();
+    List<AnAction> structureActions = new ArrayList<>();
     for (VcsLogStructureFilter filter : myHistory) {
       structureActions.add(new SelectFromHistoryAction(filter));
     }
@@ -227,7 +227,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     }
     else {
       if (visible) {
-        visibleRoots = ContainerUtil.union(new HashSet<VirtualFile>(rootFilter.getRoots()), Collections.singleton(root));
+        visibleRoots = ContainerUtil.union(new HashSet<>(rootFilter.getRoots()), Collections.singleton(root));
       }
       else {
         visibleRoots = ContainerUtil.subtract(rootFilter.getRoots(), Collections.singleton(root));
@@ -378,7 +378,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       }
 
       VcsStructureChooser chooser = new VcsStructureChooser(project, "Select Files or Folders to Filter by", files,
-                                                            new ArrayList<VirtualFile>(dataPack.getLogProviders().keySet()));
+                                                            new ArrayList<>(dataPack.getLogProviders().keySet()));
       if (chooser.showAndGet()) {
         VcsLogStructureFilterImpl structureFilter = new VcsLogStructureFilterImpl(new HashSet<VirtualFile>(chooser.getSelectedFiles()));
         myFilterModel.setFilter(new VcsLogFileFilter(structureFilter, null));
@@ -429,7 +429,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
   }
 
   private static class FixedSizeQueue<T> implements Iterable<T> {
-    private final LinkedList<T> myQueue = new LinkedList<T>();
+    private final LinkedList<T> myQueue = new LinkedList<>();
     private final int maxSize;
 
     public FixedSizeQueue(int maxSize) {

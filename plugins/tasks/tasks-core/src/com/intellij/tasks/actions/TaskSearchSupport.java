@@ -39,7 +39,7 @@ public class TaskSearchSupport {
   }
 
   public static List<Task> getLocalAndCachedTasks(final TaskManager myManager, String pattern, final boolean withClosed) {
-    List<Task> tasks = new ArrayList<Task>();
+    List<Task> tasks = new ArrayList<>();
     ContainerUtil.addAll(tasks, myManager.getLocalTasks(withClosed));
     ContainerUtil.addAll(tasks, ContainerUtil.filter(myManager.getCachedIssues(withClosed),
                                                      task -> myManager.findTask(task.getId()) == null));

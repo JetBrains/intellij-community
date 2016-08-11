@@ -54,9 +54,14 @@ open class StateStorageManagerImpl(private val rootTagName: String,
                                    private val virtualFileTracker: StorageVirtualFileTracker? = StateStorageManagerImpl.createDefaultVirtualTracker(componentManager) ) : StateStorageManager {
   private val macros: MutableList<Macro> = ContainerUtil.createLockFreeCopyOnWriteList()
   private val storageLock = ReentrantReadWriteLock()
-  private val storages = THashMap<String, StateStorage>()
+  val storages = THashMap<String, StateStorage>()
 
-  var streamProvider: StreamProvider? = null
+  private val streamWrapper = StreamProviderWrapper()
+  var streamProvider: StreamProvider?
+    get() = streamWrapper
+    set (value) {
+      streamWrapper.setStreamProvider(value)
+    }
 
   // access under storageLock
   private var isUseVfsListener = if (componentManager == null) ThreeState.NO else ThreeState.UNSURE // unsure because depends on stream provider state

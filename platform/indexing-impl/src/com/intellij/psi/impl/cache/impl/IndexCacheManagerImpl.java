@@ -74,7 +74,7 @@ public class IndexCacheManagerImpl implements CacheManager{
       return VirtualFile.EMPTY_ARRAY;
     }
 
-    final List<VirtualFile> result = new ArrayList<VirtualFile>(5);
+    final List<VirtualFile> result = new ArrayList<>(5);
     Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(result);
     collectVirtualFilesWithWord(word, occurenceMask, scope, caseSensitively, processor);
     return result.isEmpty() ? VirtualFile.EMPTY_ARRAY : result.toArray(new VirtualFile[result.size()]);
@@ -119,7 +119,7 @@ public class IndexCacheManagerImpl implements CacheManager{
 
   @Override
   public boolean processFilesWithWord(@NotNull final Processor<PsiFile> psiFileProcessor, @NotNull final String word, final short occurrenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
-    final List<VirtualFile> result = new ArrayList<VirtualFile>(5);
+    final List<VirtualFile> result = new ArrayList<>(5);
     Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(result);
     collectVirtualFilesWithWord(word, occurrenceMask, scope, caseSensitively, processor);
     if (result.isEmpty()) return true;

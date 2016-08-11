@@ -39,7 +39,7 @@ import java.util.Map;
  * @author yole
  */
 public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
-  protected final Map<RadComponent, MyPropertyChangeListener> myListenerMap = new HashMap<RadComponent, MyPropertyChangeListener>();
+  protected final Map<RadComponent, MyPropertyChangeListener> myListenerMap = new HashMap<>();
 
   @Override
   public boolean isGrid() {
@@ -435,7 +435,7 @@ public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
   }
 
   private static List<Boolean> collectCanCellsGrow(final RadAbstractGridLayoutManager grid, final RadContainer container, final boolean isRow) {
-    List<Boolean> result = new ArrayList<Boolean>();
+    List<Boolean> result = new ArrayList<>();
     for(int i=0; i<grid.getGridCellCount(container, isRow); i++) {
       if (!grid.isGapCell(container, isRow, i)) {
         result.add(grid.canCellGrow(container, isRow, i));
@@ -445,7 +445,7 @@ public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
   }
 
   private static List<RadComponent> collectComponents(final RadContainer container) {
-    List<RadComponent> contents = new ArrayList<RadComponent>();
+    List<RadComponent> contents = new ArrayList<>();
     for(int i=container.getComponentCount()-1; i >= 0; i--) {
       final RadComponent component = container.getComponent(i);
       if (!(component instanceof RadHSpacer) && !(component instanceof RadVSpacer)) {

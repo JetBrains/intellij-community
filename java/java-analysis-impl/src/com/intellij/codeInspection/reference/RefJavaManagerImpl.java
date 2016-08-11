@@ -87,7 +87,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
   @Override
   public RefPackage getPackage(String packageName) {
     if (myPackages == null) {
-      myPackages = new THashMap<String, RefPackage>();
+      myPackages = new THashMap<>();
     }
 
     RefPackage refPackage = myPackages.get(packageName);

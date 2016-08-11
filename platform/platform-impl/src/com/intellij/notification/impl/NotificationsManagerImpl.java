@@ -101,7 +101,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
   @Override
   @NotNull
   public <T extends Notification> T[] getNotificationsOfType(@NotNull Class<T> klass, @Nullable final Project project) {
-    final List<T> result = new ArrayList<T>();
+    final List<T> result = new ArrayList<>();
     if (project == null || !project.isDefault() && !project.isDisposed()) {
       for (Notification notification : EventLog.getLogModel(project).getNotifications()) {
         if (klass.isInstance(notification)) {
@@ -242,7 +242,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       final ProjectManager projectManager = ProjectManager.getInstance();
       final boolean noProjects = projectManager.getOpenProjects().length == 0;
       final boolean sticky = NotificationDisplayType.STICKY_BALLOON == displayType || noProjects;
-      Ref<Object> layoutDataRef = newEnabled() ? new Ref<Object>() : null;
+      Ref<Object> layoutDataRef = newEnabled() ? new Ref<>() : null;
       if (layoutDataRef != null) {
         if (project == null || project.isDefault()) {
           BalloonLayoutData layoutData = new BalloonLayoutData();
@@ -429,7 +429,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       buttons.setOpaque(false);
       content.add(BorderLayout.SOUTH, buttons);
 
-      final Ref<JButton> defaultButton = new Ref<JButton>();
+      final Ref<JButton> defaultButton = new Ref<>();
 
       NotificationActionProvider provider = (NotificationActionProvider)notification;
       for (NotificationActionProvider.Action action : provider.getActions(listener)) {
@@ -675,7 +675,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
       text.setCaret(new TextCaret(layoutData));
 
-      expandAction = new LinkLabel<Void>(null, AllIcons.Ide.Notification.Expand, new LinkListener<Void>() {
+      expandAction = new LinkLabel<>(null, AllIcons.Ide.Notification.Expand, new LinkListener<Void>() {
         @Override
         public void linkSelected(LinkLabel link, Void ignored) {
           layoutData.showMinSize = !layoutData.showMinSize;
@@ -914,7 +914,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       Presentation presentation = action.getTemplatePresentation();
       actionPanel.add(
         HorizontalLayout.LEFT,
-        new LinkLabel<AnAction>(presentation.getText(), presentation.getIcon(), new LinkListener<AnAction>() {
+        new LinkLabel<>(presentation.getText(), presentation.getIcon(), new LinkListener<AnAction>() {
           @Override
           public void linkSelected(LinkLabel aSource, AnAction action) {
             Notification.fire(notification, action);

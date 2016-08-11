@@ -57,7 +57,7 @@ public class ProducerConsumer<T> {
 
   public ProducerConsumer(final Consumer<T> consumer, final int maxSize, final boolean onPooledThread) {
     myConsumer = consumer;
-    myQueue = new ArrayDeque<T>();
+    myQueue = new ArrayDeque<>();
     myMaxSize = maxSize;
     myLock = new Object();
 

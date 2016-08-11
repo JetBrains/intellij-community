@@ -248,8 +248,8 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
       }
       try {
         // FIXME: loadRevisions() can call runProcessWithProgressSynchronously() inside
-        final Ref<Throwable> exceptionRef = new Ref<Throwable>();
-        final Ref<MergeData> mergeDataRef = new Ref<MergeData>();
+        final Ref<Throwable> exceptionRef = new Ref<>();
+        final Ref<MergeData> mergeDataRef = new Ref<>();
         final VirtualFile finalFile = file;
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           @Override

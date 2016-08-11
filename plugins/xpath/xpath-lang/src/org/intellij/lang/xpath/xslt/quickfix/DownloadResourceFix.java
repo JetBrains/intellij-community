@@ -105,7 +105,7 @@ public class DownloadResourceFix implements LocalQuickFix {
       if (document != null) {
         final XmlTag rootTag = document.getRootTag();
         if (rootTag != null) {
-          final Set<String> list = new HashSet<String>();
+          final Set<String> list = new HashSet<>();
           processReferences(rootTag.findSubTags("include", XsltSupport.XSLT_NS), list);
           processReferences(rootTag.findSubTags("import", XsltSupport.XSLT_NS), list);
           return list;

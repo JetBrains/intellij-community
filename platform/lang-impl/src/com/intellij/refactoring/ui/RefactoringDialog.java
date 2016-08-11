@@ -132,7 +132,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
   @Override
   @NotNull
   protected Action[] createActions() {
-    List<Action> actions = new ArrayList<Action>();
+    List<Action> actions = new ArrayList<>();
     actions.add(getRefactorAction());
     if(hasPreviewButton()) actions.add(getPreviewAction());
     actions.add(getCancelAction());

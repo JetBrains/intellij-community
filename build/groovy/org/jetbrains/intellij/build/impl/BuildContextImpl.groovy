@@ -36,7 +36,7 @@ import org.jetbrains.jps.util.JpsPathUtil
 class BuildContextImpl extends BuildContext {
   private final JpsGlobal global
   private final boolean underTeamCity
-  final List<String> outputDirectoriesToKeep = []
+  final List<String> outputDirectoriesToKeep
 
 //todo[nik] construct buildOutputRoot automatically based on product name
   static BuildContextImpl create(AntBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
@@ -52,8 +52,9 @@ class BuildContextImpl extends BuildContext {
     LinuxDistributionCustomizer linuxDistributionCustomizer = productProperties.createLinuxCustomizer(paths.projectHome)
     MacDistributionCustomizer macDistributionCustomizer = productProperties.createMacCustomizer(paths.projectHome)
 
+    List<String> outputDirectoriesToKeep = []
     if (project.modules.isEmpty()) {
-      loadProject(paths, project, global, projectBuilder, messages, options)
+      outputDirectoriesToKeep = loadProject(paths, ant, project, global, projectBuilder, messages, options)
     }
     else {
       //todo[nik] currently we need this to build IDEA CE from IDEA UI build scripts. It would be better to create a separate JpsProject instance instead
@@ -62,15 +63,15 @@ class BuildContextImpl extends BuildContext {
 
     return new BuildContextImpl(ant, messages, paths, project, global, projectBuilder, productProperties,
                                 windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
-                                macHostProperties, options,
-                                signTool, scrambleTool, underTeamCity)
+                                macHostProperties, options, signTool, scrambleTool, underTeamCity, outputDirectoriesToKeep)
   }
 
   BuildContextImpl(AntBuilder ant, BuildMessages messages, BuildPaths paths, JpsProject project, JpsGlobal global,
                    JpsGantProjectBuilder projectBuilder, ProductProperties productProperties,
                    WindowsDistributionCustomizer windowsDistributionCustomizer, LinuxDistributionCustomizer linuxDistributionCustomizer,
                    MacDistributionCustomizer macDistributionCustomizer,
-                   MacHostProperties macHostProperties, BuildOptions options, SignTool signTool, ScrambleTool scrambleTool, boolean underTeamCity) {
+                   MacHostProperties macHostProperties, BuildOptions options, SignTool signTool, ScrambleTool scrambleTool, boolean underTeamCity,
+                   List<String> outputDirectoriesToKeep) {
     this.ant = ant
     this.messages = messages
     this.paths = paths
@@ -84,6 +85,7 @@ class BuildContextImpl extends BuildContext {
     this.signTool = signTool
     this.scrambleTool = scrambleTool
     this.underTeamCity = underTeamCity
+    this.outputDirectoriesToKeep = outputDirectoriesToKeep
 
     bundledJreManager = new BundledJreManager(this, paths.buildOutputRoot)
     this.windowsDistributionCustomizer = windowsDistributionCustomizer
@@ -100,7 +102,7 @@ class BuildContextImpl extends BuildContext {
     bootClassPathJarNames = ["bootstrap.jar", "extensions.jar", "util.jar", "jdom.jar", "log4j.jar", "trove4j.jar", "jna.jar"]
   }
 
-  private static List<String> loadProject(BuildPaths paths, JpsProject project, JpsGlobal global, JpsGantProjectBuilder projectBuilder,
+  private static List<String> loadProject(BuildPaths paths, AntBuilder ant, JpsProject project, JpsGlobal global, JpsGantProjectBuilder projectBuilder,
                                           BuildMessages messages, BuildOptions options) {
     def projectHome = paths.projectHome
     def bundledKotlinPath = "$paths.communityHome/build/kotlinc"
@@ -128,7 +130,7 @@ class BuildContextImpl extends BuildContext {
     def classesOutput = "$paths.buildOutputRoot/$classesDirName"
     List<String> outputDirectoriesToKeep = []
     if (options.pathToCompiledClassesArchive != null) {
-      unpackCompiledClasses(messages, classesOutput, options)
+      unpackCompiledClasses(messages, ant, classesOutput, options)
       outputDirectoriesToKeep.add(classesDirName)
     }
     if (options.incrementalCompilation) {
@@ -150,7 +152,7 @@ class BuildContextImpl extends BuildContext {
   }
 
   @CompileDynamic
-  private static void unpackCompiledClasses(BuildMessages messages, String classesOutput, BuildOptions options) {
+  private static void unpackCompiledClasses(BuildMessages messages, AntBuilder ant, String classesOutput, BuildOptions options) {
     messages.block("Unpack compiled classes archive") {
       FileUtil.delete(new File(classesOutput))
       ant.unzip(src: options.pathToCompiledClassesArchive, dest: classesOutput)
@@ -240,7 +242,7 @@ class BuildContextImpl extends BuildContext {
     def messages = messages.forkForParallelTask(taskName)
     def child = new BuildContextImpl(ant, messages, paths, project, global, projectBuilder, productProperties,
                                            windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
-                                           macHostProperties, options, signTool, scrambleTool, underTeamCity)
+                                           macHostProperties, options, signTool, scrambleTool, underTeamCity, outputDirectoriesToKeep)
     child.bundledJreManager.baseDirectoryForJre = bundledJreManager.baseDirectoryForJre
     return child
   }

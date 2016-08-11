@@ -33,7 +33,6 @@ import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.JdkBundle;
 import com.intellij.util.JdkBundleList;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,11 +48,18 @@ import java.util.Locale;
  * @author denis
  */
 public class SwitchBootJdkAction extends AnAction implements DumbAware {
-  @NonNls private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.SwitchBootJdkAction");
-  @NonNls private static final String productJdkConfigFileName =
+  @NotNull private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.SwitchBootJdkAction");
+  @NotNull private static final String productJdkConfigFileName =
     getExecutable() + (SystemInfo.isWindows ? ((SystemInfo.is64Bit) ? "64.exe.jdk" : ".exe.jdk") : ".jdk");
-  @NonNls private static final File productJdkConfigFile = new File(PathManager.getConfigPath(), productJdkConfigFileName);
-  @NonNls private static final File bundledJdkFile = getBundledJDKFile();
+
+  @Nullable private static final String pathsSelector = PathManager.getPathsSelector();
+  @NotNull private static final File productJdkConfigDir = new File(pathsSelector != null ?
+                                                                    PathManager.getDefaultConfigPathFor(pathsSelector) :
+                                                                    PathManager.getConfigPath());
+
+  @NotNull private static final File productJdkConfigFile = new File(productJdkConfigDir, productJdkConfigFileName);
+
+  @NotNull private static final File bundledJdkFile = getBundledJDKFile();
 
 
 
@@ -70,11 +76,17 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(AnActionEvent event) {
 
-    if (!productJdkConfigFile.exists()) {
+    if (!productJdkConfigDir.exists()) {
       try {
-        if (!productJdkConfigFile.createNewFile()){
-          LOG.error("Could not create " + productJdkConfigFileName + " productJdkConfigFile");
+        if (!productJdkConfigDir.mkdirs()) {
+          LOG.error("Could not create " + productJdkConfigDir + " productJdkConfigDir");
           return;
+        }
+        if (!productJdkConfigFile.exists()) {
+          if (!productJdkConfigFile.createNewFile()) {
+            LOG.error("Could not create " + productJdkConfigFileName + " productJdkConfigFile");
+            return;
+          }
         }
       }
       catch (IOException e) {
@@ -137,7 +149,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
 
       myComboBox = new ComboBox();
 
-      final DefaultComboBoxModel<JdkBundleItem> model = new DefaultComboBoxModel<JdkBundleItem>();
+      final DefaultComboBoxModel<JdkBundleItem> model = new DefaultComboBoxModel<>();
 
       for (JdkBundle jdkBundlePath : pathsList.toArrayList()) {
         //noinspection unchecked

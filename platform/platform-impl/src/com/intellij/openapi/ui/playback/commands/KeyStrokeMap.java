@@ -134,7 +134,7 @@ public class KeyStrokeMap {
         {'<', KeyEvent.VK_COMMA, shift,}, {'.', KeyEvent.VK_PERIOD, 0,}, {'>', KeyEvent.VK_PERIOD, shift,}, {'/', KeyEvent.VK_SLASH, 0,},
         {'?', KeyEvent.VK_SLASH, shift,}, {'\\', KeyEvent.VK_BACK_SLASH, 0,}, {'|', KeyEvent.VK_BACK_SLASH, shift,},
         {'\'', KeyEvent.VK_QUOTE, 0,}, {'"', KeyEvent.VK_QUOTE, shift,},};
-    HashMap<Character, KeyStroke> map = new HashMap<Character, KeyStroke>();
+    HashMap<Character, KeyStroke> map = new HashMap<>();
     // Universal mappings
     for (int i = 0; i < universalMappings.length; i++) {
       int[] entry = universalMappings[i];

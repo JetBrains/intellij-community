@@ -44,7 +44,7 @@ public class SwitchManager {
   private final Alarm myInitSessionAlarm = new Alarm();
   private KeyEvent myAutoInitSessionEvent;
 
-  private final Set<SwitchingSession> myFadingAway = new THashSet<SwitchingSession>();
+  private final Set<SwitchingSession> myFadingAway = new THashSet<>();
 
   public SwitchManager(@NotNull Project project, QuickAccessSettings quickAccess) {
     myProject = project;

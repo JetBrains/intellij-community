@@ -119,7 +119,7 @@ class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implemen
   public void init() {
     final OrderEntry[] orderEntries = getModel().getOrderEntries();
     boolean hasJdkOrderEntry = false;
-    List<ClasspathTableItem<?>> items = new ArrayList<ClasspathTableItem<?>>();
+    List<ClasspathTableItem<?>> items = new ArrayList<>();
     for (final OrderEntry orderEntry : orderEntries) {
       if (orderEntry instanceof JdkOrderEntry) {
         hasJdkOrderEntry = true;
@@ -145,7 +145,7 @@ class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implemen
 
   private List<OrderEntry> getEntries() {
     final int count = getRowCount();
-    final List<OrderEntry> entries = new ArrayList<OrderEntry>(count);
+    final List<OrderEntry> entries = new ArrayList<>(count);
     for (int row = 0; row < count; row++) {
       final OrderEntry entry = getItem(row).getEntry();
       if (entry != null) {

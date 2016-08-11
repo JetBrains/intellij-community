@@ -39,17 +39,17 @@ public class Group implements KeymapGroup {
    */
   private final ArrayList<Object> myChildren;
 
-  private final Set<String> myIds = new HashSet<String>();
+  private final Set<String> myIds = new HashSet<>();
 
   public Group(String name, String id, Icon icon) {
     myName = name;
     myId = id;
     myIcon = icon;
-    myChildren = new ArrayList<Object>();
+    myChildren = new ArrayList<>();
   }
 
   public Group(final String name, final Icon icon) {
-    myChildren = new ArrayList<Object>();
+    myChildren = new ArrayList<>();
     myIcon = icon;
     myName = name;
   }

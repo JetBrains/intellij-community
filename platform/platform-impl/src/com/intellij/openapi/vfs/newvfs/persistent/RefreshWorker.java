@@ -57,8 +57,8 @@ public class RefreshWorker {
   private static final Logger LOG_ATTRIBUTES = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker_Attributes");
 
   private final boolean myIsRecursive;
-  private final Queue<Pair<NewVirtualFile, FileAttributes>> myRefreshQueue = new Queue<Pair<NewVirtualFile, FileAttributes>>(100);
-  private final List<VFileEvent> myEvents = new ArrayList<VFileEvent>();
+  private final Queue<Pair<NewVirtualFile, FileAttributes>> myRefreshQueue = new Queue<>(100);
+  private final List<VFileEvent> myEvents = new ArrayList<>();
   private volatile boolean myCancelled;
 
   public RefreshWorker(@NotNull NewVirtualFile refreshRoot, boolean isRecursive) {
@@ -202,7 +202,7 @@ public class RefreshWorker {
 
       OpenTHashSet<String> actualNames = null;
       if (!fs.isCaseSensitive()) {
-        actualNames = new OpenTHashSet<String>(strategy, upToDateNames);
+        actualNames = new OpenTHashSet<>(strategy, upToDateNames);
       }
       if (LOG.isTraceEnabled()) LOG.trace("current=" + Arrays.toString(currentNames) + " +" + newNames + " -" + deletedNames);
 
@@ -280,7 +280,7 @@ public class RefreshWorker {
 
       OpenTHashSet<String> actualNames = null;
       if (!fs.isCaseSensitive()) {
-        actualNames = new OpenTHashSet<String>(strategy, VfsUtil.filterNames(fs.list(dir)));
+        actualNames = new OpenTHashSet<>(strategy, VfsUtil.filterNames(fs.list(dir)));
       }
 
       if (LOG.isTraceEnabled()) {

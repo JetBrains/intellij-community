@@ -18,24 +18,52 @@ package com.intellij.formatting.commandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Set;
 
 public abstract class FileSetProcessor {
   private static final Logger LOG = Logger.getInstance("#" + FileSetProcessor.class.getName());
 
-  private File myRoot;
-  private String myPattern;
+  private Set<File> myTopEntries = ContainerUtil.newHashSet();
+  private Set<String> myFileMasks = ContainerUtil.newHashSet();
   private int myProcessedFiles;
-
-  FileSetProcessor(@NotNull String fileSpec) {
-    setRootAndPattern(fileSpec);
-  }
+  private boolean isRecursive;
 
   public void processFiles() throws IOException {
-    processEntry(myRoot);
+    for (File topEntry : myTopEntries) {
+      processEntry(topEntry);
+    }
+  }
+
+  public void setRecursive() {
+    isRecursive = true;
+  }
+
+  public void addFileMask(@NotNull String fileMask) {
+    String fileMaskRegexp = fileMaskToRegexp(fileMask);
+    LOG.info("File mask regexp: " + fileMaskRegexp);
+    myFileMasks.add(fileMaskRegexp);
+  }
+
+  private static String fileMaskToRegexp(@NotNull String fileMask) {
+    return
+      fileMask
+        .replace(".", "\\.")
+        .replace("*", ".*")
+        .replace("?", ".")
+        .replace("+", "\\+");
+  }
+
+  public void addEntry(@NotNull String filePath) throws IOException {
+    File file = new File(filePath);
+    if (!file.exists()) {
+      throw new IOException("File " + filePath + " not found.");
+    }
+    myTopEntries.add(file);
   }
 
   private void processEntry(@NotNull File entry) throws IOException {
@@ -45,68 +73,36 @@ public abstract class FileSetProcessor {
         File[] subEntries = entry.listFiles();
         if (subEntries != null) {
           for (File subEntry : subEntries) {
-            processEntry(subEntry);
+            if (!subEntry.isDirectory() || isRecursive) {
+              processEntry(subEntry);
+            }
           }
         }
       }
       else {
-        if (myPattern == null || entry.getCanonicalPath().matches(myPattern)) {
+        if (matchesFileMask(entry.getName())) {
           VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(entry);
           if (virtualFile == null) {
             throw new IOException("Can not find " + entry.getPath());
           }
           LOG.info("Processing " + virtualFile.getPath());
-          processFile(virtualFile);
-          myProcessedFiles ++;
+          if (processFile(virtualFile)) myProcessedFiles++;
         }
       }
     }
   }
 
-  protected abstract void processFile(@NotNull VirtualFile virtualFile);
-
-  private void setRootAndPattern(@NotNull String fileSpec) {
-    String rootPath = fileSpec;
-    int starPos = fileSpec.indexOf("*");
-    int questionPos = fileSpec.indexOf("?");
-    int wildcardPos = starPos >= 0 ? questionPos >= 0 ? Math.min(starPos, questionPos) : starPos : questionPos;
-    if (wildcardPos >= 0) rootPath = rootPath.substring(0, wildcardPos);
-    int lastSlash = Math.max(rootPath.lastIndexOf("/"), rootPath.lastIndexOf("\\"));
-    rootPath = lastSlash >= 0 ? rootPath.substring(0, lastSlash) : "";
-    myPattern = fileSpecToRegExp(fileSpec);
-    myRoot = new File(rootPath);
-  }
-
-  private static String fileSpecToRegExp(@NotNull String fileSpec) {
-    StringBuilder result = new StringBuilder();
-    char[] fileSpecChars = fileSpec.toCharArray();
-    for (int i = 0; i < fileSpecChars.length; i ++) {
-      char c = fileSpecChars[i];
-      switch (c) {
-        case '.':
-          result.append("\\.");
-          break;
-        case '*':
-          char next = i + 1 < fileSpecChars.length ? fileSpecChars[i + 1] : 0;
-          result.append(next == '*' ? ".*" : "[^\\\\]*");
-          break;
-        case '?':
-          result.append(".");
-          break;
-        case '/':
-          result.append("[\\\\/]");
-          break;
-        case '\\':
-          result.append("[\\\\/]");
-          break;
-        default:
-          result.append(c);
-          break;
+  private boolean matchesFileMask(@NotNull String name) {
+    if (myFileMasks.isEmpty()) return true;
+    for (String fileMask : myFileMasks) {
+      if (name.matches(fileMask)) {
+        return true;
       }
     }
-    LOG.info("Regexp: " + result);
-    return result.toString();
+    return false;
   }
+
+  protected abstract boolean processFile(@NotNull VirtualFile virtualFile);
 
   public int getProcessedFiles() {
     return myProcessedFiles;

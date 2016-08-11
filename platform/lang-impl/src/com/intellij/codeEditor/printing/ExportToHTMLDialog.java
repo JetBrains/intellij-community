@@ -59,7 +59,7 @@ public class ExportToHTMLDialog extends DialogWrapper {
     myDirectoryName = directoryName;
     this.myIsSelectedTextEnabled = isSelectedTextEnabled;
     setTitle(CodeEditorBundle.message("export.to.html.title"));
-    myExtensions = new ArrayList<UnnamedConfigurable>();
+    myExtensions = new ArrayList<>();
     for (PrintOption extension : Extensions.getExtensions(PrintOption.EP_NAME)) {
       myExtensions.add(extension.createConfigurable());
     }
@@ -109,7 +109,7 @@ public class ExportToHTMLDialog extends DialogWrapper {
   }
 
   public static LabeledComponent<TextFieldWithBrowseButton> assignLabel(TextFieldWithBrowseButton targetDirectoryField, Project project) {
-    LabeledComponent<TextFieldWithBrowseButton> labeledComponent = new LabeledComponent<TextFieldWithBrowseButton>();
+    LabeledComponent<TextFieldWithBrowseButton> labeledComponent = new LabeledComponent<>();
     labeledComponent.setText(CodeEditorBundle.message("export.to.html.output.directory.label"));
     targetDirectoryField.addBrowseFolderListener(CodeEditorBundle.message("export.to.html.select.output.directory.title"),
                                                  CodeEditorBundle.message("export.to.html.select.output.directory.description"),

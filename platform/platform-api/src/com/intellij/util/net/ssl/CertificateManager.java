@@ -293,7 +293,7 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
     Application app = ApplicationManager.getApplication();
     final CountDownLatch proceeded = new CountDownLatch(1);
     final AtomicBoolean accepted = new AtomicBoolean();
-    final AtomicReference<DialogWrapper> dialogRef = new AtomicReference<DialogWrapper>();
+    final AtomicReference<DialogWrapper> dialogRef = new AtomicReference<>();
     Runnable showDialog = () -> {
       // skip if certificate was already rejected due to timeout or interrupt
       if (proceeded.getCount() == 0) {
@@ -364,7 +364,7 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
     @Tag("expired")
     @Property(surroundWithTag = false)
     @AbstractCollection(elementTag = "commonName")
-    public LinkedHashSet<String> BROKEN_CERTIFICATES = new LinkedHashSet<String>();
+    public LinkedHashSet<String> BROKEN_CERTIFICATES = new LinkedHashSet<>();
 
     /**
      * Do not show the dialog and accept untrusted certificates automatically.

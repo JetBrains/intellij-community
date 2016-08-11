@@ -34,7 +34,7 @@ public class ExceptionFilters {
   @NotNull
   public static List<Filter> getFilters(@NotNull GlobalSearchScope searchScope) {
     ExceptionFilterFactory[] extensions = ExceptionFilterFactory.EP_NAME.getExtensions();
-    List<Filter> filters = new ArrayList<Filter>(extensions.length);
+    List<Filter> filters = new ArrayList<>(extensions.length);
     for (ExceptionFilterFactory extension : extensions) {
       filters.add(extension.create(searchScope));
     }

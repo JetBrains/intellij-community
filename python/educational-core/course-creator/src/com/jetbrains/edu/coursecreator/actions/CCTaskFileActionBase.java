@@ -1,6 +1,5 @@
 package com.jetbrains.edu.coursecreator.actions;
 
-import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -12,8 +11,12 @@ import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Task;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class CCTaskFileActionBase extends AnAction {
+  public CCTaskFileActionBase(@Nullable String text) {
+    super(text);
+  }
 
   @Override
   public void actionPerformed(final AnActionEvent e) {
@@ -35,7 +38,6 @@ public abstract class CCTaskFileActionBase extends AnAction {
     }
     Course course = StudyTaskManager.getInstance(project).getCourse();
     performAction(file, task, course, project);
-    ProjectView.getInstance(project).refresh();
   }
 
   protected abstract void performAction(VirtualFile file, Task task, Course course, Project project);

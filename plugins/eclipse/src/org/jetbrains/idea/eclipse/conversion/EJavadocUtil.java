@@ -210,7 +210,7 @@ public class EJavadocUtil {
                               Function<String, String> fun,
                               String attributeName, 
                               String[] roots) {
-    final List<String> eclipseUrls = new ArrayList<String>();
+    final List<String> eclipseUrls = new ArrayList<>();
     if (roots.length > 0) {
       eclipseUrls.add(fun.fun(roots[0]));
     }

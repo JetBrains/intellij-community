@@ -92,7 +92,7 @@ public class ExternalSystemApiUtil {
     }
 
     private int getOrder(@NotNull Object o) {
-      Queue<Class<?>> toCheck = new ArrayDeque<Class<?>>();
+      Queue<Class<?>> toCheck = new ArrayDeque<>();
       toCheck.add(o.getClass());
       while (!toCheck.isEmpty()) {
         Class<?> clazz = toCheck.poll();
@@ -114,7 +114,7 @@ public class ExternalSystemApiUtil {
   @NotNull private static final NullableFunction<DataNode<?>, Key<?>> GROUPER = node -> node.getKey();
 
   @NotNull private static final TransferToEDTQueue<Runnable> TRANSFER_TO_EDT_QUEUE =
-    new TransferToEDTQueue<Runnable>("External System queue", runnable -> {
+    new TransferToEDTQueue<>("External System queue", runnable -> {
       runnable.run();
       return true;
     }, Conditions.alwaysFalse(), 300);
@@ -230,7 +230,7 @@ public class ExternalSystemApiUtil {
   }
 
   public static MultiMap<Key<?>, DataNode<?>> recursiveGroup(@NotNull Collection<DataNode<?>> nodes) {
-    MultiMap<Key<?>, DataNode<?>> result = new ContainerUtil.KeyOrderedMultiMap<Key<?>, DataNode<?>>();
+    MultiMap<Key<?>, DataNode<?>> result = new ContainerUtil.KeyOrderedMultiMap<>();
     Queue<Collection<DataNode<?>>> queue = ContainerUtil.newLinkedList();
     queue.add(nodes);
     while (!queue.isEmpty()) {
@@ -358,7 +358,7 @@ public class ExternalSystemApiUtil {
   @NotNull
   public static Collection<DataNode<?>> findAllRecursively(@NotNull Collection<DataNode<?>> nodes,
                                                            @Nullable BooleanFunction<DataNode<?>> predicate) {
-    SmartList<DataNode<?>> result = new SmartList<DataNode<?>>();
+    SmartList<DataNode<?>> result = new SmartList<>();
     for (DataNode<?> node : nodes) {
       if (predicate == null || predicate.fun(node)) {
         result.add(node);
@@ -373,7 +373,7 @@ public class ExternalSystemApiUtil {
   @Nullable
   public static DataNode<?> findFirstRecursively(@NotNull DataNode<?> parentNode,
                                                  @NotNull BooleanFunction<DataNode<?>> predicate) {
-    Queue<DataNode<?>> queue = new LinkedList<DataNode<?>>();
+    Queue<DataNode<?>> queue = new LinkedList<>();
     queue.add(parentNode);
     return findInQueue(queue, predicate);
   }
@@ -381,7 +381,7 @@ public class ExternalSystemApiUtil {
   @Nullable
   public static DataNode<?> findFirstRecursively(@NotNull Collection<DataNode<?>> nodes,
                                                  @NotNull BooleanFunction<DataNode<?>> predicate) {
-    return findInQueue(new LinkedList<DataNode<?>>(nodes), predicate);
+    return findInQueue(new LinkedList<>(nodes), predicate);
   }
 
   @Nullable

@@ -124,7 +124,7 @@ public class PackageFileWorker {
   }
 
   private void packageFile(String outputPath, List<CompositePackagingElement<?>> parents) throws IOException {
-    List<CompositePackagingElement<?>> parentsList = new ArrayList<CompositePackagingElement<?>>(parents);
+    List<CompositePackagingElement<?>> parentsList = new ArrayList<>(parents);
     Collections.reverse(parentsList);
     if (!parentsList.isEmpty() && parentsList.get(0) instanceof ArtifactRootElement) {
       parentsList = parentsList.subList(1, parentsList.size());

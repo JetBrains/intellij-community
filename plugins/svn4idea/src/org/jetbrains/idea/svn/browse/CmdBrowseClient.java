@@ -55,7 +55,7 @@ public class CmdBrowseClient extends BaseSvnClient implements BrowseClient {
                    @Nullable DirectoryEntryConsumer handler) throws VcsException {
     assertUrl(target);
 
-    List<String> parameters = new ArrayList<String>();
+    List<String> parameters = new ArrayList<>();
 
     CommandUtil.put(parameters, target);
     CommandUtil.put(parameters, revision);
@@ -117,7 +117,7 @@ public class CmdBrowseClient extends BaseSvnClient implements BrowseClient {
   public static class TargetLists {
 
     @XmlElement(name = "list")
-    public List<TargetList> lists = new ArrayList<TargetList>();
+    public List<TargetList> lists = new ArrayList<>();
   }
 
   public static class TargetList {
@@ -126,7 +126,7 @@ public class CmdBrowseClient extends BaseSvnClient implements BrowseClient {
     public String path;
 
     @XmlElement(name = "entry")
-    public List<Entry> entries = new ArrayList<Entry>();
+    public List<Entry> entries = new ArrayList<>();
   }
 
   public static class Entry {

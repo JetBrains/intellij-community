@@ -151,7 +151,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
   }
 
   private ExpectedTypesProvider.ExpectedClassProvider createOccurrenceClassProvider() {
-    final Set<PsiClass> occurrenceClasses = new HashSet<PsiClass>();
+    final Set<PsiClass> occurrenceClasses = new HashSet<>();
     for (final PsiExpression occurrence : myOccurrences) {
       final PsiType occurrenceType = occurrence.getType();
       collectOccurrenceClasses(occurrenceClasses, occurrenceType);
@@ -178,7 +178,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
 
   private PsiType[] getTypesForMain() {
     final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(myMainOccurrence, false, myOccurrenceClassProvider, false);
-    final ArrayList<PsiType> allowedTypes = new ArrayList<PsiType>();
+    final ArrayList<PsiType> allowedTypes = new ArrayList<>();
     RefactoringHierarchyUtil.processSuperTypes(getDefaultType(), new RefactoringHierarchyUtil.SuperTypeVisitor() {
       @Override
       public void visitType(PsiType aType) {
@@ -221,7 +221,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
   }
 
   protected PsiType[] getTypesForAll(final boolean areTypesDirected) {
-    final ArrayList<ExpectedTypeInfo[]> expectedTypesFromAll = new ArrayList<ExpectedTypeInfo[]>();
+    final ArrayList<ExpectedTypeInfo[]> expectedTypesFromAll = new ArrayList<>();
     for (PsiExpression occurrence : myOccurrences) {
       final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(occurrence, false, myOccurrenceClassProvider, isUsedAfter());
       if (expectedTypes.length > 0) {
@@ -229,7 +229,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
       }
     }
 
-    final ArrayList<PsiType> allowedTypes = new ArrayList<PsiType>();
+    final ArrayList<PsiType> allowedTypes = new ArrayList<>();
     RefactoringHierarchyUtil.processSuperTypes(getDefaultType(), new RefactoringHierarchyUtil.SuperTypeVisitor() {
       @Override
       public void visitType(PsiType aType) {
@@ -269,7 +269,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
   }
 
   private ArrayList<PsiType> normalizeTypeList(final ArrayList<PsiType> typeList) {
-    ArrayList<PsiType> result = new ArrayList<PsiType>();
+    ArrayList<PsiType> result = new ArrayList<>();
     TypeListCreatingVisitor visitor = new TypeListCreatingVisitor(result, myFactory);
     for (PsiType psiType : typeList) {
       visitor.visitType(psiType);
@@ -322,7 +322,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
 
     if (defaultType instanceof PsiPrimitiveType) return defaultType;
 
-    Map<String, PsiType> map = new THashMap<String, PsiType>();
+    Map<String, PsiType> map = new THashMap<>();
     for (final PsiType type : types) {
       map.put(serialize(type), type);
     }

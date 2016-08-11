@@ -149,7 +149,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
       return;
     } 
     else {
-      final List<PsiElement> elements = new ArrayList<PsiElement>();
+      final List<PsiElement> elements = new ArrayList<>();
       for (GenerationInfo member : newMembers) {
         if (!(member instanceof TemplateGenerationInfo)) {
           final PsiMember psiMember = member.getPsiMember();
@@ -162,7 +162,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
       GlobalInspectionContextBase.cleanupElements(project, null, elements.toArray(new PsiElement[elements.size()]));
     }
 
-    final ArrayList<TemplateGenerationInfo> templates = new ArrayList<TemplateGenerationInfo>();
+    final ArrayList<TemplateGenerationInfo> templates = new ArrayList<>();
     for (GenerationInfo member : newMembers) {
       if (member instanceof TemplateGenerationInfo) {
         templates.add((TemplateGenerationInfo) member);
@@ -285,7 +285,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
 
   @NotNull
   protected List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
-    ArrayList<GenerationInfo> array = new ArrayList<GenerationInfo>();
+    ArrayList<GenerationInfo> array = new ArrayList<>();
     for (ClassMember member : members) {
       GenerationInfo[] prototypes = generateMemberPrototypes(aClass, member);
       if (prototypes != null) {

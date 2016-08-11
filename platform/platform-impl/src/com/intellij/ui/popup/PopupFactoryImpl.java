@@ -88,7 +88,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.PopupFactoryImpl");
 
-  private final Map<Disposable, List<Balloon>> myStorage = new WeakHashMap<Disposable, List<Balloon>>();
+  private final Map<Disposable, List<Balloon>> myStorage = new WeakHashMap<>();
 
   @NotNull
   @Override
@@ -105,7 +105,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
   @NotNull
   @Override
   public JBPopup createMessage(String text) {
-    return createListPopup(new BaseListPopupStep<String>(null, new String[]{text}));
+    return createListPopup(new BaseListPopupStep<>(null, new String[]{text}));
   }
 
   @Override
@@ -957,11 +957,11 @@ public class PopupFactoryImpl extends JBPopupFactory {
                               final boolean showDisabled, final boolean honorActionMnemonics)
     {
       myUseAlphaAsNumbers = useAlphaAsNumbers;
-      myListModel = new ArrayList<ActionItem>();
+      myListModel = new ArrayList<>();
       myDataContext = dataContext;
       myShowNumbers = showNumbers;
       myShowDisabled = showDisabled;
-      myAction2presentation = new HashMap<AnAction, Presentation>();
+      myAction2presentation = new HashMap<>();
       myCurrentNumber = 0;
       myPrependWithSeparator = false;
       mySeparatorText = null;

@@ -32,7 +32,7 @@ public class GenericDataProvider implements DataProvider {
 
   public GenericDataProvider(@Nullable DataProvider provider) {
     myParentProvider = provider;
-    myGenericData = new HashMap<String, Object>();
+    myGenericData = new HashMap<>();
   }
 
   public void putData(DataKey key, Object value) {

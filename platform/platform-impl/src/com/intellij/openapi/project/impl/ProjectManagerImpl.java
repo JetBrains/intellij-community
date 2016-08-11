@@ -136,7 +136,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   public static int TEST_PROJECTS_CREATED;
   private static final boolean LOG_PROJECT_LEAKAGE_IN_TESTS = true;
   private static final int MAX_LEAKY_PROJECTS = 42;
-  @SuppressWarnings("FieldCanBeLocal") private final Map<Project, String> myProjects = new WeakHashMap<Project, String>();
+  @SuppressWarnings("FieldCanBeLocal") private final Map<Project, String> myProjects = new WeakHashMap<>();
 
   @Nullable
   public Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
@@ -154,7 +154,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         }
 
         if (myProjects.size() >= MAX_LEAKY_PROJECTS) {
-          List<Project> copy = new ArrayList<Project>(myProjects.keySet());
+          List<Project> copy = new ArrayList<>(myProjects.keySet());
           myProjects.clear();
           throw new TooManyProjectLeakedException(copy);
         }

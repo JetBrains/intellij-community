@@ -32,7 +32,7 @@ public abstract class Ring<T extends Comparable<T>> {
   protected T myNextAvailable;
 
   public Ring(final T first) {
-    myFreeNumbers = new LinkedList<T>();
+    myFreeNumbers = new LinkedList<>();
     myNextAvailable = first;
     myFirst = first;
   }
@@ -73,7 +73,7 @@ public abstract class Ring<T extends Comparable<T>> {
   }
 
   public List<T> getUsed() {
-    final List<T> result = new LinkedList<T>();
+    final List<T> result = new LinkedList<>();
 
     T current = myFirst;
     final Iterator<T> iterator = myFreeNumbers.iterator();

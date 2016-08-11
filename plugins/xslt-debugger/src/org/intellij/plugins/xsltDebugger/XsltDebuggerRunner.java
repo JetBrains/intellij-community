@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class XsltDebuggerRunner extends DefaultProgramRunner {
-  static final ThreadLocal<Boolean> ACTIVE = new ThreadLocal<Boolean>();
+  static final ThreadLocal<Boolean> ACTIVE = new ThreadLocal<>();
 
   @NonNls
   private static final String ID = "XsltDebuggerRunner";

@@ -97,5 +97,5 @@ public class Native2AsciiCharset extends Charset {
     return charset;
   }
 
-  private static final ConcurrentMap<String, Native2AsciiCharset> cache = new ConcurrentHashMap<String, Native2AsciiCharset>();
+  private static final ConcurrentMap<String, Native2AsciiCharset> cache = new ConcurrentHashMap<>();
 }

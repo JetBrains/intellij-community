@@ -24,7 +24,7 @@ import java.util.HashSet;
  * @author ven
  */
 public class ReferencedElementsCollector extends JavaRecursiveElementVisitor {
-  final HashSet<PsiMember> myReferencedMembers = new HashSet<PsiMember>();
+  final HashSet<PsiMember> myReferencedMembers = new HashSet<>();
 
   @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
     visitReferenceElement(expression);

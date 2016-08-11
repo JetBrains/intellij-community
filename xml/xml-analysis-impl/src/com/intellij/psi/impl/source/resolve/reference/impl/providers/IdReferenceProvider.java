@@ -43,7 +43,7 @@ public class IdReferenceProvider extends PsiReferenceProvider {
   @NonNls public static final String STYLE_ID_ATTR_NAME = "styleId";
   @NonNls public static final String NAME_ATTR_NAME = "name";
 
-  private static final THashSet<String> ourNamespacesWithoutNameReference = new THashSet<String>();
+  private static final THashSet<String> ourNamespacesWithoutNameReference = new THashSet<>();
   static {
     ourNamespacesWithoutNameReference.add( XmlUtil.JSP_URI );
     ourNamespacesWithoutNameReference.add( XmlUtil.STRUTS_BEAN_URI );

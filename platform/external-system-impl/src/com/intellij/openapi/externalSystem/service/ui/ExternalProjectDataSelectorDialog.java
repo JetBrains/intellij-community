@@ -99,7 +99,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
     MultiMap.create(TObjectHashingStrategy.IDENTITY);
 
   private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
-  private final CachedValue<SelectionState> selectionState = new CachedValueImpl<SelectionState>(
+  private final CachedValue<SelectionState> selectionState = new CachedValueImpl<>(
     () -> CachedValueProvider.Result.createSingleDependency(getSelectionStatus(), myModificationTracker));
 
   private boolean myShowSelectedRowsOnly;

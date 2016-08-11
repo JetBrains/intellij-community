@@ -19,37 +19,23 @@ package com.intellij.execution.junit;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
-import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.junit.testDiscovery.TestBySource;
 import com.intellij.execution.junit.testDiscovery.TestsByChanges;
-import com.intellij.execution.junit2.TestProxy;
-import com.intellij.execution.junit2.segments.DeferredActionsQueue;
-import com.intellij.execution.junit2.segments.DeferredActionsQueueImpl;
-import com.intellij.execution.junit2.segments.DispatchListener;
-import com.intellij.execution.junit2.segments.Extractor;
-import com.intellij.execution.junit2.ui.JUnitTreeConsoleView;
-import com.intellij.execution.junit2.ui.TestsPacketsReceiver;
-import com.intellij.execution.junit2.ui.actions.RerunFailedTestsAction;
-import com.intellij.execution.junit2.ui.model.CompletionEvent;
-import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
-import com.intellij.execution.junit2.ui.model.RootTestInfo;
-import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.KillableColoredProcessHandler;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.testframework.*;
-import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.execution.testframework.SearchForTestsTask;
+import com.intellij.execution.testframework.SourceScope;
+import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.junit5.JUnit5IdeaTestRunner;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -107,7 +93,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     if (JUnitConfiguration.BY_SOURCE_CHANGES.equals(id)) {
       return new TestsByChanges(configuration, environment);
     }
-    LOG.error(MESSAGE + id);
+    LOG.info(MESSAGE + id);
     return null;
   }
 
@@ -203,129 +189,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   }
 
   @NotNull
-  @Override
-  public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
-    final ExecutionResult executionResult = startSMRunner(executor);
-    if (executionResult != null) {
-      return executionResult;
-    }
-    final JUnitProcessHandler handler = createJUnitHandler(executor);
-    final RunnerSettings runnerSettings = getRunnerSettings();
-    JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, runnerSettings);
-    final TestProxy unboundOutputRoot = new TestProxy(new RootTestInfo());
-    final JUnitConsoleProperties consoleProperties = new JUnitConsoleProperties(getConfiguration(), executor);
-    final JUnitTreeConsoleView consoleView = new JUnitTreeConsoleView(consoleProperties, getEnvironment(), unboundOutputRoot);
-    Disposer.register(getConfiguration().getProject(), consoleView);
-    consoleView.initUI();
-    consoleView.attachToProcess(handler);
-    unboundOutputRoot.setPrinter(consoleView.getPrinter());
-    Disposer.register(consoleView, unboundOutputRoot);
-    final TestsPacketsReceiver packetsReceiver = new TestsPacketsReceiver(consoleView, unboundOutputRoot) {
-      @Override
-      public synchronized void notifyStart(TestProxy root) {
-        if (!isRunning()) return;
-        super.notifyStart(root);
-        unboundOutputRoot.addChild(root);
-        if (getConfiguration().isSaveOutputToFile()) {
-          unboundOutputRoot.setOutputFilePath(getConfiguration().getOutputFilePath());
-        }
-        final JUnitRunningModel model = getModel();
-        if (model != null) {
-          handler.getOut().setDispatchListener(model.getNotifier());
-          Disposer.register(model, new Disposable() {
-            @Override
-            public void dispose() {
-              handler.getOut().setDispatchListener(DispatchListener.DEAF);
-            }
-          });
-          consoleView.attachToModel(model);
-        }
-      }
-    };
-    Disposer.register(consoleView, packetsReceiver);
-
-    final DeferredActionsQueue queue = new DeferredActionsQueueImpl();
-    handler.getOut().setPacketDispatcher(packetsReceiver, queue);
-    handler.getErr().setPacketDispatcher(packetsReceiver, queue);
-
-    handler.addProcessListener(new ProcessAdapter() {
-      private boolean myStarted = false;
-
-      @Override
-      public void startNotified(ProcessEvent event) {
-        myStarted = true;
-      }
-
-      @Override
-      public void processTerminated(ProcessEvent event) {
-        handler.removeProcessListener(this);
-        deleteTempFiles();
-        final Runnable runnable = () -> {
-          unboundOutputRoot.flush();
-          packetsReceiver.checkTerminated();
-          final JUnitRunningModel model = packetsReceiver.getModel();
-          notifyByBalloon(model, myStarted, consoleProperties);
-        };
-        handler.getOut().addRequest(runnable, queue);
-      }
-
-      @Override
-      public void onTextAvailable(final ProcessEvent event, final Key outputType) {
-        final String text = event.getText();
-        final ConsoleViewContentType consoleViewType = ConsoleViewContentType.getConsoleViewType(outputType);
-        final Printable printable = new Printable() {
-          @Override
-          public void printOn(final Printer printer) {
-            printer.print(text, consoleViewType);
-          }
-        };
-        final Extractor extractor;
-        if (consoleViewType == ConsoleViewContentType.ERROR_OUTPUT ||
-            consoleViewType == ConsoleViewContentType.SYSTEM_OUTPUT) {
-          extractor = handler.getErr();
-        }
-        else {
-          extractor = handler.getOut();
-        }
-        extractor.getEventsDispatcher().processOutput(printable);
-      }
-    });
-
-    final RerunFailedTestsAction rerunFailedTestsAction = new RerunFailedTestsAction(consoleView, consoleProperties);
-    rerunFailedTestsAction.setModelProvider(() -> packetsReceiver.getModel());
-
-    final DefaultExecutionResult result = new DefaultExecutionResult(consoleView, handler);
-    result.setRestartActions(rerunFailedTestsAction);
-    return result;
-  }
-
-  protected void notifyByBalloon(JUnitRunningModel model, boolean started, JUnitConsoleProperties consoleProperties) {
-    String comment;
-    if (model != null) {
-      final CompletionEvent done = model.getProgress().getDone();
-      comment = done != null ? done.getComment() : null;
-    }
-    else {
-      comment = null;
-    }
-    TestsUIUtil.notifyByBalloon(consoleProperties.getProject(), started, model != null ? model.getRoot() : null, consoleProperties, comment);
-  }
-
-  @NotNull
-  protected JUnitProcessHandler createJUnitHandler(Executor executor) throws ExecutionException {
-    appendForkInfo(executor);
-    final String repeatMode = getConfiguration().getRepeatMode();
-    if (!RepeatCount.ONCE.equals(repeatMode)) {
-      final int repeatCount = getConfiguration().getRepeatCount();
-      final String countString = RepeatCount.N.equals(repeatMode) && repeatCount > 0
-                                 ? RepeatCount.getCountString(repeatCount) 
-                                 : repeatMode;
-      getJavaParameters().getProgramParametersList().add(countString);
-    }
-    return JUnitProcessHandler.runCommandLine(createCommandLine());
-  }
-
-  @NotNull
   protected OSProcessHandler createHandler(Executor executor) throws ExecutionException {
     appendForkInfo(executor);
     final String repeatMode = getConfiguration().getRepeatMode();
@@ -359,9 +222,10 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         createTempFiles(javaParameters);
       }
 
-      final Map<Module, List<String>> perModule = forkPerModule() ? new TreeMap<Module, List<String>>((o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true)) : null;
+      final Map<Module, List<String>> perModule = forkPerModule() ? new TreeMap<>(
+        (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true)) : null;
 
-      final List<String> testNames = new ArrayList<String>();
+      final List<String> testNames = new ArrayList<>();
 
       for (final T element : elements) {
         final String name = nameFunction.fun(element);
@@ -375,7 +239,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
           if (module != null) {
             List<String> list = perModule.get(module);
             if (list == null) {
-              list = new ArrayList<String>();
+              list = new ArrayList<>();
               perModule.put(module, list);
             }
             list.add(name);

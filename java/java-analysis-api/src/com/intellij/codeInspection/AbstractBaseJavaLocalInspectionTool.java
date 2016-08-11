@@ -15,12 +15,18 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.openapi.util.Conditions.*;
+
 public abstract class AbstractBaseJavaLocalInspectionTool extends LocalInspectionTool {
+  private static final Condition<PsiElement> PROBLEM_ELEMENT_CONDITION =
+    and(instanceOf(PsiFile.class, PsiClass.class, PsiMethod.class, PsiField.class), notInstanceOf(PsiTypeParameter.class));
+
   /**
    * Override this to report problems at method level.
    *
@@ -110,6 +116,6 @@ public abstract class AbstractBaseJavaLocalInspectionTool extends LocalInspectio
 
   @Override
   public PsiNamedElement getProblemElement(final PsiElement psiElement) {
-    return PsiTreeUtil.getNonStrictParentOfType(psiElement, PsiFile.class, PsiClass.class, PsiMethod.class, PsiField.class);
+    return (PsiNamedElement)PsiTreeUtil.findFirstParent(psiElement, PROBLEM_ELEMENT_CONDITION);
   }
 }

@@ -95,7 +95,7 @@ public class LambdaHighlightingUtil {
   @Nullable
   public static String checkInterfaceFunctional(PsiType functionalInterfaceType) {
     if (functionalInterfaceType instanceof PsiIntersectionType) {
-      final Set<MethodSignature> signatures = new HashSet<MethodSignature>();
+      final Set<MethodSignature> signatures = new HashSet<>();
       for (PsiType type : ((PsiIntersectionType)functionalInterfaceType).getConjuncts()) {
         if (checkInterfaceFunctional(type) == null) {
           final MethodSignature signature = LambdaUtil.getFunction(PsiUtil.resolveClassInType(type));

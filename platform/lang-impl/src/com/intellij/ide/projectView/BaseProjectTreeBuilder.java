@@ -65,7 +65,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   @NotNull
   @Override
   public AsyncResult<Object> revalidateElement(Object element) {
-    final AsyncResult<Object> result = new AsyncResult<Object>();
+    final AsyncResult<Object> result = new AsyncResult<>();
 
     if (element instanceof AbstractTreeNode) {
       AbstractTreeNode node = (AbstractTreeNode)element;
@@ -76,7 +76,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
       batch(new Progressive() {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          final Ref<Object> target = new Ref<Object>();
+          final Ref<Object> target = new Ref<>();
           _select(value, virtualFile, false, Conditions.<AbstractTreeNode>alwaysTrue(), callback, indicator, target, focusRequestor, false);
           callback.doWhenDone(() -> result.setDone(target.get())).doWhenRejected(() -> result.setRejected());
         }
@@ -125,7 +125,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   @NotNull
   private static List<AbstractTreeNode> collectChildren(@NotNull DefaultMutableTreeNode node) {
     int childCount = node.getChildCount();
-    List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>(childCount);
+    List<AbstractTreeNode> result = new ArrayList<>(childCount);
     for (int i = 0; i < childCount; i++) {
       TreeNode childAt = node.getChildAt(i);
       DefaultMutableTreeNode defaultMutableTreeNode = (DefaultMutableTreeNode)childAt;
@@ -257,7 +257,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
                                                      @NotNull final Condition<AbstractTreeNode> nonStopCondition,
                                                      @NotNull final ProgressIndicator indicator,
                                                      @Nullable final Ref<Object> target) {
-    final AsyncResult<AbstractTreeNode> async = new AsyncResult<AbstractTreeNode>();
+    final AsyncResult<AbstractTreeNode> async = new AsyncResult<>();
 
     if (root.canRepresent(element)) {
       if (target == null) {
@@ -296,7 +296,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
       }
       else {
         final DefaultMutableTreeNode rootNode = getNodeForElement(root);
-        final ArrayList<AbstractTreeNode> kids = new ArrayList<AbstractTreeNode>();
+        final ArrayList<AbstractTreeNode> kids = new ArrayList<>();
         if (rootNode != null && getTree().isExpanded(new TreePath(rootNode.getPath()))) {
           kids.addAll(collectChildren(rootNode));
         }

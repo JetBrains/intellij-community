@@ -78,7 +78,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     myLocalTable = new FileColorSettingsTable(manager, localConfigurations) {
       @Override
       protected void apply(@NotNull List<FileColorConfiguration> configurations) {
-        final List<FileColorConfiguration> copied = new ArrayList<FileColorConfiguration>();
+        final List<FileColorConfiguration> copied = new ArrayList<>();
         try {
           for (final FileColorConfiguration configuration : configurations) {
             copied.add(configuration.clone());
@@ -110,7 +110,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     mySharedTable = new FileColorSettingsTable(manager, manager.getProjectLevelConfigurations()) {
       @Override
       protected void apply(@NotNull List<FileColorConfiguration> configurations) {
-        final List<FileColorConfiguration> copied = new ArrayList<FileColorConfiguration>();
+        final List<FileColorConfiguration> copied = new ArrayList<>();
         for (final FileColorConfiguration configuration : configurations) {
           try {
             copied.add(configuration.clone());

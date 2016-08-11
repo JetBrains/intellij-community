@@ -91,7 +91,7 @@ public class UnnecessaryInitCauseInspectionBase extends BaseInspection {
       final PsiCodeBlock newBlock = PsiTreeUtil.getParentOfType(newLocation, PsiCodeBlock.class);
       if (block == null || newBlock == null || !PsiTreeUtil.isAncestor(block, newBlock, false)) return false;
       final int offset = newLocation.getTextOffset();
-      final Ref<Boolean> result = new Ref<Boolean>(Boolean.TRUE);
+      final Ref<Boolean> result = new Ref<>(Boolean.TRUE);
       cause.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
         public void visitReferenceExpression(PsiReferenceExpression expression) {

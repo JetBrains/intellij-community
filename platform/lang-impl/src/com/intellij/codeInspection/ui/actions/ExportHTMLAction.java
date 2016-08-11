@@ -183,7 +183,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
 
   @NotNull
   private Set<InspectionToolWrapper> getWorkedTools(@NotNull InspectionNode node) {
-    final Set<InspectionToolWrapper> result = new HashSet<InspectionToolWrapper>();
+    final Set<InspectionToolWrapper> result = new HashSet<>();
     final InspectionToolWrapper wrapper = node.getToolWrapper();
     if (myView.getCurrentProfileName() == null){
       result.add(wrapper);

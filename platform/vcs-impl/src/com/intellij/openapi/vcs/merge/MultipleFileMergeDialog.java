@@ -91,8 +91,8 @@ public class MultipleFileMergeDialog extends DialogWrapper {
   @Nullable
   private final Project myProject;
   private final ProjectManagerEx myProjectManager;
-  private final List<VirtualFile> myProcessedFiles = new SmartList<VirtualFile>();
-  private final Set<VirtualFile> myBinaryFiles = new HashSet<VirtualFile>();
+  private final List<VirtualFile> myProcessedFiles = new SmartList<>();
+  private final Set<VirtualFile> myBinaryFiles = new HashSet<>();
   private final MergeDialogCustomizer myMergeDialogCustomizer;
 
   private final VirtualFileRenderer myVirtualFileRenderer = new VirtualFileRenderer();
@@ -104,7 +104,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
     myProject = project;
     myProjectManager = ProjectManagerEx.getInstanceEx();
     myProjectManager.blockReloadingProjectOnExternalChanges();
-    myFiles = new ArrayList<VirtualFile>(files);
+    myFiles = new ArrayList<>(files);
     myProvider = provider;
     myMergeDialogCustomizer = mergeDialogCustomizer;
 
@@ -113,7 +113,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
       myDescriptionLabel.setText(description);
     }
 
-    List<ColumnInfo> columns = new ArrayList<ColumnInfo>();
+    List<ColumnInfo> columns = new ArrayList<>();
     columns.add(new ColumnInfo<VirtualFile, VirtualFile>(VcsBundle.message("multiple.file.merge.column.name")) {
       @Override
       public VirtualFile valueOf(final VirtualFile virtualFile) {
@@ -156,7 +156,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
     else {
       myMergeSession = null;
     }
-    myModel = new ListTableModel<VirtualFile>(columns.toArray(new ColumnInfo[columns.size()]));
+    myModel = new ListTableModel<>(columns.toArray(new ColumnInfo[columns.size()]));
     myModel.setItems(files);
     myTable.setModelAndUpdateColumns(myModel);
     myVirtualFileRenderer.setFont(UIUtil.getListFont());
@@ -266,7 +266,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
     }
     
     for (final VirtualFile file : files) {
-      final Ref<Exception> ex = new Ref<Exception>();
+      final Ref<Exception> ex = new Ref<>();
       ApplicationManager.getApplication().runWriteAction(() -> {
         CommandProcessor.getInstance().executeCommand(myProject, () -> {
           try {

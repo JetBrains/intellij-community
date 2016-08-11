@@ -28,7 +28,7 @@ public class HgCloneCommand {
 
   @Nullable
   public HgCommandResult executeInCurrentThread() {
-    final List<String> arguments = new ArrayList<String>(2);
+    final List<String> arguments = new ArrayList<>(2);
     arguments.add(repositoryURL);
     arguments.add(directory);
     final HgRemoteCommandExecutor executor = new HgRemoteCommandExecutor(project, repositoryURL);

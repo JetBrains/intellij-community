@@ -74,7 +74,7 @@ public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
       return;
     }
 
-    List<LookupElement> lookupItems = new ArrayList<LookupElement>();
+    List<LookupElement> lookupItems = new ArrayList<>();
     for (String variant : getSuggestions(project)) {
       lookupItems.add(LookupElementBuilder.create(variant));
     }

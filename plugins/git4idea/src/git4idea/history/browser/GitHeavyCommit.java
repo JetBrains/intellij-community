@@ -98,7 +98,7 @@ public class GitHeavyCommit {
     myRemoteBranches = remoteBranches;
     myAuthorTime = authorTime;
     //myBranches = branches;
-    myParentsLinks = new HashSet<GitHeavyCommit>();
+    myParentsLinks = new HashSet<>();
   }
 
   public void addParentLink(final GitHeavyCommit commit) {

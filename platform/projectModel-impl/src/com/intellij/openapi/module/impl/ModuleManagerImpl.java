@@ -79,7 +79,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   @NonNls public static final String COMPONENT_NAME = "ProjectModuleManager";
   private static final String MODULE_GROUP_SEPARATOR = "/";
   private List<ModulePath> myModulePaths;
-  private final List<ModulePath> myFailedModulePaths = new ArrayList<ModulePath>();
+  private final List<ModulePath> myFailedModulePaths = new ArrayList<>();
   @NonNls public static final String ELEMENT_MODULES = "modules";
   @NonNls public static final String ELEMENT_MODULE = "module";
   @NonNls private static final String ATTRIBUTE_FILEURL = "fileurl";
@@ -124,7 +124,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
   private static class ModuleGroupInterner {
     private final StringInterner groups = new StringInterner();
-    private final Map<String[], String[]> paths = new THashMap<String[], String[]>(new TObjectHashingStrategy<String[]>() {
+    private final Map<String[], String[]> paths = new THashMap<>(new TObjectHashingStrategy<String[]>() {
       @Override
       public int computeHashCode(String[] object) {
         return Arrays.hashCode(object);
@@ -210,7 +210,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
   @NotNull
   public static ModulePath[] getPathsToModuleFiles(@NotNull Element element) {
-    final List<ModulePath> paths = new ArrayList<ModulePath>();
+    final List<ModulePath> paths = new ArrayList<>();
     final Element modules = element.getChild(ELEMENT_MODULES);
     if (modules != null) {
       for (final Element moduleElement : modules.getChildren(ELEMENT_MODULE)) {
@@ -231,7 +231,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   }
 
   public void readExternal(@NotNull Element element) {
-    myModulePaths = new ArrayList<ModulePath>(Arrays.asList(getPathsToModuleFiles(element)));
+    myModulePaths = new ArrayList<>(Arrays.asList(getPathsToModuleFiles(element)));
   }
 
   protected void loadModules(@NotNull ModuleModelImpl moduleModel) {
@@ -247,8 +247,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
     myFailedModulePaths.clear();
     myFailedModulePaths.addAll(myModulePaths);
-    final List<Module> modulesWithUnknownTypes = new ArrayList<Module>();
-    List<ModuleLoadingErrorDescription> errors = new ArrayList<ModuleLoadingErrorDescription>();
+    final List<Module> modulesWithUnknownTypes = new ArrayList<>();
+    List<ModuleLoadingErrorDescription> errors = new ArrayList<>();
 
     for (ModulePath modulePath : myModulePaths) {
       if (progressIndicator != null) {
@@ -435,7 +435,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   public void writeExternal(@NotNull Element element) {
     final Module[] collection = getModules();
 
-    List<SaveItem> sorted = new ArrayList<SaveItem>(collection.length + myFailedModulePaths.size());
+    List<SaveItem> sorted = new ArrayList<>(collection.length + myFailedModulePaths.size());
     for (Module module : collection) {
       sorted.add(new ModuleSaveItem(module));
     }
@@ -589,12 +589,12 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   protected abstract ModuleEx createAndLoadModule(@NotNull String filePath) throws IOException;
 
   class ModuleModelImpl implements ModifiableModuleModel {
-    final Map<String, Module> myModules = new LinkedHashMap<String, Module>();
+    final Map<String, Module> myModules = new LinkedHashMap<>();
     private volatile Module[] myModulesCache;
 
-    private final List<Module> myModulesToDispose = new ArrayList<Module>();
-    private final Map<Module, String> myModuleToNewName = new HashMap<Module, String>();
-    private final Map<String, Module> myNewNameToModule = new HashMap<String, Module>();
+    private final List<Module> myModulesToDispose = new ArrayList<>();
+    private final Map<Module, String> myModuleToNewName = new HashMap<>();
+    private final Map<String, Module> myNewNameToModule = new HashMap<>();
     private boolean myIsWritable;
     private Map<Module, String[]> myModuleGroupPath;
 
@@ -606,7 +606,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       myModules.putAll(that.myModules);
       final Map<Module, String[]> groupPath = that.myModuleGroupPath;
       if (groupPath != null){
-        myModuleGroupPath = new THashMap<Module, String[]>();
+        myModuleGroupPath = new THashMap<>();
         myModuleGroupPath.putAll(that.myModuleGroupPath);
       }
       myIsWritable = true;
@@ -779,7 +779,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
 
     private Comparator<Module> moduleDependencyComparator() {
-      DFSTBuilder<Module> builder = new DFSTBuilder<Module>(moduleGraph(true));
+      DFSTBuilder<Module> builder = new DFSTBuilder<>(moduleGraph(true));
       return builder.comparator();
     }
 
@@ -799,7 +799,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
 
     @NotNull private List<Module> getModuleDependentModules(Module module) {
-      List<Module> result = new ArrayList<Module>();
+      List<Module> result = new ArrayList<>();
       for (Module aModule : myModules.values()) {
         if (isModuleDependent(aModule, module)) {
           result.add(aModule);
@@ -832,7 +832,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     public void dispose() {
       assertWritable();
       ApplicationManager.getApplication().assertWriteAccessAllowed();
-      final Set<Module> set = new HashSet<Module>();
+      final Set<Module> set = new HashSet<>();
       set.addAll(myModuleModel.myModules.values());
       for (Module thisModule : myModules.values()) {
         if (!set.contains(thisModule)) {
@@ -891,7 +891,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     @Override
     public void setModuleGroupPath(@NotNull Module module, @Nullable("null means remove") String[] groupPath) {
       if (myModuleGroupPath == null) {
-        myModuleGroupPath = new THashMap<Module, String[]>();
+        myModuleGroupPath = new THashMap<>();
       }
       if (groupPath == null) {
         myModuleGroupPath.remove(module);
@@ -908,9 +908,9 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     final Collection<Module> oldModules = myModuleModel.myModules.values();
     final Collection<Module> newModules = moduleModel.myModules.values();
-    final List<Module> removedModules = new ArrayList<Module>(oldModules);
+    final List<Module> removedModules = new ArrayList<>(oldModules);
     removedModules.removeAll(newModules);
-    final List<Module> addedModules = new ArrayList<Module>(newModules);
+    final List<Module> addedModules = new ArrayList<>(newModules);
     addedModules.removeAll(oldModules);
 
     ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(() -> {
@@ -919,7 +919,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
         cleanCachedStuff();
       }
 
-      List<Module> neverAddedModules = new ArrayList<Module>(moduleModel.myModulesToDispose);
+      List<Module> neverAddedModules = new ArrayList<>(moduleModel.myModulesToDispose);
       neverAddedModules.removeAll(myModuleModel.myModules.values());
       for (final Module neverAddedModule : neverAddedModules) {
         neverAddedModule.putUserData(DISPOSED_MODULE_NAME, neverAddedModule.getName());
@@ -934,7 +934,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       final Set<Module> modulesToBeRenamed = modulesToNewNamesMap.keySet();
       modulesToBeRenamed.removeAll(moduleModel.myModulesToDispose);
 
-      List<Module> modules = new ArrayList<Module>();
+      List<Module> modules = new ArrayList<>();
       Map<Module, String> oldNames = ContainerUtil.newHashMap();
       for (final Module module : modulesToBeRenamed) {
         oldNames.put(module, module.getName());

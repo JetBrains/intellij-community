@@ -70,8 +70,8 @@ public class JavaStubIndexer extends StubHierarchyIndexer {
     PsiJavaFileStub javaFileStub = (PsiJavaFileStub)stubTree;
     new StubTree(javaFileStub, false);
 
-    ArrayList<ClassDecl> classList = new ArrayList<ClassDecl>();
-    Set<String> usedNames = new HashSet<String>();
+    ArrayList<ClassDecl> classList = new ArrayList<>();
+    Set<String> usedNames = new HashSet<>();
     for (StubElement<?> el : javaFileStub.getChildrenStubs()) {
       if (el instanceof PsiClassStubImpl) {
         ClassDecl classDecl = processClassDecl((PsiClassStubImpl<?>)el, usedNames);
@@ -97,7 +97,7 @@ public class JavaStubIndexer extends StubHierarchyIndexer {
     if (el instanceof PsiClassStubImpl) {
       return processClassDecl((PsiClassStubImpl)el, namesCache);
     }
-    ArrayList<Decl> innerList = new ArrayList<Decl>();
+    ArrayList<Decl> innerList = new ArrayList<>();
     for (StubElement childElement : el.getChildrenStubs()) {
       Decl innerDef = processMember(childElement, namesCache);
       if (innerDef != null) {
@@ -109,8 +109,8 @@ public class JavaStubIndexer extends StubHierarchyIndexer {
 
   @Nullable
   private static ClassDecl processClassDecl(PsiClassStubImpl<?> classStub, Set<String> namesCache) {
-    ArrayList<String> superList = new ArrayList<String>();
-    ArrayList<Decl> innerList = new ArrayList<Decl>();
+    ArrayList<String> superList = new ArrayList<>();
+    ArrayList<Decl> innerList = new ArrayList<>();
     int accessModifiers = 0;
     if (classStub.isAnonymous()) {
       if (classStub.getBaseClassReferenceText() != null) {

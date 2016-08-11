@@ -30,7 +30,7 @@ import java.util.List;
 
 public abstract class PushDownDelegate<MemberInfo extends MemberInfoBase<Member>,
                                       Member extends PsiElement> {
-  public static final LanguageExtension<PushDownDelegate> EP_NAME = new LanguageExtension<PushDownDelegate>("com.intellij.refactoring.pushDown");
+  public static final LanguageExtension<PushDownDelegate> EP_NAME = new LanguageExtension<>("com.intellij.refactoring.pushDown");
 
   @Nullable
   protected static <MemberInfo extends MemberInfoBase<Member>, Member extends PsiElement> PushDownDelegate<MemberInfo, Member> findDelegate(@NotNull PsiElement sourceClass) {

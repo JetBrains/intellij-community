@@ -31,7 +31,7 @@ public class TestMethodIsPublicVoidNoArgInspectionBase extends BaseInspection {
     STATIC, NOT_PUBLIC_VOID, PARAMETER
   }
 
-  public final List<String> ignorableAnnotations = new ArrayList<String>(Arrays.asList("mockit.Mocked"));
+  public final List<String> ignorableAnnotations = new ArrayList<>(Arrays.asList("mockit.Mocked"));
 
   @Override
   @NotNull

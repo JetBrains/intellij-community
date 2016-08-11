@@ -57,7 +57,7 @@ public class CacheUpdateRunner {
     queue.startLoading();
 
     ProgressUpdater progressUpdater = new ProgressUpdater() {
-      final Set<VirtualFile> myFilesBeingProcessed = new THashSet<VirtualFile>();
+      final Set<VirtualFile> myFilesBeingProcessed = new THashSet<>();
       final AtomicInteger myNumberOfFilesProcessed = new AtomicInteger();
       private boolean fileNameWasShown;
 

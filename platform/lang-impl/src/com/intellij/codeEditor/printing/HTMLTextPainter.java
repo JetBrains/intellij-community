@@ -66,8 +66,8 @@ class HTMLTextPainter {
   private final LineMarkerInfo[] myMethodSeparators;
   private int myCurrentMethodSeparator;
   private final Project myProject;
-  private final Map<TextAttributes, String> myStyleMap = new HashMap<TextAttributes, String>();
-  private final Map<Color, String> mySeparatorStyles = new HashMap<Color, String>();
+  private final Map<TextAttributes, String> myStyleMap = new HashMap<>();
+  private final Map<Color, String> mySeparatorStyles = new HashMap<>();
 
   public HTMLTextPainter(PsiFile psiFile, Project project, String dirName, boolean printLineNumbers) {
     myProject = project;
@@ -90,7 +90,7 @@ class HTMLTextPainter {
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
     myDocument = psiDocumentManager.getDocument(psiFile);
 
-    ArrayList<LineMarkerInfo> methodSeparators = new ArrayList<LineMarkerInfo>();
+    ArrayList<LineMarkerInfo> methodSeparators = new ArrayList<>();
     if (myDocument != null) {
       final List<LineMarkerInfo> separators = FileSeparatorProvider.getFileSeparators(psiFile, myDocument);
       if (separators != null) {

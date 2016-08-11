@@ -89,7 +89,7 @@ public class ComparatorMethodParameterNotUsedInspection extends BaseInspection {
       private final Set<PsiParameter> parameters;
 
       private ParameterAccessVisitor(@NotNull PsiParameter[] parameters) {
-        this.parameters = new HashSet<PsiParameter>(Arrays.asList(parameters));
+        this.parameters = new HashSet<>(Arrays.asList(parameters));
       }
 
       @Override

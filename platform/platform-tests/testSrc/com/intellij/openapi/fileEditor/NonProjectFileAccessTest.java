@@ -259,7 +259,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     typeAndCheck(nonProjectFile1, false);
     typeAndCheck(nonProjectFile2, false);
     
-    List<VirtualFile> allowed = new ArrayList<VirtualFile>();
+    List<VirtualFile> allowed = new ArrayList<>();
     registerAccessCheckExtension(allowed, Collections.emptyList());
 
     typeAndCheck(nonProjectFile1, false);
@@ -286,7 +286,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     typeAndCheck(nonProjectFile1, true);
     typeAndCheck(nonProjectFile2, true);
     
-    List<VirtualFile> denied = new ArrayList<VirtualFile>();
+    List<VirtualFile> denied = new ArrayList<>();
     registerAccessCheckExtension(Collections.emptyList(), denied);
 
     typeAndCheck(nonProjectFile1, true);
@@ -307,13 +307,13 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
   }
 
   private Set<VirtualFile> registerWriteAccessProvider(final VirtualFile... filesToDeny) {
-    final Set<VirtualFile> requested = new LinkedHashSet<VirtualFile>();
+    final Set<VirtualFile> requested = new LinkedHashSet<>();
     PlatformTestUtil.registerExtension(Extensions.getArea(getProject()), WritingAccessProvider.EP_NAME, new WritingAccessProvider() {
       @NotNull
       @Override
       public Collection<VirtualFile> requestWriting(VirtualFile... files) {
         Collections.addAll(requested, files);
-        HashSet<VirtualFile> denied = new HashSet<VirtualFile>(Arrays.asList(filesToDeny));
+        HashSet<VirtualFile> denied = new HashSet<>(Arrays.asList(filesToDeny));
         denied.retainAll(Arrays.asList(files));
         return denied;
       }

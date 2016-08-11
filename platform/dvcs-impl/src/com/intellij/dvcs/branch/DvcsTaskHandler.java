@@ -60,7 +60,7 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
         return hasBranch(repository, new TaskInfo(taskName, Collections.emptyList()));
       }
     });
-    List<R> map = new ArrayList<R>();
+    List<R> map = new ArrayList<>();
     if (!problems.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode() ||
           Messages.showDialog(myProject,
@@ -130,7 +130,7 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
       @Nullable
       @Override
       protected TaskInfo create(String key) {
-        return new TaskInfo(key, new ArrayList<String>());
+        return new TaskInfo(key, new ArrayList<>());
       }
     };
     for (R repository : repositories) {
@@ -151,7 +151,7 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
   @Override
   public TaskInfo[] getAllExistingTasks() {
     List<R> repositories = myRepositoryManager.getRepositories();
-    MultiMap<String, TaskInfo> tasks = new MultiMap<String, TaskInfo>();
+    MultiMap<String, TaskInfo> tasks = new MultiMap<>();
     for (R repository : repositories) {
       for (TaskInfo branch : getAllBranches(repository)) {
         tasks.putValue(branch.getName(), branch);
@@ -160,7 +160,7 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
     return ContainerUtil.map2Array(tasks.entrySet(), TaskInfo.class, new Function<Map.Entry<String, Collection<TaskInfo>>, TaskInfo>() {
       @Override
       public TaskInfo fun(Map.Entry<String, Collection<TaskInfo>> entry) {
-        Set<String> repositories = new HashSet<String>();
+        Set<String> repositories = new HashSet<>();
         boolean remote = false;
         for (TaskInfo info : entry.getValue()) {
           remote |= info.isRemote();

@@ -173,7 +173,7 @@ public class GroovyTypeCheckVisitorHelper {
     final List<GrExpression> args = getExpressionArgumentsOfCall(argumentList);
     if (args == null) return LocalQuickFix.EMPTY_ARRAY;
     
-    final List<Pair<Integer, PsiType>> allErrors = new ArrayList<Pair<Integer, PsiType>>();
+    final List<Pair<Integer, PsiType>> allErrors = new ArrayList<>();
     final List<GrClosureSignature> signatures = GrClosureSignatureUtil.generateSimpleSignatures(signature);
     for (GrClosureSignature closureSignature : signatures) {
       final GrClosureSignatureUtil.MapResultWithError<PsiType> map = GrClosureSignatureUtil.mapSimpleSignatureWithErrors(
@@ -189,7 +189,7 @@ public class GroovyTypeCheckVisitorHelper {
       }
     }
 
-    final ArrayList<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
+    final ArrayList<LocalQuickFix> fixes = new ArrayList<>();
     for (Pair<Integer, PsiType> error : allErrors) {
       if (args.size() > error.first && error.second != null) {
         fixes.add(new ParameterCastFix(error.first, error.second, args.get(error.first)));

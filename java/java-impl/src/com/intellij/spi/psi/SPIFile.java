@@ -58,7 +58,7 @@ public class SPIFile extends PsiFileBase {
       @Override
       public PsiReference[] compute() {
 
-        final List<PsiReference> refs = new ArrayList<PsiReference>();
+        final List<PsiReference> refs = new ArrayList<>();
         int idx = 0;
         int d;
         final String fileName = getName();

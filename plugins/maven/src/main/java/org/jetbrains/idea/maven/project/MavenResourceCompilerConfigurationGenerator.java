@@ -423,7 +423,7 @@ public class MavenResourceCompilerConfigurationGenerator {
   }
 
   private void addNonMavenResources(MavenProjectConfiguration projectCfg) {
-    Set<VirtualFile> processedRoots = new HashSet<VirtualFile>();
+    Set<VirtualFile> processedRoots = new HashSet<>();
 
     for (MavenProject project : myMavenProjectsManager.getProjects()) {
       for (String dir : ContainerUtil.concat(project.getSources(), project.getTestSources())) {

@@ -29,7 +29,7 @@ public class CmdMergeClient extends BaseSvnClient implements MergeClient {
                     @Nullable final ProgressTracker handler) throws VcsException {
     assertUrl(source);
 
-    List<String> parameters = new ArrayList<String>();
+    List<String> parameters = new ArrayList<>();
     CommandUtil.put(parameters, source);
     fillParameters(parameters, destination, null, dryRun, false, false, true, diffOptions);
 
@@ -48,7 +48,7 @@ public class CmdMergeClient extends BaseSvnClient implements MergeClient {
                     @Nullable ProgressTracker handler) throws VcsException {
     assertUrl(source);
 
-    List<String> parameters = new ArrayList<String>();
+    List<String> parameters = new ArrayList<>();
 
     CommandUtil.put(parameters, range.getStartRevision(), range.getEndRevision());
     CommandUtil.put(parameters, source);
@@ -71,7 +71,7 @@ public class CmdMergeClient extends BaseSvnClient implements MergeClient {
     assertUrl(source1);
     assertUrl(source2);
 
-    List<String> parameters = new ArrayList<String>();
+    List<String> parameters = new ArrayList<>();
 
     CommandUtil.put(parameters, source1);
     CommandUtil.put(parameters, source2);

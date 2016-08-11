@@ -68,7 +68,7 @@ public class ArrayExprent extends Exprent {
   }
 
   public List<Exprent> getAllExprents() {
-    List<Exprent> lst = new ArrayList<Exprent>();
+    List<Exprent> lst = new ArrayList<>();
     lst.add(array);
     lst.add(index);
     return lst;

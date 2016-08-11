@@ -49,7 +49,7 @@ public class TraitTransformationSupport implements AstTransformationSupport {
       }
     }
 
-    List<PsiClassType.ClassResolveResult> traits = getSuperTraitsByCorrectOrder(context.getImplementsTypes());
+    List<PsiClassType.ClassResolveResult> traits = getSuperTraitsByCorrectOrder(context.getSuperTypes());
     if (traits.isEmpty()) return;
 
     for (PsiClassType.ClassResolveResult resolveResult : traits) {

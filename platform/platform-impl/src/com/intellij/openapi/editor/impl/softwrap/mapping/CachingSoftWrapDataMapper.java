@@ -68,9 +68,9 @@ public class CachingSoftWrapDataMapper implements SoftWrapAwareDocumentParsingLi
   private static final Logger LOG = Logger.getInstance("#" + CachingSoftWrapDataMapper.class.getName());
   
   /** Caches information for the document visual line starts sorted in ascending order. */
-  private final List<CacheEntry>               myCache                               = new ArrayList<CacheEntry>();
-  private final List<CacheEntry>               myAffectedByUpdateCacheEntries        = new ArrayList<CacheEntry>();
-  private final List<SoftWrapImpl>             myAffectedByUpdateSoftWraps           = new ArrayList<SoftWrapImpl>();
+  private final List<CacheEntry>               myCache                               = new ArrayList<>();
+  private final List<CacheEntry>               myAffectedByUpdateCacheEntries        = new ArrayList<>();
+  private final List<SoftWrapImpl>             myAffectedByUpdateSoftWraps           = new ArrayList<>();
 
   private final LogicalToOffsetCalculationStrategy myLogicalToOffsetStrategy;
   private final OffsetToLogicalCalculationStrategy myOffsetToLogicalStrategy;

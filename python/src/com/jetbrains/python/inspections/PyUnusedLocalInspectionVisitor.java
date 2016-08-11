@@ -66,8 +66,8 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     myIgnoreTupleUnpacking = ignoreTupleUnpacking;
     myIgnoreLambdaParameters = ignoreLambdaParameters;
     myIgnoreRangeIterationVariables = ignoreRangeIterationVariables;
-    myUnusedElements = new HashSet<PsiElement>();
-    myUsedElements = new HashSet<PsiElement>();
+    myUnusedElements = new HashSet<>();
+    myUsedElements = new HashSet<>();
   }
 
   @Override
@@ -250,8 +250,8 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     final PyInspectionExtension[] filters = Extensions.getExtensions(PyInspectionExtension.EP_NAME);
     // Register problems
 
-    final Set<PyFunction> functionsWithInheritors = new HashSet<PyFunction>();
-    final Map<PyFunction, Boolean> emptyFunctions = new HashMap<PyFunction, Boolean>();
+    final Set<PyFunction> functionsWithInheritors = new HashSet<>();
+    final Map<PyFunction, Boolean> emptyFunctions = new HashMap<>();
 
     for (PsiElement element : myUnusedElements) {
       boolean ignoreUnused = false;
@@ -319,7 +319,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           boolean canRemove = !(PsiTreeUtil.getPrevSiblingOfType(element, PyParameter.class) instanceof PySingleStarParameter) ||
             PsiTreeUtil.getNextSiblingOfType(element, PyParameter.class) != null;
 
-          final List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
+          final List<LocalQuickFix> fixes = new ArrayList<>();
           if (mayBeField) {
             fixes.add(new AddFieldQuickFix(name, name, containingClass.getName(), false));
           }

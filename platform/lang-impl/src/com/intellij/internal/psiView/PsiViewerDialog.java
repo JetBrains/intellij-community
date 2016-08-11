@@ -332,7 +332,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
         }
       }
     }
-    myFileTypeComboBox.setModel(new CollectionComboBoxModel<SourceWrapper>(ContainerUtil.newArrayList(mySourceWrappers), lastUsed));
+    myFileTypeComboBox.setModel(new CollectionComboBoxModel<>(ContainerUtil.newArrayList(mySourceWrappers), lastUsed));
     myFileTypeComboBox.setRenderer(new ListCellRendererWrapper<SourceWrapper>() {
       @Override
       public void customize(JList list, SourceWrapper value, int index, boolean selected, boolean hasFocus) {
@@ -562,7 +562,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
 
   private void updateDialectsCombo(@Nullable final String lastUsed) {
     final Object source = getSource();
-    ArrayList<Language> items = new ArrayList<Language>(); 
+    ArrayList<Language> items = new ArrayList<>();
     if (source instanceof LanguageFileType) {
       final Language baseLang = ((LanguageFileType)source).getLanguage();
       items.add(baseLang);
@@ -570,7 +570,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       Arrays.sort(dialects, LanguageUtil.LANGUAGE_COMPARATOR);
       items.addAll(Arrays.asList(dialects));
     }
-    myDialectComboBox.setModel(new CollectionComboBoxModel<Language>(items));
+    myDialectComboBox.setModel(new CollectionComboBoxModel<>(items));
 
     boolean visible = items.size() > 1;
     myDialectLabel.setVisible(visible);
@@ -590,7 +590,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       if (extensions.size() > 1) {
         ExtensionComparator comp = new ExtensionComparator(extensions.get(0));
         Collections.sort(extensions, comp);
-        SortedComboBoxModel<String> model = new SortedComboBoxModel<String>(comp);
+        SortedComboBoxModel<String> model = new SortedComboBoxModel<>(comp);
         model.setAll(extensions);
         myExtensionComboBox.setModel(model);
         myExtensionComboBox.setVisible(true);
@@ -613,7 +613,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
 
   private static List<String> getAllExtensions(LanguageFileType fileType) {
     final List<FileNameMatcher> associations = FileTypeManager.getInstance().getAssociations(fileType);
-    final List<String> extensions = new ArrayList<String>();
+    final List<String> extensions = new ArrayList<>();
     extensions.add(fileType.getDefaultExtension().toLowerCase());
     for (FileNameMatcher matcher : associations) {
       final String presentableString = matcher.getPresentableString().toLowerCase();
@@ -648,7 +648,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       @Override
       public void actionPerformed(@NotNull ActionEvent e) {
         PsiElement element = parseText(myEditor.getDocument().getText());
-        List<PsiElement> allToParse = new ArrayList<PsiElement>();
+        List<PsiElement> allToParse = new ArrayList<>();
         if (element instanceof PsiFile) {
           allToParse.addAll(((PsiFile)element).getViewProvider().getAllFiles());
         }
@@ -702,7 +702,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     BlockTreeNode rootNode = new BlockTreeNode(rootBlock, null);
     blockTreeStructure.setRoot(rootNode);
     myBlockTreeBuilder = new BlockTreeBuilder(myBlockTree, blockTreeStructure);
-    myPsiToBlockMap = new HashMap<PsiElement, BlockTreeNode>();
+    myPsiToBlockMap = new HashMap<>();
     final PsiElement psiFile = (getTreeStructure()).getRootPsiElement();
     initMap(rootNode, psiFile);
     PsiElement rootPsi = rootNode.getBlock() instanceof ASTBlock ?
@@ -1036,7 +1036,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     @SuppressWarnings("unchecked")
     Map<PsiElement, PsiElement[]> map = (Map<PsiElement, PsiElement[]>)myRefs.getClientProperty(REFS_CACHE);
     if (map == null) {
-      myRefs.putClientProperty(REFS_CACHE, map = new HashMap<PsiElement, PsiElement[]>());
+      myRefs.putClientProperty(REFS_CACHE, map = new HashMap<>());
     }
     PsiElement[] cache = map.get(element);
     if (cache == null) {

@@ -56,7 +56,7 @@ public class FrameworkDetectionIndex extends ScalarIndexExtension<Integer> {
   @NotNull
   @Override
   public DataIndexer<Integer, Void, FileContent> getIndexer() {
-    final MultiMap<FileType, Pair<ElementPattern<FileContent>, Integer>> detectors = new MultiMap<FileType, Pair<ElementPattern<FileContent>, Integer>>();
+    final MultiMap<FileType, Pair<ElementPattern<FileContent>, Integer>> detectors = new MultiMap<>();
     FrameworkDetectorRegistry registry = FrameworkDetectorRegistry.getInstance();
     for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensions()) {
       detectors.putValue(detector.getFileType(), Pair.create(detector.createSuitableFilePattern(), registry.getDetectorId(detector)));
@@ -76,7 +76,7 @@ public class FrameworkDetectionIndex extends ScalarIndexExtension<Integer> {
               LOG.debug(inputData.getFile() + " accepted by detector " + pair.getSecond());
             }
             if (result == null) {
-              result = new HashMap<Integer, Void>();
+              result = new HashMap<>();
             }
             myDispatcher.getMulticaster().fileUpdated(inputData.getFile(), pair.getSecond());
             result.put(pair.getSecond(), null);
@@ -96,7 +96,7 @@ public class FrameworkDetectionIndex extends ScalarIndexExtension<Integer> {
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    final Set<FileType> acceptedTypes = new HashSet<FileType>();
+    final Set<FileType> acceptedTypes = new HashSet<>();
     for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensions()) {
       acceptedTypes.add(detector.getFileType());
     }

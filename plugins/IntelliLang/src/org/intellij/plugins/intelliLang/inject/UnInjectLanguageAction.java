@@ -112,7 +112,7 @@ public class UnInjectLanguageAction implements IntentionAction, LowPriorityActio
   }
 
   private static boolean defaultFunctionalityWorked(final PsiLanguageInjectionHost host) {
-    final THashSet<String> languages = new THashSet<String>();
+    final THashSet<String> languages = new THashSet<>();
     final List<Pair<PsiElement, TextRange>> files = InjectedLanguageManager.getInstance(host.getProject()).getInjectedPsiFiles(host);
     if (files == null) return false;
     for (Pair<PsiElement, TextRange> pair : files) {

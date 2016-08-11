@@ -34,7 +34,7 @@ public class PrepareAllToDeployAction extends PrepareToDeployAction {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
 
-    List<Module> pluginModules = new ArrayList<Module>();
+    List<Module> pluginModules = new ArrayList<>();
     for (Module aModule : ModuleManager.getInstance(project).getModules()) {
       if (PluginModuleType.isOfType(aModule)) {
         pluginModules.add(aModule);

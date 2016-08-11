@@ -76,7 +76,7 @@ public class PropertiesReferenceManager {
                                                   BundleNameEvaluator bundleNameEvaluator) {
 
 
-    final ArrayList<PropertiesFile> result = new ArrayList<PropertiesFile>();
+    final ArrayList<PropertiesFile> result = new ArrayList<>();
     processPropertiesFiles(searchScope, new PropertiesFileProcessor() {
       public boolean process(String baseName, PropertiesFile propertiesFile) {
         if (baseName.equals(bundleName)) {

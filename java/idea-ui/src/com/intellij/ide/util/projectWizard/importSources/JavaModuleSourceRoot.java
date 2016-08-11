@@ -32,7 +32,7 @@ public class JavaModuleSourceRoot extends DetectedSourceRoot {
 
   public JavaModuleSourceRoot(File directory, @Nullable String packagePrefix, @NotNull String language) {
     super(directory, packagePrefix);
-    myLanguages = new ArrayList<String>();
+    myLanguages = new ArrayList<>();
     myLanguages.add(language);
   }
 
@@ -57,7 +57,7 @@ public class JavaModuleSourceRoot extends DetectedSourceRoot {
 
   @NotNull
   public JavaModuleSourceRoot combineWith(@NotNull JavaModuleSourceRoot root) {
-    List<String> union = new ArrayList<String>(myLanguages.size() + root.myLanguages.size());
+    List<String> union = new ArrayList<>(myLanguages.size() + root.myLanguages.size());
     union.addAll(myLanguages);
     union.addAll(root.myLanguages);
     ContainerUtil.removeDuplicates(union);

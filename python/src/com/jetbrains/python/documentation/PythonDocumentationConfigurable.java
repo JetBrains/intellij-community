@@ -106,7 +106,7 @@ public class PythonDocumentationConfigurable implements SearchableConfigurable, 
 
   private static class PythonDocumentationPanel extends AddEditRemovePanel<PythonDocumentationMap.Entry> {
     public PythonDocumentationPanel() {
-      super(ourModel, new ArrayList<PythonDocumentationMap.Entry>());
+      super(ourModel, new ArrayList<>());
       setRenderer(1, new ColoredTableCellRenderer() {
         @Override
         protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {

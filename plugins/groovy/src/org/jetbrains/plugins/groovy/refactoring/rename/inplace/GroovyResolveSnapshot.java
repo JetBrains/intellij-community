@@ -39,7 +39,7 @@ public class GroovyResolveSnapshot extends ResolveSnapshotProvider.ResolveSnapsh
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.rename.inplace.GroovyResolveSnapshot");
 
   private final Map<SmartPsiElementPointer, SmartPsiElementPointer> myReferencesMap =
-    new HashMap<SmartPsiElementPointer, SmartPsiElementPointer>();
+    new HashMap<>();
   private final Project myProject;
   private final Document myDocument;
 
@@ -47,7 +47,7 @@ public class GroovyResolveSnapshot extends ResolveSnapshotProvider.ResolveSnapsh
     myProject = scope.getProject();
     myDocument = PsiDocumentManager.getInstance(myProject).getDocument(scope.getContainingFile());
     final SmartPointerManager pointerManager = SmartPointerManager.getInstance(myProject);
-    final Map<PsiElement, SmartPsiElementPointer> pointers = new HashMap<PsiElement, SmartPsiElementPointer>();
+    final Map<PsiElement, SmartPsiElementPointer> pointers = new HashMap<>();
     scope.accept(new GroovyPsiElementVisitor(new GroovyRecursiveElementVisitor() {
       @Override
       public void visitReferenceExpression(GrReferenceExpression refExpr) {

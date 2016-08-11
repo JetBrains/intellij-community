@@ -154,7 +154,7 @@ public class GitMergeUtil {
       action.delayTask(new TransactionRunnable() {
         public void run(List<VcsException> exceptionList) {
           LocalFileSystem lfs = LocalFileSystem.getInstance();
-          final ArrayList<VirtualFile> unmerged = new ArrayList<VirtualFile>();
+          final ArrayList<VirtualFile> unmerged = new ArrayList<>();
           for (String fileName : unmergedNames) {
             VirtualFile f = lfs.findFileByPath(fileName);
             if (f != null) {

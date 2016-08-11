@@ -31,14 +31,14 @@ import java.util.Map;
  */
 public final class ReplacementBuilder {
   private final String replacement;
-  private final List<ParameterInfo> parameterizations = new ArrayList<ParameterInfo>();
+  private final List<ParameterInfo> parameterizations = new ArrayList<>();
   private final Map<String, ScriptSupport> replacementVarsMap;
   private final ReplaceOptions options;
   private final Project myProject;
 
   ReplacementBuilder(final Project project,final ReplaceOptions options) {
     myProject = project;
-    replacementVarsMap = new HashMap<String, ScriptSupport>();
+    replacementVarsMap = new HashMap<>();
     this.options = options;
     String _replacement = options.getReplacement();
     FileType fileType = options.getMatchOptions().getFileType();
@@ -150,7 +150,7 @@ public final class ReplacementBuilder {
     }
 
     final StringBuilder result = new StringBuilder(replacement);
-    final HashMap<String, MatchResult> matchMap = new HashMap<String, MatchResult>();
+    final HashMap<String, MatchResult> matchMap = new HashMap<>();
     fill(match, matchMap);
 
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(type);

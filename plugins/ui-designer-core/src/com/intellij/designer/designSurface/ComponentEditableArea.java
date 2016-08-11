@@ -33,7 +33,7 @@ import java.util.List;
 public abstract class ComponentEditableArea implements EditableArea {
   private final JComponent myComponent;
   private final EventListenerList myListenerList = new EventListenerList();
-  private List<RadComponent> mySelection = new ArrayList<RadComponent>();
+  private List<RadComponent> mySelection = new ArrayList<>();
 
   public ComponentEditableArea(JComponent component) {
     myComponent = component;
@@ -74,7 +74,7 @@ public abstract class ComponentEditableArea implements EditableArea {
 
   @Override
   public void select(@NotNull RadComponent component) {
-    mySelection = new ArrayList<RadComponent>();
+    mySelection = new ArrayList<>();
     mySelection.add(component);
     fireSelectionChanged();
   }
@@ -94,7 +94,7 @@ public abstract class ComponentEditableArea implements EditableArea {
 
   @Override
   public void setSelection(@NotNull List<RadComponent> components) {
-    mySelection = new ArrayList<RadComponent>(components);
+    mySelection = new ArrayList<>(components);
     fireSelectionChanged();
   }
 
@@ -106,7 +106,7 @@ public abstract class ComponentEditableArea implements EditableArea {
 
   @Override
   public void deselectAll() {
-    mySelection = new ArrayList<RadComponent>();
+    mySelection = new ArrayList<>();
     fireSelectionChanged();
   }
 

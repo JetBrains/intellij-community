@@ -20,7 +20,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
-import com.intellij.util.io.ZipUtil;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -38,12 +36,12 @@ class PluginXmlPathResolver implements JDOMXIncluder.PathResolver {
   private final List<File> myPluginJarFiles;
 
   public PluginXmlPathResolver(File[] filesInLib) {
-    myPluginJarFiles = ContainerUtil.filter(new Condition<File>() {
+    myPluginJarFiles = ContainerUtil.filter(filesInLib, new Condition<File>() {
       @Override
       public boolean value(File file) {
         return FileUtil.isJarOrZip(file);
       }
-    }, filesInLib);
+    });
   }
 
   @NotNull

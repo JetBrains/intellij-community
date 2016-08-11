@@ -60,7 +60,7 @@ public class GitDiffProvider implements DiffProvider, DiffMixin {
   private static final Set<FileStatus> ourGoodStatuses;
 
   static {
-    ourGoodStatuses = new THashSet<FileStatus>();
+    ourGoodStatuses = new THashSet<>();
     ourGoodStatuses.addAll(
       Arrays.asList(FileStatus.NOT_CHANGED, FileStatus.DELETED, FileStatus.MODIFIED, FileStatus.MERGE, FileStatus.MERGED_WITH_CONFLICTS));
   }

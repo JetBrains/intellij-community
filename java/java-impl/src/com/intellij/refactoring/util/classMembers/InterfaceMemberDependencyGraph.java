@@ -27,15 +27,15 @@ import java.util.Set;
 
 public class InterfaceMemberDependencyGraph<T extends PsiMember, M extends MemberInfoBase<T>> implements MemberDependencyGraph<T, M> {
   protected HashSet<T> myInterfaceDependencies;
-  protected HashMap<T,HashSet<T>> myMembersToInterfacesMap = new HashMap<T, HashSet<T>>();
+  protected HashMap<T,HashSet<T>> myMembersToInterfacesMap = new HashMap<>();
   protected HashSet<PsiClass> myImplementedInterfaces;
   protected HashMap<PsiClass,HashSet<T>> myMethodsFromInterfaces;
   protected PsiClass myClass;
 
   public InterfaceMemberDependencyGraph(PsiClass aClass) {
     myClass = aClass;
-    myImplementedInterfaces = new HashSet<PsiClass>();
-    myMethodsFromInterfaces = new HashMap<PsiClass, HashSet<T>>();
+    myImplementedInterfaces = new HashSet<>();
+    myMethodsFromInterfaces = new HashMap<>();
   }
 
   @Override
@@ -56,8 +56,8 @@ public class InterfaceMemberDependencyGraph<T extends PsiMember, M extends Membe
   @Override
   public Set<? extends T> getDependent() {
     if(myInterfaceDependencies == null) {
-      myInterfaceDependencies = new HashSet<T>();
-      myMembersToInterfacesMap = new HashMap<T, HashSet<T>>();
+      myInterfaceDependencies = new HashSet<>();
+      myMembersToInterfacesMap = new HashMap<>();
       for (final PsiClass implementedInterface : myImplementedInterfaces) {
         addInterfaceDeps(implementedInterface);
       }
@@ -92,14 +92,14 @@ public class InterfaceMemberDependencyGraph<T extends PsiMember, M extends Membe
     HashSet<T> interfaceMethods = myMethodsFromInterfaces.get(intf);
 
     if(interfaceMethods == null) {
-      interfaceMethods = new HashSet<T>();
+      interfaceMethods = new HashSet<>();
       buildInterfaceMethods(interfaceMethods, intf);
       myMethodsFromInterfaces.put(intf, interfaceMethods);
     }
     for (T method : interfaceMethods) {
       HashSet<T> interfaces = myMembersToInterfacesMap.get(method);
       if (interfaces == null) {
-        interfaces = new HashSet<T>();
+        interfaces = new HashSet<>();
         myMembersToInterfacesMap.put(method, interfaces);
       }
       interfaces.add((T)intf);

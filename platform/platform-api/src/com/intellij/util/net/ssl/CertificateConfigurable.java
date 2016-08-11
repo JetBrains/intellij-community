@@ -69,7 +69,7 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
 
   private Tree myTree;
   private CertificateTreeBuilder myTreeBuilder;
-  private Set<X509Certificate> myCertificates = new HashSet<X509Certificate>();
+  private Set<X509Certificate> myCertificates = new HashSet<>();
 
   private void initializeUI() {
     myTree = new Tree();
@@ -189,17 +189,17 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
     return myAcceptAutomatically.isSelected() != state.ACCEPT_AUTOMATICALLY ||
            myCheckHostname.isSelected() != state.CHECK_HOSTNAME ||
            myCheckValidityPeriod.isSelected() != state.CHECK_VALIDITY ||
-           !myCertificates.equals(new HashSet<X509Certificate>(myTrustManager.getCertificates()));
+           !myCertificates.equals(new HashSet<>(myTrustManager.getCertificates()));
   }
 
   @Override
   public void apply() throws ConfigurationException {
     List<X509Certificate> existing = myTrustManager.getCertificates();
 
-    Set<X509Certificate> added = new HashSet<X509Certificate>(myCertificates);
+    Set<X509Certificate> added = new HashSet<>(myCertificates);
     added.removeAll(existing);
 
-    Set<X509Certificate> removed = new HashSet<X509Certificate>(existing);
+    Set<X509Certificate> removed = new HashSet<>(existing);
     removed.removeAll(myCertificates);
 
     for (X509Certificate certificate : added) {

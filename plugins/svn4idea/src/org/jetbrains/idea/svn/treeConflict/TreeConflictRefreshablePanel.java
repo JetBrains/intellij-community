@@ -127,8 +127,8 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
 
   @Override
   protected Object loadImpl() throws VcsException {
-    return new BeforeAfter<BeforeAfter<ConflictSidePresentation>>(processDescription(myChange.getBeforeDescription()),
-                                                     processDescription(myChange.getAfterDescription()));
+    return new BeforeAfter<>(processDescription(myChange.getBeforeDescription()),
+                             processDescription(myChange.getAfterDescription()));
   }
 
   private BeforeAfter<ConflictSidePresentation> processDescription(TreeConflictDescription description) throws VcsException {
@@ -164,7 +164,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
         }
         rightSide = createSide(description.getSourceRightVersion(), pegFromLeft, false);
         rightSide.load();
-        return new BeforeAfter<ConflictSidePresentation>(leftSide, rightSide);
+        return new BeforeAfter<>(leftSide, rightSide);
       }
     } catch (SVNException e) {
       throw new VcsException(e);
@@ -177,7 +177,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
       }
     }
 
-    return new BeforeAfter<ConflictSidePresentation>(leftSide, rightSide);
+    return new BeforeAfter<>(leftSide, rightSide);
   }
 
   private static boolean isDifferentURLs(TreeConflictDescription description) {

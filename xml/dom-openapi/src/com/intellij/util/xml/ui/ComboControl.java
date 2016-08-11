@@ -46,7 +46,7 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
   private static final Pair<String, Icon> EMPTY = new ComboBoxItem(" ", null);
   private final Factory<List<Pair<String, Icon>>> myDataFactory;
   private boolean myNullable;
-  private final Map<String, Icon> myIcons = new HashMap<String, Icon>();
+  private final Map<String, Icon> myIcons = new HashMap<>();
   private final ItemListener myCommitListener = new ItemListener() {
     @Override
     public void itemStateChanged(ItemEvent e) {
@@ -97,7 +97,8 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
         final ResolvingConverter resolvingConverter = (ResolvingConverter)converter;
         final Collection<Object> variants = resolvingConverter.getVariants(context);
         final List<Pair<String, Icon>> all =
-          new ArrayList<Pair<String, Icon>>(ContainerUtil.map(variants, s -> Pair.create(ElementPresentationManager.getElementName(s), ElementPresentationManager.getIcon(s))));
+          new ArrayList<>(ContainerUtil.map(variants, s -> Pair
+            .create(ElementPresentationManager.getElementName(s), ElementPresentationManager.getIcon(s))));
         all.addAll(ContainerUtil.map(resolvingConverter.getAdditionalVariants(context), new Function() {
           @Override
           public Object fun(Object s) {
@@ -134,7 +135,7 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
 
   private static JComboBox tuneUpComboBox(final JComboBox comboBox, Factory<List<Pair<String, Icon>>> dataFactory) {
     final List<Pair<String, Icon>> list = dataFactory.create();
-    final Set<String> standardValues = new HashSet<String>();
+    final Set<String> standardValues = new HashSet<>();
     for (final Pair<String, Icon> pair : list) {
       comboBox.addItem(new ComboBoxItem(pair));
       standardValues.add(pair.first);
@@ -192,13 +193,13 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
   private boolean dataChanged(List<Pair<String, Icon>> newData) {
     final JComboBox comboBox = getComponent();
     final int size = comboBox.getItemCount();
-    final List<Pair<String, Icon>> oldData = new ArrayList<Pair<String, Icon>>(size);
+    final List<Pair<String, Icon>> oldData = new ArrayList<>(size);
     for (int i = 0; i < size; i++) {
       oldData.add((Pair<String, Icon>)comboBox.getItemAt(i));
     }
 
     if (myNullable) {
-      final LinkedList<Pair<String, Icon>> list = new LinkedList<Pair<String, Icon>>(newData);
+      final LinkedList<Pair<String, Icon>> list = new LinkedList<>(newData);
       list.addFirst(EMPTY);
       newData = list;
     }

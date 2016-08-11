@@ -51,7 +51,7 @@ import java.awt.event.ActionListener;
 public class Cvs2SettingsEditPanel {
 
   private JPanel myPanel;
-  private final Ref<Boolean> myIsUpdating = new Ref<Boolean>();
+  private final Ref<Boolean> myIsUpdating = new Ref<>();
   private final CvsRootAsStringConfigurationPanel myCvsRootConfigurationPanelView;
   private JPanel myCvsRootConfigurationPanel;
 
@@ -194,7 +194,7 @@ public class Cvs2SettingsEditPanel {
 
   private static void testConnection(final CvsRootConfiguration configuration, final Component component, Project project) {
     final CvsLoginWorker loginWorker = configuration.getLoginWorker(project);
-    final Ref<Boolean> success = new Ref<Boolean>();
+    final Ref<Boolean> success = new Ref<>();
     ProgressManager.getInstance().run(new Task.Modal(project, CvsBundle.message("message.connecting.to.cvs.server"), false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {

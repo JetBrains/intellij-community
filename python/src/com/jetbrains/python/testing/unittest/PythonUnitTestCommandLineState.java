@@ -52,7 +52,7 @@ public class PythonUnitTestCommandLineState extends
 
   @NotNull
   protected List<String> getTestSpecs() {
-    List<String> specs = new ArrayList<String>();
+    List<String> specs = new ArrayList<>();
 
     final String scriptName = FileUtil.toSystemDependentName(myConfig.getScriptName());
     switch (myConfig.getTestType()) {

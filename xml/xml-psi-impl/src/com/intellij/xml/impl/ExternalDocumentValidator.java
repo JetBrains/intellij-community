@@ -115,7 +115,7 @@ public class ExternalDocumentValidator {
 
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document==null) return;
-    final List<ValidationInfo> results = new LinkedList<ValidationInfo>();
+    final List<ValidationInfo> results = new LinkedList<>();
 
     myHost = new Validator.ValidationHost() {
       @Override
@@ -270,7 +270,7 @@ public class ExternalDocumentValidator {
 
     myFile = file;
     myModificationStamp = myFile.getModificationStamp();
-    myInfos = new WeakReference<List<ValidationInfo>>(results);
+    myInfos = new WeakReference<>(results);
 
     addAllInfos(host,results);
   }
@@ -375,7 +375,7 @@ public class ExternalDocumentValidator {
 
     if(validator == null) {
       validator = new ExternalDocumentValidator();
-      project.putUserData(validatorInstanceKey,new SoftReference<ExternalDocumentValidator>(validator));
+      project.putUserData(validatorInstanceKey, new SoftReference<>(validator));
     }
 
     validator.runJaxpValidation(document,host);

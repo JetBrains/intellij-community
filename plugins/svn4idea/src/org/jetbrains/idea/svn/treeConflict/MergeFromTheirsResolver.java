@@ -98,9 +98,9 @@ public class MergeFromTheirsResolver {
     myOldPresentation = TreeConflictRefreshablePanel.filePath(myOldFilePath);
     myNewPresentation = TreeConflictRefreshablePanel.filePath(myNewFilePath);
 
-    myTheirsChanges = new ArrayList<Change>();
-    myTheirsBinaryChanges = new ArrayList<Change>();
-    myWarnings = new ArrayList<VcsException>();
+    myTheirsChanges = new ArrayList<>();
+    myTheirsBinaryChanges = new ArrayList<>();
+    myWarnings = new ArrayList<>();
     myTextPatches = Collections.emptyList();
   }
 
@@ -126,7 +126,7 @@ public class MergeFromTheirsResolver {
       }
     });
 
-    final List<TaskDescriptor> tasks = new SmartList<TaskDescriptor>();
+    final List<TaskDescriptor> tasks = new SmartList<>();
     tasks.add(myDescription.isDirectory() ? new PreloadChangesContentsForDir() : new PreloadChangesContentsForFile());
     tasks.add(new ConvertTextPaths());
     tasks.add(new PatchCreator());
@@ -149,7 +149,7 @@ public class MergeFromTheirsResolver {
     for (Iterator<Change> iterator = paths.iterator(); iterator.hasNext(); ) {
       final Change change = iterator.next();
       if (ChangesUtil.isBinaryChange(change)) {
-        result = (result == null ? new SmartList<Change>() : result);
+        result = (result == null ? new SmartList<>() : result);
         result.add(change);
         iterator.remove();
       }
@@ -196,7 +196,7 @@ public class MergeFromTheirsResolver {
     @Override
     public void run(ContinuationContext context) {
       initAddOption();
-      List<Change> convertedChanges = new SmartList<Change>();
+      List<Change> convertedChanges = new SmartList<>();
       try {
         // revision contents is preloaded, so ok to call in awt
         convertedChanges = convertPaths(myTheirsChanges);
@@ -258,7 +258,7 @@ public class MergeFromTheirsResolver {
       }
 
       final PatchApplier<BinaryFilePatch> patchApplier =
-        new PatchApplier<BinaryFilePatch>(myVcs.getProject(), myBaseDir, patches, localList, null, null);
+        new PatchApplier<>(myVcs.getProject(), myBaseDir, patches, localList, null, null);
       patchApplier.execute(false, true);  // 3
       boolean thereAreCreations = false;
       for (FilePatch patch : patches) {
@@ -338,7 +338,7 @@ public class MergeFromTheirsResolver {
         return;
       }
       if (converted.isEmpty()) return;
-      final Map<FilePath, Change> map = new HashMap<FilePath, Change>();
+      final Map<FilePath, Change> map = new HashMap<>();
       for (Change change : converted) {
         map.put(ChangesUtil.getFilePath(change), change);
       }
@@ -359,7 +359,7 @@ public class MergeFromTheirsResolver {
     public void run(final ContinuationContext context) {
       if (myTheirsBinaryChanges.isEmpty()) return;
       final Application application = ApplicationManager.getApplication();
-      final List<FilePath> dirtyPaths = new ArrayList<FilePath>();
+      final List<FilePath> dirtyPaths = new ArrayList<>();
       for (final Change change : myTheirsBinaryChanges) {
         try {
           application.runWriteAction(new ThrowableComputable<Void, VcsException>() {
@@ -431,7 +431,7 @@ public class MergeFromTheirsResolver {
         singleMessage = "Apply changes to binary file " + stringPath + " (according to theirs changes)?";
       }
     }
-    return AbstractVcsHelper.getInstance(myVcs.getProject()).selectFilePathsToProcess(new ArrayList<FilePath>(paths),
+    return AbstractVcsHelper.getInstance(myVcs.getProject()).selectFilePathsToProcess(new ArrayList<>(paths),
       TreeConflictRefreshablePanel.TITLE, "Select binary files to patch", TreeConflictRefreshablePanel.TITLE,
       singleMessage, new VcsShowConfirmationOption() {
 
@@ -453,7 +453,7 @@ public class MergeFromTheirsResolver {
 
   private List<Change> convertPaths(List<Change> changesForPatch) throws VcsException {
     initAddOption();
-    final List<Change> changes = new ArrayList<Change>();
+    final List<Change> changes = new ArrayList<>();
     for (Change change : changesForPatch) {
       if (! isUnderOldDir(change, myOldFilePath)) continue;
       ContentRevision before = null;
@@ -573,7 +573,7 @@ public class MergeFromTheirsResolver {
     settings.CHANGE_AFTER = "" + min;
     final List<SvnChangeList> committedChanges = myVcs.getCachingCommittedChangesProvider().getCommittedChanges(
       settings, new SvnRepositoryLocation(description.getSourceRightVersion().getRepositoryRoot().toString()), 0);
-    final List<CommittedChangeList> lst = new ArrayList<CommittedChangeList>(committedChanges.size() - 1);
+    final List<CommittedChangeList> lst = new ArrayList<>(committedChanges.size() - 1);
     for (SvnChangeList change : committedChanges) {
       if (change.getNumber() == min) {
         continue;

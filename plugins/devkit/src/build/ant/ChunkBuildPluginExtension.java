@@ -52,7 +52,7 @@ public class ChunkBuildPluginExtension extends ChunkBuildExtension {
       final Module module = modules[0];
       PluginBuildConfiguration buildProperties = PluginBuildConfiguration.getInstance(module);
 
-      final Set<Library> libs = new HashSet<Library>();
+      final Set<Library> libs = new HashSet<>();
       PluginBuildUtil.getLibraries(module, libs);
       @NonNls String jarPath = chunk.getBaseDir().getPath() + "/" + chunk.getName();
       if (libs.isEmpty()) {

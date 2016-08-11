@@ -57,8 +57,8 @@ public class ConvertToVarargsMethodFix extends InspectionGadgetsFix {
       return;
     }
     final PsiMethod method = (PsiMethod)parent;
-    final Collection<PsiElement> writtenElements = new ArrayList<PsiElement>();
-    final Collection<PsiReferenceExpression> methodCalls = new ArrayList<PsiReferenceExpression>();
+    final Collection<PsiElement> writtenElements = new ArrayList<>();
+    final Collection<PsiReferenceExpression> methodCalls = new ArrayList<>();
     writtenElements.add(method);
     for (final PsiReference reference : ReferencesSearch.search(method, method.getUseScope(), false)) {
       final PsiElement referenceElement = reference.getElement();

@@ -320,7 +320,7 @@ public class GenerateMembersUtil {
       return substitutor;
     }
 
-    final Map<PsiTypeParameter, PsiType> substitutionMap = new HashMap<PsiTypeParameter, PsiType>(substitutor.getSubstitutionMap());
+    final Map<PsiTypeParameter, PsiType> substitutionMap = new HashMap<>(substitutor.getSubstitutionMap());
     for (PsiTypeParameter typeParam : sourceTypeParameterList.getTypeParameters()) {
       final PsiTypeParameter substitutedTypeParam = substituteTypeParameter(factory, typeParam, substitutor, sourceMethod);
 
@@ -381,7 +381,7 @@ public class GenerateMembersUtil {
                                                           final @NotNull PsiSubstitutor substitutor, 
                                                           @NotNull final PsiMethod sourceMethod) {
     final PsiElement copy = typeParameter.copy();
-    final Map<PsiElement, PsiElement> replacementMap = new HashMap<PsiElement, PsiElement>();
+    final Map<PsiElement, PsiElement> replacementMap = new HashMap<>();
     copy.accept(new JavaRecursiveElementVisitor() {
       @Override
       public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
@@ -469,7 +469,7 @@ public class GenerateMembersUtil {
     }
     final PsiParameter[] sourceParameters = source.getParameterList().getParameters();
     final PsiParameterList targetParameterList = target.getParameterList();
-    RefactoringUtil.fixJavadocsForParams(target, new HashSet<PsiParameter>(Arrays.asList(targetParameterList.getParameters())), pair -> {
+    RefactoringUtil.fixJavadocsForParams(target, new HashSet<>(Arrays.asList(targetParameterList.getParameters())), pair -> {
       final int parameterIndex = targetParameterList.getParameterIndex(pair.first);
       if (parameterIndex >= 0 && parameterIndex < sourceParameters.length) {
         return Comparing.strEqual(pair.second, sourceParameters[parameterIndex].getName());
@@ -592,7 +592,7 @@ public class GenerateMembersUtil {
   }
 
   private static void filterAnnotations(Project project, PsiModifierList modifierList, GlobalSearchScope moduleScope) {
-    Set<String> toRemove = new HashSet<String>();
+    Set<String> toRemove = new HashSet<>();
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     for (PsiAnnotation annotation : modifierList.getAnnotations()) {
       String qualifiedName = annotation.getQualifiedName();
@@ -673,7 +673,7 @@ public class GenerateMembersUtil {
     Project project = field.getProject();
     PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
     String template = templatesManager.getDefaultTemplate().getTemplate();
-    String methodText = GenerationUtil.velocityGenerateCode(psiClass, Collections.singletonList(field), new HashMap<String, String>(), template, 0, false);
+    String methodText = GenerationUtil.velocityGenerateCode(psiClass, Collections.singletonList(field), new HashMap<>(), template, 0, false);
 
     boolean isGetter = templatesManager instanceof GetterTemplatesManager;
     PsiMethod result;

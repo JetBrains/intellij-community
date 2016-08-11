@@ -83,12 +83,12 @@ public class ExpectedHighlightingData {
       this.severity = severity;
       this.endOfLine = endOfLine;
       this.enabled = enabled;
-      this.infos = new THashSet<HighlightInfo>();
+      this.infos = new THashSet<>();
     }
   }
 
-  private final Map<String, ExpectedHighlightingSet> myHighlightingTypes = new LinkedHashMap<String, ExpectedHighlightingSet>();
-  private final Map<RangeMarker, LineMarkerInfo> myLineMarkerInfos = new THashMap<RangeMarker, LineMarkerInfo>();
+  private final Map<String, ExpectedHighlightingSet> myHighlightingTypes = new LinkedHashMap<>();
+  private final Map<RangeMarker, LineMarkerInfo> myLineMarkerInfos = new THashMap<>();
   private final Document myDocument;
   @SuppressWarnings("StatefulEp") private final PsiFile myFile;
   private final String myText;
@@ -190,7 +190,8 @@ public class ExpectedHighlightingData {
       assert element != null : value;
       TextRange range = new TextRange(startOffset, endOffset);
       final String tooltip = value.getLineMarkerTooltip();
-      LineMarkerInfo markerInfo = new LineMarkerInfo<PsiElement>(element, range, null, value.updatePass, e -> tooltip, null, GutterIconRenderer.Alignment.RIGHT);
+      LineMarkerInfo markerInfo =
+        new LineMarkerInfo<>(element, range, null, value.updatePass, e -> tooltip, null, GutterIconRenderer.Alignment.RIGHT);
       entry.setValue(markerInfo);
     }
   }
@@ -221,7 +222,7 @@ public class ExpectedHighlightingData {
       endOffset -= endTag.length();
 
       LineMarkerInfo markerInfo = new LineMarkerInfo<PsiElement>(myFile, new TextRange(startOffset, endOffset), null, Pass.LINE_MARKERS,
-                                                                 new ConstantFunction<PsiElement, String>(descr), null,
+                                                                 new ConstantFunction<>(descr), null,
                                                                  GutterIconRenderer.Alignment.RIGHT);
 
       myLineMarkerInfos.put(document.createRangeMarker(startOffset, endOffset), markerInfo);
@@ -453,7 +454,7 @@ public class ExpectedHighlightingData {
   }
 
   private static <T> List<T> reverseCollection(Collection<T> infos) {
-    return ContainerUtil.reverse(infos instanceof List ? (List<T>)infos : new ArrayList<T>(infos));
+    return ContainerUtil.reverse(infos instanceof List ? (List<T>)infos : new ArrayList<>(infos));
   }
 
   private void compareTexts(Collection<HighlightInfo> infos, String text, String failMessage, @Nullable String filePath) {

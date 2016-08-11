@@ -46,7 +46,7 @@ public class SvnMergeInfoCache {
   @NotNull private final Map<String, MyCurrentUrlData> myCurrentUrlMapping;
 
   public static Topic<SvnMergeInfoCacheListener> SVN_MERGE_INFO_CACHE =
-    new Topic<SvnMergeInfoCacheListener>("SVN_MERGE_INFO_CACHE", SvnMergeInfoCacheListener.class);
+    new Topic<>("SVN_MERGE_INFO_CACHE", SvnMergeInfoCacheListener.class);
 
   private SvnMergeInfoCache(@NotNull Project project) {
     myProject = project;
@@ -171,7 +171,7 @@ public class SvnMergeInfoCache {
     @NotNull private final Map<String, BranchInfo> myBranchInfo;
 
     private MyCurrentUrlData() {
-      myBranchInfo = new SoftHashMap<String, BranchInfo>();
+      myBranchInfo = new SoftHashMap<>();
     }
 
     public BranchInfo getBranchInfo(final String branchUrl) {

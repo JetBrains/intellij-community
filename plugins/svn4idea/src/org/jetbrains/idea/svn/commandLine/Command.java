@@ -175,7 +175,7 @@ public class Command {
   }
 
   public String getText() {
-    List<String> data = new ArrayList<String>();
+    List<String> data = new ArrayList<>();
 
     if (myConfigDir != null) {
       data.add("--config-dir");

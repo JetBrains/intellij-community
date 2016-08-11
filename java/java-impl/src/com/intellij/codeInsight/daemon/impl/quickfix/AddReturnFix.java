@@ -91,7 +91,7 @@ public class AddReturnFix implements IntentionAction {
   }
 
   private static PsiVariable[] getDeclaredVariables(PsiMethod method) {
-    List<PsiVariable> variables = new ArrayList<PsiVariable>();
+    List<PsiVariable> variables = new ArrayList<>();
     PsiStatement[] statements = method.getBody().getStatements();
     for (PsiStatement statement : statements) {
       if (statement instanceof PsiDeclarationStatement) {

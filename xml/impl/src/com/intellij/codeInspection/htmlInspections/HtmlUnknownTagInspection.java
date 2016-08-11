@@ -71,7 +71,7 @@ public class HtmlUnknownTagInspection extends HtmlUnknownTagInspectionBase {
     final JPanel internalPanel = new JPanel(new BorderLayout());
     result.add(internalPanel, BorderLayout.NORTH);
 
-    final Ref<FieldPanel> panelRef = new Ref<FieldPanel>();
+    final Ref<FieldPanel> panelRef = new Ref<>();
     final FieldPanel additionalAttributesPanel = new FieldPanel(null, null, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent event) {

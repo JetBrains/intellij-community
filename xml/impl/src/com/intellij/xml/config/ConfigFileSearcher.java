@@ -15,9 +15,9 @@ import java.util.Set;
 
 public abstract class ConfigFileSearcher {
 
-  private final MultiMap<Module, PsiFile> myFiles = new MultiMap<Module, PsiFile>();
-  private final MultiMap<VirtualFile, PsiFile> myJars = new MultiMap<VirtualFile, PsiFile>();
-  private final MultiMap<VirtualFile, PsiFile> myVirtualFiles = new MultiMap<VirtualFile, PsiFile>();
+  private final MultiMap<Module, PsiFile> myFiles = new MultiMap<>();
+  private final MultiMap<VirtualFile, PsiFile> myJars = new MultiMap<>();
+  private final MultiMap<VirtualFile, PsiFile> myVirtualFiles = new MultiMap<>();
   private final @Nullable Module myModule;
   @NotNull private final Project myProject;
 

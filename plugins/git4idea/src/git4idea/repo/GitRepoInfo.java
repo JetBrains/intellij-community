@@ -50,10 +50,10 @@ public class GitRepoInfo {
     myCurrentBranch = currentBranch;
     myCurrentRevision = currentRevision;
     myState = state;
-    myRemotes = new LinkedHashSet<GitRemote>(remotes);
-    myLocalBranches = new LinkedHashMap<GitLocalBranch, Hash>(localBranches);
-    myRemoteBranches = new LinkedHashMap<GitRemoteBranch, Hash>(remoteBranches);
-    myBranchTrackInfos = new LinkedHashSet<GitBranchTrackInfo>(branchTrackInfos);
+    myRemotes = new LinkedHashSet<>(remotes);
+    myLocalBranches = new LinkedHashMap<>(localBranches);
+    myRemoteBranches = new LinkedHashMap<>(remoteBranches);
+    myBranchTrackInfos = new LinkedHashSet<>(branchTrackInfos);
   }
 
   @Nullable
@@ -138,9 +138,9 @@ public class GitRepoInfo {
     // GitBranch has perverted equals contract (see the comment there)
     // until GitBranch is created only from a single place with correctly defined Hash, we can't change its equals
     THashSet<Map.Entry<? extends GitBranch, Hash>> set1 =
-      new THashSet<Map.Entry<? extends GitBranch, Hash>>(c1.entrySet(), new BranchesComparingStrategy());
+      new THashSet<>(c1.entrySet(), new BranchesComparingStrategy());
     THashSet<Map.Entry<? extends GitBranch, Hash>> set2 =
-      new THashSet<Map.Entry<? extends GitBranch, Hash>>(c2.entrySet(), new BranchesComparingStrategy());
+      new THashSet<>(c2.entrySet(), new BranchesComparingStrategy());
     return set1.equals(set2);
   }
 

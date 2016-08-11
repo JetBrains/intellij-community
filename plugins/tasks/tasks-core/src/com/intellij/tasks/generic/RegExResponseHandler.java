@@ -99,7 +99,7 @@ public final class RegExResponseHandler extends ResponseHandler {
                Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL | Pattern.UNICODE_CASE | Pattern.CANON_EQ)
       .matcher(response);
 
-    List<Task> tasks = new ArrayList<Task>();
+    List<Task> tasks = new ArrayList<>();
     for (int i = 0; i < max && matcher.find(); i++) {
       String id = matcher.group(placeholders.indexOf(ID_PLACEHOLDER) + 1);
       String summary = matcher.group(placeholders.indexOf(SUMMARY_PLACEHOLDER) + 1);
@@ -130,7 +130,7 @@ public final class RegExResponseHandler extends ResponseHandler {
       return ContainerUtil.emptyList();
     }
 
-    List<String> vars = new ArrayList<String>();
+    List<String> vars = new ArrayList<>();
     Matcher m = Pattern.compile("\\{(.+?)\\}").matcher(value);
     while (m.find()) {
       vars.add(m.group(0));

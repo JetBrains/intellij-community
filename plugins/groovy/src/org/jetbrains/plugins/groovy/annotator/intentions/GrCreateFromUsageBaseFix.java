@@ -130,7 +130,7 @@ public abstract class GrCreateFromUsageBaseFix extends Intention {
     final PsiClass targetClass = QuickfixUtil.findTargetClass(ref, compileStatic);
     if (targetClass == null || !canBeTargetClass(targetClass)) return Collections.emptyList();
 
-    final ArrayList<PsiClass> classes = new ArrayList<PsiClass>();
+    final ArrayList<PsiClass> classes = new ArrayList<>();
     collectSupers(targetClass, classes);
     return classes;
   }

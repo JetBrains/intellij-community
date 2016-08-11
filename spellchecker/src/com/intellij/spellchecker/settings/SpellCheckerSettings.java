@@ -36,10 +36,10 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   private static final String BUNDLED_DICTIONARY_ATTR_NAME = "BundledDictionary";
 
   // Paths
-  private List<String> myDictionaryFoldersPaths = new ArrayList<String>();
-  private Set<String> myDisabledDictionariesPaths = new HashSet<String>();
+  private List<String> myDictionaryFoldersPaths = new ArrayList<>();
+  private Set<String> myDisabledDictionariesPaths = new HashSet<>();
 
-  private Set<String> myBundledDisabledDictionariesPaths = new HashSet<String>();
+  private Set<String> myBundledDisabledDictionariesPaths = new HashSet<>();
 
   public static SpellCheckerSettings getInstance(Project project) {
     return ServiceManager.getService(project, SpellCheckerSettings.class);

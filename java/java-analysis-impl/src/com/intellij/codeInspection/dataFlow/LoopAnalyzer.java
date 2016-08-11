@@ -34,7 +34,7 @@ class LoopAnalyzer {
   private static class MyGraph implements Graph<Instruction> {
     @NotNull private final ControlFlow myFlow;
     private final Instruction[] myInstructions;
-    private final TIntObjectHashMap<int[]> myIns = new TIntObjectHashMap<int[]>();
+    private final TIntObjectHashMap<int[]> myIns = new TIntObjectHashMap<>();
 
     private MyGraph(@NotNull ControlFlow flow) {
       myFlow = flow;
@@ -77,7 +77,7 @@ class LoopAnalyzer {
     @NotNull
     private Iterator<Instruction> indicesToInstructions(int[] next) {
       if (next == null) return EmptyIterator.getInstance();
-      List<Instruction> out = new ArrayList<Instruction>(next.length);
+      List<Instruction> out = new ArrayList<>(next.length);
       for (int i : next) {
         out.add(myInstructions[i]);
       }
@@ -91,7 +91,7 @@ class LoopAnalyzer {
     final int[] loop = new int[controlFlow.getInstructionCount()]; // loop[i] = loop number(strongly connected component number) of i-th instruction or 0 if outside loop
 
     MyGraph graph = new MyGraph(controlFlow);
-    final DFSTBuilder<Instruction> builder = new DFSTBuilder<Instruction>(graph);
+    final DFSTBuilder<Instruction> builder = new DFSTBuilder<>(graph);
     TIntArrayList sccs = builder.getSCCs();
     sccs.forEach(new TIntProcedure() {
       private int myTNumber;

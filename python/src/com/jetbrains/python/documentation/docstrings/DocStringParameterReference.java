@@ -145,7 +145,7 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
     if (owner instanceof PyFunction) {
       List<PyNamedParameter> result = Lists.newArrayList();
       final List<PyNamedParameter> namedParameters = ParamHelper.collectNamedParameters(((PyFunction)owner).getParameterList());
-      Set<String> usedParameters = new HashSet<String>();
+      Set<String> usedParameters = new HashSet<>();
       PyStringLiteralExpression expression = PsiTreeUtil.getParentOfType(getElement(), PyStringLiteralExpression.class, false);
       if (expression != null) {
         PsiReference[] references = expression.getReferences();

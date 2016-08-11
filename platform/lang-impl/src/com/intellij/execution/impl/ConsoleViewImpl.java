@@ -122,8 +122,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private final Alarm myHeavyAlarm;
   private volatile int myHeavyUpdateTicket;
 
-  private final Collection<ChangeListener> myListeners = new CopyOnWriteArraySet<ChangeListener>();
-  private final List<AnAction> customActions = new ArrayList<AnAction>();
+  private final Collection<ChangeListener> myListeners = new CopyOnWriteArraySet<>();
+  private final List<AnAction> customActions = new ArrayList<>();
   private final ConsoleBuffer myBuffer = new ConsoleBuffer();
   private boolean myUpdateFoldingsEnabled = true;
   private EditorHyperlinkSupport myHyperlinks;
@@ -239,23 +239,23 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
    * <p/>
    * Target offsets are anchored to the document here.
    */
-  private final List<TokenInfo> myTokens = new ArrayList<TokenInfo>();
+  private final List<TokenInfo> myTokens = new ArrayList<>();
 
-  private final TIntObjectHashMap<ConsoleFolding> myFolding = new TIntObjectHashMap<ConsoleFolding>();
+  private final TIntObjectHashMap<ConsoleFolding> myFolding = new TIntObjectHashMap<>();
 
   private String myHelpId;
 
   private final Alarm myFlushUserInputAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
   private final Alarm myFlushAlarm = new Alarm(this);
 
-  private final Set<MyFlushRunnable> myCurrentRequests = new HashSet<MyFlushRunnable>();
+  private final Set<MyFlushRunnable> myCurrentRequests = new HashSet<>();
 
   protected final CompositeFilter myFilters;
 
   @Nullable private final InputFilter myInputMessageFilter;
 
   private final Alarm myFoldingAlarm = new Alarm(this);
-  private final List<FoldRegion> myPendingFoldRegions = new ArrayList<FoldRegion>();
+  private final List<FoldRegion> myPendingFoldRegions = new ArrayList<>();
 
   public ConsoleViewImpl(final Project project, boolean viewer) {
     this(project, GlobalSearchScope.allScope(project), viewer, true);
@@ -719,7 +719,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
       addedText = myBuffer.getText();
 
-      contentTypes = Collections.unmodifiableCollection(new HashSet<ConsoleViewContentType>(myBuffer.getDeferredTokenTypes()));
+      contentTypes = Collections.unmodifiableCollection(new HashSet<>(myBuffer.getDeferredTokenTypes()));
       List<TokenInfo> deferredTokens = myBuffer.getDeferredTokens();
       for (TokenInfo deferredToken : deferredTokens) {
         addToken(deferredToken.getLength(), deferredToken.getHyperlinkInfo(), deferredToken.contentType);
@@ -1108,7 +1108,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     final Document document = myEditor.getDocument();
     final CharSequence chars = document.getCharsSequence();
     final int startLine = Math.max(0, line1);
-    final List<FoldRegion> toAdd = new ArrayList<FoldRegion>();
+    final List<FoldRegion> toAdd = new ArrayList<>();
     for (int line = startLine; line <= endLine; line++) {
       boolean flushOnly = line == endLine;
       /*
@@ -1191,7 +1191,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         myFolding.remove(i);
       }
 
-      List<String> toFold = new ArrayList<String>(lEnd - lStart + 1);
+      List<String> toFold = new ArrayList<>(lEnd - lStart + 1);
       for (int i = lStart; i <= lEnd; i++) {
         toFold.add(EditorHyperlinkSupport.getLineText(document, i, false));
       }

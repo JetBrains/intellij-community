@@ -99,7 +99,7 @@ public class PyModuleNameIndex extends ScalarIndexExtension<String> {
 
   @NotNull
   public static List<PyFile> find(@NotNull String name, @NotNull Project project, boolean includeNonProjectItems) {
-    final List<PyFile> results = new ArrayList<PyFile>();
+    final List<PyFile> results = new ArrayList<>();
     final GlobalSearchScope scope = includeNonProjectItems
                                     ? PyProjectScopeBuilder.excludeSdkTestsScope(project)
                                     : GlobalSearchScope.projectScope(project);

@@ -30,7 +30,7 @@ public class CodeBlockOrInitializerSelectioner extends BasicSelectioner {
 
   @Override
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
-    List<TextRange> result = new ArrayList<TextRange>();
+    List<TextRange> result = new ArrayList<>();
     result.add(e.getTextRange());
 
     PsiElement[] children = e.getChildren();

@@ -26,7 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class DeclarationRangeUtil {
-  public static Map<Class,DeclarationRangeHandler> ourDeclarationRangeRegistry = new HashMap<Class, DeclarationRangeHandler>();
+  public static Map<Class,DeclarationRangeHandler> ourDeclarationRangeRegistry = new HashMap<>();
 
   private DeclarationRangeUtil() {
   }

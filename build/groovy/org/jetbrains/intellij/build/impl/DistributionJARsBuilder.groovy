@@ -205,9 +205,6 @@ class DistributionJARsBuilder {
           exclude(name: "*.txt")
         }
       }
-      dir("ext") {//why ext?
-        projectLibrary("CGLIB")
-      }
 
       dir("src") {
         ant.fileset(dir: "$communityHome/lib/src") {

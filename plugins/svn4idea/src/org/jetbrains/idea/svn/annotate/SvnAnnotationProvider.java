@@ -299,7 +299,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
 
     if (annotationSourceSwitcher != null) {
       final VcsRareLineAnnotationData merged = new VcsRareLineAnnotationData(size);
-      final Map<VcsRevisionNumber, VcsFileRevision> addMap = new HashMap<VcsRevisionNumber, VcsFileRevision>();
+      final Map<VcsRevisionNumber, VcsFileRevision> addMap = new HashMap<>();
 
       annotationSourceSwitcher.switchTo(AnnotationSource.MERGE);
       for (int i = 0; i < size; i++) {
@@ -382,7 +382,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
       myResult = result;
       myUrl = url;
       myCharset = charset;
-      myRevisionPoints = new LinkedList<SVNRevision>();
+      myRevisionPoints = new LinkedList<>();
     }
 
     public void go() throws VcsException {

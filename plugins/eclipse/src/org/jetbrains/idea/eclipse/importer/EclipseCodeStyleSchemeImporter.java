@@ -74,7 +74,7 @@ public class EclipseCodeStyleSchemeImporter implements SchemeImporter<CodeStyleS
    */
   @NotNull
   private static String[] readSchemeNames(@NotNull VirtualFile selectedFile) throws SchemeImportException {
-    final Set<String> names = new HashSet<String>();
+    final Set<String> names = new HashSet<>();
     final EclipseXmlProfileReader reader = new EclipseXmlProfileReader(new EclipseXmlProfileReader.OptionHandler() {
       @Override
       public void handleOption(@NotNull String eclipseKey, @NotNull String value) throws SchemeImportException {

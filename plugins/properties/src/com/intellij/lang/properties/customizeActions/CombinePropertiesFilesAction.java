@@ -49,8 +49,8 @@ public class CombinePropertiesFilesAction extends AnAction {
   @Override
   public void actionPerformed(final AnActionEvent e) {
     final List<PropertiesFile> initialPropertiesFiles = getPropertiesFiles(e);
-    final List<PropertiesFile> propertiesFiles = initialPropertiesFiles == null ? new ArrayList<PropertiesFile>()
-                                                                                : new ArrayList<PropertiesFile>(initialPropertiesFiles);
+    final List<PropertiesFile> propertiesFiles = initialPropertiesFiles == null ? new ArrayList<>()
+                                                                                : new ArrayList<>(initialPropertiesFiles);
     final List<ResourceBundle> resourceBundles = getResourceBundles(e);
     if (resourceBundles != null) {
       for (ResourceBundle bundle : resourceBundles) {
@@ -67,7 +67,7 @@ public class CombinePropertiesFilesAction extends AnAction {
     if (newBaseName != null) {
       final Project project = propertiesFiles.get(0).getProject();
 
-      final Set<ResourceBundle> uniqueBundlesToDissociate = new HashSet<ResourceBundle>();
+      final Set<ResourceBundle> uniqueBundlesToDissociate = new HashSet<>();
       for (PropertiesFile file : propertiesFiles) {
         final ResourceBundle resourceBundle = file.getResourceBundle();
         if (resourceBundle.getPropertiesFiles().size() != 1) {
@@ -111,7 +111,7 @@ public class CombinePropertiesFilesAction extends AnAction {
     if (psiElements == null || psiElements.length == 0) {
       return null;
     }
-    final List<PropertiesFile> files = new ArrayList<PropertiesFile>(psiElements.length);
+    final List<PropertiesFile> files = new ArrayList<>(psiElements.length);
     for (PsiElement psiElement : psiElements) {
       final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(psiElement);
       if (propertiesFile == null) {

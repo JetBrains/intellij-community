@@ -70,7 +70,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
   private final ReferenceEditorWithBrowseButton myClassField;
   private DefaultMutableTreeNode myRootNode;
 
-  private final THashMap<PsiMethod, MethodParameterInjection.MethodInfo> myData = new THashMap<PsiMethod, MethodParameterInjection.MethodInfo>();
+  private final THashMap<PsiMethod, MethodParameterInjection.MethodInfo> myData = new THashMap<>();
 
   public MethodParameterPanel(MethodParameterInjection injection, final Project project) {
     super(injection, project);
@@ -184,7 +184,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
       final PsiClass[] classes = classType instanceof PsiClassType? JavaPsiFacade.getInstance(myProject).
         findClasses(classType.getCanonicalText(), GlobalSearchScope.allScope(myProject)) : PsiClass.EMPTY_ARRAY;
       if (classes.length == 0) return;
-      final THashSet<String> visitedSignatures = new THashSet<String>();
+      final THashSet<String> visitedSignatures = new THashSet<>();
       for (PsiClass psiClass : classes) {
         for (PsiMethod method : psiClass.getMethods()) {
           final PsiModifierList modifiers = method.getModifierList();
@@ -203,7 +203,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
 
   private void refreshTreeStructure() {
     myRootNode.removeAllChildren();
-    final ArrayList<PsiMethod> methods = new ArrayList<PsiMethod>(myData.keySet());
+    final ArrayList<PsiMethod> methods = new ArrayList<>(myData.keySet());
     Collections.sort(methods, (o1, o2) -> {
       final int names = o1.getName().compareTo(o2.getName());
       if (names != 0) return names;
@@ -248,7 +248,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     setPsiClass(myOrigInjection.getClassName());
 
     rebuildTreeModel();
-    final THashMap<String, MethodParameterInjection.MethodInfo> map = new THashMap<String, MethodParameterInjection.MethodInfo>();
+    final THashMap<String, MethodParameterInjection.MethodInfo> map = new THashMap<>();
     for (PsiMethod method : myData.keySet()) {
       final MethodParameterInjection.MethodInfo methodInfo = myData.get(method);
       map.put(methodInfo.getMethodSignature(), methodInfo);

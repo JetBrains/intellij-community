@@ -61,7 +61,7 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
   private Project                                         myProject;
   private CodeStyleManager                                myCodeStyleManager;
 
-  private final List<Block> myBlocks = new ArrayList<Block>();
+  private final List<Block> myBlocks = new ArrayList<>();
 
   @Override
   // first pass - adjacent carets are grouped into blocks
@@ -167,7 +167,7 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
       block.startOffsets = new int[endLine - startLine + 1];
       block.endOffsets = new int[endLine - startLine + 1];
       block.commenters = new Commenter[endLine - startLine + 1];
-      block.commenterStateMap = new THashMap<SelfManagingCommenter, CommenterDataHolder>();
+      block.commenterStateMap = new THashMap<>();
       CharSequence chars = document.getCharsSequence();
 
       boolean singleline = startLine == endLine;
@@ -730,7 +730,7 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
   private static class Block {
     private Editor editor;
     private PsiFile psiFile;
-    private List<Caret> carets = new ArrayList<Caret>();
+    private List<Caret> carets = new ArrayList<>();
     private int startLine;
     private int endLine;
     private int[] startOffsets;

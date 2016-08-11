@@ -268,7 +268,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
   }
 
   static List<Bookmark> getSelectedBookmarks(JList list) {
-    List<Bookmark> answer = new ArrayList<Bookmark>();
+    List<Bookmark> answer = new ArrayList<>();
 
     //noinspection deprecation
     for (Object value : list.getSelectedValues()) {

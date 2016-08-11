@@ -281,7 +281,7 @@ public final class CompletionServiceImpl extends CompletionService{
 
   @Override
   public CompletionSorterImpl emptySorter() {
-    return new CompletionSorterImpl(new ArrayList<ClassifierFactory<LookupElement>>());
+    return new CompletionSorterImpl(new ArrayList<>());
   }
 
   public static boolean isStartMatch(LookupElement element, WeighingContext context) {

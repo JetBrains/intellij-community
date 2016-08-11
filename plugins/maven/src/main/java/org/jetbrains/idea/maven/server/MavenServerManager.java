@@ -64,7 +64,6 @@ import org.slf4j.Logger;
 import org.slf4j.impl.Log4jLoggerFactory;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
@@ -239,7 +238,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
 
         params.setMainClass(MAIN_CLASS);
 
-        Map<String, String> defs = new THashMap<String, String>();
+        Map<String, String> defs = new THashMap<>();
         defs.putAll(MavenUtil.getPropertiesFromMavenOpts());
 
         // pass ssl-related options
@@ -295,7 +294,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
                            NotificationType.WARNING).notify(null);
         }
 
-        final List<String> classPath = new ArrayList<String>();
+        final List<String> classPath = new ArrayList<>();
         classPath.add(PathUtil.getJarPathForClass(org.apache.log4j.Logger.class));
         if (currentMavenVersion == null || StringUtil.compareVersionNumbers(currentMavenVersion, "3.1") < 0) {
           classPath.add(PathUtil.getJarPathForClass(Logger.class));
@@ -303,7 +302,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
         }
 
         classPath.addAll(PathManager.getUtilClassPath());
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(Query.class), classPath);
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(Query.class));
         params.getClassPath().add(PathManager.getResourceRoot(getClass(), "/messages/CommonBundle.properties"));
         params.getClassPath().addAll(classPath);
         params.getClassPath().addAllFiles(collectClassPathAndLibsFolder(forceMaven2));
@@ -386,7 +385,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     File mavenHome = forceMaven2 ? BundledMavenPathHolder.myBundledMaven2Home : currentMavenVersion == null ? BundledMavenPathHolder.myBundledMaven3Home : getCurrentMavenHomeFile();
 
     final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
-    final List<File> classpath = new ArrayList<File>();
+    final List<File> classpath = new ArrayList<>();
     final String root = pluginFileOrDir.getParent();
 
     if (pluginFileOrDir.isDirectory()) {

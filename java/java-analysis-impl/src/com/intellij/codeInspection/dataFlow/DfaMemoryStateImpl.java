@@ -65,7 +65,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myUnknownVariables = ContainerUtil.newLinkedHashSet();
     myVariableStates = ContainerUtil.newLinkedHashMap();
     myDistinctClasses = new TLongHashSet();
-    myStack = new Stack<DfaValue>();
+    myStack = new Stack<>();
     myIdToEqClassesIndices = new MyIdMap(20);
   }
 
@@ -74,7 +74,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myEphemeral = toCopy.myEphemeral;
     myDefaultVariableStates = toCopy.myDefaultVariableStates; // shared between all states
     
-    myStack = new Stack<DfaValue>(toCopy.myStack);
+    myStack = new Stack<>(toCopy.myStack);
     myDistinctClasses = new TLongHashSet(toCopy.myDistinctClasses.toArray());
     myUnknownVariables = ContainerUtil.newLinkedHashSet(toCopy.myUnknownVariables);
 
@@ -139,7 +139,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     LinkedHashSet<UnorderedPair<EqClass>> result = ContainerUtil.newLinkedHashSet();
     for (long encodedPair : myDistinctClasses.toArray()) {
-      result.add(new UnorderedPair<EqClass>(myEqClasses.get(low(encodedPair)), myEqClasses.get(high(encodedPair))));
+      result.add(new UnorderedPair<>(myEqClasses.get(low(encodedPair)), myEqClasses.get(high(encodedPair))));
     }
     return myCachedDistinctClassPairs = result;
   }
@@ -193,7 +193,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     if (!myDistinctClasses.isEmpty()) {
       result.append("\n  distincts: ");
-      List<String> distincts = new ArrayList<String>();
+      List<String> distincts = new ArrayList<>();
       for (UnorderedPair<EqClass> pair : getDistinctClassPairs()) {
         distincts.add("{" + pair.first + ", " + pair.second + "}");
       }
@@ -211,7 +211,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
     }
     if (!myUnknownVariables.isEmpty()) {
-      result.append("\n  unknowns: ").append(new HashSet<DfaVariableValue>(myUnknownVariables));
+      result.append("\n  unknowns: ").append(new HashSet<>(myUnknownVariables));
     }
     result.append('>');
     return result.toString();

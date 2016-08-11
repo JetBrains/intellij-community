@@ -49,7 +49,7 @@ public class XmlSchemaTypeInheritanceTest extends CodeInsightFixtureTestCase {
     Assert.assertNotNull(node);
     Assert.assertEquals(3, node.size());
 
-    final Set<SchemaTypeInfo> expected = new HashSet<SchemaTypeInfo>();
+    final Set<SchemaTypeInfo> expected = new HashSet<>();
     expected.add(new SchemaTypeInfo("tConversation", true, ourNs));
     expected.add(new SchemaTypeInfo("tCallConversation", true, ourNs));
     expected.add(new SchemaTypeInfo("tSubConversation", true, ourNs));
@@ -81,7 +81,7 @@ public class XmlSchemaTypeInheritanceTest extends CodeInsightFixtureTestCase {
     final List<Set<SchemaTypeInfo>> childrenOfType = SchemaTypeInheritanceIndex.getWorker(project, null).convert("http://a.b.c", "baseSimpleType");
     Assert.assertNotNull(childrenOfType);
 
-    final Set<SchemaTypeInfo> expected = new HashSet<SchemaTypeInfo>();
+    final Set<SchemaTypeInfo> expected = new HashSet<>();
     expected.add(new SchemaTypeInfo("extSimple4", true, "http://a.b.c"));
     expected.add(new SchemaTypeInfo("extSimple1", true, "http://a.b.c"));
     expected.add(new SchemaTypeInfo("extComplex2", true, "http://a.b.c"));
@@ -97,7 +97,7 @@ public class XmlSchemaTypeInheritanceTest extends CodeInsightFixtureTestCase {
     //
     final List<Set<SchemaTypeInfo>> childrenOfSimple4Type = SchemaTypeInheritanceIndex.getWorker(project, null).convert("http://a.b.c", "extSimple4");
     Assert.assertNotNull(childrenOfSimple4Type);
-    final Set<SchemaTypeInfo> expectedSimple4 = new HashSet<SchemaTypeInfo>();
+    final Set<SchemaTypeInfo> expectedSimple4 = new HashSet<>();
     expectedSimple4.add(new SchemaTypeInfo("extSimple5", true, "http://a.b.c"));
     expectedSimple4.add(new SchemaTypeInfo("wiseElement", false, "http://a.b.c"));
 

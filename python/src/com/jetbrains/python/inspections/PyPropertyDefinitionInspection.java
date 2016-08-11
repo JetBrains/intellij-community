@@ -84,7 +84,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       // save us continuous checks for level, module, stc
       myLevel = LanguageLevel.forElement(psiFile);
       // string classes
-      final List<PyClass> stringClasses = new ArrayList<PyClass>(2);
+      final List<PyClass> stringClasses = new ArrayList<>(2);
       final PyBuiltinCache builtins = PyBuiltinCache.getInstance(psiFile);
       PyClass cls = builtins.getClass("str");
       if (cls != null) stringClasses.add(cls);

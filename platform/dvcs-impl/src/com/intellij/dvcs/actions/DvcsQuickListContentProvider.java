@@ -39,7 +39,7 @@ public abstract class DvcsQuickListContentProvider implements VcsQuickListConten
     }
 
     final ActionManager manager = ActionManager.getInstance();
-    final List<AnAction> actions = new ArrayList<AnAction>();
+    final List<AnAction> actions = new ArrayList<>();
 
     actions.add(new Separator(activeVcs.getDisplayName()));
     add("CheckinProject", manager, actions);

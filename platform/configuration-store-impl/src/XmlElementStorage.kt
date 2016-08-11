@@ -33,7 +33,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
                                                        roamingType: RoamingType? = RoamingType.DEFAULT,
                                                        provider: StreamProvider? = null) : StorageBaseEx<StateMap>() {
   val roamingType: RoamingType = roamingType ?: RoamingType.DEFAULT
-  private val provider: StreamProvider? = if (provider == null || roamingType == RoamingType.DISABLED || !provider.isApplicable(fileSpec, this.roamingType)) null else provider
+  private val provider: StreamProvider? = if (provider == null || roamingType == RoamingType.DISABLED) null else provider
 
   protected abstract fun loadLocalData(): Element?
 
@@ -48,7 +48,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
   override fun loadData(): StateMap {
     val element: Element?
     // we don't use local data if has stream provider
-    if (provider != null && provider.enabled) {
+    if (provider != null && provider.isApplicable(fileSpec, roamingType)) {
       try {
         element = loadDataFromProvider()
         dataLoadedFromProvider(element)
@@ -130,7 +130,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
       }
 
       val provider = storage.provider
-      if (provider != null && provider.enabled) {
+      if (provider != null && provider.isApplicable(storage.fileSpec, storage.roamingType)) {
         if (element == null) {
           provider.delete(storage.fileSpec, storage.roamingType)
         }
@@ -163,13 +163,17 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
   }
 
   fun updatedFromStreamProvider(changedComponentNames: MutableSet<String>, deleted: Boolean) {
+    updatedFrom(changedComponentNames, deleted, true)
+  }
+
+  fun updatedFrom(changedComponentNames: MutableSet<String>, deleted: Boolean, streamProvider: Boolean) {
     if (roamingType == RoamingType.DISABLED) {
       // storage roaming was changed to DISABLED, but settings repository has old state
       return
     }
 
     try {
-      val newElement = if (deleted) null else loadDataFromProvider()
+      val newElement = if (deleted) null else if (streamProvider) loadDataFromProvider() else loadLocalData()
       val states = storageDataRef.get()
       if (newElement == null) {
         // if data was loaded, mark as changed all loaded components

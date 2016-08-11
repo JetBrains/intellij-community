@@ -26,7 +26,7 @@ public class VcsLogProperties {
     }
   }
 
-  @NotNull public static final VcsLogProperty<Boolean> LIGHTWEIGHT_BRANCHES = new VcsLogProperty<Boolean>(false);
+  @NotNull public static final VcsLogProperty<Boolean> LIGHTWEIGHT_BRANCHES = new VcsLogProperty<>(false);
 
   @NotNull
   public static <T> T get(@NotNull VcsLogProvider provider, VcsLogProperty<T> property) {

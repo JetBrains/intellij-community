@@ -27,6 +27,7 @@ public class GithubCommitDetailed extends GithubCommit {
   @Mandatory private CommitStats stats;
   @Mandatory private List<GithubFile> files;
 
+  @RestModel
   public static class CommitStats {
     @Mandatory private Integer additions;
     @Mandatory private Integer deletions;

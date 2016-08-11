@@ -32,7 +32,7 @@ import java.util.Map;
 public class PasswordDatabase implements PersistentStateComponent<PasswordDatabase.State> {
   private final static Logger LOG = Logger.getInstance(PasswordDatabase.class.getName());
 
-  public transient final Map<ByteArrayWrapper, byte[]> myDatabase = new HashMap<ByteArrayWrapper, byte[]>();
+  public transient final Map<ByteArrayWrapper, byte[]> myDatabase = new HashMap<>();
   public transient byte[] myMasterPassword;
 
   @Override

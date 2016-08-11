@@ -67,7 +67,7 @@ public class GrVariableInliner implements InlineHandler.Inliner {
   @Override
   @Nullable
   public MultiMap<PsiElement, String> getConflicts(@NotNull PsiReference reference, @NotNull PsiElement referenced) {
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     GrExpression expr = (GrExpression)reference.getElement();
     if (expr.getParent() instanceof GrAssignmentExpression) {
       GrAssignmentExpression parent = (GrAssignmentExpression)expr.getParent();

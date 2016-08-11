@@ -279,7 +279,7 @@ public final class HttpRequests {
         myInputStream = getConnection().getInputStream();
         if (myBuilder.myGzip && "gzip".equalsIgnoreCase(getConnection().getContentEncoding())) {
           //noinspection IOResourceOpenedButNotSafelyClosed
-          myInputStream = CompressedBytesReadAwareGZIPInputStream.create(myInputStream);
+          myInputStream = CountingGZIPInputStream.create(myInputStream);
         }
       }
       return myInputStream;

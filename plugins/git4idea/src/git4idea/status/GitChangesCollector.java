@@ -76,7 +76,7 @@ abstract class GitChangesCollector {
    * @return the set of dirty paths to check, the paths are automatically collapsed if the summary length more than limit
    */
   protected Collection<FilePath> dirtyPaths(boolean includeChanges) {
-    final List<String> allPaths = new ArrayList<String>();
+    final List<String> allPaths = new ArrayList<>();
 
     for (FilePath p : myDirtyScope.getRecursivelyDirtyDirectories()) {
       addToPaths(p, allPaths);

@@ -59,7 +59,7 @@ public class NexusRepositoryService extends MavenRepositoryService {
   public List<MavenRepositoryInfo> getRepositories(@NotNull String url) throws IOException {
     try {
       List<RepositoryType> repos = new Endpoint.Repositories(url).getRepolistAsRepositories().getData().getRepositoriesItem();
-      List<MavenRepositoryInfo> result = new ArrayList<MavenRepositoryInfo>(repos.size());
+      List<MavenRepositoryInfo> result = new ArrayList<>(repos.size());
       for (RepositoryType repo : repos) {
         if (!"maven2".equals(repo.getProvider())) continue;
         result.add(convertRepositoryInfo(repo));
@@ -84,7 +84,7 @@ public class NexusRepositoryService extends MavenRepositoryService {
         name, template.getGroupId(), template.getArtifactId(), template.getVersion(), null, template.getClassNames());
       boolean tooManyResults = results.isTooManyResults();
       final SearchResults.Data data = results.getData();
-      final ArrayList<MavenArtifactInfo> result = new ArrayList<MavenArtifactInfo>();
+      final ArrayList<MavenArtifactInfo> result = new ArrayList<>();
       if (data != null) {
         for (ArtifactType each : data.getArtifact()) {
           if (!Comparing.equal(each.packaging, packaging)) continue;

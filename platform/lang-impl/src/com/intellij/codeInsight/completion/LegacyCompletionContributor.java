@@ -51,8 +51,8 @@ public class LegacyCompletionContributor extends CompletionContributor {
 
     completeReference(parameters, result);
 
-    final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
-    final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
+    final Set<LookupElement> lookupSet = new LinkedHashSet<>();
+    final Set<CompletionVariant> keywordVariants = new HashSet<>();
     PsiFile file = parameters.getOriginalFile();
     completionData.addKeywordVariants(keywordVariants, insertedElement, file);
     completionData.completeKeywordsBySet(lookupSet, keywordVariants, insertedElement);
@@ -67,7 +67,7 @@ public class LegacyCompletionContributor extends CompletionContributor {
 
     final Ref<Boolean> hasVariants = Ref.create(false);
     processReferences(parameters, result, (reference, resultSet) -> {
-      final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
+      final Set<LookupElement> lookupSet = new LinkedHashSet<>();
       completionData.completeReference(reference, lookupSet, parameters.getPosition(), parameters.getOriginalFile());
       for (final LookupElement item : lookupSet) {
         if (resultSet.getPrefixMatcher().prefixMatches(item)) {

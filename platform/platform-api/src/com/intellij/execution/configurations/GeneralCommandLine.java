@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.EnvironmentUtil;
@@ -300,7 +301,7 @@ public class GeneralCommandLine implements UserDataHolder {
 
   @NotNull
   public List<String> getCommandLineList(@Nullable String exeName) {
-    List<String> commands = new ArrayList<String>();
+    List<String> commands = new ArrayList<>();
     if (exeName != null) {
       commands.add(exeName);
     }
@@ -389,7 +390,7 @@ public class GeneralCommandLine implements UserDataHolder {
 
     if (!myEnvParams.isEmpty()) {
       if (SystemInfo.isWindows) {
-        THashMap<String, String> envVars = new THashMap<String, String>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+        THashMap<String, String> envVars = new THashMap<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
         envVars.putAll(environment);
         envVars.putAll(myEnvParams);
         environment.clear();
@@ -397,6 +398,13 @@ public class GeneralCommandLine implements UserDataHolder {
       }
       else {
         environment.putAll(myEnvParams);
+      }
+    }
+
+    if (SystemInfo.isUnix) {
+      File workDirectory = getWorkDirectory();
+      if (workDirectory != null) {
+        environment.put("PWD", FileUtil.toSystemDependentName(workDirectory.getAbsolutePath()));
       }
     }
   }
@@ -456,6 +464,7 @@ public class GeneralCommandLine implements UserDataHolder {
 
     @Override
     public void putAll(Map<? extends String, ? extends String> map) {
+      //noinspection ConstantConditions
       if (map != null) {
         super.putAll(map);
       }

@@ -34,7 +34,7 @@ public class GroupSettingsBuilder<T> implements CompositeSettingsBuilder<T> {
   }
 
   public Collection<SettingsEditor<T>> getEditors() {
-    List<SettingsEditor<T>> result = new ArrayList<SettingsEditor<T>>();
+    List<SettingsEditor<T>> result = new ArrayList<>();
     List<Pair<String,SettingsEditor<T>>> editors = myGroup.getEditors();
     for (int i = 0; i < editors.size(); i++) {
       result.add(editors.get(i).getSecond());

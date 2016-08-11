@@ -35,8 +35,8 @@ import java.util.Collection;
 public class FacetTreeModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ui.FacetTreeModel");
   private static final FacetInfo ROOT = new FacetInfo(null, "", null, null);
-  private final List<FacetInfo> myFacetInfos = new ArrayList<FacetInfo>();
-  private final BidirectionalMap<FacetInfo, FacetInfo> myParents = new BidirectionalMap<FacetInfo, FacetInfo>();
+  private final List<FacetInfo> myFacetInfos = new ArrayList<>();
+  private final BidirectionalMap<FacetInfo, FacetInfo> myParents = new BidirectionalMap<>();
 
   public void addFacetInfo(FacetInfo info) {
     myFacetInfos.add(info);
@@ -105,7 +105,7 @@ public class FacetTreeModel {
 
   public Collection<FacetInfo> getFacetInfos(final FacetType<?, ?> type) {
     final FacetInfo[] facetInfos = getFacetInfos();
-    List<FacetInfo> infos = new ArrayList<FacetInfo>();
+    List<FacetInfo> infos = new ArrayList<>();
     for (FacetInfo facetInfo : facetInfos) {
       if (facetInfo.getFacetType().equals(type)) {
         infos.add(facetInfo);

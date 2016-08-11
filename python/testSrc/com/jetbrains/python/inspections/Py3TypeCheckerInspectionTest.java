@@ -118,4 +118,9 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   public void testDelegatedGenerator() {
     doTest();
   }
+
+  // PY-16055
+  public void testFunctionReturnTypePy3() {
+    doTest();
+  }
 }

@@ -116,7 +116,7 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
                                    PsiElementFactory factory,
                                    final PsiElement myExpression,
                                    Editor editor) {
-    final List<PsiElement> sideEffects = new ArrayList<PsiElement>();
+    final List<PsiElement> sideEffects = new ArrayList<>();
     boolean hasSideEffects = RemoveUnusedVariableUtil.checkSideEffects(qualifierExpression, null, sideEffects);
     if (hasSideEffects && !myOnTheFly) return false;
     if (!hasSideEffects || ApplicationManager.getApplication().isUnitTestMode()) {

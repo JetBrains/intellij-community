@@ -54,7 +54,7 @@ class CvsCheckinHandlerFactory extends VcsCheckinHandlerFactory {
         final CvsVcs2 cvs = CvsVcs2.getInstance(project);
         final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
         final Collection<VirtualFile> roots = panel.getRoots();
-        final Collection<FilePath> files = new HashSet<FilePath>();
+        final Collection<FilePath> files = new HashSet<>();
         for (VirtualFile root : roots) {
           final VcsRoot vcsRoot = vcsManager.getVcsRootObjectFor(root);
           if (vcsRoot == null || vcsRoot.getVcs() != cvs) {

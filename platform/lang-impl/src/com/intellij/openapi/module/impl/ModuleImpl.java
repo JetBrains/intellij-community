@@ -361,7 +361,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     static final class State {
       @Property(surroundWithTag = false)
       @MapAnnotation(surroundKeyWithTag = false, surroundValueWithTag = false, surroundWithTag = false, entryTagName = "option")
-      public final Map<String, String> options = new THashMap<String, String>();
+      public final Map<String, String> options = new THashMap<>();
     }
 
     private State state = new State();

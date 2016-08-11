@@ -1,6 +1,5 @@
 package com.jetbrains.edu.learning.actions;
 
-import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -66,13 +65,14 @@ public class StudyShowHintAction extends StudyActionWithShortcut {
     EduUsagesCollector.hintShown();
 
     final StudyToolWindow hintComponent = new StudyHint(answerPlaceholder, project).getStudyToolWindow();
+    hintComponent.setPreferredSize(new Dimension(400, 150));
     showHintPopUp(project, studyState, editor, hintComponent);
   }
 
   private static void showHintPopUp(Project project, StudyState studyState, Editor editor, StudyToolWindow hintComponent) {
     final JBPopup popup =
       JBPopupFactory.getInstance().createComponentPopupBuilder(hintComponent, hintComponent)
-        .setDimensionServiceKey(project, DocumentationManager.JAVADOC_LOCATION_AND_SIZE, false)
+        .setDimensionServiceKey(project, "StudyHint", false)
         .setResizable(true)
         .setMovable(true)
         .setRequestFocus(true)
