@@ -366,7 +366,7 @@ public class HighlightMethodUtil {
           highlightInfo = checkVarargParameterErasureToBeAccessible((MethodCandidateInfo)resolveResult, methodCall);
         }
 
-        if (highlightInfo == null && resolveResult instanceof MethodCandidateInfo) {
+        if (highlightInfo == null) {
           final String errorMessage = ((MethodCandidateInfo)resolveResult).getInferenceErrorMessage();
           if (errorMessage != null) {
             highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(errorMessage).range(fixRange).create();
