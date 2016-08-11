@@ -87,8 +87,6 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     DebuggerUIUtil.registerActionOnComponent(XDebuggerActions.XREMOVE_WATCH, tree, myDisposables);
     DebuggerUIUtil.registerActionOnComponent(XDebuggerActions.XCOPY_WATCH, tree, myDisposables);
     DebuggerUIUtil.registerActionOnComponent(XDebuggerActions.XEDIT_WATCH, tree, myDisposables);
-    ActionManager.getInstance().getAction("XDebugger.MoveWatchUp").registerCustomShortcutSet(CommonShortcuts.MOVE_UP, tree, myDisposables);
-    ActionManager.getInstance().getAction("XDebugger.MoveWatchDown").registerCustomShortcutSet(CommonShortcuts.MOVE_DOWN, tree, myDisposables);
 
     DnDManager.getInstance().registerTarget(this, tree);
 
