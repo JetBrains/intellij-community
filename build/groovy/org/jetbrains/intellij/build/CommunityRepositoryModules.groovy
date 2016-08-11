@@ -162,6 +162,7 @@ class CommunityRepositoryModules {
       excludeFromModule("xslt-debugger-engine-impl", "serializer.jar")
       excludeFromModule("xslt-debugger-engine-impl", "xalan.jar")
     },
-    plugin("settings-repository")
+    plugin("settings-repository"),
+    plugin("rest")
   ]
 }

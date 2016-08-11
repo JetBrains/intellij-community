@@ -329,7 +329,7 @@ class DistributionJARsBuilder {
           }
           plugin.resourcePaths.entrySet().each {
             def contentRoot = JpsPathUtil.urlToPath(findModule(plugin.mainModule).contentRootsList.urls.first())
-            def path = "$contentRoot/$it.key"
+            def path = FileUtil.toSystemIndependentName(new File("$contentRoot/$it.key").absolutePath)
             dir(it.value) {
               if (new File(path).isFile()) {
                 ant.fileset(file: path)

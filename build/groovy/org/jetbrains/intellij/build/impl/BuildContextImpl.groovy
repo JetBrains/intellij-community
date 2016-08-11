@@ -248,7 +248,7 @@ class BuildContextImpl extends BuildContext {
   boolean includeBreakGenLibraries() {
     def productLayout = productProperties.productLayout
     return productLayout.mainJarName == null || //todo[nik] remove this condition later
-           productLayout.additionalPlatformModules.containsKey("java-runtime")
+           productLayout.additionalPlatformModules.containsKey("execution-impl")
   }
 
   @Override
