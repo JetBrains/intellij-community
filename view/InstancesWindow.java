@@ -286,7 +286,7 @@ public class InstancesWindow extends DialogWrapper {
       if (myFilteringTask != null) {
         synchronized (myFilteringTaskLock) {
           if (myFilteringTask != null) {
-            myFilteringTask.cancel(false);
+            myFilteringTask.cancel(true);
             myFilteringTask = null;
           }
         }
@@ -437,6 +437,12 @@ public class InstancesWindow extends DialogWrapper {
       }
 
       @Override
+      protected void done() {
+        ((XValueNodeImpl) myInstancesTree.getRoot()).addChildren(XValueChildrenList.EMPTY, true);
+        hideProgressPane();
+      }
+
+      @Override
       protected Void doInBackground() throws Exception {
         DebugProcessImpl debugProcess = (DebugProcessImpl) DebuggerManager.getInstance(myProject)
             .getDebugProcess(myDebugSession.getDebugProcess().getProcessHandler());
@@ -484,20 +490,15 @@ public class InstancesWindow extends DialogWrapper {
             }
           });
 
-          synchronized (this) {
+          synchronized (MyFilteringWorker.this) {
             while (!myDebuggerTaskCompleted) {
-              wait();
+              MyFilteringWorker.this.wait();
             }
           }
           if (totalChildren.get() >= MAX_TREE_NODE_COUNT) {
             break;
           }
         }
-
-        SwingUtilities.invokeLater(() -> {
-          ((XValueNodeImpl) myInstancesTree.getRoot()).addChildren(XValueChildrenList.EMPTY, true);
-          hideProgressPane();
-        });
 
         return null;
       }
