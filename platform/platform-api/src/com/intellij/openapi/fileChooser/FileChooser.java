@@ -87,7 +87,7 @@ public class FileChooser {
                                  @Nullable final Project project,
                                  @Nullable final VirtualFile toSelect,
                                  @NotNull final Consumer<List<VirtualFile>> callback) {
-    chooseFiles(descriptor, project, KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner(), toSelect, callback);
+    chooseFiles(descriptor, project, KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow(), toSelect, callback);
   }
 
   /**

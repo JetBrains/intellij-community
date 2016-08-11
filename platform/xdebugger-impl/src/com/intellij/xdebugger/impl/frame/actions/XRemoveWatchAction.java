@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.frame.actions;
 
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -30,7 +31,13 @@ public class XRemoveWatchAction extends XWatchesTreeActionBase {
   @Override
   public void update(AnActionEvent e) {
     XDebuggerTree tree = XDebuggerTree.getTree(e);
-    e.getPresentation().setEnabledAndVisible(tree != null && !getSelectedNodes(tree, WatchNodeImpl.class).isEmpty());
+    boolean enabled = tree != null && !getSelectedNodes(tree, WatchNodeImpl.class).isEmpty();
+    if (ActionPlaces.DEBUGGER_TOOLBAR.equals(e.getPlace())) {
+      e.getPresentation().setEnabled(enabled);
+    }
+    else {
+      e.getPresentation().setEnabledAndVisible(enabled);
+    }
   }
 
   @Override

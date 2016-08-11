@@ -157,7 +157,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
           }
         }
 
-        if (UIUtil.isCloseClick(me)) {
+        if (myHideOnCloseClick && UIUtil.isCloseClick(me)) {
           if (isInsideBalloon(me)) {
             hide();
             me.consume();
@@ -291,6 +291,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   private Runnable myHideListener;
   private final boolean myHideOnKey;
   private final boolean myHideOnAction;
+  private final boolean myHideOnCloseClick;
   private final boolean myRequestFocus;
   private Component myOriginalFocusOwner;
   private final boolean myEnableButtons;
@@ -302,6 +303,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
                      boolean hideOnMouse,
                      boolean hideOnKey,
                      boolean hideOnAction,
+                     boolean hideOnCloseClick,
                      boolean showPointer,
                      boolean enableButtons,
                      long fadeoutTime,
@@ -328,6 +330,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     myHideOnMouse = hideOnMouse;
     myHideOnKey = hideOnKey;
     myHideOnAction = hideOnAction;
+    myHideOnCloseClick = hideOnCloseClick;
     myShowPointer = showPointer;
     myEnableButtons = enableButtons;
     myHideOnFrameResize = hideOnFrameResize;

@@ -19,61 +19,62 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPInputStream;
 
-public class CompressedBytesReadAwareGZIPInputStream extends GZIPInputStream {
-  private final BytesReadAwareInputStream myInputStream;
+/**
+ * A stream for reading compressed data in the GZIP file format.
+ * Total amount of compressed read bytes can be accessed via {@link #getCompressedBytesRead()}.
+ *
+ * Note that this implementation is not thread safe.
+ */
+public class CountingGZIPInputStream extends GZIPInputStream {
+  private final CountingInputStream myInputStream;
 
-  private CompressedBytesReadAwareGZIPInputStream(@NotNull BytesReadAwareInputStream inputStream) throws IOException {
+  private CountingGZIPInputStream(@NotNull CountingInputStream inputStream) throws IOException {
     super(inputStream);
     myInputStream = inputStream;
   }
 
   public long getCompressedBytesRead() {
-    return myInputStream.myBytesRead.get();
+    return myInputStream.myBytesRead;
   }
 
   @NotNull
-  public static CompressedBytesReadAwareGZIPInputStream create(@NotNull InputStream inputStream) throws IOException {
-    return new CompressedBytesReadAwareGZIPInputStream(new BytesReadAwareInputStream(inputStream));
+  public static CountingGZIPInputStream create(@NotNull InputStream inputStream) throws IOException {
+    return new CountingGZIPInputStream(new CountingInputStream(inputStream));
   }
 
-  private static class BytesReadAwareInputStream extends InputStream {
+  private static class CountingInputStream extends InputStream {
     private final InputStream myInputStream;
-    private final AtomicLong myBytesRead = new AtomicLong(0);
+    private long myBytesRead = 0;
 
-    public BytesReadAwareInputStream(@NotNull InputStream inputStream) {
+    public CountingInputStream(@NotNull InputStream inputStream) {
       myInputStream = inputStream;
     }
 
     public int read() throws IOException {
-      long bytesReadBefore = myBytesRead.get();
       int data = myInputStream.read();
-      myBytesRead.compareAndSet(bytesReadBefore, bytesReadBefore + 1);
+      myBytesRead++;
       return data;
     }
 
     @Override
     public int read(@NotNull byte[] b) throws IOException {
-      long bytesReadBefore = myBytesRead.get();
       int bytesRead = myInputStream.read(b);
-      myBytesRead.compareAndSet(bytesReadBefore, bytesReadBefore + bytesRead);
+      myBytesRead += bytesRead;
       return bytesRead;
     }
 
     @Override
     public int read(@NotNull byte[] b, int off, int len) throws IOException {
-      long bytesReadBefore = myBytesRead.get();
       int bytesRead = myInputStream.read(b, off, len);
-      myBytesRead.compareAndSet(bytesReadBefore, bytesReadBefore + bytesRead);
+      myBytesRead += bytesRead;
       return bytesRead;
     }
 
     public long skip(long n) throws IOException {
-      long bytesReadBefore = myBytesRead.get();
       long bytesSkipped = myInputStream.skip(n);
-      myBytesRead.compareAndSet(bytesReadBefore, bytesReadBefore + bytesSkipped);
+      myBytesRead += bytesSkipped;
       return bytesSkipped;
     }
 

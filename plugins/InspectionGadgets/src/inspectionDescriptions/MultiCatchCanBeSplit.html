@@ -1,0 +1,18 @@
+<html>
+<body>
+This inspection reports <b>multi-catch</b> sections, like <code>catch&nbsp;(IOException|RuntimeException&nbsp;e)&nbsp;{...}</code>
+<p> The quick fix splits multi-catch section into separate <b>catch</b> blocks.
+<!-- tooltip end -->
+<p>For example, the multi-catch section
+<pre><code>catch (IOException|RuntimeException e) {
+  /*handle the exception*/
+}</code></pre>
+is transformed into the following:
+<pre><code>catch (IOException e) {
+  /*handle the exception*/
+}
+catch (RuntimeException e) {
+  /*handle the exception*/
+}</code></pre>
+</body>
+</html>

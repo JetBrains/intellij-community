@@ -106,12 +106,28 @@ public class PsiUtil {
   private PsiUtil() {
   }
 
-  @Nullable
-  public static PsiElement findModifierInList(@NotNull GrModifierList list, @GrModifier.GrModifierConstant @NotNull String modifier) {
-    for (PsiElement element : list.getModifiers()) {
-      if (modifier.equals(element.getText())) return element;
+  /**
+   * @param owner modifier list owner
+   * @return <ul>
+   * <li>{@code true} when owner has explicit type or it's not required for owner to have explicit type</li>
+   * <li>{@code false} when doesn't have explicit type and it's required to have a type or modifier</li>
+   * <li>{@code defaultValue} for the other owners</li>
+   * </ul>
+   */
+  public static boolean modifierListMayBeEmpty(@Nullable PsiElement owner) {
+    if (owner instanceof GrParameter) {
+      return true;
     }
-    return null;
+    if (owner instanceof GrMethod) {
+      return ((GrMethod)owner).getReturnTypeElementGroovy() != null || ((GrMethod)owner).isConstructor();
+    }
+    else if (owner instanceof GrVariable) {
+      return ((GrVariable)owner).getTypeElementGroovy() != null;
+    }
+    else if (owner instanceof GrVariableDeclaration) {
+      return ((GrVariableDeclaration)owner).getTypeElementGroovy() != null;
+    }
+    return true;
   }
 
   @Nullable

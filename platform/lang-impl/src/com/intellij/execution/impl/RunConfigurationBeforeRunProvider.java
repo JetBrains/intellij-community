@@ -43,6 +43,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -190,22 +191,13 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
       return false;
     }
 
-    List<ExecutionTarget> targets = ApplicationManager.getApplication().runReadAction(new Computable<List<ExecutionTarget>>() {
-      @Override
-      public List<ExecutionTarget> compute() {
-        return ExecutionTargetManager.getTargetsFor(env.getProject(), settings);
-      }
-    });
-
-    if (targets.isEmpty()) {
+    ExecutionTarget compatibleTarget = getCompatibleTarget(env, settings);
+    if (compatibleTarget == null) {
       return false;
     }
 
-    final ExecutionEnvironment environment = builder.target(targets.get(0)).build();
+    final ExecutionEnvironment environment = builder.target(compatibleTarget).build();
     environment.setExecutionId(env.getExecutionId());
-    if (!ExecutionTargetManager.canRun(settings, environment.getExecutionTarget())) {
-      return false;
-    }
 
     if (!environment.getRunner().canRun(executorId, environment.getRunProfile())) {
       return false;
@@ -214,6 +206,22 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
       beforeRun(environment);
       return doRunTask(executorId, environment, environment.getRunner());
     }
+  }
+
+  @Nullable
+  private static ExecutionTarget getCompatibleTarget(@NotNull ExecutionEnvironment env, @NotNull RunnerAndConfigurationSettings settings) {
+    if (ExecutionTargetManager.canRun(settings, env.getExecutionTarget())) {
+      return env.getExecutionTarget();
+    }
+
+    List<ExecutionTarget> targets = ApplicationManager.getApplication().runReadAction(new Computable<List<ExecutionTarget>>() {
+      @Override
+      public List<ExecutionTarget> compute() {
+        return ExecutionTargetManager.getTargetsFor(env.getProject(), settings);
+      }
+    });
+
+    return ContainerUtil.getFirstItem(targets);
   }
 
   public static boolean doRunTask(final String executorId, final ExecutionEnvironment environment, ProgramRunner<?> runner) {

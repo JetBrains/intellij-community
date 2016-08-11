@@ -74,7 +74,7 @@ public abstract class InspectionRVContentProvider {
 
     @NotNull
     public RefElementNode createNode(@NotNull InspectionToolPresentation presentation) {
-      return ReadAction.compute(() -> new RefElementNode(myEntity, presentation));
+      return ReadAction.compute(() -> presentation.createRefNode(myEntity));
     }
 
     @Nullable

@@ -20,41 +20,40 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrModifierFix;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GrRemoveModifierFix;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 public class GrUnnecessaryDefModifierInspection extends GroovySuppressableInspectionTool {
 
-  private static final GrModifierFix FIX = new GrModifierFix(
-    "Remove 'def'", GrModifier.DEF, false, GrModifierFix.MODIFIER_LIST_CHILD
-  );
+  private static final GrModifierFix FIX = new GrRemoveModifierFix(GrModifier.DEF);
 
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new GroovyPsiElementVisitor(new GroovyElementVisitor() {
+    return new PsiElementVisitor() {
       @Override
-      public void visitModifierList(GrModifierList modifierList) {
-        PsiElement parent = modifierList.getParent();
-        if (!(parent instanceof GrMethod) && !(parent instanceof GrParameter) && !(parent instanceof GrVariableDeclaration)) return;
+      public void visitElement(PsiElement modifier) {
+        if (modifier.getNode().getElementType() != GroovyTokenTypes.kDEF) return;
 
-        PsiElement modifier = modifierList.getModifier(GrModifier.DEF);
-        if (modifier == null) return;
+        PsiElement list = modifier.getParent();
+        if (!(list instanceof GrModifierList)) return;
 
-        if (parent instanceof GrMethod && ((GrMethod)parent).getReturnTypeElementGroovy() != null ||
-            parent instanceof GrVariable && ((GrVariable)parent).getTypeElementGroovy() != null ||
-            parent instanceof GrVariableDeclaration && ((GrVariableDeclaration)parent).getTypeElementGroovy() != null) {
-          holder.registerProblem(modifier, "'def' is not necessary", ProblemHighlightType.LIKE_UNUSED_SYMBOL, FIX);
-        }
+        PsiElement owner = list.getParent();
+        if (!PsiUtil.modifierListMayBeEmpty(owner)) return;
+
+        holder.registerProblem(
+          modifier,
+          GroovyInspectionBundle.message("unnecessary.modifier.description", GrModifier.DEF),
+          ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+          FIX
+        );
       }
-    });
+    };
   }
 }

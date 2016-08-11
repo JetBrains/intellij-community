@@ -216,5 +216,16 @@ trait T {
 '''
   }
 
+  void 'test abstract property in class'() {
+    fixture.with {
+      configureByText '_.groovy', '''\
+class A {
+    abstract f
+}
+'''
+      checkHighlighting()
+    }
+  }
+
   final InspectionProfileEntry[] customInspections = [new GroovyAssignabilityCheckInspection(), new GrUnresolvedAccessInspection()]
 }

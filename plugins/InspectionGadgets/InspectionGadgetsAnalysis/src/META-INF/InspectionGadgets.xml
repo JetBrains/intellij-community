@@ -2527,22 +2527,22 @@
                      key="replace.diamond.with.explicit.type.arguments.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.style.ReplaceDiamondWithExplicitTypeArgumentsInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ReplaceLambdaWithAnonymous" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="replace.lambda.with.anonymous.name" groupBundle="messages.InspectionsBundle"
+    <localInspection groupPath="Java" language="JAVA" shortName="LambdaCanBeReplacedWithAnonymous" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="lambda.can.be.replaced.with.anonymous.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.siyeh.ig.style.ReplaceLambdaWithAnonymousInspection"/>
+                     implementationClass="com.siyeh.ig.style.LambdaCanBeReplacedWithAnonymousInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="MethodRefCanBeReplacedWithLambda" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="method.ref.can.be.replaced.with.lambda.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.style.MethodRefCanBeReplacedWithLambdaInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="SplitTryWithMultipleResources" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="split.try.with.multiple.resources.name" groupBundle="messages.InspectionsBundle"
+    <localInspection groupPath="Java" language="JAVA" shortName="TryStatementWithMultipleResources" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="try.statement.with.multiple.resources.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.siyeh.ig.exceptions.SplitTryWithMultipleResourcesInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="SplitMultiCatch" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="split.multi.catch.name" groupBundle="messages.InspectionsBundle"
+                     implementationClass="com.siyeh.ig.exceptions.TryStatementWithMultipleResourcesInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="MultiCatchCanBeSplit" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="multi.catch.can.be.split.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.siyeh.ig.exceptions.SplitMultiCatchInspection"/>
+                     implementationClass="com.siyeh.ig.exceptions.MultiCatchCanBeSplitInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SingleElementAnnotation" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="single.element.annotation.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"

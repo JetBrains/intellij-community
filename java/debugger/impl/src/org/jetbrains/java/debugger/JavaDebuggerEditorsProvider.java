@@ -82,7 +82,7 @@ public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase {
                                                  @Nullable PsiElement context,
                                                  boolean isPhysical) {
     TextWithImports text = TextWithImportsImpl.fromXExpression(expression);
-    if (text != null && context != null) {
+    if (text != null) {
       CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, context);
       JavaCodeFragment codeFragment = factory.createPresentationCodeFragment(text, context, project);
       codeFragment.forceResolveScope(GlobalSearchScope.allScope(project));

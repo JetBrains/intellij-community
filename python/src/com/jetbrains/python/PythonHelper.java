@@ -68,10 +68,7 @@ public enum PythonHelper implements HelperPackage {
 
   BUILDOUT_ENGULFER("pycharm", "buildout_engulfer"),
 
-  EPYDOC_FORMATTER("epydoc_formatter.py"),
-  REST_FORMATTER("rest_formatter.py"),
-  GOOGLE_FORMATTER("google_formatter.py"),
-  NUMPY_FORMATTER("numpy_formatter.py"),
+  DOCSTRING_FORMATTER("docstring_formatter.py"),
 
   EXTRA_SYSPATH("extra_syspath.py"),
   SYSPATH("syspath.py"),

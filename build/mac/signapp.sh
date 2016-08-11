@@ -56,6 +56,7 @@ done
 # Make sure *.p12 is imported into local KeyChain
 security unlock-keychain -p ${PASSWORD} /Users/${USERNAME}/Library/Keychains/login.keychain
 
+echo "signing ${EXPLODED}/$BUILD_NAME"
 codesign -v --deep --force -s "${CODESIGN_STRING}" ${EXPLODED}/"$BUILD_NAME"
 echo "signing is done"
 echo "check sign"

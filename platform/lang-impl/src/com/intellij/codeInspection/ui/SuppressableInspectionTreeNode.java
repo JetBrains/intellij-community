@@ -60,6 +60,8 @@ public abstract class SuppressableInspectionTreeNode extends CachedInspectionTre
     return usrObj != null && myView.getSuppressedNodes(myPresentation.getToolWrapper().getShortName()).contains(usrObj);
   }
 
+  public abstract boolean isQuickFixAppliedFromView();
+
   @Nullable
   @Override
   public String getCustomizedTailText() {

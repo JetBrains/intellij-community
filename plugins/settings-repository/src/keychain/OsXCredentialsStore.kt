@@ -15,9 +15,9 @@
  */
 package org.jetbrains.keychain
 
-import com.intellij.ide.passwordSafe.macOs.deleteGenericPassword
-import com.intellij.ide.passwordSafe.macOs.findGenericPassword
-import com.intellij.ide.passwordSafe.macOs.saveGenericPassword
+import com.intellij.credentialStore.macOs.deleteGenericPassword
+import com.intellij.credentialStore.macOs.findGenericPassword
+import com.intellij.credentialStore.macOs.saveGenericPassword
 import com.intellij.openapi.util.PasswordUtil
 import gnu.trove.THashMap
 
@@ -36,7 +36,7 @@ class OsXCredentialsStore(serviceName: String) : CredentialsStore {
     }
 
     val accountName: String = sshKeyFile ?: host
-    var credentials = accountToCredentials[accountName]
+    var credentials = accountToCredentials.get(accountName)
     if (credentials != null) {
       return credentials
     }
@@ -70,12 +70,12 @@ class OsXCredentialsStore(serviceName: String) : CredentialsStore {
   override fun save(host: String?, credentials: Credentials, sshKeyFile: String?) {
     val accountName: String = sshKeyFile ?: host!!
     val oldCredentials = accountToCredentials.put(accountName, credentials)
-    if (credentials.equals(oldCredentials)) {
+    if (credentials == oldCredentials) {
       return
     }
 
     val data = if (sshKeyFile == null) "${PasswordUtil.encodePassword(credentials.id)}@${PasswordUtil.encodePassword(credentials.token)}" else credentials.token!!
-    saveGenericPassword(getServiceName(sshKeyFile), accountName, data)
+    saveGenericPassword(getServiceName(sshKeyFile), accountName, data.toByteArray())
   }
 
   override fun reset(host: String) {

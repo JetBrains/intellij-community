@@ -69,7 +69,7 @@ class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
     if (node.isExcluded(myView.getExcludedManager())) {
       return attributes.derive(attributes.getStyle() | SimpleTextAttributes.STYLE_STRIKEOUT, null, null, null);
     }
-    if (node instanceof ProblemDescriptionNode && ((ProblemDescriptionNode)node).isQuickFixAppliedFromView()) {
+    if (node instanceof SuppressableInspectionTreeNode && ((SuppressableInspectionTreeNode)node).isQuickFixAppliedFromView()) {
       return attributes.derive(-1, SimpleTextAttributes.GRAYED_ATTRIBUTES.getFgColor(), null, null);
     }
     if (!node.isValid()) {

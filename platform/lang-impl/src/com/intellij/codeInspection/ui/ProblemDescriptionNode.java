@@ -169,6 +169,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     return XmlStringUtil.stripHtml(ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element, TRIM_AT_TREE_END));
   }
 
+  @Override
   public boolean isQuickFixAppliedFromView() {
     return (myDescriptor != null && myPresentation.isProblemResolved(getElement(), myDescriptor)) && !isAlreadySuppressedFromView();
   }

@@ -15,7 +15,7 @@
  */
 package org.jetbrains.settingsRepository.git
 
-import com.intellij.ide.passwordSafe.macOs.isMacOsCredentialStoreSupported
+import com.intellij.credentialStore.macOs.isMacOsCredentialStoreSupported
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NotNullLazyValue

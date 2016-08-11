@@ -31,6 +31,7 @@ import com.intellij.debugger.ui.tree.UserExpressionDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiType;
@@ -72,7 +73,11 @@ public class UserExpressionDescriptorImpl extends EvaluationDescriptor implement
     if (psiClassAndType.first == null) {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.type.name", myTypeName));
     }
-    return createCodeFragment(psiClassAndType.first);
+    PsiCodeFragment fragment = createCodeFragment(psiClassAndType.first);
+    if (fragment instanceof JavaCodeFragment) {
+      ((JavaCodeFragment)fragment).setThisType(psiClassAndType.second);
+    }
+    return fragment;
   }
 
   public ValueDescriptorImpl getParentDescriptor() {

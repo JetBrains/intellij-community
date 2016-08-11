@@ -131,6 +131,11 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     return host == null || host.supportsPossessiveQuantifiers();
   }
 
+  public boolean supportsBoundary(@Nullable final RegExpBoundary boundary) {
+    final RegExpLanguageHost host = findRegExpHost(boundary);
+    return host == null || host.supportsBoundary(boundary);
+  }
+
   public boolean supportsSimpleClass(@Nullable final RegExpSimpleClass simpleClass) {
     final RegExpLanguageHost host = findRegExpHost(simpleClass);
     return host == null || host.supportsSimpleClass(simpleClass);

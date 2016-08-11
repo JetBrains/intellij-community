@@ -21,17 +21,17 @@ import org.jetbrains.annotations.NotNull;
 
 public class MandatoryTest extends TestCase {
   public void testSuccess1() {
-    String json = "{ mandatory = \"text\" }";
+    String json = "{ \"mandatory\" : \"text\" }";
     doTest(json, Class1.class, true);
   }
 
   public void testSuccess2() {
-    String json = "{ simple = \"text2\", mandatory = \"text\" }";
+    String json = "{ \"simple\" : \"text2\", \"mandatory\" : \"text\" }";
     doTest(json, Class1.class, true);
   }
 
   public void testSuccess3() {
-    String json = "{ unknown = \"text2\", mandatory = \"text\" }";
+    String json = "{ \"unknown\" : \"text2\", \"mandatory\" : \"text\" }";
     doTest(json, Class1.class, true);
   }
 
@@ -41,57 +41,57 @@ public class MandatoryTest extends TestCase {
   }
 
   public void testFailure1() {
-    String json = "{ simple = \"text2\" }";
+    String json = "{ \"simple\" : \"text2\" }";
     doTest(json, Class1.class, false);
   }
 
   public void testFailure2() {
-    String json = "{ unknown = \"text2\" }";
+    String json = "{ \"unknown\" : \"text2\" }";
     doTest(json, Class1.class, false);
   }
 
   public void testFailure3() {
-    String json = "{ mandatory = null }";
+    String json = "{ \"mandatory\" : null }";
     doTest(json, Class1.class, false);
   }
 
   public void testSuccessEnclosed1() {
-    String json = "{ mandatory = { mandatory = \"text\" } }";
+    String json = "{ \"mandatory\" : { \"mandatory\" : \"text\" } }";
     doTest(json, Class2.class, true);
   }
 
   public void testSuccessEnclosed2() {
-    String json = "{ mandatory = { mandatory = \"text\" }, simple = { mandatory = \"text\" } }";
+    String json = "{ \"mandatory\" : { \"mandatory\" : \"text\" }, \"simple\" : { \"mandatory\" : \"text\" } }";
     doTest(json, Class2.class, true);
   }
 
   public void testSuccessEnclosed3() {
-    String json = "{ mandatory = { mandatory = \"text\" }, simple = null }";
+    String json = "{ \"mandatory\" : { \"mandatory\" : \"text\" }, \"simple\" : null }";
     doTest(json, Class2.class, true);
   }
 
   public void testFailureEnclosed1() {
-    String json = "{ simple = { mandatory = \"text\" } }";
+    String json = "{ \"simple\" : { \"mandatory\" : \"text\" } }";
     doTest(json, Class2.class, false);
   }
 
   public void testFailureEnclosed2() {
-    String json = "{ mandatory = null }";
+    String json = "{ \"mandatory\" : null }";
     doTest(json, Class2.class, false);
   }
 
   public void testFailureEnclosed3() {
-    String json = "{ mandatory = { simple = \"text\" } }";
+    String json = "{ \"mandatory\" : { \"simple\" : \"text\" } }";
     doTest(json, Class2.class, false);
   }
 
   public void testFailureEnclosed4() {
-    String json = "{ mandatory = { mandatory = null, simple = \"text\" } }";
+    String json = "{ \"mandatory\" : { \"mandatory\" : null, \"simple\" : \"text\" } }";
     doTest(json, Class2.class, false);
   }
 
   public void testFailureEnclosed5() {
-    String json = "{ mandatory = { mandatory = \"text\" }, simple = { simple = \"text\" } }";
+    String json = "{ \"mandatory\" : { \"mandatory\" : \"text\" }, \"simple\" : { \"simple\" : \"text\" } }";
     doTest(json, Class2.class, false);
   }
 

@@ -131,6 +131,13 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   }
 
   @Override
+  public void visitRegExpBoundary(RegExpBoundary boundary) {
+    if (!myLanguageHosts.supportsBoundary(boundary)) {
+      myHolder.createErrorAnnotation(boundary, "Unsupported boundary");
+    }
+  }
+
+  @Override
   public void visitSimpleClass(RegExpSimpleClass simpleClass) {
     if (!myLanguageHosts.supportsSimpleClass(simpleClass)) {
       myHolder.createErrorAnnotation(simpleClass, "Illegal/unsupported escape sequence");

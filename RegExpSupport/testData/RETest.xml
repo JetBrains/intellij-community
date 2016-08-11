@@ -8,6 +8,10 @@
       <pattern><![CDATA[<weak_warning descr="Redundant character escape">\;</weak_warning>]]></pattern>
       <expected>OK</expected>
     </test>
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
+      <pattern>\b \b{g} \B \A \z \Z \G</pattern>
+      <expected>OK</expected>
+    </test>
   </simple>
   <quantifiers>
     <test verify="false" info="true">

@@ -23,28 +23,34 @@ import org.jetbrains.plugins.groovy.LightGroovyTestCase
 @CompileStatic
 public class GrUnnecessaryDefModifierInspectionTest extends LightGroovyTestCase {
 
-  LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
+  final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
 
   void 'test highlighting and fix'() {
     fixture.with {
       enableInspections GrUnnecessaryDefModifierInspection
       configureByText '_.groovy', '''\
-def foo(<warning descr="'def' is not necessary">def</warning> Object a) {}
-<warning descr="'def' is not necessary">d<caret>ef</warning> boolean baz(def a) {}
-<warning descr="'def' is not necessary">def</warning> Object bar
+def foo(<warning descr="Modifier 'def' is not necessary">def</warning> Object a) {}
+def baw(<warning descr="Modifier 'def' is not necessary">def</warning> a) {}
+<warning descr="Modifier 'def' is not necessary">d<caret>ef</warning> boolean baz(a) {}
+<warning descr="Modifier 'def' is not necessary">def</warning> Object bar
 def baf
 def (int a, b) = [1, 2]
+class A {
+  <warning descr="Modifier 'def' is not necessary">def</warning> A() {}
+}
 '''
       checkHighlighting()
       launchAction findSingleIntention("Fix all 'Unnecessary 'def''")
       checkResult '''\
 def foo(Object a) {}
-
-boolean baz(def a) {}
-
+def baw(a) {}
+boolean baz(a) {}
 Object bar
 def baf
 def (int a, b) = [1, 2]
+class A {
+  A() {}
+}
 '''
     }
   }

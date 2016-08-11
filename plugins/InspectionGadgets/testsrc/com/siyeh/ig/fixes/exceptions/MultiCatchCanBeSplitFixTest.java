@@ -17,14 +17,14 @@ package com.siyeh.ig.fixes.exceptions;
 
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
-import com.siyeh.ig.exceptions.SplitMultiCatchInspection;
+import com.siyeh.ig.exceptions.MultiCatchCanBeSplitInspection;
 
-public class SplitMultiCatchFixTest extends IGQuickFixesTestCase {
+public class MultiCatchCanBeSplitFixTest extends IGQuickFixesTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.enableInspections(new SplitMultiCatchInspection());
-    myDefaultHint = InspectionGadgetsBundle.message("split.multi.catch.descriptor");
+    myFixture.enableInspections(new MultiCatchCanBeSplitInspection());
+    myDefaultHint = InspectionGadgetsBundle.message("multi.catch.can.be.split.quickfix");
     myRelativePath = "exceptions/split_multi_catch";
   }
 

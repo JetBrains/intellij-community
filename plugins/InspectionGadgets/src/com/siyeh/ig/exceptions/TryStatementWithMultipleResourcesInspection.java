@@ -31,19 +31,19 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class SplitTryWithMultipleResourcesInspection extends BaseInspection {
+public class TryStatementWithMultipleResourcesInspection extends BaseInspection {
 
   @Nls
   @NotNull
   @Override
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message("split.try.with.multiple.resources.name");
+    return InspectionGadgetsBundle.message("try.statement.with.multiple.resources.name");
   }
 
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("split.try.with.multiple.resources.descriptor");
+    return getDisplayName();
   }
 
   @Override
@@ -136,7 +136,7 @@ public class SplitTryWithMultipleResourcesInspection extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("split.try.with.multiple.resources.descriptor");
+      return InspectionGadgetsBundle.message("try.statement.with.multiple.resources.quickfix");
     }
 
     @Nls

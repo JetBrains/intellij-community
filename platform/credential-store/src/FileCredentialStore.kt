@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.passwordSafe
+package com.intellij.credentialStore
 
+import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.windows.WindowsCryptUtils
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.setOwnerPermissions
@@ -29,15 +29,19 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.security.Key
-import java.security.MessageDigest
-import java.security.SecureRandom
 import java.util.Base64
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.crypto.spec.SecretKeySpec
 
-internal val LOG = Logger.getInstance(FileCredentialStore::class.java)
+class FileCredentialStore(keyToValue: Map<String, String>? = null, baseDirectory: Path = Paths.get(PathManager.getConfigPath()), var memoryOnly: Boolean = false) : PasswordStorage, CredentialStore {
+  override fun get(key: String) = getPassword(null, key)
 
-class FileCredentialStore(keyToValue: Map<String, String>? = null, baseDirectory: Path = Paths.get(PathManager.getConfigPath()), var memoryOnly: Boolean = false) : PasswordStorage  {
+  override fun set(key: String, password: ByteArray?) {
+    val string = password?.toString(Charsets.UTF_8)
+    password?.fill(0)
+    setPassword(key, string)
+  }
+
   private val db = ContainerUtil.newConcurrentMap<String, String>()
 
   private val dbFile = baseDirectory.resolve("pdb")
@@ -132,10 +136,10 @@ class FileCredentialStore(keyToValue: Map<String, String>? = null, baseDirectory
 
   override fun getPassword(requestor: Class<*>?, key: String): String? {
     val rawKey = getRawKey(key, requestor)
-    // try old key - as hash
     var value = db.get(rawKey)
-    if (value == null) {
-      value = db.remove(toOldKey(MessageDigest.getInstance("SHA-256").digest(rawKey.toByteArray())))
+    if (value == null && (requestor != null || key.contains('/'))) {
+      // try old key - as hash
+      value = db.remove(toOldKey(rawKey))
       if (value != null) {
         db.put(rawKey, value)
         needToSave.set(true)
@@ -161,16 +165,6 @@ class FileCredentialStore(keyToValue: Map<String, String>? = null, baseDirectory
       store.setPassword(k, v)
     }
   }
-}
-
-internal fun getRawKey(key: String, requestor: Class<*>?) = if (requestor == null) key else "${requestor.name}/$key"
-
-internal fun toOldKey(hash: ByteArray) = "old-hashed-key|" + Base64.getEncoder().encodeToString(hash)
-
-internal fun generate(): ByteArray {
-  val bytes = ByteArray(16)
-  SecureRandom().nextBytes(bytes)
-  return bytes
 }
 
 interface MasterKeyStorage {
