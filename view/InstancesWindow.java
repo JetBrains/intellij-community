@@ -1,7 +1,10 @@
 package org.jetbrains.debugger.memory.view;
 
 import com.intellij.debugger.DebuggerManager;
-import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.JavaValue;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -55,7 +58,6 @@ import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.debugger.memory.utils.DebugCommand;
 import org.jetbrains.debugger.memory.utils.InstanceJavaValue;
 import org.jetbrains.debugger.memory.utils.InstanceValueDescriptor;
 import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
@@ -104,7 +106,7 @@ public class InstancesWindow extends DialogWrapper {
   @NotNull
   @Override
   protected String getDimensionServiceKey() {
-    return "#org.jetbrains.debugger.memory.view.InstancesWindow";
+    return "#org.jetbrains.plugin.view.InstancesWindow";
   }
 
   @Nullable
@@ -170,18 +172,7 @@ public class InstancesWindow extends DialogWrapper {
 
       myFilterConditionEditor = new ExpressionEditorWithHistory(myProject, editorsProvider,
           HISTORY_ID_PREFIX + myReferenceType.name(), null, InstancesWindow.this.myDisposable);
-      new SwingWorker<Void, Void>() {
-        @Override
-        protected Void doInBackground() throws Exception {
-          ApplicationManager.getApplication().runReadAction(() -> {
-            final PsiClass psiClass = DebuggerUtils.findClass(myReferenceType.name(),
-                myProject, GlobalSearchScope.allScope(myProject));
-            XSourcePositionImpl position = XSourcePositionImpl.createByElement(psiClass);
-            SwingUtilities.invokeLater(() -> myFilterConditionEditor.setSourcePosition(position));
-          });
-          return null;
-        }
-      }.execute();
+      setSourcePositionForEditor();
 
       myFilterButton.setBorder(BorderFactory.createEmptyBorder());
       Dimension progressbarPreferredSize = myFilterConditionEditor.getEditorComponent().getPreferredSize();
@@ -209,25 +200,15 @@ public class InstancesWindow extends DialogWrapper {
 
       XDebuggerTreeCreator treeCreator =
           new XDebuggerTreeCreator(myProject, editorsProvider, null, markers);
-      myInstancesTree = (XDebuggerTree) treeCreator.createTree(Pair.pair(new XNamedValue("root") {
-        @Override
-        public void computeChildren(@NotNull XCompositeNode node) {
-          updateInstances();
-        }
 
-        @Override
-        public void computePresentation(@NotNull XValueNode xValueNode, @NotNull XValuePlace xValuePlace) {
-          xValueNode.setPresentation(null, "", "", true);
-        }
-      }, "root"));
-
+      myInstancesTree = (XDebuggerTree) treeCreator.createTree(getTreeRootDescriptor());
       myInstancesTree.setRootVisible(false);
       myInstancesTree.getRoot().setLeaf(false);
       myInstancesTree.setExpandableItemsEnabled(true);
 
       myFilterButton.addActionListener(e -> {
         String expression = myFilterConditionEditor.getExpression().getExpression();
-        if(!expression.isEmpty()) {
+        if (!expression.isEmpty()) {
           myFilterConditionEditor.saveTextInHistory();
         }
         myInstancesTree.rebuildAndRestore(XDebuggerTreeState.saveState(myInstancesTree));
@@ -247,20 +228,28 @@ public class InstancesWindow extends DialogWrapper {
     }
 
     private void updateInstances() {
-      DebugProcess debugProcess = DebuggerManager.getInstance(myProject)
+      DebugProcessImpl debugProcess = (DebugProcessImpl) DebuggerManager.getInstance(myProject)
           .getDebugProcess(myDebugSession.getDebugProcess().getProcessHandler());
 
       cancelFilteringTask();
 
-      debugProcess.getManagerThread().invokeCommand((DebugCommand) () -> {
-        List<ObjectReference> instances = myReferenceType.instances(0);
-        EvaluationContextImpl evaluationContext = ((DebugProcessImpl) debugProcess)
-            .getDebuggerContext().createEvaluationContext();
+      debugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(debugProcess.getDebuggerContext()) {
+        @Override
+        public Priority getPriority() {
+          return Priority.LOWEST;
+        }
 
-        if(evaluationContext != null) {
-          synchronized (myFilteringTaskLock) {
-            myFilteringTask = new MyFilteringWorker(instances, evaluationContext, createEvaluator());
-            myFilteringTask.execute();
+        @Override
+        public void threadAction(@NotNull SuspendContextImpl suspendContext) {
+          List<ObjectReference> instances = myReferenceType.instances(0);
+          EvaluationContextImpl evaluationContext = debugProcess
+              .getDebuggerContext().createEvaluationContext();
+
+          if(evaluationContext != null) {
+            synchronized (myFilteringTaskLock) {
+              myFilteringTask = new MyFilteringWorker(instances, evaluationContext, createEvaluator());
+              myFilteringTask.execute();
+            }
           }
         }
       });
@@ -284,7 +273,7 @@ public class InstancesWindow extends DialogWrapper {
       if (expression != null && !expression.getExpression().isEmpty()) {
         try {
           myEvaluator.setReferenceExpression(TextWithImportsImpl.
-              fromXExpression(myFilterConditionEditor.getExpression()));
+              fromXExpression(expression));
           evaluator = myEvaluator.getEvaluator();
         } catch (EvaluateException ignored) {
         }
@@ -308,6 +297,36 @@ public class InstancesWindow extends DialogWrapper {
       return myDebugSession instanceof XDebugSessionImpl
           ? ((XDebugSessionImpl) myDebugSession).getValueMarkers()
           : null;
+    }
+
+    private void setSourcePositionForEditor() {
+      new SwingWorker<Void, Void>() {
+        @Override
+        protected Void doInBackground() throws Exception {
+          ApplicationManager.getApplication().runReadAction(() -> {
+            final PsiClass psiClass = DebuggerUtils.findClass(myReferenceType.name(),
+                myProject, GlobalSearchScope.allScope(myProject));
+            XSourcePositionImpl position = XSourcePositionImpl.createByElement(psiClass);
+            SwingUtilities.invokeLater(() -> myFilterConditionEditor.setSourcePosition(position));
+          });
+          return null;
+        }
+      }.execute();
+    }
+
+    @NotNull
+    private Pair<XValue, String> getTreeRootDescriptor() {
+      return Pair.pair(new XValue() {
+        @Override
+        public void computeChildren(@NotNull XCompositeNode node) {
+          updateInstances();
+        }
+
+        @Override
+        public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
+          node.setPresentation(null, "", "", true);
+        }
+      }, "root");
     }
 
     private class MySessionListener implements XDebugSessionListener {
@@ -339,6 +358,7 @@ public class InstancesWindow extends DialogWrapper {
       public void sessionResumed() {
         SwingUtilities.invokeLater(() -> {
           myTreeState = XDebuggerTreeState.saveState(myInstancesTree);
+          cancelFilteringTask();
           myInstancesTree.getRoot().clearChildren();
           ((XValueNodeImpl) myInstancesTree.getRoot()).addChildren(myRunningAppChildNode, true);
         });
@@ -346,10 +366,7 @@ public class InstancesWindow extends DialogWrapper {
 
       @Override
       public void sessionPaused() {
-        SwingUtilities.invokeLater(() -> {
-          myInstancesTree.setRootVisible(false);
-          myInstancesTree.rebuildAndRestore(myTreeState);
-        });
+        SwingUtilities.invokeLater(() -> myInstancesTree.rebuildAndRestore(myTreeState));
       }
     }
 
@@ -408,7 +425,8 @@ public class InstancesWindow extends DialogWrapper {
       private final List<ObjectReference> myReferences;
       private final EvaluationContextImpl myEvaluationContext;
       private final ExpressionEvaluator myExpressionEvaluator;
-      private volatile boolean myDebuggerTaskCompleted;
+
+      private volatile boolean myDebuggerTaskCompleted = false;
 
       MyFilteringWorker(@NotNull List<ObjectReference> refs,
                         @NotNull EvaluationContextImpl evaluationContext,
@@ -464,9 +482,6 @@ public class InstancesWindow extends DialogWrapper {
                 MyFilteringWorker.this.notify();
               }
             }
-          });
-          debugProcess.getManagerThread().invokeCommand((DebugCommand) () -> {
-
           });
 
           synchronized (this) {
