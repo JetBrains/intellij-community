@@ -26,7 +26,7 @@ import java.lang.annotation.*;
  *  clause ::= args '-&gt;' effect<br>
  *  args ::= ((arg ',')* arg )?<br>
  *  arg ::= value-constraint<br>
- *  value-constraint ::= 'any' | 'null' | '!null' | 'false' | 'true'<br>
+ *  value-constraint ::= '_' | 'null' | '!null' | 'false' | 'true'<br>
  *  effect ::= value-constraint | 'fail' <p>
  *
  * The constraints denote the following:<br>
