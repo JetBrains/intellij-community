@@ -359,20 +359,24 @@ class DistributionJARsBuilder {
     buildContext.ant.replaceregexp(file: pluginXmlPath,
                       match: "<version>[\\d.]*</version>",
                       replace: "<version>${buildNumber}</version>")
+    def sinceBuild = buildNumber.matches(/\d+\.\d+\.\d+/) ? buildNumber.substring(0, buildNumber.lastIndexOf('.')) : buildNumber;
+    def dotIndex = buildNumber.indexOf('.')
+    def untilBuild = dotIndex > 0 ? Integer.parseInt(buildNumber.substring(0, dotIndex)) + ".*" : buildNumber
     buildContext.ant.replaceregexp(file: pluginXmlPath,
-                      match: "<idea-version\\s*since-build=\"\\d+\\.\\d+\"",
-                      replace: "<idea-version since-build=\"${buildNumber}\"")
+                      match: "<idea-version\\s*since-build=\"\\d+\\.\\d+\"\\s*until-build=\"\\d+\\.\\d+\"",
+                      replace: "<idea-version since-build=\"${buildNumber}\" until-build=\"${untilBuild}\"")
+    buildContext.ant.replaceregexp(file: pluginXmlPath,
+                                   match: "<idea-version\\s*since-build=\"\\d+\\.\\d+\"",
+                                   replace: "<idea-version since-build=\"${buildNumber}\"")
     buildContext.ant.replaceregexp(file: pluginXmlPath,
                       match: "<change-notes>\\s*<\\!\\[CDATA\\[\\s*Plugin version: \\\$\\{version\\}",
                       replace: "<change-notes>\n<![CDATA[\nPlugin version: ${buildNumber}")
     def file = new File(pluginXmlPath)
     def text = file.text
     if (!text.contains("<version>")) {
-      def dotIndex = buildNumber.indexOf('.')
-      def untilBuild = dotIndex > 0 ? Integer.parseInt(buildNumber.substring(0, dotIndex)) + ".*" : buildNumber
       def anchor = text.contains("</id>") ? "</id>" : "</name>"
       file.text = text.replace(anchor,
-                               "${anchor}\n  <version>${buildNumber}</version>\n  <idea-version since-build=\"${buildNumber}\" until-build=\"${untilBuild}\"/>\n")
+                               "${anchor}\n  <version>${buildNumber}</version>\n  <idea-version since-build=\"${sinceBuild}\" until-build=\"${untilBuild}\"/>\n")
     }
   }
 
