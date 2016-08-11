@@ -54,6 +54,7 @@ import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.OwnerOptional;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -175,18 +176,16 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
    */
   protected DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper, @NotNull Component parent, boolean canBeParent) {
     myWrapper = wrapper;
-    if (!parent.isShowing()) {
-      throw new IllegalArgumentException("parent must be showing: " + parent);
-    }
+
     myWindowManager = null;
     Application application = ApplicationManager.getApplication();
     if (application != null && application.hasComponent(WindowManager.class)) {
       myWindowManager = (WindowManagerEx)WindowManager.getInstance();
     }
 
-    Window owner = parent instanceof Window ? (Window)parent : (Window)SwingUtilities.getAncestorOfClass(Window.class, parent);
-    if (!(owner instanceof Dialog) && !(owner instanceof Frame)) {
-      owner = JOptionPane.getRootFrame();
+    Window owner = OwnerOptional.fromComponent(parent).get();
+    if (!owner.isShowing()) {
+      throw new IllegalArgumentException("owner must be showing: " + owner);
     }
     createDialog(owner, canBeParent);
   }
@@ -219,7 +218,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
   @Deprecated
   public DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper,final Window owner, final boolean canBeParent, final boolean applicationModalIfPossible) {
-      this(wrapper, owner, canBeParent, applicationModalIfPossible ? DialogWrapper.IdeModalityType.IDE : DialogWrapper.IdeModalityType.PROJECT);
+    this(wrapper, owner, canBeParent, applicationModalIfPossible ? DialogWrapper.IdeModalityType.IDE : DialogWrapper.IdeModalityType.PROJECT);
   }
 
   @Override
@@ -496,7 +495,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       if (StackingPopupDispatcher.getInstance().isPopupFocused()) return;
       JTree tree = UIUtil.getParentOfType(JTree.class, focusOwner);
       JTable table = UIUtil.getParentOfType(JTable.class, focusOwner);
-      
+
       if (tree != null || table != null) {
         if (hasNoEditingTreesOrTablesUpward(focusOwner)) {
           e.getPresentation().setEnabled(true);

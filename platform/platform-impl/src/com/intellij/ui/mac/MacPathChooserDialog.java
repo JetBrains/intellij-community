@@ -26,18 +26,15 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.UIBundle;
-import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.OwnerOptional;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,23 +51,25 @@ import java.util.stream.Stream;
 
 public class MacPathChooserDialog implements PathChooserDialog {
 
-  private final FileDialog myFileDialog;
+  private FileDialog myFileDialog;
   private final FileChooserDescriptor myFileChooserDescriptor;
   private final Component myParent;
   private final String myTitle;
 
   public MacPathChooserDialog(FileChooserDescriptor descriptor, Component parent, Project project) {
 
-    //StackingPopupDispatcher.getInstance().hidePersistentPopups();
-    //myDisposeActions.add(() -> StackingPopupDispatcher.getInstance().restorePersistentPopups());
-
-    myFileDialog = parent != null
-                   ? createFileDialogWithOwner(findOwnerByComponent(parent), descriptor.getTitle(), FileDialog.LOAD)
-                   : createFileDialogWithoutOwner(descriptor.getTitle(), FileDialog.LOAD);
-
     myFileChooserDescriptor = descriptor;
     myParent = parent;
     myTitle = getChooserTitle(descriptor);
+
+    Consumer<Dialog> dialogConsumer = owner -> myFileDialog = new FileDialog(owner, myTitle, FileDialog.LOAD);
+    Consumer<Frame> frameConsumer = owner -> myFileDialog = new FileDialog(owner, myTitle, FileDialog.LOAD);
+
+    OwnerOptional
+      .fromComponent(parent)
+      .ifDialog(dialogConsumer)
+      .ifFrame(frameConsumer)
+      .ifNull(frameConsumer);
   }
 
   private static String getChooserTitle(final FileChooserDescriptor descriptor) {
@@ -137,64 +136,6 @@ public class MacPathChooserDialog implements PathChooserDialog {
     else if (callback instanceof FileChooser.FileChooserConsumer) {
       ((FileChooser.FileChooserConsumer)callback).cancelled();
     }
-  }
-
-  @NotNull
-  private static Window findOwnerByComponent(@NotNull Component component) {
-    return (component instanceof Window) ? (Window) component : SwingUtilities.getWindowAncestor(component);
-  }
-
-  @NotNull
-  private static FileDialog createFileDialogWithOwner(@NotNull Window owner, String title, int mode) {
-    FileDialog fileDialog;
-
-    IdePopupManager manager = IdeEventQueue.getInstance().getPopupManager();
-
-    if (manager.isPopupWindow(owner)) {
-
-      manager.closeAllPopups();
-
-      owner = owner.getOwner();
-
-      while (owner != null
-             && !(owner instanceof Dialog)
-             && !(owner instanceof Frame)) {
-        owner = owner.getOwner();
-      }
-    }
-
-    if (owner instanceof Dialog) {
-      Dialog ownerDialog = (Dialog)owner;
-      if (ownerDialog.isModal()) {
-        owner = ownerDialog;
-      }
-      else {
-        while (owner instanceof Dialog && !((Dialog)owner).isModal()) {
-          owner = owner.getOwner();
-        }
-      }
-    }
-
-    if (owner == null) {
-      fileDialog = createFileDialogWithoutOwner(title, mode);
-    }
-    else {
-      if (owner instanceof Frame) {
-        if (owner instanceof IdeFrame.Child) {
-          IdeFrame.Child ideFrameChild = (IdeFrame.Child)owner;
-          owner = WindowManager.getInstance().getFrame(ideFrameChild.getProject());
-        }
-        fileDialog = new FileDialog((Frame)owner, title, mode);
-      }
-      else if (owner instanceof Dialog) {
-        fileDialog = new FileDialog((Dialog)owner, title, mode);
-      }
-      else {
-        throw new RuntimeException("Owner should be a frame or a dialog");
-      }
-    }
-
-    return fileDialog;
   }
 
   @NotNull
