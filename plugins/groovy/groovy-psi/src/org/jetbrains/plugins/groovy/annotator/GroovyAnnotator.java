@@ -695,7 +695,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
         final String superPresentation = GroovyPresentationUtil.getSignaturePresentation(signature);
         final String superQName = getQNameOfMember(superMethod);
 
-        final PsiElement modifier = PsiUtil.findModifierInList(method.getModifierList(), currentModifier);
+        final PsiElement modifier = method.getModifierList().getModifier(currentModifier);
         holder.createErrorAnnotation(
           modifier != null? modifier : method.getNameIdentifierGroovy(),
           GroovyBundle.message("method.0.cannot.have.weaker.access.privileges.1.than.2.in.3.4", currentPresentation, currentModifier, superPresentation, superQName, superModifier)
@@ -1867,7 +1867,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
   @NotNull
   private static PsiElement getModifierOrList(@NotNull GrModifierList modifiersList, @GrModifier.GrModifierConstant final String modifier) {
-    PsiElement m = PsiUtil.findModifierInList(modifiersList, modifier);
+    PsiElement m = modifiersList.getModifier(modifier);
     return m != null ? m : modifiersList;
   }
 

@@ -106,14 +106,6 @@ public class PsiUtil {
   private PsiUtil() {
   }
 
-  @Nullable
-  public static PsiElement findModifierInList(@NotNull GrModifierList list, @GrModifier.GrModifierConstant @NotNull String modifier) {
-    for (PsiElement element : list.getModifiers()) {
-      if (modifier.equals(element.getText())) return element;
-    }
-    return null;
-  }
-
   /**
    * @param owner modifier list owner
    * @return <ul>

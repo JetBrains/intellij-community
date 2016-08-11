@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -231,10 +231,10 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> impl
   private PsiElement findSuitableModifier() {
     final GrModifierList list = getModifierList();
 
-    PsiElement defModifier = PsiUtil.findModifierInList(list, GrModifier.DEF);
+    PsiElement defModifier = list.getModifier(GrModifier.DEF);
     if (defModifier != null) return defModifier;
 
-    PsiElement finalModifier = PsiUtil.findModifierInList(list, PsiModifier.FINAL);
+    PsiElement finalModifier = list.getModifier(PsiModifier.FINAL);
     if (finalModifier != null) return finalModifier;
 
     for (PsiElement element : list.getModifiers()) {
