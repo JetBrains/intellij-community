@@ -114,7 +114,7 @@ class X {
   }
 
   
-  fun `ignore test inserted closing brace`() {
+  fun `test inserted closing brace`() {
     myLineRange = TextRange(6, 6)
     check(
         """
