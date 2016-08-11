@@ -89,7 +89,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   private enum UnusedDeclarationHint {
     COMMENT("Commented out"),
-    DELETE("Deleted"),;
+    DELETE("Deleted");
 
     private final String myDescription;
 
