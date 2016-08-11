@@ -43,6 +43,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.util.containers.UtilKt.isEmpty;
+
 /**
  * @author max
  */
@@ -71,7 +73,7 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
       return false;
     }
 
-    return !VcsUtil.isEmpty(e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY)) ||
+    return !isEmpty(e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY)) ||
            !ArrayUtil.isEmpty(e.getData(VcsDataKeys.CHANGES)) ||
            !ArrayUtil.isEmpty(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
   }

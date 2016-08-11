@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
-import static com.intellij.vcsUtil.VcsUtil.getIfSingle;
+import static com.intellij.util.containers.UtilKt.getIfSingle;
 
 
 public class TabbedShowHistoryAction extends AbstractVcsAction {

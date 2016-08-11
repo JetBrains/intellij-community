@@ -34,7 +34,7 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
-import static com.intellij.vcsUtil.VcsUtil.getIfSingle;
+import static com.intellij.util.containers.UtilKt.getIfSingle;
 
 public abstract class AbstractShowDiffAction extends AbstractVcsAction{
 

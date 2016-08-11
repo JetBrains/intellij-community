@@ -25,9 +25,10 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.util.containers.UtilKt.getIfSingle;
 
 public abstract class LocalHistoryAction extends AnAction implements DumbAware {
   @Override
@@ -71,6 +72,6 @@ public abstract class LocalHistoryAction extends AnAction implements DumbAware {
 
   @Nullable
   protected VirtualFile getFile(@NotNull AnActionEvent e) {
-    return VcsUtil.getIfSingle(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM));
+    return getIfSingle(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM));
   }
 }
