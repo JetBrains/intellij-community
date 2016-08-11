@@ -33,7 +33,7 @@ public class MemoryViewCondition implements Condition<Project> {
       }
 
       private void updateIcon(@NotNull Project project, boolean enabled) {
-        ToolWindow toolWindow = MemoryViewManager.getInstance(project).getToolWindow();
+        ToolWindow toolWindow = MemoryViewManager.getInstance().getToolWindow(project);
         if (toolWindow != null) {
           SwingUtilities.invokeLater(() ->
               toolWindow.setIcon(enabled ? MemoryViewIcons.MAIN_ENABLED : MemoryViewIcons.MAIN_DISABLED));

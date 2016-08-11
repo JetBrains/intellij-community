@@ -8,15 +8,14 @@ import org.jetbrains.debugger.memory.component.MemoryViewManager;
 public class ShowClassesWithDiff extends ToggleAction {
   @Override
   public boolean isSelected(AnActionEvent e) {
-    Project project = e.getProject();
-    return project != null && MemoryViewManager.getInstance(e.getProject()).isNeedShowDiffOnly();
+    return MemoryViewManager.getInstance().isNeedShowDiffOnly();
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
     Project project = e.getProject();
     if (project != null) {
-      MemoryViewManager.getInstance(project).setShowDiffOnly(state);
+      MemoryViewManager.getInstance().setShowDiffOnly(state);
     }
   }
 }

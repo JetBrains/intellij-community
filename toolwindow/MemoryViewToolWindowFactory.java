@@ -117,7 +117,7 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
 
   @Nullable
   private ToolWindow getToolWindow(@NotNull Project project) {
-    return MemoryViewManager.getInstance(project).getToolWindow();
+    return MemoryViewManager.getInstance().getToolWindow(project);
   }
 
   private final class MyDebuggerStatusChangedListener implements XDebuggerManagerListener {

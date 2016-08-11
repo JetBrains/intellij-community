@@ -1,27 +1,24 @@
 package org.jetbrains.debugger.memory.component;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.debugger.memory.event.MemoryViewManagerListener;
 import org.jetbrains.debugger.memory.toolwindow.MemoryViewToolWindowFactory;
-import org.jetbrains.annotations.NotNull;
 
-@State(name = "MemoryViewSettings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class MemoryViewManager extends AbstractProjectComponent
+@State(name = "MemoryViewSettings", storages = @Storage("memory.view.xml"))
+public class MemoryViewManager extends ApplicationComponent.Adapter
     implements PersistentStateComponent<MemoryViewManagerState> {
   private final EventDispatcher<MemoryViewManagerListener> myDispatcher =
       EventDispatcher.create(MemoryViewManagerListener.class);
   private MemoryViewManagerState myState = new MemoryViewManagerState();
 
-  public static MemoryViewManager getInstance(Project project) {
-    return project.getComponent(MemoryViewManager.class);
-  }
-
-  protected MemoryViewManager(Project project) {
-    super(project);
+  public static MemoryViewManager getInstance() {
+    return ApplicationManager.getApplication().getComponent(MemoryViewManager.class);
   }
 
   @NotNull
@@ -70,8 +67,8 @@ public class MemoryViewManager extends AbstractProjectComponent
     myDispatcher.removeListener(listener);
   }
 
-  public ToolWindow getToolWindow() {
-    return ToolWindowManager.getInstance(myProject).getToolWindow(MemoryViewToolWindowFactory.TOOL_WINDOW_ID);
+  public ToolWindow getToolWindow(Project project) {
+    return ToolWindowManager.getInstance(project).getToolWindow(MemoryViewToolWindowFactory.TOOL_WINDOW_ID);
   }
 
   private void fireStateChanged() {

@@ -8,15 +8,14 @@ import org.jetbrains.debugger.memory.component.MemoryViewManager;
 public class ShowClassesWithInstanceAction extends ToggleAction {
   @Override
   public boolean isSelected(AnActionEvent e) {
-    Project project = e.getProject();
-    return project != null && MemoryViewManager.getInstance(project).isNeedShowInstancesOnly();
+    return MemoryViewManager.getInstance().isNeedShowInstancesOnly();
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
     Project project = e.getProject();
     if (project != null) {
-      MemoryViewManager.getInstance(project).setShowWithInstancesOnly(state);
+      MemoryViewManager.getInstance().setShowWithInstancesOnly(state);
     }
   }
 }

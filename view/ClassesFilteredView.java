@@ -56,7 +56,7 @@ public class ClassesFilteredView extends BorderLayoutPanel {
     myDebugProcess = DebuggerManager.getInstance(myProject)
         .getDebugProcess(myDebugSession.getDebugProcess().getProcessHandler());
 
-    MemoryViewManagerState memoryViewManagerState = MemoryViewManager.getInstance(myProject).getState();
+    MemoryViewManagerState memoryViewManagerState = MemoryViewManager.getInstance().getState();
 
     myTable = new ClassesTable(myDebugSession, memoryViewManagerState.isShowWithDiffOnly,
         memoryViewManagerState.isShowWithInstancesOnly);
@@ -88,7 +88,7 @@ public class ClassesFilteredView extends BorderLayoutPanel {
       myTable.setFilteringByInstanceExists(state.isShowWithInstancesOnly);
     };
 
-    MemoryViewManager.getInstance(myProject).addMemoryViewManagerListener(memoryViewManagerListener);
+    MemoryViewManager.getInstance().addMemoryViewManagerListener(memoryViewManagerListener);
 
     myDebugSession.addSessionListener(new XDebugSessionListener() {
       @Override
@@ -99,7 +99,7 @@ public class ClassesFilteredView extends BorderLayoutPanel {
       @Override
       public void sessionStopped() {
         debugSession.removeSessionListener(this);
-        MemoryViewManager.getInstance(myProject).removeMemoryViewManagerListener(memoryViewManagerListener);
+        MemoryViewManager.getInstance().removeMemoryViewManagerListener(memoryViewManagerListener);
       }
 
       @Override
