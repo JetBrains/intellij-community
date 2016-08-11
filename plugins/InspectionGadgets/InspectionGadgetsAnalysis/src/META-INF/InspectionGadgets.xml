@@ -2535,10 +2535,10 @@
                      key="method.ref.can.be.replaced.with.lambda.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.style.MethodRefCanBeReplacedWithLambdaInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="SplitTryWithMultipleResources" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="split.try.with.multiple.resources.name" groupBundle="messages.InspectionsBundle"
+    <localInspection groupPath="Java" language="JAVA" shortName="TryStatementWithMultipleResources" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="try.statement.with.multiple.resources.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.siyeh.ig.exceptions.SplitTryWithMultipleResourcesInspection"/>
+                     implementationClass="com.siyeh.ig.exceptions.TryStatementWithMultipleResourcesInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SplitMultiCatch" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="split.multi.catch.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"

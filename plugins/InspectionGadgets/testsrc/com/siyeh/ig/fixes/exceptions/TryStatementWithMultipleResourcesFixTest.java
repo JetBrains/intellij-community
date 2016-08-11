@@ -17,17 +17,17 @@ package com.siyeh.ig.fixes.exceptions;
 
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
-import com.siyeh.ig.exceptions.SplitTryWithMultipleResourcesInspection;
+import com.siyeh.ig.exceptions.TryStatementWithMultipleResourcesInspection;
 
 /**
  * @author Bas Leijdekkers
  */
-public class SplitTryWithMultipleResourcesFixTest extends IGQuickFixesTestCase {
+public class TryStatementWithMultipleResourcesFixTest extends IGQuickFixesTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.enableInspections(new SplitTryWithMultipleResourcesInspection());
-    myDefaultHint = InspectionGadgetsBundle.message("split.try.with.multiple.resources.descriptor");
+    myFixture.enableInspections(new TryStatementWithMultipleResourcesInspection());
+    myDefaultHint = InspectionGadgetsBundle.message("try.statement.with.multiple.resources.quickfix");
     myRelativePath = "exceptions/try_multiple_resource";
   }
 
