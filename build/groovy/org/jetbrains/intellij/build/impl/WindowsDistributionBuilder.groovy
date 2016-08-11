@@ -167,9 +167,6 @@ IDS_VM_OPTIONS=$vmOptions
       String inputPath = "$communityHome/bin/WinLauncher/WinLauncher${arch.fileSuffix}.exe"
       def outputPath = "$winDistPath/bin/$exeFileName"
       def resourceModules = [buildContext.findApplicationInfoModule(), buildContext.findModule("icons")]
-      if (buildContext.productProperties.brandingModule != null) {
-        resourceModules << buildContext.findRequiredModule(buildContext.productProperties.brandingModule)
-      }
       buildContext.ant.java(classname: "com.pme.launcher.LauncherGeneratorMain", fork: "true", failonerror: "true") {
         sysproperty(key: "java.awt.headless", value: "true")
         arg(value: inputPath)
@@ -186,6 +183,9 @@ IDS_VM_OPTIONS=$vmOptions
           }
           resourceModules.collectMany { it.sourceRoots }.each { JpsModuleSourceRoot root ->
             pathelement(location: root.file.absolutePath)
+          }
+          buildContext.productProperties.brandingResourcePaths.each {
+            pathelement(location: it)
           }
         }
       }

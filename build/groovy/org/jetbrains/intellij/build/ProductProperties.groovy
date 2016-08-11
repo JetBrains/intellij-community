@@ -42,7 +42,12 @@ public abstract class ProductProperties {
    */
   String applicationInfoModule
 
-  String brandingModule
+  /**
+   * Paths to directories containing images specified by 'logo/@url' and 'icon/@ico' attributes in ApplicationInfo.xml file
+   * <br>
+   * todo[nik] get rid of this and make sure that these resources are located in {@link #applicationInfoModule} instead
+   */
+  List<String> brandingResourcePaths = []
 
   /**
    * Name of the sh/bat script (without extension) which will contain the commands to run IDE in 'offline inspections' mode
