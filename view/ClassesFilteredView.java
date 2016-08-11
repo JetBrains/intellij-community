@@ -46,6 +46,7 @@ public class ClassesFilteredView extends BorderLayoutPanel {
   private final SearchTextField myFilterTextField = new SearchTextField(false);
   private final ClassesTable myTable;
 
+  private volatile SuspendContextImpl myLastSuspendContext;
   private boolean myNeedReloadClasses = false;
 
   public ClassesFilteredView(@NotNull XDebugSession debugSession) {
@@ -118,12 +119,12 @@ public class ClassesFilteredView extends BorderLayoutPanel {
     });
 
     mySingleAlarm = new SingleAlarmWithMutableDelay(() -> {
-      SuspendContextImpl suspendContext = getSuspendContext();
-      if (suspendContext != null) {
+      myLastSuspendContext = getSuspendContext();
+      if (myLastSuspendContext != null) {
         SwingUtilities.invokeLater(() -> myTable.setBusy(true));
 
         ((DebuggerManagerThreadImpl) myDebugProcess.getManagerThread())
-            .schedule(new MyUpdateClassesCommand(suspendContext));
+            .schedule(new MyUpdateClassesCommand(myLastSuspendContext));
       }
     });
 
@@ -146,7 +147,10 @@ public class ClassesFilteredView extends BorderLayoutPanel {
     if (myNeedReloadClasses != value) {
       myNeedReloadClasses = value;
       if (myNeedReloadClasses) {
-        updateClassesAndCounts();
+        SuspendContextImpl suspendContext = getSuspendContext();
+        if (suspendContext != null && !suspendContext.equals(myLastSuspendContext)) {
+          updateClassesAndCounts();
+        }
       }
     }
   }
