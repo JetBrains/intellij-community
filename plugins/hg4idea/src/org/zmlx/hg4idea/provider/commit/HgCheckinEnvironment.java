@@ -47,6 +47,7 @@ import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.provider.HgCurrentBinaryContentRevision;
 import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import javax.swing.*;
@@ -55,6 +56,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
+
+import static com.intellij.util.ObjectUtils.assertNotNull;
+import static org.zmlx.hg4idea.util.HgUtil.getRepositoryManager;
 
 public class HgCheckinEnvironment implements CheckinEnvironment {
 
@@ -316,17 +320,17 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     @NotNull private final JCheckBox myCommitSubrepos;
 
     public HgCommitAdditionalComponent(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
-      HgVcs myVcs = HgVcs.getInstance(myProject);
+      HgVcs vcs = assertNotNull(HgVcs.getInstance(myProject));
 
-      myAmend = new MyAmendComponent(project, panel, "Amend Commit (QRefresh)");
-      myAmend.getComponent().setEnabled(myVcs != null && myVcs.getVersion().isAmendSupported());
+      myAmend = new MyAmendComponent(project, getRepositoryManager(project), panel, "Amend Commit (QRefresh)");
+      myAmend.getComponent().setEnabled(vcs.getVersion().isAmendSupported());
 
       myCommitSubrepos = new JCheckBox("Commit subrepositories", false);
       myCommitSubrepos.setToolTipText(XmlStringUtil.wrapInHtml(
         "Commit all subrepos for selected repositories.<br>" +
         " <code>hg ci <i><b>files</b></i> -S <i><b>subrepos</b></i></code>"));
       myCommitSubrepos.setMnemonic('s');
-      Collection<HgRepository> repos = HgActionUtil.collectRepositoriesFromFiles(HgUtil.getRepositoryManager(myProject), panel.getRoots());
+      Collection<HgRepository> repos = HgActionUtil.collectRepositoriesFromFiles(getRepositoryManager(myProject), panel.getRoots());
       myCommitSubrepos.setVisible(ContainerUtil.exists(repos, HgRepository::hasSubrepos));
 
       myCommitSubrepos.addActionListener(new MySelectionListener(myAmend.getCheckBox()));
@@ -366,8 +370,11 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     }
 
     private class MyAmendComponent extends AmendComponent {
-      public MyAmendComponent(@NotNull Project project, @NotNull CheckinProjectPanel panel, @NotNull String title) {
-        super(project, panel, title);
+      public MyAmendComponent(@NotNull Project project,
+                              @NotNull HgRepositoryManager repoManager,
+                              @NotNull CheckinProjectPanel panel,
+                              @NotNull String title) {
+        super(project, repoManager, panel, title);
       }
 
       @NotNull

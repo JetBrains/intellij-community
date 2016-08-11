@@ -89,6 +89,8 @@ import static com.intellij.openapi.vcs.changes.ChangesUtil.getBeforePath;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static git4idea.GitUtil.getLogString;
+import static git4idea.GitUtil.getRepositoryManager;
+import static java.util.Arrays.asList;
 
 public class GitCheckinEnvironment implements CheckinEnvironment {
   private static final Logger LOG = Logger.getInstance(GitCheckinEnvironment.class);
@@ -132,8 +134,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   @Nullable
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
     LinkedHashSet<String> messages = newLinkedHashSet();
-    GitRepositoryManager manager = GitUtil.getRepositoryManager(myProject);
-    for (VirtualFile root : GitUtil.gitRoots(Arrays.asList(filesToCheckin))) {
+    GitRepositoryManager manager = getRepositoryManager(myProject);
+    for (VirtualFile root : GitUtil.gitRoots(asList(filesToCheckin))) {
       GitRepository repository = manager.getRepositoryForRoot(root);
       if (repository == null) { // unregistered nested submodule found by GitUtil.getGitRoot
         LOG.warn("Unregistered repository: " + root);
@@ -254,7 +256,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
     }
     if (myNextCommitIsPushed != null && myNextCommitIsPushed.booleanValue() && exceptions.isEmpty()) {
-      GitRepositoryManager manager = GitUtil.getRepositoryManager(myProject);
+      GitRepositoryManager manager = getRepositoryManager(myProject);
       Collection<GitRepository> repositories = GitUtil.getRepositoriesFromRoots(manager, sortedChanges.keySet());
       final List<GitRepository> preselectedRepositories = newArrayList(repositories);
       GuiUtils.invokeLaterIfNeeded(() ->
@@ -455,7 +457,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     // perform merge commit
     try {
       commitWithoutPaths(project, root, messageFile, author);
-      GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
+      GitRepositoryManager manager = getRepositoryManager(project);
       manager.updateRepository(root);
     }
     catch (VcsException ex) {
@@ -609,7 +611,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       handler.run();
     }
     if (!project.isDisposed()) {
-      GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
+      GitRepositoryManager manager = getRepositoryManager(project);
       manager.updateRepository(root);
     }
   }
@@ -712,7 +714,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       JLabel authorLabel = new JBLabel(GitBundle.message("commit.author"));
       authorLabel.setLabelFor(myAuthorField);
 
-      myAmendComponent = new MyAmendComponent(project, panel);
+      myAmendComponent = new MyAmendComponent(project, getRepositoryManager(project), panel);
       mySignOffCheckbox = new JBCheckBox("Sign-off commit", mySettings.shouldSignOffCommit());
       mySignOffCheckbox.setMnemonic(KeyEvent.VK_G);
       mySignOffCheckbox.setToolTipText(getToolTip(project, panel));
@@ -752,8 +754,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
 
     private class MyAmendComponent extends AmendComponent {
-      public MyAmendComponent(Project project, CheckinProjectPanel panel) {
-        super(project, panel);
+      public MyAmendComponent(@NotNull Project project, @NotNull GitRepositoryManager manager, @NotNull CheckinProjectPanel panel) {
+        super(project, manager, panel);
       }
 
       @NotNull

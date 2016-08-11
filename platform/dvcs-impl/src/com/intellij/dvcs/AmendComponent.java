@@ -15,6 +15,8 @@
  */
 package com.intellij.dvcs;
 
+import com.intellij.dvcs.repo.Repository;
+import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -38,6 +40,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Provides a checkbox to amend current commit to the previous commit.
@@ -48,6 +51,7 @@ public abstract class AmendComponent {
 
   private static final Logger LOG = Logger.getInstance(AmendComponent.class);
 
+  @NotNull private final RepositoryManager<? extends Repository> myRepoManager;
   @NotNull private final CheckinProjectPanel myCheckinPanel;
   @NotNull private final JCheckBox myAmend;
   @NotNull private final String myPreviousMessage;
@@ -55,11 +59,17 @@ public abstract class AmendComponent {
   @Nullable private Map<VirtualFile, String> myMessagesForRoots;
   @Nullable private String myAmendedMessage;
 
-  public AmendComponent(@NotNull final Project project, @NotNull CheckinProjectPanel panel) {
-    this(project, panel, DvcsBundle.message("commit.amend"));
+  public AmendComponent(@NotNull Project project,
+                        @NotNull RepositoryManager<? extends Repository> repoManager,
+                        @NotNull CheckinProjectPanel panel) {
+    this(project, repoManager, panel, DvcsBundle.message("commit.amend"));
   }
 
-  public AmendComponent(@NotNull final Project project, @NotNull CheckinProjectPanel panel, @NotNull String title) {
+  public AmendComponent(@NotNull Project project,
+                        @NotNull RepositoryManager<? extends Repository> repoManager,
+                        @NotNull CheckinProjectPanel panel,
+                        @NotNull String title) {
+    myRepoManager = repoManager;
     myCheckinPanel = panel;
     myAmend = new NonFocusableCheckBox(title);
     myAmend.setMnemonic('m');
@@ -142,12 +152,21 @@ public abstract class AmendComponent {
   @Nullable
   private Map<VirtualFile, String> getLastCommitMessages() throws VcsException {
     Map<VirtualFile, String> messagesForRoots = new HashMap<>();
-    Collection<VirtualFile> roots = myCheckinPanel.getRoots(); //all committed vcs roots, not only selected
-    for (VirtualFile root : roots) {
+    // load all vcs roots visible in the commit dialog (not only selected ones), to avoid another loading task if selection changes
+    for (VirtualFile root : getAffectedRoots()) {
       String message = getLastCommitMessage(root);
       messagesForRoots.put(root, message);
     }
     return messagesForRoots;
+  }
+
+  @NotNull
+  protected Collection<VirtualFile> getAffectedRoots() {
+    return myRepoManager.getRepositories().stream().
+      filter(repo -> !repo.isFresh()).
+      map(Repository::getRoot).
+      filter(root -> myCheckinPanel.getRoots().contains(root)).
+      collect(Collectors.toList());
   }
 
   @NotNull
