@@ -15,19 +15,30 @@
  */
 package com.intellij.credentialStore
 
+import com.intellij.credentialStore.linux.SecretCredentialStore
 import com.intellij.credentialStore.macOs.KeyChainCredentialStore
 import com.intellij.credentialStore.macOs.isMacOsCredentialStoreSupported
 import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.openapi.diagnostic.catchAndLog
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.SystemProperties
 
 private class CredentialStoreWrapper(private val store: CredentialStore) : PasswordStorage {
+  private val fallbackStore = lazy { FileCredentialStore(memoryOnly = true) }
+
   override fun getPassword(requestor: Class<*>?, key: String): String? {
+    var store = if (fallbackStore.isInitialized()) fallbackStore.value else store
+
     val rawKey = getRawKey(key, requestor)
     // try old key - as hash
     @Suppress("CanBeVal")
     var value: String?
     try {
+      value = store.get(rawKey)
+    }
+    catch (e: UnsatisfiedLinkError) {
+      store = fallbackStore.value
+      LOG.error(e)
       value = store.get(rawKey)
     }
     catch (e: Throwable) {
@@ -50,6 +61,7 @@ private class CredentialStoreWrapper(private val store: CredentialStore) : Passw
 
   override fun setPassword(requestor: Class<*>?, key: String, value: String?) {
     LOG.catchAndLog {
+      val store = if (fallbackStore.isInitialized()) fallbackStore.value else store
       store.set(getRawKey(key, requestor), value?.toByteArray())
     }
   }
@@ -59,6 +71,15 @@ private class MacOsCredentialStoreFactory : CredentialStoreFactory {
   override fun create(): PasswordStorage? {
     if (isMacOsCredentialStoreSupported && SystemProperties.getBooleanProperty("use.mac.keychain", true)) {
       return CredentialStoreWrapper(KeyChainCredentialStore("IntelliJ Platform"))
+    }
+    return null
+  }
+}
+
+private class LinuxSecretCredentialStoreFactory : CredentialStoreFactory {
+  override fun create(): PasswordStorage? {
+    if (SystemInfo.isLinux && SystemProperties.getBooleanProperty("use.linux.keychain", true)) {
+      return CredentialStoreWrapper(SecretCredentialStore("com.intellij.credentialStore.Credential"))
     }
     return null
   }

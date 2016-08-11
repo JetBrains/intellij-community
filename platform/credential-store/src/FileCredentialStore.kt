@@ -33,7 +33,15 @@ import java.util.Base64
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.crypto.spec.SecretKeySpec
 
-class FileCredentialStore(keyToValue: Map<String, String>? = null, baseDirectory: Path = Paths.get(PathManager.getConfigPath()), var memoryOnly: Boolean = false) : PasswordStorage {
+class FileCredentialStore(keyToValue: Map<String, String>? = null, baseDirectory: Path = Paths.get(PathManager.getConfigPath()), var memoryOnly: Boolean = false) : PasswordStorage, CredentialStore {
+  override fun get(key: String) = getPassword(null, key)
+
+  override fun set(key: String, password: ByteArray?) {
+    val string = password?.toString(Charsets.UTF_8)
+    password?.fill(0)
+    setPassword(key, string)
+  }
+
   private val db = ContainerUtil.newConcurrentMap<String, String>()
 
   private val dbFile = baseDirectory.resolve("pdb")
@@ -128,10 +136,10 @@ class FileCredentialStore(keyToValue: Map<String, String>? = null, baseDirectory
 
   override fun getPassword(requestor: Class<*>?, key: String): String? {
     val rawKey = getRawKey(key, requestor)
-    // try old key - as hash
     var value = db.get(rawKey)
-    if (value == null) {
-      value = db.remove(rawKey)
+    if (value == null && (requestor != null || key.contains('/'))) {
+      // try old key - as hash
+      value = db.remove(toOldKey(rawKey))
       if (value != null) {
         db.put(rawKey, value)
         needToSave.set(true)

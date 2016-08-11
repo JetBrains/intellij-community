@@ -21,7 +21,7 @@ internal fun stringPointer(data: ByteArray): DisposableMemory {
 }
 
 // we use default collection, it seems no way to use custom
-class SecretCredentialStore(schemeName: String) : CredentialStore {
+internal class SecretCredentialStore(schemeName: String) : CredentialStore {
   private val keyAttributeNamePointer by lazy { stringPointer("key".toByteArray()) }
   private val scheme by lazy { LIBRARY.secret_schema_new(schemeName, SECRET_SCHEMA_NONE, keyAttributeNamePointer, SECRET_SCHEMA_ATTRIBUTE_STRING, null) }
 
