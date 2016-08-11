@@ -15,34 +15,42 @@
  */
 package com.intellij.xdebugger.impl.frame.actions;
 
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.ui.CommonActionsPanel;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
+import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl;
+import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 /**
- * @author nik
+ * @author egor
  */
-public class XRemoveWatchAction extends XWatchesTreeActionBase {
-  @Override
-  public void update(AnActionEvent e) {
-    XDebuggerTree tree = XDebuggerTree.getTree(e);
-    boolean enabled = tree != null && !getSelectedNodes(tree, WatchNodeImpl.class).isEmpty();
-    if (ActionPlaces.DEBUGGER_TOOLBAR.equals(e.getPlace())) {
-      e.getPresentation().setEnabled(enabled);
+public class XMoveWatchDown extends XWatchesTreeActionBase {
+  public XMoveWatchDown() {
+    getTemplatePresentation().setIcon(CommonActionsPanel.Buttons.DOWN.getIcon());
+  }
+
+  protected boolean isEnabled(@NotNull AnActionEvent e, @NotNull XDebuggerTree tree) {
+    List<? extends WatchNodeImpl> nodes = getSelectedNodes(tree, WatchNodeImpl.class);
+    if (nodes.size() == 1) {
+      XDebuggerTreeNode root = tree.getRoot();
+      if (root instanceof WatchesRootNode) {
+        return root.getIndex(nodes.get(0)) < ((WatchesRootNode)root).getWatchChildren().size() - 1;
+      }
     }
-    else {
-      e.getPresentation().setEnabledAndVisible(enabled);
-    }
+    return false;
   }
 
   @Override
   protected void perform(@NotNull AnActionEvent e, @NotNull XDebuggerTree tree, @NotNull XWatchesView watchesView) {
-    List<? extends WatchNodeImpl>nodes = getSelectedNodes(tree, WatchNodeImpl.class);
-    watchesView.removeWatches(nodes);
+    if (watchesView instanceof XWatchesViewImpl) {
+      ((XWatchesViewImpl)watchesView).moveWatchDown(ContainerUtil.getFirstItem(getSelectedNodes(tree, WatchNodeImpl.class)));
+    }
   }
 }
