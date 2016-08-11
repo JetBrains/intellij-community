@@ -1,5 +1,7 @@
 package com.intellij.openapi.diff.impl.patch.lib.base85xjava;
 
+import java.util.Arrays;
+
 /**
  * The main Base85x-java program
  *
@@ -7,6 +9,9 @@ package com.intellij.openapi.diff.impl.patch.lib.base85xjava;
  * @version 0.2
  */
 public class Base85x {
+
+  private static final int ASCII_LEFT_SHIFT = 33;
+  private static final int ASCII_RIGHT_SHIFT = 127;
 
   private static final char[] ALPHABET_85 = {
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
@@ -25,25 +30,35 @@ public class Base85x {
 
   private static int[] initIndexOfChar() {
     int[] result = new int[256];
+    Arrays.fill(result, -1);
     for (int i = 0; i < ALPHABET_85.length; i++) {
       result[ALPHABET_85[i]] = i;
     }
     return result;
   }
 
-  public static char encodeChar(int i) {
+  public static char encodeChar(int i) throws Base85FormatException {
+    if(i<0 || i >= ALPHABET_85.length){ throw new Base85FormatException("Wrong index to encode as char " +  i);}
     return ALPHABET_85[i];
   }
 
-  public static int decodeChar(char c) {
-    return INDEX_OF[(int)c];
+  public static int decodeChar(char c) throws Base85FormatException {
+    // optimization for 2-byte char size
+    if (c < ASCII_LEFT_SHIFT || c > ASCII_RIGHT_SHIFT) {
+      throw new Base85FormatException("Illegal char " + (int)c);
+    }
+    int result = INDEX_OF[(int)c];
+    if(result == -1) {
+      throw new Base85FormatException("Illegal char " + (int)c);
+    }
+    return result;
   }
 
-  public static byte[] decode(String data) {
+  public static byte[] decode(String data) throws Base85FormatException {
     return decode(data.toCharArray());
   }
 
-  public static char[] encode(byte[] data) {
+  public static char[] encode(byte[] data) throws Base85FormatException {
     int length = data.length;
     char[] out = new char[(length / 4) * 5 + ((length % 4 != 0) ? length % 4 + 1 : 0)];
     int k = 0;
@@ -99,7 +114,7 @@ public class Base85x {
     return out;
   }
 
-  public static byte[] decode(char[] data) {
+  public static byte[] decode(char[] data) throws Base85FormatException {
     int length = data.length;
     byte[] out = new byte[(length / 5) * 4 + ((length % 5 != 0) ? length % 5 - 1 : 0)];
     int k = 0;
@@ -144,5 +159,11 @@ public class Base85x {
     }
 
     return out;
+  }
+
+  public static class Base85FormatException extends Exception {
+    public Base85FormatException(String s) {
+      super(s);
+    }
   }
 }
