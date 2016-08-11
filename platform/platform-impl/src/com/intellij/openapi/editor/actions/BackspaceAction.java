@@ -88,7 +88,6 @@ public class BackspaceAction extends TextComponentEditorAction {
         }
         else {
           document.deleteString(offset - 1, offset);
-          editor.getCaretModel().moveToOffset(offset - 1, true);
         }
       }
     }

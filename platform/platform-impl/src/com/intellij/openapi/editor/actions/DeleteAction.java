@@ -103,9 +103,7 @@ public class DeleteAction extends EditorAction {
         editor.getCaretModel().moveToOffset(region.getStartOffset());
       }
       else {
-        LogicalPosition lp = editor.getCaretModel().getLogicalPosition();
         document.deleteString(offset, offset + 1);
-        editor.getCaretModel().moveToLogicalPosition(lp.leanForward(true));
       }
       return;
     }

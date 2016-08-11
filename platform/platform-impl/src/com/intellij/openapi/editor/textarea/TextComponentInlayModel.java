@@ -51,6 +51,11 @@ public class TextComponentInlayModel implements InlayModel {
   }
 
   @Override
+  public boolean hasInlayAt(int offset) {
+    return false;
+  }
+
+  @Override
   public boolean hasInlayAt(@NotNull VisualPosition visualPosition) {
     return false;
   }

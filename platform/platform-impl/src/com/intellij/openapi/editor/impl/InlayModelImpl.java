@@ -144,6 +144,11 @@ public class InlayModelImpl implements InlayModel, Disposable {
   }
 
   @Override
+  public boolean hasInlayAt(int offset) {
+    return !getElementsInRange(offset, offset, Inlay.Type.INLINE).isEmpty();
+  }
+
+  @Override
   public boolean hasInlayAt(@NotNull VisualPosition visualPosition) {
     int offset = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(visualPosition));
     List<Inlay> inlays = getElementsInRange(offset, offset, Inlay.Type.INLINE);

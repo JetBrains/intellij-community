@@ -36,6 +36,8 @@ public interface InlayModel {
   @NotNull
   List<Inlay> getLineExtendingElements();
 
+  boolean hasInlayAt(int offset);
+
   boolean hasInlayAt(@NotNull VisualPosition visualPosition);
 
   void addListener(@NotNull Listener listener, @NotNull Disposable disposable);
