@@ -61,9 +61,8 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
           @Override
           public void stateChanged() {
             if (!myMemoryViews.isEmpty()) {
-              SwingUtilities.invokeLater(() ->
-                  myMemoryViews.values().forEach(classesFilteredView ->
-                      classesFilteredView.setNeedReloadClasses(toolWindow.isVisible())));
+              myMemoryViews.values().forEach(classesFilteredView ->
+                  classesFilteredView.setNeedReloadClasses(toolWindow.isVisible()));
             }
           }
         });
