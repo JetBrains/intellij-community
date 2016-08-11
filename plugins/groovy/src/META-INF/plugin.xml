@@ -827,6 +827,9 @@
                      displayName="Unnecessary 'def'" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessaryDefModifierInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" groupName="Style"
+                     displayName="Unnecessary 'public'" enabledByDefault="true"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessaryPublicModifierInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" groupName="Style"
                      displayName="Unnecessary semicolon" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessarySemicolonInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="ChangeToOperator"
