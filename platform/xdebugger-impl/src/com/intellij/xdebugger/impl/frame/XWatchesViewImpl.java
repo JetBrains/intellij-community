@@ -111,6 +111,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     toolbar.setBorder(new CustomLineBorder(CaptionPanel.CNT_ACTIVE_BORDER_COLOR, 0, 0,
                                            myWatchesInVariables ? 0 : 1,
                                            myWatchesInVariables ? 1 : 0));
+    toolbar.setTargetComponent(tree);
 
     if (!myWatchesInVariables) {
       getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.no.watches"));
