@@ -30,19 +30,19 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
-public class SplitMultiCatchInspection extends BaseInspection {
+public class MultiCatchCanBeSplitInspection extends BaseInspection {
 
   @Nls
   @NotNull
   @Override
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message("split.multi.catch.name");
+    return InspectionGadgetsBundle.message("multi.catch.can.be.split.name");
   }
 
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("split.multi.catch.descriptor");
+    return getDisplayName();
   }
 
   @Override
@@ -123,7 +123,7 @@ public class SplitMultiCatchInspection extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("split.multi.catch.descriptor");
+      return InspectionGadgetsBundle.message("multi.catch.can.be.split.quickfix");
     }
 
     @Nls
