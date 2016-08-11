@@ -2015,14 +2015,15 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               .setCancelKeyEnabled(false)
               .setResizable(true)
               .setCancelCallback(() -> {
+                final JBPopup balloon = myBalloon;
                 final AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
                 if (event instanceof MouseEvent) {
                   final Component comp = ((MouseEvent)event).getComponent();
-                  if (UIUtil.getWindow(comp) == UIUtil.getWindow(myBalloon.getContent())) {
+                  if (balloon != null && UIUtil.getWindow(comp) == UIUtil.getWindow(balloon.getContent())) {
                     return false;
                   }
                 }
-                final boolean canClose = myBalloon == null || myBalloon.isDisposed() || (!getField().getTextEditor().hasFocus() && !mySkipFocusGain);
+                final boolean canClose = balloon == null || balloon.isDisposed() || (!getField().getTextEditor().hasFocus() && !mySkipFocusGain);
                 if (canClose) {
                   PropertiesComponent.getInstance().setValue("search.everywhere.max.popup.width", Math.max(content.getWidth(), JBUI.scale(600)), JBUI.scale(600));
                 }
