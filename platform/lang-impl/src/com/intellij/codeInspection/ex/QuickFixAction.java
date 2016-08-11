@@ -271,7 +271,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     }
   }
 
-  private static void refreshViews(@NotNull Project project, @NotNull RefEntity[] refElements, @NotNull InspectionToolWrapper toolWrapper) {
+  protected static void refreshViews(@NotNull Project project, @NotNull RefEntity[] refElements, @NotNull InspectionToolWrapper toolWrapper) {
     final Set<PsiElement> ignoredElements = new HashSet<>();
     for (RefEntity element : refElements) {
       final PsiElement psiElement = element instanceof RefElement ? ((RefElement)element).getElement() : null;
