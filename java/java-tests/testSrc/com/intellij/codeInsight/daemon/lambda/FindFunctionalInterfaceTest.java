@@ -101,9 +101,14 @@ public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase
 
   public void testFindSubInterfaceLambdas() {
     configure();
+
     assertSize(5, FunctionalExpressionSearch.search(findClass("DumbAwareRunnable")).findAll());
     assertSize(3, FunctionalExpressionSearch.search(findClass("DumbAwareRunnable2")).findAll());
     assertSize(6, FunctionalExpressionSearch.search(findClass("DumbAware")).findAll());
+
+    assertSize(1, FunctionalExpressionSearch.search(findClass("WithDefaultMethods")).findAll());
+    assertSize(1, FunctionalExpressionSearch.search(findClass("WithManyMethods")).findAll());
+    assertSize(1, FunctionalExpressionSearch.search(findClass("WithManyMethods2")).findAll());
   }
 
   public void testArraysStreamLikeApi() {

@@ -371,7 +371,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
         if (!result.add(c)) return;
 
         DirectClassInheritorsSearch.search(c).forEach(candidate -> {
-          if (candidate.isInterface() && isFunctionalCompatible(candidate)) {
+          if (candidate.isInterface()) {
             visit(candidate);
           }
           return true;
@@ -379,11 +379,6 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
       }
     }.visit(base);
     return result;
-  }
-
-  private static boolean isFunctionalCompatible(PsiClass candidate) {
-    return LambdaUtil.isFunctionalClass(candidate) ||
-           Arrays.stream(candidate.getAllMethods()).filter(m -> !m.hasModifierProperty(PsiModifier.DEFAULT)).count() == 0;
   }
 
   private static class SamDescriptor {

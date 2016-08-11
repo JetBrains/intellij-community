@@ -30,14 +30,14 @@ import java.io.IOException;
  */
 public class FunctionalExpressionKey {
   public static final int UNKNOWN_PARAM_COUNT = -1;
-  public final int lambdaParameterCount;
-  public final CoarseType lambdaType;
+  private final int lambdaParameterCount;
+  private final CoarseType lambdaReturnType;
   public final Location location;
 
-  public FunctionalExpressionKey(int lambdaParameterCount, @NotNull CoarseType lambdaType, @NotNull Location location) {
+  public FunctionalExpressionKey(int lambdaParameterCount, @NotNull CoarseType lambdaReturnType, @NotNull Location location) {
     this.location = location;
     this.lambdaParameterCount = lambdaParameterCount;
-    this.lambdaType = lambdaType;
+    this.lambdaReturnType = lambdaReturnType;
   }
 
   @NotNull
@@ -49,7 +49,7 @@ public class FunctionalExpressionKey {
 
   public void serializeKey(@NotNull DataOutput dataStream) throws IOException {
     dataStream.writeByte(lambdaParameterCount);
-    dataStream.writeByte(lambdaType.ordinal());
+    dataStream.writeByte(lambdaReturnType.ordinal());
     serializeLocation(dataStream);
   }
 
@@ -78,7 +78,7 @@ public class FunctionalExpressionKey {
   public boolean canRepresent(int samParamCount, boolean booleanCompatible, boolean isVoid) {
     if (lambdaParameterCount >= 0 && samParamCount != lambdaParameterCount) return false;
 
-    switch (lambdaType) {
+    switch (lambdaReturnType) {
       case VOID: return isVoid;
       case NON_VOID: return !isVoid;
       case BOOLEAN: return booleanCompatible;
@@ -98,7 +98,7 @@ public class FunctionalExpressionKey {
     FunctionalExpressionKey key = (FunctionalExpressionKey)o;
 
     if (lambdaParameterCount != key.lambdaParameterCount) return false;
-    if (lambdaType != key.lambdaType) return false;
+    if (lambdaReturnType != key.lambdaReturnType) return false;
     if (!location.equals(key.location)) return false;
 
     return true;
@@ -107,7 +107,7 @@ public class FunctionalExpressionKey {
   @Override
   public int hashCode() {
     int result = lambdaParameterCount;
-    result = 31 * result + lambdaType.ordinal();
+    result = 31 * result + lambdaReturnType.ordinal();
     result = 31 * result + location.hashCode();
     return result;
   }
@@ -116,7 +116,7 @@ public class FunctionalExpressionKey {
   public String toString() {
     return MoreObjects.toStringHelper(this)
       .add("lambdaParameterCount", lambdaParameterCount)
-      .add("type", lambdaType)
+      .add("type", lambdaReturnType)
       .add("location", location)
       .toString();
   }
