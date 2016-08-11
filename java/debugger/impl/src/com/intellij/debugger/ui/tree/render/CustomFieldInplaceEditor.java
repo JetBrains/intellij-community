@@ -48,7 +48,7 @@ import java.util.List;
  */
 public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {
   private final UserExpressionDescriptorImpl myDescriptor;
-  private final EnumerationChildrenRenderer myRenderer;
+  protected final EnumerationChildrenRenderer myRenderer;
 
   public CustomFieldInplaceEditor(@NotNull XDebuggerTreeNode node,
                                   @Nullable UserExpressionDescriptorImpl descriptor,
@@ -79,20 +79,26 @@ public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {
 
       @Override
       protected List<Pair<String, TextWithImports>> getRendererChildren() {
-        if (renderer != null) {
-          return renderer.getChildren();
+        if (myRenderer != null) {
+          return myRenderer.getChildren();
+        }
+        String name = getTypeName(descriptor);
+        EnumerationChildrenRenderer enumerationChildrenRenderer = new EnumerationChildrenRenderer();
+        enumerationChildrenRenderer.setAppendDefaultChildren(true);
+
+        Renderer lastRenderer = descriptor.getLastRenderer();
+        if (lastRenderer instanceof CompoundNodeRenderer &&
+            !(((CompoundNodeRenderer)lastRenderer).getChildrenRenderer() instanceof ExpressionChildrenRenderer)) {
+            ((CompoundNodeRenderer)lastRenderer).setChildrenRenderer(enumerationChildrenRenderer);
         }
         else {
-          String name = getTypeName(descriptor);
-          EnumerationChildrenRenderer enumerationChildrenRenderer = new EnumerationChildrenRenderer();
-          enumerationChildrenRenderer.setAppendDefaultChildren(true);
           NodeRenderer renderer =
             NodeRendererSettings.getInstance().createCompoundTypeRenderer(name, name, null, enumerationChildrenRenderer);
           renderer.setEnabled(true);
           NodeRendererSettings.getInstance().getCustomRenderers().addRenderer(renderer);
           NodeRendererSettings.getInstance().fireRenderersChanged();
-          return enumerationChildrenRenderer.getChildren();
         }
+        return enumerationChildrenRenderer.getChildren();
       }
     }.show());
   }
