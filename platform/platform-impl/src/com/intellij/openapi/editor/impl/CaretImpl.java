@@ -877,6 +877,20 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     updateSelectionOnDocumentChange();
   }
 
+  void onInlayAdded(int offset) {
+    if (offset == myOffset) {
+      VisualPosition pos = myEditor.offsetToVisualPosition(myOffset, true, false);
+      moveToVisualPosition(pos);
+    }
+    else {
+      updateVisualPosition();
+    }
+  }
+
+  void onInlayRemoved() {
+    updateVisualPosition();
+  }
+
   private boolean needToShiftWhiteSpaces(final DocumentEvent e) {
     if (!CharArrayUtil.containsOnlyWhiteSpaces(e.getNewFragment()) || CharArrayUtil.containLineBreaks(e.getNewFragment()))
       return e.getOldLength() > 0;

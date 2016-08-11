@@ -43,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, Disposable, Dumpable {
+public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, Disposable, Dumpable, InlayModel.Listener {
   private final EditorImpl myEditor;
   
   private final EventDispatcher<CaretListener> myCaretListeners = EventDispatcher.create(CaretListener.class);
@@ -538,6 +538,23 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
            ", perform caret merging: " + myPerformCaretMergingAfterCurrentOperation +
            ", current caret: " + myCurrentCaret +
            ", all carets: " + ContainerUtil.map(myCarets, CaretImpl::dumpState) + "]";
+  }
+
+  @Override
+  public void onAdded(Inlay inlay) {
+    int offset = inlay.getOffset();
+    for (CaretImpl caret : myCarets) {
+      caret.onInlayAdded(offset);
+    }
+  }
+
+  @Override
+  public void onRemoved(Inlay inlay) {
+    doWithCaretMerging(() -> {
+      for (CaretImpl caret : myCarets) {
+        caret.onInlayRemoved();
+      }
+    });
   }
 
   private static class VisualPositionComparator implements Comparator<VisualPosition> {

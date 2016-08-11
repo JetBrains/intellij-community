@@ -468,6 +468,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myFoldingModel.addListener(mySoftWrapModel, myCaretModel);
 
+    myInlayModel.addListener(myCaretModel, myCaretModel);
+
     myIndentsModel = new IndentsModelImpl(this);
     myCaretModel.addCaretListener(new CaretListener() {
       @Nullable private LightweightHint myCurrentHint;
@@ -594,9 +596,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       public void onChanged(Inlay inlay) {
         if (myDocument.isInEventsHandling() || myDocument.isInBulkUpdate()) return;
         validateSize();
-        if (inlay.getType() == Inlay.Type.INLINE) {
-          myCaretModel.updateVisualPosition();
-        }
         if (inlay.getType() == Inlay.Type.INLINE && inlay.getHeightInPixels() <= getLineHeight()) {
           repaint(inlay.getOffset(), inlay.getOffset(), false);
         }
