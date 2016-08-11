@@ -87,13 +87,13 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     }
     addSeparator();
 
-    final Set<String> languageIds = new HashSet<String>();
+    final Set<String> languageIds = new HashSet<>();
     for (ScopeToolState state : profile.getDefaultStates(project)) {
       final String languageId = state.getTool().getLanguage();
       languageIds.add(languageId);
     }
 
-    final List<Language> languages = new ArrayList<Language>();
+    final List<Language> languages = new ArrayList<>();
     for (String id : languageIds) {
       if (id != null) {
         final Language language = Language.findLanguageByID(id);

@@ -101,7 +101,7 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
                                    @Nullable final AbstractVcs vcs) {
 
     // include all custom actions in general popup
-    final List<AnAction> actions = new ArrayList<AnAction>();
+    final List<AnAction> actions = new ArrayList<>();
     for (VcsQuickListContentProvider provider : VcsQuickListContentProvider.EP_NAME.getExtensions()) {
       final List<AnAction> providerActions = provider.getVcsActions(project, vcs, dataContext);
       if (providerActions != null) {
@@ -170,7 +170,7 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
     final AbstractVcs[] activeVcss = getActiveVCSs(project);
     if (activeVcss.length == 0) {
       // no vcs
-      return new Pair<SupportedVCS, AbstractVcs>(SupportedVCS.NOT_IN_VCS, null);
+      return new Pair<>(SupportedVCS.NOT_IN_VCS, null);
     } else if (activeVcss.length == 1) {
       // get by name
       return Pair.create(SupportedVCS.VCS, activeVcss[0]);
@@ -185,7 +185,7 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
       }
     }
 
-    return new Pair<SupportedVCS, AbstractVcs>(SupportedVCS.VCS, null);
+    return new Pair<>(SupportedVCS.VCS, null);
   }
 
   private AbstractVcs[] getActiveVCSs(final Project project) {

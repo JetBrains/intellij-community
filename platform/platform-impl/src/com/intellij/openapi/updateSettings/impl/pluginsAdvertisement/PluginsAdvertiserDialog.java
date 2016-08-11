@@ -38,7 +38,7 @@ public class PluginsAdvertiserDialog extends DialogWrapper {
   @Nullable private final Project myProject;
   private final PluginDownloader[] myUploadedPlugins;
   private final List<PluginId> myAllPlugins;
-  private final Set<String> mySkippedPlugins = new HashSet<String>();
+  private final Set<String> mySkippedPlugins = new HashSet<>();
 
   private final PluginManagerMain.PluginEnabler.HEADLESS pluginHelper = new PluginManagerMain.PluginEnabler.HEADLESS();
 
@@ -71,8 +71,8 @@ public class PluginsAdvertiserDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    final Set<String> pluginsToEnable = new HashSet<String>();
-    final List<PluginNode> nodes = new ArrayList<PluginNode>();
+    final Set<String> pluginsToEnable = new HashSet<>();
+    final List<PluginNode> nodes = new ArrayList<>();
     for (PluginDownloader downloader : myUploadedPlugins) {
       String pluginId = downloader.getPluginId();
       if (!mySkippedPlugins.contains(pluginId)) {

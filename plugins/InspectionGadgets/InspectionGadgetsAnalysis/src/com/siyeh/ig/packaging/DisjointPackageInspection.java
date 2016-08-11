@@ -58,7 +58,7 @@ public class DisjointPackageInspection extends BaseGlobalInspection {
     if (children == null) {
       return null;
     }
-    final Set<RefClass> childClasses = new HashSet<RefClass>();
+    final Set<RefClass> childClasses = new HashSet<>();
     for (RefEntity child : children) {
       if (!(child instanceof RefClass)) {
         continue;
@@ -88,14 +88,14 @@ public class DisjointPackageInspection extends BaseGlobalInspection {
 
   private static Set<Set<RefClass>> createComponents(
     RefPackage aPackage, Set<RefClass> classes) {
-    final Set<RefClass> allClasses = new HashSet<RefClass>(classes);
-    final Set<Set<RefClass>> out = new HashSet<Set<RefClass>>();
+    final Set<RefClass> allClasses = new HashSet<>(classes);
+    final Set<Set<RefClass>> out = new HashSet<>();
     while (!allClasses.isEmpty()) {
       final RefClass seed = allClasses.iterator().next();
       allClasses.remove(seed);
-      final Set<RefClass> currentComponent = new HashSet<RefClass>();
+      final Set<RefClass> currentComponent = new HashSet<>();
       currentComponent.add(seed);
-      final List<RefClass> pendingClasses = new ArrayList<RefClass>();
+      final List<RefClass> pendingClasses = new ArrayList<>();
       pendingClasses.add(seed);
       while (!pendingClasses.isEmpty()) {
         final RefClass classToProcess = pendingClasses.remove(0);
@@ -117,7 +117,7 @@ public class DisjointPackageInspection extends BaseGlobalInspection {
 
   private static Set<RefClass> getRelatedClasses(RefPackage aPackage,
                                                  RefClass classToProcess) {
-    final Set<RefClass> out = new HashSet<RefClass>();
+    final Set<RefClass> out = new HashSet<>();
     final Set<RefClass> dependencies =
       DependencyUtils.calculateDependenciesForClass(classToProcess);
     for (RefClass dependency : dependencies) {

@@ -146,7 +146,7 @@ public class ChangesCacheFile {
   public List<CommittedChangeList> writeChanges(final List<CommittedChangeList> changes, @Nullable final List<Boolean> present) throws IOException {
     assert present == null || present.size() == changes.size();
 
-    List<CommittedChangeList> result = new ArrayList<CommittedChangeList>(changes.size());
+    List<CommittedChangeList> result = new ArrayList<>(changes.size());
     boolean wasEmpty = isEmpty();
     openStreams();
     try {
@@ -349,7 +349,7 @@ public class ChangesCacheFile {
   }
 
   private List<Boolean> loadAllData(final List<CommittedChangeList> lists) throws IOException {
-    List<Boolean> idx = new ArrayList<Boolean>();
+    List<Boolean> idx = new ArrayList<>();
     openStreams();
 
     try {
@@ -372,7 +372,7 @@ public class ChangesCacheFile {
   }
 
   public void editChangelist(long number, String message) throws IOException {
-    final List<CommittedChangeList> lists = new ArrayList<CommittedChangeList>();
+    final List<CommittedChangeList> lists = new ArrayList<>();
     final List<Boolean> present = loadAllData(lists);
     for (CommittedChangeList list : lists) {
       if (list.getNumber() == number) {
@@ -442,7 +442,7 @@ public class ChangesCacheFile {
         return Collections.emptyList();
       }
 
-      final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
+      final List<CommittedChangeList> result = new ArrayList<>();
       for (IndexEntry entry : entries) {
         final CommittedChangeList changeList = loadChangeListAt(entry.offset);
         result.add(changeList);
@@ -454,7 +454,7 @@ public class ChangesCacheFile {
   }
 
   public List<CommittedChangeList> readChanges(final ChangeBrowserSettings settings, final int maxCount) throws IOException {
-    final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
+    final List<CommittedChangeList> result = new ArrayList<>();
     final ChangeBrowserSettings.Filter filter = settings.createFilter();
     openStreams();
     try {
@@ -518,7 +518,7 @@ public class ChangesCacheFile {
   }
 
   public List<CommittedChangeList> loadIncomingChanges() throws IOException {
-    List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
+    List<CommittedChangeList> result = new ArrayList<>();
     int offset = 0;
     openStreams();
     try {
@@ -662,7 +662,7 @@ public class ChangesCacheFile {
   private List<IncomingChangeListData> loadIncomingChangeListData() throws IOException {
     final long length = myIndexStream.length();
     long totalCount = length / INDEX_ENTRY_SIZE;
-    List<IncomingChangeListData> incomingData = new ArrayList<IncomingChangeListData>();
+    List<IncomingChangeListData> incomingData = new ArrayList<>();
     for(int i=0; i<totalCount; i++) {
       final long indexOffset = length - (i + 1) * INDEX_ENTRY_SIZE;
       myIndexStream.seek(indexOffset);
@@ -717,7 +717,7 @@ public class ChangesCacheFile {
   }
 
   private void readPartial(IncomingChangeListData data) {
-    HashSet<Change> result = new HashSet<Change>();
+    HashSet<Change> result = new HashSet<>();
     try {
       File partialFile = getPartialPath(data.indexEntry.offset);
       if (partialFile.exists()) {
@@ -726,8 +726,8 @@ public class ChangesCacheFile {
           int count = file.readInt();
           if (count > 0) {
             final Collection<Change> changes = data.changeList.getChanges();
-            final Map<String, Change> beforePaths = new HashMap<String, Change>();
-            final Map<String, Change> afterPaths = new HashMap<String, Change>();
+            final Map<String, Change> beforePaths = new HashMap<>();
+            final Map<String, Change> afterPaths = new HashMap<>();
             for (Change change : changes) {
               if (change.getBeforeRevision() != null) {
                 beforePaths.put(FilePathsHelper.convertPath(change.getBeforeRevision().getFile()), change);
@@ -786,11 +786,11 @@ public class ChangesCacheFile {
   }
 
   private static class RefreshIncomingChangesOperation {
-    private final Set<FilePath> myDeletedFiles = new HashSet<FilePath>();
-    private final Set<FilePath> myCreatedFiles = new HashSet<FilePath>();
-    private final Set<FilePath> myReplacedFiles = new HashSet<FilePath>();
-    private final Map<Long, IndexEntry> myIndexEntryCache = new HashMap<Long, IndexEntry>();
-    private final Map<Long, CommittedChangeList> myPreviousChangeListsCache = new HashMap<Long, CommittedChangeList>();
+    private final Set<FilePath> myDeletedFiles = new HashSet<>();
+    private final Set<FilePath> myCreatedFiles = new HashSet<>();
+    private final Set<FilePath> myReplacedFiles = new HashSet<>();
+    private final Map<Long, IndexEntry> myIndexEntryCache = new HashMap<>();
+    private final Map<Long, CommittedChangeList> myPreviousChangeListsCache = new HashMap<>();
     private final ChangeListManagerImpl myClManager;
     private final ChangesCacheFile myChangesCacheFile;
     private final Project myProject;
@@ -1177,7 +1177,7 @@ public class ChangesCacheFile {
   }
 
   private static class ReceivedChangeListTracker {
-    private final Map<CommittedChangeList, ReceivedChangeList> myMap = new HashMap<CommittedChangeList, ReceivedChangeList>();
+    private final Map<CommittedChangeList, ReceivedChangeList> myMap = new HashMap<>();
 
     public void addChange(CommittedChangeList changeList, Change change) {
       ReceivedChangeList list = myMap.get(changeList);

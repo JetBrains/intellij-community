@@ -104,7 +104,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private static final float DIVIDER_PROPORTION_DEFAULT = 0.5f;
 
-  private final List<ToolDescriptors> myInitialToolDescriptors = new ArrayList<ToolDescriptors>();
+  private final List<ToolDescriptors> myInitialToolDescriptors = new ArrayList<>();
   private final InspectionConfigTreeNode myRoot =
     new InspectionConfigTreeNode(InspectionsBundle.message("inspection.root.node.title"));
   private final Alarm myAlarm = new Alarm();
@@ -762,8 +762,8 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (mySelectedProfile == null) return;
     myRoot.removeAllChildren();
     myRoot.dropCache();
-    List<Set<String>> keySetList = new ArrayList<Set<String>>();
-    final Set<String> quoted = new HashSet<String>();
+    List<Set<String>> keySetList = new ArrayList<>();
+    final Set<String> quoted = new HashSet<>();
     if (filter != null && !filter.isEmpty()) {
       keySetList.addAll(SearchUtil.findKeys(filter, quoted));
     }
@@ -849,7 +849,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       final JPanel severityPanel = new JPanel(new GridBagLayout());
       final JPanel configPanelAnchor = new JPanel(new GridLayout());
 
-      final Set<String> scopesNames = new THashSet<String>();
+      final Set<String> scopesNames = new THashSet<>();
       for (final InspectionConfigTreeNode node : nodes) {
         final List<ScopeToolState> nonDefaultTools = mySelectedProfile.getNonDefaultTools(node.getDefaultDescriptor().getKey().toString(), project);
         for (final ScopeToolState tool : nonDefaultTools) {
@@ -953,7 +953,7 @@ public class SingleInspectionProfilePanel extends JPanel {
             }
 
             private void update(final boolean updateOptionsAndDescriptionPanel) {
-              Queue<InspectionConfigTreeNode> q = new Queue<InspectionConfigTreeNode>(nodes.size());
+              Queue<InspectionConfigTreeNode> q = new Queue<>(nodes.size());
               for (InspectionConfigTreeNode node : nodes) {
                 q.addLast(node);
               }

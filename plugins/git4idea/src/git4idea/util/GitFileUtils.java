@@ -110,7 +110,7 @@ public class GitFileUtils {
 
   @NotNull
   private static Collection<VirtualFile> getVirtualFilesFromFilePaths(@NotNull Collection<FilePath> paths) {
-    Collection<VirtualFile> files = new ArrayList<VirtualFile>(paths.size());
+    Collection<VirtualFile> files = new ArrayList<>(paths.size());
     for (FilePath path : paths) {
       VirtualFile file = path.getVirtualFile();
       if (file != null) {
@@ -146,8 +146,8 @@ public class GitFileUtils {
     handler.addParameters(paths);
     String output = handler.run();
 
-    List<String> nonIgnoredFiles = new ArrayList<String>(paths.size());
-    Set<String> ignoredPaths = new HashSet<String>(Arrays.asList(StringUtil.splitByLines(output)));
+    List<String> nonIgnoredFiles = new ArrayList<>(paths.size());
+    Set<String> ignoredPaths = new HashSet<>(Arrays.asList(StringUtil.splitByLines(output)));
     for (String pathToCheck : paths) {
       if (!ignoredPaths.contains(pathToCheck)) {
         nonIgnoredFiles.add(pathToCheck);

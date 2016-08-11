@@ -76,7 +76,7 @@ public class I18nUtil {
   }
 
   public static List<String> defaultSuggestPropertiesFiles(Project project) {
-    final List<String> paths = new ArrayList<String>();
+    final List<String> paths = new ArrayList<>();
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
     PropertiesReferenceManager.getInstance(project).processAllPropertiesFiles(new PropertiesFileProcessor() {

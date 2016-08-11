@@ -28,7 +28,7 @@ import java.util.List;
  * @see HtmlCustomTagNameProvider
  */
 public interface XmlTagNameProvider {
-  ExtensionPointName<XmlTagNameProvider> EP_NAME = new ExtensionPointName<XmlTagNameProvider>("com.intellij.xml.tagNameProvider");
+  ExtensionPointName<XmlTagNameProvider> EP_NAME = new ExtensionPointName<>("com.intellij.xml.tagNameProvider");
 
   void addTagNameVariants(List<LookupElement> elements, @NotNull XmlTag tag, String prefix);
 }

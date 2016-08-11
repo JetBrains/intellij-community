@@ -78,7 +78,7 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     if (vcsRoot == null) {
       return null;
     }
-    final List<VcsFileRevision> revisions = new ArrayList<VcsFileRevision>();
+    final List<VcsFileRevision> revisions = new ArrayList<>();
     revisions.addAll(getHistory(filePath, vcsRoot, myProject));
     return createAppendableSession(vcsRoot, revisions, null);
   }
@@ -146,7 +146,7 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     final HgLogCommand logCommand = new HgLogCommand(project);
     logCommand.setFollowCopies(!filePath.isDirectory());
     logCommand.setIncludeRemoved(true);
-    List<String> args = new ArrayList<String>();
+    List<String> args = new ArrayList<>();
     if (revisionNumber != null) {
       args.add("--rev");
       args.add("reverse(0::" + revisionNumber.getChangeset() + ")");

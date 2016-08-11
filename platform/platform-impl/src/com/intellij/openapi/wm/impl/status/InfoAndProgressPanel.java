@@ -68,12 +68,12 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   private final JPanel myRefreshAndInfoPanel = new JPanel();
   private final AnimatedIcon myProgressIcon;
 
-  private final ArrayList<ProgressIndicatorEx> myOriginals = new ArrayList<ProgressIndicatorEx>();
-  private final ArrayList<TaskInfo> myInfos = new ArrayList<TaskInfo>();
+  private final ArrayList<ProgressIndicatorEx> myOriginals = new ArrayList<>();
+  private final ArrayList<TaskInfo> myInfos = new ArrayList<>();
   private final Map<InlineProgressIndicator, ProgressIndicatorEx> myInline2Original
-    = new HashMap<InlineProgressIndicator, ProgressIndicatorEx>();
+    = new HashMap<>();
   private final MultiValuesMap<ProgressIndicatorEx, InlineProgressIndicator> myOriginal2Inlines
-    = new MultiValuesMap<ProgressIndicatorEx, InlineProgressIndicator>();
+    = new MultiValuesMap<>();
 
   private final MergingUpdateQueue myUpdateQueue;
   private final Alarm myQueryAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
@@ -189,7 +189,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     synchronized (myOriginals) {
       if (myOriginals.isEmpty()) return Collections.emptyList();
 
-      List<Pair<TaskInfo, ProgressIndicator>> result = new ArrayList<Pair<TaskInfo, ProgressIndicator>>(myOriginals.size());
+      List<Pair<TaskInfo, ProgressIndicator>> result = new ArrayList<>(myOriginals.size());
       for (int i = 0; i < myOriginals.size(); i++) {
         result.add(Pair.<TaskInfo, ProgressIndicator>create(myInfos.get(i), myOriginals.get(i)));
       }

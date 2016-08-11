@@ -184,7 +184,7 @@ public class HgRepositoryReader {
 
   @NotNull
   public Map<String, LinkedHashSet<Hash>> readBranches() {
-    Map<String, LinkedHashSet<Hash>> branchesWithHashes = new HashMap<String, LinkedHashSet<Hash>>();
+    Map<String, LinkedHashSet<Hash>> branchesWithHashes = new HashMap<>();
     // Set<String> branchNames = new HashSet<String>();
     if (isBranchInfoAvailable()) {
       Pattern activeBranchPattern = myStatusInBranchFile ? HASH_STATUS_NAME : HASH_NAME;
@@ -198,7 +198,7 @@ public class HgRepositoryReader {
             branchesWithHashes.get(name).add(myVcsObjectsFactory.createHash(matcher.group(1)));
           }
           else {
-            LinkedHashSet<Hash> hashes = new LinkedHashSet<Hash>();
+            LinkedHashSet<Hash> hashes = new LinkedHashSet<>();
             hashes.add(myVcsObjectsFactory.createHash(matcher.group(1)));
             branchesWithHashes.put(name, hashes);
           }

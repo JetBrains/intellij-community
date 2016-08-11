@@ -34,7 +34,7 @@ public class NonReproducibleMathCallInspection extends BaseInspection {
 
   @SuppressWarnings("StaticCollection")
   @NonNls private static final Set<String> nonReproducibleMethods =
-    new HashSet<String>(20);
+    new HashSet<>(20);
 
   static {
     nonReproducibleMethods.add("acos");

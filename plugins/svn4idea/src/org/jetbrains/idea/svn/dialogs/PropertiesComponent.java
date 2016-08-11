@@ -88,7 +88,7 @@ public class PropertiesComponent extends JPanel {
     mySplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, true, scrollPane, ScrollPaneFactory.createScrollPane(myTextArea));
     add(mySplitPane, BorderLayout.CENTER);
     add(createToolbar(), BorderLayout.WEST);
-    final DefaultTableModel model = new DefaultTableModel(createTableModel(new HashMap<String, String>()), new Object[]{"Name", "Value"}) {
+    final DefaultTableModel model = new DefaultTableModel(createTableModel(new HashMap<>()), new Object[]{"Name", "Value"}) {
       public boolean isCellEditable(final int row, final int column) {
         return false;
       }
@@ -120,7 +120,7 @@ public class PropertiesComponent extends JPanel {
   }
 
   public void setFile(SvnVcs vcs, File file) {
-    final Map<String, String> props = new TreeMap<String, String>();
+    final Map<String, String> props = new TreeMap<>();
     boolean firstTime = myFile == null;
     if (file != null) {
       myFile = file;

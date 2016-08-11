@@ -18,6 +18,7 @@ public class RefsModel implements VcsLogRefs {
   @NotNull private final VcsLogStorage myHashMap;
   @NotNull private final Map<VirtualFile, CompressedRefs> myRefs;
   @NotNull private final TIntObjectHashMap<VcsRef> myBestRefForHead;
+  @NotNull private final TIntObjectHashMap<VirtualFile> myRootForHead;
 
   public RefsModel(@NotNull Map<VirtualFile, CompressedRefs> refs,
                    @NotNull Set<Integer> heads,
@@ -27,10 +28,12 @@ public class RefsModel implements VcsLogRefs {
     myHashMap = hashMap;
 
     myBestRefForHead = new TIntObjectHashMap<>();
+    myRootForHead = new TIntObjectHashMap<>();
     for (int head : heads) {
       CommitId commitId = myHashMap.getCommitId(head);
       if (commitId != null) {
         VirtualFile root = commitId.getRoot();
+        myRootForHead.put(head, root);
         Optional<VcsRef> bestRef =
           myRefs.get(root).refsToCommit(head).stream().min(providers.get(root).getReferenceManager().getBranchLayoutComparator());
         if (bestRef.isPresent()) {
@@ -50,7 +53,7 @@ public class RefsModel implements VcsLogRefs {
 
   @NotNull
   public VirtualFile rootAtHead(int headIndex) {
-    return myBestRefForHead.get(headIndex).getRoot();
+    return myRootForHead.get(headIndex);
   }
 
   @NotNull

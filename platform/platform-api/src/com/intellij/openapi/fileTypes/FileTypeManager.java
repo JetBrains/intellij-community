@@ -42,7 +42,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
   private static FileTypeManager ourInstance = CachedSingletonsRegistry.markCachedField(FileTypeManager.class);
 
   @NotNull
-  public static final Topic<FileTypeListener> TOPIC = new Topic<FileTypeListener>("File types change", FileTypeListener.class);
+  public static final Topic<FileTypeListener> TOPIC = new Topic<>("File types change", FileTypeListener.class);
 
   /**
    * Returns the singleton instance of the FileTypeManager component.
@@ -72,7 +72,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    * @deprecated use {@link com.intellij.openapi.fileTypes.FileTypeFactory} instead
    */
   public final void registerFileType(@NotNull FileType type, @NonNls @Nullable String... defaultAssociatedExtensions) {
-    List<FileNameMatcher> matchers = new ArrayList<FileNameMatcher>();
+    List<FileNameMatcher> matchers = new ArrayList<>();
     if (defaultAssociatedExtensions != null) {
       for (String extension : defaultAssociatedExtensions) {
         matchers.add(new ExtensionFileNameMatcher(extension));

@@ -42,7 +42,7 @@ public class YAMLStructureViewElement implements StructureViewTreeElement {
       children = Collections.emptyList();
     }
     
-    final List<StructureViewTreeElement> structureElements = new ArrayList<StructureViewTreeElement>();
+    final List<StructureViewTreeElement> structureElements = new ArrayList<>();
     for (YAMLPsiElement child : children) {
       structureElements.add(new YAMLStructureViewElement(child));
     }

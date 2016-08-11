@@ -44,7 +44,7 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
 
   @Override
   public Collection<String> suggestHomePaths() {
-    Set<String> candidates = new TreeSet<String>();
+    Set<String> candidates = new TreeSet<>();
     findInCandidatePaths(candidates, "python.exe", "jython.bat", "pypy.exe");
     findInstallations(candidates, "python.exe", PythonHelpersLocator.getHelpersRoot().getParent());
     return candidates;
@@ -86,7 +86,7 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
 
   private static void fillRegistryCache() {
     if (ourRegistryCache == null) {
-      ourRegistryCache = new HashSet<String>();
+      ourRegistryCache = new HashSet<>();
       for (Map.Entry<String, String> entry : ourRegistryMap.entrySet()) {
         final String prefix = entry.getKey();
         final String exePath = entry.getValue();

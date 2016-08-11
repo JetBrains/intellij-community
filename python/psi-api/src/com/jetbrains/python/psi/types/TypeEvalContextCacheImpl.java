@@ -34,7 +34,7 @@ final class TypeEvalContextCacheImpl implements TypeEvalContextCache {
   private final TypeEvalContextBasedCache<TypeEvalContext> myCache;
 
   TypeEvalContextCacheImpl(@NotNull final CachedValuesManager manager) {
-    myCache = new TypeEvalContextBasedCache<TypeEvalContext>(manager, VALUE_PROVIDER);
+    myCache = new TypeEvalContextBasedCache<>(manager, VALUE_PROVIDER);
   }
 
 

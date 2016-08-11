@@ -48,13 +48,13 @@ public class InnerClassesScannerTest extends PsiTestCase {
   }
 
   private static List<PsiClass> getInnerClasses(PsiElement psiElement, final CharSequence fileBuffer) {
-    final Ref<ArrayList<PsiClass>> ourList = new Ref<ArrayList<PsiClass>>();
+    final Ref<ArrayList<PsiClass>> ourList = new Ref<>();
     ourList.set(null);
 
     if (psiElement != null && mayContainClassesInside(psiElement, fileBuffer)) {
       psiElement.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override public void visitClass(PsiClass aClass) {
-          if (ourList.isNull()) ourList.set(new ArrayList<PsiClass>());
+          if (ourList.isNull()) ourList.set(new ArrayList<>());
           ourList.get().add(aClass);
         }
 

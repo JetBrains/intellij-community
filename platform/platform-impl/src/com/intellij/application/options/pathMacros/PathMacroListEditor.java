@@ -79,7 +79,7 @@ public class PathMacroListEditor {
 
   private Collection<String> parseIgnoredVariables() {
     final String s = myIgnoredVariables.getText();
-    final List<String> ignored = new ArrayList<String>();
+    final List<String> ignored = new ArrayList<>();
     final StringTokenizer st = new StringTokenizer(s, ";");
     while (st.hasMoreElements()) {
       ignored.add(st.nextElement().trim());

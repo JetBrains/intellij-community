@@ -130,7 +130,7 @@ public class SpellCheckerManager {
     stateLoader.load(s -> {
       //do nothing - in this loader we don't worry about word list itself - the whole dictionary will be restored
     });
-    final List<Loader> loaders = new ArrayList<Loader>();
+    final List<Loader> loaders = new ArrayList<>();
     // Load bundled dictionaries from corresponding jars
     for (BundledDictionaryProvider provider : Extensions.getExtensions(BundledDictionaryProvider.EP_NAME)) {
       for (String dictionary : provider.getBundledDictionaries()) {
@@ -185,7 +185,7 @@ public class SpellCheckerManager {
 
   @NotNull
   public static List<String> getBundledDictionaries() {
-    final ArrayList<String> dictionaries = new ArrayList<String>();
+    final ArrayList<String> dictionaries = new ArrayList<>();
     for (BundledDictionaryProvider provider : Extensions.getExtensions(BundledDictionaryProvider.EP_NAME)) {
       ContainerUtil.addAll(dictionaries, provider.getBundledDictionaries());
     }
@@ -213,8 +213,8 @@ public class SpellCheckerManager {
         else if (Strings.isUpperCase(word)) {
           Strings.upperCase(suggestions);
         }
-        Set<String> unique = new LinkedHashSet<String>(suggestions);
-        return unique.size() < suggestions.size() ? new ArrayList<String>(unique) : suggestions;
+        Set<String> unique = new LinkedHashSet<>(suggestions);
+        return unique.size() < suggestions.size() ? new ArrayList<>(unique) : suggestions;
       }
     }
     return Collections.emptyList();

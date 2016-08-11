@@ -15,7 +15,6 @@
  */
 package com.intellij.rt.execution.junit;
 
-import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
 import com.intellij.rt.execution.testFrameworks.ForkedSplitter;
 
 import java.io.File;
@@ -44,33 +43,7 @@ public class JUnitForkedSplitter extends ForkedSplitter {
   protected Object createRootDescription(String[] args, String configName)
     throws InstantiationException, IllegalAccessException, ClassNotFoundException {
     myTestRunner = (IdeaTestRunner)JUnitStarter.getAgentClass((String)myNewArgs.get(0)).newInstance();
-    myTestRunner.setStreams(myOut, myErr, 0);
     return myTestRunner.getTestToStart(args, configName);
-  }
-
-  protected void sendTree(Object rootDescription) {
-    TreeSender.sendTree(myTestRunner, rootDescription, !JUnitStarter.SM_RUNNER);
-  }
-
-  protected void sendTime(long time) {
-    if (!JUnitStarter.SM_RUNNER) {
-      new TimeSender(myTestRunner.getRegistry()).printHeader(System.currentTimeMillis() - time);
-    }
-  }
-
-  protected Object findByClassName(String className, Object rootDescription) {
-    final List children = getChildren(rootDescription);
-    for (int i = 0; i < children.size(); i++) {
-      Object child = children.get(i);
-      if (className.equals(getTestClassName(child))) {
-        return child;
-      }
-    }
-    for (int i = 0; i < children.size(); i++) {
-      final Object byName = findByClassName( className, children.get(i));
-      if (byName != null) return byName;
-    }
-    return null;
   }
 
   protected String getTestClassName(Object child) {
@@ -79,8 +52,6 @@ public class JUnitForkedSplitter extends ForkedSplitter {
 
   protected List createChildArgs(Object child) {
     List newArgs = new ArrayList();
-    final OutputObjectRegistry registry = myTestRunner.getRegistry();
-    newArgs.add(String.valueOf(registry != null ? registry.getKnownObject(child) : -1));
     newArgs.add(myTestRunner.getStartDescription(child));
     newArgs.addAll(myNewArgs);
     return newArgs;
@@ -93,16 +64,7 @@ public class JUnitForkedSplitter extends ForkedSplitter {
     File tempFile = File.createTempFile("idea_junit", ".tmp");
     tempFile.deleteOnExit();
     JUnitStarter.printClassesList(classNames, packageName + ", working directory: \'" + workingDir + "\'", "", tempFile);
-    final OutputObjectRegistry registry = myTestRunner.getRegistry();
-    final String startIndex;
-    if (registry != null) {
-      startIndex = String.valueOf(registry.getKnownObject(findByClassName((String)classNames.get(0), rootDescription)));
-    }
-    else {
-      startIndex = "-1";
-    }
     final List childArgs = new ArrayList();
-    childArgs.add(startIndex);
     childArgs.add("@" + tempFile.getAbsolutePath());
     childArgs.addAll(myNewArgs);
     return childArgs;

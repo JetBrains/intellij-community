@@ -120,7 +120,7 @@ public class ProtocolParser {
     threadingEvent.setLine(Integer.parseInt(readString(reader, "line", "")) - 1);
     reader.moveUp();
 
-    final List<PyStackFrameInfo> frames = new LinkedList<PyStackFrameInfo>();
+    final List<PyStackFrameInfo> frames = new LinkedList<>();
     while (reader.hasMoreChildren()) {
       reader.moveDown();
       frames.add(parseFrame(reader, thread_id, positionConverter));
@@ -174,7 +174,7 @@ public class ProtocolParser {
       message = null;
     }
 
-    final List<PyStackFrameInfo> frames = new LinkedList<PyStackFrameInfo>();
+    final List<PyStackFrameInfo> frames = new LinkedList<>();
     while (reader.hasMoreChildren()) {
       reader.moveDown();
       frames.add(parseFrame(reader, id, positionConverter));
@@ -212,7 +212,7 @@ public class ProtocolParser {
 
   @NotNull
   public static List<PyDebugValue> parseReferrers(final String text, final PyFrameAccessor frameAccessor) throws PyDebuggerException {
-    final List<PyDebugValue> values = new LinkedList<PyDebugValue>();
+    final List<PyDebugValue> values = new LinkedList<>();
 
     final XppReader reader = openReader(text, false);
 
@@ -238,7 +238,7 @@ public class ProtocolParser {
 
   @NotNull
   public static List<PyDebugValue> parseValues(final String text, final PyFrameAccessor frameAccessor) throws PyDebuggerException {
-    final List<PyDebugValue> values = new LinkedList<PyDebugValue>();
+    final List<PyDebugValue> values = new LinkedList<>();
 
     final XppReader reader = openReader(text, false);
     while (reader.hasMoreChildren()) {
@@ -257,7 +257,7 @@ public class ProtocolParser {
 
     final String name = readString(reader, "name", null);
     final String type = readString(reader, "type", null);
-    final String qualifier = readString(reader, "qualifier", null); //to be able to get the fully qualified type if necessary
+    final String qualifier = readString(reader, "qualifier", ""); //to be able to get the fully qualified type if necessary
 
     String value = readString(reader, "value", null);
     final String isContainer = readString(reader, "isContainer", "");

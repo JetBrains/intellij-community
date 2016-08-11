@@ -88,7 +88,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
   }
 
   public static class ConfigurationBean {
-    public Map<String, SvnBranchConfiguration> myConfigurationMap = new TreeMap<String, SvnBranchConfiguration>();
+    public Map<String, SvnBranchConfiguration> myConfigurationMap = new TreeMap<>();
     /**
      * version of "support SVN in IDEA". for features tracking. should grow
      */
@@ -113,7 +113,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
   }
 
   public void setConfiguration(final VirtualFile vcsRoot, final SvnBranchConfigurationNew configuration) {
-    myBunch.updateForRoot(vcsRoot, new InfoStorage<SvnBranchConfigurationNew>(configuration, InfoReliability.setByUser), true);
+    myBunch.updateForRoot(vcsRoot, new InfoStorage<>(configuration, InfoReliability.setByUser), true);
 
     SvnBranchMapperManager.getInstance().notifyBranchesChanged(myProject, vcsRoot, configuration);
 
@@ -175,14 +175,14 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
       for (String branchUrl : configToConvert.getBranchUrls()) {
         List<SvnBranchItem> stored = getStored(branchUrl);
         if (stored != null && ! stored.isEmpty()) {
-          newConfig.addBranches(branchUrl, new InfoStorage<List<SvnBranchItem>>(stored, InfoReliability.setByUser));
+          newConfig.addBranches(branchUrl, new InfoStorage<>(stored, InfoReliability.setByUser));
         } else {
           branchPointsToLoad.add(Pair.create(root, newConfig));
-          newConfig.addBranches(branchUrl, new InfoStorage<List<SvnBranchItem>>(new ArrayList<SvnBranchItem>(), InfoReliability.empty));
+          newConfig.addBranches(branchUrl, new InfoStorage<>(new ArrayList<>(), InfoReliability.empty));
         }
       }
 
-      myBunch.updateForRoot(root, new InfoStorage<SvnBranchConfigurationNew>(newConfig, InfoReliability.setByUser), false);
+      myBunch.updateForRoot(root, new InfoStorage<>(newConfig, InfoReliability.setByUser), false);
     }
     return branchPointsToLoad;
   }
@@ -209,7 +209,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
   private List<SvnBranchItem> getStored(String branchUrl) {
     Collection<SvnBranchItem> collection = myStorage.get(branchUrl);
     if (collection == null) return null;
-    final List<SvnBranchItem> items = new ArrayList<SvnBranchItem>(collection);
+    final List<SvnBranchItem> items = new ArrayList<>(collection);
     Collections.sort(items);
     return items;
   }

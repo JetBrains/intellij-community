@@ -178,9 +178,9 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
   public static class RootsSelection {
     public static final RootsSelection EMPTY = new RootsSelection();
 
-    public List<SourceFolder> mySelectedRoots = new ArrayList<SourceFolder>();
-    public List<ExcludeFolder> mySelectedExcludeRoots = new ArrayList<ExcludeFolder>();
-    public List<VirtualFile> mySelectedDirectories = new ArrayList<VirtualFile>();
+    public List<SourceFolder> mySelectedRoots = new ArrayList<>();
+    public List<ExcludeFolder> mySelectedExcludeRoots = new ArrayList<>();
+    public List<VirtualFile> mySelectedDirectories = new ArrayList<>();
     public boolean myHaveSelectedFilesUnderSourceRoots;
   }
 }

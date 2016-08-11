@@ -36,7 +36,7 @@ public abstract class ProjectViewNodeWithChildrenList<T> extends ProjectViewNode
 
   protected ProjectViewNodeWithChildrenList(Project project, T t, ViewSettings viewSettings) {
     super(project, t, viewSettings);
-    myChildren = new ArrayList<AbstractTreeNode>();
+    myChildren = new ArrayList<>();
   }
 
   @NotNull

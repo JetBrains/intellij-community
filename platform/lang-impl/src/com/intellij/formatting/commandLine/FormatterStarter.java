@@ -61,27 +61,43 @@ public class FormatterStarter extends ApplicationStarterEx {
       new PrintWriter(System.out),
       new PrintWriter(System.err));
     messageOutput.info(getAppInfo() + " Formatter\n");
-    CodeStyleSettings settings = null;
+    FileSetFormatter fileSetFormatter = new FileSetFormatter(messageOutput);
     logArgs(args);
     if (args.length < 2) {
       showUsageInfo(messageOutput);
     }
     for (int i = 1; i < args.length; i ++) {
       if (args[i].startsWith("-")) {
-        if (checkOption(args[i], "-h", "--help")) {
+        if (checkOption(args[i], "-h", "-help")) {
           showUsageInfo(messageOutput);
         }
-        if (checkOption(args[i], "-s", "--settings")) {
+        if (checkOption(args[i], "-s", "-settings")) {
           //noinspection AssignmentToForLoopParameter
           i ++;
           if (i >= args.length) {
-            fatalError(messageOutput, "Mising settings file path.");
+            fatalError(messageOutput, "Missing settings file path.");
           }
           try {
-            settings = readSettings(args[i]);
+            CodeStyleSettings settings = readSettings(args[i]);
+            fileSetFormatter.setCodeStyleSettings(settings);
           }
           catch (SchemeImportException e) {
             fatalError(messageOutput, e.getLocalizedMessage() + "\n");
+          }
+        }
+        else if (checkOption(args[i], "-r", "-R")) {
+          fileSetFormatter.setRecursive();
+        }
+        else if (checkOption(args[i], "-m", "-mask")) {
+          //noinspection AssignmentToForLoopParameter
+          i ++;
+          if (i >= args.length) {
+            fatalError(messageOutput, "Missing file mask(s).");
+          }
+          for (String mask : args[i].split(",")) {
+            if (!mask.isEmpty()) {
+              fileSetFormatter.addFileMask(mask);
+            }
           }
         }
         else {
@@ -89,15 +105,20 @@ public class FormatterStarter extends ApplicationStarterEx {
         }
       }
       else {
-        FileSetFormatter fileSetFormatter = new FileSetFormatter(args[i], settings, messageOutput);
         try {
-          fileSetFormatter.processFiles();
-          messageOutput.info("\n" + fileSetFormatter.getProcessedFiles() + " files formatted.\n");
+          fileSetFormatter.addEntry(args[i]);
         }
         catch (IOException e) {
           fatalError(messageOutput, e.getLocalizedMessage());
         }
       }
+    }
+    try {
+      fileSetFormatter.processFiles();
+      messageOutput.info("\n" + fileSetFormatter.getProcessedFiles() + " file(s) formatted.\n");
+    }
+    catch (IOException e) {
+      fatalError(messageOutput, e.getLocalizedMessage());
     }
     ((ApplicationEx)ApplicationManager.getApplication()).exit(true, true);
   }
@@ -130,9 +151,13 @@ public class FormatterStarter extends ApplicationStarterEx {
 
 
   private static void showUsageInfo(@NotNull MessageOutput messageOutput) {
-    messageOutput.info("Usage: format [-s|--settings settingsPath] fileSpec...\n");
-    messageOutput.info("  -s|--settings  A path to Intellij IDEA code style settings .xml file.\n");
-    messageOutput.info("  fileSpec       A file specification, may contain wildcards.\n");
+    messageOutput.info("Usage: format [-h] [-r|-R] [-s|-settings settingsPath] path1 path2...\n");
+    messageOutput.info("  -h|-help       Show a help message and exit.\n");
+    messageOutput.info("  -s|-settings   A path to Intellij IDEA code style settings .xml file.\n");
+    messageOutput.info("  -r|-R          Scan directories recursively.\n");
+    messageOutput.info("  -m|-mask       A comma-separated list of file masks.\n");
+    messageOutput.info("  path<n>        A path to a file or a directory.\n");
+    System.exit(0);
   }
 
   private static void logArgs(@NotNull String[] args) {

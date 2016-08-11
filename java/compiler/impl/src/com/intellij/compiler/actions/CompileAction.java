@@ -156,7 +156,7 @@ public class CompileAction extends CompileActionBase {
     final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(project);
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final CompilerManager compilerManager = CompilerManager.getInstance(project);
-    final List<VirtualFile> filesToCompile = new ArrayList<VirtualFile>();
+    final List<VirtualFile> filesToCompile = new ArrayList<>();
     for (final VirtualFile file : files) {
       if (!fileIndex.isInSourceContent(file)) {
         continue;

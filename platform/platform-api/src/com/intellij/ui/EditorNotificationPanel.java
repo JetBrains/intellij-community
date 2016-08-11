@@ -131,7 +131,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   }
 
   private class MyIntentionAction extends AbstractEmptyIntentionAction implements IntentionActionWithOptions, Iconable {
-    private final List<IntentionAction> myOptions = new ArrayList<IntentionAction>();
+    private final List<IntentionAction> myOptions = new ArrayList<>();
 
     private MyIntentionAction() {
       for (Component component : myLinksPanel.getComponents()) {

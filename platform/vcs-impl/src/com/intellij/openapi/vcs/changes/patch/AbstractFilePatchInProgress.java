@@ -55,7 +55,7 @@ public abstract class AbstractFilePatchInProgress<T extends FilePatch> implement
   protected AbstractFilePatchInProgress(final T patch, final Collection<VirtualFile> autoBases, final VirtualFile baseDir) {
     myPatch = patch; //should be a copy of FilePatch! because names may be changes during processing variants
     myStrippable = new PatchStrippable(patch);
-    myAutoBases = new ArrayList<VirtualFile>();
+    myAutoBases = new ArrayList<>();
     if (autoBases != null) {
       setAutoBases(autoBases);
     }
@@ -205,7 +205,7 @@ public abstract class AbstractFilePatchInProgress<T extends FilePatch> implement
   public abstract DiffRequestProducer getDiffRequestProducers(Project project, PatchReader baseContents);
 
   public List<VirtualFile> getAutoBasesCopy() {
-    final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>(myAutoBases.size() + 1);
+    final ArrayList<VirtualFile> result = new ArrayList<>(myAutoBases.size() + 1);
     result.addAll(myAutoBases);
     return result;
   }

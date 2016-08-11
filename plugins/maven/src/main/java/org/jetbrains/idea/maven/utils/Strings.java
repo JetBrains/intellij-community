@@ -30,7 +30,7 @@ public class Strings {
   @NonNls public static final String WHITESPACE = " \t\n\r\f";
 
   public static List<String> tokenize(final String string, final String delim) {
-    final List<String> tokens = new ArrayList<String>();
+    final List<String> tokens = new ArrayList<>();
     for (StringTokenizer tokenizer = new StringTokenizer(string, delim); tokenizer.hasMoreTokens(); ) {
       tokens.add(tokenizer.nextToken());
     }

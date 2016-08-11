@@ -41,7 +41,7 @@ public class DefaultColorSchemesManager implements PersistentStateComponent<Elem
   @NonNls private static final String SCHEME_ELEMENT = "scheme";
 
   public DefaultColorSchemesManager() {
-    mySchemes = new ArrayList<DefaultColorsScheme>();
+    mySchemes = new ArrayList<>();
   }
 
   public static DefaultColorSchemesManager getInstance() {

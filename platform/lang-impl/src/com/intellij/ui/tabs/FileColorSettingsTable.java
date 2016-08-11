@@ -62,7 +62,7 @@ public abstract class FileColorSettingsTable extends JBTable {
   }
 
   private static List<FileColorConfiguration> copy(@NotNull final List<FileColorConfiguration> configurations) {
-    final List<FileColorConfiguration> result = new ArrayList<FileColorConfiguration>();
+    final List<FileColorConfiguration> result = new ArrayList<>();
     for (FileColorConfiguration c : configurations) {
       try {
         result.add(c.clone());

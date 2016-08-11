@@ -45,7 +45,7 @@ import java.util.Arrays;
 
 public class ExcludedEntriesConfigurable implements UnnamedConfigurable, NoScroll {
   private final Project myProject;
-  private final ArrayList<ExcludeEntryDescription> myExcludeEntryDescriptions = new ArrayList<ExcludeEntryDescription>();
+  private final ArrayList<ExcludeEntryDescription> myExcludeEntryDescriptions = new ArrayList<>();
   private final FileChooserDescriptor myDescriptor;
   private final ExcludesConfiguration myConfiguration;
   private ExcludedEntriesPanel myExcludedEntriesPanel;

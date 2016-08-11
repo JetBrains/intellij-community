@@ -55,7 +55,7 @@ public class RollbackWorker {
     myProject = project;
     myOperationName = operationName;
     myInvokedFromModalContext = invokedFromModalContext;
-    myExceptions = new ArrayList<VcsException>(0);
+    myExceptions = new ArrayList<>(0);
   }
 
   public void doRollback(final Collection<Change> changes,
@@ -142,7 +142,7 @@ public class RollbackWorker {
     private void doRun() {
       myIndicator = ProgressManager.getInstance().getProgressIndicator();
 
-      final List<Change> changesToRefresh = new ArrayList<Change>();
+      final List<Change> changesToRefresh = new ArrayList<>();
       try {
         ChangesUtil.processChangesByVcs(myProject, myChanges, new ChangesUtil.PerVcsProcessor<Change>() {
           public void process(AbstractVcs vcs, List<Change> changes) {

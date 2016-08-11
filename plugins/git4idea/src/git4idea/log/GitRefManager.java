@@ -159,8 +159,8 @@ public class GitRefManager implements VcsLogRefManager {
 
   @NotNull
   private static Set<String> getTrackedRemoteBranches(@NotNull GitRepository repository) {
-    Set<GitRemoteBranch> all = new HashSet<GitRemoteBranch>(repository.getBranches().getRemoteBranches());
-    Set<String> tracked = new HashSet<String>();
+    Set<GitRemoteBranch> all = new HashSet<>(repository.getBranches().getRemoteBranches());
+    Set<String> tracked = new HashSet<>();
     for (GitBranchTrackInfo info : repository.getBranchTrackInfos()) {
       GitRemoteBranch trackedRemoteBranch = info.getRemoteBranch();
       if (all.contains(trackedRemoteBranch)) { // check that this branch really exists, not just written in .git/config
@@ -172,7 +172,7 @@ public class GitRefManager implements VcsLogRefManager {
 
   @NotNull
   private static Map<String, GitRemote> getAllRemoteBranches(@NotNull GitRepository repository) {
-    Set<GitRemoteBranch> all = new HashSet<GitRemoteBranch>(repository.getBranches().getRemoteBranches());
+    Set<GitRemoteBranch> all = new HashSet<>(repository.getBranches().getRemoteBranches());
     Map<String, GitRemote> allRemote = ContainerUtil.newHashMap();
     for (GitRemoteBranch remoteBranch : all) {
       allRemote.put(remoteBranch.getName(), remoteBranch.getRemote());

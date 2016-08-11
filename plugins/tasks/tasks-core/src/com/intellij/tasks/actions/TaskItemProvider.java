@@ -34,7 +34,7 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
   private boolean myOldEverywhere = false;
   private String myOldPattern = "";
 
-  private final AtomicReference<Future<List<Task>>> myFutureReference = new AtomicReference<Future<List<Task>>>();
+  private final AtomicReference<Future<List<Task>>> myFutureReference = new AtomicReference<>();
 
   public TaskItemProvider(Project project) {
     myProject = project;

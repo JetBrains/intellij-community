@@ -59,7 +59,7 @@ public class SvnIgnoreTest extends Svn17TestCase {
     checkin();
     update();
 
-    final List<VirtualFile> ignored = new ArrayList<VirtualFile>();
+    final List<VirtualFile> ignored = new ArrayList<>();
     final VirtualFile ignChild = createDirInCommand(versionedParent, name);
     ignored.add(ignChild);
     VirtualFile current = ignChild;
@@ -89,7 +89,7 @@ public class SvnIgnoreTest extends Svn17TestCase {
     checkin();
     update();
 
-    final List<VirtualFile> ignored = new ArrayList<VirtualFile>();
+    final List<VirtualFile> ignored = new ArrayList<>();
     final VirtualFile ignChild = createDirInCommand(versionedParent, name);
     final VirtualFile ignChild2 = createDirInCommand(versionedParent, name2);
     ignored.add(ignChild);
@@ -106,7 +106,7 @@ public class SvnIgnoreTest extends Svn17TestCase {
     }
 
     final Random rnd = new Random(17);
-    final List<VirtualFile> vf = new ArrayList<VirtualFile>();
+    final List<VirtualFile> vf = new ArrayList<>();
     for (int i = 0; i < 200; i++) {
       final int idx = rnd.nextInt(ignored.size());
       vf.add(createFileInCommand(ignored.get(idx), "file" + i + ".txt", "***"));

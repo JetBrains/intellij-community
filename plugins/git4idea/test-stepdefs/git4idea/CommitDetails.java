@@ -118,7 +118,7 @@ public class CommitDetails {
     commit.myHash = hash;
 
     StringBuilder message = new StringBuilder();
-    Collection<Change> changes = new ArrayList<Change>();
+    Collection<Change> changes = new ArrayList<>();
     ParsingStage stage = ParsingStage.MESSAGE;
     for (String line : StringUtil.splitByLines(details)) {
       Pair<Data, String> data = checkDataLine(line);

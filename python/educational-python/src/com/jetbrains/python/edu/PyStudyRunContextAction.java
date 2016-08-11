@@ -17,6 +17,7 @@
 package com.jetbrains.python.edu;
 
 import com.intellij.execution.Executor;
+import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.RunContextAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -35,10 +36,13 @@ public class PyStudyRunContextAction extends RunContextAction {
 
   @Override
   public void update(AnActionEvent event) {
+    final ConfigurationContext context = ConfigurationContext.getFromContext(event.getDataContext());
+    final Location location = context.getLocation();
+    if (location == null) return;
     super.update(event);
     final InputEvent inputEvent = event.getInputEvent();
     final Presentation presentation = event.getPresentation();
-    final ConfigurationContext context = ConfigurationContext.getFromContext(event.getDataContext());
+
     if (inputEvent == null && !(context.getDataContext().getData(PlatformDataKeys.CONTEXT_COMPONENT) instanceof EditorGutter)) {
       presentation.setText("");
     }

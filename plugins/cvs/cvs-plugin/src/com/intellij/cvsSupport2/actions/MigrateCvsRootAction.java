@@ -65,7 +65,7 @@ public class MigrateCvsRootAction extends AnAction implements DumbAware {
     }
     final File directory = dialog.getSelectedDirectory();
     final boolean shouldReplaceAllRoots = dialog.shouldReplaceAllRoots();
-    final List<File> rootFiles = new ArrayList<File>();
+    final List<File> rootFiles = new ArrayList<>();
     try {
       if (shouldReplaceAllRoots) {
         collectRootFiles(directory, null, rootFiles);

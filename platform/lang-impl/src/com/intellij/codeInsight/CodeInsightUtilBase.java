@@ -76,7 +76,7 @@ public class CodeInsightUtilBase extends CodeInsightUtilCore {
   @Override
   public boolean preparePsiElementsForWrite(@NotNull Collection<? extends PsiElement> elements) {
     if (elements.isEmpty()) return true;
-    Set<VirtualFile> files = new THashSet<VirtualFile>();
+    Set<VirtualFile> files = new THashSet<>();
     Project project = null;
     for (PsiElement element : elements) {
       if (element == null) continue;

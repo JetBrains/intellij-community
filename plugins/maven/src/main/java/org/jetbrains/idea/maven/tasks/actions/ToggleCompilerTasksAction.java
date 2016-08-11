@@ -70,7 +70,7 @@ public abstract class ToggleCompilerTasksAction extends MavenToggleAction {
     MavenProject project = MavenActionUtil.getMavenProject(context);
     if (project == null) return Collections.emptyList();
 
-    List<MavenCompilerTask> result = new ArrayList<MavenCompilerTask>();
+    List<MavenCompilerTask> result = new ArrayList<>();
     for (String each : goals) {
       result.add(new MavenCompilerTask(project.getPath(), each));
     }

@@ -38,7 +38,7 @@ public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
   private byte[] myContent;
   private boolean myContentLoadFailed;
 
-  private static final WeakHashMap<ContentRevision, ContentRevisionVirtualFile> ourMap = new WeakHashMap<ContentRevision, ContentRevisionVirtualFile>();
+  private static final WeakHashMap<ContentRevision, ContentRevisionVirtualFile> ourMap = new WeakHashMap<>();
 
   public static ContentRevisionVirtualFile create(@NotNull ContentRevision contentRevision) {
     synchronized(ourMap) {

@@ -213,7 +213,7 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
     final PsiType functionalInterfaceParamType = substitutor.substitute(params[0].getType());
     final PsiClass paramClass = PsiUtil.resolveClassInClassTypeOnly(functionalInterfaceParamType);
     if (paramClass != null && !paramClass.hasTypeParameters()) {
-      final Set<String> visited = new HashSet<String>();
+      final Set<String> visited = new HashSet<>();
       for (PsiMethod psiMethod : paramClass.getAllMethods()) {
         final PsiType returnType = psiMethod.getReturnType();
         PsiClass containingClass = psiMethod.getContainingClass();

@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseOutputReader;
+import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
@@ -55,8 +56,8 @@ public class RemoteDebugger implements ProcessDebugger {
   private volatile boolean myConnected = false;
   private int mySequence = -1;
   private final Object mySequenceObject = new Object(); // for synchronization on mySequence
-  private final Map<String, PyThreadInfo> myThreads = new ConcurrentHashMap<String, PyThreadInfo>();
-  private final Map<Integer, ProtocolFrame> myResponseQueue = new HashMap<Integer, ProtocolFrame>();
+  private final Map<String, PyThreadInfo> myThreads = new ConcurrentHashMap<>();
+  private final Map<Integer, ProtocolFrame> myResponseQueue = new HashMap<>();
   private final TempVarsHolder myTempVars = new TempVarsHolder();
 
   private Map<Pair<String, Integer>, String> myTempBreakpoints = Maps.newHashMap();
@@ -283,7 +284,7 @@ public class RemoteDebugger implements ProcessDebugger {
 
   @Override
   public Collection<PyThreadInfo> getThreads() {
-    return Collections.unmodifiableCollection(new ArrayList<PyThreadInfo>(myThreads.values()));
+    return Collections.unmodifiableCollection(new ArrayList<>(myThreads.values()));
   }
 
   int getNextSequence() {
@@ -453,25 +454,22 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
-  public void setBreakpoint(@NotNull String typeId, @NotNull String file, int line, @Nullable String condition,
-                            @Nullable String logExpression) {
-    final SetBreakpointCommand command =
-      new SetBreakpointCommand(this, typeId, file, line,
-                               condition,
-                               logExpression);
-    execute(command);
-  }
-
-  @Override
-  public void setBreakpointWithFuncName(@NotNull String typeId, @NotNull String file, int line, @Nullable String condition,
-                                        @Nullable String logExpression, @Nullable String funcName) {
+  public void setBreakpoint(@NotNull String typeId,
+                            @NotNull String file,
+                            int line,
+                            @Nullable String condition,
+                            @Nullable String logExpression,
+                            @Nullable String funcName,
+                            @NotNull SuspendPolicy policy) {
     final SetBreakpointCommand command =
       new SetBreakpointCommand(this, typeId, file, line,
                                condition,
                                logExpression,
-                               funcName);
+                               funcName,
+                               policy);
     execute(command);
   }
+
 
   @Override
   public void removeBreakpoint(@NotNull String typeId, @NotNull String file, int line) {
@@ -704,7 +702,7 @@ public class RemoteDebugger implements ProcessDebugger {
 
 
   private static class TempVarsHolder {
-    private final Map<String, Map<String, Set<String>>> myData = new HashMap<String, Map<String, Set<String>>>();
+    private final Map<String, Map<String, Set<String>>> myData = new HashMap<>();
 
     public boolean contains(final String threadId, final String frameId, final String name) {
       final Map<String, Set<String>> threadVars = myData.get(threadId);
@@ -718,10 +716,10 @@ public class RemoteDebugger implements ProcessDebugger {
 
     private void put(final String threadId, final String frameId, final String name) {
       Map<String, Set<String>> threadVars = myData.get(threadId);
-      if (threadVars == null) myData.put(threadId, (threadVars = new HashMap<String, Set<String>>()));
+      if (threadVars == null) myData.put(threadId, (threadVars = new HashMap<>()));
 
       Set<String> frameVars = threadVars.get(frameId);
-      if (frameVars == null) threadVars.put(frameId, (frameVars = new HashSet<String>()));
+      if (frameVars == null) threadVars.put(frameId, (frameVars = new HashSet<>()));
 
       frameVars.add(name);
     }
@@ -769,9 +767,13 @@ public class RemoteDebugger implements ProcessDebugger {
 
   @Override
   public void suspendOtherThreads(PyThreadInfo thread) {
-    for (PyThreadInfo otherThread : getThreads()) {
-      if (!otherThread.getId().equals(thread.getId())) {
-        suspendThread(otherThread.getId());
+    if (!myThreads.containsKey(thread.getId())) {
+      // It means that breakpoint with "Suspend all" policy was reached in another process
+      // and we should suspend all threads in the current process on Java side
+      for (PyThreadInfo otherThread : getThreads()) {
+        if (!otherThread.getId().equals(thread.getId())) {
+          suspendThread(otherThread.getId());
+        }
       }
     }
   }

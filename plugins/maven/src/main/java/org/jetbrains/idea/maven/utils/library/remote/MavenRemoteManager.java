@@ -37,7 +37,7 @@ import java.util.concurrent.Future;
 public abstract class MavenRemoteManager<Result, Argument, RemoteTask extends MavenRemoteTask<Result, Argument>>
   extends AbstractProjectComponent {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.utils.library.remote.MavenRemoteManager");
-  private Deque<DequeItem<Result, Argument, RemoteTask>> tasks = new ArrayDeque<DequeItem<Result, Argument, RemoteTask>>();
+  private Deque<DequeItem<Result, Argument, RemoteTask>> tasks = new ArrayDeque<>();
   private boolean busy;
 
   protected MavenRemoteManager(Project project) {
@@ -52,7 +52,7 @@ public abstract class MavenRemoteManager<Result, Argument, RemoteTask extends Ma
                                        @NotNull Argument argument,
                                        RemoteTask.ResultProcessor<Result> resultProcessor,
                                        boolean force) {
-    DequeItem<Result, Argument, RemoteTask> dequeItem = new DequeItem<Result, Argument, RemoteTask>(task, argument, resultProcessor);
+    DequeItem<Result, Argument, RemoteTask> dequeItem = new DequeItem<>(task, argument, resultProcessor);
     if (!busy) {
       tasks.addFirst(dequeItem);
       startNextTask();
@@ -67,7 +67,7 @@ public abstract class MavenRemoteManager<Result, Argument, RemoteTask extends Ma
   }
 
   protected Future<Result> schedule(@NotNull RemoteTask task, @NotNull Argument argument) {
-    final FutureResult<Result> future = new FutureResult<Result>();
+    final FutureResult<Result> future = new FutureResult<>();
     schedule(task, argument, new MavenRemoteTask.ResultProcessor<Result>() {
       @Override
       public void process(@Nullable Result result) {

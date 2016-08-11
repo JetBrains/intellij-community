@@ -33,7 +33,7 @@ import java.util.Map;
  */
 public class ChameleonAction extends AnAction {
 
-  private final Map<ProjectType, AnAction> myActions = new HashMap<ProjectType, AnAction>();
+  private final Map<ProjectType, AnAction> myActions = new HashMap<>();
 
   public ChameleonAction(@NotNull AnAction first, ProjectType projectType) {
     addAction(first, projectType);

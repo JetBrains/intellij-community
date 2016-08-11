@@ -61,6 +61,6 @@ public class JavaExtractor implements LangCodeStyleExtractor {
     @NotNull
     @Override
     public Collection<Value.VAR_KIND> getCustomVarKinds() {
-        return new LinkedList<Value.VAR_KIND>();
+        return new LinkedList<>();
     }
 }

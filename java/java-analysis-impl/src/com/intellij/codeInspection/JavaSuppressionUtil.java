@@ -63,7 +63,7 @@ public class JavaSuppressionUtil {
     else if (element instanceof PsiReferenceExpression) {
       final PsiElement psiElement = ((PsiReferenceExpression)element).resolve();
       if (psiElement instanceof PsiVariableEx) {
-        final Object val = ((PsiVariableEx)psiElement).computeConstantValue(new THashSet<PsiVariable>());
+        final Object val = ((PsiVariableEx)psiElement).computeConstantValue(new THashSet<>());
         if (val instanceof String) {
           return (String)val;
         }
@@ -91,7 +91,7 @@ public class JavaSuppressionUtil {
       return Collections.emptyList();
     }
     final PsiAnnotationMemberValue attributeValue = attributes[0].getValue();
-    Collection<String> result = new ArrayList<String>();
+    Collection<String> result = new ArrayList<>();
     if (attributeValue instanceof PsiArrayInitializerMemberValue) {
       final PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)attributeValue).getInitializers();
       for (PsiAnnotationMemberValue annotationMemberValue : initializers) {

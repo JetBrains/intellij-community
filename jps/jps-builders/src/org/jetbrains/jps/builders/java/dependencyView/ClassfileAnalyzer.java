@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ import java.util.Set;
 class ClassfileAnalyzer {
   private final static Logger LOG = Logger.getInstance("#org.jetbrains.jps.builders.java.dependencyView.ClassfileAnalyzer");
   public static final String LAMBDA_FACTORY_CLASS = "java/lang/invoke/LambdaMetafactory";
-  private static final int ASM_API_VERSION = Opcodes.ASM5;
+  private static final int ASM_API_VERSION = Opcodes.API_VERSION;
 
   private final DependencyContext myContext;
 
@@ -300,6 +300,7 @@ class ClassfileAnalyzer {
 
     private final Map<TypeRepr.ClassType, TIntHashSet> myAnnotationArguments = new THashMap<TypeRepr.ClassType, TIntHashSet>();
     private final Map<TypeRepr.ClassType, Set<ElemType>> myAnnotationTargets = new THashMap<TypeRepr.ClassType, Set<ElemType>>();
+    private final Set<TypeRepr.ClassType> myAnnotations = new THashSet<TypeRepr.ClassType>();
 
     public ClassCrawler(final int fn) {
       super(ASM_API_VERSION);
@@ -313,7 +314,7 @@ class ClassfileAnalyzer {
     public Pair<ClassRepr, Set<UsageRepr.Usage>> getResult() {
       ClassRepr repr = myTakeIntoAccount ? new ClassRepr(
         myContext, myAccess, myFileName, myName, myContext.get(mySignature), myContext.get(mySuperClass), myInterfaces,
-        myFields, myMethods, myTargets, myRetentionPolicy, myContext.get(myOuterClassName.get()), myLocalClassFlag.get(),
+        myFields, myMethods, myAnnotations, myTargets, myRetentionPolicy, myContext.get(myOuterClassName.get()), myLocalClassFlag.get(),
         myAnonymousClassFlag.get(), myUsages) : null;
 
       if (repr != null) {
@@ -324,16 +325,16 @@ class ClassfileAnalyzer {
     }
 
     @Override
-    public void visit(int version, int a, String n, String sig, String s, String[] i) {
-      myTakeIntoAccount = notPrivate(a);
+    public void visit(int version, int access, String name, String sig, String superName, String[] interfaces) {
+      myTakeIntoAccount = notPrivate(access);
 
-      myAccess = a;
-      myName = myContext.get(n);
+      myAccess = access;
+      myName = myContext.get(name);
       mySignature = sig;
-      mySuperClass = s;
-      myInterfaces = i;
+      mySuperClass = superName;
+      myInterfaces = interfaces;
 
-      myClassNameHolder.set(n);
+      myClassNameHolder.set(name);
 
       if (mySuperClass != null) {
         final int superclassName = myContext.get(mySuperClass);
@@ -373,10 +374,9 @@ class ClassfileAnalyzer {
         return new AnnotationRetentionPolicyCrawler();
       }
 
-      return new AnnotationCrawler(
-        (TypeRepr.ClassType)TypeRepr.getType(myContext, desc),
-        (myAccess & Opcodes.ACC_ANNOTATION) > 0 ? ElemType.ANNOTATION_TYPE : ElemType.TYPE
-      );
+      final TypeRepr.ClassType annotationType = (TypeRepr.ClassType)TypeRepr.getType(myContext, desc);
+      myAnnotations.add(annotationType);
+      return new AnnotationCrawler(annotationType, (myAccess & Opcodes.ACC_ANNOTATION) > 0 ? ElemType.ANNOTATION_TYPE : ElemType.TYPE);
     }
 
     @Override

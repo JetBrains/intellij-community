@@ -94,7 +94,7 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
     if (myCanExpand) {
       final Object root = myComponent.getModel().getRoot();
       if (root instanceof DefaultMutableTreeNode || root instanceof PathAwareTreeNode) {
-        final List<TreePath> paths = new ArrayList<TreePath>();
+        final List<TreePath> paths = new ArrayList<>();
         TreeUtil.traverseDepth((TreeNode)root, new TreeUtil.Traverse() {
           @Override
           public boolean accept(Object node) {

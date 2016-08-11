@@ -105,7 +105,7 @@ class StartUseVcsDialog extends DialogWrapper {
 
   private Object[] prepareComboData() {
     final Collection<String> displayNames = myData.getVcses().keySet();
-    final List<String> keys = new ArrayList<String>(displayNames.size() + 1);
+    final List<String> keys = new ArrayList<>(displayNames.size() + 1);
     keys.add("");
     keys.addAll(displayNames);
     Collections.sort(keys);

@@ -63,7 +63,7 @@ public class CCUtils {
                                           final int threshold,
                                           final String prefix,
                                           final int delta) {
-    ArrayList<VirtualFile> dirsToRename = new ArrayList<VirtualFile>
+    ArrayList<VirtualFile> dirsToRename = new ArrayList<>
       (Collections2.filter(Arrays.asList(dirs), new Predicate<VirtualFile>() {
         @Override
         public boolean apply(VirtualFile dir) {

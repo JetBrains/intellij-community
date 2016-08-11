@@ -69,7 +69,7 @@ class QuickListsUi implements ConfigurableUi<List<QuickList>> {
     }
   };
 
-  private final ListModelEditor<QuickList> editor = new ListModelEditor<QuickList>(itemEditor);
+  private final ListModelEditor<QuickList> editor = new ListModelEditor<>(itemEditor);
 
   private JComponent component;
   private final QuickListPanel itemPanel;

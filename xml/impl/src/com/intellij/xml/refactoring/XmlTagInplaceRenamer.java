@@ -54,7 +54,7 @@ public class XmlTagInplaceRenamer {
 
   private final Editor myEditor;
 
-  private final static Stack<XmlTagInplaceRenamer> ourRenamersStack = new Stack<XmlTagInplaceRenamer>();
+  private final static Stack<XmlTagInplaceRenamer> ourRenamersStack = new Stack<>();
   private ArrayList<RangeHighlighter> myHighlighters;
 
   private XmlTagInplaceRenamer(@NotNull final Editor editor) {
@@ -78,7 +78,7 @@ public class XmlTagInplaceRenamer {
     final Project project = myEditor.getProject();
     if (project != null) {
 
-      final List<TextRange> highlightRanges = new ArrayList<TextRange>();
+      final List<TextRange> highlightRanges = new ArrayList<>();
       highlightRanges.add(pair.first.getTextRange());
       if (pair.second != null) {
         highlightRanges.add(pair.second.getTextRange());
@@ -88,7 +88,7 @@ public class XmlTagInplaceRenamer {
         return;
       }
 
-      myHighlighters = new ArrayList<RangeHighlighter>();
+      myHighlighters = new ArrayList<>();
 
       CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
         final int offset = myEditor.getCaretModel().getOffset();

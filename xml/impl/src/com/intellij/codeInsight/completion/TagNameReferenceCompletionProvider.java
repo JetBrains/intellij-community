@@ -16,18 +16,13 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.lookup.TailTypeDecorator;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.xml.SchemaPrefixReference;
 import com.intellij.psi.impl.source.xml.TagNameReference;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Consumer;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.xml.XmlTagNameProvider;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +35,7 @@ import java.util.List;
  */
 public class TagNameReferenceCompletionProvider extends CompletionProvider<CompletionParameters> {
   public static LookupElement[] getTagNameVariants(final @NotNull XmlTag tag, final String prefix) {
-    List<LookupElement> elements = new ArrayList<LookupElement>();
+    List<LookupElement> elements = new ArrayList<>();
     for (XmlTagNameProvider tagNameProvider : XmlTagNameProvider.EP_NAME.getExtensions()) {
       tagNameProvider.addTagNameVariants(elements, tag, prefix);
     }
@@ -83,8 +78,10 @@ public class TagNameReferenceCompletionProvider extends CompletionProvider<Compl
   public static LookupElement createClosingTagLookupElement(XmlTag tag, boolean includePrefix, ASTNode nameElement) {
     LookupElementBuilder
       builder = LookupElementBuilder.create(includePrefix || !nameElement.getText().contains(":") ? tag.getName() : tag.getLocalName());
-    return TailTypeDecorator.withTail(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE.applyPolicy(builder),
-                                      TailType.createSimpleTailType('>'));
+    return LookupElementDecorator.withInsertHandler(
+      TailTypeDecorator.withTail(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE.applyPolicy(builder),
+                                 TailType.createSimpleTailType('>')),
+      XmlClosingTagInsertHandler.INSTANCE);
   }
 
 }

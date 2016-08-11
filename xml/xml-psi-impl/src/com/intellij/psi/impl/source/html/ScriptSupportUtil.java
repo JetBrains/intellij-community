@@ -40,7 +40,7 @@ import java.util.List;
  */
 public class ScriptSupportUtil {
   private static final Key<CachedValue<XmlTag[]>> CachedScriptTagsKey = Key.create("script tags");
-  private static final ThreadLocal<String> ProcessingDeclarationsFlag = new ThreadLocal<String>();
+  private static final ThreadLocal<String> ProcessingDeclarationsFlag = new ThreadLocal<>();
 
   private ScriptSupportUtil() {
   }
@@ -58,7 +58,7 @@ public class ScriptSupportUtil {
     if (myCachedScriptTags == null) {
       myCachedScriptTags = CachedValuesManager.getManager(element.getProject())
           .createCachedValue(() -> {
-            final List<XmlTag> scriptTags = new ArrayList<XmlTag>();
+            final List<XmlTag> scriptTags = new ArrayList<>();
             final XmlDocument document = HtmlPsiUtil.getRealXmlDocument(element.getDocument());
 
             if (document != null) {
@@ -81,7 +81,7 @@ public class ScriptSupportUtil {
               XmlPsiUtil.processXmlElements(document, psiElementProcessor, true);
             }
 
-            return new CachedValueProvider.Result<XmlTag[]>(scriptTags.toArray(new XmlTag[scriptTags.size()]), element);
+            return new CachedValueProvider.Result<>(scriptTags.toArray(new XmlTag[scriptTags.size()]), element);
           }, false);
       element.putUserData(CachedScriptTagsKey, myCachedScriptTags);
     }

@@ -20,6 +20,7 @@ import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -71,7 +72,7 @@ public class RefusedBequestInspection extends RefusedBequestInspectionBase {
     @NotNull
     @Override
     public String getFamilyName() {
-      return getName();
+      return "Insert call to super method";
     }
 
     @Override
@@ -96,12 +97,14 @@ public class RefusedBequestInspection extends RefusedBequestInspectionBase {
         final SuggestedNameInfo nameInfo = codeStyleManager.suggestUniqueVariableName(baseNameInfo, body, true);
         statementText.append(nameInfo.names.length > 0 ? nameInfo.names[0] : "result");
         statementText.append('=');
-        final PsiMethod superMethod = MethodUtils.getSuper(method);
-        if (superMethod == null) {
+        final MethodSignatureBackedByPsiMethod superMethodSignature = MethodUtils.getSuperMethodSignature(method);
+        if (superMethodSignature == null) {
           return;
         }
+        final PsiMethod superMethod = superMethodSignature.getMethod();
         final PsiType superReturnType = superMethod.getReturnType();
-        if (superReturnType != null && !returnType.isAssignableFrom(superReturnType)) {
+        final PsiType substitutedType = superMethodSignature.getSubstitutor().substitute(superReturnType);
+        if (superReturnType != null && !returnType.isAssignableFrom(substitutedType)) {
           statementText.append('(').append(returnType.getCanonicalText()).append(')');
         }
       }
@@ -118,10 +121,11 @@ public class RefusedBequestInspection extends RefusedBequestInspectionBase {
       final PsiJavaToken brace = body.getLBrace();
       final PsiElement element = body.addAfter(newStatement, brace);
       final PsiElement element1 = styleManager.reformat(element);
+      final PsiElement element2 = JavaCodeStyleManager.getInstance(project).shortenClassReferences(element1);
       if (isOnTheFly()) {
-        HighlightUtils.highlightElement(element1);
-        if (element1 instanceof PsiDeclarationStatement) {
-          final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)element1;
+        HighlightUtils.highlightElement(element2);
+        if (element2 instanceof PsiDeclarationStatement) {
+          final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)element2;
           final PsiLocalVariable variable = (PsiLocalVariable)declarationStatement.getDeclaredElements()[0];
           HighlightUtils.showRenameTemplate(body, variable);
         }

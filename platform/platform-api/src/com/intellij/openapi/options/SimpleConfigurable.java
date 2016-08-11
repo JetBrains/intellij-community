@@ -32,7 +32,7 @@ public final class SimpleConfigurable<UI extends ConfigurableUi<S>, S> extends C
   }
 
   public static <UI extends ConfigurableUi<S>, S> SimpleConfigurable<UI, S> create(@NotNull String id, @NotNull String displayName, @Nullable String helpTopic, @NotNull Class<UI> uiClass, @NotNull Getter<S> settingsGetter) {
-    return new SimpleConfigurable<UI, S>(id, displayName, helpTopic, uiClass, settingsGetter);
+    return new SimpleConfigurable<>(id, displayName, helpTopic, uiClass, settingsGetter);
   }
 
   public static <UI extends ConfigurableUi<S>, S> SimpleConfigurable<UI, S> create(@NotNull String id, @NotNull String displayName, @NotNull Class<UI> uiClass, @NotNull Getter<S> settingsGetter) {

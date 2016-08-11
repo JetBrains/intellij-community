@@ -18,9 +18,6 @@ package com.intellij.lang.annotation;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.List;
-
 /**
  * Implemented by a custom language plugin to add annotations to files in the language.
  *
@@ -31,8 +28,6 @@ import java.util.List;
  * @see com.intellij.lang.LanguageAnnotators
  */
 public interface Annotator {
-  List<Annotator> EMPTY_LIST = Collections.emptyList();
-
   /**
    * Annotates the specified PSI element.
    * It is guaranteed to be executed in non-reentrant fashion.

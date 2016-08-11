@@ -36,7 +36,7 @@ public class MarkSourceRootActionGroup extends ActionGroup {
   @Override
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     //todo[nik] obtain compatible root types by module
-    List<AnAction> actions = new ArrayList<AnAction>();
+    List<AnAction> actions = new ArrayList<>();
     for (JpsModuleSourceRootType<?> type : Arrays.asList(JavaSourceRootType.SOURCE, JavaSourceRootType.TEST_SOURCE, 
                                                          JavaResourceRootType.RESOURCE, JavaResourceRootType.TEST_RESOURCE)) {
       actions.add(new MarkSourceRootAction(type));

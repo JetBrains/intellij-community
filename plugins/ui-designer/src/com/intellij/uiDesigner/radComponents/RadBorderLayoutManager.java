@@ -104,7 +104,7 @@ public class RadBorderLayoutManager extends RadLayoutManager {
 
 
   @Override public void changeContainerLayout(RadContainer container) throws IncorrectOperationException {
-    ArrayList<RadComponent> componentsInBorder = new ArrayList<RadComponent>();
+    ArrayList<RadComponent> componentsInBorder = new ArrayList<>();
 
     boolean borderHorz = true;
     if (container.getComponentCount() == 1) {
@@ -362,7 +362,7 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     @NotNull
     public PropertyRenderer<String> getRenderer() {
       if (myRenderer == null) {
-        myRenderer = new LabelPropertyRenderer<String>();
+        myRenderer = new LabelPropertyRenderer<>();
       }
       return myRenderer;
     }

@@ -55,7 +55,7 @@ import java.util.Map;
  * Author: dmitrylomov
  */
 public abstract class PlatformIdTableBuilding {
-  public static final Key<EditorHighlighter> EDITOR_HIGHLIGHTER = new Key<EditorHighlighter>("Editor");
+  public static final Key<EditorHighlighter> EDITOR_HIGHLIGHTER = new Key<>("Editor");
   private static final TokenSet ABSTRACT_FILE_COMMENT_TOKENS = TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);
 
   private PlatformIdTableBuilding() {}
@@ -186,7 +186,7 @@ public abstract class PlatformIdTableBuilding {
           }
           iterator.advance();
         }
-        final Map<TodoIndexEntry, Integer> map = new HashMap<TodoIndexEntry, Integer>();
+        final Map<TodoIndexEntry, Integer> map = new HashMap<>();
         for (IndexPattern pattern : IndexPatternUtil.getIndexPatterns()) {
           final int count = occurrenceConsumer.getOccurrenceCount(pattern);
           if (count > 0) {

@@ -48,7 +48,7 @@ public abstract class GenericsInspectionToolBase extends BaseJavaBatchLocalInspe
   public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final PsiClassInitializer[] initializers = aClass.getInitializers();
     if (initializers.length == 0) return null;
-    List<ProblemDescriptor> descriptors = new ArrayList<ProblemDescriptor>();
+    List<ProblemDescriptor> descriptors = new ArrayList<>();
     for (PsiClassInitializer initializer : initializers) {
       final ProblemDescriptor[] localDescriptions = getDescriptions(initializer, manager, isOnTheFly);
       if (localDescriptions != null) {

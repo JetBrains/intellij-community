@@ -121,7 +121,7 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
   }
 
   private static void sortPropertiesFile(final PropertiesFile file) {
-    final List<IProperty> properties = new ArrayList<IProperty>(file.getProperties());
+    final List<IProperty> properties = new ArrayList<>(file.getProperties());
 
     Collections.sort(properties, (p1, p2) -> Comparing.compare(p1.getKey(), p2.getKey(), String.CASE_INSENSITIVE_ORDER));
     final char delimiter = PropertiesCodeStyleSettings.getInstance(file.getProject()).getDelimiter();

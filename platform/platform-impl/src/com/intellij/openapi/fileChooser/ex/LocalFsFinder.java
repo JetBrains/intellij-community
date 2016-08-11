@@ -86,7 +86,7 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
     private final Computable<Boolean> myShowHidden;
 
     public FileChooserFilter(final FileChooserDescriptor descriptor, boolean showHidden) {
-      myShowHidden = new Computable.PredefinedValueComputable<Boolean>(showHidden);
+      myShowHidden = new Computable.PredefinedValueComputable<>(showHidden);
       myDescriptor = descriptor;
     }
     public FileChooserFilter(final FileChooserDescriptor descriptor, final FileSystemTree tree) {
@@ -139,7 +139,7 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
     }
 
     public List<LookupFile> getChildren(final LookupFilter filter) {
-      List<LookupFile> result = new ArrayList<LookupFile>();
+      List<LookupFile> result = new ArrayList<>();
       if (myFile == null) return result;
 
       VirtualFile[] kids = myFile.getChildren();
@@ -208,7 +208,7 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
     }
 
     public List<LookupFile> getChildren(final LookupFilter filter) {
-      List<LookupFile> result = new ArrayList<LookupFile>();
+      List<LookupFile> result = new ArrayList<>();
       File[] files = myIoFile.listFiles(pathname -> filter.isAccepted(new IoFile(pathname)));
       if (files == null) return result;
 

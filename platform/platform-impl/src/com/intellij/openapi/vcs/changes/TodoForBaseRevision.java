@@ -62,7 +62,7 @@ public class TodoForBaseRevision extends TodoForRanges {
   }
 
   public static TodoItemData[] convertTodo(TodoItem[] todoItems) {
-    final List<TodoItemData> list = new ArrayList<TodoItemData>();
+    final List<TodoItemData> list = new ArrayList<>();
     for (TodoItem item : todoItems) {
       final TextRange range = item.getTextRange();
       final TodoItemData data = new TodoItemData(range.getStartOffset(), range.getEndOffset(), item.getPattern());

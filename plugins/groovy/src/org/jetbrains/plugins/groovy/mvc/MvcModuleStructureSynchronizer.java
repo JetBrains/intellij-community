@@ -62,7 +62,7 @@ import java.util.concurrent.ExecutorService;
  */
 public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
   private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(1);
-  private final Set<Pair<Object, SyncAction>> myOrders = new LinkedHashSet<Pair<Object, SyncAction>>();
+  private final Set<Pair<Object, SyncAction>> myOrders = new LinkedHashSet<>();
 
   private Set<VirtualFile> myPluginRoots = Collections.emptySet();
 
@@ -148,7 +148,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
               if (!file.isValid()) return;
               if (!framework.hasSupport(module)) return;
 
-              final List<VirtualFile> files = new ArrayList<VirtualFile>();
+              final List<VirtualFile> files = new ArrayList<>();
 
               if (file.isDirectory()) {
                 ModuleRootManager.getInstance(module).getFileIndex().iterateContentUnderDirectory(file, new ContentIterator() {
@@ -297,7 +297,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
 
   private LinkedHashSet<Pair<Object, SyncAction>> takeOrderSnapshot() {
     synchronized (myOrders) {
-      return new LinkedHashSet<Pair<Object, SyncAction>>(myOrders);
+      return new LinkedHashSet<>(myOrders);
     }
   }
 
@@ -360,7 +360,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
 
   private Set<Trinity<Module, SyncAction, MvcFramework>> computeRawActions(Set<Pair<Object, SyncAction>> actions) {
     //get module by object and kill duplicates
-    final Set<Trinity<Module, SyncAction, MvcFramework>> rawActions = new LinkedHashSet<Trinity<Module, SyncAction, MvcFramework>>();
+    final Set<Trinity<Module, SyncAction, MvcFramework>> rawActions = new LinkedHashSet<>();
     for (final Pair<Object, SyncAction> pair : actions) {
       for (Module module : determineModuleBySyncActionObject(pair.first)) {
         if (!module.isDisposed()) {
@@ -424,7 +424,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
         if (mvcModuleStructureSynchronizer.myOutOfModuleDirectoryCreatedActionAdded) {
           mvcModuleStructureSynchronizer.myOutOfModuleDirectoryCreatedActionAdded = false;
 
-          Set<VirtualFile> roots = new HashSet<VirtualFile>();
+          Set<VirtualFile> roots = new HashSet<>();
 
           for (String rootPath : MvcWatchedRootProvider.getRootsToWatch(project)) {
             ContainerUtil.addIfNotNull(roots, LocalFileSystem.getInstance().findFileByPath(rootPath));

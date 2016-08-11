@@ -41,7 +41,7 @@ class RefModuleImpl extends RefEntityImpl implements RefModule {
   @Override
   public synchronized void add(@NotNull final RefEntity child) {
     if (myChildren == null) {
-      myChildren = new ArrayList<RefEntity>();
+      myChildren = new ArrayList<>();
     }
     myChildren.add(child);
 

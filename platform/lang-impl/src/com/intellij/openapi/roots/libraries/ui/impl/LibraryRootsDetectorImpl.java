@@ -39,7 +39,7 @@ public class LibraryRootsDetectorImpl extends LibraryRootsDetector {
 
   @Override
   public Collection<DetectedLibraryRoot> detectRoots(@NotNull VirtualFile rootCandidate, @NotNull ProgressIndicator progressIndicator) {
-    List<DetectedLibraryRoot> result = new ArrayList<DetectedLibraryRoot>();
+    List<DetectedLibraryRoot> result = new ArrayList<>();
     for (RootDetector detector : myDetectors) {
       final Collection<VirtualFile> files = detector.detectRoots(rootCandidate, progressIndicator);
       for (VirtualFile file : files) {

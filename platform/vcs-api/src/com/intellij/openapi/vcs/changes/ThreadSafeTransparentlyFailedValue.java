@@ -29,24 +29,24 @@ public class ThreadSafeTransparentlyFailedValue<T,E extends Exception> implement
   private final AtomicReference<ThrowableComputable<T, E>> myRef;
 
   public ThreadSafeTransparentlyFailedValue() {
-    myRef = new AtomicReference<ThrowableComputable<T, E>>();
+    myRef = new AtomicReference<>();
   }
 
   @Override
   public void set(T t) {
     if (t != null) {
-      myRef.set(new Value<T, E>(t));
+      myRef.set(new Value<>(t));
     }
   }
 
   @Override
   public void fail(E e) {
-    myRef.set(new ExceptionHolder<T, E>(e));
+    myRef.set(new ExceptionHolder<>(e));
   }
 
   @Override
   public void failRuntime(RuntimeException e) {
-    myRef.set(new RuntimeExceptionHolder<T, E>(e));
+    myRef.set(new RuntimeExceptionHolder<>(e));
   }
 
   @Override

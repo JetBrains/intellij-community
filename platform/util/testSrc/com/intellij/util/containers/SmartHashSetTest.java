@@ -10,7 +10,7 @@ import static org.junit.Assert.*;
 public class SmartHashSetTest {
   @Test
   public void testIterator() {
-    Set<Integer> set = new SmartHashSet<Integer>();
+    Set<Integer> set = new SmartHashSet<>();
     set.add(30);
     Iterator<Integer> iterator = set.iterator();
     assertEquals((int)iterator.next(), 30);

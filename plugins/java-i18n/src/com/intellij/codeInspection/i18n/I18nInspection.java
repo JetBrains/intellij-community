@@ -316,7 +316,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
       @Override
       protected JComponent createCenterPanel() {
         final String[] ignored = ignoreForSpecifiedExceptionConstructors.split(",");
-        final List<String> initialList = new ArrayList<String>();
+        final List<String> initialList = new ArrayList<>();
         for (String e : ignored) {
           if (!e.isEmpty()) initialList.add(e);
         }
@@ -370,7 +370,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
       return null;
     }
     final PsiClassInitializer[] initializers = aClass.getInitializers();
-    List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
+    List<ProblemDescriptor> result = new ArrayList<>();
     for (PsiClassInitializer initializer : initializers) {
       final ProblemDescriptor[] descriptors = checkElement(initializer, manager, isOnTheFly);
       if (descriptors != null) {
@@ -458,7 +458,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
   }
 
   private class StringI18nVisitor extends JavaRecursiveElementWalkingVisitor {
-    private final List<ProblemDescriptor> myProblems = new ArrayList<ProblemDescriptor>();
+    private final List<ProblemDescriptor> myProblems = new ArrayList<>();
     private final InspectionManager myManager;
     private final boolean myOnTheFly;
 
@@ -493,7 +493,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
         return;
       }
 
-      Set<PsiModifierListOwner> nonNlsTargets = new THashSet<PsiModifierListOwner>();
+      Set<PsiModifierListOwner> nonNlsTargets = new THashSet<>();
       if (canBeI18ned(myManager.getProject(), expression, stringValue, nonNlsTargets)) {
         PsiField parentField = PsiTreeUtil.getParentOfType(expression, PsiField.class);
         if (parentField != null) {
@@ -502,7 +502,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
 
         final String description = CodeInsightBundle.message("inspection.i18n.message.general.with.value", "#ref");
 
-        List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
+        List<LocalQuickFix> fixes = new ArrayList<>();
         if (I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(expression) != null) {
           fixes.add(I18N_CONCATENATION_QUICK_FIX);
         }
@@ -562,7 +562,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
       return false;
     }
 
-    if (JavaI18nUtil.isPassedToAnnotatedParam(expression, AnnotationUtil.NON_NLS, new HashMap<String, Object>(), nonNlsTargets)) {
+    if (JavaI18nUtil.isPassedToAnnotatedParam(expression, AnnotationUtil.NON_NLS, new HashMap<>(), nonNlsTargets)) {
       return false;
     }
 
@@ -578,7 +578,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
       return false;
     }
 
-    if (JavaI18nUtil.mustBePropertyKey(expression, new HashMap<String, Object>())) {
+    if (JavaI18nUtil.mustBePropertyKey(expression, new HashMap<>())) {
       return false;
     }
 

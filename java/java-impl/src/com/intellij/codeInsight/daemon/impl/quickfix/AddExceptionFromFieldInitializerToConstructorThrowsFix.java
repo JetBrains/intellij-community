@@ -87,7 +87,7 @@ public class AddExceptionFromFieldInitializerToConstructorThrowsFix extends Base
           LOG.assertTrue(constructors.length != 0);
         }
 
-        Set<PsiClassType> unhandledExceptions = new THashSet<PsiClassType>(ExceptionUtil.getUnhandledExceptions(field));
+        Set<PsiClassType> unhandledExceptions = new THashSet<>(ExceptionUtil.getUnhandledExceptions(field));
         for (PsiMethod constructor : constructors) {
           AddExceptionToThrowsFix.addExceptionsToThrowsList(project, constructor, unhandledExceptions);
         }

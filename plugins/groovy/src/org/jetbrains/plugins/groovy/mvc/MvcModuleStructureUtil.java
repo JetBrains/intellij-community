@@ -87,7 +87,7 @@ public class MvcModuleStructureUtil {
                                                                              final MvcProjectStructure structure) {
     ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(structure.myModule);
 
-    Map<VirtualFile, JpsModuleSourceRootType<?>> sourceRoots = new HashMap<VirtualFile, JpsModuleSourceRootType<?>>();
+    Map<VirtualFile, JpsModuleSourceRootType<?>> sourceRoots = new HashMap<>();
     for (ContentEntry entry : moduleRootManager.getContentEntries()) {
       for (SourceFolder folder : entry.getSourceFolders()) {
         sourceRoots.put(folder.getFile(), folder.getRootType());
@@ -274,10 +274,10 @@ public class MvcModuleStructureUtil {
     cleanupDefaultLibrary(structure.myModule, actions, appRoots, structure.getUserLibraryName());
     moveupLibrariesFromMavenPlugin(structure.myModule, actions);
 
-    List<VirtualFile> rootsToFacetSetup = new ArrayList<VirtualFile>(appRoots.size());
+    List<VirtualFile> rootsToFacetSetup = new ArrayList<>(appRoots.size());
     for (VirtualFile appRoot : appRoots) {
       if (checkValidity(appRoot)) {
-        ContainerUtil.addIfNotNull(addSourceRootsAndLibDirectory(appRoot, structure), actions);
+        ContainerUtil.addIfNotNull(actions, addSourceRootsAndLibDirectory(appRoot, structure));
         rootsToFacetSetup.add(appRoot);
       }
     }
@@ -379,7 +379,7 @@ public class MvcModuleStructureUtil {
 
     final VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
 
-    final List<String> toRemoveUrls = new ArrayList<String>();
+    final List<String> toRemoveUrls = new ArrayList<>();
 
     for (String url : library.getUrls(OrderRootType.CLASSES)) {
       VirtualFile virtualFile = virtualFileManager.findFileByUrl(url);
@@ -418,7 +418,7 @@ public class MvcModuleStructureUtil {
   }
 
   public static List<Module> getAllModulesWithSupport(Project project, MvcFramework framework) {
-    List<Module> modules = new ArrayList<Module>();
+    List<Module> modules = new ArrayList<>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       if (framework.hasSupport(module)) {
         modules.add(module);
@@ -459,7 +459,7 @@ public class MvcModuleStructureUtil {
   private static Set<String> getJarUrls(@Nullable Library library) {
     if (library == null) return Collections.emptySet();
 
-    Set<String> res = new HashSet<String>();
+    Set<String> res = new HashSet<>();
 
     for (String url : library.getUrls(OrderRootType.CLASSES)) {
       if (!library.isJarDirectory(url)) {
@@ -476,10 +476,10 @@ public class MvcModuleStructureUtil {
 
     final boolean isSdkEquals = Comparing.equal(auxRootManager.getSdk(), appRootManager.getSdk());
 
-    List<Library> appLibraries = new ArrayList<Library>();
+    List<Library> appLibraries = new ArrayList<>();
     Library appUserLibrary = extractNonModuleLibraries(appLibraries, appRootManager, false, framework.getUserLibraryName());
 
-    List<Library> auxLibraries = new ArrayList<Library>();
+    List<Library> auxLibraries = new ArrayList<>();
     Library auxUserLibrary = extractNonModuleLibraries(auxLibraries, auxRootManager, false, framework.getUserLibraryName());
 
     final boolean isLibrariesEquals = appLibraries.equals(auxLibraries) && getJarUrls(auxUserLibrary).equals(getJarUrls(appUserLibrary));
@@ -514,7 +514,7 @@ public class MvcModuleStructureUtil {
   }
 
   public static void removeAuxiliaryModule(Module toRemove) {
-    List<ModifiableRootModel> usingModels = new SmartList<ModifiableRootModel>();
+    List<ModifiableRootModel> usingModels = new SmartList<>();
 
     Project project = toRemove.getProject();
     ModuleManager moduleManager = ModuleManager.getInstance(project);
@@ -768,7 +768,7 @@ public class MvcModuleStructureUtil {
   }
 
   public static void updateGlobalPluginModule(@NotNull Project project, @NotNull MvcFramework framework) {
-    MultiMap<VirtualFile, Module> map = new MultiMap<VirtualFile, Module>();
+    MultiMap<VirtualFile, Module> map = new MultiMap<>();
 
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       if (framework.hasSupport(module)) {
@@ -779,7 +779,7 @@ public class MvcModuleStructureUtil {
       }
     }
 
-    Map<VirtualFile, Module> globalAuxModules = new HashMap<VirtualFile, Module>();
+    Map<VirtualFile, Module> globalAuxModules = new HashMap<>();
 
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       if (framework.isGlobalPluginModule(module)) {
@@ -823,7 +823,7 @@ public class MvcModuleStructureUtil {
     assert map.size() == globalAuxModules.size();
 
     for (VirtualFile virtualFile : map.keySet()) {
-      List<VirtualFile> pluginRoots = new ArrayList<VirtualFile>();
+      List<VirtualFile> pluginRoots = new ArrayList<>();
 
       for (VirtualFile child : virtualFile.getChildren()) {
         if (child.isDirectory()) {
@@ -864,7 +864,7 @@ public class MvcModuleStructureUtil {
   public static Module updateAuxiliaryPluginsModuleRoots(Module appModule, MvcFramework framework) {
     Module commonPluginsModule = framework.findCommonPluginsModule(appModule);
 
-    Set<VirtualFile> pluginRoots = new HashSet<VirtualFile>();
+    Set<VirtualFile> pluginRoots = new HashSet<>();
 
     VirtualFile globalPluginsDir = refreshAndFind(framework.getGlobalPluginsDir(appModule));
 

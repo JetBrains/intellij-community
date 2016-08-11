@@ -55,7 +55,7 @@ public class JavaVfsSourceRootDetectionUtil {
     }
 
     final FileTypeManager typeManager = FileTypeManager.getInstance();
-    final ArrayList<VirtualFile> foundDirectories = new ArrayList<VirtualFile>();
+    final ArrayList<VirtualFile> foundDirectories = new ArrayList<>();
     try {
       VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor() {
         @NotNull

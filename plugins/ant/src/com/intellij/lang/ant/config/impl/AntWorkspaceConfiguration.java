@@ -38,7 +38,7 @@ public class AntWorkspaceConfiguration implements PersistentStateComponent<Eleme
   private final Project myProject;
   @NonNls private static final String BUILD_FILE = "buildFile";
   @NonNls private static final String URL = "url";
-  private final AtomicReference<Element> myProperties = new AtomicReference<Element>(null);
+  private final AtomicReference<Element> myProperties = new AtomicReference<>(null);
 
   public boolean IS_AUTOSCROLL_TO_SOURCE;
   public boolean FILTER_TARGETS;

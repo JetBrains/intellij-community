@@ -76,7 +76,7 @@ public class PyMakeLocalFunctionTopLevelProcessor extends PyBaseMakeFunctionTopL
   @Override
   @NotNull
   protected List<String> collectNewParameterNames() {
-    final Set<String> enclosingScopeReads = new LinkedHashSet<String>();
+    final Set<String> enclosingScopeReads = new LinkedHashSet<>();
     for (ScopeOwner owner : PsiTreeUtil.collectElementsOfType(myFunction, ScopeOwner.class)) {
       final AnalysisResult result = analyseScope(owner);
       if (!result.nonlocalWritesToEnclosingScope.isEmpty()) {

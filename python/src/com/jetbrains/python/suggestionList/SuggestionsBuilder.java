@@ -34,9 +34,9 @@ import java.util.*;
 public class SuggestionsBuilder {
   private static final MySuggestionComparator SUGGESTION_COMPARATOR = new MySuggestionComparator();
   @NotNull
-  private final List<Suggestion> myPrefixGroup = new ArrayList<Suggestion>();
+  private final List<Suggestion> myPrefixGroup = new ArrayList<>();
   @NotNull
-  private final List<Suggestion> myMainGroup = new ArrayList<Suggestion>();
+  private final List<Suggestion> myMainGroup = new ArrayList<>();
   @NotNull
   private List<Suggestion> myCurrentGroup = myMainGroup;
 

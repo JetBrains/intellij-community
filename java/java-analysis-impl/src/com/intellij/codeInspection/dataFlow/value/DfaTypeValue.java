@@ -46,7 +46,7 @@ public class DfaTypeValue extends DfaValue {
     DfaTypeValue createTypeValue(@NotNull DfaPsiType type, @NotNull Nullness nullness) {
       ArrayList<DfaTypeValue> conditions = myCache.get(type);
       if (conditions == null) {
-        conditions = new ArrayList<DfaTypeValue>();
+        conditions = new ArrayList<>();
         myCache.put(type, conditions);
       }
       else {

@@ -31,7 +31,7 @@ import java.util.Map;
  */
 public class PyEvaluationContext {
   @NotNull
-  private final Map<PyFile, PyEvaluationResult> myResultMap = new HashMap<PyFile, PyEvaluationResult>();
+  private final Map<PyFile, PyEvaluationResult> myResultMap = new HashMap<>();
 
   PyEvaluationContext() {
   }

@@ -152,7 +152,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
       properties = PropertiesImplUtil.findPropertiesByKey(getElement().getProject(), key);
     }
     else {
-      properties = new ArrayList<IProperty>();
+      properties = new ArrayList<>();
       for (PropertiesFile propertiesFile : propertiesFiles) {
         properties.addAll(propertiesFile.findPropertiesByKey(key));
       }

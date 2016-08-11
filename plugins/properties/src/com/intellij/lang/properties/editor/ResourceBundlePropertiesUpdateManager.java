@@ -161,7 +161,7 @@ public class ResourceBundlePropertiesUpdateManager {
     final GraphGenerator<String> generator = GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<String>() {
       @Override
       public Collection<String> getNodes() {
-        final Set<String> nodes = new LinkedHashSet<String>();
+        final Set<String> nodes = new LinkedHashSet<>();
         for (PropertiesFile propertiesFile : resourceBundle.getPropertiesFiles()) {
           for (IProperty property : propertiesFile.getProperties()) {
             final String key = property.getKey();
@@ -175,7 +175,7 @@ public class ResourceBundlePropertiesUpdateManager {
 
       @Override
       public Iterator<String> getIn(String n) {
-        final Collection<String> siblings = new LinkedHashSet<String>();
+        final Collection<String> siblings = new LinkedHashSet<>();
         for (PropertiesFile propertiesFile : resourceBundle.getPropertiesFiles()) {
           for (IProperty property : propertiesFile.findPropertiesByKey(n)) {
             PsiElement sibling = property.getPsiElement().getNextSibling();
@@ -196,11 +196,11 @@ public class ResourceBundlePropertiesUpdateManager {
         return siblings.iterator();
       }
     }));
-    DFSTBuilder<String> dfstBuilder = new DFSTBuilder<String>(generator);
+    DFSTBuilder<String> dfstBuilder = new DFSTBuilder<>(generator);
     final boolean acyclic = dfstBuilder.isAcyclic();
     if (acyclic) {
       if (isAlphaSorted[0]) {
-        final List<String> sortedNodes = new ArrayList<String>(generator.getNodes());
+        final List<String> sortedNodes = new ArrayList<>(generator.getNodes());
         Collections.sort(sortedNodes, String.CASE_INSENSITIVE_ORDER);
         return Pair.create(sortedNodes, true);
       } else {

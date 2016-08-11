@@ -48,7 +48,7 @@ import java.util.List;
  * Date: 11/20/12
  */
 class AddModuleDependencyFix extends OrderEntryFix {
-  private final LinkedHashSet<Module> myModules = new LinkedHashSet<Module>();
+  private final LinkedHashSet<Module> myModules = new LinkedHashSet<>();
   private final Module myCurrentModule;
   private final VirtualFile myClassVFile;
   private final PsiClass[] myClasses;
@@ -141,7 +141,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
       JavaProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, module,
                                                                          test ? DependencyScope.TEST : DependencyScope.COMPILE);
       if (editor != null) {
-        final List<PsiClass> targetClasses = new ArrayList<PsiClass>();
+        final List<PsiClass> targetClasses = new ArrayList<>();
         for (PsiClass psiClass : myClasses) {
           if (ModuleUtilCore.findModuleForPsiElement(psiClass) == module) {
             targetClasses.add(psiClass);

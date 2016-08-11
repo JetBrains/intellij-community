@@ -88,7 +88,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   public Element getState() {
     Element element = new Element("x");
     if (!myMapping.isEmpty()) {
-      List<VirtualFile> files = new ArrayList<VirtualFile>(myMapping.keySet());
+      List<VirtualFile> files = new ArrayList<>(myMapping.keySet());
       ContainerUtil.quickSort(files, (o1, o2) -> o1.getPath().compareTo(o2.getPath()));
       for (VirtualFile file : files) {
         Charset charset = myMapping.get(file);
@@ -124,7 +124,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
     myMapping.clear();
     List<Element> files = element.getChildren("file");
     if (!files.isEmpty()) {
-      Map<VirtualFile, Charset> mapping = new HashMap<VirtualFile, Charset>();
+      Map<VirtualFile, Charset> mapping = new HashMap<>();
       for (Element fileElement : files) {
         String url = fileElement.getAttributeValue("url");
         String charsetName = fileElement.getAttributeValue("charset");
@@ -232,7 +232,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
 
   @NotNull
   static Set<Charset> widelyKnownCharsets() {
-    Set<Charset> result = new HashSet<Charset>();
+    Set<Charset> result = new HashSet<>();
     result.add(CharsetToolkit.UTF8_CHARSET);
     result.add(CharsetToolkit.getDefaultSystemCharset());
     result.add(CharsetToolkit.UTF_16_CHARSET);
@@ -252,8 +252,8 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   public void setMapping(@NotNull final Map<VirtualFile, Charset> mapping) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     FileDocumentManager.getInstance().saveAllDocuments();  // consider all files as unmodified
-    final Map<VirtualFile, Charset> newMap = new THashMap<VirtualFile, Charset>(mapping.size());
-    final Map<VirtualFile, Charset> oldMap = new THashMap<VirtualFile, Charset>(myMapping);
+    final Map<VirtualFile, Charset> newMap = new THashMap<>(mapping.size());
+    final Map<VirtualFile, Charset> oldMap = new THashMap<>(myMapping);
 
     // ChangeFileEncodingAction should not start progress "reload files..."
     suppressReloadDuring(() -> {
@@ -291,7 +291,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
     myMapping.clear();
     myMapping.putAll(newMap);
 
-    final Set<VirtualFile> changed = new HashSet<VirtualFile>(oldMap.keySet());
+    final Set<VirtualFile> changed = new HashSet<>(oldMap.keySet());
     for (Map.Entry<VirtualFile, Charset> entry : newMap.entrySet()) {
       VirtualFile file = entry.getKey();
       Charset charset = entry.getValue();
@@ -301,10 +301,10 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
       }
     }
 
-    Set<VirtualFile> added = new HashSet<VirtualFile>(newMap.keySet());
+    Set<VirtualFile> added = new HashSet<>(newMap.keySet());
     added.removeAll(oldMap.keySet());
 
-    Set<VirtualFile> removed = new HashSet<VirtualFile>(oldMap.keySet());
+    Set<VirtualFile> removed = new HashSet<>(oldMap.keySet());
     removed.removeAll(newMap.keySet());
 
     changed.addAll(added);
@@ -314,7 +314,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
     if (!changed.isEmpty()) {
       final Processor<VirtualFile> reloadProcessor = createChangeCharsetProcessor();
       tryStartReloadWithProgress(() -> {
-        Set<VirtualFile> processed = new THashSet<VirtualFile>();
+        Set<VirtualFile> processed = new THashSet<>();
         next:
         for (VirtualFile changedFile : changed) {
           for (VirtualFile processedFile : processed) {
@@ -370,7 +370,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
     return true;
   }
 
-  private static final ThreadLocal<Boolean> SUPPRESS_RELOAD = new ThreadLocal<Boolean>();
+  private static final ThreadLocal<Boolean> SUPPRESS_RELOAD = new ThreadLocal<>();
   static void suppressReloadDuring(@NotNull Runnable action) {
     Boolean old = SUPPRESS_RELOAD.get();
     try {

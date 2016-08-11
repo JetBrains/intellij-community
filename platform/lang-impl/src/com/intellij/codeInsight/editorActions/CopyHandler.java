@@ -87,7 +87,7 @@ public class CopyHandler extends EditorActionHandler {
     final int[] startOffsets = selectionModel.getBlockSelectionStarts();
     final int[] endOffsets = selectionModel.getBlockSelectionEnds();
 
-    final List<TextBlockTransferableData> transferableDatas = new ArrayList<TextBlockTransferableData>();
+    final List<TextBlockTransferableData> transferableDatas = new ArrayList<>();
     
     DumbService.getInstance(project).withAlternativeResolveEnabled(() -> {
       for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {

@@ -225,7 +225,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
               return;
             }
 
-            final Ref<PsiClass> newClassRef = new Ref<PsiClass>();
+            final Ref<PsiClass> newClassRef = new Ref<>();
             anonymousClassStatement.accept(new JavaRecursiveElementWalkingVisitor() {
               @Override
               public void visitClass(PsiClass aClass) {

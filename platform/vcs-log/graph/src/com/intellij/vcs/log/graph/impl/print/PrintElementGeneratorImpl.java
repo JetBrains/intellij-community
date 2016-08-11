@@ -44,7 +44,7 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
   private static final boolean SHOW_ARROW_WHEN_SHOW_LONG_EDGES = true;
 
 
-  @NotNull private final SLRUMap<Integer, List<GraphElement>> cache = new SLRUMap<Integer, List<GraphElement>>(CACHE_SIZE, CACHE_SIZE * 2);
+  @NotNull private final SLRUMap<Integer, List<GraphElement>> cache = new SLRUMap<>(CACHE_SIZE, CACHE_SIZE * 2);
   @NotNull private final EdgesInRowGenerator myEdgesInRowGenerator;
   @NotNull private final Comparator<GraphElement> myGraphElementComparator;
 
@@ -92,7 +92,7 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
   protected List<ShortEdge> getDownShortEdges(int rowIndex) {
     NullableFunction<GraphEdge, Integer> endPosition = createEndPositionFunction(rowIndex);
 
-    List<ShortEdge> result = new ArrayList<ShortEdge>();
+    List<ShortEdge> result = new ArrayList<>();
     List<GraphElement> visibleElements = getSortedVisibleElementsInRow(rowIndex);
 
     for (int startPosition = 0; startPosition < visibleElements.size(); startPosition++) {
@@ -121,7 +121,7 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
   private NullableFunction<GraphEdge, Integer> createEndPositionFunction(int visibleRowIndex) {
     List<GraphElement> visibleElementsInNextRow = getSortedVisibleElementsInRow(visibleRowIndex + 1);
 
-    final Map<GraphElement, Integer> toPosition = new HashMap<GraphElement, Integer>();
+    final Map<GraphElement, Integer> toPosition = new HashMap<>();
     for (int position = 0; position < visibleElementsInNextRow.size(); position++) {
       toPosition.put(visibleElementsInNextRow.get(position), position);
     }
@@ -143,7 +143,7 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
   @NotNull
   @Override
   protected List<SimpleRowElement> getSimpleRowElements(int visibleRowIndex) {
-    List<SimpleRowElement> result = new SmartList<SimpleRowElement>();
+    List<SimpleRowElement> result = new SmartList<>();
     List<GraphElement> sortedVisibleElementsInRow = getSortedVisibleElementsInRow(visibleRowIndex);
 
     for (int position = 0; position < sortedVisibleElementsInRow.size(); position++) {
@@ -234,7 +234,7 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
       return graphElements;
     }
 
-    List<GraphElement> result = new ArrayList<GraphElement>();
+    List<GraphElement> result = new ArrayList<>();
     result.add(myLinearGraph.getGraphNode(rowIndex));
 
     for (GraphEdge edge : myEdgesInRowGenerator.getEdgesInRow(rowIndex)) {

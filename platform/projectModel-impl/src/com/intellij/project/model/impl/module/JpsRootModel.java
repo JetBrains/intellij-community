@@ -42,11 +42,11 @@ public class JpsRootModel extends RootModelBase implements ModuleRootModel {
   public JpsRootModel(Module module, JpsModule jpsModule) {
     myModule = module;
     myJpsModule = jpsModule;
-    myContentEntries = new ArrayList<ContentEntry>();
+    myContentEntries = new ArrayList<>();
     for (String contentRoot : myJpsModule.getContentRootsList().getUrls()) {
       myContentEntries.add(new JpsContentEntry(jpsModule, this, contentRoot));
     }
-    myOrderEntries = new ArrayList<OrderEntry>();
+    myOrderEntries = new ArrayList<>();
     for (JpsDependencyElement element : myJpsModule.getDependenciesList().getDependencies()) {
       myOrderEntries.add(JpsOrderEntryFactory.createOrderEntry(this, element));
     }

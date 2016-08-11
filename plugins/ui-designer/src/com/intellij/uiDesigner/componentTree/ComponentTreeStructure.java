@@ -52,7 +52,7 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
 
   public Object[] getChildElements(final Object element){
     if(element==myRootElement){
-      ArrayList<Object> elements = new ArrayList<Object>();
+      ArrayList<Object> elements = new ArrayList<>();
       final RadRootContainer rootContainer=myEditor.getRootContainer();
       elements.add(new ComponentPtr(myEditor, rootContainer));
       final LwInspectionSuppression[] suppressions = rootContainer.getInspectionSuppressions();
@@ -81,7 +81,7 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
       }
     }
     else if (element instanceof LwInspectionSuppression[]) {
-      ArrayList<LwInspectionSuppression> result = new ArrayList<LwInspectionSuppression>();
+      ArrayList<LwInspectionSuppression> result = new ArrayList<>();
       for(LwInspectionSuppression suppression: (LwInspectionSuppression[]) element) {
         if (suppression.getComponentId() == null ||
           FormEditingUtil.findComponent(myEditor.getRootContainer(), suppression.getComponentId()) != null) {

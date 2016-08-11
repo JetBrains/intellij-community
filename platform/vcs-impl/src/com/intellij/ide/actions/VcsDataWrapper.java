@@ -80,7 +80,7 @@ class VcsDataWrapper {
   public Map<String, String> getVcses() {
     if (myVcses == null && myProject != null && !myProject.isDefault()) {
       final VcsDescriptor[] allVcss = myManager.getAllVcss();
-      myVcses = new HashMap<String, String>(allVcss.length, 1);
+      myVcses = new HashMap<>(allVcss.length, 1);
       for (VcsDescriptor vcs : allVcss) {
         myVcses.put(vcs.getDisplayName(), vcs.getName());
       }

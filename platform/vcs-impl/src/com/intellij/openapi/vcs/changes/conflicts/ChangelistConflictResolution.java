@@ -42,7 +42,7 @@ public enum ChangelistConflictResolution {
     @Override
     public boolean resolveConflict(Project project, Collection<Change> changes) {
       ChangeListManagerImpl manager = getManager(project);
-      Set<ChangeList> changeLists = new HashSet<ChangeList>();
+      Set<ChangeList> changeLists = new HashSet<>();
       for (Change change : changes) {
         LocalChangeList list = manager.getChangeList(change);
         if (list != null) {

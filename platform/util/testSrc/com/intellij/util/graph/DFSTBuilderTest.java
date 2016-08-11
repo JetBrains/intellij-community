@@ -33,7 +33,7 @@ public class DFSTBuilderTest extends TestCase {
     final TestNode nE = new TestNode("E");
     final TestNode nF = new TestNode("F");
     final TestNode[] allNodes = {nA, nB, nC, nD, nE, nF};
-    final Map<TestNode, TestNode[]> map = new HashMap<TestNode, TestNode[]>();
+    final Map<TestNode, TestNode[]> map = new HashMap<>();
     map.put(nA, new TestNode[0]);
     map.put(nB, new TestNode[0]);
     map.put(nC, new TestNode[]{nA, nB});
@@ -41,7 +41,7 @@ public class DFSTBuilderTest extends TestCase {
     map.put(nE, new TestNode[]{nC});
     map.put(nF, new TestNode[]{nB});
     GraphGenerator<TestNode> graph = graphByNodes(allNodes, map);
-    final DFSTBuilder<TestNode> dfstBuilder = new DFSTBuilder<TestNode>(graph);
+    final DFSTBuilder<TestNode> dfstBuilder = new DFSTBuilder<>(graph);
     if (!dfstBuilder.isAcyclic()) {
       fail("Acyclic graph expected");
       return;
@@ -56,7 +56,7 @@ public class DFSTBuilderTest extends TestCase {
   }
 
   private static GraphGenerator<TestNode> graphByNodes(final TestNode[] allNodes, final Map<TestNode, TestNode[]> mapIn) {
-    final GraphGenerator<TestNode> graph = new GraphGenerator<TestNode>(new GraphGenerator.SemiGraph<TestNode>() {
+    final GraphGenerator<TestNode> graph = new GraphGenerator<>(new GraphGenerator.SemiGraph<TestNode>() {
       @Override
       public Collection<TestNode> getNodes() {
         return Arrays.asList(allNodes);
@@ -76,7 +76,7 @@ public class DFSTBuilderTest extends TestCase {
     final TestNode nC = new TestNode("C");
     final TestNode nD = new TestNode("D");
     final TestNode[] allNodes = {nA, nB, nC, nD};
-    final Map<TestNode, TestNode[]> map = new HashMap<TestNode, TestNode[]>();
+    final Map<TestNode, TestNode[]> map = new HashMap<>();
     map.put(nA, new TestNode[0]);
     map.put(nB, new TestNode[0]);
     map.put(nC, new TestNode[]{nA, nB, nD});
@@ -88,7 +88,7 @@ public class DFSTBuilderTest extends TestCase {
   private static void checkCircularDependecyDetected(final TestNode[] allNodes,
                                                      final Map<TestNode, TestNode[]> map) {
     GraphGenerator<TestNode> graph = graphByNodes(allNodes, map);
-    final DFSTBuilder<TestNode> dfstBuilder = new DFSTBuilder<TestNode>(graph);
+    final DFSTBuilder<TestNode> dfstBuilder = new DFSTBuilder<>(graph);
     assertTrue (dfstBuilder.getCircularDependency() != null);
   }
 
@@ -96,7 +96,7 @@ public class DFSTBuilderTest extends TestCase {
     final TestNode nA = new TestNode("A");
     final TestNode nB = new TestNode("B");
     final TestNode[] allNodes = {nA, nB};
-    final Map<TestNode, TestNode[]> map = new HashMap<TestNode, TestNode[]>();
+    final Map<TestNode, TestNode[]> map = new HashMap<>();
     map.put(nA, new TestNode[]{nB});
     map.put(nB, new TestNode[]{nA});
     checkCircularDependecyDetected(allNodes, map);
@@ -107,7 +107,7 @@ public class DFSTBuilderTest extends TestCase {
     final TestNode nB = new TestNode("B");
     final TestNode nC = new TestNode("C");
     final TestNode[] allNodes = {nA, nB, nC};
-    final Map<TestNode, TestNode[]> map = new HashMap<TestNode, TestNode[]>();
+    final Map<TestNode, TestNode[]> map = new HashMap<>();
     map.put(nA, new TestNode[]{nB});
     map.put(nB, new TestNode[]{nA});
     map.put(nC, new TestNode[0]);
@@ -120,13 +120,13 @@ public class DFSTBuilderTest extends TestCase {
     final TestNode nC = new TestNode("C");
     final TestNode nD = new TestNode("D");
     final TestNode[] allNodes = {nA, nB, nC, nD};
-    final Map<TestNode, TestNode[]> map = new HashMap<TestNode, TestNode[]>();
+    final Map<TestNode, TestNode[]> map = new HashMap<>();
     map.put(nA, new TestNode[]{nC});
     map.put(nB, new TestNode[]{nA});
     map.put(nC, new TestNode[]{nB});
     map.put(nD, new TestNode[]{nB});
     GraphGenerator<TestNode> graph = graphByNodes(allNodes, map);
-    final DFSTBuilder<TestNode> dfstBuilder = new DFSTBuilder<TestNode>(graph);
+    final DFSTBuilder<TestNode> dfstBuilder = new DFSTBuilder<>(graph);
     assertFalse(dfstBuilder.isAcyclic());
     Comparator<TestNode> comparator = dfstBuilder.comparator();
     assertTrue(comparator.compare(nA, nD) < 0);
@@ -136,7 +136,7 @@ public class DFSTBuilderTest extends TestCase {
 
   public void testStackOverflow() {
     final TestNode[] allNodes = new TestNode[10000];
-    final Map<TestNode, TestNode[]> map = new HashMap<TestNode, TestNode[]>();
+    final Map<TestNode, TestNode[]> map = new HashMap<>();
     for (int i = 0; i < allNodes.length; i++) {
       allNodes[i] = new TestNode(i + "");
       if (i != 0) {
@@ -145,7 +145,7 @@ public class DFSTBuilderTest extends TestCase {
     }
     map.put(allNodes[0], new TestNode[]{allNodes[allNodes.length - 1]});
     GraphGenerator<TestNode> graph = graphByNodes(allNodes, map);
-    final DFSTBuilder<TestNode> dfstBuilder = new DFSTBuilder<TestNode>(graph);
+    final DFSTBuilder<TestNode> dfstBuilder = new DFSTBuilder<>(graph);
     assertFalse(dfstBuilder.isAcyclic());
   }
 
@@ -157,14 +157,14 @@ public class DFSTBuilderTest extends TestCase {
     final TestNode resMain = new TestNode("resMain");
     final TestNode resDep = new TestNode("resDep");
     final TestNode[] allNodes = {main, dep, d, d2, resMain, resDep};
-    final Map<TestNode, TestNode[]> mapIn = new HashMap<TestNode, TestNode[]>();
+    final Map<TestNode, TestNode[]> mapIn = new HashMap<>();
     mapIn.put(main, new TestNode[]{d, resMain});
     mapIn.put(dep, new TestNode[]{main,resDep});
     mapIn.put(d, new TestNode[]{d2});
     mapIn.put(d2, new TestNode[]{dep, d});
     GraphGenerator<TestNode> graph = graphByNodes(allNodes, mapIn);
 
-    final DFSTBuilder<TestNode> dfstBuilder = new DFSTBuilder<TestNode>(graph);
+    final DFSTBuilder<TestNode> dfstBuilder = new DFSTBuilder<>(graph);
     assertTrue (!dfstBuilder.isAcyclic());
     Comparator<TestNode> comparator = dfstBuilder.comparator();
     assertTrue(comparator.compare(resMain, main) < 0);
@@ -180,14 +180,14 @@ public class DFSTBuilderTest extends TestCase {
     final TestNode b = new TestNode("b");
     final TestNode c = new TestNode("c");
     for (int oIndex = 0; oIndex<4; oIndex++) {
-      List<TestNode> list = new ArrayList<TestNode>(Arrays.asList(a,b,c));
+      List<TestNode> list = new ArrayList<>(Arrays.asList(a, b, c));
       list.add(oIndex, o);
       TestNode[] allNodes = list.toArray(new TestNode[list.size()]);
 
-      Map<TestNode, TestNode[]> mapIn = new HashMap<TestNode, TestNode[]>();
+      Map<TestNode, TestNode[]> mapIn = new HashMap<>();
       mapIn.put(o, new TestNode[]{a,b,c});
 
-      final DFSTBuilder<TestNode> dfstBuilder = new DFSTBuilder<TestNode>(graphByNodes(allNodes, mapIn));
+      final DFSTBuilder<TestNode> dfstBuilder = new DFSTBuilder<>(graphByNodes(allNodes, mapIn));
       assertTrue (dfstBuilder.isAcyclic());
       Comparator<TestNode> comparator = dfstBuilder.comparator();
       TestNode[] sorted = allNodes.clone();
@@ -202,16 +202,16 @@ public class DFSTBuilderTest extends TestCase {
     final TestNode b = new TestNode("b");
     final TestNode c = new TestNode("c");
     for (int oIndex = 0; oIndex<4; oIndex++) {
-      List<TestNode> list = new ArrayList<TestNode>(Arrays.asList(a,b,c));
+      List<TestNode> list = new ArrayList<>(Arrays.asList(a, b, c));
       list.add(oIndex, o1);
       list.add(oIndex, o2);
       TestNode[] allNodes = list.toArray(new TestNode[list.size()]);
 
-      Map<TestNode, TestNode[]> mapIn = new HashMap<TestNode, TestNode[]>();
+      Map<TestNode, TestNode[]> mapIn = new HashMap<>();
       mapIn.put(o1, new TestNode[]{a,b,c,o2});
       mapIn.put(o2, new TestNode[]{o1});
 
-      final DFSTBuilder<TestNode> dfstBuilder = new DFSTBuilder<TestNode>(graphByNodes(allNodes, mapIn));
+      final DFSTBuilder<TestNode> dfstBuilder = new DFSTBuilder<>(graphByNodes(allNodes, mapIn));
       assertFalse(dfstBuilder.isAcyclic());
       Comparator<TestNode> comparator = dfstBuilder.comparator();
       assertTrue("All nodes: "+list,comparator.compare(b, a) < 0); //reversed loading order

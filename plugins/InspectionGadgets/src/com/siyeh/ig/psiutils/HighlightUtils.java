@@ -34,7 +34,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
@@ -62,6 +61,9 @@ public class HighlightUtils {
     @NotNull final Collection<? extends PsiElement> elementCollection) {
     if (elementCollection.isEmpty()) {
       return;
+    }
+    if (elementCollection.contains(null)) {
+      throw new IllegalArgumentException("Nulls passed in collection: " + elementCollection);
     }
     final Application application = ApplicationManager.getApplication();
     application.invokeLater(() -> {

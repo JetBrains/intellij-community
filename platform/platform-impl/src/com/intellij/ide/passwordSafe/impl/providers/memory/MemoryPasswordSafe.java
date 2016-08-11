@@ -33,11 +33,13 @@ import java.util.concurrent.atomic.AtomicReference;
  * so all passwords are forgotten after application exit. Some efforts are done to complicate retrieving passwords
  * from page file. However the passwords could be still retrieved from the memory using debugger or full memory dump.
  */
+@Deprecated
+// used in https://github.com/groboclown/p4ic4idea, cannot be deleted
 public class MemoryPasswordSafe extends BasePasswordSafeProvider {
   /**
    * The key to use to encrypt data
    */
-  private final transient AtomicReference<byte[]> key = new AtomicReference<byte[]>();
+  private final transient AtomicReference<byte[]> key = new AtomicReference<>();
   /**
    * The password database
    */
@@ -81,11 +83,6 @@ public class MemoryPasswordSafe extends BasePasswordSafeProvider {
   @Override
   protected void storeEncryptedPassword(byte[] key, byte[] encryptedPassword) {
     database.get().put(new ByteArrayWrapper(key), encryptedPassword);
-  }
-
-  @Override
-  public String getName() {
-    return "Memory PasswordSafe";
   }
 
   public void clear() {

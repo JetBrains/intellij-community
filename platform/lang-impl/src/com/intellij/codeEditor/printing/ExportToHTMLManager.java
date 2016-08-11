@@ -150,7 +150,7 @@ class ExportToHTMLManager {
       for (PrintOption printOption : Extensions.getExtensions(PrintOption.EP_NAME)) {
         final TreeMap<Integer, PsiReference> map = printOption.collectReferences(psiFile, filesMap);
         if (map != null) {
-          refMap = new TreeMap<Integer, PsiReference>();
+          refMap = new TreeMap<>();
           refMap.putAll(map);
         }
       }
@@ -248,7 +248,7 @@ class ExportToHTMLManager {
     public void run() {
       ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
 
-      final ArrayList<PsiFile> filesList = new ArrayList<PsiFile>();
+      final ArrayList<PsiFile> filesList = new ArrayList<>();
       final boolean isRecursive = myExportToHTMLSettings.isIncludeSubdirectories();
 
       ApplicationManager.getApplication().runReadAction(() -> {
@@ -262,7 +262,7 @@ class ExportToHTMLManager {
       if (myLastException != null) {
         return;
       }
-      HashMap<PsiFile, PsiFile> filesMap = new HashMap<PsiFile, PsiFile>();
+      HashMap<PsiFile, PsiFile> filesMap = new HashMap<>();
       for (PsiFile psiFile : filesList) {
         filesMap.put(psiFile, psiFile);
       }

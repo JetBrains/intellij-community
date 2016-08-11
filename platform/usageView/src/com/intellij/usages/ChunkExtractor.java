@@ -78,7 +78,7 @@ public class ChunkExtractor {
       final T cur = SoftReference.dereference(myRef);
       if (cur != null) return cur;
       final T result = create();
-      myRef = new WeakReference<T>(result);
+      myRef = new WeakReference<>(result);
       return result;
     }
   }
@@ -145,7 +145,7 @@ public class ChunkExtractor {
 
     int lineNumber = myDocument.getLineNumber(absoluteStartOffset);
     int visibleLineNumber = visibleDocument.getLineNumber(visibleStartOffset);
-    List<TextChunk> result = new ArrayList<TextChunk>();
+    List<TextChunk> result = new ArrayList<>();
     appendPrefix(result, visibleLineNumber);
 
     int fragmentToShowStart = myDocument.getLineStartOffset(lineNumber);

@@ -38,10 +38,10 @@ public class PPandMMHelper {
     FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
     DirectGraph dgraph = flatthelper.buildDirectGraph(root);
 
-    LinkedList<DirectNode> stack = new LinkedList<DirectNode>();
+    LinkedList<DirectNode> stack = new LinkedList<>();
     stack.add(dgraph.first);
 
-    HashSet<DirectNode> setVisited = new HashSet<DirectNode>();
+    HashSet<DirectNode> setVisited = new HashSet<>();
 
     boolean res = false;
 

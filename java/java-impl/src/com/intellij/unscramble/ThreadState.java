@@ -36,8 +36,8 @@ public class ThreadState {
   private String myThreadStateDetail;
   private String myExtraState;
   private boolean isDaemon;
-  private final Set<ThreadState> myThreadsWaitingForMyLock = new HashSet<ThreadState>();
-  private final Set<ThreadState> myDeadlockedThreads = new HashSet<ThreadState>();
+  private final Set<ThreadState> myThreadsWaitingForMyLock = new HashSet<>();
+  private final Set<ThreadState> myDeadlockedThreads = new HashSet<>();
 
   @Nullable
   private ThreadOperation myOperation;

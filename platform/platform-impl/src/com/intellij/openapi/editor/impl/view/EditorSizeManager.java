@@ -74,7 +74,7 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
                            // became hidden. myLineWidths contents is irrelevant in such a state. Previously calculated preferred size
                            // is kept until soft wraps will be recalculated and size calculations will become possible
   
-  private final List<TextRange> myDeferredRanges = new ArrayList<TextRange>();
+  private final List<TextRange> myDeferredRanges = new ArrayList<>();
   
   private final SoftWrapAwareDocumentParsingListenerAdapter mySoftWrapChangeListener = new SoftWrapAwareDocumentParsingListenerAdapter() {
     @Override
@@ -245,7 +245,7 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
       int visualLine = iterator.getVisualLine();
       int width = myLineWidths.get(visualLine);
       if (width == UNKNOWN_WIDTH) {
-        final Ref<Boolean> approximateValue = new Ref<Boolean>(Boolean.FALSE);
+        final Ref<Boolean> approximateValue = new Ref<>(Boolean.FALSE);
         width = getVisualLineWidth(iterator, () -> approximateValue.set(Boolean.TRUE));
         if (approximateValue.get()) width = -width;
         myLineWidths.set(visualLine, width);

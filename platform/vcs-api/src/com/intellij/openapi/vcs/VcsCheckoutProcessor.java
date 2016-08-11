@@ -28,7 +28,8 @@ import java.util.Map;
  */
 public abstract class VcsCheckoutProcessor {
 
-  public static final ExtensionPointName<VcsCheckoutProcessor> EXTENSION_POINT_NAME = new ExtensionPointName<VcsCheckoutProcessor>("com.intellij.vcs.checkoutProcessor");
+  public static final ExtensionPointName<VcsCheckoutProcessor> EXTENSION_POINT_NAME =
+    new ExtensionPointName<>("com.intellij.vcs.checkoutProcessor");
 
   public static VcsCheckoutProcessor getProcessor(final @NotNull String protocol) {
     return ContainerUtil.find(EXTENSION_POINT_NAME.getExtensions(), new Condition<VcsCheckoutProcessor>() {

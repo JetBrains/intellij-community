@@ -95,7 +95,7 @@ public class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
       MyVirtualFile file = findChild(name);
       if (file == null) {
         if (myChildren == null) {
-          myChildren = new THashMap<String, MyVirtualFile>();
+          myChildren = new THashMap<>();
         }
 
         file = new MyVirtualFile(name, this);

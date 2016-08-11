@@ -64,7 +64,7 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
     myDeploymentConfigurator = deploymentConfigurator;
     myProject = project;
 
-    myServerListModel = new SortedComboBoxModel<String>(String.CASE_INSENSITIVE_ORDER);
+    myServerListModel = new SortedComboBoxModel<>(String.CASE_INSENSITIVE_ORDER);
     myServerComboBox = new ComboboxWithBrowseButton(new ComboBox(myServerListModel));
     fillApplicationServersList(null);
     myServerComboBox.addActionListener(new ActionListener() {
@@ -93,7 +93,7 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
       }
     });
 
-    mySourceListModel = new SortedComboBoxModel<DeploymentSource>(
+    mySourceListModel = new SortedComboBoxModel<>(
       (o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
     mySourceListModel.addAll(deploymentConfigurator.getAvailableDeploymentSources());
     mySourceComboBox = new ComboBox(mySourceListModel);

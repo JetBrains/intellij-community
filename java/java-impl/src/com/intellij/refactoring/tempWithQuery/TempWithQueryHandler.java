@@ -89,7 +89,7 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
     }
 
     final HighlightManager highlightManager = HighlightManager.getInstance(project);
-    ArrayList<PsiReference> array = new ArrayList<PsiReference>();
+    ArrayList<PsiReference> array = new ArrayList<>();
     EditorColorsManager manager = EditorColorsManager.getInstance();
     final TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     for (PsiReference ref : refs) {

@@ -47,8 +47,8 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
   private final FileType ourStyleFileType;// = FileTypeManager.getInstance().getStdFileType("CSS");
   protected Lexer elLexer;
   private Lexer embeddedLexer;
-  private final Map<String, Lexer> scriptLexers = new HashMap<String, Lexer>();
-  private final Map<String, Lexer> styleLexers = new HashMap<String, Lexer>();
+  private final Map<String, Lexer> scriptLexers = new HashMap<>();
+  private final Map<String, Lexer> styleLexers = new HashMap<>();
   private boolean hasNoEmbeddments;
 
   public HtmlHighlightingLexer() {

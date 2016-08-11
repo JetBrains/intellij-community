@@ -88,9 +88,9 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
   private static final String MAIN_CLASS_NAME = RemoteExternalSystemFacadeImpl.class.getName();
 
   private final AtomicReference<RemoteExternalSystemProgressNotificationManager> myExportedNotificationManager
-    = new AtomicReference<RemoteExternalSystemProgressNotificationManager>();
+    = new AtomicReference<>();
 
-  @NotNull private final ThreadLocal<ProjectSystemId> myTargetExternalSystemId = new ThreadLocal<ProjectSystemId>();
+  @NotNull private final ThreadLocal<ProjectSystemId> myTargetExternalSystemId = new ThreadLocal<>();
 
   @NotNull private final ExternalSystemProgressNotificationManagerImpl                    myProgressManager;
   @NotNull private final RemoteProcessSupport<Object, RemoteExternalSystemFacade, String> mySupport;
@@ -133,30 +133,30 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
 
         // IDE jars.
         classPath.addAll(PathManager.getUtilClassPath());
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(ProjectBundle.class), classPath);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(PlaceHolder.class), classPath);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(DebuggerView.class), classPath);
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ProjectBundle.class));
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(PlaceHolder.class));
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(DebuggerView.class));
         ExternalSystemApiUtil.addBundle(params.getClassPath(), "messages.ProjectBundle", ProjectBundle.class);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(PsiBundle.class), classPath);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(Alarm.class), classPath);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(DependencyScope.class), classPath);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(ExtensionPointName.class), classPath);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(StorageUtil.class), classPath);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(ExternalSystemTaskNotificationListener.class), classPath);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(StdModuleTypes.class), classPath);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(JavaModuleType.class), classPath);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(ModuleType.class), classPath);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(EmptyModuleType.class), classPath);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(LanguageLevel.class), classPath);
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(PsiBundle.class));
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(Alarm.class));
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(DependencyScope.class));
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ExtensionPointName.class));
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(StorageUtil.class));
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ExternalSystemTaskNotificationListener.class));
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(StdModuleTypes.class));
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(JavaModuleType.class));
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ModuleType.class));
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(EmptyModuleType.class));
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(LanguageLevel.class));
 
         // add Kotlin runtime
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(Unit.class), classPath);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(KotlinReflectionInternalError.class), classPath);
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(Unit.class));
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(KotlinReflectionInternalError.class));
 
         // External system module jars
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(getClass()), classPath);
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(getClass()));
         // external-system-rt.jar
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(ExternalSystemException.class), classPath);
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ExternalSystemException.class));
         ExternalSystemApiUtil.addBundle(params.getClassPath(), "messages.CommonBundle", CommonBundle.class);
         params.getClassPath().addAll(classPath);
 

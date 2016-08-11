@@ -39,10 +39,10 @@ class VcsDirtyScopeManagerProxy extends VcsDirtyScopeManager {
   VcsDirtyScopeManagerProxy() {
     myEverythingDirty = false;
 
-    myVFiles = new HashSet<VirtualFile>();
-    myVDirs = new HashSet<VirtualFile>();
-    myFiles = new HashSet<FilePath>();
-    myDirs = new HashSet<FilePath>();
+    myVFiles = new HashSet<>();
+    myVDirs = new HashSet<>();
+    myFiles = new HashSet<>();
+    myDirs = new HashSet<>();
   }
 
   public void markEverythingDirty() {

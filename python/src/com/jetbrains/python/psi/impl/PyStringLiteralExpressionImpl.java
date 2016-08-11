@@ -69,7 +69,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   private final DefaultRegExpPropertiesProvider myPropertiesProvider;
 
   private static Map<String, String> initializeEscapeMap() {
-    Map<String, String> map = new HashMap<String, String>();
+    Map<String, String> map = new HashMap<>();
     map.put("\n", "\n");
     map.put("\\", "\\");
     map.put("'", "'");
@@ -104,7 +104,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   public List<TextRange> getStringValueTextRanges() {
     if (valueTextRanges == null) {
       int elStart = getTextRange().getStartOffset();
-      List<TextRange> ranges = new ArrayList<TextRange>();
+      List<TextRange> ranges = new ArrayList<>();
       for (ASTNode node : getStringNodes()) {
         TextRange range = getNodeTextRange(node.getText());
         int nodeOffset = node.getStartOffset() - elStart;
@@ -173,7 +173,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   @NotNull
   public List<Pair<TextRange, String>> getDecodedFragments() {
     if (myDecodedFragments == null) {
-      final List<Pair<TextRange, String>> result = new ArrayList<Pair<TextRange, String>>();
+      final List<Pair<TextRange, String>> result = new ArrayList<>();
       final int elementStart = getTextRange().getStartOffset();
       final boolean unicodeByDefault = isUnicodeByDefault();
       for (ASTNode node : getStringNodes()) {
@@ -196,7 +196,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
 
   @NotNull
   private static List<Pair<TextRange, String>> getDecodedFragments(@NotNull String encoded, int offset, boolean raw, boolean unicode) {
-    final List<Pair<TextRange, String>> result = new ArrayList<Pair<TextRange, String>>();
+    final List<Pair<TextRange, String>> result = new ArrayList<>();
     final Matcher escMatcher = PATTERN_ESCAPE.matcher(encoded);
     int index = 0;
     while (escMatcher.find(index)) {

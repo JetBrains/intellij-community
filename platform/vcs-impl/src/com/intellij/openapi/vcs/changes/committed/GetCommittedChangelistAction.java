@@ -42,13 +42,13 @@ public class GetCommittedChangelistAction extends AbstractCommonUpdateAction {
   @Override
   protected void actionPerformed(@NotNull final VcsContext context) {
     Collection<FilePath> filePaths = getFilePaths(context);
-    final List<ChangeList> selectedChangeLists = new ArrayList<ChangeList>();
+    final List<ChangeList> selectedChangeLists = new ArrayList<>();
     final ChangeList[] selectionFromContext = context.getSelectedChangeLists();
     if (selectionFromContext != null) {
       Collections.addAll(selectedChangeLists, selectionFromContext);
     }
     final List<CommittedChangeList> incomingChanges = CommittedChangesCache.getInstance(context.getProject()).getCachedIncomingChanges();
-    final List<CommittedChangeList> intersectingChanges = new ArrayList<CommittedChangeList>();
+    final List<CommittedChangeList> intersectingChanges = new ArrayList<>();
     if (incomingChanges != null) {
       for(CommittedChangeList changeList: incomingChanges) {
         if (!selectedChangeLists.contains(changeList)) {
@@ -103,7 +103,7 @@ public class GetCommittedChangelistAction extends AbstractCommonUpdateAction {
   };
 
   private static Collection<FilePath> getFilePaths(final VcsContext context) {
-    final Set<FilePath> files = new HashSet<FilePath>();
+    final Set<FilePath> files = new HashSet<>();
     final ChangeList[] selectedChangeLists = context.getSelectedChangeLists();
     if (selectedChangeLists != null) {
       for(ChangeList changelist: selectedChangeLists) {

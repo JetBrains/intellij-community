@@ -68,11 +68,11 @@ public class MavenIndicesManager implements Disposable {
   private volatile MavenIndices myIndices;
 
   private final Object myUpdatingIndicesLock = new Object();
-  private final List<MavenIndex> myWaitingIndices = new ArrayList<MavenIndex>();
+  private final List<MavenIndex> myWaitingIndices = new ArrayList<>();
   private volatile MavenIndex myUpdatingIndex;
   private final BackgroundTaskQueue myUpdatingQueue = new BackgroundTaskQueue(null, IndicesBundle.message("maven.indices.updating"));
 
-  private volatile List<MavenArchetype> myUserArchetypes = new ArrayList<MavenArchetype>();
+  private volatile List<MavenArchetype> myUserArchetypes = new ArrayList<>();
 
   public static MavenIndicesManager getInstance() {
     return ServiceManager.getService(MavenIndicesManager.class);
@@ -159,7 +159,7 @@ public class MavenIndicesManager implements Disposable {
                                                           File localRepository,
                                                           Collection<Pair<String, String>> remoteRepositoriesIdsAndUrls) {
     // MavenIndices.add method returns an existing index if it has already been added, thus we have to use set here.
-    LinkedHashSet<MavenIndex> result = new LinkedHashSet<MavenIndex>();
+    LinkedHashSet<MavenIndex> result = new LinkedHashSet<>();
 
     MavenIndices indicesObjectCache = getIndicesObject();
 
@@ -183,7 +183,7 @@ public class MavenIndicesManager implements Disposable {
       }
     }
 
-    return new ArrayList<MavenIndex>(result);
+    return new ArrayList<>(result);
   }
 
   private void addArtifact(File artifactFile, String relativePath) {
@@ -214,7 +214,7 @@ public class MavenIndicesManager implements Disposable {
   }
 
   private void scheduleUpdate(final Project projectOrNull, List<MavenIndex> indices, final boolean fullUpdate) {
-    final List<MavenIndex> toSchedule = new ArrayList<MavenIndex>();
+    final List<MavenIndex> toSchedule = new ArrayList<>();
 
     synchronized (myUpdatingIndicesLock) {
       for (MavenIndex each : indices) {
@@ -240,7 +240,7 @@ public class MavenIndicesManager implements Disposable {
     throws MavenProcessCanceledException {
     MavenLog.LOG.assertTrue(!fullUpdate || projectOrNull != null);
 
-    List<MavenIndex> remainingWaiting = new ArrayList<MavenIndex>(indices);
+    List<MavenIndex> remainingWaiting = new ArrayList<>(indices);
 
     try {
       for (MavenIndex each : indices) {
@@ -307,7 +307,7 @@ public class MavenIndicesManager implements Disposable {
 
   public synchronized Set<MavenArchetype> getArchetypes() {
     ensureInitialized();
-    Set<MavenArchetype> result = new THashSet<MavenArchetype>(myIndexer.getArchetypes());
+    Set<MavenArchetype> result = new THashSet<>(myIndexer.getArchetypes());
     result.addAll(myUserArchetypes);
 
     for (MavenArchetypesProvider each : Extensions.getExtensions(MavenArchetypesProvider.EP_NAME)) {
@@ -338,7 +338,7 @@ public class MavenIndicesManager implements Disposable {
       Element root = JDOMUtil.load(file);
 
       // Store artifact to set to remove duplicate created by old IDEA (https://youtrack.jetbrains.com/issue/IDEA-72105)
-      Collection<MavenArchetype> result = new LinkedHashSet<MavenArchetype>();
+      Collection<MavenArchetype> result = new LinkedHashSet<>();
 
       List<Element> children = root.getChildren(ELEMENT_ARCHETYPE);
       for (int i = children.size() - 1; i >= 0; i--) {
@@ -359,7 +359,7 @@ public class MavenIndicesManager implements Disposable {
         result.add(new MavenArchetype(groupId, artifactId, version, repository, description));
       }
 
-      ArrayList<MavenArchetype> listResult = new ArrayList<MavenArchetype>(result);
+      ArrayList<MavenArchetype> listResult = new ArrayList<>(result);
       Collections.reverse(listResult);
 
       myUserArchetypes = listResult;

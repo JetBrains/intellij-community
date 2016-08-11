@@ -65,10 +65,10 @@ public class CustomAntElementsRegistry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.dom.CustomAntElementsRegistry");
   private static final Key<CustomAntElementsRegistry> REGISTRY_KEY = Key.create("_custom_element_registry_");
 
-  private final Map<XmlName, ClassProvider> myCustomElements = new THashMap<XmlName, ClassProvider>();
-  private final Map<AntDomNamedElement, String> myTypeDefErrors = new THashMap<AntDomNamedElement, String>();
-  private final Map<XmlName, AntDomNamedElement> myDeclarations = new THashMap<XmlName, AntDomNamedElement>();
-  private final Map<String, ClassLoader> myNamedLoaders = new THashMap<String, ClassLoader>();
+  private final Map<XmlName, ClassProvider> myCustomElements = new THashMap<>();
+  private final Map<AntDomNamedElement, String> myTypeDefErrors = new THashMap<>();
+  private final Map<XmlName, AntDomNamedElement> myDeclarations = new THashMap<>();
+  private final Map<String, ClassLoader> myNamedLoaders = new THashMap<>();
 
   private CustomAntElementsRegistry(final AntDomProject antProject) {
     antProject.accept(new CustomTagDefinitionFinder(antProject));
@@ -89,7 +89,7 @@ public class CustomAntElementsRegistry {
       // this case is already handled in AntDomExtender when defining children
       return Collections.emptySet(); 
     }
-    final Set<XmlName> result = new HashSet<XmlName>();
+    final Set<XmlName> result = new HashSet<>();
     
     final Pair<AntDomMacroDef, AntDomScriptDef> contextMacroOrScriptDef = getContextMacroOrScriptDef(parentElement);
     final AntDomMacroDef restrictToMacroDef = contextMacroOrScriptDef != null? contextMacroOrScriptDef.getFirst() : null;
@@ -137,15 +137,15 @@ public class CustomAntElementsRegistry {
   private Pair<AntDomMacroDef, AntDomScriptDef> getContextMacroOrScriptDef(AntDomElement element) {
     final AntDomMacroDef macrodef = element.getParentOfType(AntDomMacroDef.class, false);
     if (macrodef != null) {
-      return new Pair<AntDomMacroDef, AntDomScriptDef>(macrodef, null);
+      return new Pair<>(macrodef, null);
     }
     for (AntDomCustomElement custom = element.getParentOfType(AntDomCustomElement.class, false); custom != null; custom = custom.getParentOfType(AntDomCustomElement.class, true)) {
       final AntDomNamedElement declaring = getDeclaringElement(custom.getXmlName());
       if (declaring instanceof AntDomMacroDef) {
-        return new Pair<AntDomMacroDef, AntDomScriptDef>((AntDomMacroDef)declaring, null);
+        return new Pair<>((AntDomMacroDef)declaring, null);
       }
       else if (declaring instanceof AntDomScriptDef) {
-        return new Pair<AntDomMacroDef, AntDomScriptDef>(null, (AntDomScriptDef)declaring);
+        return new Pair<>(null, (AntDomScriptDef)declaring);
       }
     }
     return null;
@@ -218,7 +218,7 @@ public class CustomAntElementsRegistry {
         final String err = lookupError(entry.getKey());
         if (err != null)  {
           if (errors == null) {
-            errors = new ArrayList<String>();
+            errors = new ArrayList<>();
           }
           errors.add(err);
         }
@@ -313,7 +313,7 @@ public class CustomAntElementsRegistry {
     }
 
     try {
-      final List<URL> urls = new ArrayList<URL>();
+      final List<URL> urls = new ArrayList<>();
       // check classpath attribute
       final List<File> cpFiles = typedef.getClasspath().getValue();
       if (cpFiles != null) {
@@ -327,7 +327,7 @@ public class CustomAntElementsRegistry {
         }
       }
 
-      final HashSet<AntFilesProvider> processed = new HashSet<AntFilesProvider>();
+      final HashSet<AntFilesProvider> processed = new HashSet<>();
       final AntDomElement referencedPath = typedef.getClasspathRef().getValue();
       if (referencedPath instanceof AntFilesProvider) {
         for (File cpFile : ((AntFilesProvider)referencedPath).getFiles(processed)) {
@@ -369,8 +369,8 @@ public class CustomAntElementsRegistry {
   }
 
   private class CustomTagDefinitionFinder extends AntDomRecursiveVisitor {
-    private final Set<AntDomElement> myElementsOnThePath = new HashSet<AntDomElement>();
-    private final Set<String> processedAntlibs = new HashSet<String>();
+    private final Set<AntDomElement> myElementsOnThePath = new HashSet<>();
+    private final Set<String> processedAntlibs = new HashSet<>();
     private final AntDomProject myAntProject;
 
     public CustomTagDefinitionFinder(AntDomProject antProject) {
@@ -585,7 +585,7 @@ public class CustomAntElementsRegistry {
     private void loadDefinitionsFromAntlib(XmlFile xmlFile, String uri, ClassLoader loader, @Nullable AntDomTypeDef typedef, AntDomProject antProject) {
       final AntDomAntlib antLib = AntSupport.getAntLib(xmlFile);
       if (antLib != null) {
-        final List<AntDomTypeDef> defs = new ArrayList<AntDomTypeDef>();
+        final List<AntDomTypeDef> defs = new ArrayList<>();
         defs.addAll(antLib.getTaskdefs());
         defs.addAll(antLib.getTypedefs());
         if (!defs.isEmpty()) {

@@ -52,7 +52,7 @@ public class DecompilerTestFixture {
     targetDir = new File(tempDir, "decompiled");
     assertThat(targetDir.mkdirs()).isTrue();
 
-    Map<String, Object> options = new HashMap<String, Object>();
+    Map<String, Object> options = new HashMap<>();
     options.put(IFernflowerPreferences.LOG_LEVEL, "warn");
     options.put(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES, "1");
     options.put(IFernflowerPreferences.REMOVE_SYNTHETIC, "1");

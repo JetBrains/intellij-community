@@ -43,7 +43,7 @@ import java.util.List;
 public class RunContentBuilder extends RunTab {
   private static final String JAVA_RUNNER = "JavaRunner";
 
-  private final List<AnAction> myRunnerActions = new SmartList<AnAction>();
+  private final List<AnAction> myRunnerActions = new SmartList<>();
   private final ExecutionResult myExecutionResult;
 
   public RunContentBuilder(@NotNull ExecutionResult executionResult, @NotNull ExecutionEnvironment environment) {

@@ -236,7 +236,7 @@ public class SvnChangesCorrectlyRefreshedTest extends Svn17TestCase {
   }
 
   private List<VirtualFile> getAllFiles(final SubTree subTree) {
-    final List<VirtualFile> files = new ArrayList<VirtualFile>();
+    final List<VirtualFile> files = new ArrayList<>();
     files.addAll(Arrays.asList(subTree.myRootDir, subTree.mySourceDir, subTree.myS2File, subTree.myS1File, subTree.myTargetDir));
     files.addAll(subTree.myTargetFiles);
     return files;

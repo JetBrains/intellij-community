@@ -907,7 +907,7 @@ public class CreateFromUsageUtils {
           if (qName == null) continue;
 
           ClassInheritorsSearch.search(containingClass, descendantsSearchScope, true, true, false).forEach(psiClass -> {
-            ContainerUtil.addIfNotNull(getQualifiedName(psiClass), possibleClassNames);
+            ContainerUtil.addIfNotNull(possibleClassNames, getQualifiedName(psiClass));
             return true;
           });
 
@@ -957,7 +957,7 @@ public class CreateFromUsageUtils {
         });
         for (final PsiClass aClass : classes) {
           final String qname = getQualifiedName(aClass);
-          ContainerUtil.addIfNotNull(qname, possibleClassNames);
+          ContainerUtil.addIfNotNull(possibleClassNames, qname);
         }
       }
       return true;

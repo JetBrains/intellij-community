@@ -45,7 +45,7 @@ public class StudyEditInputAction extends DumbAwareAction {
 
   private static final Logger LOG = Logger.getInstance(StudyEditInputAction.class.getName());
   private JBEditorTabs tabbedPane;
-  private Map<TabInfo, UserTest> myEditableTabs = new HashMap<TabInfo, UserTest>();
+  private Map<TabInfo, UserTest> myEditableTabs = new HashMap<>();
 
   public StudyEditInputAction() {
     super("Watch Test Input", "Watch test input", InteractiveLearningIcons.WatchInput);

@@ -22,17 +22,18 @@ package org.testng;
 
 import com.beust.jcommander.JCommander;
 import com.intellij.rt.execution.testFrameworks.ForkedDebuggerHelper;
-import org.testng.remote.RemoteTestNG;
 
 import java.io.*;
-import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Vector;
 
 public class RemoteTestNGStarter {
-  public static boolean SM_RUNNER = System.getProperty("idea.testng.sm_runner") != null;
   private static final String SOCKET = "-socket";
+
   public static void main(String[] args) throws Exception {
     int i = 0;
     String param = null;
@@ -44,13 +45,16 @@ public class RemoteTestNGStarter {
       if (arg.startsWith("@name")) {
         param = arg.substring(5);
         continue;
-      } else if (arg.startsWith("@w@")) {
+      }
+      else if (arg.startsWith("@w@")) {
         workingDirs = arg.substring(3);
         continue;
-      } else if (arg.startsWith("@@@")) {
+      }
+      else if (arg.startsWith("@@@")) {
         commandFileName = arg.substring(3);
         continue;
-      } else if (arg.startsWith(ForkedDebuggerHelper.DEBUG_SOCKET)) {
+      }
+      else if (arg.startsWith(ForkedDebuggerHelper.DEBUG_SOCKET)) {
         continue;
       }
       else if (arg.startsWith(SOCKET)) {
@@ -89,7 +93,7 @@ public class RemoteTestNGStarter {
           line = reader.readLine();
         }
 
-        if (line.startsWith(cantRunMessage) && !new File(line).exists()){
+        if (line.startsWith(cantRunMessage) && !new File(line).exists()) {
           System.err.println(line.substring(cantRunMessage.length()));
           while (true) {
             line = reader.readLine();
@@ -108,41 +112,18 @@ public class RemoteTestNGStarter {
     }
 
     resultArgs.addAll(newArgs);
-    
-    if (SM_RUNNER) {
-      if (commandFileName != null) {
-        if (workingDirs != null && new File(workingDirs).length() > 0) {
-          System.exit(new TestNGForkedSplitter(workingDirs, System.out, System.err, newArgs)
-                        .startSplitting(args, param, commandFileName, null));
-          return;
-        }
+
+    if (commandFileName != null) {
+      if (workingDirs != null && new File(workingDirs).length() > 0) {
+        System.exit(new TestNGForkedSplitter(workingDirs, System.out, System.err, newArgs)
+                      .startSplitting(args, param, commandFileName, null));
+        return;
       }
-      final IDEARemoteTestNG testNG = new IDEARemoteTestNG(param);
-      CommandLineArgs cla = new CommandLineArgs();
-      new JCommander(Collections.singletonList(cla), (String[])resultArgs.toArray(new String[resultArgs.size()]));
-      testNG.configure(cla);
-      testNG.run();
-      return;
     }
-
-    try {
-      //testng 5.10 do not initialize xml suites before run in normal main call => No test suite found.
-      //revert "cleanup" to set suites manually again, this time for old versions only
-      final Class aClass = Class.forName("org.testng.TestNGCommandLineArgs");
-      final Method parseCommandLineMethod = aClass.getDeclaredMethod("parseCommandLine", new Class[] {new String[0].getClass()});
-      final Map commandLineArgs = (Map)parseCommandLineMethod.invoke(null, new Object[] {(String[])resultArgs.toArray(new String[resultArgs.size()])});
-      final RemoteTestNG testNG = new RemoteTestNG();
-      testNG.configure(commandLineArgs);
-      //set suites manually
-      testNG.initializeSuitesAndJarFile();
-      //in order to prevent suites to be initialized twice (second time in run)
-      //clear string suites here
-      testNG.setTestSuites(new ArrayList());
-      testNG.run();
-      return;
-    }
-    catch (Throwable ignore) {}
-
-    RemoteTestNG.main((String[])resultArgs.toArray(new String[resultArgs.size()]));
+    final IDEARemoteTestNG testNG = new IDEARemoteTestNG(param);
+    CommandLineArgs cla = new CommandLineArgs();
+    new JCommander(Collections.singletonList(cla), (String[])resultArgs.toArray(new String[resultArgs.size()]));
+    testNG.configure(cla);
+    testNG.run();
   }
 }

@@ -140,7 +140,7 @@ public class AntArtifactProperties extends ArtifactProperties<AntArtifactExtensi
   }
 
   public List<BuildFileProperty> getAllProperties(@NotNull Artifact artifact) {
-    final List<BuildFileProperty> properties = new ArrayList<BuildFileProperty>();
+    final List<BuildFileProperty> properties = new ArrayList<>();
     properties.add(new BuildFileProperty(JpsAntArtifactExtensionImpl.ARTIFACT_OUTPUT_PATH_PROPERTY, artifact.getOutputPath()));
     properties.addAll(myExtensionProperties.myUserProperties);
     return properties;

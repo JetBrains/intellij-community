@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,15 +158,17 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   @Override
-  public PyType getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
-    if ("typing.cast".equals(function.getQualifiedName()) && callSite instanceof PyCallExpression) {
-      final PyCallExpression callExpr = (PyCallExpression)callSite;
-      final PyExpression[] args = callExpr.getArguments();
-      if (args.length > 0) {
-        final PyExpression typeExpr = args[0];
-        return getType(typeExpr, new Context(context));
-      }
+  public Ref<PyType> getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+    if ("typing.cast".equals(function.getQualifiedName())) {
+      return Optional
+        .ofNullable(as(callSite, PyCallExpression.class))
+        .map(PyCallExpression::getArguments)
+        .filter(args -> args.length > 0)
+        .map(args -> getType(args[0], new Context(context)))
+        .map(Ref::create)
+        .orElse(null);
     }
+
     return null;
   }
 
@@ -227,7 +229,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PyClass cls = function.getContainingClass();
       if (cls != null) {
         final List<PyGenericType> genericTypes = collectGenericTypes(cls, context);
-        final List<PyType> elementTypes = new ArrayList<PyType>(genericTypes);
+        final List<PyType> elementTypes = new ArrayList<>(genericTypes);
         if (!elementTypes.isEmpty()) {
           return new PyCollectionTypeImpl(cls, false, elementTypes);
         }
@@ -246,7 +248,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       }
     }
     if (isGeneric) {
-      final ArrayList<PyGenericType> results = new ArrayList<PyGenericType>();
+      final ArrayList<PyGenericType> results = new ArrayList<>();
       // XXX: Requires switching from stub to AST
       for (PyExpression expr : cls.getSuperClassExpressions()) {
         if (expr instanceof PySubscriptionExpression) {
@@ -454,7 +456,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PyExpression expr = ((PyExpressionStatement)element).getExpression();
       if (expr instanceof PyTupleExpression) {
         final PyTupleExpression tupleExpr = (PyTupleExpression)expr;
-        final List<PyType> elementTypes = new ArrayList<PyType>();
+        final List<PyType> elementTypes = new ArrayList<>();
         for (PyExpression elementExpr : tupleExpr.getElements()) {
           elementTypes.add(getType(elementExpr, context));
         }
@@ -480,7 +482,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
             final PyExpression parametersExpr = elements[0];
             final PyExpression returnTypeExpr = elements[1];
             if (parametersExpr instanceof PyListLiteralExpression) {
-              final List<PyCallableParameter> parameters = new ArrayList<PyCallableParameter>();
+              final List<PyCallableParameter> parameters = new ArrayList<>();
               final PyListLiteralExpression listExpr = (PyListLiteralExpression)parametersExpr;
               for (PyExpression argExpr : listExpr.getElements()) {
                 parameters.add(new PyCallableParameterImpl(null, getType(argExpr, context)));
@@ -550,7 +552,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @NotNull
   private static List<PyType> getIndexTypes(@NotNull PySubscriptionExpression expression, @NotNull Context context) {
-    final List<PyType> types = new ArrayList<PyType>();
+    final List<PyType> types = new ArrayList<>();
     final PyExpression indexExpr = expression.getIndexExpression();
     if (indexExpr instanceof PyTupleExpression) {
       final PyTupleExpression tupleExpr = (PyTupleExpression)indexExpr;

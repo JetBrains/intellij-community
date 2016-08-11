@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,11 +48,6 @@ public abstract class JdkVersionDetector {
 
   @Nullable
   public abstract JdkVersionInfo detectJdkVersionInfo(@NotNull String homePath, @NotNull ActionRunner actionRunner);
-
-  @Deprecated
-  @Nullable
-  public abstract String readVersionFromProcessOutput(@NotNull String homePath, @NotNull String[] command, String versionLineMarker,
-                                                      @NotNull ActionRunner actionRunner);
 
   //todo[nik] replace with a service with different implementations for IDE process and for JPS process (need to exclude jps-builders module from IDEA classpath)
   public interface ActionRunner {

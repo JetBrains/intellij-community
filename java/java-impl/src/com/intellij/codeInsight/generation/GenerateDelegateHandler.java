@@ -73,7 +73,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
       try {
         int offset = editor.getCaretModel().getOffset();
 
-        List<PsiGenerationInfo<PsiMethod>> prototypes = new ArrayList<PsiGenerationInfo<PsiMethod>>(candidates.length);
+        List<PsiGenerationInfo<PsiMethod>> prototypes = new ArrayList<>(candidates.length);
         for (PsiMethodMember candidate : candidates) {
           prototypes.add(generateDelegatePrototype(candidate, target.getElement()));
         }
@@ -182,7 +182,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
       OverrideImplementUtil.annotateOnOverrideImplement(method, targetClass, overridden);
     }
 
-    return new PsiGenerationInfo<PsiMethod>(method);
+    return new PsiGenerationInfo<>(method);
   }
 
   private void clearMethod(PsiMethod method) throws IncorrectOperationException {
@@ -231,11 +231,11 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
     if (aClass == null) return null;
 
-    List<PsiMethodMember> methodInstances = new ArrayList<PsiMethodMember>();
+    List<PsiMethodMember> methodInstances = new ArrayList<>();
 
     final PsiMethod[] allMethods;
     if (targetClass instanceof PsiTypeParameter) {
-      LinkedHashSet<PsiMethod> meths = new LinkedHashSet<PsiMethod>();
+      LinkedHashSet<PsiMethod> meths = new LinkedHashSet<>();
       for (PsiClass superClass : targetClass.getSupers()) {
         meths.addAll(Arrays.asList(superClass.getAllMethods()));
       }
@@ -244,10 +244,10 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     else {
       allMethods = targetClass.getAllMethods();
     }
-    final Set<MethodSignature> signatures = new HashSet<MethodSignature>();
-    final Set<MethodSignature> existingSignatures = new HashSet<MethodSignature>(aClass.getVisibleSignatures());
-    final Set<PsiMethodMember> selection = new HashSet<PsiMethodMember>();
-    Map<PsiClass, PsiSubstitutor> superSubstitutors = new HashMap<PsiClass, PsiSubstitutor>();
+    final Set<MethodSignature> signatures = new HashSet<>();
+    final Set<MethodSignature> existingSignatures = new HashSet<>(aClass.getVisibleSignatures());
+    final Set<PsiMethodMember> selection = new HashSet<>();
+    Map<PsiClass, PsiSubstitutor> superSubstitutors = new HashMap<>();
 
     final PsiClass containingClass = targetMember.getContainingClass();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(target.getProject());
@@ -285,7 +285,8 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
 
     PsiMethodMember[] result;
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      MemberChooser<PsiElementClassMember> chooser = new MemberChooser<PsiElementClassMember>(methodInstances.toArray(new PsiMethodMember[methodInstances.size()]), false, true, project);
+      MemberChooser<PsiElementClassMember> chooser =
+        new MemberChooser<>(methodInstances.toArray(new PsiMethodMember[methodInstances.size()]), false, true, project);
       chooser.setTitle(CodeInsightBundle.message("generate.delegate.method.chooser.title"));
       chooser.setCopyJavadocVisible(true);
       if (!selection.isEmpty()) {
@@ -320,7 +321,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     final PsiElementClassMember[] targetElements = getTargetElements(file, editor);
     if (targetElements == null || targetElements.length == 0) return null;
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      MemberChooser<PsiElementClassMember> chooser = new MemberChooser<PsiElementClassMember>(targetElements, false, false, project);
+      MemberChooser<PsiElementClassMember> chooser = new MemberChooser<>(targetElements, false, false, project);
       chooser.setTitle(CodeInsightBundle.message("generate.delegate.target.chooser.title"));
       chooser.setCopyJavadocVisible(false);
       chooser.show();
@@ -346,7 +347,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     PsiClass aClass = targetClass;
     if (aClass == null) return null;
 
-    List<PsiElementClassMember> result = new ArrayList<PsiElementClassMember>();
+    List<PsiElementClassMember> result = new ArrayList<>();
 
     while (aClass != null) {
       collectTargetsInClass(element, targetClass, aClass, result);

@@ -38,7 +38,7 @@ public class GrPropertyForCompletion extends LightFieldBuilder {
     super(method.getManager(), name, type);
     myOriginalAccessor = method;
 
-    List<String> modifiers = new ArrayList<String>();
+    List<String> modifiers = new ArrayList<>();
     if (method.hasModifierProperty(GrModifier.PUBLIC)) modifiers.add(GrModifier.PUBLIC);
     if (method.hasModifierProperty(GrModifier.PROTECTED)) modifiers.add(GrModifier.PROTECTED);
     if (method.hasModifierProperty(GrModifier.PRIVATE)) modifiers.add(GrModifier.PRIVATE);

@@ -75,8 +75,8 @@ class PrintDialog extends DialogWrapper {
   private String myDirectoryName = null;
   private final boolean isSelectedTextEnabled;
 
-  private static final Map<Object, String> PLACEMENT_MAP = new HashMap<Object, String>();
-  private static final Map<Object, String> ALIGNMENT_MAP = new HashMap<Object, String>();
+  private static final Map<Object, String> PLACEMENT_MAP = new HashMap<>();
+  private static final Map<Object, String> ALIGNMENT_MAP = new HashMap<>();
   private final String mySelectedText;
 
   static {

@@ -50,7 +50,7 @@ public class AutoHardWrapHandler {
    *
    * @see CodeStyleSettings#isWrapOnTyping(Language)
    */
-  public static final Key<Boolean> AUTO_WRAP_LINE_IN_PROGRESS_KEY = new Key<Boolean>("AUTO_WRAP_LINE_IN_PROGRESS");
+  public static final Key<Boolean> AUTO_WRAP_LINE_IN_PROGRESS_KEY = new Key<>("AUTO_WRAP_LINE_IN_PROGRESS");
 
   private static final AutoHardWrapHandler INSTANCE = new AutoHardWrapHandler();
 
@@ -64,7 +64,7 @@ public class AutoHardWrapHandler {
    * Hence, we remember last auto-wrap change per-document and merge it with the new auto-wrap if necessary. Current collection
    * holds that <code>'document -> last auto-wrap change'</code> mappings.
    */
-  private final Map<Document, AutoWrapChange> myAutoWrapChanges = new WeakHashMap<Document, AutoWrapChange>();
+  private final Map<Document, AutoWrapChange> myAutoWrapChanges = new WeakHashMap<>();
 
   public static AutoHardWrapHandler getInstance() {
     return INSTANCE;

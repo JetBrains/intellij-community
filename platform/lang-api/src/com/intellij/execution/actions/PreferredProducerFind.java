@@ -72,7 +72,7 @@ class PreferredProducerFind {
     Extensions.getExtensions(ConfigurationType.CONFIGURATION_TYPE_EP);
     final RuntimeConfigurationProducer[] configurationProducers =
       ApplicationManager.getApplication().getExtensions(RuntimeConfigurationProducer.RUNTIME_CONFIGURATION_PRODUCER);
-    final ArrayList<RuntimeConfigurationProducer> producers = new ArrayList<RuntimeConfigurationProducer>();
+    final ArrayList<RuntimeConfigurationProducer> producers = new ArrayList<>();
     for (final RuntimeConfigurationProducer prototype : configurationProducers) {
       final RuntimeConfigurationProducer producer;
       try {
@@ -98,7 +98,7 @@ class PreferredProducerFind {
       return null;
     }
 
-    final ArrayList<ConfigurationFromContext> configurationsFromContext = new ArrayList<ConfigurationFromContext>();
+    final ArrayList<ConfigurationFromContext> configurationsFromContext = new ArrayList<>();
     for (RuntimeConfigurationProducer producer : findAllProducers(location, context)) {
       configurationsFromContext.add(new ConfigurationFromContextWrapper(producer));
     }

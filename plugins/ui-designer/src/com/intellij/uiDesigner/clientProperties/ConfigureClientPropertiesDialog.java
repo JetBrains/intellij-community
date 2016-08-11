@@ -205,7 +205,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
 
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     DefaultTreeModel treeModel = new DefaultTreeModel(root);
-    Map<Class, DefaultMutableTreeNode> classToNodeMap = new HashMap<Class, DefaultMutableTreeNode>();
+    Map<Class, DefaultMutableTreeNode> classToNodeMap = new HashMap<>();
     for (Class cls : configuredClasses) {
       DefaultMutableTreeNode parentNode = root;
       Class superClass = cls.getSuperclass();

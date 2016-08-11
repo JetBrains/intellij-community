@@ -451,7 +451,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     private final int myEndVOffset;
     private final int myAnimationDuration;
 
-    private final ArrayList<Runnable> myPostRunnables = new ArrayList<Runnable>();
+    private final ArrayList<Runnable> myPostRunnables = new ArrayList<>();
 
     private final int myHDist;
     private final int myVDist;

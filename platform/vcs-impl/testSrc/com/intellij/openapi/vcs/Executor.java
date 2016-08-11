@@ -222,7 +222,7 @@ public class Executor {
 
   @NotNull
   public static List<String> splitCommandInParameters(@NotNull String command) {
-    List<String> split = new ArrayList<String>();
+    List<String> split = new ArrayList<>();
 
     boolean insideParam = false;
     StringBuilder currentParam = new StringBuilder();

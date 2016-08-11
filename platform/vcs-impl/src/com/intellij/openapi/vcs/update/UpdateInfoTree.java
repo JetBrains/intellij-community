@@ -331,7 +331,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   }
 
   private VirtualFile[] getVirtualFileArray() {
-    ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
+    ArrayList<VirtualFile> result = new ArrayList<>();
     TreePath[] selectionPaths = myTree.getSelectionPaths();
     if (selectionPaths != null) {
       for (TreePath selectionPath : selectionPaths) {
@@ -344,7 +344,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
 
   @Nullable
   private File[] getFileArray() {
-    ArrayList<File> result = new ArrayList<File>();
+    ArrayList<File> result = new ArrayList<>();
     TreePath[] selectionPaths = myTree.getSelectionPaths();
     if (selectionPaths != null) {
       for (TreePath selectionPath : selectionPaths) {

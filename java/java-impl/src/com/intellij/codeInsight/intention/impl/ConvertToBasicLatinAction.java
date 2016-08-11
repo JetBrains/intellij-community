@@ -196,7 +196,7 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
         LOG.error(e); return;
       }
 
-      ourEntities = new HashMap<Character, String>();
+      ourEntities = new HashMap<>();
       final Pattern pattern = Pattern.compile("&#(\\d+);");
       XmlUtil.processXmlElements(file, new PsiElementProcessor() {
         @Override

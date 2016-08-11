@@ -252,7 +252,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     List<PsiElement> filtered = null;
     for (PsiElement element : psiElements) {
       if (element instanceof SyntheticElement) {
-        if (filtered == null) filtered = new ArrayList<PsiElement>(Collections.singletonList(element));
+        if (filtered == null) filtered = new ArrayList<>(Collections.singletonList(element));
         filtered.remove(element);
       }
     }

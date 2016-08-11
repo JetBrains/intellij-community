@@ -32,8 +32,8 @@ import java.util.regex.Pattern;
  *         Date: May 2, 2007
  */
 public class AntDomPattern extends AntDomRecursiveVisitor {
-  private static final List<Pattern> ourDefaultExcludes = new ArrayList<Pattern>(getDefaultExcludes(true));
-  private static final List<Pattern> ourCaseInsensitiveDefaultExcludes = new ArrayList<Pattern>(getDefaultExcludes(false));
+  private static final List<Pattern> ourDefaultExcludes = new ArrayList<>(getDefaultExcludes(true));
+  private static final List<Pattern> ourCaseInsensitiveDefaultExcludes = new ArrayList<>(getDefaultExcludes(false));
   private final boolean myCaseSensitive;
   private static final String ourSeparatorPattern = Pattern.quote("/");
 
@@ -58,9 +58,9 @@ public class AntDomPattern extends AntDomRecursiveVisitor {
     );
   }
 
-  private final List<Pattern> myIncludePatterns = new ArrayList<Pattern>();
-  private final List<Pattern> myExcludePatterns = new ArrayList<Pattern>();
-  private final List<PrefixItem[]> myCouldBeIncludedPatterns = new ArrayList<PrefixItem[]>();
+  private final List<Pattern> myIncludePatterns = new ArrayList<>();
+  private final List<Pattern> myExcludePatterns = new ArrayList<>();
+  private final List<PrefixItem[]> myCouldBeIncludedPatterns = new ArrayList<>();
 
   AntDomPattern(final boolean caseSensitive) {
     myCaseSensitive = caseSensitive;

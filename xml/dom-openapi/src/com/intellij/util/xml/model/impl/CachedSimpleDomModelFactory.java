@@ -50,7 +50,7 @@ public abstract class CachedSimpleDomModelFactory<T extends DomElement, M extend
 
          final Scope scope = getModelScope(file);
          final M model = computeModel(file, scope);
-         return new CachedValueProvider.Result<M>(model, computeDependencies(model, scope));
+         return new CachedValueProvider.Result<>(model, computeDependencies(model, scope));
       }
     };
   }

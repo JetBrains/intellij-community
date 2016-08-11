@@ -49,7 +49,7 @@ public class NameSuggesterUtil {
       name = name.substring(1);
     }
     final int length = name.length();
-    final Collection<String> possibleNames = new LinkedHashSet<String>();
+    final Collection<String> possibleNames = new LinkedHashSet<>();
     for (int i = 0; i < length; i++) {
       if (Character.isLetter(name.charAt(i)) &&
           (i == 0 || name.charAt(i - 1) == '_' || (Character.isLowerCase(name.charAt(i - 1)) && Character.isUpperCase(name.charAt(i))))) {
@@ -60,13 +60,13 @@ public class NameSuggesterUtil {
       }
     }
     // prefer shorter names
-    ArrayList<String> reversed = new ArrayList<String>(possibleNames);
+    ArrayList<String> reversed = new ArrayList<>(possibleNames);
     Collections.reverse(reversed);
     return reversed;
   }
 
   public static Collection<String> generateNamesByType(@NotNull String name) {
-    final Collection<String> possibleNames = new LinkedHashSet<String>();
+    final Collection<String> possibleNames = new LinkedHashSet<>();
     name = StringUtil.decapitalize(deleteNonLetterFromString(name.replace('.', '_')));
     name = toUnderscoreCase(name);
     possibleNames.add(name);

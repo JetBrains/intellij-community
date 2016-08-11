@@ -141,7 +141,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
   }
 
   protected XmlAttributeDescriptor[] computeAttributeDescriptors(final Map<DAttributePattern, Pair<? extends Map<String, String>, Boolean>> map) {
-    final Map<QName, RngXmlAttributeDescriptor> name2descriptor = new HashMap<QName, RngXmlAttributeDescriptor>();
+    final Map<QName, RngXmlAttributeDescriptor> name2descriptor = new HashMap<>();
 
     for (DAttributePattern pattern : map.keySet()) {
       final Pair<? extends Map<String, String>, Boolean> value = map.get(pattern);

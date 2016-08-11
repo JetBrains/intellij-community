@@ -56,7 +56,7 @@ class PatternDialog extends DialogWrapper {
 
     final TodoAttributes attrs = pattern.getAttributes();
     myPattern = pattern;
-    myIconComboBox = new ComboBox<Icon>(new Icon[]{AllIcons.General.TodoDefault, AllIcons.General.TodoQuestion, 
+    myIconComboBox = new ComboBox<>(new Icon[]{AllIcons.General.TodoDefault, AllIcons.General.TodoQuestion,
       AllIcons.General.TodoImportant});
     myIconComboBox.setSelectedItem(attrs.getIcon());
     myIconComboBox.setRenderer(new ListCellRendererWrapper<Icon>() {

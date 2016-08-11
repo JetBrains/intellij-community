@@ -582,7 +582,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
     public TypeView(PsiVariable var, PsiSubstitutor varSubstitutor, PsiSubstitutor evalSubstitutor) {
       myOriginType = varSubstitutor != null ? varSubstitutor.substitute(var.getType()) : var.getType();
 
-      Map<PsiTypeParameter, PsiType> realMap = new HashMap<PsiTypeParameter, PsiType>();
+      Map<PsiTypeParameter, PsiType> realMap = new HashMap<>();
       if (varSubstitutor != null) realMap.putAll(varSubstitutor.getSubstitutionMap());
       if (evalSubstitutor != null) realMap.putAll(evalSubstitutor.getSubstitutionMap());
 

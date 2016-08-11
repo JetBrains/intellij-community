@@ -67,7 +67,7 @@ public class GroovyOverlyComplexArithmeticExpressionInspectionBase extends BaseI
   }
 
   private class Visitor extends BaseInspectionVisitor {
-    private final Set<IElementType> arithmeticTokens = new HashSet<IElementType>(5);
+    private final Set<IElementType> arithmeticTokens = new HashSet<>(5);
 
     {
       arithmeticTokens.add(GroovyTokenTypes.mPLUS);

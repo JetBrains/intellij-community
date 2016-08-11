@@ -35,7 +35,7 @@ public class MethodCallUtils {
   /**
    * @noinspection StaticCollection
    */
-  @NonNls private static final Set<String> regexMethodNames = new HashSet<String>(5);
+  @NonNls private static final Set<String> regexMethodNames = new HashSet<>(5);
 
   static {
     regexMethodNames.add("compile");
@@ -314,6 +314,12 @@ public class MethodCallUtils {
         super.visitElement(element);
       }
     }
+
+    @Override
+    public void visitClass(PsiClass aClass) {}
+
+    @Override
+    public void visitLambdaExpression(PsiLambdaExpression expression) {}
 
     @Override
     public void visitIfStatement(PsiIfStatement statement) {

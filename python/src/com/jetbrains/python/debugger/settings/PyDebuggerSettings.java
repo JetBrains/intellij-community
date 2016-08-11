@@ -42,7 +42,7 @@ public class PyDebuggerSettings extends XDebuggerSettings<PyDebuggerSettings> im
 
   public PyDebuggerSettings() {
     super("python");
-    mySteppingFilters = new SmartList<PySteppingFilter>();
+    mySteppingFilters = new SmartList<>();
   }
 
   public static PyDebuggerSettings getInstance() {

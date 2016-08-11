@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.application.impl;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
@@ -932,7 +933,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   //copy of ApplicationInfoProperties.shortenCompanyName
-  private static String shortenCompanyName(String name) {
+  @VisibleForTesting
+  static String shortenCompanyName(String name) {
     return StringUtil.trimEnd(StringUtil.trimEnd(name, " s.r.o."), " Inc.");
   }
 

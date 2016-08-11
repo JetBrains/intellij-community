@@ -90,7 +90,7 @@ public class ClassRepr extends Proto {
   public abstract static class Diff extends Difference {
     public abstract Specifier<TypeRepr.AbstractType, Difference> interfaces();
 
-    public abstract Specifier<FieldRepr, FieldRepr.Diff> fields();
+    public abstract Specifier<FieldRepr, Difference> fields();
 
     public abstract Specifier<MethodRepr, MethodRepr.Diff> methods();
 
@@ -155,7 +155,7 @@ public class ClassRepr extends Proto {
       }
 
       @Override
-      public Difference.Specifier<FieldRepr, FieldRepr.Diff> fields() {
+      public Difference.Specifier<FieldRepr, Difference> fields() {
         return Difference.make(pastClass.myFields, myFields);
       }
 
@@ -167,6 +167,10 @@ public class ClassRepr extends Proto {
       @Override
       public Specifier<ElemType, Difference> targets() {
         return Difference.make(pastClass.myAnnotationTargets, myAnnotationTargets);
+      }
+
+      public Specifier<TypeRepr.ClassType, Difference> annotations() {
+        return diff.annotations();
       }
 
       @Override
@@ -223,25 +227,26 @@ public class ClassRepr extends Proto {
     }
   }
 
-  public ClassRepr(final DependencyContext context, final int a, final int fn, final int n, final int sig,
-                   final int sup,
-                   final String[] i,
-                   final Set<FieldRepr> f,
-                   final Set<MethodRepr> m,
-                   final Set<ElemType> targets,
+  public ClassRepr(final DependencyContext context, final int access, final int fileName, final int name, final int sig,
+                   final int superClass,
+                   final String[] interfaces,
+                   final Set<FieldRepr> fields,
+                   final Set<MethodRepr> methods,
+                   final Set<TypeRepr.ClassType> annotations,
+                   final Set<ElemType> annotationTargets,
                    final RetentionPolicy policy,
                    final int outerClassName,
                    final boolean localClassFlag,
                    final boolean anonymousClassFlag,
                    final Set<UsageRepr.Usage> usages) {
-    super(a, sig, n);
+    super(access, sig, name, annotations);
     this.myContext = context;
-    myFileName = fn;
-    mySuperClass = TypeRepr.createClassType(context, sup);
-    myInterfaces = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, i, new THashSet<TypeRepr.AbstractType>(1));
-    myFields = f;
-    myMethods = m;
-    this.myAnnotationTargets = targets;
+    myFileName = fileName;
+    mySuperClass = TypeRepr.createClassType(context, superClass);
+    myInterfaces = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, interfaces, new THashSet<TypeRepr.AbstractType>(1));
+    myFields = fields;
+    myMethods = methods;
+    this.myAnnotationTargets = annotationTargets;
     this.myRetentionPolicy = policy;
     this.myOuterClassName = outerClassName;
     this.myIsLocal = localClassFlag;
@@ -250,7 +255,7 @@ public class ClassRepr extends Proto {
   }
 
   public ClassRepr(final DependencyContext context, final DataInput in) {
-    super(in);
+    super(context, in);
     try {
       this.myContext = context;
       myFileName = DataInputOutputUtil.readINT(in);

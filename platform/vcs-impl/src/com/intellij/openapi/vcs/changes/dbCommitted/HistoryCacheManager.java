@@ -65,7 +65,7 @@ public class HistoryCacheManager {
 
   public static List<AbstractVcs> getGoodActiveVcses(final Project project) {
     final AbstractVcs[] abstractVcses = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
-    final List<AbstractVcs> result = new SmartList<AbstractVcs>();
+    final List<AbstractVcs> result = new SmartList<>();
     for(AbstractVcs vcs: abstractVcses) {
       if (vcs.getCommittedChangesProvider() instanceof CachingCommittedChangesProvider && VcsType.centralized.equals(vcs.getType())) {
         result.add(vcs);
@@ -151,7 +151,7 @@ public class HistoryCacheManager {
       try {
         //indicator.setText2("Checking and possibly creating database");
         indicator.setText2("Updating VCS and roots");
-        final MultiMap<String, String> map = new MultiMap<String, String>();
+        final MultiMap<String, String> map = new MultiMap<>();
         myCachesHolder.iterateAllRepositoryLocations(new PairProcessor<RepositoryLocation, AbstractVcs>() {
           @Override
           public boolean process(RepositoryLocation location, AbstractVcs vcs) {

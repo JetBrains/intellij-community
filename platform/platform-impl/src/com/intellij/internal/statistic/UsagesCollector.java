@@ -41,14 +41,16 @@ public abstract class UsagesCollector {
   public abstract GroupDescriptor getGroupId();
 
   public static void doPersistProjectUsages(@NotNull Project project) {
-    synchronized (LOCK) {
-      if (!project.isInitialized() || DumbService.isDumb(project)) {
-        return;
-      }
+    if (StatisticsUploadAssistant.isSendAllowed()) {
+      synchronized (LOCK) {
+        if (!project.isInitialized() || DumbService.isDumb(project)) {
+          return;
+        }
 
-      for (UsagesCollector usagesCollector : EP_NAME.getExtensions()) {
-        if (usagesCollector instanceof AbstractApplicationUsagesCollector) {
-          ((AbstractApplicationUsagesCollector)usagesCollector).persistProjectUsages(project);
+        for (UsagesCollector usagesCollector : EP_NAME.getExtensions()) {
+          if (usagesCollector instanceof AbstractApplicationUsagesCollector) {
+            ((AbstractApplicationUsagesCollector)usagesCollector).persistProjectUsages(project);
+          }
         }
       }
     }
@@ -57,7 +59,7 @@ public abstract class UsagesCollector {
   @NotNull
   public static Map<GroupDescriptor, Set<UsageDescriptor>> getAllUsages(@NotNull Set<String> disabledGroups) {
     synchronized (LOCK) {
-      Map<GroupDescriptor, Set<UsageDescriptor>> usageDescriptors = new LinkedHashMap<GroupDescriptor, Set<UsageDescriptor>>();
+      Map<GroupDescriptor, Set<UsageDescriptor>> usageDescriptors = new LinkedHashMap<>();
       for (UsagesCollector usagesCollector : EP_NAME.getExtensions()) {
         GroupDescriptor groupDescriptor = usagesCollector.getGroupId();
         if (!disabledGroups.contains(groupDescriptor.getId())) {

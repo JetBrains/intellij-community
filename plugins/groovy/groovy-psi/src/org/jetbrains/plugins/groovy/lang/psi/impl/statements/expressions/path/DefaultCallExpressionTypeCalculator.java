@@ -141,7 +141,7 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
   }
 
 
-  private static final Set<String> CLOSURE_METHODS = new HashSet<String>();
+  private static final Set<String> CLOSURE_METHODS = new HashSet<>();
   static {
     CLOSURE_METHODS.add("call");
     CLOSURE_METHODS.add("curry");

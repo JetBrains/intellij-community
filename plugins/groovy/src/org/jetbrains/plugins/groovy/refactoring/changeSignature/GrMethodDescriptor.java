@@ -42,7 +42,7 @@ public class GrMethodDescriptor implements MethodDescriptor<GrParameterInfo, Str
 
   @Override
   public List<GrParameterInfo> getParameters() {
-    final ArrayList<GrParameterInfo> result = new ArrayList<GrParameterInfo>();
+    final ArrayList<GrParameterInfo> result = new ArrayList<>();
     final GrParameter[] parameters = myMethod.getParameters();
     for (int i = 0; i < parameters.length; i++) {
       GrParameter parameter = parameters[i];

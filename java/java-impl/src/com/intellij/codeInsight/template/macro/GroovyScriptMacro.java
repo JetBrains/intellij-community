@@ -94,7 +94,7 @@ public class GroovyScriptMacro extends Macro {
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     Object o = runIt(params, context);
     if (o != null) {
-      Set<LookupElement> set = new LinkedHashSet<LookupElement>();
+      Set<LookupElement> set = new LinkedHashSet<>();
       set.add(LookupElementBuilder.create(o.toString()));
       return set.toArray(new LookupElement[set.size()]);
     }

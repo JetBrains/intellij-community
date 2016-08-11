@@ -105,15 +105,15 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
 
   public boolean removeInjectionInPlace(final PsiLanguageInjectionHost psiElement) {
     if (!isMine(psiElement)) return false;
-    final HashMap<BaseInjection, Pair<PsiMethod, Integer>> injectionsMap = new HashMap<BaseInjection, Pair<PsiMethod, Integer>>();
-    final ArrayList<PsiElement> annotations = new ArrayList<PsiElement>();
+    final HashMap<BaseInjection, Pair<PsiMethod, Integer>> injectionsMap = new HashMap<>();
+    final ArrayList<PsiElement> annotations = new ArrayList<>();
     final PsiLiteralExpression host = (PsiLiteralExpression)psiElement;
     final Project project = host.getProject();
     final Configuration configuration = Configuration.getProjectInstance(project);
     collectInjections(host, configuration, this, injectionsMap, annotations);
 
     if (injectionsMap.isEmpty() && annotations.isEmpty()) return false;
-    final ArrayList<BaseInjection> originalInjections = new ArrayList<BaseInjection>(injectionsMap.keySet());
+    final ArrayList<BaseInjection> originalInjections = new ArrayList<>(injectionsMap.keySet());
     final List<BaseInjection> newInjections = ContainerUtil.mapNotNull(originalInjections,
                                                                        (NullableFunction<BaseInjection, BaseInjection>)injection -> {
                                                                          final Pair<PsiMethod, Integer> pair = injectionsMap.get(injection);
@@ -128,8 +128,8 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
 
   public boolean editInjectionInPlace(final PsiLanguageInjectionHost psiElement) {
     if (!isMine(psiElement)) return false;
-    final HashMap<BaseInjection, Pair<PsiMethod, Integer>> injectionsMap = new HashMap<BaseInjection, Pair<PsiMethod, Integer>>();
-    final ArrayList<PsiElement> annotations = new ArrayList<PsiElement>();
+    final HashMap<BaseInjection, Pair<PsiMethod, Integer>> injectionsMap = new HashMap<>();
+    final ArrayList<PsiElement> annotations = new ArrayList<>();
     final PsiLiteralExpression host = (PsiLiteralExpression)psiElement;
     final Project project = host.getProject();
     final Configuration configuration = Configuration.getProjectInstance(project);
@@ -339,7 +339,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
       first = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, false);
     }
     if (first == null || first.getContainingClass() == null) return null;
-    final LinkedList<PsiMethod> methods = new LinkedList<PsiMethod>();
+    final LinkedList<PsiMethod> methods = new LinkedList<>();
     methods.add(first);
     while (!methods.isEmpty()) {
       final PsiMethod method = methods.removeFirst();
@@ -451,9 +451,9 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     result.copyFrom(injection);
     result.setInjectionPlaces(InjectionPlace.EMPTY_ARRAY);
     result.setClassName(className);
-    final ArrayList<MethodInfo> infos = new ArrayList<MethodInfo>();
+    final ArrayList<MethodInfo> infos = new ArrayList<>();
     if (classes.length > 0) {
-      final THashSet<String> visitedSignatures = new THashSet<String>();
+      final THashSet<String> visitedSignatures = new THashSet<>();
       final PatternCompiler<PsiElement> compiler = injection.getCompiler();
       for (PsiClass psiClass : classes) {
         for (PsiMethod method : psiClass.getMethods()) {

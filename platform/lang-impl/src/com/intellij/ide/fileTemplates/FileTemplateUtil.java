@@ -69,7 +69,7 @@ public class FileTemplateUtil{
   @NonNls public static final String INTERNAL_PACKAGE_INFO_TEMPLATE_NAME = "package-info";
 
   public static String[] calculateAttributes(String templateContent, Properties properties, boolean includeDummies, Project project) throws ParseException {
-    Set<String> propertiesNames = new HashSet<String>();
+    Set<String> propertiesNames = new HashSet<>();
     for (Enumeration e = properties.propertyNames(); e.hasMoreElements(); ) {
       propertiesNames.add((String)e.nextElement());
     }
@@ -81,11 +81,11 @@ public class FileTemplateUtil{
   }
 
   private static String[] calculateAttributes(String templateContent, Set<String> propertiesNames, boolean includeDummies, Project project) throws ParseException {
-    final Set<String> unsetAttributes = new LinkedHashSet<String>();
-    final Set<String> definedAttributes = new HashSet<String>();
+    final Set<String> unsetAttributes = new LinkedHashSet<>();
+    final Set<String> definedAttributes = new HashSet<>();
     //noinspection HardCodedStringLiteral
     SimpleNode template = VelocityWrapper.parse(new StringReader(templateContent), "MyTemplate");
-    collectAttributes(unsetAttributes, definedAttributes, template, propertiesNames, includeDummies, new HashSet<String>(), project);
+    collectAttributes(unsetAttributes, definedAttributes, template, propertiesNames, includeDummies, new HashSet<>(), project);
     for (String definedAttribute : definedAttributes) {
       unsetAttributes.remove(definedAttribute);
     }
@@ -263,7 +263,7 @@ public class FileTemplateUtil{
                                               @NotNull final PsiDirectory directory) throws Exception {
     Map<String, Object> map;
     if (props != null) {
-      map = new HashMap<String, Object>();
+      map = new HashMap<>();
       putAll(map, props);
     }
     else {
@@ -279,7 +279,7 @@ public class FileTemplateUtil{
                                               @Nullable ClassLoader classLoader) throws Exception {
     Map<String, Object> map;
     if (props != null) {
-      map = new HashMap<String, Object>();
+      map = new HashMap<>();
       putAll(map, props);
     }
     else {
@@ -296,7 +296,7 @@ public class FileTemplateUtil{
     @NotNull final Project project = directory.getProject();
     if (propsMap == null) {
       Properties p = FileTemplateManager.getInstance(project).getDefaultProperties();
-      propsMap = new HashMap<String, Object>();
+      propsMap = new HashMap<>();
       putAll(propsMap, p);
     }
     FileTemplateManager.getInstance(project).addRecentName(template.getName());
@@ -397,7 +397,7 @@ public class FileTemplateUtil{
                                             @NotNull String extension,
                                             @NotNull String content,
                                             FileTemplate[] templates) {
-    final Set<String> names = new HashSet<String>();
+    final Set<String> names = new HashSet<>();
     for (FileTemplate template : templates) {
       names.add(template.getName());
     }

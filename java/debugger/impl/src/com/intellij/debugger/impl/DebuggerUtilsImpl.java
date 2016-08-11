@@ -48,6 +48,7 @@ import com.intellij.xdebugger.impl.breakpoints.XExpressionState;
 import com.sun.jdi.Value;
 import com.sun.jdi.connect.spi.TransportService;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -139,6 +140,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     return PositionUtil.getContextElement(context);
   }
 
+  @NotNull
   public static Pair<PsiClass, PsiType> getPsiClassAndType(String className, Project project) {
     PsiClass contextClass;
     PsiType contextType;

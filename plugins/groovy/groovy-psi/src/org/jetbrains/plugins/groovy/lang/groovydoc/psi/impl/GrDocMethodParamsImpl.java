@@ -59,7 +59,7 @@ public class GrDocMethodParamsImpl extends GroovyDocPsiElementImpl implements Gr
 
   @Override
   public PsiType[] getParameterTypes() {
-    ArrayList<PsiType> types = new ArrayList<PsiType>();
+    ArrayList<PsiType> types = new ArrayList<>();
     PsiManagerEx manager = getManager();
     GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
     PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
@@ -79,7 +79,7 @@ public class GrDocMethodParamsImpl extends GroovyDocPsiElementImpl implements Gr
 
   @Override
   public GrDocMethodParameter[] getParameters() {
-    List<GrDocMethodParameter> result = new ArrayList<GrDocMethodParameter>();
+    List<GrDocMethodParameter> result = new ArrayList<>();
     for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (GrDocMethodParameter.class.isInstance(cur)) result.add((GrDocMethodParameter)cur);
     }

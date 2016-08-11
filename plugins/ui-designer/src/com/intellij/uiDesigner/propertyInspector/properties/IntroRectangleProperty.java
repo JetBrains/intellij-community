@@ -46,7 +46,7 @@ public final class IntroRectangleProperty extends IntrospectedProperty<Rectangle
       new IntFieldProperty(this, "width", 0, new Rectangle(0, 0, 0, 0)),
       new IntFieldProperty(this, "height", 0, new Rectangle(0, 0, 0, 0)),
     };
-    myEditor = new IntRegexEditor<Rectangle>(Rectangle.class, myRenderer, new int[] { Integer.MIN_VALUE, Integer.MIN_VALUE, 0, 0 });
+    myEditor = new IntRegexEditor<>(Rectangle.class, myRenderer, new int[]{Integer.MIN_VALUE, Integer.MIN_VALUE, 0, 0});
   }
 
   public void write(final Rectangle value,final XmlWriter writer){

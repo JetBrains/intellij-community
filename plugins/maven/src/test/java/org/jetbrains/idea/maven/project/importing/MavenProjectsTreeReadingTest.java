@@ -622,7 +622,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     MavenProject project = myTree.findProject(myProjectPom);
     MavenEmbeddersManager embeddersManager = new MavenEmbeddersManager(myProject);
-    final List<NativeMavenProjectHolder> nativeProject = new ArrayList<NativeMavenProjectHolder>();
+    final List<NativeMavenProjectHolder> nativeProject = new ArrayList<>();
     try {
       myTree.addListener(new MavenProjectsTree.ListenerAdapter() {
         @Override

@@ -206,7 +206,7 @@ public class SSHMain implements GitExternalApp {
    * @throws IOException in case of IO error or authentication failure
    */
   private void authenticate(final Connection c) throws IOException {
-    LinkedList<String> methods = new LinkedList<String>(myHost.getPreferredMethods());
+    LinkedList<String> methods = new LinkedList<>(myHost.getPreferredMethods());
     //log("authenticating... " + this);
     String lastSuccessfulMethod = myXmlRpcClient.getLastSuccessful(myHandlerNo, getUserHostString());
     //log("SSH: authentication methods: " + methods + " last successful method: " + lastSuccessfulMethod);
@@ -526,9 +526,9 @@ public class SSHMain implements GitExternalApp {
         return ArrayUtilRt.EMPTY_STRING_ARRAY;
       }
       myPromptCount++;
-      Vector<String> vPrompts = new Vector<String>(prompt.length);
+      Vector<String> vPrompts = new Vector<>(prompt.length);
       Collections.addAll(vPrompts, prompt);
-      Vector<Boolean> vEcho = new Vector<Boolean>(prompt.length);
+      Vector<Boolean> vEcho = new Vector<>(prompt.length);
       for (boolean e : echo) {
         vEcho.add(e);
       }

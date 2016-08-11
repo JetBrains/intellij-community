@@ -53,7 +53,7 @@ public class MembersConflictDialog extends ConflictsDialog {
   private static MultiMap<PsiElement, String> convertDescription(
     @NotNull final MultiMap<PyClass, PyMemberInfo<?>> duplicateConflictDescriptions,
     @NotNull final Collection<PyMemberInfo<?>> dependenciesConflicts) {
-    final MultiMap<PsiElement, String> result = new MultiMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> result = new MultiMap<>();
     for (final PyClass aClass : duplicateConflictDescriptions.keySet()) {
       for (final PyMemberInfo<?> pyMemberInfo : duplicateConflictDescriptions.get(aClass)) {
         final String message = RefactoringBundle.message("0.already.contains.a.1",

@@ -56,7 +56,7 @@ import java.util.List;
 public class ChooseCheckoutMode extends WizardStep {
 
   private File mySelectedLocation;
-  private final Collection<File> myCvsPaths = new ArrayList<File>();
+  private final Collection<File> myCvsPaths = new ArrayList<>();
   private final DefaultListModel myCheckoutModeModel = new DefaultListModel();
   private final JList myCheckoutModeList = new JBList(myCheckoutModeModel);
   private final JCheckBox myMakeNewFilesReadOnly = new JCheckBox(CvsBundle.message("checkbox.make.new.files.read.only"));
@@ -241,14 +241,14 @@ public class ChooseCheckoutMode extends WizardStep {
   }
 
   private Collection<File> getSelectedFiles() {
-    final Collection<File> allFiles = new HashSet<File>();
+    final Collection<File> allFiles = new HashSet<>();
     final CvsElement[] selection = getWizard().getSelectedElements();
     if (selection == null) return allFiles;
     for (CvsElement cvsElement : selection) {
       allFiles.add(new File(cvsElement.getCheckoutPath()));
     }
 
-    final ArrayList<File> result = new ArrayList<File>();
+    final ArrayList<File> result = new ArrayList<>();
 
     for (File file : allFiles) {
       if (!hasParentIn(allFiles, file)) result.add(file);

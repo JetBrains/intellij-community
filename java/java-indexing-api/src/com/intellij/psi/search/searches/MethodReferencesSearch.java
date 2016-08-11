@@ -126,7 +126,7 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
     final SearchRequestCollector requests = parameters.getOptimizer();
 
     Project project = PsiUtilCore.getProjectInReadAction(parameters.getMethod());
-    return uniqueResults(new MergeQuery<PsiReference>(result, new SearchRequestQuery(project, requests)));
+    return uniqueResults(new MergeQuery<>(result, new SearchRequestQuery(project, requests)));
   }
 
   public static Query<PsiReference> search(final PsiMethod method, final boolean strictSignatureSearch) {
@@ -138,6 +138,6 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
   }
 
   private static UniqueResultsQuery<PsiReference, ReferenceDescriptor> uniqueResults(@NotNull Query<PsiReference> composite) {
-    return new UniqueResultsQuery<PsiReference, ReferenceDescriptor>(composite, ContainerUtil.<ReferenceDescriptor>canonicalStrategy(), ReferenceDescriptor.MAPPER);
+    return new UniqueResultsQuery<>(composite, ContainerUtil.<ReferenceDescriptor>canonicalStrategy(), ReferenceDescriptor.MAPPER);
   }
 }

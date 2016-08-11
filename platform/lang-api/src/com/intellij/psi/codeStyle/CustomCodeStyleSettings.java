@@ -54,7 +54,7 @@ public abstract class CustomCodeStyleSettings implements Cloneable {
 
   public void writeExternal(Element parentElement, @NotNull final CustomCodeStyleSettings parentSettings) throws WriteExternalException {
     final Element childElement = new Element(myTagName);
-    DefaultJDOMExternalizer.writeExternal(this, childElement, new DifferenceFilter<CustomCodeStyleSettings>(this, parentSettings));
+    DefaultJDOMExternalizer.writeExternal(this, childElement, new DifferenceFilter<>(this, parentSettings));
     if (!childElement.getContent().isEmpty()) {
       parentElement.addContent(childElement);
     }

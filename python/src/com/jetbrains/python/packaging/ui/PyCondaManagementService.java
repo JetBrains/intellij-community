@@ -60,7 +60,7 @@ public class PyCondaManagementService extends PyPackageManagementService {
 
   @Override
   public List<String> getAllRepositories() {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     result.addAll(PyCondaPackageService.getInstance().loadAndGetChannels());
     return result;
   }

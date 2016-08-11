@@ -206,7 +206,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   @Override
   public void visitTryStatement(GrTryCatchStatement statement) {
     final GrCatchClause[] clauses = statement.getCatchClauses();
-    List<PsiType> usedExceptions = new ArrayList<PsiType>();
+    List<PsiType> usedExceptions = new ArrayList<>();
 
     for (GrCatchClause clause : clauses) {
       final GrParameter parameter = clause.getParameter();
@@ -222,7 +222,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
           types[i] = elements[i].getType();
         }
 
-        List<PsiType> usedInsideDisjunction = new ArrayList<PsiType>();
+        List<PsiType> usedInsideDisjunction = new ArrayList<>();
         for (int i = 0; i < types.length; i++) {
           if (checkExceptionUsed(usedExceptions, parameter, elements[i], types[i])) {
             usedInsideDisjunction.add(types[i]);
@@ -516,7 +516,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   private static void checkRecursiveConstructors(AnnotationHolder holder, PsiMethod[] constructors) {
-    Map<PsiMethod, PsiMethod> nodes = new HashMap<PsiMethod, PsiMethod>(constructors.length);
+    Map<PsiMethod, PsiMethod> nodes = new HashMap<>(constructors.length);
 
     Set<PsiMethod> set = ContainerUtil.set(constructors);
 
@@ -535,13 +535,13 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       nodes.put(constructor, resolved);
     }
 
-    Set<PsiMethod> checked = new HashSet<PsiMethod>();
+    Set<PsiMethod> checked = new HashSet<>();
 
     Set<PsiMethod> current;
     for (PsiMethod constructor : constructors) {
       if (!checked.add(constructor)) continue;
 
-      current = new HashSet<PsiMethod>();
+      current = new HashSet<>();
       current.add(constructor);
       for (constructor = nodes.get(constructor); constructor != null && current.add(constructor); constructor = nodes.get(constructor)) {
         checked.add(constructor);
@@ -973,7 +973,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   @Override
   public void visitClassInitializer(GrClassInitializer initializer) {
     final PsiClass aClass = initializer.getContainingClass();
-    if (aClass != null && aClass.isInterface()) {
+    if (GrTraitUtil.isInterface(aClass)) {
       final TextRange range = GrHighlightUtil.getInitializerHeaderTextRange(initializer);
       myHolder.createErrorAnnotation(range, GroovyBundle.message("initializers.are.not.allowed.in.interface"));
     }
@@ -1922,7 +1922,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
   private static void checkDuplicateModifiers(AnnotationHolder holder, @NotNull GrModifierList list, PsiMember member) {
     final PsiElement[] modifiers = list.getModifiers();
-    Set<String> set = new THashSet<String>(modifiers.length);
+    Set<String> set = new THashSet<>(modifiers.length);
     for (PsiElement modifier : modifiers) {
       if (modifier instanceof GrAnnotation) continue;
       @GrModifier.GrModifierConstant String name = modifier.getText();
@@ -2017,6 +2017,14 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), GroovyBundle.message("annotation.type.cannot.be.inner"));
     }
 
+    if (!typeDefinition.hasModifierProperty(PsiModifier.STATIC)
+        && (typeDefinition.getContainingClass() != null || typeDefinition instanceof GrAnonymousClassDefinition)) {
+      GrTypeDefinition owner = PsiTreeUtil.getParentOfType(typeDefinition, GrTypeDefinition.class);
+      if (owner instanceof GrTraitTypeDefinition) {
+        holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), GroovyBundle.message("non.static.classes.not.allowed"));
+      }
+    }
+
     checkDuplicateClass(typeDefinition, holder);
 
     checkCyclicInheritance(holder, typeDefinition);
@@ -2024,7 +2032,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
   private static void checkCyclicInheritance(AnnotationHolder holder,
                                              GrTypeDefinition typeDefinition) {
-    final PsiClass psiClass = HighlightClassUtil.getCircularClass(typeDefinition, new HashSet<PsiClass>());
+    final PsiClass psiClass = HighlightClassUtil.getCircularClass(typeDefinition, new HashSet<>());
     if (psiClass != null) {
       String qname = psiClass.getQualifiedName();
       assert qname != null;

@@ -78,7 +78,7 @@ public class ScopeImpl implements Scope {
     if (myCachedScopeVariables == null) {
       final PyReachingDefsDfaInstance dfaInstance = new PyReachingDefsDfaInstance();
       final PyReachingDefsSemilattice semilattice = new PyReachingDefsSemilattice();
-      final DFAMapEngine<ScopeVariable> engine = new DFAMapEngine<ScopeVariable>(myFlow, dfaInstance, semilattice);
+      final DFAMapEngine<ScopeVariable> engine = new DFAMapEngine<>(myFlow, dfaInstance, semilattice);
       myCachedScopeVariables = engine.performDFA();
     }
   }
@@ -185,13 +185,13 @@ public class ScopeImpl implements Scope {
   }
 
   private void collectDeclarations() {
-    final Map<String, Collection<PsiNamedElement>> namedElements = new HashMap<String, Collection<PsiNamedElement>>();
-    final List<PyImportedNameDefiner> importedNameDefiners = new ArrayList<PyImportedNameDefiner>();
-    final List<Scope> nestedScopes = new ArrayList<Scope>();
-    final Set<String> globals = new HashSet<String>();
-    final Set<String> nonlocals = new HashSet<String>();
-    final Set<String> augAssignments = new HashSet<String>();
-    final List<PyTargetExpression> targetExpressions = new ArrayList<PyTargetExpression>();
+    final Map<String, Collection<PsiNamedElement>> namedElements = new HashMap<>();
+    final List<PyImportedNameDefiner> importedNameDefiners = new ArrayList<>();
+    final List<Scope> nestedScopes = new ArrayList<>();
+    final Set<String> globals = new HashSet<>();
+    final Set<String> nonlocals = new HashSet<>();
+    final Set<String> augAssignments = new HashSet<>();
+    final List<PyTargetExpression> targetExpressions = new ArrayList<>();
     myFlowOwner.acceptChildren(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyTargetExpression(PyTargetExpression node) {

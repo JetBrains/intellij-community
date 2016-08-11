@@ -41,7 +41,7 @@ public abstract class BaseOccurrenceManager implements OccurrenceManager {
       myOccurrences = findOccurrences();
 
       if(myFilter != null) {
-        ArrayList<PsiExpression> result = new ArrayList<PsiExpression>();
+        ArrayList<PsiExpression> result = new ArrayList<>();
         for (PsiExpression occurrence : myOccurrences) {
           if (myFilter.isOK(occurrence)) result.add(occurrence);
         }

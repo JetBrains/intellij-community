@@ -53,8 +53,8 @@ public class ModuleChooserUtil {
                                   final Function<Module, String> versionProvider,
                                   final Consumer<Module> callback,
                                   @Nullable DataContext context) {
-    final List<Module> modules = new ArrayList<Module>();
-    final Map<Module, String> versions = new HashMap<Module, String>();
+    final List<Module> modules = new ArrayList<>();
+    final Map<Module, String> versions = new HashMap<>();
 
     for (Module module : suitableModules) {
       modules.add(module);

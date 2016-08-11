@@ -59,7 +59,7 @@ public class PermanentLinearGraphImpl implements LinearGraph {
   @NotNull
   @Override
   public List<GraphEdge> getAdjacentEdges(int nodeIndex, @NotNull EdgeFilter filter) {
-    List<GraphEdge> result = new SmartList<GraphEdge>();
+    List<GraphEdge> result = new SmartList<>();
 
     boolean hasUpSimpleEdge = nodeIndex != 0 && mySimpleNodes.get(nodeIndex - 1);
     if (hasUpSimpleEdge && filter.upNormal) result.add(new GraphEdge(nodeIndex - 1, nodeIndex, null, USUAL));

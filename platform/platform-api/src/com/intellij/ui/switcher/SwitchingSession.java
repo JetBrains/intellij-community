@@ -44,7 +44,7 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
   private SwitchProvider myProvider;
   private KeyEvent myInitialEvent;
   private boolean myFinished;
-  private LinkedHashSet<SwitchTarget> myTargets = new LinkedHashSet<SwitchTarget>();
+  private LinkedHashSet<SwitchTarget> myTargets = new LinkedHashSet<>();
   private IdeGlassPane myGlassPane;
 
   private Component myRootComponent;
@@ -156,7 +156,7 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
       int inset = -1;
       int selectedInset = -8;
 
-      Set<Area> shapes = new HashSet<Area>();
+      Set<Area> shapes = new HashSet<>();
       Area selected = null;
 
       boolean hasIntersections = false;
@@ -298,9 +298,9 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
       return getSelection();
     }
 
-    List<Point> points = new ArrayList<Point>();
+    List<Point> points = new ArrayList<>();
     Point selected = null;
-    Map<SwitchTarget, Point> target2Point = new HashMap<SwitchTarget, Point>();
+    Map<SwitchTarget, Point> target2Point = new HashMap<>();
     for (SwitchTarget each : myTargets) {
       RelativeRectangle rectangle = each.getRectangle();
       if (rectangle == null) continue;
@@ -345,7 +345,7 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
       }
     }
 
-    TreeMap<Integer, SwitchTarget> distance = new TreeMap<Integer, SwitchTarget>();
+    TreeMap<Integer, SwitchTarget> distance = new TreeMap<>();
     for (SwitchTarget eachTarget : myTargets) {
       Point eachPoint = target2Point.get(eachTarget);
       if (eachPoint == null || selected == null) continue;
@@ -447,7 +447,7 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
   public AsyncResult<SwitchTarget> finish(final boolean fadeAway) {
     myAlarm.cancelAllRequests();
 
-    final AsyncResult<SwitchTarget> result = new AsyncResult<SwitchTarget>();
+    final AsyncResult<SwitchTarget> result = new AsyncResult<>();
     final SwitchTarget selection = getSelection();
     if (selection != null) {
       selection.switchTo(true).doWhenDone(() -> {

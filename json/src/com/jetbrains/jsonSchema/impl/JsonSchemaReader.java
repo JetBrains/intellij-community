@@ -44,7 +44,7 @@ public class JsonSchemaReader {
     }
 
     processReferences(object, adapter.getAllObjects(), definitions);
-    final ArrayList<JsonSchemaObject> withoutDefinitions = new ArrayList<JsonSchemaObject>(adapter.getAllObjects());
+    final ArrayList<JsonSchemaObject> withoutDefinitions = new ArrayList<>(adapter.getAllObjects());
     removeDefinitions(object, withoutDefinitions);
     return object;
   }
@@ -107,7 +107,7 @@ public class JsonSchemaReader {
   }
 
   private static void removeDefinitions(JsonSchemaObject root, ArrayList<JsonSchemaObject> objects) {
-    final List<JsonSchemaObject> queue = new ArrayList<JsonSchemaObject>(objects.size() + 1);
+    final List<JsonSchemaObject> queue = new ArrayList<>(objects.size() + 1);
     queue.addAll(objects);
     queue.add(root);
 
@@ -122,7 +122,7 @@ public class JsonSchemaReader {
   private void processReferences(JsonSchemaObject root,
                                  Set<JsonSchemaObject> objects,
                                  @Nullable JsonSchemaExportedDefinitions definitions) {
-    final ArrayDeque<JsonSchemaObject> queue = new ArrayDeque<JsonSchemaObject>();
+    final ArrayDeque<JsonSchemaObject> queue = new ArrayDeque<>();
     queue.addAll(objects);
     int control = 10000;
 
@@ -223,13 +223,13 @@ public class JsonSchemaReader {
   }
 
   private static class JsonSchemaGeneralObjectTypeAdapter extends TypeAdapter<JsonSchemaObject> {
-    private final Set<JsonSchemaObject> myAllObjects = new HashSet<JsonSchemaObject>();
-    private final Map<String, JsonSchemaObject> myIds = new HashMap<String, JsonSchemaObject>();
+    private final Set<JsonSchemaObject> myAllObjects = new HashSet<>();
+    private final Map<String, JsonSchemaObject> myIds = new HashMap<>();
 
     private final Map<String, ThrowablePairConsumer<JsonReader, JsonSchemaObject, IOException>> myMap;
 
     public JsonSchemaGeneralObjectTypeAdapter() {
-      myMap = new HashMap<String, ThrowablePairConsumer<JsonReader, JsonSchemaObject, IOException>>();
+      myMap = new HashMap<>();
       myMap.put("id", new StringReader() {
         @Override
         protected void assign(String s, JsonSchemaObject object) throws IOException {
@@ -346,7 +346,7 @@ public class JsonSchemaReader {
       public void consume(JsonReader in, JsonSchemaObject object) throws IOException {
         if (in.peek() == JsonToken.BEGIN_ARRAY) {
           in.beginArray();
-          final ArrayList<JsonSchemaObject> list = new ArrayList<JsonSchemaObject>();
+          final ArrayList<JsonSchemaObject> list = new ArrayList<>();
           while (in.peek() != JsonToken.END_ARRAY) {
             if (in.peek() == JsonToken.BEGIN_OBJECT) {
               list.add(readInnerObject(in));
@@ -367,7 +367,7 @@ public class JsonSchemaReader {
           if (in.peek() == JsonToken.STRING) {
             object.setType(parseType(in));
           } else if (in.peek() == JsonToken.BEGIN_ARRAY) {
-            final ArrayList<JsonSchemaType> variants = new ArrayList<JsonSchemaType>();
+            final ArrayList<JsonSchemaType> variants = new ArrayList<>();
             in.beginArray();
             while (in.peek() != JsonToken.END_ARRAY) {
               if (in.peek() == JsonToken.STRING) {
@@ -396,7 +396,7 @@ public class JsonSchemaReader {
           in.skipValue();
           return;
         }
-        final ArrayList<Object> objects = new ArrayList<Object>();
+        final ArrayList<Object> objects = new ArrayList<>();
         in.beginArray();
         while (in.peek() != JsonToken.END_ARRAY) {
           if (in.peek() == JsonToken.STRING) objects.add("\"" + in.nextString() + "\"");
@@ -415,8 +415,8 @@ public class JsonSchemaReader {
           in.skipValue();
           return;
         }
-        final HashMap<String, List<String>> propertyDependencies = new HashMap<String, List<String>>();
-        final HashMap<String, JsonSchemaObject> schemaDependencies = new HashMap<String, JsonSchemaObject>();
+        final HashMap<String, List<String>> propertyDependencies = new HashMap<>();
+        final HashMap<String, JsonSchemaObject> schemaDependencies = new HashMap<>();
         in.beginObject();
         while (in.peek() != JsonToken.END_OBJECT) {
           if (in.peek() != JsonToken.NAME) {
@@ -425,7 +425,7 @@ public class JsonSchemaReader {
           }
           final String name = in.nextName();
           if (in.peek() == JsonToken.BEGIN_ARRAY) {
-            final List<String> members = new ArrayList<String>();
+            final List<String> members = new ArrayList<>();
             in.beginArray();
             while (in.peek() != JsonToken.END_ARRAY) {
               if (in.peek() == JsonToken.STRING) {
@@ -455,7 +455,7 @@ public class JsonSchemaReader {
           return;
         }
         in.beginObject();
-        final HashMap<String, JsonSchemaObject> properties = new HashMap<String, JsonSchemaObject>();
+        final HashMap<String, JsonSchemaObject> properties = new HashMap<>();
         while (in.peek() != JsonToken.END_OBJECT) {
           if (in.peek() == JsonToken.NAME) {
             final String name = in.nextName();
@@ -484,7 +484,7 @@ public class JsonSchemaReader {
     private ThrowablePairConsumer<JsonReader, JsonSchemaObject, IOException> createRequired() {
       return (in, object) -> {
         if (in.peek() == JsonToken.BEGIN_ARRAY) {
-          final ArrayList<String> required = new ArrayList<String>();
+          final ArrayList<String> required = new ArrayList<>();
           in.beginArray();
           while (in.peek() != JsonToken.END_ARRAY) {
             if (in.peek() == JsonToken.STRING) {
@@ -552,7 +552,7 @@ public class JsonSchemaReader {
           object.setItemsSchema(readInnerObject(in));
         } else if (in.peek() == JsonToken.BEGIN_ARRAY) {
           in.beginArray();
-          final List<JsonSchemaObject> list = new ArrayList<JsonSchemaObject>();
+          final List<JsonSchemaObject> list = new ArrayList<>();
           while (in.peek() != JsonToken.END_ARRAY) {
             if (in.peek() == JsonToken.BEGIN_OBJECT) {
               list.add(readInnerObject(in));
@@ -705,7 +705,7 @@ public class JsonSchemaReader {
     @NotNull
     private ThrowablePairConsumer<JsonReader, JsonSchemaObject, IOException> createDefinitionsConsumer() {
       return (in, object) -> {
-        final Map<String, JsonSchemaObject> map = new HashMap<String, JsonSchemaObject>();
+        final Map<String, JsonSchemaObject> map = new HashMap<>();
         in.beginObject();
         while (in.peek() == JsonToken.NAME) {
           final String name = in.nextName();
@@ -763,7 +763,7 @@ public class JsonSchemaReader {
       if (defined == null) return;
       Map<String, JsonSchemaObject> definitions = object.getDefinitions();
       if (definitions == null) {
-        object.setDefinitions(definitions = new HashMap<String, JsonSchemaObject>());
+        object.setDefinitions(definitions = new HashMap<>());
       }
       definitions.put(name, defined);
     }

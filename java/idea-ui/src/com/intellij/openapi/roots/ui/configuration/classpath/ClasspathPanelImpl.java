@@ -128,7 +128,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     myEntryTable.setDefaultRenderer(ClasspathTableItem.class, new TableItemRenderer(getStructureConfigurableContext()));
     myEntryTable.setDefaultRenderer(Boolean.class, new ExportFlagRenderer(myEntryTable.getDefaultRenderer(Boolean.class)));
 
-    JComboBox scopeEditor = new ComboBox(new EnumComboBoxModel<DependencyScope>(DependencyScope.class));
+    JComboBox scopeEditor = new ComboBox(new EnumComboBoxModel<>(DependencyScope.class));
     myEntryTable.setDefaultEditor(DependencyScope.class, new DefaultCellEditor(scopeEditor));
     myEntryTable.setDefaultRenderer(DependencyScope.class, new ComboBoxTableRenderer<DependencyScope>(DependencyScope.values()) {
         @Override
@@ -581,7 +581,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   private void initPopupActions() {
     if (myPopupActions == null) {
       int actionIndex = 1;
-      final List<AddItemPopupAction<?>> actions = new ArrayList<AddItemPopupAction<?>>();
+      final List<AddItemPopupAction<?>> actions = new ArrayList<>();
       final StructureConfigurableContext context = getStructureConfigurableContext();
       actions.add(new AddNewModuleLibraryAction(this, actionIndex++, context));
       actions.add(new AddLibraryDependencyAction(this, actionIndex++, ProjectBundle.message("classpath.add.library.action"), context));
@@ -665,9 +665,9 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   }
 
   public void forceInitFromModel() {
-    Set<ClasspathTableItem<?>> oldSelection = new HashSet<ClasspathTableItem<?>>();
+    Set<ClasspathTableItem<?>> oldSelection = new HashSet<>();
     for (int i : myEntryTable.getSelectedRows()) {
-      ContainerUtil.addIfNotNull(getItemAt(i), oldSelection);
+      ContainerUtil.addIfNotNull(oldSelection, getItemAt(i));
     }
     myModel.clear();
     myModel.init();

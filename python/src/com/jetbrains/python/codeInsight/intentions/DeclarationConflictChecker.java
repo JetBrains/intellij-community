@@ -55,7 +55,7 @@ public class DeclarationConflictChecker {
   public static List<Pair<PsiElement, PsiElement>> findDefinitions(@NotNull String name,
                                                                    @NotNull Collection<PsiReference> references,
                                                                    @NotNull Set<PsiElement> ignored) {
-    final List<Pair<PsiElement, PsiElement>> conflicts = new ArrayList<Pair<PsiElement, PsiElement>>();
+    final List<Pair<PsiElement, PsiElement>> conflicts = new ArrayList<>();
     for (PsiReference ref : references) {
       final PsiElement refElement = ref.getElement();
       final ScopeOwner owner = ScopeUtil.getScopeOwner(refElement);

@@ -111,8 +111,8 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
   @Override
   @NotNull
   public MultiHostRegistrar startInjecting(@NotNull Language language) {
-    escapers = new SmartList<LiteralTextEscaper<? extends PsiLanguageInjectionHost>>();
-    shreds = new SmartList<PsiLanguageInjectionHost.Shred>();
+    escapers = new SmartList<>();
+    shreds = new SmartList<>();
     outChars = new StringBuilder();
 
     if (!cleared) {
@@ -351,14 +351,19 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
 
   private static final Key<ASTNode> TREE_HARD_REF = Key.create("TREE_HARD_REF");
   private static ASTNode keepTreeFromChameleoningBack(PsiFile psiFile) {
-    // expand chameleons
-    //noinspection ResultOfMethodCallIgnored
-    psiFile.getFirstChild();
-    // need to keep tree reacheable to avoid being garbage-collected (via WeakReference in PsiFileImpl)
+    // need to keep tree reachable to avoid being garbage-collected (via WeakReference in PsiFileImpl)
     // and then being reparsed from wrong (escaped) document content
     ASTNode node = psiFile.getNode();
-    assert !TreeUtil.isCollapsedChameleon(node) : "Chameleon "+node+" is collapsed";
+    // expand chameleons
+    ASTNode child = node.getFirstChildNode();
+
+    assert !TreeUtil.isCollapsedChameleon(node) : "Chameleon "+node+" is collapsed; file: "+psiFile+"; language: "+psiFile.getLanguage();
     psiFile.putUserData(TREE_HARD_REF, node);
+
+    // just to use child variable
+    if (child == null) {
+      assert node != null;
+    }
     return node;
   }
 
@@ -390,7 +395,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
 
   private void addToResults(Place place, PsiFile psiFile) {
     if (result == null) {
-      result = new SmartList<Pair<Place, PsiFile>>();
+      result = new SmartList<>();
     }
     result.add(Pair.create(place, psiFile));
   }
@@ -491,7 +496,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
                                          Place shreds,
                                          VirtualFileWindow virtualFile,
                                          Project project) {
-    List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>> tokens = new ArrayList<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>>(10);
+    List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>> tokens = new ArrayList<>(10);
     SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, (VirtualFile)virtualFile);
     Lexer lexer = syntaxHighlighter.getHighlightingLexer();
     lexer.start(outChars);

@@ -15,9 +15,8 @@
  */
 package org.jetbrains.idea.devkit.run;
 
-import com.intellij.execution.CantRunException;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
+import com.intellij.diagnostic.logging.LogConfigurationPanel;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,6 +24,7 @@ import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -55,6 +55,7 @@ import java.util.Arrays;
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 
 public class PluginRunConfiguration extends RunConfigurationBase implements ModuleRunConfiguration {
+  private static final String IDEA_LOG = "idea.log";
   private Module myModule;
   private String myModuleName;
 
@@ -70,12 +71,32 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
 
   public PluginRunConfiguration(final Project project, final ConfigurationFactory factory, final String name) {
     super(project, factory, name);
+    addPredefinedLogFile(new PredefinedLogFile(IDEA_LOG, true));
+  }
+
+  @Nullable
+  @Override
+  public LogFileOptions getOptionsForPredefinedLogFile(PredefinedLogFile predefinedLogFile) {
+    if (IDEA_LOG.equals(predefinedLogFile.getId())) {
+      final Module module = getModule();
+      final Sdk ideaJdk = module != null ? IdeaJdk.findIdeaJdk(ModuleRootManager.getInstance(module).getSdk()) : null;
+      if (ideaJdk != null) {
+        final String sandboxHome = ((Sandbox)ideaJdk.getSdkAdditionalData()).getSandboxHome();
+        if (sandboxHome != null) {
+          return new LogFileOptions(IDEA_LOG, sandboxHome + "/system/log/" + IDEA_LOG, predefinedLogFile.isEnabled(), true, false);
+        }
+      }
+    }
+    return super.getOptionsForPredefinedLogFile(predefinedLogFile);
   }
 
   @NotNull
   @Override
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    return new PluginRunConfigurationEditor(this);
+    SettingsEditorGroup<PluginRunConfiguration> group = new SettingsEditorGroup<>();
+    group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new PluginRunConfigurationEditor(this));
+    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
+    return group;
   }
 
   @Override
@@ -280,6 +301,9 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
       ALTERNATIVE_JRE_PATH_ENABLED = enabledAttr != null && Boolean.parseBoolean(enabledAttr);
     }
     super.readExternal(element);
+    if (getPredefinedLogFiles().isEmpty() && getLogFiles().isEmpty()) {
+      addPredefinedLogFile(new PredefinedLogFile(IDEA_LOG, true));
+    }
   }
 
   @Override

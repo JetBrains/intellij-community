@@ -58,7 +58,7 @@ public class GrAnnotationArgumentListImpl extends GroovyPsiElementImpl implement
   @Override
   @NotNull
   public GrAnnotationNameValuePair[] getAttributes() {
-    List<GrAnnotationNameValuePair> result = new ArrayList<GrAnnotationNameValuePair>();
+    List<GrAnnotationNameValuePair> result = new ArrayList<>();
     for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (cur instanceof GrAnnotationNameValuePair) result.add((GrAnnotationNameValuePair)cur);
     }

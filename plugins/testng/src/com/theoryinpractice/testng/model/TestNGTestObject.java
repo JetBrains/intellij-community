@@ -76,8 +76,9 @@ public abstract class TestNGTestObject {
     if (testObject.equals(TestType.SOURCE.getType())) {
       return new TestNGSource(config);
     }
-    assert false : testObject;
-    return null;
+
+    LOG.info("Unknown test object" + testObject);
+    return new UnknownTestNGTestObject(config);
   }
 
   public abstract void fillTestObjects(final Map<PsiClass, Map<PsiMethod, List<String>>> classes) throws CantRunException;
@@ -93,7 +94,7 @@ public abstract class TestNGTestObject {
                                               final Map<PsiClass, Map<PsiMethod, List<String>>> results,
                                               GlobalSearchScope searchScope,
                                               @Nullable final PsiClass... classes) {
-    calculateDependencies(methods, results, new LinkedHashSet<PsiMember>(), searchScope, classes);
+    calculateDependencies(methods, results, new LinkedHashSet<>(), searchScope, classes);
   }
 
   private static void calculateDependencies(final PsiMethod[] methods,
@@ -102,7 +103,7 @@ public abstract class TestNGTestObject {
                                             final GlobalSearchScope searchScope,
                                             @Nullable final PsiClass... classes) {
     if (classes != null && classes.length > 0) {
-      final Set<PsiMember> membersToCheckNow = new LinkedHashSet<PsiMember>();
+      final Set<PsiMember> membersToCheckNow = new LinkedHashSet<>();
 
       final Set<String> groupDependencies = new LinkedHashSet<>(), declaredGroups = new LinkedHashSet<>();
       final HashMap<String, Collection<String>> valuesMap = new HashMap<>();
@@ -125,7 +126,7 @@ public abstract class TestNGTestObject {
 
       if (methods == null) {
         for (PsiClass c : classes) {
-          results.put(c, new LinkedHashMap<PsiMethod, List<String>>());
+          results.put(c, new LinkedHashMap<>());
         }
       } else {
         for (PsiMember psiMember : membersToCheckNow) {
@@ -178,7 +179,7 @@ public abstract class TestNGTestObject {
                                               final PsiClass... classes) {
     final PsiClass[] psiClasses;
     if (methods != null && methods.length > 0) {
-      final Set<PsiClass> containingClasses = new LinkedHashSet<PsiClass>();
+      final Set<PsiClass> containingClasses = new LinkedHashSet<>();
       for (final PsiMethod method : methods) {
         containingClasses.add(ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
           @Override
@@ -192,7 +193,7 @@ public abstract class TestNGTestObject {
       psiClasses = classes;
     }
     for (final PsiClass containingClass : psiClasses) {
-      final Set<String> testMethodDependencies = new LinkedHashSet<String>();
+      final Set<String> testMethodDependencies = new LinkedHashSet<>();
       final HashMap<String, Collection<String>> valuesMap = new HashMap<>();
       valuesMap.put("dependsOnMethods", testMethodDependencies);
       TestNGUtil.collectAnnotationValues(valuesMap, methods, containingClass);
@@ -239,7 +240,7 @@ public abstract class TestNGTestObject {
     final PsiClass psiClass = psiMember instanceof PsiClass ? ((PsiClass)psiMember) : psiMember.getContainingClass();
     Map<PsiMethod, List<String>> psiMethods = results.get(psiClass);
     if (psiMethods == null) {
-      psiMethods = new LinkedHashMap<PsiMethod, List<String>>();
+      psiMethods = new LinkedHashMap<>();
       results.put(psiClass, psiMethods);
       if (psiMember instanceof PsiClass) {
         result = underConsideration.add(psiMember);
@@ -285,7 +286,7 @@ public abstract class TestNGTestObject {
     calculateDependencies(methods, classes, searchScope, psiClass);
     Map<PsiMethod, List<String>> psiMethods = classes.get(psiClass);
     if (psiMethods == null) {
-      psiMethods = new LinkedHashMap<PsiMethod, List<String>>();
+      psiMethods = new LinkedHashMap<>();
       classes.put(psiClass, psiMethods);
     }
     for (PsiMethod method : methods) {
@@ -293,5 +294,27 @@ public abstract class TestNGTestObject {
         psiMethods.put(method, Collections.<String>emptyList());
       }
     }
+  }
+
+  private static class UnknownTestNGTestObject extends TestNGTestObject {
+    public UnknownTestNGTestObject(TestNGConfiguration config) {
+      super(config);
+    }
+
+    @Override
+    public void fillTestObjects(Map<PsiClass, Map<PsiMethod, List<String>>> classes) throws CantRunException {}
+
+    @Override
+    public String getGeneratedName() {
+      return getActionName();
+    }
+
+    @Override
+    public String getActionName() {
+      return "Unknown";
+    }
+
+    @Override
+    public void checkConfiguration() throws RuntimeConfigurationException {}
   }
 }

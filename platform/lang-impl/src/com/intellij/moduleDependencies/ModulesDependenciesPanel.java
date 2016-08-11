@@ -257,7 +257,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
   }
 
   private void updateSplitterProportion() {
-    DFSTBuilder<Module> builder = new DFSTBuilder<Module>(myModuleGraph);
+    DFSTBuilder<Module> builder = new DFSTBuilder<>(myModuleGraph);
     mySplitter.setProportion(builder.isAcyclic() ? 1.0f : 0.6f);
   }
 

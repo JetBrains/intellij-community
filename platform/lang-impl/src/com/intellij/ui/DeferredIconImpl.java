@@ -308,7 +308,7 @@ public class DeferredIconImpl<T> implements DeferredIcon, RetrievableIcon, Scala
 
   private static class RepaintScheduler {
     private final Alarm myAlarm = new Alarm();
-    private final Set<RepaintRequest> myQueue = new LinkedHashSet<RepaintRequest>();
+    private final Set<RepaintRequest> myQueue = new LinkedHashSet<>();
 
     private void pushDirtyComponent(@NotNull Component c, final Rectangle rec) {
       ApplicationManager.getApplication().assertIsDispatchThread(); // assert myQueue accessed from EDT only

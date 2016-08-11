@@ -70,7 +70,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   private boolean myStatusBarDisposed;
 
   private final Box myNorthPanel = Box.createVerticalBox();
-  private final List<IdeRootPaneNorthExtension> myNorthComponents = new ArrayList<IdeRootPaneNorthExtension>();
+  private final List<IdeRootPaneNorthExtension> myNorthComponents = new ArrayList<>();
 
   /**
    * Current <code>ToolWindowsPane</code>. If there is no such pane then this field is null.

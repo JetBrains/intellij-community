@@ -35,9 +35,9 @@ public class PendingEventDispatcher <T extends EventListener> {
   private final T myMulticaster;
 
   private final List<T> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final Map<T, Boolean> myListenersState = new HashMap<T, Boolean>();
+  private final Map<T, Boolean> myListenersState = new HashMap<>();
 
-  private final Stack<T> myDispatchingListeners = new Stack<T>();
+  private final Stack<T> myDispatchingListeners = new Stack<>();
 
   private Method myCurrentDispatchMethod = null;
   private Object[] myCurrentDispatchArgs = null;
@@ -50,7 +50,7 @@ public class PendingEventDispatcher <T extends EventListener> {
   }
 
   public static <T extends EventListener> PendingEventDispatcher<T> create(Class<T> listenerClass, boolean assertDispatchThread) {
-    return new PendingEventDispatcher<T>(listenerClass, assertDispatchThread);
+    return new PendingEventDispatcher<>(listenerClass, assertDispatchThread);
   }
 
   public static boolean isDispatchingAnyEvent(){

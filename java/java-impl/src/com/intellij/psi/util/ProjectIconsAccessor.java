@@ -53,7 +53,7 @@ public class ProjectIconsAccessor {
 
   private final Project myProject;
 
-  private final SLRUMap<String, Pair<Long, Icon>> iconsCache = new SLRUMap<String, Pair<Long, Icon>>(500, 1000);
+  private final SLRUMap<String, Pair<Long, Icon>> iconsCache = new SLRUMap<>(500, 1000);
 
   ProjectIconsAccessor(Project project) {
     myProject = project;
@@ -69,7 +69,7 @@ public class ProjectIconsAccessor {
       return null;
     }
 
-    final List<FileReference> refs = new ArrayList<FileReference>();
+    final List<FileReference> refs = new ArrayList<>();
     initializer.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
@@ -120,7 +120,7 @@ public class ProjectIconsAccessor {
     if (iconInfo == null || iconInfo.getFirst() < stamp) {
       try {
         final Icon icon = createOrFindBetterIcon(file, isIdeaProject(myProject));
-        iconInfo = new Pair<Long, Icon>(stamp, hasProperSize(icon) ? icon : null);
+        iconInfo = new Pair<>(stamp, hasProperSize(icon) ? icon : null);
         iconsCache.put(file.getPath(), iconInfo);
       }
       catch (Exception e) {//

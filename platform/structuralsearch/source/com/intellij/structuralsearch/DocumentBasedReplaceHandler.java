@@ -19,7 +19,7 @@ import java.util.Map;
  */
 public class DocumentBasedReplaceHandler extends StructuralReplaceHandler {
   private final Project myProject;
-  private final Map<ReplacementInfo, RangeMarker> myRangeMarkers = new HashMap<ReplacementInfo, RangeMarker>();
+  private final Map<ReplacementInfo, RangeMarker> myRangeMarkers = new HashMap<>();
 
   public DocumentBasedReplaceHandler(Project project) {
     myProject = project;

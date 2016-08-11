@@ -19,8 +19,7 @@ import com.intellij.configurationStore.ComponentStoreImpl
 import com.intellij.configurationStore.SchemeManagerFactoryBase
 import com.intellij.configurationStore.StateStorageManagerImpl
 import com.intellij.configurationStore.reloadAppStore
-import com.intellij.migLayout.label
-import com.intellij.migLayout.panel
+import com.intellij.layout.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.options.ConfigurableUi
@@ -55,8 +54,8 @@ internal fun createRepositoryListEditor(): ConfigurableUi<IcsSettings> {
 
     override fun getComponent() = panel {
       label("Repository:")
-      add(editor.comboBox)
-      add(deleteButton)
+      editor.comboBox()
+      deleteButton()
     }
 
     override fun apply(settings: IcsSettings) {

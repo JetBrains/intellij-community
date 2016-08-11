@@ -48,7 +48,7 @@ class StubVersionMap {
   private static final String RECORD_SEPARATOR = "\uFFFF";
   private static final String LINE_SEPARATOR = "\n";
   private static final String ourEncoding = "utf-8";
-  private final Map<FileType, Object> fileTypeToVersionOwner = new THashMap<FileType, Object>();
+  private final Map<FileType, Object> fileTypeToVersionOwner = new THashMap<>();
   private final TObjectLongHashMap<FileType> fileTypeToVersion = new TObjectLongHashMap<>();
   private final TLongObjectHashMap<FileType> versionToFileType = new TLongObjectHashMap<>();
   private long myStubIndexStamp;

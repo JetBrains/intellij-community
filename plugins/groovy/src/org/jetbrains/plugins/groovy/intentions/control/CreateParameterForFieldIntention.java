@@ -141,7 +141,7 @@ public class CreateParameterForFieldIntention extends Intention {
   }
 
   private static void addParameter(final GrField selectedValue, final GrMethod constructor, final Project project) {
-    List<GrParameterInfo> parameters = new ArrayList<GrParameterInfo>();
+    List<GrParameterInfo> parameters = new ArrayList<>();
     GrParameter[] constructorParameters = constructor.getParameters();
     for (int i = 0; i < constructorParameters.length; i++) {
       parameters.add(new GrParameterInfo(constructorParameters[i], i));
@@ -233,7 +233,7 @@ public class CreateParameterForFieldIntention extends Intention {
   }
 
   private static List<GrField> findCandidates(PsiMethod constructor, final GrTypeDefinition clazz) {
-    final List<GrField> usedFields = new ArrayList<GrField>();
+    final List<GrField> usedFields = new ArrayList<>();
     final GrOpenBlock block = constructor instanceof GrMethod ? ((GrMethod)constructor).getBlock() : null;
     if (block == null) {
       return usedFields;
@@ -261,7 +261,7 @@ public class CreateParameterForFieldIntention extends Intention {
       }
     });
 
-    List<GrField> fields = new ArrayList<GrField>();
+    List<GrField> fields = new ArrayList<>();
     for (final GrField field : clazz.getFields()) {
       if (field.getInitializerGroovy() != null) continue;
       if (ContainerUtil.find(usedFields, new Condition<PsiField>() {
@@ -296,7 +296,7 @@ public class CreateParameterForFieldIntention extends Intention {
   }
 
   private static List<GrMethod> findConstructorCandidates(final GrField field, GrTypeDefinition psiClass) {
-    final List<GrMethod> result = new ArrayList<GrMethod>();
+    final List<GrMethod> result = new ArrayList<>();
     final PsiMethod[] constructors = psiClass.getConstructors();
     final PsiManager manager = field.getManager();
     for (PsiMethod constructor : constructors) {

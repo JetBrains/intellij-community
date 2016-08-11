@@ -34,10 +34,10 @@ public class Task implements StudyItem {
   @Expose private int myStepicId;
   
   @SerializedName("task_files")
-  @Expose public Map<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
+  @Expose public Map<String, TaskFile> taskFiles = new HashMap<>();
 
   private String text;
-  private Map<String, String> testsText = new HashMap<String, String>();
+  private Map<String, String> testsText = new HashMap<>();
 
   @Transient private Lesson myLesson;
   @Expose @SerializedName("update_date") private Date myUpdateDate;

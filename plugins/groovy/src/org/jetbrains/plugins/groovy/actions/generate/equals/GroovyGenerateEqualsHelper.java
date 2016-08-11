@@ -60,7 +60,7 @@ public class GroovyGenerateEqualsHelper {
   private String myClassInstanceName;
 
   @NonNls
-  private static final HashMap<String, MessageFormat> PRIMITIVE_HASHCODE_FORMAT = new HashMap<String, MessageFormat>();
+  private static final HashMap<String, MessageFormat> PRIMITIVE_HASHCODE_FORMAT = new HashMap<>();
   private final boolean mySuperHasHashCode;
 //  private CodeStyleManager myCodeStyleManager;
 
@@ -79,7 +79,7 @@ public class GroovyGenerateEqualsHelper {
     myProject = project;
     myCheckParameterWithInstanceof = useInstanceofToCheckParameterType;
 
-    myNonNullSet = new HashSet<PsiField>();
+    myNonNullSet = new HashSet<>();
     ContainerUtil.addAll(myNonNullSet, nonNullFields);
 
     myFactory = GroovyPsiElementFactory.getInstance(project);
@@ -253,7 +253,7 @@ public class GroovyGenerateEqualsHelper {
     if (myEqualsFields.length > 0) {
       addClassInstance(buffer);
 
-      ArrayList<PsiField> equalsFields = new ArrayList<PsiField>();
+      ArrayList<PsiField> equalsFields = new ArrayList<>();
       ContainerUtil.addAll(equalsFields, myEqualsFields);
       Collections.sort(equalsFields, EqualsFieldsComparator.INSTANCE);
 

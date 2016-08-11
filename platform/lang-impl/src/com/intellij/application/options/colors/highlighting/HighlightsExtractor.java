@@ -35,7 +35,7 @@ public class HighlightsExtractor {
   private int myIndex;
   private boolean myIsOpeningTag;
 
-  private List<TextRange> mySkipped = new ArrayList<TextRange>();
+  private List<TextRange> mySkipped = new ArrayList<>();
 
   public HighlightsExtractor(@Nullable Map<String, TextAttributesKey> tags) {
     myTags = tags;
@@ -45,7 +45,7 @@ public class HighlightsExtractor {
     mySkipped.clear();
     if (myTags == null || myTags.isEmpty()) return text;
     resetIndices();
-    Stack<HighlightData> highlightsStack = new Stack<HighlightData>();
+    Stack<HighlightData> highlightsStack = new Stack<>();
     while (true) {
       String tagName = findTagName(text);
       if (tagName == null || myIndex < 0) break;

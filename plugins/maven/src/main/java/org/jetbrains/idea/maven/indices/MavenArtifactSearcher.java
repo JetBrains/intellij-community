@@ -48,7 +48,7 @@ public class MavenArtifactSearcher extends MavenSearcher<MavenArtifactSearchResu
 
   @NotNull
   private static List<MavenArtifactSearchResult> getResultsFromIdeaCache(Project project, String pattern, int maxResult) {
-    List<String> parts = new ArrayList<String>();
+    List<String> parts = new ArrayList<>();
     for (String each : StringUtil.tokenize(pattern, " :")) {
       parts.add(each);
     }
@@ -87,7 +87,7 @@ public class MavenArtifactSearcher extends MavenSearcher<MavenArtifactSearchResu
     pattern = StringUtil.toLowerCase(pattern);
     if (pattern.trim().length() == 0) return Pair.create(pattern, (Query)new MatchAllDocsQuery());
 
-    List<String> parts = new ArrayList<String>();
+    List<String> parts = new ArrayList<>();
     for (String each : StringUtil.tokenize(pattern, " :")) {
       parts.add(each);
     }
@@ -112,7 +112,7 @@ public class MavenArtifactSearcher extends MavenSearcher<MavenArtifactSearchResu
   }
 
   protected Collection<MavenArtifactSearchResult> processResults(Set<MavenArtifactInfo> infos, String pattern, int maxResult) {
-    Map<String, MavenArtifactSearchResult> result = new THashMap<String, MavenArtifactSearchResult>();
+    Map<String, MavenArtifactSearchResult> result = new THashMap<>();
 
     for (MavenArtifactInfo each : infos) {
       if (!StringUtil.isEmptyOrSpaces(each.getClassifier())) {

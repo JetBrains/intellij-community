@@ -52,7 +52,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   
   private static final Logger LOG = Logger.getInstance(CodeStyleSettings.class);
 
-  private final ClassMap<CustomCodeStyleSettings> myCustomSettings = new ClassMap<CustomCodeStyleSettings>();
+  private final ClassMap<CustomCodeStyleSettings> myCustomSettings = new ClassMap<>();
 
   @NonNls private static final String ADDITIONAL_INDENT_OPTIONS = "ADDITIONAL_INDENT_OPTIONS";
 
@@ -191,7 +191,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   public final IndentOptions OTHER_INDENT_OPTIONS = new IndentOptions();
 
-  private final Map<FileType,IndentOptions> myAdditionalIndentOptions = new LinkedHashMap<FileType, IndentOptions>();
+  private final Map<FileType,IndentOptions> myAdditionalIndentOptions = new LinkedHashMap<>();
 
   private static final String ourSystemLineSeparator = SystemProperties.getLineSeparator();
 
@@ -533,7 +533,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
     final CodeStyleSettings parentSettings = new CodeStyleSettings();
-    DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<CodeStyleSettings>(this, parentSettings));
+    DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<>(this, parentSettings));
 
     myUnknownElementWriter.write(element, getCustomSettingsValues(), CustomCodeStyleSettings::getTagName, settings -> {
       CustomCodeStyleSettings parentCustomSettings = parentSettings.getCustomSettings(settings.getClass());
@@ -744,8 +744,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   }
 
   public static class TypeToNameMap implements JDOMExternalizable {
-    private final List<String> myPatterns = new ArrayList<String>();
-    private final List<String> myNames = new ArrayList<String>();
+    private final List<String> myPatterns = new ArrayList<>();
+    private final List<String> myNames = new ArrayList<>();
 
     public void addPair(String pattern, String name) {
       myPatterns.add(pattern);

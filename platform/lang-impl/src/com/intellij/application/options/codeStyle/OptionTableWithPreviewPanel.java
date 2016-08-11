@@ -60,10 +60,10 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
   protected TreeTable myTreeTable;
   private final JPanel myPanel = new JPanel();
 
-  private final List<Option> myOptions = new ArrayList<Option>();
-  private final List<Option> myCustomOptions = new ArrayList<Option>();
-  private final Set<String> myAllowedOptions = new THashSet<String>();
-  private final Map<String, String> myRenamedFields = new THashMap<String, String>();
+  private final List<Option> myOptions = new ArrayList<>();
+  private final List<Option> myCustomOptions = new ArrayList<>();
+  private final Set<String> myAllowedOptions = new THashSet<>();
+  private final Map<String, String> myRenamedFields = new THashMap<>();
   private boolean myShowAllStandardOptions;
   protected boolean isFirstUpdate = true;
 
@@ -180,7 +180,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
 
   protected TreeTable createOptionsTree(CodeStyleSettings settings) {
     DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();
-    Map<String, DefaultMutableTreeNode> groupsMap = new THashMap<String, DefaultMutableTreeNode>();
+    Map<String, DefaultMutableTreeNode> groupsMap = new THashMap<>();
 
     List<Option> sorted = sortOptions(ContainerUtil.concat(myOptions, myCustomOptions));
     for (Option each : sorted) {
@@ -950,7 +950,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
 
   @Override
   public Set<String> processListOptions() {
-    Set<String> options = new HashSet<String>();
+    Set<String> options = new HashSet<>();
     collectOptions(options, myOptions);
     collectOptions(options, myCustomOptions);
     return options;

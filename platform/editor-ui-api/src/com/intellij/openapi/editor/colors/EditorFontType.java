@@ -30,7 +30,7 @@ public enum EditorFontType {
   CONSOLE_ITALIC,
   CONSOLE_BOLD_ITALIC;
 
-  private static final Map<EditorFontType, EditorFontType> ourConsoleTypes = new HashMap<EditorFontType, EditorFontType>();
+  private static final Map<EditorFontType, EditorFontType> ourConsoleTypes = new HashMap<>();
   static {
     ourConsoleTypes.put(PLAIN, CONSOLE_PLAIN);
     ourConsoleTypes.put(ITALIC, CONSOLE_ITALIC);

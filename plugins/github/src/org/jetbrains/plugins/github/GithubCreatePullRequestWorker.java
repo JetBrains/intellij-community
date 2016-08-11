@@ -102,7 +102,7 @@ public class GithubCreatePullRequestWorker {
     myRemoteUrl = remoteUrl;
     myCurrentBranch = currentBranch;
 
-    myForks = new ArrayList<ForkInfo>();
+    myForks = new ArrayList<>();
   }
 
   @NotNull
@@ -287,7 +287,7 @@ public class GithubCreatePullRequestWorker {
     synchronized (fork.LOCK) {
       if (fork.getFetchTask() != null) return;
 
-      final MasterFutureTask<Void> task = new MasterFutureTask<Void>(new Callable<Void>() {
+      final MasterFutureTask<Void> task = new MasterFutureTask<>(new Callable<Void>() {
         @Override
         public Void call() throws Exception {
           doFetchRemote(fork);
@@ -316,7 +316,7 @@ public class GithubCreatePullRequestWorker {
       MasterFutureTask<Void> masterTask = branch.getForkInfo().getFetchTask();
       assert masterTask != null;
 
-      final SlaveFutureTask<DiffInfo> task = new SlaveFutureTask<DiffInfo>(masterTask, new Callable<DiffInfo>() {
+      final SlaveFutureTask<DiffInfo> task = new SlaveFutureTask<>(masterTask, new Callable<DiffInfo>() {
         @Override
         public DiffInfo call() throws VcsException {
           return doLoadDiffInfo(branch);
@@ -638,7 +638,7 @@ public class GithubCreatePullRequestWorker {
     public ForkInfo(@NotNull GithubFullPath path, @NotNull List<String> branches, @Nullable String defaultBranch) {
       myPath = path;
       myDefaultBranch = defaultBranch == null ? "master" : defaultBranch;
-      myBranches = new ArrayList<BranchInfo>();
+      myBranches = new ArrayList<>();
       for (String branchName : branches) {
         myBranches.add(new BranchInfo(branchName, this));
       }
@@ -837,7 +837,7 @@ public class GithubCreatePullRequestWorker {
       else {
         synchronized (LOCK) {
           if (myDone) return false;
-          if (mySlaves == null) mySlaves = new ArrayList<SlaveFutureTask>();
+          if (mySlaves == null) mySlaves = new ArrayList<>();
           mySlaves.add(slave);
           return true;
         }

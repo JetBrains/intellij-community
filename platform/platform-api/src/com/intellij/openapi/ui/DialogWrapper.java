@@ -152,7 +152,7 @@ public abstract class DialogWrapper {
   protected Action myOKAction;
   protected Action myCancelAction;
   protected Action myHelpAction;
-  private final Map<Action, JButton> myButtonMap = new LinkedHashMap<Action, JButton>();
+  private final Map<Action, JButton> myButtonMap = new LinkedHashMap<>();
 
   private boolean myClosed = false;
 
@@ -180,7 +180,7 @@ public abstract class DialogWrapper {
       DialogWrapper.this.dispose();
     }
   };
-  private final List<JBOptionButton> myOptionsButtons = new ArrayList<JBOptionButton>();
+  private final List<JBOptionButton> myOptionsButtons = new ArrayList<>();
   private int myCurrentOptionsButtonIndex = -1;
   private boolean myResizeInProgress = false;
   private ComponentAdapter myResizeListener;
@@ -449,7 +449,7 @@ public abstract class DialogWrapper {
   protected JComponent createSouthPanel() {
     Action[] actions = filter(createActions());
     Action[] leftSideActions = createLeftSideActions();
-    Map<Action, JButton> buttonMap = new LinkedHashMap<Action, JButton>();
+    Map<Action, JButton> buttonMap = new LinkedHashMap<>();
 
     boolean hasHelpToMoveToLeftSide = false;
     if (isMoveHelpButtonLeft() && Arrays.asList(actions).contains(getHelpAction())) {
@@ -614,7 +614,7 @@ public abstract class DialogWrapper {
 
   @NotNull
   private Action[] filter(@NotNull Action[] actions) {
-    ArrayList<Action> answer = new ArrayList<Action>();
+    ArrayList<Action> answer = new ArrayList<>();
     for (Action action : actions) {
       if (action != null && (ApplicationInfo.contextHelpAvailable() || action != getHelpAction())) {
         answer.add(action);
@@ -670,7 +670,7 @@ public abstract class DialogWrapper {
   @NotNull
   private JPanel createButtons(@NotNull Action[] actions, @NotNull Map<Action, JButton> buttons) {
     if (!UISettings.getShadowInstance().ALLOW_MERGE_BUTTONS) {
-      final List<Action> actionList = new ArrayList<Action>();
+      final List<Action> actionList = new ArrayList<>();
       for (Action action : actions) {
         actionList.add(action);
         if (action instanceof OptionAction) {
@@ -1668,7 +1668,7 @@ public abstract class DialogWrapper {
       }
     }
 
-    final AsyncResult<Boolean> result = new AsyncResult<Boolean>();
+    final AsyncResult<Boolean> result = new AsyncResult<>();
 
     ensureEventDispatchThread();
     registerKeyboardShortcuts();
@@ -1762,7 +1762,7 @@ public abstract class DialogWrapper {
   }
 
   private void focusPreviousButton() {
-    JButton[] myButtons = new ArrayList<JButton>(myButtonMap.values()).toArray(new JButton[0]);
+    JButton[] myButtons = new ArrayList<>(myButtonMap.values()).toArray(new JButton[0]);
     for (int i = 0; i < myButtons.length; i++) {
       if (myButtons[i].hasFocus()) {
         if (i == 0) {
@@ -1776,7 +1776,7 @@ public abstract class DialogWrapper {
   }
 
   private void focusNextButton() {
-    JButton[] myButtons = new ArrayList<JButton>(myButtonMap.values()).toArray(new JButton[0]);
+    JButton[] myButtons = new ArrayList<>(myButtonMap.values()).toArray(new JButton[0]);
     for (int i = 0; i < myButtons.length; i++) {
       if (myButtons[i].hasFocus()) {
         if (i == myButtons.length - 1) {

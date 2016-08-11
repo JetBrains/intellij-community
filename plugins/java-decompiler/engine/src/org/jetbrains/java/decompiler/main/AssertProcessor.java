@@ -169,7 +169,7 @@ public class AssertProcessor {
       return false;
     }
 
-    List<Exprent> lstParams = new ArrayList<Exprent>();
+    List<Exprent> lstParams = new ArrayList<>();
 
     Exprent ascond = null, retcond = null;
     if (exprres[0] != null) {
@@ -196,7 +196,7 @@ public class AssertProcessor {
       first.removeSuccessor(stat.getIfEdge());
       first.removeSuccessor(stat.getElseEdge());
 
-      List<Statement> lstStatements = new ArrayList<Statement>();
+      List<Statement> lstStatements = new ArrayList<>();
       if (first.getExprents() != null && !first.getExprents().isEmpty()) {
         lstStatements.add(first);
       }

@@ -190,7 +190,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
       }
     }
 
-    final List<ScopeDescriptor> customScopes = new ArrayList<ScopeDescriptor>();
+    final List<ScopeDescriptor> customScopes = new ArrayList<>();
     final NamedScopesHolder[] holders = NamedScopesHolder.getAllNamedScopeHolders(myProject);
     for (NamedScopesHolder holder : holders) {
       final NamedScope[] scopes = holder.getEditableScopes();  // predefined scopes already included

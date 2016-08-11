@@ -91,7 +91,7 @@ public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction
     }
     final PsiReferenceList extendsList = targetClass.getExtendsList();
     if (extendsList != null && extendsList.getReferencedTypes().length > 0) {
-      final List<PsiMethod> methods = new ArrayList<PsiMethod>(Arrays.asList(targetClass.getAllMethods()));
+      final List<PsiMethod> methods = new ArrayList<>(Arrays.asList(targetClass.getAllMethods()));
       final PsiClass objectClass =
         JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(project));
       if (objectClass == null) return false;
@@ -126,7 +126,7 @@ public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction
       LOG.assertTrue(element instanceof PsiClass);
       targetClass = (PsiClass)element;
     }
-    final Map<PsiFile, Map<PsiField, Set<PsiReference>>> refs = new HashMap<PsiFile, Map<PsiField, Set<PsiReference>>>();
+    final Map<PsiFile, Map<PsiField, Set<PsiReference>>> refs = new HashMap<>();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
       for (PsiField field : targetClass.getAllFields()) {
         final PsiClass containingClass = field.getContainingClass();
@@ -140,12 +140,12 @@ public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction
           if (psiFile instanceof PsiJavaFile) {
             Map<PsiField, Set<PsiReference>> references = refs.get(psiFile);
             if (references == null) {
-              references = new HashMap<PsiField, Set<PsiReference>>();
+              references = new HashMap<>();
               refs.put(psiFile, references);
             }
             Set<PsiReference> fieldsRefs = references.get(field);
             if (fieldsRefs == null) {
-              fieldsRefs = new HashSet<PsiReference>();
+              fieldsRefs = new HashSet<>();
               references.put(field, fieldsRefs);
             }
             fieldsRefs.add(reference);
@@ -156,12 +156,12 @@ public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction
       return;
     }
 
-    final Set<PsiJavaCodeReferenceElement> refs2Unimplement = new HashSet<PsiJavaCodeReferenceElement>();
+    final Set<PsiJavaCodeReferenceElement> refs2Unimplement = new HashSet<>();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
       for (PsiClass psiClass : DirectClassInheritorsSearch.search(targetClass)) {
         PsiFile containingFile = psiClass.getContainingFile();
         if (!refs.containsKey(containingFile)) {
-          refs.put(containingFile, new HashMap<PsiField, Set<PsiReference>>());
+          refs.put(containingFile, new HashMap<>());
         }
         if (collectExtendsImplements(targetClass, psiClass.getExtendsList(), refs2Unimplement)) continue;
         collectExtendsImplements(targetClass, psiClass.getImplementsList(), refs2Unimplement);
@@ -189,7 +189,7 @@ public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction
       }
     });
 
-    final Map<PsiJavaFile, PsiImportList> redundant = new HashMap<PsiJavaFile, PsiImportList>();
+    final Map<PsiJavaFile, PsiImportList> redundant = new HashMap<>();
     final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
       for (PsiFile psiFile : refs.keySet()) {

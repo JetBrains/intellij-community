@@ -69,7 +69,7 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
       }
 
       boolean camel = editor.getSettings().isCamelWords();
-      List<TextRange> ranges = new ArrayList<TextRange>();
+      List<TextRange> ranges = new ArrayList<>();
 
       int textLength = document.getTextLength();
       if (caretOffset == textLength) caretOffset--;

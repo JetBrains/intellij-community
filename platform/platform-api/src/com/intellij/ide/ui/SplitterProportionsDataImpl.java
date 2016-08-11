@@ -40,7 +40,7 @@ public class SplitterProportionsDataImpl implements SplitterProportionsData {
   @NonNls private static final String ATTRIBUTE_PROPORTIONS = "proportions";
   @NonNls private static final String ATTRIBUTE_VERSION = "version";
 
-  private List<Float> proportions = new SmartList<Float>();
+  private List<Float> proportions = new SmartList<>();
 
   @Override
   public void saveSplitterProportions(Component root) {

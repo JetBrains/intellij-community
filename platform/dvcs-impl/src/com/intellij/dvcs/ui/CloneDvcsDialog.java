@@ -293,7 +293,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   private void createUIComponents() {
     myRepositoryURL = new EditorComboBox("");
     final DvcsRememberedInputs rememberedInputs = getRememberedInputs();
-    List<String> urls = new ArrayList<String>(rememberedInputs.getVisitedUrls());
+    List<String> urls = new ArrayList<>(rememberedInputs.getVisitedUrls());
     if (myDefaultRepoUrl != null) {
       urls.add(0, myDefaultRepoUrl);
     }

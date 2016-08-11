@@ -155,9 +155,9 @@ public class MavenProject {
       newState.myProfilesIds = newProfiles;
     }
     else {
-      Set<String> mergedProfiles = new THashSet<String>(newState.myProfilesIds);
+      Set<String> mergedProfiles = new THashSet<>(newState.myProfilesIds);
       mergedProfiles.addAll(newProfiles);
-      newState.myProfilesIds = new ArrayList<String>(mergedProfiles);
+      newState.myProfilesIds = new ArrayList<>(mergedProfiles);
     }
 
     newState.myModelMap = readerResult.nativeModelMap;
@@ -176,12 +176,12 @@ public class MavenProject {
                                               boolean reset) {
     MavenModel model = readerResult.mavenModel;
 
-    Set<MavenId> newUnresolvedArtifacts = new THashSet<MavenId>();
-    LinkedHashSet<MavenRemoteRepository> newRepositories = new LinkedHashSet<MavenRemoteRepository>();
-    LinkedHashSet<MavenArtifact> newDependencies = new LinkedHashSet<MavenArtifact>();
-    LinkedHashSet<MavenArtifactNode> newDependencyTree = new LinkedHashSet<MavenArtifactNode>();
-    LinkedHashSet<MavenPlugin> newPlugins = new LinkedHashSet<MavenPlugin>();
-    LinkedHashSet<MavenArtifact> newExtensions = new LinkedHashSet<MavenArtifact>();
+    Set<MavenId> newUnresolvedArtifacts = new THashSet<>();
+    LinkedHashSet<MavenRemoteRepository> newRepositories = new LinkedHashSet<>();
+    LinkedHashSet<MavenArtifact> newDependencies = new LinkedHashSet<>();
+    LinkedHashSet<MavenArtifactNode> newDependencyTree = new LinkedHashSet<>();
+    LinkedHashSet<MavenPlugin> newPlugins = new LinkedHashSet<>();
+    LinkedHashSet<MavenArtifact> newExtensions = new LinkedHashSet<>();
 
     if (!reset) {
       if (state.myUnresolvedArtifactIds != null) newUnresolvedArtifacts.addAll(state.myUnresolvedArtifactIds);
@@ -200,11 +200,11 @@ public class MavenProject {
     newExtensions.addAll(model.getExtensions());
 
     state.myUnresolvedArtifactIds = newUnresolvedArtifacts;
-    state.myRemoteRepositories = new ArrayList<MavenRemoteRepository>(newRepositories);
-    state.myDependencies = new ArrayList<MavenArtifact>(newDependencies);
-    state.myDependencyTree = new ArrayList<MavenArtifactNode>(newDependencyTree);
-    state.myPlugins = new ArrayList<MavenPlugin>(newPlugins);
-    state.myExtensions = new ArrayList<MavenArtifact>(newExtensions);
+    state.myRemoteRepositories = new ArrayList<>(newRepositories);
+    state.myDependencies = new ArrayList<>(newDependencies);
+    state.myDependencyTree = new ArrayList<>(newDependencyTree);
+    state.myPlugins = new ArrayList<>(newPlugins);
+    state.myExtensions = new ArrayList<>(newExtensions);
   }
 
   private MavenProjectChanges setFolders(MavenProjectReaderResult readerResult) {
@@ -224,7 +224,7 @@ public class MavenProject {
 
   private static Map<String, String> collectModulePathsAndNames(MavenModel mavenModel, String baseDir) {
     String basePath = baseDir + "/";
-    Map<String, String> result = new LinkedHashMap<String, String>();
+    Map<String, String> result = new LinkedHashMap<>();
     for (Map.Entry<String, String> each : collectModulesRelativePathsAndNames(mavenModel).entrySet()) {
       result.put(new Path(basePath + each.getKey()).getPath(), each.getValue());
     }
@@ -232,7 +232,7 @@ public class MavenProject {
   }
 
   private static Map<String, String> collectModulesRelativePathsAndNames(MavenModel mavenModel) {
-    LinkedHashMap<String, String> result = new LinkedHashMap<String, String>();
+    LinkedHashMap<String, String> result = new LinkedHashMap<>();
     for (String name : mavenModel.getModules()) {
       name = name.trim();
 
@@ -253,7 +253,7 @@ public class MavenProject {
   private static Collection<String> collectProfilesIds(Collection<MavenProfile> profiles) {
     if (profiles == null) return Collections.emptyList();
 
-    Set<String> result = new THashSet<String>(profiles.size());
+    Set<String> result = new THashSet<>(profiles.size());
     for (MavenProfile each : profiles) {
       result.add(each.getId());
     }
@@ -439,7 +439,7 @@ public class MavenProject {
   }
 
   private static Map<String, String> getAnnotationProcessorOptionsFromCompilerConfig(Element compilerConfig) {
-    Map<String, String> res = new LinkedHashMap<String, String>();
+    Map<String, String> res = new LinkedHashMap<>();
 
     String compilerArgument = compilerConfig.getChildText("compilerArgument");
     addAnnotationProcessorOptionFomrParametersString(compilerArgument, res);
@@ -496,7 +496,7 @@ public class MavenProject {
     if (cfg == null) {
       cfg = bscMavenPlugin.getConfigurationElement();
     }
-    LinkedHashMap<String, String> res = new LinkedHashMap<String, String>();
+    LinkedHashMap<String, String> res = new LinkedHashMap<>();
     if (cfg != null) {
       String compilerArguments = cfg.getChildText("compilerArguments");
       addAnnotationProcessorOptionFomrParametersString(compilerArguments, res);
@@ -518,7 +518,7 @@ public class MavenProject {
       return null;
     }
 
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     if (getProcMode() != MavenProject.ProcMode.NONE) {
       Element processors = compilerConfig.getChild("annotationProcessors");
       if (processors != null) {
@@ -597,7 +597,7 @@ public class MavenProject {
       if (propCfg != null) {
         Element files = propCfg.getChild("files");
         if (files != null) {
-          res = new ArrayList<String>();
+          res = new ArrayList<>();
 
           for (Element file : files.getChildren("file")) {
             File f = new File(file.getValue());
@@ -692,7 +692,7 @@ public class MavenProject {
   }
 
   private static List<MavenProjectProblem> collectProblems(VirtualFile file, State state) {
-    List<MavenProjectProblem> result = new ArrayList<MavenProjectProblem>();
+    List<MavenProjectProblem> result = new ArrayList<>();
 
     validateParent(file, state, result);
     result.addAll(state.myReadingProblems);
@@ -747,7 +747,7 @@ public class MavenProject {
   private static List<MavenArtifact> getUnresolvedDependencies(State state) {
     synchronized (state) {
       if (state.myUnresolvedDependenciesCache == null) {
-        List<MavenArtifact> result = new ArrayList<MavenArtifact>();
+        List<MavenArtifact> result = new ArrayList<>();
         for (MavenArtifact each : state.myDependencies) {
           if (!each.isResolved()) result.add(each);
         }
@@ -760,7 +760,7 @@ public class MavenProject {
   private static List<MavenArtifact> getUnresolvedExtensions(State state) {
     synchronized (state) {
       if (state.myUnresolvedExtensionsCache == null) {
-        List<MavenArtifact> result = new ArrayList<MavenArtifact>();
+        List<MavenArtifact> result = new ArrayList<>();
         for (MavenArtifact each : state.myExtensions) {
           // Collect only extensions that were attempted to be resolved.
           // It is because embedder does not even try to resolve extensions that
@@ -783,7 +783,7 @@ public class MavenProject {
   private static List<MavenPlugin> getUnresolvedPlugins(State state) {
     synchronized (state) {
       if (state.myUnresolvedPluginsCache == null) {
-        List<MavenPlugin> result = new ArrayList<MavenPlugin>();
+        List<MavenPlugin> result = new ArrayList<>();
         for (MavenPlugin each : getDeclaredPlugins(state)) {
           if (!MavenArtifactUtil.hasArtifactFile(state.myLocalRepository, each.getMavenId())) {
             result.add(each);
@@ -799,7 +799,7 @@ public class MavenProject {
   public List<VirtualFile> getExistingModuleFiles() {
     LocalFileSystem fs = LocalFileSystem.getInstance();
 
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
+    List<VirtualFile> result = new ArrayList<>();
     Set<String> pathsInStack = getModulePaths();
     for (String each : pathsInStack) {
       VirtualFile f = fs.findFileByPath(each);
@@ -850,7 +850,7 @@ public class MavenProject {
   }
 
   public Set<String> getDependencyTypesFromImporters(@NotNull SupportedRequestType type) {
-    THashSet<String> res = new THashSet<String>();
+    THashSet<String> res = new THashSet<>();
 
     for (MavenImporter each : getSuitableImporters()) {
       each.getSupportedDependencyTypes(res, type);
@@ -861,11 +861,11 @@ public class MavenProject {
 
   @NotNull
   public Set<String> getSupportedDependencyScopes() {
-    Set<String> result = new THashSet<String>(Arrays.asList(MavenConstants.SCOPE_COMPILE,
-                                                            MavenConstants.SCOPE_PROVIDED,
-                                                            MavenConstants.SCOPE_RUNTIME,
-                                                            MavenConstants.SCOPE_TEST,
-                                                            MavenConstants.SCOPE_SYSTEM));
+    Set<String> result = new THashSet<>(Arrays.asList(MavenConstants.SCOPE_COMPILE,
+                                                      MavenConstants.SCOPE_PROVIDED,
+                                                      MavenConstants.SCOPE_RUNTIME,
+                                                      MavenConstants.SCOPE_TEST,
+                                                      MavenConstants.SCOPE_SYSTEM));
     for (MavenImporter each : getSuitableImporters()) {
       each.getSupportedDependencyScopes(result);
     }
@@ -874,7 +874,7 @@ public class MavenProject {
 
   public void addDependency(@NotNull MavenArtifact dependency) {
     State state = myState;
-    List<MavenArtifact> dependenciesCopy = new ArrayList<MavenArtifact>(state.myDependencies);
+    List<MavenArtifact> dependenciesCopy = new ArrayList<>(state.myDependencies);
     dependenciesCopy.add(dependency);
     state.myDependencies = dependenciesCopy;
 
@@ -1110,13 +1110,13 @@ public class MavenProject {
     volatile List<MavenPlugin> myUnresolvedPluginsCache;
     volatile List<MavenArtifact> myUnresolvedExtensionsCache;
 
-    transient ConcurrentHashMap<Key, Object> myCache = new ConcurrentHashMap<Key, Object>();
+    transient ConcurrentHashMap<Key, Object> myCache = new ConcurrentHashMap<>();
 
     @Override
     public State clone() {
       try {
         State result = (State)super.clone();
-        myCache = new ConcurrentHashMap<Key, Object>();
+        myCache = new ConcurrentHashMap<>();
         result.resetCache();
         return result;
       }
@@ -1162,7 +1162,7 @@ public class MavenProject {
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
       in.defaultReadObject();
-      myCache = new ConcurrentHashMap<Key, Object>();
+      myCache = new ConcurrentHashMap<>();
     }
   }
 }

@@ -123,7 +123,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
 
   @Property(surroundWithTag = false)
   @AbstractCollection(elementTag = "MESSAGE", elementValueAttribute = "value", surroundWithTag = false)
-  public List<String> myLastCommitMessages = new ArrayList<String>();
+  public List<String> myLastCommitMessages = new ArrayList<>();
   public String LAST_COMMIT_MESSAGE = null;
   public boolean MAKE_NEW_CHANGELIST_ACTIVE = false;
   public boolean PRESELECT_EXISTING_CHANGELIST = false;
@@ -136,7 +136,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
 
   public boolean REARRANGE_BEFORE_PROJECT_COMMIT = false;
 
-  public Map<String, ChangeBrowserSettings> CHANGE_BROWSER_SETTINGS = new HashMap<String, ChangeBrowserSettings>();
+  public Map<String, ChangeBrowserSettings> CHANGE_BROWSER_SETTINGS = new HashMap<>();
 
   public boolean UPDATE_GROUP_BY_PACKAGES = false;
   public boolean UPDATE_GROUP_BY_CHANGELIST = false;
@@ -188,7 +188,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
 
   @NotNull
   public ArrayList<String> getRecentMessages() {
-    return new ArrayList<String>(myLastCommitMessages);
+    return new ArrayList<>(myLastCommitMessages);
   }
 
   public void removeMessage(final String content) {
@@ -294,7 +294,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   }
 
   public void addIgnoredUnregisteredRoots(@NotNull Collection<String> roots) {
-    List<String> unregisteredRoots = new ArrayList<String>(IGNORED_UNREGISTERED_ROOTS);
+    List<String> unregisteredRoots = new ArrayList<>(IGNORED_UNREGISTERED_ROOTS);
     for (String root : roots) {
       if (!unregisteredRoots.contains(root)) {
         unregisteredRoots.add(root);

@@ -44,7 +44,7 @@ public abstract class AbstractExternalFilter {
 
   private static final Pattern ourClassDataStartPattern = Pattern.compile("START OF CLASS DATA", Pattern.CASE_INSENSITIVE);
   private static final Pattern ourClassDataEndPattern = Pattern.compile("SUMMARY ========", Pattern.CASE_INSENSITIVE);
-  private static final Pattern ourNonClassDataEndPattern = Pattern.compile("<A NAME=", Pattern.CASE_INSENSITIVE);
+  private static final Pattern ourNonClassDataEndPattern = Pattern.compile("<A (NAME|ID)=", Pattern.CASE_INSENSITIVE);
 
   @NonNls
   protected static final Pattern ourAnchorSuffix = Pattern.compile("#(.*)$");
@@ -307,7 +307,7 @@ public abstract class AbstractExternalFilter {
     Matcher anchorMatcher = ourAnchorSuffix.matcher(url);
     if (anchorMatcher.find()) {
       anchorPresent = true;
-      startSection = Pattern.compile(Pattern.quote("<a name=\"" + anchorMatcher.group(1) + "\""), Pattern.CASE_INSENSITIVE);
+      startSection = Pattern.compile("<a (name|id)=\"" + Pattern.quote(anchorMatcher.group(1)) + "\"", Pattern.CASE_INSENSITIVE);
       endSection = ourNonClassDataEndPattern;
     }
     return new ParseSettings(startSection, endSection, !anchorPresent, anchorPresent);

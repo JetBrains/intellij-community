@@ -69,9 +69,9 @@ public class WindowSystemPlaybackCall {
 
 
   public static AsyncResult<String> waitForDialog(final PlaybackContext context, final String title) {
-    final AsyncResult<String> result = new AsyncResult<String>();
+    final AsyncResult<String> result = new AsyncResult<>();
 
-    final Ref<AWTEventListener> listener = new Ref<AWTEventListener>();
+    final Ref<AWTEventListener> listener = new Ref<>();
     listener.set(new AWTEventListener() {
       @Override
       public void eventDispatched(AWTEvent event) {
@@ -100,8 +100,8 @@ public class WindowSystemPlaybackCall {
   }
 
   public static AsyncResult<String> checkFocus(final PlaybackContext context, String expected) {
-    final AsyncResult<String> result = new AsyncResult<String>();
-    final Map<String, String> expectedMap = new LinkedHashMap<String, String>();
+    final AsyncResult<String> result = new AsyncResult<>();
+    final Map<String, String> expectedMap = new LinkedHashMap<>();
 
     if (expected.length() > 0) {
       final String[] keyValue = expected.split("\\|");
@@ -129,7 +129,7 @@ public class WindowSystemPlaybackCall {
   }
 
   public static AsyncResult<String> waitForToolWindow(final PlaybackContext context, final String id) {
-    final AsyncResult<String> result = new AsyncResult<String>();
+    final AsyncResult<String> result = new AsyncResult<>();
 
     findProject().doWhenDone(new Consumer<Project>() {
       @Override
@@ -148,7 +148,7 @@ public class WindowSystemPlaybackCall {
   }
 
   public static AsyncResult<Project> findProject() {
-    final AsyncResult<Project> project = new AsyncResult<Project>();
+    final AsyncResult<Project> project = new AsyncResult<>();
     final IdeFocusManager fm = IdeFocusManager.getGlobalInstance();
     fm.doWhenFocusSettlesDown(() -> {
       Component parent = UIUtil.findUltimateParent(fm.getFocusOwner());
@@ -167,7 +167,7 @@ public class WindowSystemPlaybackCall {
   }
 
   public static AsyncResult<String> contextMenu(final PlaybackContext context, final String path) {
-    final AsyncResult<String> result = new AsyncResult<String>();
+    final AsyncResult<String> result = new AsyncResult<>();
 
     final IdeFocusManager fm = IdeFocusManager.getGlobalInstance();
     fm.doWhenFocusSettlesDown(() -> {
@@ -236,7 +236,7 @@ public class WindowSystemPlaybackCall {
   }
 
   private static AsyncResult<MenuElement[]> activateItem(final PlaybackContext context, final MenuElement element) {
-    final AsyncResult<MenuElement[]> result = new AsyncResult<MenuElement[]>();
+    final AsyncResult<MenuElement[]> result = new AsyncResult<>();
     final AbstractButton c = (AbstractButton)element.getComponent();
 
     final Runnable pressRunnable = () -> {
@@ -304,7 +304,7 @@ public class WindowSystemPlaybackCall {
       }
     }
 
-    Map<String, String> untested = new HashMap<String, String>();
+    Map<String, String> untested = new HashMap<>();
     for (String eachKey : actual.keySet()) {
       if (testedKeys.contains(eachKey)) continue;
       untested.put(eachKey, actual.get(eachKey));
@@ -333,7 +333,7 @@ public class WindowSystemPlaybackCall {
     }
 
     Component eachParent = owner;
-    final LinkedHashMap<String, String> actual = new LinkedHashMap<String, String>();
+    final LinkedHashMap<String, String> actual = new LinkedHashMap<>();
     while (eachParent != null) {
       if (eachParent instanceof Queryable) {
         ((Queryable)eachParent).putInfo(actual);
@@ -345,7 +345,7 @@ public class WindowSystemPlaybackCall {
   }
 
   public static AsyncResult<String> flushUi(PlaybackContext context) {
-    AsyncResult<String> result = new AsyncResult<String>();
+    AsyncResult<String> result = new AsyncResult<>();
     getUiReady(context).notify(result);
     return result;
   }

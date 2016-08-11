@@ -77,7 +77,7 @@ public class PyTypeParserTest extends PyTestCase {
     assertNotNull(type);
     final Collection<PyType> members = type.getMembers();
     assertEquals(2, members.size());
-    final List<PyType> list = new ArrayList<PyType>(members);
+    final List<PyType> list = new ArrayList<>(members);
     assertClassType(list.get(0), "MyObject");
     assertClassType(list.get(1), "str");
   }
@@ -102,7 +102,7 @@ public class PyTypeParserTest extends PyTestCase {
     assertNotNull(type);
     assertInstanceOf(type, PyUnionType.class);
     final PyUnionType unionType = (PyUnionType)type;
-    final ArrayList<PyType> types = new ArrayList<PyType>(unionType.getMembers());
+    final ArrayList<PyType> types = new ArrayList<>(unionType.getMembers());
     assertClassType(types.get(0), "str");
     assertClassType(types.get(1), "unicode");
   }
@@ -161,7 +161,7 @@ public class PyTypeParserTest extends PyTestCase {
     final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "Unresolved or int");
     assertNotNull(type);
     assertInstanceOf(type, PyUnionType.class);
-    final List<PyType> members = new ArrayList<PyType>(((PyUnionType)type).getMembers());
+    final List<PyType> members = new ArrayList<>(((PyUnionType)type).getMembers());
     assertEquals(2, members.size());
     assertNull(members.get(0));
     assertClassType(members.get(1), "int");
@@ -230,7 +230,7 @@ public class PyTypeParserTest extends PyTestCase {
     assertNotNull(type);
     final Collection<PyType> members = type.getMembers();
     assertEquals(3, members.size());
-    final List<PyType> list = new ArrayList<PyType>(members);
+    final List<PyType> list = new ArrayList<>(members);
     assertClassType(list.get(0), "MyObject");
     assertClassType(list.get(1), "str");
     assertClassType(list.get(2), "unicode");

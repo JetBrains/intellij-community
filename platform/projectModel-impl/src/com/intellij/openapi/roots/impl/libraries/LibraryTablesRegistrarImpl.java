@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 public class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements Disposable {
-  private static final Map<String, LibraryTable> myLibraryTables = new HashMap<String, LibraryTable>();
+  private static final Map<String, LibraryTable> myLibraryTables = new HashMap<>();
 
   @Override
   @NotNull
@@ -59,7 +59,7 @@ public class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implement
 
   @Override
   public List<LibraryTable> getCustomLibraryTables() {
-    return new SmartList<LibraryTable>(myLibraryTables.values());
+    return new SmartList<>(myLibraryTables.values());
   }
 
   @Override

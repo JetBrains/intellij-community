@@ -44,9 +44,18 @@ public abstract class InspectionElementsMerger {
     return ourMergers.get(shortName);
   }
 
-  public abstract String   getMergedToolName();
+  public abstract String getMergedToolName();
+
+  /**
+   * @return the shortNames of the merged inspections
+   */
   public abstract String[] getSourceToolNames();
 
+  /**
+   * The ids to check for suppression.
+   * If this returns an empty string array, the result of getSourceToolNames() is used instead.
+   * @return the suppressIds of the merged inspections.
+   */
   public String[] getSuppressIds() {
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }

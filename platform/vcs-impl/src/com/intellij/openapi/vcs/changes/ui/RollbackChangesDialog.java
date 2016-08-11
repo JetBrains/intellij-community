@@ -70,15 +70,15 @@ public class RollbackChangesDialog extends DialogWrapper {
       return;
     }
 
-    final ArrayList<Change> validChanges = new ArrayList<Change>();
-    final Set<LocalChangeList> lists = new THashSet<LocalChangeList>();
+    final ArrayList<Change> validChanges = new ArrayList<>();
+    final Set<LocalChangeList> lists = new THashSet<>();
     lists.addAll(manager.getInvolvedListsFilterChanges(changes, validChanges));
 
     new RollbackChangesDialog(project, ContainerUtil.newArrayList(lists), validChanges, refreshSynchronously, afterVcsRefreshInAwt).show();
   }
 
   public static void rollbackChanges(final Project project, final LocalChangeList changeList) {
-    List<Change> changes = new ArrayList<Change>(changeList.getChanges());
+    List<Change> changes = new ArrayList<>(changeList.getChanges());
 
     if (changes.isEmpty()) {
       showNoChangesDialog(project);

@@ -29,7 +29,7 @@ public class CompositeChangeListFilteringStrategy implements ChangeListFiltering
   private boolean myInSetBase;
 
   public CompositeChangeListFilteringStrategy() {
-    myDelegates = new TreeMap<CommittedChangesFilterKey, ChangeListFilteringStrategy>();
+    myDelegates = new TreeMap<>();
     myInSetBase = false;
   }
 
@@ -52,7 +52,7 @@ public class CompositeChangeListFilteringStrategy implements ChangeListFiltering
     }
     myInSetBase = true;
 
-    List<CommittedChangeList> list = new ArrayList<CommittedChangeList>(changeLists);
+    List<CommittedChangeList> list = new ArrayList<>(changeLists);
     boolean callSetFilterBase = setFirst;
     for (final ChangeListFilteringStrategy delegate : myDelegates.values()) {
       if (callSetFilterBase) {
@@ -86,7 +86,7 @@ public class CompositeChangeListFilteringStrategy implements ChangeListFiltering
   }
 
   public void appendFilterBase(final List<CommittedChangeList> changeLists) {
-    List<CommittedChangeList> list = new ArrayList<CommittedChangeList>(changeLists);
+    List<CommittedChangeList> list = new ArrayList<>(changeLists);
     for (final ChangeListFilteringStrategy delegate : myDelegates.values()) {
       delegate.appendFilterBase(list);
       list = delegate.filterChangeLists(list);

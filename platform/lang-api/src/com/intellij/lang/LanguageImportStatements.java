@@ -35,7 +35,7 @@ public class LanguageImportStatements extends LanguageExtension<ImportOptimizer>
 
   @NotNull
   public Set<ImportOptimizer> forFile(@NotNull PsiFile file) {
-    Set<ImportOptimizer> optimizers = new HashSet<ImportOptimizer>();
+    Set<ImportOptimizer> optimizers = new HashSet<>();
     for (PsiFile psiFile : file.getViewProvider().getAllFiles()) {
       List<ImportOptimizer> langOptimizers = allForLanguage(psiFile.getLanguage());
       for (ImportOptimizer optimizer : langOptimizers) {

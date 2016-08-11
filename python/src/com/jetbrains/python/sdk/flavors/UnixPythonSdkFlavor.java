@@ -37,7 +37,7 @@ public class UnixPythonSdkFlavor extends CPythonSdkFlavor {
 
   @Override
   public Collection<String> suggestHomePaths() {
-    Set<String> candidates = new HashSet<String>();
+    Set<String> candidates = new HashSet<>();
     collectUnixPythons("/usr/bin", candidates);
     return candidates;
   }

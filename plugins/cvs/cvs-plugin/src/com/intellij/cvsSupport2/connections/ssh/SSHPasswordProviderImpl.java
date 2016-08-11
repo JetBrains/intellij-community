@@ -35,11 +35,11 @@ import java.util.Map;
  */
 public class SSHPasswordProviderImpl implements NamedComponent, JDOMExternalizable, SSHPasswordProvider {
 
-  private final Map<String, String> myCvsRootToPasswordMap = new HashMap<String, String>();
-  private final Map<String, String> myCvsRootToStoringPasswordMap = new HashMap<String, String>();
+  private final Map<String, String> myCvsRootToPasswordMap = new HashMap<>();
+  private final Map<String, String> myCvsRootToStoringPasswordMap = new HashMap<>();
 
-  private final Map<String, String> myCvsRootToPPKPasswordMap = new HashMap<String, String>();
-  private final Map<String, String> myCvsRootToStoringPPKPasswordMap = new HashMap<String, String>();
+  private final Map<String, String> myCvsRootToPPKPasswordMap = new HashMap<>();
+  private final Map<String, String> myCvsRootToStoringPPKPasswordMap = new HashMap<>();
 
   private final Object myLock = new Object();
 

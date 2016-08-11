@@ -179,8 +179,8 @@ public class ExportTestResultsAction extends DumbAwareAction {
             return;
           }
 
-          final Ref<VirtualFile> result = new Ref<VirtualFile>();
-          final Ref<String> error = new Ref<String>();
+          final Ref<VirtualFile> result = new Ref<>();
+          final Ref<String> error = new Ref<>();
           ApplicationManager.getApplication().invokeAndWait(new Runnable() {
             @Override
             public void run() {

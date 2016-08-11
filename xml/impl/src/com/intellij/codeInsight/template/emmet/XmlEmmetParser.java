@@ -56,7 +56,7 @@ public class XmlEmmetParser extends EmmetParser {
   @NonNls private static final String LIPSUM_KEYWORD = "lipsum";
 
   private boolean hasTagContext = false;
-  private final Stack<String> tagLevel = new Stack<String>();
+  private final Stack<String> tagLevel = new Stack<>();
 
   private static final Map<String, String> parentChildTagMapping = ContainerUtil.newHashMap(
     pair("p", "span"),
@@ -338,7 +338,7 @@ public class XmlEmmetParser extends EmmetParser {
 
   @Nullable
   private List<Couple<String>> parseAttributeList() {
-    final List<Couple<String>> result = new ArrayList<Couple<String>>();
+    final List<Couple<String>> result = new ArrayList<>();
     while (true) {
       final Couple<String> attribute = parseAttribute();
       if (attribute == null) {

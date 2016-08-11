@@ -46,8 +46,8 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
   private static int ourIndex;
 
   private final ModuleType myModuleType;
-  protected final List<String> myContentRoots = new ArrayList<String>();
-  protected final List<String> mySourceRoots = new ArrayList<String>();
+  protected final List<String> myContentRoots = new ArrayList<>();
+  protected final List<String> mySourceRoots = new ArrayList<>();
   protected final TestFixtureBuilder<? extends IdeaProjectTestFixture> myFixtureBuilder;
   private T myModuleFixture;
   protected String myOutputPath;

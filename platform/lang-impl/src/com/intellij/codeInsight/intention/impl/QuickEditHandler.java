@@ -404,7 +404,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
     final PsiFile origPsiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myOrigDocument);
     String newText = myNewDocument.getText();
     // prepare guarded blocks
-    LinkedHashMap<String, String> replacementMap = new LinkedHashMap<String, String>();
+    LinkedHashMap<String, String> replacementMap = new LinkedHashMap<>();
     int count = 0;
     for (RangeMarker o : ContainerUtil.reverse(((DocumentEx)myNewDocument).getGuardedBlocks())) {
       String replacement = o.getUserData(REPLACEMENT_KEY);

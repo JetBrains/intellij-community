@@ -52,7 +52,7 @@ public class FileTemplatesLoader {
   private final FTManager myCodeTemplatesManager;
   private final FTManager myJ2eeTemplatesManager;
 
-  private final Map<String, FTManager> myDirToManagerMap = new HashMap<String, FTManager>();
+  private final Map<String, FTManager> myDirToManagerMap = new HashMap<>();
   private final FTManager[] myAllManagers;
 
   private static final String INTERNAL_DIR = "internal";
@@ -124,7 +124,7 @@ public class FileTemplatesLoader {
   }
 
   private void loadDefaultTemplates() {
-    final Set<URL> processedUrls = new HashSet<URL>();
+    final Set<URL> processedUrls = new HashSet<>();
     for (PluginDescriptor plugin : PluginManagerCore.getPlugins()) {
       if (plugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)plugin).isEnabled()) {
         final ClassLoader loader = plugin.getPluginClassLoader();
@@ -156,7 +156,7 @@ public class FileTemplatesLoader {
     if (children.isEmpty()) {
       return;
     }
-    final Set<String> descriptionPaths = new HashSet<String>();
+    final Set<String> descriptionPaths = new HashSet<>();
     for (String path : children) {
       if (path.equals("default.html")) {
         myDefaultTemplateDescription = UrlClassLoader.internProtocol(new URL(root.toExternalForm() + "/" + path));

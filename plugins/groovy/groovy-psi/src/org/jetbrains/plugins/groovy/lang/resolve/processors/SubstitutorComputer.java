@@ -276,7 +276,7 @@ public class SubstitutorComputer {
   protected boolean exitsContains(PsiElement place) {
     if (myFlowOwner == null) return false;
     if (myExitPoints == null) {
-      myExitPoints = new HashSet<PsiElement>();
+      myExitPoints = new HashSet<>();
       myExitPoints.addAll(ControlFlowUtils.collectReturns(myFlowOwner));
     }
     return myExitPoints.contains(place);

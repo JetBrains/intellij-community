@@ -33,9 +33,9 @@ import java.util.*;
 
 public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegistry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.featureStatistics.ProductivityFeaturesRegistry");
-  private final Map<String, FeatureDescriptor> myFeatures = new HashMap<String, FeatureDescriptor>();
-  private final Map<String, GroupDescriptor> myGroups = new HashMap<String, GroupDescriptor>();
-  private final List<Pair<String, ApplicabilityFilter>> myApplicabilityFilters = new ArrayList<Pair<String,ApplicabilityFilter>>();
+  private final Map<String, FeatureDescriptor> myFeatures = new HashMap<>();
+  private final Map<String, GroupDescriptor> myGroups = new HashMap<>();
+  private final List<Pair<String, ApplicabilityFilter>> myApplicabilityFilters = new ArrayList<>();
 
   private boolean myAdditionalFeaturesLoaded = false;
 
@@ -185,7 +185,7 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
   @NotNull
   public ApplicabilityFilter[] getMatchingFilters(@NotNull String featureId) {
     lazyLoadFromPluginsFeaturesProviders();
-    List<ApplicabilityFilter> filters = new ArrayList<ApplicabilityFilter>();
+    List<ApplicabilityFilter> filters = new ArrayList<>();
     for (Pair<String, ApplicabilityFilter> pair : myApplicabilityFilters) {
       if (featureId.startsWith(pair.getFirst())) {
         filters.add(pair.getSecond());

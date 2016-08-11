@@ -55,7 +55,7 @@ public class RootIndex {
 
   private final InfoCache myInfoCache;
   private final List<JpsModuleSourceRootType<?>> myRootTypes = ContainerUtil.newArrayList();
-  private final TObjectIntHashMap<JpsModuleSourceRootType<?>> myRootTypeId = new TObjectIntHashMap<JpsModuleSourceRootType<?>>();
+  private final TObjectIntHashMap<JpsModuleSourceRootType<?>> myRootTypeId = new TObjectIntHashMap<>();
   @NotNull private final Project myProject;
   private final PackageDirectoryCache myPackageDirectoryCache;
   private OrderEntryGraph myOrderEntryGraph;
@@ -72,7 +72,7 @@ public class RootIndex {
       List<VirtualFile> hierarchy = getHierarchy(root, allRoots, info);
       Pair<DirectoryInfo, String> pair = hierarchy != null
                                          ? calcDirectoryInfo(root, hierarchy, info)
-                                         : new Pair<DirectoryInfo, String>(NonProjectDirectoryInfo.IGNORED, null);
+                                         : new Pair<>(NonProjectDirectoryInfo.IGNORED, null);
       cacheInfos(root, root, pair.first);
       rootsByPackagePrefix.putValue(pair.second, root);
       myPackagePrefixByRoot.put(root, pair.second);
@@ -200,7 +200,7 @@ public class RootIndex {
 
     private static class Node {
       Module myKey;
-      List<Edge> myEdges = new ArrayList<Edge>();
+      List<Edge> myEdges = new ArrayList<>();
 
       @Override
       public String toString() {
@@ -209,7 +209,7 @@ public class RootIndex {
     }
 
     private static class Graph {
-      Map<Module, Node> myNodes = new HashMap<Module, Node>();
+      Map<Module, Node> myNodes = new HashMap<>();
     }
 
     final Project myProject;
@@ -313,8 +313,8 @@ public class RootIndex {
       if (roots == null) {
         return Collections.emptyList();
       }
-      List<OrderEntry> result = new ArrayList<OrderEntry>();
-      Stack<Node> stack = new Stack<Node>();
+      List<OrderEntry> result = new ArrayList<>();
+      Stack<Node> stack = new Stack<>();
       for (VirtualFile root : roots) {
         Collection<Node> nodes = myRoots.get(root);
         for (Node node : nodes) {
@@ -322,7 +322,7 @@ public class RootIndex {
         }
       }
 
-      Set<Node> seen = new HashSet<Node>();
+      Set<Node> seen = new HashSet<>();
       while (!stack.isEmpty()) {
         Node node = stack.pop();
         if (seen.contains(node)) {
@@ -432,7 +432,7 @@ public class RootIndex {
         return info.isInProject() && (!info.isInLibrarySource() || info.isInModuleSource() || info.hasLibraryClassRoot());
       });
     }
-    return new CollectionQuery<VirtualFile>(result);
+    return new CollectionQuery<>(result);
   }
 
   @Nullable
@@ -501,7 +501,7 @@ public class RootIndex {
     @NotNull final Set<VirtualFile> libraryOrSdkClasses = ContainerUtil.newHashSet();
     @NotNull final Map<VirtualFile, Module> contentRootOf = ContainerUtil.newHashMap();
     @NotNull final MultiMap<VirtualFile, Module> sourceRootOf = MultiMap.createSet();
-    @NotNull final TObjectIntHashMap<VirtualFile> rootTypeId = new TObjectIntHashMap<VirtualFile>();
+    @NotNull final TObjectIntHashMap<VirtualFile> rootTypeId = new TObjectIntHashMap<>();
     @NotNull final MultiMap<VirtualFile, Library> excludedFromLibraries = MultiMap.createSmart();
     @NotNull final MultiMap<VirtualFile, Library> classOfLibraries = MultiMap.createSmart();
     @NotNull final MultiMap<VirtualFile, Library> sourceOfLibraries = MultiMap.createSmart();
@@ -652,7 +652,7 @@ public class RootIndex {
     else {
       nearestContentRoot = info.findNearestContentRootForExcluded(hierarchy);
       if (nearestContentRoot == null) {
-        return new Pair<DirectoryInfo, String>(NonProjectDirectoryInfo.EXCLUDED, null);
+        return new Pair<>(NonProjectDirectoryInfo.EXCLUDED, null);
       }
     }
 

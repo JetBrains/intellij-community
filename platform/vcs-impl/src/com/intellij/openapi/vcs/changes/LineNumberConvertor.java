@@ -32,7 +32,7 @@ public class LineNumberConvertor implements TIntFunction {
   private final TIntHashSet myEmptyLines;
 
   public LineNumberConvertor() {
-    myFragmentStarts = new TreeMap<Integer, Integer>();
+    myFragmentStarts = new TreeMap<>();
     myEmptyLines = new TIntHashSet();
   }
 

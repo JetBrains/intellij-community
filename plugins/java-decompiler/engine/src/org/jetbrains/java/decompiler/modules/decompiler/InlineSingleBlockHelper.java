@@ -68,7 +68,7 @@ public class InlineSingleBlockHelper {
     Statement parent = source.getParent();
     source.removeSuccessor(edge);
 
-    List<Statement> lst = new ArrayList<Statement>();
+    List<Statement> lst = new ArrayList<>();
     for (int i = seq.getStats().size() - 1; i >= index; i--) {
       lst.add(0, seq.getStats().remove(i));
     }

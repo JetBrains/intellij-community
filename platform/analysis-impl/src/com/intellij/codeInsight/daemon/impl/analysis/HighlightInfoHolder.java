@@ -39,7 +39,7 @@ public class HighlightInfoHolder {
   private final HighlightInfoFilter[] myFilters;
   private final AnnotationSession myAnnotationSession;
   private int myErrorCount;
-  private final List<HighlightInfo> myInfos = new ArrayList<HighlightInfo>(5);
+  private final List<HighlightInfo> myInfos = new ArrayList<>(5);
 
   public HighlightInfoHolder(@NotNull final PsiFile contextFile, @NotNull final HighlightInfoFilter... filters) {
     myContextFile = contextFile;

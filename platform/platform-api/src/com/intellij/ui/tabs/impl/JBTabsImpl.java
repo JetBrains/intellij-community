@@ -76,13 +76,13 @@ public class JBTabsImpl extends JComponent
   private static final Comparator<TabInfo> ABC_COMPARATOR = (o1, o2) -> StringUtil.naturalCompare(o1.getText(), o2.getText());
 
   @NotNull final ActionManager myActionManager;
-  private final List<TabInfo> myVisibleInfos = new ArrayList<TabInfo>();
-  private final Map<TabInfo, AccessibleTabPage> myInfo2Page = new HashMap<TabInfo, AccessibleTabPage>();
-  private final Map<TabInfo, Integer> myHiddenInfos = new HashMap<TabInfo, Integer>();
+  private final List<TabInfo> myVisibleInfos = new ArrayList<>();
+  private final Map<TabInfo, AccessibleTabPage> myInfo2Page = new HashMap<>();
+  private final Map<TabInfo, Integer> myHiddenInfos = new HashMap<>();
 
   private TabInfo mySelectedInfo;
-  public final Map<TabInfo, TabLabel> myInfo2Label = new HashMap<TabInfo, TabLabel>();
-  public final Map<TabInfo, Toolbar> myInfo2Toolbar = new HashMap<TabInfo, Toolbar>();
+  public final Map<TabInfo, TabLabel> myInfo2Label = new HashMap<>();
+  public final Map<TabInfo, Toolbar> myInfo2Toolbar = new HashMap<>();
   public Dimension myHeaderFitSize;
 
   private Insets myInnerInsets = JBUI.emptyInsets();
@@ -110,7 +110,7 @@ public class JBTabsImpl extends JComponent
 
   private DataProvider myDataProvider;
 
-  private final WeakHashMap<Component, Component> myDeferredToRemove = new WeakHashMap<Component, Component>();
+  private final WeakHashMap<Component, Component> myDeferredToRemove = new WeakHashMap<>();
 
   private SingleRowLayout mySingleRowLayout;
   private final TableLayout myTableLayout = new TableLayout(this);
@@ -133,7 +133,7 @@ public class JBTabsImpl extends JComponent
 
   private boolean myRequestFocusOnLastFocusedComponent = false;
   private boolean myListenerAdded;
-  final Set<TabInfo> myAttractions = new HashSet<TabInfo>();
+  final Set<TabInfo> myAttractions = new HashSet<>();
   private final Animator myAnimator;
   private List<TabInfo> myAllTabs;
   private boolean myPaintBlocked;
@@ -604,7 +604,7 @@ public class JBTabsImpl extends JComponent
   }
 
   public void updateTabActions(final boolean validateNow) {
-    final Ref<Boolean> changed = new Ref<Boolean>(Boolean.FALSE);
+    final Ref<Boolean> changed = new Ref<>(Boolean.FALSE);
     for (final TabInfo eachInfo : myInfo2Label.keySet()) {
       updateTab(() -> {
         final boolean changes = myInfo2Label.get(eachInfo).updateTabActions();
@@ -990,7 +990,7 @@ public class JBTabsImpl extends JComponent
     else {
       final ActionCallback result = new ActionCallback();
       final FocusRequestor requestor = myFocusManager.getFurtherRequestor();
-      final Ref<Boolean> queued = new Ref<Boolean>(false);
+      final Ref<Boolean> queued = new Ref<>(false);
       Disposer.register(requestor, new Disposable() {
         @Override
         public void dispose() {
@@ -1340,7 +1340,7 @@ public class JBTabsImpl extends JComponent
   public List<TabInfo> getTabs() {
     if (myAllTabs != null) return myAllTabs;
 
-    ArrayList<TabInfo> result = new ArrayList<TabInfo>();
+    ArrayList<TabInfo> result = new ArrayList<>();
     result.addAll(myVisibleInfos);
 
     for (TabInfo each : myHiddenInfos.keySet()) {
@@ -1474,7 +1474,7 @@ public class JBTabsImpl extends JComponent
       }
 
 
-      List<TabInfo> visible = new ArrayList<TabInfo>();
+      List<TabInfo> visible = new ArrayList<>();
       visible.addAll(getVisibleInfos());
 
       if (myDropInfo != null && !visible.contains(myDropInfo) && myShowDropLocation) {
@@ -2062,7 +2062,7 @@ public class JBTabsImpl extends JComponent
     if (!isAlphabeticalMode()) {
       return myVisibleInfos;
     } else {
-      List<TabInfo> sortedCopy = new ArrayList<TabInfo>(myVisibleInfos);
+      List<TabInfo> sortedCopy = new ArrayList<>(myVisibleInfos);
       Collections.sort(sortedCopy, ABC_COMPARATOR);
       return sortedCopy;
     }
@@ -2630,7 +2630,7 @@ public class JBTabsImpl extends JComponent
 
   private void updateContainer(boolean forced, final boolean layoutNow) {
     if (myProject != null && !myProject.isOpen()) return;
-    for (TabInfo each : new ArrayList<TabInfo>(myVisibleInfos)) {
+    for (TabInfo each : new ArrayList<>(myVisibleInfos)) {
       final JComponent eachComponent = each.getComponent();
       if (getSelectedInfo() == each && getSelectedInfo() != null) {
         unqueueFromRemove(eachComponent);
@@ -3148,7 +3148,7 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public List<AnAction> getActions(boolean originalProvider) {
-    ArrayList<AnAction> result = new ArrayList<AnAction>();
+    ArrayList<AnAction> result = new ArrayList<>();
 
     TabInfo selection = getSelectedInfo();
     if (selection != null) {
@@ -3309,7 +3309,7 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider) {
-    ArrayList<SwitchTarget> result = new ArrayList<SwitchTarget>();
+    ArrayList<SwitchTarget> result = new ArrayList<>();
     for (TabInfo each : myVisibleInfos) {
       result.add(new TabTarget(each));
     }

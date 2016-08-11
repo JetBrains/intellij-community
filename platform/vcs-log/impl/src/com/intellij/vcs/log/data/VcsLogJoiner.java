@@ -56,13 +56,13 @@ public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
     Set<Commit> allNewsCommits = newCommitsAndSavedGreenIndex.second;
 
     int unsafeBlockSize = Math.max(redCommitsAndSavedRedIndex.first, newCommitsAndSavedGreenIndex.first);
-    List<Commit> unsafePartSavedLog = new ArrayList<Commit>();
+    List<Commit> unsafePartSavedLog = new ArrayList<>();
     for (Commit commit : savedLog.subList(0, unsafeBlockSize)) {
       if (!removeCommits.contains(commit.getId())) {
         unsafePartSavedLog.add(commit);
       }
     }
-    unsafePartSavedLog = new NewCommitIntegrator<CommitId, Commit>(unsafePartSavedLog, allNewsCommits).getResultList();
+    unsafePartSavedLog = new NewCommitIntegrator<>(unsafePartSavedLog, allNewsCommits).getResultList();
 
     return Pair.create(ContainerUtil.concat(unsafePartSavedLog, savedLog.subList(unsafeBlockSize, savedLog.size())),
                        unsafePartSavedLog.size() - unsafeBlockSize);
@@ -74,7 +74,7 @@ public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
                                                                      @NotNull Collection<CommitId> previousRefs,
                                                                      @NotNull List<? extends Commit> firstBlock,
                                                                      @NotNull Collection<CommitId> newRefs) {
-    Set<CommitId> allUnresolvedLinkedHashes = new THashSet<CommitId>(newRefs);
+    Set<CommitId> allUnresolvedLinkedHashes = new THashSet<>(newRefs);
     allUnresolvedLinkedHashes.removeAll(previousRefs);
     // at this moment allUnresolvedLinkedHashes contains only NEW refs
     for (Commit commit : firstBlock) {
@@ -88,7 +88,7 @@ public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
     }
     int saveGreenIndex = getFirstUnTrackedIndex(savedLog, allUnresolvedLinkedHashes);
 
-    return new Pair<Integer, Set<Commit>>(saveGreenIndex, getAllNewCommits(savedLog.subList(0, saveGreenIndex), firstBlock));
+    return new Pair<>(saveGreenIndex, getAllNewCommits(savedLog.subList(0, saveGreenIndex), firstBlock));
   }
 
   private int getFirstUnTrackedIndex(@NotNull List<? extends Commit> commits, @NotNull Set<CommitId> searchHashes) {
@@ -126,23 +126,23 @@ public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
                                                                      @NotNull Collection<CommitId> previousRefs,
                                                                      @NotNull List<? extends Commit> firstBlock,
                                                                      @NotNull Collection<CommitId> newRefs) {
-    Set<CommitId> startRedCommits = new THashSet<CommitId>(previousRefs);
+    Set<CommitId> startRedCommits = new THashSet<>(previousRefs);
     startRedCommits.removeAll(newRefs);
-    Set<CommitId> startGreenNodes = new THashSet<CommitId>(newRefs);
+    Set<CommitId> startGreenNodes = new THashSet<>(newRefs);
     for (Commit commit : firstBlock) {
       startGreenNodes.add(commit.getId());
       startGreenNodes.addAll(commit.getParents());
     }
-    RedGreenSorter<CommitId, Commit> sorter = new RedGreenSorter<CommitId, Commit>(startRedCommits, startGreenNodes, savedLog);
+    RedGreenSorter<CommitId, Commit> sorter = new RedGreenSorter<>(startRedCommits, startGreenNodes, savedLog);
     int saveRegIndex = sorter.getFirstSaveIndex();
 
-    return new Pair<Integer, Set<CommitId>>(saveRegIndex, sorter.getAllRedCommit());
+    return new Pair<>(saveRegIndex, sorter.getAllRedCommit());
   }
 
   private static class RedGreenSorter<CommitId, Commit extends GraphCommit<CommitId>> {
     private final Set<CommitId> currentRed;
     private final Set<CommitId> currentGreen;
-    private final Set<CommitId> allRedCommit = new THashSet<CommitId>();
+    private final Set<CommitId> allRedCommit = new THashSet<>();
 
     private final List<? extends Commit> savedLog;
 
@@ -197,7 +197,7 @@ public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
       for (Commit commit : newCommits) {
         newCommitsMap.put(commit.getId(), commit);
       }
-      commitsStack = new Stack<Commit>();
+      commitsStack = new Stack<>();
     }
 
     private void insertAllUseStack() {
@@ -220,7 +220,7 @@ public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
           }
 
           int insertIndex;
-          Set<CommitId> parents = new THashSet<CommitId>(currentCommit.getParents());
+          Set<CommitId> parents = new THashSet<>(currentCommit.getParents());
           for (insertIndex = 0; insertIndex < list.size(); insertIndex++) {
             Commit someCommit = list.get(insertIndex);
             if (parents.contains(someCommit.getId())) {

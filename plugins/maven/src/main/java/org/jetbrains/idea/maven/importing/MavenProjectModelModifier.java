@@ -85,9 +85,9 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
                                       @Nullable String minVersion,
                                       @Nullable String maxVersion,
                                       @NotNull final DependencyScope scope) {
-    final List<Pair<MavenDomProjectModel, MavenId>> models = new ArrayList<Pair<MavenDomProjectModel, MavenId>>(fromModules.size());
-    List<XmlFile> files = new ArrayList<XmlFile>(fromModules.size());
-    List<MavenProject> projectToUpdate = new ArrayList<MavenProject>(fromModules.size());
+    final List<Pair<MavenDomProjectModel, MavenId>> models = new ArrayList<>(fromModules.size());
+    List<XmlFile> files = new ArrayList<>(fromModules.size());
+    List<MavenProject> projectToUpdate = new ArrayList<>(fromModules.size());
     for (Module from : fromModules) {
       if (!myProjectsManager.isMavenizedModule(from)) return null;
       MavenProject fromProject = myProjectsManager.findProject(from);
@@ -148,7 +148,7 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
   @NotNull
   private String selectVersion(@NotNull MavenId mavenId, @Nullable String minVersion, @Nullable String maxVersion) {
     Set<String> versions = myIndicesManager.getVersions(mavenId.getGroupId(), mavenId.getArtifactId());
-    List<String> suitableVersions = new ArrayList<String>();
+    List<String> suitableVersions = new ArrayList<>();
     for (String version : versions) {
       if ((minVersion == null || VersionComparatorUtil.compare(minVersion, version) <= 0)
           && (maxVersion == null || VersionComparatorUtil.compare(version, maxVersion) <= 0)) {

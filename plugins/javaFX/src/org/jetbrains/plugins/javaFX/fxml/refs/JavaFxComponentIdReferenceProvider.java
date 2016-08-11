@@ -63,7 +63,7 @@ public class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
     if (value.startsWith("$")) {
       return getSinglePropertyReferences(xmlAttributeValue, value, fileIds);
     }
-    final Set<String> acceptableIds = new HashSet<String>();
+    final Set<String> acceptableIds = new HashSet<>();
     if (currentTag != null) {
       final XmlTag parentTag = currentTag.getParentTag();
       for (final String id : fileIds.keySet()) {

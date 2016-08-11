@@ -35,7 +35,7 @@ import java.util.*;
  * @author yole
  */
 public class PyPackageManagersImpl extends PyPackageManagers {
-  private final Map<String, PyPackageManagerImpl> myInstances = new HashMap<String, PyPackageManagerImpl>();
+  private final Map<String, PyPackageManagerImpl> myInstances = new HashMap<>();
 
   @NotNull
   public synchronized PyPackageManager forSdk(@NotNull final Sdk sdk) {

@@ -27,8 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class Promise<T> {
-  public static final Promise<Void> DONE = new DonePromise<Void>(null);
-  public static final Promise<Void> REJECTED = new RejectedPromise<Void>(createError("rejected"));
+  public static final Promise<Void> DONE = new DonePromise<>(null);
+  public static final Promise<Void> REJECTED = new RejectedPromise<>(createError("rejected"));
 
   @NotNull
   public static RuntimeException createError(@NotNull String error) {
@@ -46,7 +46,7 @@ public abstract class Promise<T> {
       return (Promise<T>)DONE;
     }
     else {
-      return new DonePromise<T>(result);
+      return new DonePromise<>(result);
     }
   }
 
@@ -62,13 +62,13 @@ public abstract class Promise<T> {
       return (Promise<T>)REJECTED;
     }
     else {
-      return new RejectedPromise<T>(error);
+      return new RejectedPromise<>(error);
     }
   }
 
   @NotNull
   public static Promise<Void> wrapAsVoid(@NotNull ActionCallback asyncResult) {
-    final AsyncPromise<Void> promise = new AsyncPromise<Void>();
+    final AsyncPromise<Void> promise = new AsyncPromise<>();
     asyncResult.doWhenDone(() -> promise.setResult(null)).doWhenRejected(
       error -> promise.setError(createError(error == null ? "Internal error" : error)));
     return promise;
@@ -76,7 +76,7 @@ public abstract class Promise<T> {
 
   @NotNull
   public static <T> Promise<T> wrap(@NotNull AsyncResult<T> asyncResult) {
-    final AsyncPromise<T> promise = new AsyncPromise<T>();
+    final AsyncPromise<T> promise = new AsyncPromise<>();
     asyncResult.doWhenDone(new Consumer<T>() {
       @Override
       public void consume(T result) {

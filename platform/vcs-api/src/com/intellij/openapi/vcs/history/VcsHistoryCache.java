@@ -44,10 +44,10 @@ public class VcsHistoryCache {
     myLock = new Object();
     // increase cache size when preload enabled
     boolean preloadEnabled = Registry.is("vcs.annotations.preload");
-    myHistoryCache = new SLRUMap<HistoryCacheBaseKey, CachedHistory>(
+    myHistoryCache = new SLRUMap<>(
       preloadEnabled ? 50 : 10,
       preloadEnabled ? 50 : 10);
-    myAnnotationCache = new SLRUMap<HistoryCacheWithRevisionKey, VcsAnnotation>(
+    myAnnotationCache = new SLRUMap<>(
       preloadEnabled ? 50 : 10,
       preloadEnabled ? 50 : 5);
     //myContentCache = new SLRUMap<HistoryCacheWithRevisionKey, String>(20, 20);

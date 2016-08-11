@@ -200,7 +200,7 @@ public class VfsData {
 
   public static class Segment {
     // user data for files, DirectoryData for folders
-    private final AtomicReferenceArray<Object> myObjectArray = new AtomicReferenceArray<Object>(SEGMENT_SIZE);
+    private final AtomicReferenceArray<Object> myObjectArray = new AtomicReferenceArray<>(SEGMENT_SIZE);
 
     // <nameId, flags> pairs, "flags" part containing flags per se and modification stamp
     private final AtomicIntegerArray myIntArray = new AtomicIntegerArray(SEGMENT_SIZE * 2);
@@ -301,7 +301,7 @@ public class VfsData {
     void addAdoptedName(String name, boolean caseSensitive) {
       if (myAdoptedNames == null) {
         //noinspection unchecked
-        myAdoptedNames = new THashSet<String>(0, caseSensitive ? TObjectHashingStrategy.CANONICAL : CaseInsensitiveStringHashingStrategy.INSTANCE);
+        myAdoptedNames = new THashSet<>(0, caseSensitive ? TObjectHashingStrategy.CANONICAL : CaseInsensitiveStringHashingStrategy.INSTANCE);
       }
       myAdoptedNames.add(name);
     }

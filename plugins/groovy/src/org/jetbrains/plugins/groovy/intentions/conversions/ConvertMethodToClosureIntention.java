@@ -61,7 +61,7 @@ public class ConvertMethodToClosureIntention extends Intention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     final GrMethod method;
     if (element.getParent() instanceof GrMethod) {
       method = (GrMethod)element.getParent();
@@ -83,7 +83,7 @@ public class ConvertMethodToClosureIntention extends Intention {
     }
 
     final Collection<PsiReference> references = MethodReferencesSearch.search(method).findAll();
-    final Collection<GrReferenceExpression> usagesToConvert = new HashSet<GrReferenceExpression>(references.size());
+    final Collection<GrReferenceExpression> usagesToConvert = new HashSet<>(references.size());
     for (PsiReference ref : references) {
       final PsiElement psiElement = ref.getElement();
       if (!GroovyLanguage.INSTANCE.equals(psiElement.getLanguage())) {

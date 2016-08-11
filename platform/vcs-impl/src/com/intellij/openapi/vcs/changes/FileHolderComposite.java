@@ -26,7 +26,7 @@ public class FileHolderComposite implements FileHolder {
   private final Map<HolderType, FileHolder> myHolders;
 
   public FileHolderComposite(final Project project) {
-    myHolders = new HashMap<HolderType, FileHolder>();
+    myHolders = new HashMap<>();
     myHolders.put(FileHolder.HolderType.UNVERSIONED, new VirtualFileHolder(project, FileHolder.HolderType.UNVERSIONED));
     myHolders.put(FileHolder.HolderType.ROOT_SWITCH, new SwitchedFileHolder(project, HolderType.ROOT_SWITCH));
     myHolders.put(FileHolder.HolderType.MODIFIED_WITHOUT_EDITING, new VirtualFileHolder(project, FileHolder.HolderType.MODIFIED_WITHOUT_EDITING));
@@ -36,7 +36,7 @@ public class FileHolderComposite implements FileHolder {
   }
 
   public FileHolderComposite(final FileHolderComposite holder) {
-    myHolders = new HashMap<HolderType, FileHolder>();
+    myHolders = new HashMap<>();
     for (FileHolder fileHolder : holder.myHolders.values()) {
       myHolders.put(fileHolder.getType(), fileHolder.copy());
     }

@@ -29,7 +29,7 @@ class WeakKeymapManagerListener implements KeymapManagerListener {
 
   WeakKeymapManagerListener(@NotNull KeymapManagerEx keymapManager, @NotNull KeymapManagerListener delegate) {
     myKeymapManager = keymapManager;
-    myRef = new WeakReference<KeymapManagerListener>(delegate);
+    myRef = new WeakReference<>(delegate);
   }
 
   public boolean isDead() {

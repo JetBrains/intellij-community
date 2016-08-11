@@ -85,7 +85,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
   @Nullable
   public ConfigurationFromContext createConfigurationFromContext(ConfigurationContext context) {
     final RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(context);
-    Ref<PsiElement> ref = new Ref<PsiElement>(context.getPsiLocation());
+    Ref<PsiElement> ref = new Ref<>(context.getPsiLocation());
     try {
       if (!setupConfigurationFromContext((T)settings.getConfiguration(), context, ref)) {
        return null;
@@ -235,7 +235,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
   @Nullable
   public RunConfiguration createLightConfiguration(@NotNull final ConfigurationContext context) {
     RunConfiguration configuration = myConfigurationFactory.createTemplateConfiguration(context.getProject());
-    final Ref<PsiElement> ref = new Ref<PsiElement>(context.getPsiLocation());
+    final Ref<PsiElement> ref = new Ref<>(context.getPsiLocation());
     try {
       if (!setupConfigurationFromContext((T)configuration, context, ref)) {
         return null;

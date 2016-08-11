@@ -105,7 +105,7 @@ public class DomIncludesTest extends LightCodeInsightFixtureTestCase {
     System.out.println("iterationCount = " + iterationCount);
 
     final CountDownLatch finished = new CountDownLatch(threadCount);
-    final AtomicReference<Exception> ex = new AtomicReference<Exception>();
+    final AtomicReference<Exception> ex = new AtomicReference<>();
 
     for (int j = 0; j < threadCount; j++) {
       ApplicationManager.getApplication().executeOnPooledThread(() -> {

@@ -49,7 +49,7 @@ public class ChangelistConflictAccessProvider extends WritingAccessProvider {
     if (!options.TRACKING_ENABLED || !options.SHOW_DIALOG) {
       return Collections.emptyList();
     }
-    ArrayList<VirtualFile> denied = new ArrayList<VirtualFile>();
+    ArrayList<VirtualFile> denied = new ArrayList<>();
     for (VirtualFile file : files) {
       if (file != null && !myManager.getConflictTracker().isWritingAllowed(file)) {
         denied.add(file);
@@ -57,8 +57,8 @@ public class ChangelistConflictAccessProvider extends WritingAccessProvider {
     }
 
     if (!denied.isEmpty()) {
-      HashSet<ChangeList> changeLists = new HashSet<ChangeList>();
-      ArrayList<Change> changes = new ArrayList<Change>();
+      HashSet<ChangeList> changeLists = new HashSet<>();
+      ArrayList<Change> changes = new ArrayList<>();
       for (VirtualFile file : denied) {
         changeLists.add(myManager.getChangeList(file));
         changes.add(myManager.getChange(file));
@@ -67,7 +67,7 @@ public class ChangelistConflictAccessProvider extends WritingAccessProvider {
       ChangelistConflictDialog dialog;
       final int savedEventCount = IdeEventQueue.getInstance().getEventCount();
       do {
-        dialog = new ChangelistConflictDialog(myProject, new ArrayList<ChangeList>(changeLists), denied);
+        dialog = new ChangelistConflictDialog(myProject, new ArrayList<>(changeLists), denied);
         dialog.show();
       } while (dialog.isOK() && !dialog.getResolution().resolveConflict(myProject, changes));
       IdeEventQueue.getInstance().setEventCount(savedEventCount);

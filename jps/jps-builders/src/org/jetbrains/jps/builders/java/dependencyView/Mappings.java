@@ -955,8 +955,8 @@ public class Mappings {
 
     final boolean myEasyMode; // true means: no need to search for affected files, only preprocess data for integrate
 
-    private final Iterable<MemberAnnotationsChangeTracker> myAnnotationChangeTracker =
-      JpsServiceManager.getInstance().getExtensions(MemberAnnotationsChangeTracker.class);
+    private final Iterable<AnnotationsChangeTracker> myAnnotationChangeTracker =
+      JpsServiceManager.getInstance().getExtensions(AnnotationsChangeTracker.class);
 
     private class DelayedWorks {
       class Triple {
@@ -1512,25 +1512,36 @@ public class Mappings {
             }
           }
 
-          if ((!affected || constrained) && (d.base() & Difference.ANNOTATIONS) > 0) {
-            final Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff = d.annotations();
-            final Difference.Specifier<ParamAnnotation, Difference> paramAnnotationsDiff = d.parameterAnnotations();
-            for (MemberAnnotationsChangeTracker extension : myAnnotationChangeTracker) {
-              final MemberAnnotationsChangeTracker.Action action = extension.methodAnnotationsChanged(m, annotationsDiff, paramAnnotationsDiff);
-              if (action == MemberAnnotationsChangeTracker.Action.RECOMPILE_USAGES) {
-                debug("Extension "+extension.getClass().getName()+" requested recompilation because of changes in annotations list --- affecting method usages");
-                myFuture.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, state.myDependants);
-                state.myAffectedUsages.addAll(usages);
-                if (constrained) {
-                  // remove any constraints so that all usages of this method are recompiled
-                  for (UsageRepr.Usage usage : usages) {
-                    state.myUsageConstraints.remove(usage);
-                  }
-                }
-                affected = true;
+          if ((d.base() & Difference.ANNOTATIONS) > 0) {
+            final Set<AnnotationsChangeTracker.Recompile> toRecompile = EnumSet.noneOf(AnnotationsChangeTracker.Recompile.class);
+            for (AnnotationsChangeTracker extension : myAnnotationChangeTracker) {
+              if (toRecompile.containsAll(AnnotationsChangeTracker.RECOMPILE_ALL)) {
                 break;
               }
+              final Set<AnnotationsChangeTracker.Recompile> actions = extension.methodAnnotationsChanged(myContext, m, d.annotations(), d.parameterAnnotations());
+              if (actions.contains(AnnotationsChangeTracker.Recompile.USAGES)) {
+                debug("Extension "+extension.getClass().getName()+" requested recompilation because of changes in annotations list --- affecting method usages");
+              }
+              if (actions.contains(AnnotationsChangeTracker.Recompile.SUBCLASSES)) {
+                debug("Extension "+extension.getClass().getName()+" requested recompilation because of changes in method annotations or method parameter annotations list --- affecting subclasses");
+              }
+              toRecompile.addAll(actions);
             }
+
+            if (toRecompile.contains(AnnotationsChangeTracker.Recompile.USAGES)) {
+              myFuture.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, state.myDependants);
+              state.myAffectedUsages.addAll(usages);
+              if (constrained) {
+                // remove any constraints so that all usages of this method are recompiled
+                for (UsageRepr.Usage usage : usages) {
+                  state.myUsageConstraints.remove(usage);
+                }
+              }
+            }
+            if (toRecompile.contains(AnnotationsChangeTracker.Recompile.SUBCLASSES)) {
+              myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false, myCompiledFiles, null);
+            }
+
           }
         }
       }
@@ -1675,15 +1686,15 @@ public class Mappings {
     }
 
     private boolean processChangedFields(final DiffState state, final ClassRepr.Diff diff, final ClassRepr it) {
-      final Collection<Pair<FieldRepr, FieldRepr.Diff>> changed = diff.fields().changed();
+      final Collection<Pair<FieldRepr, Difference>> changed = diff.fields().changed();
       if (changed.isEmpty()) {
         return true;
       }
       debug("Processing changed fields:");
       assert myFuture != null;
 
-      for (final Pair<FieldRepr, FieldRepr.Diff> f : changed) {
-        final FieldRepr.Diff d = f.second;
+      for (final Pair<FieldRepr, Difference> f : changed) {
+        final Difference d = f.second;
         final FieldRepr field = f.first;
 
         debug("Field: ", field.name);
@@ -1761,22 +1772,32 @@ public class Mappings {
             }
           }
 
-          if (!affected && (d.base() & Difference.ANNOTATIONS) > 0) {
-            final Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff = d.annotations();
-            for (MemberAnnotationsChangeTracker extension : myAnnotationChangeTracker) {
-              final MemberAnnotationsChangeTracker.Action action = extension.fieldAnnotationsChanged(field, annotationsDiff);
-              if (action == MemberAnnotationsChangeTracker.Action.RECOMPILE_USAGES) {
-                debug("Extension "+extension.getClass().getName()+" requested recompilation because of changes in annotations list --- affecting field usages");
-                final Set<UsageRepr.Usage> usages = new THashSet<UsageRepr.Usage>();
-                myFuture.affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), usages, state.myDependants);
-                state.myAffectedUsages.addAll(usages);
-                // remove any constraints to ensure all field usages are recompiled
-                for (UsageRepr.Usage usage : usages) {
-                  state.myUsageConstraints.remove(usage);
-                }
-                affected = true;
+          if ((d.base() & Difference.ANNOTATIONS) > 0) {
+            final Set<AnnotationsChangeTracker.Recompile> toRecompile = EnumSet.noneOf(AnnotationsChangeTracker.Recompile.class);
+            for (AnnotationsChangeTracker extension : myAnnotationChangeTracker) {
+              if (toRecompile.containsAll(AnnotationsChangeTracker.RECOMPILE_ALL)) {
                 break;
               }
+              final Set<AnnotationsChangeTracker.Recompile> res = extension.fieldAnnotationsChanged(myContext, field, d.annotations());
+              if (res.contains(AnnotationsChangeTracker.Recompile.USAGES)) {
+                debug("Extension "+extension.getClass().getName()+" requested recompilation because of changes in annotations list --- affecting field usages");
+              }
+              if (res.contains(AnnotationsChangeTracker.Recompile.SUBCLASSES)) {
+                debug("Extension "+extension.getClass().getName()+" requested recompilation because of changes in field annotations list --- affecting subclasses");
+              }
+              toRecompile.addAll(res);
+            }
+            if (toRecompile.contains(AnnotationsChangeTracker.Recompile.USAGES)) {
+              final Set<UsageRepr.Usage> usages = new THashSet<UsageRepr.Usage>();
+              myFuture.affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), usages, state.myDependants);
+              state.myAffectedUsages.addAll(usages);
+              // remove any constraints to ensure all field usages are recompiled
+              for (UsageRepr.Usage usage : usages) {
+                state.myUsageConstraints.remove(usage);
+              }
+            }
+            if (toRecompile.contains(AnnotationsChangeTracker.Recompile.SUBCLASSES)) {
+              myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false, myCompiledFiles, null);
             }
           }
 
@@ -1968,6 +1989,30 @@ public class Mappings {
 
           if (!processChangedFields(state, diff, changedClass)) {
             return false;
+          }
+
+          if ((diff.base() & Difference.ANNOTATIONS) > 0) {
+            final Set<AnnotationsChangeTracker.Recompile> toRecompile = EnumSet.noneOf(AnnotationsChangeTracker.Recompile.class);
+            for (AnnotationsChangeTracker extension : myAnnotationChangeTracker) {
+              if (toRecompile.containsAll(AnnotationsChangeTracker.RECOMPILE_ALL)) {
+                break;
+              }
+              final Set<AnnotationsChangeTracker.Recompile> res = extension.classAnnotationsChanged(myContext, changedClass, diff.annotations());
+              if (res.contains(AnnotationsChangeTracker.Recompile.USAGES)) {
+                debug("Extension "+extension.getClass().getName()+" requested class usages recompilation because of changes in annotations list --- adding class usage to affected usages");
+              }
+              if (res.contains(AnnotationsChangeTracker.Recompile.SUBCLASSES)) {
+                debug("Extension "+extension.getClass().getName()+" requested subclasses recompilation because of changes in annotations list --- adding subclasses to affected usages");
+              }
+              toRecompile.addAll(res);
+            }
+            final boolean recompileUsages = toRecompile.contains(AnnotationsChangeTracker.Recompile.USAGES);
+            if (recompileUsages) {
+              state.myAffectedUsages.add(changedClass.createUsage());
+            }
+            if (toRecompile.contains(AnnotationsChangeTracker.Recompile.SUBCLASSES)) {
+              myFuture.affectSubclasses(changedClass.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, recompileUsages, myCompiledFiles, null);
+            }
           }
         }
         debug("End of changed classes processing");

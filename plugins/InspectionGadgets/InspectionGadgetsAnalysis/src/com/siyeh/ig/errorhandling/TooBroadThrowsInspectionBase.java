@@ -177,7 +177,7 @@ public class TooBroadThrowsInspectionBase extends BaseInspection {
       }
       final Set<PsiClassType> exceptionsThrown = ExceptionUtils.calculateExceptionsThrown(body);
       final PsiClassType[] referencedExceptions = throwsList.getReferencedTypes();
-      final Set<PsiType> exceptionsDeclared = new HashSet<PsiType>(referencedExceptions.length);
+      final Set<PsiType> exceptionsDeclared = new HashSet<>(referencedExceptions.length);
       ContainerUtil.addAll(exceptionsDeclared, referencedExceptions);
       final int referencedExceptionsLength = referencedExceptions.length;
       for (int i = 0; i < referencedExceptionsLength; i++) {
@@ -188,7 +188,7 @@ public class TooBroadThrowsInspectionBase extends BaseInspection {
             continue;
           }
         }
-        final List<SmartTypePointer> exceptionsMasked = new ArrayList<SmartTypePointer>();
+        final List<SmartTypePointer> exceptionsMasked = new ArrayList<>();
         final SmartTypePointerManager pointerManager = SmartTypePointerManager.getInstance(body.getProject());
         for (PsiType exceptionThrown : exceptionsThrown) {
           if (referencedException.isAssignableFrom(exceptionThrown) && !exceptionsDeclared.contains(exceptionThrown)) {

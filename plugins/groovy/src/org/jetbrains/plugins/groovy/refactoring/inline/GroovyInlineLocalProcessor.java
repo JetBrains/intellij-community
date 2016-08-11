@@ -77,7 +77,7 @@ public class GroovyInlineLocalProcessor extends BaseRefactoringProcessor {
 
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     final UsageInfo[] usages = refUsages.get();
     for (UsageInfo usage : usages) {
       collectConflicts(usage.getReference(), conflicts);
@@ -108,7 +108,7 @@ public class GroovyInlineLocalProcessor extends BaseRefactoringProcessor {
     final Instruction[] controlFlow = mySettings.getFlow();
     final ArrayList<BitSet> writes = ControlFlowUtils.inferWriteAccessMap(controlFlow, myLocal);
     
-    ArrayList<UsageInfo> toInline = new ArrayList<UsageInfo>();
+    ArrayList<UsageInfo> toInline = new ArrayList<>();
     collectRefs(myLocal, controlFlow, writes, mySettings.getWriteInstructionNumber(), toInline);
 
     return toInline.toArray(new UsageInfo[toInline.size()]);

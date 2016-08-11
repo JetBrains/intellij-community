@@ -91,7 +91,7 @@ public class JavaCompletionUtil {
   public static Set<PsiType> getExpectedTypes(final CompletionParameters parameters) {
     final PsiExpression expr = PsiTreeUtil.getContextOfType(parameters.getPosition(), PsiExpression.class, true);
     if (expr != null) {
-      final Set<PsiType> set = new THashSet<PsiType>();
+      final Set<PsiType> set = new THashSet<>();
       for (final ExpectedTypeInfo expectedInfo : JavaSmartCompletionContributor.getExpectedTypes(parameters)) {
         set.add(expectedInfo.getType());
       }
@@ -258,7 +258,7 @@ public class JavaCompletionUtil {
             final PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)declarationScope;
             if (PsiTypesUtil.getExpectedTypeByParent(lambdaExpression) == null) {
               final int parameterIndex = lambdaExpression.getParameterList().getParameterIndex((PsiParameter)resolve);
-              final Set<LookupElement> set = new LinkedHashSet<LookupElement>();
+              final Set<LookupElement> set = new LinkedHashSet<>();
               final boolean overloadsFound = LambdaUtil.processParentOverloads(lambdaExpression, functionalInterfaceType -> {
                 PsiType qualifierType = LambdaUtil.getLambdaParameterFromType(functionalInterfaceType, parameterIndex);
                 if (qualifierType instanceof PsiWildcardType) {

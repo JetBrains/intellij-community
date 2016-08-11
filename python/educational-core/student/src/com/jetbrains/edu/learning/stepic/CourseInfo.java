@@ -23,7 +23,7 @@ public class CourseInfo {
   boolean isAdaptive;
   @SerializedName("is_public") boolean isPublic;
   List<Integer> sections;
-  List<Integer> instructors = new ArrayList<Integer>();
+  List<Integer> instructors = new ArrayList<>();
 
   List<StepicUser> myAuthors = new ArrayList<>();
   @SerializedName("summary") private String myDescription;
@@ -31,6 +31,7 @@ public class CourseInfo {
   @Nullable private String username;
 
   @SerializedName("update_date") private Date updateDate;
+  @SerializedName("is_idea_compatible") private boolean isCompatible = true;
 
   public String getName() {
     return myName;
@@ -150,5 +151,13 @@ public class CourseInfo {
 
   public List<Integer> getSections() {
     return sections;
+  }
+
+  public boolean isCompatible() {
+    return isCompatible;
+  }
+
+  public void setCompatible(boolean compatible) {
+    isCompatible = compatible;
   }
 }

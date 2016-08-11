@@ -42,7 +42,7 @@ public class PointlessArithmeticExpressionInspection
   extends BaseInspection {
 
   private static final Set<IElementType> arithmeticTokens =
-    new THashSet<IElementType>(9);
+    new THashSet<>(9);
 
   static {
     arithmeticTokens.add(JavaTokenType.PLUS);

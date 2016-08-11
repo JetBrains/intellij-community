@@ -107,7 +107,7 @@ public class TreeState implements JDOMExternalizable {
   }
 
   public TreeState() {
-    this(new ArrayList<List<PathElement>>(), new ArrayList<List<PathElement>>());
+    this(new ArrayList<>(), new ArrayList<>());
   }
 
   public boolean isEmpty() {
@@ -130,7 +130,7 @@ public class TreeState implements JDOMExternalizable {
   }
 
   private static List<PathElement> readPath(final Element xmlPathElement) throws InvalidDataException {
-    final ArrayList<PathElement> result = new ArrayList<PathElement>();
+    final ArrayList<PathElement> result = new ArrayList<>();
     final List elements = xmlPathElement.getChildren(PATH_ELEMENT);
     for (final Object element : elements) {
       Element xmlPathElementElement = (Element)element;
@@ -146,7 +146,7 @@ public class TreeState implements JDOMExternalizable {
   }
 
   public static TreeState createOn(@NotNull JTree tree) {
-    return new TreeState(createPaths(tree), new ArrayList<List<PathElement>>());
+    return new TreeState(createPaths(tree), new ArrayList<>());
   }
 
   @Override
@@ -188,7 +188,7 @@ public class TreeState implements JDOMExternalizable {
   }
 
   private static List<List<PathElement>> createPaths(JTree tree, List<TreePath> paths) {
-    ArrayList<List<PathElement>> result = new ArrayList<List<PathElement>>();
+    ArrayList<List<PathElement>> result = new ArrayList<>();
     for (TreePath path : paths) {
       if (tree.isRootVisible() || path.getPathCount() > 1) {
         List<PathElement> list = createPath(path);
@@ -199,7 +199,7 @@ public class TreeState implements JDOMExternalizable {
   }
 
   private static List<PathElement> createPath(final TreePath treePath) {
-    final ArrayList<PathElement> result = new ArrayList<PathElement>();
+    final ArrayList<PathElement> result = new ArrayList<>();
     for (int i = 0; i < treePath.getPathCount(); i++) {
       final Object pathComponent = treePath.getPathComponent(i);
       if (pathComponent instanceof DefaultMutableTreeNode) {
@@ -295,7 +295,7 @@ public class TreeState implements JDOMExternalizable {
 
   private void applySelected(final JTree tree, final DefaultMutableTreeNode node) {
     TreeUtil.unselect(tree, node);
-    List<TreePath> selectionPaths = new ArrayList<TreePath>();
+    List<TreePath> selectionPaths = new ArrayList<>();
     for (List<PathElement> pathElements : mySelectedPaths) {
       applySelectedTo(pathElements, tree.getModel().getRoot(), tree, selectionPaths, myScrollToSelection);
     }

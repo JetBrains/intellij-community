@@ -53,7 +53,7 @@ public class RemoveUnnecessaryBackslashQuickFix implements LocalQuickFix {
   
   public static void removeBackSlash(PsiElement parent) {
     if (parent != null) {
-      Stack<PsiElement> stack = new Stack<PsiElement>();
+      Stack<PsiElement> stack = new Stack<>();
       if (parent instanceof PyParenthesizedExpression)
         stack.push(((PyParenthesizedExpression)parent).getContainedExpression());
       else

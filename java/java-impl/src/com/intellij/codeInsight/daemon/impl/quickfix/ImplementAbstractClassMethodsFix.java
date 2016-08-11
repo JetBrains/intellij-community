@@ -93,7 +93,7 @@ public class ImplementAbstractClassMethodsFix extends ImplementMethodsFix {
         newExpression = (PsiNewExpression)startElement.replace(newExpression);
         final PsiClass psiClass = newExpression.getAnonymousClass();
         if (psiClass == null) return;
-        Map<PsiClass, PsiSubstitutor> subst = new HashMap<PsiClass, PsiSubstitutor>();
+        Map<PsiClass, PsiSubstitutor> subst = new HashMap<>();
         for (PsiMethodMember selectedElement : selectedElements) {
           final PsiClass baseClass = selectedElement.getElement().getContainingClass();
           if (baseClass != null) {

@@ -21,12 +21,5 @@ import com.intellij.refactoring.util.AbstractVariableData;
  * @author oleg
  */
 public interface ExtractMethodDecorator {
-  default String createMethodSignature(String methodName, AbstractVariableData[] variableDatas) {
-    return createMethodPreview(methodName, com.intellij.refactoring.extractMethod.AbstractVariableData.copy(variableDatas));
-  }
-
-  @Deprecated
-  default String createMethodPreview(String methodName, com.intellij.refactoring.extractMethod.AbstractVariableData[] variableDatas) {
-    return null;
-  }
+  String createMethodSignature(String methodName, AbstractVariableData[] variableDatas);
 }

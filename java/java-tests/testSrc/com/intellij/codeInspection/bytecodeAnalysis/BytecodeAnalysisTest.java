@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,16 +79,16 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private static void checkLeakingParameters(Class<?> jClass) throws IOException {
-    final HashMap<Method, boolean[]> map = new HashMap<Method, boolean[]>();
+    final HashMap<Method, boolean[]> map = new HashMap<>();
 
     // collecting leakedParameters
     final ClassReader classReader = new ClassReader(jClass.getResourceAsStream("/" + jClass.getName().replace('.', '/') + ".class"));
-    classReader.accept(new ClassVisitor(Opcodes.ASM5) {
+    classReader.accept(new ClassVisitor(Opcodes.API_VERSION) {
       @Override
       public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-        final MethodNode node = new MethodNode(Opcodes.ASM5, access, name, desc, signature, exceptions);
+        final MethodNode node = new MethodNode(Opcodes.API_VERSION, access, name, desc, signature, exceptions);
         final Method method = new Method(classReader.getClassName(), name, desc);
-        return new MethodVisitor(Opcodes.ASM5, node) {
+        return new MethodVisitor(Opcodes.API_VERSION, node) {
           @Override
           public void visitEnd() {
             super.visitEnd();

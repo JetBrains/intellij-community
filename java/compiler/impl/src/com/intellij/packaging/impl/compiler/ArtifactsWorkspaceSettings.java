@@ -49,10 +49,10 @@ public class ArtifactsWorkspaceSettings implements PersistentStateComponent<Arti
   }
 
   public List<Artifact> getArtifactsToBuild() {
-    final List<Artifact> result = new ArrayList<Artifact>();
+    final List<Artifact> result = new ArrayList<>();
     final ArtifactManager artifactManager = ArtifactManager.getInstance(myProject);
     for (String name : myState.myArtifactsToBuild) {
-      ContainerUtil.addIfNotNull(artifactManager.findArtifact(name), result);
+      ContainerUtil.addIfNotNull(result, artifactManager.findArtifact(name));
     }
     return result;
   }
@@ -76,7 +76,7 @@ public class ArtifactsWorkspaceSettings implements PersistentStateComponent<Arti
   public static class ArtifactsWorkspaceSettingsState {
     @Tag("artifacts-to-build")
     @AbstractCollection(surroundWithTag = false, elementTag = "artifact", elementValueAttribute = "name")
-    public List<String> myArtifactsToBuild = new ArrayList<String>();
+    public List<String> myArtifactsToBuild = new ArrayList<>();
 
   }
 }

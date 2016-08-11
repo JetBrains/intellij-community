@@ -35,7 +35,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class ForwardDependenciesBuilder extends DependenciesBuilder {
-  private final Map<PsiFile, Set<PsiFile>> myDirectDependencies = new HashMap<PsiFile, Set<PsiFile>>();
+  private final Map<PsiFile, Set<PsiFile>> myDirectDependencies = new HashMap<>();
 
   public ForwardDependenciesBuilder(@NotNull Project project, @NotNull AnalysisScope scope) {
     super(project, scope);
@@ -106,12 +106,12 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
     }
 
     final boolean isInLibrary =  virtualFile == null || fileIndex.isInLibrarySource(virtualFile) || fileIndex.isInLibraryClasses(virtualFile);
-    final Set<PsiFile> collectedDeps = new HashSet<PsiFile>();
-    final HashSet<PsiFile> processed = new HashSet<PsiFile>();
+    final Set<PsiFile> collectedDeps = new HashSet<>();
+    final HashSet<PsiFile> processed = new HashSet<>();
     collectedDeps.add(file);
     do {
       if (depth++ > getTransitiveBorder()) return;
-      for (PsiFile psiFile : new HashSet<PsiFile>(collectedDeps)) {
+      for (PsiFile psiFile : new HashSet<>(collectedDeps)) {
         final VirtualFile vFile = psiFile.getVirtualFile();
         if (vFile != null) {
 
@@ -123,7 +123,7 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
             processed.add(psiFile);
           }
         }
-        final Set<PsiFile> found = new HashSet<PsiFile>();
+        final Set<PsiFile> found = new HashSet<>();
         if (!processed.contains(psiFile)) {
           processed.add(psiFile);
           analyzeFileDependencies(psiFile, new DependencyProcessor() {
@@ -147,12 +147,12 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
           });
           Set<PsiFile> deps = getDependencies().get(file);
           if (deps == null) {
-            deps = new HashSet<PsiFile>();
+            deps = new HashSet<>();
             getDependencies().put(file, deps);
           }
           deps.addAll(found);
 
-          getDirectDependencies().put(psiFile, new HashSet<PsiFile>(found));
+          getDirectDependencies().put(psiFile, new HashSet<>(found));
 
           collectedDeps.addAll(found);
 

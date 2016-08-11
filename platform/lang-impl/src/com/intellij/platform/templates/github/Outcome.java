@@ -34,17 +34,17 @@ public class Outcome<V> {
 
   @NotNull
   public static <V> Outcome<V> createAsCancelled() {
-    return new Outcome<V>(null, true, null);
+    return new Outcome<>(null, true, null);
   }
 
   @NotNull
   public static <V> Outcome<V> createAsException(@NotNull Exception ex) {
-    return new Outcome<V>(null, false, ex);
+    return new Outcome<>(null, false, ex);
   }
 
   @NotNull
   public static <V> Outcome<V> createNormal(@NotNull V data) {
-    return new Outcome<V>(data, false, null);
+    return new Outcome<>(data, false, null);
   }
 
 }

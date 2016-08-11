@@ -136,7 +136,7 @@ public class PropertyKeyReferenceProvider extends PsiReferenceProvider {
       final PropertiesReferenceManager propertiesReferenceManager = PropertiesReferenceManager.getInstance(project);
       final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
 
-      final List<PropertiesFile> allPropertiesFiles = new ArrayList<PropertiesFile>();
+      final List<PropertiesFile> allPropertiesFiles = new ArrayList<>();
       for (String name : allBundleNames) {
         final List<PropertiesFile> propertiesFiles = propertiesReferenceManager
           .findPropertiesFiles(searchScope, name, BundleNameEvaluator.DEFAULT);

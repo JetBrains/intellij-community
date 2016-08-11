@@ -198,7 +198,7 @@ public class AddImportAction implements QuestionAction {
   }
 
   public static List<String> getAllExcludableStrings(@NotNull String qname) {
-    List<String> toExclude = new ArrayList<String>();
+    List<String> toExclude = new ArrayList<>();
     while (true) {
       toExclude.add(qname);
       final int i = qname.lastIndexOf('.');

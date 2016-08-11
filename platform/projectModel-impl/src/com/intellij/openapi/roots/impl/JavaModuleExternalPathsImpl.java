@@ -36,7 +36,7 @@ import java.util.Map;
  */
 public class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
   @NonNls private static final String ROOT_ELEMENT = JpsJavaModelSerializerExtension.ROOT_TAG;
-  private final Map<OrderRootType, VirtualFilePointerContainer> myOrderRootPointerContainers = new HashMap<OrderRootType, VirtualFilePointerContainer>();
+  private final Map<OrderRootType, VirtualFilePointerContainer> myOrderRootPointerContainers = new HashMap<>();
   private JavaModuleExternalPathsImpl mySource;
 
   public JavaModuleExternalPathsImpl() {

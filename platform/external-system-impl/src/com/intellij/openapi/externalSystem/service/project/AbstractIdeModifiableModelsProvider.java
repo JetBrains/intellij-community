@@ -59,10 +59,10 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   private static final Logger LOG = Logger.getInstance(AbstractIdeModifiableModelsProvider.class);
 
   private ModifiableModuleModel myModifiableModuleModel;
-  private Map<Module, ModifiableRootModel> myModifiableRootModels = new THashMap<Module, ModifiableRootModel>();
-  private Map<Module, ModifiableFacetModel> myModifiableFacetModels = new THashMap<Module, ModifiableFacetModel>();
-  private Map<Module, String> myProductionModulesForTestModules = new THashMap<Module, String>();
-  private Map<Library, Library.ModifiableModel> myModifiableLibraryModels = new IdentityHashMap<Library, Library.ModifiableModel>();
+  private Map<Module, ModifiableRootModel> myModifiableRootModels = new THashMap<>();
+  private Map<Module, ModifiableFacetModel> myModifiableFacetModels = new THashMap<>();
+  private Map<Module, String> myProductionModulesForTestModules = new THashMap<>();
+  private Map<Library, Library.ModifiableModel> myModifiableLibraryModels = new IdentityHashMap<>();
   private ModifiableArtifactModel myModifiableArtifactModel;
   private AbstractIdeModifiableModelsProvider.MyPackagingElementResolvingContext myPackagingElementResolvingContext;
   private final ArtifactExternalDependenciesImporter myArtifactExternalDependenciesImporter;
@@ -264,7 +264,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   @NotNull
   @Override
   public List<Module> getAllDependentModules(@NotNull Module module) {
-    final ArrayList<Module> list = new ArrayList<Module>();
+    final ArrayList<Module> list = new ArrayList<>();
     final Graph<Module> graph = getModuleGraph(true);
     for (Iterator<Module> i = graph.getOut(module); i.hasNext();) {
       list.add(i.next());

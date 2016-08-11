@@ -57,7 +57,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private final DfaValue myString;
   private final PsiType myNpe;
   private final PsiType myAssertionError;
-  private final Stack<PsiElement> myElementStack = new Stack<PsiElement>();
+  private final Stack<PsiElement> myElementStack = new Stack<>();
 
   /**
    * Variables for try-related control transfers. Contain exceptions or an (Throwable-inconvertible) string to indicate return inside finally
@@ -89,7 +89,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Nullable
   public ControlFlow buildControlFlow() {
-    myCatchStack = new Stack<CatchDescriptor>();
+    myCatchStack = new Stack<>();
     myCurrentFlow = new ControlFlow(myFactory);
     try {
       myCodeFragment.accept(this);
@@ -460,7 +460,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override public void visitForStatement(PsiForStatement statement) {
     startElement(statement);
-    final ArrayList<PsiElement> declaredVariables = new ArrayList<PsiElement>();
+    final ArrayList<PsiElement> declaredVariables = new ArrayList<>();
 
     PsiStatement initialization = statement.getInitialization();
     if (initialization != null) {
@@ -626,7 +626,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (psiClass != null) {
         addInstruction(new FieldReferenceInstruction(caseExpression, "switch statement expression"));
         if (psiClass.isEnum()) {
-          enumValues = new HashSet<PsiEnumConstant>();
+          enumValues = new HashSet<>();
           for (PsiField f : psiClass.getFields()) {
             if (f instanceof PsiEnumConstant) {
               enumValues.add((PsiEnumConstant)f);
@@ -1310,7 +1310,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void generateAndExpression(PsiExpression[] operands, final PsiType exprType, boolean shortCircuit) {
-    List<ConditionalGotoInstruction> branchToFail = new ArrayList<ConditionalGotoInstruction>();
+    List<ConditionalGotoInstruction> branchToFail = new ArrayList<>();
     for (int i = 0; i < operands.length; i++) {
       PsiExpression operand = operands[i];
       operand.accept(this);

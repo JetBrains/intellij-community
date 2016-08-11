@@ -239,7 +239,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
         break;
       }
     }
-    final TableView<VcsFileRevision> table = new TableView<VcsFileRevision>(new ListTableModel<VcsFileRevision>(columns, revisions, 0));
+    final TableView<VcsFileRevision> table = new TableView<>(new ListTableModel<>(columns, revisions, 0));
     table.setShowHorizontalLines(false);
     table.setTableHeader(null);
     Runnable runnable = new Runnable() {

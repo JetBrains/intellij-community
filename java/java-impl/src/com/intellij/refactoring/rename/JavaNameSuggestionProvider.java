@@ -57,7 +57,7 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
       }
     }
     final String[] strings = info != null ? info.names : ArrayUtil.EMPTY_STRING_ARRAY;
-    final ArrayList<String> list = new ArrayList<String>(Arrays.asList(strings));
+    final ArrayList<String> list = new ArrayList<>(Arrays.asList(strings));
     final String[] properlyCased = suggestProperlyCasedName(element);
     if (properlyCased != null) {
       Collections.addAll(list, properlyCased);
@@ -116,7 +116,7 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
         return new String[] {buffer.toString()};
       }
     }
-    final List<String> result = new ArrayList<String>();
+    final List<String> result = new ArrayList<>();
     result.add(suggestProperlyCasedName(prefix, NameUtil.splitNameIntoWords(name)));
     if (name.startsWith(prefix)) {
       name = name.substring(prefix.length());

@@ -31,8 +31,8 @@ public class GitCommitCompareInfo {
   
   private static final Logger LOG = Logger.getInstance(GitCommitCompareInfo.class);
   
-  private final Map<GitRepository, Pair<List<GitCommit>, List<GitCommit>>> myInfo = new HashMap<GitRepository, Pair<List<GitCommit>, List<GitCommit>>>();
-  private final Map<GitRepository, Collection<Change>> myTotalDiff = new HashMap<GitRepository, Collection<Change>>();
+  private final Map<GitRepository, Pair<List<GitCommit>, List<GitCommit>>> myInfo = new HashMap<>();
+  private final Map<GitRepository, Collection<Change>> myTotalDiff = new HashMap<>();
   private final InfoType myInfoType;
 
   public GitCommitCompareInfo() {
@@ -86,7 +86,7 @@ public class GitCommitCompareInfo {
 
   @NotNull
   public List<Change> getTotalDiff() {
-    List<Change> changes = new ArrayList<Change>();
+    List<Change> changes = new ArrayList<>();
     for (Collection<Change> changeCollection : myTotalDiff.values()) {
       changes.addAll(changeCollection);
     }

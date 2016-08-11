@@ -49,7 +49,7 @@ public class ListSelectioner extends BasicSelectioner {
       }
     }
 
-    List<TextRange> result = new ArrayList<TextRange>();
+    List<TextRange> result = new ArrayList<>();
     if (start != 0 && end != 0) {
       result.add(new TextRange(start, end));
     }

@@ -70,7 +70,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   private ImportHelper myImportHelper;
 
-  private static final ThreadLocal<JavaSpacePropertyProcessor> mySharedProcessorAllocator = new ThreadLocal<JavaSpacePropertyProcessor>();
+  private static final ThreadLocal<JavaSpacePropertyProcessor> mySharedProcessorAllocator = new ThreadLocal<>();
 
   private void doInit(ASTNode child, CommonCodeStyleSettings settings, JavaCodeStyleSettings javaSettings) {
     if (isErrorElement(child)) {

@@ -36,7 +36,7 @@ public abstract class TaskDescriptor {
   public TaskDescriptor(final String name, @NotNull final Where where) {
     myName = name;
     myWhere = where;
-    mySurviveKit = new HashMap<Object, Object>();
+    mySurviveKit = new HashMap<>();
   }
 
   public abstract void run(final ContinuationContext context);

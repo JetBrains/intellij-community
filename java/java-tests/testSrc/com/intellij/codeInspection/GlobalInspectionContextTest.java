@@ -69,7 +69,7 @@ public class GlobalInspectionContextTest extends CodeInsightTestCase {
       if (!toolWrapper.isEnabledByDefault()) {
         InspectionManagerEx instance = (InspectionManagerEx)InspectionManager.getInstance(myProject);
         GlobalInspectionContextImpl context = RunInspectionIntention.createContext(toolWrapper, instance, file);
-        context.initializeTools(new ArrayList<Tools>(), new ArrayList<Tools>(), new ArrayList<Tools>());
+        context.initializeTools(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
         assertEquals(1, context.getTools().size());
         return;
       }

@@ -56,7 +56,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
   private Tree myTree;
   private DefaultTreeModel myTreeModel;
   private TreePath myParentPath = null;
-  private final ArrayList<MessageNode> myMessageItems = new ArrayList<MessageNode>();
+  private final ArrayList<MessageNode> myMessageItems = new ArrayList<>();
   private final JPanel myPanel;
   private boolean myActionsEnabled = true;
   private String myCurrentTaskName;

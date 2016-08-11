@@ -106,11 +106,11 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
 
     // Paging is not used - "Load Xxx" buttons load corresponding new elements and add them to the end of the table. Single (first) page is
     // always used.
-    myListsEngine = new BasePageEngine<CommittedChangeList>(lists, lists.size());
+    myListsEngine = new BasePageEngine<>(lists, lists.size());
 
     myPanel = new JPanel(new BorderLayout());
-    myWiseSelection = new QuantitySelection<Long>(myEverythingLoaded);
-    myAlreadyMerged = new HashSet<Change>();
+    myWiseSelection = new QuantitySelection<>(myEverythingLoaded);
+    myAlreadyMerged = new HashSet<>();
     setOKButtonText("Merge Selected");
     initUI();
     init();
@@ -228,7 +228,7 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
     final SelectionResult<Long> selected = myWiseSelection.getSelected();
     final SelectionResult<Long> unselected = myWiseSelection.getUnselected();
 
-    final List<CommittedChangeList> result = new LinkedList<CommittedChangeList>();
+    final List<CommittedChangeList> result = new LinkedList<>();
     result.addAll(myListsEngine.getCurrent());
     while (myListsEngine.hasNext()) {
       result.addAll(myListsEngine.next());
@@ -306,7 +306,7 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
         return element.getComment();
       }
     };
-    final ListTableModel<CommittedChangeList> flatModel = new ListTableModel<CommittedChangeList>(FAKE_COLUMN);
+    final ListTableModel<CommittedChangeList> flatModel = new ListTableModel<>(FAKE_COLUMN);
     myRevisionsList.setModelAndUpdateColumns(flatModel);
     myRevisionsList.setTableHeader(null);
     myRevisionsList.setShowGrid(false);
@@ -343,8 +343,8 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
     myMore100Action = new MoreXAction(100);
     myMore500Action = new MoreXAction(500);
     final PagedListWithActions<CommittedChangeList> byRevisions =
-      new PagedListWithActions<CommittedChangeList>(myListsEngine, listsManager, new MySelectAll(), new MyUnselectAll(),
-                                                    myMore100Action, myMore500Action);
+      new PagedListWithActions<>(myListsEngine, listsManager, new MySelectAll(), new MyUnselectAll(),
+                                 myMore100Action, myMore500Action);
 
     mySplitter = new Splitter(false, 0.7f);
     mySplitter.setFirstComponent(byRevisions.getComponent());

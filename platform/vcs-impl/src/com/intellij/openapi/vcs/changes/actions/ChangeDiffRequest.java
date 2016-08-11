@@ -133,7 +133,7 @@ public class ChangeDiffRequest implements ChangeRequestChain {
       return null;
     }
 
-    final List<String> errors = new ArrayList<String>();
+    final List<String> errors = new ArrayList<>();
     DiffRequestPresentable.MyResult result = moveImpl(presentable, errors);
     showErrors(errors);
     if (result == null) {
@@ -167,7 +167,7 @@ public class ChangeDiffRequest implements ChangeRequestChain {
 
   @Nullable
   private DiffRequest moveWithErrorReport(final MoveDirection moveDirection) {
-    final List<String> errors = new ArrayList<String>();
+    final List<String> errors = new ArrayList<>();
     final DiffRequest diffRequest = moveInc(moveDirection, errors);
     showErrors(errors);
     return diffRequest;

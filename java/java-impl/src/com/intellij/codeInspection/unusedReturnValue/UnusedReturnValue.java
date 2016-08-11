@@ -209,7 +209,7 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
     private static void replaceReturnStatements(@NotNull final PsiMethod method) {
       final PsiCodeBlock body = method.getBody();
       if (body != null) {
-        final List<PsiReturnStatement> returnStatements = new ArrayList<PsiReturnStatement>();
+        final List<PsiReturnStatement> returnStatements = new ArrayList<>();
         body.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
           public void visitReturnStatement(final PsiReturnStatement statement) {

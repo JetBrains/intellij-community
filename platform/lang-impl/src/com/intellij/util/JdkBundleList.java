@@ -28,9 +28,9 @@ import java.util.HashMap;
 public class JdkBundleList {
   @NotNull private static final Logger LOG = Logger.getInstance("#com.intellij.util.JdkBundleList");
 
-  private ArrayList<JdkBundle> bundleList = new ArrayList<JdkBundle>();
-  private HashMap<String, JdkBundle> bundleMap = new HashMap<String, JdkBundle>();
-  private HashMap<String, JdkBundle> nameVersionMap = new HashMap<String, JdkBundle>();
+  private ArrayList<JdkBundle> bundleList = new ArrayList<>();
+  private HashMap<String, JdkBundle> bundleMap = new HashMap<>();
+  private HashMap<String, JdkBundle> nameVersionMap = new HashMap<>();
 
   public void addBundle(@NotNull JdkBundle bundle, boolean forceOldVersion) {
     JdkBundle bundleDescr = bundleMap.get(bundle.getAbsoluteLocation().getAbsolutePath());

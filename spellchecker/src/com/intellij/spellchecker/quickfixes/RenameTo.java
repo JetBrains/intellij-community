@@ -83,7 +83,7 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
     }
 
     Editor editor = getEditorFromFocus();
-    HashMap<String, Object> map = new HashMap<String, Object>();
+    HashMap<String, Object> map = new HashMap<>();
     PsiElement psiElement = descriptor.getPsiElement();
     if (psiElement == null) return;
     PsiFile containingFile = psiElement.getContainingFile();

@@ -48,7 +48,7 @@ public abstract class DomTestCase extends LightIdeaTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myCallRegistry = new CallRegistry<DomEvent>();
+    myCallRegistry = new CallRegistry<>();
     getDomManager().addDomEventListener(myListener, getTestRootDisposable());
   }
 

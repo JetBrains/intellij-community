@@ -54,7 +54,7 @@ public class MorphingAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     myDesigner.getToolProvider().execute(() -> {
-      List<RadComponent> newComponents = new ArrayList<RadComponent>();
+      List<RadComponent> newComponents = new ArrayList<>();
 
       for (RadComponent component : myComponents) {
         RadComponent newComponent = component.morphingTo(myTarget);

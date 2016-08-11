@@ -30,7 +30,7 @@ public class LeafBlock implements ASTBlock{
   private final Wrap myWrap;
   private final Alignment myAlignment;
 
-  private static final ArrayList<Block> EMPTY_SUB_BLOCKS = new ArrayList<Block>();
+  private static final ArrayList<Block> EMPTY_SUB_BLOCKS = new ArrayList<>();
   private final Indent myIndent;
 
   public LeafBlock(final ASTNode node,

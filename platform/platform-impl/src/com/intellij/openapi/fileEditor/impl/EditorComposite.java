@@ -92,8 +92,8 @@ public abstract class EditorComposite implements Disposable {
    */
   private FileEditor mySelectedEditor;
   private final FileEditorManagerEx myFileEditorManager;
-  private final Map<FileEditor, JComponent> myTopComponents = new HashMap<FileEditor, JComponent>();
-  private final Map<FileEditor, JComponent> myBottomComponents = new HashMap<FileEditor, JComponent>();
+  private final Map<FileEditor, JComponent> myTopComponents = new HashMap<>();
+  private final Map<FileEditor, JComponent> myBottomComponents = new HashMap<>();
   private final Map<FileEditor, String> myDisplayNames = ContainerUtil.newHashMap();
 
   /**
@@ -288,7 +288,7 @@ public abstract class EditorComposite implements Disposable {
 
   @NotNull
   private List<JComponent> getTopBottomComponents(@NotNull FileEditor editor, boolean top) {
-    SmartList<JComponent> result = new SmartList<JComponent>();
+    SmartList<JComponent> result = new SmartList<>();
     JComponent container = top ? myTopComponents.get(editor) : myBottomComponents.get(editor);
     for (Component each : container.getComponents()) {
       if (each instanceof NonOpaquePanel) {

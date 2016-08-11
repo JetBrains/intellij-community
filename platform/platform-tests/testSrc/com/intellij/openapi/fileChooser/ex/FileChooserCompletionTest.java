@@ -16,7 +16,7 @@ public class FileChooserCompletionTest extends FlyIdeaTestCase {
   private File myParent;
   private LocalFsFinder myFinder;
 
-  private final Map<String, String> myMacros = new HashMap<String, String>();
+  private final Map<String, String> myMacros = new HashMap<>();
   private File myFolder11;
   private File myFolder21;
 

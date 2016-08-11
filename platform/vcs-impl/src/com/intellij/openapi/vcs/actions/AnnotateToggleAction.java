@@ -110,7 +110,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
 
 
     final EditorGutterComponentEx editorGutter = (EditorGutterComponentEx)editor.getGutter();
-    final List<AnnotationFieldGutter> gutters = new ArrayList<AnnotationFieldGutter>();
+    final List<AnnotationFieldGutter> gutters = new ArrayList<>();
     final AnnotationSourceSwitcher switcher = fileAnnotation.getAnnotationSourceSwitcher();
     if (getUpToDateLineNumber == null) getUpToDateLineNumber = new UpToDateLineNumberProviderImpl(editor.getDocument(), project);
 
@@ -185,7 +185,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
 
   @Nullable
   private static Map<VcsRevisionNumber, Integer> computeLineNumbers(@NotNull FileAnnotation fileAnnotation) {
-    final Map<VcsRevisionNumber, Integer> numbers = new HashMap<VcsRevisionNumber, Integer>();
+    final Map<VcsRevisionNumber, Integer> numbers = new HashMap<>();
     final List<VcsFileRevision> fileRevisionList = fileAnnotation.getRevisions();
     if (fileRevisionList != null) {
       int size = fileRevisionList.size();
@@ -204,9 +204,9 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     final List<VcsFileRevision> fileRevisionList = fileAnnotation.getRevisions();
     if (ContainerUtil.isEmpty(fileRevisionList)) return null;
 
-    final Map<VcsRevisionNumber, Color> commitOrderColors = new HashMap<VcsRevisionNumber, Color>();
-    final Map<VcsRevisionNumber, Color> commitAuthorColors = new HashMap<VcsRevisionNumber, Color>();
-    final Map<String, Color> authorColors = new HashMap<String, Color>();
+    final Map<VcsRevisionNumber, Color> commitOrderColors = new HashMap<>();
+    final Map<VcsRevisionNumber, Color> commitAuthorColors = new HashMap<>();
+    final Map<String, Color> authorColors = new HashMap<>();
 
     EditorColorsScheme colorScheme = editor.getColorsScheme();
     AnnotationsSettings settings = AnnotationsSettings.getInstance();

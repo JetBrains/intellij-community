@@ -74,7 +74,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
   private JComponent myChild = null;
 
   protected JBList myList;
-  protected final CollectionListModel<T> myListModel = new CollectionListModel<T>();
+  protected final CollectionListModel<T> myListModel = new CollectionListModel<>();
 
   private final MergingUpdateQueue myMergingUpdateQueue = new MergingUpdateQueue("FinderRecursivePanel", 100, true, this, this);
   private volatile boolean isMergeListItemsRunning;

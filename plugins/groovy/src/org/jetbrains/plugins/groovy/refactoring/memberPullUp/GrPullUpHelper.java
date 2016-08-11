@@ -327,7 +327,7 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
                                                       final Iterable<PsiTypeParameter> parametersIterable,
                                                       final PsiSubstitutor substitutor,
                                                       final GroovyPsiElementFactory factory) {
-    final Map<PsiElement, PsiElement> replacement = new LinkedHashMap<PsiElement, PsiElement>();
+    final Map<PsiElement, PsiElement> replacement = new LinkedHashMap<>();
     for (PsiTypeParameter parameter : parametersIterable) {
       PsiType substitutedType = substitutor.substitute(parameter);
 
@@ -382,9 +382,9 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
 
 
   private class StaticReferencesCollector extends GrClassMemberReferenceVisitor {
-    private final ArrayList<GrReferenceElement> myReferences = new ArrayList<GrReferenceElement>();
-    private final ArrayList<PsiElement> myReferees = new ArrayList<PsiElement>();
-    private final ArrayList<PsiClass> myRefereeClasses = new ArrayList<PsiClass>();
+    private final ArrayList<GrReferenceElement> myReferences = new ArrayList<>();
+    private final ArrayList<PsiElement> myReferees = new ArrayList<>();
+    private final ArrayList<PsiClass> myRefereeClasses = new ArrayList<>();
     private final Set<PsiMember> myMovedMembers;
 
     private StaticReferencesCollector(Set<PsiMember> movedMembers) {

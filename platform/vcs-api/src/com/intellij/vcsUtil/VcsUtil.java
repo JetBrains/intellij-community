@@ -42,6 +42,7 @@ import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -231,7 +232,7 @@ public class VcsUtil {
   }
 
   private static List<VirtualFile> collectFilesToRefresh(final File[] roots) {
-    final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
+    final ArrayList<VirtualFile> result = new ArrayList<>();
     for (File root : roots) {
       VirtualFile vFile = findFileFor(root);
       if (vFile != null) {
@@ -495,7 +496,7 @@ public class VcsUtil {
 
   public static boolean runVcsProcessWithProgress(final VcsRunnable runnable, String progressTitle, boolean canBeCanceled, Project project)
     throws VcsException {
-    final Ref<VcsException> ex = new Ref<VcsException>();
+    final Ref<VcsException> ex = new Ref<>();
     boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
@@ -651,7 +652,7 @@ public class VcsUtil {
   public static List<VcsDirectoryMapping> addMapping(@NotNull List<VcsDirectoryMapping> existingMappings,
                                                      @NotNull String path,
                                                      @NotNull String vcs) {
-    List<VcsDirectoryMapping> mappings = new ArrayList<VcsDirectoryMapping>(existingMappings);
+    List<VcsDirectoryMapping> mappings = new ArrayList<>(existingMappings);
     for (Iterator<VcsDirectoryMapping> iterator = mappings.iterator(); iterator.hasNext(); ) {
       VcsDirectoryMapping mapping = iterator.next();
       if (mapping.isDefaultMapping() && StringUtil.isEmptyOrSpaces(mapping.getVcs())) {
@@ -673,9 +674,34 @@ public class VcsUtil {
   }
 
   @Nullable
-  public static <T> T getIfSingle(@NotNull Stream<T> items) {
-    return items.limit(2).map(Optional::ofNullable)
+  public static <T> T getIfSingle(@Nullable Stream<T> items) {
+    return items == null ? null : items.limit(2).map(Optional::ofNullable)
       .reduce(Optional.empty(), (a, b) -> a.isPresent() ^ b.isPresent() ? b : Optional.empty())
       .orElse(null);
+  }
+
+  public static <T> boolean isEmpty(@Nullable Stream<T> items) {
+    return items == null || !items.findAny().isPresent();
+  }
+
+  @NotNull
+  public static <T> Stream<T> notNullize(@Nullable Stream<T> items) {
+    return ObjectUtils.notNull(items, Stream.empty());
+  }
+
+  @NotNull
+  public static <T> Stream<T> toStream(@Nullable T... items) {
+    return items == null ? Stream.empty() : Stream.of(items);
+  }
+
+  /**
+   * There probably could be some performance issues if there is lots of streams to concat. See
+   * http://mail.openjdk.java.net/pipermail/lambda-dev/2013-July/010659.html for some details.
+   * <p>
+   * Also see {@link Stream#concat(Stream, Stream)} documentation for other possible issues of concatenating large number of streams.
+   */
+  @NotNull
+  public static <T> Stream<T> concat(@NotNull Stream<T>... streams) {
+    return toStream(streams).reduce(Stream.empty(), Stream::concat);
   }
 }

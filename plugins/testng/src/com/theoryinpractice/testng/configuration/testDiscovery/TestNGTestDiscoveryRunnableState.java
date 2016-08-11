@@ -50,7 +50,7 @@ public class TestNGTestDiscoveryRunnableState extends TestNGRunnableState {
 
   @Override
   public SearchingForTestsTask createSearchingForTestsTask() {
-    return new SearchingForTestsTask(myServerSocket, getConfiguration(), myTempFile, client) {
+    return new SearchingForTestsTask(myServerSocket, getConfiguration(), myTempFile) {
       @Override
       protected void search() throws CantRunException {
         myClasses.clear();

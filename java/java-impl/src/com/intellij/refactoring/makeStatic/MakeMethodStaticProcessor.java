@@ -59,7 +59,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
   @Override
   protected boolean findAdditionalMembers(final Set<UsageInfo> toMakeStatic) {
     if (!toMakeStatic.isEmpty()) {
-      myAdditionalMethods = new ArrayList<PsiMethod>();
+      myAdditionalMethods = new ArrayList<>();
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         for (UsageInfo usageInfo : toMakeStatic) {
           myAdditionalMethods.add((PsiMethod)usageInfo.getElement());
@@ -70,7 +70,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
                                                                           methods -> myAdditionalMethods.addAll(methods)) {
           @Override
           protected ArrayList<UsageInfo> getTopLevelItems() {
-            return new ArrayList<UsageInfo>(toMakeStatic);
+            return new ArrayList<>(toMakeStatic);
           }
         };
         TreeUtil.expand(chooser.getTree(), 2);
@@ -132,13 +132,13 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
     PsiParameterList paramList = myMember.getParameterList();
     PsiElement addParameterAfter = null;
     PsiDocTag anchor = null;
-    List<PsiType> addedTypes = new ArrayList<PsiType>();
+    List<PsiType> addedTypes = new ArrayList<>();
 
     final PsiClass containingClass = myMember.getContainingClass();
     LOG.assertTrue(containingClass != null);
     
     if (mySettings.isDelegate()) {
-      List<ParameterInfoImpl> params = new ArrayList<ParameterInfoImpl>();
+      List<ParameterInfoImpl> params = new ArrayList<>();
       PsiParameter[] parameters = myMember.getParameterList().getParameters();
 
       if (mySettings.isMakeClassParameter()) {

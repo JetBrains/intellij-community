@@ -81,7 +81,7 @@ public class SvnBranchPointsCalculator {
       }
     };
 
-    myCalculator = new FactsCalculator<KeyData, WrapperInvertor, VcsException>(
+    myCalculator = new FactsCalculator<>(
       myProject, "Looking for branch origin", cache, new Loader(myProject));
   }
 
@@ -105,7 +105,7 @@ public class SvnBranchPointsCalculator {
     }
 
     public TreeMap<String,BranchCopyData> read(@NotNull DataInput in) throws IOException {
-      final TreeMap<String,BranchCopyData> result = new TreeMap<String, BranchCopyData>();
+      final TreeMap<String,BranchCopyData> result = new TreeMap<>();
 
       final int num = in.readInt();
       for (int i = 0; i < num; i++) {
@@ -159,14 +159,14 @@ public class SvnBranchPointsCalculator {
 
     PersistentHolder(final File file) {
       myLock = new Object();
-      myPersistentMap = new SmallMapSerializer<String, TreeMap<String, BranchCopyData>>(
+      myPersistentMap = new SmallMapSerializer<>(
         file, EnumeratorStringDescriptor.INSTANCE, new BranchDataExternalizer());
       // list for values by default
-      myForSearchMap = new MultiMap<String, String>();
+      myForSearchMap = new MultiMap<>();
       for (String s : myPersistentMap.keySet()) {
         final TreeMap<String, BranchCopyData> map = myPersistentMap.get(s);
         if (map != null) {
-          myForSearchMap.put(s, new ArrayList<String>(map.keySet()));
+          myForSearchMap.put(s, new ArrayList<>(map.keySet()));
         }
       }
 
@@ -184,7 +184,7 @@ public class SvnBranchPointsCalculator {
       synchronized (myLock) {
         TreeMap<String, BranchCopyData> map = myPersistentMap.get(uid);
         if (map == null) {
-          map = new TreeMap<String, BranchCopyData>();
+          map = new TreeMap<>();
         }
         map.put(target, data);
         myPersistentMap.put(uid, map);
@@ -252,7 +252,7 @@ public class SvnBranchPointsCalculator {
 
     @Override
     public WrapperInvertor convert(final KeyData keyData) throws VcsException {
-      final TransparentlyFailedValue<CopyData, VcsException> consumer = new TransparentlyFailedValue<CopyData, VcsException>();
+      final TransparentlyFailedValue<CopyData, VcsException> consumer = new TransparentlyFailedValue<>();
       new FirstInBranch(myVcs, keyData.getRepoUrl(), keyData.getTargetUrl(), keyData.getSourceUrl(), consumer).run();
 
       final CopyData copyData = consumer.get();

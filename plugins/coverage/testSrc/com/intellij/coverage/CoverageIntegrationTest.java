@@ -84,13 +84,13 @@ public class CoverageIntegrationTest extends ModuleTestCase {
 
   private static class PackageAnnotationConsumer implements PackageAnnotator.Annotator {
     private final Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> myDirectoryCoverage =
-      new HashMap<VirtualFile, PackageAnnotator.PackageCoverageInfo>();
+      new HashMap<>();
     private final Map<String, PackageAnnotator.PackageCoverageInfo> myPackageCoverage =
-      new HashMap<String, PackageAnnotator.PackageCoverageInfo>();
+      new HashMap<>();
     private final Map<String, PackageAnnotator.PackageCoverageInfo> myFlatPackageCoverage =
-      new HashMap<String, PackageAnnotator.PackageCoverageInfo>();
+      new HashMap<>();
     private final Map<String, PackageAnnotator.ClassCoverageInfo> myClassCoverageInfo =
-      new HashMap<String, PackageAnnotator.ClassCoverageInfo>();
+      new HashMap<>();
 
     public void annotateSourceDirectory(VirtualFile virtualFile, PackageAnnotator.PackageCoverageInfo packageCoverageInfo, Module module) {
       myDirectoryCoverage.put(virtualFile, packageCoverageInfo);

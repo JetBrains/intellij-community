@@ -443,8 +443,8 @@ public class PyRequirement {
   @NotNull
   private static Pair<String, String> parseNameAndVersionFromVcsOrArchive(@NotNull String name) {
     boolean isName = true;
-    final List<String> nameParts = new ArrayList<String>();
-    final List<String> versionParts = new ArrayList<String>();
+    final List<String> nameParts = new ArrayList<>();
+    final List<String> versionParts = new ArrayList<>();
 
     for (String part : StringUtil.split(name, "-")) {
       final boolean partStartsWithDigit = !part.isEmpty() && Character.isDigit(part.charAt(0));

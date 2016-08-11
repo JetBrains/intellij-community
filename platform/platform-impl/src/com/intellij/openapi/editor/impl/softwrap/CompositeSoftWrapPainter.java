@@ -58,7 +58,7 @@ public class CompositeSoftWrapPainter implements SoftWrapPainter {
 
   private static final Logger LOG = Logger.getInstance("#" + CompositeSoftWrapPainter.class.getName());
 
-  private static final List<Map<SoftWrapDrawingType, Character>> SYMBOLS = new ArrayList<Map<SoftWrapDrawingType, Character>>();
+  private static final List<Map<SoftWrapDrawingType, Character>> SYMBOLS = new ArrayList<>();
 
   static {
     // Pickup custom soft wraps drawing symbols if both of the are defined.
@@ -179,7 +179,7 @@ public class CompositeSoftWrapPainter implements SoftWrapPainter {
   }
 
   private static <K, V> Map<K, V> asMap(Iterable<K> keys, Iterable<V> values) throws IllegalArgumentException {
-    Map<K, V> result = new HashMap<K,V>();
+    Map<K, V> result = new HashMap<>();
     Iterator<K> keyIterator = keys.iterator();
     Iterator<V> valueIterator = values.iterator();
     while (keyIterator.hasNext()) {

@@ -58,7 +58,7 @@ public class GitSharedSettings implements PersistentStateComponent<GitSharedSett
   }
 
   public void setForcePushProhibitedPatters(@NotNull List<String> patterns) {
-    myState.FORCE_PUSH_PROHIBITED_PATTERNS = new ArrayList<String>(patterns);
+    myState.FORCE_PUSH_PROHIBITED_PATTERNS = new ArrayList<>(patterns);
   }
 
   public boolean isBranchProtected(@NotNull String branch) {

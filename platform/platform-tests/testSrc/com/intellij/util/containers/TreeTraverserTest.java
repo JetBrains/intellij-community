@@ -499,7 +499,7 @@ public class TreeTraverserTest extends TestCase {
 
   @NotNull
   private static JBTreeTraverser<Integer> filteredTraverser() {
-    return new JBTreeTraverser<Integer>(Functions.fromMap(numbers()));
+    return new JBTreeTraverser<>(Functions.fromMap(numbers()));
   }
 
   public void testSimpleFilter() {
@@ -574,7 +574,7 @@ public class TreeTraverserTest extends TestCase {
   }
 
   public void testEndlessGraph() {
-    JBTreeTraverser<Integer> t = new JBTreeTraverser<Integer>(new Function<Integer, Iterable<Integer>>() {
+    JBTreeTraverser<Integer> t = new JBTreeTraverser<>(new Function<Integer, Iterable<Integer>>() {
       @Override
       public Iterable<Integer> fun(Integer k) {
         return JBIterable.generate(k, INCREMENT).transform(SQUARE).take(3);
@@ -584,7 +584,7 @@ public class TreeTraverserTest extends TestCase {
   }
 
   public void testEndlessGraphParents() {
-    JBTreeTraverser<Integer> t = new JBTreeTraverser<Integer>(new Function<Integer, Iterable<Integer>>() {
+    JBTreeTraverser<Integer> t = new JBTreeTraverser<>(new Function<Integer, Iterable<Integer>>() {
       @Override
       public Iterable<Integer> fun(Integer k) {
         return JBIterable.generate(1, k, FIBONACCI).skip(2).take(3);

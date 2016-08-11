@@ -275,7 +275,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
                                                @NotNull Collection<ExternalProjectPojo> childProjects,
                                                @NotNull Map<String, Collection<ExternalTaskPojo>> availableTasks) {
     ProjectData projectData = new ProjectData(systemId, rootProject.getName(), rootProject.getPath(), rootProject.getPath());
-    DataNode<ProjectData> projectDataNode = new DataNode<ProjectData>(PROJECT, projectData, null);
+    DataNode<ProjectData> projectDataNode = new DataNode<>(PROJECT, projectData, null);
 
     for (ExternalProjectPojo childProject : childProjects) {
       String moduleConfigPath = childProject.getPath();
@@ -354,7 +354,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
 
   @NotNull
   private static Collection<InternalExternalProjectInfo> load(@NotNull Project project) throws IOException {
-    SmartList<InternalExternalProjectInfo> projects = new SmartList<InternalExternalProjectInfo>();
+    SmartList<InternalExternalProjectInfo> projects = new SmartList<>();
     @SuppressWarnings("unchecked") final File configurationFile = getProjectConfigurationFile(project);
     if (!configurationFile.isFile()) return projects;
 

@@ -36,7 +36,7 @@ public class BoxingBoxedValueInspection extends BaseInspection {
 
   @NonNls
   static final Map<String, String> boxedPrimitiveMap =
-    new HashMap<String, String>(8);
+    new HashMap<>(8);
 
   static {
     boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_INTEGER, "int");

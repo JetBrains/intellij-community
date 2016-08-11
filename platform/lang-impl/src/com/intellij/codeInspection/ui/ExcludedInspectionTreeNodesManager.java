@@ -38,7 +38,7 @@ public class ExcludedInspectionTreeNodesManager {
     @Nullable
     @Override
     protected Set<Object> create(Class key) {
-      return new THashSet<Object>();
+      return new THashSet<>();
     }
   };
 

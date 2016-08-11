@@ -272,7 +272,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       if (startChild == endChild) return PsiElement.EMPTY_ARRAY; // nothing produced
 
       final PsiCodeBlock codeBlock = elementFactory.createCodeBlock();
-      final List<PsiElement> result = new ArrayList<PsiElement>(3);
+      final List<PsiElement> result = new ArrayList<>(3);
       assert startChild != null;
       for (PsiElement el = startChild.getNextSibling(); el != endChild && el != null; el = el.getNextSibling()) {
         if (el instanceof PsiErrorElement) continue;

@@ -62,7 +62,7 @@ public class JavaFindUsagesHelper {
       return aPackage == null ? Collections.<String>emptySet() : getElementNames(aPackage);
     }
 
-    final Set<String> result = new HashSet<String>();
+    final Set<String> result = new HashSet<>();
 
     ApplicationManager.getApplication().runReadAction(() -> {
       if (element instanceof PsiPackage) {
@@ -187,7 +187,7 @@ public class JavaFindUsagesHelper {
 
         if (classOptions.isImplementingClasses) {
           FunctionalExpressionSearch
-            .search(psiClass, classOptions.searchScope).forEach(new PsiElementProcessorAdapter<PsiFunctionalExpression>(
+            .search(psiClass, classOptions.searchScope).forEach(new PsiElementProcessorAdapter<>(
             new PsiElementProcessor<PsiFunctionalExpression>() {
               @Override
               public boolean execute(@NotNull PsiFunctionalExpression expression) {
@@ -212,7 +212,7 @@ public class JavaFindUsagesHelper {
       final JavaMethodFindUsagesOptions methodOptions = (JavaMethodFindUsagesOptions)options;
       if (isAbstract && methodOptions.isImplementingMethods || methodOptions.isOverridingMethods) {
         if (!processOverridingMethods(psiMethod, processor, methodOptions)) return false;
-        FunctionalExpressionSearch.search(psiMethod, methodOptions.searchScope).forEach(new PsiElementProcessorAdapter<PsiFunctionalExpression>(
+        FunctionalExpressionSearch.search(psiMethod, methodOptions.searchScope).forEach(new PsiElementProcessorAdapter<>(
           new PsiElementProcessor<PsiFunctionalExpression>() {
             @Override
             public boolean execute(@NotNull PsiFunctionalExpression expression) {
@@ -271,13 +271,14 @@ public class JavaFindUsagesHelper {
   private static boolean processOverridingMethods(@NotNull PsiMethod psiMethod,
                                                   @NotNull final Processor<UsageInfo> processor,
                                                   @NotNull final JavaMethodFindUsagesOptions options) {
-    return OverridingMethodsSearch.search(psiMethod, options.searchScope, options.isCheckDeepInheritance).forEach(new PsiElementProcessorAdapter<PsiMethod>(
-      new PsiElementProcessor<PsiMethod>() {
-      @Override
-      public boolean execute(@NotNull PsiMethod element) {
-        return addResult(element.getNavigationElement(), options, processor);
-      }
-    }));
+    return OverridingMethodsSearch.search(psiMethod, options.searchScope, options.isCheckDeepInheritance).forEach(
+      new PsiElementProcessorAdapter<>(
+        new PsiElementProcessor<PsiMethod>() {
+          @Override
+          public boolean execute(@NotNull PsiMethod element) {
+            return addResult(element.getNavigationElement(), options, processor);
+          }
+        }));
   }
 
   private static boolean addClassesUsages(@NotNull PsiPackage aPackage,
@@ -289,7 +290,7 @@ public class JavaFindUsagesHelper {
     }
 
     try {
-      List<PsiClass> classes = new ArrayList<PsiClass>();
+      List<PsiClass> classes = new ArrayList<>();
       addClassesInPackage(aPackage, options.isIncludeSubpackages, classes);
       for (final PsiClass aClass : classes) {
         if (progress != null) {
@@ -503,39 +504,40 @@ public class JavaFindUsagesHelper {
   private static boolean addInheritors(@NotNull PsiClass aClass,
                                        @NotNull final JavaClassFindUsagesOptions options,
                                        @NotNull final Processor<UsageInfo> processor) {
-    return ClassInheritorsSearch.search(aClass, options.searchScope, options.isCheckDeepInheritance).forEach(new PsiElementProcessorAdapter<PsiClass>(
-      new PsiElementProcessor<PsiClass>() {
-      @Override
-      public boolean execute(@NotNull PsiClass element) {
-        return addResult(element, options, processor);
-      }
-
-    }));
+    return ClassInheritorsSearch.search(aClass, options.searchScope, options.isCheckDeepInheritance).forEach(
+      new PsiElementProcessorAdapter<>(
+        new PsiElementProcessor<PsiClass>() {
+          @Override
+          public boolean execute(@NotNull PsiClass element) {
+            return addResult(element, options, processor);
+          }
+        }));
   }
 
   private static boolean addDerivedInterfaces(@NotNull PsiClass anInterface,
                                               @NotNull final JavaClassFindUsagesOptions options,
                                               @NotNull final Processor<UsageInfo> processor) {
-    return ClassInheritorsSearch.search(anInterface, options.searchScope, options.isCheckDeepInheritance).forEach(new PsiElementProcessorAdapter<PsiClass>(
-      new PsiElementProcessor<PsiClass>() {
-      @Override
-      public boolean execute(@NotNull PsiClass inheritor) {
-        return !inheritor.isInterface() || addResult(inheritor, options, processor);
-      }
-
-    }));
+    return ClassInheritorsSearch.search(anInterface, options.searchScope, options.isCheckDeepInheritance).forEach(
+      new PsiElementProcessorAdapter<>(
+        new PsiElementProcessor<PsiClass>() {
+          @Override
+          public boolean execute(@NotNull PsiClass inheritor) {
+            return !inheritor.isInterface() || addResult(inheritor, options, processor);
+          }
+        }));
   }
 
   private static boolean addImplementingClasses(@NotNull PsiClass anInterface,
                                                 @NotNull final JavaClassFindUsagesOptions options,
                                                 @NotNull final Processor<UsageInfo> processor) {
-    return ClassInheritorsSearch.search(anInterface, options.searchScope, options.isCheckDeepInheritance).forEach(new PsiElementProcessorAdapter<PsiClass>(
-      new PsiElementProcessor<PsiClass>() {
-      @Override
-      public boolean execute(@NotNull PsiClass inheritor) {
-        return inheritor.isInterface() || addResult(inheritor, options, processor);
-      }
-    }));
+    return ClassInheritorsSearch.search(anInterface, options.searchScope, options.isCheckDeepInheritance).forEach(
+      new PsiElementProcessorAdapter<>(
+        new PsiElementProcessor<PsiClass>() {
+          @Override
+          public boolean execute(@NotNull PsiClass inheritor) {
+            return inheritor.isInterface() || addResult(inheritor, options, processor);
+          }
+        }));
   }
 
   private static boolean addResultFromReference(@NotNull PsiReference reference,

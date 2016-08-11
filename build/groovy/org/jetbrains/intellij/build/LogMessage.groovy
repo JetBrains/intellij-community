@@ -15,21 +15,19 @@
  */
 package org.jetbrains.intellij.build
 
+import groovy.transform.Canonical
 import groovy.transform.CompileStatic
+import groovy.transform.Immutable
 
 /**
  * @author nik
  */
 @CompileStatic
+@Immutable
 class LogMessage {
   enum Kind {
     ERROR, WARNING, INFO, PROGRESS, BLOCK_STARTED, BLOCK_FINISHED
   }
   final Kind kind
   final String text
-
-  LogMessage(Kind kind, String text) {
-    this.text = text
-    this.kind = kind
-  }
 }

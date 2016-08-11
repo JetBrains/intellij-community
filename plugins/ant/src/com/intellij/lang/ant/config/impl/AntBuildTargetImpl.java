@@ -138,7 +138,7 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
     if (domProject != null) {
       final AntDomTarget antTarget = domProject.findDeclaredTarget(myName);
       if (antTarget != null) {
-        final Ref<AntDomElement> result = new Ref<AntDomElement>(null);
+        final Ref<AntDomElement> result = new Ref<>(null);
         antTarget.accept(new AntDomRecursiveVisitor() {
           public void visitAntDomElement(AntDomElement element) {
             if (result.get() != null) {

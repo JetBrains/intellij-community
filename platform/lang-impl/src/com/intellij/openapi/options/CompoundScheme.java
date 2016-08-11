@@ -28,7 +28,7 @@ import java.util.List;
 
 public class CompoundScheme<E extends SchemeElement> implements ExternalizableScheme {
   protected String myName;
-  protected final ArrayList<E> myElements = new ArrayList<E>();
+  protected final ArrayList<E> myElements = new ArrayList<>();
 
   public CompoundScheme(final String name) {
     setName(name);
@@ -42,7 +42,7 @@ public class CompoundScheme<E extends SchemeElement> implements ExternalizableSc
 
   @NotNull
   public final List<E> getElements() {
-    return Collections.unmodifiableList(new ArrayList<E>(myElements));
+    return Collections.unmodifiableList(new ArrayList<>(myElements));
   }
 
   @NotNull
@@ -116,7 +116,7 @@ public class CompoundScheme<E extends SchemeElement> implements ExternalizableSc
   }
 
   public static final class MutatorHelper<T extends CompoundScheme<E>, E extends SchemeElement> {
-    private final THashMap<T, T> copiedToOriginal = new THashMap<T, T>(ContainerUtil.identityStrategy());
+    private final THashMap<T, T> copiedToOriginal = new THashMap<>(ContainerUtil.identityStrategy());
 
     @NotNull
     public T copy(@NotNull T scheme) {
@@ -135,7 +135,7 @@ public class CompoundScheme<E extends SchemeElement> implements ExternalizableSc
         }
       });
 
-      List<T> originals = new ArrayList<T>(copiedSchemes.size());
+      List<T> originals = new ArrayList<>(copiedSchemes.size());
       for (T copied : copiedSchemes) {
         T original = copiedToOriginal.remove(copied);
         if (original == null) {

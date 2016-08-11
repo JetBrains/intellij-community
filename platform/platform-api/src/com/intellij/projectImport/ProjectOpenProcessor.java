@@ -30,7 +30,8 @@ import javax.swing.*;
 import java.io.File;
 
 public abstract class ProjectOpenProcessor {
-  public static final ExtensionPointName<ProjectOpenProcessor> EXTENSION_POINT_NAME = new ExtensionPointName<ProjectOpenProcessor>("com.intellij.projectOpenProcessor");
+  public static final ExtensionPointName<ProjectOpenProcessor> EXTENSION_POINT_NAME =
+    new ExtensionPointName<>("com.intellij.projectOpenProcessor");
 
   public abstract String getName();
 

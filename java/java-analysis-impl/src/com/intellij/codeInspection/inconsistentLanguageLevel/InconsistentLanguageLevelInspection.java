@@ -51,7 +51,7 @@ public class InconsistentLanguageLevelInspection extends GlobalInspectionTool {
                             @NotNull InspectionManager manager,
                             @NotNull GlobalInspectionContext globalContext,
                             @NotNull ProblemDescriptionsProcessor problemProcessor) {
-    final Set<Module> modules = new THashSet<Module>();
+    final Set<Module> modules = new THashSet<>();
     scope.accept(new PsiElementVisitor(){
       @Override
       public void visitElement(PsiElement element) {

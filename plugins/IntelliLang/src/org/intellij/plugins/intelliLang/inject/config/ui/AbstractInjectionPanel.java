@@ -29,8 +29,8 @@ import java.util.List;
  * of nested forms
  */
 public abstract class AbstractInjectionPanel<T extends BaseInjection> implements InjectionPanel<T> {
-  private final List<Field> myOtherPanels = new ArrayList<Field>(3);
-  private final List<Runnable> myUpdaters = new ArrayList<Runnable>(1);
+  private final List<Field> myOtherPanels = new ArrayList<>(3);
+  private final List<Runnable> myUpdaters = new ArrayList<>(1);
 
   protected final Project myProject;
 

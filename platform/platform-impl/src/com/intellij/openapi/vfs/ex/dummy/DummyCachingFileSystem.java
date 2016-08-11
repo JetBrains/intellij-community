@@ -44,7 +44,7 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
 
   private final String myProtocol;
 
-  private final BidirectionalMap<Project, String> myProject2Id = new BidirectionalMap<Project, String>();
+  private final BidirectionalMap<Project, String> myProject2Id = new BidirectionalMap<>();
 
   private final FactoryMap<String, T> myCachedFiles = new ConcurrentFactoryMap<String, T>() {
     @Override

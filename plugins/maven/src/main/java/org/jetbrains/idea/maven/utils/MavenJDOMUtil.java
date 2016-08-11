@@ -63,7 +63,7 @@ public class MavenJDOMUtil {
 
   @Nullable
   private static Element doRead(String text, final ErrorHandler handler) {
-    final LinkedList<Element> stack = new LinkedList<Element>();
+    final LinkedList<Element> stack = new LinkedList<>();
 
     final Element[] result = {null};
     XmlBuilderDriver driver = new XmlBuilderDriver(text);
@@ -164,7 +164,7 @@ public class MavenJDOMUtil {
   }
 
   public static List<String> findChildrenValuesByPath(@Nullable Element element, String path, String childrenName) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     for (Element each : findChildrenByPath(element, path, childrenName)) {
       String value = each.getTextTrim();
       if (!value.isEmpty()) {
@@ -186,7 +186,7 @@ public class MavenJDOMUtil {
     String childName = subPath.substring(0, firstDot);
     String pathInChild = subPath.substring(firstDot + 1);
 
-    List<Element> result = new ArrayList<Element>();
+    List<Element> result = new ArrayList<>();
 
     for (Element each : container.getChildren(childName)) {
       Element child = findChildByPath(each, pathInChild);

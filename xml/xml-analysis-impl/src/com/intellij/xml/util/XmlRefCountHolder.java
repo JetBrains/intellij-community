@@ -56,18 +56,18 @@ public class XmlRefCountHolder {
           final PsiFile psiFile = file.getViewProvider().getPsi(language);
           assert psiFile != null;
           psiFile.accept(new IdGatheringRecursiveVisitor(holder));
-          return new CachedValueProvider.Result<XmlRefCountHolder>(holder, file);
+          return new CachedValueProvider.Result<>(holder, file);
         }, false);
       }
     };
 
-  private final Map<String, List<Pair<XmlAttributeValue, Boolean>>> myId2AttributeListMap = new HashMap<String, List<Pair<XmlAttributeValue, Boolean>>>();
-  private final Set<XmlAttributeValue> myPossiblyDuplicateIds = new HashSet<XmlAttributeValue>();
-  private final List<XmlAttributeValue> myIdReferences = new ArrayList<XmlAttributeValue>();
-  private final Set<String> myAdditionallyDeclaredIds = new HashSet<String>();
-  private final Set<PsiElement> myDoNotValidateParentsList = new HashSet<PsiElement>();
-  private final Set<String> myUsedPrefixes = new HashSet<String>();
-  private final Set<String> myUsedNamespaces = new HashSet<String>();
+  private final Map<String, List<Pair<XmlAttributeValue, Boolean>>> myId2AttributeListMap = new HashMap<>();
+  private final Set<XmlAttributeValue> myPossiblyDuplicateIds = new HashSet<>();
+  private final List<XmlAttributeValue> myIdReferences = new ArrayList<>();
+  private final Set<String> myAdditionallyDeclaredIds = new HashSet<>();
+  private final Set<PsiElement> myDoNotValidateParentsList = new HashSet<>();
+  private final Set<String> myUsedPrefixes = new HashSet<>();
+  private final Set<String> myUsedNamespaces = new HashSet<>();
 
   @Nullable
   public static XmlRefCountHolder getRefCountHolder(@NotNull XmlFile file) {
@@ -97,7 +97,7 @@ public class XmlRefCountHolder {
   private void registerId(@NotNull final String id, @NotNull final XmlAttributeValue attributeValue, final boolean soft) {
     List<Pair<XmlAttributeValue, Boolean>> list = myId2AttributeListMap.get(id);
     if (list == null) {
-      list = new ArrayList<Pair<XmlAttributeValue, Boolean>>();
+      list = new ArrayList<>();
       myId2AttributeListMap.put(id, list);
     }
     else if (!soft) {
@@ -126,7 +126,7 @@ public class XmlRefCountHolder {
       }
     }
 
-    list.add(new Pair<XmlAttributeValue, Boolean>(attributeValue, soft));
+    list.add(new Pair<>(attributeValue, soft));
   }
 
   private void registerAdditionalId(@NotNull final String id) {

@@ -30,11 +30,9 @@ public class PasswordPromptComponent {
   private JPanel myRootPanel;
   private JPanel myMessagePanel;
   private JPanel myUserPanel;
-  private JPanel myPasswordPanel;
   private JPasswordField myPasswordField;
   private JCheckBox myRememberCheckBox;
   private JLabel myPasswordLabel;
-  private JLabel myUserLabel;
   private JTextField myUserTextField;
   private JLabel myIconLabel;
 

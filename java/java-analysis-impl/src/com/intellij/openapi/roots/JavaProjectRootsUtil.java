@@ -52,7 +52,7 @@ public class JavaProjectRootsUtil {
    */
   @NotNull
   public static List<VirtualFile> getSuitableDestinationSourceRoots(@NotNull Project project) {
-    List<VirtualFile> roots = new ArrayList<VirtualFile>();
+    List<VirtualFile> roots = new ArrayList<>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       collectSuitableDestinationSourceRoots(module, roots);
     }

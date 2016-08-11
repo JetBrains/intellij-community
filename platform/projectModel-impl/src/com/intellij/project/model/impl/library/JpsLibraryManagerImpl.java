@@ -26,7 +26,7 @@ import java.util.Map;
  * @author nik
  */
 public class JpsLibraryManagerImpl implements JpsLibraryManager {
-  private final Map<JpsLibrary, Library> myLibraries = new HashMap<JpsLibrary, Library>();
+  private final Map<JpsLibrary, Library> myLibraries = new HashMap<>();
 
   @Override
   public Library getLibrary(JpsLibrary library) {

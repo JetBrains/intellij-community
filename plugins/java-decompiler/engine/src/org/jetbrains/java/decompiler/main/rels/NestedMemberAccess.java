@@ -36,7 +36,7 @@ public class NestedMemberAccess {
   private enum MethodAccess {NORMAL, FIELD_GET, FIELD_SET, METHOD, FUNCTION}
 
   private boolean noSynthFlag;
-  private final Map<MethodWrapper, MethodAccess> mapMethodType = new HashMap<MethodWrapper, MethodAccess>();
+  private final Map<MethodWrapper, MethodAccess> mapMethodType = new HashMap<>();
 
 
   public void propagateMemberAccess(ClassNode root) {
@@ -231,8 +231,8 @@ public class NestedMemberAccess {
 
         DirectGraph graph = meth.getOrBuildGraph();
 
-        HashSet<DirectNode> setVisited = new HashSet<DirectNode>();
-        LinkedList<DirectNode> stack = new LinkedList<DirectNode>();
+        HashSet<DirectNode> setVisited = new HashSet<>();
+        LinkedList<DirectNode> stack = new LinkedList<>();
         stack.add(graph.first);
 
         while (!stack.isEmpty()) {  // TODO: replace with interface iterator?

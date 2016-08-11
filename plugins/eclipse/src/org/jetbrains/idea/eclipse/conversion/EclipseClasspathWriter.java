@@ -45,7 +45,7 @@ import java.util.Map;
 public class EclipseClasspathWriter {
   public static final Logger LOG = Logger.getInstance(EclipseClasspathWriter.class);
 
-  private final Map<String, Element> myOldEntries = new THashMap<String, Element>();
+  private final Map<String, Element> myOldEntries = new THashMap<>();
 
   @NotNull
   public Element writeClasspath(@Nullable Element oldRoot, @NotNull ModuleRootModel model) {

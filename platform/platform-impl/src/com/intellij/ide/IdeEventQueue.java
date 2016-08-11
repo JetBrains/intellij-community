@@ -382,7 +382,7 @@ public class IdeEventQueue extends EventQueue {
     AWTEvent oldEvent = myCurrentEvent;
     myCurrentEvent = e;
 
-    boolean userActivity = myIsInInputEvent || e instanceof ItemEvent || e instanceof FocusEvent && !((FocusEvent)e).isTemporary();
+    boolean userActivity = myIsInInputEvent || e instanceof ItemEvent || e instanceof FocusEvent;
     try (AccessToken ignored = startActivity(userActivity)) {
       _dispatchEvent(e, false);
     }

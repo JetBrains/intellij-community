@@ -89,7 +89,7 @@ public class LongLineInspection extends LocalInspectionTool {
     if (document == null) {
       return null;
     }
-    final List<ProblemDescriptor> descriptors = new SmartList<ProblemDescriptor>();
+    final List<ProblemDescriptor> descriptors = new SmartList<>();
     for (int idx = 0; idx < document.getLineCount(); idx++) {
       final int startOffset = document.getLineStartOffset(idx);
       final int endOffset = document.getLineEndOffset(idx);

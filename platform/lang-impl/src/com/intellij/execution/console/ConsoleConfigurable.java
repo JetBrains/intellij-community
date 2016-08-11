@@ -216,7 +216,7 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
     private final String myQuery;
 
     public MyAddDeleteListPanel(String title, String query) {
-      super(title, new ArrayList<String>());
+      super(title, new ArrayList<>());
       myQuery = query;
     }
 

@@ -77,7 +77,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
   private boolean isDebugEnabled;
   @Nullable private String scriptParams;
   @Nullable private String scriptPath;
-  private final Map<String, String> envs = new LinkedHashMap<String, String>();
+  private final Map<String, String> envs = new LinkedHashMap<>();
   public boolean passParentEnv = true;
 
   public GroovyScriptRunConfiguration(final String name, final Project project, final ConfigurationFactory factory) {
@@ -107,7 +107,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     }
 
 
-    ArrayList<Module> res = new ArrayList<Module>();
+    ArrayList<Module> res = new ArrayList<>();
     for (Module module : modules) {
       if (scriptRunner.isValidModule(module)) {
         res.add(module);

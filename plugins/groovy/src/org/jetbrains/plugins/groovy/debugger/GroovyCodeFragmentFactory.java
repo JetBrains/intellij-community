@@ -79,7 +79,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
     GroovyFile toEval = pair.second;
     final Map<String, String> parameters = pair.first;
 
-    List<String> names = new ArrayList<String>(parameters.keySet());
+    List<String> names = new ArrayList<>(parameters.keySet());
     List<String> values = ContainerUtil.map(names, name -> parameters.get(name));
 
     String text = toEval.getText();
@@ -191,8 +191,8 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
     final GroovyFile toEval = factory.createGroovyFile(text, false, context);
 
     final GrClosableBlock closure = PsiTreeUtil.getParentOfType(context, GrClosableBlock.class);
-    final Map<String, String> parameters = new THashMap<String, String>();
-    final Map<GrExpression, String> replacements = new HashMap<GrExpression, String>();
+    final Map<String, String> parameters = new THashMap<>();
+    final Map<GrExpression, String> replacements = new HashMap<>();
     toEval.accept(new GroovyRecursiveElementVisitor() {
       @Override
       public void visitReferenceExpression(GrReferenceExpression referenceExpression) {

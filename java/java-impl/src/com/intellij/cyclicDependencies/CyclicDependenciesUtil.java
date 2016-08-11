@@ -29,17 +29,17 @@ import java.util.*;
  */
 public class CyclicDependenciesUtil{
   public static <Node> List<Chunk<Node>> buildChunks(Graph<Node> graph) {
-    final DFSTBuilder<Node> dfstBuilder = new DFSTBuilder<Node>(graph);
+    final DFSTBuilder<Node> dfstBuilder = new DFSTBuilder<>(graph);
     final TIntArrayList sccs = dfstBuilder.getSCCs();
-    final List<Chunk<Node>> chunks = new ArrayList<Chunk<Node>>();
+    final List<Chunk<Node>> chunks = new ArrayList<>();
     sccs.forEach(new TIntProcedure() {
       int myTNumber;
       public boolean execute(int size) {
-        Set<Node> packs = new LinkedHashSet<Node>();
+        Set<Node> packs = new LinkedHashSet<>();
         for (int j = 0; j < size; j++) {
           packs.add(dfstBuilder.getNodeByTNumber(myTNumber + j));
         }
-        chunks.add(new Chunk<Node>(packs));
+        chunks.add(new Chunk<>(packs));
         myTNumber += size;
         return true;
       }
@@ -50,13 +50,13 @@ public class CyclicDependenciesUtil{
 
 
   public static class Path <Node> {
-    private ArrayList<Node> myPath = new ArrayList<Node>();
+    private ArrayList<Node> myPath = new ArrayList<>();
 
     public Path() {
     }
 
     public Path(Path<Node> path) {
-      myPath = new ArrayList<Node>(path.myPath);
+      myPath = new ArrayList<>(path.myPath);
     }
 
     public Node getBeg() {
@@ -72,7 +72,7 @@ public class CyclicDependenciesUtil{
     }
 
     public List<Node> getNextNodes(Node node) {
-      List<Node> result = new ArrayList<Node>();
+      List<Node> result = new ArrayList<>();
       for (int i = 0; i < myPath.size() - 1; i++) {
         Node nodeN = myPath.get(i);
         if (nodeN == node) {
@@ -92,7 +92,7 @@ public class CyclicDependenciesUtil{
   }
 
   public static class GraphTraverser<Node> {
-    private final List<Path<Node>> myCurrentPaths = new ArrayList<Path<Node>>();
+    private final List<Path<Node>> myCurrentPaths = new ArrayList<>();
     private final Node myBegin;
     private final Chunk<Node> myChunk;
     private final int myMaxPathsCount;
@@ -106,8 +106,8 @@ public class CyclicDependenciesUtil{
     }
 
     public Set<Path<Node>> traverse() {
-      Set<Path<Node>> result = new HashSet<Path<Node>>();
-      Path<Node> firstPath = new Path<Node>();
+      Set<Path<Node>> result = new HashSet<>();
+      Path<Node> firstPath = new Path<>();
       firstPath.add(myBegin);
       myCurrentPaths.add(firstPath);
       while (!myCurrentPaths.isEmpty() && result.size() < myMaxPathsCount) {
@@ -119,7 +119,7 @@ public class CyclicDependenciesUtil{
     }
 
     public Set<ArrayList<Node>> convert(Set<Path<Node>> paths) {
-      Set<ArrayList<Node>> result = new HashSet<ArrayList<Node>>();
+      Set<ArrayList<Node>> result = new HashSet<>();
       for (Path<Node> path : paths) {
         result.add(path.getPath());
       }
@@ -136,7 +136,7 @@ public class CyclicDependenciesUtil{
           result.add(path);
           continue;
         }
-        Path<Node> newPath = new Path<Node>(path);
+        Path<Node> newPath = new Path<>(path);
         newPath.add(node);
         if (path.contains(node)) {
           final Set<Node> nodesAfterInnerCycle = getNextNodes(node);
@@ -150,7 +150,7 @@ public class CyclicDependenciesUtil{
     }
 
     private Set<Node> getNextNodes(Node node) {
-      Set<Node> result = new HashSet<Node>();
+      Set<Node> result = new HashSet<>();
       final Iterator<Node> in = myGraph.getIn(node);
       for (; in.hasNext();) {
         final Node inNode = in.next();

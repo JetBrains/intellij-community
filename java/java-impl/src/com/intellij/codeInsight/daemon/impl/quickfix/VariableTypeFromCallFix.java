@@ -92,7 +92,7 @@ public class VariableTypeFromCallFix implements IntentionAction {
     if (method == null) return Collections.emptyList();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length != expressions.length) return Collections.emptyList();
-    List<IntentionAction> actions = new ArrayList<IntentionAction>();
+    List<IntentionAction> actions = new ArrayList<>();
     for (int i = 0; i < expressions.length; i++) {
       final PsiExpression expression = expressions[i];
       PsiType expressionType = expression.getType();
@@ -137,7 +137,7 @@ public class VariableTypeFromCallFix implements IntentionAction {
     if (!(expression instanceof PsiReferenceExpression)) {
       return Collections.emptyList();
     }
-    List<IntentionAction> result = new ArrayList<IntentionAction>();
+    List<IntentionAction> result = new ArrayList<>();
     final PsiManager manager = method.getManager();
     if (manager.isInProject(method)) {
       final PsiMethod[] superMethods = method.findDeepestSuperMethods();

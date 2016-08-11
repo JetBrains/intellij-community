@@ -142,7 +142,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
           if (pair.getFirst()) {
             onTaskSolved("Congratulations! Remote tests passed.");
             if (myStatusBeforeCheck != StudyStatus.Solved) {
-              EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, 2);
+              EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, 2, indicator);
             }
           }
           else {

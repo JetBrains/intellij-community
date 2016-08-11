@@ -520,7 +520,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
     VfsTestUtil.deleteFile(module2Output);
     VfsTestUtil.deleteFile(module2TestOutput);
 
-    final List<VirtualFile> created = new ArrayList<VirtualFile>();
+    final List<VirtualFile> created = new ArrayList<>();
     VirtualFileListener l = new VirtualFileAdapter() {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent e) {
@@ -715,7 +715,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
   private static void assertIteratedContent(ProjectFileIndex fileIndex,
                                             @Nullable List<VirtualFile> contains,
                                             @Nullable List<VirtualFile> doesntContain) {
-    final Set<VirtualFile> collected = new THashSet<VirtualFile>();
+    final Set<VirtualFile> collected = new THashSet<>();
     fileIndex.iterateContent(new ContentIterator() {
       @Override
       public boolean processFile(VirtualFile fileOrDir) {

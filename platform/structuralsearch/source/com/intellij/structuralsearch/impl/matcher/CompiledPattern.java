@@ -101,7 +101,7 @@ public abstract class CompiledPattern {
     return profile.getTypedVarString(element);
   }
 
-  private final HashMap<Object,MatchingHandler> handlers = new HashMap<Object,MatchingHandler>();
+  private final HashMap<Object,MatchingHandler> handlers = new HashMap<>();
 
   public MatchingHandler getHandlerSimple(PsiElement node) {
     return handlers.get(node);

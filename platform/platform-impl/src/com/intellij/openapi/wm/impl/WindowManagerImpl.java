@@ -140,8 +140,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
     final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     keyboardFocusManager.addPropertyChangeListener(FOCUSED_WINDOW_PROPERTY_NAME, myWindowWatcher);
     myLayout = new DesktopLayout();
-    myProject2Frame = new HashMap<Project, IdeFrameImpl>();
-    myDialogsToDispose = new HashMap<Project, Set<JDialog>>();
+    myProject2Frame = new HashMap<>();
+    myDialogsToDispose = new HashMap<>();
     myFrameExtendedState = Frame.NORMAL;
 
     myActivationListener = new WindowAdapter() {
@@ -584,7 +584,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   private void queueForDisposal(JDialog dialog, Project project) {
     Set<JDialog> dialogs = myDialogsToDispose.get(project);
     if (dialogs == null) {
-      dialogs = new HashSet<JDialog>();
+      dialogs = new HashSet<>();
       myDialogsToDispose.put(project, dialogs);
     }
     dialogs.add(dialog);

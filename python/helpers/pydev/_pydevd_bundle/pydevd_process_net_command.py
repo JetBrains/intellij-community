@@ -85,7 +85,7 @@ def process_net_command(py_db, cmd_id, seq, text):
             elif cmd_id == CMD_THREAD_SUSPEND:
                 # Yes, thread suspend is still done at this point, not through an internal command!
                 t = pydevd_find_thread_by_id(text)
-                if t:
+                if t and not hasattr(t, 'pydev_do_not_trace'):
                     additional_info = None
                     try:
                         additional_info = t.additional_info
@@ -240,6 +240,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                 # func name: 'None': match anything. Empty: match global, specified: only method context.
                 # command to add some breakpoint.
                 # text is file\tline. Add to breakpoints dictionary
+                suspend_policy = "NONE"
                 if py_db._set_breakpoints_with_id:
                     breakpoint_id, type, file, line, func_name, condition, expression = text.split('\t', 6)
 
@@ -256,7 +257,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                 else:
                     #Note: this else should be removed after PyCharm migrates to setting
                     #breakpoints by id (and ideally also provides func_name).
-                    type, file, line, func_name, condition, expression = text.split('\t', 5)
+                    type, file, line, func_name, suspend_policy, condition, expression = text.split('\t', 6)
                     # If we don't have an id given for each breakpoint, consider
                     # the id to be the line.
                     breakpoint_id = line = int(line)
@@ -284,9 +285,8 @@ def process_net_command(py_db, cmd_id, seq, text):
                 if len(expression) <= 0 or expression is None or expression == "None":
                     expression = None
 
-                supported_type = False
                 if type == 'python-line':
-                    breakpoint = LineBreakpoint(line, condition, func_name, expression)
+                    breakpoint = LineBreakpoint(line, condition, func_name, expression, suspend_policy)
                     breakpoints = py_db.breakpoints
                     file_to_id_to_breakpoint = py_db.file_to_id_to_line_breakpoint
                     supported_type = True

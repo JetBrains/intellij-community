@@ -275,7 +275,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
   private static List<PsiElement> extractReferencedElementsFromParameter(PsiMethodCallExpression expression) {
     final PsiExpression psiExpression = expression.getArgumentList().getExpressions()[0];
     final Collection<PsiReferenceExpression> references =
-      new ArrayList<PsiReferenceExpression>(PsiTreeUtil.findChildrenOfType(psiExpression, PsiReferenceExpression.class));
+      new ArrayList<>(PsiTreeUtil.findChildrenOfType(psiExpression, PsiReferenceExpression.class));
     if (psiExpression instanceof PsiReferenceExpression) {
       references.add((PsiReferenceExpression)psiExpression);
     }

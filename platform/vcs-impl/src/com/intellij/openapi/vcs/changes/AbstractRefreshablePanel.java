@@ -62,7 +62,7 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel<Ch
     myDetailsPanel.loading();
     myDetailsPanel.layout();
     
-    myDetailsLoader = new GenericDetailsLoader<Ticket, T>(new Consumer<Ticket>() {
+    myDetailsLoader = new GenericDetailsLoader<>(new Consumer<Ticket>() {
       @Override
       public void consume(Ticket ticket) {
         final Loader loader = new Loader(project, loadingTitle, myTicket.copy());

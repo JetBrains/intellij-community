@@ -93,7 +93,7 @@ public class MavenActionUtil {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
     if (!projectsManager.isMavenizedProject()) return Collections.emptyList();
 
-    Set<MavenProject> res = new LinkedHashSet<MavenProject>();
+    Set<MavenProject> res = new LinkedHashSet<>();
 
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
@@ -118,7 +118,7 @@ public class MavenActionUtil {
       res.add(mavenProject);
     }
 
-    return new ArrayList<MavenProject>(res);
+    return new ArrayList<>(res);
   }
 
   public static List<VirtualFile> getMavenProjectsFiles(DataContext context) {

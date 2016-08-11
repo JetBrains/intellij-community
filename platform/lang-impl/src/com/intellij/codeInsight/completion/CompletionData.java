@@ -50,8 +50,8 @@ import static com.intellij.patterns.StandardPatterns.not;
 public class CompletionData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionData");
   public static final ObjectPattern.Capture<Character> NOT_JAVA_ID = not(character().javaIdentifierPart());
-  private final Set<Class> myFinalScopes = new HashSet<Class>();
-  private final List<CompletionVariant> myCompletionVariants = new ArrayList<CompletionVariant>();
+  private final Set<Class> myFinalScopes = new HashSet<>();
+  private final List<CompletionVariant> myCompletionVariants = new ArrayList<>();
 
   protected CompletionData(){ }
 
@@ -119,7 +119,7 @@ public class CompletionData {
   }
 
   public CompletionVariant[] findVariants(final PsiElement position, final PsiFile file){
-    final List<CompletionVariant> variants = new ArrayList<CompletionVariant>();
+    final List<CompletionVariant> variants = new ArrayList<>();
       PsiElement scope = position;
       if(scope == null){
         scope = file;

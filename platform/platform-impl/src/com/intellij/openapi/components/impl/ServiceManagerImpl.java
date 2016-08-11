@@ -47,8 +47,8 @@ import java.util.List;
 public class ServiceManagerImpl implements BaseComponent {
   private static final Logger LOG = Logger.getInstance(ServiceManagerImpl.class);
 
-  private static final ExtensionPointName<ServiceDescriptor> APP_SERVICES = new ExtensionPointName<ServiceDescriptor>("com.intellij.applicationService");
-  private static final ExtensionPointName<ServiceDescriptor> PROJECT_SERVICES = new ExtensionPointName<ServiceDescriptor>("com.intellij.projectService");
+  private static final ExtensionPointName<ServiceDescriptor> APP_SERVICES = new ExtensionPointName<>("com.intellij.applicationService");
+  private static final ExtensionPointName<ServiceDescriptor> PROJECT_SERVICES = new ExtensionPointName<>("com.intellij.projectService");
   private ExtensionPointName<ServiceDescriptor> myExtensionPointName;
   private ExtensionPointListener<ServiceDescriptor> myExtensionPointListener;
 
@@ -80,7 +80,7 @@ public class ServiceManagerImpl implements BaseComponent {
           }
         }
 
-        if (!ComponentManagerImpl.isComponentSuitableForOs(descriptor.os)) {
+        if (!Extensions.isComponentSuitableForOs(descriptor.os)) {
           return;
         }
 

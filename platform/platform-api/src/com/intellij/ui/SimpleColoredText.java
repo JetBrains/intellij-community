@@ -29,8 +29,8 @@ public class SimpleColoredText implements ColoredTextContainer {
   private String myCachedToString = null;
 
   public SimpleColoredText() {
-    myTexts = new ArrayList<String>(3);
-    myAttributes = new ArrayList<SimpleTextAttributes>(3);
+    myTexts = new ArrayList<>(3);
+    myAttributes = new ArrayList<>(3);
   }
 
   public SimpleColoredText(@NotNull String fragment, @NotNull SimpleTextAttributes attributes) {

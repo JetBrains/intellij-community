@@ -39,12 +39,12 @@ final class ValidationResultImpl extends CommandLineVisitor implements Validatio
    * All options [name -> option]
    */
   @NotNull
-  private final Map<String, Option> myOptions = new HashMap<String, Option>();
+  private final Map<String, Option> myOptions = new HashMap<>();
   /**
    * Available, but unused options [name -> option]
    */
   @NotNull
-  private final Map<String, Option> myUnusedOptions = new HashMap<String, Option>();
+  private final Map<String, Option> myUnusedOptions = new HashMap<>();
   /**
    * We always need command to validate args
    */
@@ -64,22 +64,22 @@ final class ValidationResultImpl extends CommandLineVisitor implements Validatio
    * List of elements whose values are known to be bad
    */
   @NotNull
-  private final Collection<PsiElement> myBadValues = new ArrayList<PsiElement>();
+  private final Collection<PsiElement> myBadValues = new ArrayList<>();
   /**
    * List of elements which is known to be excess
    */
   @NotNull
-  private final Collection<CommandLineArgument> myExcessArguments = new ArrayList<CommandLineArgument>();
+  private final Collection<CommandLineArgument> myExcessArguments = new ArrayList<>();
   /**
    * Map of arguments known to be option arguments [PSI argument -> option]
    */
   @NotNull
-  private final Map<CommandLineArgument, Option> myOptionArguments = new HashMap<CommandLineArgument, Option>();
+  private final Map<CommandLineArgument, Option> myOptionArguments = new HashMap<>();
   /**
    * PSI argument -> argument map
    */
   @NotNull
-  private final Map<CommandLineArgument, Argument> myArguments = new HashMap<CommandLineArgument, Argument>();
+  private final Map<CommandLineArgument, Argument> myArguments = new HashMap<>();
 
   private ValidationResultImpl(@NotNull final Command command) {
     for (final Option option : command.getOptions()) {
@@ -214,7 +214,7 @@ final class ValidationResultImpl extends CommandLineVisitor implements Validatio
         myCurrentOptionAndArgsLeft = Pair.create(option, argumentAndQuantity.first);
       }
       else {
-        myCurrentOptionAndArgsLeft = new Pair<Option, Integer>(option, 0);
+        myCurrentOptionAndArgsLeft = new Pair<>(option, 0);
       }
     }
     else {

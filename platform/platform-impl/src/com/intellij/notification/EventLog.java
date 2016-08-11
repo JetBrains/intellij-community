@@ -130,8 +130,8 @@ public class EventLog {
   public static LogEntry formatForLog(@NotNull final Notification notification, final String indent) {
     DocumentImpl logDoc = new DocumentImpl("",true);
     AtomicBoolean showMore = new AtomicBoolean(false);
-    Map<RangeMarker, HyperlinkInfo> links = new LinkedHashMap<RangeMarker, HyperlinkInfo>();
-    List<RangeMarker> lineSeparators = new ArrayList<RangeMarker>();
+    Map<RangeMarker, HyperlinkInfo> links = new LinkedHashMap<>();
+    List<RangeMarker> lineSeparators = new ArrayList<>();
 
     String title = notification.getTitle();
     String subtitle = notification.getSubtitle();
@@ -179,7 +179,7 @@ public class EventLog {
 
     indentNewLines(logDoc, lineSeparators, afterTitle, hasHtml, indent);
 
-    ArrayList<Pair<TextRange, HyperlinkInfo>> list = new ArrayList<Pair<TextRange, HyperlinkInfo>>();
+    ArrayList<Pair<TextRange, HyperlinkInfo>> list = new ArrayList<>();
     for (RangeMarker marker : links.keySet()) {
       if (!marker.isValid()) {
         showMore.set(true);
@@ -194,8 +194,8 @@ public class EventLog {
         appendText(logDoc, " ");
       }
       appendText(logDoc, "(" + sb + ")");
-      list.add(new Pair<TextRange, HyperlinkInfo>(TextRange.from(logDoc.getTextLength() - 1 - sb.length(), sb.length()),
-                                                  new ShowBalloon(notification)));
+      list.add(new Pair<>(TextRange.from(logDoc.getTextLength() - 1 - sb.length(), sb.length()),
+                          new ShowBalloon(notification)));
     }
 
     return new LogEntry(logDoc.getText(), status, list, titleLength);
@@ -267,7 +267,7 @@ public class EventLog {
                                       String indent,
                                       boolean hasHtml) {
     DocumentImpl statusDoc = new DocumentImpl(logDoc.getImmutableCharSequence(),true);
-    List<RangeMarker> statusSeparators = new ArrayList<RangeMarker>();
+    List<RangeMarker> statusSeparators = new ArrayList<>();
     for (RangeMarker separator : lineSeparators) {
       if (separator.isValid()) {
         statusSeparators.add(statusDoc.createRangeMarker(separator.getStartOffset(), separator.getEndOffset()));

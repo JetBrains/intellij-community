@@ -112,7 +112,7 @@ public class GradleResourceCompilerConfigurationGenerator {
 
     boolean configurationUpdateRequired = context.isRebuild() || !gradleConfigFile.exists();
 
-    final Map<String, Integer> affectedConfigurationHash = new THashMap<String, Integer>();
+    final Map<String, Integer> affectedConfigurationHash = new THashMap<>();
     for (Map.Entry<String, GradleModuleResourceConfiguration> entry : affectedGradleModuleConfigurations.entrySet()) {
       Integer moduleLastConfigurationHash = myModulesConfigurationHash.get(entry.getKey());
       int moduleCurrentConfigurationHash = entry.getValue().computeConfigurationHash();

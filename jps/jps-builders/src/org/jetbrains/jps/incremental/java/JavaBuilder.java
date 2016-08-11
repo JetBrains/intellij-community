@@ -61,7 +61,8 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.*;
 import java.net.ServerSocket;
 import java.util.*;
@@ -113,7 +114,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
     ourDefaultRtJar = rtJar;
   }
-  
+
+  // todo: remove this prop. when there appears a way to undestand directly from the project model, whether we should use model_path
+  private static final boolean JAVA9_MODULE_PATH_ENABLED = Boolean.valueOf(System.getProperty("compiler.java9.use.module_path", "false"));
+
   private static boolean isRtJarPath(String path) {
     if (StringUtil.endsWithIgnoreCase(path, RT_JAR_PATH_SUFFIX)) {
       return true;
@@ -417,11 +421,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
       }
 
+      final Collection<File> modulePath = JAVA9_MODULE_PATH_ENABLED && targetLanguageLevel >= 9? ProjectPaths.getCompilationModulePath(chunk) : Collections.<File>emptyList();
+
       final ClassProcessingConsumer classesConsumer = new ClassProcessingConsumer(context, outputSink);
       final boolean rc;
       if (!shouldForkJavac) {
         rc = JavacMain.compile(
-          options, files, classpath, _platformCp, sourcePath, outs, diagnosticSink, classesConsumer, context.getCancelStatus(), compilingTool
+          options, files, classpath, _platformCp, modulePath, sourcePath, outs, diagnosticSink, classesConsumer, context.getCancelStatus(), compilingTool
         );
       }
       else {
@@ -431,7 +437,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         rc = server.forkJavac(
           forkSdk.getFirst(), 
           getExternalJavacHeapSize(context), 
-          vmOptions, options, _platformCp, classpath, sourcePath, 
+          vmOptions, options, _platformCp, classpath, modulePath, sourcePath,
           files, outs, diagnosticSink, classesConsumer, compilingTool, context.getCancelStatus()
         );
       }

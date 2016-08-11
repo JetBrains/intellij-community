@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEn
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.util.TestUtils
 
@@ -1455,7 +1456,7 @@ trait T {
 class C extends T {}
 
 new C().pr<caret>op
-''', GrAccessorMethod)
+''', GrTraitMethod)
   }
 
   void testTraitProperty2() {
@@ -1469,7 +1470,7 @@ class C extends T {
     print pro<caret>p
   }
 }
-''', GrAccessorMethod)
+''', GrTraitMethod)
   }
 
   void testTraitProperty3() {

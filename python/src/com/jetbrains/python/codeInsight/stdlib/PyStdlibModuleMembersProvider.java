@@ -35,7 +35,7 @@ public class PyStdlibModuleMembersProvider extends PyModuleMembersProvider {
   @Override
   protected Collection<PyCustomMember> getMembersByQName(PyFile module, String qName) {
     if (qName.equals("os")) {
-      final List<PyCustomMember> results = new ArrayList<PyCustomMember>();
+      final List<PyCustomMember> results = new ArrayList<>();
       PsiElement path = null;
       if (module != null) {
         final String pathModuleName = SystemInfo.isWindows ? "ntpath" : "posixpath";

@@ -691,6 +691,15 @@ public class PyTypingTest extends PyTestCase {
            "    expr = x[y]\n");
   }
 
+  public void testGetListOfListsItemByIntegral() {
+    doTest("Any",
+           "from typing import List\n" +
+           "\n" +
+           "def foo(x: List[List]):\n" +
+           "    sublist = x[0]\n" +
+           "    expr = sublist[0]\n");
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

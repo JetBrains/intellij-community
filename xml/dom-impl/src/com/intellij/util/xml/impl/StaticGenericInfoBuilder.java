@@ -42,22 +42,22 @@ public class StaticGenericInfoBuilder {
   private static final Set ADDER_PARAMETER_TYPES = new THashSet<Class>(Arrays.asList(Class.class, int.class));
   private static final Logger LOG = Logger.getInstance(StaticGenericInfoBuilder.class);
   private final Class myClass;
-  private final MultiValuesMap<XmlName, JavaMethod> myCollectionGetters = new MultiValuesMap<XmlName, JavaMethod>();
-  final MultiValuesMap<XmlName, JavaMethod> collectionAdders = new MultiValuesMap<XmlName, JavaMethod>();
-  final MultiValuesMap<XmlName, JavaMethod> collectionClassAdders = new MultiValuesMap<XmlName, JavaMethod>();
-  final MultiValuesMap<XmlName, JavaMethod> collectionIndexAdders = new MultiValuesMap<XmlName, JavaMethod>();
-  final MultiValuesMap<XmlName, JavaMethod> collectionIndexClassAdders = new MultiValuesMap<XmlName, JavaMethod>();
-  final MultiValuesMap<XmlName, JavaMethod> collectionClassIndexAdders = new MultiValuesMap<XmlName, JavaMethod>();
-  private final Map<XmlName, Type> myCollectionChildrenTypes = new THashMap<XmlName, Type>();
-  private final Map<JavaMethodSignature, String[]> myCompositeCollectionGetters = new THashMap<JavaMethodSignature, String[]>();
-  private final Map<JavaMethodSignature, Pair<String,String[]>> myCompositeCollectionAdders = new THashMap<JavaMethodSignature, Pair<String,String[]>>();
+  private final MultiValuesMap<XmlName, JavaMethod> myCollectionGetters = new MultiValuesMap<>();
+  final MultiValuesMap<XmlName, JavaMethod> collectionAdders = new MultiValuesMap<>();
+  final MultiValuesMap<XmlName, JavaMethod> collectionClassAdders = new MultiValuesMap<>();
+  final MultiValuesMap<XmlName, JavaMethod> collectionIndexAdders = new MultiValuesMap<>();
+  final MultiValuesMap<XmlName, JavaMethod> collectionIndexClassAdders = new MultiValuesMap<>();
+  final MultiValuesMap<XmlName, JavaMethod> collectionClassIndexAdders = new MultiValuesMap<>();
+  private final Map<XmlName, Type> myCollectionChildrenTypes = new THashMap<>();
+  private final Map<JavaMethodSignature, String[]> myCompositeCollectionGetters = new THashMap<>();
+  private final Map<JavaMethodSignature, Pair<String,String[]>> myCompositeCollectionAdders = new THashMap<>();
   private final FactoryMap<XmlName, TIntObjectHashMap<Collection<JavaMethod>>> myFixedChildrenGetters = new FactoryMap<XmlName, TIntObjectHashMap<Collection<JavaMethod>>>() {
     @Override
     protected TIntObjectHashMap<Collection<JavaMethod>> create(final XmlName key) {
-      return new TIntObjectHashMap<Collection<JavaMethod>>();
+      return new TIntObjectHashMap<>();
     }
   };
-  private final Map<JavaMethodSignature, AttributeChildDescriptionImpl> myAttributes = new THashMap<JavaMethodSignature, AttributeChildDescriptionImpl>();
+  private final Map<JavaMethodSignature, AttributeChildDescriptionImpl> myAttributes = new THashMap<>();
 
   private boolean myValueElement;
   private JavaMethod myNameValueGetter;
@@ -66,7 +66,7 @@ public class StaticGenericInfoBuilder {
   public StaticGenericInfoBuilder(final Class aClass) {
     myClass = aClass;
 
-    final Set<JavaMethod> methods = new LinkedHashSet<JavaMethod>();
+    final Set<JavaMethod> methods = new LinkedHashSet<>();
     InvocationCache invocationCache = DomApplicationComponent.getInstance().getInvocationCache(myClass);
     for (final Method method : ReflectionUtil.getClassPublicMethods(myClass)) {
       methods.add(invocationCache.getInternedMethod(method));
@@ -237,7 +237,7 @@ public class StaticGenericInfoBuilder {
         final TIntObjectHashMap<Collection<JavaMethod>> map = myFixedChildrenGetters.get(xmlName);
         Collection<JavaMethod> methods = map.get(index);
         if (methods == null) {
-          map.put(index, methods = new SmartList<JavaMethod>());
+          map.put(index, methods = new SmartList<>());
         }
         methods.add(method);
         return true;
@@ -330,7 +330,7 @@ public class StaticGenericInfoBuilder {
   }
 
   final Map<JavaMethodSignature, Pair<FixedChildDescriptionImpl, Integer>> getFixedGetters() {
-    final Map<JavaMethodSignature, Pair<FixedChildDescriptionImpl, Integer>> map = new THashMap<JavaMethodSignature, Pair<FixedChildDescriptionImpl, Integer>>();
+    final Map<JavaMethodSignature, Pair<FixedChildDescriptionImpl, Integer>> map = new THashMap<>();
     final Set<XmlName> names = myFixedChildrenGetters.keySet();
     for (final XmlName name : names) {
       final TIntObjectHashMap<Collection<JavaMethod>> map1 = myFixedChildrenGetters.get(name);
@@ -356,7 +356,7 @@ public class StaticGenericInfoBuilder {
   }
 
   final Map<JavaMethodSignature, CollectionChildDescriptionImpl> getCollectionGetters() {
-    final Map<JavaMethodSignature, CollectionChildDescriptionImpl> getters = new THashMap<JavaMethodSignature, CollectionChildDescriptionImpl>();
+    final Map<JavaMethodSignature, CollectionChildDescriptionImpl> getters = new THashMap<>();
     for (final XmlName xmlName : myCollectionGetters.keySet()) {
       final Collection<JavaMethod> collGetters = myCollectionGetters.get(xmlName);
       final JavaMethod method = collGetters.iterator().next();

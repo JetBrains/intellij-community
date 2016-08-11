@@ -42,7 +42,7 @@ import java.util.Map;
 public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>>, VcsListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.RemoteRevisionsCache");
 
-  public static Topic<Runnable> REMOTE_VERSION_CHANGED  = new Topic<Runnable>("REMOTE_VERSION_CHANGED", Runnable.class);
+  public static Topic<Runnable> REMOTE_VERSION_CHANGED  = new Topic<>("REMOTE_VERSION_CHANGED", Runnable.class);
   public static final int DEFAULT_REFRESH_INTERVAL = 3 * 60 * 1000;
 
   private final RemoteRevisionsNumbersCache myRemoteRevisionsNumbersCache;
@@ -74,7 +74,7 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
     MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, this);
-    myKinds = new HashMap<String, RemoteDifferenceStrategy>();
+    myKinds = new HashMap<>();
 
     final VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
     myControlledCycle = new ControlledCycle(project, new Getter<Boolean>() {
@@ -172,10 +172,10 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
   public void invalidate(final UpdatedFiles updatedFiles) {
     final Map<String, RemoteDifferenceStrategy> strategyMap;
     synchronized (myLock) {
-      strategyMap = new HashMap<String, RemoteDifferenceStrategy>(myKinds);
+      strategyMap = new HashMap<>(myKinds);
     }
-    final Collection<String> newForTree = new LinkedList<String>();
-    final Collection<String> newForUsual = new LinkedList<String>();
+    final Collection<String> newForTree = new LinkedList<>();
+    final Collection<String> newForUsual = new LinkedList<>();
     UpdateFilesHelper.iterateAffectedFiles(updatedFiles, new Consumer<Couple<String>>() {
       public void consume(final Couple<String> pair) {
         final String vcsName = pair.getSecond();

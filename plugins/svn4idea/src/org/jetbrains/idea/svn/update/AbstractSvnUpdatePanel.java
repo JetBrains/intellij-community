@@ -33,7 +33,7 @@ import java.util.*;
 public abstract class AbstractSvnUpdatePanel {
   protected final SvnVcs myVCS;
 
-  private final Map<FilePath, SvnPanel> myRootToPanel = new LinkedHashMap<FilePath, SvnPanel>();
+  private final Map<FilePath, SvnPanel> myRootToPanel = new LinkedHashMap<>();
 
   public AbstractSvnUpdatePanel(final SvnVcs vcs) {
     myVCS = vcs;
@@ -43,7 +43,7 @@ public abstract class AbstractSvnUpdatePanel {
     final JPanel configureRootsPanel = getRootsPanel();
     configureRootsPanel.setLayout(new BorderLayout());
 
-    final ArrayList<FilePath> rootsCopy = new ArrayList<FilePath>(roots);
+    final ArrayList<FilePath> rootsCopy = new ArrayList<>(roots);
     Collections.sort(rootsCopy, FilePathByPathComparator.getInstance());
     for (FilePath root : rootsCopy) {
       SVNURL url = getUrlFor(root);

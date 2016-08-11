@@ -145,7 +145,7 @@ public class UsageViewPresentation {
   }
 
   public void addNotFoundAction(Action _action) {
-    if (myNotFoundActions == null) myNotFoundActions = new ArrayList<Action>();
+    if (myNotFoundActions == null) myNotFoundActions = new ArrayList<>();
     myNotFoundActions.add(_action);
   }
 

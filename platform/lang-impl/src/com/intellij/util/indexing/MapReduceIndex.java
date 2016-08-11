@@ -68,7 +68,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   private final IndexExtension<Key, Value, Input> myExtension;
   private final AtomicBoolean myInMemoryMode = new AtomicBoolean();
   private final AtomicLong myModificationStamp = new AtomicLong();
-  private final TIntObjectHashMap<Collection<Key>> myInMemoryKeys = new TIntObjectHashMap<Collection<Key>>();
+  private final TIntObjectHashMap<Collection<Key>> myInMemoryKeys = new TIntObjectHashMap<>();
 
   private PersistentHashMap<Integer, ByteSequence> myContents;
   private PersistentHashMap<Integer, Integer> myInputsSnapshotMapping;
@@ -151,7 +151,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     if (extension instanceof CustomInputsIndexFileBasedIndexExtension) {
       externalizer = ((CustomInputsIndexFileBasedIndexExtension<K>)extension).createExternalizer();
     } else {
-      externalizer = new InputIndexDataExternalizer<K>(keyDescriptor, indexId);
+      externalizer = new InputIndexDataExternalizer<>(keyDescriptor, indexId);
     }
     return externalizer;
   }
@@ -164,7 +164,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     KeyDescriptor<K> keyDescriptor = extension.getKeyDescriptor();
     final File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile(indexId);
 
-    return new PersistentHashMap<Integer, Collection<K>>(
+    return new PersistentHashMap<>(
       indexStorageFile, EnumeratorIntegerDescriptor.INSTANCE, createInputsIndexExternalizer(extension, indexId, keyDescriptor)
     );
   }
@@ -174,7 +174,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
     if (saved != null) {
       try {
-        return new PersistentHashMap<Integer, ByteSequence>(saved, EnumeratorIntegerDescriptor.INSTANCE, ByteSequenceDataExternalizer.INSTANCE);
+        return new PersistentHashMap<>(saved, EnumeratorIntegerDescriptor.INSTANCE, ByteSequenceDataExternalizer.INSTANCE);
       } catch (IOException ex) {
         IOUtil.deleteAllFilesStartingWith(saved);
         throw ex;
@@ -244,20 +244,20 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     assert myIndexId != null;
     final File mapFile = new File(IndexInfrastructure.getIndexRootDir(myIndexId), "indextrace");
     try {
-      return new PersistentHashMap<Integer, String>(mapFile, EnumeratorIntegerDescriptor.INSTANCE,
-                                                    new DataExternalizer<String>() {
-                                                      @Override
-                                                      public void save(@NotNull DataOutput out, String value) throws IOException {
-                                                        out.write((byte[])CompressionUtil.compressCharSequence(value, Charset.defaultCharset()));
-                                                      }
+      return new PersistentHashMap<>(mapFile, EnumeratorIntegerDescriptor.INSTANCE,
+                                     new DataExternalizer<String>() {
+                                       @Override
+                                       public void save(@NotNull DataOutput out, String value) throws IOException {
+                                         out.write((byte[])CompressionUtil.compressCharSequence(value, Charset.defaultCharset()));
+                                       }
 
-                                                      @Override
-                                                      public String read(@NotNull DataInput in) throws IOException {
-                                                        byte[] b = new byte[((InputStream)in).available()];
-                                                        in.readFully(b);
-                                                        return (String)CompressionUtil.uncompressCharSequence(b, Charset.defaultCharset());
-                                                      }
-                                                    }, 4096);
+                                       @Override
+                                       public String read(@NotNull DataInput in) throws IOException {
+                                         byte[] b = new byte[((InputStream)in).available()];
+                                         in.readFully(b);
+                                         return (String)CompressionUtil.uncompressCharSequence(b, Charset.defaultCharset());
+                                       }
+                                     }, 4096);
     }
     catch (IOException ex) {
       IOUtil.deleteAllFilesStartingWith(mapFile);
@@ -796,7 +796,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     DataInputStream stream = new DataInputStream(new UnsyncByteArrayInputStream(bytes.getBytes(), bytes.getOffset(), bytes.getLength()));
     int pairs = DataInputOutputUtil.readINT(stream);
     if (pairs == 0) return Collections.emptyMap();
-    Map<Key, Value> result = new THashMap<Key, Value>(pairs);
+    Map<Key, Value> result = new THashMap<>(pairs);
     while (stream.available() > 0) {
       Value value = myValueExternalizer.read(stream);
       Collection<Key> keys = mySnapshotIndexExternalizer.read(stream);
@@ -864,15 +864,15 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
       DataInputOutputUtil.writeINT(stream, size);
 
       if (size > 0) {
-        THashMap<Value, List<Key>> values = new THashMap<Value, List<Key>>();
+        THashMap<Value, List<Key>> values = new THashMap<>();
         List<Key> keysForNullValue = null;
         for (Map.Entry<Key, Value> e : data.entrySet()) {
           Value value = e.getValue();
 
           List<Key> keys = value != null ? values.get(value):keysForNullValue;
           if (keys == null) {
-            if (value != null) values.put(value, keys = new SmartList<Key>());
-            else keys = keysForNullValue = new SmartList<Key>();
+            if (value != null) values.put(value, keys = new SmartList<>());
+            else keys = keysForNullValue = new SmartList<>();
           }
           keys.add(e.getKey());
         }

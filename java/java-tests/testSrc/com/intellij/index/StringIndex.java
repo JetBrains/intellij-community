@@ -99,7 +99,7 @@ public class StringIndex {
     @Override
     @NotNull
     public Map<String,String> map(@NotNull final PathContentPair inputData) {
-      final Map<String,String> _map = new HashMap<String, String>();
+      final Map<String,String> _map = new HashMap<>();
       final StringBuilder builder = new StringBuilder();
       final String content = inputData.content;
       for (int idx = 0; idx < content.length(); idx++) {

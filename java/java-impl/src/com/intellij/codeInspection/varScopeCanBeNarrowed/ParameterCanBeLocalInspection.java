@@ -62,7 +62,7 @@ public class ParameterCanBeLocalInspection extends ParameterCanBeLocalInspection
         final PsiMethod method = (PsiMethod)scope;
         final PsiParameter[] parameters = method.getParameterList().getParameters();
 
-        final List<ParameterInfoImpl> info = new ArrayList<ParameterInfoImpl>();
+        final List<ParameterInfoImpl> info = new ArrayList<>();
         for (int i = 0; i < parameters.length; i++) {
           PsiParameter psiParameter = parameters[i];
           if (psiParameter == parameter) continue;

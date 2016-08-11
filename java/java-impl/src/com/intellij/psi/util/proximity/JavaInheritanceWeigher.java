@@ -38,7 +38,7 @@ public class JavaInheritanceWeigher extends ProximityWeigher {
     @NotNull
     @Override
     public Set<String> fun(ProximityLocation location) {
-      final HashSet<String> result = new HashSet<String>();
+      final HashSet<String> result = new HashSet<>();
       PsiClass contextClass = PsiTreeUtil.getContextOfType(location.getPosition(), PsiClass.class, false);
       Processor<PsiClass> processor = psiClass -> {
         ContainerUtilRt.addIfNotNull(result, psiClass.getQualifiedName());

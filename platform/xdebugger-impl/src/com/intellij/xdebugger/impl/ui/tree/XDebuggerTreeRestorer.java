@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.xdebugger.XNamedTreeNode;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
@@ -34,16 +36,20 @@ import java.util.Map;
  * @author nik
  */
 public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelectionListener {
+  public static final String SELECTION_PATH_PROPERTY = "selection.path";
   private final XDebuggerTree myTree;
   private final Rectangle myLastVisibleNodeRect;
   private final Map<XDebuggerTreeNode, XDebuggerTreeState.NodeInfo> myNode2State = new HashMap<>();
   private final Map<RestorableStateNode, XDebuggerTreeState.NodeInfo> myNode2ParentState = new HashMap<>();
   private boolean myStopRestoringSelection;
   private boolean myInsideRestoring;
+  private TreePath mySelectionPath;
 
   public XDebuggerTreeRestorer(final XDebuggerTree tree, Rectangle lastVisibleNodeRect) {
     myTree = tree;
     myLastVisibleNodeRect = lastVisibleNodeRect;
+    mySelectionPath = (TreePath)myTree.getClientProperty(SELECTION_PATH_PROPERTY);
+    myTree.putClientProperty(SELECTION_PATH_PROPERTY, null);
     tree.addTreeListener(this);
     tree.addTreeSelectionListener(this);
   }
@@ -82,7 +88,7 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
       if (!checkExtendedModified(treeNode) && !(Comparing.equal(nodeInfo.getValue(), treeNode.getRawValue()))) {
         treeNode.markChanged();
       }
-      if (!myStopRestoringSelection && nodeInfo.isSelected()) {
+      if (!myStopRestoringSelection && nodeInfo.isSelected() && mySelectionPath == null) {
         try {
           myInsideRestoring = true;
           myTree.addSelectionPath(treeNode.getPath());
@@ -94,9 +100,33 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
 
       restoreChildren((XDebuggerTreeNode)treeNode, nodeInfo);
     }
-    else if (!checkExtendedModified(treeNode)) {
-      treeNode.markChanged();
+    else {
+      if (!checkExtendedModified(treeNode)) {
+        treeNode.markChanged();
+      }
+      if (mySelectionPath != null && !myStopRestoringSelection && pathsEqual(mySelectionPath, treeNode.getPath())) {
+        myTree.addSelectionPath(treeNode.getPath());
+      }
     }
+  }
+
+  // comparing only named nodes
+  private static boolean pathsEqual(@NotNull TreePath path1, @NotNull TreePath path2) {
+    if (path1.getPathCount() != path2.getPathCount()) {
+      return false;
+    }
+    do {
+      Object component1 = path1.getLastPathComponent();
+      Object component2 = path2.getLastPathComponent();
+      if (component1 instanceof XNamedTreeNode && component2 instanceof XNamedTreeNode) {
+        if (!Comparing.equal(((XNamedTreeNode)component1).getName(), ((XNamedTreeNode)component2).getName())) {
+          return false;
+        }
+      }
+      path1 = path1.getParentPath();
+      path2 = path2.getParentPath();
+    } while (path1 != null && path2 != null);
+    return true;
   }
 
   private static boolean checkExtendedModified(RestorableStateNode treeNode) {

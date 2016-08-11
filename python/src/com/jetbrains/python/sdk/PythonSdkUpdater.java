@@ -71,7 +71,7 @@ public class PythonSdkUpdater implements StartupActivity {
 
   private static final Object ourLock = new Object();
   private static final Set<String> ourScheduledToRefresh = Sets.newHashSet();
-  private static final BlockingSet<String> ourUnderRefresh = new BlockingSet<String>();
+  private static final BlockingSet<String> ourUnderRefresh = new BlockingSet<>();
 
   /**
    * Refreshes the SDKs of the modules for the open project after some delay.
@@ -166,8 +166,13 @@ public class PythonSdkUpdater implements StartupActivity {
                   PyPackageManager.getInstance(sdk12).refreshAndGetPackages(true);
                 }
                 catch (ExecutionException e) {
-                  e.initCause(methodCallStacktrace);
-                  LOG.warn(e);
+                  if (LOG.isDebugEnabled()) {
+                    e.initCause(methodCallStacktrace);
+                    LOG.debug(e);
+                  }
+                  else {
+                    LOG.warn(e.getMessage());
+                  }
                 }
               }
               catch (InvalidSdkException e) {

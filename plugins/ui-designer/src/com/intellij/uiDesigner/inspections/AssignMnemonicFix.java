@@ -75,7 +75,7 @@ public class AssignMnemonicFix extends QuickFix {
       });
     }
 
-    ArrayList<String> variants = new ArrayList<String>();
+    ArrayList<String> variants = new ArrayList<>();
     // try upper-case and word start characters
     for(int i=0; i<value.length(); i++) {
       final char ch = value.charAt(i);

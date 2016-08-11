@@ -42,7 +42,7 @@ import java.util.*;
 @State(name = "PyCondaPackageService", storages = @Storage("conda_packages.xml"))
 public class PyCondaPackageService implements PersistentStateComponent<PyCondaPackageService> {
   public Map<String, String> CONDA_PACKAGES = ContainerUtil.newConcurrentMap();
-  public Map<String, List<String>> PACKAGES_TO_RELEASES = new HashMap<String, List<String>>();
+  public Map<String, List<String>> PACKAGES_TO_RELEASES = new HashMap<>();
   public Set<String> CONDA_CHANNELS = ContainerUtil.newConcurrentSet();
 
   public long LAST_TIME_CHECKED = 0;
@@ -195,7 +195,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
         }
       }
       else {
-        final ArrayList<String> versions = new ArrayList<String>();
+        final ArrayList<String> versions = new ArrayList<>();
         versions.add(split.get(1));
         PACKAGES_TO_RELEASES.put(split.get(0), versions);
       }

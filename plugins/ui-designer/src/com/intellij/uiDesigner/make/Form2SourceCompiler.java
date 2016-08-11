@@ -82,7 +82,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
       return ProcessingItem.EMPTY_ARRAY;
     }
 
-    final ArrayList<ProcessingItem> items = new ArrayList<ProcessingItem>();
+    final ArrayList<ProcessingItem> items = new ArrayList<>();
     DumbService.getInstance(project).runReadActionInSmartMode(() -> {
       final CompileScope scope = context.getCompileScope();
       final CompileScope projectScope = context.getProjectCompileScope();
@@ -92,7 +92,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
       final BindingsCache bindingsCache = new BindingsCache(project);
 
       try {
-        final HashMap<String, VirtualFile> class2form = new HashMap<String, VirtualFile>();
+        final HashMap<String, VirtualFile> class2form = new HashMap<>();
 
         for (final VirtualFile formFile : formFiles) {
           if (compilerManager.isExcludedFromCompilation(formFile)) {
@@ -151,7 +151,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
   }
 
   public ProcessingItem[] process(final CompileContext context, final ProcessingItem[] items) {
-    final ArrayList<ProcessingItem> compiledItems = new ArrayList<ProcessingItem>();
+    final ArrayList<ProcessingItem> compiledItems = new ArrayList<>();
 
     context.getProgressIndicator().setText(UIDesignerBundle.message("progress.compiling.ui.forms"));
 
@@ -160,9 +160,9 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
     final Project project = context.getProject();
     final FormSourceCodeGenerator generator = new FormSourceCodeGenerator(project);
 
-    final HashSet<Module> processedModules = new HashSet<Module>();
+    final HashSet<Module> processedModules = new HashSet<>();
 
-    final List<File> filesToRefresh = new ArrayList<File>();
+    final List<File> filesToRefresh = new ArrayList<>();
     for (ProcessingItem item1 : items) {
       context.getProgressIndicator().setFraction((double)(++formsProcessed) / ((double)items.length));
 

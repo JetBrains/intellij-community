@@ -26,8 +26,8 @@ import java.util.List;
 
 public class StructBootstrapMethodsAttribute extends StructGeneralAttribute {
 
-  private final List<LinkConstant> methodRefs = new ArrayList<LinkConstant>();
-  private final List<List<PooledConstant>> methodArguments = new ArrayList<List<PooledConstant>>();
+  private final List<LinkConstant> methodRefs = new ArrayList<>();
+  private final List<List<PooledConstant>> methodArguments = new ArrayList<>();
 
   @Override
   public void initContent(ConstantPool pool) throws IOException {
@@ -39,7 +39,7 @@ public class StructBootstrapMethodsAttribute extends StructGeneralAttribute {
       int bootstrap_method_ref = data.readUnsignedShort();
       int num_bootstrap_arguments = data.readUnsignedShort();
 
-      List<PooledConstant> list_arguments = new ArrayList<PooledConstant>();
+      List<PooledConstant> list_arguments = new ArrayList<>();
 
       for (int j = 0; j < num_bootstrap_arguments; ++j) {
         int bootstrap_argument_ref = data.readUnsignedShort();

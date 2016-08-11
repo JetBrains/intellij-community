@@ -215,7 +215,7 @@ public class RunIdeConsoleAction extends DumbAwareAction {
     RunContentDescriptor descriptor = ref == null ? null : ref.get();
     if (descriptor == null || descriptor.getExecutionConsole() == null) {
       descriptor = createConsoleView(project, psiFile);
-      psiFile.putCopyableUserData(DESCRIPTOR_KEY, new WeakReference<RunContentDescriptor>(descriptor));
+      psiFile.putCopyableUserData(DESCRIPTOR_KEY, new WeakReference<>(descriptor));
     }
     return descriptor;
   }
@@ -286,7 +286,7 @@ public class RunIdeConsoleAction extends DumbAwareAction {
       return;
     }
 
-    WeakReference<RunContentDescriptor> ref = new WeakReference<RunContentDescriptor>(descriptor);
+    WeakReference<RunContentDescriptor> ref = new WeakReference<>(descriptor);
     engine.setStdOut(new ConsoleWriter(ref, ConsoleViewContentType.NORMAL_OUTPUT));
     engine.setStdErr(new ConsoleWriter(ref, ConsoleViewContentType.ERROR_OUTPUT));
   }

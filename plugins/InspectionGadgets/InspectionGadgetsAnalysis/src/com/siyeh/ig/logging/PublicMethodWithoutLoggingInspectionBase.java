@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 class PublicMethodWithoutLoggingInspectionBase extends BaseInspection {
-  final List<String> loggerClassNames = new ArrayList<String>();
+  final List<String> loggerClassNames = new ArrayList<>();
   @SuppressWarnings("PublicField")
   public String loggerClassName = "java.util.logging.Logger" + ',' +
                                   "org.slf4j.Logger" + ',' +

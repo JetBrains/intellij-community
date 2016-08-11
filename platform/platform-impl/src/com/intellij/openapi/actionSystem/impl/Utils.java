@@ -276,11 +276,11 @@ public class Utils{
     final ActionCallback menuBuilt = new ActionCallback();
     final boolean checked = group instanceof CheckedActionGroup;
 
-    final ArrayList<AnAction> list = new ArrayList<AnAction>();
+    final ArrayList<AnAction> list = new ArrayList<>();
     expandActionGroup(group, list, presentationFactory, context, place, ActionManager.getInstance());
 
     final boolean fixMacScreenMenu = SystemInfo.isMacSystemMenu && isWindowMenu && Registry.is("actionSystem.mac.screenMenuNotUpdatedFix");
-    final ArrayList<Component> children = new ArrayList<Component>();
+    final ArrayList<Component> children = new ArrayList<>();
 
     for (int i = 0, size = list.size(); i < size; i++) {
       final AnAction action = list.get(i);
@@ -372,7 +372,7 @@ public class Utils{
           if (!component.isShowing()) return;
 
           DataContext context1 = DataManager.getInstance().getDataContext();
-          expandActionGroup(group, new ArrayList<AnAction>(), presentationFactory, context1, place, ActionManager.getInstance());
+          expandActionGroup(group, new ArrayList<>(), presentationFactory, context1, place, ActionManager.getInstance());
 
           for (Component each : children) {
             if (each instanceof ActionMenuItem) {

@@ -292,7 +292,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
 
   class NodeWrapper extends AbstractTreeNode<Object> {
     String myName;
-    List<NodeWrapper> myChildren = new ArrayList<NodeWrapper>();
+    List<NodeWrapper> myChildren = new ArrayList<>();
 
     public NodeWrapper(final Project project, final String value) {
       super(project, new Object());
@@ -406,7 +406,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
         if (parent instanceof NodeWrapper) {
           return children;
         }
-        List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+        List<AbstractTreeNode> result = new ArrayList<>();
         result.add(rootWrapper);
         return result;
       }

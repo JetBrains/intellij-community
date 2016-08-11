@@ -39,7 +39,7 @@ public class IdeSettingsStatisticsUtils {
   }
 
   public static Set<UsageDescriptor> getUsages(@NotNull IdeSettingsDescriptor descriptor, @NotNull Object componentInstance) {
-    Set<UsageDescriptor> descriptors = new HashSet<UsageDescriptor>();
+    Set<UsageDescriptor> descriptors = new HashSet<>();
 
     String providerName = descriptor.myProviderName;
 

@@ -89,8 +89,8 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
       return null;
     }
 
-    final Set<File> fileToCopy = new LinkedHashSet<File>();
-    final Map<String, String> copiedFiles = new HashMap<String, String>();
+    final Set<File> fileToCopy = new LinkedHashSet<>();
+    final Map<String, String> copiedFiles = new HashMap<>();
     final String targetDirectoryPath = dialog.getDirectoryForFilesPath();
     if (targetDirectoryPath != null) {
       for (OrderRootType type : OrderRootType.getAllTypes()) {

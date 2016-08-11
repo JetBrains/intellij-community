@@ -150,7 +150,7 @@ public class GroovyBlockGenerator {
       final FormattingContext context =
         myNode.getPsi() instanceof GrString && ((GrString)myNode.getPsi()).isPlainString() ? myContext.createContext(true) : myContext;
 
-      final ArrayList<Block> subBlocks = new ArrayList<Block>();
+      final ArrayList<Block> subBlocks = new ArrayList<>();
       ASTNode[] children = getGroovyChildren(myNode);
       for (ASTNode childNode : children) {
         if (childNode.getTextRange().getLength() > 0) {
@@ -162,7 +162,7 @@ public class GroovyBlockGenerator {
 
     // chained properties, calls, indexing, etc
     if (NESTED.contains(elementType) && blockPsi.getParent() != null && !NESTED.contains(blockPsi.getParent().getNode().getElementType())) {
-      final List<Block> subBlocks = new ArrayList<Block>();
+      final List<Block> subBlocks = new ArrayList<>();
       AlignmentProvider.Aligner dotsAligner = myContext.getSettings().ALIGN_MULTILINE_CHAINED_METHODS ? myAlignmentProvider.createAligner(false) : null;
 
       final Wrap wrap = myWrappingProcessor.getChainedMethodCallWrap();
@@ -186,7 +186,7 @@ public class GroovyBlockGenerator {
 
     // For Parameter lists
     if (isListLikeClause(blockPsi)) {
-      final ArrayList<Block> subBlocks = new ArrayList<Block>();
+      final ArrayList<Block> subBlocks = new ArrayList<>();
       List<ASTNode> astNodes = visibleChildren(myNode);
 
       if (mustAlign(blockPsi, astNodes)) {
@@ -208,7 +208,7 @@ public class GroovyBlockGenerator {
         !getClosureBodyVisibleChildren(myNode).isEmpty()) {
       GrClosableBlock closableBlock = (GrClosableBlock)blockPsi;
 
-      ArrayList<Block> blocks = new ArrayList<Block>();
+      ArrayList<Block> blocks = new ArrayList<>();
 
       PsiElement lbrace = closableBlock.getLBrace();
       if (lbrace != null) {
@@ -252,7 +252,7 @@ public class GroovyBlockGenerator {
 
     if (blockPsi instanceof GrMethod) {
 
-      final ArrayList<Block> subBlocks = new ArrayList<Block>();
+      final ArrayList<Block> subBlocks = new ArrayList<>();
 
       for (ASTNode childNode : getGroovyChildren(myNode)) {
         if (childNode.getElementType() == GroovyTokenTypes.mLPAREN) continue;
@@ -325,7 +325,7 @@ public class GroovyBlockGenerator {
     }
 
     // For other cases
-    final ArrayList<Block> subBlocks = new ArrayList<Block>();
+    final ArrayList<Block> subBlocks = new ArrayList<>();
     for (ASTNode childNode : visibleChildren(myNode)) {
       subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
     }
@@ -339,7 +339,7 @@ public class GroovyBlockGenerator {
   @NotNull
   public List<Block> generateSubBlockForCodeBlocks(boolean classLevel, final List<ASTNode> children, boolean indentLabelBlocks) {
 
-    final ArrayList<Block> subBlocks = new ArrayList<Block>();
+    final ArrayList<Block> subBlocks = new ArrayList<>();
 
     if (indentLabelBlocks && isCodeBlock()) {
       List<ASTNode> flattenChildren = flattenChildren(children);
@@ -516,7 +516,7 @@ public class GroovyBlockGenerator {
   }
 
   private static List<LeafPsiElement> getSpockTable(GrStatement statement) {
-    LinkedList<LeafPsiElement> result = new LinkedList<LeafPsiElement>();
+    LinkedList<LeafPsiElement> result = new LinkedList<>();
     while (isTablePart(statement)) {
       result.addFirst((LeafPsiElement)((GrBinaryExpression)statement).getOperationToken());
       statement = ((GrBinaryExpression)statement).getLeftOperand();
@@ -529,7 +529,7 @@ public class GroovyBlockGenerator {
   }
 
   public static List<ASTNode> visibleChildren(ASTNode node) {
-    ArrayList<ASTNode> list = new ArrayList<ASTNode>();
+    ArrayList<ASTNode> list = new ArrayList<>();
     for (ASTNode astNode : getGroovyChildren(node)) {
       if (canBeCorrectBlock(astNode)) {
         list.add(astNode);
@@ -586,7 +586,7 @@ public class GroovyBlockGenerator {
 
 
   private List<Block> generateForMultiLineString() {
-    final ArrayList<Block> subBlocks = new ArrayList<Block>();
+    final ArrayList<Block> subBlocks = new ArrayList<>();
     final int start = myNode.getTextRange().getStartOffset();
     final int end = myNode.getTextRange().getEndOffset();
 
@@ -609,7 +609,7 @@ public class GroovyBlockGenerator {
     PsiElement psi = node.getPsi();
     if (psi instanceof OuterLanguageElement) {
       TextRange range = node.getTextRange();
-      ArrayList<ASTNode> childList = new ArrayList<ASTNode>();
+      ArrayList<ASTNode> childList = new ArrayList<>();
       PsiFile groovyFile = psi.getContainingFile().getViewProvider().getPsi(GroovyLanguage.INSTANCE);
       if (groovyFile instanceof GroovyFileBase) {
         addChildNodes(groovyFile, childList, range);
@@ -637,7 +637,7 @@ public class GroovyBlockGenerator {
    * @return
    */
   private List<Block> generateForBinaryExpr() {
-    final ArrayList<Block> subBlocks = new ArrayList<Block>();
+    final ArrayList<Block> subBlocks = new ArrayList<>();
     AlignmentProvider.Aligner
       alignment = myContext.getSettings().ALIGN_MULTILINE_BINARY_OPERATION ? myAlignmentProvider.createAligner(false) : null;
 

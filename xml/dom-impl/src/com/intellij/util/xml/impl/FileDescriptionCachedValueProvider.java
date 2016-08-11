@@ -71,7 +71,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
       if (myComputed) return myLastResult;
 
       myLastResult = result;
-      WeakReference<DomFileElementImpl> ref = result != null ? new WeakReference<DomFileElementImpl>(result) : null;
+      WeakReference<DomFileElementImpl> ref = result != null ? new WeakReference<>(result) : null;
       myXmlFile.putUserData(DomManagerImpl.CACHED_FILE_ELEMENT, ref);
       myComputed = true;
       return result;
@@ -106,7 +106,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
     if (sb != null) {
       sb.append("last " + oldValue + "\n");
     }
-    final List<DomEvent> events = fireEvents ? new SmartList<DomEvent>() : Collections.<DomEvent>emptyList();
+    final List<DomEvent> events = fireEvents ? new SmartList<>() : Collections.<DomEvent>emptyList();
     if (oldValue != null) {
       if (fireEvents) {
         events.add(new DomEvent(oldValue, false));
@@ -134,7 +134,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
       }
     }
 
-    DomFileElementImpl<T> result = new DomFileElementImpl<T>(myXmlFile, rootElementClass, rootTagName1, myDomManager, description, stub);
+    DomFileElementImpl<T> result = new DomFileElementImpl<>(myXmlFile, rootElementClass, rootTagName1, myDomManager, description, stub);
     if (sb != null) {
       sb.append("success " + result + "\n");
     }
@@ -174,7 +174,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
     //noinspection unchecked
     final Set<DomFileDescription> namedDescriptions = myDomManager.getFileDescriptions(xmlFileHeader.getRootTagLocalName());
     if (sb != null) {
-      sb.append("named " + new HashSet<DomFileDescription>(namedDescriptions) + "\n");
+      sb.append("named " + new HashSet<>(namedDescriptions) + "\n");
     }
     DomFileDescription<T> description = ContainerUtil.find(namedDescriptions, myCondition);
     if (description == null) {

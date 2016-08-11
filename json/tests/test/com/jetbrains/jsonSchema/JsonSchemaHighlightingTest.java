@@ -190,7 +190,7 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
 
   @SuppressWarnings("Duplicates")
   public void testOneOf() throws Exception {
-    final List<String> subSchemas = new ArrayList<String>();
+    final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"string\"}");
     subSchemas.add("{\"type\": \"boolean\"}");
     final String schema = schema("{\"oneOf\": [" + StringUtil.join(subSchemas, ", ") + "]}");
@@ -201,7 +201,7 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
 
   @SuppressWarnings("Duplicates")
   public void testOneOfForTwoMatches() throws Exception {
-    final List<String> subSchemas = new ArrayList<String>();
+    final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"string\", \"enum\": [\"a\", \"b\"]}");
     subSchemas.add("{\"type\": \"string\", \"enum\": [\"a\", \"c\"]}");
     final String schema = schema("{\"oneOf\": [" + StringUtil.join(subSchemas, ", ") + "]}");
@@ -212,7 +212,7 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
 
   @SuppressWarnings("Duplicates")
   public void testOneOfSelectError() throws Exception {
-    final List<String> subSchemas = new ArrayList<String>();
+    final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"string\",\n" +
                    "          \"enum\": [\n" +
                    "            \"off\", \"warn\", \"error\"\n" +
@@ -226,7 +226,7 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
 
   @SuppressWarnings("Duplicates")
   public void testAnyOf() throws Exception {
-    final List<String> subSchemas = new ArrayList<String>();
+    final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"string\", \"enum\": [\"a\", \"b\"]}");
     subSchemas.add("{\"type\": \"string\", \"enum\": [\"a\", \"c\"]}");
     final String schema = schema("{\"anyOf\": [" + StringUtil.join(subSchemas, ", ") + "]}");
@@ -237,7 +237,7 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
 
   @SuppressWarnings("Duplicates")
   public void testAllOf() throws Exception {
-    final List<String> subSchemas = new ArrayList<String>();
+    final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"string\", \"enum\": [\"a\", \"b\"]}");
     subSchemas.add("{\"type\": \"string\", \"enum\": [\"a\", \"c\"]}");
     final String schema = schema("{\"allOf\": [" + StringUtil.join(subSchemas, ", ") + "]}");

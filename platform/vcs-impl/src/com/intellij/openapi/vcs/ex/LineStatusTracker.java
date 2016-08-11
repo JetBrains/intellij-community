@@ -64,7 +64,7 @@ public class LineStatusTracker {
 
   public static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.ex.LineStatusTracker");
   private static final Key<CanNotCalculateDiffPanel> PANEL_KEY =
-    new Key<CanNotCalculateDiffPanel>("LineStatusTracker.CanNotCalculateDiffPanel");
+    new Key<>("LineStatusTracker.CanNotCalculateDiffPanel");
 
   // all variables should be modified in EDT and under LOCK
   // read access allowed from EDT or while holding LOCK
@@ -113,7 +113,7 @@ public class LineStatusTracker {
     myApplicationListener = new MyApplicationListener();
     ApplicationManager.getApplication().addApplicationListener(myApplicationListener);
 
-    myRanges = new ArrayList<Range>();
+    myRanges = new ArrayList<>();
 
     myVcsDocument = new DocumentImpl("", true);
     myVcsDocument.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
@@ -521,9 +521,9 @@ public class LineStatusTracker {
                               int beforeTotalLines) {
     LOG.assertTrue(!myReleased);
 
-    List<Range> rangesBeforeChange = new ArrayList<Range>();
-    List<Range> rangesAfterChange = new ArrayList<Range>();
-    List<Range> changedRanges = new ArrayList<Range>();
+    List<Range> rangesBeforeChange = new ArrayList<>();
+    List<Range> rangesAfterChange = new ArrayList<>();
+    List<Range> changedRanges = new ArrayList<>();
 
     sortRanges(beforeChangedLine1, beforeChangedLine2, linesShift, rangesBeforeChange, changedRanges, rangesAfterChange);
 
@@ -566,7 +566,7 @@ public class LineStatusTracker {
       shiftRanges(rangesAfter, linesShift);
 
       if (!changedRanges.equals(newChangedRanges)) {
-        myRanges = new ArrayList<Range>(rangesBefore.size() + newChangedRanges.size() + rangesAfter.size());
+        myRanges = new ArrayList<>(rangesBefore.size() + newChangedRanges.size() + rangesAfter.size());
 
         myRanges.addAll(rangesBefore);
         myRanges.addAll(newChangedRanges);
@@ -777,7 +777,7 @@ public class LineStatusTracker {
 
   @CalledWithWriteLock
   public void rollbackChanges(@NotNull final BitSet lines) {
-    List<Range> toRollback = new ArrayList<Range>();
+    List<Range> toRollback = new ArrayList<>();
     for (Range range : myRanges) {
       boolean check = DiffUtil.isSelectedByLine(lines, range.getLine1(), range.getLine2());
       if (check) {

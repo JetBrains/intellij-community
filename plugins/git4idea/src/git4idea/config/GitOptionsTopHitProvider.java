@@ -47,7 +47,7 @@ public final class GitOptionsTopHitProvider extends OptionsTopHitProvider {
       for (VcsDescriptor descriptor : ProjectLevelVcsManager.getInstance(project).getAllVcss()) {
         if ("Git".equals(descriptor.getDisplayName())) {
           final GitVcsSettings settings = GitVcsSettings.getInstance(project);
-          ArrayList<BooleanOptionDescription> options = new ArrayList<BooleanOptionDescription>();
+          ArrayList<BooleanOptionDescription> options = new ArrayList<>();
           options.add(option(project, "Git: Commit automatically on cherry-pick", "isAutoCommitOnCherryPick", "setAutoCommitOnCherryPick"));
           options.add(option(project, "Git: Auto-update if push of the current branch was rejected", "autoUpdateIfPushRejected", "setAutoUpdateIfPushRejected"));
           GitRepositoryManager manager = ServiceManager.getService(project, GitRepositoryManager.class);

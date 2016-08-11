@@ -101,8 +101,8 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
 
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final UsageInfo[] usages = refUsages.get();
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
-    final Set<PsiMember> members = new HashSet<PsiMember>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    final Set<PsiMember> members = new HashSet<>();
     members.add(myMethod);
     if (myTargetVariable instanceof PsiField) members.add((PsiMember)myTargetVariable);
     if (!myTargetClass.isInterface()) {
@@ -154,7 +154,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
   protected UsageInfo[] findUsages() {
     final PsiManager manager = myMethod.getManager();
     final GlobalSearchScope searchScope = GlobalSearchScope.allScope(manager.getProject());
-    final List<UsageInfo> usages = new ArrayList<UsageInfo>();
+    final List<UsageInfo> usages = new ArrayList<>();
     for (PsiReference ref : ReferencesSearch.search(myMethod, searchScope, false)) {
       final PsiElement element = ref.getElement();
       if (element instanceof PsiReferenceExpression) {
@@ -231,7 +231,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myTargetClass)) return;
 
     PsiMethod patternMethod = createMethodToAdd();
-    final List<PsiReference> docRefs = new ArrayList<PsiReference>();
+    final List<PsiReference> docRefs = new ArrayList<>();
     for (UsageInfo usage : usages) {
       if (usage instanceof InheritorUsageInfo) {
         final PsiClass inheritor = ((InheritorUsageInfo)usage).getInheritor();
@@ -433,7 +433,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       //correct internal references
       final PsiCodeBlock body = myMethod.getBody();
       if (body != null) {
-        final Map<PsiElement, PsiElement> replaceMap = new HashMap<PsiElement, PsiElement>();
+        final Map<PsiElement, PsiElement> replaceMap = new HashMap<>();
         body.accept(new JavaRecursiveElementVisitor() {
           @Override public void visitThisExpression(PsiThisExpression expression) {
             final PsiClass classReferencedByThis = MoveInstanceMembersUtil.getClassReferencedByThis(expression);
@@ -535,7 +535,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       final PsiMethod methodCopy = getPatternMethod();
 
       final List<PsiParameter> newParameters = Arrays.asList(methodCopy.getParameterList().getParameters());
-      RefactoringUtil.fixJavadocsForParams(methodCopy, new HashSet<PsiParameter>(newParameters));
+      RefactoringUtil.fixJavadocsForParams(methodCopy, new HashSet<>(newParameters));
       return methodCopy;
     }
     catch (IncorrectOperationException e) {

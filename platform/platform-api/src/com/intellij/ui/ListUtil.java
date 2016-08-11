@@ -89,11 +89,11 @@ public class ListUtil {
 
   private static <T> List<T> removeIndices(JList list, int[] idxs, Condition<T> condition) {
     if (idxs.length == 0) {
-      return new ArrayList<T>(0);
+      return new ArrayList<>(0);
     }
     ListModel model = list.getModel();
     int firstSelectedIndex = idxs[0];
-    ArrayList<T> removedItems = new ArrayList<T>();
+    ArrayList<T> removedItems = new ArrayList<>();
     int deletedCount = 0;
     for (int idx = 0; idx < idxs.length; idx++) {
       int index = idxs[idx] - deletedCount;

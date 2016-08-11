@@ -135,7 +135,7 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
 
   @NotNull
   private static Map<String, NamedArgumentDescriptor> findOtherNamedArgumentsInFile(PsiElement mapOrArgumentList) {
-    final Map<String, NamedArgumentDescriptor> map = new HashMap<String, NamedArgumentDescriptor>();
+    final Map<String, NamedArgumentDescriptor> map = new HashMap<>();
     mapOrArgumentList.getContainingFile().accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {

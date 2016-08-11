@@ -71,7 +71,7 @@ public class MvcRunConfigurationEditor<T extends MvcRunConfiguration> extends Se
 
     commandLineChanged(getCommandLine());
 
-    myEnvVariablesComponent.setEnvs(new HashMap<String, String>(configuration.envs));
+    myEnvVariablesComponent.setEnvs(new HashMap<>(configuration.envs));
     myEnvVariablesComponent.setPassParentEnvs(configuration.passParentEnv);
 
     if (myDepsClasspath.isEnabled()) {

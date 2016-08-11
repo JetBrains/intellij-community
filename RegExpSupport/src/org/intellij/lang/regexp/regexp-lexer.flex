@@ -106,7 +106,7 @@ META1 = {ESCAPE} | {LBRACKET} | "^"
 META2= {DOT} | "$" | "?" | "*" | "+" | "|" | {LBRACE} | {LPAREN} | {RPAREN}
 
 CONTROL="t" | "n" | "r" | "f" | "a" | "e"
-BOUNDARY="b" | "B" | "A" | "z" | "Z" | "G"
+BOUNDARY="b" | "b{g}"| "B" | "A" | "z" | "Z" | "G"
 
 CLASS="w" | "W" | "s" | "S" | "d" | "D" | "v" | "V" | "X"
 XML_CLASS="c" | "C" | "i" | "I"

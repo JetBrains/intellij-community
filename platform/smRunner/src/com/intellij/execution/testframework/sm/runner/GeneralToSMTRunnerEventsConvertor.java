@@ -37,9 +37,9 @@ import java.util.*;
  */
 public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcessor {
 
-  private final Map<String, SMTestProxy> myRunningTestsFullNameToProxy = new HashMap<String, SMTestProxy>();
+  private final Map<String, SMTestProxy> myRunningTestsFullNameToProxy = new HashMap<>();
   private final TestSuiteStack mySuitesStack;
-  private final Set<SMTestProxy> myCurrentChildren = new LinkedHashSet<SMTestProxy>();
+  private final Set<SMTestProxy> myCurrentChildren = new LinkedHashSet<>();
   private boolean myGetChildren = true;
   private final SMTestProxy.SMRootTestProxy myTestsRootNode;
 
@@ -112,7 +112,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     });
   }
 
-  private final List<Runnable> myBuildTreeRunnables = new ArrayList<Runnable>();
+  private final List<Runnable> myBuildTreeRunnables = new ArrayList<>();
   
   @Override
   public void onSuiteTreeNodeAdded(final String testName, final String locationHint) {
@@ -155,7 +155,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     myBuildTreeRunnables.add(() -> mySuitesStack.popSuite(suiteName));
     
     if (myBuildTreeRunnables.size() > 100) {
-      final ArrayList<Runnable> runnables = new ArrayList<Runnable>(myBuildTreeRunnables);
+      final ArrayList<Runnable> runnables = new ArrayList<>(myBuildTreeRunnables);
       myBuildTreeRunnables.clear();
       processTreeBuildEvents(runnables);
     }

@@ -29,12 +29,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.ClassUtil;
-import com.theoryinpractice.testng.model.IDEARemoteTestRunnerClient;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestNGTestObject;
 import com.theoryinpractice.testng.model.TestType;
@@ -57,19 +58,16 @@ public class SearchingForTestsTask extends SearchForTestsTask {
   private final Project myProject;
   private final TestNGConfiguration myConfig;
   private final File myTempFile;
-  private final IDEARemoteTestRunnerClient myClient;
 
   public SearchingForTestsTask(ServerSocket serverSocket,
                                TestNGConfiguration config,
-                               File tempFile,
-                               IDEARemoteTestRunnerClient client) {
+                               File tempFile) {
     super(config.getProject(), serverSocket);
-    myClient = client;
     myData = config.getPersistantData();
     myProject = config.getProject();
     myConfig = config;
     myTempFile = tempFile;
-    myClasses = new LinkedHashMap<PsiClass, Map<PsiMethod, List<String>>>();
+    myClasses = new LinkedHashMap<>();
   }
 
   @Override
@@ -101,11 +99,6 @@ public class SearchingForTestsTask extends SearchForTestsTask {
     fillTestObjects(myClasses);
   }
 
-  @Override
-  protected void startListening() {
-    if (!Registry.is("testng_sm")) myClient.startListening(myConfig);
-  }
-
   protected void logCantRunException(ExecutionException e) {
     try {
       final String message = "CantRunException" + e.getMessage() + "\n";
@@ -117,13 +110,13 @@ public class SearchingForTestsTask extends SearchForTestsTask {
   }
 
   private void composeTestSuiteFromClasses() {
-    Map<String, Map<String, List<String>>> map = new LinkedHashMap<String, Map<String, List<String>>>();
+    Map<String, Map<String, List<String>>> map = new LinkedHashMap<>();
 
     final boolean findTestMethodsForClass = shouldSearchForTestMethods();
 
     for (final Map.Entry<PsiClass, Map<PsiMethod, List<String>>> entry : myClasses.entrySet()) {
       final Map<PsiMethod, List<String>> depMethods = entry.getValue();
-      LinkedHashMap<String, List<String>> methods = new LinkedHashMap<String, List<String>>();
+      LinkedHashMap<String, List<String>> methods = new LinkedHashMap<>();
       for (Map.Entry<PsiMethod, List<String>> method : depMethods.entrySet()) {
         methods.put(method.getKey().getName(), method.getValue());
       }
@@ -166,7 +159,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
 
     File xmlFile;
     if (groupNames != null) {
-      final LinkedHashMap<String, Collection<String>> methodNames = new LinkedHashMap<String, Collection<String>>();
+      final LinkedHashMap<String, Collection<String>> methodNames = new LinkedHashMap<>();
       for (Map.Entry<String, Map<String, List<String>>> entry : map.entrySet()) {
         methodNames.put(entry.getKey(), entry.getValue().keySet());
       }
@@ -246,7 +239,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
   }
 
   private Map<String, String> buildTestParameters() {
-    Map<String, String> testParams = new HashMap<String, String>();
+    Map<String, String> testParams = new HashMap<>();
 
     // Override with those from the test runner configuration
     if (myData.PROPERTIES_FILE != null) {

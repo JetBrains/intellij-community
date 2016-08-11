@@ -71,20 +71,20 @@ class ResultUtil {
     if (r1 instanceof Final && r2 instanceof Pending) {
       Final f1 = (Final)r1;
       Pending pending = (Pending) r2;
-      Set<Product> sum1 = new HashSet<Product>(pending.sum);
+      Set<Product> sum1 = new HashSet<>(pending.sum);
       sum1.add(new Product(f1.value, Collections.<Key>emptySet()));
       return new Pending(sum1);
     }
     if (r1 instanceof Pending && r2 instanceof Final) {
       Final f2 = (Final)r2;
       Pending pending = (Pending) r1;
-      Set<Product> sum1 = new HashSet<Product>(pending.sum);
+      Set<Product> sum1 = new HashSet<>(pending.sum);
       sum1.add(new Product(f2.value, Collections.<Key>emptySet()));
       return new Pending(sum1);
     }
     Pending pending1 = (Pending) r1;
     Pending pending2 = (Pending) r2;
-    Set<Product> sum = new HashSet<Product>();
+    Set<Product> sum = new HashSet<>();
     sum.addAll(pending1.sum);
     sum.addAll(pending2.sum);
     checkLimit(sum);
@@ -253,13 +253,13 @@ final class CoreHKey {
 final class Solver {
 
   private final ELattice<Value> lattice;
-  private final HashMap<HKey, HashSet<HKey>> dependencies = new HashMap<HKey, HashSet<HKey>>();
-  private final HashMap<HKey, HPending> pending = new HashMap<HKey, HPending>();
-  private final HashMap<HKey, Value> solved = new HashMap<HKey, Value>();
-  private final Stack<HKey> moving = new Stack<HKey>();
+  private final HashMap<HKey, HashSet<HKey>> dependencies = new HashMap<>();
+  private final HashMap<HKey, HPending> pending = new HashMap<>();
+  private final HashMap<HKey, Value> solved = new HashMap<>();
+  private final Stack<HKey> moving = new Stack<>();
 
   private final HResultUtil resultUtil;
-  private final HashMap<CoreHKey, HEquation> equations = new HashMap<CoreHKey, HEquation>();
+  private final HashMap<CoreHKey, HEquation> equations = new HashMap<>();
   private final Value unstableValue;
 
   Solver(ELattice<Value> lattice, Value unstableValue) {
@@ -301,7 +301,7 @@ final class Solver {
           for (HKey trigger : component.ids) {
             HashSet<HKey> set = dependencies.get(trigger);
             if (set == null) {
-              set = new HashSet<HKey>();
+              set = new HashSet<>();
               dependencies.put(trigger, set);
             }
             set.add(equation.key);

@@ -49,7 +49,7 @@ public abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPoint
   @NotNull
   public final Collection<AbstractTreeNode> getChildren() {
     PsiElement value = getPsiElement();
-    if (value == null) return new ArrayList<AbstractTreeNode>();
+    if (value == null) return new ArrayList<>();
     LOG.assertTrue(value.isValid());
     return getChildrenImpl();
   }

@@ -24,10 +24,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.psi.PsiElement;
 import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider;
 import org.intellij.lang.regexp.RegExpLanguageHost;
-import org.intellij.lang.regexp.psi.RegExpChar;
-import org.intellij.lang.regexp.psi.RegExpGroup;
-import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
-import org.intellij.lang.regexp.psi.RegExpSimpleClass;
+import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,6 +92,24 @@ public class JavaRegExpHost implements RegExpLanguageHost {
   }
 
   @Override
+  public boolean supportsBoundary(RegExpBoundary boundary) {
+    switch (boundary.getType()) {
+      case UNICODE_EXTENDED_GRAPHEME:
+        return hasAtLeastJdkVersion(boundary, JavaSdkVersion.JDK_1_9);
+      case LINE_START:
+      case LINE_END:
+      case WORD:
+      case NON_WORD:
+      case BEGIN:
+      case END:
+      case END_NO_LINE_TERM:
+      case PREVIOUS_MATCH:
+      default:
+        return true;
+    }
+  }
+
+  @Override
   public boolean supportsSimpleClass(RegExpSimpleClass simpleClass) {
     switch(simpleClass.getKind()) {
       case UNICODE_LINEBREAK:
@@ -106,6 +121,7 @@ public class JavaRegExpHost implements RegExpLanguageHost {
         // is vertical tab before jdk 1.8
         return true;
       case UNICODE_GRAPHEME:
+        return hasAtLeastJdkVersion(simpleClass, JavaSdkVersion.JDK_1_9);
       case XML_NAME_START:
       case NON_XML_NAME_START:
       case XML_NAME_PART:

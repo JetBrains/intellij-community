@@ -42,7 +42,7 @@ public class SettingsProviderComponent {
     }
     catch (EditorConfigException error) {
       Utils.invalidConfigMessage(project, error.getMessage(), "", filePath);
-      return new ArrayList<OutPair>();
+      return new ArrayList<>();
     }
   }
 
@@ -52,7 +52,7 @@ public class SettingsProviderComponent {
     }
 
     return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
-      final Set<String> dirs = new HashSet<String>();
+      final Set<String> dirs = new HashSet<>();
       final VirtualFile projectBase = project.getBaseDir();
       if (projectBase != null) {
         dirs.add(project.getBasePath());
@@ -65,7 +65,7 @@ public class SettingsProviderComponent {
         }
       }
       dirs.add(PathManager.getConfigPath());
-      return new CachedValueProvider.Result<Set<String>>(dirs, ProjectRootModificationTracker.getInstance(project));
+      return new CachedValueProvider.Result<>(dirs, ProjectRootModificationTracker.getInstance(project));
     });
   }
 }

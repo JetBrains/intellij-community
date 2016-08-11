@@ -53,7 +53,7 @@ public class JavaFxCustomComponentsIndex extends FileBasedIndexExtension<String,
           if (value != null && FxmlConstants.TYPE.equals(key)) {
             Set<String> paths = map.get(value);
             if (paths == null) {
-              paths = new HashSet<String>();
+              paths = new HashSet<>();
               map.put(value, paths);
             }
             paths.add(path);
@@ -130,7 +130,7 @@ public class JavaFxCustomComponentsIndex extends FileBasedIndexExtension<String,
           return Collections.emptyList();
         }
         if (files.isEmpty()) return Collections.emptyList();
-        List<T> result = new ArrayList<T>();
+        List<T> result = new ArrayList<>();
         for (VirtualFile file : files) {
           if (!file.isValid()) continue;
           final T fFile = f.fun(file);

@@ -80,7 +80,7 @@ public class AutomaticTestRenamerFactory implements AutomaticRenamerFactory {
       String klassName = aClass.getName();
       Pattern pattern = Pattern.compile(".*" + klassName + ".*" + testSuffix);
 
-      HashSet<String> names = new HashSet<String>();
+      HashSet<String> names = new HashSet<>();
       cache.getAllClassNames(names);
       for (String eachName : names) {
         if (pattern.matcher(eachName).matches()) {

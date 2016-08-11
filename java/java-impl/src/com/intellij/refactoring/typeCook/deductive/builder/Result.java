@@ -95,7 +95,7 @@ public class Result {
   public Set<PsiElement> getCookedElements() {
     myCookedNumber = 0;
 
-    final Set<PsiElement> set = new HashSet<PsiElement>();
+    final Set<PsiElement> set = new HashSet<>();
 
     for (final PsiElement element : myVictims) {
       final PsiType originalType = Util.getType(element);

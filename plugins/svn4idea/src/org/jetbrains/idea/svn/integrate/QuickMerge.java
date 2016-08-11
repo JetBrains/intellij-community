@@ -47,7 +47,7 @@ public class QuickMerge {
 
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    final List<TaskDescriptor> tasks = new LinkedList<TaskDescriptor>();
+    final List<TaskDescriptor> tasks = new LinkedList<>();
     tasks.add(new MergeInitChecksTask(myMergeContext, myInteraction));
     tasks.add(new CheckRepositorySupportsMergeInfoTask(myMergeContext, myInteraction));
     if (finalTasks.length > 0) {

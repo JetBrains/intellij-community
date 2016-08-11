@@ -90,7 +90,7 @@ public class SaveAsTemplateAction extends AnAction {
     new WriteCommandAction.Simple(project, (String)null) {
       @Override
       protected void run() throws Throwable {
-        Map<RangeMarker, String> rangeToText = new HashMap<RangeMarker, String>();
+        Map<RangeMarker, String> rangeToText = new HashMap<>();
 
         for (PsiElement element : psiElements) {
           for (PsiReference reference : element.getReferences()) {

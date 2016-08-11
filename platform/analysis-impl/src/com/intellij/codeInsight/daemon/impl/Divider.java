@@ -73,8 +73,8 @@ public class Divider {
 
     final TIntStack starts = new TIntStack(STARTING_TREE_HEIGHT);
     starts.push(startOffset);
-    final Stack<PsiElement> elements = new Stack<PsiElement>(STARTING_TREE_HEIGHT);
-    final Stack<PsiElement> children = new Stack<PsiElement>(STARTING_TREE_HEIGHT);
+    final Stack<PsiElement> elements = new Stack<>(STARTING_TREE_HEIGHT);
+    final Stack<PsiElement> children = new Stack<>(STARTING_TREE_HEIGHT);
     PsiElement element = root;
 
     PsiElement child = HAVE_TO_GET_CHILDREN;

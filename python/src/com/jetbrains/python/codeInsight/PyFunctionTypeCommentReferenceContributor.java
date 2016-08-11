@@ -73,7 +73,7 @@ public class PyFunctionTypeCommentReferenceContributor extends PsiReferenceContr
   @SuppressWarnings("Duplicates")
   @NotNull
   private static List<PsiReference> parseTypeReferences(@NotNull PsiElement anchor, @NotNull String typeText, int offsetInComment) {
-    final List<PsiReference> result = new ArrayList<PsiReference>();
+    final List<PsiReference> result = new ArrayList<>();
     final PyTypeParser.ParseResult parseResult = PyTypeParser.parsePep484FunctionTypeComment(anchor, typeText);
     final Map<TextRange, ? extends PyType> types = parseResult.getTypes();
     final Map<? extends PyType, TextRange> fullRanges = parseResult.getFullRanges();

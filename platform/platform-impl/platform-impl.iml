@@ -46,5 +46,6 @@
     <orderEntry type="module" module-name="configuration-store-impl" scope="RUNTIME" />
     <orderEntry type="library" name="com.twelvemonkeys.imageio:imageio-tiff:3.2.1" level="project" />
     <orderEntry type="library" name="pty4j" level="project" />
+    <orderEntry type="module" module-name="credential-store" scope="RUNTIME" />
   </component>
 </module>

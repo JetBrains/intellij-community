@@ -74,7 +74,7 @@ public class ApplyChangesState extends State {
 
     if (document instanceof DocumentEx) ((DocumentEx)document).setInBulkUpdate(true);
     try {
-      List<TextChange> changes = new ArrayList<TextChange>();
+      List<TextChange> changes = new ArrayList<>();
       int shift = 0;
       int currentIterationShift = 0;
       for (LeafBlockWrapper block : blocksToModify) {
@@ -128,7 +128,7 @@ public class ApplyChangesState extends State {
   }
 
   private List<LeafBlockWrapper> collectBlocksToModify() {
-    List<LeafBlockWrapper> blocksToModify = new ArrayList<LeafBlockWrapper>();
+    List<LeafBlockWrapper> blocksToModify = new ArrayList<>();
     LeafBlockWrapper firstBlock = myWrapState.getFirstBlock();
     for (LeafBlockWrapper block = firstBlock; block != null; block = block.getNextBlock()) {
       final WhiteSpace whiteSpace = block.getWhiteSpace();

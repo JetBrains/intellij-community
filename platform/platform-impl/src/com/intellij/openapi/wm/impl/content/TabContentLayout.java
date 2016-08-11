@@ -47,10 +47,10 @@ class TabContentLayout extends ContentLayout {
   JPopupMenu myPopup;
   final PopupMenuListener myPopupListener;
 
-  ArrayList<ContentTabLabel> myTabs = new ArrayList<ContentTabLabel>();
-  final Map<Content, ContentTabLabel> myContent2Tabs = new HashMap<Content, ContentTabLabel>();
+  ArrayList<ContentTabLabel> myTabs = new ArrayList<>();
+  final Map<Content, ContentTabLabel> myContent2Tabs = new HashMap<>();
 
-  private Map<String, BufferedImage> myCached = new com.intellij.util.containers.HashMap<String, BufferedImage>();
+  private Map<String, BufferedImage> myCached = new com.intellij.util.containers.HashMap<>();
 
   private final MoreIcon myMoreIcon = new MoreIcon() {
     protected Rectangle getIconRec() {
@@ -291,8 +291,8 @@ class TabContentLayout extends ContentLayout {
 
     int moreRectWidth;
 
-    ArrayList<ContentTabLabel> toLayout = new ArrayList<ContentTabLabel>();
-    ArrayList<ContentTabLabel> toDrop = new ArrayList<ContentTabLabel>();
+    ArrayList<ContentTabLabel> toLayout = new ArrayList<>();
+    ArrayList<ContentTabLabel> toDrop = new ArrayList<>();
 
     Rectangle moreRect;
 

@@ -55,7 +55,7 @@ public class PyExceptClausesOrderInspection extends PyInspection {
     public void visitPyTryExceptStatement(PyTryExceptStatement node) {
       PyExceptPart[] exceptParts = node.getExceptParts();
       if (exceptParts.length > 1) {
-        Set<PyClass> exceptClasses = new HashSet<PyClass>();
+        Set<PyClass> exceptClasses = new HashSet<>();
         for (PyExceptPart exceptPart : exceptParts) {
           PyExpression exceptClass = exceptPart.getExceptClass();
           if (exceptClass instanceof PyReferenceExpression) {

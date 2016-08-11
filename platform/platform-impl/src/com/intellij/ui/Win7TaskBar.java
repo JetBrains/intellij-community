@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.jna.DisposableMemory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.IdeFrame;
@@ -68,17 +69,6 @@ class Win7TaskBar {
                                           int Flags);
 
     boolean FlashWindow(WinDef.HWND hwnd, boolean bInvert);
-  }
-
-  private static class MyMemory extends Memory {
-    private MyMemory(long size) {
-      super(size);
-    }
-
-    @Override
-    public synchronized void dispose() {
-      super.dispose();
-    }
   }
 
   private static boolean ourInitialized = true;
@@ -162,7 +152,7 @@ class Win7TaskBar {
       return new Object();
     }
 
-    MyMemory memory = new MyMemory(ico.length);
+    DisposableMemory memory = new DisposableMemory(ico.length);
 
     try {
       memory.write(0, ico, 0, ico.length);

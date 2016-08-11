@@ -41,7 +41,7 @@ public class ComplementaryFontsRegistry {
   
   private static final Object lock = new String("common lock");
   private static final List<String> ourFontNames;
-  private static final Map<String, Pair<String, Integer>[]> ourStyledFontMap = new HashMap<String, Pair<String, Integer>[]>();
+  private static final Map<String, Pair<String, Integer>[]> ourStyledFontMap = new HashMap<>();
   private static final LinkedHashMap<FontKey, FontInfo> ourUsedFonts;
   private static FontKey ourSharedKeyInstance = new FontKey("", 0, Font.PLAIN, false);
   private static FontInfo ourSharedDefaultFont;
@@ -55,7 +55,7 @@ public class ComplementaryFontsRegistry {
     "bold oblique", "demibold italic", "negreta cursiva","demi oblique"};
 
   // Explicit mapping fontName->style for cases where generic rules (given above) don't work.
-  private static final Map<String, Integer> FONT_NAME_TO_STYLE = new HashMap<String, Integer>();
+  private static final Map<String, Integer> FONT_NAME_TO_STYLE = new HashMap<>();
   static {
     FONT_NAME_TO_STYLE.put("AnkaCoder-b",           Font.BOLD);
     FONT_NAME_TO_STYLE.put("AnkaCoder-i",           Font.ITALIC);
@@ -128,7 +128,7 @@ public class ComplementaryFontsRegistry {
   @NonNls private static final String ITALIC_SUFFIX = ".italic";
 
   static {
-    ourFontNames = new ArrayList<String>();
+    ourFontNames = new ArrayList<>();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ourFontNames.add("Monospaced");
     } else {
@@ -142,7 +142,7 @@ public class ComplementaryFontsRegistry {
         }
       }
     }
-    ourUsedFonts = new LinkedHashMap<FontKey, FontInfo>();
+    ourUsedFonts = new LinkedHashMap<>();
   }
 
   private static void fillStyledFontMap() {

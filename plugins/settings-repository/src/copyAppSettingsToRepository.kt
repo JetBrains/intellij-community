@@ -17,6 +17,7 @@ package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.ROOT_CONFIG
 import com.intellij.configurationStore.StateStorageManagerImpl
+import com.intellij.configurationStore.StreamProviderWrapper
 import com.intellij.configurationStore.removeMacroIfStartsWith
 import com.intellij.ide.actions.ExportableItem
 import com.intellij.ide.actions.getExportableComponentsMap
@@ -33,7 +34,7 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 
 fun copyLocalConfig(storageManager: StateStorageManagerImpl = ApplicationManager.getApplication()!!.stateStore.stateStorageManager as StateStorageManagerImpl) {
-  val streamProvider = storageManager.streamProvider!! as IcsManager.IcsStreamProvider
+  val streamProvider = StreamProviderWrapper.getOriginalProvider(storageManager.streamProvider)!! as IcsManager.IcsStreamProvider
 
   val fileToComponents = getExportableComponentsMap(true, false, storageManager)
   fileToComponents.keys.forEachGuaranteed { file ->

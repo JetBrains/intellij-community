@@ -35,7 +35,7 @@ import java.util.*;
  */
 public class InstallPluginAction extends AnAction implements DumbAware {
   private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
-  private static final Set<IdeaPluginDescriptor> ourInstallingNodes = new HashSet<IdeaPluginDescriptor>();
+  private static final Set<IdeaPluginDescriptor> ourInstallingNodes = new HashSet<>();
 
   private final PluginManagerMain myHost;
   private final PluginManagerMain myInstalled;
@@ -94,7 +94,7 @@ public class InstallPluginAction extends AnAction implements DumbAware {
     IdeaPluginDescriptor[] selection = getPluginTable().getSelectedObjects();
 
     if (confirmed || userConfirm(selection)) {
-      final List<PluginNode> list = new ArrayList<PluginNode>();
+      final List<PluginNode> list = new ArrayList<>();
       for (IdeaPluginDescriptor descr : selection) {
         PluginNode pluginNode = null;
         if (descr instanceof PluginNode) {

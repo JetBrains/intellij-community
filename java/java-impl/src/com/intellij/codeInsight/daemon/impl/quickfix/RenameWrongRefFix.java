@@ -90,7 +90,7 @@ public class RenameWrongRefFix implements IntentionAction {
   }
 
   private LookupElement[] collectItems() {
-    Set<LookupElement> items = new LinkedHashSet<LookupElement>();
+    Set<LookupElement> items = new LinkedHashSet<>();
     boolean qualified = myRefExpr.getQualifierExpression() != null;
 
     if (!qualified && !(myRefExpr.getParent() instanceof PsiMethodCallExpression)) {
@@ -100,7 +100,7 @@ public class RenameWrongRefFix implements IntentionAction {
       }
     } else {
       class MyScopeProcessor extends BaseScopeProcessor {
-        ArrayList<PsiElement> myResult = new ArrayList<PsiElement>();
+        ArrayList<PsiElement> myResult = new ArrayList<>();
         boolean myFilterMethods;
         boolean myFilterStatics;
 

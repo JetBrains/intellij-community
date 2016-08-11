@@ -41,8 +41,8 @@ import java.util.List;
 public class StubSerializationHelper {
   private final AbstractStringEnumerator myNameStorage;
 
-  protected final TIntObjectHashMap<ObjectStubSerializer> myIdToSerializer = new TIntObjectHashMap<ObjectStubSerializer>();
-  protected final TObjectIntHashMap<ObjectStubSerializer> mySerializerToId = new TObjectIntHashMap<ObjectStubSerializer>();
+  protected final TIntObjectHashMap<ObjectStubSerializer> myIdToSerializer = new TIntObjectHashMap<>();
+  protected final TObjectIntHashMap<ObjectStubSerializer> mySerializerToId = new TObjectIntHashMap<>();
 
   public StubSerializationHelper(@NotNull AbstractStringEnumerator nameStorage) {
     myNameStorage = nameStorage;
@@ -189,10 +189,10 @@ public class StubSerializationHelper {
 
   private static class FileLocalStringEnumerator implements AbstractStringEnumerator {
     private final TObjectIntHashMap<String> myEnumerates;
-    private final ArrayList<String> myStrings = new ArrayList<String>();
+    private final ArrayList<String> myStrings = new ArrayList<>();
 
     FileLocalStringEnumerator(boolean forSavingStub) {
-      if (forSavingStub) myEnumerates = new TObjectIntHashMap<String>();
+      if (forSavingStub) myEnumerates = new TObjectIntHashMap<>();
       else myEnumerates = null;
     }
 

@@ -30,7 +30,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class OverlyComplexBooleanExpressionInspectionBase extends BaseInspection {
-  protected static final Set<IElementType> s_booleanOperators = new HashSet<IElementType>(5);
+  protected static final Set<IElementType> s_booleanOperators = new HashSet<>(5);
 
   static {
     s_booleanOperators.add(JavaTokenType.ANDAND);

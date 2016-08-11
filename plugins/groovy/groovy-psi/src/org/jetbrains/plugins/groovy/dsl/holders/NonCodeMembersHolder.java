@@ -44,7 +44,7 @@ import java.util.Map;
 public class NonCodeMembersHolder implements CustomMembersHolder {
   public static final Key<String> DOCUMENTATION = Key.create("GdslDocumentation");
   public static final Key<String> DOCUMENTATION_URL = Key.create("GdslDocumentationUrl");
-  private final List<PsiElement> myDeclarations = new ArrayList<PsiElement>();
+  private final List<PsiElement> myDeclarations = new ArrayList<>();
 
   public static NonCodeMembersHolder generateMembers(List<Map> methods, final PsiFile place) {
     Map<List<Map>, NonCodeMembersHolder> map = CachedValuesManager.getCachedValue(

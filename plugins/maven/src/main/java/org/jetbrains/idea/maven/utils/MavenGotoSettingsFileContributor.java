@@ -36,7 +36,7 @@ public class MavenGotoSettingsFileContributor implements ChooseByNameContributor
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     if (!includeNonProjectItems) return ArrayUtil.EMPTY_STRING_ARRAY;
 
-    Set<String> result = new THashSet<String>();
+    Set<String> result = new THashSet<>();
     for (VirtualFile each : getSettingsFiles(project)) {
       result.add(each.getName());
     }
@@ -47,7 +47,7 @@ public class MavenGotoSettingsFileContributor implements ChooseByNameContributor
   public NavigationItem[] getItemsByName(String name, String pattern, Project project, boolean includeNonProjectItems) {
     if (!includeNonProjectItems) return NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY;
 
-    List<NavigationItem> result = new ArrayList<NavigationItem>();
+    List<NavigationItem> result = new ArrayList<>();
     for (VirtualFile each : getSettingsFiles(project)) {
       if (each.getName().equals(name)) {
         PsiFile psiFile = PsiManager.getInstance(project).findFile(each);

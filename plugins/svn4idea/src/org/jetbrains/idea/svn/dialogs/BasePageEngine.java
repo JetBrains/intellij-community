@@ -24,7 +24,7 @@ public class BasePageEngine<T> implements PageEngine<List<T>> {
   private int myIdx;
 
   public BasePageEngine(final List<T> data, final int pageSize) {
-    final CollectionSplitter<T> splitter = new CollectionSplitter<T>(pageSize);
+    final CollectionSplitter<T> splitter = new CollectionSplitter<>(pageSize);
     mySplitData = splitter.split(data);
     myIdx = 0;
   }

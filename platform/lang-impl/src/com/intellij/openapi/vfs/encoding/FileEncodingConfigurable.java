@@ -49,9 +49,9 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Configu
   private JPanel myPanel;
   private JCheckBox myTransparentNativeToAsciiCheckBox;
   private JPanel myPropertiesFilesEncodingCombo;
-  private final Ref<Charset> mySelectedCharsetForPropertiesFiles = new Ref<Charset>();
-  private final Ref<Charset> mySelectedIdeCharset = new Ref<Charset>();           // IDE encoding or null if "System Default"
-  private final Ref<Charset> mySelectedProjectCharset = new Ref<Charset>(); // Project encoding or null if "System Default"
+  private final Ref<Charset> mySelectedCharsetForPropertiesFiles = new Ref<>();
+  private final Ref<Charset> mySelectedIdeCharset = new Ref<>();           // IDE encoding or null if "System Default"
+  private final Ref<Charset> mySelectedProjectCharset = new Ref<>(); // Project encoding or null if "System Default"
   private JLabel myTitleLabel;
   private JPanel myIdeEncodingsListCombo;
   private JPanel myProjectEncodingListCombo;
@@ -140,7 +140,7 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Configu
 
   @NotNull
   static Map<VirtualFile, Charset> getExistingMappingIncludingDefault(@NotNull Project project) {
-    Map<VirtualFile, Charset> existingMapping = new HashMap<VirtualFile, Charset>();
+    Map<VirtualFile, Charset> existingMapping = new HashMap<>();
     EncodingProjectManagerImpl encodingProjectManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(project);
     existingMapping.putAll(encodingProjectManager.getAllMappings());
     existingMapping.put(null, encodingProjectManager.getDefaultCharset());

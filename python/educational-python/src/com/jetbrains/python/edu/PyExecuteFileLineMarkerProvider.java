@@ -41,7 +41,7 @@ public class PyExecuteFileLineMarkerProvider implements LineMarkerProvider {
     final PyExecuteFileExtensionPoint[] extensions =
       ApplicationManager.getApplication().getExtensions(PyExecuteFileExtensionPoint.EP_NAME);
 
-    final List<AnAction> actions = new ArrayList<AnAction>();
+    final List<AnAction> actions = new ArrayList<>();
     final DefaultActionGroup group = new DefaultActionGroup();
     if (PlatformUtils.isPyCharmEducational()) {
       group.add(runAction);
@@ -60,7 +60,7 @@ public class PyExecuteFileLineMarkerProvider implements LineMarkerProvider {
 
     Icon icon = PlatformUtils.isPyCharmEducational() ? AllIcons.Actions.Execute : actions.get(0).getTemplatePresentation().getIcon();
     final LineMarkerInfo<PsiElement> markerInfo = new LineMarkerInfo<PsiElement>(
-      file, file.getTextRange(), icon, Pass.UPDATE_OVERRIDDEN_MARKERS,
+      file, file.getTextRange(), icon, Pass.LINE_MARKERS,
       e -> {
         String text = "Execute '" + e.getContainingFile().getName() + "'";
         return PlatformUtils.isPyCharmEducational() ? text : actions.get(0).getTemplatePresentation().getText();

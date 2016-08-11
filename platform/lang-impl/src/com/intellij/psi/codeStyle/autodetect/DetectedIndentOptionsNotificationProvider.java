@@ -65,7 +65,7 @@ public class DetectedIndentOptionsNotificationProvider extends EditorNotificatio
         Document document = editor.getDocument();
         PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
         PsiFile psiFile = documentManager.getPsiFile(document);
-        final Ref<FileIndentOptionsProvider> indentOptionsProviderRef = new Ref<FileIndentOptionsProvider>();
+        final Ref<FileIndentOptionsProvider> indentOptionsProviderRef = new Ref<>();
         if (psiFile != null) {
           CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
           CommonCodeStyleSettings.IndentOptions userOptions = settings.getIndentOptions(psiFile.getFileType());

@@ -17,7 +17,7 @@ package com.intellij.formatting
 
 import com.intellij.formatting.engine.State
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.formatter.common.AbstractBlock
+import com.intellij.psi.formatter.common.ExtraRangesProvider
 import com.intellij.util.containers.Stack
 
 interface BlockProcessor {
@@ -29,17 +29,23 @@ class AdditionalRangesExtractor(private val info: FormattingRangesInfo) : BlockP
   
   val totalNewRanges = mutableListOf<TextRange>()
 
-  override fun processLeafBlock(block: Block) = Unit
+  override fun processLeafBlock(block: Block) {
+    extractRanges(block)
+  }
 
   override fun processCompositeBlock(block: Block) {
-    if (block is AbstractBlock) {
+    extractRanges(block)
+  }
+
+  private fun extractRanges(block: Block) {
+    if (block is ExtraRangesProvider) {
       val newRanges = block.getExtraRangesToFormat(info)
       if (newRanges != null) {
         totalNewRanges.addAll(newRanges)
       }
     }
   }
-  
+
 }
 
 

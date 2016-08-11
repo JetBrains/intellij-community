@@ -23,6 +23,7 @@ import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.picocontainer.PicoContainer;
 
 /**
  * For old-style components, the contract specifies a lifecycle: the component gets created and notified during the project opening process.
@@ -34,8 +35,7 @@ public class ServiceManager {
   private ServiceManager() { }
 
   public static <T> T getService(@NotNull Class<T> serviceClass) {
-    final Application application = ApplicationManager.getApplication();
-    assert application != null : "Unable to get the Application when requested service " + serviceClass.getSimpleName();
+    Application application = ApplicationManager.getApplication();
     return doGetService(application, serviceClass);
   }
 
@@ -44,8 +44,9 @@ public class ServiceManager {
   }
 
   @Nullable
-  private static <T> T doGetService(@NotNull ComponentManager componentManager, @NotNull Class<T> serviceClass) {
-    @SuppressWarnings("unchecked") T instance = (T)componentManager.getPicoContainer().getComponentInstance(serviceClass.getName());
+  private static <T> T doGetService(ComponentManager componentManager, @NotNull Class<T> serviceClass) {
+    PicoContainer picoContainer = componentManager.getPicoContainer();
+    @SuppressWarnings("unchecked") T instance = (T)picoContainer.getComponentInstance(serviceClass.getName());
     if (instance == null) {
       instance = componentManager.getComponent(serviceClass);
       if (instance != null) {

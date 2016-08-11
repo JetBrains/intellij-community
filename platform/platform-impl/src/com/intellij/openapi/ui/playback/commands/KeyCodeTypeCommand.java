@@ -105,8 +105,8 @@ public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
   }
 
   public static Couple<List<Integer>> parseKeyCodes(String keyCodesText) {
-    List<Integer> codes = new ArrayList<Integer>();
-    List<Integer> modifiers = new ArrayList<Integer>();
+    List<Integer> codes = new ArrayList<>();
+    List<Integer> modifiers = new ArrayList<>();
 
     if (keyCodesText != null) {
       String[] pairs = keyCodesText.split(CODE_DELIMITER);

@@ -150,10 +150,10 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
   @Override
   @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    SettingsEditorGroup<JUnitConfiguration> group = new SettingsEditorGroup<JUnitConfiguration>();
+    SettingsEditorGroup<JUnitConfiguration> group = new SettingsEditorGroup<>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new JUnitConfigurable(getProject()));
     JavaRunConfigurationExtensionManager.getInstance().appendEditors(this, group);
-    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<JUnitConfiguration>());
+    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
     return group;
   }
 
@@ -337,7 +337,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     EnvironmentVariablesComponent.readExternal(element, getPersistentData().getEnvs());
     final Element patternsElement = element.getChild(PATTERNS_EL_NAME);
     if (patternsElement != null) {
-      final LinkedHashSet<String> tests = new LinkedHashSet<String>();
+      final LinkedHashSet<String> tests = new LinkedHashSet<>();
       for (Object o : patternsElement.getChildren(PATTERN_EL_NAME)) {
         Element patternElement = (Element)o;
         tests.add(patternElement.getAttributeValue(TEST_CLASS_ATT_NAME));
@@ -437,7 +437,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
 
   public void bePatternConfiguration(List<PsiClass> classes, PsiMethod method) {
     myData.TEST_OBJECT = TEST_PATTERN;
-    final LinkedHashSet<String> patterns = new LinkedHashSet<String>();
+    final LinkedHashSet<String> patterns = new LinkedHashSet<>();
     final String methodSufiix;
     if (method != null) {
       myData.METHOD_NAME = method.getName();
@@ -504,8 +504,8 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     private String FORK_MODE = "none";
     private int REPEAT_COUNT = 1;
     private String REPEAT_MODE = RepeatCount.ONCE;
-    private LinkedHashSet<String> myPattern = new LinkedHashSet<String>();
-    private Map<String, String> myEnvs = new LinkedHashMap<String, String>();
+    private LinkedHashSet<String> myPattern = new LinkedHashSet<>();
+    private Map<String, String> myEnvs = new LinkedHashMap<>();
     private String myChangeList = "All";
 
     public boolean equals(final Object object) {
@@ -556,7 +556,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
         Data data = (Data)super.clone();
         data.TEST_SEARCH_SCOPE = new TestSearchScope.Wrapper();
         data.setScope(getScope());
-        data.myEnvs = new LinkedHashMap<String, String>(myEnvs);
+        data.myEnvs = new LinkedHashMap<>(myEnvs);
         return data;
       }
       catch (CloneNotSupportedException e) {
@@ -656,7 +656,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     }
 
     public String getPatternPresentation() {
-      final List<String> enabledTests = new ArrayList<String>();
+      final List<String> enabledTests = new ArrayList<>();
       for (String pattern : myPattern) {
         enabledTests.add(pattern);
       }
@@ -664,8 +664,9 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     }
 
     public TestObject getTestObject(@NotNull JUnitConfiguration configuration) {
-      //TODO[dyoma]!
-      return TestObject.fromString(TEST_OBJECT, configuration, ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration).build());
+      final ExecutionEnvironment environment = ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration).build();
+      final TestObject testObject = TestObject.fromString(TEST_OBJECT, configuration, environment);
+      return testObject == null ? new UnknownTestTarget(configuration, environment) : testObject;
     }
 
     public Module setMainClass(final PsiClass testClass) {

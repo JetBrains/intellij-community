@@ -33,7 +33,7 @@ public class IDEARootFormatter implements CvsRootSettingsBuilder<CvsConnectionSe
   }
   
   public CvsConnectionSettings createConfiguration() {
-    return new RootFormatter<CvsConnectionSettings>(this).createConfiguration(myCvsRootConfiguration.getCvsRootAsString(), true);
+    return new RootFormatter<>(this).createConfiguration(myCvsRootConfiguration.getCvsRootAsString(), true);
   }
 
   @Override

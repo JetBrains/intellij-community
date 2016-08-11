@@ -26,7 +26,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public abstract class ErrorReporter {
-  protected final Set<String> ourErrorsSet = new HashSet<String>();
+  protected final Set<String> ourErrorsSet = new HashSet<>();
   protected final ValidateXmlActionHandler myHandler;
 
   public ErrorReporter(ValidateXmlActionHandler handler) {

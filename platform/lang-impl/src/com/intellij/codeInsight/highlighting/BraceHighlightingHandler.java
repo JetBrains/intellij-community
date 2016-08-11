@@ -522,7 +522,7 @@ public class BraceHighlightingHandler {
     Editor editor = myEditor instanceof EditorWindow ? ((EditorWindow)myEditor).getDelegate() : myEditor;
     List<RangeHighlighter> highlighters = editor.getUserData(BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY);
     if (highlighters == null) {
-      highlighters = new ArrayList<RangeHighlighter>();
+      highlighters = new ArrayList<>();
       editor.putUserData(BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY, highlighters);
     }
     return highlighters;

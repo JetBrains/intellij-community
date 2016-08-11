@@ -46,7 +46,7 @@ public abstract class IntentionSettingsTree {
   private CheckboxTree myTree;
   private FilterComponent myFilter;
 
-  private final Map<IntentionActionMetaData, Boolean> myIntentionToCheckStatus = new HashMap<IntentionActionMetaData, Boolean>();
+  private final Map<IntentionActionMetaData, Boolean> myIntentionToCheckStatus = new HashMap<>();
   private JPanel myNorthPanel;
 
   protected IntentionSettingsTree() {
@@ -172,7 +172,7 @@ public abstract class IntentionSettingsTree {
   }
 
   private static List<IntentionActionMetaData> sort(final List<IntentionActionMetaData> intentionsToShow) {
-    List<IntentionActionMetaData> copy = new ArrayList<IntentionActionMetaData>(intentionsToShow);
+    List<IntentionActionMetaData> copy = new ArrayList<>(intentionsToShow);
     Collections.sort(copy, (data1, data2) -> {
       String[] category1 = data1.myCategory;
       String[] category2 = data2.myCategory;
@@ -213,7 +213,7 @@ public abstract class IntentionSettingsTree {
   }
 
   private static CheckedTreeNode findChild(CheckedTreeNode node, final String name) {
-    final Ref<CheckedTreeNode> found = new Ref<CheckedTreeNode>();
+    final Ref<CheckedTreeNode> found = new Ref<>();
     visitChildren(node, new CheckedNodeVisitor() {
       @Override
       public void visit(CheckedTreeNode node) {
@@ -227,7 +227,7 @@ public abstract class IntentionSettingsTree {
   }
 
   private static CheckedTreeNode findChildRecursively(CheckedTreeNode node, final String name) {
-    final Ref<CheckedTreeNode> found = new Ref<CheckedTreeNode>();
+    final Ref<CheckedTreeNode> found = new Ref<>();
     visitChildren(node, new CheckedNodeVisitor() {
       @Override
       public void visit(CheckedTreeNode node) {

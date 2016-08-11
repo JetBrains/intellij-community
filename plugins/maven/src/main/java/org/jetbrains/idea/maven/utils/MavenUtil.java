@@ -237,7 +237,7 @@ public class MavenUtil {
   }
 
   public static <T, U> List<T> collectFirsts(List<Pair<T, U>> pairs) {
-    List<T> result = new ArrayList<T>(pairs.size());
+    List<T> result = new ArrayList<>(pairs.size());
     for (Pair<T, ?> each : pairs) {
       result.add(each.first);
     }
@@ -245,7 +245,7 @@ public class MavenUtil {
   }
 
   public static <T, U> List<U> collectSeconds(List<Pair<T, U>> pairs) {
-    List<U> result = new ArrayList<U>(pairs.size());
+    List<U> result = new ArrayList<>(pairs.size());
     for (Pair<T, U> each : pairs) {
       result.add(each.second);
     }
@@ -265,7 +265,7 @@ public class MavenUtil {
   }
 
   private static <T> Collection<T> toSet(final Collection<T> collection) {
-    return (collection instanceof Set ? collection : new THashSet<T>(collection));
+    return (collection instanceof Set ? collection : new THashSet<>(collection));
   }
 
   public static <T, U> List<Pair<T, U>> mapToList(Map<T, U> map) {
@@ -746,7 +746,7 @@ public class MavenUtil {
   }
 
   public static List<LookupElement> getPhaseVariants(MavenProjectsManager manager) {
-    Set<String> goals = new HashSet<String>();
+    Set<String> goals = new HashSet<>();
     goals.addAll(MavenConstants.PHASES);
 
     for (MavenProject mavenProject : manager.getProjects()) {
@@ -760,7 +760,7 @@ public class MavenUtil {
       }
     }
 
-    List<LookupElement> res = new ArrayList<LookupElement>(goals.size());
+    List<LookupElement> res = new ArrayList<>(goals.size());
     for (String goal : goals) {
       res.add(LookupElementBuilder.create(goal).withIcon(MavenIcons.Phase));
     }

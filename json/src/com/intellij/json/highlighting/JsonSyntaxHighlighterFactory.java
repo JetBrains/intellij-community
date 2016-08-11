@@ -55,7 +55,7 @@ public class JsonSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
   }
 
   private static class MyHighlighter extends SyntaxHighlighterBase {
-    private static final Map<IElementType, TextAttributesKey> ourAttributes = new HashMap<IElementType, TextAttributesKey>();
+    private static final Map<IElementType, TextAttributesKey> ourAttributes = new HashMap<>();
 
     static {
       fillMap(ourAttributes, JSON_BRACES, JsonElementTypes.L_CURLY, JsonElementTypes.R_CURLY);

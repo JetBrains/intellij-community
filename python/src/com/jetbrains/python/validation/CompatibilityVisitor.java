@@ -381,7 +381,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyWithStatement(PyWithStatement node) {
     super.visitPyWithStatement(node);
-    Set<PyWithItem> problemItems = new HashSet<PyWithItem>();
+    Set<PyWithItem> problemItems = new HashSet<>();
     StringBuilder message = new StringBuilder(myCommonMessage);
     for (int i = 0; i != myVersionsToProcess.size(); ++i) {
       LanguageLevel languageLevel = myVersionsToProcess.get(i);
@@ -464,7 +464,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     if (myVersionsToProcess.contains(LanguageLevel.PYTHON24)) {
       PyExpression assignedValue = node.getAssignedValue();
 
-      Stack<PsiElement> st = new Stack<PsiElement>();           // PY-2796
+      Stack<PsiElement> st = new Stack<>();           // PY-2796
       if (assignedValue != null)
         st.push(assignedValue);
       while (!st.isEmpty()) {
@@ -725,7 +725,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   private void highlightIncorrectArguments(@NotNull PyCallExpression callExpression) {
-    final Set<String> keywordArgumentNames = new HashSet<String>();
+    final Set<String> keywordArgumentNames = new HashSet<>();
     boolean seenKeywordArgument = false;
     boolean seenKeywordContainer = false;
     boolean seenPositionalContainer = false;

@@ -44,7 +44,7 @@ import java.util.Map;
  */
 public abstract class BasicDomElementComponent<T extends DomElement> extends AbstractDomElementComponent<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.ui.editors.BasicDomElementComponent");
-  private final Map<JComponent, DomUIControl> myBoundComponents = new HashMap<JComponent, DomUIControl>();
+  private final Map<JComponent, DomUIControl> myBoundComponents = new HashMap<>();
 
   public BasicDomElementComponent(T domElement) {
     super(domElement);

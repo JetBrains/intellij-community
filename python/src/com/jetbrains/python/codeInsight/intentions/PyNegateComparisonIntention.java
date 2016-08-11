@@ -37,8 +37,8 @@ import java.util.Map;
  * Time:   17:58:56
  */
 public class PyNegateComparisonIntention extends BaseIntentionAction {
-  private static final Map<PyElementType, String> comparisonStrings = new HashMap<PyElementType, String>(7);
-  private static final Map<PyElementType, PyElementType> invertedComparasions = new HashMap<PyElementType, PyElementType>(7);
+  private static final Map<PyElementType, String> comparisonStrings = new HashMap<>(7);
+  private static final Map<PyElementType, PyElementType> invertedComparasions = new HashMap<>(7);
 
   static {
     comparisonStrings.put(PyTokenTypes.LT, "<");

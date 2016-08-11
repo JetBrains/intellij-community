@@ -93,7 +93,7 @@ public class JsonSchemaDefinitionResolver {
               ref.set(resolveByPath(definitionAddress));
               if (!ref.isNull()) return;
             }
-            List<JsonSchemaObject> list = new ArrayList<JsonSchemaObject>();
+            List<JsonSchemaObject> list = new ArrayList<>();
             if (schema.getAllOf() != null) list.addAll(schema.getAllOf());
             if (schema.getAnyOf() != null) list.addAll(schema.getAnyOf());
             if (schema.getOneOf() != null) list.addAll(schema.getOneOf());

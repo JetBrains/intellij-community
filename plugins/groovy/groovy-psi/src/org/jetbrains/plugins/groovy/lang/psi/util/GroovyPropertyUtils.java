@@ -135,7 +135,7 @@ public class GroovyPropertyUtils {
       methods = aClass.getMethods();
     }
 
-    List<PsiMethod> result = new ArrayList<PsiMethod>();
+    List<PsiMethod> result = new ArrayList<>();
     for (PsiMethod method : methods) {
       if (method.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
 
@@ -160,7 +160,7 @@ public class GroovyPropertyUtils {
       methods = aClass.getMethods();
     }
 
-    List<PsiMethod> result = new ArrayList<PsiMethod>();
+    List<PsiMethod> result = new ArrayList<>();
     for (PsiMethod method : methods) {
       if (method.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
 
@@ -473,7 +473,7 @@ public class GroovyPropertyUtils {
   }
 
   public static List<GrAccessorMethod> getFieldAccessors(GrField field) {
-    List<GrAccessorMethod> accessors = new ArrayList<GrAccessorMethod>();
+    List<GrAccessorMethod> accessors = new ArrayList<>();
     final GrAccessorMethod[] getters = field.getGetters();
     Collections.addAll(accessors, getters);
     final GrAccessorMethod setter = field.getSetter();

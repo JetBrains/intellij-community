@@ -68,10 +68,10 @@ public final class SpellingPopupActionGroup extends ActionGroup {
     Editor editor = e.getData(LangDataKeys.EDITOR);
     if (psiFile != null && project != null && editor != null) {
       List<HighlightInfo.IntentionActionDescriptor> quickFixes = ShowIntentionsPass.getAvailableActions(editor, psiFile, -1);
-      Map<Anchor, List<AnAction>> children = new HashMap<Anchor, List<AnAction>>();
-      ArrayList<AnAction> first = new ArrayList<AnAction>();
+      Map<Anchor, List<AnAction>> children = new HashMap<>();
+      ArrayList<AnAction> first = new ArrayList<>();
       children.put(Anchor.FIRST, first);
-      ArrayList<AnAction> last = new ArrayList<AnAction>();
+      ArrayList<AnAction> last = new ArrayList<>();
       children.put(Anchor.LAST, last);
       extractActions(quickFixes, children);
       if (first.size() > 0 && last.size() > 0) {

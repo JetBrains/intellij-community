@@ -56,8 +56,8 @@ public class SSBasedInspection extends LocalInspectionTool {
   private static final Object LOCK = new Object(); // hack to avoid race conditions in SSR
 
   static final String SHORT_NAME = "SSBasedInspection";
-  private final List<Configuration> myConfigurations = new ArrayList<Configuration>();
-  private final Set<String> myProblemsReported = new HashSet<String>(1);
+  private final List<Configuration> myConfigurations = new ArrayList<>();
+  private final Set<String> myProblemsReported = new HashSet<>(1);
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
@@ -68,7 +68,7 @@ public class SSBasedInspection extends LocalInspectionTool {
   public void readSettings(@NotNull Element node) throws InvalidDataException {
     myProblemsReported.clear();
     myConfigurations.clear();
-    ConfigurationManager.readConfigurations(node, myConfigurations, new ArrayList<Configuration>());
+    ConfigurationManager.readConfigurations(node, myConfigurations, new ArrayList<>());
   }
 
   @Override

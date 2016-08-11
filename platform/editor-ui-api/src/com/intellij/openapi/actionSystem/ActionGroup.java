@@ -139,7 +139,7 @@ public abstract class ActionGroup extends AnAction {
       }
     } else {
       if (mySecondaryActions == null) {
-        mySecondaryActions = new HashSet<AnAction>();
+        mySecondaryActions = new HashSet<>();
       }
 
       mySecondaryActions.add(action);

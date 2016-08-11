@@ -35,7 +35,7 @@ import java.util.Collection;
 public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvider{
   private final SmartPsiElementPointer mySuperClassPointer;
   private final OwnershipType myOverrides;
-  private final Collection<TreeElement> myChildren = new ArrayList<TreeElement>();
+  private final Collection<TreeElement> myChildren = new ArrayList<>();
 
   public static enum OwnershipType {
     IMPLEMENTS,

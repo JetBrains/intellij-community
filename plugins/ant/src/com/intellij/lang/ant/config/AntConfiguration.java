@@ -40,7 +40,7 @@ public abstract class AntConfiguration extends SimpleModificationTracker {
     return ServiceManager.getService(project, AntConfiguration.class);
   }
 
-  private static final Key<Boolean> ANT_SUPPORT_INITIALIZED_KEY = new Key<Boolean>("AntSupportInitialized");
+  private static final Key<Boolean> ANT_SUPPORT_INITIALIZED_KEY = new Key<>("AntSupportInitialized");
   public static void initAntSupport(final Project project) {
     if (!Boolean.TRUE.equals(project.getUserData(ANT_SUPPORT_INITIALIZED_KEY))) {
       ServiceManager.getService(project, AntConfiguration.class);

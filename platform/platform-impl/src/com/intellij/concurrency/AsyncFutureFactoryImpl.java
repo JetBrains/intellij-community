@@ -27,6 +27,6 @@ public class AsyncFutureFactoryImpl extends AsyncFutureFactory {
   @NotNull
   @Override
   public <V> AsyncFutureResult<V> createAsyncFutureResult() {
-    return new AsyncFutureResultImpl<V>();
+    return new AsyncFutureResultImpl<>();
   }
 }

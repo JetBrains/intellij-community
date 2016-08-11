@@ -52,7 +52,7 @@ public class VelocityHelper
           if (virtualFile != null) {
             final CopyrightVariablesProvider variablesProvider = CopyrightVariablesProviders.INSTANCE.forFileType(virtualFile.getFileType());
             if (variablesProvider != null) {
-              final Map<String, Object> context = new HashMap<String, Object>();
+              final Map<String, Object> context = new HashMap<>();
               variablesProvider.collectVariables(context, project, module, file);
               for (Map.Entry<String, Object> entry : context.entrySet()) {
                 vc.put(entry.getKey(), entry.getValue());

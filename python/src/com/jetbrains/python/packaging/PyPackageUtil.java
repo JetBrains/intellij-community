@@ -204,7 +204,7 @@ public class PyPackageUtil {
   @NotNull
   public static List<String> getPackageNames(@NotNull Module module) {
     // TODO: Cache found module packages, clear cache on module updates
-    final List<String> packageNames = new ArrayList<String>();
+    final List<String> packageNames = new ArrayList<>();
     final Project project = module.getProject();
     VirtualFile[] roots = ModuleRootManager.getInstance(module).getSourceRoots();
     if (roots.length == 0) {
@@ -223,7 +223,7 @@ public class PyPackageUtil {
 
   @Nullable
   public static PyCallExpression findSetupCall(@NotNull PyFile file) {
-    final Ref<PyCallExpression> result = new Ref<PyCallExpression>(null);
+    final Ref<PyCallExpression> result = new Ref<>(null);
     file.acceptChildren(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyCallExpression(PyCallExpression node) {
@@ -282,6 +282,7 @@ public class PyPackageUtil {
   @Nullable
   public static List<PyPackage> refreshAndGetPackagesModally(@NotNull Sdk sdk) {
     final Ref<List<PyPackage>> packagesRef = Ref.create();
+    @SuppressWarnings("ThrowableInstanceNeverThrown") final Throwable callStacktrace = new Throwable();
     LOG.debug("Showing modal progress for collecting installed packages", new Throwable());
     PyUtil.runWithProgress(null, PyBundle.message("sdk.scanning.installed.packages"), true, false, indicator -> {
       indicator.setIndeterminate(true);
@@ -289,7 +290,13 @@ public class PyPackageUtil {
         packagesRef.set(PyPackageManager.getInstance(sdk).refreshAndGetPackages(false));
       }
       catch (ExecutionException e) {
-        LOG.warn(e);
+        if (LOG.isDebugEnabled()) {
+          e.initCause(callStacktrace);
+          LOG.debug(e);
+        }
+        else {
+          LOG.warn(e.getMessage());
+        }
       }
     });
     return packagesRef.get();

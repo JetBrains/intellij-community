@@ -112,6 +112,7 @@ public class ChangeContextUtil {
     }
   }
 
+  @NotNull
   public static PsiElement decodeContextInfo(@NotNull PsiElement scope,
                                              @Nullable PsiClass thisClass,
                                              @Nullable PsiExpression thisAccessExpr) throws IncorrectOperationException {

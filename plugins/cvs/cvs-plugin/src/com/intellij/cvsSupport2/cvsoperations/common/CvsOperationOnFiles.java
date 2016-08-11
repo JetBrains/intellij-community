@@ -34,7 +34,7 @@ import java.util.Collection;
 import java.util.Map;
 
 public abstract class CvsOperationOnFiles extends CvsCommandOperation {
-  protected Collection<File> myFiles = new ArrayList<File>();
+  protected Collection<File> myFiles = new ArrayList<>();
   private Map<CvsRootProvider, ArrayList<File>> myRootsToFiles;
 
   public CvsOperationOnFiles(IAdminReader reader) {
@@ -114,14 +114,14 @@ public abstract class CvsOperationOnFiles extends CvsCommandOperation {
   }
 
   private Map<CvsRootProvider, ArrayList<File>> buildRootsToFilesMap() throws CannotFindCvsRootException {
-    HashMap<CvsRootProvider,ArrayList<File>> result = new HashMap<CvsRootProvider, ArrayList<File>>();
+    HashMap<CvsRootProvider,ArrayList<File>> result = new HashMap<>();
     for (File file : myFiles) {
       CvsRootProvider cvsRoot = CvsRootProvider.createOn(file);
       if (cvsRoot == null) {
         throw new CannotFindCvsRootException(file);
       }
       else {
-        if (!result.containsKey(cvsRoot)) result.put(cvsRoot, new ArrayList<File>());
+        if (!result.containsKey(cvsRoot)) result.put(cvsRoot, new ArrayList<>());
         (result.get(cvsRoot)).add(file);
       }
     }

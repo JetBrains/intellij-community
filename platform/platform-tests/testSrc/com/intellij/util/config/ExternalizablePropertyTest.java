@@ -29,7 +29,7 @@ import java.util.List;
 public class ExternalizablePropertyTest extends TestCase {
   private final ExternalizablePropertyContainer myContainer = new ExternalizablePropertyContainer();
   private static final ListProperty<MockJDOMExternalizable> PROPERTY =
-    new ListProperty<MockJDOMExternalizable>("list");
+    new ListProperty<>("list");
   private final Assertion CHECK = new Assertion();
   private static final Externalizer.FactoryBased<MockJDOMExternalizable> EXTERNALIZER = Externalizer.FactoryBased.create(NewInstanceFactory.fromClass(MockJDOMExternalizable.class));
 

@@ -41,9 +41,9 @@ public class MavenEmbeddersManager {
 
   private final Project myProject;
 
-  private final Map<Key, MavenEmbedderWrapper> myPool = new SoftValueHashMap<Key, MavenEmbedderWrapper>();
-  private final Set<MavenEmbedderWrapper> myEmbeddersInUse = new THashSet<MavenEmbedderWrapper>();
-  private final Set<MavenEmbedderWrapper> myEmbeddersToClear = new THashSet<MavenEmbedderWrapper>();
+  private final Map<Key, MavenEmbedderWrapper> myPool = new SoftValueHashMap<>();
+  private final Set<MavenEmbedderWrapper> myEmbeddersInUse = new THashSet<>();
+  private final Set<MavenEmbedderWrapper> myEmbeddersToClear = new THashSet<>();
 
   public MavenEmbeddersManager(Project project) {
     myProject = project;

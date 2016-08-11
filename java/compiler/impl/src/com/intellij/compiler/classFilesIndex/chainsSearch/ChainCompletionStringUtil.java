@@ -58,8 +58,8 @@ public final class ChainCompletionStringUtil {
     return nameWithoutArraySign;
   }
 
-  private static final Set<String> PRIMITIVES_NAMES = new HashSet<String>();
-  private static final Set<String> PRIMITIVES_SHORT_NAMES = new HashSet<String>();
+  private static final Set<String> PRIMITIVES_NAMES = new HashSet<>();
+  private static final Set<String> PRIMITIVES_SHORT_NAMES = new HashSet<>();
 
   static {
     fillPrimitivesNames(PsiType.BOOLEAN);

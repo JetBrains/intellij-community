@@ -156,7 +156,7 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
     }
 
     static class VariantsProcessor extends VariableProcessor {
-        private final List<XsltVariable> myNames = new ArrayList<XsltVariable>();
+        private final List<XsltVariable> myNames = new ArrayList<>();
 
         public VariantsProcessor(XmlTag context) {
             super(context);

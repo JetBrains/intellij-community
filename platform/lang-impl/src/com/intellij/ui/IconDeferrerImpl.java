@@ -86,13 +86,13 @@ public class IconDeferrerImpl extends IconDeferrer {
       Icon result = myIconsCache.get(param);
       if (result == null) {
         final long started = myLastClearTimestamp;
-        result = new DeferredIconImpl<T>(base, param, evaluator, new DeferredIconImpl.IconListener<T>() {
+        result = new DeferredIconImpl<>(base, param, evaluator, new DeferredIconImpl.IconListener<T>() {
           @Override
           public void evalDone(DeferredIconImpl<T> source, T key, @NotNull Icon r) {
             synchronized (LOCK) {
               // check if our results is not outdated yet
               if (started == myLastClearTimestamp) {
-                myIconsCache.put(key, autoUpdatable ? source: r);
+                myIconsCache.put(key, autoUpdatable ? source : r);
               }
             }
           }

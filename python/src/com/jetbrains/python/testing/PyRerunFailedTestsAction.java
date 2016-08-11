@@ -78,7 +78,7 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
       // If configuration wants to take care about rerun itself
       if (configuration instanceof TestRunConfigurationReRunResponsible) {
         // TODO: Extract method
-        final Set<PsiElement> failedTestElements = new HashSet<PsiElement>();
+        final Set<PsiElement> failedTestElements = new HashSet<>();
         for (final AbstractTestProxy proxy : getFailedTests(getProject())) {
           final Location<?> location = proxy.getLocation(getProject(), GlobalSearchScope.allScope(getProject()));
           if (location != null) {
@@ -122,7 +122,7 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
     @NotNull
     @Override
     protected List<String> getTestSpecs() {
-      List<String> specs = new ArrayList<String>();
+      List<String> specs = new ArrayList<>();
       List<AbstractTestProxy> failedTests = getFailedTests(myProject);
       for (AbstractTestProxy failedTest : failedTests) {
         if (failedTest.isLeaf()) {

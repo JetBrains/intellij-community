@@ -75,7 +75,7 @@ public class LoginPerformer {
   public static ThreeState checkLoginWorker(final CvsLoginWorker worker, final boolean forceCheckParam)
     throws AuthenticationException {
     boolean forceCheck = forceCheckParam;
-    final Ref<Boolean> promptResult = new Ref<Boolean>();
+    final Ref<Boolean> promptResult = new Ref<>();
     final Runnable prompt = () -> promptResult.set(worker.promptForPassword());
     while (true) {
       final ThreeState state = worker.silentLogin(forceCheck);

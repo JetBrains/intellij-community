@@ -32,7 +32,7 @@ import java.util.Map;
 public class ListPopupModel extends AbstractListModel {
 
   private final List<Object> myOriginalList;
-  private final List<Object> myFilteredList = new ArrayList<Object>();
+  private final List<Object> myFilteredList = new ArrayList<>();
 
   private final ElementFilter myFilter;
   private final ListPopupStep myStep;
@@ -40,13 +40,13 @@ public class ListPopupModel extends AbstractListModel {
   private int myFullMatchIndex = -1;
   private int myStartsWithIndex = -1;
   private final SpeedSearch mySpeedSearch;
-  private final Map<Object, ListSeparator> mySeparators = new HashMap<Object, ListSeparator>();
+  private final Map<Object, ListSeparator> mySeparators = new HashMap<>();
 
   public ListPopupModel(ElementFilter filter, SpeedSearch speedSearch, ListPopupStep step) {
     myFilter = filter;
     myStep = step;
     mySpeedSearch = speedSearch;
-    myOriginalList = new ArrayList<Object>(step.getValues());
+    myOriginalList = new ArrayList<>(step.getValues());
     rebuildLists();
   }
 

@@ -148,7 +148,7 @@ public enum LanguageLevel {
     return getDefault();
   }
 
-  public static final Key<LanguageLevel> KEY = new Key<LanguageLevel>("python.language.level");
+  public static final Key<LanguageLevel> KEY = new Key<>("python.language.level");
 
   @NotNull
   public static LanguageLevel forElement(@NotNull PsiElement element) {

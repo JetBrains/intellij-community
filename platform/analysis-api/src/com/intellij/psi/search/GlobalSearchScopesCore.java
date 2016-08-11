@@ -371,7 +371,7 @@ public class GlobalSearchScopesCore {
       }
       if (scope instanceof DirectoriesScope) {
         DirectoriesScope other = (DirectoriesScope)scope;
-        List<VirtualFile> newDirectories = new ArrayList<VirtualFile>(myDirectories.length + other.myDirectories.length);
+        List<VirtualFile> newDirectories = new ArrayList<>(myDirectories.length + other.myDirectories.length);
         newDirectories.addAll(Arrays.asList(other.myDirectories));
         BitSet newWithSubdirectories = (BitSet)myWithSubdirectories.clone();
         VirtualFile[] directories = other.myDirectories;

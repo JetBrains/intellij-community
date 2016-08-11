@@ -46,7 +46,7 @@ public class WizardDialog<T extends WizardModel> extends DialogWrapper implement
 
   private JPanel myStepContent;
   private CardLayout myCardLayout;
-  private final Map<WizardStep, String> myStepCardNames = new HashMap<WizardStep, String>();
+  private final Map<WizardStep, String> myStepCardNames = new HashMap<>();
 
   public WizardDialog(Project project, boolean canBeParent, T model) {
     super(project, canBeParent);

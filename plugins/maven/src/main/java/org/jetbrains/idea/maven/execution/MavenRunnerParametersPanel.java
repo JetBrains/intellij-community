@@ -123,7 +123,7 @@ public class MavenRunnerParametersPanel implements PanelWithAnchor {
     data.setGoals(ParametersListUtil.parse(goalsComponent.getComponent().getText()));
     data.setResolveToWorkspace(myResolveToWorkspaceCheckBox.isSelected());
 
-    Map<String, Boolean> profilesMap = new LinkedHashMap<String, Boolean>();
+    Map<String, Boolean> profilesMap = new LinkedHashMap<>();
 
     List<String> profiles = ParametersListUtil.parse(profilesComponent.getComponent().getText());
 

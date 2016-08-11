@@ -66,8 +66,8 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
 
   private static final String uiClassID = "IdeStatusBarUI";
 
-  private final Map<String, WidgetBean> myWidgetMap = new HashMap<String, WidgetBean>();
-  private final List<String> myOrderedWidgets = new ArrayList<String>();
+  private final Map<String, WidgetBean> myWidgetMap = new HashMap<>();
+  private final List<String> myOrderedWidgets = new ArrayList<>();
 
   private JPanel myLeftPanel;
   private JPanel myRightPanel;
@@ -76,9 +76,9 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   private String myInfo;
   private String myRequestor;
 
-  private final List<String> myCustomComponentIds = new ArrayList<String>();
+  private final List<String> myCustomComponentIds = new ArrayList<>();
 
-  private final Set<IdeStatusBarImpl> myChildren = new HashSet<IdeStatusBarImpl>();
+  private final Set<IdeStatusBarImpl> myChildren = new HashSet<>();
   //private ToolWindowsWidget myToolWindowWidget;
 
   private static class WidgetBean {

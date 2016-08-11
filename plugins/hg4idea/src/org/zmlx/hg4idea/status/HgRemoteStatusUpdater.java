@@ -112,7 +112,7 @@ public class HgRemoteStatusUpdater implements HgUpdater {
 
   private void updateChangesStatusSynchronously(Project project, VirtualFile[] roots, HgChangesetStatus status, boolean incoming) {
     if (!myProjectSettings.isCheckIncomingOutgoing()) return;
-    final List<HgRevisionNumber> changesets = new LinkedList<HgRevisionNumber>();
+    final List<HgRevisionNumber> changesets = new LinkedList<>();
     for (VirtualFile root : roots) {
       if (incoming) {
         changesets.addAll(new HgIncomingCommand(project).executeInCurrentThread(root));

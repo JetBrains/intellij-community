@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class DeploymentLogManagerImpl implements DeploymentLogManager {
   private final LoggingHandlerImpl myMainLoggingHandler;
   private final Project myProject;
-  private final List<LoggingHandlerBase> myAdditionalLoggingHandlers = new ArrayList<LoggingHandlerBase>();
+  private final List<LoggingHandlerBase> myAdditionalLoggingHandlers = new ArrayList<>();
   private final Runnable myChangeListener;
 
   private final AtomicBoolean myLogsDisposed = new AtomicBoolean(false);
@@ -112,7 +112,7 @@ public class DeploymentLogManagerImpl implements DeploymentLogManager {
   public List<LoggingHandlerBase> getAdditionalLoggingHandlers() {
     List<LoggingHandlerBase> result;
     synchronized (myAdditionalLoggingHandlers) {
-      result = new ArrayList<LoggingHandlerBase>(myAdditionalLoggingHandlers);
+      result = new ArrayList<>(myAdditionalLoggingHandlers);
     }
     return result;
   }

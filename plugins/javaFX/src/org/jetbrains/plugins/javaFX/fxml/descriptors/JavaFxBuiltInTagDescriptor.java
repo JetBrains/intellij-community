@@ -76,7 +76,7 @@ public class JavaFxBuiltInTagDescriptor implements XmlElementDescriptor, Validat
 
   @Override
   public XmlAttributeDescriptor[] getAttributesDescriptors(@Nullable XmlTag context) {
-    final List<XmlAttributeDescriptor> descriptors = new ArrayList<XmlAttributeDescriptor>();
+    final List<XmlAttributeDescriptor> descriptors = new ArrayList<>();
     final List<String> builtInAttributeNames = FxmlConstants.FX_BUILT_IN_TAG_SUPPORTED_ATTRIBUTES.get(getName());
     if (builtInAttributeNames != null) {
       for (String attrName : builtInAttributeNames) {

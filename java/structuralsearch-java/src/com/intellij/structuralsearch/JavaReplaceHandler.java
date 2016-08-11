@@ -484,7 +484,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     final int elementOffset = affectedElement.getTextOffset();
     final int finalStartOffset = startOffset + elementOffset;
     final int finalEndOffset = endOffset + elementOffset;
-    final List<PsiJavaCodeReferenceElement> references = new ArrayList<PsiJavaCodeReferenceElement>();
+    final List<PsiJavaCodeReferenceElement> references = new ArrayList<>();
     final JavaRecursiveElementVisitor collector = new JavaRecursiveElementVisitor() {
       @Override
       public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
@@ -548,7 +548,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
   }
 
   private static class Collector extends JavaRecursiveElementWalkingVisitor {
-    private final HashMap<String, PsiNamedElement> namedElements = new HashMap<String, PsiNamedElement>(1);
+    private final HashMap<String, PsiNamedElement> namedElements = new HashMap<>(1);
 
     public static  Map<String, PsiNamedElement> collectNamedElements(PsiElement context) {
       final Collector collector = new Collector();

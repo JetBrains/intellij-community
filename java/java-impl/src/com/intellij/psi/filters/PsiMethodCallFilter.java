@@ -30,7 +30,7 @@ public class PsiMethodCallFilter implements ElementFilter {
 
   public PsiMethodCallFilter(@NonNls final String className, @NonNls final String... methodNames) {
     myClassName = className;
-    myMethodNames = new HashSet<String>(Arrays.asList(methodNames));
+    myMethodNames = new HashSet<>(Arrays.asList(methodNames));
   }
 
   @Override

@@ -53,7 +53,7 @@ public class TestClientRunner {
                                  @Nullable String stdin,
                                  @Nullable final File workingDir,
                                  String... commandLine) throws IOException {
-    final List<String> arguments = new ArrayList<String>();
+    final List<String> arguments = new ArrayList<>();
 
     final File client = new File(myClientBinaryPath, SystemInfo.isWindows ? exeName + ".exe" : exeName);
     if (client.exists()) {

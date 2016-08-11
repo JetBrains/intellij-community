@@ -41,7 +41,7 @@ public class MethodDescriptor {
 
     if (parenth > 1) {
       String parameters = descriptor.substring(1, parenth);
-      List<String> lst = new ArrayList<String>();
+      List<String> lst = new ArrayList<>();
 
       int indexFrom = -1, ind, len = parameters.length(), index = 0;
       while (index < len) {

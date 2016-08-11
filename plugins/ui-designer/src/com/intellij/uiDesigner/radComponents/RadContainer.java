@@ -90,7 +90,7 @@ public class RadContainer extends RadComponent implements IContainer {
   public RadContainer(final ModuleProvider module, final Class aClass, final String id) {
     super(module, aClass, id);
 
-    myComponents = new ArrayList<RadComponent>();
+    myComponents = new ArrayList<>();
 
     // By default container doesn't have any special border
     setBorderType(BorderType.NONE);

@@ -69,7 +69,7 @@ public class ApplyIntentionAction extends AnAction {
     ApplicationManager.getApplication().runReadAction(() -> ShowIntentionsPass.getActionsToShow(editor, file, info, -1));
     if (info.isEmpty()) return null;
 
-    final List<HighlightInfo.IntentionActionDescriptor> actions = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
+    final List<HighlightInfo.IntentionActionDescriptor> actions = new ArrayList<>();
     actions.addAll(info.errorFixesToShow);
     actions.addAll(info.inspectionFixesToShow);
     actions.addAll(info.intentionsToShow);

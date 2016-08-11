@@ -80,7 +80,7 @@ public class UpdateJavaFileCopyright extends UpdatePsiFileCopyright
 
         if (topclass != null)
         {
-            final List<PsiComment> comments = new ArrayList<PsiComment>();
+            final List<PsiComment> comments = new ArrayList<>();
             collectComments(first, topclass, comments);
             collectComments(topclass.getFirstChild(), topclass.getModifierList(), comments);
           checkCommentsForTopClass(topclass, location, comments);

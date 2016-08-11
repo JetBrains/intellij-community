@@ -50,7 +50,7 @@ public class StructuralSearchUtil {
 
   private static StructuralSearchProfile[] getNewStyleProfiles() {
     if (ourNewStyleProfiles == null) {
-      final List<StructuralSearchProfile> list = new ArrayList<StructuralSearchProfile>();
+      final List<StructuralSearchProfile> list = new ArrayList<>();
 
       for (StructuralSearchProfile profile : StructuralSearchProfile.EP_NAME.getExtensions()) {
         if (profile instanceof StructuralSearchProfileBase) {
@@ -111,7 +111,7 @@ public class StructuralSearchUtil {
 
   @NotNull
   public static FileType[] getSuitableFileTypes() {
-    Set<FileType> allFileTypes = new HashSet<FileType>();
+    Set<FileType> allFileTypes = new HashSet<>();
     Collections.addAll(allFileTypes, FileTypeManager.getInstance().getRegisteredFileTypes());
     for (Language language : Language.getRegisteredLanguages()) {
       FileType fileType = language.getAssociatedFileType();
@@ -120,7 +120,7 @@ public class StructuralSearchUtil {
       }
     }
 
-    List<FileType> result = new ArrayList<FileType>();
+    List<FileType> result = new ArrayList<>();
     for (FileType fileType : allFileTypes) {
       if (fileType instanceof LanguageFileType) {
         result.add(fileType);
@@ -145,7 +145,7 @@ public class StructuralSearchUtil {
 
   public static List<Configuration> getPredefinedTemplates() {
     if (ourPredefinedConfigurations == null) {
-      final List<Configuration> result = new ArrayList<Configuration>();
+      final List<Configuration> result = new ArrayList<>();
       for (StructuralSearchProfile profile : getProfiles()) {
         Collections.addAll(result, profile.getPredefinedTemplates());
       }

@@ -78,7 +78,7 @@ public class DependenciesUsagesPanel extends UsagesPanel {
               elementsToSearch = searchFor;
               usages = FindDependencyUtil.findDependencies(myBuilders, searchIn, searchFor);
             }
-            assert !new HashSet<PsiFile>(elementsToSearch).contains(null);
+            assert !new HashSet<>(elementsToSearch).contains(null);
           }
           catch (ProcessCanceledException e) {
           }

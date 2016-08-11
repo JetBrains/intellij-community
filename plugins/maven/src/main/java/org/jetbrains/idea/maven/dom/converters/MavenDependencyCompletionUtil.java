@@ -40,7 +40,7 @@ public class MavenDependencyCompletionUtil {
   public static MavenDomDependency findManagedDependency(MavenDomProjectModel domModel, Project project,
     @NotNull final String groupId, @NotNull final String artifactId) {
 
-    final Ref<MavenDomDependency> ref = new Ref<MavenDomDependency>();
+    final Ref<MavenDomDependency> ref = new Ref<>();
 
     MavenDomProjectProcessorUtils.processDependenciesInDependencyManagement(domModel,
                                                                             dependency -> {

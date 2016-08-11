@@ -213,7 +213,7 @@ public class CreateResourceBundleDialogComponent {
     });
 
     ResourceBundle mainBundle = myResourceBundle;
-    final Set<ResourceBundle> allBundles = new HashSet<ResourceBundle>();
+    final Set<ResourceBundle> allBundles = new HashSet<>();
     if (mainBundle != null) {
       allBundles.add(mainBundle);
     }
@@ -230,7 +230,7 @@ public class CreateResourceBundleDialogComponent {
     }
 
     if (needCombining) {
-      final List<PropertiesFile> toCombine = new ArrayList<PropertiesFile>(createdFiles);
+      final List<PropertiesFile> toCombine = new ArrayList<>(createdFiles);
       final String baseName = getBaseName();
       if (myResourceBundle != null) {
         toCombine.addAll(myResourceBundle.getPropertiesFiles());
@@ -287,7 +287,7 @@ public class CreateResourceBundleDialogComponent {
       return Collections.emptyList();
     }
     final String[] splitRawLocales = rawLocales.split(",");
-    final List<Locale> locales = new ArrayList<Locale>(splitRawLocales.length);
+    final List<Locale> locales = new ArrayList<>(splitRawLocales.length);
 
     for (String rawLocale : splitRawLocales) {
       final Locale locale = PropertiesUtil.getLocale("_" + rawLocale + ".properties");
@@ -444,7 +444,7 @@ public class CreateResourceBundleDialogComponent {
     private final List<Locale> myLocales;
 
     private MyExistLocalesListModel() {
-      myLocales = new ArrayList<Locale>();
+      myLocales = new ArrayList<>();
       myLocales.add(PropertiesUtil.DEFAULT_LOCALE);
       PropertiesReferenceManager.getInstance(myProject).processPropertiesFiles(GlobalSearchScope.projectScope(myProject), new PropertiesFileProcessor() {
         @Override

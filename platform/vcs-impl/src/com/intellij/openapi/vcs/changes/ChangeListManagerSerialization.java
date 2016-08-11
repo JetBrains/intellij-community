@@ -64,7 +64,7 @@ class ChangeListManagerSerialization {
       readFileToIgnore(ignoredNode);
     }
     Element manuallyRemovedFromIgnoredTag = element.getChild(MANUALLY_REMOVED_FROM_IGNORED);
-    Set<String> manuallyRemovedFromIgnoredPaths = new HashSet<String>();
+    Set<String> manuallyRemovedFromIgnoredPaths = new HashSet<>();
     if (manuallyRemovedFromIgnoredTag != null) {
       for (Element tag : manuallyRemovedFromIgnoredTag.getChildren(DIRECTORY_TAG)) {
         manuallyRemovedFromIgnoredPaths.add(tag.getAttributeValue(ATT_PATH));
@@ -134,7 +134,7 @@ class ChangeListManagerSerialization {
       if (comment != null) {
         listNode.setAttribute(ATT_COMMENT, comment);
       }
-      List<Change> changes = new ArrayList<Change>(list.getChanges());
+      List<Change> changes = new ArrayList<>(list.getChanges());
       Collections.sort(changes, new ChangeComparator());
       for (Change change : changes) {
         writeChange(listNode, change);

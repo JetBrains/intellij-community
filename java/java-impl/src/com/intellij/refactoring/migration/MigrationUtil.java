@@ -89,7 +89,7 @@ public class MigrationUtil {
   }
 
   private static UsageInfo[] findRefs(final Project project, final PsiElement aClass) {
-    final ArrayList<UsageInfo> results = new ArrayList<UsageInfo>();
+    final ArrayList<UsageInfo> results = new ArrayList<>();
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
     for (PsiReference usage : ReferencesSearch.search(aClass, projectScope, false)) {
       results.add(new UsageInfo(usage));

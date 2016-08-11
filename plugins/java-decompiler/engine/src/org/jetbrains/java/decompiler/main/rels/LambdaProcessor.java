@@ -78,7 +78,7 @@ public class LambdaProcessor {
       return false; // no lambda bootstrap constant found
     }
 
-    Map<String, String> mapMethodsLambda = new HashMap<String, String>();
+    Map<String, String> mapMethodsLambda = new HashMap<>();
 
     // iterate over code and find invocations of bootstrap methods. Replace them with anonymous classes.
     for (StructMethod mt : cl.getMethods()) {

@@ -47,7 +47,7 @@ public class ModuleListNode extends ProjectViewNode<Module> {
     Module module = getValue();
 
     final Module[] deps = ModuleRootManager.getInstance(module).getDependencies(true);
-    final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
+    final List<AbstractTreeNode> children = new ArrayList<>();
     for (Module dependency : deps) {
       children.add(new ProjectViewModuleNode(myProject, dependency, getSettings()) {
         @Override

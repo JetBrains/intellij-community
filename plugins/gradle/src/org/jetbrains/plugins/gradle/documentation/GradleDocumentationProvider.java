@@ -50,7 +50,7 @@ public class GradleDocumentationProvider implements DocumentationProvider {
   @Nullable
   @Override
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     return result.isEmpty() ? null : result;
   }
 

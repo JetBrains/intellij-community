@@ -23,8 +23,8 @@ public class SvnMappingSavedPart {
   public List<SvnCopyRootSimple> myMoreRealMappingRoots;
 
   public SvnMappingSavedPart() {
-    myMappingRoots = new ArrayList<SvnCopyRootSimple>();
-    myMoreRealMappingRoots = new ArrayList<SvnCopyRootSimple>();
+    myMappingRoots = new ArrayList<>();
+    myMoreRealMappingRoots = new ArrayList<>();
   }
 
   public void add(final SvnCopyRootSimple copy) {

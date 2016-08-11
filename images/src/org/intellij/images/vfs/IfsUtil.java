@@ -74,7 +74,7 @@ public final class IfsUtil {
           try {
             final BufferedImage image = ICO_IMAGE_PARSER.getBufferedImage(new ByteSourceArray(content), null);
             file.putUserData(FORMAT_KEY, ICO_FORMAT);
-            file.putUserData(BUFFERED_IMAGE_REF_KEY, new SoftReference<BufferedImage>(image));
+            file.putUserData(BUFFERED_IMAGE_REF_KEY, new SoftReference<>(image));
             return true;
           }
           catch (ImageReadException ignore) { }
@@ -92,7 +92,7 @@ public final class IfsUtil {
               imageReader.setInput(imageInputStream, true, true);
               int minIndex = imageReader.getMinIndex();
               BufferedImage image = imageReader.read(minIndex, param);
-              file.putUserData(BUFFERED_IMAGE_REF_KEY, new SoftReference<BufferedImage>(image));
+              file.putUserData(BUFFERED_IMAGE_REF_KEY, new SoftReference<>(image));
               return true;
             } finally {
               imageReader.dispose();

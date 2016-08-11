@@ -34,7 +34,7 @@ import java.util.List;
 public class BuildArtifactsBeforeRunTask extends BeforeRunTask<BuildArtifactsBeforeRunTask> {
   @NonNls public static final String NAME_ATTRIBUTE = "name";
   @NonNls public static final String ARTIFACT_ELEMENT = "artifact";
-  private List<ArtifactPointer> myArtifactPointers = new ArrayList<ArtifactPointer>();
+  private List<ArtifactPointer> myArtifactPointers = new ArrayList<>();
   private final Project myProject;
 
   public BuildArtifactsBeforeRunTask(Project project) {
@@ -63,7 +63,7 @@ public class BuildArtifactsBeforeRunTask extends BeforeRunTask<BuildArtifactsBef
   @Override
   public BeforeRunTask clone() {
     final BuildArtifactsBeforeRunTask task = (BuildArtifactsBeforeRunTask)super.clone();
-    task.myArtifactPointers = new ArrayList<ArtifactPointer>(myArtifactPointers);
+    task.myArtifactPointers = new ArrayList<>(myArtifactPointers);
     return task;
   }
 
@@ -77,7 +77,7 @@ public class BuildArtifactsBeforeRunTask extends BeforeRunTask<BuildArtifactsBef
   }
 
   public void setArtifactPointers(List<ArtifactPointer> artifactPointers) {
-    myArtifactPointers = new ArrayList<ArtifactPointer>(artifactPointers);
+    myArtifactPointers = new ArrayList<>(artifactPointers);
   }
 
   public void addArtifact(Artifact artifact) {

@@ -187,7 +187,7 @@ public class ManifestFileUtil {
         updatedClasspath = classpath;
       }
       else {
-        updatedClasspath = new ArrayList<String>();
+        updatedClasspath = new ArrayList<>();
         final String oldClasspath = (String)mainAttributes.get(Attributes.Name.CLASS_PATH);
         if (!StringUtil.isEmpty(oldClasspath)) {
           updatedClasspath.addAll(StringUtil.split(oldClasspath, " "));
@@ -228,7 +228,7 @@ public class ManifestFileUtil {
     Manifest manifest = readManifest(manifestFile);
     String mainClass = manifest.getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
     final String classpathText = manifest.getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
-    final List<String> classpath = new ArrayList<String>();
+    final List<String> classpath = new ArrayList<>();
     if (classpathText != null) {
       classpath.addAll(StringUtil.split(classpathText, " "));
     }
@@ -236,7 +236,7 @@ public class ManifestFileUtil {
   }
 
   public static List<String> getClasspathForElements(List<? extends PackagingElement<?>> elements, PackagingElementResolvingContext context, final ArtifactType artifactType) {
-    final List<String> classpath = new ArrayList<String>();
+    final List<String> classpath = new ArrayList<>();
     final PackagingElementProcessor<PackagingElement<?>> processor = new PackagingElementProcessor<PackagingElement<?>>() {
       @Override
       public boolean process(@NotNull PackagingElement<?> element, @NotNull PackagingElementPath path) {

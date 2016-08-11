@@ -100,14 +100,14 @@ public class MemberInfo extends MemberInfoBase<PsiMember> {
   }
 
   public static List<MemberInfo> extractClassMembers(PsiClass subclass, Filter<PsiMember> filter, boolean extractInterfacesDeep) {
-    List<MemberInfo> members = new ArrayList<MemberInfo>();
+    List<MemberInfo> members = new ArrayList<>();
     extractClassMembers(subclass, members, filter, extractInterfacesDeep);
     return members;
   }
 
   public static void extractClassMembers(PsiClass subclass, List<MemberInfo> result, Filter<PsiMember> filter, final boolean extractInterfacesDeep) {
     if (extractInterfacesDeep) {
-      extractSuperInterfaces(subclass, filter, result, new HashSet<PsiClass>());
+      extractSuperInterfaces(subclass, filter, result, new HashSet<>());
     }
     else {
       PsiClass[] interfaces = subclass.getInterfaces();

@@ -39,7 +39,7 @@ public interface ElementFilter<T> {
     void addListener(Listener<T> listener, Disposable parent);
 
     abstract class Impl<T> implements Active<T> {
-      Set<Listener<T>> myListeners = new CopyOnWriteArraySet<Listener<T>>();
+      Set<Listener<T>> myListeners = new CopyOnWriteArraySet<>();
 
       public ActionCallback fireUpdate(@Nullable final T preferredSelection, final boolean adjustSelection, final boolean now) {
         final ActionCallback result = new ActionCallback(myListeners.size());

@@ -38,7 +38,7 @@ import java.util.List;
 public class UpgradeFormatDialog extends DialogWrapper  {
 
   private ButtonGroup formatGroup = new ButtonGroup();
-  private List<JRadioButton> formatButtons = new ArrayList<JRadioButton>();
+  private List<JRadioButton> formatButtons = new ArrayList<>();
 
   private JBLoadingPanel myLoadingPanel;
 

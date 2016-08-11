@@ -18,14 +18,13 @@ package com.intellij.lang.properties.editor.inspections;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.ResourceBundle;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.function.Function;
 
 /**
  * @author Dmitry Batkovich
  */
 public interface ResourceBundleEditorInspection {
-  @Nullable
-  ResourceBundleEditorProblemDescriptor[] checkPropertyGroup(@NotNull List<IProperty> properties, @NotNull ResourceBundle resourceBundle);
+  @NotNull
+  Function<IProperty[], ResourceBundleEditorProblemDescriptor[]> buildPropertyGroupVisitor(@NotNull ResourceBundle resourceBundle);
 }

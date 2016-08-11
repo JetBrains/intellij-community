@@ -43,7 +43,7 @@ public class ConfigurableExtensionPointUtil {
 
 
   public static List<Configurable> buildConfigurablesList(final ConfigurableEP<Configurable>[] extensions, @Nullable ConfigurableFilter filter) {
-    final List<Configurable> result = new ArrayList<Configurable>();
+    final List<Configurable> result = new ArrayList<>();
     final Map<String, ConfigurableWrapper> idToConfigurable = ContainerUtil.newHashMap();
     List<String> idsInEpOrder = ContainerUtil.newArrayList();
     for (ConfigurableEP<Configurable> ep : extensions) {
@@ -56,7 +56,7 @@ public class ConfigurableExtensionPointUtil {
       }
       else {
 //        dumpConfigurable(configurablesExtensionPoint, ep, configurable);
-        ContainerUtil.addIfNotNull(configurable, result);
+        ContainerUtil.addIfNotNull(result, configurable);
       }
     }
 
@@ -549,7 +549,7 @@ public class ConfigurableExtensionPointUtil {
     private static <I, V> Node<V> get(Map<I, Node<V>> tree, I id) {
       Node<V> node = tree.get(id);
       if (node == null) {
-        node = new Node<V>();
+        node = new Node<>();
         tree.put(id, node);
       }
       return node;

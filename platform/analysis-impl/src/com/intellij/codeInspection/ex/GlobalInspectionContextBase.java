@@ -446,23 +446,18 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     int old = job.getDoneAmount();
     job.setDoneAmount(old + 1);
 
-    float totalProgress = getTotalProgress(job);
+    float totalProgress = getTotalProgress();
 
     myProgressIndicator.setFraction(totalProgress);
     myProgressIndicator.setText(job.getDisplayName() + " " + message);
   }
 
-  private float getTotalProgress(@NotNull JobDescriptor currentJob) {
+  private float getTotalProgress() {
     int totalDone = 0;
     int totalTotal = 0;
     for (JobDescriptor jobDescriptor : myJobDescriptors) {
       totalDone += jobDescriptor.getDoneAmount();
       totalTotal += jobDescriptor.getTotalAmount();
-    }
-    // if we run e.g. just "Annotator" simple global tool then myJobDescriptors are empty
-    if (myJobDescriptors.isEmpty()) {
-      totalDone += currentJob.getDoneAmount();
-      totalTotal += currentJob.getTotalAmount();
     }
     return totalTotal == 0 ? 1 : 1.0f * totalDone / totalTotal;
   }

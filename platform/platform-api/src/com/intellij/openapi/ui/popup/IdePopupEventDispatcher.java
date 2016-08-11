@@ -19,11 +19,16 @@ package com.intellij.openapi.ui.popup;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.stream.Stream;
 
 public interface IdePopupEventDispatcher {
 
   @Nullable
   Component getComponent();
+
+  @Nullable
+  Stream<JBPopup> getPopupStream();
+
   boolean dispatch(AWTEvent event);
 
   boolean requestFocus();

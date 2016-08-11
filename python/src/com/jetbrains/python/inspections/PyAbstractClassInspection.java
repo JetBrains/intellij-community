@@ -65,7 +65,7 @@ public class PyAbstractClassInspection extends PyInspection {
       if (isAbstract(pyClass)) {
         return;
       }
-      final Set<PyFunction> toBeImplemented = new HashSet<PyFunction>();
+      final Set<PyFunction> toBeImplemented = new HashSet<>();
       final Collection<PyFunction> functions = PyOverrideImplementUtil.getAllSuperFunctions(pyClass, myTypeEvalContext);
       for (PyFunction method : functions) {
         if (isAbstractMethodForClass(method, pyClass)) {

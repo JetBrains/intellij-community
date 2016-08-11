@@ -72,7 +72,7 @@ public class MavenIndex {
   private final File myDir;
 
   private final Set<String> myRegisteredRepositoryIds = ContainerUtil.newHashSet();
-  private final CachedValue<String> myId = new CachedValueImpl<String>(new MyIndexRepositoryIdsProvider());
+  private final CachedValue<String> myId = new CachedValueImpl<>(new MyIndexRepositoryIdsProvider());
 
   private final String myRepositoryPathOrUrl;
   private final Kind myKind;
@@ -408,8 +408,8 @@ public class MavenIndex {
 
   private void doUpdateIndexData(IndexData data,
                                  MavenProgressIndicator progress) throws IOException, MavenServerIndexerException {
-    final Map<String, Set<String>> groupToArtifactMap = new THashMap<String, Set<String>>();
-    final Map<String, Set<String>> groupWithArtifactToVersionMap = new THashMap<String, Set<String>>();
+    final Map<String, Set<String>> groupToArtifactMap = new THashMap<>();
+    final Map<String, Set<String>> groupWithArtifactToVersionMap = new THashMap<>();
 
     final StringBuilder builder = new StringBuilder();
 
@@ -447,7 +447,7 @@ public class MavenIndex {
   private static <T> Set<T> getOrCreate(Map<String, Set<T>> map, String key) {
     Set<T> result = map.get(key);
     if (result == null) {
-      result = new THashSet<T>();
+      result = new THashSet<>();
       map.put(key, result);
     }
     return result;
@@ -510,7 +510,7 @@ public class MavenIndex {
 
   private static void addToCache(PersistentHashMap<String, Set<String>> cache, String key, String value) throws IOException {
     Set<String> values = cache.get(key);
-    if (values == null) values = new THashSet<String>();
+    if (values == null) values = new THashSet<>();
     values.add(value);
     cache.put(key, values);
   }
@@ -647,9 +647,9 @@ public class MavenIndex {
     final PersistentHashMap<String, Set<String>> groupToArtifactMap;
     final PersistentHashMap<String, Set<String>> groupWithArtifactToVersionMap;
 
-    final Map<String, Boolean> hasGroupCache = new THashMap<String, Boolean>();
-    final Map<String, Boolean> hasArtifactCache = new THashMap<String, Boolean>();
-    final Map<String, Boolean> hasVersionCache = new THashMap<String, Boolean>();
+    final Map<String, Boolean> hasGroupCache = new THashMap<>();
+    final Map<String, Boolean> hasArtifactCache = new THashMap<>();
+    final Map<String, Boolean> hasVersionCache = new THashMap<>();
 
     private final int indexId;
 
@@ -671,7 +671,7 @@ public class MavenIndex {
     }
 
     private PersistentHashMap<String, Set<String>> createPersistentMap(final File f) throws IOException {
-      return new PersistentHashMap<String, Set<String>>(f, EnumeratorStringDescriptor.INSTANCE, new SetDescriptor());
+      return new PersistentHashMap<>(f, EnumeratorStringDescriptor.INSTANCE, new SetDescriptor());
     }
 
     public void close(boolean releaseIndexContext) throws MavenIndexException {
@@ -725,7 +725,7 @@ public class MavenIndex {
 
     public Set<String> read(@NotNull DataInput s) throws IOException {
       int count = s.readInt();
-      Set<String> result = new THashSet<String>(count);
+      Set<String> result = new THashSet<>(count);
       while (count-- > 0) {
         result.add(s.readUTF());
       }

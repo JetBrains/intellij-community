@@ -42,7 +42,7 @@ public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor 
 
   private static final List<String> METHOD_NAMES = Arrays.asList("containsKey", "remove", "get");
 
-  private final Map<String, NamedArgumentDescriptor> myResult = new HashMap<String, NamedArgumentDescriptor>();
+  private final Map<String, NamedArgumentDescriptor> myResult = new HashMap<>();
 
   private final String myFirstArgumentName;
 

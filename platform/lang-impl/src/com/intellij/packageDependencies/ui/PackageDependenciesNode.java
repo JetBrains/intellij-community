@@ -201,7 +201,7 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
 
   public Set<VirtualFile> getRegisteredFiles() {
     if (myRegisteredFiles == null) {
-      myRegisteredFiles = new HashSet<VirtualFile>();
+      myRegisteredFiles = new HashSet<>();
     }
     return myRegisteredFiles;
   }

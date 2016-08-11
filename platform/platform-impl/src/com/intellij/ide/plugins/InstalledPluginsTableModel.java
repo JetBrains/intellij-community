@@ -147,7 +147,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
               (enabled1 != null && !enabled1.booleanValue())) {
             Set<PluginId> required = myDependentToRequiredListMap.get(pluginId);
             if (required == null) {
-              required = new HashSet<PluginId>();
+              required = new HashSet<>();
               myDependentToRequiredListMap.put(pluginId, required);
             }
 
@@ -336,8 +336,8 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   }
 
   private void warnAboutMissedDependencies(final Boolean newVal, final IdeaPluginDescriptor... ideaPluginDescriptors) {
-    final Set<PluginId> deps = new HashSet<PluginId>();
-    final List<IdeaPluginDescriptor> descriptorsToCheckDependencies = new ArrayList<IdeaPluginDescriptor>();
+    final Set<PluginId> deps = new HashSet<>();
+    final List<IdeaPluginDescriptor> descriptorsToCheckDependencies = new ArrayList<>();
     if (newVal) {
       Collections.addAll(descriptorsToCheckDependencies, ideaPluginDescriptors);
     } else {
@@ -382,7 +382,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     }
     if (!deps.isEmpty()) {
       final String listOfSelectedPlugins = StringUtil.join(ideaPluginDescriptors, pluginDescriptor -> pluginDescriptor.getName(), ", ");
-      final Set<IdeaPluginDescriptor> pluginDependencies = new HashSet<IdeaPluginDescriptor>();
+      final Set<IdeaPluginDescriptor> pluginDependencies = new HashSet<>();
       final String listOfDependencies = StringUtil.join(deps, pluginId -> {
         final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginId);
         assert pluginDescriptor != null;

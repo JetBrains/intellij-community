@@ -61,12 +61,12 @@ public class GriffonDefaultImportContributor extends GrImportContributorBase {
           }
         }
 
-        return Result.create(Couple.<List<String>>of(new ArrayList<String>(), new ArrayList<String>()),
+        return Result.create(Couple.<List<String>>of(new ArrayList<>(), new ArrayList<>()),
                              PsiModificationTracker.MODIFICATION_COUNT);
       }
 
       private List<String> tokenize(IProperty models) {
-        List<String> modelImports = new ArrayList<String>();
+        List<String> modelImports = new ArrayList<>();
         if (models != null) {
           String value = models.getValue();
           if (value != null) {
@@ -87,7 +87,7 @@ public class GriffonDefaultImportContributor extends GrImportContributorBase {
     Module module = ModuleUtilCore.findModuleForPsiElement(file);
     MvcFramework framework = MvcFramework.getInstance(module);
     if (framework instanceof GriffonFramework) {
-      ArrayList<String> result = new ArrayList<String>();
+      ArrayList<String> result = new ArrayList<>();
       result.add("griffon.core");
       result.add("griffon.util");
 

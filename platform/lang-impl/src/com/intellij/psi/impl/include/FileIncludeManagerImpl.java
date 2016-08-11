@@ -59,7 +59,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
   private final IncludeCacheHolder myIncludedHolder = new IncludeCacheHolder("compile time includes", "runtime includes") {
     @Override
     protected VirtualFile[] computeFiles(final PsiFile file, final boolean compileTimeOnly) {
-      final Set<VirtualFile> files = new THashSet<VirtualFile>();
+      final Set<VirtualFile> files = new THashSet<>();
       processIncludes(file, info -> {
         if (compileTimeOnly != info.runtimeOnly) {
           PsiFileSystemItem item = resolveFileInclude(info, file);
@@ -87,7 +87,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
   private final IncludeCacheHolder myIncludingHolder = new IncludeCacheHolder("compile time contexts", "runtime contexts") {
     @Override
     protected VirtualFile[] computeFiles(PsiFile context, boolean compileTimeOnly) {
-      final Set<VirtualFile> files = new THashSet<VirtualFile>();
+      final Set<VirtualFile> files = new THashSet<>();
       processIncludingFiles(context, virtualFileFileIncludeInfoPair -> {
         files.add(virtualFileFileIncludeInfoPair.first);
         return true;
@@ -123,7 +123,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
     myPsiFileFactory = psiFileFactory;
 
     FileIncludeProvider[] providers = Extensions.getExtensions(FileIncludeProvider.EP_NAME);
-    myProviderMap = new HashMap<String, FileIncludeProvider>(providers.length);
+    myProviderMap = new HashMap<>(providers.length);
     for (FileIncludeProvider provider : providers) {
       FileIncludeProvider old = myProviderMap.put(provider.getId(), provider);
       assert old == null;
@@ -204,7 +204,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
     @NotNull
     private VirtualFile[] getAllFiles(@NotNull VirtualFile file, boolean compileTimeOnly, boolean recursively) {
       if (recursively) {
-        Set<VirtualFile> result = new HashSet<VirtualFile>();
+        Set<VirtualFile> result = new HashSet<>();
         getAllFilesRecursively(file, compileTimeOnly, result);
         return VfsUtilCore.toVirtualFileArray(result);
       }
@@ -249,7 +249,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
     public CachedValueProvider.Result<VirtualFile[]> compute(PsiFile psiFile) {
       VirtualFile[] value = computeFiles(psiFile, myRuntimeOnly);
       // todo: we need "url modification tracker" for VirtualFile
-      List<Object> deps = new ArrayList<Object>(Arrays.asList(value));
+      List<Object> deps = new ArrayList<>(Arrays.asList(value));
       deps.add(psiFile);
       deps.add(VirtualFileManager.getInstance());
 

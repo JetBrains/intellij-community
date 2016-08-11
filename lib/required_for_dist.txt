@@ -51,7 +51,7 @@ miglayout-core-5.0.jar
 miglayout-swing-5.0.jar
 nanoxml-2.2.3.jar
 nekohtml-1.9.14.jar
-netty-all-4.1.1.Final.jar
+netty-all-4.1.4.Final.jar
 oromatcher.jar
 picocontainer.jar
 protobuf-2.5.0.jar

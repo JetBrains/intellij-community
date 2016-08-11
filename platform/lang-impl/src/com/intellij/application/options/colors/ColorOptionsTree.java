@@ -142,7 +142,7 @@ public class ColorOptionsTree extends Tree {
   private static List<String> extractPath(@NotNull EditorSchemeAttributeDescriptor descriptor) {
     if (descriptor instanceof EditorSchemeAttributeDescriptorWithPath) {
       String name = descriptor.toString();
-      List<String> path = new ArrayList<String>();
+      List<String> path = new ArrayList<>();
       int separatorStart = name.indexOf(NAME_SEPARATOR);
       int nextChunkStart = 0;
       while(separatorStart > 0) {

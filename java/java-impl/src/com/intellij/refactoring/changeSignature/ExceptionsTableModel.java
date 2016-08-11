@@ -106,8 +106,8 @@ public class ExceptionsTableModel extends AbstractTableModel implements Editable
 
   public void setTypeInfos(PsiMethod method) {
     PsiClassType[] referencedTypes = method.getThrowsList().getReferencedTypes();
-    myTypeCodeFragments = new ArrayList<PsiTypeCodeFragment>(referencedTypes.length);
-    myExceptionInfos = new ArrayList<ThrownExceptionInfo>(referencedTypes.length);
+    myTypeCodeFragments = new ArrayList<>(referencedTypes.length);
+    myExceptionInfos = new ArrayList<>(referencedTypes.length);
     for (int i = 0; i < referencedTypes.length; i++) {
       CanonicalTypes.Type typeWrapper = CanonicalTypes.createTypeWrapper(referencedTypes[i]);
       final PsiTypeCodeFragment typeCodeFragment = createParameterTypeCodeFragment(typeWrapper.getTypeText(), method.getThrowsList());

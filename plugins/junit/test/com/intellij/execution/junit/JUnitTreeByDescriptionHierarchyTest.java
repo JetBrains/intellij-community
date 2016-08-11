@@ -40,7 +40,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
   @Test
   public void test2Parameterized() throws Exception {
     final Description root = Description.createSuiteDescription("root");
-    final ArrayList<Description> tests = new ArrayList<Description>();
+    final ArrayList<Description> tests = new ArrayList<>();
     for (String className : new String[]{"a.TestA", "a.TestB"}) {
       final Description aTestClass = Description.createSuiteDescription(className);
       root.addChild(aTestClass);
@@ -101,7 +101,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
   @Test
   public void testClassWithMethodsWithoutSendTreeBefore() throws Exception {
     Description root = Description.createSuiteDescription("ATest");
-    List<Description> tests = new ArrayList<Description>();
+    List<Description> tests = new ArrayList<>();
     tests.add(Description.createTestDescription("ATest", "test1"));
     tests.add(Description.createTestDescription("ATest", "test2"));
 
@@ -134,7 +134,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
   @Test
   public void testSameShortNames() throws Exception {
     final Description rootDescription = Description.createSuiteDescription("root");
-    final ArrayList<Description> tests = new ArrayList<Description>();
+    final ArrayList<Description> tests = new ArrayList<>();
     for (String className : new String[]{"a.MyTest", "b.MyTest"}) {
       final Description aTestClass = Description.createSuiteDescription(className);
       rootDescription.addChild(aTestClass);
@@ -170,7 +170,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
   public void testSingleParameterizedClass() throws Exception {
     final String className = "a.TestA";
     final Description aTestClassDescription = Description.createSuiteDescription(className);
-    final ArrayList<Description> tests = new ArrayList<Description>();
+    final ArrayList<Description> tests = new ArrayList<>();
     attachParameterizedTests(className, aTestClassDescription, tests);
     doTest(aTestClassDescription, tests,
            //tree
@@ -202,7 +202,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
   public void testParameterizedClassWithSameParameters() throws Exception {
     final String className = "a.TestA";
     final Description aTestClassDescription = Description.createSuiteDescription(className);
-    final ArrayList<Description> tests = new ArrayList<Description>();
+    final ArrayList<Description> tests = new ArrayList<>();
     for (String paramName : new String[]{"[0]", "[0]"}) {
       final Description param1 = Description.createSuiteDescription(paramName);
       aTestClassDescription.addChild(param1);
@@ -240,7 +240,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
   public void testParameterizedClassWithParamsWithDots() throws Exception {
     final String className = "a.TestA";
     final Description aTestClassDescription = Description.createSuiteDescription(className);
-    final ArrayList<Description> tests = new ArrayList<Description>();
+    final ArrayList<Description> tests = new ArrayList<>();
     for (String paramName : new String[]{"[0: with - 1.1]", "[1: with - 2.1]"}) {
       final Description param1 = Description.createSuiteDescription(paramName);
       aTestClassDescription.addChild(param1);
@@ -279,7 +279,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
     final Description root = Description.createSuiteDescription("root");
     final String className = "ATest";
     final String methodName = "test1";
-    final List<Description> tests = new ArrayList<Description>();
+    final List<Description> tests = new ArrayList<>();
     for( String suiteName : new String[] {"ASuite1", "ASuite2"}) {
       final Description aSuite = Description.createSuiteDescription(suiteName);
       root.addChild(aSuite);
@@ -581,7 +581,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
   @Test
   public void testPackageWithoutDescriptionBefore() throws Exception {
     final Description root = Description.createSuiteDescription("root");
-    final ArrayList<Description> tests = new ArrayList<Description>();
+    final ArrayList<Description> tests = new ArrayList<>();
     for (String className : new String[]{"a.TestA", "a.TestB"}) {
       final Description aTestClass = Description.createSuiteDescription(className);
       root.addChild(aTestClass);
@@ -637,7 +637,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
   @Test
   public void testParameterizedTestsUpsideDown() throws Exception {
     final Description aTestClass = Description.createSuiteDescription("ATest");
-    final ArrayList<Description> tests = new ArrayList<Description>();
+    final ArrayList<Description> tests = new ArrayList<>();
     final Description testMethod = Description.createSuiteDescription("testName");
     aTestClass.addChild(testMethod);
     for (String paramName : new String[]{"[0]", "[1]"}) {
@@ -672,7 +672,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
     final Description root = Description.createSuiteDescription("root");
     final Description aTestClass = Description.createSuiteDescription("ATest");
     root.addChild(aTestClass);
-    final ArrayList<Description> tests = new ArrayList<Description>();
+    final ArrayList<Description> tests = new ArrayList<>();
     attachParameterizedTests("ATest", aTestClass, tests);
     final Description suiteDescription = Description.createSuiteDescription("suite");
     root.addChild(suiteDescription);

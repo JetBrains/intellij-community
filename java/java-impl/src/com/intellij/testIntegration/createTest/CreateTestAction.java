@@ -163,7 +163,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     }
 
     //suggest to choose from all dependencies modules
-    final HashSet<Module> modules = new HashSet<Module>();
+    final HashSet<Module> modules = new HashSet<>();
     ModuleUtilCore.collectModulesDependsOn(mainModule, modules);
     return modules.stream()
       .flatMap(CreateTestAction::suitableTestSourceFolders)

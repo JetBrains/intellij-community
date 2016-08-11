@@ -82,7 +82,7 @@ public class PackagingElementPath {
   }
 
   public List<CompositePackagingElement<?>> getParentsFrom(@Nullable CompositePackagingElement<?> ancestor) {
-    List<CompositePackagingElement<?>> result = new SmartList<CompositePackagingElement<?>>();
+    List<CompositePackagingElement<?>> result = new SmartList<>();
     PackagingElementPath path = this;
     while (path != EMPTY && path.myLastElement != ancestor) {
       if (path.myLastElement instanceof CompositePackagingElement<?>) {
@@ -94,7 +94,7 @@ public class PackagingElementPath {
   }
 
   public List<PackagingElement<?>> getAllElements() {
-    List<PackagingElement<?>> result = new SmartList<PackagingElement<?>>();
+    List<PackagingElement<?>> result = new SmartList<>();
     PackagingElementPath path = this;
     while (path != EMPTY) {
       result.add(path.myLastElement);

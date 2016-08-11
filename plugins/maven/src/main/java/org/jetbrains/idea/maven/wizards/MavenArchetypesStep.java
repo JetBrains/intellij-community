@@ -173,7 +173,7 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
   }
 
   private static TreeNode groupAndSortArchetypes(Set<MavenArchetype> archetypes) {
-    List<MavenArchetype> list = new ArrayList<MavenArchetype>(archetypes);
+    List<MavenArchetype> list = new ArrayList<>(archetypes);
 
     Collections.sort(list, (o1, o2) -> {
       String key1 = o1.groupId + ":" + o1.artifactId;
@@ -185,13 +185,13 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
       return o2.version.compareToIgnoreCase(o1.version);
     });
 
-    Map<String, List<MavenArchetype>> map = new TreeMap<String, List<MavenArchetype>>();
+    Map<String, List<MavenArchetype>> map = new TreeMap<>();
 
     for (MavenArchetype each : list) {
       String key = each.groupId + ":" + each.artifactId;
       List<MavenArchetype> versions = map.get(key);
       if (versions == null) {
-        versions = new ArrayList<MavenArchetype>();
+        versions = new ArrayList<>();
         map.put(key, versions);
       }
       versions.add(each);

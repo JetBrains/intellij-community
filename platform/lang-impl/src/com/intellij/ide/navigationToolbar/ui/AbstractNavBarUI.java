@@ -40,7 +40,7 @@ import java.util.Map;
  */
 public abstract class AbstractNavBarUI implements NavBarUI {
 
-  private final static Map<NavBarItem, Map<ImageType, BufferedImage>> myCache = new THashMap<NavBarItem, Map<ImageType, BufferedImage>>();
+  private final static Map<NavBarItem, Map<ImageType, BufferedImage>> myCache = new THashMap<>();
 
   private enum ImageType {
     INACTIVE, NEXT_ACTIVE, ACTIVE, INACTIVE_FLOATING, NEXT_ACTIVE_FLOATING, ACTIVE_FLOATING,
@@ -105,7 +105,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     }
 
     if (cached == null) {
-      cached = new HashMap<ImageType, BufferedImage>();
+      cached = new HashMap<>();
       myCache.put(item, cached);
     }
 
@@ -307,7 +307,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   @Override
   public void doPaintNavBarPanel(Graphics2D g, Rectangle r, boolean mainToolbarVisible, boolean undocked) {
     g.setColor(getBackgroundColor());
-    if (!UIUtil.isUnderAquaLookAndFeel() && mainToolbarVisible) {
+    if (mainToolbarVisible) {
       g.fillRect(0, 0, r.width, r.height);
     }
   }

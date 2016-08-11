@@ -176,7 +176,7 @@ public class GrDynamicImplicitMethod extends GrLightMethodBuilder implements GrD
 
       final GrParameter[] parameters = getParameters();
 
-      List<String> parameterTypes = new ArrayList<String>();
+      List<String> parameterTypes = new ArrayList<>();
       for (GrParameter parameter : parameters) {
         final String type = parameter.getType().getCanonicalText();
         parameterTypes.add(type);

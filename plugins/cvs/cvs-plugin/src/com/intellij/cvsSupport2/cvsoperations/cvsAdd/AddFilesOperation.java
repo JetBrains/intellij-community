@@ -28,8 +28,8 @@ import java.util.Map;
  */
 public class AddFilesOperation extends CompositeOperation {
 
-  private final Map<KeywordSubstitution, AddFileOperation> mySubstitutionToOperation = new HashMap<KeywordSubstitution, AddFileOperation>();
-  private final Map<VirtualFile, AddFileOperation> myAlreadyProcessedParentToOperation = new HashMap<VirtualFile, AddFileOperation>();
+  private final Map<KeywordSubstitution, AddFileOperation> mySubstitutionToOperation = new HashMap<>();
+  private final Map<VirtualFile, AddFileOperation> myAlreadyProcessedParentToOperation = new HashMap<>();
   private int myFilesCount = -1;
   private int myMainPartSize;
 

@@ -33,7 +33,7 @@ public class GenericCompilerPersistentData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.generic.GenericCompilerPersistentData");
   private static final int VERSION = 1;
   private File myFile;
-  private Map<String, Integer> myTarget2Id = new HashMap<String, Integer>();
+  private Map<String, Integer> myTarget2Id = new HashMap<>();
   private TIntHashSet myUsedIds = new TIntHashSet();
   private boolean myVersionChanged;
   private final int myCompilerVersion;

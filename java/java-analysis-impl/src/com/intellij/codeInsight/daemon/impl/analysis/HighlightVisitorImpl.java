@@ -1285,6 +1285,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
       myHolder.add(HighlightNamesUtil.highlightClassNameInQualifier(expression, colorsScheme));
     }
+
+    if (!LambdaUtil.isValidLambdaContext(expression.getParent())) {
+      myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
+        .descriptionAndTooltip("Method reference expression is not expected here").create());
+    }
+
     if (!myHolder.hasErrorResults()) {
       final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
       if (functionalInterfaceType != null) {

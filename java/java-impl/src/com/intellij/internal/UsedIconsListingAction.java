@@ -53,7 +53,7 @@ public class UsedIconsListingAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = LangDataKeys.PROJECT.getData(e.getDataContext());
 
-    final MultiMap<String, PsiExpression> calls = new MultiMap<String, PsiExpression>();
+    final MultiMap<String, PsiExpression> calls = new MultiMap<>();
 
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     Processor<PsiReference> consumer = new Processor<PsiReference>() {
@@ -120,7 +120,7 @@ public class UsedIconsListingAction extends AnAction {
       MethodReferencesSearch.search(findIconMethod, false).forEach(consumer);
     }
 
-    final List<XmlAttribute> xmlAttributes = new ArrayList<XmlAttribute>();
+    final List<XmlAttribute> xmlAttributes = new ArrayList<>();
 
     PsiSearchHelper.SERVICE.getInstance(project).processAllFilesWithWordInText(
       "icon",
@@ -154,7 +154,7 @@ public class UsedIconsListingAction extends AnAction {
 
     PsiClass presentation = psiFacade.findClass("com.intellij.ide.presentation.Presentation",
                                                 allScope);
-    final MultiMap<String, PsiAnnotation> annotations = new MultiMap<String, PsiAnnotation>();
+    final MultiMap<String, PsiAnnotation> annotations = new MultiMap<>();
     AnnotationTargetsSearch.search(presentation).forEach(owner -> {
       PsiAnnotation annotation = owner.getModifierList().findAnnotation("com.intellij.ide.presentation.Presentation");
 
@@ -182,7 +182,7 @@ public class UsedIconsListingAction extends AnAction {
                                      List<XmlAttribute> xmlAttributes,
                                      MultiMap<String, PsiAnnotation> annotations,
                                      PsiClass iconClass) {
-    final HashMap<String, String> mappings = new HashMap<String, String>();
+    final HashMap<String, String> mappings = new HashMap<>();
     int size = mappings.size();
     collectFields(iconClass, "", mappings);
     System.out.println("Found " + (mappings.size() - size) + " icons in " + iconClass.getQualifiedName());

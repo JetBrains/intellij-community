@@ -57,7 +57,7 @@ import java.util.Map;
  * Date: Sep 6, 2010
  */
 public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter implements EditorFactoryListener, Disposable {
-  private final Map<VirtualFile, MyDocumentChangeAdapter> myListenerMap = new HashMap<VirtualFile, MyDocumentChangeAdapter>();
+  private final Map<VirtualFile, MyDocumentChangeAdapter> myListenerMap = new HashMap<>();
   private static final Logger LOG = Logger.getInstance("#" + ChangeSignatureGestureDetector.class.getName());
   private boolean myDeaf = false;
   private final FileDocumentManager myDocumentManager;
@@ -275,7 +275,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
     private ChangeInfo myInitialChangeInfo;
     private ChangeInfo myCurrentInfo;
 
-    private final List<String> mySignatures = new ArrayList<String>();
+    private final List<String> mySignatures = new ArrayList<>();
 
     public MyDocumentChangeAdapter() {
     }

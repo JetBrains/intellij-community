@@ -39,7 +39,7 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
   private static final int NON_ID_WEIGHT = (Rule.DEFAULT_WEIGHT - 1) / 2;
 
   /** Holds symbols wrap rules by symbol. */
-  private final TIntObjectHashMap<Rule> myRules = new TIntObjectHashMap<Rule>();
+  private final TIntObjectHashMap<Rule> myRules = new TIntObjectHashMap<>();
   private final Storage myOffset2weight = new Storage();
 
   @Override

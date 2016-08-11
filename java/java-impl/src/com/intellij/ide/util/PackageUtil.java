@@ -223,7 +223,7 @@ public class PackageUtil {
     if (psiDirectory == null) {
       if (!checkSourceRootsConfigured(module, askUserToCreate)) return null;
       final List<VirtualFile> sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(JavaModuleSourceRootTypes.SOURCES);
-      List<PsiDirectory> directoryList = new ArrayList<PsiDirectory>();
+      List<PsiDirectory> directoryList = new ArrayList<>();
       for (VirtualFile sourceRoot : sourceRoots) {
         final PsiDirectory directory = PsiManager.getInstance(project).findDirectory(sourceRoot);
         if (directory != null) {
@@ -284,7 +284,7 @@ public class PackageUtil {
   private static PsiDirectory[] filterSourceDirectories(PsiDirectory baseDir, Project project, PsiDirectory[] moduleDirectories) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     if (fileIndex.isInTestSourceContent(baseDir.getVirtualFile())) {
-      List<PsiDirectory> result = new ArrayList<PsiDirectory>();
+      List<PsiDirectory> result = new ArrayList<>();
       for (PsiDirectory moduleDirectory : moduleDirectories) {
         if (fileIndex.isInTestSourceContent(moduleDirectory.getVirtualFile())) {
           result.add(moduleDirectory);

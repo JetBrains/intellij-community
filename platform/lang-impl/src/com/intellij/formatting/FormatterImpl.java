@@ -57,7 +57,7 @@ public class FormatterImpl extends FormatterEx
              FormattingModelFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.FormatterImpl");
 
-  private final AtomicReference<FormattingProgressTask> myProgressTask = new AtomicReference<FormattingProgressTask>();
+  private final AtomicReference<FormattingProgressTask> myProgressTask = new AtomicReference<>();
 
   private final AtomicInteger myIsDisabledCount = new AtomicInteger();
   private final IndentImpl NONE_INDENT = new IndentImpl(Indent.Type.NONE, false, false);
@@ -819,7 +819,7 @@ public class FormatterImpl extends FormatterEx
     return getSpacingImpl(minSpaces, maxSpaces, minLineFeeds, false, false, keepLineBreaks, keepBlankLines, false, prefLineFeeds);
   }
 
-  private final Map<SpacingImpl,SpacingImpl> ourSharedProperties = new HashMap<SpacingImpl,SpacingImpl>();
+  private final Map<SpacingImpl,SpacingImpl> ourSharedProperties = new HashMap<>();
   private final SpacingImpl ourSharedSpacing = new SpacingImpl(-1,-1,-1,false,false,false,-1,false,0);
 
   private SpacingImpl getSpacingImpl(final int minSpaces,

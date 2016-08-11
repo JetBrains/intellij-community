@@ -39,11 +39,11 @@ import java.util.TreeSet;
 public class VisibleTreeState{
   @Tag("expanded-state")
   @AbstractCollection(surroundWithTag = false, elementTag = "expanded", elementValueAttribute = "path", elementTypes = {State.class})
-  public TreeSet<State> myExpandedNodes = new TreeSet<State>();
+  public TreeSet<State> myExpandedNodes = new TreeSet<>();
 
   @Tag("selected-state")
   @AbstractCollection(surroundWithTag = false, elementTag = "selected", elementValueAttribute = "path", elementTypes = {State.class})
-  public TreeSet<State> mySelectedNodes = new TreeSet<State>();
+  public TreeSet<State> mySelectedNodes = new TreeSet<>();
 
   public VisibleTreeState(VisibleTreeState src) {
     myExpandedNodes.addAll(src.myExpandedNodes);
@@ -62,8 +62,8 @@ public class VisibleTreeState{
   }
 
   public void restoreVisibleState(Tree tree) {
-    ArrayList<TreePath> pathsToExpand = new ArrayList<TreePath>();
-    ArrayList<TreePath> toSelect = new ArrayList<TreePath>();
+    ArrayList<TreePath> pathsToExpand = new ArrayList<>();
+    ArrayList<TreePath> toSelect = new ArrayList<>();
     traverseNodes((DefaultMutableTreeNode)tree.getModel().getRoot(), pathsToExpand, toSelect);
     TreeUtil.restoreExpandedPaths(tree, pathsToExpand);
     if (toSelect.isEmpty()) {

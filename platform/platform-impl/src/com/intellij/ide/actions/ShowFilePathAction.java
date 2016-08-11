@@ -180,8 +180,8 @@ public class ShowFilePathAction extends AnAction {
   private static void show(@NotNull VirtualFile file, @NotNull ShowAction show) {
     if (!isSupported()) return;
 
-    List<VirtualFile> files = new ArrayList<VirtualFile>();
-    List<String> fileUrls = new ArrayList<String>();
+    List<VirtualFile> files = new ArrayList<>();
+    List<String> fileUrls = new ArrayList<>();
     VirtualFile eachParent = file;
     while (eachParent != null) {
       int index = files.size() == 0 ? 0 : files.size();
@@ -195,7 +195,7 @@ public class ShowFilePathAction extends AnAction {
     }
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      List<Icon> icons = new ArrayList<Icon>();
+      List<Icon> icons = new ArrayList<>();
       for (String url : fileUrls) {
         File ioFile = new File(url);
         icons.add(ioFile.exists() ? FileSystemView.getFileSystemView().getSystemIcon(ioFile) : EmptyIcon.ICON_16);

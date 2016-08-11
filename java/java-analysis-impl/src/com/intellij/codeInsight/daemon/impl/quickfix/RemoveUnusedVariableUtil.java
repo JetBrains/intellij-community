@@ -33,7 +33,7 @@ public class RemoveUnusedVariableUtil {
 
   public static boolean checkSideEffects(PsiExpression element, PsiVariable variableToIgnore, List<PsiElement> sideEffects) {
     if (sideEffects == null || element == null) return false;
-    List<PsiElement> writes = new ArrayList<PsiElement>();
+    List<PsiElement> writes = new ArrayList<>();
     SideEffectChecker.checkSideEffects(element, writes);
     if (variableToIgnore != null) {
       for (int i = writes.size() - 1; i >= 0; i--) {
@@ -140,7 +140,7 @@ public class RemoveUnusedVariableUtil {
             while (element.getParent() instanceof PsiParenthesizedExpression) {
               element = element.getParent().replace(element);
             }
-            List<PsiElement> references = new ArrayList<PsiElement>();
+            List<PsiElement> references = new ArrayList<>();
             collectReferences(element, variable, references);
             deleteReferences(variable, references, deleteMode);
           }
@@ -177,7 +177,7 @@ public class RemoveUnusedVariableUtil {
               ((PsiDeclarationStatement)variable.getParent()).getDeclaredElements().length > 1)) {
           if (deleteMode == RemoveMode.MAKE_STATEMENT) {
             element = element.replace(createStatementIfNeeded(expression, factory, element));
-            List<PsiElement> references = new ArrayList<PsiElement>();
+            List<PsiElement> references = new ArrayList<>();
             collectReferences(element, variable, references);
             deleteReferences(variable, references, deleteMode);
           }

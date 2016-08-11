@@ -70,7 +70,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
   private LightweightHint myQuestionHint = null;
   private QuestionAction myQuestionAction = null;
 
-  private final List<HintInfo> myHintsStack = new ArrayList<HintInfo>();
+  private final List<HintInfo> myHintsStack = new ArrayList<>();
   private Editor myLastEditor = null;
   private final Alarm myHideAlarm = new Alarm();
 

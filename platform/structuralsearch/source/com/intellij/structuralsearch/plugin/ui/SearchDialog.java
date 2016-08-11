@@ -202,7 +202,7 @@ public class SearchDialog extends DialogWrapper {
     caseSensitiveMatch = new JCheckBox(FindBundle.message("find.options.case.sensitive"), true);
     searchOptions.add(UIUtil.createOptionLine(caseSensitiveMatch));
 
-    final List<FileType> types = new ArrayList<FileType>();
+    final List<FileType> types = new ArrayList<>();
 
     for (FileType fileType : StructuralSearchUtil.getSuitableFileTypes()) {
       if (StructuralSearchUtil.getProfileByFileType(fileType) != null) {
@@ -704,7 +704,7 @@ public class SearchDialog extends DialogWrapper {
 
   protected static ArrayList<Variable> getVarsFrom(Editor searchCriteriaEdit) {
     SubstitutionShortInfoHandler handler = searchCriteriaEdit.getUserData(UIUtil.LISTENER_KEY);
-    return new ArrayList<Variable>(handler.getVariables());
+    return new ArrayList<>(handler.getVariables());
   }
 
   public final Project getProject() {
@@ -805,7 +805,7 @@ public class SearchDialog extends DialogWrapper {
 
   private void filterOutUnusedVariableConstraints(Configuration configuration) {
     final List<Variable> variables = getVariablesFromListeners();
-    final List<String> variableNames = new ArrayList<String>();
+    final List<String> variableNames = new ArrayList<>();
     for (Variable variable : variables) {
       variableNames.add(variable.getName());
     }

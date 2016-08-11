@@ -145,7 +145,7 @@ public class PyIntroduceParameterHandler extends IntroduceHandler {
       operation.getEditor().getCaretModel().moveToOffset(elementForCaret.getTextRange().getStartOffset());
       final InplaceVariableIntroducer<PsiElement> introducer =
         new PyInplaceParameterIntroducer((PyNamedParameter)statement, operation, occurrences);
-      introducer.performInplaceRefactoring(new LinkedHashSet<String>(operation.getSuggestedNames()));
+      introducer.performInplaceRefactoring(new LinkedHashSet<>(operation.getSuggestedNames()));
     }
   }
 

@@ -73,9 +73,9 @@ abstract class GitBranchOperation {
     myRepositories = repositories;
     myCurrentHeads = Maps.toMap(repositories, repo -> chooseNotNull(repo.getCurrentBranchName(), repo.getCurrentRevision()));
     myInitialRevisions = Maps.toMap(repositories, GitRepository::getCurrentRevision);
-    mySuccessfulRepositories = new ArrayList<GitRepository>();
-    mySkippedRepositories = new ArrayList<GitRepository>();
-    myRemainingRepositories = new ArrayList<GitRepository>(myRepositories);
+    mySuccessfulRepositories = new ArrayList<>();
+    mySkippedRepositories = new ArrayList<>();
+    myRemainingRepositories = new ArrayList<>(myRepositories);
     mySettings = GitVcsSettings.getInstance(myProject);
   }
 
@@ -170,7 +170,7 @@ abstract class GitBranchOperation {
 
   @NotNull
   protected List<GitRepository> getRemainingRepositoriesExceptGiven(@NotNull final GitRepository currentRepository) {
-    List<GitRepository> repositories = new ArrayList<GitRepository>(myRemainingRepositories);
+    List<GitRepository> repositories = new ArrayList<>(myRemainingRepositories);
     repositories.remove(currentRepository);
     return repositories;
   }
@@ -343,7 +343,7 @@ abstract class GitBranchOperation {
   @NotNull
   Map<GitRepository, List<Change>> collectLocalChangesConflictingWithBranch(@NotNull Collection<GitRepository> repositories,
                                                                             @NotNull String currentBranch, @NotNull String otherBranch) {
-    Map<GitRepository, List<Change>> changes = new HashMap<GitRepository, List<Change>>();
+    Map<GitRepository, List<Change>> changes = new HashMap<>();
     for (GitRepository repository : repositories) {
       try {
         Collection<String> diff = GitUtil.getPathsDiffBetweenRefs(myGit, repository, currentBranch, otherBranch);
@@ -387,7 +387,7 @@ abstract class GitBranchOperation {
       collectLocalChangesConflictingWithBranch(getRemainingRepositoriesExceptGiven(currentRepository), currentBranch, nextBranch);
 
     Set<GitRepository> otherProblematicRepositories = conflictingChangesInRepositories.keySet();
-    List<GitRepository> allConflictingRepositories = new ArrayList<GitRepository>(otherProblematicRepositories);
+    List<GitRepository> allConflictingRepositories = new ArrayList<>(otherProblematicRepositories);
     allConflictingRepositories.add(currentRepository);
     for (List<Change> changes : conflictingChangesInRepositories.values()) {
       affectedChanges.addAll(changes);

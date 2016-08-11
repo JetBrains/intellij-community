@@ -40,12 +40,12 @@ public class GithubRequestPagingTest extends GithubTest {
     GithubConnection connection = new GithubConnection(myGitHubSettings.getAuthData(), true);
     try {
       List<GithubRepo> availableRepos = GithubApiUtil.getUserRepos(connection, myLogin2);
-      List<String> realData = new ArrayList<String>();
+      List<String> realData = new ArrayList<>();
       for (GithubRepo info : availableRepos) {
         realData.add(info.getName());
       }
 
-      List<String> expectedData = new ArrayList<String>();
+      List<String> expectedData = new ArrayList<>();
       for (int i = 1; i <= 251; i++) {
         expectedData.add(String.valueOf(i));
       }

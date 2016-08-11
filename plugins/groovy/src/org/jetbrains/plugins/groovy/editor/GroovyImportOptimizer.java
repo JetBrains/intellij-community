@@ -83,12 +83,12 @@ public class GroovyImportOptimizer implements ImportOptimizer {
     public Runnable compute() {
       if (!(myFile instanceof GroovyFile)) return EmptyRunnable.getInstance();
       final GroovyFile file = ((GroovyFile)myFile);
-      final Set<String> simplyImportedClasses = new LinkedHashSet<String>();
-      final Set<String> staticallyImportedMembers = new LinkedHashSet<String>();
-      final Set<GrImportStatement> usedImports = new HashSet<GrImportStatement>();
-      final Set<GrImportStatement> unresolvedOnDemandImports = new HashSet<GrImportStatement>();
-      final Set<String> implicitlyImportedClasses = new LinkedHashSet<String>();
-      final Set<String> innerClasses = new HashSet<String>();
+      final Set<String> simplyImportedClasses = new LinkedHashSet<>();
+      final Set<String> staticallyImportedMembers = new LinkedHashSet<>();
+      final Set<GrImportStatement> usedImports = new HashSet<>();
+      final Set<GrImportStatement> unresolvedOnDemandImports = new HashSet<>();
+      final Set<String> implicitlyImportedClasses = new LinkedHashSet<>();
+      final Set<String> innerClasses = new HashSet<>();
       Map<String, String> aliasImported = ContainerUtil.newHashMap();
       Map<String, String> annotatedImports = ContainerUtil.newHashMap();
 
@@ -147,8 +147,8 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         CodeStyleSettingsManager.getSettings(project).getCustomSettings(GroovyCodeStyleSettings.class);
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
 
-      TObjectIntHashMap<String> packageCountMap = new TObjectIntHashMap<String>();
-      TObjectIntHashMap<String> classCountMap = new TObjectIntHashMap<String>();
+      TObjectIntHashMap<String> packageCountMap = new TObjectIntHashMap<>();
+      TObjectIntHashMap<String> classCountMap = new TObjectIntHashMap<>();
 
       //init packageCountMap
       for (String importedClass : importedClasses) {
@@ -175,8 +175,8 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         classCountMap.increment(className);
       }
 
-      final Set<String> onDemandImportedSimpleClassNames = new HashSet<String>();
-      final List<GrImportStatement> result = new ArrayList<GrImportStatement>();
+      final Set<String> onDemandImportedSimpleClassNames = new HashSet<>();
+      final List<GrImportStatement> result = new ArrayList<>();
 
       packageCountMap.forEachEntry(new TObjectIntProcedure<String>() {
         @Override

@@ -48,7 +48,7 @@ import java.util.LinkedHashMap;
 public class ProjectSdksModel implements SdkModel {
   private static final Logger LOG = Logger.getInstance("com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel");
 
-  private final HashMap<Sdk, Sdk> myProjectSdks = new HashMap<Sdk, Sdk>();
+  private final HashMap<Sdk, Sdk> myProjectSdks = new HashMap<>();
   private final EventDispatcher<Listener> mySdkEventsDispatcher = EventDispatcher.create(Listener.class);
 
   private boolean myModified = false;
@@ -136,7 +136,7 @@ public class ProjectSdksModel implements SdkModel {
 
   private void doApply() {
     ApplicationManager.getApplication().runWriteAction(() -> {
-      final ArrayList<Sdk> itemsInTable = new ArrayList<Sdk>();
+      final ArrayList<Sdk> itemsInTable = new ArrayList<>();
       final ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
       final Sdk[] allFromTable = jdkTable.getAllJdks();
 
@@ -171,14 +171,14 @@ public class ProjectSdksModel implements SdkModel {
 
   private boolean canApply(String[] errorString, @Nullable MasterDetailsComponent rootConfigurable, boolean addedOnly) throws ConfigurationException {
 
-    LinkedHashMap<Sdk, Sdk> sdks = new LinkedHashMap<Sdk, Sdk>(myProjectSdks);
+    LinkedHashMap<Sdk, Sdk> sdks = new LinkedHashMap<>(myProjectSdks);
     if (addedOnly) {
       Sdk[] allJdks = ProjectJdkTable.getInstance().getAllJdks();
       for (Sdk jdk : allJdks) {
         sdks.remove(jdk);
       }
     }
-    ArrayList<String> allNames = new ArrayList<String>();
+    ArrayList<String> allNames = new ArrayList<>();
     Sdk itemWithError = null;
     for (Sdk currItem : sdks.values()) {
       String currName = currItem.getName();

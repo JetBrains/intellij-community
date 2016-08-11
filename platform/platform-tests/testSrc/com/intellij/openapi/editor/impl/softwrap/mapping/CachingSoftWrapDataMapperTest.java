@@ -88,11 +88,11 @@ public class CachingSoftWrapDataMapperTest {
   private static final int    SOFT_WRAP_DRAWING_WIDTH = 11;
 
   /** Holds expected mappings between visual and logical positions and offset. */
-  private final List<DataEntry>  myExpectedData  = new ArrayList<DataEntry>();
-  private final List<TextRange>  myLineRanges    = new ArrayList<TextRange>();
+  private final List<DataEntry>  myExpectedData  = new ArrayList<>();
+  private final List<TextRange>  myLineRanges    = new ArrayList<>();
   /** Holds document offsets that are considered to be folded. */
   private final TIntHashSet      myFoldedOffsets = new TIntHashSet();
-  private final List<FoldRegion> myFoldRegions   = new ArrayList<FoldRegion>();
+  private final List<FoldRegion> myFoldRegions   = new ArrayList<>();
 
   private CachingSoftWrapDataMapper          myMapper;
   private Mockery                            myMockery;

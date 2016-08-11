@@ -62,7 +62,7 @@ public class ApplyPatchForBaseRevisionTexts {
                                          final TextFilePatch patch,
                                          final VirtualFile file,
                                          Getter<CharSequence> baseContents) {
-    myWarnings = new ArrayList<String>();
+    myWarnings = new ArrayList<>();
     final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
     Document document = fileDocumentManager.getDocument(file);
     if (document != null) {

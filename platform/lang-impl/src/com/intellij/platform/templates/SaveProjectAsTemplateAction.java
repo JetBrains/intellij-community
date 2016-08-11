@@ -237,7 +237,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
   }
 
   public static Map<String, String> computeParameters(final Project project, boolean replaceParameters) {
-    final Map<String, String> parameters = new HashMap<String, String>();
+    final Map<String, String> parameters = new HashMap<>();
     if (replaceParameters) {
       ApplicationManager.getApplication().runReadAction(() -> {
         ProjectTemplateParameterFactory[] extensions = Extensions.getExtensions(ProjectTemplateParameterFactory.EP_NAME);
@@ -267,7 +267,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
     String text = VfsUtilCore.loadText(virtualFile);
     final FileTemplate template = FileTemplateManager.getInstance(project).getDefaultTemplate(fileHeaderTemplateName);
     final String templateText = template.getText();
-    final Pattern pattern = FileTemplateUtil.getTemplatePattern(template, project, new TIntObjectHashMap<String>());
+    final Pattern pattern = FileTemplateUtil.getTemplatePattern(template, project, new TIntObjectHashMap<>());
     String result = convertTemplates(text, pattern, templateText, shouldEscape);
     result = ProjectTemplateFileProcessor.encodeFile(result, virtualFile, project);
     for (Map.Entry<String, String> entry : parameters.entrySet()) {

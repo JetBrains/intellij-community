@@ -88,7 +88,7 @@ public class InterpreterUtil {
       return false;
     }
 
-    HashSet<Object> set = new HashSet<Object>(c1);
+    HashSet<Object> set = new HashSet<>(c1);
     set.removeAll(c2);
     return (set.size() == 0);
   }

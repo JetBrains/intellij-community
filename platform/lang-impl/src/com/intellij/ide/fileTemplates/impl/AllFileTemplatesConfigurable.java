@@ -33,7 +33,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
@@ -92,7 +91,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
 
   private FileTemplatesScheme myScheme;
   private final Map<FileTemplatesScheme, Map<String, FileTemplate[]>> myChangesCache =
-    new HashMap<FileTemplatesScheme, Map<String, FileTemplate[]>>();
+    new HashMap<>();
 
   private static final String CURRENT_TAB = "FileTemplates.CurrentTab";
   private static final String SELECTED_TEMPLATE = "FileTemplates.SelectedTemplate";
@@ -142,7 +141,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     }
 
     final FileTemplate[] templates = myCurrentTab.getTemplates();
-    final Set<String> names = new HashSet<String>();
+    final Set<String> names = new HashSet<>();
     for (FileTemplate template : templates) {
       names.add(template.getName());
     }
@@ -209,7 +208,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     };
     myCurrentTab = myTemplatesList;
 
-    final List<FileTemplateTab> allTabs = new ArrayList<FileTemplateTab>(Arrays.asList(myTemplatesList, myIncludesList, myCodeTemplatesList));
+    final List<FileTemplateTab> allTabs = new ArrayList<>(Arrays.asList(myTemplatesList, myIncludesList, myCodeTemplatesList));
 
     final FileTemplateGroupDescriptorFactory[] factories = Extensions.getExtensions(FileTemplateGroupDescriptorFactory.EXTENSION_POINT_NAME);
     if (factories.length != 0) {
@@ -222,11 +221,11 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
         @Override
         protected FileTemplateNode initModel() {
           SortedSet<FileTemplateGroupDescriptor> categories =
-            new TreeSet<FileTemplateGroupDescriptor>((o1, o2) -> o1.getTitle().compareTo(o2.getTitle()));
+            new TreeSet<>((o1, o2) -> o1.getTitle().compareTo(o2.getTitle()));
 
 
           for (FileTemplateGroupDescriptorFactory templateGroupFactory : factories) {
-            ContainerUtil.addIfNotNull(templateGroupFactory.getFileTemplatesDescriptor(), categories);
+            ContainerUtil.addIfNotNull(categories, templateGroupFactory.getFileTemplatesDescriptor());
           }
 
           //noinspection HardCodedStringLiteral
@@ -513,7 +512,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
 
   private void checkCanApply(FileTemplateTab list) throws ConfigurationException {
     final FileTemplate[] templates = myCurrentTab.getTemplates();
-    final List<String> allNames = new ArrayList<String>();
+    final List<String> allNames = new ArrayList<>();
     FileTemplate itemWithError = null;
     boolean errorInName = true;
     String errorString = null;
@@ -687,7 +686,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
   private void updateCache() {
     if (isSchemeModified()) {
       if (!myChangesCache.containsKey(myScheme)) {
-        Map<String, FileTemplate[]> templates = new HashMap<String, FileTemplate[]>();
+        Map<String, FileTemplate[]> templates = new HashMap<>();
         FileTemplate[] allTemplates = myTemplatesList.getTemplates();
         templates.put(DEFAULT_TEMPLATES_CATEGORY, ContainerUtil.filter(allTemplates,
                                                                        template -> !myInternalTemplateNames.contains(template.getName())).toArray(FileTemplate.EMPTY_ARRAY));

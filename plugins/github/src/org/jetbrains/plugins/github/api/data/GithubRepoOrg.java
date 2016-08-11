@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 public class GithubRepoOrg extends GithubRepo {
   @Mandatory private Permissions permissions;
 
+  @RestModel
   public static class Permissions {
     @Mandatory private Boolean admin;
     @Mandatory private Boolean pull;

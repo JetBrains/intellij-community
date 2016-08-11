@@ -53,7 +53,7 @@ import java.util.Map;
  * @author mike
  */
 abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends ModuleFixtureBuilderImpl<T> implements JavaModuleFixtureBuilder<T> {
-  private final List<Lib> myLibraries = new ArrayList<Lib>();
+  private final List<Lib> myLibraries = new ArrayList<>();
   private String myJdk;
   private MockJdkLevel myMockJdkLevel = MockJdkLevel.jdk14;
   private LanguageLevel myLanguageLevel = null;
@@ -74,7 +74,7 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
 
   @Override
   public JavaModuleFixtureBuilder addLibrary(String libraryName, String... classPath) {
-    final HashMap<OrderRootType, String[]> map = new HashMap<OrderRootType, String[]>();
+    final HashMap<OrderRootType, String[]> map = new HashMap<>();
     for (String path : classPath) {
       if (!new File(path).exists()) {
         System.out.println(path + " does not exist");

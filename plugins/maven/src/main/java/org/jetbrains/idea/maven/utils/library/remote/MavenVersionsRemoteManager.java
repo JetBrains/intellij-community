@@ -83,7 +83,7 @@ public class MavenVersionsRemoteManager
   }
 
   private static List<MavenRemoteRepository> convertRepositories(Collection<MavenRepositoryInfo> infos) {
-    List<MavenRemoteRepository> result = new ArrayList<MavenRemoteRepository>(infos.size());
+    List<MavenRemoteRepository> result = new ArrayList<>(infos.size());
     for (MavenRepositoryInfo each : infos) {
       if (each.getUrl() != null) {
         result.add(new MavenRemoteRepository(each.getId(), each.getName(), each.getUrl(), null, null, null));

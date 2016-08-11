@@ -239,7 +239,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
         }
         // Guess the type from file-local calls
         if (context.allowCallContext(this)) {
-          final List<PyType> types = new ArrayList<PyType>();
+          final List<PyType> types = new ArrayList<>();
           processLocalCalls(func, call -> {
             final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
             final PyArgumentList argumentList = call.getArgumentList();
@@ -282,7 +282,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
 
   @NotNull
   private Set<String> collectUsedAttributes(@NotNull final TypeEvalContext context) {
-    final Set<String> result = new LinkedHashSet<String>();
+    final Set<String> result = new LinkedHashSet<>();
     final ScopeOwner owner = ScopeUtil.getScopeOwner(this);
     final String name = getName();
     if (owner != null && name != null) {

@@ -403,6 +403,7 @@ binding.setVariable("platformImplementationModules", [
   "analysis-impl",
   "built-in-server",
   "core-impl",
+  "credential-store",
   "diff-impl",
   "dvcs-impl",
   "editor-ui-ex",

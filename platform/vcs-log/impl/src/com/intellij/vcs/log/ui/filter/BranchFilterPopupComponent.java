@@ -105,7 +105,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
 
   @Override
   protected void rememberValuesInSettings(@NotNull Collection<String> values) {
-    myUiProperties.addRecentlyFilteredBranchGroup(new ArrayList<String>(values));
+    myUiProperties.addRecentlyFilteredBranchGroup(new ArrayList<>(values));
   }
 
   @NotNull

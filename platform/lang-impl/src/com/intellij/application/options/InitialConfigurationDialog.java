@@ -90,7 +90,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
     myColorSettingsPage = colorSettingsPage;
     setTitle(ApplicationNamesInfo.getInstance().getFullProductName() + " Initial Configuration");
 
-    final ArrayList<Keymap> keymaps = new ArrayList<Keymap>();
+    final ArrayList<Keymap> keymaps = new ArrayList<>();
     for (Keymap keymap : ((KeymapManagerImpl)KeymapManager.getInstance()).getAllKeymaps()) {
       if (matchesPlatform(keymap)) {
         keymaps.add(keymap);

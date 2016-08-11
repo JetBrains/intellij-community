@@ -65,7 +65,7 @@ public class SshSharedConnection {
         throw new AuthenticationException(e.getMessage(), e);
       }
     };
-    myQueue = new LinkedList<Cell>();
+    myQueue = new LinkedList<>();
   }
 
   public boolean isValid() {
@@ -142,7 +142,7 @@ public class SshSharedConnection {
     private Cell(final ThrowableComputable<Connection, AuthenticationException> factory, final String repository) {
       myConnectionLifeCycle = new ConnectionLifeCycle(CHECK_GRANULARITY, factory);
       myRepository = repository;
-      mySessions = new LinkedList<IConnection>();
+      mySessions = new LinkedList<>();
 
       myCloseListener = sshSessionConnection -> {
         synchronized (myLock) {
@@ -197,7 +197,7 @@ public class SshSharedConnection {
     void closeSelf() {
       final List<IConnection> copy;
       synchronized (myLock) {
-        copy = new ArrayList<IConnection>(mySessions);
+        copy = new ArrayList<>(mySessions);
       }
 
       for (IConnection session : copy) {

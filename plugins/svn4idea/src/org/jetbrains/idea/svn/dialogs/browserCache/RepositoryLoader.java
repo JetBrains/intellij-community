@@ -113,7 +113,7 @@ class RepositoryLoader extends Loader {
     }
 
     public void run() {
-      final Collection<DirectoryEntry> entries = new TreeSet<DirectoryEntry>();
+      final Collection<DirectoryEntry> entries = new TreeSet<>();
       final RepositoryTreeNode node = myData.first;
       final SvnVcs vcs = node.getVcs();
       SvnAuthenticationProvider.forceInteractive();

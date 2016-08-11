@@ -15,13 +15,11 @@
  */
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInspection.GlobalInspectionContext;
-import com.intellij.codeInspection.GlobalInspectionTool;
-import com.intellij.codeInspection.InspectionEP;
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefGraphAnnotator;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,13 +64,20 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
   @Override
   @NotNull
   public JobDescriptor[] getJobDescriptors(@NotNull GlobalInspectionContext context) {
-    final JobDescriptor[] additionalJobs = getTool().getAdditionalJobs();
-    if (additionalJobs == null) {
-      return getTool().isGraphNeeded() ? context.getStdJobDescriptors().BUILD_GRAPH_ONLY : JobDescriptor.EMPTY_ARRAY;
+    GlobalInspectionTool tool = getTool();
+    JobDescriptor[] additionalJobs = ObjectUtils.notNull(tool.getAdditionalJobs(), JobDescriptor.EMPTY_ARRAY);
+    StdJobDescriptors stdJobDescriptors = context.getStdJobDescriptors();
+    if (tool.isGraphNeeded()) {
+      additionalJobs = additionalJobs.length == 0 ? stdJobDescriptors.BUILD_GRAPH_ONLY :
+                       ArrayUtil.append(additionalJobs, stdJobDescriptors.BUILD_GRAPH);
     }
-    else {
-      return getTool().isGraphNeeded() ? ArrayUtil.append(additionalJobs, context.getStdJobDescriptors().BUILD_GRAPH) : additionalJobs;
+    if (tool instanceof GlobalSimpleInspectionTool) {
+      // if we run e.g. just "Annotator" simple global tool then myJobDescriptors are empty but LOCAL_ANALYSIS is used from inspectFile()
+      additionalJobs = additionalJobs.length == 0 ? stdJobDescriptors.LOCAL_ANALYSIS_ARRAY :
+                       ArrayUtil.contains(stdJobDescriptors.LOCAL_ANALYSIS, additionalJobs) ? additionalJobs :
+                       ArrayUtil.append(additionalJobs, stdJobDescriptors.LOCAL_ANALYSIS);
     }
+    return additionalJobs;
   }
 
   public boolean worksInBatchModeOnly() {
@@ -85,6 +90,7 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
     if (sharedTool == null) {
       return null;
     }
+    //noinspection TestOnlyProblems
     return new LocalInspectionToolWrapper(sharedTool);
   }
 }

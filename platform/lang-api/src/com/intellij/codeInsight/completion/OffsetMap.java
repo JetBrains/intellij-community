@@ -32,8 +32,8 @@ import java.util.Set;
  */
 public class OffsetMap implements Disposable {
   private final Document myDocument;
-  private final Map<OffsetKey, RangeMarker> myMap = new THashMap<OffsetKey, RangeMarker>();
-  private final Set<OffsetKey> myModified = new THashSet<OffsetKey>();
+  private final Map<OffsetKey, RangeMarker> myMap = new THashMap<>();
+  private final Set<OffsetKey> myModified = new THashSet<>();
   private volatile boolean myDisposed;
 
   public OffsetMap(final Document document) {

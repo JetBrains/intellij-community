@@ -93,7 +93,7 @@ public class PyCompatibilityInspection extends PyInspection {
   }
 
   private List<LanguageLevel> updateVersionsToProcess() {
-    List<LanguageLevel> result = new ArrayList<LanguageLevel>();
+    List<LanguageLevel> result = new ArrayList<>();
 
     for (String version : ourVersions) {
       LanguageLevel level = LanguageLevel.fromPythonVersion(version);
@@ -111,7 +111,7 @@ public class PyCompatibilityInspection extends PyInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final ElementsChooser<String> chooser = new ElementsChooser<String>(true);
+    final ElementsChooser<String> chooser = new ElementsChooser<>(true);
     chooser.setElements(UnsupportedFeaturesUtil.ALL_LANGUAGE_LEVELS, false);
     chooser.markElements(ourVersions);
     chooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<String>() {
@@ -169,42 +169,53 @@ public class PyCompatibilityInspection extends PyInspection {
     public void visitPyCallExpression(PyCallExpression node) {
       super.visitPyCallExpression(node);
 
-      int len = 0;
-      StringBuilder message = new StringBuilder("Python version ");
-      final PyExpression callee = node.getCallee();
-      assert callee != null;
-      PsiReference reference = callee.getReference();
-      if (reference != null) {
-        PsiElement resolved = reference.resolve();
-        ProjectFileIndex ind = ProjectRootManager.getInstance(callee.getProject()).getFileIndex();
-        if (resolved instanceof PyFunction) {
-          String name = ((PyFunction)resolved).getName();
-          final PyClass containingClass = ((PyFunction)resolved).getContainingClass();
-          if (containingClass != null) {
-            if (PyNames.INIT.equals(name))
-              name = callee.getText();
-            else
-              message = new StringBuilder("Class " + containingClass.getName() + " in python version ");
-            for (int i = 0; i != myVersionsToProcess.size(); ++i) {
-              LanguageLevel languageLevel = myVersionsToProcess.get(i);
-              if (UnsupportedFeaturesUtil.CLASS_METHODS.containsKey(containingClass.getName())) {
-                final Map<LanguageLevel, Set<String>> map = UnsupportedFeaturesUtil.CLASS_METHODS.get(containingClass.getName());
-                final Set<String> unsupportedMethods = map.get(languageLevel);
-                if (unsupportedMethods != null && unsupportedMethods.contains(name))
-                  len = appendLanguageLevel(message, len, languageLevel);
-              }
-            }
-          }
-          for (int i = 0; i != myVersionsToProcess.size(); ++i) {
-            LanguageLevel languageLevel = myVersionsToProcess.get(i);
-            if (PyBuiltinCache.getInstance(resolved).isBuiltin(resolved)) {
-              if (!"print".equals(name) && !myUsedImports.contains(name) && UnsupportedFeaturesUtil.BUILTINS.get(languageLevel).contains(name)) {
+      final Optional<PyFunction> optionalFunction = Optional
+        .ofNullable(node.getCallee())
+        .map(PyExpression::getReference)
+        .map(PsiReference::resolve)
+        .filter(PyFunction.class::isInstance)
+        .map(PyFunction.class::cast);
+
+      if (optionalFunction.isPresent()) {
+        final PyFunction function = optionalFunction.get();
+        final PyClass containingClass = function.getContainingClass();
+        final String originalFunctionName = function.getName();
+
+        final StringBuilder message = containingClass != null && !PyNames.INIT.equals(originalFunctionName)
+                                      ? new StringBuilder("Class " + containingClass.getName() + " in python version ")
+                                      : new StringBuilder("Python version ");
+
+        final String functionName = containingClass != null && PyNames.INIT.equals(originalFunctionName)
+                                    ? node.getCallee().getText()
+                                    : originalFunctionName;
+
+        int len = 0;
+
+        if (containingClass != null) {
+          final String className = containingClass.getName();
+
+          if (UnsupportedFeaturesUtil.CLASS_METHODS.containsKey(className)) {
+            final Map<LanguageLevel, Set<String>> unsupportedMethods = UnsupportedFeaturesUtil.CLASS_METHODS.get(className);
+            for (LanguageLevel languageLevel : myVersionsToProcess) {
+              if (unsupportedMethods.getOrDefault(languageLevel, Collections.emptySet()).contains(functionName)) {
                 len = appendLanguageLevel(message, len, languageLevel);
               }
             }
           }
-          commonRegisterProblem(message, " not have method " + name, len, node, null, false);
         }
+
+        if (PyBuiltinCache.getInstance(function).isBuiltin(function) &&
+            !"print".equals(functionName) &&
+            !"exec".equals(functionName) &&
+            !myUsedImports.contains(functionName)) {
+          for (LanguageLevel languageLevel : myVersionsToProcess) {
+            if (UnsupportedFeaturesUtil.BUILTINS.get(languageLevel).contains(functionName)) {
+              len = appendLanguageLevel(message, len, languageLevel);
+            }
+          }
+        }
+
+        commonRegisterProblem(message, " not have method " + functionName, len, node, null, false);
       }
     }
 
@@ -280,7 +291,7 @@ public class PyCompatibilityInspection extends PyInspection {
 
     @Override
     public void visitPyArgumentList(final PyArgumentList node) { //PY-5588
-      final List<PyElement> problemElements = new ArrayList<PyElement>();
+      final List<PyElement> problemElements = new ArrayList<>();
       if (node.getParent() instanceof PyClass) {
         for (final PyExpression expression : node.getArguments()) {
           if (expression instanceof PyKeywordArgument)

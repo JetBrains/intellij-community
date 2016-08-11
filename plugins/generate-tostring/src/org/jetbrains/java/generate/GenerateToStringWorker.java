@@ -128,7 +128,7 @@ public class GenerateToStringWorker {
     resolutionPolicy.setNewMethodStrategy(getStrategy(config.getInsertNewMethodInitialOption()));
 
     // user didn't click cancel so go on
-    Map<String, String> params = new HashMap<String, String>();
+    Map<String, String> params = new HashMap<>();
 
     // before
     beforeCreateToStringMethod(params, template);

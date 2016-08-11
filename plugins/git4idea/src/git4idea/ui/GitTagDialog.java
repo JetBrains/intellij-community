@@ -94,7 +94,7 @@ public class GitTagDialog extends DialogWrapper {
   /**
    * Existing tags for the project
    */
-  private final Set<String> myExistingTags = new HashSet<String>();
+  private final Set<String> myExistingTags = new HashSet<>();
   /**
    * Prefix for message file name
    */

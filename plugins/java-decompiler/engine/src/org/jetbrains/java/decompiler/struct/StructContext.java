@@ -35,8 +35,8 @@ public class StructContext {
   private final IResultSaver saver;
   private final IDecompiledData decompiledData;
   private final LazyLoader loader;
-  private final Map<String, ContextUnit> units = new HashMap<String, ContextUnit>();
-  private final Map<String, StructClass> classes = new HashMap<String, StructClass>();
+  private final Map<String, ContextUnit> units = new HashMap<>();
+  private final Map<String, StructClass> classes = new HashMap<>();
 
   public StructContext(IResultSaver saver, IDecompiledData decompiledData, LazyLoader loader) {
     this.saver = saver;

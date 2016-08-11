@@ -149,10 +149,10 @@ public class GrTypeComboBox extends ComboBox {
       min = null;
     }
 
-    Map<String, PsiType> map = new LinkedHashMap<String, PsiType>();
+    Map<String, PsiType> map = new LinkedHashMap<>();
     final PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(type);
     if (unboxed != null) type = unboxed;
-    final Set<PsiType> set = new LinkedHashSet<PsiType>();
+    final Set<PsiType> set = new LinkedHashSet<>();
     set.add(type);
     while (!set.isEmpty()) {
       PsiType cur = set.iterator().next();

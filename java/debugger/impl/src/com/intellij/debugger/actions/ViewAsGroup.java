@@ -183,6 +183,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     });
   }
 
+  @NotNull
   public static List<JavaValue> getSelectedValues(AnActionEvent event) {
     List<XValueNodeImpl> selectedNodes = XDebuggerTreeActionBase.getSelectedNodes(event.getDataContext());
     if (selectedNodes.isEmpty()) return Collections.emptyList();

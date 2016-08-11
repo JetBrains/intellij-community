@@ -63,7 +63,7 @@ public class DefaultScopesProvider extends CustomScopesProviderEx {
 
   @NotNull
   public List<NamedScope> getAllCustomScopes() {
-    final List<NamedScope> scopes = new ArrayList<NamedScope>();
+    final List<NamedScope> scopes = new ArrayList<>();
     for (CustomScopesProvider provider : Extensions.getExtensions(CUSTOM_SCOPES_PROVIDER, myProject)) {
       scopes.addAll(provider.getFilteredScopes());
     }

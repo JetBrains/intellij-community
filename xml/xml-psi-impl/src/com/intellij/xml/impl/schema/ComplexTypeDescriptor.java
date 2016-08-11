@@ -91,8 +91,8 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     @Override
     protected CachedValue<CanContainAttributeType> create(final String key) {
       return CachedValuesManager.getManager(myTag.getProject()).createCachedValue(() -> {
-        THashSet<Object> dependencies = new THashSet<Object>();
-        CanContainAttributeType type = _canContainAttribute(key, myTag, null, new THashSet<String>(), dependencies);
+        THashSet<Object> dependencies = new THashSet<>();
+        CanContainAttributeType type = _canContainAttribute(key, myTag, null, new THashSet<>(), dependencies);
         if (dependencies.isEmpty()) {
           dependencies.add(myTag.getContainingFile());
         }
@@ -141,9 +141,9 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
   // Read-only calculation
   private XmlElementDescriptor[] doCollectElements(@Nullable XmlElement context) {
-    final Map<String,XmlElementDescriptor> map = new LinkedHashMap<String,XmlElementDescriptor>(5);
+    final Map<String,XmlElementDescriptor> map = new LinkedHashMap<>(5);
     createProcessor(map).startProcessing(myTag);
-    addSubstitutionGroups(map, myDocumentDescriptor, new HashSet<XmlNSDescriptorImpl>());
+    addSubstitutionGroups(map, myDocumentDescriptor, new HashSet<>());
     filterAbstractElements(map);
     return map.values().toArray(
       new XmlElementDescriptor[map.values().size()]
@@ -225,7 +225,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
   // Read-only calculation
   private XmlAttributeDescriptor[] doCollectAttributes(@Nullable final XmlElement context) {
-    final List<XmlAttributeDescriptorImpl> result = new ArrayList<XmlAttributeDescriptorImpl>();
+    final List<XmlAttributeDescriptorImpl> result = new ArrayList<>();
 
     XmlSchemaTagsProcessor processor = new XmlSchemaTagsProcessor(myDocumentDescriptor, "element") {
       @Override
@@ -285,7 +285,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   }
 
   public boolean canContainTag(String localName, String namespace, XmlElement context) {
-    return _canContainTag(localName, namespace, myTag, context, new HashSet<XmlTag>(5),
+    return _canContainTag(localName, namespace, myTag, context, new HashSet<>(5),
                           new CurrentContextInfo(myDocumentDescriptor, myDocumentDescriptor.getDefaultNamespace()), false);
   }
 
@@ -395,7 +395,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     if (qName == null) {
       return myAnyAttributeCache.get(namespace).getValue();
     }
-    return _canContainAttribute(namespace, myTag, qName, new THashSet<String>(), null);
+    return _canContainAttribute(namespace, myTag, qName, new THashSet<>(), null);
   }
   
   enum CanContainAttributeType {

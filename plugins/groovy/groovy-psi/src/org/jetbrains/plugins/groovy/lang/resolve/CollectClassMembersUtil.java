@@ -128,7 +128,7 @@ public class CollectClassMembersUtil {
       LinkedHashMap<String, List<CandidateInfo>> allMethods = ContainerUtil.newLinkedHashMap();
       LinkedHashMap<String, CandidateInfo> allInnerClasses = ContainerUtil.newLinkedHashMap();
 
-      processClass(aClass, allFields, allMethods, allInnerClasses, new HashSet<PsiClass>(), PsiSubstitutor.EMPTY, includeSynthetic);
+      processClass(aClass, allFields, allMethods, allInnerClasses, new HashSet<>(), PsiSubstitutor.EMPTY, includeSynthetic);
       return CachedValueProvider.Result.create(
         ClassMembers.create(allFields, allMethods, allInnerClasses), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT
       );
@@ -225,7 +225,7 @@ public class CollectClassMembersUtil {
     String name = method.getName();
     List<CandidateInfo> methods = allMethods.get(name);
     if (methods == null) {
-      methods = new ArrayList<CandidateInfo>();
+      methods = new ArrayList<>();
       allMethods.put(name, methods);
     }
     methods.add(new CandidateInfo(method, substitutor));

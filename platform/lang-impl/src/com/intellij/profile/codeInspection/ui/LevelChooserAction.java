@@ -87,13 +87,14 @@ public abstract class LevelChooserAction extends ComboBoxAction implements DumbA
   }
 
   public static List<HighlightSeverity> getSeverities(final SeverityRegistrar severityRegistrar, boolean includeDoNotShow) {
-    final List<HighlightSeverity> severities = new ArrayList<HighlightSeverity>();
+    final List<HighlightSeverity> severities = new ArrayList<>();
     for (final SeverityRegistrar.SeverityBasedTextAttributes type : SeverityUtil.getRegisteredHighlightingInfoTypes(severityRegistrar)) {
       severities.add(type.getSeverity());
     }
     if (includeDoNotShow) {
       severities.add(HighlightSeverity.INFORMATION);
     }
+    severities.remove(HighlightSeverity.INFO);
     Collections.sort(severities, severityRegistrar.reversed());
     return severities;
   }

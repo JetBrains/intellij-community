@@ -48,7 +48,7 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
   HttpVirtualFileImpl(@NotNull HttpFileSystemBase fileSystem, @Nullable HttpVirtualFileImpl parent, String path, @Nullable RemoteFileInfoImpl fileInfo) {
     if (parent != null) {
       if (parent.myChildren == null) {
-        parent.myChildren = new SmartList<VirtualFile>();
+        parent.myChildren = new SmartList<>();
       }
       parent.myChildren.add(this);
     }

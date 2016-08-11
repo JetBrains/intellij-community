@@ -149,7 +149,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
   }
 
   public List<PackagingElementNode<?>> findNodes(final Collection<? extends PackagingElement<?>> elements) {
-    final List<PackagingElementNode<?>> nodes = new ArrayList<PackagingElementNode<?>>();
+    final List<PackagingElementNode<?>> nodes = new ArrayList<>();
     TreeUtil.traverseDepth(getRootNode(), new TreeUtil.Traverse() {
       @Override
       public boolean accept(Object node) {

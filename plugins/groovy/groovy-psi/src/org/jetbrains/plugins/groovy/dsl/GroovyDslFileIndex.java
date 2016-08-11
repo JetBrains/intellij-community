@@ -78,7 +78,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   public static final @NonNls ID<String, Void> NAME = ID.create("GroovyDslFileIndex");
 
   private static final MultiMap<String, LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>>> filesInProcessing =
-    new ConcurrentMultiMap<String, LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>>>();
+    new ConcurrentMultiMap<>();
 
   private static final ExecutorService ourPool = AppExecutorUtil.createBoundedApplicationPoolExecutor(4);
 
@@ -366,10 +366,10 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
       int count = 0;
 
-      List<GroovyDslScript> result = new ArrayList<GroovyDslScript>();
+      List<GroovyDslScript> result = new ArrayList<>();
 
       final LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>> queue =
-        new LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>>();
+        new LinkedBlockingQueue<>();
 
       for (VirtualFile vfile : getGdslFiles(project)) {
         final long stamp = vfile.getModificationStamp();

@@ -70,9 +70,9 @@ public class SearchResults implements DocumentListener {
   private @Nullable FindResult myCursor;
 
   @NotNull
-  private List<FindResult> myOccurrences = new ArrayList<FindResult>();
+  private List<FindResult> myOccurrences = new ArrayList<>();
 
-  private final Set<RangeMarker> myExcluded = new HashSet<RangeMarker>();
+  private final Set<RangeMarker> myExcluded = new HashSet<>();
 
   private Editor myEditor;
   private final Project myProject;
@@ -89,7 +89,7 @@ public class SearchResults implements DocumentListener {
   private int myLastUpdatedStamp = -1;
   private long myDocumentTimestamp;
 
-  private final Stack<Pair<FindModel, FindResult>> myCursorPositions = new Stack<Pair<FindModel, FindResult>>();
+  private final Stack<Pair<FindModel, FindResult>> myCursorPositions = new Stack<>();
 
   private final SelectionManager mySelectionManager = new SelectionManager(this);
 
@@ -191,7 +191,7 @@ public class SearchResults implements DocumentListener {
   }
 
   public void clear() {
-    searchCompleted(new ArrayList<FindResult>(), getEditor(), null, false, null, getStamp());
+    searchCompleted(new ArrayList<>(), getEditor(), null, false, null, getStamp());
   }
 
   public void updateThreadSafe(final FindModel findModel, final boolean toChangeSelection, @Nullable final TextRange next, final int stamp) {
@@ -199,11 +199,11 @@ public class SearchResults implements DocumentListener {
 
     final Editor editor = getEditor();
 
-    final ArrayList<FindResult> results = new ArrayList<FindResult>();
+    final ArrayList<FindResult> results = new ArrayList<>();
     if (findModel != null) {
       updatePreviousFindModel(findModel);
-      final FutureResult<int[]> startsRef = new FutureResult<int[]>();
-      final FutureResult<int[]> endsRef = new FutureResult<int[]>();
+      final FutureResult<int[]> startsRef = new FutureResult<>();
+      final FutureResult<int[]> endsRef = new FutureResult<>();
       getSelection(editor, startsRef, endsRef);
 
       ApplicationManager.getApplication().runReadAction(() -> {
@@ -347,7 +347,7 @@ public class SearchResults implements DocumentListener {
   }
 
   private void updateExcluded() {
-    Set<RangeMarker> invalid = new HashSet<RangeMarker>();
+    Set<RangeMarker> invalid = new HashSet<>();
     for (RangeMarker marker : myExcluded) {
       if (!marker.isValid()) {
         invalid.add(marker);

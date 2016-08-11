@@ -170,7 +170,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   public List<VcsException> commit(@NotNull List<Change> changes,
                                    @NotNull String message,
                                    @NotNull NullableFunction<Object, Object> parametersHolder, Set<String> feedback) {
-    List<VcsException> exceptions = new ArrayList<VcsException>();
+    List<VcsException> exceptions = new ArrayList<>();
     Map<VirtualFile, Collection<Change>> sortedChanges = sortChangesByGitRoot(changes, exceptions);
     LOG.assertTrue(!sortedChanges.isEmpty(), "Trying to commit an empty list of changes: " + changes);
     for (Map.Entry<VirtualFile, Collection<Change>> entry : sortedChanges.entrySet()) {
@@ -221,7 +221,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         }
         else {
           try {
-            Set<FilePath> files = new HashSet<FilePath>();
+            Set<FilePath> files = new HashSet<>();
             files.addAll(added);
             files.addAll(removed);
             commit(myProject, root, files, messageFile, myNextCommitAuthor, myNextCommitAmend, myNextCommitAuthorDate);
@@ -370,8 +370,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                                      final File messageFile,
                                      final String author,
                                      List<VcsException> exceptions, @NotNull final PartialOperation partialOperation) {
-    HashSet<FilePath> realAdded = new HashSet<FilePath>();
-    HashSet<FilePath> realRemoved = new HashSet<FilePath>();
+    HashSet<FilePath> realAdded = new HashSet<>();
+    HashSet<FilePath> realRemoved = new HashSet<>();
     // perform diff
     GitSimpleHandler diff = new GitSimpleHandler(project, root, GitCommand.DIFF);
     diff.setSilent(true);
@@ -409,10 +409,10 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     realRemoved.removeAll(removed);
     if (realAdded.size() != 0 || realRemoved.size() != 0) {
 
-      final List<FilePath> files = new ArrayList<FilePath>();
+      final List<FilePath> files = new ArrayList<>();
       files.addAll(realAdded);
       files.addAll(realRemoved);
-      final Ref<Boolean> mergeAll = new Ref<Boolean>();
+      final Ref<Boolean> mergeAll = new Ref<>();
       try {
         GuiUtils.runOrInvokeAndWait(new Runnable() {
           public void run() {
@@ -550,7 +550,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
-    ArrayList<VcsException> rc = new ArrayList<VcsException>();
+    ArrayList<VcsException> rc = new ArrayList<>();
     Map<VirtualFile, List<FilePath>> sortedFiles;
     try {
       sortedFiles = GitUtil.sortFilePathsByGitRoot(files);
@@ -607,7 +607,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
-    ArrayList<VcsException> rc = new ArrayList<VcsException>();
+    ArrayList<VcsException> rc = new ArrayList<>();
     Map<VirtualFile, List<VirtualFile>> sortedFiles;
     try {
       sortedFiles = GitUtil.sortFilesByGitRoot(files);
@@ -646,7 +646,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   private static Map<VirtualFile, Collection<Change>> sortChangesByGitRoot(@NotNull List<Change> changes, List<VcsException> exceptions) {
-    Map<VirtualFile, Collection<Change>> result = new HashMap<VirtualFile, Collection<Change>>();
+    Map<VirtualFile, Collection<Change>> result = new HashMap<>();
     for (Change change : changes) {
       final ContentRevision afterRevision = change.getAfterRevision();
       final ContentRevision beforeRevision = change.getBeforeRevision();
@@ -667,7 +667,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
       Collection<Change> changeList = result.get(vcsRoot);
       if (changeList == null) {
-        changeList = new ArrayList<Change>();
+        changeList = new ArrayList<>();
         result.put(vcsRoot, changeList);
       }
       changeList.add(change);
@@ -714,9 +714,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       c.weightx = 1;
       c.fill = GridBagConstraints.HORIZONTAL;
 
-      Set<String> authors = new HashSet<String>(getUsersList(project));
+      Set<String> authors = new HashSet<>(getUsersList(project));
       addAll(authors, mySettings.getCommitAuthors());
-      List<String> list = new ArrayList<String>(authors);
+      List<String> list = new ArrayList<>(authors);
       Collections.sort(list);
 
       myAuthorField = createTextField(project, list);

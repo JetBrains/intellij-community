@@ -35,7 +35,7 @@ public abstract class UnwrapTestCase extends LightPlatformCodeInsightTestCase {
   protected void assertOptions(String code, String... expectedOptions) throws IOException {
     configureCode(code);
 
-    final List<String> actualOptions = new ArrayList<String>();
+    final List<String> actualOptions = new ArrayList<>();
 
     UnwrapHandler h = new UnwrapHandler() {
       @Override

@@ -54,7 +54,7 @@ public abstract class ResolverProcessor<T extends GroovyResolveResult> extends G
     PsiElement element = candidate.getElement();
     assert element == null || element.isValid() : getElementInfo(element);
 
-    if (myCandidates == null) myCandidates = new ArrayList<T>();
+    if (myCandidates == null) myCandidates = new ArrayList<>();
     myCandidates.add(candidate);
   }
 

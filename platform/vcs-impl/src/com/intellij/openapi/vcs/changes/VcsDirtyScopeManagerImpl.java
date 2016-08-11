@@ -247,7 +247,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       scope.addDirtyData(dirs.get(key), files.get(key));
     }
 
-    return new VcsInvalidated(new ArrayList<VcsDirtyScope>(scopes.values()), dirt.isEverythingDirty());
+    return new VcsInvalidated(new ArrayList<>(scopes.values()), dirt.isEverythingDirty());
   }
 
   @NotNull

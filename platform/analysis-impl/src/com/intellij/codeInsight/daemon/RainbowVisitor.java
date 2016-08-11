@@ -86,12 +86,15 @@ public abstract class RainbowVisitor implements HighlightVisitor {
                                   @NotNull PsiElement rainbowElement,
                                   @NotNull String id,
                                   @Nullable TextAttributesKey colorKey) {
-    return getHighlighter()
-      .getInfo(getHighlighter().getColorIndex(
-                   USED_COLORS.getValue(context),
-                   id,
-                   RainbowHighlighter.getRainbowHash(id)),
-               rainbowElement,
-               colorKey);
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
+    synchronized (context) {
+      return getHighlighter()
+        .getInfo(getHighlighter().getColorIndex(
+          USED_COLORS.getValue(context),
+          id,
+          RainbowHighlighter.getRainbowHash(id)),
+                 rainbowElement,
+                 colorKey);
+    }
   }
 }

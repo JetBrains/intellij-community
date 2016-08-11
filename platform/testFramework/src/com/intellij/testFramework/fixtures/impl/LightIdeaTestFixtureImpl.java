@@ -65,7 +65,7 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
     CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
     CodeStyleSettings oldCodeStyleSettings = myOldCodeStyleSettings;
     myOldCodeStyleSettings = null;
-    List<Throwable> exceptions = new SmartList<Throwable>();
+    List<Throwable> exceptions = new SmartList<>();
     try {
       UsefulTestCase.doCheckForSettingsDamage(oldCodeStyleSettings, getCurrentCodeStyleSettings(), exceptions);
 

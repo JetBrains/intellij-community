@@ -178,7 +178,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     myPropExceptionsButton = new AnActionButton(RefactoringBundle.message("changeSignature.propagate.exceptions.title"), null, AllIcons.Hierarchy.Caller) {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        final Ref<JavaCallerChooser> chooser = new Ref<JavaCallerChooser>();
+        final Ref<JavaCallerChooser> chooser = new Ref<>();
         Consumer<Set<PsiMethod>> callback = psiMethods -> {
           myMethodsToPropagateExceptions = psiMethods;
           myExceptionPropagationTree = chooser.get().getTree();
@@ -198,7 +198,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
 
     myExceptionsModel.addTableModelListener(mySignatureUpdater);
 
-    final ArrayList<Pair<String, JPanel>> result = new ArrayList<Pair<String, JPanel>>();
+    final ArrayList<Pair<String, JPanel>> result = new ArrayList<>();
     final String message = RefactoringBundle.message("changeSignature.exceptions.panel.border.title");
     result.add(Pair.create(message, panel));
     return result;
@@ -365,7 +365,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
 
           @Override
           public JComponent[] getFocusableComponents() {
-            final List<JComponent> focusable = new ArrayList<JComponent>();
+            final List<JComponent> focusable = new ArrayList<>();
             focusable.add(myTypeEditor.getFocusTarget());
             focusable.add(myNameEditor.getFocusTarget());
             if (myDefaultValueEditor != null) {

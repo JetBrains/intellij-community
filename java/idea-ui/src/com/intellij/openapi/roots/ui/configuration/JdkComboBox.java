@@ -279,7 +279,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
     model.removeAllElements();
     model.addElement(firstItem);
     final ProjectSdksModel projectJdksModel = ProjectStructureConfigurable.getInstance(project).getProjectJdksModel();
-    List<Sdk> projectJdks = new ArrayList<Sdk>(projectJdksModel.getProjectSdks().values());
+    List<Sdk> projectJdks = new ArrayList<>(projectJdksModel.getProjectSdks().values());
     if (myFilter != null) {
       projectJdks = ContainerUtil.filter(projectJdks, myFilter);
     }

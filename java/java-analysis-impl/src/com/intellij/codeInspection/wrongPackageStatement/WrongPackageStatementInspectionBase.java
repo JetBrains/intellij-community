@@ -64,7 +64,7 @@ public class WrongPackageStatementInspectionBase extends BaseJavaBatchLocalInspe
       if (packageStatement != null) {
         final PsiJavaCodeReferenceElement packageReference = packageStatement.getPackageReference();
         PsiPackage classPackage = (PsiPackage)packageReference.resolve();
-        List<LocalQuickFix> availableFixes = new ArrayList<LocalQuickFix>();
+        List<LocalQuickFix> availableFixes = new ArrayList<>();
         if (classPackage == null || !Comparing.equal(dirPackage.getQualifiedName(), packageReference.getQualifiedName(), true)) {
           availableFixes.add(new AdjustPackageNameFix(packageName));
           String packName = classPackage != null ? classPackage.getQualifiedName() : packageReference.getQualifiedName();

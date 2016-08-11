@@ -92,7 +92,7 @@ public class FormatterTagHandler {
   }
 
   private class EnabledRangesCollector extends PsiRecursiveElementVisitor {
-    private final List<FormatterTagInfo> myTagInfoList = new ArrayList<FormatterTagInfo>();
+    private final List<FormatterTagInfo> myTagInfoList = new ArrayList<>();
     private final TextRange myInitialRange;
 
     private EnabledRangesCollector(TextRange initialRange) {
@@ -114,7 +114,7 @@ public class FormatterTagHandler {
     }
 
     private List<TextRange> getRanges() {
-      List<TextRange> enabledRanges = new ArrayList<TextRange>();
+      List<TextRange> enabledRanges = new ArrayList<>();
       Collections.sort(myTagInfoList, (tagInfo1, tagInfo2) -> tagInfo1.offset - tagInfo2.offset);
 
       int start = myInitialRange.getStartOffset();

@@ -162,7 +162,7 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
   }
 
   void createResult(SyntaxInfo syntaxInfo, Editor editor) {
-    myResult = new ArrayList<RawTextWithMarkup>(2);
+    myResult = new ArrayList<>(2);
     myResult.add(new HtmlTransferableData(syntaxInfo, EditorUtil.getTabSize(editor)));
     myResult.add(new RtfTransferableData(syntaxInfo));
   }

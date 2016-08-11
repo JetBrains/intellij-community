@@ -160,7 +160,7 @@ public abstract class AnAction implements PossiblyDumbAware {
     if (component == null) return;
     List<AnAction> actionList = UIUtil.getClientProperty(component, ACTIONS_KEY);
     if (actionList == null) {
-      UIUtil.putClientProperty(component, ACTIONS_KEY, actionList = new SmartList<AnAction>());
+      UIUtil.putClientProperty(component, ACTIONS_KEY, actionList = new SmartList<>());
     }
     if (!actionList.contains(this)) {
       actionList.add(this);

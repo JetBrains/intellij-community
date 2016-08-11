@@ -76,7 +76,7 @@ public class MethodReturnAlwaysConstantInspection extends BaseGlobalInspection {
         return null;
       }
     }
-    final List<ProblemDescriptor> out = new ArrayList<ProblemDescriptor>();
+    final List<ProblemDescriptor> out = new ArrayList<>();
     for (RefMethod siblingRefMethod : siblingMethods) {
       final PsiMethod siblingMethod =
         (PsiMethod)siblingRefMethod.getElement();

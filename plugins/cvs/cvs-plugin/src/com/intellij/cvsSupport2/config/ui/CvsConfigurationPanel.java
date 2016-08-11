@@ -87,7 +87,7 @@ public class CvsConfigurationPanel {
   }
 
   public void updateFrom(CvsConfiguration config, CvsApplicationLevelConfiguration appLevelConfiguration) {
-    myConfigurations = new ArrayList<CvsRootConfiguration>(appLevelConfiguration.CONFIGURATIONS);
+    myConfigurations = new ArrayList<>(appLevelConfiguration.CONFIGURATIONS);
     myShowOutput.setSelected(config.SHOW_OUTPUT);
     myMakeNewFilesReadOnly.setSelected(config.MAKE_NEW_FILES_READONLY);
     myOnFileMergedWithConflictGroup[config.SHOW_CORRUPTED_PROJECT_FILES].setSelected(true);
@@ -125,7 +125,7 @@ public class CvsConfigurationPanel {
 
   public boolean equalsTo(CvsConfiguration config,
                           CvsApplicationLevelConfiguration appLevelConfiguration) {
-    return new HashSet<CvsRootConfiguration>(appLevelConfiguration.CONFIGURATIONS).equals(new HashSet<CvsRootConfiguration>(myConfigurations))
+    return new HashSet<>(appLevelConfiguration.CONFIGURATIONS).equals(new HashSet<>(myConfigurations))
            && config.MAKE_NEW_FILES_READONLY == myMakeNewFilesReadOnly.isSelected()
            && config.SHOW_OUTPUT == myShowOutput.isSelected()
            && config.SHOW_CORRUPTED_PROJECT_FILES == getSelected(myOnFileMergedWithConflictGroup)

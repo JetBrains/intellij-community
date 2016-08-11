@@ -69,8 +69,8 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
   }
 
   private void initTest() throws IOException {
-    myRevisions = new ArrayList<GitTestRevision>(7);
-    myRevisionsAfterRename = new ArrayList<GitTestRevision>(4);
+    myRevisions = new ArrayList<>(7);
+    myRevisionsAfterRename = new ArrayList<>(4);
 
     // 1. create a file
     // 2. simple edit with a simple commit message
@@ -158,7 +158,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
   // Inspired by IDEA-89347
   @Test
   public void testCyclicRename() throws Exception {
-    List<TestCommit> commits = new ArrayList<TestCommit>();
+    List<TestCommit> commits = new ArrayList<>();
 
     File source = mkdir("source");
     File initialFile = touch("source/PostHighlightingPass.java", "Initial content");
@@ -359,7 +359,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
 
   @Test
   public void testAppendableHistory() throws Exception {
-    final List<GitFileRevision> revisions = new ArrayList<GitFileRevision>(3);
+    final List<GitFileRevision> revisions = new ArrayList<>(3);
     Consumer<GitFileRevision> consumer = new Consumer<GitFileRevision>() {
       @Override
       public void consume(GitFileRevision gitFileRevision) {

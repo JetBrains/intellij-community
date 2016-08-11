@@ -61,7 +61,7 @@ public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWith
       }
     }
 
-    return new ArrayList<AbstractTreeNode>();
+    return new ArrayList<>();
   }
 
   private boolean isArchive() {

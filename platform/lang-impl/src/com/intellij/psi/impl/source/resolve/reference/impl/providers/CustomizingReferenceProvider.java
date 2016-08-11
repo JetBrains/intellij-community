@@ -39,7 +39,7 @@ public class CustomizingReferenceProvider extends PsiReferenceProvider implement
   
   public <Option> void addCustomization(CustomizableReferenceProvider.CustomizationKey<Option> key, Option value) {
     if (myOptions == null) {
-      myOptions = new HashMap<CustomizationKey, Object>(5);
+      myOptions = new HashMap<>(5);
     }
     myOptions.put(key,value);
   }

@@ -110,6 +110,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     super(null);
     myViewProvider = viewProvider;
     myIsForDecompiling = forDecompiling;
+    //noinspection ResultOfMethodCallIgnored
     JavaElementType.CLASS.getIndex();  // initialize Java stubs
   }
 
@@ -166,13 +167,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   @NotNull
   public PsiElement[] getChildren() {
     PsiJavaModule module = getModuleDeclaration();
-    if (module != null) {
-      return new PsiElement[]{module};
-    }
-    else {
-      PsiPackageStatement pkg = getPackageStatement();
-      return pkg != null ? ArrayUtil.prepend(pkg, getClasses(), PsiElement.class) : getClasses();
-    }
+    return module != null ? new PsiElement[]{module} : getClasses();
   }
 
   @Override

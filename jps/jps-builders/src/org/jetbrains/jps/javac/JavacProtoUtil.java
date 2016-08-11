@@ -20,7 +20,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.BinaryContent;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
@@ -41,7 +42,7 @@ public class JavacProtoUtil {
     return JavacRemoteProto.Message.Request.newBuilder().setRequestType(JavacRemoteProto.Message.Request.Type.SHUTDOWN).build();
   }
 
-  public static JavacRemoteProto.Message.Request createCompilationRequest(List<String> options, Collection<File> files, Collection<File> classpath, Collection<File> platformCp, Collection<File> sourcePath, Map<File, Set<File>> outs) {
+  public static JavacRemoteProto.Message.Request createCompilationRequest(List<String> options, Collection<File> files, Collection<File> classpath, Collection<File> platformCp, Collection<File> modulePath, Collection<File> sourcePath, Map<File, Set<File>> outs) {
     final JavacRemoteProto.Message.Request.Builder builder = JavacRemoteProto.Message.Request.newBuilder();
     builder.setRequestType(JavacRemoteProto.Message.Request.Type.COMPILE);
     builder.addAllOption(options);
@@ -53,6 +54,9 @@ public class JavacProtoUtil {
     }
     for (File file : platformCp) {
       builder.addPlatformClasspath(FileUtil.toSystemIndependentName(file.getPath()));
+    }
+    for (File file : modulePath) {
+      builder.addModulePath(FileUtil.toSystemIndependentName(file.getPath()));
     }
     for (File file : sourcePath) {
       builder.addSourcepath(FileUtil.toSystemIndependentName(file.getPath()));

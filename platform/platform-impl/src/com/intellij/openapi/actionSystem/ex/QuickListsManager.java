@@ -117,7 +117,7 @@ public class QuickListsManager implements ExportableApplicationComponent {
 
   private void registerActions() {
     // to prevent exception if 2 or more targets have the same name
-    Set<String> registeredIds = new THashSet<String>();
+    Set<String> registeredIds = new THashSet<>();
     for (QuickList list : mySchemeManager.getAllSchemes()) {
       String actionId = list.getActionId();
       if (registeredIds.add(actionId)) {

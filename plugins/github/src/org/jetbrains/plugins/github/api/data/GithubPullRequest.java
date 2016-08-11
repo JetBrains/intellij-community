@@ -57,6 +57,7 @@ public class GithubPullRequest {
   @Mandatory private Link head;
   @Mandatory private Link base;
 
+  @RestModel
   public static class Link {
     @Mandatory private String label;
     @Mandatory private String ref;

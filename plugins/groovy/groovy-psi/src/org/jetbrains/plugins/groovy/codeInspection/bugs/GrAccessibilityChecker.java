@@ -74,7 +74,7 @@ public class GrAccessibilityChecker {
     PsiModifierList modifierList = refElement.getModifierList();
     if (modifierList == null) return GroovyFix.EMPTY_ARRAY;
 
-    List<GroovyFix> fixes = new ArrayList<GroovyFix>();
+    List<GroovyFix> fixes = new ArrayList<>();
     try {
       Project project = refElement.getProject();
       JavaPsiFacade facade = JavaPsiFacade.getInstance(project);

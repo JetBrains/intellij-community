@@ -50,7 +50,7 @@ public class DataFlowRunner {
   private static final Key<Integer> TOO_EXPENSIVE_HASH = Key.create("TOO_EXPENSIVE_HASH");
 
   private Instruction[] myInstructions;
-  private final MultiMap<PsiElement, DfaMemoryState> myNestedClosures = new MultiMap<PsiElement, DfaMemoryState>();
+  private final MultiMap<PsiElement, DfaMemoryState> myNestedClosures = new MultiMap<>();
   @NotNull
   private final DfaValueFactory myValueFactory;
 
@@ -252,7 +252,7 @@ public class DataFlowRunner {
     })) return;
 
     // now remove obsolete memory states
-    final Set<BranchingInstruction> mayRemoveStatesFor = new THashSet<BranchingInstruction>();
+    final Set<BranchingInstruction> mayRemoveStatesFor = new THashSet<>();
     for (Instruction instruction : myInstructions) {
       if (inSameLoop(prevInstruction, instruction, loopNumber) && instruction instanceof BranchingInstruction) {
         mayRemoveStatesFor.add((BranchingInstruction)instruction);
@@ -327,13 +327,13 @@ public class DataFlowRunner {
 
   @NotNull
   MultiMap<PsiElement, DfaMemoryState> getNestedClosures() {
-    return new MultiMap<PsiElement, DfaMemoryState>(myNestedClosures);
+    return new MultiMap<>(myNestedClosures);
   }
 
   @NotNull
   public Pair<Set<Instruction>,Set<Instruction>> getConstConditionalExpressions() {
-    Set<Instruction> trueSet = new HashSet<Instruction>();
-    Set<Instruction> falseSet = new HashSet<Instruction>();
+    Set<Instruction> trueSet = new HashSet<>();
+    Set<Instruction> falseSet = new HashSet<>();
 
     for (Instruction instruction : myInstructions) {
       if (instruction instanceof BranchingInstruction) {
@@ -369,7 +369,7 @@ public class DataFlowRunner {
   private static DfaMemoryStateImpl createClosureState(@NotNull DfaMemoryState memState) {
     DfaMemoryStateImpl copy = (DfaMemoryStateImpl)memState.createCopy();
     copy.flushFields();
-    Set<DfaVariableValue> vars = new HashSet<DfaVariableValue>(copy.getVariableStates().keySet());
+    Set<DfaVariableValue> vars = new HashSet<>(copy.getVariableStates().keySet());
     for (DfaVariableValue value : vars) {
       copy.flushDependencies(value);
     }

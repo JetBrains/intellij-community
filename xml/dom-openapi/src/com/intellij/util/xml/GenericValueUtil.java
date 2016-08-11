@@ -51,7 +51,7 @@ public class GenericValueUtil {
   @NotNull
   public static <T> Collection<T> getValueCollection(final Collection<? extends GenericValue<? extends T>> collection, Collection<T> result) {
     for (GenericValue<? extends T> o : collection) {
-      ContainerUtil.addIfNotNull(o.getValue(), result);
+      ContainerUtil.addIfNotNull(result, o.getValue());
     }
     return result;
   }
@@ -59,7 +59,7 @@ public class GenericValueUtil {
   @NotNull
   public static Collection<String> getStringCollection(final Collection<? extends GenericValue> collection, Collection<String> result) {
     for (GenericValue o : collection) {
-      ContainerUtil.addIfNotNull(o.getStringValue(), result);
+      ContainerUtil.addIfNotNull(result, o.getStringValue());
     }
     return result;
   }

@@ -139,12 +139,12 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
 
   @Override
   protected void processRemovedItems() {
-    Set<RemoteServer<?>> servers = new HashSet<RemoteServer<?>>();
+    Set<RemoteServer<?>> servers = new HashSet<>();
     for (NamedConfigurable<RemoteServer<?>> configurable : getConfiguredServers()) {
       servers.add(configurable.getEditableObject());
     }
 
-    List<RemoteServer<?>> toDelete = new ArrayList<RemoteServer<?>>();
+    List<RemoteServer<?>> toDelete = new ArrayList<>();
     for (RemoteServer<?> server : getServers()) {
       if (!servers.contains(server)) {
         toDelete.add(server);
@@ -158,7 +158,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   @Override
   public void apply() throws ConfigurationException {
     super.apply();
-    Set<RemoteServer<?>> servers = new HashSet<RemoteServer<?>>(getServers());
+    Set<RemoteServer<?>> servers = new HashSet<>(getServers());
     for (NamedConfigurable<RemoteServer<?>> configurable : getConfiguredServers()) {
       RemoteServer<?> server = configurable.getEditableObject();
       server.setName(configurable.getDisplayName());
@@ -171,7 +171,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   @Nullable
   @Override
   protected ArrayList<AnAction> createActions(boolean fromPopup) {
-    ArrayList<AnAction> actions = new ArrayList<AnAction>();
+    ArrayList<AnAction> actions = new ArrayList<>();
     ServerType<?> singleServerType = getSingleServerType();
     if (singleServerType == null) {
       actions.add(new AddRemoteServerGroup());
@@ -213,7 +213,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   }
 
   private List<NamedConfigurable<RemoteServer<?>>> getConfiguredServers() {
-    List<NamedConfigurable<RemoteServer<?>>> configurables = new ArrayList<NamedConfigurable<RemoteServer<?>>>();
+    List<NamedConfigurable<RemoteServer<?>>> configurables = new ArrayList<>();
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       MyNode node = (MyNode)myRoot.getChildAt(i);
       configurables.add((NamedConfigurable<RemoteServer<?>>)node.getConfigurable());

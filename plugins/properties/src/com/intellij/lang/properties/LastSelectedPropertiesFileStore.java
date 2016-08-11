@@ -45,7 +45,7 @@ import java.util.Map;
 public class LastSelectedPropertiesFileStore implements PersistentStateComponent<Element> {
   private static final String PROPERTIES_FILE_STATISTICS_KEY = "PROPERTIES_FILE";
 
-  private final Map<String, String> lastSelectedUrls = new LinkedHashMap<String, String>();
+  private final Map<String, String> lastSelectedUrls = new LinkedHashMap<>();
   private String lastSelectedFileUrl;
 
   public static LastSelectedPropertiesFileStore getInstance() {

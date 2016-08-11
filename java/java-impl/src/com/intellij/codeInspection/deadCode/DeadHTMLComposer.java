@@ -97,7 +97,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
       } else {
         appendNoProblems(buf);
       }
-      appendCallesList(refElement, buf, new HashSet<RefElement>(), true);
+      appendCallesList(refElement, buf, new HashSet<>(), true);
     }
   }
 
@@ -377,7 +377,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
   public static Set<RefElement> getPossibleChildren(final RefElementNode refElementNode, RefElement refElement) {
     final TreeNode[] pathToRoot = refElementNode.getPath();
 
-    final HashSet<RefElement> newChildren = new HashSet<RefElement>();
+    final HashSet<RefElement> newChildren = new HashSet<>();
 
     if (!refElement.isValid()) return newChildren;
 

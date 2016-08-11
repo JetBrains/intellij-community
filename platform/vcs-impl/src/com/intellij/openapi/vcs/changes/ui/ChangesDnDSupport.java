@@ -157,7 +157,7 @@ public class ChangesDnDSupport implements DnDDropHandler, DnDTargetChecker {
   private int getSelectionCount() {
     final TreePath[] paths = myTree.getSelectionModel().getSelectionPaths();
     int count = 0;
-    final List<ChangesBrowserNode> nodes = new ArrayList<ChangesBrowserNode>();
+    final List<ChangesBrowserNode> nodes = new ArrayList<>();
 
     for (final TreePath path : paths) {
       final ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();

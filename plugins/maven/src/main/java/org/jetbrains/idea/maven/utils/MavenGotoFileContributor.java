@@ -31,7 +31,7 @@ import java.util.List;
 public class MavenGotoFileContributor implements ChooseByNameContributor {
   @NotNull
   public String[] getNames(Project project, boolean includeNonProjectItems) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
 
     for (MavenProject each : MavenProjectsManager.getInstance(project).getProjects()) {
       result.add(each.getMavenId().getArtifactId());
@@ -42,7 +42,7 @@ public class MavenGotoFileContributor implements ChooseByNameContributor {
 
   @NotNull
   public NavigationItem[] getItemsByName(String name, String pattern, Project project, boolean includeNonProjectItems) {
-    List<NavigationItem> result = new ArrayList<NavigationItem>();
+    List<NavigationItem> result = new ArrayList<>();
 
     for (final MavenProject each : MavenProjectsManager.getInstance(project).getProjects()) {
       if (name.equals(each.getMavenId().getArtifactId())) {

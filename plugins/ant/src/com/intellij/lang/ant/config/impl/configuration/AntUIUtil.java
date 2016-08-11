@@ -118,7 +118,7 @@ public class AntUIUtil {
     private final CellEditorComponentWithBrowseButton<JTextField> myComponent;
 
     public PropertyValueCellEditor() {
-      myComponent = new CellEditorComponentWithBrowseButton<JTextField>(new TextFieldWithBrowseButton(), this);
+      myComponent = new CellEditorComponentWithBrowseButton<>(new TextFieldWithBrowseButton(), this);
       getChildComponent().setBorder(BorderFactory.createLineBorder(Color.black));
 
       FixedSizeButton button = myComponent.getComponentWithButton().getButton();

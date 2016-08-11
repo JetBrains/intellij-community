@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 class ReturnValueBeanBuilder {
-  private final List<PsiTypeParameter> myTypeParams = new ArrayList<PsiTypeParameter>();
+  private final List<PsiTypeParameter> myTypeParams = new ArrayList<>();
   private String myClassName;
   private String myPackageName;
   private Project myProject;

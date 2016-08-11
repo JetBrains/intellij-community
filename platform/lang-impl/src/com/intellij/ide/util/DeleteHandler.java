@@ -212,7 +212,7 @@ public class DeleteHandler {
         if (elementToDelete instanceof PsiDirectory) {
           VirtualFile virtualFile = ((PsiDirectory)elementToDelete).getVirtualFile();
           if (virtualFile.isInLocalFileSystem() && !virtualFile.is(VFileProperty.SYMLINK)) {
-            ArrayList<VirtualFile> readOnlyFiles = new ArrayList<VirtualFile>();
+            ArrayList<VirtualFile> readOnlyFiles = new ArrayList<>();
             CommonRefactoringUtil.collectReadOnlyFiles(virtualFile, readOnlyFiles);
 
             if (!readOnlyFiles.isEmpty()) {

@@ -37,7 +37,7 @@ public interface StructureViewBuilder {
   ExtensionPointName<KeyedFactoryEPBean> EP_NAME = ExtensionPointName.create("com.intellij.structureViewBuilder");
 
   StructureViewBuilderProvider PROVIDER =
-    new FileTypeExtensionFactory<StructureViewBuilderProvider>(StructureViewBuilderProvider.class, EP_NAME).get();
+    new FileTypeExtensionFactory<>(StructureViewBuilderProvider.class, EP_NAME).get();
 
   /**
    * Returns the structure view implementation for the file displayed in the specified

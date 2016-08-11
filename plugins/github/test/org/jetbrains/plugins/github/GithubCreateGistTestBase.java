@@ -67,7 +67,7 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
 
   @NotNull
   protected static List<FileContent> createContent() {
-    List<FileContent> content = new ArrayList<FileContent>();
+    List<FileContent> content = new ArrayList<>();
 
     content.add(new FileContent("file1", "file1 content"));
     content.add(new FileContent("file2", "file2 content"));

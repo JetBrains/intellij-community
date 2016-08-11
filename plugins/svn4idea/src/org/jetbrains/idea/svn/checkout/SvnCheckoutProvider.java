@@ -108,7 +108,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
                                final Depth depth,
                                final boolean ignoreExternals,
                                final Listener listener, final WorkingCopyFormat selectedFormat) {
-    final Ref<Boolean> checkoutSuccessful = new Ref<Boolean>();
+    final Ref<Boolean> checkoutSuccessful = new Ref<>();
     final Exception[] exception = new Exception[1];
     final Task.Backgroundable checkoutBackgroundTask = new Task.Backgroundable(project,
                      message("message.title.check.out"), true, VcsConfiguration.getInstance(project).getCheckoutOption()) {
@@ -233,7 +233,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
 
   public static void doImport(final Project project, final File target, final SVNURL url, final Depth depth,
                               final boolean includeIgnored, final String message) {
-    final Ref<String> errorMessage = new Ref<String>();
+    final Ref<String> errorMessage = new Ref<>();
     final SvnVcs vcs = SvnVcs.getInstance(project);
     final String targetPath = FileUtil.toSystemIndependentName(target.getAbsolutePath());
 
@@ -315,7 +315,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       myVcs = SvnVcs.getInstance(project);
       myPath = path;
 
-      error = new AtomicReference<String>();
+      error = new AtomicReference<>();
     }
 
     @CalledInAwt

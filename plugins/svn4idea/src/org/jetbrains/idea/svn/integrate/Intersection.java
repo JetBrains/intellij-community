@@ -31,8 +31,8 @@ public class Intersection {
   private final MultiMap<String, Change> myChangesSubset;
 
   public Intersection() {
-    myLists = new HashMap<String, String>();
-    myChangesSubset = new MultiMap<String, Change>();
+    myLists = new HashMap<>();
+    myChangesSubset = new MultiMap<>();
   }
 
   public void add(@NotNull final String listName, @Nullable final String comment, final Change change) {

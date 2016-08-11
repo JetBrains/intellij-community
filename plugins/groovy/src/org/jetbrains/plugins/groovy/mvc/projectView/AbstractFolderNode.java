@@ -76,7 +76,7 @@ public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
       return Collections.emptyList();
     }
 
-    final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
+    final List<AbstractTreeNode> children = new ArrayList<>();
 
     // scan folder's children
     for (PsiDirectory subDir : directory.getSubdirectories()) {

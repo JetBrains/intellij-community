@@ -23,7 +23,7 @@ public class YAMLPlainTextImpl extends YAMLScalarImpl implements YAMLScalar {
   public List<TextRange> getContentRanges() {
     final int myStart = getTextOffset();
     final ASTNode node = getNode();
-    final List<TextRange> result = new ArrayList<TextRange>();
+    final List<TextRange> result = new ArrayList<>();
 
     boolean seenText = false;
     for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {

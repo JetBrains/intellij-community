@@ -61,16 +61,16 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
   private TextFieldWithBrowseButton myOutputFile;
   private JCheckBox myShowConsoleOnStdOutCb;
   private JCheckBox myShowConsoleOnStdErrCb;
-  private final Map<LogFileOptions, PredefinedLogFile> myLog2Predefined = new THashMap<LogFileOptions, PredefinedLogFile>();
-  private final List<PredefinedLogFile> myUnresolvedPredefined = new SmartList<PredefinedLogFile>();
+  private final Map<LogFileOptions, PredefinedLogFile> myLog2Predefined = new THashMap<>();
+  private final List<PredefinedLogFile> myUnresolvedPredefined = new SmartList<>();
 
   public LogConfigurationPanel() {
     ColumnInfo<LogFileOptions, Boolean> IS_SHOW = new MyIsActiveColumnInfo();
     ColumnInfo<LogFileOptions, LogFileOptions> FILE = new MyLogFileColumnInfo();
     ColumnInfo<LogFileOptions, Boolean> IS_SKIP_CONTENT = new MyIsSkipColumnInfo();
 
-    myModel = new ListTableModel<LogFileOptions>(IS_SHOW, FILE, IS_SKIP_CONTENT);
-    myFilesTable = new TableView<LogFileOptions>(myModel);
+    myModel = new ListTableModel<>(IS_SHOW, FILE, IS_SKIP_CONTENT);
+    myFilesTable = new TableView<>(myModel);
     myFilesTable.getEmptyText().setText(DiagnosticBundle.message("log.monitor.no.files"));
 
     final JTableHeader tableHeader = myFilesTable.getTableHeader();
@@ -95,7 +95,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
         .setAddAction(new AnActionButtonRunnable() {
           @Override
           public void run(AnActionButton button) {
-            ArrayList<LogFileOptions> newList = new ArrayList<LogFileOptions>(myModel.getItems());
+            ArrayList<LogFileOptions> newList = new ArrayList<>(myModel.getItems());
             LogFileOptions newOptions = new LogFileOptions("", "", true, true, false);
             if (showEditorDialog(newOptions)) {
               newList.add(newOptions);
@@ -174,7 +174,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
 
   public void refreshPredefinedLogFiles(RunConfigurationBase configurationBase) {
     List<LogFileOptions> items = myModel.getItems();
-    List<LogFileOptions> newItems = new ArrayList<LogFileOptions>();
+    List<LogFileOptions> newItems = new ArrayList<>();
     boolean changed = false;
     for (LogFileOptions item : items) {
       final PredefinedLogFile predefined = myLog2Predefined.get(item);
@@ -218,7 +218,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
 
   @Override
   protected void resetEditorFrom(final RunConfigurationBase configuration) {
-    ArrayList<LogFileOptions> list = new ArrayList<LogFileOptions>();
+    ArrayList<LogFileOptions> list = new ArrayList<>();
     final List<LogFileOptions> logFiles = configuration.getLogFiles();
     for (LogFileOptions setting : logFiles) {
       list.add(
@@ -415,7 +415,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
 
     public LogFileCellEditor(LogFileOptions options) {
       myLogFileOptions = options;
-      myComponent = new CellEditorComponentWithBrowseButton<JTextField>(new TextFieldWithBrowseButton(), this);
+      myComponent = new CellEditorComponentWithBrowseButton<>(new TextFieldWithBrowseButton(), this);
       getChildComponent().setEditable(false);
       getChildComponent().setBorder(null);
       myComponent.getComponentWithButton().getButton().addActionListener(new ActionListener() {

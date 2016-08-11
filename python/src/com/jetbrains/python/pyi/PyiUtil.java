@@ -83,7 +83,7 @@ public class PyiUtil {
       if (cachedResults != null) {
         return getFirstPyiFile(cachedResults);
       }
-      final ArrayList<PsiElement> results = new ArrayList<PsiElement>();
+      final ArrayList<PsiElement> results = new ArrayList<>();
       final PsiManager psiManager = PsiManager.getInstance(project);
       final String nameAsPath = StringUtil.join(qName.getComponents(), "/");
       final List<String> paths = ImmutableList.of(

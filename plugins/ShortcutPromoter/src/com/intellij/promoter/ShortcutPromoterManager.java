@@ -25,8 +25,8 @@ import java.util.Map;
   storages = @Storage(value = "promoter.xml", roamingType = RoamingType.PER_OS)
 )
 public class ShortcutPromoterManager implements ApplicationComponent, AnActionListener, PersistentStateComponent<Element> {
-  private final Map<String, PromoterState> myState = new LinkedHashMap<String, PromoterState>();
-  private final Map<String, ShortcutPromoterEP> myExtensions = new THashMap<String, ShortcutPromoterEP>();
+  private final Map<String, PromoterState> myState = new LinkedHashMap<>();
+  private final Map<String, ShortcutPromoterEP> myExtensions = new THashMap<>();
 
   @Override
   public void initComponent() {

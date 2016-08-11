@@ -128,19 +128,19 @@ public class StringUtilTest {
   public void testNaturalCompare() {
     assertEquals(1, StringUtil.naturalCompare("test011", "test10"));
     assertEquals(1, StringUtil.naturalCompare("test10a", "test010"));
-    final List<String> strings = new ArrayList<String>(Arrays.asList("Test99", "tes0", "test0", "testing", "test", "test99", "test011", "test1",
-                                                             "test 3", "test2", "test10a", "test10", "1.2.10.5", "1.2.9.1"));
+    final List<String> strings = new ArrayList<>(Arrays.asList("Test99", "tes0", "test0", "testing", "test", "test99", "test011", "test1",
+                                                               "test 3", "test2", "test10a", "test10", "1.2.10.5", "1.2.9.1"));
     final Comparator<String> c = (o1, o2) -> StringUtil.naturalCompare(o1, o2);
     Collections.sort(strings, c);
     assertEquals(Arrays.asList("1.2.9.1", "1.2.10.5", "tes0", "test", "test0", "test1", "test2", "test 3", "test10", "test10a",
                                "test011", "Test99", "test99", "testing"), strings);
-    final List<String> strings2 = new ArrayList<String>(Arrays.asList("t1", "t001", "T2", "T002", "T1", "t2"));
+    final List<String> strings2 = new ArrayList<>(Arrays.asList("t1", "t001", "T2", "T002", "T1", "t2"));
     Collections.sort(strings2, c);
     assertEquals(Arrays.asList("T1", "t1", "t001", "T2", "t2", "T002"), strings2);
     assertEquals(1 ,StringUtil.naturalCompare("7403515080361171695", "07403515080361171694"));
     assertEquals(-14, StringUtil.naturalCompare("_firstField", "myField1"));
     //idea-80853
-    final List<String> strings3 = new ArrayList<String>(
+    final List<String> strings3 = new ArrayList<>(
       Arrays.asList("C148A_InsomniaCure", "C148B_Escape", "C148C_TersePrincess", "C148D_BagOfMice", "C148E_Porcelain"));
     Collections.sort(strings3, c);
     assertEquals(Arrays.asList("C148A_InsomniaCure", "C148B_Escape", "C148C_TersePrincess", "C148D_BagOfMice", "C148E_Porcelain"), strings3);

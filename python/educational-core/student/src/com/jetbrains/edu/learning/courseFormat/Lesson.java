@@ -25,7 +25,7 @@ public class Lesson implements StudyItem {
 
   @Expose
   @SerializedName("task_list")
-  public List<Task> taskList = new ArrayList<Task>();
+  public List<Task> taskList = new ArrayList<>();
 
   @Transient
   private Course myCourse = null;

@@ -49,7 +49,7 @@ public class MoveMembersImpl {
       return;
     }
     
-    final Set<PsiMember> preselectMembers = new HashSet<PsiMember>();
+    final Set<PsiMember> preselectMembers = new HashSet<>();
     for (PsiElement element : elements) {
       if (element instanceof PsiMember && !sourceClass.equals(((PsiMember)element).getContainingClass())) {
         String message = RefactoringBundle.getCannotRefactorMessage(

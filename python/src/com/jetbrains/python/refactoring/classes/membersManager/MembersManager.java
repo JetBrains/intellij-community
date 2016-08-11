@@ -65,7 +65,7 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
    */
   @NotNull
   public static List<PyMemberInfo<PyElement>> getAllMembersCouldBeMoved(@NotNull final PyClass pyClass) {
-    final List<PyMemberInfo<PyElement>> result = new ArrayList<PyMemberInfo<PyElement>>();
+    final List<PyMemberInfo<PyElement>> result = new ArrayList<>();
 
     for (final MembersManager<? extends PyElement> manager : MANAGERS) {
       result.addAll(transformSafely(pyClass, manager));
@@ -105,7 +105,7 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
     @NotNull final PyClass from,
     @NotNull final PyClass... to
   ) {
-    List<PyMemberInfo<PyElement>> memberInfosSorted = new ArrayList<PyMemberInfo<PyElement>>(memberInfos);
+    List<PyMemberInfo<PyElement>> memberInfosSorted = new ArrayList<>(memberInfos);
     Collections.sort(memberInfosSorted, (o1, o2) -> PyDependenciesComparator.INSTANCE.compare(o1.getMember(), o2.getMember()));
 
     for (PyMemberInfo<PyElement> info : memberInfosSorted) {
@@ -284,9 +284,9 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
     final Collection<? extends PyElement> elementsToCheckDependency =
       memberInfo.getMembersManager().getElementsToStoreReferences(Collections.singleton(member));
 
-    final MultiMap<PyClass, PyElement> dependencies = new MultiMap<PyClass, PyElement>();
+    final MultiMap<PyClass, PyElement> dependencies = new MultiMap<>();
 
-    final Collection<PyElement> result = new HashSet<PyElement>();
+    final Collection<PyElement> result = new HashSet<>();
     for (final MembersManager<? extends PyElement> manager : MANAGERS) {
       for (final PyElement elementToCheckDependency : elementsToCheckDependency) {
         dependencies.putAllValues(manager.getDependencies(elementToCheckDependency));

@@ -55,7 +55,7 @@ class PyEduDebugProcess extends PyDebugProcess {
   @NotNull
   @Override
   protected PySuspendContext createSuspendContext(PyThreadInfo threadInfo) {
-    threadInfo.updateState(threadInfo.getState(), new ArrayList<PyStackFrameInfo>(filterFrames(threadInfo.getFrames())));
+    threadInfo.updateState(threadInfo.getState(), new ArrayList<>(filterFrames(threadInfo.getFrames())));
     return new PySuspendContext(this, threadInfo);
   }
 

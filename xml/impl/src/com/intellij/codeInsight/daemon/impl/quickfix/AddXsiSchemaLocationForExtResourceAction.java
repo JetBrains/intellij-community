@@ -58,7 +58,7 @@ public class AddXsiSchemaLocationForExtResourceAction extends BaseExtResourceAct
   protected void doInvoke(@NotNull final PsiFile file, final int offset, @NotNull final String uri, final Editor editor) throws IncorrectOperationException {
     final XmlTag tag = PsiTreeUtil.getParentOfType(file.findElementAt(offset), XmlTag.class);
     if (tag == null) return;
-    final List<String> schemaLocations = new ArrayList<String>();
+    final List<String> schemaLocations = new ArrayList<>();
 
     CreateNSDeclarationIntentionFix.processExternalUris(new CreateNSDeclarationIntentionFix.TagMetaHandler(tag.getLocalName()), file, new CreateNSDeclarationIntentionFix.ExternalUriProcessor() {
       @Override

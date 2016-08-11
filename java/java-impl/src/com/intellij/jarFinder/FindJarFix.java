@@ -118,7 +118,7 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
   }
 
   private void findJarsForFqn(final String fqn, final Editor editor) {
-    final Map<String, String> libs = new HashMap<String, String>();
+    final Map<String, String> libs = new HashMap<>();
 
     final Runnable runnable = () -> {
       try {
@@ -163,7 +163,7 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
         if (libs.isEmpty()) {
           HintManager.getInstance().showInformationHint(editor, "No libraries found for '" + fqn + "'");
         } else {
-          final ArrayList<String> variants = new ArrayList<String>(libs.keySet());
+          final ArrayList<String> variants = new ArrayList<>(libs.keySet());
           Collections.sort(variants, (o1, o2) -> o1.compareTo(o2));
           final JBList libNames = new JBList(variants);
           libNames.installCellRenderer(o -> new JLabel(o.toString(), PlatformIcons.JAR_ICON, SwingConstants.LEFT));
@@ -271,7 +271,7 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
   protected List<String> getPossibleFqns(T ref) {
     Collection<String> fqns = getFqns(ref);
     
-    List<String> res = new ArrayList<String>(fqns.size());
+    List<String> res = new ArrayList<>(fqns.size());
 
     for (String fqn : fqns) {
       if (fqn.startsWith("java.") || fqn.startsWith("javax.swing.")) {

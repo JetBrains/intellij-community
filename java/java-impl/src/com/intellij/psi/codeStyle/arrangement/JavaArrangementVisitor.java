@@ -60,8 +60,8 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   private static final ArrangementSettingsToken ANON_CLASS_PARAMETER_LIST = new ArrangementSettingsToken("Dummy", "not matchable anon class argument list");
   private static final ArrangementSettingsToken ANONYMOUS_CLASS_BODY = new ArrangementSettingsToken("Dummy", "not matchable anonymous class body");
 
-  @NotNull private final Stack<JavaElementArrangementEntry>           myStack   = new Stack<JavaElementArrangementEntry>();
-  @NotNull private final Map<PsiElement, JavaElementArrangementEntry> myEntries = new HashMap<PsiElement, JavaElementArrangementEntry>();
+  @NotNull private final Stack<JavaElementArrangementEntry>           myStack   = new Stack<>();
+  @NotNull private final Map<PsiElement, JavaElementArrangementEntry> myEntries = new HashMap<>();
 
   @NotNull private final  JavaArrangementParseInfo      myInfo;
   @NotNull private final  Collection<TextRange>         myRanges;
@@ -248,7 +248,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
 
   @NotNull
   private List<PsiField> getReferencedFields(@NotNull final PsiField field) {
-    final List<PsiField> referencedElements = new ArrayList<PsiField>();
+    final List<PsiField> referencedElements = new ArrayList<>();
 
     PsiExpression fieldInitializer = field.getInitializer();
     PsiClass containingClass = field.getContainingClass();

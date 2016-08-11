@@ -47,7 +47,7 @@ public class MethodsUsageIndexReader extends ClassFilesIndexReaderBase<Integer, 
   public MethodsUsageIndexReader(final Project project, final String canonicalIndexName, final int version) {
     //noinspection ConstantConditions
     super(EnumeratorIntegerDescriptor.INSTANCE,
-          new TObjectIntHashMapExternalizer<EnumeratedMethodIncompleteSignature>(EnumeratedMethodIncompleteSignature.createDataExternalizer()),
+          new TObjectIntHashMapExternalizer<>(EnumeratedMethodIncompleteSignature.createDataExternalizer()),
           canonicalIndexName, version, project);
   }
 
@@ -57,7 +57,7 @@ public class MethodsUsageIndexReader extends ClassFilesIndexReaderBase<Integer, 
     assert myMappings != null;
     final Collection<TObjectIntHashMap<EnumeratedMethodIncompleteSignature>> unReducedValues = myIndex.getData(myMappings.getName(key.replace('.', '/')));
 
-    final TObjectIntHashMap<MethodIncompleteSignature> rawValues = new TObjectIntHashMap<MethodIncompleteSignature>();
+    final TObjectIntHashMap<MethodIncompleteSignature> rawValues = new TObjectIntHashMap<>();
     for (final TObjectIntHashMap<EnumeratedMethodIncompleteSignature> unReducedValue : unReducedValues) {
       unReducedValue.forEachEntry(new TObjectIntProcedure<EnumeratedMethodIncompleteSignature>() {
         @Override
@@ -71,7 +71,7 @@ public class MethodsUsageIndexReader extends ClassFilesIndexReaderBase<Integer, 
       });
     }
 
-    final TreeSet<UsageIndexValue> values = new TreeSet<UsageIndexValue>();
+    final TreeSet<UsageIndexValue> values = new TreeSet<>();
     rawValues.forEachEntry(new TObjectIntProcedure<MethodIncompleteSignature>() {
       @Override
       public boolean execute(final MethodIncompleteSignature sign, final int occurrences) {

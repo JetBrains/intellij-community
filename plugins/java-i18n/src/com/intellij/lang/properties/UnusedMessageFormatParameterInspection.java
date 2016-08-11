@@ -62,7 +62,7 @@ public class UnusedMessageFormatParameterInspection extends PropertySuppressable
     if (!(file instanceof PropertiesFile)) return null;
     PropertiesFile propertiesFile = (PropertiesFile)file;
     final List<IProperty> properties = propertiesFile.getProperties();
-    List<ProblemDescriptor> problemDescriptors = new ArrayList<ProblemDescriptor>();
+    List<ProblemDescriptor> problemDescriptors = new ArrayList<>();
     for (IProperty property : properties) {
       @NonNls String name = property.getName();
       if (name != null) {
@@ -70,7 +70,7 @@ public class UnusedMessageFormatParameterInspection extends PropertySuppressable
         if (name.startsWith(REGEXP + ".") || name.endsWith("." + REGEXP)) continue;
       }
       String value = property.getValue();
-      Set<Integer> parameters = new HashSet<Integer>();
+      Set<Integer> parameters = new HashSet<>();
       if (value != null) {
         int index = value.indexOf('{');
         while (index != -1) {

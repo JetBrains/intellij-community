@@ -51,7 +51,7 @@ public class LibraryJarUsagesCollector extends AbstractApplicationUsagesCollecto
   @Override
   public Set<UsageDescriptor> getProjectUsages(@NotNull final Project project) throws CollectUsagesException {
     final LibraryJarDescriptor[] descriptors = LibraryJarStatisticsService.getInstance().getTechnologyDescriptors();
-    final Set<UsageDescriptor> result = new HashSet<UsageDescriptor>(descriptors.length);
+    final Set<UsageDescriptor> result = new HashSet<>(descriptors.length);
 
     ApplicationManager.getApplication().runReadAction(() -> {
       for (LibraryJarDescriptor descriptor : descriptors) {

@@ -275,8 +275,8 @@ public class PyTypeChecker {
   }
 
   public static boolean hasGenerics(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    final Set<PyGenericType> collected = new HashSet<PyGenericType>();
-    collectGenerics(type, context, collected, new HashSet<PyType>());
+    final Set<PyGenericType> collected = new HashSet<>();
+    collectGenerics(type, context, collected, new HashSet<>());
     return !collected.isEmpty();
   }
 
@@ -331,7 +331,7 @@ public class PyTypeChecker {
       }
       else if (type instanceof PyUnionType) {
         final PyUnionType union = (PyUnionType)type;
-        final List<PyType> results = new ArrayList<PyType>();
+        final List<PyType> results = new ArrayList<>();
         for (PyType t : union.getMembers()) {
           final PyType subst = substitute(t, substitutions, context);
           results.add(subst);
@@ -341,7 +341,7 @@ public class PyTypeChecker {
       else if (type instanceof PyCollectionTypeImpl) {
         final PyCollectionTypeImpl collection = (PyCollectionTypeImpl)type;
         final List<PyType> elementTypes = collection.getElementTypes(context);
-        final List<PyType> substitutes = new ArrayList<PyType>();
+        final List<PyType> substitutes = new ArrayList<>();
         for (PyType elementType : elementTypes) {
           substitutes.add(substitute(elementType, substitutions, context));
         }
@@ -350,7 +350,7 @@ public class PyTypeChecker {
       else if (type instanceof PyTupleType) {
         final PyTupleType tuple = (PyTupleType)type;
         final int n = tuple.getElementCount();
-        final List<PyType> results = new ArrayList<PyType>();
+        final List<PyType> results = new ArrayList<>();
         for (int i = 0; i < n; i++) {
           final PyType subst = substitute(tuple.getElementType(i), substitutions, context);
           results.add(subst);
@@ -362,7 +362,7 @@ public class PyTypeChecker {
         List<PyCallableParameter> substParams = null;
         final List<PyCallableParameter> parameters = callable.getParameters(context);
         if (parameters != null) {
-          substParams = new ArrayList<PyCallableParameter>();
+          substParams = new ArrayList<>();
           for (PyCallableParameter parameter : parameters) {
             final PyType substType = substitute(parameter.getType(context), substitutions, context);
             final PyCallableParameter subst = parameter.getParameter() != null ?
@@ -399,11 +399,11 @@ public class PyTypeChecker {
 
   @NotNull
   public static Map<PyGenericType, PyType> unifyReceiver(@Nullable PyExpression receiver, @NotNull TypeEvalContext context) {
-    final Map<PyGenericType, PyType> substitutions = new LinkedHashMap<PyGenericType, PyType>();
+    final Map<PyGenericType, PyType> substitutions = new LinkedHashMap<>();
     // Collect generic params of object type
-    final Set<PyGenericType> generics = new LinkedHashSet<PyGenericType>();
+    final Set<PyGenericType> generics = new LinkedHashSet<>();
     final PyType qualifierType = receiver != null ? context.getType(receiver) : null;
-    collectGenerics(qualifierType, context, generics, new HashSet<PyType>());
+    collectGenerics(qualifierType, context, generics, new HashSet<>());
     for (PyGenericType t : generics) {
       substitutions.put(t, t);
     }
@@ -446,7 +446,7 @@ public class PyTypeChecker {
   @NotNull
   public static List<AnalyzeCallResults> analyzeCallSite(@Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
     if (callSite != null) {
-      final List<AnalyzeCallResults> results = new ArrayList<AnalyzeCallResults>();
+      final List<AnalyzeCallResults> results = new ArrayList<>();
       for (PyCallable callable : resolveCallee(callSite, context)) {
         final PyExpression receiver = getReceiver(callSite, callable);
         for (List<PyParameter> parameters : PyUtil.getOverloadedParametersSet(callable, context)) {
@@ -468,7 +468,7 @@ public class PyTypeChecker {
       return callee != null ? Collections.singletonList(callee.getCallable()) : Collections.<PyCallable>emptyList();
     }
     else if (callSite instanceof PySubscriptionExpression || callSite instanceof PyBinaryExpression) {
-      final List<PyCallable> results = new ArrayList<PyCallable>();
+      final List<PyCallable> results = new ArrayList<>();
       boolean resolvedToUnknownResult = false;
       for (PsiElement result : PyUtil.multiResolveTopPriority(callSite, resolveContext)) {
         if (result instanceof PyCallable) {
