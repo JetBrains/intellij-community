@@ -22,14 +22,29 @@ import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.SystemProperties
+import com.intellij.util.concurrency.QueueProcessor
+import com.intellij.util.containers.ContainerUtil
+
+private const val nullPassword = "\u0000"
 
 private class CredentialStoreWrapper(private val store: CredentialStore) : PasswordStorage {
   private val fallbackStore = lazy { FileCredentialStore(memoryOnly = true) }
 
+  private val queueProcessor = QueueProcessor<() -> Unit>({
+                                                            it()
+                                                          })
+
+  private val postponedCredentials = ContainerUtil.newConcurrentMap<String, String>()
+
   override fun getPassword(requestor: Class<*>?, key: String): String? {
+    val rawKey = getRawKey(key, requestor)
+
+    postponedCredentials.get(rawKey)?.let {
+      return if (it == nullPassword) null else it
+    }
+
     var store = if (fallbackStore.isInitialized()) fallbackStore.value else store
 
-    val rawKey = getRawKey(key, requestor)
     // try old key - as hash
     @Suppress("CanBeVal")
     var value: String?
@@ -62,7 +77,25 @@ private class CredentialStoreWrapper(private val store: CredentialStore) : Passw
   override fun setPassword(requestor: Class<*>?, key: String, value: String?) {
     LOG.catchAndLog {
       val store = if (fallbackStore.isInitialized()) fallbackStore.value else store
-      store.set(getRawKey(key, requestor), value?.toByteArray())
+      val rawKey = getRawKey(key, requestor)
+      val passwordData = value?.toByteArray()
+      if (fallbackStore.isInitialized()) {
+        store.set(rawKey, passwordData)
+      }
+      else {
+        postponedCredentials.put(rawKey, value ?: nullPassword)
+        queueProcessor.add {
+          if (!fallbackStore.isInitialized()) {
+            LOG.catchAndLog {
+              store.set(rawKey, passwordData)
+              postponedCredentials.remove(rawKey)
+              return@add
+            }
+          }
+          fallbackStore.value.set(rawKey, passwordData)
+          postponedCredentials.remove(rawKey)
+        }
+      }
     }
   }
 }
