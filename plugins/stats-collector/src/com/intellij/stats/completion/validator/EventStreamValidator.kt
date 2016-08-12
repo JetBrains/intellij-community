@@ -82,7 +82,7 @@ open class SessionsInputSeparator(input: InputStream,
 
 
 class CompletionState(event: CompletionStartedEvent) : LogEventVisitor() {
-    val allCompletionItems = event.newCompletionListItems.toMutableList()
+    val allCompletionItemIds: MutableList<Int> = event.newCompletionListItems.map { it.id }.toMutableList()
     
     var currentPosition    = event.currentPosition
     var completionList     = event.completionListIds
@@ -93,7 +93,7 @@ class CompletionState(event: CompletionStartedEvent) : LogEventVisitor() {
 
     private fun updateState(nextEvent: LookupStateLogData) {
         currentPosition = nextEvent.currentPosition
-        allCompletionItems.addAll(nextEvent.newCompletionListItems)
+        allCompletionItemIds.addAll(nextEvent.newCompletionListItems.map { it.id })
         if (nextEvent.completionListIds.isNotEmpty()) {
             completionList = nextEvent.completionListIds
         }
@@ -104,7 +104,7 @@ class CompletionState(event: CompletionStartedEvent) : LogEventVisitor() {
         if (completionList.isEmpty()) {
             return -1
         }        
-        else if (position < completionList.size && position > 0) {
+        else if (position < completionList.size && position >= 0) {
             return completionList[position]
         }
         else {
@@ -139,7 +139,7 @@ class CompletionState(event: CompletionStartedEvent) : LogEventVisitor() {
         val listBefore = completionList 
         updateState(event)
         
-        isValid = listBefore.containsAll(completionList)
+        isValid = allCompletionItemIds.containsAll(completionList)
     }
 
     override fun visit(event: BackspaceEvent) {
@@ -153,7 +153,7 @@ class CompletionState(event: CompletionStartedEvent) : LogEventVisitor() {
         val selectedIdBefore = currentId
         updateState(event)
 
-        isValid = selectedIdBefore == currentId && allCompletionItems.find { it.id == currentId } != null
+        isValid = selectedIdBefore == currentId && allCompletionItemIds.find { it == currentId } != null
         isFinished = true
     }
 

@@ -16,28 +16,26 @@ class RealTextValidator {
         separator.processInput()
     }
     
-    
-    
-//    @Test
-//    fun test_DumpErr() {
-//        val file = File("completion_data.txt")
-//        val output = ByteArrayOutputStream()
-//        val err = FileOutputStream(File("err"))
-//        val separator = ErrorSessionDumper(FileInputStream(file), output, err)         
-//        separator.processInput()
-//    }
-    
-    private fun validate(file: File, expectedOut: String, expectedErr: String) {
+    @Test
+    fun test0() {
+        val file = File("0")
         val output = ByteArrayOutputStream()
         val err = ByteArrayOutputStream()
-
         val separator = SessionsInputSeparator(FileInputStream(file), output, err)
         separator.processInput()
-
-        Assertions.assertThat(err.toString().trim()).isEqualTo(expectedErr)
-        Assertions.assertThat(output.toString().trim()).isEqualTo(expectedOut)
+        
+        Assertions.assertThat(err.size()).isEqualTo(0)
     }
-
+    
+    
+    @Test
+    fun test_DumpErr() {
+        val file = File("completion_data.txt")
+        val output = ByteArrayOutputStream()
+        val err = FileOutputStream(File("err"))
+        val separator = ErrorSessionDumper(FileInputStream(file), output, err)         
+        separator.processInput()
+    }
 
 }
 
