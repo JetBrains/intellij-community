@@ -4,6 +4,7 @@ lock = RLock()
 
 
 def foo():
+    sleep(1)
     while True:
         lock.acquire()
         x = 12
