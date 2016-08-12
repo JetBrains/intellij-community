@@ -31,12 +31,14 @@ public class RegExpBoundaryImpl extends RegExpElementImpl implements RegExpBound
 
     @NotNull
     public Type getType() {
-        final IElementType type = getNode().getElementType();
+        final ASTNode child = getNode().getFirstChildNode();
+        assert child != null;
+        final IElementType type = child.getElementType();
         if (type == RegExpTT.CARET) {
             return Type.LINE_START;
         } else if (type == RegExpTT.DOLLAR) {
             return Type.LINE_END;
-        } else {
+        } else if (type == RegExpTT.BOUNDARY){
             final String s = getUnescapedText();
             if (s.equals("\\b")) {
                 return Type.WORD;
