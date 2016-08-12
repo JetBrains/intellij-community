@@ -247,7 +247,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
     if (breakpoints != null) {
       result.addAll((Collection<? extends B>)breakpoints);
     }
-    return result;
+    return Collections.unmodifiableList(result);
   }
 
   @NotNull
