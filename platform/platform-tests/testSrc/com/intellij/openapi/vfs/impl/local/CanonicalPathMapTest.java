@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl.local;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.PathUtil;
@@ -31,11 +32,16 @@ import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class CanonicalPathMapTest {
+  private static final String DIR_ROOT = SystemInfo.isWindows ? "c:\\parent\\root" : "/parent/root";
+  private static final String FILE_ROOT = SystemInfo.isWindows ? "c:\\parent\\root.txt" : "/parent/root.txt";
+  private static final String CHILD_DIR = File.separator + "child_dir";
+  private static final String CHILD_FILE = File.separator + "child.txt";
+
   @Rule public TempDirectory myTempDir = new TempDirectory();
 
   @Test
   public void flatRootReportedExactlyViaParent() {
-    String root = "/parent/root";
+    String root = DIR_ROOT;
     CanonicalPathMap map = new CanonicalPathMap(emptyList(), singletonList(root));
     Collection<String> paths = map.getWatchedPaths(PathUtil.getParentPath(root), true);
     assertThat(paths).isEmpty();
@@ -43,7 +49,7 @@ public class CanonicalPathMapTest {
 
   @Test
   public void flatRootReportedExactlyViaItself() {
-    String root = "/parent/root.txt";
+    String root = FILE_ROOT;
     CanonicalPathMap map = new CanonicalPathMap(emptyList(), singletonList(root));
     Collection<String> paths = map.getWatchedPaths(root, true);
     assertThat(paths).containsExactly(root);
@@ -51,7 +57,7 @@ public class CanonicalPathMapTest {
 
   @Test
   public void flatRootReportedExactlyViaChild() {
-    String root = "/parent/root", child = root + "/child.txt";
+    String root = DIR_ROOT, child = root + CHILD_FILE;
     CanonicalPathMap map = new CanonicalPathMap(emptyList(), singletonList(root));
     Collection<String> paths = map.getWatchedPaths(child, true);
     assertThat(paths).containsExactly(child);
@@ -59,7 +65,7 @@ public class CanonicalPathMapTest {
 
   @Test
   public void flatRootReportedInexactlyViaParent() {
-    String root = "/parent/root.txt";
+    String root = FILE_ROOT;
     CanonicalPathMap map = new CanonicalPathMap(emptyList(), singletonList(root));
     Collection<String> paths = map.getWatchedPaths(PathUtil.getParentPath(root), false);
     assertThat(paths).containsExactly(root);
@@ -67,7 +73,7 @@ public class CanonicalPathMapTest {
 
   @Test
   public void flatRootReportedInexactlyViaItself() {
-    String root = "/parent/root";
+    String root = DIR_ROOT;
     CanonicalPathMap map = new CanonicalPathMap(emptyList(), singletonList(root));
     Collection<String> paths = map.getWatchedPaths(root, false);
     assertThat(paths).containsExactly(root);
@@ -75,7 +81,7 @@ public class CanonicalPathMapTest {
 
   @Test
   public void flatRootReportedInexactlyViaChild() {
-    String root = "/parent/root", child = root + "/child_dir";
+    String root = DIR_ROOT, child = root + CHILD_DIR;
     CanonicalPathMap map = new CanonicalPathMap(emptyList(), singletonList(root));
     Collection<String> paths = map.getWatchedPaths(child, false);
     assertThat(paths).isEmpty();
@@ -83,7 +89,7 @@ public class CanonicalPathMapTest {
 
   @Test
   public void recursiveRootReportedExactlyViaParent() {
-    String root = "/parent/root";
+    String root = DIR_ROOT;
     CanonicalPathMap map = new CanonicalPathMap(singletonList(root), emptyList());
     Collection<String> paths = map.getWatchedPaths(PathUtil.getParentPath(root), true);
     assertThat(paths).isEmpty();
@@ -91,7 +97,7 @@ public class CanonicalPathMapTest {
 
   @Test
   public void recursiveRootReportedExactlyViaItself() {
-    String root = "/parent/root";
+    String root = DIR_ROOT;
     CanonicalPathMap map = new CanonicalPathMap(singletonList(root), emptyList());
     Collection<String> paths = map.getWatchedPaths(root, true);
     assertThat(paths).containsExactly(root);
@@ -99,7 +105,7 @@ public class CanonicalPathMapTest {
 
   @Test
   public void recursiveRootReportedExactlyViaChild() {
-    String root = "/parent/root", child = root + "/child.txt";
+    String root = DIR_ROOT, child = root + CHILD_FILE;
     CanonicalPathMap map = new CanonicalPathMap(singletonList(root), emptyList());
     Collection<String> paths = map.getWatchedPaths(child, true);
     assertThat(paths).containsExactly(child);
@@ -107,7 +113,7 @@ public class CanonicalPathMapTest {
 
   @Test
   public void recursiveRootReportedInexactlyViaParent() {
-    String root = "/parent/root";
+    String root = DIR_ROOT;
     CanonicalPathMap map = new CanonicalPathMap(singletonList(root), emptyList());
     Collection<String> paths = map.getWatchedPaths(PathUtil.getParentPath(root), false);
     assertThat(paths).containsExactly(root);
@@ -115,7 +121,7 @@ public class CanonicalPathMapTest {
 
   @Test
   public void recursiveRootReportedInexactlyViaItself() {
-    String root = "/parent/root";
+    String root = DIR_ROOT;
     CanonicalPathMap map = new CanonicalPathMap(singletonList(root), emptyList());
     Collection<String> paths = map.getWatchedPaths(root, false);
     assertThat(paths).containsExactly(root);
@@ -123,7 +129,7 @@ public class CanonicalPathMapTest {
 
   @Test
   public void recursiveRootReportedInexactlyViaChild() {
-    String root = "/parent/root", child = root + "/child";
+    String root = DIR_ROOT, child = root + CHILD_DIR;
     CanonicalPathMap map = new CanonicalPathMap(singletonList(root), emptyList());
     Collection<String> paths = map.getWatchedPaths(child, false);
     assertThat(paths).containsExactly(child);
