@@ -83,7 +83,9 @@ public class OwnerOptional {
   }
 
   public OwnerOptional ifNull(Consumer<Frame> consumer) {
-    consumer.consume((Frame)this.myPermanentOwner);
+    if (myPermanentOwner == null) {
+      consumer.consume(null);
+    }
     return this;
   }
 
