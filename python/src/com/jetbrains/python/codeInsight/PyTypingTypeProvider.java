@@ -367,7 +367,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       }
     }
     if ("typing.Tuple".equals(qualifiedName)) {
-      if (elementTypes.get(1) instanceof PyTypeParser.EllipsisType) {
+      if (elementTypes.size() > 1 && elementTypes.get(1) instanceof PyTypeParser.EllipsisType) {
         return PyTupleType.createHomogeneous(resolved, elementTypes.get(0));
       }
       return PyTupleType.create(resolved, elementTypes.toArray(new PyType[elementTypes.size()]));
