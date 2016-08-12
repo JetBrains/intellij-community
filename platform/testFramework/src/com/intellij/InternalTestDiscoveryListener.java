@@ -94,10 +94,13 @@ public class InternalTestDiscoveryListener implements TestListener, Closeable {
     final String[] fullTestNames = ArrayUtil.toStringArray(myCompletedMethodNames);
     myCompletedMethodNames.clear();
     myProcessTracesAlarm.addRequest(() -> {
+      System.out.println("Start compacting to index");
       try {
+        final Object index = getIndex();
         final Method method = Class.forName("com.intellij.execution.testDiscovery.TestDiscoveryExtension")
           .getMethod("processAvailableTraces", fullTestNames.getClass(), myTracesDirectory.getClass(), String.class, String.class, myDiscoveryIndexClass);
-        method.invoke(null, fullTestNames, myTracesDirectory, myModuleName, "j", getIndex());
+        method.invoke(null, fullTestNames, myTracesDirectory, myModuleName, "j", index);
+        System.out.println("Compacting done.");
       }
       catch (Throwable e) {
         e.printStackTrace();
