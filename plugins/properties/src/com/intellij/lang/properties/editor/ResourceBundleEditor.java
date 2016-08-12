@@ -397,10 +397,11 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   }
 
   void recreateEditorsPanel() {
+    if (!myProject.isOpen() || myDisposed) return;
+
     myValuesPanel.removeAll();
     myValuesPanel.setLayout(new CardLayout());
 
-    if (!myProject.isOpen()) return;
     JPanel valuesPanelComponent = new MyJPanel(new GridBagLayout());
     myValuesPanel.add(new JBScrollPane(valuesPanelComponent){
       @Override
