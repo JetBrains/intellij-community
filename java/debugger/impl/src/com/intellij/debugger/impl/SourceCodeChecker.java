@@ -169,7 +169,7 @@ public class SourceCodeChecker {
     if (psiFile instanceof PsiCompiledFile) {
       stream = stream.map(line -> DebuggerUtilsEx.bytecodeToSourceLine(psiFile, line));
     }
-    return stream.filter(line -> line >= 0);
+    return stream.filter(line -> line > 0);
   }
 
   @TestOnly
