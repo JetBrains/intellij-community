@@ -54,6 +54,10 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
   public void appendPositionManager(PositionManager manager) {
     myPositionManagers.remove(manager);
     myPositionManagers.add(0, manager);
+    clearCache();
+  }
+
+  public void clearCache() {
     mySourcePositionCache.clear();
   }
 
