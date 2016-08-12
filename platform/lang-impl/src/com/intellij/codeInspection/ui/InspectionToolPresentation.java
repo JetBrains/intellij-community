@@ -50,7 +50,7 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
                                 final boolean groupBySeverity);
 
   @NotNull
-  default RefElementNode createRefNode(@NotNull RefEntity entity) {
+  default RefElementNode createRefNode(@Nullable RefEntity entity) {
     return new RefElementNode(entity, this);
   }
 

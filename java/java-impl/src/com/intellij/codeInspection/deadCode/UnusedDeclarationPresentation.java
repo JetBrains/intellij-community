@@ -403,7 +403,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   @NotNull
   @Override
-  public RefElementNode createRefNode(@NotNull RefEntity entity) {
+  public RefElementNode createRefNode(@Nullable RefEntity entity) {
     return new RefElementNode(entity, this) {
       @Nullable
       @Override
