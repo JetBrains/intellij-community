@@ -711,7 +711,7 @@ public class PyTypingTest extends PyTestCase {
            "    sublist = x[0]\n" +
            "    expr = sublist[0]\n");
   }
-
+  
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
