@@ -137,7 +137,7 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
   @Override
   public Task[] getIssues(@Nullable String query, int offset, int limit, boolean withClosed) throws Exception {
     final List<TrelloCard> cards = fetchCards(offset + limit, withClosed);
-    return ContainerUtil.map2Array(cards, Task.class, (Function<TrelloCard, Task>)card -> new TrelloTask(card, TrelloRepository.this));
+    return ContainerUtil.map2Array(cards, Task.class, (Function<TrelloCard, Task>)card -> new TrelloTask(card, this));
   }
 
   @Nullable

@@ -104,7 +104,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   @Override
   public void accept(@NotNull final RefVisitor visitor) {
     if (visitor instanceof RefJavaVisitor) {
-      ApplicationManager.getApplication().runReadAction(() -> ((RefJavaVisitor)visitor).visitField(RefFieldImpl.this));
+      ApplicationManager.getApplication().runReadAction(() -> ((RefJavaVisitor)visitor).visitField(this));
     }  else {
       super.accept(visitor);
     }

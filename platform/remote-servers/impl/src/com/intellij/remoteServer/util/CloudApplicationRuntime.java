@@ -89,7 +89,7 @@ public abstract class CloudApplicationRuntime extends DeploymentRuntime {
                     LOG.info(message);
                   }
                 };
-            LoggingTask.this.run(loggingHandler);
+            this.run(loggingHandler);
             return null;
           });
           onDone.run();

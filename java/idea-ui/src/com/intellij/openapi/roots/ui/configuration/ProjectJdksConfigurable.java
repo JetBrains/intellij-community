@@ -118,7 +118,7 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
   public void apply() throws ConfigurationException {
     final Ref<ConfigurationException> exceptionRef = Ref.create();
     try {
-      ProjectJdksConfigurable.super.apply();
+      super.apply();
       boolean modifiedJdks = false;
       for (int i = 0; i < myRoot.getChildCount(); i++) {
         final NamedConfigurable configurable = ((MyNode)myRoot.getChildAt(i)).getConfigurable();
@@ -129,7 +129,7 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
       }
 
       if (myProjectJdksModel.isModified() || modifiedJdks) {
-        myProjectJdksModel.apply(ProjectJdksConfigurable.this);
+        myProjectJdksModel.apply(this);
       }
       myProjectJdksModel.setProjectSdk(getSelectedJdk());
     }

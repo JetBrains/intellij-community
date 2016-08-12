@@ -395,7 +395,7 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
 
       painter.appendLine("No files are open");//.underlined(new JBColor(Gray._150, Gray._180));
       painter.draw(g, (width, height) -> {
-        Dimension s = EmptyStatePanel.this.getSize();
+        Dimension s = this.getSize();
         return Couple.of((s.width - width) / 2, (s.height - height) / 2);
       });
     }

@@ -686,7 +686,7 @@ public class TypeCookTest extends MultiFileTestCase {
   }
 
   public void start(final boolean cookObjects) throws Exception {
-    doTest((rootDir, rootAfter) -> TypeCookTest.this.performAction("Test", rootDir.getName(), cookObjects));
+    doTest((rootDir, rootAfter) -> this.performAction("Test", rootDir.getName(), cookObjects));
   }
 
   private void performAction(String className, String rootDir, final boolean cookObjects) throws Exception {

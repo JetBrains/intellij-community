@@ -186,7 +186,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
 
   @Override
   public void show() {
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, () -> RefactoringDialog.super.show());
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, () -> super.show());
   }
 
 }

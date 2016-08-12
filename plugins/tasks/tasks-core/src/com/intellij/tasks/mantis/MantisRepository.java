@@ -128,7 +128,7 @@ public class MantisRepository extends BaseRepositoryImpl {
       if (issueData.getId() == null || issueData.getSummary() == null) {
         return null;
       }
-      return new MantisTask(issueData, MantisRepository.this);
+      return new MantisTask(issueData, this);
     });
   }
 

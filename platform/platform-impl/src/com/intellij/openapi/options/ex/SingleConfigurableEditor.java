@@ -124,7 +124,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
 
   @Override
   public void show() {
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> SingleConfigurableEditor.super.show());
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> super.show());
   }
 
   public Configurable getConfigurable() {

@@ -770,7 +770,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
           myTypesMap.remove(pair);
           return new CachedValueProvider.Result<>(null, PsiModificationTracker.MODIFICATION_COUNT);
         }
-        final ComplexTypeDescriptor complexTypeDescriptor = new ComplexTypeDescriptor(XmlNSDescriptorImpl.this, tag);
+        final ComplexTypeDescriptor complexTypeDescriptor = new ComplexTypeDescriptor(this, tag);
         return new CachedValueProvider.Result<>(complexTypeDescriptor, tag);
       }, false);
     myTypesMap.put(pair, value);

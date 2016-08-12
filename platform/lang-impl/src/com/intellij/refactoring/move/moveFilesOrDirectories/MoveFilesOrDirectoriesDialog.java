@@ -227,7 +227,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
                                                  RefactoringBundle.message("cannot.create.directory"), myHelpID, myProject);
           return;
         }
-        myCallback.run(MoveFilesOrDirectoriesDialog.this);
+        myCallback.run(this);
       });
     }, RefactoringBundle.message("move.title"), null);
   }
@@ -238,7 +238,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
 
   @Override
   public void show() {
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> MoveFilesOrDirectoriesDialog.super.show());
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> super.show());
   }
 
 }

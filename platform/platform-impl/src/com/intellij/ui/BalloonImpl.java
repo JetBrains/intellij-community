@@ -982,10 +982,10 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       }
 
       for (JBPopupListener each : myListeners) {
-        each.onClosed(new LightweightWindowEvent(BalloonImpl.this, ok));
+        each.onClosed(new LightweightWindowEvent(this, ok));
       }
 
-      Disposer.dispose(BalloonImpl.this);
+      Disposer.dispose(this);
       onDisposed();
     };
 

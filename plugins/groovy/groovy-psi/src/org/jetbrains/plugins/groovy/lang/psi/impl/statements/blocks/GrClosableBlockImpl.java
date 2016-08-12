@@ -299,7 +299,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
 
   private PsiVariable getOwner() {
     return CachedValuesManager.getCachedValue(this, () -> {
-      final GroovyPsiElement context = PsiTreeUtil.getParentOfType(GrClosableBlockImpl.this, GrTypeDefinition.class, GrClosableBlock.class, GroovyFile.class);
+      final GroovyPsiElement context = PsiTreeUtil.getParentOfType(this, GrTypeDefinition.class, GrClosableBlock.class, GroovyFile.class);
       final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
       PsiType type = null;
       if (context instanceof GrTypeDefinition) {
@@ -313,10 +313,10 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
         if (scriptClass != null && GroovyNamesUtil.isIdentifier(scriptClass.getName())) type = factory.createType(scriptClass);
       }
       if (type == null) {
-        type = TypesUtil.getJavaLangObject(GrClosableBlockImpl.this);
+        type = TypesUtil.getJavaLangObject(this);
       }
 
-      PsiVariable owner = new GrLightVariable(getManager(), OWNER_NAME, type, GrClosableBlockImpl.this);
+      PsiVariable owner = new GrLightVariable(getManager(), OWNER_NAME, type, this);
       return CachedValueProvider.Result.create(owner, PsiModificationTracker.MODIFICATION_COUNT);
     });
   }

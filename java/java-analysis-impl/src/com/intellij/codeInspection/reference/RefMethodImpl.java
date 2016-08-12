@@ -339,7 +339,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   @Override
   public void accept(@NotNull final RefVisitor visitor) {
     if (visitor instanceof RefJavaVisitor) {
-      ApplicationManager.getApplication().runReadAction(() -> ((RefJavaVisitor)visitor).visitMethod(RefMethodImpl.this));
+      ApplicationManager.getApplication().runReadAction(() -> ((RefJavaVisitor)visitor).visitMethod(this));
     } else {
       super.accept(visitor);
     }

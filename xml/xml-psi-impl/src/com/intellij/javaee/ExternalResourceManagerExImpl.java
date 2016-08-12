@@ -101,7 +101,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
         }
       }
     }
-    return CachedValueProvider.Result.create(result, ExternalResourceManagerExImpl.this);
+    return CachedValueProvider.Result.create(result, this);
   };
 
   private String myDefaultHtmlDoctype = HTML5_DOCTYPE_ELEMENT;

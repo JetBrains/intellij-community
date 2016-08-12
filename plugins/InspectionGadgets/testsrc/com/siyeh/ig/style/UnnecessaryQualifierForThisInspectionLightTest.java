@@ -28,7 +28,7 @@ public class UnnecessaryQualifierForThisInspectionLightTest extends LightInspect
            "}\n" +
            "class Impl extends Base {\n" +
            "    void foo() {\n" +
-           "        /*Qualifier 'Impl' on 'super' is unnecessary in this context*/Impl/**/.super.foo();\n" +
+           "        /*Qualifier 'Impl' on 'super' is unnecessary in this context*/super.foo();\n" +
            "    }\n" +
            "}");
   }

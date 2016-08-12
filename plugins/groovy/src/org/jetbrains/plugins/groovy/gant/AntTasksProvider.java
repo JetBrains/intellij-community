@@ -148,7 +148,7 @@ public class AntTasksProvider {
       super(build().urls(urls).allowUnescaped().noPreload());
       myFuture = ApplicationManager.getApplication().executeOnPooledThread(() -> {
         try {
-          final ReflectedProject antProject = ReflectedProject.getProject(AntClassLoader.this);
+          final ReflectedProject antProject = ReflectedProject.getProject(this);
           final Map<String, Class> result = new HashMap<>();
           if (antProject != null) {
             final Map<String, Class> taskDefinitions = antProject.getTaskDefinitions();

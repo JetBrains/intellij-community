@@ -226,7 +226,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
         initOccurrencesMarkers();
         setElementToRename(variable);
         updateTitle(getVariable());
-        started = AbstractInplaceIntroducer.super.performInplaceRefactoring(nameSuggestions);
+        started = super.performInplaceRefactoring(nameSuggestions);
         if (started) {
           onRenameTemplateStarted();
           myDocumentAdapter = new DocumentAdapter() {
@@ -245,7 +245,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
           myEditor.getDocument().addDocumentListener(myDocumentAdapter);
           updateTitle(getVariable());
           if (TemplateManagerImpl.getTemplateState(myEditor) != null) {
-            myEditor.putUserData(ACTIVE_INTRODUCE, AbstractInplaceIntroducer.this);
+            myEditor.putUserData(ACTIVE_INTRODUCE, this);
           }
         }
       }

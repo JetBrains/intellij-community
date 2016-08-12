@@ -2215,7 +2215,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myMarkupModel.processRangeHighlightersOverlappingWith(clipStartOffset, clipEndOffset, highlighter -> {
       final CustomHighlighterRenderer customRenderer = highlighter.getCustomRenderer();
       if (customRenderer != null && clipStartOffset < highlighter.getEndOffset() && highlighter.getStartOffset() < clipEndOffset) {
-        customRenderer.paint(EditorImpl.this, highlighter, g);
+        customRenderer.paint(this, highlighter, g);
       }
       return true;
     });

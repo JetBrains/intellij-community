@@ -106,7 +106,7 @@ public class AddCustomLibraryDialog extends DialogWrapper {
         }
 
       }
-      AddCustomLibraryDialog.super.doOKAction();
+      super.doOKAction();
     });
   }
 

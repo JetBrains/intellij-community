@@ -230,7 +230,7 @@ public class PythonTask {
         try {
           process.destroyProcess(); // Stop process before rerunning it
           if (process.waitFor(TIME_TO_WAIT_PROCESS_STOP)) {
-            PythonTask.this.run(env, consoleView);
+            this.run(env, consoleView);
           }
           else {
             Messages.showErrorDialog(PyBundle.message("unable.to.stop"), myRunTabTitle);

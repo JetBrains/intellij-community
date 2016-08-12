@@ -201,7 +201,7 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
         return;
       }
       file.setCommands(myCommandsAndDefaultExecutor.first);
-      final CommandConsole console = CommandConsole.this;
+      final CommandConsole console = this;
       resetConsumer(new CommandModeConsumer(myCommandsAndDefaultExecutor.first, myModule, console, myCommandsAndDefaultExecutor.second));
     }, ModalityState.NON_MODAL);
   }

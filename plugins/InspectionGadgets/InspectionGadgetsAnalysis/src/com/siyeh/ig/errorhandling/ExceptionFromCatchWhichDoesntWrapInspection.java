@@ -166,7 +166,7 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection 
             final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
             final PsiExpression[] arguments = argumentList.getExpressions();
             for (PsiExpression argument : arguments) {
-              argument.accept(ReferenceFinder.this);
+              argument.accept(this);
             }
             return true;
           });

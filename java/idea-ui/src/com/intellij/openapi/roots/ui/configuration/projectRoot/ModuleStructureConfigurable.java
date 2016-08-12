@@ -385,7 +385,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     super.disposeUIResources();
     myFacetEditorFacade.clearMaps(true);
     myContext.myModulesConfigurator.disposeUIResources();
-    ModuleStructureConfigurable.super.disposeUIResources();
+    super.disposeUIResources();
 
     for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
       extension.disposeUIResources();

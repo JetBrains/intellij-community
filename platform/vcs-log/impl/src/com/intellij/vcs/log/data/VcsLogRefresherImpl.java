@@ -402,7 +402,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
     @NotNull
     Map<VirtualFile, VcsLogProvider.Requirements> asMap(@NotNull Collection<VirtualFile> roots) {
       return ContainerUtil
-        .map2Map(roots, root -> Pair.<VirtualFile, VcsLogProvider.Requirements>create(root, CommitCountRequirements.this));
+        .map2Map(roots, root -> Pair.<VirtualFile, VcsLogProvider.Requirements>create(root, this));
     }
   }
 

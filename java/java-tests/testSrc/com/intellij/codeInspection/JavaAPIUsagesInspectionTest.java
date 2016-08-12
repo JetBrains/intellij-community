@@ -59,7 +59,7 @@ public class JavaAPIUsagesInspectionTest extends InspectionTestCase {
   }
 
   public void testRawInheritFromNewlyGenerified() throws Exception {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_6, JavaAPIUsagesInspectionTest.this::doTest);
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_6, this::doTest);
   }
 
   //generate apiXXX.txt

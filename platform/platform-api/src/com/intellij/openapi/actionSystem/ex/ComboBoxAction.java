@@ -66,7 +66,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       if (rootPane != null) {
         button = (ComboBoxButton)
           UIUtil.uiTraverser(rootPane).bfsTraversal().filter(
-            component -> component instanceof ComboBoxButton && ((ComboBoxButton)component).getMyAction() == ComboBoxAction.this).first();
+            component -> component instanceof ComboBoxButton && ((ComboBoxButton)component).getMyAction() == this).first();
       }
       if (button == null) return;
     }

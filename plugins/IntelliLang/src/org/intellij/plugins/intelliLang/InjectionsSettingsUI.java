@@ -807,8 +807,8 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
       originalInjections = new ArrayList<>(ContainerUtil
                                              .concat(InjectorUtils.getActiveInjectionSupportIds(), s -> {
                                                List<BaseInjection> injections =
-                                                 CfgInfo.this.cfg instanceof Configuration.Prj ? ((Configuration.Prj)CfgInfo.this.cfg)
-                                                   .getOwnInjections(s) : CfgInfo.this.cfg
+                                                 this.cfg instanceof Configuration.Prj ? ((Configuration.Prj)this.cfg)
+                                                   .getOwnInjections(s) : this.cfg
                                                    .getInjections(s);
                                                return ContainerUtil.findAll(injections, injection -> {
                                                  String id = injection.getInjectedLanguageId();

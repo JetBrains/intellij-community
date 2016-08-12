@@ -72,7 +72,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   @Override
   public void setUp(final String testName) throws Exception {
     if (myFixture == null) {
-      PyConsoleTask.super.setUp(testName);
+      super.setUp(testName);
     }
   }
 
