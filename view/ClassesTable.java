@@ -1,9 +1,9 @@
 package org.jetbrains.debugger.memory.view;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.XDebugSession;
@@ -78,9 +78,7 @@ public class ClassesTable extends JBTable implements DataProvider {
       protected void customizeCellRenderer(JTable table, @Nullable Object value,
                                            boolean isSelected, boolean hasFocus, int row, int column) {
         String presentation = value == null ? "null" : ((ReferenceType) value).name();
-        append(presentation);
-        setTransparentIconBackground(true);
-        setIcon(AllIcons.Nodes.Class);
+        append(String.format(" %s", presentation), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
     });
 
