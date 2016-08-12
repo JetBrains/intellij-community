@@ -23,15 +23,11 @@ import java.util.List;
 
 public class BootstrapUITestRunner {
 
-  private static final String JUNIT_CORE_CLASS = "org.junit.runner.JUnitCore";
-  private static final String REQUEST_CLASS = "org.junit.runner.Request";
-  private static final String RESULT_CLASS = "org.junit.runner.Result";
-
   private static final String UITESTS_ROOT = "plugins/android/ui-tests-dir";
   private static final String ANDROID_ROOT = "plugins/android/lib";
 
-  private static final String SUITE_CLASS = "com.android.tools.idea.tests.gui.GuiTestSuite";
-
+  private static final String RUNNER_CLASS = "com.android.tools.idea.tests.gui.framework.PlainJUnitRunnable";
+  private static final String SUITE_CLASS = "com.android.tools.idea.tests.gui.GuiSanityTestSuite";
 
   private static String getTestClasspath() {
     String ideaHome = PathManager.getHomePath();
@@ -53,32 +49,9 @@ public class BootstrapUITestRunner {
     System.setProperty("idea.additional.classpath", getTestClasspath());
     ClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader(true);
 
-    Class<?> testClass = Class.forName(SUITE_CLASS, true, newClassLoader);
+    Class<?> suiteClass = Class.forName(SUITE_CLASS, true, newClassLoader);
 
-    Class<?> jUnitCore = Class.forName(JUNIT_CORE_CLASS, true, newClassLoader);
-    Object c = jUnitCore.newInstance();
-    Class<?> request = Class.forName(REQUEST_CLASS, true, newClassLoader);
-    Method runMethod = jUnitCore.getMethod("run", request);
-
-    Method aClassMethod = request.getMethod("aClass", Class.class);
-    Object r = runMethod.invoke(c, aClassMethod.invoke(request, testClass));
-
-    Class<?> result = Class.forName(RESULT_CLASS, true, newClassLoader);
-    System.out.printf(
-      "Tests run: %1$d, Failures: %2$d, Ignored: %3$d, Time elapsed: %4$.3f(s)\n",
-      result.getMethod("getRunCount").invoke(r),
-      result.getMethod("getFailureCount").invoke(r),
-      result.getMethod("getIgnoreCount").invoke(r),
-      ((Long) result.getMethod("getRunTime").invoke(r)) / 1000.0
-    );
-
-    if (!(Boolean) result.getMethod("wasSuccessful").invoke(r)) {
-      List<?> failures = (List<?>) result.getMethod("getFailures").invoke(r);
-      for (Object failure : failures) {
-        System.err.println(failure);
-      }
-
-      System.exit(1);
-    }
+    Runnable runner = (Runnable) Class.forName(RUNNER_CLASS, true, newClassLoader).getConstructor(Class.class).newInstance(suiteClass);
+    runner.run();
   }
 }
