@@ -34,6 +34,7 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Pair;
@@ -45,6 +46,9 @@ import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionState;
+import com.sun.jdi.InternalException;
+import com.sun.jdi.ObjectCollectedException;
+import com.sun.jdi.VMDisconnectedException;
 import com.sun.jdi.Value;
 import com.sun.jdi.connect.spi.TransportService;
 import org.jdom.Element;
@@ -212,4 +216,33 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   public static boolean isRemote(DebugProcess debugProcess) {
     return Boolean.TRUE.equals(debugProcess.getUserData(BatchEvaluator.REMOTE_SESSION_KEY));
   }
+
+  public interface SupplierThrowing<T, E extends Throwable> {
+    T get() throws E;
+  }
+
+  public static <T, E extends Exception> T suppressExceptions(SupplierThrowing<T, E> supplier, T defaultValue) throws E {
+    return suppressExceptions(supplier, defaultValue, null);
+  }
+
+  public static <T, E extends Exception> T suppressExceptions(SupplierThrowing<T, E> supplier,
+                                                              T defaultValue,
+                                                              Class<E> rethrow) throws E {
+    try {
+      return supplier.get();
+    }
+    catch (ProcessCanceledException ignored) {}
+    catch (VMDisconnectedException | ObjectCollectedException e) {throw e;}
+    catch (InternalException e) {LOG.info(e);}
+    catch (Exception | AssertionError e) {
+      if (rethrow != null && rethrow.isInstance(e)) {
+        throw e;
+      }
+      else {
+        LOG.error(e);
+      }
+    }
+    return defaultValue;
+  }
+
 }
