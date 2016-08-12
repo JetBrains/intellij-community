@@ -125,31 +125,35 @@ class CompletionState(event: CompletionStartedEvent) : LogEventVisitor() {
     override fun visit(event: DownPressedEvent) {
         val beforeDownPressedPosition = currentPosition
         updateState(event)
-        isValid = (beforeDownPressedPosition + 1) % completionList.size == currentPosition
+        updateValid((beforeDownPressedPosition + 1) % completionList.size == currentPosition)
+    }
+
+    private fun updateValid(value: Boolean) {
+        isValid = isValid && value
     }
 
     override fun visit(event: UpPressedEvent) {
         val beforeUpPressedPosition = currentPosition
         updateState(event)
         
-        isValid = (completionList.size + beforeUpPressedPosition - 1) % completionList.size == currentPosition
+        updateValid((completionList.size + beforeUpPressedPosition - 1) % completionList.size == currentPosition)
     }
 
     override fun visit(event: TypeEvent) {
         updateState(event)
-        isValid = allCompletionItemIds.containsAll(completionList)
+        updateValid(allCompletionItemIds.containsAll(completionList))
     }
 
     override fun visit(event: BackspaceEvent) {
         updateState(event)
-        isValid = allCompletionItemIds.containsAll(completionList)
+        updateValid(allCompletionItemIds.containsAll(completionList))
     }
 
     override fun visit(event: ExplicitSelectEvent) {
         val selectedIdBefore = currentId
         updateState(event)
 
-        isValid = selectedIdBefore == currentId && allCompletionItemIds.find { it == currentId } != null
+        updateValid(selectedIdBefore == currentId && allCompletionItemIds.find { it == currentId } != null)
         isFinished = true
     }
 
@@ -159,7 +163,7 @@ class CompletionState(event: CompletionStartedEvent) : LogEventVisitor() {
 
     override fun visit(event: TypedSelectEvent) {
         val id = event.selectedId
-        isValid = completionList[0] == id
+        updateValid(completionList[0] == id)
         isFinished = true
     }
     

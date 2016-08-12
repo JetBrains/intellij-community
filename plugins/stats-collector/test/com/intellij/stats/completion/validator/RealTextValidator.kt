@@ -37,7 +37,6 @@ class RealTextValidator {
 
         Assertions.assertThat(err.size()).isEqualTo(0)
     }
-
     
     
 //    @Test
