@@ -15,10 +15,12 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PsiTestUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -28,6 +30,8 @@ import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author vlan
@@ -49,12 +53,27 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
   }
 
   private void doMultiFileTest(@NotNull final String filename) {
+    doMultiFileTest(filename, Collections.emptyList());
+  }
+
+  private void doMultiFileTest(@NotNull final String filename, @NotNull List<String> sourceRoots) {
     runWithLanguageLevel(LanguageLevel.PYTHON35, () -> {
       final String testName = getTestName(false);
       myFixture.copyDirectoryToProject(TEST_DIRECTORY + testName, "");
-      myFixture.configureFromTempProjectFile(filename);
-      myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
-      myFixture.checkHighlighting(true, false, false);
+      final Module module = myFixture.getModule();
+      for (String root : sourceRoots) {
+        PsiTestUtil.addSourceRoot(module, myFixture.findFileInTempDir(root));
+      }
+      try {
+        myFixture.configureFromTempProjectFile(filename);
+        myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
+        myFixture.checkHighlighting(true, false, false);
+      }
+      finally {
+        for (String root : sourceRoots) {
+          PsiTestUtil.removeSourceRoot(module, myFixture.findFileInTempDir(root));
+        }
+      }
     });
   }
 
@@ -150,5 +169,10 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
   // PY-19775
   public void testAsyncInitMethod() {
     doTest();
+  }
+
+  // PY-19691
+  public void testNestedPackageNamedAsSourceRoot() {
+    doMultiFileTest("a.py", Collections.singletonList("lib1"));
   }
 }
