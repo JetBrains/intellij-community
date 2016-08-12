@@ -77,6 +77,10 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
 
       SelectWordUtil.addWordOrLexemeSelection(camel, editor, caretOffset, ranges);
 
+      // add whole line selection
+      int line = document.getLineNumber(caretOffset);
+      ranges.add(new TextRange(document.getLineStartOffset(line), document.getLineEndOffset(line)));
+
       if (ranges.isEmpty()) return;
 
       final TextRange selectionRange = new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
