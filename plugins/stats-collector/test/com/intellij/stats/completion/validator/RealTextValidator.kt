@@ -26,22 +26,37 @@ class RealTextValidator {
         
         Assertions.assertThat(err.size()).isEqualTo(0)
     }
-    
-    
+
     @Test
-    fun test_DumpErr() {
-        val file = File("completion_data.txt")
+    fun testError0() {
+        val file = File("1")
         val output = ByteArrayOutputStream()
-        val err = FileOutputStream(File("err"))
-        val separator = ErrorSessionDumper(FileInputStream(file), output, err)         
+        val err = ByteArrayOutputStream()
+        val separator = SessionsInputSeparator(FileInputStream(file), output, err)
         separator.processInput()
+
+        Assertions.assertThat(err.size()).isEqualTo(0)
     }
+
+    
+    
+//    @Test
+//    fun test_DumpErr() {
+//        val file = File("completion_data.txt")
+//        val output = ByteArrayOutputStream()
+//        val err = FileOutputStream(File("err"))
+//        val separator = ErrorSessionDumper(FileInputStream(file), output, err)         
+//        separator.processInput()
+//
+//        println("Failed: ${separator.totalFailedSessions} Success: ${separator.totalSuccessSessions}")   
+//    }
 
 }
 
 
 class ErrorSessionDumper(input: InputStream, output: OutputStream, error: OutputStream) : SessionsInputSeparator(input, output, error) {
-    private var i = 0
+    var totalFailedSessions = 0
+    var totalSuccessSessions = 0
     private val dir = File("errors")
 
     init {
@@ -50,7 +65,7 @@ class ErrorSessionDumper(input: InputStream, output: OutputStream, error: Output
 
     override fun onSessionProcessingFinished(session: List<EventLine>, isValidSession: Boolean) {
         if (!isValidSession) {
-            val file = File(dir, i.toString())
+            val file = File(dir, totalFailedSessions.toString())
             if (file.exists()) {
                 file.delete()
             }
@@ -60,7 +75,10 @@ class ErrorSessionDumper(input: InputStream, output: OutputStream, error: Output
                 file.appendText(it.line)
                 file.appendText("\n")
             }
-            i++
+            totalFailedSessions++
+        }
+        else {
+            totalSuccessSessions++
         }
     }
 }
