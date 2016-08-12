@@ -46,6 +46,7 @@ public class InternalTestDiscoveryListener implements TestListener, Closeable {
     myProcessTracesAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, null);
     myTracesDirectory = System.getProperty("org.jetbrains.instrumentation.trace.dir");
     myModuleName = System.getProperty("org.jetbrains.instrumentation.main.module");
+    System.out.println(getClass().getSimpleName() + " instantiated with module='" + myModuleName + "' , directory='" + myTracesDirectory + "'");
   }
 
   private Object getIndex() {
