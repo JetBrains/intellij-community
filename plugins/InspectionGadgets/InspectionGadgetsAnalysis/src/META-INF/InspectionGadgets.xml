@@ -2519,10 +2519,10 @@
                      key="expand.one.line.lambda2.code.block.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.style.ExpandOneLineLambda2CodeBlockInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="InferLambdaParameterType" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="infer.lambda.parameter.type.name" groupBundle="messages.InspectionsBundle"
+    <localInspection groupPath="Java" language="JAVA" shortName="LambdaParameterTypeCanBeSpecified" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="lambda.parameter.type.can.be.specified.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.siyeh.ig.style.InferLambdaParameterTypeInspection"/>
+                     implementationClass="com.siyeh.ig.style.LambdaParameterTypeCanBeSpecifiedInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="DiamondCanBeReplacedWithExplicitTypeArguments" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="diamond.can.be.replaced.with.explicit.type.arguments.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"

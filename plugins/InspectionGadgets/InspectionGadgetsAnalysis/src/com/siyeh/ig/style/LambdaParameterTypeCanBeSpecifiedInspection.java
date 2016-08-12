@@ -30,20 +30,20 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class InferLambdaParameterTypeInspection extends BaseInspection {
-  private static final Logger LOG = Logger.getInstance("#" + InferLambdaParameterTypeInspection.class.getName());
+public class LambdaParameterTypeCanBeSpecifiedInspection extends BaseInspection {
+  private static final Logger LOG = Logger.getInstance("#" + LambdaParameterTypeCanBeSpecifiedInspection.class.getName());
 
   @Nls
   @NotNull
   @Override
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message("infer.lambda.parameter.type.name");
+    return InspectionGadgetsBundle.message("lambda.parameter.type.can.be.specified.name");
   }
 
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("infer.lambda.parameter.type.descriptor", infos);
+    return InspectionGadgetsBundle.message("lambda.parameter.type.can.be.specified.descriptor", infos);
   }
 
   @Override
@@ -126,21 +126,21 @@ public class InferLambdaParameterTypeInspection extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("infer.lambda.parameter.type.descriptor", myInfos);
+      return InspectionGadgetsBundle.message("lambda.parameter.type.can.be.specified.quickfix", myInfos);
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("infer.lambda.parameter.type.name");
+      return InspectionGadgetsBundle.message("lambda.parameter.type.can.be.specified.family.quickfix");
     }
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiLambdaExpression) {
-        InferLambdaParameterTypeInspection.doFix(project, (PsiLambdaExpression)element);
+        LambdaParameterTypeCanBeSpecifiedInspection.doFix(project, (PsiLambdaExpression)element);
       }
     }
   }
