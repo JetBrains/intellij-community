@@ -198,7 +198,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
               discoveryIndex.updateFromTestTrace(testMethodTrace, moduleName, frameworkPrefix);
               FileUtil.delete(testMethodTrace);
             }
-            catch (IOException e) {
+            catch (Throwable e) {
               LOG.error("Can not load " + testMethodTrace, e);
             }
           }
