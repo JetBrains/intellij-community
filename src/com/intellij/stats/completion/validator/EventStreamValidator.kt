@@ -101,7 +101,7 @@ class CompletionState(event: CompletionStartedEvent) : LogEventVisitor() {
         if (completionList.isEmpty()) {
             return -1
         }        
-        else if (position < completionList.size) {
+        else if (position < completionList.size && position > 0) {
             return completionList[position]
         }
         else {
