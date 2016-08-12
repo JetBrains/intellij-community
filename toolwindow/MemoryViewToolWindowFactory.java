@@ -62,12 +62,12 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
         .addToolWindowManagerListener(new ToolWindowManagerAdapter() {
           @Override
           public void stateChanged() {
-            if (!myMemoryViews.isEmpty()) {
+            if (!myMemoryViews.isEmpty() && !toolWindow.isDisposed()) {
               myMemoryViews.values().forEach(classesFilteredView ->
                   classesFilteredView.setNeedReloadClasses(toolWindow.isVisible()));
             }
           }
-        });
+        }, project);
 
     ActionGroup group = new DefaultActionGroup(
         ActionManager.getInstance().getAction("MemoryView.ShowOnlyWithInstances"),
@@ -171,9 +171,12 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
     }
 
     private void updateView(@NotNull XDebugSession debugSession) {
-      ToolWindow toolWindow = getToolWindow(debugSession.getProject());
-      if (toolWindow != null) {
-        updateCurrentMemoryView(debugSession.getProject(), toolWindow);
+      Project project = debugSession.getProject();
+      if (!project.isDisposed()) {
+        ToolWindow toolWindow = getToolWindow(project);
+        if (toolWindow != null) {
+          updateCurrentMemoryView(project, toolWindow);
+        }
       }
     }
   }

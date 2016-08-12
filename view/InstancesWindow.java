@@ -225,6 +225,7 @@ public class InstancesWindow extends DialogWrapper {
       ActionManager.getInstance().removeAnActionListener(myActionListener);
       myDebugSession.removeSessionListener(myDebugSessionListener);
       cancelFilteringTask();
+
       Disposer.dispose(myInstancesTree);
     }
 
@@ -301,9 +302,9 @@ public class InstancesWindow extends DialogWrapper {
     }
 
     private void addChildrenToTree(XValueChildrenList children, boolean last) {
-      XDebuggerTreeNode root =  myInstancesTree.getRoot();
-      if(root != null) {
-        ((XValueNodeImpl)root).addChildren(children, last);
+      XDebuggerTreeNode root = myInstancesTree.getRoot();
+      if (root != null) {
+        ((XValueNodeImpl) root).addChildren(children, last);
       }
     }
 
@@ -369,7 +370,7 @@ public class InstancesWindow extends DialogWrapper {
           cancelFilteringTask();
 
           XDebuggerTreeNode root = myInstancesTree.getRoot();
-          if(root != null) {
+          if (root != null) {
             root.clearChildren();
             addChildrenToTree(myRunningAppChildNode, true);
           }
