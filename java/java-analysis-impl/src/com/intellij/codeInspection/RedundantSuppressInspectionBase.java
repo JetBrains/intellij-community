@@ -18,7 +18,6 @@ package com.intellij.codeInspection;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.RemoveSuppressWarningAction;
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
@@ -182,7 +181,7 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
           else if (toolWrapper.getShortName().equals(shortName)) {
             //ignore global unused as it won't be checked anyway
             if (toolWrapper instanceof LocalInspectionToolWrapper ||
-                toolWrapper instanceof GlobalInspectionToolWrapper && !isGlobalInspectionRunCustomly(toolWrapper.getTool())) {
+                toolWrapper instanceof GlobalInspectionToolWrapper && !((GlobalInspectionToolWrapper)toolWrapper).getTool().isGraphNeeded()) {
               suppressedTools.put(toolWrapper, shortName);
             }
             else {
@@ -217,10 +216,8 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
         else if (toolWrapper instanceof GlobalInspectionToolWrapper) {
           final GlobalInspectionToolWrapper global = (GlobalInspectionToolWrapper)toolWrapper;
           GlobalInspectionTool globalTool = global.getTool();
-          if (isGlobalInspectionRunCustomly(globalTool)) continue;
-          if (globalTool.isGraphNeeded()) {
-            refManager.findAllDeclarations();
-          }
+          //when graph is needed, results probably depend on outer files so absence of results on one file (in current context) doesn't guarantee anything
+          if (globalTool.isGraphNeeded()) continue;
           descriptors = new ArrayList<>();
           globalContext.getRefManager().iterate(new RefVisitor() {
             @Override public void visitElement(@NotNull RefEntity refEntity) {
@@ -299,10 +296,6 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
       globalContext.close(true);
     }
     return result.toArray(new ProblemDescriptor[result.size()]);
-  }
-
-  private static boolean isGlobalInspectionRunCustomly(InspectionProfileEntry tool) {
-    return tool instanceof UnusedDeclarationInspectionBase;
   }
 
   protected GlobalInspectionContextBase createContext(PsiFile file) {
