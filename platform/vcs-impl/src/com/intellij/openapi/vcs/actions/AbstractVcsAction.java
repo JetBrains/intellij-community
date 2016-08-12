@@ -16,10 +16,8 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.AsyncUpdateAction;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -30,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Collections;
 
-public abstract class AbstractVcsAction extends AsyncUpdateAction<VcsContext> implements DumbAware {
+public abstract class AbstractVcsAction extends DumbAwareAction {
   public static Collection<AbstractVcs> getActiveVcses(VcsContext dataContext) {
     Collection<AbstractVcs> result = new HashSet<>();
     final Project project = dataContext.getProject();
@@ -46,27 +44,26 @@ public abstract class AbstractVcsAction extends AsyncUpdateAction<VcsContext> im
   }
 
   @Override
-  protected VcsContext prepareDataFromContext(final AnActionEvent e) {
-    return forceSyncUpdate(e) ? VcsContextWrapper.createInstanceOn(e) : VcsContextWrapper.createCachedInstanceOn(e);
+  public void update(@NotNull AnActionEvent e) {
+    performUpdate(e.getPresentation(), VcsContextWrapper.createInstanceOn(e));
   }
 
   @Override
-  protected void performUpdate(final Presentation presentation, final VcsContext data) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        update(data, presentation);
-      }
-    });
-  }
-
-  @Override
-  public final void actionPerformed(@NotNull AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     actionPerformed(VcsContextWrapper.createCachedInstanceOn(e));
   }
 
+  protected abstract void update(@NotNull VcsContext vcsContext, @NotNull Presentation presentation);
+
   protected abstract void actionPerformed(@NotNull VcsContext e);
 
-  protected abstract void update(VcsContext vcsContext, Presentation presentation);
+  // Not used actually. Required for compatibility with external plugins.
+  protected boolean forceSyncUpdate(@NotNull AnActionEvent e) {
+    return true;
+  }
 
+  // Required for compatibility with external plugins.
+  protected void performUpdate(@NotNull Presentation presentation, @NotNull VcsContext vcsContext) {
+    update(vcsContext, presentation);
+  }
 }
