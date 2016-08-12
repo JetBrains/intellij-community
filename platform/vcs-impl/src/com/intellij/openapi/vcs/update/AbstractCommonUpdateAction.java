@@ -19,7 +19,6 @@ import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.errorTreeView.HotfixData;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -226,7 +225,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
   protected abstract boolean filterRootsBeforeAction();
 
   @Override
-  protected void update(VcsContext vcsContext, Presentation presentation) {
+  protected void update(@NotNull VcsContext vcsContext, @NotNull Presentation presentation) {
     Project project = vcsContext.getProject();
 
     if (project != null) {
@@ -271,11 +270,6 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       presentation.setEnabled(false);
     }
  }
-
-  @Override
-  protected boolean forceSyncUpdate(final AnActionEvent e) {
-    return true;
-  }
 
   private static boolean supportingVcsesAreEmpty(final ProjectLevelVcsManager vcsManager, final ActionInfo actionInfo) {
     final AbstractVcs[] allActiveVcss = vcsManager.getAllActiveVcss();

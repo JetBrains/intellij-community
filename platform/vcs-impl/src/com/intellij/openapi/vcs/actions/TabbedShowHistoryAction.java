@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -111,10 +110,5 @@ public class TabbedShowHistoryAction extends AbstractVcsAction {
     VcsHistoryProvider provider = assertNotNull(vcs.getVcsHistoryProvider());
 
     AbstractVcsHelper.getInstance(project).showFileHistory(provider, vcs.getAnnotationProvider(), path, null, vcs);
-  }
-
-  @Override
-  protected boolean forceSyncUpdate(@NotNull AnActionEvent e) {
-    return true;
   }
 }

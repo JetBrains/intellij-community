@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -48,11 +47,6 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
                                          @Nullable VcsBackgroundableActions actionKey) {
     presentation.setEnabled(isEnabled(vcsContext, actionKey));
     presentation.setVisible(isVisible(vcsContext));
-  }
-
-  @Override
-  protected boolean forceSyncUpdate(@NotNull AnActionEvent e) {
-    return true;
   }
 
   protected abstract VcsBackgroundableActions getKey();

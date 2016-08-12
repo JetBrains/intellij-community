@@ -20,31 +20,26 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Collections;
+
+import static com.intellij.util.containers.ContainerUtil.newHashSet;
+import static java.util.Collections.emptySet;
 
 public abstract class AbstractVcsAction extends DumbAwareAction {
-  public static Collection<AbstractVcs> getActiveVcses(VcsContext dataContext) {
-    Collection<AbstractVcs> result = new HashSet<>();
-    final Project project = dataContext.getProject();
-    if (project != null) {
-      Collections.addAll(result, ProjectLevelVcsManager.getInstance(project).getAllActiveVcss());
-    }
-    return result;
-  }
 
-  @NotNull
-  protected static FilePath[] filterDescindingFiles(@NotNull FilePath[] roots, Project project) {
-    return DescindingFilesFilter.filterDescindingFiles(roots, project);
+  @SuppressWarnings("unused") // Required for compatibility with external plugins.
+  public static Collection<AbstractVcs> getActiveVcses(@NotNull VcsContext dataContext) {
+    Project project = dataContext.getProject();
+
+    return project != null ? newHashSet(ProjectLevelVcsManager.getInstance(project).getAllActiveVcss()) : emptySet();
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
+    //noinspection deprecation - required for compatibility with external plugins.
     performUpdate(e.getPresentation(), VcsContextWrapper.createInstanceOn(e));
   }
 
@@ -57,12 +52,21 @@ public abstract class AbstractVcsAction extends DumbAwareAction {
 
   protected abstract void actionPerformed(@NotNull VcsContext e);
 
-  // Not used actually. Required for compatibility with external plugins.
+  /**
+   * @deprecated Only sync update is currently supported by {@link AbstractVcsAction}. Use
+   * {@link com.intellij.openapi.actionSystem.AsyncUpdateAction} directly if async update is necessary.
+   */
+  @SuppressWarnings("unused") // Required for compatibility with external plugins.
+  @Deprecated
   protected boolean forceSyncUpdate(@NotNull AnActionEvent e) {
     return true;
   }
 
-  // Required for compatibility with external plugins.
+
+  /**
+   * @deprecated Use {@link AbstractVcsAction#update(VcsContext, Presentation)}.
+   */
+  @Deprecated
   protected void performUpdate(@NotNull Presentation presentation, @NotNull VcsContext vcsContext) {
     update(vcsContext, presentation);
   }
