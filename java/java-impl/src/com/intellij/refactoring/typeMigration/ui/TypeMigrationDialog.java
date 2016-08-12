@@ -170,6 +170,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
           flags |= JavaCodeFragmentFactory.ALLOW_DISJUNCTION;
         }
       }
+      flags |= JavaCodeFragmentFactory.ALLOW_VOID;
       myTypeCodeFragment = JavaCodeFragmentFactory.getInstance(project).createTypeCodeFragment(text, root, true, flags);
 
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
