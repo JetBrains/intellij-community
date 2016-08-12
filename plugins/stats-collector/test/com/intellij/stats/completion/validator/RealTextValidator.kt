@@ -5,6 +5,7 @@ import org.junit.Test
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileOutputStream
 
 class RealTextValidator {
     
@@ -15,6 +16,17 @@ class RealTextValidator {
         val output = ByteArrayOutputStream()
         val err = ByteArrayOutputStream()
         val separator = SessionsInputSeparator(FileInputStream(file), output, err)
+        separator.processInput()
+    }
+    
+    
+    
+    @Test
+    fun test_DumpErr() {
+        val data = File("completion_data.txt")
+        val output = ByteArrayOutputStream()
+        val err = FileOutputStream(File("err"))
+        val separator = SessionsInputSeparator(FileInputStream(data), output, err)
         separator.processInput()
     }
     

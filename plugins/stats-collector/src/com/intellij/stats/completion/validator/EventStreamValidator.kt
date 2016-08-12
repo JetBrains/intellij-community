@@ -5,9 +5,9 @@ import java.io.*
 
 data class EventLine(val event: LogEvent, val line: String)
 
-class SessionsInputSeparator(input: InputStream,
-                             output: OutputStream,
-                             error: OutputStream) {
+open class SessionsInputSeparator(input: InputStream,
+                                  output: OutputStream,
+                                  error: OutputStream) {
     
     private val inputReader = BufferedReader(InputStreamReader(input))
     private val outputWriter = BufferedWriter(OutputStreamWriter(output))
@@ -53,14 +53,17 @@ class SessionsInputSeparator(input: InputStream,
             session.drop(1).forEach { state.accept(it.event) }
             isValidSession = state.isFinished && state.isValid
         }
-        
+
+        onSessionProcessingFinished(session, isValidSession)
+    }
+
+    open protected fun onSessionProcessingFinished(session: List<EventLine>, isValidSession: Boolean) {
         val writer = if (isValidSession) outputWriter else errorWriter
         session.forEach {
             writer.write(it.line)
             writer.newLine()
         }
     }
-
 
     private fun handleNullEvent(line: String?) {
         processCompletionSession(session)
