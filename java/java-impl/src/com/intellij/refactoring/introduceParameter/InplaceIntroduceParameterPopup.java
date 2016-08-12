@@ -212,7 +212,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
         normalizeParameterIdxAccordingToRemovedParams(parametersToRemove);
         final PsiParameter parameter = getParameter();
         if (parameter != null) {
-          InplaceIntroduceParameterPopup.super.saveSettings(parameter);
+          super.saveSettings(parameter);
         }
       };
       if (ApplicationManager.getApplication().isUnitTestMode()) {

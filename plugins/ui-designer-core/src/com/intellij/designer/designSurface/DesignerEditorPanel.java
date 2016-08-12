@@ -171,7 +171,7 @@ public abstract class DesignerEditorPanel extends JPanel
     createProgressPanel();
 
     UIUtil.invokeLaterIfNeeded(() -> {
-      DesignerEditorPanel designer = DesignerEditorPanel.this;
+      DesignerEditorPanel designer = this;
       getDesignerWindowManager().bind(designer);
       getPaletteWindowManager().bind(designer);
     });

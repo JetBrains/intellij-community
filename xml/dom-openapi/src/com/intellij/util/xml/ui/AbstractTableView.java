@@ -322,7 +322,7 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
       final Object oldValue = getValueAt(rowIndex, columnIndex);
       if (!Comparing.equal(oldValue, aValue)) {
         wrapValueSetting(getItems().get(rowIndex),
-                         () -> MyListTableModel.super.setValueAt("".equals(aValue) ? null : aValue, rowIndex, columnIndex));
+                         () -> super.setValueAt("".equals(aValue) ? null : aValue, rowIndex, columnIndex));
       }
     }
 

@@ -168,6 +168,8 @@ class ReloadClassesWorker {
       processException(e);
     }
 
+    debugProcess.getPositionManager().clearCache();
+
     DebuggerContextImpl context = myDebuggerSession.getContextManager().getContext();
     SuspendContextImpl suspendContext = context.getSuspendContext();
     if (suspendContext != null) {

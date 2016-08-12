@@ -204,7 +204,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     for (BaseInjection injection : getAllInjections()) {
       map.putValue(injection.getInjectedLanguageId(), injection);
     }
-    return CachedValueProvider.Result.create(map, Configuration.this);
+    return CachedValueProvider.Result.create(map, this);
   });
 
   public Configuration() {

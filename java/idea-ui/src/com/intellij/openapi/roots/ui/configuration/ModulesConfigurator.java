@@ -379,10 +379,10 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         if (builder instanceof ProjectImportBuilder<?>) {
           final ModifiableArtifactModel artifactModel =
             ProjectStructureConfigurable.getInstance(myProject).getArtifactsStructureConfigurable().getModifiableArtifactModel();
-          committedModules = ((ProjectImportBuilder<?>)builder).commit(myProject, myModuleModel, ModulesConfigurator.this, artifactModel);
+          committedModules = ((ProjectImportBuilder<?>)builder).commit(myProject, myModuleModel, this, artifactModel);
         }
         else {
-          committedModules = builder.commit(myProject, myModuleModel, ModulesConfigurator.this);
+          committedModules = builder.commit(myProject, myModuleModel, this);
         }
         if (committedModules != null) {
           modules.addAll(committedModules);

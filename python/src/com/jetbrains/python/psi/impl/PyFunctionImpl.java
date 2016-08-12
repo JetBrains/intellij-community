@@ -769,7 +769,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
      *
      */
     return CachedValuesManager.getManager(getProject()).getCachedValue(this, ATTRIBUTES_KEY, () -> {
-      final List<PyAssignmentStatement> result = findAttributesStatic(PyFunctionImpl.this);
+      final List<PyAssignmentStatement> result = findAttributesStatic(this);
       return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
     }, false);
   }

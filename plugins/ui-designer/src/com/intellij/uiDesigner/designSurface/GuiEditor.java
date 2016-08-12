@@ -374,8 +374,8 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
     UsageTrigger.trigger("swing-designer.open");
 
     UIUtil.invokeLaterIfNeeded(() -> {
-      DesignerToolWindowManager.getInstance(myProject).bind(GuiEditor.this);
-      PaletteToolWindowManager.getInstance(myProject).bind(GuiEditor.this);
+      DesignerToolWindowManager.getInstance(myProject).bind(this);
+      PaletteToolWindowManager.getInstance(myProject).bind(this);
     });
   }
 

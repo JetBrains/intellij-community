@@ -159,6 +159,15 @@ public class InferenceSession {
     return psiClass.getUserData(LOWER_BOUND);
   }
 
+  public static PsiType createTypeParameterTypeWithUpperBound(PsiType upperBound, PsiElement place) {
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(place.getProject());
+
+    final PsiTypeParameter parameter = elementFactory.createTypeParameterFromText("T", place);
+    parameter.putUserData(UPPER_BOUND, upperBound);
+
+    return elementFactory.createType(parameter);
+  }
+
   public void initExpressionConstraints(PsiParameter[] parameters, PsiExpression[] args, PsiElement parent, PsiMethod method) {
     final MethodCandidateInfo.CurrentCandidateProperties currentProperties = getCurrentProperties(parent);
     initExpressionConstraints(parameters, args, parent, method, currentProperties != null && currentProperties.isVarargs());

@@ -958,7 +958,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     @Override
     public ActionCallback requestFocus(@NotNull Component c, boolean forced) {
       final ActionCallback result = isExpired() ? ActionCallback.REJECTED : myManager.requestFocus(c, forced);
-      result.doWhenProcessed(() -> Disposer.dispose(FurtherRequestor.this));
+      result.doWhenProcessed(() -> Disposer.dispose(this));
       return result;
     }
 

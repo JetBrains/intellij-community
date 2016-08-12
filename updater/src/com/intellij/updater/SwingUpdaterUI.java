@@ -183,7 +183,7 @@ public class SwingUpdaterUI implements UpdaterUI {
 
     new Thread(() -> {
       try {
-        myApplied = myOperation.execute(SwingUpdaterUI.this);
+        myApplied = myOperation.execute(this);
       }
       catch (OperationCancelledException ignore) {
         Runner.printStackTrace(ignore);

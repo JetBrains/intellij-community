@@ -376,7 +376,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
   public GrAnnotation[] getAnnotations() {
     return CachedValuesManager.getCachedValue(this,
                                               () -> CachedValueProvider.Result
-                                                .create(GrAnnotationCollector.getResolvedAnnotations(GrModifierListImpl.this), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+                                                .create(GrAnnotationCollector.getResolvedAnnotations(this), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
   }
 
   @Override

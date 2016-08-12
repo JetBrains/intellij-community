@@ -168,7 +168,7 @@ public abstract class ColorPipetteBase implements ColorPipette {
   protected void notifyListener(@NotNull final Color c, int delayMillis) {
     if (!myColorListenersNotifier.isDisposed()) {
       myColorListenersNotifier.cancelAllRequests();
-      myColorListenersNotifier.addRequest(() -> myColorListener.colorChanged(c, ColorPipetteBase.this), delayMillis);
+      myColorListenersNotifier.addRequest(() -> myColorListener.colorChanged(c, this), delayMillis);
     }
   }
 

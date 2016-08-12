@@ -2523,10 +2523,10 @@
                      key="infer.lambda.parameter.type.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.style.InferLambdaParameterTypeInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ReplaceDiamondWithExplicitTypeArguments" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="replace.diamond.with.explicit.type.arguments.name" groupBundle="messages.InspectionsBundle"
+    <localInspection groupPath="Java" language="JAVA" shortName="DiamondCanBeReplacedWithExplicitTypeArguments" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="diamond.can.be.replaced.with.explicit.type.arguments.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.siyeh.ig.style.ReplaceDiamondWithExplicitTypeArgumentsInspection"/>
+                     implementationClass="com.siyeh.ig.style.DiamondCanBeReplacedWithExplicitTypeArgumentsInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="LambdaCanBeReplacedWithAnonymous" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="lambda.can.be.replaced.with.anonymous.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"

@@ -142,7 +142,7 @@ public abstract class CloudRuntimeTask<
   protected void run(final SR serverRuntime, final Semaphore semaphore, final AtomicReference<T> result) {
     serverRuntime.getTaskExecutor().submit(() -> {
       try {
-        result.set(CloudRuntimeTask.this.run(serverRuntime));
+        result.set(this.run(serverRuntime));
         mySuccess.set(true);
       }
       catch (ServerRuntimeException e) {

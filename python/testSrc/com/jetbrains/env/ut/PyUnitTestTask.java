@@ -109,7 +109,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
   @Override
   public void setUp(final String testName) throws Exception {
     if (myFixture == null) {
-      PyUnitTestTask.super.setUp(testName);
+      super.setUp(testName);
       mySetUp = true;
     }
     deletePycFiles(new File(myFixture.getTempDirPath()));

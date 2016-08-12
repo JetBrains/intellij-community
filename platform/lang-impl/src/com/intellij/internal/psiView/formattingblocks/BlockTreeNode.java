@@ -42,7 +42,7 @@ public class BlockTreeNode extends SimpleNode {
 
   @Override
   public BlockTreeNode[] getChildren() {
-    return ContainerUtil.map2Array(myBlock.getSubBlocks(), BlockTreeNode.class, block -> new BlockTreeNode(block, BlockTreeNode.this));
+    return ContainerUtil.map2Array(myBlock.getSubBlocks(), BlockTreeNode.class, block -> new BlockTreeNode(block, this));
   }
 
   @Override

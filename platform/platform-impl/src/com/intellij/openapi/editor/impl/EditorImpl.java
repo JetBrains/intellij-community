@@ -147,8 +147,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(true);
   private int myLinePaintersWidth;
 
+  private static final Cursor EMPTY_CURSOR;
+
   static {
     ComplementaryFontsRegistry.getFontAbleToDisplay(' ', 0, Font.PLAIN, UIManager.getFont("Label.font").getFamily()); // load costly font info
+
+    Cursor emptyCursor = null;
+    try {
+      emptyCursor = Toolkit.getDefaultToolkit().createCustomCursor(UIUtil.createImage(1, 1, BufferedImage.TYPE_INT_ARGB),
+                                                                    new Point(),
+                                                                    "Empty cursor");
+    }
+    catch (Exception e){
+      LOG.warn("Couldn't create an empty cursor", e);
+    }
+    EMPTY_CURSOR = emptyCursor;
   }
 
   private final CommandProcessor myCommandProcessor;
@@ -1981,6 +1994,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         (getCaretModel().getOffset() < e.getOffset() || getCaretModel().getOffset() > e.getOffset() + e.getNewLength())) {
       restoreCaretRelativePosition();
     }
+
+    if (EMPTY_CURSOR != null) {
+      myEditorComponent.setCursor(EMPTY_CURSOR);
+    }
   }
 
   private void saveCaretRelativePosition() {
@@ -2215,7 +2232,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myMarkupModel.processRangeHighlightersOverlappingWith(clipStartOffset, clipEndOffset, highlighter -> {
       final CustomHighlighterRenderer customRenderer = highlighter.getCustomRenderer();
       if (customRenderer != null && clipStartOffset < highlighter.getEndOffset() && highlighter.getStartOffset() < clipEndOffset) {
-        customRenderer.paint(EditorImpl.this, highlighter, g);
+        customRenderer.paint(this, highlighter, g);
       }
       return true;
     });

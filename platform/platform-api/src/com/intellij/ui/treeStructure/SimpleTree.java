@@ -396,7 +396,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
   }
 
   private void handleDoubleClickOrEnter(final TreePath treePath, final InputEvent e) {
-    Runnable runnable = () -> getNodeFor(treePath).handleDoubleClickOrEnter(SimpleTree.this, e);
+    Runnable runnable = () -> getNodeFor(treePath).handleDoubleClickOrEnter(this, e);
     ApplicationManager.getApplication().invokeLater(runnable, ModalityState.stateForComponent(this));
   }
 

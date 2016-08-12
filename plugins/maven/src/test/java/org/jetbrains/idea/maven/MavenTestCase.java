@@ -225,7 +225,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
         }.executeSilently().throwException();
       }
       else {
-        MavenTestCase.super.runTest();
+        super.runTest();
       }
     }
     catch (Exception throwable) {

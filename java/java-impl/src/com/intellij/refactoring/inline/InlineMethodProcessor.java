@@ -634,9 +634,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     PsiSubstitutor callSubstitutor = getCallSubstitutor(methodCall);
     BlockData blockData = prepareBlock(ref, callSubstitutor, methodCall.getArgumentList(), tailCall);
     InlineUtil.solveVariableNameConflicts(blockData.block, ref, myMethodCopy.getBody());
-    if (callSubstitutor != PsiSubstitutor.EMPTY) {
-      substituteMethodTypeParams(blockData.block, callSubstitutor);
-    }
     addParmAndThisVarInitializers(blockData, methodCall);
 
     PsiElement anchor = RefactoringUtil.getParentStatement(methodCall, true);
@@ -801,6 +798,9 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
                                  final InlineUtil.TailCallType tailCallType)
     throws IncorrectOperationException {
     final PsiCodeBlock block = myMethodCopy.getBody();
+    if (callSubstitutor != PsiSubstitutor.EMPTY) {
+      substituteMethodTypeParams(block, callSubstitutor);
+    }
     final PsiStatement[] originalStatements = block.getStatements();
 
     PsiLocalVariable resultVar = null;

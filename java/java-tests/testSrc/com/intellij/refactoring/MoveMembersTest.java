@@ -244,7 +244,7 @@ public class MoveMembersTest extends MultiFileTestCase {
                       final String defaultVisibility,
                       final int... memberIndices)
     throws Exception {
-    doTest((rootDir, rootAfter) -> MoveMembersTest.this.performAction(sourceClassName, targetClassName, memberIndices, defaultVisibility), lowercaseFirstLetter);
+    doTest((rootDir, rootAfter) -> this.performAction(sourceClassName, targetClassName, memberIndices, defaultVisibility), lowercaseFirstLetter);
   }
 
   private void performAction(String sourceClassName, String targetClassName, int[] memberIndices, final String visibility) throws Exception {

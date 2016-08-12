@@ -17,14 +17,14 @@ package com.siyeh.ig.fixes.style;
 
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
-import com.siyeh.ig.style.ReplaceDiamondWithExplicitTypeArgumentsInspection;
+import com.siyeh.ig.style.DiamondCanBeReplacedWithExplicitTypeArgumentsInspection;
 
-public class ReplaceDiamondWithExplicitTypeFixTest extends IGQuickFixesTestCase {
+public class DiamondCanBeReplacedWithExplicitTypeArgumentsFixTest extends IGQuickFixesTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.enableInspections(new ReplaceDiamondWithExplicitTypeArgumentsInspection());
-    myDefaultHint = InspectionGadgetsBundle.message("replace.diamond.with.explicit.type.arguments.descriptor");
+    myFixture.enableInspections(new DiamondCanBeReplacedWithExplicitTypeArgumentsInspection());
+    myDefaultHint = InspectionGadgetsBundle.message("diamond.can.be.replaced.with.explicit.type.arguments.quickfix");
   }
 
   public void testAnonymousClass() {

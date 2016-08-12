@@ -234,7 +234,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
     private Function<PsiElement, PsiElement> getSuperBindToElementFunction(final Ref<IncorrectOperationException> ref) {
       return s -> {
         try {
-          return MyPsiReference.super.bindToElement(s);
+          return super.bindToElement(s);
         }
         catch (IncorrectOperationException e) {
           ref.set(e);
@@ -246,7 +246,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
     private Function<String, PsiElement> getSuperElementRenameFunction(final Ref<IncorrectOperationException> ref) {
       return s -> {
         try {
-          return MyPsiReference.super.handleElementRename(s);
+          return super.handleElementRename(s);
         }
         catch (IncorrectOperationException e) {
           ref.set(e);

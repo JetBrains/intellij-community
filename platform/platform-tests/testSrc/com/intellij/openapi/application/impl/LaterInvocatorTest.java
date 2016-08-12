@@ -77,7 +77,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
     final Exception[] exception = {null};
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
-        LaterInvocatorTest.super.setUp();
+        super.setUp();
         final Object[] modalEntities = LaterInvocator.getCurrentModalEntities();
         if (modalEntities.length > 0) {
           LOG.error(

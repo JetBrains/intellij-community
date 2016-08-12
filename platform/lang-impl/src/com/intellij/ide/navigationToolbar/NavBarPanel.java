@@ -286,7 +286,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       if (!myList.isEmpty()) {
         myModel.setSelectedIndex(myList.size() - 1);
         if (requestFocus) {
-          IdeFocusManager.getInstance(myProject).requestFocus(NavBarPanel.this, true);
+          IdeFocusManager.getInstance(myProject).requestFocus(this, true);
         }
       }
     });

@@ -175,7 +175,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     final Ref<RangeHighlighterEx> found = new Ref<>();
     markup.processRangeHighlightersOverlappingWith(startOffset, endOffset, highlighter -> {
       GutterMark renderer = highlighter.getGutterIconRenderer();
-      if (renderer instanceof MyGutterIconRenderer && ((MyGutterIconRenderer)renderer).myBookmark == Bookmark.this) {
+      if (renderer instanceof MyGutterIconRenderer && ((MyGutterIconRenderer)renderer).myBookmark == this) {
         found.set(highlighter);
         return false;
       }

@@ -193,7 +193,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
     if (myMoveToAnotherClassCb.isSelected()) {
       myEditor.putUserData(INTRODUCE_RESTART, true);
       ApplicationManager.getApplication().invokeLater(() -> {
-        myEditor.putUserData(ACTIVE_INTRODUCE, InplaceIntroduceConstantPopup.this);
+        myEditor.putUserData(ACTIVE_INTRODUCE, this);
         try {
           final IntroduceConstantHandler constantHandler = new IntroduceConstantHandler();
           final PsiLocalVariable localVariable = (PsiLocalVariable)getLocalVariable();

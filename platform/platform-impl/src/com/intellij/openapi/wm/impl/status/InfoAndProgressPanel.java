@@ -509,7 +509,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       listener).createBalloon();
 
     SwingUtilities.invokeLater(() -> {
-      Component comp = InfoAndProgressPanel.this;
+      Component comp = this;
       if (comp.isShowing()) {
         int offset = comp.getHeight() / 2;
         Point point = new Point(comp.getWidth() - offset, comp.getHeight() - offset);
@@ -681,7 +681,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     @Override
     public void finish(@NotNull final TaskInfo task) {
       super.finish(task);
-      queueRunningUpdate(() -> removeProgress(MyInlineProgressIndicator.this));
+      queueRunningUpdate(() -> removeProgress(this));
     }
 
     @Override

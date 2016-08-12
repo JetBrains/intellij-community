@@ -17,7 +17,6 @@ package com.intellij.ide.passwordSafe.impl.providers.masterKey;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -30,22 +29,13 @@ public class EnterPasswordComponent extends PasswordComponentBase {
   private final Function<String, Boolean> myPasswordConsumer;
 
   public EnterPasswordComponent(@NotNull Function<String, Boolean> passwordConsumer) {
-    super("Enter");
-
     myPasswordConsumer = passwordConsumer;
 
-    myPromptLabel.setText("<html><br>Master password is required to unlock the password database to convert it to a new format.</html>");
-    UIUtil.setEnabled(myNewPasswordPanel, false, true);
-    myNewPasswordPanel.setVisible(false);
+    myPromptLabel.setText("Master password is required to convert saved password.");
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       myPasswordField.setText("pass");
     }
-  }
-
-  @Override
-  public ValidationInfo doValidate() {
-    return null;
   }
 
   @Override

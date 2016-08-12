@@ -316,7 +316,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   private void doTest(@NonNls final String qClassName) throws Exception {
-    doTest((rootDir, rootAfter) -> SafeDeleteTest.this.performAction(qClassName));
+    doTest((rootDir, rootAfter) -> this.performAction(qClassName));
   }
 
   @Override

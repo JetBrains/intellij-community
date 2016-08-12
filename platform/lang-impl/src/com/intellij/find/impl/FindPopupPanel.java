@@ -225,7 +225,7 @@ public class FindPopupPanel extends JBPanel {
     initByModel();
     updateReplaceVisibility();
 
-    ApplicationManager.getApplication().invokeLater(() -> FindPopupPanel.this.scheduleResultsUpdate(), ModalityState.any());
+    ApplicationManager.getApplication().invokeLater(() -> this.scheduleResultsUpdate(), ModalityState.any());
   }
 
   private void initComponents() {

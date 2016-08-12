@@ -41,7 +41,7 @@ public abstract class JsonObjectMixin extends JsonContainerImpl implements JsonO
         }
       }
       // Cached value is invalidated every time file containing this object is modified
-      return CachedValueProvider.Result.createSingleDependency(cache, JsonObjectMixin.this);
+      return CachedValueProvider.Result.createSingleDependency(cache, this);
     };
 
   public JsonObjectMixin(@NotNull ASTNode node) {

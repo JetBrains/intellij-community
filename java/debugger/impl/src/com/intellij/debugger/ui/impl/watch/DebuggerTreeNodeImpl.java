@@ -217,14 +217,14 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
   public void labelChanged() {
     invoke(() -> {
       updateCaches();
-      getTree().getMutableModel().nodeChanged(DebuggerTreeNodeImpl.this);
+      getTree().getMutableModel().nodeChanged(this);
     });
   }
 
   public void childrenChanged(final boolean scrollToVisible) {
     invoke(() -> {
-      getTree().getMutableModel().nodeStructureChanged(DebuggerTreeNodeImpl.this);
-      getTree().restoreState(DebuggerTreeNodeImpl.this);
+      getTree().getMutableModel().nodeStructureChanged(this);
+      getTree().restoreState(this);
     });
   }
 

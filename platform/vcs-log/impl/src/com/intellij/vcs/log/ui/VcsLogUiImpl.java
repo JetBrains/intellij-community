@@ -69,7 +69,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     }
 
     myVisiblePackChangeListener = visiblePack -> UIUtil.invokeLaterIfNeeded(() -> {
-      if (!Disposer.isDisposed(VcsLogUiImpl.this)) {
+      if (!Disposer.isDisposed(this)) {
         setVisiblePack(visiblePack);
       }
     });

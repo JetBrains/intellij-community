@@ -30,18 +30,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class ReplaceDiamondWithExplicitTypeArgumentsInspection extends BaseInspection {
+public class DiamondCanBeReplacedWithExplicitTypeArgumentsInspection extends BaseInspection {
   @Nls
   @NotNull
   @Override
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message("replace.diamond.with.explicit.type.arguments.name");
+    return InspectionGadgetsBundle.message("diamond.can.be.replaced.with.explicit.type.arguments.name");
   }
 
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("replace.diamond.with.explicit.type.arguments.descriptor");
+    return getDisplayName();
   }
 
   @Override
@@ -81,14 +81,14 @@ public class ReplaceDiamondWithExplicitTypeArgumentsInspection extends BaseInspe
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("replace.diamond.with.explicit.type.arguments.descriptor");
+      return InspectionGadgetsBundle.message("diamond.can.be.replaced.with.explicit.type.arguments.quickfix");
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("replace.diamond.with.explicit.type.arguments.name");
+      return getName();
     }
 
     @Override

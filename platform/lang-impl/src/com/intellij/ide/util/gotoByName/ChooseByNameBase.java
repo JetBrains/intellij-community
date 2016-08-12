@@ -1529,7 +1529,7 @@ public abstract class ChooseByNameBase {
       return new Continuation(() -> {
         if (!checkDisposed() && !myProgress.isCanceled()) {
           CalcElementsThread currentBgProcess = myCalcElementsThread;
-          LOG.assertTrue(currentBgProcess == CalcElementsThread.this, currentBgProcess);
+          LOG.assertTrue(currentBgProcess == this, currentBgProcess);
 
           showCard(cardToShow, 0);
 
