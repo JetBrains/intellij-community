@@ -33,6 +33,7 @@ import com.intellij.ui.TitlePanel;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -127,7 +128,7 @@ class ProgressDialog implements Disposable {
     if (SystemInfo.isMac) {
       UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myText2Label);
     }
-    myInnerPanel.setPreferredSize(new Dimension(SystemInfo.isMac ? 350 : 450, -1));
+    myInnerPanel.setPreferredSize(new Dimension(SystemInfo.isMac ? 350 : JBUI.scale(450), -1));
 
     myCancelButton.addActionListener(new ActionListener() {
       @Override
