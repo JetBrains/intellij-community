@@ -18,8 +18,10 @@ package com.intellij.ui.popup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ActiveComponent;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Processor;
@@ -72,7 +74,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
   private String myAd;
   private boolean myShowShadow = true;
-  private boolean myShowBorder = !(SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui"));
+  private boolean myShowBorder = true;
   private boolean myFocusable = true;
   private ActiveComponent myCommandButton;
   private List<Pair<ActionListener, KeyStroke>> myKeyboardActions = Collections.emptyList();
