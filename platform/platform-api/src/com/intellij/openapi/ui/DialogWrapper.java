@@ -544,8 +544,10 @@ public abstract class DialogWrapper {
     }
 
     if (hasHelpToMoveToLeftSide) {
-      JButton helpButton = createHelpButton(insets);
-      panel.add(helpButton, BorderLayout.WEST);
+      if (!(SystemInfo.isWindows && UIUtil.isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.win10.ui"))) {
+        JButton helpButton = createHelpButton(insets);
+        panel.add(helpButton, BorderLayout.WEST);
+      }
     }
 
 
