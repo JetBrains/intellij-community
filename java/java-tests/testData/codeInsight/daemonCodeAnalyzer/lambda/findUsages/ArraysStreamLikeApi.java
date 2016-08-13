@@ -13,6 +13,6 @@ interface MyStream {
 class Test {
 
   {
-    Arrays.stream().map(p -> "a");
+    Arrays.stream(1).map(p -> "a");
   }
 }

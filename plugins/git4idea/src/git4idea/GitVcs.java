@@ -300,7 +300,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     if (myRepositoryForAnnotationsListener == null) {
       myRepositoryForAnnotationsListener = new GitRepositoryForAnnotationsListener(myProject);
     }
-    ServiceManager.getService(myProject, GitUserRegistry.class).activate();
+    GitUserRegistry.getInstance(myProject).activate();
   }
 
   private void checkExecutableAndVersion() {

@@ -398,6 +398,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private static PatchReader loadPatches(@NotNull VirtualFile patchFile) {
     PatchReader reader;
     try {
+      patchFile.refresh(false, false);
       reader = PatchVirtualFileReader.create(patchFile);
     }
     catch (IOException e) {

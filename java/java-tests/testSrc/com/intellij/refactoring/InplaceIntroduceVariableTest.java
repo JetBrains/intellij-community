@@ -143,6 +143,15 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     });
   }
 
+  public void testConflictWithFieldNoCast() throws Exception {
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer introducer) {
+        type("weights");
+      }
+    });
+  }
+
   public void testCast() throws Exception {
     doTestTypeChange("Integer");
   }

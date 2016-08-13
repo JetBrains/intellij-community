@@ -23,6 +23,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.CommandProcessorEx;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -49,12 +50,13 @@ import java.util.stream.Stream;
  * @author Denis Fokin
  */
 
-public class MacPathChooserDialog implements PathChooserDialog {
+public class MacPathChooserDialog implements PathChooserDialog, FileChooserDialog{
 
   private FileDialog myFileDialog;
   private final FileChooserDescriptor myFileChooserDescriptor;
   private final Component myParent;
   private final String myTitle;
+  private VirtualFile [] virtualFiles;
 
   public MacPathChooserDialog(FileChooserDescriptor descriptor, Component parent, Project project) {
 
@@ -120,10 +122,11 @@ public class MacPathChooserDialog implements PathChooserDialog {
     }
 
     File[] files = myFileDialog.getFiles();
-    List<VirtualFile> virtualFilesList = getChosenFiles(Stream.of(files));
+    List<VirtualFile> virtualFileList = getChosenFiles(Stream.of(files));
+    virtualFiles = virtualFileList.toArray(VirtualFile.EMPTY_ARRAY);
 
     try {
-      myFileChooserDescriptor.validateSelectedFiles(virtualFilesList.toArray(VirtualFile.EMPTY_ARRAY));
+      myFileChooserDescriptor.validateSelectedFiles(virtualFiles);
     }
     catch (Exception e) {
       Messages.showErrorDialog(myParent, e.getMessage(), myTitle);
@@ -131,7 +134,7 @@ public class MacPathChooserDialog implements PathChooserDialog {
     }
 
     if (!ArrayUtil.isEmpty(files)) {
-      callback.consume(virtualFilesList);
+      callback.consume(virtualFileList);
     }
     else if (callback instanceof FileChooser.FileChooserConsumer) {
       ((FileChooser.FileChooserConsumer)callback).cancelled();
@@ -144,5 +147,18 @@ public class MacPathChooserDialog implements PathChooserDialog {
     // On the other hand, it is a bit strange to show a file dialog without an owner
     // Therefore we should minimize usage of this case.
     return new FileDialog((Frame)null, title, load);
+  }
+
+  @NotNull
+  @Override
+  public VirtualFile[] choose(@Nullable VirtualFile toSelect, @Nullable Project project) {
+    choose(toSelect, files -> {});
+    return virtualFiles;
+  }
+
+  @NotNull
+  @Override
+  public VirtualFile[] choose(@Nullable Project project, @NotNull VirtualFile... toSelect) {
+    return choose((toSelect.length > 0 ? toSelect[0] : null), project);
   }
 }

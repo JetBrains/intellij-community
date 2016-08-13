@@ -62,7 +62,7 @@ open internal class Pull(val manager: GitRepositoryManager, val indicator: Progr
       return null
     }
 
-    var refToMerge = prefetchedRefToMerge ?: fetch() ?: return null
+    val refToMerge = prefetchedRefToMerge ?: fetch() ?: return null
     val mergeResult = merge(refToMerge, mergeStrategy, commitMessage = commitMessage)
     val mergeStatus = mergeResult.status
     LOG.debug { mergeStatus.toString() }

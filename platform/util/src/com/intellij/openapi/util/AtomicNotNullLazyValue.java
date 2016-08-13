@@ -45,4 +45,15 @@ public abstract class AtomicNotNullLazyValue<T> extends NotNullLazyValue<T> {
     }
     return value;
   }
+
+  @NotNull
+  public static <T> AtomicNotNullLazyValue<T> create(@NotNull final NotNullFactory<T> value) {
+    return new AtomicNotNullLazyValue<T>() {
+      @NotNull
+      @Override
+      protected T compute() {
+        return value.create();
+      }
+    };
+  }
 }

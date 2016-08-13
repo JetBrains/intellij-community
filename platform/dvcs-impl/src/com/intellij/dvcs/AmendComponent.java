@@ -15,24 +15,21 @@
  */
 package com.intellij.dvcs;
 
+import com.intellij.dvcs.repo.Repository;
+import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.NonFocusableCheckBox;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,37 +38,40 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
-public abstract class DvcsCommitAdditionalComponent implements RefreshableOnComponent {
+/**
+ * Provides a checkbox to amend current commit to the previous commit.
+ * Selecting a checkbox loads the previous commit message from the provider, and substitutes current message in the editor,
+ * unless it was already modified by user.
+ */
+public abstract class AmendComponent {
 
-  private static final Logger log = Logger.getInstance(DvcsCommitAdditionalComponent.class);
+  private static final Logger LOG = Logger.getInstance(AmendComponent.class);
 
-  protected final JPanel myPanel;
-  protected final JCheckBox myAmend;
+  @NotNull private final RepositoryManager<? extends Repository> myRepoManager;
+  @NotNull private final CheckinProjectPanel myCheckinPanel;
+  @NotNull private final JCheckBox myAmend;
   @NotNull private final String myPreviousMessage;
+
+  @Nullable private Map<VirtualFile, String> myMessagesForRoots;
   @Nullable private String myAmendedMessage;
-  @NotNull protected final CheckinProjectPanel myCheckinPanel;
-  @Nullable  private  Map<VirtualFile, String> myMessagesForRoots;
 
-  public DvcsCommitAdditionalComponent(@NotNull final Project project, @NotNull CheckinProjectPanel panel) {
+  public AmendComponent(@NotNull Project project,
+                        @NotNull RepositoryManager<? extends Repository> repoManager,
+                        @NotNull CheckinProjectPanel panel) {
+    this(project, repoManager, panel, DvcsBundle.message("commit.amend"));
+  }
+
+  public AmendComponent(@NotNull Project project,
+                        @NotNull RepositoryManager<? extends Repository> repoManager,
+                        @NotNull CheckinProjectPanel panel,
+                        @NotNull String title) {
+    myRepoManager = repoManager;
     myCheckinPanel = panel;
-    myPanel = new JPanel(new GridBagLayout());
-    final Insets insets = JBUI.insets(2);
-    // add amend checkbox
-    GridBagConstraints c = new GridBagConstraints();
-    //todo change to MigLayout
-    c.gridx = 0;
-    c.gridy = 1;
-    c.gridwidth = 2;
-    c.anchor = GridBagConstraints.CENTER;
-    c.insets = insets;
-    c.weightx = 1;
-    c.fill = GridBagConstraints.HORIZONTAL;
-
-    myAmend = new NonFocusableCheckBox(DvcsBundle.message("commit.amend"));
+    myAmend = new NonFocusableCheckBox(title);
     myAmend.setMnemonic('m');
     myAmend.setToolTipText(DvcsBundle.message("commit.amend.tooltip"));
     myPreviousMessage = myCheckinPanel.getCommitMessage();
@@ -80,16 +80,16 @@ public abstract class DvcsCommitAdditionalComponent implements RefreshableOnComp
       @Override
       public void actionPerformed(ActionEvent e) {
         if (myAmend.isSelected()) {
-            if (myPreviousMessage.equals(myCheckinPanel.getCommitMessage())) { // if user has already typed something, don't revert it
-              if (myMessagesForRoots == null) {
-                loadMessagesInModalTask(project);      //load all commit messages for all repositories
-              }
-              String message = constructAmendedMessage();
-              if (!StringUtil.isEmptyOrSpaces(message)) {
-                myAmendedMessage = message;
-                substituteCommitMessage(myAmendedMessage);
-              }
+          if (myPreviousMessage.equals(myCheckinPanel.getCommitMessage())) { // if user has already typed something, don't revert it
+            if (myMessagesForRoots == null) {
+              loadMessagesInModalTask(project); // load all commit messages for all repositories
             }
+            String message = constructAmendedMessage();
+            if (!StringUtil.isEmptyOrSpaces(message)) {
+              myAmendedMessage = message;
+              substituteCommitMessage(myAmendedMessage);
+            }
+          }
         }
         else {
           // there was the amended message, but user has changed it => not reverting
@@ -99,11 +99,11 @@ public abstract class DvcsCommitAdditionalComponent implements RefreshableOnComp
         }
       }
     });
-    myPanel.add(myAmend, c);
   }
 
+  @Nullable
   private String constructAmendedMessage() {
-    Set<VirtualFile> selectedRoots = getVcsRoots(getSelectedFilePaths());        // get only selected files
+    Set<VirtualFile> selectedRoots = getVcsRoots(getSelectedFilePaths()); // get only selected files
     LinkedHashSet<String> messages = ContainerUtil.newLinkedHashSet();
     if (myMessagesForRoots != null) {
       for (VirtualFile root : selectedRoots) {
@@ -116,28 +116,29 @@ public abstract class DvcsCommitAdditionalComponent implements RefreshableOnComp
     return DvcsUtil.joinMessagesOrNull(messages);
   }
 
-  public JComponent getComponent() {
-    return myPanel;
-  }
-
   public void refresh() {
     myAmend.setSelected(false);
   }
 
+  @NotNull
+  public Component getComponent() {
+    return myAmend;
+  }
+
+  @NotNull
+  public JCheckBox getCheckBox() {
+    return myAmend;
+  }
+
   private void loadMessagesInModalTask(@NotNull Project project) {
     try {
-      myMessagesForRoots =
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<Map<VirtualFile,String>, VcsException>() {
-          @Override
-          public Map<VirtualFile, String> compute() throws VcsException {
-            return getLastCommitMessages();
-          }
-        }, "Reading commit message...", false, project);
+      myMessagesForRoots = ProgressManager.getInstance().runProcessWithProgressSynchronously(this::getLastCommitMessages,
+                                                                                             "Reading Commit Message...", true, project);
     }
     catch (VcsException e) {
-      Messages.showErrorDialog(getComponent(), "Couldn't load commit message of the commit to amend.\n" + e.getMessage(),
+      Messages.showErrorDialog(project, "Couldn't load commit message of the commit to amend.\n" + e.getMessage(),
                                "Commit Message not Loaded");
-      log.info(e);
+      LOG.info(e);
     }
   }
 
@@ -151,26 +152,26 @@ public abstract class DvcsCommitAdditionalComponent implements RefreshableOnComp
   @Nullable
   private Map<VirtualFile, String> getLastCommitMessages() throws VcsException {
     Map<VirtualFile, String> messagesForRoots = new HashMap<>();
-    Collection<VirtualFile> roots = myCheckinPanel.getRoots(); //all committed vcs roots, not only selected
-    final Ref<VcsException> exception = Ref.create();
-    for (VirtualFile root : roots) {
+    // load all vcs roots visible in the commit dialog (not only selected ones), to avoid another loading task if selection changes
+    for (VirtualFile root : getAffectedRoots()) {
       String message = getLastCommitMessage(root);
       messagesForRoots.put(root, message);
-    }
-    if (!exception.isNull()) {
-      throw exception.get();
     }
     return messagesForRoots;
   }
 
   @NotNull
+  protected Collection<VirtualFile> getAffectedRoots() {
+    return myRepoManager.getRepositories().stream().
+      filter(repo -> !repo.isFresh()).
+      map(Repository::getRoot).
+      filter(root -> myCheckinPanel.getRoots().contains(root)).
+      collect(Collectors.toList());
+  }
+
+  @NotNull
   private List<FilePath> getSelectedFilePaths() {
-    return ContainerUtil.map(myCheckinPanel.getFiles(), new Function<File, FilePath>() {
-      @Override
-      public FilePath fun(File file) {
-        return VcsUtil.getFilePath(file);
-      }
-    });
+    return ContainerUtil.map(myCheckinPanel.getFiles(), VcsUtil::getFilePath);
   }
 
   @NotNull

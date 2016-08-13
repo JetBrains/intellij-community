@@ -71,7 +71,6 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
         VcsBalloonProblemNotifier.showOverChangesView(project, "Can not find path file", MessageType.ERROR);
         return;
       }
-      virtualFile.refresh(false, false);
       List<ShelvedBinaryFilePatch> binaryShelvedPatches =
         ContainerUtil.map(changeList.getBinaryFiles(), ShelvedBinaryFilePatch::new);
       final ApplyPatchDifferentiatedDialog dialog =

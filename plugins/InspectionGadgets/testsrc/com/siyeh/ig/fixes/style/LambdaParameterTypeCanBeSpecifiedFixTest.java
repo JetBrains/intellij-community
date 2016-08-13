@@ -16,13 +16,13 @@
 package com.siyeh.ig.fixes.style;
 
 import com.siyeh.ig.IGQuickFixesTestCase;
-import com.siyeh.ig.style.InferLambdaParameterTypeInspection;
+import com.siyeh.ig.style.LambdaParameterTypeCanBeSpecifiedInspection;
 
-public class InferLambdaParameterTypeFixTest extends IGQuickFixesTestCase {
+public class LambdaParameterTypeCanBeSpecifiedFixTest extends IGQuickFixesTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.enableInspections(new InferLambdaParameterTypeInspection());
+    myFixture.enableInspections(new LambdaParameterTypeCanBeSpecifiedInspection());
   }
 
   public void testSimple() {

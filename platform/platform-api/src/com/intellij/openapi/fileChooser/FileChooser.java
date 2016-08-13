@@ -68,8 +68,9 @@ public class FileChooser {
                                        @Nullable final Component parent,
                                        @Nullable final Project project,
                                        @Nullable final VirtualFile toSelect) {
+    Component parentComponent = (parent == null) ? KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() : parent;
     LOG.assertTrue(!descriptor.isChooseMultiple());
-    return ArrayUtil.getFirstElement(chooseFiles(descriptor, parent, project, toSelect));
+    return ArrayUtil.getFirstElement(chooseFiles(descriptor, parentComponent, project, toSelect));
   }
 
   /**
@@ -87,7 +88,7 @@ public class FileChooser {
                                  @Nullable final Project project,
                                  @Nullable final VirtualFile toSelect,
                                  @NotNull final Consumer<List<VirtualFile>> callback) {
-    chooseFiles(descriptor, project, KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow(), toSelect, callback);
+    chooseFiles(descriptor, project, null, toSelect, callback);
   }
 
   /**
@@ -107,8 +108,9 @@ public class FileChooser {
                                  @Nullable final Component parent,
                                  @Nullable final VirtualFile toSelect,
                                  @NotNull final Consumer<List<VirtualFile>> callback) {
+    Component parentComponent = (parent == null) ? KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() : parent;
     final FileChooserFactory factory = FileChooserFactory.getInstance();
-    final PathChooserDialog pathChooser = factory.createPathChooser(descriptor, project, parent);
+    final PathChooserDialog pathChooser = factory.createPathChooser(descriptor, project, parentComponent);
     pathChooser.choose(toSelect, callback);
   }
 
@@ -126,7 +128,7 @@ public class FileChooser {
                                 @Nullable final Project project,
                                 @Nullable final VirtualFile toSelect,
                                 @NotNull final Consumer<VirtualFile> callback) {
-    chooseFile(descriptor, project, IdeFocusManager.getInstance(project).getFocusOwner(), toSelect, callback);
+    chooseFile(descriptor, project, null, toSelect, callback);
   }
 
   /**

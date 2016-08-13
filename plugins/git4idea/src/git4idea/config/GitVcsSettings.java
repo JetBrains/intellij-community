@@ -78,6 +78,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public GitResetMode RESET_MODE = null;
     public boolean FORCE_PUSH_ALLOWED = false;
     public GitPushTagMode PUSH_TAGS = null;
+    public boolean SIGN_OFF_COMMIT = false;
 
     @AbstractCollection(surroundWithTag = false)
     @Tag("push-targets")
@@ -240,6 +241,15 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
   public void setPushTagMode(@Nullable GitPushTagMode mode) {
     myState.PUSH_TAGS = mode;
   }
+
+  public boolean shouldSignOffCommit() {
+    return myState.SIGN_OFF_COMMIT;
+  }
+
+  public void setSignOffCommit(boolean state) {
+    myState.SIGN_OFF_COMMIT = state;
+  }
+
 
   /**
    * Provides migration from project settings.

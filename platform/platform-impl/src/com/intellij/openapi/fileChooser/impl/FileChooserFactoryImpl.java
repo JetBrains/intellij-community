@@ -43,6 +43,9 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
   public FileChooserDialog createFileChooser(@NotNull FileChooserDescriptor descriptor,
                                              @Nullable Project project,
                                              @Nullable Component parent) {
+    if (useNativeMacChooser(descriptor)) {
+      return new MacPathChooserDialog(descriptor, parent, project);
+    }
     if (parent != null) {
       return new FileChooserDialogImpl(descriptor, parent, project);
     }
@@ -69,7 +72,6 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
 
   private static boolean useNativeMacChooser(final FileChooserDescriptor descriptor) {
     return SystemInfo.isMac &&
-           !descriptor.isChooseJarContents() &&
            SystemProperties.getBooleanProperty("native.mac.file.chooser.enabled", true) &&
            Registry.is("ide.mac.file.chooser.native") /*&&
            !DialogWrapper.isMultipleModalDialogs()*/;

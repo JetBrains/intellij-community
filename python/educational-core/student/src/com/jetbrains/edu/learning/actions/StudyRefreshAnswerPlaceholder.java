@@ -80,7 +80,9 @@ public class StudyRefreshAnswerPlaceholder extends DumbAwareAction {
 
     if (getAnswerPlaceholder(e) == null) {
       presentation.setEnabledAndVisible(false);
+      return;
     }
+    presentation.setEnabledAndVisible(true);
   }
 
   @Nullable
