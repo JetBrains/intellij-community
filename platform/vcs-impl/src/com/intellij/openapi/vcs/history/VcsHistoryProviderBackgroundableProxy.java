@@ -118,7 +118,6 @@ public class VcsHistoryProviderBackgroundableProxy {
       if (session != null) {
         partner.reportCreatedEmptySession(session);
         partner.finished();
-        partner.forceRefresh();
         return;
       }
     }
