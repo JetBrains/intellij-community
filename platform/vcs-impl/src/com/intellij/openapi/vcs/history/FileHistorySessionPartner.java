@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Condition;
@@ -38,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.history.FileHistoryPanelImpl.*;
+import static com.intellij.openapi.vcs.history.FileHistoryPanelImpl.sameHistories;
 
 /**
  * @author irengrig
@@ -71,11 +72,8 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
         // TODO: session
         mySession.getRevisionList().addAll(vcsFileRevisions);
         final VcsHistorySession copy = mySession.copyWithCachedRevision();
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            ensureHistoryPanelCreated().getHistoryPanelRefresh().consume(copy);
-          }
-        });
+        ApplicationManager.getApplication().invokeAndWait(() -> ensureHistoryPanelCreated().getHistoryPanelRefresh().consume(copy),
+                                                          ModalityState.defaultModalityState());
       }
     };
     myBuffer = new BufferedListConsumer<VcsFileRevision>(5, sessionRefresher, 1000) {
@@ -120,26 +118,23 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
     return new FileHistoryPanelImpl(myVcs, myPath, myStartingRevisionNumber, copy, myVcsHistoryProvider, contentManager, myRefresherI, false);
   }
 
-  public void reportCreatedEmptySession(final VcsAbstractHistorySession session) {
+  public void reportCreatedEmptySession(VcsAbstractHistorySession session) {
     if (mySession != null && session != null && mySession.getRevisionList().equals(session.getRevisionList())) return;
     mySession = session;
     if (mySession != null) {
       mySession.shouldBeRefreshed();  // to init current revision!
     }
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        final VcsHistorySession copy = mySession.copyWithCachedRevision();
-        if (myFileHistoryPanel == null) {
-          myFileHistoryPanel = createFileHistoryPanel(copy);
-          createOrSelectContentIfNeeded();
-        }
-        else {
-          myFileHistoryPanel.getHistoryPanelRefresh().consume(copy);
-        }
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      final VcsHistorySession copy = mySession.copyWithCachedRevision();
+      if (myFileHistoryPanel == null) {
+        myFileHistoryPanel = createFileHistoryPanel(copy);
+        createOrSelectContentIfNeeded();
       }
-    });
+      else {
+        myFileHistoryPanel.getHistoryPanelRefresh().consume(copy);
+      }
+    }, ModalityState.defaultModalityState());
   }
 
   @NotNull
@@ -188,27 +183,23 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
 
   public void finished() {
     myBuffer.flush();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (mySession == null) {
-          // nothing to be done, exit
-          return;
-        }
-        ensureHistoryPanelCreated().getHistoryPanelRefresh().finished();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      if (mySession == null) {
+        // nothing to be done, exit
+        return;
       }
-    });
+      ensureHistoryPanelCreated().getHistoryPanelRefresh().finished();
+    }, ModalityState.defaultModalityState());
   }
 
   @Override
   public void forceRefresh() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (mySession == null) {
-          // nothing to be done, exit
-          return;
-        }
-        ensureHistoryPanelCreated().scheduleRefresh(false);
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      if (mySession == null) {
+        // nothing to be done, exit
+        return;
       }
-    });
+      ensureHistoryPanelCreated().scheduleRefresh(false);
+    }, ModalityState.defaultModalityState());
   }
 }
