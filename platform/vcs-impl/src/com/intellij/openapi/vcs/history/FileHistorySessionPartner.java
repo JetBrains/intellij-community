@@ -126,7 +126,7 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
         myFileHistoryPanel = createFileHistoryPanel(copy);
         createOrSelectContentIfNeeded();
       }
-      else {
+      else if (session != null && !session.getRevisionList().isEmpty()){
         myFileHistoryPanel.getHistoryPanelRefresh().consume(copy);
       }
     }, ModalityState.defaultModalityState());
