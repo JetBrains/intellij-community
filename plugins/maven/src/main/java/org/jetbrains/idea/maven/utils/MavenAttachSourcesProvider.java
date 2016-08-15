@@ -27,7 +27,6 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -36,7 +35,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
@@ -63,7 +61,7 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
     if (projects.isEmpty()) return Collections.emptyList();
     if (findArtifacts(projects, orderEntries).isEmpty()) return Collections.emptyList();
 
-    return Collections.<AttachSourcesAction>singleton(new AttachSourcesAction() {
+    return Collections.singleton(new AttachSourcesAction() {
       @Override
       public String getName() {
         return ProjectBundle.message("maven.action.download.sources");

@@ -71,7 +71,7 @@ public class ManifestBuilder {
       final Element mavenArchiveConfiguration =
         mavenPackagingPluginConfiguration != null ? mavenPackagingPluginConfiguration.getChild("archive") : null;
 
-      if (mavenArchiveConfiguration == null) return getDefaultManifest(Collections.<String, String>emptyMap());
+      if (mavenArchiveConfiguration == null) return getDefaultManifest(Collections.emptyMap());
 
       final Element manifestEntries = mavenArchiveConfiguration.getChild("manifestEntries");
       Map<String, String> entries = getManifestEntries(manifestEntries);
@@ -139,7 +139,7 @@ public class ManifestBuilder {
     boolean hasManifestEntries = manifestEntries != null && manifestEntries.getContentSize() > 0;
     Map<String, String> entries = hasManifestEntries ?
                                   new LinkedHashMap<>(manifestEntries.getContentSize()) :
-                                  Collections.<String, String>emptyMap();
+                                  Collections.emptyMap();
     if (hasManifestEntries) {
       for (Element element : manifestEntries.getChildren()) {
         entries.put(element.getName(), element.getTextTrim());
