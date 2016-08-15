@@ -27,6 +27,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -83,6 +84,7 @@ import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 
 public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
+  private static final Logger LOG = Logger.getInstance(ApplyPatchDifferentiatedDialog.class);
   private final ZipperUpdater myLoadQueue;
   private final TextFieldWithBrowseButton myPatchFile;
 
@@ -397,11 +399,17 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   @Nullable
   private static PatchReader loadPatches(@NotNull VirtualFile patchFile) {
     PatchReader reader;
+    patchFile.refresh(false, false);
     try {
-      patchFile.refresh(false, false);
-      reader = PatchVirtualFileReader.create(patchFile);
+      reader = ApplicationManager.getApplication().runReadAction(new ThrowableComputable<PatchReader, IOException>() {
+        @Override
+        public PatchReader compute() throws IOException {
+          return PatchVirtualFileReader.create(patchFile);
+        }
+      });
     }
     catch (IOException e) {
+      LOG.warn("Can't read patchFile: " + patchFile.getPresentableName(), e);
       return null;
     }
     try {
