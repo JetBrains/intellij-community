@@ -1,4 +1,5 @@
 import <symbolName descr="null" type="CLASS_NAME">java.io</symbolName>.*; // highlight on demand import as class name
+import <symbolName descr="null" type="CLASS_NAME"><symbolName descr="null" type="CLASS_NAME">java</symbolName>.lang</symbolName>/*comment*/.<symbolName descr="null" type="CLASS_NAME">String</symbolName>;
 import static <symbolName descr="null" type="CLASS_NAME">java.io.File</symbolName>.<symbolName descr="null" type="STATIC_FINAL_FIELD">pathSeparator</symbolName>;
 import static <symbolName descr="null" type="CLASS_NAME">java.io.File</symbolName>.*;
 

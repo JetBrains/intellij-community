@@ -852,11 +852,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
     else if (resolved instanceof PsiClass) {
       final PsiElement qualifier = element.getQualifier();
-      boolean hasNameHighlighting = qualifier instanceof PsiJavaCodeReferenceElement &&
-                                    ((PsiJavaCodeReferenceElement)qualifier).getTypeParameters().length > 0;
+      boolean highlightByItem = qualifier instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifier).getTypeParameters().length > 0 ||
+                                PsiTreeUtil.findChildOfType(element, PsiComment.class) != null;
       final PsiElement referenceNameElement = element.getReferenceNameElement();
       final List<PsiElement> toHighlight = new ArrayList<>();
-      if (hasNameHighlighting && referenceNameElement != null) {
+      if (highlightByItem && referenceNameElement != null) {
         toHighlight.add(referenceNameElement);
         toHighlight.addAll(PsiTreeUtil.findChildrenOfType(element, PsiJavaCodeReferenceElement.class));
       }
