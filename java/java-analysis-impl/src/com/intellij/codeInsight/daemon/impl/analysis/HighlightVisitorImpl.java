@@ -851,7 +851,21 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myHolder.add(HighlightNamesUtil.highlightClassName(null, element, colorsScheme));
     }
     else if (resolved instanceof PsiClass) {
-      myHolder.add(HighlightNamesUtil.highlightClassName((PsiClass)resolved, element, colorsScheme));
+      final PsiElement qualifier = element.getQualifier();
+      boolean hasNameHighlighting = qualifier instanceof PsiJavaCodeReferenceElement &&
+                                    ((PsiJavaCodeReferenceElement)qualifier).getTypeParameters().length > 0;
+      final PsiElement referenceNameElement = element.getReferenceNameElement();
+      final List<PsiElement> toHighlight = new ArrayList<>();
+      if (hasNameHighlighting && referenceNameElement != null) {
+        toHighlight.add(referenceNameElement);
+        toHighlight.addAll(PsiTreeUtil.findChildrenOfType(element, PsiJavaCodeReferenceElement.class));
+      }
+      else {
+        toHighlight.add(element);
+      }
+      for (PsiElement psiElement : toHighlight) {
+        myHolder.add(HighlightNamesUtil.highlightClassName((PsiClass)resolved, psiElement, colorsScheme));
+      }
     }
   }
 

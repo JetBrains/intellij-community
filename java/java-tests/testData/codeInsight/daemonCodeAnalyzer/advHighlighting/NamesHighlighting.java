@@ -95,3 +95,9 @@ class <symbolName descr="null" type="CLASS_NAME">InheritedSymbolNames</symbolNam
       }
   }
 }
+
+class <symbolName descr="null" type="CLASS_NAME">Node</symbolName><<symbolName descr="null" type="TYPE_PARAMETER_NAME">E</symbolName>> {
+  public class <symbolName descr="null" type="CLASS_NAME">Details</symbolName> {}
+
+  <symbolName descr="null" type="CLASS_NAME">Node</symbolName><? extends <symbolName descr="null" type="CLASS_NAME">String</symbolName>>.<symbolName descr="null" type="CLASS_NAME">Details</symbolName> <symbolName descr="null" type="INSTANCE_FIELD">details</symbolName>;
+}
