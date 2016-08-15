@@ -173,8 +173,6 @@ public class ClassesTable extends JBTable implements DataProvider {
       changeSelection(convertRowIndexToView(newSelectedIndex),
           DiffViewTableModel.CLASSNAME_COLUMN_INDEX, false, false);
     }
-
-    setBusy(false);
   }
 
   void hideContent() {
@@ -202,10 +200,10 @@ public class ClassesTable extends JBTable implements DataProvider {
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
-    if(SELECTED_CLASS_KEY.is(dataId)) {
+    if (SELECTED_CLASS_KEY.is(dataId)) {
       return getSelectedClass();
     }
-    if(DEBUG_SESSION_KEY.is(dataId)) {
+    if (DEBUG_SESSION_KEY.is(dataId)) {
       return myDebugSession;
     }
 

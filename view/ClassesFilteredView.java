@@ -47,7 +47,7 @@ public class ClassesFilteredView extends BorderLayoutPanel {
   private final ClassesTable myTable;
 
   private volatile SuspendContextImpl myLastSuspendContext;
-  private boolean myNeedReloadClasses = false;
+  private volatile boolean myNeedReloadClasses = false;
 
   public ClassesFilteredView(@NotNull XDebugSession debugSession) {
     super();
@@ -95,6 +95,7 @@ public class ClassesFilteredView extends BorderLayoutPanel {
       @Override
       public void sessionResumed() {
         SwingUtilities.invokeLater(myTable::hideContent);
+        mySingleAlarm.cancelAllRequests();
       }
 
       @Override
@@ -121,10 +122,11 @@ public class ClassesFilteredView extends BorderLayoutPanel {
     mySingleAlarm = new SingleAlarmWithMutableDelay(() -> {
       myLastSuspendContext = getSuspendContext();
       if (myLastSuspendContext != null) {
-        SwingUtilities.invokeLater(() -> myTable.setBusy(true));
-
-        ((DebuggerManagerThreadImpl) myDebugProcess.getManagerThread())
-            .schedule(new MyUpdateClassesCommand(myLastSuspendContext));
+        SwingUtilities.invokeLater(() -> {
+          myTable.setBusy(true);
+          ((DebuggerManagerThreadImpl) myDebugProcess.getManagerThread())
+              .schedule(new MyUpdateClassesCommand(myLastSuspendContext));
+        });
       }
     });
 
@@ -171,7 +173,13 @@ public class ClassesFilteredView extends BorderLayoutPanel {
     }
   }
 
+  private ActionPopupMenu createContextMenu() {
+    ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("ClassesView.PopupActionGroup");
+    return ActionManager.getInstance().createActionPopupMenu("ClassesView.PopupActionGroup", group);
+  }
+
   private final class MyUpdateClassesCommand extends SuspendContextCommandImpl {
+
     MyUpdateClassesCommand(@Nullable SuspendContextImpl suspendContext) {
       super(suspendContext);
     }
@@ -183,35 +191,35 @@ public class ClassesFilteredView extends BorderLayoutPanel {
 
     @Override
     public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
-      loadClassesAndCounts();
+      myDebugProcess.getVirtualMachineProxy();
+      List<ReferenceType> classes = myDebugProcess.getVirtualMachineProxy().allClasses();
+
+      if (classes.isEmpty()) {
+        return;
+      }
+
+      VirtualMachine vm = classes.get(0).virtualMachine();
+      long start = System.nanoTime();
+      long[] counts = vm.instanceCounts(classes);
+      long delay = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
+      mySingleAlarm.setDelay((int) (DELAY_BEFORE_INSTANCES_QUERY_COEFFICIENT * delay));
+
+      LOG.info(String.format("Instances query time = %d ms. Count = %d", delay, classes.size()));
+      SwingUtilities.invokeLater(() -> {
+        if (contextIsValid()) {
+          myTable.setClassesAndCounts(classes, counts);
+        }
+
+        myTable.setBusy(false);
+      });
     }
 
     @Override
     public void commandCancelled() {
     }
-  }
 
-  private ActionPopupMenu createContextMenu() {
-    ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("ClassesView.PopupActionGroup");
-    return ActionManager.getInstance().createActionPopupMenu("ClassesView.PopupActionGroup", group);
-  }
-
-  private void loadClassesAndCounts() {
-    assert DebuggerManager.getInstance(myProject).isDebuggerManagerThread();
-    myDebugProcess.getVirtualMachineProxy();
-    List<ReferenceType> classes = myDebugProcess.getVirtualMachineProxy().allClasses();
-
-    if (classes.isEmpty()) {
-      return;
+    private boolean contextIsValid() {
+      return ClassesFilteredView.this.getSuspendContext() == getSuspendContext();
     }
-
-    VirtualMachine vm = classes.get(0).virtualMachine();
-    long start = System.nanoTime();
-    long[] counts = vm.instanceCounts(classes);
-    long delay = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
-    mySingleAlarm.setDelay((int) (DELAY_BEFORE_INSTANCES_QUERY_COEFFICIENT * delay));
-
-    LOG.info(String.format("Instances query time = %d ms. Count = %d%n", delay, classes.size()));
-    SwingUtilities.invokeLater(() -> myTable.setClassesAndCounts(classes, counts));
   }
 }

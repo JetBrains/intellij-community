@@ -176,10 +176,10 @@ public class InstancesWindow extends DialogWrapper {
       setSourcePositionForEditor();
 
       myFilterButton.setBorder(BorderFactory.createEmptyBorder());
-      Dimension progressbarPreferredSize = myFilterConditionEditor.getEditorComponent().getPreferredSize();
-      progressbarPreferredSize.width = JBUI.scale(FILTERING_BUTTON_ADDITIONAL_WIDTH) +
+      Dimension filteringButtonSize = myFilterConditionEditor.getEditorComponent().getPreferredSize();
+      filteringButtonSize.width = JBUI.scale(FILTERING_BUTTON_ADDITIONAL_WIDTH) +
           myFilterButton.getPreferredSize().width;
-      myFilterButton.setPreferredSize(progressbarPreferredSize);
+      myFilterButton.setPreferredSize(filteringButtonSize);
 
       JBPanel filteringPane = new JBPanel(new BorderLayout(JBUI.scale(BORDER_LAYOUT_DEFAULT_GAP), 0));
 
@@ -261,10 +261,12 @@ public class InstancesWindow extends DialogWrapper {
       myFilteringProgressBar.setMinimum(0);
       myFilteringProgressBar.setMaximum(progressBarMaximum);
       myProgressPanel.setVisible(true);
+      myProgressPanel.repaint();
     }
 
     private void hideProgressPane() {
       myProgressPanel.setVisible(false);
+      myProgressPanel.repaint();
     }
 
     @Nullable
@@ -463,7 +465,7 @@ public class InstancesWindow extends DialogWrapper {
         SwingUtilities.invokeLater(() -> showProgressPane(myReferences.size()));
 
         AtomicInteger totalChildren = new AtomicInteger(0);
-        for (int i = 0, size = myReferences.size(); i < size && !isCancelled(); i += FILTERING_CHUNK_SIZE) {
+        for (int i = 0, size = myReferences.size(); i < size; i += FILTERING_CHUNK_SIZE) {
           myDebuggerTaskCompleted = false;
           final int chunkBegin = i;
           debugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(debugProcess.getDebuggerContext()) {
@@ -476,8 +478,7 @@ public class InstancesWindow extends DialogWrapper {
             public void threadAction(@NotNull SuspendContextImpl suspendContext) {
               XValueChildrenList children = new XValueChildrenList();
               int endOfChunk = min(chunkBegin + FILTERING_CHUNK_SIZE, size);
-              for (int j = chunkBegin; j < endOfChunk
-                  && !isCancelled() && totalChildren.get() < MAX_TREE_NODE_COUNT; j++) {
+              for (int j = chunkBegin; j < endOfChunk && totalChildren.get() < MAX_TREE_NODE_COUNT; j++) {
                 ObjectReference ref = myReferences.get(j);
                 if (myExpressionEvaluator != null && isSatisfy(myExpressionEvaluator, ref) != MyFilteringResult.MATCH) {
                   continue;
@@ -490,7 +491,11 @@ public class InstancesWindow extends DialogWrapper {
 
               if (children.size() > 0) {
                 totalChildren.addAndGet(children.size());
-                SwingUtilities.invokeLater(() -> addChildrenToTree(children, false));
+                SwingUtilities.invokeLater(() -> {
+                  if(MyFilteringWorker.this == myFilteringTask) {
+                    addChildrenToTree(children, false);
+                  }
+                });
               }
 
               SwingUtilities.invokeLater(() -> myFilteringProgressBar.setValue(endOfChunk));
@@ -522,7 +527,6 @@ public class InstancesWindow extends DialogWrapper {
             return MyFilteringResult.MATCH;
           }
         } catch (EvaluateException e) {
-          System.out.println(e.getMessage());
           return MyFilteringResult.EVAL_ERROR;
         }
 
