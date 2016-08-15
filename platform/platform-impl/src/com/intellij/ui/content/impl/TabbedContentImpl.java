@@ -183,6 +183,7 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
       final String tabName = copy.get(i).first;
       ContentUtilEx.addTabbedContent(manager, component, prefix, tabName, select);
     }
+    setShouldDisposeContent(false);
     Disposer.dispose(this);
   }
 
