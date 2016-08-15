@@ -53,6 +53,9 @@ class TeamCityBuildMessageLogger extends BuildMessageLogger {
       case LogMessage.Kind.BLOCK_FINISHED:
         printTeamCityMessage("blockClosed", "name='${escape(message.text)}'")
         break
+      case LogMessage.Kind.ARTIFACT_BUILT:
+        out.println "##teamcity[publishArtifacts '${escape(message.text)}']"
+        break
     }
   }
 

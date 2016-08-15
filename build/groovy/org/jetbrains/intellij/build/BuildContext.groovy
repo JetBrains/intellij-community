@@ -156,6 +156,8 @@ interface BuildMessages {
   void progress(String message)
   public <V> V block(String blockName, Closure<V> body)
 
+  void artifactBuild(String relativeArtifactPath)
+
   BuildMessages forkForParallelTask(String taskName)
 
   /**

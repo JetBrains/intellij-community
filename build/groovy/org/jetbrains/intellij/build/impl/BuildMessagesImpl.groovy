@@ -41,11 +41,12 @@ class BuildMessagesImpl implements BuildMessages {
   private final List<BuildMessagesImpl> forkedInstances = []
   private final List<LogMessage> delayedMessages = []
 
-  static BuildMessagesImpl create(JpsGantProjectBuilder builder, Project antProject, boolean underTeamCity) {
+  static BuildMessagesImpl create(JpsGantProjectBuilder builder, Project antProject) {
     String key = "IntelliJBuildMessages"
     def registered = antProject.getReference(key)
     if (registered != null) return registered as BuildMessagesImpl
 
+    boolean underTeamCity = System.getProperty("teamcity.buildType.id") != null
     BuildInfoPrinter buildInfoPrinter = underTeamCity ? new TeamCityBuildInfoPrinter() : new DefaultBuildInfoPrinter()
     builder.buildInfoPrinter = buildInfoPrinter
     disableAntLogging(antProject)
@@ -117,6 +118,11 @@ class BuildMessagesImpl implements BuildMessages {
     finally {
       processMessage(new LogMessage(LogMessage.Kind.BLOCK_FINISHED, blockName))
     }
+  }
+
+  @Override
+  void artifactBuild(String relativeArtifactPath) {
+    processMessage(new LogMessage(LogMessage.Kind.ARTIFACT_BUILT, relativeArtifactPath))
   }
 
   void processMessage(LogMessage message) {

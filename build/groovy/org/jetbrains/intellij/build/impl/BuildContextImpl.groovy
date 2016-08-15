@@ -16,7 +16,6 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.*
@@ -35,15 +34,13 @@ import org.jetbrains.jps.util.JpsPathUtil
 @CompileStatic
 class BuildContextImpl extends BuildContext {
   private final JpsGlobal global
-  private final boolean underTeamCity
   final List<String> outputDirectoriesToKeep
 
 //todo[nik] construct buildOutputRoot automatically based on product name
   static BuildContextImpl create(AntBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
                    String communityHome, String projectHome, String buildOutputRoot, ProductProperties productProperties,
                    BuildOptions options, MacHostProperties macHostProperties, SignTool signTool, ScrambleTool scrambleTool) {
-    boolean underTeamCity = System.getProperty("teamcity.buildType.id") != null
-    BuildMessages messages = BuildMessagesImpl.create(projectBuilder, ant.project, underTeamCity)
+    BuildMessages messages = BuildMessagesImpl.create(projectBuilder, ant.project)
 
     def jdk8Home = JdkUtils.computeJdkHome(messages, "jdk8Home", "$projectHome/build/jdk/1.8", "JDK_18_x64")
     BuildPathsImpl paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, jdk8Home)
@@ -63,14 +60,14 @@ class BuildContextImpl extends BuildContext {
 
     return new BuildContextImpl(ant, messages, paths, project, global, projectBuilder, productProperties,
                                 windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
-                                macHostProperties, options, signTool, scrambleTool, underTeamCity, outputDirectoriesToKeep)
+                                macHostProperties, options, signTool, scrambleTool, outputDirectoriesToKeep)
   }
 
   BuildContextImpl(AntBuilder ant, BuildMessages messages, BuildPaths paths, JpsProject project, JpsGlobal global,
                    JpsGantProjectBuilder projectBuilder, ProductProperties productProperties,
                    WindowsDistributionCustomizer windowsDistributionCustomizer, LinuxDistributionCustomizer linuxDistributionCustomizer,
                    MacDistributionCustomizer macDistributionCustomizer,
-                   MacHostProperties macHostProperties, BuildOptions options, SignTool signTool, ScrambleTool scrambleTool, boolean underTeamCity,
+                   MacHostProperties macHostProperties, BuildOptions options, SignTool signTool, ScrambleTool scrambleTool,
                    List<String> outputDirectoriesToKeep) {
     this.ant = ant
     this.messages = messages
@@ -84,7 +81,6 @@ class BuildContextImpl extends BuildContext {
     this.options = options
     this.signTool = signTool
     this.scrambleTool = scrambleTool
-    this.underTeamCity = underTeamCity
     this.outputDirectoriesToKeep = outputDirectoriesToKeep
 
     bundledJreManager = new BundledJreManager(this, paths.buildOutputRoot)
@@ -241,8 +237,8 @@ class BuildContextImpl extends BuildContext {
     def ant = new AntBuilder(ant.project)
     def messages = messages.forkForParallelTask(taskName)
     def child = new BuildContextImpl(ant, messages, paths, project, global, projectBuilder, productProperties,
-                                           windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
-                                           macHostProperties, options, signTool, scrambleTool, underTeamCity, outputDirectoriesToKeep)
+                                     windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
+                                     macHostProperties, options, signTool, scrambleTool, outputDirectoriesToKeep)
     child.bundledJreManager.baseDirectoryForJre = bundledJreManager.baseDirectoryForJre
     return child
   }
@@ -273,18 +269,17 @@ class BuildContextImpl extends BuildContext {
 
   @Override
   void notifyArtifactBuilt(String artifactPath) {
-    if (!underTeamCity) return
-
-    if (!FileUtil.startsWith(FileUtil.toSystemIndependentName(artifactPath), paths.projectHome)) {
+    def file = new File(artifactPath)
+    def baseDir = new File(paths.projectHome)
+    if (!FileUtil.isAncestor(baseDir, file, true)) {
       messages.warning("Artifact '$artifactPath' is not under '$paths.projectHome', it won't be reported")
       return
     }
-    def relativePath = StringUtil.trimStart(artifactPath.substring(paths.projectHome.length()), "/")
-    def file = new File(artifactPath)
+    def relativePath = FileUtil.toSystemIndependentName(FileUtil.getRelativePath(baseDir, file))
     if (file.isDirectory()) {
       relativePath += "=>" + file.name
     }
-    messages.info("##teamcity[publishArtifacts '$relativePath']")
+    messages.artifactBuild(relativePath)
   }
 }
 
