@@ -15,6 +15,7 @@
  */
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.util.text.UniqueNameGenerator
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.BuildException
 import org.apache.tools.ant.DefaultLogger
@@ -40,6 +41,7 @@ class BuildMessagesImpl implements BuildMessages {
   private final BuildMessagesImpl parentInstance
   private final List<BuildMessagesImpl> forkedInstances = []
   private final List<LogMessage> delayedMessages = []
+  private final UniqueNameGenerator taskNameGenerator = new UniqueNameGenerator()
 
   static BuildMessagesImpl create(JpsGantProjectBuilder builder, Project antProject) {
     String key = "IntelliJBuildMessages"
@@ -137,7 +139,8 @@ class BuildMessagesImpl implements BuildMessages {
   }
 
   @Override
-  BuildMessages forkForParallelTask(String taskName) {
+  BuildMessages forkForParallelTask(String suggestedTaskName) {
+    String taskName = taskNameGenerator.generateUniqueName(suggestedTaskName)
     def forked = new BuildMessagesImpl(loggerFactory.apply(taskName), loggerFactory, antTaskLogger, this)
     forkedInstances << forked
     return forked
