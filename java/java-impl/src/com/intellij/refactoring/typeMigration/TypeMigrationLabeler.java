@@ -735,7 +735,7 @@ public class TypeMigrationLabeler {
         if (getter.isEquivalentTo(method)) {
           final String suggestedName = GenerateMembersUtil.suggestGetterName(field.getName(), migrationType, method.getProject());
           if (!suggestedName.equals(method.getName())) {
-            if (getter.getContainingClass().findMethodsByName(suggestedName, true).length == 0) {
+            if (getter.getContainingClass().findMethodsByName(suggestedName, true).length != 0) {
               return null;
             }
             return suggestedName;
