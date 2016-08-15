@@ -56,7 +56,7 @@ public class GradleResourceFileFilter implements FileFilter {
   }
 
   private Spec<RelativePath> getAsSpec() {
-    return Specs.and(getAsIncludeSpec(true), Specs.not(getAsExcludeSpec(true)));
+    return Specs.intersect(getAsIncludeSpec(true), Specs.negate(getAsExcludeSpec(true)));
   }
 
   private Spec<RelativePath> getAsExcludeSpec(boolean caseSensitive) {
@@ -66,7 +66,7 @@ public class GradleResourceFileFilter implements FileFilter {
       Spec<RelativePath> patternMatcher = PatternMatcherFactory.getPatternMatcher(false, caseSensitive, exclude);
       matchers.add(patternMatcher);
     }
-    return Specs.or(false, matchers);
+    return matchers.isEmpty() ? Specs.<RelativePath>satisfyNone() : Specs.union(matchers);
   }
 
   private Spec<RelativePath> getAsIncludeSpec(boolean caseSensitive) {
@@ -75,6 +75,6 @@ public class GradleResourceFileFilter implements FileFilter {
       Spec<RelativePath> patternMatcher = PatternMatcherFactory.getPatternMatcher(true, caseSensitive, include);
       matchers.add(patternMatcher);
     }
-    return Specs.or(true, matchers);
+    return matchers.isEmpty() ? Specs.<RelativePath>satisfyAll() : Specs.union(matchers);
   }
 }
