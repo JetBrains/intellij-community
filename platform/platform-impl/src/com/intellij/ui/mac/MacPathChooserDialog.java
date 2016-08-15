@@ -115,7 +115,7 @@ public class MacPathChooserDialog implements PathChooserDialog, FileChooserDialo
       LaterInvocator.enterModal(myFileDialog);
     }
 
-    Component component = myParent.get();
+    Component parent = myParent.get();
     try {
       myFileDialog.setVisible(true);
     }
@@ -123,7 +123,6 @@ public class MacPathChooserDialog implements PathChooserDialog, FileChooserDialo
       if (appStarted) {
         commandProcessor.leaveModal();
         LaterInvocator.leaveModal(myFileDialog);
-        Component parent = component;
         if (parent != null) parent.requestFocus();
       }
     }
@@ -136,10 +135,10 @@ public class MacPathChooserDialog implements PathChooserDialog, FileChooserDialo
       myFileChooserDescriptor.validateSelectedFiles(virtualFiles);
     }
     catch (Exception e) {
-      if (component == null) {
+      if (parent == null) {
         Messages.showErrorDialog(myProject, e.getMessage(), myTitle);
       } else {
-        Messages.showErrorDialog(component, e.getMessage(), myTitle);
+        Messages.showErrorDialog(parent, e.getMessage(), myTitle);
       }
 
       return;
