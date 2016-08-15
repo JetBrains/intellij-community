@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -53,6 +52,12 @@ public class PyMoveTest extends PyTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     SystemProperties.setTestUserName("user1");
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    SystemProperties.setTestUserName(null);
+    super.tearDown();
   }
 
   public void testFunction() {
@@ -435,4 +440,3 @@ public class PyMoveTest extends PyTestCase {
     return null;
   }
 }
-
