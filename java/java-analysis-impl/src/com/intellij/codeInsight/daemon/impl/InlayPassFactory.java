@@ -122,12 +122,12 @@ public class InlayPassFactory extends AbstractProjectComponent implements TextEd
 
     private void inlineLiteralArgumentsNames(@NotNull PsiCallExpression expression) {
       ParameterNameFoldingManager manager = new ParameterNameFoldingManager(expression);
-      List<FoldingDescriptor> descriptors = manager.buildDescriptors();
+      List<FoldingDescriptor> descriptors = manager.getDescriptors();
       for (FoldingDescriptor descriptor : descriptors) {
         String text = descriptor.getPlaceholderText();
         assert text != null;
         int colonPos = text.indexOf(':');
-        myAnnotations.put(descriptor.getRange().getStartOffset(), text.substring(0, colonPos));
+        myAnnotations.put(descriptor.getRange().getEndOffset(), text.substring(1, colonPos));
       }
     }
 
