@@ -15,6 +15,7 @@
  */
 
 import com.intellij.TestAll;
+import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.testFramework.TestRunnerUtil;
 import junit.framework.TestCase;
@@ -53,6 +54,10 @@ public class _FirstInSuiteTest extends TestCase {
     if (nothingIsCalled) return;
 
     nothingIsCalled = true;
+
+    // some tests do not initialize Application but want to use parallel streams
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool();
+
     suiteStarted = System.nanoTime();
 
     SwingUtilities.invokeAndWait(() -> System.out.println("EDT is " + Thread.currentThread()));
