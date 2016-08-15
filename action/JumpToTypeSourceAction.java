@@ -7,7 +7,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.xdebugger.XDebugSession;
-import com.sun.jdi.ReferenceType;
+import com.sun.jdi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JumpToTypeSourceAction extends ClassesActionBase {
@@ -22,8 +23,8 @@ public class JumpToTypeSourceAction extends ClassesActionBase {
   @Override
   protected void perform(AnActionEvent e) {
     final PsiClass psiClass = getPsiClass(e);
-    if(psiClass != null) {
-      NavigationUtil.openFileWithPsiElement(psiClass, true, true);
+    if (psiClass != null) {
+      NavigationUtil.activateFileWithPsiElement(psiClass);
     }
   }
 
@@ -31,11 +32,34 @@ public class JumpToTypeSourceAction extends ClassesActionBase {
   private PsiClass getPsiClass(AnActionEvent e) {
     ReferenceType selectedClass = getSelectedClass(e);
     XDebugSession session = getDebugSession(e);
-    if(selectedClass == null || session == null) {
+    if (selectedClass == null || session == null) {
       return null;
     }
 
-    Project project = session.getProject();
-    return DebuggerUtils.findClass(selectedClass.name(), project, GlobalSearchScope.allScope(project));
+    ReferenceType targetClass = getObjectType(selectedClass);
+    if (targetClass != null) {
+      Project project = session.getProject();
+      return DebuggerUtils
+          .findClass(targetClass.name(), project, GlobalSearchScope.allScope(project));
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private ReferenceType getObjectType(@NotNull ReferenceType ref) {
+    if (!(ref instanceof ArrayType)) {
+      return ref;
+    }
+
+    try {
+      Type elementType = ((ArrayType) ref).componentType();
+      if (elementType instanceof ReferenceType) {
+        return getObjectType((ReferenceType) elementType);
+      }
+    } catch (ClassNotLoadedException ignored) {
+    }
+
+    return null;
   }
 }
