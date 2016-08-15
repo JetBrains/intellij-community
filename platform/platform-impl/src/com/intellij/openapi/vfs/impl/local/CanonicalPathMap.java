@@ -71,7 +71,6 @@ class CanonicalPathMap {
     }
     else {
       Stream.concat(recursiveRoots.stream(), flatRoots.stream())
-        .parallel()
         .forEach(root -> ContainerUtil.putIfNotNull(root, FileSystemUtil.resolveSymLink(root), result));
     }
 
