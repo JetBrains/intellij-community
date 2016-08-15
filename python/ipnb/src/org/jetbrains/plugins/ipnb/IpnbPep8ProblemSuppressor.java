@@ -3,10 +3,7 @@ package org.jetbrains.plugins.ipnb;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.psi.PyEmptyExpression;
-import com.jetbrains.python.psi.PyExpressionStatement;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyImportStatement;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.validation.Pep8ExternalAnnotator;
 import com.jetbrains.python.validation.Pep8ProblemSuppressor;
@@ -32,18 +29,18 @@ public class IpnbPep8ProblemSuppressor implements Pep8ProblemSuppressor {
 
       // Ignore warnings about imports not at the top of file if there are magic commands before
       if (problem.getCode().equals("E402") && targetElement != null) {
-        final PyImportStatement importStatement = PsiTreeUtil.getParentOfType(targetElement, PyImportStatement.class);
+        final PyImportStatementBase importStatement = PsiTreeUtil.getParentOfType(targetElement, PyImportStatementBase.class);
         if (importStatement != null && importStatement.getParent() == file) {
           boolean containsMagicCommandsBefore = false;
-          PsiElement prev = PyPsiUtils.getPrevNonWhitespaceSibling(importStatement);
+          PsiElement prev = PyPsiUtils.getPrevNonCommentSibling(importStatement, true);
           while (prev != null) {
             if (prev instanceof PyEmptyExpression && prev.getText().startsWith("%")) {
               containsMagicCommandsBefore = true;
             }
-            else if (!isModuleLevelDocstring(prev, (PyFile)file)) {
+            else if (!(isModuleLevelDocstring(prev, (PyFile)file) || prev instanceof PyImportStatementBase)) {
               return false;
             }
-            prev = PyPsiUtils.getPrevNonWhitespaceSibling(prev);
+            prev = PyPsiUtils.getPrevNonCommentSibling(prev, true);
           }
           return containsMagicCommandsBefore;
         }
