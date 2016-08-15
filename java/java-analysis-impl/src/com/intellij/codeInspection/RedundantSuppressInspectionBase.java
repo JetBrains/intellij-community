@@ -71,7 +71,7 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Ignore @SuppressWarning(\"ALL\")", this, "IGNORE_ALL");
+    return new SingleCheckboxOptionsPanel("Ignore '@SuppressWarning(\"ALL\")'", this, "IGNORE_ALL");
   }
 
   @Override
