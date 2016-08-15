@@ -62,6 +62,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.*;
 import java.util.*;
+import java.util.stream.Collectors;
+
+import static com.intellij.openapi.util.Pair.pair;
 
 @State(
   name = "HttpConfigurable",
@@ -483,49 +486,60 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     return uri == null || !mySelector.isProxyException(uri.getHost());
   }
 
-  public static List<KeyValue<String, String>> getJvmPropertiesList(final boolean withAutodetection, @Nullable final URI uri) {
-    final HttpConfigurable me = getInstance();
-    if (! me.USE_HTTP_PROXY && ! me.USE_PROXY_PAC) {
+  /** @deprecated use {@link #getJvmProperties(boolean, URI)} (to be removed in IDEA 2018) */
+  @SuppressWarnings({"deprecation", "unused"})
+  public static List<KeyValue<String, String>> getJvmPropertiesList(boolean withAutodetection, @Nullable URI uri) {
+    List<Pair<String, String>> properties = getInstance().getJvmProperties(withAutodetection, uri);
+    return properties.stream().map(p -> KeyValue.create(p.first, p.second)).collect(Collectors.toList());
+  }
+
+  @NotNull
+  public List<Pair<String, String>> getJvmProperties(boolean withAutodetection, @Nullable URI uri) {
+    if (!USE_HTTP_PROXY && !USE_PROXY_PAC) {
       return Collections.emptyList();
     }
-    final List<KeyValue<String, String>> result = new ArrayList<>();
-    if (me.USE_HTTP_PROXY) {
-      final boolean putCredentials = me.KEEP_PROXY_PASSWORD && StringUtil.isNotEmpty(me.getProxyLogin());
-      if (me.PROXY_TYPE_IS_SOCKS) {
-        result.add(KeyValue.create(JavaProxyProperty.SOCKS_HOST, me.PROXY_HOST));
-        result.add(KeyValue.create(JavaProxyProperty.SOCKS_PORT, String.valueOf(me.PROXY_PORT)));
+
+    List<Pair<String, String>> result = new ArrayList<>();
+    if (USE_HTTP_PROXY) {
+      boolean putCredentials = KEEP_PROXY_PASSWORD && StringUtil.isNotEmpty(getProxyLogin());
+      if (PROXY_TYPE_IS_SOCKS) {
+        result.add(pair(JavaProxyProperty.SOCKS_HOST, PROXY_HOST));
+        result.add(pair(JavaProxyProperty.SOCKS_PORT, String.valueOf(PROXY_PORT)));
         if (putCredentials) {
-          result.add(KeyValue.create(JavaProxyProperty.SOCKS_USERNAME, me.getProxyLogin()));
-          result.add(KeyValue.create(JavaProxyProperty.SOCKS_PASSWORD, me.getPlainProxyPassword()));
-        }
-      } else {
-        result.add(KeyValue.create(JavaProxyProperty.HTTP_HOST, me.PROXY_HOST));
-        result.add(KeyValue.create(JavaProxyProperty.HTTP_PORT, String.valueOf(me.PROXY_PORT)));
-        result.add(KeyValue.create(JavaProxyProperty.HTTPS_HOST, me.PROXY_HOST));
-        result.add(KeyValue.create(JavaProxyProperty.HTTPS_PORT, String.valueOf(me.PROXY_PORT)));
-        if (putCredentials) {
-          result.add(KeyValue.create(JavaProxyProperty.HTTP_USERNAME, me.getProxyLogin()));
-          result.add(KeyValue.create(JavaProxyProperty.HTTP_PASSWORD, me.getPlainProxyPassword()));
+          result.add(pair(JavaProxyProperty.SOCKS_USERNAME, getProxyLogin()));
+          result.add(pair(JavaProxyProperty.SOCKS_PASSWORD, getPlainProxyPassword()));
         }
       }
-    } else if (me.USE_PROXY_PAC && withAutodetection && uri != null) {
-      final List<Proxy> proxies = CommonProxy.getInstance().select(uri);
+      else {
+        result.add(pair(JavaProxyProperty.HTTP_HOST, PROXY_HOST));
+        result.add(pair(JavaProxyProperty.HTTP_PORT, String.valueOf(PROXY_PORT)));
+        result.add(pair(JavaProxyProperty.HTTPS_HOST, PROXY_HOST));
+        result.add(pair(JavaProxyProperty.HTTPS_PORT, String.valueOf(PROXY_PORT)));
+        if (putCredentials) {
+          result.add(pair(JavaProxyProperty.HTTP_USERNAME, getProxyLogin()));
+          result.add(pair(JavaProxyProperty.HTTP_PASSWORD, getPlainProxyPassword()));
+        }
+      }
+    }
+    else if (USE_PROXY_PAC && withAutodetection && uri != null) {
+      List<Proxy> proxies = CommonProxy.getInstance().select(uri);
       // we will just take the first returned proxy, but we have an option to test connection through each of them,
       // for instance, by calling prepareUrl()
-      if (proxies != null && ! proxies.isEmpty()) {
+      if (proxies != null && !proxies.isEmpty()) {
         for (Proxy proxy : proxies) {
           if (isRealProxy(proxy)) {
-            final SocketAddress address = proxy.address();
+            SocketAddress address = proxy.address();
             if (address instanceof InetSocketAddress) {
-              final InetSocketAddress inetSocketAddress = (InetSocketAddress)address;
+              InetSocketAddress inetSocketAddress = (InetSocketAddress)address;
               if (Proxy.Type.SOCKS.equals(proxy.type())) {
-                result.add(KeyValue.create(JavaProxyProperty.SOCKS_HOST, inetSocketAddress.getHostName()));
-                result.add(KeyValue.create(JavaProxyProperty.SOCKS_PORT, String.valueOf(inetSocketAddress.getPort())));
-              } else {
-                result.add(KeyValue.create(JavaProxyProperty.HTTP_HOST, inetSocketAddress.getHostName()));
-                result.add(KeyValue.create(JavaProxyProperty.HTTP_PORT, String.valueOf(inetSocketAddress.getPort())));
-                result.add(KeyValue.create(JavaProxyProperty.HTTPS_HOST, inetSocketAddress.getHostName()));
-                result.add(KeyValue.create(JavaProxyProperty.HTTPS_PORT, String.valueOf(inetSocketAddress.getPort())));
+                result.add(pair(JavaProxyProperty.SOCKS_HOST, inetSocketAddress.getHostName()));
+                result.add(pair(JavaProxyProperty.SOCKS_PORT, String.valueOf(inetSocketAddress.getPort())));
+              }
+              else {
+                result.add(pair(JavaProxyProperty.HTTP_HOST, inetSocketAddress.getHostName()));
+                result.add(pair(JavaProxyProperty.HTTP_PORT, String.valueOf(inetSocketAddress.getPort())));
+                result.add(pair(JavaProxyProperty.HTTPS_HOST, inetSocketAddress.getHostName()));
+                result.add(pair(JavaProxyProperty.HTTPS_PORT, String.valueOf(inetSocketAddress.getPort())));
               }
             }
           }
@@ -539,6 +553,8 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     return !Proxy.NO_PROXY.equals(proxy) && !Proxy.Type.DIRECT.equals(proxy.type());
   }
 
+  /** @deprecated use {@link com.intellij.execution.configurations.ParametersList#addProperty(String, String)} (to be removed in IDEA 2018) */
+  @SuppressWarnings({"deprecation", "unused"})
   @NotNull
   public static List<String> convertArguments(@NotNull final List<KeyValue<String, String>> list) {
     if (list.isEmpty()) {
@@ -570,8 +586,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     public String myPasswordCrypt;
 
     @SuppressWarnings("UnusedDeclaration")
-    public ProxyInfo() {
-    }
+    public ProxyInfo() { }
 
     public ProxyInfo(boolean store, String username, String passwordCrypt) {
       myStore = store;

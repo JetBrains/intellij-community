@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.containers;
+package com.intellij.openapi.vcs.changes.ui;
 
 /**
  * Created with IntelliJ IDEA.
  * User: Irina.Chernushina
- * Date: 7/4/12
- * Time: 7:05 PM
+ * Date: 11/19/12
+ * Time: 6:50 PM
  */
-public interface EncoderDecoder<Raw,Encoded> {
-  Encoded encode(Raw raw);
-  Raw decode(Encoded encoded);
+public interface PlusMinusModify<T> extends PlusMinus<T> {
+  void modify(T was, T become);
 }

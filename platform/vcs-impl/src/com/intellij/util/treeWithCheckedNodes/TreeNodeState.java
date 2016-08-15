@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.containers;
+package com.intellij.util.treeWithCheckedNodes;
 
 /**
  * @author irengrig
+ *         Date: 2/4/11
+ *         Time: 3:36 PM
  */
-public interface PrimitiveConvertor<T> {
-  interface Int<T> extends PrimitiveConvertor<T> {
-    T convert(final int value);
-  }
-  interface Long<T> extends PrimitiveConvertor<T> {
-    T convert(final long value);
-  }
+public enum TreeNodeState {
+  SELECTED,CLEAR,HAVE_SELECTED_ABOVE,HAVE_SELECTED_BELOW
 }

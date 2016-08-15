@@ -53,7 +53,6 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SplitterWithSecondHideable;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.OnOffListener;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
@@ -1039,7 +1038,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     // TODO: there are no reason to use such heavy interface for a simple task.
     myDetailsSplitter = new SplitterWithSecondHideable(true, "Details", rootPane,
-                                                       new OnOffListener<Integer>() {
+                                                       new SplitterWithSecondHideable.OnOffListener<Integer>() {
                                                          @Override
                                                          public void on(Integer integer) {
                                                            if (integer == 0) return;

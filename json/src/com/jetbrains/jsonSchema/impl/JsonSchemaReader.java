@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jetbrains.jsonSchema.impl;
 
 import com.google.gson.TypeAdapter;
@@ -9,14 +24,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.PairConvertor;
-import com.intellij.util.ThrowablePairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.Reader;
 import java.util.*;
+import java.util.function.BiFunction;
 
 /**
  * @author Irina.Chernushina on 8/27/2015.
@@ -24,6 +38,7 @@ import java.util.*;
 public class JsonSchemaReader {
   public static final Logger LOG = Logger.getInstance("#com.jetbrains.jsonSchema.impl.JsonSchemaReader");
   public static final NotificationGroup ERRORS_NOTIFICATION = NotificationGroup.logOnlyGroup("JSON Schema");
+
   @Nullable private final VirtualFile myKey;
 
   public JsonSchemaReader(@Nullable final VirtualFile key) {
@@ -81,7 +96,7 @@ public class JsonSchemaReader {
     String id = object.getId();
     if (!StringUtil.isEmptyOrSpaces(id)) {
       id = id.endsWith("#") ? id.substring(0, id.length() - 1) : id;
-      final PairConvertor<String, Map<String, JsonSchemaObject>, Map<String, JsonSchemaObject>> convertor =
+      final BiFunction<String, Map<String, JsonSchemaObject>, Map<String, JsonSchemaObject>> convertor =
         (s, map) -> {
           final Map<String, JsonSchemaObject> converted = new HashMap<>();
           for (Map.Entry<String, JsonSchemaObject> entry : map.entrySet()) {
@@ -96,11 +111,11 @@ public class JsonSchemaReader {
       map.put("", object);
       final Map<String, JsonSchemaObject> definitions = object.getDefinitions();
       if (definitions != null && !definitions.isEmpty()) {
-        map.putAll(convertor.convert("#/definitions/", definitions));
+        map.putAll(convertor.apply("#/definitions/", definitions));
       }
       final Map<String, JsonSchemaObject> properties = object.getProperties();
       if (properties != null && !properties.isEmpty()) {
-        map.putAll(convertor.convert("#/properties/", properties));
+        map.putAll(convertor.apply("#/properties/", properties));
       }
       definitionsObject.register(key, id, map);
     }
@@ -775,5 +790,9 @@ public class JsonSchemaReader {
     public Map<String, JsonSchemaObject> getIds() {
       return myIds;
     }
+  }
+
+  private interface ThrowablePairConsumer<P,S,T extends Throwable> {
+    void consume(P p, S s) throws T;
   }
 }
