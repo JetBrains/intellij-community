@@ -846,6 +846,22 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
     doTestFieldsType("Test", myFactory.createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null), "a", "b");
   }
 
+  public void testVoidMigrationInVarDecl() {
+    doTestMethodType("migrationMethod", PsiType.VOID);
+  }
+
+  public void testVoidMigrationInVarDeclFailed() {
+    doTestMethodType("migrationMethod", PsiType.VOID);
+  }
+
+  public void testVoidMigrationInAssignment() {
+    doTestMethodType("migrationMethod", PsiType.VOID);
+  }
+
+  public void testVoidMigrationInAssignmentFailed() {
+    doTestMethodType("migrationMethod", PsiType.VOID);
+  }
+
   private void doTestReturnType(final String methodName, final String migrationType) {
     start(new RulesProvider() {
       @Override
