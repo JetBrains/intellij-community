@@ -204,7 +204,9 @@ def find_user_password(self, realm, authuri):
                 else:
                     return None
 
-        newMerc = isNewer3_8_3()
+        # After mercurial 3.8.3 urllib2.HTTPPasswordmgrwithdefaultrealm.find_user_password etc were changed to appropriate methods
+        # in util.urlreq module with slightly different semantics
+        newMerc = False if isinstance(self, urllib2.HTTPPasswordMgrWithDefaultRealm) else True
         if newMerc:
             user, password = util.urlreq.httppasswordmgrwithdefaultrealm().find_user_password(realm, authuri)
         else:
@@ -222,14 +224,3 @@ def find_user_password(self, realm, authuri):
         user, passwd = retrievedPass
         pmWithRealm.add_password(realm, authuri, user, passwd)
         return retrievedPass
-
-
-def isNewer3_8_3():
-     # After mercurial 3.8.3 urllib2.HTTPPasswordmgrwithdefaultrealm.find_user_password etc were changed to appropriate methods
-     # in util.urlreq module with slightly different semantics
-    try:
-        from mercurial.url import urlreq
-        return True
-    except ImportError:
-        pass
-        return False
