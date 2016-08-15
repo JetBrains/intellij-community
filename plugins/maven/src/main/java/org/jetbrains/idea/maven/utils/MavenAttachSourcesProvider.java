@@ -125,6 +125,7 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
                 .flatMap(entry -> entry.getLibrary() != null ?
                                   Stream.of(entry.getLibrary().getUrls(OrderRootType.SOURCES)) :
                                   Stream.empty())
+                .distinct()
                 .map(url -> new File(PathUtil.getLocalPath(VfsUtilCore.urlToPath(url))))
                 .collect(Collectors.toList());
 
