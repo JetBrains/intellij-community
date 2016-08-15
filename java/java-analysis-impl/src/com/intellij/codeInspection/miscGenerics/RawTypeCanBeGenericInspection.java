@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  *  @author dsl
  */
-public class MakeTypeGenericInspection extends BaseJavaBatchLocalInspectionTool {
+public class RawTypeCanBeGenericInspection extends BaseJavaBatchLocalInspectionTool {
 
   @NotNull
   @Override
@@ -41,9 +41,9 @@ public class MakeTypeGenericInspection extends BaseJavaBatchLocalInspectionTool 
         if (variableTypeElement != null) {
           final PsiType type = getSuggestedType(variable);
           if (type != null) {
-            final String typeText = type.getCanonicalText();
+            final String typeText = type.getPresentableText();
             final String message =
-              InspectionsBundle.message("inspection.raw.variable.type.make.generic.text", variable.getName(), typeText);
+              InspectionsBundle.message("inspection.raw.variable.type.can.be.generic.quickfix", variable.getName(), typeText);
             final PsiElement beforeInitializer =
               PsiTreeUtil.skipSiblingsBackward(variable.getInitializer(), PsiWhiteSpace.class, PsiComment.class);
             final ProblemDescriptor descriptor =
@@ -100,7 +100,7 @@ public class MakeTypeGenericInspection extends BaseJavaBatchLocalInspectionTool 
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.raw.variable.type.make.generic.family");
+      return InspectionsBundle.message("inspection.raw.variable.type.can.be.generic.family.quickfix");
     }
 
     @Override

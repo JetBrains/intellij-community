@@ -17,15 +17,15 @@ package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.miscGenerics.MakeTypeGenericInspection;
+import com.intellij.codeInspection.miscGenerics.RawTypeCanBeGenericInspection;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 import java.util.List;
 
-public class MakeTypeGenericTest extends LightCodeInsightFixtureTestCase {
-  private MakeTypeGenericInspection myInspection = new MakeTypeGenericInspection();
+public class RawTypeCanBeGenericTest extends LightCodeInsightFixtureTestCase {
+  private RawTypeCanBeGenericInspection myInspection = new RawTypeCanBeGenericInspection();
 
   @Override
   protected String getBasePath() {
@@ -50,23 +50,23 @@ public class MakeTypeGenericTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testField() {
-    doTest("Change type of TT to java.util.Comparator<java.lang.String>");
+    doTest(getMessage("TT", "Comparator<String>"));
   }
 
   public void testLocalVariable() {
-    doTest("Change type of list to java.util.List<java.lang.String>");
+    doTest(getMessage("list", "List<String>"));
   }
 
   public void testAtEquals() {
-    doTest("Change type of list to java.util.List<java.lang.String>");
+    doTest(getMessage("list", "List<String>"));
   }
 
   public void testAtInitializer() {
-    assertIntentionNotAvailable("Change type of list to java.util.List<java.lang.String>");
+    assertIntentionNotAvailable(getMessagePrefix());
   }
 
   public void testImplementedRaw() {
-    assertIntentionNotAvailable("Change type of");
+    assertIntentionNotAvailable(getMessagePrefix());
   }
 
   private void doTest(String intentionName) {
@@ -80,5 +80,14 @@ public class MakeTypeGenericTest extends LightCodeInsightFixtureTestCase {
     myFixture.configureByFiles(getTestName(false) + ".java");
     final List<IntentionAction> intentionActions = myFixture.filterAvailableIntentions(intentionName);
     assertEmpty(intentionName + " is not expected", intentionActions);
+  }
+
+  private static String getMessage(String variable, String type) {
+    return InspectionsBundle.message("inspection.raw.variable.type.can.be.generic.quickfix", variable, type);
+  }
+
+  private static String getMessagePrefix() {
+    String message = InspectionsBundle.message("inspection.raw.variable.type.can.be.generic.quickfix", "@", "@");
+    return message.substring(0, message.indexOf("@"));
   }
 }
