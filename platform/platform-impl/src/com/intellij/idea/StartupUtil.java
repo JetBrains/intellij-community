@@ -76,11 +76,6 @@ public class StartupUtil {
     }
   }
 
-  public static int getAcquiredPort() {
-    BuiltInServer server = getServer();
-    return server == null ? -1 : server.getPort();
-  }
-
   @Nullable
   public synchronized static BuiltInServer getServer() {
     return ourSocketLock == null ? null : ourSocketLock.getServer();

@@ -34,19 +34,23 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public class Restarter {
-  private Restarter() {
-  }
+  private Restarter() { }
 
   private static int getRestartCode() {
     return SystemProperties.getIntProperty("jb.restart.code", 0);
   }
 
   public static boolean isSupported() {
-    if (getRestartCode() != 0) return true;
-    if (SystemInfo.isWindows) return new File(PathManager.getBinPath(), "restarter.exe").exists();
-    if (SystemInfo.isMac) return PathManager.getHomePath().contains(".app");
+    if (getRestartCode() != 0) {
+      return true;
+    }
+    if (SystemInfo.isWindows) {
+      return new File(PathManager.getBinPath(), "restarter.exe").exists();
+    }
+    if (SystemInfo.isMac) {
+      return PathManager.getHomePath().contains(".app");
+    }
     return false;
   }
 
