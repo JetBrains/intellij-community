@@ -16,8 +16,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.ide.highlighter.JavaHighlightingColors;
-import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
@@ -27,6 +25,7 @@ import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.GraphicsUtil;
@@ -35,29 +34,19 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-public class InlineHintsPresentationManager implements Disposable, UISettingsListener {
+public class InlineHintsPresentationManager implements Disposable {
+  private static final Key<FontMetrics> HINT_FONT_METRICS = Key.create("ParameterHintFontMetrics");
+
   private static final int ANIMATION_STEP_MS = 25;
   private static final int ANIMATION_CHARS_PER_STEP = 3;
 
   private final Alarm OUR_ALARM = new Alarm(this);
-
-  private FontInfo myFontInfo;
 
   public static InlineHintsPresentationManager getInstance() {
     return ServiceManager.getService(InlineHintsPresentationManager.class);
   }
 
   private InlineHintsPresentationManager() {
-    UISettings settings = UISettings.getInstance();
-    assert settings != null;
-    settings.addUISettingsListener(this, this);
-    updateFontInfo();
-  }
-
-  private void updateFontInfo() {
-    Font font = UIManager.getFont("Label.font");
-    font = font.deriveFont(Math.max(1, font.getSize2D() - 1));
-    myFontInfo = new FontInfo(font);
   }
 
   public boolean isInlineHint(@NotNull Inlay inlay) {
@@ -86,21 +75,36 @@ public class InlineHintsPresentationManager implements Disposable, UISettingsLis
   @Override
   public void dispose() {}
 
-  @Override
-  public void uiSettingsChanged(UISettings source) {
-    updateFontInfo();
+  private static Font getFont(@NotNull Editor editor) {
+    return getFontMetrics(editor).getFont();
   }
 
-  private class MyRenderer extends Inlay.Renderer {
+  private static FontMetrics getFontMetrics(@NotNull Editor editor) {
+    String familyName = UIManager.getFont("Label.font").getFamily();
+    int size = Math.max(1, editor.getColorsScheme().getEditorFontSize() - 1);
+    FontMetrics metrics = editor.getUserData(HINT_FONT_METRICS);
+    if (metrics != null) {
+      Font font = metrics.getFont();
+      if (!familyName.equals(font.getFamily()) || size != font.getSize()) metrics = null;
+    }
+    if (metrics == null) {
+      Font font = new Font(familyName, Font.PLAIN, size);
+      metrics = FontInfo.createReferenceGraphics().getFontMetrics(font);
+    }
+    return metrics;
+  }
+
+  private static class MyRenderer extends Inlay.Renderer {
     private final String myText;
 
     private MyRenderer(String text) {
       myText = text;
     }
 
+
     @Override
     public int calcWidthInPixels(@NotNull Editor editor) {
-      return myFontInfo.fontMetrics().stringWidth(myText) + 14;
+      return getFontMetrics(editor).stringWidth(myText) + 14;
     }
 
     @Override
@@ -116,7 +120,7 @@ public class InlineHintsPresentationManager implements Disposable, UISettingsLis
         g.setColor(backgroundColor);
         g.fillRoundRect(r.x + 2, r.y + 2, r.width - 4, r.height - 4, 4, 4);
         g.setColor(attributes.getForegroundColor());
-        g.setFont(myFontInfo.getFont());
+        g.setFont(getFont(editor));
         FontMetrics metrics = g.getFontMetrics();
         Shape savedClip = g.getClip();
         g.clipRect(r.x + 3, r.y + 3, r.width - 6, r.height - 6); // support drawing in smaller rectangle (used in animation)
@@ -127,22 +131,22 @@ public class InlineHintsPresentationManager implements Disposable, UISettingsLis
     }
   }
 
-  private class AnimationStepRenderer extends Inlay.Renderer {
-    private final Inlay.Renderer renderer;
+  private static class AnimationStepRenderer extends Inlay.Renderer {
+    private final MyRenderer renderer;
     private final int startWidth;
     private final int endWidth;
     private final int step;
     private final int steps;
 
-    private AnimationStepRenderer(Editor editor, Inlay.Renderer renderer, int startWidth) {
+    private AnimationStepRenderer(Editor editor, MyRenderer renderer, int startWidth) {
       this.renderer = renderer;
       this.startWidth = startWidth;
       this.endWidth = renderer.calcWidthInPixels(editor);
       this.step = 1;
-      this.steps = Math.max(1, Math.abs(endWidth - startWidth) / myFontInfo.charWidth(' ') / ANIMATION_CHARS_PER_STEP);
+      this.steps = Math.max(1, Math.abs(endWidth - startWidth) / getFontMetrics(editor).charWidth(' ') / ANIMATION_CHARS_PER_STEP);
     }
 
-    private AnimationStepRenderer(Inlay.Renderer renderer, int startWidth, int endWidth, int step, int steps) {
+    private AnimationStepRenderer(MyRenderer renderer, int startWidth, int endWidth, int step, int steps) {
       this.renderer = renderer;
       this.startWidth = startWidth;
       this.endWidth = endWidth;

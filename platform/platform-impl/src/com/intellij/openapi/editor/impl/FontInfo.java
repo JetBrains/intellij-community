@@ -57,13 +57,6 @@ public class FontInfo {
   private boolean myHasGlyphsToBreakDrawingIteration;
   private boolean myCheckedForProblemGlyphs;
 
-  public FontInfo(@NotNull Font font) {
-    myFont = font;
-    mySize = font.getSize();
-    myStyle = font.getStyle();
-    myUseLigatures = TextAttribute.LIGATURES_ON.equals(font.getAttributes().get(TextAttribute.LIGATURES));
-  }
-
   public FontInfo(final String familyName, final int size, @JdkConstants.FontStyle int style) {
     this(familyName, size, style, false);    
   }
