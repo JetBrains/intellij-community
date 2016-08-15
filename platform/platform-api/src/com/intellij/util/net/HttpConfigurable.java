@@ -51,13 +51,6 @@ import com.intellij.util.xmlb.annotations.Transient;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectObjectProcedure;
-import org.apache.http.HttpHost;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.NTCredentials;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.config.AuthSchemes;
-import org.apache.http.client.config.RequestConfig;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -413,12 +406,11 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   /**
    * todo [all] It is NOT necessary to call anything if you obey common IDEA proxy settings;
-   * todo if you want to define your own behaviour, refer to {@link com.intellij.util.proxy.CommonProxy}
+   * todo if you want to define your own behaviour, refer to {@link CommonProxy}
    *
    * also, this method is useful in a way that it test connection to the host [through proxy]
    *
    * @param url URL for HTTP connection
-   * @throws IOException
    */
   public void prepareURL(@NotNull String url) throws IOException {
     URLConnection connection = openConnection(url);
@@ -489,56 +481,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     if (!USE_HTTP_PROXY) return false;
     URI uri = url != null ? VfsUtil.toUri(url) : null;
     return uri == null || !mySelector.isProxyException(uri.getHost());
-  }
-
-  /**
-   * @deprecated To be removed in IDEA 16. Use corresponding method of IdeHttpClientHelpers.
-   */
-  @Deprecated
-  @NotNull
-  public RequestConfig.Builder setProxy(@NotNull RequestConfig.Builder builder) {
-    if (USE_HTTP_PROXY) {
-      builder.setProxy(new HttpHost(PROXY_HOST, PROXY_PORT));
-    }
-    return builder;
-  }
-
-  /**
-   * @deprecated To be removed in IDEA 16. Use corresponding method of IdeHttpClientHelpers.
-   */
-  @Deprecated
-  @NotNull
-  public CredentialsProvider setProxyCredentials(@NotNull CredentialsProvider provider) {
-    if (USE_HTTP_PROXY && PROXY_AUTHENTICATION) {
-      String login = getSecure("proxy.login");
-      if (login == null) {
-        login = "";
-      }
-      String ntlmUserPassword = login.replace('\\', '/') + ":" + getPlainProxyPassword();
-      provider.setCredentials(new AuthScope(PROXY_HOST, PROXY_PORT, AuthScope.ANY_REALM, AuthSchemes.NTLM), new NTCredentials(ntlmUserPassword));
-      provider.setCredentials(new AuthScope(PROXY_HOST, PROXY_PORT), new UsernamePasswordCredentials(login, getPlainProxyPassword()));
-    }
-    return provider;
-  }
-
-  /**
-   * @deprecated To be removed in IDEA 15. This method was not supposed to be here. Use corresponding methods of IdeHttpClientHelpers.
-   */
-  @Deprecated
-  @NotNull
-  public RequestConfig.Builder setProxy(@NotNull RequestConfig.Builder builder, boolean useProxy) {
-    if (useProxy) setProxy(builder);
-    return builder;
-  }
-
-  /**
-   * @deprecated To be removed in IDEA 15. This method was not supposed to be here. Use corresponding methods of IdeHttpClientHelpers.
-   */
-  @Deprecated
-  @NotNull
-  public CredentialsProvider setProxyCredentials(@NotNull CredentialsProvider provider, boolean useProxy) {
-    if (useProxy) setProxyCredentials(provider);
-    return provider;
   }
 
   public static List<KeyValue<String, String>> getJvmPropertiesList(final boolean withAutodetection, @Nullable final URI uri) {
