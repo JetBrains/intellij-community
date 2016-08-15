@@ -28,6 +28,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +37,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class InlayPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
+  private static final Key<Boolean> REPEATED_PASS = Key.create("RepeatedParameterHintsPass");
+
   public InlayPassFactory(Project project, TextEditorHighlightingPassRegistrar registrar) {
     super(project);
     registrar.registerTextEditorHighlightingPass(this, null, null, false, -1);
@@ -134,6 +137,7 @@ public class InlayPassFactory extends AbstractProjectComponent implements TextEd
     @Override
     public void doApplyInformationToEditor() {
       assert myDocument != null;
+      boolean firstTime = myEditor.getUserData(REPEATED_PASS) == null;
       InlineHintsPresentationManager presentationManager = InlineHintsPresentationManager.getInstance();
       Map<Integer, Integer> existingWidths = new HashMap<>();
       Set<String> removedHints = new HashSet<>();
@@ -158,8 +162,9 @@ public class InlayPassFactory extends AbstractProjectComponent implements TextEd
       for (Map.Entry<Integer, String> e : myAnnotations.entrySet()) {
         int offset = e.getKey();
         String text = e.getValue();
-        presentationManager.addHint(myEditor, offset, text, !removedHints.contains(text), existingWidths.getOrDefault(offset, 0));
+        presentationManager.addHint(myEditor, offset, text, !firstTime && !removedHints.contains(text), existingWidths.getOrDefault(offset, 0));
       }
+      myEditor.putUserData(REPEATED_PASS, Boolean.TRUE);
     }
   }
 }
