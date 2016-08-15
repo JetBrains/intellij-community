@@ -21,6 +21,7 @@
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -34,6 +35,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
+import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +45,6 @@ public class ParametersFolder {
   private final Map<PsiVariable, PsiExpression> myExpressions = new HashMap<>();
   private final Map<PsiVariable, String> myArgs = new HashMap<>();
   private final Map<PsiVariable, List<PsiExpression>> myMentionedInExpressions = new HashMap<>();
-  private final Set<String> myUsedNames = new HashSet<>();
 
   private final Set<PsiVariable> myDeleted = new HashSet<>();
   private boolean myFoldingSelectedByDefault;
@@ -52,7 +53,6 @@ public class ParametersFolder {
   public void clear() {
     myExpressions.clear();
     myMentionedInExpressions.clear();
-    myUsedNames.clear();
     myDeleted.clear();
   }
 
@@ -120,9 +120,10 @@ public class ParametersFolder {
     }
   }
 
-  public boolean isParameterFoldable(@NotNull VariableData data,
-                                     @NotNull LocalSearchScope scope,
-                                     @NotNull final List<? extends PsiVariable> inputVariables) {
+  boolean isParameterFoldable(@NotNull VariableData data,
+                              @NotNull LocalSearchScope scope,
+                              @NotNull final List<? extends PsiVariable> inputVariables,
+                              UniqueNameGenerator nameGenerator, String defaultName) {
     final List<PsiExpression> mentionedInExpressions = getMentionedExpressions(data.variable, scope, inputVariables);
     if (mentionedInExpressions == null) return false;
 
@@ -147,10 +148,12 @@ public class ParametersFolder {
       data.type = RefactoringChangeUtil.getTypeByExpression(mostRanked);
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(mostRanked.getProject());
       final SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, mostRanked, data.type);
-      if (nameInfo.names.length > 0) {
+      if (nameInfo.names.length > 0 &&
+          !Comparing.equal(nameInfo.names[0], data.name) &&
+          !Comparing.equal(nameInfo.names[0], defaultName)) {
         data.name = nameInfo.names[0];
+        setUniqueName(data, nameGenerator, scope, mostRanked);
       }
-      setUniqueName(data, scope, mostRanked);
     }
 
     return mostRanked != null;
@@ -175,14 +178,16 @@ public class ParametersFolder {
     return false;
   }
 
-  private void setUniqueName(VariableData data, LocalSearchScope scope, PsiExpression expr) {
+  private static void setUniqueName(VariableData data, UniqueNameGenerator nameGenerator,
+                                    LocalSearchScope scope, PsiExpression expr) {
     String name = data.name;
     int idx = 1;
     while (true) {
-      if (myUsedNames.add(name)) {
+      if (nameGenerator.isUnique(name, "", "")) {
         final PsiVariable definedVariable = PsiResolveHelper.SERVICE.getInstance(expr.getProject()).resolveReferencedVariable(name, expr);
         if (definedVariable == null || !scope.containsRange(expr.getContainingFile(), definedVariable.getTextRange())) {
           data.name = name;
+          nameGenerator.addExistingName(name);
           break;
         }
       }

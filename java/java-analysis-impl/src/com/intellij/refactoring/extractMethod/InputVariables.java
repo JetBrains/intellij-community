@@ -33,6 +33,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.Nullable;
 
@@ -96,7 +97,8 @@ public class InputVariables {
     UniqueNameGenerator nameGenerator = new UniqueNameGenerator();
     final ArrayList<VariableData> inputData = new ArrayList<>(inputVariables.size());
     for (PsiVariable var : inputVariables) {
-      String name = nameGenerator.generateUniqueName(getParameterName(var));
+      final String defaultName = getParameterName(var);
+      String name = nameGenerator.generateUniqueName(defaultName);
       PsiType type = var.getType();
       if (type instanceof PsiEllipsisType) {
         type = ((PsiEllipsisType)type).toArrayType();
@@ -135,7 +137,7 @@ public class InputVariables {
       data.passAsParameter = true;
       inputData.add(data);
 
-      if (myFoldingAvailable) myFolding.isParameterFoldable(data, myScope, inputVariables);
+      if (myFoldingAvailable) myFolding.isParameterFoldable(data, myScope, inputVariables, nameGenerator, defaultName);
     }
 
 
