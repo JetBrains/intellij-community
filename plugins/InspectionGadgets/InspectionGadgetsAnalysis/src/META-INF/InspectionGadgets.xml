@@ -2515,10 +2515,10 @@
                      key="size.replaceable.by.isempty.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.style.SizeReplaceableByIsEmptyInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ExpandOneLineLambda2CodeBlock" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="expand.one.line.lambda2.code.block.name" groupBundle="messages.InspectionsBundle"
+    <localInspection groupPath="Java" language="JAVA" shortName="LambdaBodyCanBeCodeBlock" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="lambda.body.can.be.code.block.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.siyeh.ig.style.ExpandOneLineLambda2CodeBlockInspection"/>
+                     implementationClass="com.siyeh.ig.style.LambdaBodyCanBeCodeBlockInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="LambdaParameterTypeCanBeSpecified" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="lambda.parameter.type.can.be.specified.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"

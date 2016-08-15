@@ -17,14 +17,14 @@ package com.siyeh.ig.fixes.style;
 
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
-import com.siyeh.ig.style.ExpandOneLineLambda2CodeBlockInspection;
+import com.siyeh.ig.style.LambdaBodyCanBeCodeBlockInspection;
 
-public class ExpandOneLineLambda2CodeBlockFixTest extends IGQuickFixesTestCase {
+public class LambdaBodyCanBeCodeBlockFixTest extends IGQuickFixesTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.enableInspections(new ExpandOneLineLambda2CodeBlockInspection());
-    myDefaultHint = InspectionGadgetsBundle.message("expand.one.line.lambda2.code.block.quickfix");
+    myFixture.enableInspections(new LambdaBodyCanBeCodeBlockInspection());
+    myDefaultHint = InspectionGadgetsBundle.message("lambda.body.can.be.code.block.quickfix");
     myRelativePath = "style/expr2block";
   }
 

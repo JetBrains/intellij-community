@@ -30,20 +30,18 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ExpandOneLineLambda2CodeBlockInspection extends BaseInspection {
-  private static final Logger LOG = Logger.getInstance("#" + ExpandOneLineLambda2CodeBlockInspection.class.getName());
-
+public class LambdaBodyCanBeCodeBlockInspection extends BaseInspection {
   @Nls
   @NotNull
   @Override
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message("expand.one.line.lambda2.code.block.descriptor");
+    return InspectionGadgetsBundle.message("lambda.body.can.be.code.block.name");
   }
 
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("expand.one.line.lambda2.code.block.name");
+    return getDisplayName();
   }
 
   @Override
@@ -83,7 +81,7 @@ public class ExpandOneLineLambda2CodeBlockInspection extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("expand.one.line.lambda2.code.block.quickfix");
+      return InspectionGadgetsBundle.message("lambda.body.can.be.code.block.quickfix");
     }
 
     @Nls
