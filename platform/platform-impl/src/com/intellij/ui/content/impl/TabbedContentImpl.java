@@ -184,12 +184,12 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
       ContentUtilEx.addTabbedContent(manager, component, prefix, tabName, select);
     }
     setShouldDisposeContent(false);
-    try {
-      Disposer.dispose(this);
-    }
-    finally {
-      setShouldDisposeContent(true);
-    }
+    //try {
+    Disposer.dispose(this);
+    //}
+    //finally {
+      //setShouldDisposeContent(true);
+    //}
   }
 
   @Override
