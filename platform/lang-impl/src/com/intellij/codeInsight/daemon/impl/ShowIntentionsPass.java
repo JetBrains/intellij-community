@@ -352,7 +352,10 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
                                                                        PsiElement psiElement,
                                                                        final int offset,
                                                                        @NotNull final IntentionsInfo intentions) {
-    if (psiElement != null && psiElement.isPhysical()) {
+    if (psiElement != null) {
+      assert psiElement.isPhysical() : "isPhysical: '" + psiElement.getText() + "' @" + psiElement.getTextRange() + "==" + offset +
+                                       "(" + psiElement.getClass().getName() + ") " + (psiElement.isValid() ? "valid" : "invalid") +
+                                       psiElement.getContainingFile() + " " + hostFile + "(" + hostFile.getClass().getName() + ")";
       final List<LocalInspectionToolWrapper> intentionTools = new ArrayList<>();
       final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
       final InspectionToolWrapper[] tools = profile.getInspectionTools(hostFile);
