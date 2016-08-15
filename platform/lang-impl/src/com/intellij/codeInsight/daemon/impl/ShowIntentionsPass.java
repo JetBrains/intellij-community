@@ -37,6 +37,7 @@ import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -53,6 +54,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -353,9 +355,14 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
                                                                        final int offset,
                                                                        @NotNull final IntentionsInfo intentions) {
     if (psiElement != null) {
-      assert psiElement.isPhysical() : "isPhysical: '" + psiElement.getText() + "' @" + psiElement.getTextRange() + "==" + offset +
-                                       "(" + psiElement.getClass().getName() + ") " + (psiElement.isValid() ? "valid" : "invalid") +
-                                       psiElement.getContainingFile() + " " + hostFile + "(" + hostFile.getClass().getName() + ")";
+      if (!psiElement.isPhysical()) {
+        VirtualFile virtualFile = hostFile.getVirtualFile();
+        String text = hostFile.getText();
+        LOG.error("not physical: '" + psiElement.getText() + "' @" + offset + psiElement.getTextRange() +
+                  " elem:" + psiElement + " (" + psiElement.getClass().getName() + ")" +
+                  " in:" + psiElement.getContainingFile() + " host:" + hostFile + "(" + hostFile.getClass().getName() + ")",
+                  new Attachment(virtualFile != null ? virtualFile.getPresentableUrl() : "null", text != null ? text : "null"));
+      }
       final List<LocalInspectionToolWrapper> intentionTools = new ArrayList<>();
       final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
       final InspectionToolWrapper[] tools = profile.getInspectionTools(hostFile);
