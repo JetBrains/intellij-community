@@ -22,4 +22,3 @@ class DisposableMemory(size: Long) : Memory(size) {
     super.dispose()
   }
 }
-
