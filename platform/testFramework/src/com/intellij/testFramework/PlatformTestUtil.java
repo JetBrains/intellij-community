@@ -319,6 +319,7 @@ public class PlatformTestUtil {
   public static void dispatchAllEventsInIdeEventQueue() throws InterruptedException {
     assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
     final IdeEventQueue eventQueue = (IdeEventQueue)Toolkit.getDefaultToolkit().getSystemEventQueue();
+    //noinspection StatementWithEmptyBody
     while (dispatchNextEventIfAny(eventQueue) != null);
   }
 
@@ -507,8 +508,13 @@ public class PlatformTestUtil {
   }
 
   @NotNull
+  public static String getJavaExe() {
+    return SystemProperties.getJavaHome() + (SystemInfo.isWindows ? "\\bin\\java.exe" : "/bin/java");
+  }
+
+  @NotNull
   public static String getRtJarPath() {
-    String home = System.getProperty("java.home");
+    String home = SystemProperties.getJavaHome();
     return SystemInfo.isAppleJvm ? FileUtil.toCanonicalPath(home + "/../Classes/classes.jar") : home + "/lib/rt.jar";
   }
 
@@ -970,5 +976,4 @@ public class PlatformTestUtil {
     }
     ourProjectCleanups.clear();
   }
-  
 }
