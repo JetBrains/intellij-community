@@ -43,7 +43,7 @@ public class RedundantLambdaParameterTypeInspection extends BaseJavaBatchLocalIn
       public void visitParameterList(PsiParameterList parameterList) {
         super.visitParameterList(parameterList);
         if (isApplicable(parameterList)) {
-          holder.registerProblem(parameterList, "Remove redundant types", new LambdaParametersFix());
+          holder.registerProblem(parameterList, "Lambda parameter type is redundant", new LambdaParametersFix());
         }
       }
     };
@@ -140,7 +140,7 @@ public class RedundantLambdaParameterTypeInspection extends BaseJavaBatchLocalIn
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Remove redundant types";
+      return "Remove redundant parameter types";
     }
 
     @Override
