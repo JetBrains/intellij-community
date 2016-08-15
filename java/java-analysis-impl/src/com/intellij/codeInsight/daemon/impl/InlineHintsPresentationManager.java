@@ -37,7 +37,7 @@ import java.awt.*;
 
 public class InlineHintsPresentationManager implements Disposable, UISettingsListener {
   private static final int ANIMATION_STEP_MS = 25;
-  private static final int ANIMATION_STEPS = 4;
+  private static final int ANIMATION_CHARS_PER_STEP = 3;
 
   private final Alarm OUR_ALARM = new Alarm(this);
 
@@ -127,30 +127,36 @@ public class InlineHintsPresentationManager implements Disposable, UISettingsLis
     }
   }
 
-  private static class AnimationStepRenderer extends Inlay.Renderer {
+  private class AnimationStepRenderer extends Inlay.Renderer {
     private final Inlay.Renderer renderer;
     private final int startWidth;
     private final int endWidth;
     private final int step;
+    private final int steps;
 
     private AnimationStepRenderer(Editor editor, Inlay.Renderer renderer, int startWidth) {
-      this(renderer, startWidth, renderer.calcWidthInPixels(editor), 1);
+      this.renderer = renderer;
+      this.startWidth = startWidth;
+      this.endWidth = renderer.calcWidthInPixels(editor);
+      this.step = 1;
+      this.steps = Math.max(1, Math.abs(endWidth - startWidth) / myFontInfo.charWidth(' ') / ANIMATION_CHARS_PER_STEP);
     }
 
-    private AnimationStepRenderer(Inlay.Renderer renderer, int startWidth, int endWidth, int step) {
+    private AnimationStepRenderer(Inlay.Renderer renderer, int startWidth, int endWidth, int step, int steps) {
       this.renderer = renderer;
       this.startWidth = startWidth;
       this.endWidth = endWidth;
       this.step = step;
+      this.steps = steps;
     }
 
     private Inlay.Renderer nextStep() {
-      return step < ANIMATION_STEPS ? new AnimationStepRenderer(renderer, startWidth, endWidth, step + 1) : renderer;
+      return step < steps ? new AnimationStepRenderer(renderer, startWidth, endWidth, step + 1, steps) : renderer;
     }
 
     @Override
     public int calcWidthInPixels(@NotNull Editor editor) {
-      return Math.max(1, startWidth + (endWidth - startWidth) / ANIMATION_STEPS * step);
+      return Math.max(1, startWidth + (endWidth - startWidth) / steps * step);
     }
 
     @Override
