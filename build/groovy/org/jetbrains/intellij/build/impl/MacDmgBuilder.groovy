@@ -89,7 +89,7 @@ class MacDmgBuilder {
       }
     }
 
-    sshExec("$remoteDir/makedmg.sh ${targetFileName} ${buildContext.fullBuildNumber}")
+    sshExec("$remoteDir/makedmg.sh ${targetFileName} ${buildContext.fullBuildNumber} 2>&1 | tee $remoteDir/makedmg.log")
     ftpAction("get", true, null, 3) {
       ant.fileset(dir: artifactsPath) {
         include(name: "${targetFileName}.dmg")
@@ -134,7 +134,7 @@ class MacDmgBuilder {
 
     String jreFileNameArgument = jreArchivePath != null ? " \"${PathUtilRt.getFileName(jreArchivePath)}\"" : ""
     sshExec("$remoteDir/signapp.sh ${targetFileName} ${buildContext.fullBuildNumber} ${this.macHostProperties.userName}"
-              + " ${this.macHostProperties.password} \"${this.macHostProperties.codesignString}\"$jreFileNameArgument")
+              + " ${this.macHostProperties.password} \"${this.macHostProperties.codesignString}\"$jreFileNameArgument 2>&1 | tee $remoteDir/signapp.log")
     ftpAction("get", true, null, 3) {
       ant.fileset(dir: artifactsPath) {
         include(name: "${targetFileName}.sit")
