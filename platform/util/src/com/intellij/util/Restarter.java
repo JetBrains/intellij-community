@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -46,7 +47,7 @@ public class Restarter {
       return true;
     }
     if (SystemInfo.isWindows) {
-      return new File(PathManager.getBinPath(), "restarter.exe").exists();
+      return JnaLoader.isLoaded() && new File(PathManager.getBinPath(), "restarter.exe").exists();
     }
     if (SystemInfo.isMac) {
       return PathManager.getHomePath().contains(".app");
