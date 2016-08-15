@@ -16,6 +16,7 @@
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileSystemUtil;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.Pair.pair;
 
@@ -60,11 +62,18 @@ class CanonicalPathMap {
   private static Map<String, String> resolvePaths(Collection<String> recursiveRoots, Collection<String> flatRoots) {
     Map<String, String> result = ContainerUtil.newConcurrentMap();
 
-    List<String> roots = ContainerUtil.concat(Arrays.asList(recursiveRoots, flatRoots));
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(roots, null, false, false, root -> {
-      ContainerUtil.putIfNotNull(root, FileSystemUtil.resolveSymLink(root), result);
-      return true;
-    });
+    if (ApplicationManager.getApplication() != null) {
+      List<String> roots = ContainerUtil.concat(Arrays.asList(recursiveRoots, flatRoots));
+      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(roots, null, false, false, root -> {
+        ContainerUtil.putIfNotNull(root, FileSystemUtil.resolveSymLink(root), result);
+        return true;
+      });
+    }
+    else {
+      Stream.concat(recursiveRoots.stream(), flatRoots.stream())
+        .parallel()
+        .forEach(root -> ContainerUtil.putIfNotNull(root, FileSystemUtil.resolveSymLink(root), result));
+    }
 
     return result;
   }
