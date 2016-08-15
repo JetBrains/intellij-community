@@ -110,16 +110,16 @@ public class InlineHintsPresentationManager implements Disposable, UISettingsLis
         GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
         Color backgroundColor = attributes.getBackgroundColor();
         g.setColor(ColorUtil.brighter(backgroundColor, 1));
-        g.fillRoundRect(r.x + 1, r.y + 1, r.width - 2, r.height - 4, 4, 4);
+        g.fillRoundRect(r.x + 2, r.y + 1, r.width - 4, r.height - 4, 4, 4);
         g.setColor(ColorUtil.darker(backgroundColor, 1));
-        g.fillRoundRect(r.x + 1, r.y + 3, r.width - 2, r.height - 4, 4, 4);
+        g.fillRoundRect(r.x + 2, r.y + 3, r.width - 4, r.height - 4, 4, 4);
         g.setColor(backgroundColor);
-        g.fillRoundRect(r.x + 1, r.y + 2, r.width - 2, r.height - 4, 4, 4);
+        g.fillRoundRect(r.x + 2, r.y + 2, r.width - 4, r.height - 4, 4, 4);
         g.setColor(attributes.getForegroundColor());
         g.setFont(myFontInfo.getFont());
         FontMetrics metrics = g.getFontMetrics();
         Shape savedClip = g.getClip();
-        g.clipRect(r.x + 2, r.y + 3, r.width - 4, r.height - 6); // support drawing in smaller rectangle (used in animation)
+        g.clipRect(r.x + 3, r.y + 3, r.width - 6, r.height - 6); // support drawing in smaller rectangle (used in animation)
         g.drawString(myText, r.x + 7, r.y + (r.height + metrics.getAscent() - metrics.getDescent()) / 2 - 1);
         g.setClip(savedClip);
         config.restore();
