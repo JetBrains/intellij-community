@@ -132,6 +132,9 @@ public class MacPathChooserDialog implements PathChooserDialog, FileChooserDialo
     virtualFiles = virtualFileList.toArray(VirtualFile.EMPTY_ARRAY);
 
     try {
+      if (virtualFileList.size() == 1) {
+        myFileChooserDescriptor.isFileSelectable(virtualFileList.get(0));
+      }
       myFileChooserDescriptor.validateSelectedFiles(virtualFiles);
     }
     catch (Exception e) {
