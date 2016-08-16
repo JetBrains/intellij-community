@@ -150,17 +150,16 @@ public class InlayPassFactory extends AbstractProjectComponent implements TextEd
         if (!Objects.equals(newText, oldText)) {
           if (newText == null) {
             removedHints.add(oldText);
-            toRemove.add(offset);
+            presentationManager.deleteHint(myEditor, inlay);
           }
-          existingWidths.put(offset, inlay.getWidthInPixels());
-          Disposer.dispose(inlay);
+          else {
+            existingWidths.put(offset, inlay.getWidthInPixels());
+            Disposer.dispose(inlay);
+          }
         }
         else {
           myAnnotations.remove(offset);
         }
-      }
-      for (Integer offset : toRemove) {
-        presentationManager.addDeletionAnimation(myEditor, offset, existingWidths.get(offset));
       }
       for (Map.Entry<Integer, String> e : myAnnotations.entrySet()) {
         int offset = e.getKey();

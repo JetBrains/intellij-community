@@ -72,7 +72,10 @@ public class InlineHintsPresentationManager implements Disposable {
     }
   }
 
-  public void addDeletionAnimation(@NotNull Editor editor, int offset,int animationStartWidthInPixels) {
+  public void deleteHint(@NotNull Editor editor, @NotNull Inlay hint) {
+    int offset = hint.getOffset();
+    int animationStartWidthInPixels = hint.getWidthInPixels();
+    Disposer.dispose(hint);
     AnimationStepRenderer stepRenderer = new AnimationStepRenderer(editor, null, animationStartWidthInPixels);
     Inlay inlay = editor.getInlayModel().addElement(offset, Inlay.Type.INLINE, stepRenderer);
     if (inlay != null) {
