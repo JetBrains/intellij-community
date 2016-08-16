@@ -19,7 +19,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.MultiValuesMap;
-import com.intellij.ui.speedSearch.ElementFilter;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,20 +27,14 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public class OptionsEditorContext {
-  ElementFilter.Active myFilter;
-
   CopyOnWriteArraySet<OptionsEditorColleague> myColleagues = new CopyOnWriteArraySet<>();
 
   Configurable myCurrentConfigurable;
   Set<Configurable> myModified = new CopyOnWriteArraySet<>();
-  Map<Configurable, ConfigurationException> myErrors = new HashMap<>();
+  Map<Configurable, ConfigurationException> myErrors = new THashMap<>();
   private boolean myHoldingFilter;
   private final Map<Configurable,  Configurable> myConfigurableToParentMap = new HashMap<>();
   private final MultiValuesMap<Configurable, Configurable> myParentToChildrenMap = new MultiValuesMap<>();
-
-  public OptionsEditorContext(ElementFilter.Active filter) {
-    myFilter = filter;
-  }
 
   ActionCallback fireSelected(@Nullable final Configurable configurable, @NotNull OptionsEditorColleague requestor) {
     if (myCurrentConfigurable == configurable) return ActionCallback.REJECTED;
@@ -110,7 +104,7 @@ public class OptionsEditorContext {
     }
 
     if (myErrors.containsKey(configurable)) {
-      final HashMap<Configurable, ConfigurationException> newErrors = new HashMap<>();
+      Map<Configurable, ConfigurationException> newErrors = new THashMap<>();
       newErrors.remove(configurable);
       fireErrorsChanged(newErrors, null);
     }
@@ -146,11 +140,6 @@ public class OptionsEditorContext {
     ActionCallback process(OptionsEditorColleague colleague);
   }
 
-  @NotNull
-  ElementFilter<Configurable> getFilter() {
-    return myFilter;
-  }
-
   public Configurable getCurrentConfigurable() {
     return myCurrentConfigurable;
   }
@@ -163,7 +152,7 @@ public class OptionsEditorContext {
     return myErrors;
   }
 
-  public void addColleague(final OptionsEditorColleague colleague) {
+  public void addColleague(@NotNull OptionsEditorColleague colleague) {
     myColleagues.add(colleague);
   }
 }
