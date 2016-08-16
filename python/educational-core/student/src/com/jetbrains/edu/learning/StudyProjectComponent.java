@@ -86,7 +86,7 @@ public class StudyProjectComponent implements ProjectComponent {
               registerShortcuts();
               EduUsagesCollector.projectTypeOpened(course.isAdaptive() ? EduNames.ADAPTIVE : EduNames.STUDY);
               //TODO use it
-              StepicConnectorLogin.login(myProject);
+              StepicConnectorLogin.loginFromDialog(myProject);
             }
           }
         });

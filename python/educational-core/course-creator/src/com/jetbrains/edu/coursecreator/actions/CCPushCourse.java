@@ -11,7 +11,7 @@ import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
-import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.stepic.StepicConnectorPost;
 import org.jetbrains.annotations.NotNull;
 
 public class CCPushCourse extends DumbAwareAction {
@@ -37,7 +37,7 @@ public class CCPushCourse extends DumbAwareAction {
     if (course == null) {
       return;
     }
-    EduStepicConnector.postCourseWithProgress(project, course);
+    StepicConnectorPost.postCourseWithProgress(project, course);
     EduUsagesCollector.courseUploaded();
   }
 

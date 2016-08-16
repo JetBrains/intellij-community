@@ -1,7 +1,10 @@
 package com.jetbrains.edu.learning.stepic;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.ui.LoginPanel;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,9 +44,12 @@ public class LoginDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     if (!validateLoginAndPasswordFields()) return;
-    final StepicUser user = EduStepicConnector.login(myLoginPanel.getLogin(), myLoginPanel.getPassword());
+    StepicUser basicUser = new StepicUser(myLoginPanel.getLogin(), myLoginPanel.getPassword());
+    final StepicUser user = StepicConnectorLogin.minorLogin(basicUser);
     if (user != null) {
       doJustOkAction();
+      final Project project = ProjectUtil.guessCurrentProject(myLoginPanel.getContentPanel());
+      StudyTaskManager.getInstance(project).setUser(user);
     }
     else {
       setErrorText("Login failed");

@@ -27,6 +27,11 @@ public class StepicUser {
     setPassword(password);
   }
 
+  public StepicUser(StepicUser basicUser) {
+    this.email = basicUser.getEmail();
+    setPassword(basicUser.getPassword());
+  }
+
   public StepicUser(StepicWrappers.TokenInfo tokenInfo) {
     this.accessToken = tokenInfo.accessToken;
     this.refreshToken = tokenInfo.refreshToken;

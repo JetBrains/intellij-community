@@ -133,7 +133,7 @@ public class StepicStudyOptions implements StudyOptionsProvider {
         user.setEmail(getLogin());
         user.setPassword(getPassword());
         if (!StringUtil.isEmptyOrSpaces(getLogin()) && !StringUtil.isEmptyOrSpaces(getPassword())) {
-          EduStepicConnector.login(getLogin(), getPassword());
+          StepicConnectorLogin.minorLogin(new StepicUser(getLogin(), getPassword()));
         }
       }
       else {

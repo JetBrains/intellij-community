@@ -14,7 +14,7 @@ import com.intellij.psi.PsiDirectory;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
-import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.stepic.StepicConnectorPost;
 import org.jetbrains.annotations.NotNull;
 
 public class CCPushLesson extends DumbAwareAction {
@@ -67,7 +67,7 @@ public class CCPushLesson extends DumbAwareAction {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setText("Uploading lesson to http://stepic.org");
-        EduStepicConnector.updateLesson(project, lesson, indicator);
+        StepicConnectorPost.updateLesson(project, lesson, indicator);
       }});
   }
 

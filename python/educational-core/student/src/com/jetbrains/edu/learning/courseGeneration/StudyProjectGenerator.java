@@ -35,7 +35,6 @@ import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
-import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.stepic.StepicConnectorGet;
 import com.jetbrains.edu.learning.stepic.StepicUser;
 import org.apache.commons.codec.binary.Base64;
@@ -373,7 +372,7 @@ public class StudyProjectGenerator {
       myCourses = getCoursesFromCache();
     }
     if (force || myCourses.isEmpty()) {
-      myCourses = execCancelable(EduStepicConnector::getCourses);
+      myCourses = execCancelable(StepicConnectorGet::getCourses);
       flushCache(myCourses);
     }
     if (myCourses.isEmpty()) {

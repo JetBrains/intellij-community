@@ -18,9 +18,12 @@ package com.jetbrains.edu.learning.stepic;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.edu.learning.StudySerializationUtils;
 import com.jetbrains.edu.learning.StudyTaskManager;
@@ -43,14 +46,14 @@ public class StepicConnectorLogin {
   private static final Logger LOG = Logger.getInstance(StepicConnectorLogin.class.getName());
   private static CloseableHttpClient ourClient;
   private static final String CLIENT_ID = "hUCWcq3hZHCmz0DKrDtwOWITLcYutzot7p4n59vU";
-  private static String accessToken = "";
+  private static StepicUser currentUser;
 
   // TODO sing_in
   public static CloseableHttpClient getHttpClient() {
     if (ourClient == null) {
       List<BasicHeader> headers = new ArrayList<>();
-      if (!accessToken.isEmpty()) {
-        headers.add(new BasicHeader("Authorization", "Bearer " + accessToken));
+      if (!currentUser.getAccessToken().isEmpty()) {
+        headers.add(new BasicHeader("Authorization", "Bearer " + currentUser.getAccessToken()));
         headers.add(new BasicHeader("Content-type", EduStepicNames.CONTENT_TYPE_APPL_JSON));
       }
       else {
@@ -62,6 +65,7 @@ public class StepicConnectorLogin {
   }
 
   //use it !!
+  @Deprecated
   public static boolean login(@NotNull final Project project) {
     resetClient();
     StepicUser user = StudyTaskManager.getInstance(project).getUser();
@@ -81,7 +85,8 @@ public class StepicConnectorLogin {
 
     try {
       minorLogin(user);
-    } catch (StepicAuthorizationException  e) {
+    }
+    catch (StepicAuthorizationException e) {
       LOG.warn(e.getMessage());
       return false;
     }
@@ -89,20 +94,71 @@ public class StepicConnectorLogin {
     return true;
   }
 
-  private static void resetClient() {
-    ourClient = null;
-    accessToken = "";
+  public static boolean loginFromSettings(@NotNull final Project project, StepicUser basicUser) {
+    resetClient();
+    StepicUser user = minorLogin(basicUser);
+
+    if (user == null) {
+      return false;
+    }
+    else {
+      StudyTaskManager.getInstance(project).setUser(user);
+
+      Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+      if (defaultProject != project && (StudyTaskManager.getInstance(defaultProject)).getUser().getEmail().isEmpty()) {
+        StudyTaskManager.getInstance(defaultProject).setUser(user);
+      }
+      return true;
+    }
   }
 
-  private static void minorLogin(StepicUser user){
-    StepicWrappers.TokenInfo tokenInfo = postCredentials(user.getEmail(), user.getPassword());
-    if (tokenInfo == null) {
-      throw new StepicAuthorizationException("Wrong credentials");
+  public static boolean loginFromDialog(@NotNull final Project project) {
+    StepicUser user = StudyTaskManager.getInstance(project).getUser();
+    StepicUser defaultUser = StudyTaskManager.getInstance(ProjectManager.getInstance().getDefaultProject()).getUser();
+    final String email = user.getEmail();
+    if (StringUtil.isEmptyOrSpaces(email)) {
+      if (StringUtil.isEmptyOrSpaces(defaultUser.getEmail())) {
+        return showLoginDialog();
+      }
+      else {
+        defaultUser = minorLogin(defaultUser);
+        StudyTaskManager.getInstance(project).setUser(defaultUser);
+      }
     }
-    accessToken = tokenInfo.accessToken;
+    else {
+      if (minorLogin(new StepicUser(email, user.getPassword())) == null) {
+        return showLoginDialog();
+      }
+    }
+    return true;
+  }
+
+  public static boolean showLoginDialog() {
+    final boolean[] logged = {false};
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      final LoginDialog dialog = new LoginDialog();
+      dialog.show();
+      logged[0] = dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE;
+    }, ModalityState.defaultModalityState());
+    return logged[0];
+  }
+
+  private static void resetClient() {
+    ourClient = null;
+    currentUser = null;
+  }
+
+  public static StepicUser minorLogin(StepicUser basicUser) {
+    StepicWrappers.TokenInfo tokenInfo = postCredentials(basicUser.getEmail(), basicUser.getPassword());
+    if (tokenInfo == null) {
+      return null;
+    }
+    StepicUser user = new StepicUser(basicUser);
     user.setupTokenInfo(tokenInfo);
-    StepicUser tmpUser = StepicConnectorGet.getCurrentUser().users.get(0);
-    user.update(tmpUser);
+    currentUser = user;
+    StepicUser userInfo = StepicConnectorGet.getCurrentUser().users.get(0);
+    user.update(userInfo);
+    return user;
   }
 
   private static StepicWrappers.TokenInfo postCredentials(String user, String password) {
@@ -129,7 +185,6 @@ public class StepicConnectorLogin {
       }
       else {
         LOG.warn("Failed to Login: " + statusLine.getStatusCode() + statusLine.getReasonPhrase());
-        LOG.info("Failed to Login " + responseString);
         throw new IOException("Stepic returned non 200 status code " + responseString);
       }
     }
@@ -137,13 +192,5 @@ public class StepicConnectorLogin {
       LOG.warn(e.getMessage());
       return null;
     }
-  }
-
-  public static void setAccessToken(String accessToken2) {
-    accessToken = accessToken2;
-  }
-
-  public static String getAccessToken() {
-    return accessToken;
   }
 }
