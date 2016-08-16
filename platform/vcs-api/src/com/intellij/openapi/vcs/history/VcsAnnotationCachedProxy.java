@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.history;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -92,13 +91,16 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider {
 
     if (vcsAnnotation != null) {
       final VcsHistoryProvider historyProvider = myVcs.getVcsHistoryProvider();
+      // question is whether we need "not moved" path here?
+      FileAnnotation restored = cacheableAnnotationProvider.restore(vcsAnnotation, revisionNumber);
+      if (restored != null) {
+        return restored;
+      }
+      final ContentRevision fileContent = myVcs.getDiffProvider().createFileContent(revisionNumber, file);
       final VcsAbstractHistorySession history = getHistory(revisionNumber, filePath, historyProvider, vcsAnnotation.getFirstRevision());
       if (history == null) return null;
-      // question is whether we need "not moved" path here?
-      final ContentRevision fileContent = myVcs.getDiffProvider().createFileContent(revisionNumber, file);
-      final FileAnnotation restored = cacheableAnnotationProvider.
-        restore(vcsAnnotation, history, fileContent.getContent(), currentRevision,
-                                                                          revisionNumber);
+      restored = cacheableAnnotationProvider.
+        restore(vcsAnnotation, history, fileContent.getContent(), currentRevision, revisionNumber);
       if (restored != null) {
         return restored;
       }
@@ -111,28 +113,7 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider {
     if (revisionNumber != null) {
       myCache.put(filePath, myVcs.getKeyInstanceMethod(), revisionNumber, vcsAnnotation);
     }
-
-    if (myVcs.getVcsHistoryProvider() instanceof VcsCacheableHistorySessionFactory) {
-      loadHistoryInBackgroundToCache(revisionNumber, filePath, vcsAnnotation);
-    }
     return fileAnnotation;
-  }
-
-  // todo will be removed - when annotation will be presented together with history
-  private void loadHistoryInBackgroundToCache(final VcsRevisionNumber revisionNumber,
-                                              final FilePath filePath,
-                                              final VcsAnnotation vcsAnnotation) {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          getHistory(revisionNumber, filePath, myVcs.getVcsHistoryProvider(), vcsAnnotation.getFirstRevision());
-        }
-        catch (VcsException e) {
-          LOG.info(e);
-        }
-      }
-    });
   }
 
   private VcsAbstractHistorySession getHistory(VcsRevisionNumber revision, FilePath filePath, VcsHistoryProvider historyProvider,
