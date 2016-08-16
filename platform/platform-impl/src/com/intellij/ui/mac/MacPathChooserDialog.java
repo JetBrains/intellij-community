@@ -131,27 +131,30 @@ public class MacPathChooserDialog implements PathChooserDialog, FileChooserDialo
     List<VirtualFile> virtualFileList = getChosenFiles(Stream.of(files));
     virtualFiles = virtualFileList.toArray(VirtualFile.EMPTY_ARRAY);
 
-    try {
-      if (virtualFileList.size() == 1) {
-        myFileChooserDescriptor.isFileSelectable(virtualFileList.get(0));
+    if (!virtualFileList.isEmpty()) {
+      try {
+        if (virtualFileList.size() == 1) {
+          myFileChooserDescriptor.isFileSelectable(virtualFileList.get(0));
+        }
+        myFileChooserDescriptor.validateSelectedFiles(virtualFiles);
       }
-      myFileChooserDescriptor.validateSelectedFiles(virtualFiles);
-    }
-    catch (Exception e) {
-      if (parent == null) {
-        Messages.showErrorDialog(myProject, e.getMessage(), myTitle);
-      } else {
-        Messages.showErrorDialog(parent, e.getMessage(), myTitle);
+      catch (Exception e) {
+        if (parent == null) {
+          Messages.showErrorDialog(myProject, e.getMessage(), myTitle);
+        }
+        else {
+          Messages.showErrorDialog(parent, e.getMessage(), myTitle);
+        }
+
+        return;
       }
 
-      return;
-    }
-
-    if (!ArrayUtil.isEmpty(files)) {
-      callback.consume(virtualFileList);
-    }
-    else if (callback instanceof FileChooser.FileChooserConsumer) {
-      ((FileChooser.FileChooserConsumer)callback).cancelled();
+      if (!ArrayUtil.isEmpty(files)) {
+        callback.consume(virtualFileList);
+      }
+      else if (callback instanceof FileChooser.FileChooserConsumer) {
+        ((FileChooser.FileChooserConsumer)callback).cancelled();
+      }
     }
   }
 
