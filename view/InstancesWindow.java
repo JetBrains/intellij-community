@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.JBColor;
@@ -35,6 +36,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XExpression;
@@ -218,6 +220,11 @@ public class InstancesWindow extends DialogWrapper {
       JBScrollPane treeScrollPane = new JBScrollPane(myInstancesTree);
       add(filteringPane, BorderLayout.NORTH);
       add(treeScrollPane, BorderLayout.CENTER);
+
+      JComponent focusedComponent = myFilterConditionEditor.getEditorComponent();
+      UiNotifyConnector.doWhenFirstShown(focusedComponent, () ->
+          IdeFocusManager.findInstanceByComponent(focusedComponent)
+              .requestFocus(focusedComponent, true));
     }
 
     @Override
@@ -492,7 +499,7 @@ public class InstancesWindow extends DialogWrapper {
               if (children.size() > 0) {
                 totalChildren.addAndGet(children.size());
                 SwingUtilities.invokeLater(() -> {
-                  if(MyFilteringWorker.this == myFilteringTask) {
+                  if (MyFilteringWorker.this == myFilteringTask) {
                     addChildrenToTree(children, false);
                   }
                 });
