@@ -141,6 +141,7 @@ public class InlayPassFactory extends AbstractProjectComponent implements TextEd
       InlineHintsPresentationManager presentationManager = InlineHintsPresentationManager.getInstance();
       Map<Integer, Integer> existingWidths = new HashMap<>();
       Set<String> removedHints = new HashSet<>();
+      List<Integer> toRemove = new ArrayList<>();
       for (Inlay inlay : myEditor.getInlayModel().getElementsInRange(0, myDocument.getTextLength() + 1, Inlay.Type.INLINE)) {
         if (!presentationManager.isInlineHint(inlay)) continue;
         int offset = inlay.getOffset();
@@ -149,15 +150,17 @@ public class InlayPassFactory extends AbstractProjectComponent implements TextEd
         if (!Objects.equals(newText, oldText)) {
           if (newText == null) {
             removedHints.add(oldText);
+            toRemove.add(offset);
           }
-          else {
-            existingWidths.put(offset, inlay.getWidthInPixels());
-          }
+          existingWidths.put(offset, inlay.getWidthInPixels());
           Disposer.dispose(inlay);
         }
         else {
           myAnnotations.remove(offset);
         }
+      }
+      for (Integer offset : toRemove) {
+        presentationManager.addDeletionAnimation(myEditor, offset, existingWidths.get(offset));
       }
       for (Map.Entry<Integer, String> e : myAnnotations.entrySet()) {
         int offset = e.getKey();

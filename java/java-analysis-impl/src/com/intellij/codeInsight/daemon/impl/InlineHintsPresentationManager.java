@@ -72,6 +72,14 @@ public class InlineHintsPresentationManager implements Disposable {
     }
   }
 
+  public void addDeletionAnimation(@NotNull Editor editor, int offset,int animationStartWidthInPixels) {
+    AnimationStepRenderer stepRenderer = new AnimationStepRenderer(editor, null, animationStartWidthInPixels);
+    Inlay inlay = editor.getInlayModel().addElement(offset, Inlay.Type.INLINE, stepRenderer);
+    if (inlay != null) {
+      OUR_ALARM.addRequest(new AnimationStep(editor, inlay, stepRenderer), ANIMATION_STEP_MS, ModalityState.any());
+    }
+  }
+
   @Override
   public void dispose() {}
 
@@ -141,7 +149,7 @@ public class InlineHintsPresentationManager implements Disposable {
     private AnimationStepRenderer(Editor editor, MyRenderer renderer, int startWidth) {
       this.renderer = renderer;
       this.startWidth = startWidth;
-      this.endWidth = renderer.calcWidthInPixels(editor);
+      this.endWidth = renderer == null ? 0 : renderer.calcWidthInPixels(editor);
       this.step = 1;
       this.steps = Math.max(1, Math.abs(endWidth - startWidth) / getFontMetrics(editor).charWidth(' ') / ANIMATION_CHARS_PER_STEP);
     }
@@ -165,7 +173,7 @@ public class InlineHintsPresentationManager implements Disposable {
 
     @Override
     public void paint(@NotNull Graphics g, @NotNull Rectangle r, @NotNull Editor editor) {
-      if (startWidth > 0) {
+      if (startWidth > 0 && renderer != null) {
         renderer.paint(g, r, editor);
       }
     }
@@ -188,10 +196,12 @@ public class InlineHintsPresentationManager implements Disposable {
       int offset = myInlay.getOffset();
       Inlay.Renderer nextRenderer = myRenderer.nextStep();
       Disposer.dispose(myInlay);
-      Inlay newInlay = myEditor.getInlayModel().addElement(offset, Inlay.Type.INLINE, nextRenderer);
-      if (nextRenderer instanceof AnimationStepRenderer) {
-        OUR_ALARM.addRequest(new AnimationStep(myEditor, newInlay, (AnimationStepRenderer)nextRenderer),
-                             ANIMATION_STEP_MS, ModalityState.any());
+      if (nextRenderer != null) {
+        Inlay newInlay = myEditor.getInlayModel().addElement(offset, Inlay.Type.INLINE, nextRenderer);
+        if (nextRenderer instanceof AnimationStepRenderer) {
+          OUR_ALARM.addRequest(new AnimationStep(myEditor, newInlay, (AnimationStepRenderer)nextRenderer),
+                               ANIMATION_STEP_MS, ModalityState.any());
+        }
       }
     }
   }
