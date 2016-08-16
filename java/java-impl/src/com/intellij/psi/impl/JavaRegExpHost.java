@@ -135,7 +135,7 @@ public class JavaRegExpHost implements RegExpLanguageHost {
 
   @Override
   public boolean characterNeedsEscaping(char c) {
-    return c == ']' || c == '}';
+    return false;
   }
 
   @Override

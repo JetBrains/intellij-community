@@ -108,7 +108,7 @@ META2= {DOT} | "$" | "?" | "*" | "+" | "|" | {LBRACE} | {LPAREN} | {RPAREN}
 CONTROL="t" | "n" | "r" | "f" | "a" | "e"
 BOUNDARY="b" | "b{g}"| "B" | "A" | "z" | "Z" | "G"
 
-CLASS="w" | "W" | "s" | "S" | "d" | "D" | "v" | "V" | "X"
+CLASS="w" | "W" | "s" | "S" | "d" | "D" | "v" | "V" | "X" | "R"
 XML_CLASS="c" | "C" | "i" | "I"
 PROP="p" | "P"
 
@@ -185,8 +185,7 @@ HEX_CHAR=[0-9a-fA-F]
 {ESCAPE}  [\n\b\t\r\f ]       { return commentMode ? RegExpTT.CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
 
 <CLASS2> {
-  {ESCAPE} {RBRACKET}         { if (!allowNestedCharacterClasses) return RegExpTT.CHARACTER;
-                                return RegExpTT.REDUNDANT_ESCAPE; }
+  {ESCAPE} {RBRACKET}         { return RegExpTT.ESC_CHARACTER; }
 }
 
 {ESCAPE}  {ANY}               { return RegExpTT.REDUNDANT_ESCAPE; }
@@ -247,17 +246,17 @@ HEX_CHAR=[0-9a-fA-F]
                           }
 }
 
-{LBRACKET} / {RBRACKET}   { if (allowEmptyCharacterClass) yypushstate(CLASS2); else yypushstate(CLASS1);
-                            return RegExpTT.CLASS_BEGIN; }
+{LBRACKET} / {RBRACKET}   { if (allowEmptyCharacterClass) yypushstate(CLASS2); else yypushstate(CLASS1); return RegExpTT.CLASS_BEGIN; }
+{LBRACKET} / {ESCAPE} {RBRACKET} { if (allowEmptyCharacterClass) yypushstate(CLASS2); else yypushstate(CLASS1); return RegExpTT.CLASS_BEGIN; }
 
-{LBRACKET} / "^" {RBRACKET} { if (allowEmptyCharacterClass) yypushstate(CLASS2); else yypushstate(NEGATE_CLASS1);
-                              return RegExpTT.CLASS_BEGIN; }
+{LBRACKET} / "^" {RBRACKET} { if (allowEmptyCharacterClass) yypushstate(CLASS2); else yypushstate(NEGATE_CLASS1); return RegExpTT.CLASS_BEGIN; }
+{LBRACKET} / "^" {ESCAPE} {RBRACKET} { if (allowEmptyCharacterClass) yypushstate(CLASS2); else yypushstate(NEGATE_CLASS1); return RegExpTT.CLASS_BEGIN; }
 
-{LBRACKET}                { yypushstate(CLASS2);
-                            return RegExpTT.CLASS_BEGIN; }
+{LBRACKET}                { yypushstate(CLASS2); return RegExpTT.CLASS_BEGIN; }
 
 /* []abc] is legal. The first ] is treated as literal character */
 <CLASS1> {
+  {ESCAPE} {RBRACKET}     { yybegin(CLASS2); return RegExpTT.REDUNDANT_ESCAPE; }
   {RBRACKET}              { yybegin(CLASS2); return RegExpTT.CHARACTER; }
   .                       { assert false : yytext(); }
 }
@@ -280,6 +279,7 @@ HEX_CHAR=[0-9a-fA-F]
 
   "&&"                  { if (allowNestedCharacterClasses) return RegExpTT.ANDAND; else yypushback(1); return RegExpTT.CHARACTER; }
   [\n\b\t\r\f]          { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.ESC_CHARACTER; }
+  "^"                   { return RegExpTT.CARET; }
   {ANY}                 { return RegExpTT.CHARACTER; }
 }
 

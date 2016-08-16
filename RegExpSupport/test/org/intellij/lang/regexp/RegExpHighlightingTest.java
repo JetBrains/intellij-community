@@ -42,7 +42,7 @@ public class RegExpHighlightingTest extends LightPlatformCodeInsightFixtureTestC
     final String pattern;
     final Result expectedResult;
     boolean showWarnings = true;
-    boolean showInfo = false;
+    boolean showInfo = true;
     String regExpHost = null;
 
     Test(String pattern, Result result, boolean warn, boolean info, String host) {

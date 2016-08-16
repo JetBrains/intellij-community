@@ -1,10 +1,10 @@
 <tests>
   <simple>
-    <test verify="false" info="true">
+    <test verify="false">
       <pattern><![CDATA[a<weak_warning descr="Single repetition">{1}</weak_warning>]]></pattern>
       <expected>OK</expected>
     </test>
-    <test info="true" verify="false">
+    <test verify="false">
       <pattern><![CDATA[<weak_warning descr="Redundant character escape">\;</weak_warning>]]></pattern>
       <expected>OK</expected>
     </test>
@@ -14,23 +14,23 @@
     </test>
   </simple>
   <quantifiers>
-    <test verify="false" info="true">
+    <test verify="false">
       <pattern><![CDATA[a<weak_warning descr="Repetition range replaceable by '?'">{0,1}</weak_warning>]]></pattern>
       <expected>OK</expected>
     </test>
-    <test verify="false" info="true">
+    <test verify="false">
       <pattern><![CDATA[a<weak_warning descr="Repetition range replaceable by '+'">{1,}</weak_warning>]]></pattern>
       <expected>OK</expected>
     </test>
-    <test verify="false" info="true">
+    <test verify="false">
       <pattern><![CDATA[a<weak_warning descr="Repetition range replaceable by '*'">{0,}</weak_warning>]]></pattern>
       <expected>OK</expected>
     </test>
-    <test verify="false" info="true">
+    <test verify="false">
       <pattern><![CDATA[a<weak_warning descr="Single repetition">{1}</weak_warning>]]></pattern>
       <expected>OK</expected>
     </test>
-    <test verify="false" info="true">
+    <test verify="false">
       <pattern><![CDATA[a<weak_warning descr="Fixed repetition range">{3,3}</weak_warning>]]></pattern>
       <expected>OK</expected>
     </test>
@@ -101,6 +101,14 @@
       <pattern><![CDATA[[\Qabc?*+.)<warning descr="Duplicate character ')' in character class">)</warning>]<warning descr="Duplicate character ']' in character class">]</warning>[<warning descr="Duplicate character ']' in character class">]</warning>\E]]]></pattern>
       <expected>OK</expected>
     </test>
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
+      <pattern>]}</pattern>
+      <expected>OK</expected>
+    </test>
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
+      <pattern><![CDATA[<weak_warning descr="Redundant character escape">\]</weak_warning><weak_warning descr="Redundant character escape">\}</weak_warning>]]></pattern>
+      <expected>OK</expected>
+    </test>
   </escapes>
 
   <namedchars>
@@ -145,7 +153,7 @@
 
 
   <bug id="IDEA-25680">
-    <test verify="false" info="true">
+    <test verify="false">
       <pattern><![CDATA[a<weak_warning descr="Redundant character escape">\ </weak_warning>b]]></pattern>
       <expected>OK</expected>
     </test>
