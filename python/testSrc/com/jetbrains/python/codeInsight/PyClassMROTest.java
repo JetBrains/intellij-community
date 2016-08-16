@@ -17,6 +17,7 @@ package com.jetbrains.python.codeInsight;
 
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -113,6 +114,11 @@ public class PyClassMROTest extends PyTestCase {
   // PY-20026
   public void testDuplicatedBaseClasses() {
     assertMRO(getClass("MyClass"), "Base", "object");
+  }
+
+  // PY-20026
+  public void testUnresolvedMetaClassAncestors() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> assertMRO(getClass("CompositeFieldMeta"), "type", "object"));
   }
 
   @NotNull
