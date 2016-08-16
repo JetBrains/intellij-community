@@ -55,6 +55,11 @@ public abstract class BaseRefactoringAction extends AnAction {
 
   protected abstract boolean isEnabledOnElements(@NotNull PsiElement[] elements);
 
+  @Override
+  public boolean startInTransaction() {
+    return true;
+  }
+
   protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element, @NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
     return true;
   }

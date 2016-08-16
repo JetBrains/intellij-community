@@ -747,7 +747,7 @@ public abstract class DialogWrapper {
           final char mnemonic = (char)eachInfo.getMnemonic();
           JRootPane rootPane = getPeer().getRootPane();
           if (rootPane != null) {
-            new NoTransactionAction() {
+            new DumbAwareAction() {
               @Override
               public void actionPerformed(AnActionEvent e) {
                 final JBOptionButton buttonToActivate = eachInfo.getButton();
@@ -1275,7 +1275,7 @@ public abstract class DialogWrapper {
     myPeer.setContentPane(root);
 
     final CustomShortcutSet sc = new CustomShortcutSet(SHOW_OPTION_KEYSTROKE);
-    final AnAction toggleShowOptions = new NoTransactionAction() {
+    final AnAction toggleShowOptions = new DumbAwareAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         expandNextOptionButton();
@@ -1335,7 +1335,7 @@ public abstract class DialogWrapper {
   }
 
   private static void installEnterHook(JComponent root, Disposable disposable) {
-    new NoTransactionAction() {
+    new DumbAwareAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
@@ -2171,10 +2171,4 @@ public abstract class DialogWrapper {
 
   public enum DialogStyle {NO_STYLE, COMPACT}
 
-  private static abstract class NoTransactionAction extends DumbAwareAction {
-    @Override
-    public boolean startInTransaction() {
-      return false;
-    }
-  }
 }
