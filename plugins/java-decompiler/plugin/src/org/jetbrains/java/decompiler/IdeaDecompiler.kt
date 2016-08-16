@@ -36,6 +36,8 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
+import com.intellij.psi.PsiJavaModule
+import com.intellij.psi.PsiPackage
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.compiled.ClassFileDecompilers
 import com.intellij.psi.impl.compiled.ClsFileImpl
@@ -133,7 +135,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
       else ClsFileImpl.decompile(file)
 
   private fun decompile(file: VirtualFile): CharSequence {
-    if ("package-info.class" == file.name || "module-info.class" == file.name) {
+    if (PsiPackage.PACKAGE_INFO_CLS_FILE == file.name || PsiJavaModule.MODULE_INFO_CLS_FILE == file.name) {
       return ClsFileImpl.decompile(file)
     }
 
