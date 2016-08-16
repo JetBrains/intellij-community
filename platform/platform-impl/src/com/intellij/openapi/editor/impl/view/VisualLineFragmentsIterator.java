@@ -319,7 +319,7 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
     }
     
     boolean isCollapsedFoldRegion() {
-      return myDelegate == null;
+      return myFoldRegion != null;
     }
 
     int getMinLogicalColumn() {

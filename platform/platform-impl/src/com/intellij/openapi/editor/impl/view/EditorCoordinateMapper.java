@@ -230,9 +230,10 @@ class EditorCoordinateMapper {
           column == minColumn ||
           column == maxColumn && !pos.leansRight) {
         return new LogicalPosition(column == maxColumn ? fragment.getEndLogicalLine() : fragment.getStartLogicalLine(), 
-                                   fragment.visualToLogicalColumn(column), fragment.isCollapsedFoldRegion() ? 
-                                                                           column < maxColumn : 
-                                                                           fragment.isRtl() ^ pos.leansRight);
+                                   fragment.visualToLogicalColumn(column),
+                                   fragment.isCollapsedFoldRegion() ? column < maxColumn :
+                                   fragment.getCurrentInlays() != null ? column == maxColumn :
+                                   fragment.isRtl() ^ pos.leansRight);
       }
       maxLogicalColumn = logicalLine == fragment.getEndLogicalLine() ? Math.max(maxLogicalColumn, fragment.getMaxLogicalColumn()) : 
                          fragment.getMaxLogicalColumn();
