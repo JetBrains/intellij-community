@@ -357,11 +357,10 @@ class CompoundRendererConfigurable extends JPanel {
 
     final ValueLabelRenderer labelRenderer = myRenderer.getLabelRenderer();
     final ChildrenRenderer childrenRenderer = myRenderer.getChildrenRenderer();
-    final NodeRendererSettings rendererSettings = NodeRendererSettings.getInstance();
 
     myShowTypeCheckBox.setSelected(myRenderer.isShowType());
 
-    if (rendererSettings.isBase(labelRenderer)) {
+    if (myRenderer.isBaseRenderer(labelRenderer)) {
       myLabelEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
       myRbDefaultLabel.setSelected(true);
     }
@@ -373,7 +372,7 @@ class CompoundRendererConfigurable extends JPanel {
     getTableModel().clear();
     myAppendDefaultChildren.setSelected(false);
 
-    if (rendererSettings.isBase(childrenRenderer)) {
+    if (myRenderer.isBaseRenderer(childrenRenderer)) {
       myRbDefaultChildrenRenderer.setSelected(true);
       myChildrenEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
       myChildrenExpandedEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));

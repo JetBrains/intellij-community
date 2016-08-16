@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import java.awt.*;
 /**
 * Created by Egor on 04.10.2014.
 */
-class ColorObjectRenderer extends ToStringBasedRenderer {
+class ColorObjectRenderer extends CompoundReferenceRenderer {
   public ColorObjectRenderer(final NodeRendererSettings rendererSettings) {
     super(rendererSettings, "Color", null, null);
     setClassName("java.awt.Color");
