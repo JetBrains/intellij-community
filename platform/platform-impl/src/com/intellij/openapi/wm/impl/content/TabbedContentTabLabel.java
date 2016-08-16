@@ -25,6 +25,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.content.TabbedContent;
+import com.intellij.util.ContentUtilEx;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
@@ -149,7 +150,7 @@ public class TabbedContentTabLabel extends ContentTabLabel {
 
   private void setTabIcon(String tabName, JLabel jLabel) {
     for (Pair<String, JComponent> nextTabWithName : myContent.getTabs()) {
-      if (nextTabWithName.getFirst().equals(myContent.getTabNameWithoutPrefix(tabName))) {
+      if (nextTabWithName.getFirst().equals(ContentUtilEx.getTabNameWithoutPrefix(myContent, tabName))) {
         JComponent tab = nextTabWithName.getSecond();
         if (tab instanceof Iconable) {
           Icon baseIcon = ((Iconable)tab).getIcon(Iconable.ICON_FLAG_VISIBILITY);

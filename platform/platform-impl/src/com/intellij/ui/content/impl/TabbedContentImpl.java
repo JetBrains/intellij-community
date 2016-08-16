@@ -22,7 +22,6 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.ContentUtilEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -157,16 +156,6 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
   @Override
   public void setTitlePrefix(String titlePrefix) {
     myPrefix = titlePrefix;
-  }
-
-  @Nullable
-  @Override
-  public String getTabNameWithoutPrefix(String fullTabName) {
-    int titlePrefixLength = getTitlePrefix().length() + 2;
-    if (fullTabName.startsWith(getTitlePrefix())) {
-      return fullTabName.substring(titlePrefixLength);
-    }
-    return null;
   }
 
   @Override
