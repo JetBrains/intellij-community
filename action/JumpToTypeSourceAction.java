@@ -11,6 +11,8 @@ import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public class JumpToTypeSourceAction extends ClassesActionBase {
 
   @Override
@@ -52,12 +54,11 @@ public class JumpToTypeSourceAction extends ClassesActionBase {
       return ref;
     }
 
-    try {
-      Type elementType = ((ArrayType) ref).componentType();
-      if (elementType instanceof ReferenceType) {
-        return getObjectType((ReferenceType) elementType);
-      }
-    } catch (ClassNotLoadedException ignored) {
+    String elementTypeName = ref.name().replace("[]", "");
+    VirtualMachine vm = ref.virtualMachine();
+    final List<ReferenceType> referenceTypes = vm.classesByName(elementTypeName);
+    if (referenceTypes.size() == 1) {
+      return referenceTypes.get(0);
     }
 
     return null;
