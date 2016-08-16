@@ -35,7 +35,7 @@ class OsXCredentialsStore(serviceName: String) : CredentialsStore {
       return null
     }
 
-    val accountName: String = sshKeyFile ?: host
+    val accountName = sshKeyFile ?: host
     var credentials = accountToCredentials.get(accountName)
     if (credentials != null) {
       return credentials
@@ -57,7 +57,7 @@ class OsXCredentialsStore(serviceName: String) : CredentialsStore {
       credentials = Credentials(sshKeyFile, data)
     }
 
-    accountToCredentials[accountName] = credentials
+    accountToCredentials.set(accountName, credentials)
     return credentials
   }
 

@@ -27,29 +27,27 @@ fun showAuthenticationForm(credentials: Credentials?, uri: String, host: String?
     throw AssertionError("showAuthenticationForm called from tests")
   }
 
-  return UIUtil.invokeAndWaitIfNeeded(object : Computable<Credentials?> {
-    override fun compute(): Credentials? {
-      val note = if (sshKeyFile == null) icsMessage(if (host == "github.com") "login.github.note" else "login.other.git.provider.note") else null
-      var username = credentials?.id
-      if (username == null && host == "github.com" && path != null && sshKeyFile == null) {
-        val firstSlashIndex = path.indexOf('/', 1)
-        username = path.substring(1, if (firstSlashIndex == -1) path.length else firstSlashIndex)
-      }
+  return UIUtil.invokeAndWaitIfNeeded(Computable {
+    val note = if (sshKeyFile == null) icsMessage(if (host == "github.com") "login.github.note" else "login.other.git.provider.note") else null
+    var username = credentials?.id
+    if (username == null && host == "github.com" && path != null && sshKeyFile == null) {
+      val firstSlashIndex = path.indexOf('/', 1)
+      username = path.substring(1, if (firstSlashIndex == -1) path.length else firstSlashIndex)
+    }
 
-      val authenticationForm = RepositoryAuthenticationForm(if (sshKeyFile == null) {
-        icsMessage("log.in.to", StringUtil.trimMiddle(uri, 50))
-      }
-      else {
-        icsMessage("enter.your.password.for.ssh.key", PathUtilRt.getFileName(sshKeyFile))
-      }, username, credentials?.token, note, sshKeyFile != null)
-      if (authenticationForm.showAndGet()) {
-        username = sshKeyFile ?: authenticationForm.username
-        val passwordChars = authenticationForm.password
-        return Credentials(username, if (passwordChars == null) (if (username == null) null else "x-oauth-basic") else String(passwordChars))
-      }
-      else {
-        return null
-      }
+    val authenticationForm = RepositoryAuthenticationForm(if (sshKeyFile == null) {
+      icsMessage("log.in.to", StringUtil.trimMiddle(uri, 50))
+    }
+                                                          else {
+      icsMessage("enter.your.password.for.ssh.key", PathUtilRt.getFileName(sshKeyFile))
+    }, username, credentials?.token, note, sshKeyFile != null)
+    if (authenticationForm.showAndGet()) {
+      username = sshKeyFile ?: authenticationForm.username
+      val passwordChars = authenticationForm.password
+      Credentials(username, if (passwordChars == null) (if (username == null) null else "x-oauth-basic") else String(passwordChars))
+    }
+    else {
+      null
     }
   })
 }

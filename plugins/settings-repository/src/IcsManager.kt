@@ -56,12 +56,12 @@ val icsManager by lazy(LazyThreadSafetyMode.NONE) {
 class IcsManager(dir: Path) {
   val credentialsStore = object : AtomicNotNullLazyValue<CredentialsStore>() {
     override fun compute(): CredentialsStore {
-      if (isMacOsCredentialStoreSupported && SystemProperties.getBooleanProperty("use.osx.keychain", true)) {
+      if (isMacOsCredentialStoreSupported && SystemProperties.getBooleanProperty("use.mac.keychain", true)) {
         catchAndLog {
           return OsXCredentialsStore("IntelliJ Platform Settings Repository")
         }
       }
-      return FileCredentialsStore(dir.resolve(".git_auth"))
+      return FileCredentialsStore()
     }
   }
 
