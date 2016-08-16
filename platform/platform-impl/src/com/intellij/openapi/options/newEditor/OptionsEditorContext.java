@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public class OptionsEditorContext {
-
   ElementFilter.Active myFilter;
 
   CopyOnWriteArraySet<OptionsEditorColleague> myColleagues = new CopyOnWriteArraySet<>();
@@ -38,7 +37,6 @@ public class OptionsEditorContext {
   private boolean myHoldingFilter;
   private final Map<Configurable,  Configurable> myConfigurableToParentMap = new HashMap<>();
   private final MultiValuesMap<Configurable, Configurable> myParentToChildrenMap = new MultiValuesMap<>();
-
 
   public OptionsEditorContext(ElementFilter.Active filter) {
     myFilter = filter;
@@ -97,8 +95,7 @@ public class OptionsEditorContext {
 
   ActionCallback notify(ColleagueAction action, OptionsEditorColleague requestor) {
     final ActionCallback.Chunk chunk = new ActionCallback.Chunk();
-    for (Iterator<OptionsEditorColleague> iterator = myColleagues.iterator(); iterator.hasNext();) {
-      OptionsEditorColleague each = iterator.next();
+    for (OptionsEditorColleague each : myColleagues) {
       if (each != requestor) {
         chunk.add(action.process(each));
       }
@@ -142,13 +139,12 @@ public class OptionsEditorContext {
 
   public Collection<Configurable> getChildren(final Configurable parent) {
     Collection<Configurable> result = myParentToChildrenMap.get(parent);
-    return result == null ? Collections.<Configurable>emptySet() : result;
+    return result == null ? Collections.emptySet() : result;
   }
 
   interface ColleagueAction {
     ActionCallback process(OptionsEditorColleague colleague);
   }
-
 
   @NotNull
   ElementFilter<Configurable> getFilter() {
@@ -170,6 +166,4 @@ public class OptionsEditorContext {
   public void addColleague(final OptionsEditorColleague colleague) {
     myColleagues.add(colleague);
   }
-
-
 }

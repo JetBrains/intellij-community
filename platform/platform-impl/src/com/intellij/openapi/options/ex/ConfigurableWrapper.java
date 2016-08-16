@@ -42,9 +42,8 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
       return null;
     }
     if (ep.displayName != null || ep.key != null || ep.parentId != null || ep.groupId != null) {
-      return !ep.dynamic && ep.children == null && ep.childrenEPName == null
-             ? (T)new ConfigurableWrapper(ep)
-             : (T)new CompositeWrapper(ep);
+      //noinspection unchecked
+      return (T)(!ep.dynamic && ep.children == null && ep.childrenEPName == null ? new ConfigurableWrapper(ep) : new CompositeWrapper(ep));
     }
     return createConfigurable(ep, LOG.isDebugEnabled());
   }
@@ -62,16 +61,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
   }
 
   public static <T extends UnnamedConfigurable> List<T> createConfigurables(ExtensionPointName<? extends ConfigurableEP<T>> name) {
-    return ContainerUtil.mapNotNull(name.getExtensions(), new NullableFunction<ConfigurableEP<T>, T>() {
-      @Override
-      public T fun(ConfigurableEP<T> ep) {
-        return wrapConfigurable(ep);
-      }
-    });
-  }
-
-  public static boolean isNoScroll(Configurable configurable) {
-    return cast(NoScroll.class, configurable) != null;
+    return ContainerUtil.mapNotNull(name.getExtensions(), (NullableFunction<ConfigurableEP<T>, T>)ep -> wrapConfigurable(ep));
   }
 
   public static boolean hasOwnContent(UnnamedConfigurable configurable) {
@@ -80,6 +70,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
   }
 
   public static boolean isNonDefaultProject(Configurable configurable) {
+    //noinspection deprecation
     return configurable instanceof NonDefaultProjectConfigurable ||
            (configurable instanceof ConfigurableWrapper && ((ConfigurableWrapper)configurable).myEp.nonDefaultProject);
   }
@@ -149,10 +140,6 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
       }
     }
     return myEp.getDisplayName();
-  }
-
-  public String getInstanceClass() {
-    return myEp.instanceClass;
   }
 
   public String getProviderClass() {
