@@ -55,7 +55,7 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
   }
 
   private void restoreChildren(final XDebuggerTreeNode treeNode, final XDebuggerTreeState.NodeInfo nodeInfo) {
-    if (nodeInfo.isExpanded()) {
+    if (!treeNode.isLeaf() && nodeInfo.isExpanded()) {
       myTree.expandPath(treeNode.getPath());
       treeNode.getLoadedChildren().forEach(child -> restoreNode(child, nodeInfo));
       myNode2State.put(treeNode, nodeInfo);
