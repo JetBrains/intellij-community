@@ -245,7 +245,7 @@ public class CodeCompletionHandlerBase {
   }
 
   @NotNull
-  private LookupImpl obtainLookup(Editor editor) {
+  private LookupImpl obtainLookup(Editor editor, Project project) {
     CompletionAssertions.checkEditorValid(editor);
     LookupImpl existing = (LookupImpl)LookupManager.getActiveLookup(editor);
     if (existing != null && existing.isCompletion()) {
@@ -256,8 +256,8 @@ public class CodeCompletionHandlerBase {
       return existing;
     }
 
-    LookupImpl lookup = (LookupImpl)LookupManager.getInstance(editor.getProject()).createLookup(editor, LookupElement.EMPTY_ARRAY, "",
-                                                                                                new LookupArranger.DefaultArranger());
+    LookupImpl lookup = (LookupImpl)LookupManager.getInstance(project).createLookup(editor, LookupElement.EMPTY_ARRAY, "",
+                                                                                    new LookupArranger.DefaultArranger());
     if (editor.isOneLineMode()) {
       lookup.setCancelOnClickOutside(true);
       lookup.setCancelOnOtherWindowOpen(true);
@@ -275,7 +275,7 @@ public class CodeCompletionHandlerBase {
     CompletionAssertions.checkEditorValid(editor);
 
     CompletionContext context = createCompletionContext(hostCopy, hostMap.getOffset(CompletionInitializationContext.START_OFFSET), hostMap, initContext.getFile());
-    LookupImpl lookup = obtainLookup(editor);
+    LookupImpl lookup = obtainLookup(editor, initContext.getProject());
     CompletionParameters parameters = createCompletionParameters(invocationCount, context, editor);
 
     CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
@@ -481,7 +481,9 @@ public class CodeCompletionHandlerBase {
       final CompletionPhase.CommittingDocuments phase = (CompletionPhase.CommittingDocuments)CompletionServiceImpl.getCompletionPhase();
 
       AutoPopupController.runTransactionWithEverythingCommitted(project, () -> {
-        if (phase.checkExpired()) {
+        if (phase.checkExpired() ||
+            !initContext.getFile().isValid() || !hostCopy.isValid() ||
+            !CompletionAssertions.isEditorValid(initContext.getEditor())) {
           Disposer.dispose(translator);
           return;
         }
