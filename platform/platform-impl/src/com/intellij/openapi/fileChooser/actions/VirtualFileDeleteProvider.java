@@ -20,6 +20,7 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.RunResult;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -61,18 +62,16 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         for (VirtualFile file : files) {
-          new WriteCommandAction.Simple(project) {
+          RunResult result = new WriteCommandAction.Simple(project) {
             @Override
             protected void run() throws Throwable {
-              try {
-                file.delete(this);
-              }
-              catch (Exception e) {
-                LOG.info(e);
-                problems.add(file.getName());
-              }
+              file.delete(this);
             }
           }.execute();
+          if (result.hasException()) {
+            LOG.info("Error when deleting " + file, result.getThrowable());
+            problems.add(file.getName());
+          }
         }
       }
 
