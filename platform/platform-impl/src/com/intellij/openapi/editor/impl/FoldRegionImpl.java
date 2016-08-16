@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -131,6 +132,12 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion, Inlay
 
   public int getHeightInPixels() {
     return myRendererData == null ? 0 : myRendererData.myHeightInPixels;
+  }
+
+  @Override
+  public void update() {
+    FoldingModelImpl model = (FoldingModelImpl)myEditor.getFoldingModel();
+    model.runBatchFoldingOperation(() -> model.markRegionAsChanged(this));
   }
 
   @Override

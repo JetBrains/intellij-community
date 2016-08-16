@@ -36,6 +36,8 @@ public interface Inlay extends Disposable, UserDataHolderEx {
 
   int getHeightInPixels();
 
+  void update();
+
   enum Type { INLINE, BLOCK }
 
   abstract class Renderer {

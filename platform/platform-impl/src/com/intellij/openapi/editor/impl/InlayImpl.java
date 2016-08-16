@@ -37,11 +37,12 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
     myOriginalOffset = offset;
     myType = type;
     myRenderer = renderer;
-    updateSize();
+    update();
     myEditor.getInlayModel().myInlayTree.addInterval(this, offset, offset, false, false, 0);
   }
 
-  void updateSize() {
+  @Override
+  public void update() {
     myWidthInPixels = myRenderer.calcWidthInPixels(myEditor);
     if (myType == Type.INLINE && myWidthInPixels <= 0) {
       throw new IllegalArgumentException("Positive width should be defined for an inline inlay");

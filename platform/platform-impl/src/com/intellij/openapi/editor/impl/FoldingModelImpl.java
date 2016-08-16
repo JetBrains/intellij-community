@@ -394,6 +394,11 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     notifyListenersOnFoldRegionStateChange(region);
   }
 
+  void markRegionAsChanged(@NotNull FoldRegion region) {
+    myFoldRegionsProcessed = true;
+    notifyListenersOnFoldRegionStateChange(region);
+  }
+
   private void notifyBatchFoldingProcessingDone(final boolean moveCaretFromCollapsedRegion) {
     rebuild();
 
