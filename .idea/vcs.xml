@@ -25,12 +25,16 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../adt/idea" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../analytics-library" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../base" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../data-binding" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../sherpa" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../studio/google/appindexing" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../studio/google/cloud/testing" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../studio/google/cloud/tools" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../studio/google/samples" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../studio/google/services" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../swing-testing" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../vendor/google" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../vendor/google3/blaze" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../vendor/intellij/cidr" vcs="Git" />
