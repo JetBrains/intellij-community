@@ -61,14 +61,21 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
     new Task.Modal(project, "Deleting Files...", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(false);
+        int i = 0;
         for (VirtualFile file : files) {
           indicator.checkCanceled();
+          indicator.setText2(file.getPresentableUrl());
+          indicator.setFraction((double)i / files.length);
+          i++;
+
           RunResult result = new WriteCommandAction.Simple(project) {
             @Override
             protected void run() throws Throwable {
               file.delete(this);
             }
           }.execute();
+
           if (result.hasException()) {
             LOG.info("Error when deleting " + file, result.getThrowable());
             problems.add(file.getName());
