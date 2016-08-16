@@ -62,6 +62,7 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         for (VirtualFile file : files) {
+          indicator.checkCanceled();
           RunResult result = new WriteCommandAction.Simple(project) {
             @Override
             protected void run() throws Throwable {
