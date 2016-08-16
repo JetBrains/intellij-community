@@ -683,11 +683,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   @Override
   public XValueChildrenList loadVariable(final PyDebugValue var) throws PyDebuggerException {
     final PyStackFrame frame = currentFrame();
-    PyDebugValue debugValue = var;
-    if (var.isReturnedVal()) {
-      // return values are saved in dictionary on Python side, so the variable's name should be transformed
-      debugValue = var.setName(PyDebugValue.RETURN_VALUES_PREFIX + "[\"" + var.getName() + "\"]");
-    }
+    PyDebugValue debugValue = var.setName(var.getFullName());
     return myDebugger.loadVariable(frame.getThreadId(), frame.getFrameId(), debugValue);
   }
 
