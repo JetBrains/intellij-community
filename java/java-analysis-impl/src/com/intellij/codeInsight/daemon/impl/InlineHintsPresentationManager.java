@@ -98,6 +98,7 @@ public class InlineHintsPresentationManager implements Disposable {
     if (metrics == null) {
       Font font = new Font(familyName, Font.PLAIN, size);
       metrics = FontInfo.createReferenceGraphics().getFontMetrics(font);
+      editor.putUserData(HINT_FONT_METRICS, metrics);
     }
     return metrics;
   }
