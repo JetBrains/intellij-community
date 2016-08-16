@@ -22,6 +22,8 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,7 +32,6 @@ import com.intellij.ui.UIBundle;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -56,26 +57,41 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
     Arrays.sort(files, FileComparator.getInstance());
 
     final List<String> problems = ContainerUtil.newLinkedList();
-    new WriteCommandAction.Simple(project) {
+    new Task.Modal(project, "Deleting Files...", true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        for (VirtualFile file : files) {
+          new WriteCommandAction.Simple(project) {
+            @Override
+            protected void run() throws Throwable {
+              try {
+                file.delete(this);
+              }
+              catch (Exception e) {
+                LOG.info(e);
+                problems.add(file.getName());
+              }
+            }
+          }.execute();
+        }
+      }
 
       @Override
-      protected void run() throws Throwable {
-        for (final VirtualFile file : files) {
-          try {
-            file.delete(this);
-          }
-          catch (Exception e) {
-            LOG.info(e);
-            problems.add(file.getName());
-          }
-        }
-
+      public void onSuccess() {
+        reportProblems();
       }
-    }.execute();
 
-    if (!problems.isEmpty()) {
-      reportDeletionProblem(problems);
-    }
+      @Override
+      public void onCancel() {
+        reportProblems();
+      }
+
+      private void reportProblems() {
+        if (!problems.isEmpty()) {
+          reportDeletionProblem(problems);
+        }
+      }
+    }.queue();
   }
 
   private static void reportDeletionProblem(List<String> problems) {
