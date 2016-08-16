@@ -1480,9 +1480,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       if (provider != null) {
         final int line = getLineNumAtPoint(e.getPoint());
         toolTip = provider.getToolTip(line, myEditor);
-        if (provider instanceof TextAnnotationGutterProviderEx) {
-          asyncTooltip = ((TextAnnotationGutterProviderEx)provider).getToolTipAsync(line, myEditor);
-        }
+        asyncTooltip = provider.getToolTipAsync(line, myEditor);
         if (!Comparing.equal(toolTip, myLastGutterToolTip)) {
           controller.cancelTooltip(GUTTER_TOOLTIP_GROUP, e, true);
           myLastGutterToolTip = toolTip;
