@@ -139,32 +139,26 @@ public class InlayPassFactory extends AbstractProjectComponent implements TextEd
       assert myDocument != null;
       boolean firstTime = myEditor.getUserData(REPEATED_PASS) == null;
       InlineHintsPresentationManager presentationManager = InlineHintsPresentationManager.getInstance();
-      Map<Integer, Integer> existingWidths = new HashMap<>();
       Set<String> removedHints = new HashSet<>();
-      List<Integer> toRemove = new ArrayList<>();
       for (Inlay inlay : myEditor.getInlayModel().getElementsInRange(0, myDocument.getTextLength() + 1, Inlay.Type.INLINE)) {
         if (!presentationManager.isInlineHint(inlay)) continue;
         int offset = inlay.getOffset();
         String oldText = presentationManager.getHintText(inlay);
-        String newText = myAnnotations.get(offset);
+        String newText = myAnnotations.remove(offset);
         if (!Objects.equals(newText, oldText)) {
           if (newText == null) {
             removedHints.add(oldText);
             presentationManager.deleteHint(myEditor, inlay);
           }
           else {
-            existingWidths.put(offset, inlay.getWidthInPixels());
-            Disposer.dispose(inlay);
+            presentationManager.replaceHint(myEditor, inlay, newText);
           }
-        }
-        else {
-          myAnnotations.remove(offset);
         }
       }
       for (Map.Entry<Integer, String> e : myAnnotations.entrySet()) {
         int offset = e.getKey();
         String text = e.getValue();
-        presentationManager.addHint(myEditor, offset, text, !firstTime && !removedHints.contains(text), existingWidths.getOrDefault(offset, 0));
+        presentationManager.addHint(myEditor, offset, text, !firstTime && !removedHints.contains(text));
       }
       myEditor.putUserData(REPEATED_PASS, Boolean.TRUE);
     }

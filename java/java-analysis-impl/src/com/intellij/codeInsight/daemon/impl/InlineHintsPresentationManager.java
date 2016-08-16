@@ -58,7 +58,18 @@ public class InlineHintsPresentationManager implements Disposable {
     return renderer instanceof MyRenderer ? ((MyRenderer)renderer).myText : null;
   }
 
-  public void addHint(@NotNull Editor editor, int offset, @NotNull String hintText, boolean useAnimation, int animationStartWidthInPixels) {
+  public void replaceHint(@NotNull Editor editor, @NotNull Inlay hint, @NotNull String newText) {
+    int offset = hint.getOffset();
+    int animationStartWidthInPixels = hint.getWidthInPixels();
+    Disposer.dispose(hint);
+    addHint(editor, offset, newText, true, animationStartWidthInPixels);
+  }
+
+  public void addHint(@NotNull Editor editor, int offset, @NotNull String hintText, boolean useAnimation) {
+    addHint(editor, offset, hintText, useAnimation, 0);
+  }
+
+  private void addHint(@NotNull Editor editor, int offset, @NotNull String hintText, boolean useAnimation, int animationStartWidthInPixels) {
     MyRenderer renderer = new MyRenderer(hintText);
     if (useAnimation) {
       AnimationStepRenderer stepRenderer = new AnimationStepRenderer(editor, renderer, animationStartWidthInPixels);
