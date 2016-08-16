@@ -385,9 +385,6 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
           removeTreeListener(this); // remove the listener on first match
         }
       }
-
-      @Override
-      public void childrenLoaded(@NotNull XDebuggerTreeNode node, @NotNull List<XValueContainerNode<?>> children, boolean last) {}
     });
   }
 
