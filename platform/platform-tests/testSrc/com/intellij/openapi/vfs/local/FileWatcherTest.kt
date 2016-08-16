@@ -81,6 +81,8 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     runInEdtAndWait { VirtualFileManager.getInstance().syncRefresh() }
 
+    alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, testRootDisposable)
+
     watcher = (fs as LocalFileSystemImpl).fileWatcher
     assertFalse(watcher.isOperational)
     watcher.startup { reset ->
@@ -89,8 +91,6 @@ class FileWatcherTest : BareTestFixtureTestCase() {
       if (reset) resetHappened.set(true)
     }
     wait { !watcher.isOperational }
-
-    alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, testRootDisposable)
 
     LOG.debug("================== setting up " + getTestName(false) + " ==================")
   }
@@ -122,7 +122,17 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     val file = tempDir.newFile("test.txt")
     refresh(file)
 
-    watch(file)
+    watch(file, false)
+    assertEvents({ file.writeText("new content") }, mapOf(file to 'U'))
+    assertEvents({ file.delete() }, mapOf(file to 'D'))
+    assertEvents({ file.writeText("re-creation") }, mapOf(file to 'C'))
+  }
+
+  @Test fun testFileRootRecursive() {
+    val file = tempDir.newFile("test.txt")
+    refresh(file)
+
+    watch(file, true)
     assertEvents({ file.writeText("new content") }, mapOf(file to 'U'))
     assertEvents({ file.delete() }, mapOf(file to 'D'))
     assertEvents({ file.writeText("re-creation") }, mapOf(file to 'C'))
