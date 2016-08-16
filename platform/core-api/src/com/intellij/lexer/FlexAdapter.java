@@ -39,6 +39,7 @@ public class FlexAdapter extends LexerBase {
 
   private int myBufferEnd;
   private int myState;
+  private boolean myInconsistentState;
 
   public FlexAdapter(@NotNull FlexLexer flex) {
     myFlex = flex;
@@ -55,6 +56,7 @@ public class FlexAdapter extends LexerBase {
     myBufferEnd = endOffset;
     myFlex.reset(myText, startOffset, endOffset, initialState);    
     myTokenType = null;
+    myInconsistentState = false;
   }
 
   @Override
@@ -99,7 +101,7 @@ public class FlexAdapter extends LexerBase {
   }
 
   protected void locateToken() {
-    if (myTokenType != null) return;
+    if (myTokenType != null || myInconsistentState) return;
 
     try {
       myTokenStart = myFlex.getTokenEnd();
@@ -113,6 +115,7 @@ public class FlexAdapter extends LexerBase {
       }
       myTokenType = TokenType.WHITE_SPACE;
       myTokenEnd = myBufferEnd;
+      myInconsistentState = true;
     }
     catch (Error e) {
       if (logLexerErrors) {
@@ -120,6 +123,7 @@ public class FlexAdapter extends LexerBase {
       }
       myTokenType = TokenType.WHITE_SPACE;
       myTokenEnd = myBufferEnd;
+      myInconsistentState = true;
     }
   }
 }
