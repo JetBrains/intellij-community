@@ -55,6 +55,7 @@ import java.util.Calendar;
 
 public class CCShowPreview extends DumbAwareAction {
   public static final String SHOW_PREVIEW = "Show Preview";
+  public static final String NO_PREVIEW_MESSAGE = "Preview is available for task files with answer placeholders only";
 
   public CCShowPreview() {
     super(SHOW_PREVIEW, SHOW_PREVIEW, null);
@@ -161,6 +162,8 @@ public class CCShowPreview extends DumbAwareAction {
     createdEditor.setCaretEnabled(false);
     showPreviewFrame.setComponent(labeledEditor);
     showPreviewFrame.setSize(new Dimension(500, 500));
-    showPreviewFrame.show();
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      showPreviewFrame.show();
+    }
   }
 }
