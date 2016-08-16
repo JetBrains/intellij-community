@@ -125,6 +125,18 @@ public class JavaSuppressionUtil {
 
       classContainer = PsiTreeUtil.getParentOfType(classContainer, PsiDocCommentOwner.class);
     }
+
+    final PsiJavaFile file = PsiTreeUtil.getParentOfType(owner, PsiJavaFile.class);
+    if (file != null) {
+      final PsiDirectory directory = file.getContainingDirectory();
+      if (directory != null) {
+        final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
+        if (aPackage != null) {
+          return AnnotationUtil.findAnnotation(aPackage, Generated.class.getName());
+        }
+      }
+    }
+
     return null;
   }
 
