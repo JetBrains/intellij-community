@@ -29,6 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
+import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,10 +40,11 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import java.util.*;
 
 /**
- * Author: dmitry lomov
+ * @author dmitry lomov
  */
 public class JavaFileManagerImpl implements JavaFileManager, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.impl.JavaFileManagerImpl");
+
   private final PsiManagerEx myManager;
   private volatile Set<String> myNontrivialPackagePrefixes;
   private boolean myDisposed;
@@ -175,4 +177,10 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
     return names;
   }
 
+  @NotNull
+  @Override
+  public Collection<PsiJavaModule> findModules(@NotNull String moduleName) {
+    Project project = myManager.getProject();
+    return JavaModuleNameIndex.getInstance().get(moduleName, project, GlobalSearchScope.allScope(project));
+  }
 }

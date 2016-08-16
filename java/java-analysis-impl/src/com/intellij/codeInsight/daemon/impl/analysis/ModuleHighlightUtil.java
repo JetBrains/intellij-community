@@ -30,9 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaModule;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.ProjectScope;
@@ -104,6 +102,20 @@ public class ModuleHighlightUtil {
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(range(element)).description(message).create();
         QuickFixAction.registerQuickFixAction(info, new MoveFileFix(vFile, root, QuickFixBundle.message("move.file.to.source.root.text")));
         return info;
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  static HighlightInfo checkModuleReference(@Nullable PsiJavaModuleReferenceElement refElement) {
+    if (refElement != null) {
+      PsiPolyVariantReference ref = refElement.getReference();
+      assert ref != null : refElement.getParent();
+      if (ref.multiResolve(false).length == 0) {
+        String message = JavaErrorMessages.message("module.ref.unknown", refElement.getReferenceText());
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refElement).description(message).create();
       }
     }
 

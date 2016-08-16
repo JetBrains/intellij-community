@@ -44,6 +44,10 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
     myFixture.checkHighlighting()
   }
 
+  fun testUnresolvedModule() {
+    doTest("""module M { requires <error descr="Cannot resolve module 'M.missing'">M.missing</error>; }""")
+  }
+
   //<editor-fold desc="Helpers.">
   private fun additionalFile(text: String) = myFixture.configureFromExistingVirtualFile(runWriteAction {
     val file = LightPlatformTestCase.getSourceRoot().createChildDirectory(this, "pkg").createChildData(this, "module-info.java")
