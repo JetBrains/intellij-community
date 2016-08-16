@@ -66,6 +66,10 @@ public class AnnotationsPreloader {
       @Override
       public void run() {
         try {
+          long start = 0;
+          if (LOG.isDebugEnabled()) {
+            start = System.currentTimeMillis();
+          }
           if (!FileEditorManager.getInstance(myProject).isFileOpen(file)) return;
 
           FileStatus fileStatus = FileStatusManager.getInstance(myProject).getStatus(file);
@@ -80,6 +84,9 @@ public class AnnotationsPreloader {
           assert annotationProvider != null;
 
           annotationProvider.annotate(file);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Preloaded VCS annotations for ", file.getName(), " in ", String.valueOf(System.currentTimeMillis() - start), "ms");
+          }
         }
         catch (VcsException e) {
           LOG.warn(e);
