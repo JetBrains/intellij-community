@@ -325,7 +325,9 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
           intentionOffset = offset - 1;
         }
       }
-      collectIntentionsFromDoNotShowLeveledInspections(project, hostFile, intentionElement, intentionOffset, intentions);
+      if (intentionElement != null && intentionElement.getManager().isInProject(intentionElement)) {
+        collectIntentionsFromDoNotShowLeveledInspections(project, hostFile, intentionElement, intentionOffset, intentions);
+      }
     }
 
     final int line = hostDocument.getLineNumber(offset);
