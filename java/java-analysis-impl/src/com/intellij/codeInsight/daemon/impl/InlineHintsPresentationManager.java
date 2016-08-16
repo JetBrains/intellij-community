@@ -50,11 +50,14 @@ public class InlineHintsPresentationManager implements Disposable {
   }
 
   public boolean isInlineHint(@NotNull Inlay inlay) {
-    return inlay.getRenderer() instanceof MyRenderer;
+    Inlay.Renderer renderer = inlay.getRenderer();
+    return renderer instanceof MyRenderer ||
+           renderer instanceof AnimationStepRenderer && ((AnimationStepRenderer)renderer).renderer != null;
   }
 
   public String getHintText(@NotNull Inlay inlay) {
     Inlay.Renderer renderer = inlay.getRenderer();
+    if (renderer instanceof AnimationStepRenderer) renderer = ((AnimationStepRenderer)renderer).renderer;
     return renderer instanceof MyRenderer ? ((MyRenderer)renderer).myText : null;
   }
 
