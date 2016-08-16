@@ -39,8 +39,6 @@ import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
@@ -104,7 +102,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
           if (samType == null) continue;
 
           SearchScope scope = samClass.getUseScope().intersectWith(queryParameters.getEffectiveSearchScope());
-          descriptors.add(new SamDescriptor(samClass, saMethod, samType, convertToGlobalScope(project, scope)));
+          descriptors.add(new SamDescriptor(samClass, saMethod, samType, GlobalSearchScopeUtil.toGlobalSearchScope(scope, project)));
         }
       }
     });
@@ -230,23 +228,6 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
       }
     }
     return false;
-  }
-
-  @NotNull
-  private static GlobalSearchScope convertToGlobalScope(Project project, SearchScope useScope) {
-    final GlobalSearchScope scope;
-    if (useScope instanceof GlobalSearchScope) {
-      scope = (GlobalSearchScope)useScope;
-    }
-    else if (useScope instanceof LocalSearchScope) {
-      final Set<VirtualFile> files = new HashSet<>();
-      ContainerUtil.addAllNotNull(files, ContainerUtil.map(((LocalSearchScope)useScope).getScope(), PsiUtilCore::getVirtualFile));
-      scope = GlobalSearchScope.filesScope(project, files);
-    }
-    else {
-      scope = new EverythingGlobalScope(project);
-    }
-    return scope;
   }
 
   private static Set<PsiClass> processSubInterfaces(PsiClass base) {
