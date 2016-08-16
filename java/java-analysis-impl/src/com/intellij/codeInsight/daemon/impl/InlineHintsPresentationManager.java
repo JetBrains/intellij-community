@@ -167,7 +167,7 @@ public class InlineHintsPresentationManager implements Disposable {
       this.startWidth = startWidth;
       this.endWidth = renderer == null ? 0 : renderer.calcWidthInPixels(editor);
       this.step = 1;
-      this.steps = Math.max(1, Math.abs(endWidth - startWidth) / getFontMetrics(editor).charWidth(' ') / ANIMATION_CHARS_PER_STEP);
+      this.steps = Math.max(1, Math.abs(endWidth - startWidth) / getFontMetrics(editor).charWidth('a') / ANIMATION_CHARS_PER_STEP);
     }
 
     private AnimationStepRenderer(MyRenderer renderer, int startWidth, int endWidth, int step, int steps) {
