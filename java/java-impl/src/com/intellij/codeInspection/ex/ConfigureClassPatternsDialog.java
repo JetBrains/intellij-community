@@ -75,7 +75,7 @@ class ConfigureClassPatternsDialog extends DialogWrapper {
       })
       .setButtonComparator("Add", "Remove");
     JPanel panel = new JPanel(new BorderLayout());
-    panel.add(SeparatorFactory.createSeparator("Mark class as reachable if name matches", null), BorderLayout.NORTH);
+    panel.add(SeparatorFactory.createSeparator("Mark class as entry point if name matches", null), BorderLayout.NORTH);
     panel.add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
     return panel;
   }

@@ -41,56 +41,52 @@ public class UnusedSymbolLocalInspectionBase extends BaseJavaLocalInspectionTool
   public boolean PARAMETER = true;
   public boolean REPORT_PARAMETER_FOR_PUBLIC_METHODS = true;
 
-  private String myClassVisibility = PsiModifier.PUBLIC;
-  private String myFieldVisibility = PsiModifier.PUBLIC;
-  private String myMethodVisibility = PsiModifier.PUBLIC;
-  private String myParameterVisibility = PsiModifier.PUBLIC;
+  protected String myClassVisibility = PsiModifier.PUBLIC;
+  protected String myFieldVisibility = PsiModifier.PUBLIC;
+  protected String myMethodVisibility = PsiModifier.PUBLIC;
+  protected String myParameterVisibility = PsiModifier.PUBLIC;
   private boolean myIgnoreAccessors = false;
 
 
   @PsiModifier.ModifierConstant
   @Nullable
   public String getClassVisibility() {
-    if (!CLASS || "none".equals(myClassVisibility)) return null;
+    if (!CLASS) return null;
     return myClassVisibility;
   }
   @PsiModifier.ModifierConstant
   @Nullable
   public String getFieldVisibility() {
-    if (!FIELD || "none".equals(myFieldVisibility)) return null;
+    if (!FIELD) return null;
     return myFieldVisibility;
   }
   @PsiModifier.ModifierConstant
   @Nullable
   public String getMethodVisibility() {
-    if (!METHOD || "none".equals(myMethodVisibility)) return null;
+    if (!METHOD) return null;
     return myMethodVisibility;
   }
 
   @PsiModifier.ModifierConstant
   @Nullable
   public String getParameterVisibility() {
-    if (!PARAMETER || "none".equals(myParameterVisibility)) return null;
+    if (!PARAMETER) return null;
     return myParameterVisibility;
   }
 
   public void setClassVisibility(String classVisibility) {
-    CLASS = !"none".equals(classVisibility);
     this.myClassVisibility = classVisibility;
   }
 
   public void setFieldVisibility(String fieldVisibility) {
-    FIELD = !"none".equals(fieldVisibility);
     this.myFieldVisibility = fieldVisibility;
   }
 
   public void setMethodVisibility(String methodVisibility) {
-    METHOD = !"none".equals(methodVisibility);
     this.myMethodVisibility = methodVisibility;
   }
 
   public void setParameterVisibility(String parameterVisibility) {
-    PARAMETER = !"none".equals(parameterVisibility);
     REPORT_PARAMETER_FOR_PUBLIC_METHODS = PsiModifier.PUBLIC.equals(parameterVisibility);
     this.myParameterVisibility = parameterVisibility;
   }
