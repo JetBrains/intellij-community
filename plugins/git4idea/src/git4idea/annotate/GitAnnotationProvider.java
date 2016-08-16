@@ -22,7 +22,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.*;
@@ -32,8 +31,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.AnnotationProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitFileRevision;
@@ -76,8 +73,10 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
         try {
           final FilePath currentFilePath = VcsUtil.getFilePath(file.getPath());
           final FilePath realFilePath;
+          /*
           setProgressIndicatorText(GitBundle.message("getting.history", file.getName()));
           final List<VcsFileRevision> revisions = GitHistoryUtils.history(myProject, currentFilePath);
+          */
           if (revision == null) {
             realFilePath = GitHistoryUtils.getLastCommitName(myProject, currentFilePath);
           }
@@ -86,7 +85,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
           }
           setProgressIndicatorText(GitBundle.message("computing.annotation", file.getName()));
           VcsRevisionNumber revisionNumber = revision != null ? revision.getRevisionNumber() : null;
-          final GitFileAnnotation result = annotate(realFilePath, revisionNumber, revisions, file);
+          final GitFileAnnotation result = annotate(realFilePath, revisionNumber, file);
           annotation[0] = result;
         }
         catch (ProcessCanceledException pce) {
@@ -120,7 +119,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
     VcsVirtualFile file = new VcsVirtualFile(path.getPath(), fileRevision, VcsFileSystem.getInstance());
 
     setProgressIndicatorText(GitBundle.message("computing.annotation", path.getName()));
-    return annotate(path, revision, revisions, file);
+    return annotate(path, revision, file);
   }
 
   private static void setProgressIndicatorText(@Nullable String text) {
@@ -130,7 +129,6 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
 
   private GitFileAnnotation annotate(@NotNull final FilePath repositoryFilePath,
                                      @Nullable final VcsRevisionNumber revision,
-                                     @NotNull final List<VcsFileRevision> revisions,
                                      @NotNull final VirtualFile file) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(myProject, GitUtil.getGitRoot(repositoryFilePath), GitCommand.BLAME);
     h.setStdoutSuppressed(true);
@@ -145,19 +143,17 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
     h.endOptions();
     h.addRelativePaths(repositoryFilePath);
     String output = h.run();
-    return parseAnnotations(revision, file, output, revisions);
+    return parseAnnotations(revision, file, output);
   }
 
   @NotNull
   private GitFileAnnotation parseAnnotations(@Nullable VcsRevisionNumber revision,
                                              @NotNull VirtualFile file,
-                                             @NotNull String output,
-                                             @NotNull List<VcsFileRevision> revisions) throws VcsException {
+                                             @NotNull String output) throws VcsException {
     try {
       StringBuilder content = new StringBuilder();
       List<LineInfo> lines = new ArrayList<>();
       HashMap<String, LineInfo> commits = new HashMap<>();
-      final Map<VcsRevisionNumber, VcsFileRevision> historyAsMap = getRevisionMap(revisions);
       for (StringScanner s = new StringScanner(output); s.hasMoreData(); ) {
         // parse header line
         String commitHash = s.spaceToken();
@@ -191,7 +187,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
               revisionNumber = new GitRevisionNumber(commitHash, committerDate);
             }
           }
-          commit = new LineInfo(committerDate, revisionNumber, (GitFileRevision)historyAsMap.get(revisionNumber), author);
+          commit = new LineInfo(committerDate, revisionNumber, author);
           commits.put(commitHash, commit);
         }
         // parse line
@@ -210,23 +206,12 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
         content.append(s.line(true));
         lines.add(commit);
       }
-      return new GitFileAnnotation(myProject, file, revision, content.toString(), lines, revisions);
+      return new GitFileAnnotation(myProject, file, revision, content.toString(), lines);
     }
     catch (Exception e) {
       LOG.error("Couldn't parse annotation: " + e, new Attachment("output.txt", output));
       throw new VcsException(e);
     }
-  }
-
-  @NotNull
-  private static Map<VcsRevisionNumber, VcsFileRevision> getRevisionMap(@NotNull List<VcsFileRevision> revisions) {
-    return ContainerUtil.map2Map(revisions,
-                                 new Function<VcsFileRevision, Pair<VcsRevisionNumber, VcsFileRevision>>() {
-                                   @Override
-                                   public Pair<VcsRevisionNumber, VcsFileRevision> fun(VcsFileRevision revision) {
-                                     return Pair.create(revision.getRevisionNumber(), revision);
-                                   }
-                                 });
   }
 
   @Override
@@ -259,9 +244,9 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
       if (vcsFileRevision == null) {
         return null;
       }
-      lines.add(new LineInfo(vcsFileRevision.getRevisionDate(), revision, vcsFileRevision, vcsFileRevision.getAuthor()));
+      lines.add(new LineInfo(vcsFileRevision.getRevisionDate(), revision, vcsFileRevision.getAuthor()));
     }
-    return new GitFileAnnotation(myProject, virtualFile, revisionNumber, annotatedContent, lines, session.getRevisionList());
+    return new GitFileAnnotation(myProject, virtualFile, revisionNumber, annotatedContent, lines);
   }
 
   public boolean isAnnotationValid(VcsFileRevision rev) {

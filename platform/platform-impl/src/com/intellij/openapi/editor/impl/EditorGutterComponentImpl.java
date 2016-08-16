@@ -25,6 +25,8 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.codeInsight.hint.LineTooltipRenderer;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.ide.IdeEventQueue;
@@ -48,10 +50,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.ScalableIcon;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
@@ -1470,6 +1469,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @Override
   public void mouseMoved(final MouseEvent e) {
     String toolTip = null;
+    Computable<String> asyncTooltip = null;
     final GutterIconRenderer renderer = getGutterRenderer(e);
     TooltipController controller = TooltipController.getInstance();
     if (renderer != null) {
@@ -1480,6 +1480,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       if (provider != null) {
         final int line = getLineNumAtPoint(e.getPoint());
         toolTip = provider.getToolTip(line, myEditor);
+        if (provider instanceof TextAnnotationGutterProviderEx) {
+          asyncTooltip = ((TextAnnotationGutterProviderEx)provider).getToolTipAsync(line, myEditor);
+        }
         if (!Comparing.equal(toolTip, myLastGutterToolTip)) {
           controller.cancelTooltip(GUTTER_TOOLTIP_GROUP, e, true);
           myLastGutterToolTip = toolTip;
@@ -1522,12 +1525,32 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
       RelativePoint showPoint = new RelativePoint(this, t.get());
 
-      controller.showTooltipByMouseMove(myEditor, showPoint, ((EditorMarkupModel)myEditor.getMarkupModel()).getErrorStripTooltipRendererProvider().calcTooltipRenderer(toolTip), false, GUTTER_TOOLTIP_GROUP,
-                                        new HintHint(this, t.get()).setAwtTooltip(true).setPreferredPosition(ballPosition));
+      if (asyncTooltip != null) toolTip += "\n\nLoading...";
+      LineTooltipRenderer r = showTooltip(toolTip, t.get(), ballPosition, showPoint);
+      if (asyncTooltip != null) {
+        Computable<String> finalAsyncTooltip = asyncTooltip;
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          String call = finalAsyncTooltip.compute();
+          ApplicationManager.getApplication().invokeLater(() -> {
+            String s = HintUtil.prepareHintText(call, new HintHint(this, t.get()));
+            r.updateText(s);
+          });
+        });
+      }
     }
     else {
       controller.cancelTooltip(GUTTER_TOOLTIP_GROUP, e, false);
     }
+  }
+
+  private LineTooltipRenderer showTooltip(String toolTip,
+                                          Point t,
+                                          Balloon.Position ballPosition,
+                                          RelativePoint showPoint) {
+    LineTooltipRenderer renderer = new LineTooltipRenderer(toolTip);
+    TooltipController.getInstance().showTooltipByMouseMove(myEditor, showPoint, renderer, false, GUTTER_TOOLTIP_GROUP,
+                                                           new HintHint(this, t).setAwtTooltip(true).setPreferredPosition(ballPosition));
+    return renderer;
   }
 
   void validateMousePointer(@NotNull MouseEvent e) {
