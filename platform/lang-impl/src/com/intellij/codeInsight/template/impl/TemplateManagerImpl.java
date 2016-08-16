@@ -30,9 +30,7 @@ import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValueProvider;
@@ -50,7 +48,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 
 public class TemplateManagerImpl extends TemplateManager implements Disposable {
-  protected Project myProject;
+  private final Project myProject;
   private boolean myTemplateTesting;
 
   private static final Key<TemplateState> TEMPLATE_STATE_KEY = Key.create("TEMPLATE_STATE_KEY");
@@ -589,10 +587,9 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     return result;
   }
   
-  public static PsiFile insertDummyIdentifier(final Editor editor, PsiFile file) {
-    boolean selection = editor.getSelectionModel().hasSelection();
-    final int startOffset = selection ? editor.getSelectionModel().getSelectionStart() : editor.getCaretModel().getOffset();
-    final int endOffset = selection ? editor.getSelectionModel().getSelectionEnd() : startOffset;
+  public static PsiFile insertDummyIdentifier(Editor editor, PsiFile file) {
+    int startOffset = editor.getSelectionModel().getSelectionStart();
+    int endOffset = editor.getSelectionModel().getSelectionEnd();
     return insertDummyIdentifierIfNeeded(file, startOffset, endOffset, CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
   }
 
@@ -604,23 +601,23 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
       return file;
     }
 
-    ConcurrentFactoryMap<Trinity<Integer, Integer, String>, PsiFile> map =
-      CachedValuesManager.getCachedValue(file, () -> CachedValueProvider.Result.create(new ConcurrentFactoryMap<Trinity<Integer, Integer, String>, PsiFile>() {
+    ConcurrentFactoryMap<Pair<ProperTextRange, String>, PsiFile> map =
+      CachedValuesManager.getCachedValue(file, () -> CachedValueProvider.Result.create(new ConcurrentFactoryMap<Pair<ProperTextRange, String>, PsiFile>() {
         @Nullable
         @Override
-        protected PsiFile create(Trinity<Integer, Integer, String> key) {
+        protected PsiFile create(Pair<ProperTextRange, String> key) {
           PsiFile copy = (PsiFile)file.copy();
 
           final Document document = copy.getViewProvider().getDocument();
           assert document != null;
 
           document.setText(originalDocument.getImmutableCharSequence()); // original file might be uncommitted
-          document.replaceString(key.first, key.second, key.third);
+          document.replaceString(key.first.getStartOffset(), key.first.getEndOffset(), key.second);
           PsiDocumentManager.getInstance(copy.getProject()).commitDocument(document);
           return copy;
         }
       }, file, originalDocument));
 
-    return map.get(Trinity.create(startOffset, endOffset, replacement));
+    return map.get(Pair.create(ProperTextRange.create(startOffset, endOffset), replacement));
   }
 }
