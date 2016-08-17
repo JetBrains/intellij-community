@@ -105,6 +105,7 @@ public class MavenArtifactDownloader {
 
       Set<File> parentsToRefresh = new HashSet<>(); // We have to refresh parents of downloaded files, because some additional files  may have been download.
       for (File file : downloadedFiles) {
+        parentsToRefresh.add(file);
         parentsToRefresh.add(file.getParentFile());
       }
 

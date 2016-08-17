@@ -22,15 +22,11 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.PathUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
@@ -41,13 +37,10 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.ProjectBundle;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class MavenAttachSourcesProvider implements AttachSourcesProvider {
   @Override
@@ -115,17 +108,6 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
               resultWrapper.setRejected();
             }
             else {
-              List<File> files = orderEntries.stream()
-                .flatMap(entry -> entry.getLibrary() != null ?
-                                  Stream.of(entry.getLibrary().getUrls(OrderRootType.SOURCES)) :
-                                  Stream.empty())
-                .distinct()
-                .map(url -> new File(PathUtil.getLocalPath(VfsUtilCore.urlToPath(url))))
-                .collect(Collectors.toList());
-
-              if(!files.isEmpty()) {
-                LocalFileSystem.getInstance().refreshIoFiles(files, true, false, null);
-              }
               resultWrapper.setDone();
             }
           }
