@@ -38,7 +38,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Collections;
 
 import static com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE;
 
@@ -77,8 +76,7 @@ public class ModuleHighlightUtil {
     Module module = ModuleUtilCore.findModuleForPsiElement(element);
     if (module != null) {
       Project project = file.getProject();
-      Collection<VirtualFile> others =
-        FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, new ModulesScope(Collections.singleton(module), project));
+      Collection<VirtualFile> others = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, new ModulesScope(module));
       if (others.size() > 1) {
         String message = JavaErrorMessages.message("module.file.duplicate");
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(element)).description(message).create();

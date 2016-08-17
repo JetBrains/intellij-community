@@ -24,11 +24,16 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Set;
 
 public class ModulesScope extends GlobalSearchScope {
   private final ProjectFileIndex myProjectFileIndex;
   private final Set<Module> myModules;
+
+  public ModulesScope(@NotNull Module module) {
+    this(Collections.singleton(module), module.getProject());
+  }
 
   public ModulesScope(@NotNull Set<Module> modules, @NotNull Project project) {
     super(project);
