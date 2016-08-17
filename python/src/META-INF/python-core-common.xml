@@ -428,8 +428,6 @@
                         serviceImplementation="com.jetbrains.python.codeInsight.PyCodeInsightSettings"/>
     <applicationService serviceInterface="com.jetbrains.python.testing.PyTestFrameworkService"
                         serviceImplementation="com.jetbrains.python.testing.PyTestFrameworkService"/>
-    <applicationService serviceInterface="com.jetbrains.python.sdk.PySdkService"
-                        serviceImplementation="com.jetbrains.python.sdk.PySdkService"/>
     <autoImportOptionsProvider instance="com.jetbrains.python.codeInsight.imports.PyAutoImportOptions"/>
 
     <completion.contributor language="Python"
