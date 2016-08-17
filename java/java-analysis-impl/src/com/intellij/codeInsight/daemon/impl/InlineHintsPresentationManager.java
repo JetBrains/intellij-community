@@ -34,9 +34,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 public class InlineHintsPresentationManager implements Disposable {
   private static final Key<FontMetrics> HINT_FONT_METRICS = Key.create("ParameterHintFontMetrics");
+  private static final Key<AnimationStep> ANIMATION_STEP = Key.create("ParameterHintAnimationStep");
 
   private static final int ANIMATION_STEP_MS = 25;
   private static final int ANIMATION_CHARS_PER_STEP = 3;
@@ -62,9 +66,8 @@ public class InlineHintsPresentationManager implements Disposable {
   public void addHint(@NotNull Editor editor, int offset, @NotNull String hintText, boolean useAnimation) {
     MyRenderer renderer = new MyRenderer(editor, hintText, useAnimation);
     Inlay inlay = editor.getInlayModel().addElement(offset, Inlay.Type.INLINE, renderer);
-    renderer.myInlay = inlay;
     if (useAnimation && inlay != null) {
-      scheduleRendererUpdate(renderer);
+      scheduleRendererUpdate(editor, inlay);
     }
   }
 
@@ -80,15 +83,24 @@ public class InlineHintsPresentationManager implements Disposable {
     MyRenderer renderer = (MyRenderer)hint.getRenderer();
     renderer.update(editor, newText);
     hint.update();
-    scheduleRendererUpdate(renderer);
+    scheduleRendererUpdate(editor, hint);
   }
 
   @Override
   public void dispose() {}
 
-  private void scheduleRendererUpdate(MyRenderer renderer) {
-    myAlarm.cancelRequest(renderer);
-    myAlarm.addRequest(renderer, ANIMATION_STEP_MS, ModalityState.any());
+  private void scheduleRendererUpdate(Editor editor, Inlay inlay) {
+    AnimationStep step = editor.getUserData(ANIMATION_STEP);
+    if (step == null) {
+      editor.putUserData(ANIMATION_STEP, step = new AnimationStep(editor));
+    }
+    step.inlays.add(inlay);
+    scheduleAnimationStep(step);
+  }
+
+  private void scheduleAnimationStep(AnimationStep step) {
+    myAlarm.cancelRequest(step);
+    myAlarm.addRequest(step, ANIMATION_STEP_MS, ModalityState.any());
   }
 
   private static Font getFont(@NotNull Editor editor) {
@@ -111,13 +123,12 @@ public class InlineHintsPresentationManager implements Disposable {
     return metrics;
   }
 
-  private class MyRenderer extends Inlay.Renderer implements Runnable {
+  private static class MyRenderer extends Inlay.Renderer {
     private String myText;
     private int startWidth;
     private int endWidth;
     private int steps;
     private int step;
-    private Inlay myInlay;
 
     private MyRenderer(Editor editor, String text, boolean animated) {
       updateState(editor, text, 0);
@@ -134,7 +145,7 @@ public class InlineHintsPresentationManager implements Disposable {
       FontMetrics metrics = getFontMetrics(editor);
       endWidth = myText == null ? 0 : metrics.stringWidth(myText) + 14;
       step = 1;
-      steps = Math.max(1, Math.abs(endWidth - startWidth) / metrics.charWidth('a') / ANIMATION_CHARS_PER_STEP);
+      steps = Math.max(1, Math.abs(endWidth - startWidth) / metrics.charWidth(' ') / ANIMATION_CHARS_PER_STEP);
     }
 
     public boolean nextStep() {
@@ -174,20 +185,42 @@ public class InlineHintsPresentationManager implements Disposable {
         }
       }
     }
+  }
+
+  private class AnimationStep implements Runnable {
+    private final Editor myEditor;
+    private final Set<Inlay> inlays = new HashSet<>();
+
+    AnimationStep(Editor editor) {
+      myEditor = editor;
+    }
 
     @Override
     public void run() {
-      if (myInlay.isValid()) {
-        MyRenderer renderer = (MyRenderer)myInlay.getRenderer();
-        if (renderer.nextStep()) {
-          scheduleRendererUpdate(this);
-        }
-        if (renderer.currentWidth() == 0) {
-          Disposer.dispose(myInlay);
+      Iterator<Inlay> it = inlays.iterator();
+      while (it.hasNext()) {
+        Inlay inlay = it.next();
+        if (inlay.isValid()) {
+          MyRenderer renderer = (MyRenderer)inlay.getRenderer();
+          if (!renderer.nextStep()) {
+            it.remove();
+          }
+          if (renderer.currentWidth() == 0) {
+            Disposer.dispose(inlay);
+          }
+          else {
+            inlay.update();
+          }
         }
         else {
-          myInlay.update();
+          it.remove();
         }
+      }
+      if (inlays.isEmpty()) {
+        myEditor.putUserData(ANIMATION_STEP, null);
+      }
+      else {
+        scheduleAnimationStep(this);
       }
     }
   }
