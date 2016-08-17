@@ -102,7 +102,13 @@ public class RegExpLexerTest extends LexerTestCase {
                               "CLASS_END (']')", lexer);
   }
 
-
+  public void testNoNestedCharacterClasses() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
+    doTest("[[\\]]", "CLASS_BEGIN ('[')\n" +
+                     "CHARACTER ('[')\n" +
+                     "ESC_CHARACTER ('\\]')\n" +
+                     "CLASS_END (']')", lexer);
+  }
 
   @Override
   protected Lexer createLexer() {

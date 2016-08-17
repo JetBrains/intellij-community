@@ -250,6 +250,13 @@ HEX_CHAR=[0-9a-fA-F]
                             }
                             return RegExpTT.CHARACTER;
                           }
+
+  {LBRACKET} / {ESCAPE} {RBRACKET} { if (allowNestedCharacterClasses) {
+                                       yypushstate(CLASS1);
+                                       return RegExpTT.CLASS_BEGIN;
+                                     }
+                                     return RegExpTT.CHARACTER;
+                                   }
 }
 
 {LBRACKET} / {RBRACKET}   { if (allowEmptyCharacterClass) yypushstate(CLASS2); else yypushstate(CLASS1); return RegExpTT.CLASS_BEGIN; }
