@@ -173,9 +173,11 @@ public class VcsHistoryProviderBackgroundableProxy {
         indicator.setText(VcsUtil.getPathForProgressPresentation(filePath.getIOFile()));
         indicator.setIndeterminate(true);
         try {
-          VcsHistorySession cachedSession;
-          if (canUseLastRevisionCheck && myCachesHistory && ((cachedSession = getSessionFromCacheWithLastRevisionCheck(filePath, vcsKey))) != null) {
-            cachedPartner.reportCreatedEmptySession((VcsAbstractHistorySession)cachedSession);
+          VcsAbstractHistorySession cachedSession;
+          if (canUseLastRevisionCheck &&
+              myCachesHistory &&
+              (cachedSession = getSessionFromCacheWithLastRevisionCheck(filePath, vcsKey)) != null) {
+            cachedPartner.reportCreatedEmptySession(cachedSession);
           } else if (myDelegate instanceof VcsHistoryProviderEx) {
             ((VcsHistoryProviderEx)myDelegate).reportAppendableHistory(filePath, startRevisionNumber, cachedPartner);
           }
@@ -261,7 +263,7 @@ public class VcsHistoryProviderBackgroundableProxy {
     }
   }
 
-  private VcsHistorySession createSessionWithLimitCheck(final FilePath filePath) throws VcsException {
+  private VcsAbstractHistorySession createSessionWithLimitCheck(final FilePath filePath) throws VcsException {
     final LimitHistoryCheck check = new LimitHistoryCheck(myProject, filePath.getPath());
     final VcsAppendableHistoryPartnerAdapter partner = new VcsAppendableHistoryPartnerAdapter() {
       @Override
@@ -291,16 +293,15 @@ public class VcsHistoryProviderBackgroundableProxy {
 
     @Override
     public VcsHistorySession compute() throws VcsException {
-      VcsHistorySession session;
+      VcsAbstractHistorySession session;
       // we check for the last revision, since requests to this exact method at the moment only request history once, and no refresh is possible later
       session = getSessionFromCacheWithLastRevisionCheck(myFilePath, myVcsKey);
       if (session == null) {
         session = createSessionWithLimitCheck(myFilePath);
         VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> delegate =
           (VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession>)myDelegate;
-        FilePath correctedPath = delegate.getUsedFilePath((VcsAbstractHistorySession)session);
-        myVcsHistoryCache.put(myFilePath, correctedPath, myVcsKey, (VcsAbstractHistorySession)((VcsAbstractHistorySession) session).copy(),
-                              delegate, true);
+        FilePath correctedPath = delegate.getUsedFilePath(session);
+        myVcsHistoryCache.put(myFilePath, correctedPath, myVcsKey, (VcsAbstractHistorySession)session.copy(), delegate, true);
       }
       if (myConsumer != null) {
         myConsumer.consume(session);
@@ -310,12 +311,12 @@ public class VcsHistoryProviderBackgroundableProxy {
   }
 
   @Nullable
-  private VcsHistorySession getSessionFromCacheWithLastRevisionCheck(final FilePath filePath, final VcsKey vcsKey) {
+  private VcsAbstractHistorySession getSessionFromCacheWithLastRevisionCheck(final FilePath filePath, final VcsKey vcsKey) {
     final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
     if (pi != null) {
       pi.setText2("Checking last revision");
     }
-    final VcsAbstractHistorySession cached = getFullHistoryFromCache(vcsKey, filePath);
+    VcsAbstractHistorySession cached = getFullHistoryFromCache(vcsKey, filePath);
     if (cached == null) return null;
     final FilePath correctedFilePath =
       ((VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession>)myDelegate).getUsedFilePath(cached);
