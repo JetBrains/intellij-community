@@ -804,7 +804,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
    */
   void updateVisualPosition() {
     VerticalInfo oldInfo = myCaretInfo;
-    LogicalPosition visUnawarePos = new LogicalPosition(myLogicalCaret.line, myLogicalCaret.column);
+    LogicalPosition visUnawarePos = new LogicalPosition(myLogicalCaret.line, myLogicalCaret.column, myLogicalCaret.leansForward);
     setCurrentLogicalCaret(visUnawarePos);
     myVisibleCaret = myEditor.logicalToVisualPosition(myLogicalCaret);
     updateVisualLineInfo();
