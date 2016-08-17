@@ -1603,4 +1603,10 @@ class Bar {
     assert LookupElementPresentation.renderElement(myFixture.lookup.items[0]).tailText.contains('{...}')
     assert LookupElementPresentation.renderElement(myFixture.lookup.items[1]).tailText.contains('[]')
   }
+
+  public void testSuggestInterfaceArrayWhenObjectArrayIsExpected() {
+    configure()
+    assert LookupElementPresentation.renderElement(myFixture.lookup.items[0]).tailText.contains('{...}')
+    assert LookupElementPresentation.renderElement(myFixture.lookup.items[1]).tailText.contains('[]')
+  }
 }
