@@ -6,7 +6,7 @@ class Test {
   }
 
   void m(List l){
-    <error descr="Incompatible types. Found: 'java.lang.Object', required: 'boolean'">boolean foo = foo(l);</error>
-    <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.String'">String s = foo(l);</error>
+    boolean foo = foo<error descr="'foo(java.util.List<T>)' in 'Test' cannot be applied to '(java.util.List)'">(l)</error>;
+    String s = foo<error descr="'foo(java.util.List<T>)' in 'Test' cannot be applied to '(java.util.List)'">(l)</error>;
   }
 }

@@ -1187,6 +1187,12 @@ public class InferenceSession {
 
   @NotNull
   private PsiSubstitutor resolveSubset(Collection<InferenceVariable> vars, PsiSubstitutor substitutor) {
+    if (myErased) {
+      for (InferenceVariable var : vars) {
+        substitutor = substitutor.put(var, null);
+      }
+    }
+
     for (InferenceVariable var : vars) {
       final PsiType instantiation = var.getInstantiation();
       final PsiType type = instantiation == PsiType.NULL ? checkBoundsConsistency(substitutor, var) : instantiation;
@@ -1228,12 +1234,7 @@ public class InferenceSession {
         type =  PsiType.getJavaLangRuntimeException(myManager, GlobalSearchScope.allScope(myManager.getProject()));
       }
       else {
-        if (myErased) {
-          type = null;
-        }
-        else {
-          type = var.getBounds(InferenceBound.UPPER).size() == 1 ? myPolicy.getInferredTypeWithNoConstraint(myManager, upperBound).first : upperBound;
-        }
+        type = var.getBounds(InferenceBound.UPPER).size() == 1 ? myPolicy.getInferredTypeWithNoConstraint(myManager, upperBound).first : upperBound;
       }
 
       if (type instanceof PsiIntersectionType) {
