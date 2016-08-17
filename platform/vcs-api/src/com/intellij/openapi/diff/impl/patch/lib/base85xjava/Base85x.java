@@ -58,8 +58,7 @@ public class Base85x {
     return decode(data.toCharArray());
   }
 
-  public static char[] encode(byte[] data) throws Base85FormatException {
-    int length = data.length;
+  public static char[] encode(byte[] data, int length) throws Base85FormatException {
     char[] out = new char[(length / 4) * 5 + ((length % 4 != 0) ? length % 4 + 1 : 0)];
     int k = 0;
     // 64 bit integer
@@ -105,7 +104,7 @@ public class Base85x {
       for (j = 0; j < rest; j++) {
         block[j] = data[i + j];
       }
-      char[] out_rest = encode(block);
+      char[] out_rest = encode(block, block.length);
       for (j = 0; j < rest + 1; j++) {
         out[k] = out_rest[j];
         k++;
@@ -162,7 +161,7 @@ public class Base85x {
   }
 
   public static class Base85FormatException extends Exception {
-    public Base85FormatException(String s) {
+    Base85FormatException(String s) {
       super(s);
     }
   }
