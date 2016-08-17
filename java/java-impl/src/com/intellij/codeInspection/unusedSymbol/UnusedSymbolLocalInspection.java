@@ -72,12 +72,15 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
     private JLabel myFieldVisibilityCb;
     private JLabel myMethodVisibilityCb;
     private JLabel myMethodParameterVisibilityCb;
+    private JCheckBox myInnerClassesCheckBox;
+    private JLabel myInnerClassVisibilityCb;
 
     public OptionsPanel() {
       myCheckLocalVariablesCheckBox.setSelected(LOCAL_VARIABLE);
       myCheckClassesCheckBox.setSelected(CLASS);
       myCheckFieldsCheckBox.setSelected(FIELD);
       myCheckMethodsCheckBox.setSelected(METHOD);
+      myInnerClassesCheckBox.setSelected(INNER_CLASS);
 
       myCheckParametersCheckBox.setSelected(PARAMETER);
       myAccessors.setSelected(isIgnoreAccessors());
@@ -88,12 +91,21 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
         public void actionPerformed(ActionEvent e) {
           LOCAL_VARIABLE = myCheckLocalVariablesCheckBox.isSelected();
           CLASS = myCheckClassesCheckBox.isSelected();
-          FIELD = myCheckFieldsCheckBox.isSelected();
-          METHOD = myCheckMethodsCheckBox.isSelected();
-          PARAMETER = myCheckParametersCheckBox.isSelected();
+          UIUtil.setEnabled(myClassVisibilityCb, CLASS, true);
 
+          INNER_CLASS = myInnerClassesCheckBox.isSelected();
+          UIUtil.setEnabled(myInnerClassVisibilityCb, INNER_CLASS, true);
+
+          FIELD = myCheckFieldsCheckBox.isSelected();
+          UIUtil.setEnabled(myFieldVisibilityCb, FIELD, true);
+
+          METHOD = myCheckMethodsCheckBox.isSelected();
+          UIUtil.setEnabled(myMethodVisibilityCb, METHOD, true);
           myAccessors.setEnabled(METHOD);
           setIgnoreAccessors(!myAccessors.isSelected());
+
+          PARAMETER = myCheckParametersCheckBox.isSelected();
+          UIUtil.setEnabled(myMethodParameterVisibilityCb, PARAMETER, true);
         }
       };
       myCheckLocalVariablesCheckBox.addActionListener(listener);
@@ -101,10 +113,12 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
       myCheckMethodsCheckBox.addActionListener(listener);
       myCheckClassesCheckBox.addActionListener(listener);
       myCheckParametersCheckBox.addActionListener(listener);
+      myInnerClassesCheckBox.addActionListener(listener);
       myAccessors.addActionListener(listener);
 
-      ((MyLabel)myClassVisibilityCb).setupVisibilityLabel(() -> myClassVisibility, modifier -> setClassVisibility(modifier));
-      ((MyLabel)myFieldVisibilityCb).setupVisibilityLabel( () -> myFieldVisibility, modifier -> setFieldVisibility(modifier));
+      ((MyLabel)myClassVisibilityCb).setupVisibilityLabel(() -> myClassVisibility, modifier -> setClassVisibility(modifier), new String[]{PsiModifier.PUBLIC, PsiModifier.PACKAGE_LOCAL});
+      ((MyLabel)myInnerClassVisibilityCb).setupVisibilityLabel(() -> myInnerClassVisibility, modifier -> setInnerClassVisibility(modifier));
+      ((MyLabel)myFieldVisibilityCb).setupVisibilityLabel(() -> myFieldVisibility, modifier -> setFieldVisibility(modifier));
       ((MyLabel)myMethodVisibilityCb).setupVisibilityLabel(() -> myMethodVisibility, modifier -> setMethodVisibility(modifier));
       ((MyLabel)myMethodParameterVisibilityCb).setupVisibilityLabel(() -> myParameterVisibility, modifier -> setParameterVisibility(modifier));
     }
@@ -115,6 +129,7 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
 
     private void createUIComponents() {
       myClassVisibilityCb = new MyLabel();
+      myInnerClassVisibilityCb = new MyLabel();
       myFieldVisibilityCb = new MyLabel();
       myMethodVisibilityCb = new MyLabel();
       myMethodParameterVisibilityCb = new MyLabel();
@@ -130,6 +145,8 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
 
     public MyLabel() {
       setIcon(AllIcons.General.Combo2);
+      setDisabledIcon(AllIcons.General.Combo2);
+      setIconTextGap(0);
       setHorizontalTextPosition(SwingConstants.LEFT);
     }
 
@@ -144,23 +161,27 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
     }
 
     private void setupVisibilityLabel(Producer<String> visibilityProducer, Consumer<String> setter) {
+      setupVisibilityLabel(visibilityProducer, setter, MODIFIERS);
+    }
+
+    private void setupVisibilityLabel(Producer<String> visibilityProducer, Consumer<String> setter, final String[] modifiers) {
       setText(getPresentableText(visibilityProducer.produce()));
       new ClickListener() {
         @Override
         public boolean onClick(@NotNull MouseEvent e, int clickCount) {
           @SuppressWarnings("UseOfObsoleteCollectionType")
           Hashtable<Integer, JComponent> sliderLabels = new Hashtable<>();
-          for (int i = 0; i < MODIFIERS.length; i++) {
-            sliderLabels.put(i + 1, new JLabel(getPresentableText(MODIFIERS[i])));
+          for (int i = 0; i < modifiers.length; i++) {
+            sliderLabels.put(i + 1, new JLabel(getPresentableText(modifiers[i])));
           }
 
-          JSlider slider = new JSlider(SwingConstants.VERTICAL, 1, MODIFIERS.length, 1);
+          JSlider slider = new JSlider(SwingConstants.VERTICAL, 1, modifiers.length, 1);
           slider.setLabelTable(sliderLabels);
           slider.putClientProperty(UIUtil.JSLIDER_ISFILLED, Boolean.TRUE);
-          slider.setPreferredSize(JBUI.size(150, 100));
+          slider.setPreferredSize(JBUI.size(150, modifiers.length * 25));
           slider.setPaintLabels(true);
           slider.setSnapToTicks(true);
-          slider.setValue(ArrayUtil.find(MODIFIERS, visibilityProducer.produce()) + 1);
+          slider.setValue(ArrayUtil.find(modifiers, visibilityProducer.produce()) + 1);
           final JBPopup popup = JBPopupFactory.getInstance()
             .createComponentPopupBuilder(slider, null)
             .setCancelOnClickOutside(true)
@@ -168,7 +189,7 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
           popup.addListener(new JBPopupAdapter() {
             @Override
             public void onClosed(LightweightWindowEvent event) {
-              final String modifier = MODIFIERS[slider.getValue() - 1];
+              final String modifier = modifiers[slider.getValue() - 1];
               setter.consume(modifier);
               setText(getPresentableText(modifier));
               fireStateChanged();

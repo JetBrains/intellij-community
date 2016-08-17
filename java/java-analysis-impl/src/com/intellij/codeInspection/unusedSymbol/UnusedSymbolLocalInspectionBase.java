@@ -38,10 +38,12 @@ public class UnusedSymbolLocalInspectionBase extends BaseJavaLocalInspectionTool
   public boolean FIELD = true;
   public boolean METHOD = true;
   public boolean CLASS = true;
+  protected boolean INNER_CLASS = CLASS;
   public boolean PARAMETER = true;
   public boolean REPORT_PARAMETER_FOR_PUBLIC_METHODS = true;
 
   protected String myClassVisibility = PsiModifier.PUBLIC;
+  protected String myInnerClassVisibility = PsiModifier.PUBLIC;
   protected String myFieldVisibility = PsiModifier.PUBLIC;
   protected String myMethodVisibility = PsiModifier.PUBLIC;
   protected String myParameterVisibility = PsiModifier.PUBLIC;
@@ -72,6 +74,17 @@ public class UnusedSymbolLocalInspectionBase extends BaseJavaLocalInspectionTool
   public String getParameterVisibility() {
     if (!PARAMETER) return null;
     return myParameterVisibility;
+  }
+
+  @PsiModifier.ModifierConstant
+  @Nullable
+  public String getInnerClassVisibility() {
+    if (!INNER_CLASS) return null;
+    return myInnerClassVisibility;
+  }
+
+  public void setInnerClassVisibility(String innerClassVisibility) {
+    myInnerClassVisibility = innerClassVisibility;
   }
 
   public void setClassVisibility(String classVisibility) {
@@ -138,12 +151,19 @@ public class UnusedSymbolLocalInspectionBase extends BaseJavaLocalInspectionTool
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    writeVisibility(node, myClassVisibility, "inner_class");
+    writeVisibility(node, myClassVisibility, "klass");
+    writeVisibility(node, myInnerClassVisibility, "inner_class");
     writeVisibility(node, myFieldVisibility, "field");
     writeVisibility(node, myMethodVisibility, "method");
     writeVisibility(node, "parameter", myParameterVisibility, getParameterDefaultVisibility());
     if (myIgnoreAccessors) {
       node.setAttribute("ignoreAccessors", Boolean.toString(true));
+    }
+    if (!INNER_CLASS) {
+      Element element = new Element("option");
+      node.addContent(element);
+      element.setAttribute("name", "INNER_CLASS");
+      element.setAttribute("value", "false");
     }
     super.writeSettings(node);
   }
@@ -168,7 +188,8 @@ public class UnusedSymbolLocalInspectionBase extends BaseJavaLocalInspectionTool
   @Override
   public void readSettings(@NotNull Element node) throws InvalidDataException {
     super.readSettings(node);
-    myClassVisibility = readVisibility(node, "inner_class");
+    myClassVisibility = readVisibility(node, "klass");
+    myInnerClassVisibility = readVisibility(node, "inner_class");
     myFieldVisibility = readVisibility(node, "field");
     myMethodVisibility = readVisibility(node, "method");
     myParameterVisibility = readVisibility(node, "parameter", getParameterDefaultVisibility());
