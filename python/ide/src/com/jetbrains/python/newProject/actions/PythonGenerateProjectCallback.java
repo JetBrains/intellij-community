@@ -116,7 +116,6 @@ public class PythonGenerateProjectCallback implements NullableConsumer<ProjectSe
         return LocalFileSystem.getInstance().refreshAndFindFileByPath(name);
       }
     });
-    PySdkService.getInstance().solidifySdk(sdk);
     sdk = SdkConfigurationUtil.createAndAddSDK(sdkHome.getPath(), PythonSdkType.getInstance());
     if (sdk != null) {
       PythonSdkUpdater.updateOrShowError(sdk, null, project, null);
