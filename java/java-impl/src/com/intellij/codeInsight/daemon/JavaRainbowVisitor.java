@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
@@ -35,8 +34,6 @@ public class JavaRainbowVisitor extends RainbowVisitor {
 
   @Override
   public void visit(@NotNull PsiElement element) {
-    if (!RainbowHighlighter.isRainbowEnabled()) return;
-
     if (element instanceof PsiReferenceExpression
         || element instanceof PsiLocalVariable
         || element instanceof PsiParameter
@@ -50,9 +47,7 @@ public class JavaRainbowVisitor extends RainbowVisitor {
           : element instanceof PsiDocParamRef
             ? Pair.create(element, element.getReference() == null ? null : element.getReference().resolve())
             : Pair.create(((PsiVariable)element).getNameIdentifier(), element));
-        if (attrs != null) {
-          addInfo(attrs);
-        }
+        addInfo(attrs);
       }
     }
   }

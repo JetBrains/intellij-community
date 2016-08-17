@@ -17,8 +17,10 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.RainbowVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.CustomHighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
@@ -64,18 +66,17 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass");
   private static final String PRESENTABLE_NAME = DaemonBundle.message("pass.syntax");
   private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
-  static final Condition<PsiFile> SHOULD_HIGHLIGHT_FILTER =
-    file -> HighlightingLevelManager.getInstance(file.getProject()).shouldHighlight(file);
+  static final Condition<PsiFile> SHOULD_HIGHLIGHT_FILTER = file -> HighlightingLevelManager.getInstance(file.getProject()).shouldHighlight(file);
   private static final Random RESTART_DAEMON_RANDOM = new Random();
 
-  protected final boolean myUpdateAll;
-  protected final ProperTextRange myPriorityRange;
+  final boolean myUpdateAll;
+  final ProperTextRange myPriorityRange;
 
-  protected final List<HighlightInfo> myHighlights = new ArrayList<>();
+  final List<HighlightInfo> myHighlights = new ArrayList<>();
 
   protected volatile boolean myHasErrorElement;
   private volatile boolean myErrorFound;
-  protected final EditorColorsScheme myGlobalScheme;
+  final EditorColorsScheme myGlobalScheme;
   private volatile NotNullProducer<HighlightVisitor[]> myHighlightVisitorProducer = this::cloneHighlightVisitors;
 
   public GeneralHighlightingPass(@NotNull Project project,
@@ -139,6 +140,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     final List<HighlightVisitor> visitors = new ArrayList<>(highlightVisitors.length);
     List<HighlightVisitor> list = Arrays.asList(highlightVisitors);
     for (HighlightVisitor visitor : DumbService.getInstance(myProject).filterByDumbAwareness(list)) {
+      if (visitor instanceof RainbowVisitor && !RainbowHighlighter.isRainbowEnabled()) {
+        continue;
+      }
       if (visitor.suitableForFile(psiFile)) {
         visitors.add(visitor);
       }
@@ -153,7 +157,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return visitors.toArray(new HighlightVisitor[visitors.size()]);
   }
 
-  public void setHighlightVisitorProducer(@NotNull NotNullProducer<HighlightVisitor[]> highlightVisitorProducer) {
+  void setHighlightVisitorProducer(@NotNull NotNullProducer<HighlightVisitor[]> highlightVisitorProducer) {
     myHighlightVisitorProducer = highlightVisitorProducer;
   }
 
@@ -448,10 +452,10 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     for (TodoItem todoItem : todoItems) {
       progress.checkCanceled();
       TextRange range = todoItem.getTextRange();
-      String description = text.subSequence(range.getStartOffset(), range.getEndOffset()).toString();
       TextAttributes attributes = todoItem.getPattern().getAttributes().getTextAttributes();
       HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.TODO).range(range);
       builder.textAttributes(attributes);
+      String description = text.subSequence(range.getStartOffset(), range.getEndOffset()).toString();
       builder.description(description);
       builder.unescapedToolTip(StringUtil.shortenPathWithEllipsis(description, 1024));
       HighlightInfo info = builder.createUnconditionally();

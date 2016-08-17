@@ -20,7 +20,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.psi.PsiElement;
@@ -48,10 +47,10 @@ public abstract class RainbowVisitor implements HighlightVisitor {
   }
 
   @Override
-  public boolean analyze(@NotNull PsiFile file,
-                         boolean updateWholeFile,
-                         @NotNull HighlightInfoHolder holder,
-                         @NotNull Runnable action) {
+  public final boolean analyze(@NotNull PsiFile file,
+                               boolean updateWholeFile,
+                               @NotNull HighlightInfoHolder holder,
+                               @NotNull Runnable action) {
     myHolder = holder;
     myRainbowHighlighter = new RainbowHighlighter(myHolder.getColorsScheme());
     try {
@@ -69,17 +68,8 @@ public abstract class RainbowVisitor implements HighlightVisitor {
     return 1;
   }
 
-  protected void addInfo(HighlightInfo highlightInfo) {
+  protected void addInfo(@Nullable HighlightInfo highlightInfo) {
     myHolder.add(highlightInfo);
-  }
-
-  public static boolean existsPassSuitableForFile(@NotNull PsiFile file) {
-    for (HighlightVisitor visitor : Extensions.getExtensions(HighlightVisitor.EP_HIGHLIGHT_VISITOR, file.getProject())) {
-      if (visitor instanceof RainbowVisitor && visitor.suitableForFile(file)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   protected HighlightInfo getInfo(@NotNull final PsiElement context,
