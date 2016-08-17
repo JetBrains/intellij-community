@@ -424,9 +424,14 @@ public class InstancesWindow extends DialogWrapper {
 
       @Override
       protected void done() {
-        XValueChildrenList lst = new XValueChildrenList();
-        lst.addBottomGroup(myErrorsGroup);
-        addChildrenToTree(lst, true);
+        if (!myErrorsGroup.isEmpty()) {
+          XValueChildrenList lst = new XValueChildrenList();
+          lst.addBottomGroup(myErrorsGroup);
+          addChildrenToTree(lst, true);
+        } else {
+          addChildrenToTree(XValueChildrenList.EMPTY, true);
+        }
+
         myFilterButton.setEnabled(true);
         myProgress.complete(myCompletionReason);
       }

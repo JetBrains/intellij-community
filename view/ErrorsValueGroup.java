@@ -16,13 +16,14 @@ import java.util.Map;
 
 class ErrorsValueGroup extends XValueGroup {
   private final Map<String, List<XNamedValue>> myErrorMessage2ValueMap = new HashMap<>();
+
   ErrorsValueGroup(@NotNull String name) {
     super(name);
   }
 
   void addErrorValue(@NotNull String message, @NotNull XNamedValue value) {
     List<XNamedValue> lst;
-    if(!myErrorMessage2ValueMap.containsKey(message)) {
+    if (!myErrorMessage2ValueMap.containsKey(message)) {
       myErrorMessage2ValueMap.put(message, new ArrayList<>());
     }
 
@@ -41,6 +42,10 @@ class ErrorsValueGroup extends XValueGroup {
     XValueChildrenList lst = new XValueChildrenList();
     myErrorMessage2ValueMap.keySet().forEach(s -> lst.addTopGroup(new MyErrorsValueGroup(s)));
     node.addChildren(lst, true);
+  }
+
+  boolean isEmpty() {
+    return myErrorMessage2ValueMap.isEmpty();
   }
 
   private class MyErrorsValueGroup extends XValueGroup {
