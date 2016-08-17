@@ -46,7 +46,7 @@ import java.util.List;
 /**
  * Calculates width (in pixels) of editor contents.
  */
-class EditorSizeManager extends InlayModel.Adapter implements PrioritizedDocumentListener, Disposable, FoldingListener, Dumpable {
+class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedDocumentListener, Disposable, FoldingListener, Dumpable {
   private static final Logger LOG = Logger.getInstance(EditorSizeManager.class);
   
   private static final int UNKNOWN_WIDTH = Integer.MAX_VALUE;

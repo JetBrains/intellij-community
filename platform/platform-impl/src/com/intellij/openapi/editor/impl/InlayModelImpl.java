@@ -168,4 +168,8 @@ public class InlayModelImpl implements InlayModel, Disposable {
   public void addListener(@NotNull Listener listener, @NotNull Disposable disposable) {
     myDispatcher.addListener(listener, disposable);
   }
+
+  void notifyChanged(InlayImpl inlay) {
+    myDispatcher.getMulticaster().onChanged(inlay);
+  }
 }

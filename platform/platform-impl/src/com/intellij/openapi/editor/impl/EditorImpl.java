@@ -591,7 +591,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     else {
       myView = null;
     }
-    myInlayModel.addListener(new InlayModel.Adapter() {
+    myInlayModel.addListener(new InlayModel.SimpleAdapter() {
       @Override
       public void onChanged(Inlay inlay) {
         if (myDocument.isInEventsHandling() || myDocument.isInBulkUpdate()) return;

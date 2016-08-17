@@ -46,9 +46,11 @@ public interface InlayModel {
     void onAdded(Inlay inlay);
 
     void onRemoved(Inlay inlay);
+
+    void onChanged(Inlay inlay);
   }
 
-  abstract class Adapter implements Listener {
+  abstract class SimpleAdapter implements Listener {
     @Override
     public void onAdded(Inlay inlay) {
       onChanged(inlay);

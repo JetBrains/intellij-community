@@ -887,7 +887,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     }
   }
 
-  void onInlayRemoved() {
+  void onInlayChangedOrRemoved() {
     updateVisualPosition();
   }
 

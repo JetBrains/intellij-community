@@ -552,7 +552,16 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   public void onRemoved(Inlay inlay) {
     doWithCaretMerging(() -> {
       for (CaretImpl caret : myCarets) {
-        caret.onInlayRemoved();
+        caret.onInlayChangedOrRemoved();
+      }
+    });
+  }
+
+  @Override
+  public void onChanged(Inlay inlay) {
+    doWithCaretMerging(() -> {
+      for (CaretImpl caret : myCarets) {
+        caret.onInlayChangedOrRemoved();
       }
     });
   }
