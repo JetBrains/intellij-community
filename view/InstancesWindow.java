@@ -30,6 +30,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBProgressBar;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
@@ -41,7 +42,6 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.*;
-import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActionBase;
@@ -348,29 +348,7 @@ public class InstancesWindow extends DialogWrapper {
     }
 
     private class MySessionListener implements XDebugSessionListener {
-      private final XValueChildrenList myRunningAppChildNode = new XValueChildrenList();
-
       private volatile XDebuggerTreeState myTreeState = null;
-
-      {
-        myRunningAppChildNode.add(new XNamedValue("") {
-          @Override
-          public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
-            node.setPresentation(XDebuggerUIConstants.INFORMATION_MESSAGE_ICON, new XValuePresentation() {
-              @NotNull
-              @Override
-              public String getSeparator() {
-                return "";
-              }
-
-              @Override
-              public void renderValue(@NotNull XValueTextRenderer renderer) {
-                renderer.renderValue("The application is running");
-              }
-            }, false);
-          }
-        });
-      }
 
       @Override
       public void sessionResumed() {
@@ -378,11 +356,11 @@ public class InstancesWindow extends DialogWrapper {
           myTreeState = XDebuggerTreeState.saveState(myInstancesTree);
           cancelFilteringTask();
 
-          XDebuggerTreeNode root = myInstancesTree.getRoot();
-          if (root != null) {
-            root.clearChildren();
-            addChildrenToTree(myRunningAppChildNode, true);
-          }
+          myInstancesTree.getRoot().clearChildren();
+          XCompositeNode root = (XCompositeNode) myInstancesTree.getRoot();
+
+          root.setMessage("The application is running", XDebuggerUIConstants.INFORMATION_MESSAGE_ICON,
+              SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
         });
       }
 
