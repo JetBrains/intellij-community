@@ -58,6 +58,7 @@ import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.debugger.memory.utils.ErrorsValueGroup;
 import org.jetbrains.debugger.memory.utils.InstanceJavaValue;
 import org.jetbrains.debugger.memory.utils.InstanceValueDescriptor;
 import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;

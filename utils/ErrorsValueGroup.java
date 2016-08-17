@@ -1,4 +1,4 @@
-package org.jetbrains.debugger.memory.view;
+package org.jetbrains.debugger.memory.utils;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.util.containers.HashMap;
@@ -14,14 +14,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-class ErrorsValueGroup extends XValueGroup {
+public class ErrorsValueGroup extends XValueGroup {
   private final Map<String, List<XNamedValue>> myErrorMessage2ValueMap = new HashMap<>();
 
-  ErrorsValueGroup(@NotNull String name) {
+  public ErrorsValueGroup(@NotNull String name) {
     super(name);
   }
 
-  void addErrorValue(@NotNull String message, @NotNull XNamedValue value) {
+  public void addErrorValue(@NotNull String message, @NotNull XNamedValue value) {
     List<XNamedValue> lst;
     if (!myErrorMessage2ValueMap.containsKey(message)) {
       myErrorMessage2ValueMap.put(message, new ArrayList<>());
@@ -29,6 +29,10 @@ class ErrorsValueGroup extends XValueGroup {
 
     lst = myErrorMessage2ValueMap.get(message);
     lst.add(value);
+  }
+
+  public boolean isEmpty() {
+    return myErrorMessage2ValueMap.isEmpty();
   }
 
   @Nullable
@@ -42,10 +46,6 @@ class ErrorsValueGroup extends XValueGroup {
     XValueChildrenList lst = new XValueChildrenList();
     myErrorMessage2ValueMap.keySet().forEach(s -> lst.addTopGroup(new MyErrorsValueGroup(s)));
     node.addChildren(lst, true);
-  }
-
-  boolean isEmpty() {
-    return myErrorMessage2ValueMap.isEmpty();
   }
 
   private class MyErrorsValueGroup extends XValueGroup {
