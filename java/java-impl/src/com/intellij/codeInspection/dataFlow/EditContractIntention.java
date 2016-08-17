@@ -17,6 +17,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
+import com.intellij.codeInsight.InferredAnnotationsManagerImpl;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.LowPriorityAction;
@@ -97,7 +98,7 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
       }
     });
     if (builder.showAndGet()) {
-      updateContract(method, contractText.getText(), pureCB.isSelected(), oldPure);
+      updateContract(method, contractText.getText(), pureCB.isSelected());
     }
   }
 
@@ -119,14 +120,13 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
     return pureCB;
   }
 
-  private static void updateContract(PsiMethod method, String newContract, boolean newPure, boolean oldPure) {
+  private static void updateContract(PsiMethod method, String contract, boolean pure) {
     Project project = method.getProject();
     WriteAction.run(() -> {
       ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(project);
       manager.deannotate(method, ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
-      if (!StringUtil.isEmpty(newContract) || newPure || oldPure) {
-        String text = "value=\"" + newContract + "\", pure=" + newPure;
-        PsiAnnotation mockAnno = JavaPsiFacade.getElementFactory(project).createAnnotationFromText("@Foo(" + text + ")", null);
+      PsiAnnotation mockAnno = InferredAnnotationsManagerImpl.createContractAnnotation(project, pure, contract);
+      if (mockAnno != null) {
         manager.annotateExternally(method, ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT, method.getContainingFile(),
                                    mockAnno.getParameterList().getAttributes());
       }

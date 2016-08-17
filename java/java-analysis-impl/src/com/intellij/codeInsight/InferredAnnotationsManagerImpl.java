@@ -124,17 +124,22 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
 
   @Nullable
   private PsiAnnotation createContractAnnotation(List<MethodContract> contracts, boolean pure) {
+    return createContractAnnotation(myProject, pure, StringUtil.join(contracts, "; "));
+  }
+
+  @Nullable
+  public static PsiAnnotation createContractAnnotation(Project project, boolean pure, String contracts) {
     final String attrs;
     if (!contracts.isEmpty() && pure) {
-      attrs = "value = " + "\"" + StringUtil.join(contracts, "; ") + "\", pure = true";
+      attrs = "value = " + "\"" + contracts + "\", pure = true";
     } else if (pure) {
       attrs = "pure = true";
     } else if (!contracts.isEmpty()) {
-      attrs = "\"" + StringUtil.join(contracts, "; ") + "\"";
+      attrs = "\"" + contracts + "\"";
     } else {
       return null;
     }
-    return ProjectBytecodeAnalysis.getInstance(myProject).createContractAnnotation(attrs);
+    return ProjectBytecodeAnalysis.getInstance(project).createContractAnnotation(attrs);
   }
 
   @NotNull
