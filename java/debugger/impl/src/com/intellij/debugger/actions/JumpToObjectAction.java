@@ -105,8 +105,7 @@ public class JumpToObjectAction extends DebuggerAction{
         final ClassType clsType = (ClassType)type;
         Location lambdaLocation = null;
         if (DebuggerUtilsEx.isLambdaClassName(clsType.name())) {
-          List<Method> applicableMethods = ContainerUtil.filter(clsType.methods(),
-                                                                m -> !m.isConstructor() && !"get$Lambda".equals(m.name()));
+          List<Method> applicableMethods = ContainerUtil.filter(clsType.methods(), m -> m.isPublic() && !m.isBridge());
           if (applicableMethods.size() == 1) {
             AtomicReference<Location> locationRef = new AtomicReference<>();
             MethodBytecodeUtil.visit(clsType, applicableMethods.get(0), new MethodVisitor(Opcodes.API_VERSION) {
