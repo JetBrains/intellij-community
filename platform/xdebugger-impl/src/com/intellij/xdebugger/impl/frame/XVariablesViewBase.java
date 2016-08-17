@@ -142,6 +142,7 @@ public abstract class XVariablesViewBase extends XDebugView {
     }
   }
 
+  @NotNull
   public final XDebuggerTree getTree() {
     return myTreePanel.getTree();
   }
