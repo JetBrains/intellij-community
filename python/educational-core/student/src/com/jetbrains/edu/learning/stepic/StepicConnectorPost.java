@@ -124,7 +124,6 @@ public class StepicConnectorPost {
     }
 
     final HttpPost attemptRequest = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.ATTEMPTS);
-    //setHeaders(attemptRequest, "application/json");
     String attemptRequestBody = new Gson().toJson(new StepicWrappers.AttemptWrapper(task.getStepicId()));
     attemptRequest.setEntity(new StringEntity(attemptRequestBody, ContentType.APPLICATION_JSON));
 
@@ -253,7 +252,6 @@ public class StepicConnectorPost {
       course.setAuthors(user.users);
     }
 
-    //setHeaders(request, EduStepicNames.CONTENT_TYPE_APPL_JSON);
     String requestBody = new Gson().toJson(new StepicWrappers.CourseWrapper(course));
     request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
 
@@ -331,7 +329,6 @@ public class StepicConnectorPost {
 
   private static void postUnit(int lessonId, int position, int sectionId) {
     final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.UNITS);
-    //setHeaders(request, EduStepicNames.CONTENT_TYPE_APPL_JSON);
     final StepicWrappers.UnitWrapper unitWrapper = new StepicWrappers.UnitWrapper();
     unitWrapper.unit = new StepicWrappers.Unit();
     unitWrapper.unit.lesson = lessonId;
@@ -357,7 +354,6 @@ public class StepicConnectorPost {
 
   private static int postModule(int courseId, int position, @NotNull final String title) {
     final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + "sections");
-    //setHeaders(request, "application/json");
     final StepicWrappers.Section section = new StepicWrappers.Section();
     section.course = courseId;
     section.title = title;
@@ -392,7 +388,6 @@ public class StepicConnectorPost {
       StepicConnectorLogin.loginFromDialog(project);
     }
 
-    //setHeaders(request, "application/json");
     String requestBody = new Gson().toJson(new StepicWrappers.LessonWrapper(lesson));
     request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
 
@@ -453,7 +448,6 @@ public class StepicConnectorPost {
       }
     }
 
-    //setHeaders(request, "application/json");
     String requestBody = new Gson().toJson(new StepicWrappers.LessonWrapper(lesson));
     request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
 
