@@ -178,11 +178,20 @@ class RandomAccessFileWithLengthAndSizeTracking extends RandomAccessFile {
     if (LOG.isTraceEnabled()) {
       LOG.trace("Closed:" + this + "," + Thread.currentThread() );
     }
+    force();
     super.close();
   }
 
   @Override
   public String toString() {
     return myPath + "@" + Integer.toHexString(hashCode());
+  }
+
+  public void force() throws IOException {
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("Forcing:" + this + "," + Thread.currentThread() );
+    }
+
+    getFD().sync();
   }
 }
