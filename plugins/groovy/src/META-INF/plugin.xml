@@ -824,13 +824,13 @@
                      groupName="Style" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.JavaStylePropertiesInvocationInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" groupName="Style"
-                     displayName="Unnecessary 'def'" enabledByDefault="true" cleanupTool="true"
+                     displayName="Unnecessary 'def'" cleanupTool="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessaryDefModifierInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" groupName="Style"
-                     displayName="Unnecessary 'public'" enabledByDefault="true" cleanupTool="true"
+                     displayName="Unnecessary 'public'" cleanupTool="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessaryPublicModifierInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" groupName="Style"
-                     displayName="Unnecessary semicolon" enabledByDefault="true" cleanupTool="true"
+                     displayName="Unnecessary semicolon" cleanupTool="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessarySemicolonInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="ChangeToOperator"
                      displayName="Change to operator"
