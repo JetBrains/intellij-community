@@ -120,6 +120,7 @@ public final class TextEditorState implements FileEditorState {
   public static class CaretState {
     public int   LINE;
     public int   COLUMN;
+    public boolean LEAN_FORWARD;
     public int   SELECTION_START_LINE;
     public int   SELECTION_START_COLUMN;
     public int   SELECTION_END_LINE;
