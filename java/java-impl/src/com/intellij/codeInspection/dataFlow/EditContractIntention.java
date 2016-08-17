@@ -124,7 +124,7 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
     WriteAction.run(() -> {
       ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(project);
       manager.deannotate(method, ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
-      if (!StringUtil.isEmpty(newContract) || newPure != oldPure) {
+      if (!StringUtil.isEmpty(newContract) || newPure || oldPure) {
         String text = "value=\"" + newContract + "\", pure=" + newPure;
         PsiAnnotation mockAnno = JavaPsiFacade.getElementFactory(project).createAnnotationFromText("@Foo(" + text + ")", null);
         manager.annotateExternally(method, ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT, method.getContainingFile(),
