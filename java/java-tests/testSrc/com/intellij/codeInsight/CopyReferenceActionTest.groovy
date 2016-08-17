@@ -19,11 +19,18 @@ import com.intellij.JavaTestUtil
 import com.intellij.ide.actions.CopyReferenceAction
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.psi.PsiFile
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 class CopyReferenceActionTest extends LightCodeInsightFixtureTestCase {
   private int oldSetting
+
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_9
+  }
 
   @Override
   protected String getBasePath() {
@@ -68,7 +75,6 @@ class CopyReferenceActionTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResult """import foo.Foo;
 
 class Goo { Foo }"""
-
   }
 
   void "test paste correct signature to javadoc"() {
@@ -121,7 +127,6 @@ class Foo {
     myFixture.configureByText "b.java", "import <caret>"
     performPaste()
     myFixture.checkResult """import foo.Foo<caret>"""
-
   }
 
   void testCopyFile() {
@@ -168,6 +173,18 @@ class Koo2 { }
  */
 class Koo2 { }
 '''
+  }
+
+  void testModuleNameCopy() {
+    myFixture.configureByText 'module-info.java', 'module M16<caret> { }'
+    performCopy()
+    assert CopyPasteManager.getInstance().getContents(CopyReferenceAction.ourFlavor) == 'M16'
+  }
+
+  void testModuleReferenceCopy() {
+    myFixture.configureByText 'module-info.java', 'module M16 { requires M16<caret>; }'
+    performCopy()
+    assert CopyPasteManager.getInstance().getContents(CopyReferenceAction.ourFlavor) == 'M16'
   }
 
   private void doTest() {
