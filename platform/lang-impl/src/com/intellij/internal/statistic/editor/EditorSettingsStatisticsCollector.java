@@ -57,7 +57,7 @@ class EditorSettingsStatisticsCollector extends UsagesCollector {
     addIfDiffers(set, es.isBlinkCaret(), true, "nonBlinkingCaret");
     addIfDiffers(set, es.isBlockCursor(), false, "blockCaret");
     addIfDiffers(set, es.isRightMarginShown(), true, "noRightMargin");
-    addIfDiffers(set, es.isLineNumbersShown(), false, "lineNumbers");
+    addIfDiffers(set, es.isLineNumbersShown(), true, "noLineNumbers");
     addIfDiffers(set, es.areGutterIconsShown(), true, "gutterIcons");
     addIfDiffers(set, es.isFoldingOutlineShown(), true, "noFoldingOutline");
     addIfDiffers(set, es.isWhitespacesShown() && es.isLeadingWhitespacesShown(), false, "showLeadingWhitespace");
