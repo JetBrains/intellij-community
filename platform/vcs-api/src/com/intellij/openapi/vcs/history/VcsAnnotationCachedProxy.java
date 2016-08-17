@@ -146,7 +146,7 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider {
   }
 
   @Override
-  public boolean isAnnotationValid(VcsFileRevision rev) {
+  public boolean isAnnotationValid(@NotNull VcsFileRevision rev) {
     return myAnnotationProvider.isAnnotationValid(rev);
   }
 

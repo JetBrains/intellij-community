@@ -83,10 +83,6 @@ public class CvsAnnotationProvider implements AnnotationProvider{
     return annotate(file, revision.getRevisionNumber().asString(), settings);
   }
 
-  public boolean isAnnotationValid(VcsFileRevision rev){
-    return true;
-  }
-
   public FileAnnotation annotate(VirtualFile cvsVirtualFile, String revision, CvsEnvironment environment) throws VcsException {
     // the VirtualFile has a full path if annotate is called from history (when we have a real file on disk),
     // and has the path equal to a CVS module name if annotate is called from the CVS repository browser

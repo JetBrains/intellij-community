@@ -249,8 +249,4 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
     }
     return new GitFileAnnotation(myProject, virtualFile, revisionNumber, lines);
   }
-
-  public boolean isAnnotationValid(VcsFileRevision rev) {
-    return true;
-  }
 }
