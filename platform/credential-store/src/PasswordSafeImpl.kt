@@ -112,6 +112,8 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
     finally {
       (currentProvider as? FileCredentialStore)?.let { it.clear() }
     }
+
+    ApplicationManager.getApplication().messageBus.syncPublisher(PasswordSafeSettings.TOPIC).credentialStoreCleared()
   }
 
   // public - backward compatibility

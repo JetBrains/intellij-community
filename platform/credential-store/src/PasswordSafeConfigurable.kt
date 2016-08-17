@@ -70,7 +70,3 @@ class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings> {
     }
   }
 }
-
-interface PasswordSafeSettingsListener {
-  fun typeChanged(oldValue: PasswordSafeSettings.ProviderType, newValue: PasswordSafeSettings.ProviderType)
-}
