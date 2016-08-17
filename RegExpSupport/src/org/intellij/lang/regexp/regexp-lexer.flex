@@ -151,15 +151,21 @@ HEX_CHAR=[0-9a-fA-F]
     parser will drop digits until the number is smaller or equal to the existing
     number of groups or it is one digit."
 */
-{ESCAPE} [0-7]{3}             { if (allowOctalNoLeadingZero) return RegExpTT.OCT_CHAR;
-                                if (yystate() == CLASS2) return RegExpTT.ESC_CHARACTER;
-                                while (yylength() > 2 && Integer.parseInt(yytext().toString().substring(1)) > capturingGroupCount) {
-                                  yypushback(1);
+{ESCAPE} {DIGITS}             { if (allowOctalNoLeadingZero) {
+                                  CharSequence s = yytext();
+                                  int i = 1;
+                                  for (; i < s.length(); i++) {
+                                    if (s.charAt(i) > '7') break;
+                                  }
+                                  if (i > 1) {
+                                    yypushback(yylength() - i);
+                                    return RegExpTT.OCT_CHAR;
+                                  }
                                 }
-                                return RegExpTT.BACKREF;
-                              }
-
-{ESCAPE} {DIGITS}             { if (yystate() == CLASS2) return RegExpTT.ESC_CHARACTER;
+                                if (yystate() == CLASS2) {
+                                  yypushback(yylength() - 2);
+                                  return RegExpTT.REDUNDANT_ESCAPE;
+                                }
                                 while (yylength() > 2 && Integer.parseInt(yytext().toString().substring(1)) > capturingGroupCount) {
                                   yypushback(1);
                                 }
