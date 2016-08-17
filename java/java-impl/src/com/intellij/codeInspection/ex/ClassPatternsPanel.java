@@ -15,13 +15,11 @@
  */
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.ItemRemovable;
+import com.intellij.util.ui.JBDimension;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -33,21 +31,13 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-class ConfigureClassPatternsDialog extends DialogWrapper {
+class ClassPatternsPanel extends JPanel {
 
   private final List<EntryPointsManagerBase.ClassPattern> myModifiedPatterns;
-  private final List<EntryPointsManagerBase.ClassPattern> myPatterns;
-  private final Project myProject;
-  public ConfigureClassPatternsDialog(List<EntryPointsManagerBase.ClassPattern> patterns, Project project) {
-    super(project);
+
+  public ClassPatternsPanel(List<EntryPointsManagerBase.ClassPattern> patterns) {
+    super(new BorderLayout());
     myModifiedPatterns = new ArrayList<>(patterns);
-    myPatterns = patterns;
-    myProject = project;
-    init();
-    setTitle("Configure Class Patterns");
-  }
-  @Override
-  protected JComponent createCenterPanel() {
     final JBTable table = createTableForPatterns();
     final ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(table)
       .setAddAction(new AnActionButtonRunnable() {
@@ -74,18 +64,9 @@ class ConfigureClassPatternsDialog extends DialogWrapper {
         }
       })
       .setButtonComparator("Add", "Remove");
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.add(SeparatorFactory.createSeparator("Mark class as entry point if name matches", null), BorderLayout.NORTH);
-    panel.add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
-    return panel;
-  }
-
-  @Override
-  protected void doOKAction() {
-    myPatterns.clear();
-    myPatterns.addAll(myModifiedPatterns);
-    DaemonCodeAnalyzer.getInstance(myProject).restart();
-    super.doOKAction();
+    add(SeparatorFactory.createSeparator("Mark class as entry point if name matches", null), BorderLayout.NORTH);
+    add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
+    setPreferredSize(new JBDimension(-1, 250));
   }
 
   private JBTable createTableForPatterns() {

@@ -71,11 +71,6 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
   }
 
   @Override
-  public void configureEntryClassPatterns() {
-    new ConfigureClassPatternsDialog(getPatterns(), myProject).show();
-  }
-
-  @Override
   public JButton createConfigureAnnotationsBtn() {
     return createConfigureAnnotationsButton();
   }
@@ -86,17 +81,6 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
       @Override
       public void actionPerformed(ActionEvent e) {
         getInstance(ProjectUtil.guessCurrentProject(configureAnnotations)).configureAnnotations();
-      }
-    });
-    return configureAnnotations;
-  }
-
-  public static JButton createConfigureClassPatternsButton() {
-    final JButton configureAnnotations = new JButton("Configure class patterns...");
-    configureAnnotations.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        getInstance(ProjectUtil.guessCurrentProject(configureAnnotations)).configureEntryClassPatterns();
       }
     });
     return configureAnnotations;
