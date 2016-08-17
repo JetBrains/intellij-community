@@ -16,7 +16,6 @@ import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.render.CachedEvaluator;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -29,14 +28,12 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.JBProgressBar;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
@@ -68,8 +65,6 @@ import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 import javax.swing.*;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -106,6 +101,10 @@ public class InstancesWindow extends DialogWrapper {
     root.setDefaultButton(myInstancesView.myFilterButton);
   }
 
+  enum FilteringCompletionReason {
+    ALL_CHECKED, INTERRUPTED, LIMIT_REACHED
+  }
+
   @NotNull
   @Override
   protected String getDimensionServiceKey() {
@@ -126,7 +125,7 @@ public class InstancesWindow extends DialogWrapper {
   protected JComponent createSouthPanel() {
     JComponent comp = super.createSouthPanel();
     if (comp != null) {
-      comp.add(myInstancesView.myProgressPanel, BorderLayout.WEST);
+      comp.add(myInstancesView.myProgress, BorderLayout.WEST);
     }
 
     return comp;
@@ -156,9 +155,8 @@ public class InstancesWindow extends DialogWrapper {
     private final MyCachedEvaluator myEvaluator = new MyCachedEvaluator();
     private final MyNodeManager myNodeManager = new MyNodeManager(myProject);
 
-    private final JBProgressBar myFilteringProgressBar = new JBProgressBar();
     private final JButton myFilterButton = new JButton("Filter");
-    private final JComponent myProgressPanel = new JBPanel<>(new BorderLayout());
+    private final FilteringProgressView myProgress = new FilteringProgressView();
 
     private final AnActionListener.Adapter myActionListener = new MyActionListener();
     private final Object myFilteringTaskLock = new Object();
@@ -189,17 +187,7 @@ public class InstancesWindow extends DialogWrapper {
       filteringPane.add(myFilterConditionEditor.getComponent(), BorderLayout.CENTER);
       filteringPane.add(myFilterButton, BorderLayout.EAST);
 
-      JLabel stopFilteringButton =
-          new JLabel(UIUtil.isUnderDarcula() ? AllIcons.Actions.Clean : AllIcons.Actions.CleanLight);
-      stopFilteringButton.setOpaque(true);
-      stopFilteringButton.addMouseListener(new MouseAdapter() {
-        public void mousePressed(MouseEvent e) {
-          cancelFilteringTask();
-        }
-      });
-
-      myProgressPanel.add(myFilteringProgressBar, BorderLayout.CENTER);
-      myProgressPanel.add(stopFilteringButton, BorderLayout.EAST);
+      myProgress.addStopActionListener(this::cancelFilteringTask);
 
       XDebuggerTreeCreator treeCreator =
           new XDebuggerTreeCreator(myProject, editorsProvider, null, markers);
@@ -259,23 +247,15 @@ public class InstancesWindow extends DialogWrapper {
           if (evaluationContext != null) {
             synchronized (myFilteringTaskLock) {
               myFilteringTask = new MyFilteringWorker(instances, evaluationContext, createEvaluator());
+              SwingUtilities.invokeLater(() -> {
+                myProgress.start(instances.size());
+                myFilteringTask.execute();
+              });
               myFilteringTask.execute();
             }
           }
         }
       });
-    }
-
-    private void showProgressPane(int progressBarMaximum) {
-      myFilteringProgressBar.setMinimum(0);
-      myFilteringProgressBar.setMaximum(progressBarMaximum);
-      myProgressPanel.setVisible(true);
-      myProgressPanel.repaint();
-    }
-
-    private void hideProgressPane() {
-      myProgressPanel.setVisible(false);
-      myProgressPanel.repaint();
     }
 
     @Nullable
@@ -430,6 +410,9 @@ public class InstancesWindow extends DialogWrapper {
 
       private volatile boolean myDebuggerTaskCompleted = false;
 
+      @NotNull
+      private volatile FilteringCompletionReason myCompletionReason = FilteringCompletionReason.INTERRUPTED;
+
       MyFilteringWorker(@NotNull List<ObjectReference> refs,
                         @NotNull EvaluationContextImpl evaluationContext,
                         @Nullable ExpressionEvaluator evaluator) {
@@ -440,9 +423,11 @@ public class InstancesWindow extends DialogWrapper {
 
       @Override
       protected void done() {
-        addChildrenToTree(XValueChildrenList.EMPTY, true);
-        myFilterButton.setEnabled(true);
-        hideProgressPane();
+        SwingUtilities.invokeLater(() -> {
+          addChildrenToTree(XValueChildrenList.EMPTY, true);
+          myFilterButton.setEnabled(true);
+          myProgress.complete(myCompletionReason);
+        });
       }
 
       @Override
@@ -450,10 +435,10 @@ public class InstancesWindow extends DialogWrapper {
         DebugProcessImpl debugProcess = (DebugProcessImpl) DebuggerManager.getInstance(myProject)
             .getDebugProcess(myDebugSession.getDebugProcess().getProcessHandler());
 
-        SwingUtilities.invokeLater(() -> showProgressPane(myReferences.size()));
-
         AtomicInteger totalChildren = new AtomicInteger(0);
-        for (int i = 0, size = myReferences.size(); i < size; i += FILTERING_CHUNK_SIZE) {
+        AtomicInteger totalViewed = new AtomicInteger(0);
+        for (int i = 0, size = myReferences.size(); i < size && totalChildren.get() < MAX_TREE_NODE_COUNT;
+             i += FILTERING_CHUNK_SIZE) {
           myDebuggerTaskCompleted = false;
           final int chunkBegin = i;
           debugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(debugProcess.getDebuggerContext()) {
@@ -466,19 +451,28 @@ public class InstancesWindow extends DialogWrapper {
             public void threadAction(@NotNull SuspendContextImpl suspendContext) {
               XValueChildrenList children = new XValueChildrenList();
               int endOfChunk = min(chunkBegin + FILTERING_CHUNK_SIZE, size);
+              int errorCount = 0;
               for (int j = chunkBegin; j < endOfChunk && totalChildren.get() < MAX_TREE_NODE_COUNT; j++) {
                 ObjectReference ref = myReferences.get(j);
-                if (myExpressionEvaluator != null && isSatisfy(myExpressionEvaluator, ref) != MyFilteringResult.MATCH) {
-                  continue;
+                totalViewed.incrementAndGet();
+                if (myExpressionEvaluator != null) {
+                  MyFilteringResult comparison = isSatisfy(myExpressionEvaluator, ref);
+                  if(comparison == MyFilteringResult.EVAL_ERROR) {
+                    errorCount++;
+                  }
+
+                  if(comparison != MyFilteringResult.MATCH) {
+                    continue;
+                  }
                 }
 
                 JavaValue val = new InstanceJavaValue(null, new InstanceValueDescriptor(myProject, ref),
                     myEvaluationContext, myNodeManager, true);
                 children.add(val);
+                totalChildren.incrementAndGet();
               }
 
               if (children.size() > 0) {
-                totalChildren.addAndGet(children.size());
                 SwingUtilities.invokeLater(() -> {
                   if (MyFilteringWorker.this == myFilteringTask) {
                     addChildrenToTree(children, false);
@@ -486,7 +480,10 @@ public class InstancesWindow extends DialogWrapper {
                 });
               }
 
-              SwingUtilities.invokeLater(() -> myFilteringProgressBar.setValue(endOfChunk));
+              final int childrenSize = children.size();
+              final int finalErrorsCount = errorCount;
+              SwingUtilities.invokeLater(() ->
+                  myProgress.updateProgress(endOfChunk - chunkBegin, childrenSize, finalErrorsCount));
 
               synchronized (MyFilteringWorker.this) {
                 myDebuggerTaskCompleted = true;
@@ -500,10 +497,11 @@ public class InstancesWindow extends DialogWrapper {
               MyFilteringWorker.this.wait();
             }
           }
-          if (totalChildren.get() >= MAX_TREE_NODE_COUNT) {
-            break;
-          }
         }
+
+        myCompletionReason = totalViewed.get() == myReferences.size()
+            ? FilteringCompletionReason.ALL_CHECKED
+            : FilteringCompletionReason.LIMIT_REACHED;
 
         return null;
       }
