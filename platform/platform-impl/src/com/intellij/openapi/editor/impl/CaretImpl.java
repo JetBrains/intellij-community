@@ -878,7 +878,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   }
 
   void onInlayAdded(int offset) {
-    if (offset == myOffset) {
+    if (offset == myOffset && myLogicalCaret.leansForward) {
       VisualPosition pos = myEditor.offsetToVisualPosition(myOffset, true, false);
       moveToVisualPosition(pos);
     }
