@@ -30,7 +30,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.*;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.IconUtil;
@@ -138,19 +137,19 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       @Override
       public void projectOpened(final Project project) {
         final MessageBusConnection connect = project.getMessageBus().connect(project);
-        connect.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionAdapter(){
+        connect.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener(){
           @Override
-          public void processStartScheduled(String executorId, ExecutionEnvironment environment) {
+          public void processStartScheduled(@NotNull String executorId, @NotNull ExecutionEnvironment environment) {
             myInProgress.add(createExecutionId(executorId, environment));
           }
 
           @Override
-          public void processNotStarted(String executorId, @NotNull ExecutionEnvironment environment) {
+          public void processNotStarted(@NotNull String executorId, @NotNull ExecutionEnvironment environment) {
             myInProgress.remove(createExecutionId(executorId, environment));
           }
 
           @Override
-          public void processStarted(String executorId, @NotNull ExecutionEnvironment environment, @NotNull ProcessHandler handler) {
+          public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment environment, @NotNull ProcessHandler handler) {
             myInProgress.remove(createExecutionId(executorId, environment));
           }
         });
