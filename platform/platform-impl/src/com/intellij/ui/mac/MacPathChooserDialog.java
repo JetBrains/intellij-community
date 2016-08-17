@@ -107,6 +107,8 @@ public class MacPathChooserDialog implements PathChooserDialog, FileChooserDialo
       myFileDialog.setFile(toSelect.getPath());
     }
 
+    myFileDialog.setMultipleMode(myFileChooserDescriptor.isChooseMultiple());
+
     final CommandProcessorEx commandProcessor =
       ApplicationManager.getApplication() != null ? (CommandProcessorEx)CommandProcessor.getInstance() : null;
     final boolean appStarted = commandProcessor != null;
