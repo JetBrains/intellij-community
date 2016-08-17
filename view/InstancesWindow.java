@@ -145,7 +145,7 @@ public class InstancesWindow extends DialogWrapper {
 
   private class MyInstancesView extends JBPanel implements Disposable {
     private static final String HISTORY_ID_PREFIX = "filtering";
-    private static final int MAX_TREE_NODE_COUNT = 1000;
+    private static final int MAX_TREE_NODE_COUNT = 2000;
     private static final int FILTERING_CHUNK_SIZE = 30;
 
     private final XDebuggerTree myInstancesTree;
@@ -407,6 +407,7 @@ public class InstancesWindow extends DialogWrapper {
       private final List<ObjectReference> myReferences;
       private final EvaluationContextImpl myEvaluationContext;
       private final ExpressionEvaluator myExpressionEvaluator;
+      private final ErrorsValueGroup myErrorsGroup = new ErrorsValueGroup("Errors");
 
       private volatile boolean myDebuggerTaskCompleted = false;
 
@@ -423,11 +424,11 @@ public class InstancesWindow extends DialogWrapper {
 
       @Override
       protected void done() {
-        SwingUtilities.invokeLater(() -> {
-          addChildrenToTree(XValueChildrenList.EMPTY, true);
-          myFilterButton.setEnabled(true);
-          myProgress.complete(myCompletionReason);
-        });
+        XValueChildrenList lst = new XValueChildrenList();
+        lst.addBottomGroup(myErrorsGroup);
+        addChildrenToTree(lst, true);
+        myFilterButton.setEnabled(true);
+        myProgress.complete(myCompletionReason);
       }
 
       @Override
@@ -449,26 +450,33 @@ public class InstancesWindow extends DialogWrapper {
 
             @Override
             public void threadAction(@NotNull SuspendContextImpl suspendContext) {
+              // TODO: need to rewrite this
               XValueChildrenList children = new XValueChildrenList();
               int endOfChunk = min(chunkBegin + FILTERING_CHUNK_SIZE, size);
               int errorCount = 0;
               for (int j = chunkBegin; j < endOfChunk && totalChildren.get() < MAX_TREE_NODE_COUNT; j++) {
                 ObjectReference ref = myReferences.get(j);
                 totalViewed.incrementAndGet();
+                Pair<MyFilteringResult, String> comparison = null;
                 if (myExpressionEvaluator != null) {
-                  MyFilteringResult comparison = isSatisfy(myExpressionEvaluator, ref);
-                  if(comparison == MyFilteringResult.EVAL_ERROR) {
+                  comparison = isSatisfy(myExpressionEvaluator, ref);
+                  if (comparison.first == MyFilteringResult.EVAL_ERROR) {
                     errorCount++;
                   }
 
-                  if(comparison != MyFilteringResult.MATCH) {
+                  if (comparison.first == MyFilteringResult.NO_MATCH) {
                     continue;
                   }
                 }
 
                 JavaValue val = new InstanceJavaValue(null, new InstanceValueDescriptor(myProject, ref),
                     myEvaluationContext, myNodeManager, true);
-                children.add(val);
+                if (comparison == null || comparison.first == MyFilteringResult.MATCH) {
+                  children.add(val);
+                } else {
+                  myErrorsGroup.addErrorValue(comparison.second, val);
+                }
+
                 totalChildren.incrementAndGet();
               }
 
@@ -506,17 +514,17 @@ public class InstancesWindow extends DialogWrapper {
         return null;
       }
 
-      private MyFilteringResult isSatisfy(@NotNull ExpressionEvaluator evaluator, @NotNull Value value) {
+      private Pair<MyFilteringResult, String> isSatisfy(@NotNull ExpressionEvaluator evaluator, @NotNull Value value) {
         try {
           Value result = evaluator.evaluate(myEvaluationContext.createEvaluationContext(value));
           if (result instanceof BooleanValue && ((BooleanValue) result).value()) {
-            return MyFilteringResult.MATCH;
+            return Pair.create(MyFilteringResult.MATCH, "");
           }
         } catch (EvaluateException e) {
-          return MyFilteringResult.EVAL_ERROR;
+          return Pair.create(MyFilteringResult.EVAL_ERROR, e.getMessage());
         }
 
-        return MyFilteringResult.NO_MATCH;
+        return Pair.create(MyFilteringResult.NO_MATCH, "");
       }
     }
   }
