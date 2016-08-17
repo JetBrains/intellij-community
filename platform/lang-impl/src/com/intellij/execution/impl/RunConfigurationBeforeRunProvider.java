@@ -241,8 +241,8 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
               onFinish.consume(event.getExitCode());
             }
           });
-          int exitCode = handler.getExitCode();
-          if (exitCode != -1) {
+          Integer exitCode = handler.getExitCode();
+          if (exitCode != null) {
             onFinish.consume(exitCode);
           }
         }
