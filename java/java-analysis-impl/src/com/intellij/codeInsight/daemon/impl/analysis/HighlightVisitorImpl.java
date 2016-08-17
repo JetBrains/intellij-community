@@ -1633,7 +1633,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitModule(module);
     if (!myHolder.hasErrorResults()) myHolder.add(checkFeature(module, Feature.MODULES));
     if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkFileName(module, myFile));
-    if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkModuleDuplicates(module, myFile));
     if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkFileDuplicates(module, myFile));
     if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkFileLocation(module, myFile));
   }

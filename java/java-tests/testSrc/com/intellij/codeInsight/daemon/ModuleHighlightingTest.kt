@@ -29,11 +29,6 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
     myFixture.checkHighlighting()
   }
 
-  fun testModuleDuplicate() {
-    additionalFile("""module M { }""")
-    doTest("""module <error descr="Module 'M' already exists in the project">M</error> { }""")
-  }
-
   fun testFileDuplicate() {
     additionalFile("""module M.bis { }""")
     doTest("""<error descr="'module-info.java' already exists in the module">module M</error> { }""")

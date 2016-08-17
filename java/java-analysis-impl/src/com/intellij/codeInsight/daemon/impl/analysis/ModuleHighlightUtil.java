@@ -31,9 +31,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.search.FilenameIndex;
-import com.intellij.psi.search.ProjectScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,23 +46,6 @@ public class ModuleHighlightUtil {
       String message = JavaErrorMessages.message("module.file.wrong.name");
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(element)).description(message).create();
       QuickFixAction.registerQuickFixAction(info, factory().createRenameFileFix(MODULE_INFO_FILE));
-      return info;
-    }
-
-    return null;
-  }
-
-  @Nullable
-  static HighlightInfo checkModuleDuplicates(@NotNull PsiJavaModule element, @NotNull PsiFile file) {
-    String name = element.getModuleName();
-    Project project = file.getProject();
-    Collection<PsiJavaModule> others = JavaModuleNameIndex.getInstance().get(name, project, ProjectScope.getAllScope(project));
-    if (others.size() > 1) {
-      String message = JavaErrorMessages.message("module.name.duplicate", name);
-      HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element.getNameElement()).description(message).create();
-      others.stream().filter(m -> m != element).findFirst().ifPresent(
-        duplicate -> QuickFixAction.registerQuickFixAction(info, new GoToSymbolFix(duplicate, JavaErrorMessages.message("module.open.duplicate.text")))
-      );
       return info;
     }
 
