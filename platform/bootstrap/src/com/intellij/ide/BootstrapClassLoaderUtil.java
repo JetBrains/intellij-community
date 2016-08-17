@@ -48,16 +48,17 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
   }
 
   @NotNull
-  public static ClassLoader initClassLoader(boolean updatePlugins) throws MalformedURLException {
+  public static ClassLoader initClassLoader(ClassLoader parent, boolean updatePlugins) throws MalformedURLException {
     PathManager.loadProperties();
 
     Collection<URL> classpath = new LinkedHashSet<URL>();
-    addParentClasspath(classpath, false);
+    //addParentClasspath(classpath, false);
     addIDEALibraries(classpath);
     addAdditionalClassPath(classpath);
-    addParentClasspath(classpath, true);
+    //addParentClasspath(classpath, true);
 
     UrlClassLoader.Builder builder = UrlClassLoader.build()
+      .parent(parent)
       .urls(filterClassPath(new ArrayList<URL>(classpath)))
       .allowLock()
       .usePersistentClasspathIndexForLocalClassDirectories()

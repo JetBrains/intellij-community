@@ -28,9 +28,11 @@ public class Bootstrap {
   private Bootstrap() { }
 
   public static void main(String[] args, String mainClass, String methodName) throws Exception {
-    boolean updatePlugins = !Main.isCommandLine();
-    ClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader(updatePlugins);
+    main(args, mainClass, methodName, null);
+  }
 
+  public static void main(String[] args, String mainClass, String methodName, ClassLoader parent) throws Exception {
+    ClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader(parent, !Main.isCommandLine());
     WindowsCommandLineProcessor.ourMirrorClass = Class.forName(WindowsCommandLineProcessor.class.getName(), true, newClassLoader);
 
     Class<?> klass = Class.forName(PLUGIN_MANAGER, true, newClassLoader);
