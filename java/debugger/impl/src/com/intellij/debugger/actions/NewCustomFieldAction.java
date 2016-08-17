@@ -16,15 +16,27 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.ui.tree.render.CustomFieldInplaceEditor;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.ui.LayeredIcon;
+import com.intellij.util.IconUtil;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 /**
  * @author egor
  */
 public class NewCustomFieldAction extends XDebuggerTreeActionBase {
+  public NewCustomFieldAction() {
+    LayeredIcon icon = new LayeredIcon(2);
+    icon.setIcon(AllIcons.Debugger.Watch, 1);
+    icon.setIcon(IconUtil.scale(AllIcons.Nodes.Class, 0.7), 0, SwingConstants.NORTH_EAST);
+    getTemplatePresentation().setIcon(icon);
+  }
+
   @Override
   protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
     CustomFieldInplaceEditor.editNew(node);
