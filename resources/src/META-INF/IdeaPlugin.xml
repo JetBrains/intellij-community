@@ -1400,6 +1400,7 @@
     <internalFileTemplate name="Enum"/>
     <internalFileTemplate name="AnnotationType" subject="@interface"/>
     <internalFileTemplate name="package-info"/>
+    <internalFileTemplate name="module-info"/>
 
     <saveFileAsTemplateHandler implementation="com.intellij.ide.fileTemplates.SaveJavaAsTemplateHandler"/>
 

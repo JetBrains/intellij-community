@@ -25,9 +25,11 @@
       <add-to-group group-id="NewGroup1" anchor="first"/>
     </action>
 
-    <action id="NewPackageInfo" class="com.intellij.ide.actions.CreatePackageInfoAction">
+    <group id="NewJavaSpecialFile">
+      <action id="NewPackageInfo" class="com.intellij.ide.actions.CreatePackageInfoAction"/>
+      <action id="NewModuleInfo" class="com.intellij.ide.actions.CreateModuleInfoAction"/>
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
-    </action>
+    </group>
 
     <action id="CollapseBlock" class="com.intellij.codeInsight.folding.impl.actions.CollapseBlockAction">
       <add-to-group group-id="FoldingGroup" anchor="after" relative-to-action="CollapseSelection"/>

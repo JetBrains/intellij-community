@@ -43,6 +43,7 @@ public class JavaTemplateUtil {
     INTERNAL_CLASS_TEMPLATE_NAME, INTERNAL_INTERFACE_TEMPLATE_NAME, INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME, INTERNAL_ENUM_TEMPLATE_NAME};
 
   public static final String INTERNAL_PACKAGE_INFO_TEMPLATE_NAME = "package-info";
+  public static final String INTERNAL_MODULE_INFO_TEMPLATE_NAME = "module-info";
 
   private JavaTemplateUtil() { }
 
