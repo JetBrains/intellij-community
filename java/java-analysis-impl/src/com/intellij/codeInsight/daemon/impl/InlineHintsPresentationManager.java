@@ -145,7 +145,7 @@ public class InlineHintsPresentationManager implements Disposable {
       FontMetrics metrics = getFontMetrics(editor);
       endWidth = myText == null ? 0 : metrics.stringWidth(myText) + 14;
       step = 1;
-      steps = Math.max(1, Math.abs(endWidth - startWidth) / metrics.charWidth(' ') / ANIMATION_CHARS_PER_STEP);
+      steps = Math.max(1, Math.abs(endWidth - startWidth) / metrics.charWidth('a') / ANIMATION_CHARS_PER_STEP);
     }
 
     public boolean nextStep() {
