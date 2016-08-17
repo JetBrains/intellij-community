@@ -4751,7 +4751,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       VisualPosition caretPosition = caret.getVisualPosition();
       Point pos1 = visualPositionToXY(caretPosition.leanRight(!isRtl));
       Point pos2 = visualPositionToXY(new VisualPosition(caretPosition.line, Math.max(0, caretPosition.column + (isRtl ? -1 : 1)), isRtl));
-      caretPoints.add(new CaretRectangle(pos1, Math.abs(pos2.x - pos1.x), caret, isRtl));
+      int width = Math.abs(pos2.x - pos1.x);
+      if (!isRtl && myInlayModel.hasInlayAt(caretPosition)) {
+        width = Math.min(width, myView.getPlainSpaceWidth());
+      }
+      caretPoints.add(new CaretRectangle(pos1, width, caret, isRtl));
     }
     myCaretCursor.setPositions(caretPoints.toArray(new CaretRectangle[caretPoints.size()]));
   }

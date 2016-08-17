@@ -376,7 +376,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
     return relativeOffset < 0 ? -1 : lineStartOffset + relativeOffset;
   }
 
-  int getPlainSpaceWidth() {
+  public int getPlainSpaceWidth() {
     synchronized (myLock) {
       initMetricsIfNeeded();
       return myPlainSpaceWidth;
