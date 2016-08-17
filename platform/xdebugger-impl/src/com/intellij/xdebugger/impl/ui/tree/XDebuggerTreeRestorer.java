@@ -44,6 +44,7 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
   private boolean myStopRestoringSelection;
   private boolean myInsideRestoring;
   private TreePath mySelectionPath;
+  private boolean myFinished;
 
   public XDebuggerTreeRestorer(final XDebuggerTree tree, Rectangle lastVisibleNodeRect) {
     myTree = tree;
@@ -153,6 +154,7 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
 
   private void disposeIfFinished() {
     if (myNode2ParentState.isEmpty() && myNode2State.isEmpty()) {
+      myFinished = true;
       if (myLastVisibleNodeRect != null) {
         myTree.scrollRectToVisible(myLastVisibleNodeRect);
       }
@@ -179,6 +181,10 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
     myNode2State.clear();
     myTree.removeTreeListener(this);
     myTree.removeTreeSelectionListener(this);
+  }
+
+  public boolean isFinished() {
+    return myFinished;
   }
 
   @Override

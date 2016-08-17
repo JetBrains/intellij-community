@@ -115,10 +115,12 @@ public abstract class XVariablesViewBase extends XDebugView {
   }
 
   protected void saveCurrentTreeState(@Nullable XStackFrame stackFrame) {
-    disposeTreeRestorer();
     removeSelectionListener();
     myFrameEqualityObject = stackFrame != null ? stackFrame.getEqualityObject() : null;
-    myTreeState = XDebuggerTreeState.saveState(getTree());
+    if (myTreeRestorer == null || myTreeRestorer.isFinished()) {
+      myTreeState = XDebuggerTreeState.saveState(getTree());
+    }
+    disposeTreeRestorer();
   }
 
   private void removeSelectionListener() {

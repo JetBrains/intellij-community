@@ -30,6 +30,7 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -65,26 +66,27 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
   }
 
   @Override
-  public void processSessionEvent(@NotNull final SessionEvent event) {
-    XDebugSession session = getSession(getPanel());
-    XStackFrame stackFrame = session == null ? null : session.getCurrentStackFrame();
-    XDebuggerTree tree = getTree();
+  public void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSession session) {
+    XStackFrame stackFrame = session.getCurrentStackFrame();
+    DebuggerUIUtil.invokeLater(() -> {
+      XDebuggerTree tree = getTree();
 
-    if (event == SessionEvent.BEFORE_RESUME || event == SessionEvent.SETTINGS_CHANGED) {
-      saveCurrentTreeState(stackFrame);
-      if (event == SessionEvent.BEFORE_RESUME) {
-        return;
+      if (event == SessionEvent.BEFORE_RESUME || event == SessionEvent.SETTINGS_CHANGED) {
+        saveCurrentTreeState(stackFrame);
+        if (event == SessionEvent.BEFORE_RESUME) {
+          return;
+        }
       }
-    }
 
-    tree.markNodesObsolete();
-    if (stackFrame != null) {
-      cancelClear();
-      buildTreeAndRestoreState(stackFrame);
-    }
-    else {
-      requestClear();
-    }
+      tree.markNodesObsolete();
+      if (stackFrame != null) {
+        cancelClear();
+        buildTreeAndRestoreState(stackFrame);
+      }
+      else {
+        requestClear();
+      }
+    });
   }
 
   @Override
