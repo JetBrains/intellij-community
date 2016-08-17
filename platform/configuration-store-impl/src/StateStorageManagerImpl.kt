@@ -118,7 +118,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
     // you must not add duplicated macro, but our ModuleImpl.setModuleFilePath does it (it will be fixed later)
     for (macro in macros) {
-      if (key.equals(macro.key)) {
+      if (key == macro.key) {
         macro.value = value
         return false
       }
@@ -131,7 +131,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   // system-independent paths
   open fun pathRenamed(oldPath: String, newPath: String, event: VFileEvent?) {
     for (macro in macros) {
-      if (oldPath.equals(macro.value)) {
+      if (oldPath == macro.value) {
         macro.value = newPath
       }
     }
@@ -168,7 +168,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
       key = storageClass.name!!
     }
     storageLock.read {
-      var storage = storages[key]
+      var storage = storages.get(key)
       if (storage == null) {
         storage = createStateStorage(storageClass, normalizedCollapsedPath, roamingType, stateSplitter, exclusive)
         storages.put(key, storage)
@@ -211,7 +211,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
                                         @Suppress("DEPRECATION") stateSplitter: Class<out StateSplitter>,
                                         exclusive: Boolean = false): StateStorage {
     if (storageClass != StateStorage::class.java) {
-      val constructor = storageClass.constructors[0]!!
+      val constructor = storageClass.constructors.get(0)!!
       constructor.isAccessible = true
       return constructor.newInstance(componentManager!!, this) as StateStorage
     }
@@ -440,7 +440,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
 private fun String.startsWithMacro(macro: String): Boolean {
   val i = macro.length
-  return length > i && this[i] == '/' && startsWith(macro)
+  return length > i && this.get(i) == '/' && startsWith(macro)
 }
 
 fun removeMacroIfStartsWith(path: String, macro: String) = if (path.startsWithMacro(macro)) path.substring(macro.length + 1) else path
