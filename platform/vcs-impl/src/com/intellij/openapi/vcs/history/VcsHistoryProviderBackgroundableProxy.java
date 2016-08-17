@@ -71,7 +71,7 @@ public class VcsHistoryProviderBackgroundableProxy {
         if (myCachesHistory) {
           return new CachingHistoryComputer(filePath, consumer, vcsKey);
         } else {
-          return new SimpelHistoryComputer(filePath, consumer);
+          return new SimpleHistoryComputer(filePath, consumer);
         }
       }
     };
@@ -244,11 +244,11 @@ public class VcsHistoryProviderBackgroundableProxy {
     ThrowableComputable<VcsHistorySession, VcsException> create(FilePath filePath, Consumer<VcsHistorySession> consumer, VcsKey vcsKey);
   }
 
-  private class SimpelHistoryComputer implements ThrowableComputable<VcsHistorySession, VcsException> {
+  private class SimpleHistoryComputer implements ThrowableComputable<VcsHistorySession, VcsException> {
     private final FilePath myFilePath;
     private final Consumer<VcsHistorySession> myConsumer;
 
-    private SimpelHistoryComputer(FilePath filePath, Consumer<VcsHistorySession> consumer) {
+    private SimpleHistoryComputer(FilePath filePath, Consumer<VcsHistorySession> consumer) {
       myFilePath = filePath;
       myConsumer = consumer;
     }
