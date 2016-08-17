@@ -16,7 +16,6 @@
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.diff.impl.patch.lib.base85xjava.Base85x;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
@@ -34,12 +33,12 @@ import static com.intellij.openapi.diff.impl.patch.lib.base85xjava.Base85x.encod
 
 public class BinaryEncoder {
 
-  public static char getCharForLineSize(int lineSize) throws BinaryPatchException, Base85x.Base85FormatException {
+  private static char getCharForLineSize(int lineSize) throws BinaryPatchException, Base85x.Base85FormatException {
     checkLenIsValid(lineSize, "Can't encode binary file patch: wrong line size");
     return encodeChar(decodeChar('A') + lineSize - 1);
   }
 
-  public static int getLineSizeFromChar(char charSize) throws BinaryPatchException, Base85x.Base85FormatException {
+  private static int getLineSizeFromChar(char charSize) throws BinaryPatchException, Base85x.Base85FormatException {
     int result = decodeChar(charSize) - decodeChar('A') + 1;
     checkLenIsValid(result, "Can't decode binary file patch: wrong char-size symbol");
     return result;
@@ -54,8 +53,7 @@ public class BinaryEncoder {
   public static void encode(@NotNull InputStream input, @NotNull Writer writer) throws IOException, BinaryPatchException {
     int maxLineSize = 52;
     byte[] deflated = new byte[maxLineSize];
-    DeflaterInputStream deflaterStream = new DeflaterInputStream(input);
-    try {
+    try (DeflaterInputStream deflaterStream = new DeflaterInputStream(input)) {
       int lineSize;
       do {
         lineSize = deflaterStream.read(deflated, 0, maxLineSize);
@@ -64,16 +62,13 @@ public class BinaryEncoder {
         //fill encoded block to be divisible by 4
         int newSize = ((lineSize + 3) / 4) * 4;
         Arrays.fill(deflated, lineSize, newSize, (byte)0);
-        writer.append(new String(Base85x.encode(ArrayUtil.realloc(deflated, newSize))));
+        writer.append(new String(Base85x.encode(deflated, newSize)));
         writer.append('\n');
       }
       while (lineSize > 0);
     }
     catch (Base85x.Base85FormatException e) {
       throw new BinaryPatchException(e);
-    }
-    finally {
-      deflaterStream.close();
     }
   }
 
@@ -88,13 +83,15 @@ public class BinaryEncoder {
         byte[] toInflate = Base85x.decode(line.substring(1));
         inflater.setInput(toInflate, 0, len);
         int resultLength;
-        try {
-          resultLength = inflater.inflate(inflated);
+        while (!inflater.needsInput()) {
+          try {
+            resultLength = inflater.inflate(inflated);
+          }
+          catch (DataFormatException e) {
+            throw new BinaryPatchException("Can't decode binary file patch: can't decompress data");
+          }
+          output.write(inflated, 0, resultLength);
         }
-        catch (DataFormatException e) {
-          throw new BinaryPatchException("Can't decode binary file patch: can't decompress data");
-        }
-        output.write(inflated, 0, resultLength);
         if (!input.hasNext()) break;
         line = input.next();
       }
@@ -112,11 +109,11 @@ public class BinaryEncoder {
   }
 
   public static class BinaryPatchException extends Exception {
-    public BinaryPatchException(String s) {
+    BinaryPatchException(String s) {
       super(s);
     }
 
-    public BinaryPatchException(Base85x.Base85FormatException e) {
+    BinaryPatchException(Base85x.Base85FormatException e) {
       this(e.getMessage());
     }
   }
