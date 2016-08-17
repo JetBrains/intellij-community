@@ -228,8 +228,10 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
   public void rebuildViews() {
     AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> {
-      for (XDebugView view : myViews.values()) {
-        view.processSessionEvent(XDebugView.SessionEvent.SETTINGS_CHANGED, mySession);
+      if (mySession != null) {
+        for (XDebugView view : myViews.values()) {
+          view.processSessionEvent(XDebugView.SessionEvent.SETTINGS_CHANGED, mySession);
+        }
       }
     });
   }

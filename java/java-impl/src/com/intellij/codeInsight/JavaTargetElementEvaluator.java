@@ -167,19 +167,25 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
     return super.adjustReferenceOrReferencedElement(file, editor, offset, flags, refElement);
   }
 
-
   @Nullable
   @Override
-  public PsiElement getNamedElement(@NotNull final PsiElement element) {
-    PsiElement parent = element.getParent();
+  public PsiElement getNamedElement(@NotNull PsiElement element) {
     if (element instanceof PsiIdentifier) {
-      if (parent instanceof PsiClass && element.equals(((PsiClass)parent).getNameIdentifier())
-        || parent instanceof PsiVariable && element.equals(((PsiVariable)parent).getNameIdentifier())
-        || parent instanceof PsiMethod && element.equals(((PsiMethod)parent).getNameIdentifier())
-        || parent instanceof PsiLabeledStatement && element.equals(((PsiLabeledStatement)parent).getLabelIdentifier())) {
+      PsiElement parent = element.getParent();
+      if (parent instanceof PsiClass && element.equals(((PsiClass)parent).getNameIdentifier()) ||
+          parent instanceof PsiVariable && element.equals(((PsiVariable)parent).getNameIdentifier()) ||
+          parent instanceof PsiMethod && element.equals(((PsiMethod)parent).getNameIdentifier()) ||
+          parent instanceof PsiLabeledStatement && element.equals(((PsiLabeledStatement)parent).getLabelIdentifier())) {
         return parent;
       }
+      if (parent instanceof PsiJavaModuleReferenceElement) {
+        PsiElement grand = parent.getParent();
+        if (grand instanceof PsiJavaModule) {
+          return grand;
+        }
+      }
     }
+
     return null;
   }
 
