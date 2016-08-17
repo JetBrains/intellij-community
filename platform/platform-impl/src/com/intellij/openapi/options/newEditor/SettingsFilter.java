@@ -30,6 +30,7 @@ import com.intellij.ui.SearchTextField;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.DocumentEvent;
 import java.awt.event.MouseAdapter;
@@ -127,10 +128,6 @@ abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNode> {
     return myHits != null && myHits.getNameHits().contains(configurable);
   }
 
-  ActionCallback update(boolean adjustSelection, boolean now) {
-    return update(DocumentEvent.EventType.CHANGE, adjustSelection, now);
-  }
-
   ActionCallback update(String text, boolean adjustSelection, boolean now) {
     try {
       myUpdateRejected = true;
@@ -139,10 +136,10 @@ abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNode> {
     finally {
       myUpdateRejected = false;
     }
-    return update(adjustSelection, now);
+    return update(DocumentEvent.EventType.CHANGE, adjustSelection, now);
   }
 
-  private ActionCallback update(DocumentEvent.EventType type, boolean adjustSelection, boolean now) {
+  private ActionCallback update(@NotNull DocumentEvent.EventType type, boolean adjustSelection, boolean now) {
     if (myUpdateRejected) {
       return ActionCallback.REJECTED;
     }
