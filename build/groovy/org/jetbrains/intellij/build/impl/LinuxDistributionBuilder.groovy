@@ -127,7 +127,7 @@ class LinuxDistributionBuilder {
   }
 
   private void buildTarGz(String jreDirectoryPath) {
-    def tarRoot = customizer.rootDirectoryName(buildContext.buildNumber)
+    def tarRoot = customizer.rootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
     def suffix = jreDirectoryPath != null ? "" : "-no-jdk"
     def tarPath = "$buildContext.paths.artifacts/${buildContext.productProperties.baseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${suffix}.tar"
     def extraBins = customizer.extraExecutables

@@ -35,11 +35,11 @@ abstract class LinuxDistributionCustomizer {
   /**
    * Name of the root directory inside linux .tar.gz archive
    */
-  abstract String rootDirectoryName(String buildNumber)
+  abstract String rootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber)
 
   /**
    * Override this method to copy additional files to Linux distribution of the product.
-   * @param targetDirectory contents of this directory will be packed into .tar.gz archive under {@link #rootDirectoryName(java.lang.String)}
+   * @param targetDirectory contents of this directory will be packed into .tar.gz archive under {@link #rootDirectoryName(ApplicationInfoProperties, String)}
    */
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {}
 }
