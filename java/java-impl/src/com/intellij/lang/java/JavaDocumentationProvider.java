@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -548,12 +548,16 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
   }
 
   @Nullable
-  public static String generateExternalJavadoc(final PsiElement element) {
+  public static String generateExternalJavadoc(@NotNull final PsiElement element) {
     final JavaDocInfoGenerator javaDocInfoGenerator = JavaDocInfoGeneratorFactory.create(element.getProject(), element);
-    final List<String> docURLs = getExternalJavaDocUrl(element);
-    return JavaDocExternalFilter.filterInternalDocInfo(javaDocInfoGenerator.generateDocInfo(docURLs));
+    return generateExternalJavadoc(element, javaDocInfoGenerator);
   }
 
+  @Nullable
+  public static String generateExternalJavadoc(@NotNull final PsiElement element, @NotNull JavaDocInfoGenerator generator) {
+    final List<String> docURLs = getExternalJavaDocUrl(element);
+    return JavaDocExternalFilter.filterInternalDocInfo(generator.generateDocInfo(docURLs));
+  }
 
   @Nullable
   private static String fetchExternalJavadoc(final PsiElement element, String fromUrl, @NotNull JavaDocExternalFilter filter) {
