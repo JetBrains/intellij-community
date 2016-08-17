@@ -45,6 +45,8 @@ public class JavaTemplateUtil {
   public static final String INTERNAL_PACKAGE_INFO_TEMPLATE_NAME = "package-info";
   public static final String INTERNAL_MODULE_INFO_TEMPLATE_NAME = "module-info";
 
+  public static final String[] INTERNAL_FILE_TEMPLATES = {INTERNAL_PACKAGE_INFO_TEMPLATE_NAME, INTERNAL_MODULE_INFO_TEMPLATE_NAME};
+
   private JavaTemplateUtil() { }
 
   public static void setClassAndMethodNameProperties (@NotNull Properties properties, @NotNull PsiClass aClass, @NotNull PsiMethod method) {

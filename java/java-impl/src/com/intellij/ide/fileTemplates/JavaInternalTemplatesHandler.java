@@ -16,8 +16,15 @@
 package com.intellij.ide.fileTemplates;
 
 import com.intellij.psi.PsiDirectory;
+import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class JavaInternalTemplatesHandler extends JavaCreateFromTemplateHandler {
+  @Override
+  public boolean handlesTemplate(@NotNull FileTemplate template) {
+    return ArrayUtil.contains(template.getName(), JavaTemplateUtil.INTERNAL_CLASS_TEMPLATES);
+  }
+
   @Override
   public boolean canCreate(PsiDirectory[] dirs) {
     return false;

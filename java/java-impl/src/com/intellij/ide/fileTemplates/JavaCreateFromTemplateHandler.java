@@ -98,7 +98,7 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
   @Override
   public boolean handlesTemplate(@NotNull FileTemplate template) {
     FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());
-    return fileType.equals(StdFileTypes.JAVA) && ArrayUtil.contains(template.getName(), JavaTemplateUtil.INTERNAL_CLASS_TEMPLATES);
+    return fileType.equals(StdFileTypes.JAVA) && !ArrayUtil.contains(template.getName(), JavaTemplateUtil.INTERNAL_FILE_TEMPLATES);
   }
 
   @NotNull
