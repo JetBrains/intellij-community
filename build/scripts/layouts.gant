@@ -350,8 +350,8 @@ public def layoutCommunityPlugins(String home, BuildContext buildContext = null)
       jar("maven30-server-impl.jar") {
         module("maven30-server-impl")
       }
-      jar("maven32-server-impl.jar") {
-        module("maven32-server-impl")
+      jar("maven3-server-impl.jar") {
+        module("maven3-server-impl")
       }
 
       jar("artifact-resolver-m2.jar") {
@@ -373,7 +373,7 @@ public def layoutCommunityPlugins(String home, BuildContext buildContext = null)
         fileset(dir: "$home/plugins/maven/maven3-server-common/lib") {include(name: "*.jar")}
       }
       dir("maven3") {
-        fileset(dir: "$home/plugins/maven/maven30-server-impl/lib/maven3")
+        fileset(dir: "$home/plugins/maven/maven3-server-impl/lib/maven3")
       }
 
       dir("maven2-server-lib") {

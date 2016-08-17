@@ -28,7 +28,7 @@
     <component>
       <role>org.apache.maven.artifact.resolver.ArtifactResolver</role>
       <role-hint>ide</role-hint>
-      <implementation>org.jetbrains.idea.maven.server.embedder.CustomMaven30ArtifactResolver</implementation>
+      <implementation>org.jetbrains.idea.maven.server.embedder.CustomMaven3ArtifactResolver</implementation>
       <description />
       <isolated-realm>false</isolated-realm>
       <requirements>
@@ -68,7 +68,7 @@
           <field-name>legacySupport</field-name>
         </requirement>
         <requirement>
-          <role>org.sonatype.aether.RepositorySystem</role>
+          <role>org.eclipse.aether.RepositorySystem</role>
           <role-hint />
           <field-name>repoSystem</field-name>
         </requirement>
