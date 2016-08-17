@@ -46,7 +46,7 @@ import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.GlobalContextKey;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.Diagnostic;
+import javax.tools.*;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -318,7 +318,8 @@ public class ExternalJavacManager {
       });
     }
 
-    public int getExitCode() {
+    @NotNull
+    public Integer getExitCode() {
       return myExitCode;
     }
   }
