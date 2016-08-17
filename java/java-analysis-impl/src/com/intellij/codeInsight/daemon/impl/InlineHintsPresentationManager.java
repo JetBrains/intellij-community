@@ -30,6 +30,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -40,7 +41,7 @@ public class InlineHintsPresentationManager implements Disposable {
   private static final int ANIMATION_STEP_MS = 25;
   private static final int ANIMATION_CHARS_PER_STEP = 3;
 
-  private final Alarm OUR_ALARM = new Alarm(this);
+  private final Alarm myAlarm = new Alarm(this);
 
   public static InlineHintsPresentationManager getInstance() {
     return ServiceManager.getService(InlineHintsPresentationManager.class);
@@ -50,56 +51,45 @@ public class InlineHintsPresentationManager implements Disposable {
   }
 
   public boolean isInlineHint(@NotNull Inlay inlay) {
-    Inlay.Renderer renderer = inlay.getRenderer();
-    return renderer instanceof MyRenderer ||
-           renderer instanceof AnimationStepRenderer && ((AnimationStepRenderer)renderer).renderer != null;
+    return inlay.getRenderer() instanceof MyRenderer;
   }
 
   public String getHintText(@NotNull Inlay inlay) {
     Inlay.Renderer renderer = inlay.getRenderer();
-    if (renderer instanceof AnimationStepRenderer) renderer = ((AnimationStepRenderer)renderer).renderer;
     return renderer instanceof MyRenderer ? ((MyRenderer)renderer).myText : null;
   }
 
   public void addHint(@NotNull Editor editor, int offset, @NotNull String hintText, boolean useAnimation) {
-    addHint(editor, offset, hintText, useAnimation, 0);
+    MyRenderer renderer = new MyRenderer(editor, hintText, useAnimation);
+    Inlay inlay = editor.getInlayModel().addElement(offset, Inlay.Type.INLINE, renderer);
+    renderer.myInlay = inlay;
+    if (useAnimation && inlay != null) {
+      scheduleRendererUpdate(renderer);
+    }
   }
 
   public void deleteHint(@NotNull Editor editor, @NotNull Inlay hint) {
-    int offset = hint.getOffset();
-    int animationStartWidthInPixels = hint.getWidthInPixels();
-    Disposer.dispose(hint);
-    animateTransition(editor, offset, animationStartWidthInPixels, null);
+    updateRenderer(editor, hint, null);
   }
 
   public void replaceHint(@NotNull Editor editor, @NotNull Inlay hint, @NotNull String newText) {
-    int offset = hint.getOffset();
-    int animationStartWidthInPixels = hint.getWidthInPixels();
-    Disposer.dispose(hint);
-    addHint(editor, offset, newText, true, animationStartWidthInPixels);
+    updateRenderer(editor, hint, newText);
   }
 
-  private void addHint(@NotNull Editor editor, int offset, @NotNull String hintText,
-                       boolean useAnimation, int animationStartWidthInPixels) {
-    MyRenderer renderer = new MyRenderer(hintText);
-    if (useAnimation) {
-      animateTransition(editor, offset, animationStartWidthInPixels, renderer);
-    }
-    else {
-      editor.getInlayModel().addElement(offset, Inlay.Type.INLINE, renderer);
-    }
-  }
-
-  private void animateTransition(@NotNull Editor editor, int offset, int animationStartWidthInPixels, MyRenderer renderer) {
-    AnimationStepRenderer stepRenderer = new AnimationStepRenderer(editor, renderer, animationStartWidthInPixels);
-    Inlay inlay = editor.getInlayModel().addElement(offset, Inlay.Type.INLINE, stepRenderer);
-    if (inlay != null) {
-      OUR_ALARM.addRequest(new AnimationStep(editor, inlay, stepRenderer), ANIMATION_STEP_MS, ModalityState.any());
-    }
+  private void updateRenderer(@NotNull Editor editor, @NotNull Inlay hint, @Nullable String newText) {
+    MyRenderer renderer = (MyRenderer)hint.getRenderer();
+    renderer.update(editor, newText);
+    hint.update();
+    scheduleRendererUpdate(renderer);
   }
 
   @Override
   public void dispose() {}
+
+  private void scheduleRendererUpdate(MyRenderer renderer) {
+    myAlarm.cancelRequest(renderer);
+    myAlarm.addRequest(renderer, ANIMATION_STEP_MS, ModalityState.any());
+  }
 
   private static Font getFont(@NotNull Editor editor) {
     return getFontMetrics(editor).getFont();
@@ -121,105 +111,82 @@ public class InlineHintsPresentationManager implements Disposable {
     return metrics;
   }
 
-  private static class MyRenderer extends Inlay.Renderer {
-    private final String myText;
+  private class MyRenderer extends Inlay.Renderer implements Runnable {
+    private String myText;
+    private int startWidth;
+    private int endWidth;
+    private int steps;
+    private int step;
+    private Inlay myInlay;
 
-    private MyRenderer(String text) {
+    private MyRenderer(Editor editor, String text, boolean animated) {
+      updateState(editor, text, 0);
+      if (!animated) step = steps + 1;
+    }
+
+    public void update(Editor editor, String newText) {
+      updateState(editor, newText, currentWidth());
+    }
+
+    private void updateState(Editor editor, String text, int startWidth) {
       myText = text;
-    }
-
-
-    @Override
-    public int calcWidthInPixels(@NotNull Editor editor) {
-      return getFontMetrics(editor).stringWidth(myText) + 14;
-    }
-
-    @Override
-    public void paint(@NotNull Graphics g, @NotNull Rectangle r, @NotNull Editor editor) {
-      TextAttributes attributes = editor.getColorsScheme().getAttributes(JavaHighlightingColors.INLINE_PARAMETER_HINT);
-      if (attributes != null) {
-        GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-        Color backgroundColor = attributes.getBackgroundColor();
-        g.setColor(ColorUtil.brighter(backgroundColor, 1));
-        g.fillRoundRect(r.x + 2, r.y + 1, r.width - 4, r.height - 4, 4, 4);
-        g.setColor(ColorUtil.darker(backgroundColor, 1));
-        g.fillRoundRect(r.x + 2, r.y + 3, r.width - 4, r.height - 4, 4, 4);
-        g.setColor(backgroundColor);
-        g.fillRoundRect(r.x + 2, r.y + 2, r.width - 4, r.height - 4, 4, 4);
-        g.setColor(attributes.getForegroundColor());
-        g.setFont(getFont(editor));
-        FontMetrics metrics = g.getFontMetrics();
-        Shape savedClip = g.getClip();
-        g.clipRect(r.x + 3, r.y + 3, r.width - 6, r.height - 6); // support drawing in smaller rectangle (used in animation)
-        g.drawString(myText, r.x + 7, r.y + (r.height + metrics.getAscent() - metrics.getDescent()) / 2 - 1);
-        g.setClip(savedClip);
-        config.restore();
-      }
-    }
-  }
-
-  private static class AnimationStepRenderer extends Inlay.Renderer {
-    private final MyRenderer renderer;
-    private final int startWidth;
-    private final int endWidth;
-    private final int step;
-    private final int steps;
-
-    private AnimationStepRenderer(Editor editor, MyRenderer renderer, int startWidth) {
-      this.renderer = renderer;
       this.startWidth = startWidth;
-      this.endWidth = renderer == null ? 0 : renderer.calcWidthInPixels(editor);
-      this.step = 1;
-      this.steps = Math.max(1, Math.abs(endWidth - startWidth) / getFontMetrics(editor).charWidth('a') / ANIMATION_CHARS_PER_STEP);
+      FontMetrics metrics = getFontMetrics(editor);
+      endWidth = myText == null ? 0 : metrics.stringWidth(myText) + 14;
+      step = 1;
+      steps = Math.max(1, Math.abs(endWidth - startWidth) / metrics.charWidth('a') / ANIMATION_CHARS_PER_STEP);
     }
 
-    private AnimationStepRenderer(MyRenderer renderer, int startWidth, int endWidth, int step, int steps) {
-      this.renderer = renderer;
-      this.startWidth = startWidth;
-      this.endWidth = endWidth;
-      this.step = step;
-      this.steps = steps;
-    }
-
-    private Inlay.Renderer nextStep() {
-      return step < steps ? new AnimationStepRenderer(renderer, startWidth, endWidth, step + 1, steps) : renderer;
+    public boolean nextStep() {
+      return ++step <= steps;
     }
 
     @Override
     public int calcWidthInPixels(@NotNull Editor editor) {
-      return Math.max(1, startWidth + (endWidth - startWidth) / steps * step);
+      return currentWidth();
+    }
+
+    private int currentWidth() {
+      return step <= steps ? Math.max(1, startWidth + (endWidth - startWidth) / steps * step) : endWidth;
     }
 
     @Override
     public void paint(@NotNull Graphics g, @NotNull Rectangle r, @NotNull Editor editor) {
-      if (startWidth > 0 && renderer != null) {
-        renderer.paint(g, r, editor);
+      if (myText != null && (step > steps || startWidth != 0)) {
+        TextAttributes attributes = editor.getColorsScheme().getAttributes(JavaHighlightingColors.INLINE_PARAMETER_HINT);
+        if (attributes != null) {
+          GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+          Color backgroundColor = attributes.getBackgroundColor();
+          g.setColor(ColorUtil.brighter(backgroundColor, 1));
+          g.fillRoundRect(r.x + 2, r.y + 1, r.width - 4, r.height - 4, 4, 4);
+          g.setColor(ColorUtil.darker(backgroundColor, 1));
+          g.fillRoundRect(r.x + 2, r.y + 3, r.width - 4, r.height - 4, 4, 4);
+          g.setColor(backgroundColor);
+          g.fillRoundRect(r.x + 2, r.y + 2, r.width - 4, r.height - 4, 4, 4);
+          g.setColor(attributes.getForegroundColor());
+          g.setFont(getFont(editor));
+          FontMetrics metrics = g.getFontMetrics();
+          Shape savedClip = g.getClip();
+          g.clipRect(r.x + 3, r.y + 3, r.width - 6, r.height - 6);
+          g.drawString(myText, r.x + 7, r.y + (r.height + metrics.getAscent() - metrics.getDescent()) / 2 - 1);
+          g.setClip(savedClip);
+          config.restore();
+        }
       }
-    }
-  }
-
-  private class AnimationStep implements Runnable {
-    private final Editor myEditor;
-    private final Inlay myInlay;
-    private final AnimationStepRenderer myRenderer;
-
-    public AnimationStep(Editor editor, Inlay inlay, AnimationStepRenderer renderer) {
-      myEditor = editor;
-      myInlay = inlay;
-      myRenderer = renderer;
     }
 
     @Override
     public void run() {
-      if (!myInlay.isValid()) return;
-      int offset = myInlay.getOffset();
-      Inlay.Renderer nextRenderer = myRenderer.nextStep();
-      Disposer.dispose(myInlay);
-      if (nextRenderer != null) {
-        Inlay newInlay = myEditor.getInlayModel().addElement(offset, Inlay.Type.INLINE, nextRenderer);
-        if (nextRenderer instanceof AnimationStepRenderer) {
-          OUR_ALARM.addRequest(new AnimationStep(myEditor, newInlay, (AnimationStepRenderer)nextRenderer),
-                               ANIMATION_STEP_MS, ModalityState.any());
+      if (myInlay.isValid()) {
+        MyRenderer renderer = (MyRenderer)myInlay.getRenderer();
+        if (renderer.nextStep()) {
+          scheduleRendererUpdate(this);
+        }
+        if (renderer.currentWidth() == 0) {
+          Disposer.dispose(myInlay);
+        }
+        else {
+          myInlay.update();
         }
       }
     }
