@@ -37,6 +37,8 @@ import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.NotNull
+
 /**
  * @author Denis Zhdanov
  * @since 1/17/11 1:00 PM
@@ -46,6 +48,7 @@ public class JavaFoldingTest extends LightCodeInsightFixtureTestCase {
   def JavaCodeFoldingSettingsImpl myFoldingSettings
   def JavaCodeFoldingSettingsImpl myFoldingStateToRestore
 
+  @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
     return JAVA_1_7
