@@ -32,7 +32,8 @@ class IdeaCommunityBuilder {
   IdeaCommunityBuilder(String home, String outputRootPath, GantBinding binding, BuildOptions options = new BuildOptions()) {
     this.binding = binding
     buildContext = BuildContext.createContext(binding.ant, binding.projectBuilder, binding.project, binding.global, home, home,
-                                              "$outputRootPath/release", new IdeaCommunityProperties(home), options)
+                                              "$outputRootPath/release", new IdeaCommunityProperties(home), ProprietaryBuildTools.DUMMY,
+                                              options)
   }
 
   IdeaCommunityBuilder(GantBinding binding, BuildContext buildContext) {

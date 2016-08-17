@@ -73,8 +73,8 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
   private static boolean useNativeMacChooser(final FileChooserDescriptor descriptor) {
     return SystemInfo.isMac &&
            SystemProperties.getBooleanProperty("native.mac.file.chooser.enabled", true) &&
-           Registry.is("ide.mac.file.chooser.native") /*&&
-           !DialogWrapper.isMultipleModalDialogs()*/;
+           Registry.is("ide.mac.file.chooser.native") &&
+           SystemInfo.isJetbrainsJvm;
   }
 
   @NotNull

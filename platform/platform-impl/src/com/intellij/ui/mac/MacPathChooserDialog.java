@@ -102,8 +102,12 @@ public class MacPathChooserDialog implements PathChooserDialog, FileChooserDialo
 
   @Override
   public void choose(@Nullable VirtualFile toSelect, @NotNull Consumer<List<VirtualFile>> callback) {
-    String path = toSelect != null ? toSelect.getCanonicalPath() : null;
-    myFileDialog.setFile(path);
+    if (toSelect != null && toSelect.getParent() != null) {
+      myFileDialog.setDirectory(toSelect.getParent().getCanonicalPath());
+      myFileDialog.setFile(toSelect.getPath());
+    }
+
+    myFileDialog.setMultipleMode(myFileChooserDescriptor.isChooseMultiple());
 
     final CommandProcessorEx commandProcessor =
       ApplicationManager.getApplication() != null ? (CommandProcessorEx)CommandProcessor.getInstance() : null;

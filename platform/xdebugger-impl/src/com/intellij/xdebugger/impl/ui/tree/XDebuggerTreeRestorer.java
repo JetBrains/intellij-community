@@ -44,6 +44,7 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
   private boolean myStopRestoringSelection;
   private boolean myInsideRestoring;
   private TreePath mySelectionPath;
+  private boolean myFinished;
 
   public XDebuggerTreeRestorer(final XDebuggerTree tree, Rectangle lastVisibleNodeRect) {
     myTree = tree;
@@ -55,7 +56,7 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
   }
 
   private void restoreChildren(final XDebuggerTreeNode treeNode, final XDebuggerTreeState.NodeInfo nodeInfo) {
-    if (!treeNode.isLeaf() && nodeInfo.isExpanded()) {
+    if (nodeInfo.isExpanded()) {
       myTree.expandPath(treeNode.getPath());
       treeNode.getLoadedChildren().forEach(child -> restoreNode(child, nodeInfo));
       myNode2State.put(treeNode, nodeInfo);
@@ -75,7 +76,7 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
     if (treeNode instanceof RestorableStateNode) {
       RestorableStateNode node = (RestorableStateNode)treeNode;
       if (node.isComputed()) {
-        doRestoreNode(node, parentInfo.removeChild(node.getName()));
+        doRestoreNode(node, parentInfo.getChild(node));
       }
       else {
         myNode2ParentState.put(node, parentInfo);
@@ -98,7 +99,9 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
         }
       }
 
-      restoreChildren((XDebuggerTreeNode)treeNode, nodeInfo);
+      if (!(treeNode.isComputed() && treeNode.isLeaf())) { // do not restore computed leafs children
+        restoreChildren((XDebuggerTreeNode)treeNode, nodeInfo);
+      }
     }
     else {
       if (!checkExtendedModified(treeNode)) {
@@ -146,13 +149,14 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
   public void nodeLoaded(@NotNull final RestorableStateNode node, final String name) {
     XDebuggerTreeState.NodeInfo parentInfo = myNode2ParentState.remove(node);
     if (parentInfo != null) {
-      doRestoreNode(node, parentInfo.removeChild(node.getName()));
+      doRestoreNode(node, parentInfo.getChild(node));
     }
     disposeIfFinished();
   }
 
   private void disposeIfFinished() {
     if (myNode2ParentState.isEmpty() && myNode2State.isEmpty()) {
+      myFinished = true;
       if (myLastVisibleNodeRect != null) {
         myTree.scrollRectToVisible(myLastVisibleNodeRect);
       }
@@ -179,6 +183,10 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
     myNode2State.clear();
     myTree.removeTreeListener(this);
     myTree.removeTreeSelectionListener(this);
+  }
+
+  public boolean isFinished() {
+    return myFinished;
   }
 
   @Override

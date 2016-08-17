@@ -118,6 +118,10 @@ public abstract class FileAnnotation {
     return getRevisions();
   }
 
+  public VcsFileRevision getRevisionByDescription(VcsRevisionDescription description) {
+    return (VcsFileRevision)description;
+  }
+
   public abstract boolean revisionsNotEmpty();
 
   @Nullable

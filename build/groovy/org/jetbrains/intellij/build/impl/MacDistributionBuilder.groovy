@@ -61,13 +61,13 @@ class MacDistributionBuilder {
     layoutMacApp(ideaPropertiesFile, customIdeaProperties, docTypes)
     customizer.copyAdditionalFiles(buildContext, macDistPath)
     def macZipPath = buildMacZip()
-    if (buildContext.macHostProperties == null) {
+    if (buildContext.proprietaryBuildTools.macHostProperties == null) {
       buildContext.messages.info("A Mac OS build agent isn't configured, dmg artifact won't be produced")
       buildContext.notifyArtifactBuilt(macZipPath)
     }
     else {
       buildContext.executeStep("Build dmg artifact for Mac OS X", BuildOptions.MAC_DMG_STEP) {
-        MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.macHostProperties, macZipPath)
+        MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath)
         buildContext.ant.delete(file: macZipPath)
       }
     }

@@ -18,7 +18,7 @@ package org.jetbrains.intellij.build
 import groovy.transform.CompileStatic
 
 /**
- * Implement this interfaces and pass the implementation to {@link BuildContext#createContext} method to support scrambling the product
+ * Implement this interfaces and pass the implementation to {@link ProprietaryBuildTools} constructor to support scrambling the product
  * JAR files.
  *
  * @author nik

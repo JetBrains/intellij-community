@@ -66,8 +66,8 @@ public abstract class XVariablesViewBase extends XDebugView {
   protected XVariablesViewBase(@NotNull Project project, @NotNull XDebuggerEditorsProvider editorsProvider, @Nullable XValueMarkers<?, ?> markers) {
     myTreePanel = new XDebuggerTreePanel(
       project, editorsProvider, this, null, this instanceof XWatchesView ? XDebuggerActions.WATCHES_TREE_POPUP_GROUP : XDebuggerActions.VARIABLES_TREE_POPUP_GROUP, markers);
-    myTreePanel.getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.variables.not.available"));
-    DnDManager.getInstance().registerSource(myTreePanel, myTreePanel.getTree());
+    getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.variables.not.available"));
+    DnDManager.getInstance().registerSource(myTreePanel, getTree());
   }
 
   protected void buildTreeAndRestoreState(@NotNull final XStackFrame stackFrame) {
@@ -115,10 +115,12 @@ public abstract class XVariablesViewBase extends XDebugView {
   }
 
   protected void saveCurrentTreeState(@Nullable XStackFrame stackFrame) {
-    disposeTreeRestorer();
     removeSelectionListener();
     myFrameEqualityObject = stackFrame != null ? stackFrame.getEqualityObject() : null;
-    myTreeState = XDebuggerTreeState.saveState(myTreePanel.getTree());
+    if (myTreeRestorer == null || myTreeRestorer.isFinished()) {
+      myTreeState = XDebuggerTreeState.saveState(getTree());
+    }
+    disposeTreeRestorer();
   }
 
   private void removeSelectionListener() {
@@ -140,7 +142,8 @@ public abstract class XVariablesViewBase extends XDebugView {
     }
   }
 
-  public XDebuggerTree getTree() {
+  @NotNull
+  public final XDebuggerTree getTree() {
     return myTreePanel.getTree();
   }
 
@@ -152,7 +155,7 @@ public abstract class XVariablesViewBase extends XDebugView {
   public void dispose() {
     disposeTreeRestorer();
     removeSelectionListener();
-    DnDManager.getInstance().unregisterSource(myTreePanel, myTreePanel.getTree());
+    DnDManager.getInstance().unregisterSource(myTreePanel, getTree());
   }
 
   private class MySelectionListener implements SelectionListener {

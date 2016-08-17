@@ -35,6 +35,7 @@ import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -200,64 +201,66 @@ public class XFramesView extends XDebugView {
   }
 
   @Override
-  public void processSessionEvent(@NotNull final SessionEvent event) {
+  public void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSession session) {
     myRefresh = event == SessionEvent.SETTINGS_CHANGED;
 
     if (event == SessionEvent.BEFORE_RESUME) {
       return;
     }
 
-    XDebugSession session = getSession(getMainPanel());
+    XStackFrame currentStackFrame = session.getCurrentStackFrame();
+    XSuspendContext suspendContext = session.getSuspendContext();
 
-    if (event == SessionEvent.FRAME_CHANGED) {
-      XStackFrame currentStackFrame = session == null ? null : session.getCurrentStackFrame();
-      if (currentStackFrame != null) {
-        myFramesList.setSelectedValue(currentStackFrame, true);
-        mySelectedFrameIndex = myFramesList.getSelectedIndex();
-        myExecutionStacksWithSelection.put(mySelectedStack, mySelectedFrameIndex);
+    DebuggerUIUtil.invokeLater(() -> {
+      if (event == SessionEvent.FRAME_CHANGED) {
+        if (currentStackFrame != null) {
+          myFramesList.setSelectedValue(currentStackFrame, true);
+          mySelectedFrameIndex = myFramesList.getSelectedIndex();
+          myExecutionStacksWithSelection.put(mySelectedStack, mySelectedFrameIndex);
+        }
+        return;
       }
-      return;
-    }
 
-    if (event != SessionEvent.SETTINGS_CHANGED) {
-      mySelectedFrameIndex = 0;
-      mySelectedStack = null;
-      myVisibleRect = null;
-    }
-    else {
-      myVisibleRect = myFramesList.getVisibleRect();
-    }
+      if (event != SessionEvent.SETTINGS_CHANGED) {
+        mySelectedFrameIndex = 0;
+        mySelectedStack = null;
+        myVisibleRect = null;
+      }
+      else {
+        myVisibleRect = myFramesList.getVisibleRect();
+      }
 
-    myListenersEnabled = false;
-    for (StackFramesListBuilder builder : myBuilders.values()) {
-      builder.dispose();
-    }
-    myBuilders.clear();
-    XSuspendContext suspendContext = session == null ? null : session.getSuspendContext();
-    if (suspendContext == null) {
-      requestClear();
-      return;
-    }
+      myListenersEnabled = false;
+      for (StackFramesListBuilder builder : myBuilders.values()) {
+        builder.dispose();
+      }
+      myBuilders.clear();
 
-    if (event == SessionEvent.PAUSED) {
-      // clear immediately
-      cancelClear();
-      clear();
-    }
+      if (suspendContext == null) {
+        requestClear();
+        return;
+      }
 
-    XExecutionStack[] executionStacks = suspendContext.getExecutionStacks();
-    addExecutionStacks(Arrays.asList(executionStacks));
+      if (event == SessionEvent.PAUSED) {
+        // clear immediately
+        cancelClear();
+        clear();
+      }
 
-    XExecutionStack activeExecutionStack = mySelectedStack != null ? mySelectedStack : suspendContext.getActiveExecutionStack();
-    myThreadComboBox.setSelectedItem(activeExecutionStack);
-    myThreadsPanel.removeAll();
-    myThreadsPanel.add(myToolbar.getComponent(), BorderLayout.EAST);
-    final boolean invisible = executionStacks.length == 1 && StringUtil.isEmpty(executionStacks[0].getDisplayName());
-    if (!invisible) {
-      myThreadsPanel.add(myThreadComboBox, BorderLayout.CENTER);
-    }
-    myToolbar.setAddSeparatorFirst(!invisible);
-    updateFrames(activeExecutionStack, session);
+      XExecutionStack[] executionStacks = suspendContext.getExecutionStacks();
+      addExecutionStacks(Arrays.asList(executionStacks));
+
+      XExecutionStack activeExecutionStack = mySelectedStack != null ? mySelectedStack : suspendContext.getActiveExecutionStack();
+      myThreadComboBox.setSelectedItem(activeExecutionStack);
+      myThreadsPanel.removeAll();
+      myThreadsPanel.add(myToolbar.getComponent(), BorderLayout.EAST);
+      final boolean invisible = executionStacks.length == 1 && StringUtil.isEmpty(executionStacks[0].getDisplayName());
+      if (!invisible) {
+        myThreadsPanel.add(myThreadComboBox, BorderLayout.CENTER);
+      }
+      myToolbar.setAddSeparatorFirst(!invisible);
+      updateFrames(activeExecutionStack, session);
+    });
   }
 
   @Override

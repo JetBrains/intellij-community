@@ -117,7 +117,6 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   @Nullable
   public EventSet getEventSet() {
-    assertNotResumed();
     return myEventSet;
   }
 

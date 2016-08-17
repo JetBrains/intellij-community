@@ -129,8 +129,8 @@ class DistributionJARsBuilder {
 
     Set<String> usedJars = collectUsedJars(includedModules, []) - productLayout.additionalJarsToUnpackIntoMainJar.collect {FileUtil.toSystemIndependentName(it)}
 
-    if (buildContext.scrambleTool != null) {
-      def forbiddenJarNames = buildContext.scrambleTool.namesOfJarsRequiredToBeScrambled
+    if (buildContext.proprietaryBuildTools.scrambleTool != null) {
+      def forbiddenJarNames = buildContext.proprietaryBuildTools.scrambleTool.namesOfJarsRequiredToBeScrambled
       def forbiddenJars = usedJars.findAll { forbiddenJarNames.contains(PathUtilRt.getFileName(it)) }
       if (!forbiddenJars.empty) {
         buildContext.messages.error("The following JARs cannot be included into the product 'lib' directory, they need to be scrambled with the main jar: ${forbiddenJars}")

@@ -18,8 +18,10 @@ package git4idea.annotate;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
@@ -168,6 +170,13 @@ public class GitFileAnnotation extends FileAnnotation {
   }
 
   @Override
+  public VcsFileRevision getRevisionByDescription(VcsRevisionDescription description) {
+    LineInfo lineInfo = (LineInfo)description;
+    FilePath path = VcsContextFactory.SERVICE.getInstance().createFilePath(lineInfo.getPath(), false);
+    return new GitFileRevision(myProject, path, (GitRevisionNumber)description.getRevisionNumber());
+  }
+
+  @Override
   public boolean revisionsNotEmpty() {
     return !myRevisions.isEmpty();
   }
@@ -250,11 +259,13 @@ public class GitFileAnnotation extends FileAnnotation {
     private final Date myDate;
     private final GitRevisionNumber myRevision;
     private final String myAuthor;
+    private final String myPath;
 
-    public LineInfo(Date date, GitRevisionNumber revision, String author) {
+    public LineInfo(Date date, GitRevisionNumber revision, String author, String path) {
       myDate = date;
       myRevision = revision;
       myAuthor = author;
+      myPath = path;
     }
 
     public Date getRevisionDate() {
@@ -273,6 +284,10 @@ public class GitFileAnnotation extends FileAnnotation {
     @Override
     public String getCommitMessage() {
       return null;
+    }
+
+    public String getPath() {
+      return myPath;
     }
   }
 

@@ -33,7 +33,7 @@ package org.jetbrains.intellij.build
 import groovy.transform.CompileStatic
 
 /**
- * Implement this interfaces and pass the implementation to {@link BuildContext#createContext} method to sign the product's *.exe files.
+ * Implement this interfaces and pass the implementation to {@link ProprietaryBuildTools} constructor to sign the product's *.exe files.
  *
  * @author nik
  */
