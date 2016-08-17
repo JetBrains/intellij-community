@@ -47,7 +47,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
@@ -119,7 +118,8 @@ public class PsiUtil {
       return true;
     }
     if (owner instanceof GrMethod) {
-      return ((GrMethod)owner).getReturnTypeElementGroovy() != null || ((GrMethod)owner).isConstructor();
+      GrMethod method = (GrMethod)owner;
+      return method.isConstructor() || method.getReturnTypeElementGroovy() != null && method.getTypeParameterList() == null;
     }
     else if (owner instanceof GrVariable) {
       return ((GrVariable)owner).getTypeElementGroovy() != null;
