@@ -21,9 +21,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
@@ -57,7 +54,6 @@ import org.jetbrains.plugins.groovy.annotator.checkers.AnnotationChecker;
 import org.jetbrains.plugins.groovy.annotator.checkers.CustomAnnotationChecker;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrModifierFix;
-import org.jetbrains.plugins.groovy.codeInspection.bugs.GrRemoveModifierFix;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter;
@@ -106,9 +102,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ast.InheritConstructorContribut
 
 import java.util.*;
 
-import static org.jetbrains.plugins.groovy.annotator.UtilKt.checkModifierIsNotAllowed;
-import static org.jetbrains.plugins.groovy.annotator.UtilKt.checkVariableModifiers;
-import static org.jetbrains.plugins.groovy.annotator.UtilKt.registerFix;
+import static org.jetbrains.plugins.groovy.annotator.UtilKt.*;
 
 /**
  * @author ven
@@ -988,8 +982,11 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   private static void checkFieldModifiers(AnnotationHolder holder, GrVariableDeclaration fieldDeclaration) {
+    GrVariable variable = fieldDeclaration.getVariables()[0];
+    if (!(variable instanceof GrField)) return;
+
+    final GrField member = (GrField)variable;
     final GrModifierList modifierList = fieldDeclaration.getModifierList();
-    final GrField member = (GrField)fieldDeclaration.getVariables()[0];
 
     checkAccessModifiers(holder, modifierList, member);
     checkDuplicateModifiers(holder, modifierList, member);
