@@ -22,9 +22,9 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -33,6 +33,8 @@ import com.intellij.pom.Navigatable;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,11 +42,27 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Stream;
 
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
+import static com.intellij.util.containers.ContainerUtil.newTroveSet;
+import static java.util.stream.Collectors.toCollection;
+
 /**
  * @author max
  */
 public class ChangesUtil {
   private static final Key<Boolean> INTERNAL_OPERATION_KEY = Key.create("internal vcs operation");
+
+  public static final TObjectHashingStrategy<FilePath> FILE_PATH_BY_PATH_ONLY_HASHING_STRATEGY = new TObjectHashingStrategy<FilePath>() {
+    @Override
+    public int computeHashCode(@NotNull FilePath path) {
+      return path.getPath().hashCode();
+    }
+
+    @Override
+    public boolean equals(@NotNull FilePath path1, @NotNull FilePath path2) {
+      return StringUtil.equals(path1.getPath(), path2.getPath());
+    }
+  };
 
   private ChangesUtil() {}
 
@@ -97,59 +115,11 @@ public class ChangesUtil {
     return ProjectLevelVcsManager.getInstance(project).getVcsFor(VcsContextFactory.SERVICE.getInstance().createFilePathOn(file));
   }
 
-  /**
-   * TODO: Provide common approach for either case sensitive or case insensitive comparison of File, FilePath, etc. depending on used VCS,
-   * TODO: OS, VCS operation (several hashing and equality strategies seems to be useful here)
-   */
-  @Deprecated
-  public static class CaseSensitiveFilePathList {
-    @NotNull private final List<FilePath> myResult = new ArrayList<>();
-    @NotNull private final Set<String> myDuplicatesControlSet = new HashSet<>();
-
-    public void add(@NotNull FilePath file) {
-      final String path = file.getPath();
-      if (! myDuplicatesControlSet.contains(path)) {
-        myResult.add(file);
-        myDuplicatesControlSet.add(path);
-      }
-    }
-
-    public void addParents(@NotNull FilePath file, @NotNull Condition<FilePath> condition) {
-      FilePath parent = file.getParentPath();
-
-      if (parent != null && condition.value(parent)) {
-        add(parent);
-        addParents(parent, condition);
-      }
-    }
-
-    @NotNull
-    public List<FilePath> getResult() {
-      return myResult;
-    }
-  }
-
   @NotNull
   public static List<FilePath> getPaths(@NotNull Collection<Change> changes) {
-    return getPathsList(changes).getResult();
-  }
-
-  @NotNull
-  public static CaseSensitiveFilePathList getPathsList(@NotNull Collection<Change> changes) {
-    CaseSensitiveFilePathList list = new CaseSensitiveFilePathList();
-
-    for (Change change : changes) {
-      ContentRevision beforeRevision = change.getBeforeRevision();
-      if (beforeRevision != null) {
-        list.add(beforeRevision.getFile());
-      }
-      ContentRevision afterRevision = change.getAfterRevision();
-      if (afterRevision != null) {
-        list.add(afterRevision.getFile());
-      }
-    }
-
-    return list;
+    THashSet<FilePath> distinctPaths = getAllPaths(changes.stream())
+      .collect(toCollection(() -> newTroveSet(FILE_PATH_BY_PATH_ONLY_HASHING_STRATEGY)));
+    return newArrayList(distinctPaths);
   }
 
   public static List<File> getIoFilesFromChanges(final Collection<Change> changes) {
@@ -170,6 +140,13 @@ public class ChangesUtil {
       }
     }
     return result;
+  }
+
+  @NotNull
+  public static Stream<FilePath> getAllPaths(@NotNull Stream<Change> changes) {
+    return changes
+      .flatMap(change -> Stream.of(getBeforePath(change), getAfterPath(change)))
+      .filter(Objects::nonNull);
   }
 
   /**
