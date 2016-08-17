@@ -272,11 +272,11 @@ idea.fatal.error.notification=disabled
       new DistributionJARsBuilder(buildContext, includedModules, allPlugins).buildJARs()
     }
     if (buildContext.productProperties.scrambleMainJar) {
-      if (buildContext.scrambleTool != null) {
-        buildContext.scrambleTool.scramble(buildContext.productProperties.productLayout.mainJarName, buildContext)
+      if (buildContext.proprietaryBuildTools.scrambleTool != null) {
+        buildContext.proprietaryBuildTools.scrambleTool.scramble(buildContext.productProperties.productLayout.mainJarName, buildContext)
       }
       else {
-        buildContext.messages.warning("Scrambling skipped: 'srambleTool' isn't defined")
+        buildContext.messages.warning("Scrambling skipped: 'scrambleTool' isn't defined")
       }
     }
     buildDistributions()
@@ -347,7 +347,7 @@ idea.fatal.error.notification=disabled
     }
     else {
       List<String> modulesToBuild = ((moduleNames as Set<String>) + DistributionJARsBuilder.ADDITIONAL_MODULES_TO_COMPILE
-        + buildContext.scrambleTool?.additionalModulesToCompile ?: []) as List<String>
+        + buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: []) as List<String>
       List<String> invalidModules = modulesToBuild.findAll {buildContext.findModule(it) == null}
       if (!invalidModules.empty) {
         buildContext.messages.warning("The following modules won't be compiled: $invalidModules")

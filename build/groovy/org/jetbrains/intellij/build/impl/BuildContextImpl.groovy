@@ -38,8 +38,8 @@ class BuildContextImpl extends BuildContext {
 
 //todo[nik] construct buildOutputRoot automatically based on product name
   static BuildContextImpl create(AntBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
-                   String communityHome, String projectHome, String buildOutputRoot, ProductProperties productProperties,
-                   BuildOptions options, MacHostProperties macHostProperties, SignTool signTool, ScrambleTool scrambleTool) {
+                                 String communityHome, String projectHome, String buildOutputRoot, ProductProperties productProperties,
+                                 ProprietaryBuildTools proprietaryBuildTools, BuildOptions options) {
     BuildMessages messages = BuildMessagesImpl.create(projectBuilder, ant.project)
 
     def jdk8Home = JdkUtils.computeJdkHome(messages, "jdk8Home", "$projectHome/build/jdk/1.8", "JDK_18_x64")
@@ -60,15 +60,14 @@ class BuildContextImpl extends BuildContext {
 
     return new BuildContextImpl(ant, messages, paths, project, global, projectBuilder, productProperties,
                                 windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
-                                macHostProperties, options, signTool, scrambleTool, outputDirectoriesToKeep)
+                                proprietaryBuildTools, options, outputDirectoriesToKeep)
   }
 
   BuildContextImpl(AntBuilder ant, BuildMessages messages, BuildPaths paths, JpsProject project, JpsGlobal global,
                    JpsGantProjectBuilder projectBuilder, ProductProperties productProperties,
                    WindowsDistributionCustomizer windowsDistributionCustomizer, LinuxDistributionCustomizer linuxDistributionCustomizer,
                    MacDistributionCustomizer macDistributionCustomizer,
-                   MacHostProperties macHostProperties, BuildOptions options, SignTool signTool, ScrambleTool scrambleTool,
-                   List<String> outputDirectoriesToKeep) {
+                   ProprietaryBuildTools proprietaryBuildTools, BuildOptions options, List<String> outputDirectoriesToKeep) {
     this.ant = ant
     this.messages = messages
     this.paths = paths
@@ -76,11 +75,9 @@ class BuildContextImpl extends BuildContext {
     this.global = global
     this.projectBuilder = projectBuilder
     this.productProperties = productProperties
-    this.macHostProperties = macHostProperties
+    this.proprietaryBuildTools = proprietaryBuildTools
     bundledJreManager = new BundledJreManager(this, paths.buildOutputRoot)
     this.options = options
-    this.signTool = signTool
-    this.scrambleTool = scrambleTool
     this.outputDirectoriesToKeep = outputDirectoriesToKeep
 
     bundledJreManager = new BundledJreManager(this, paths.buildOutputRoot)
@@ -212,9 +209,9 @@ class BuildContextImpl extends BuildContext {
 
   @Override
   void signExeFile(String path) {
-    if (signTool != null) {
+    if (proprietaryBuildTools.signTool != null) {
       messages.progress("Signing $path")
-      signTool.signExeFile(path, this)
+      proprietaryBuildTools.signTool.signExeFile(path, this)
       messages.info("Signing done")
     }
     else {
@@ -238,7 +235,7 @@ class BuildContextImpl extends BuildContext {
     def messages = messages.forkForParallelTask(taskName)
     def child = new BuildContextImpl(ant, messages, paths, project, global, projectBuilder, productProperties,
                                      windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
-                                     macHostProperties, options, signTool, scrambleTool, outputDirectoriesToKeep)
+                                     proprietaryBuildTools, options, outputDirectoriesToKeep)
     child.bundledJreManager.baseDirectoryForJre = bundledJreManager.baseDirectoryForJre
     return child
   }

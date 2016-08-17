@@ -88,7 +88,7 @@ public abstract class ProductProperties {
   List<LibraryLicense> allLibraryLicenses = CommunityLibraryLicenses.LICENSES_LIST
 
   /**
-   * If {@code true} the main product JAR file will be scrambled using {@link BuildContext#scrambleTool}
+   * If {@code true} the main product JAR file will be scrambled using {@link ProprietaryBuildTools#scrambleTool}
    */
   boolean scrambleMainJar = false
 

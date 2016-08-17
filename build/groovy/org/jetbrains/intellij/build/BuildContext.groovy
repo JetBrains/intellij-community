@@ -38,10 +38,8 @@ abstract class BuildContext {
   WindowsDistributionCustomizer windowsDistributionCustomizer
   LinuxDistributionCustomizer linuxDistributionCustomizer
   MacDistributionCustomizer macDistributionCustomizer
-  MacHostProperties macHostProperties
+  ProprietaryBuildTools proprietaryBuildTools
   BuildOptions options
-  SignTool signTool
-  ScrambleTool scrambleTool
   BundledJreManager bundledJreManager
 
   /**
@@ -88,10 +86,10 @@ abstract class BuildContext {
 
   public static BuildContext createContext(AntBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
                                            String communityHome, String projectHome, String buildOutputRoot, ProductProperties productProperties,
-                                           BuildOptions options = new BuildOptions(), MacHostProperties macHostProperties = null, SignTool signTool = null,
-                                           ScrambleTool scrambleTool = null) {
+                                           ProprietaryBuildTools proprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+                                           BuildOptions options = new BuildOptions()) {
     return BuildContextImpl.create(ant, projectBuilder, project, global, communityHome, projectHome, buildOutputRoot, productProperties,
-                                   options, macHostProperties, signTool, scrambleTool)
+                                   proprietaryBuildTools, options)
   }
 
   /**
