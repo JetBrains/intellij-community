@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.fileTemplates;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
@@ -47,4 +48,9 @@ public interface CreateFromTemplateHandler {
   String getErrorMessage();
 
   void prepareProperties(Map<String, Object> props);
+
+  @NotNull
+  default String commandName(@NotNull FileTemplate template) {
+    return IdeBundle.message("command.create.file.from.template");
+  }
 }

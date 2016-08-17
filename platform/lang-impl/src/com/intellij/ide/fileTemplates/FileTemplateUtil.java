@@ -24,7 +24,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -60,8 +59,6 @@ import java.util.regex.Pattern;
  * @author MYakovlev
  */
 public class FileTemplateUtil {
-  public static final String INTERNAL_PACKAGE_INFO_TEMPLATE_NAME = "package-info";
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.FileTemplateUtil");
   private static final CreateFromTemplateHandler DEFAULT_HANDLER = new DefaultCreateFromTemplateHandler();
 
@@ -340,8 +337,7 @@ public class FileTemplateUtil {
             commandException[0] = ex;
           }
         }),
-      IdeBundle.message(template.isTemplateOfType(StdFileTypes.JAVA) && !"package-info".equals(template.getName()) ?
-                        "command.create.class.from.template" : "command.create.file.from.template"),
+      handler.commandName(template),
       null);
 
     if (commandException[0] != null) {
@@ -370,7 +366,6 @@ public class FileTemplateUtil {
     int indent = CodeStyleSettingsManager.getSettings(project).getIndentSize(fileType);
     return methodText.replaceAll("\n", "\n" + StringUtil.repeatSymbol(' ', indent));
   }
-
 
   public static boolean canCreateFromTemplate(PsiDirectory[] dirs, FileTemplate template) {
     FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());
@@ -422,7 +417,7 @@ public class FileTemplateUtil {
 
   private static String templateToRegex(String text, TIntObjectHashMap<String> offsetToProperty, Project project) {
     List<Object> properties = ContainerUtil.newArrayList(FileTemplateManager.getInstance(project).getDefaultProperties().keySet());
-    properties.add("PACKAGE_NAME");
+    properties.add(FileTemplate.ATTRIBUTE_PACKAGE_NAME);
 
     String regex = escapeRegexChars(text);
     // first group is a whole file header

@@ -39,8 +39,10 @@ public class JavaTemplateUtil {
   public static final String INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME = "AnnotationType";
   public static final String INTERNAL_ENUM_TEMPLATE_NAME = "Enum";
 
-  public static final String[] INTERNAL_JAVA_TEMPLATES = {
+  public static final String[] INTERNAL_CLASS_TEMPLATES = {
     INTERNAL_CLASS_TEMPLATE_NAME, INTERNAL_INTERFACE_TEMPLATE_NAME, INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME, INTERNAL_ENUM_TEMPLATE_NAME};
+
+  public static final String INTERNAL_PACKAGE_INFO_TEMPLATE_NAME = "package-info";
 
   private JavaTemplateUtil() { }
 
