@@ -222,23 +222,28 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
               if (files.size() > 0) {
                 final File jdkFile = new File(files.get(0).getPath());
                 JdkBundle selectedJdk = pathsList.getBundle(jdkFile.getPath());
+                JdkBundleItem jdkBundleItem;
                 if (selectedJdk == null) {
                   selectedJdk = JdkBundle.createBundle(jdkFile, false, false);
                   if (selectedJdk != null) {
                     pathsList.addBundle(selectedJdk, true);
                     if (model.getSize() > 0) {
-                      model.insertElementAt(new JdkBundleItem(selectedJdk), model.getSize() - 1);
+                      jdkBundleItem = new JdkBundleItem(selectedJdk);
+                      model.insertElementAt(jdkBundleItem, model.getSize() - 1);
                     }
                     else {
-                      model.addElement(new JdkBundleItem(selectedJdk));
+                      jdkBundleItem = new JdkBundleItem(selectedJdk);
+                      model.addElement(jdkBundleItem);
                     }
                   }
                   else {
                     LOG.error("Cannot create bundle for path: " + jdkFile.getPath());
                     return;
                   }
+                } else {
+                  jdkBundleItem = new JdkBundleItem(selectedJdk);
                 }
-                myComboBox.setSelectedItem(selectedJdk);
+                myComboBox.setSelectedItem(jdkBundleItem);
               }
             });
           }
