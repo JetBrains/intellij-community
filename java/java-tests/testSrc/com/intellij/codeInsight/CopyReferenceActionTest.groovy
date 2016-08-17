@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight
 
 import com.intellij.JavaTestUtil
@@ -6,39 +21,36 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import org.jetbrains.annotations.NonNls
 
-public class CopyReferenceActionTest extends LightCodeInsightFixtureTestCase {
-  @NonNls private static final String BASE_PATH = "/codeInsight/copyReference";
-  protected int oldSetting;
+class CopyReferenceActionTest extends LightCodeInsightFixtureTestCase {
+  private int oldSetting
 
   @Override
   protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + BASE_PATH;
+    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/copyReference"
   }
 
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-
-    CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    oldSetting = settings.ADD_IMPORTS_ON_PASTE;
-    settings.ADD_IMPORTS_ON_PASTE = CodeInsightSettings.YES;
+  protected void setUp() {
+    super.setUp()
+    CodeInsightSettings settings = CodeInsightSettings.getInstance()
+    oldSetting = settings.ADD_IMPORTS_ON_PASTE
+    settings.ADD_IMPORTS_ON_PASTE = CodeInsightSettings.YES
   }
 
   @Override
-  protected void tearDown() throws Exception {
-    CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    settings.ADD_IMPORTS_ON_PASTE = oldSetting;
-    super.tearDown();
+  protected void tearDown() {
+    CodeInsightSettings settings = CodeInsightSettings.getInstance()
+    settings.ADD_IMPORTS_ON_PASTE = oldSetting
+    super.tearDown()
   }
 
-  public void testConstructor() throws Exception { doTest(); }
-  public void testDefaultConstructor() throws Exception { doTest(); }
-  public void testIdentifierSeparator() throws Exception { doTest(); }
-  public void testMethodFromAnonymousClass() throws Exception { doTest(); }
+  void testConstructor() { doTest() }
+  void testDefaultConstructor() { doTest() }
+  void testIdentifierSeparator() { doTest() }
+  void testMethodFromAnonymousClass() { doTest() }
 
-  public void testSameClassNames() throws Exception {
+  void testSameClassNames() {
     myFixture.addClass("package p; public class Foo {}")
     myFixture.configureByText("Foo.java", "package p1; public class Fo<caret>o {}")
     performCopy()
@@ -47,19 +59,19 @@ public class CopyReferenceActionTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResult """import p.Foo; class Bar {p1.Foo}"""
   }
 
-  public void testAddImport() {
+  void testAddImport() {
     myFixture.addClass("package foo; public class Foo {}")
     myFixture.configureByText "a.java", "import foo.F<caret>oo;"
-    performCopy();
+    performCopy()
     myFixture.configureByText "b.java", "class Goo { <caret> }"
-    performPaste();
+    performPaste()
     myFixture.checkResult """import foo.Foo;
 
 class Goo { Foo }"""
 
   }
 
-  public void "test paste correct signature to javadoc"() {
+  void "test paste correct signature to javadoc"() {
     myFixture.configureByText "a.java", """
 class Foo {
   void foo(int a) {}
@@ -72,7 +84,7 @@ class Foo {
     myFixture.checkResult "/** Foo#foo(byte)<caret> */"
   }
 
-  public void "test paste correct generic signature to javadoc"() {
+  void "test paste correct generic signature to javadoc"() {
     myFixture.configureByText "a.java", """
 class Foo {
   void foo<caret>(java.util.List<String[]> a) {}
@@ -84,7 +96,7 @@ class Foo {
     myFixture.checkResult "/** Foo#foo(java.util.List)<caret> */"
   }
 
-  public void "test paste overloaded signature to a comment"() {
+  void "test paste overloaded signature to a comment"() {
     myFixture.configureByText "a.java", """
 class Foo {
   void foo<caret>(int a) {} //
@@ -101,28 +113,28 @@ class Foo {
 }
 """
   }
-  
-  public void testFqnInImport() {
+
+  void testFqnInImport() {
     myFixture.addClass("package foo; public class Foo {}")
     myFixture.configureByText "a.java", "import foo.F<caret>oo;"
-    performCopy();
+    performCopy()
     myFixture.configureByText "b.java", "import <caret>"
-    performPaste();
+    performPaste()
     myFixture.checkResult """import foo.Foo<caret>"""
 
   }
 
-  public void testCopyFile() throws Exception {
-    PsiFile psiFile = myFixture.addFileToProject("x/x.txt", "");
-    assertTrue(CopyReferenceAction.doCopy(psiFile, getProject()));
+  void testCopyFile() {
+    PsiFile psiFile = myFixture.addFileToProject("x/x.txt", "")
+    assertTrue(CopyReferenceAction.doCopy(psiFile, getProject()))
 
-    String name = getTestName(false);
-    myFixture.configureByFile(name + "_dst.java");
-    performPaste();
-    myFixture.checkResultByFile(name + "_after.java");
+    String name = getTestName(false)
+    myFixture.configureByFile(name + "_dst.java")
+    performPaste()
+    myFixture.checkResultByFile(name + "_after.java")
   }
 
-  public void testCopyLineNumber() {
+  void testCopyLineNumber() {
     myFixture.configureByText 'a.java', '''
 <caret>class Foo {
 }'''
@@ -132,7 +144,7 @@ class Foo {
     myFixture.checkResult "a.java:2"
   }
 
-  public void testMethodOverloadCopy() {
+  void testMethodOverloadCopy() {
     myFixture.configureByText 'a.java', '''
 class Koo {
   public void foo(int a) { }
@@ -158,20 +170,20 @@ class Koo2 { }
 '''
   }
 
-  private void doTest() throws Exception {
-    String name = getTestName(false);
-    myFixture.configureByFile(name + ".java");
-    performCopy();
-    myFixture.configureByFile(name + "_dst.java");
-    performPaste();
-    myFixture.checkResultByFile(name + "_after.java");
+  private void doTest() {
+    String name = getTestName(false)
+    myFixture.configureByFile(name + ".java")
+    performCopy()
+    myFixture.configureByFile(name + "_dst.java")
+    performPaste()
+    myFixture.checkResultByFile(name + "_after.java")
   }
 
   private void performCopy() {
-    myFixture.testAction(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY_REFERENCE));
+    myFixture.testAction(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY_REFERENCE))
   }
 
   private void performPaste() {
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE);
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE)
   }
 }
