@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.style;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
@@ -29,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-public class GrUnnecessaryDefModifierInspection extends GroovySuppressableInspectionTool {
+public class GrUnnecessaryDefModifierInspection extends GroovySuppressableInspectionTool implements CleanupLocalInspectionTool{
 
   private static final GrModifierFix FIX = new GrRemoveModifierFix(GrModifier.DEF);
 
