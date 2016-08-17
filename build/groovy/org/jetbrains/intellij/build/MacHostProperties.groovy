@@ -20,8 +20,6 @@ import groovy.transform.Immutable
 
 
 /**
- * @author nik
- *
  * The purpose of using Mac host is preparation and signing OS X specific artifacts.
  * The necessary software for Mac host:
  *    OS X 10.9
