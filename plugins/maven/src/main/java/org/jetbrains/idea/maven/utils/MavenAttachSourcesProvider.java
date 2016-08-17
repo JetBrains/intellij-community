@@ -15,13 +15,10 @@
  */
 package org.jetbrains.idea.maven.utils;
 
-import com.intellij.codeEditor.JavaEditorFileSwapper;
 import com.intellij.codeInsight.AttachSourcesProvider;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
@@ -31,7 +28,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
@@ -128,13 +124,7 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
                 .collect(Collectors.toList());
 
               if(!files.isEmpty()) {
-                LocalFileSystem.getInstance().refreshIoFiles(files, true, false, () -> {
-                  Project project = psiFile.getProject();
-                  final VirtualFile sourceFile = JavaEditorFileSwapper.findSourceFile(project, psiFile.getVirtualFile());
-                  if (sourceFile != null) {
-                    FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, sourceFile), true);
-                  }
-                });
+                LocalFileSystem.getInstance().refreshIoFiles(files, true, false, null);
               }
               resultWrapper.setDone();
             }
