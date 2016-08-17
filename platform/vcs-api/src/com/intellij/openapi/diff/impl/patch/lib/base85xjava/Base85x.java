@@ -1,57 +1,67 @@
-/*
- * Copyright (c) 2012 Simon Warta
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
 package com.intellij.openapi.diff.impl.patch.lib.base85xjava;
+
+import java.util.Arrays;
 
 /**
  * The main Base85x-java program
  *
- * @author Simon Warta, Kullo
- * @version 0.1
+ * @author Simon Warta, Kullo, Nadya Zabrodina
+ * @version 0.2
  */
 public class Base85x {
 
-  public static byte[] alphabet = {'$', '%', '(', ')', '*', '+', ',', '-', '.', '/',
+  private static final int ASCII_LEFT_SHIFT = 33;
+  private static final int ASCII_RIGHT_SHIFT = 127;
+
+  private static final char[] ALPHABET_85 = {
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-    ':', ';', '?', '@', 'A', 'B', 'C', 'D', 'E', 'F',
-    'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
-    'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-    '[', ']', '^', '_', '`', 'a', 'b', 'c', 'd', 'e',
-    'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
-    'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y',
-    'z', '{', '|', '}', '~'};
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
+    'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
+    'U', 'V', 'W', 'X', 'Y', 'Z',
+    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+    'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
+    'u', 'v', 'w', 'x', 'y', 'z',
+    '!', '#', '$', '%', '&', '(', ')', '*', '+', '-',
+    ';', '<', '=', '>', '?', '@', '^', '_', '`', '{',
+    '|', '}', '~'
+  };
 
+  private static final int[] INDEX_OF = initIndexOfChar();
 
-  public static byte[] encode(String data) {
-    return encode(data.getBytes());
+  private static int[] initIndexOfChar() {
+    int[] result = new int[256];
+    Arrays.fill(result, -1);
+    for (int i = 0; i < ALPHABET_85.length; i++) {
+      result[ALPHABET_85[i]] = i;
+    }
+    return result;
   }
 
-  public static byte[] decode(String data) {
-    return decode(data.getBytes());
+  public static char encodeChar(int i) throws Base85FormatException {
+    if (i < 0 || i >= ALPHABET_85.length) {
+      throw new Base85FormatException("Wrong index to encode as char " + i);
+    }
+    return ALPHABET_85[i];
   }
 
-  public static byte[] encode(byte[] data) {
-    int length = data.length;
-    byte[] out = new byte[(length / 4) * 5 + ((length % 4 != 0) ? length % 4 + 1 : 0)];
+  public static int decodeChar(char c) throws Base85FormatException {
+    // optimization for 2-byte char size
+    if (c < ASCII_LEFT_SHIFT || c > ASCII_RIGHT_SHIFT) {
+      throw new Base85FormatException("Illegal char " + (int)c);
+    }
+    int result = INDEX_OF[(int)c];
+    if (result == -1) {
+      throw new Base85FormatException("Illegal char " + (int)c);
+    }
+    return result;
+  }
+
+  public static byte[] decode(String data) throws Base85FormatException {
+    return decode(data.toCharArray());
+  }
+
+  public static char[] encode(byte[] data, int length) throws Base85FormatException {
+    char[] out = new char[(length / 4) * 5 + ((length % 4 != 0) ? length % 4 + 1 : 0)];
     int k = 0;
     // 64 bit integer
     long b;
@@ -79,15 +89,15 @@ public class Base85x {
       b /= 85;
       c1 = (int)(b % 85);
 
-      out[k] = alphabet[c1];
+      out[k] = encodeChar(c1);
       k++;
-      out[k] = alphabet[c2];
+      out[k] = encodeChar(c2);
       k++;
-      out[k] = alphabet[c3];
+      out[k] = encodeChar(c3);
       k++;
-      out[k] = alphabet[c4];
+      out[k] = encodeChar(c4);
       k++;
-      out[k] = alphabet[c5];
+      out[k] = encodeChar(c5);
       k++;
     }
     if ((rest = length % 4) != 0) {
@@ -96,7 +106,7 @@ public class Base85x {
       for (j = 0; j < rest; j++) {
         block[j] = data[i + j];
       }
-      byte[] out_rest = Base85x.encode(block);
+      char[] out_rest = encode(block, block.length);
       for (j = 0; j < rest + 1; j++) {
         out[k] = out_rest[j];
         k++;
@@ -105,27 +115,21 @@ public class Base85x {
     return out;
   }
 
-  public static byte[] decode(byte[] data) {
+  public static byte[] decode(char[] data) throws Base85FormatException {
     int length = data.length;
     byte[] out = new byte[(length / 5) * 4 + ((length % 5 != 0) ? length % 5 - 1 : 0)];
     int k = 0;
     int rest;
     int i;
-    int b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0;
-    int b = 0;
+    int b1, b2, b3, b4, b5;
+    int b;
 
     for (i = 0; i + 5 <= length; i += 5) {
-      b1 = (int)data[i + 0] & 0xFF;
-      b2 = (int)data[i + 1] & 0xFF;
-      b3 = (int)data[i + 2] & 0xFF;
-      b4 = (int)data[i + 3] & 0xFF;
-      b5 = (int)data[i + 4] & 0xFF;
-
-      b1 = ((b1 >= 93) ? b1 - 42 : ((b1 >= 63) ? b1 - 41 : ((b1 >= 40) ? b1 - 38 : b1 - 36)));
-      b2 = ((b2 >= 93) ? b2 - 42 : ((b2 >= 63) ? b2 - 41 : ((b2 >= 40) ? b2 - 38 : b2 - 36)));
-      b3 = ((b3 >= 93) ? b3 - 42 : ((b3 >= 63) ? b3 - 41 : ((b3 >= 40) ? b3 - 38 : b3 - 36)));
-      b4 = ((b4 >= 93) ? b4 - 42 : ((b4 >= 63) ? b4 - 41 : ((b4 >= 40) ? b4 - 38 : b4 - 36)));
-      b5 = ((b5 >= 93) ? b5 - 42 : ((b5 >= 63) ? b5 - 41 : ((b5 >= 40) ? b5 - 38 : b5 - 36)));
+      b1 = decodeChar(data[i]);
+      b2 = decodeChar(data[i + 1]);
+      b3 = decodeChar(data[i + 2]);
+      b4 = decodeChar(data[i + 3]);
+      b5 = decodeChar(data[i + 4]);
 
       // overflow into negative numbers
       // is normal and does not do any damage because
@@ -144,7 +148,7 @@ public class Base85x {
 
     if ((rest = length % 5) != 0) {
       int j;
-      byte[] block = {'~', '~', '~', '~', '~'};
+      char[] block = {'~', '~', '~', '~', '~'};
       for (j = 0; j < rest; j++) {
         block[j] = data[i + j];
       }
@@ -156,5 +160,11 @@ public class Base85x {
     }
 
     return out;
+  }
+
+  public static class Base85FormatException extends Exception {
+    Base85FormatException(String s) {
+      super(s);
+    }
   }
 }
