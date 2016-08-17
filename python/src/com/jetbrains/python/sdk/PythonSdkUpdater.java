@@ -124,12 +124,8 @@ public class PythonSdkUpdater implements StartupActivity {
     final Application application = ApplicationManager.getApplication();
 
     if (application.isUnitTestMode()) {
-      /**
-       * All actions we take after this line are dedicated to skeleton update process.
-       * Not all tests do need them.
-       * To find test API that updates skeleton, find usage of following method:
-       * {@link PySkeletonRefresher#refreshSkeletonsOfSdk(Project, Component, String, Sdk)}
-       */
+      // All actions we take after this line are dedicated to skeleton update process. Not all tests do need them. To find test API that
+      // updates skeleton, see PySkeletonRefresher
       return true;
     }
 
@@ -309,7 +305,7 @@ public class PythonSdkUpdater implements StartupActivity {
     final SdkAdditionalData additionalData = sdk.getSdkAdditionalData();
     final PythonSdkAdditionalData pythonAdditionalData = PyUtil.as(additionalData, PythonSdkAdditionalData.class);
     return pythonAdditionalData != null ? Lists.newArrayList(pythonAdditionalData.getAddedPathFiles()) :
-           Collections.<VirtualFile>emptyList();
+           Collections.emptyList();
   }
 
   /**
@@ -338,7 +334,7 @@ public class PythonSdkUpdater implements StartupActivity {
   private static List<VirtualFile> filterRootPaths(@NotNull Sdk sdk, @NotNull List<String> paths) {
     final PythonSdkAdditionalData pythonAdditionalData = PyUtil.as(sdk.getSdkAdditionalData(), PythonSdkAdditionalData.class);
     final Collection<VirtualFile> excludedPaths = pythonAdditionalData != null ? pythonAdditionalData.getExcludedPathFiles() :
-                                                  Collections.<VirtualFile>emptyList();
+                                                  Collections.emptyList();
     final List<VirtualFile> results = Lists.newArrayList();
     for (String path : paths) {
       if (path != null && !FileUtilRt.extensionEquals(path, "egg-info")) {
