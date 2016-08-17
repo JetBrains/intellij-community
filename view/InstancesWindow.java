@@ -214,6 +214,8 @@ public class InstancesWindow extends DialogWrapper {
         if (!expression.isEmpty()) {
           myFilterConditionEditor.saveTextInHistory();
         }
+
+        myFilterButton.setEnabled(false);
         myInstancesTree.rebuildAndRestore(XDebuggerTreeState.saveState(myInstancesTree));
       });
 
@@ -439,6 +441,7 @@ public class InstancesWindow extends DialogWrapper {
       @Override
       protected void done() {
         addChildrenToTree(XValueChildrenList.EMPTY, true);
+        myFilterButton.setEnabled(true);
         hideProgressPane();
       }
 
