@@ -980,7 +980,10 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   private static void checkFieldModifiers(AnnotationHolder holder, GrVariableDeclaration fieldDeclaration) {
-    GrVariable variable = fieldDeclaration.getVariables()[0];
+    GrVariable[] variables = fieldDeclaration.getVariables();
+    if (variables.length == 0) return;
+
+    GrVariable variable = variables[0];
     if (!(variable instanceof GrField)) return;
 
     final GrField member = (GrField)variable;
