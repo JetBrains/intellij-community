@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
+import com.sun.jdi.ArrayReference;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 
@@ -20,7 +21,11 @@ public class InstanceValueDescriptor extends ValueDescriptorImpl {
 
   @Override
   public String calcValueName() {
-    ObjectReference ref = ((ObjectReference)getValue());
+    ObjectReference ref = ((ObjectReference) getValue());
+    if (ref instanceof ArrayReference) {
+      ArrayReference arrayReference = (ArrayReference) ref;
+      return NamesUtils.getArrayUniqueName(arrayReference);
+    }
     return NamesUtils.getUniqueName(ref);
   }
 
@@ -37,7 +42,7 @@ public class InstanceValueDescriptor extends ValueDescriptorImpl {
   @Override
   public PsiExpression getDescriptorEvaluation(DebuggerContext debuggerContext) throws EvaluateException {
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
-    ObjectReference ref = ((ObjectReference)getValue());
+    ObjectReference ref = ((ObjectReference) getValue());
     String name = NamesUtils.getUniqueName(ref).replace("@", "");
     String presentation = String.format("%s_DebugLabel", name);
 
