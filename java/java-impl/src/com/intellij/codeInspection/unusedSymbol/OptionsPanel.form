@@ -6,14 +6,14 @@
       <xy x="20" y="20" width="258" height="400"/>
     </constraints>
     <properties/>
-    <border type="empty" title=""/>
+    <border type="empty"/>
     <children>
       <vspacer id="eb5d4">
         <constraints>
           <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
         </constraints>
       </vspacer>
-      <component id="2077d" class="javax.swing.JCheckBox" binding="myAccessors" default-binding="true">
+      <component id="2077d" class="javax.swing.JCheckBox" binding="myAccessors" custom-create="true" default-binding="true">
         <constraints>
           <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="2" use-parent-layout="false"/>
         </constraints>

@@ -15,10 +15,7 @@
  */
 package org.jetbrains.settingsRepository
 
-import com.intellij.openapi.util.text.StringUtil
 import java.nio.ByteBuffer
-
-fun String?.nullize(): String? = StringUtil.nullize(this)
 
 fun byteBufferToBytes(byteBuffer: ByteBuffer): ByteArray {
   if (byteBuffer.hasArray() && byteBuffer.arrayOffset() == 0) {

@@ -103,7 +103,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       updateExtension = false
     }
 
-    if (useVfs && (provider == null || !provider.enabled)) {
+    if (useVfs && (provider == null || !provider.isApplicable(fileSpec, roamingType))) {
       try {
         refreshVirtualDirectoryAndAddListener()
       }
@@ -551,10 +551,12 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       }
     }
 
-    if (!filesToDelete.isEmpty()) {
-      deleteFiles(errors)
+    val filesToDelete = THashSet(filesToDelete)
+    if (!filesToDelete.isEmpty) {
+      this.filesToDelete.removeAll(filesToDelete)
+      deleteFiles(errors, filesToDelete)
       // remove empty directory only if some file was deleted - avoid check on each save
-      if (!hasSchemes && (provider == null || !provider.enabled)) {
+      if (!hasSchemes && (provider == null || !provider.isApplicable(fileSpec, roamingType))) {
         removeDirectoryIfEmpty(errors)
       }
     }
@@ -708,29 +710,28 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     return info != null && scheme.name != info.schemeName
   }
 
-  private fun deleteFiles(errors: MutableList<Throwable>) {
-    val deleteUsingIo: Boolean
+  private fun deleteFiles(errors: MutableList<Throwable>, filesToDelete: MutableSet<String>) {
     if (provider != null && provider.enabled) {
-      deleteUsingIo = false
       for (name in filesToDelete) {
         errors.catch {
           val spec = "$fileSpec/$name"
           if (provider.isApplicable(spec, roamingType)) {
+            filesToDelete.remove(name)
             provider.delete(spec, roamingType)
           }
         }
       }
     }
-    else if (!useVfs) {
-      deleteUsingIo = true
+
+    if (filesToDelete.isEmpty()) {
+      return
     }
-    else {
-      val dir = virtualDirectory
-      deleteUsingIo = dir == null
-      if (!deleteUsingIo) {
+
+    if (useVfs) {
+      virtualDirectory?.let {
         var token: AccessToken? = null
         try {
-          for (file in dir!!.children) {
+          for (file in it.children) {
             if (filesToDelete.contains(file.name)) {
               if (token == null) {
                 token = WriteAction.start()
@@ -745,16 +746,13 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
         finally {
           token?.finish()
         }
+        return
       }
     }
 
-    if (deleteUsingIo) {
-      for (name in filesToDelete) {
-        errors.catch { ioDirectory.resolve(name).delete() }
-      }
+    for (name in filesToDelete) {
+      errors.catch { ioDirectory.resolve(name).delete() }
     }
-
-    filesToDelete.clear()
   }
 
   private val virtualDirectory: VirtualFile?

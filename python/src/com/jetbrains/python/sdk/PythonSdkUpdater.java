@@ -144,7 +144,7 @@ public class PythonSdkUpdater implements StartupActivity {
           if (sdkInsideTask != null) {
             ourUnderRefresh.put(key);
             try {
-              final String skeletonsPath = getBinarySkeletonsPath(key);
+              final String skeletonsPath = getBinarySkeletonsPath(sdk.getHomePath());
               try {
                 if (PythonSdkType.isRemote(sdkInsideTask) && project1 == null && ownerComponent == null) {
                   LOG.error("For refreshing skeletons of remote SDK, either project or owner component must be specified");

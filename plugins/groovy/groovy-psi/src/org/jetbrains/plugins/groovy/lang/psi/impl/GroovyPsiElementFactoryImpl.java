@@ -1039,14 +1039,16 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       }
       builder.append("(){}");
       GrMethod method = createMethodFromText(builder.toString(), context);
-      if (returnType != null) {
-        method.getModifierList().setModifierProperty(GrModifier.DEF, false);
-      }
       PsiTypeParameterList typeParameterList = method.getTypeParameterList();
       assert typeParameterList != null;
       typeParameterList.getFirstChild().delete();
       typeParameterList.getFirstChild().delete();
       typeParameterList.getFirstChild().delete();
+
+      if (returnType != null) {
+        method.getModifierList().setModifierProperty(GrModifier.DEF, false);
+      }
+
       return method;
     }
     finally {

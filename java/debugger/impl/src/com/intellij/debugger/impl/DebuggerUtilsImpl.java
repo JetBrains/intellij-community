@@ -37,6 +37,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
@@ -57,6 +58,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 
 public class DebuggerUtilsImpl extends DebuggerUtilsEx{
+  public static final Key<PsiType> PSI_TYPE_KEY = Key.create("PSI_TYPE_KEY");
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerUtilsImpl");
 
   @Override
@@ -162,6 +164,9 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
         contextClass = (PsiClass)((PsiCompiledElement)contextClass).getMirror();
       }
       contextType = getType(className, project);
+    }
+    if (contextClass != null) {
+      contextClass.putUserData(PSI_TYPE_KEY, contextType);
     }
     return Pair.create(contextClass, contextType);
   }

@@ -54,7 +54,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
                                    private val virtualFileTracker: StorageVirtualFileTracker? = StateStorageManagerImpl.createDefaultVirtualTracker(componentManager) ) : StateStorageManager {
   private val macros: MutableList<Macro> = ContainerUtil.createLockFreeCopyOnWriteList()
   private val storageLock = ReentrantReadWriteLock()
-  val storages = THashMap<String, StateStorage>()
+  private val storages = THashMap<String, StateStorage>()
 
   private val streamWrapper = StreamProviderWrapper()
   var streamProvider: StreamProvider?
@@ -179,6 +179,8 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
   fun getCachedFileStorages() = storageLock.read { storages.values.toSet() }
 
+  fun findCachedFileStorage(name: String) : StateStorage? = storageLock.read { storages[name] }
+
   fun getCachedFileStorages(changed: Collection<String>, deleted: Collection<String>, pathNormalizer: ((String) -> String)? = null) = storageLock.read {
     Pair(getCachedFileStorages(changed, pathNormalizer), getCachedFileStorages(deleted, pathNormalizer))
   }
@@ -216,8 +218,16 @@ open class StateStorageManagerImpl(private val rootTagName: String,
       return constructor.newInstance(componentManager!!, this) as StateStorage
     }
 
+    val effectiveRoamingType: RoamingType
+    if (roamingType != RoamingType.DISABLED && (collapsedPath == StoragePathMacros.WORKSPACE_FILE || collapsedPath == "other.xml")) {
+      effectiveRoamingType = RoamingType.DISABLED
+    }
+    else {
+      effectiveRoamingType = roamingType
+    }
+
     if (isUseVfsListener == ThreeState.UNSURE) {
-      isUseVfsListener = ThreeState.fromBoolean(streamProvider == null || !streamProvider!!.enabled)
+      isUseVfsListener = ThreeState.fromBoolean(streamProvider == null || !streamProvider!!.isApplicable(collapsedPath, effectiveRoamingType))
     }
 
     val filePath = expandMacros(collapsedPath)
@@ -232,14 +242,6 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment && PathUtilRt.getFileName(filePath).lastIndexOf('.') < 0) {
       throw IllegalArgumentException("Extension is missing for storage file: $filePath")
-    }
-
-    val effectiveRoamingType: RoamingType
-    if (roamingType != RoamingType.DISABLED && (collapsedPath == StoragePathMacros.WORKSPACE_FILE || collapsedPath == "other.xml")) {
-      effectiveRoamingType = RoamingType.DISABLED
-    }
-    else {
-      effectiveRoamingType = roamingType
     }
 
     val storage = createFileBasedStorage(filePath, collapsedPath, effectiveRoamingType, if (exclusive) null else this.rootTagName)

@@ -119,7 +119,7 @@ public class PsiUtil {
     }
     if (owner instanceof GrMethod) {
       GrMethod method = (GrMethod)owner;
-      return method.isConstructor() || method.getReturnTypeElementGroovy() != null && method.getTypeParameterList() == null;
+      return method.isConstructor() || method.getReturnTypeElementGroovy() != null && !method.hasTypeParameters();
     }
     else if (owner instanceof GrVariable) {
       return ((GrVariable)owner).getTypeElementGroovy() != null;

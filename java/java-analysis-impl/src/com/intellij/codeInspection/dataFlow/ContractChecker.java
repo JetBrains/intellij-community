@@ -35,15 +35,14 @@ import java.util.*;
 class ContractChecker extends DataFlowRunner {
   private final PsiMethod myMethod;
   private final MethodContract myContract;
-  private final boolean myOnTheFly;
   private final Set<PsiElement> myViolations = ContainerUtil.newHashSet();
   private final Set<PsiElement> myNonViolations = ContainerUtil.newHashSet();
   private final Set<PsiElement> myFailures = ContainerUtil.newHashSet();
 
   private ContractChecker(PsiMethod method, MethodContract contract, final boolean onTheFly) {
+    super(false, true, onTheFly);
     myMethod = method;
     myContract = contract;
-    myOnTheFly = onTheFly;
   }
 
   static Map<PsiElement, String> checkContractClause(PsiMethod method,
@@ -70,12 +69,6 @@ class ContractChecker extends DataFlowRunner {
 
     checker.analyzeMethod(body, new StandardInstructionVisitor(), ignoreAssertions, Arrays.asList(initialState));
     return checker.getErrors();
-  }
-
-  @Override
-  protected boolean shouldCheckTimeLimit() {
-    if (!myOnTheFly) return false;
-    return super.shouldCheckTimeLimit();
   }
 
   @NotNull

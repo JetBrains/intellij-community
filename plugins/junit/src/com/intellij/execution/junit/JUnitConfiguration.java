@@ -193,7 +193,19 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
 
   @Override
   public String suggestedName() {
-    return myData.getGeneratedName(getConfigurationModule());
+    String repeat;
+    switch (getRepeatMode()) {
+      case RepeatCount.UNLIMITED :
+      case RepeatCount.UNTIL_FAILURE :
+        repeat = " [*]";
+        break;
+      case RepeatCount.N:
+        repeat = " [" + getRepeatCount() + "]";
+        break;
+      default:
+        repeat = "";
+    }
+    return myData.getGeneratedName(getConfigurationModule()) + repeat;
   }
 
   @Override

@@ -23,6 +23,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiModifier;
 import org.intellij.lang.annotations.Pattern;
+import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -160,10 +161,7 @@ public class UnusedSymbolLocalInspectionBase extends BaseJavaLocalInspectionTool
       node.setAttribute("ignoreAccessors", Boolean.toString(true));
     }
     if (!INNER_CLASS) {
-      Element element = new Element("option");
-      node.addContent(element);
-      element.setAttribute("name", "INNER_CLASS");
-      element.setAttribute("value", "false");
+      node.setAttribute("INNER_CLASS", Boolean.toString(false));
     }
     super.writeSettings(node);
   }
@@ -195,6 +193,8 @@ public class UnusedSymbolLocalInspectionBase extends BaseJavaLocalInspectionTool
     myParameterVisibility = readVisibility(node, "parameter", getParameterDefaultVisibility());
     final String ignoreAccessors = node.getAttributeValue("ignoreAccessors");
     myIgnoreAccessors = ignoreAccessors != null && Boolean.parseBoolean(ignoreAccessors);
+    final String innerClassEnabled = node.getAttributeValue("INNER_CLASS");
+    INNER_CLASS = innerClassEnabled == null || Boolean.parseBoolean(innerClassEnabled);
   }
 
   private static String readVisibility(@NotNull Element node, final String type) {
