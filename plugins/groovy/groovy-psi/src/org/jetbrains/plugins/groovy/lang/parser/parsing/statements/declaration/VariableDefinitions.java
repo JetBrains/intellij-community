@@ -99,7 +99,7 @@ public class VariableDefinitions {
 
       if (declarator == GroovyElementTypes.TUPLE_DECLARATION) {
         varAssMarker.drop();
-        if (!wasAssignment && !hasModifiers) {
+        if (!wasAssignment) {
           builder.error(GroovyBundle.message("assignment.expected"));
           return GroovyElementTypes.WRONGWAY;
         }
