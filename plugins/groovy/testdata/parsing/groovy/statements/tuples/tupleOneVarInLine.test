@@ -15,7 +15,12 @@ Groovy script
     Variable
       PsiElement(identifier)('c')
     PsiElement())(')')
+  PsiErrorElement:';' or new line expected
+    <empty list>
+  PsiErrorElement:Unexpected symbol
     PsiElement(,)(',')
-    PsiWhiteSpace(' ')
-    Variable
-      PsiElement(identifier)('d')
+  PsiErrorElement:';' or new line expected
+    <empty list>
+  PsiWhiteSpace(' ')
+  Reference expression
+    PsiElement(identifier)('d')
