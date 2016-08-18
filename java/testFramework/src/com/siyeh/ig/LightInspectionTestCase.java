@@ -16,7 +16,13 @@
 package com.siyeh.ig;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
 import org.intellij.lang.annotations.Language;
@@ -38,6 +44,15 @@ public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTes
     final InspectionProfileEntry inspection = getInspection();
     if (inspection != null) {
       myFixture.enableInspections(inspection);
+    }
+
+    Sdk sdk = ModuleRootManager.getInstance(ModuleManager.getInstance(getProject()).getModules()[0]).getSdk();
+    if (JAVA_1_7.getSdk().getName().equals(sdk == null ? null : sdk.getName())) {
+      PsiClass object = JavaPsiFacade.getInstance(getProject()).findClass("java.lang.Object", GlobalSearchScope.allScope(getProject()));
+      assertNotNull(object);
+
+      PsiClass component = JavaPsiFacade.getInstance(getProject()).findClass("java.awt.Component", GlobalSearchScope.allScope(getProject()));
+      assertNotNull(component);
     }
   }
 
