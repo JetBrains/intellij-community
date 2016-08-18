@@ -91,7 +91,7 @@ class FilteringProgressView extends BorderLayoutPanel {
 
   private String getDescription() {
     int total = myProgressBar.getMaximum();
-    String itemsInfo = String.format("Items: %d / %d", myMatchedCount, total);
+    String itemsInfo = String.format("Shown: %d / %d", myMatchedCount, total);
     if (myIsInProcess || myCompletionReason == null) {
       return itemsInfo;
     }
