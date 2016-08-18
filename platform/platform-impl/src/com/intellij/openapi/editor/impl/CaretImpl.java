@@ -887,10 +887,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     }
   }
 
-  void onInlayChangedOrRemoved() {
-    updateVisualPosition();
-  }
-
   private boolean needToShiftWhiteSpaces(final DocumentEvent e) {
     if (!CharArrayUtil.containsOnlyWhiteSpaces(e.getNewFragment()) || CharArrayUtil.containLineBreaks(e.getNewFragment()))
       return e.getOldLength() > 0;

@@ -59,7 +59,9 @@ public class InlayModelImpl implements InlayModel, Disposable {
 
       @Override
       void fireBeforeRemoved(@NotNull InlayImpl markerEx, @NotNull @NonNls Object reason) {
-        myDispatcher.getMulticaster().onRemoved(markerEx);
+        if (markerEx.myOffsetBeforeDisposal == -1) {
+          notifyRemoved(markerEx);
+        }
       }
     };
     myEditor.getDocument().addDocumentListener(new PrioritizedDocumentListener() {
@@ -105,7 +107,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
     DocumentEx document = myEditor.getDocument();
     offset = Math.max(0, Math.min(document.getTextLength(), offset));
     InlayImpl inlay = new InlayImpl(myEditor, offset, type, renderer);
-    myDispatcher.getMulticaster().onAdded(inlay);
+    notifyAdded(inlay);
     return inlay;
   }
 
@@ -169,7 +171,15 @@ public class InlayModelImpl implements InlayModel, Disposable {
     myDispatcher.addListener(listener, disposable);
   }
 
+  private void notifyAdded(InlayImpl inlay) {
+    myDispatcher.getMulticaster().onAdded(inlay);
+  }
+
   void notifyChanged(InlayImpl inlay) {
     myDispatcher.getMulticaster().onChanged(inlay);
+  }
+
+  void notifyRemoved(InlayImpl inlay) {
+    myDispatcher.getMulticaster().onRemoved(inlay);
   }
 }

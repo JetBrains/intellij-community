@@ -45,9 +45,9 @@ public interface InlayModel {
   interface Listener extends EventListener {
     void onAdded(Inlay inlay);
 
-    void onRemoved(Inlay inlay);
-
     void onChanged(Inlay inlay);
+
+    void onRemoved(Inlay inlay);
   }
 
   abstract class SimpleAdapter implements Listener {
@@ -57,10 +57,11 @@ public interface InlayModel {
     }
 
     @Override
+    public void onChanged(Inlay inlay) {}
+
+    @Override
     public void onRemoved(Inlay inlay) {
       onChanged(inlay);
     }
-
-    public void onChanged(Inlay inlay) {}
   }
 }

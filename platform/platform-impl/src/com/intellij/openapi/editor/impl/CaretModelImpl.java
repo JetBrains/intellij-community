@@ -550,20 +550,12 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   @Override
   public void onRemoved(Inlay inlay) {
-    doWithCaretMerging(() -> {
-      for (CaretImpl caret : myCarets) {
-        caret.onInlayChangedOrRemoved();
-      }
-    });
+    doWithCaretMerging(this::updateVisualPosition);
   }
 
   @Override
   public void onChanged(Inlay inlay) {
-    doWithCaretMerging(() -> {
-      for (CaretImpl caret : myCarets) {
-        caret.onInlayChangedOrRemoved();
-      }
-    });
+    updateVisualPosition();
   }
 
   private static class VisualPositionComparator implements Comparator<VisualPosition> {

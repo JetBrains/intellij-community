@@ -24,6 +24,7 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
   @NotNull
   private final EditorImpl myEditor;
   final int myOriginalOffset; // used for sorting of inlays, if they ever get merged into same offset after document modification
+  int myOffsetBeforeDisposal = -1;
   @NotNull
   private final Type myType;
   private int myWidthInPixels;
@@ -71,13 +72,15 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
   @Override
   public void dispose() {
     if (isValid()) {
+      myOffsetBeforeDisposal = getOffset(); // We want listeners notified after disposal, but want inlay offset to be available at that time
       myEditor.getInlayModel().myInlayTree.removeInterval(this);
+      myEditor.getInlayModel().notifyRemoved(this);
     }
   }
 
   @Override
   public int getOffset() {
-    return getStartOffset();
+    return myOffsetBeforeDisposal == -1 ? getStartOffset() : myOffsetBeforeDisposal;
   }
 
   @NotNull
