@@ -195,20 +195,18 @@ public class RollbackAction extends AnAction implements DumbAware {
       public void run() {
         final ProgressIndicator indicator = progressManager.getProgressIndicator();
         try {
-          ChangesUtil.processVirtualFilesByVcs(project, modifiedWithoutEditing, new ChangesUtil.PerVcsProcessor<VirtualFile>() {
-            public void process(final AbstractVcs vcs, final List<VirtualFile> items) {
-              final RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
-              if (rollbackEnvironment != null) {
-                if (indicator != null) {
-                  indicator.setText(vcs.getDisplayName() +
-                                    ": performing " + UIUtil.removeMnemonic(rollbackEnvironment.getRollbackOperationName()).toLowerCase() + "...");
-                  indicator.setIndeterminate(false);
-                }
-                rollbackEnvironment
-                  .rollbackModifiedWithoutCheckout(items, exceptions, new RollbackProgressModifier(items.size(), indicator));
-                if (indicator != null) {
-                  indicator.setText2("");
-                }
+          ChangesUtil.processVirtualFilesByVcs(project, modifiedWithoutEditing, (vcs, items) -> {
+            final RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
+            if (rollbackEnvironment != null) {
+              if (indicator != null) {
+                indicator.setText(vcs.getDisplayName() +
+                                  ": performing " + UIUtil.removeMnemonic(rollbackEnvironment.getRollbackOperationName()).toLowerCase() + "...");
+                indicator.setIndeterminate(false);
+              }
+              rollbackEnvironment
+                .rollbackModifiedWithoutCheckout(items, exceptions, new RollbackProgressModifier(items.size(), indicator));
+              if (indicator != null) {
+                indicator.setText2("");
               }
             }
           });

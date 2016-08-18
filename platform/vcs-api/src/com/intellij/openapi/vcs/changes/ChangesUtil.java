@@ -279,10 +279,12 @@ public class ChangesUtil {
     return FileStatus.MERGED_WITH_CONFLICTS.equals(status) || FileStatus.MERGED_WITH_BOTH_CONFLICTS.equals(status);
   }
 
+  @FunctionalInterface
   public interface PerVcsProcessor<T> {
     void process(@NotNull AbstractVcs vcs, @NotNull List<T> items);
   }
 
+  @FunctionalInterface
   public interface VcsSeparator<T> {
     @Nullable
     AbstractVcs getVcsFor(@NotNull T item);
@@ -310,34 +312,19 @@ public class ChangesUtil {
   public static void processChangesByVcs(@NotNull Project project,
                                          @NotNull Collection<Change> changes,
                                          @NotNull PerVcsProcessor<Change> processor) {
-    processItemsByVcs(changes, new VcsSeparator<Change>() {
-      @Override
-      public AbstractVcs getVcsFor(@NotNull Change item) {
-        return getVcsForChange(item, project);
-      }
-    }, processor);
+    processItemsByVcs(changes, change -> getVcsForChange(change, project), processor);
   }
 
   public static void processVirtualFilesByVcs(@NotNull Project project,
                                               @NotNull Collection<VirtualFile> files,
                                               @NotNull PerVcsProcessor<VirtualFile> processor) {
-    processItemsByVcs(files, new VcsSeparator<VirtualFile>() {
-      @Override
-      public AbstractVcs getVcsFor(@NotNull VirtualFile item) {
-        return getVcsForFile(item, project);
-      }
-    }, processor);
+    processItemsByVcs(files, file -> getVcsForFile(file, project), processor);
   }
 
   public static void processFilePathsByVcs(@NotNull Project project,
                                            @NotNull Collection<FilePath> files,
                                            @NotNull PerVcsProcessor<FilePath> processor) {
-    processItemsByVcs(files, new VcsSeparator<FilePath>() {
-      @Override
-      public AbstractVcs getVcsFor(@NotNull FilePath item) {
-        return getVcsForFile(item.getIOFile(), project);
-      }
-    }, processor);
+    processItemsByVcs(files, filePath -> getVcsForFile(filePath.getIOFile(), project), processor);
   }
 
   @NotNull

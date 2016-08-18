@@ -741,17 +741,14 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private String getInitialMessageFromVcs() {
     final List<Change> list = getIncludedChanges();
     final Ref<String> result = new Ref<>();
-    ChangesUtil.processChangesByVcs(myProject, list, new ChangesUtil.PerVcsProcessor<Change>() {
-      @Override
-      public void process(final AbstractVcs vcs, final List<Change> items) {
-        if (result.isNull()) {
-          CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
-          if (checkinEnvironment != null) {
-            final Collection<FilePath> paths = ChangesUtil.getPaths(items);
-            String defaultMessage = checkinEnvironment.getDefaultMessageFor(paths.toArray(new FilePath[paths.size()]));
-            if (defaultMessage != null) {
-              result.set(defaultMessage);
-            }
+    ChangesUtil.processChangesByVcs(myProject, list, (vcs, items) -> {
+      if (result.isNull()) {
+        CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
+        if (checkinEnvironment != null) {
+          final Collection<FilePath> paths = ChangesUtil.getPaths(items);
+          String defaultMessage = checkinEnvironment.getDefaultMessageFor(paths.toArray(new FilePath[paths.size()]));
+          if (defaultMessage != null) {
+            result.set(defaultMessage);
           }
         }
       }
