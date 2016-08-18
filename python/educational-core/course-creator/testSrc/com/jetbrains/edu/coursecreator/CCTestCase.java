@@ -7,16 +7,21 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.junit.ComparisonFailure;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,6 +32,43 @@ import java.util.regex.Pattern;
 
 public abstract class CCTestCase extends LightPlatformCodeInsightFixtureTestCase {
   private static final Logger LOG = Logger.getInstance(CCTestCase.class);
+
+  @Nullable
+  public static RangeHighlighter getHighlighter(MarkupModel model, AnswerPlaceholder placeholder) {
+    for (RangeHighlighter highlighter : model.getAllHighlighters()) {
+      int endOffset = placeholder.getOffset() + placeholder.getRealLength();
+      if (highlighter.getStartOffset() == placeholder.getOffset() && highlighter.getEndOffset() == endOffset) {
+        return highlighter;
+      }
+    }
+    return null;
+  }
+
+  protected static void checkHighlighters(TaskFile taskFile, MarkupModel markupModel) {
+    for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
+      if (getHighlighter(markupModel, answerPlaceholder) == null) {
+        throw new AssertionError("No highlighter for placeholder: " + CCTestsUtil.getPlaceholderPresentation(answerPlaceholder));
+      }
+    }
+  }
+
+  public void checkByFile(TaskFile taskFile, String fileName, boolean useLength) {
+    Pair<Document, List<AnswerPlaceholder>> placeholders = getPlaceholders(fileName, useLength, true);
+    String message = "Placeholders don't match";
+    if (taskFile.getAnswerPlaceholders().size() != placeholders.second.size()) {
+      throw new ComparisonFailure(message,
+                                  CCTestsUtil.getPlaceholdersPresentation(taskFile.getAnswerPlaceholders()),
+                                  CCTestsUtil.getPlaceholdersPresentation(placeholders.second));
+    }
+    for (AnswerPlaceholder answerPlaceholder : placeholders.getSecond()) {
+      AnswerPlaceholder placeholder = taskFile.getAnswerPlaceholder(answerPlaceholder.getOffset());
+      if (!CCTestsUtil.comparePlaceholders(placeholder, answerPlaceholder)) {
+        throw new ComparisonFailure(message,
+                                    CCTestsUtil.getPlaceholdersPresentation(taskFile.getAnswerPlaceholders()),
+                                    CCTestsUtil.getPlaceholdersPresentation(placeholders.second));
+      }
+    }
+  }
 
   @Override
   protected String getTestDataPath() {
@@ -63,7 +105,6 @@ public abstract class CCTestCase extends LightPlatformCodeInsightFixtureTestCase
         }
       }
     });
-
   }
 
   protected VirtualFile configureByTaskFile(String name) {
@@ -88,7 +129,7 @@ public abstract class CCTestCase extends LightPlatformCodeInsightFixtureTestCase
     new WriteCommandAction(null) {
       @Override
       protected void run(@NotNull Result result) {
-        final String openingTagRx = "<placeholder( taskText=\"(.+?)\")?( possibleAnswer=\"(.+?)\")?>";
+        final String openingTagRx = "<placeholder( taskText=\"(.+?)\")?( possibleAnswer=\"(.+?)\")?( hint=\"(.+?)\")?>";
         final String closingTagRx = "</placeholder>";
         CharSequence text = document.getCharsSequence();
         final Matcher openingMatcher = Pattern.compile(openingTagRx).matcher(text);
@@ -105,6 +146,10 @@ public abstract class CCTestCase extends LightPlatformCodeInsightFixtureTestCase
           String possibleAnswer = openingMatcher.group(4);
           if (possibleAnswer != null) {
             answerPlaceholder.setPossibleAnswer(possibleAnswer);
+          }
+          String hint = openingMatcher.group(6);
+          if (hint != null) {
+            answerPlaceholder.setHint(hint);
           }
           answerPlaceholder.setOffset(openingMatcher.start());
           if (!closingMatcher.find(openingMatcher.end())) {
@@ -128,11 +173,23 @@ public abstract class CCTestCase extends LightPlatformCodeInsightFixtureTestCase
   }
 
   public Pair<Document, List<AnswerPlaceholder>> getPlaceholders(String name) {
+    return getPlaceholders(name, true, false);
+  }
+
+  public Pair<Document, List<AnswerPlaceholder>> getPlaceholders(String name, boolean useLength, boolean removeMarkers) {
     VirtualFile resultFile = LocalFileSystem.getInstance().findFileByPath(getTestDataPath() + "/" + name);
     Document document = FileDocumentManager.getInstance().getDocument(resultFile);
     Document tempDocument = EditorFactory.getInstance().createDocument(document.getCharsSequence());
-    List<AnswerPlaceholder> placeholders = getPlaceholders(tempDocument, true);
+    if (removeMarkers) {
+      EditorTestUtil.extractCaretAndSelectionMarkers(tempDocument);
+    }
+    List<AnswerPlaceholder> placeholders = getPlaceholders(tempDocument, useLength);
     return Pair.create(tempDocument, placeholders);
+  }
+
+  @Override
+  protected boolean shouldContainTempFiles() {
+    return false;
   }
 }
 
