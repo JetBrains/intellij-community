@@ -56,9 +56,6 @@ import java.util.List;
  * @see ProjectLevelVcsManager
  */
 public abstract class AbstractVcs<ComList extends CommittedChangeList> extends StartedActivated {
-  // true is default
-  private static final String USE_ANNOTATION_CACHE = "vcs.use.annotation.cache";
-
   @NonNls protected static final String ourIntegerPattern = "\\d+";
 
   @NotNull
@@ -71,15 +68,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   private CheckinEnvironment myCheckinEnvironment;
   private UpdateEnvironment myUpdateEnvironment;
   private RollbackEnvironment myRollbackEnvironment;
-  private static boolean ourUseAnnotationCache;
-
-  static {
-    final String property = System.getProperty(USE_ANNOTATION_CACHE);
-    ourUseAnnotationCache = true;
-    if (property != null) {
-      ourUseAnnotationCache = Boolean.valueOf(property);
-    }
-  }
 
   public AbstractVcs(@NotNull Project project, final String name) {
     super(project);
@@ -606,7 +594,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   @Nullable
   public AnnotationProvider getCachingAnnotationProvider() {
     final AnnotationProvider ap = getAnnotationProvider();
-    if (ourUseAnnotationCache && ap instanceof VcsCacheableAnnotationProvider) {
+    if (ap instanceof VcsCacheableAnnotationProvider) {
       return new VcsAnnotationCachedProxy(this, ProjectLevelVcsManager.getInstance(myProject).getVcsHistoryCache());
     }
     return ap;
