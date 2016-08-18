@@ -201,9 +201,11 @@ class MacDistributionBuilder {
       replacefilter(token: "@@product_full@@", value: fullName)
       replacefilter(token: "@@script_name@@", value: executable)
     }
-    String inspectScript = buildContext.productProperties.inspectScriptName
+    String inspectScript = buildContext.productProperties.inspectCommandName
     if (inspectScript != "inspect") {
-      buildContext.ant.move(file: "$target/bin/inspect.sh", tofile: "$target/bin/${inspectScript}.sh")
+      String targetPath = "$target/bin/${inspectScript}.sh"
+      buildContext.ant.move(file: "$target/bin/inspect.sh", tofile: targetPath)
+      buildContext.patchInspectScript(targetPath)
     }
 
     buildContext.ant.fixcrlf(srcdir: "$target/bin", includes: "*.sh", eol: "unix")

@@ -248,6 +248,15 @@ class BuildContextImpl extends BuildContext {
            productLayout.additionalPlatformModules.containsKey("execution-impl")
   }
 
+  @CompileDynamic
+  @Override
+  void patchInspectScript(String path) {
+    //todo[nik] use placeholder in inspect.sh/inspect.bat file instead
+    ant.replace(file: path) {
+      replacefilter(token: " inspect ", value: " ${productProperties.inspectCommandName} ")
+    }
+  }
+
   @Override
   String getAdditionalJvmArguments() {
     String jvmArgs
