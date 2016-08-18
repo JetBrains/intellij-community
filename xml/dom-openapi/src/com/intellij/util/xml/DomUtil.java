@@ -362,7 +362,7 @@ public class DomUtil {
   }
 
   @Nullable
-  public static DomElement getDomElement(final Editor editor, final PsiFile file) {
+  public static DomElement getDomElement(@NotNull final Editor editor, @NotNull final PsiFile file) {
      return getDomElement(file.findElementAt(editor.getCaretModel().getOffset()));
   }
 
