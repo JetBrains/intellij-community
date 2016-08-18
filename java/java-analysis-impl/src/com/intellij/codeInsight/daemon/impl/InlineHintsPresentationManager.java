@@ -178,8 +178,8 @@ public class InlineHintsPresentationManager implements Disposable {
           g.setFont(getFont(editor));
           FontMetrics metrics = g.getFontMetrics();
           Shape savedClip = g.getClip();
-          g.clipRect(r.x + 3, r.y + 3, r.width - 6, r.height - 6);
-          g.drawString(myText, r.x + 7, r.y + (r.height + metrics.getAscent() - metrics.getDescent()) / 2 - 1);
+          g.clipRect(r.x + 3, r.y + 2, r.width - 6, r.height - 4);
+          g.drawString(myText, r.x + 7, r.y + (r.height + metrics.getAscent() - metrics.getDescent()) / 2);
           g.setClip(savedClip);
           config.restore();
         }
