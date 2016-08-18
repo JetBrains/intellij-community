@@ -23,7 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
-import com.intellij.util.continuation.SemaphoreContinuationContext;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.openapi.application.ModalityState.defaultModalityState;
@@ -94,8 +94,7 @@ public class GitFreezingProcess {
   }
 
   private void freeze() {
-    myChangeListManager.freeze(new SemaphoreContinuationContext(),
-                               "Local changes are not available until Git " + myOperationTitle + " is finished.");
+    ((ChangeListManagerImpl)myChangeListManager).freeze("Local changes are not available until Git " + myOperationTitle + " is finished.");
   }
 
   private void unfreeze() {
