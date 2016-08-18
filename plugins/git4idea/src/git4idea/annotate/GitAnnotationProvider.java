@@ -15,10 +15,8 @@
  */
 package git4idea.annotate;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -68,45 +66,21 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
     if (file.isDirectory()) {
       throw new VcsException("Cannot annotate a directory");
     }
-    final FileAnnotation[] annotation = new FileAnnotation[1];
-    final Exception[] exception = new Exception[1];
-    Runnable command = new Runnable() {
-      public void run() {
-        try {
-          final FilePath currentFilePath = VcsUtil.getFilePath(file.getPath());
-          final FilePath realFilePath;
-          setProgressIndicatorText(GitBundle.message("getting.history", file.getName()));
-          final List<VcsFileRevision> revisions = GitHistoryUtils.history(myProject, currentFilePath);
-          if (revision == null) {
-            realFilePath = GitHistoryUtils.getLastCommitName(myProject, currentFilePath);
-          }
-          else {
-            realFilePath = ((GitFileRevision)revision).getPath();
-          }
-          setProgressIndicatorText(GitBundle.message("computing.annotation", file.getName()));
-          VcsRevisionNumber revisionNumber = revision != null ? revision.getRevisionNumber() : null;
-          final GitFileAnnotation result = annotate(realFilePath, revisionNumber, revisions, file);
-          annotation[0] = result;
-        }
-        catch (ProcessCanceledException pce) {
-          throw pce;
-        }
-        catch (Exception e) {
-          exception[0] = e;
-        }
-      }
-    };
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(command, GitBundle.getString("annotate.action.name"), false,
-                                                                        myProject);
+
+    final FilePath currentFilePath = VcsUtil.getFilePath(file.getPath());
+    final FilePath realFilePath;
+    setProgressIndicatorText(GitBundle.message("getting.history", file.getName()));
+    final List<VcsFileRevision> revisions = GitHistoryUtils.history(myProject, currentFilePath);
+    if (revision == null) {
+      realFilePath = GitHistoryUtils.getLastCommitName(myProject, currentFilePath);
     }
     else {
-      command.run();
+      realFilePath = ((GitFileRevision)revision).getPath();
     }
-    if (exception[0] != null) {
-      throw new VcsException("Failed to annotate: " + exception[0], exception[0]);
-    }
-    return annotation[0];
+    setProgressIndicatorText(GitBundle.message("computing.annotation", file.getName()));
+    VcsRevisionNumber revisionNumber = revision != null ? revision.getRevisionNumber() : null;
+
+    return annotate(realFilePath, revisionNumber, revisions, file);
   }
 
   @NotNull
