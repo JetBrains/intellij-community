@@ -67,7 +67,7 @@ private class CredentialStoreWrapper(private val store: CredentialStore) : Passw
         value = store.get(oldKey)
         if (value != null) {
           LOG.catchAndLog { store.set(oldKey, null) }
-          store.set(key, value!!.toByteArray())
+          store.set(rawKey, value!!.toByteArray())
         }
       }
     }
