@@ -70,6 +70,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   public boolean TREAT_UNKNOWN_MEMBERS_AS_NULLABLE;
   public boolean IGNORE_ASSERT_STATEMENTS;
   public boolean REPORT_CONSTANT_REFERENCE_VALUES = true;
+  public boolean REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER = true;
 
   @Override
   public JComponent createOptionsPanel() {
@@ -103,6 +104,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       @Override
       public void visitMethod(PsiMethod method) {
         analyzeCodeBlock(method.getBody(), holder, isOnTheFly);
+        analyzeNullLiteralMethodArguments(method, holder, isOnTheFly);
       }
 
       @Override
@@ -137,20 +139,31 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     };
   }
 
+  protected LocalQuickFix createNavigateToNullParameterUsagesFix(PsiParameter parameter) {
+    return null;
+  }
+
+  private void analyzeNullLiteralMethodArguments(PsiMethod method, ProblemsHolder holder, boolean isOnTheFly) {
+    if (REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER) {
+      for (PsiParameter parameter : NullParameterConstraintChecker.checkMethodParameters(method, isOnTheFly)) {
+        final String name = parameter.getName();
+        holder.registerProblem(parameter.getNameIdentifier(),
+                               InspectionsBundle.message("dataflow.method.fails.with.null.argument", name),
+                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                               NullableStuffInspectionBase.getWrappedUiDependentQuickFix(this::createNavigateToNullParameterUsagesFix, parameter, isOnTheFly));
+      }
+    }
+  }
+
   private void analyzeCodeBlock(@Nullable final PsiElement scope, ProblemsHolder holder, final boolean onTheFly) {
     if (scope == null) return;
 
     PsiClass containingClass = PsiTreeUtil.getParentOfType(scope, PsiClass.class);
     if (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass) && !(containingClass instanceof PsiEnumConstantInitializer)) return;
 
-    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, !isInsideConstructorOrInitializer(
-      scope)) {
-      @Override
-      protected boolean shouldCheckTimeLimit() {
-        if (!onTheFly) return false;
-        return super.shouldCheckTimeLimit();
-      }
-    };
+    final StandardDataFlowRunner dfaRunner =
+      new StandardDataFlowRunner(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE,
+                                 !isInsideConstructorOrInitializer(scope), onTheFly);
     analyzeDfaWithNestedClosures(scope, holder, dfaRunner, Collections.singletonList(dfaRunner.createMemoryState()), onTheFly);
   }
 

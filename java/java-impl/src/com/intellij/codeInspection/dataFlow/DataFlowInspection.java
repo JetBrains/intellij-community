@@ -17,6 +17,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.NullableNotNullDialog;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
@@ -75,12 +76,18 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     };
   }
 
+  @Override
+  protected LocalQuickFix createNavigateToNullParameterUsagesFix(PsiParameter parameter) {
+    return new NullableStuffInspection.NavigateToNullLiteralArguments(parameter);
+  }
+
   private class OptionsPanel extends JPanel {
     private final JCheckBox myIgnoreAssertions;
     private final JCheckBox myReportConstantReferences;
     private final JCheckBox mySuggestNullables;
     private final JCheckBox myDontReportTrueAsserts;
     private final JCheckBox myTreatUnknownMembersAsNullable;
+    private final JCheckBox myReportNullArguments;
 
     private OptionsPanel() {
       super(new GridBagLayout());
@@ -138,6 +145,15 @@ public class DataFlowInspection extends DataFlowInspectionBase {
         }
       });
 
+      myReportNullArguments = new JCheckBox("Report 'null' literals passed to not-null required parameter");
+      myTreatUnknownMembersAsNullable.setSelected(REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER);
+      myTreatUnknownMembersAsNullable.getModel().addChangeListener(new ChangeListener() {
+        @Override
+        public void stateChanged(ChangeEvent e) {
+          REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER = myTreatUnknownMembersAsNullable.isSelected();
+        }
+      });
+
       gc.insets = JBUI.emptyInsets();
       gc.gridy = 0;
       add(mySuggestNullables, gc);
@@ -172,6 +188,9 @@ public class DataFlowInspection extends DataFlowInspectionBase {
 
       gc.gridy++;
       add(myTreatUnknownMembersAsNullable, gc);
+
+      gc.gridy++;
+      add(myReportNullArguments, gc);
     }
   }
 

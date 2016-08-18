@@ -53,16 +53,17 @@ public class DataFlowRunner {
   private final MultiMap<PsiElement, DfaMemoryState> myNestedClosures = new MultiMap<>();
   @NotNull
   private final DfaValueFactory myValueFactory;
-
+  private final boolean myShouldCheckLimitTime;
   // Maximum allowed attempts to process instruction. Fail as too complex to process if certain instruction
   // is executed more than this limit times.
   static final int MAX_STATES_PER_BRANCH = 300;
 
   protected DataFlowRunner() {
-    this(false, true);
+    this(false, true, false);
   }
 
-  protected DataFlowRunner(boolean unknownMembersAreNullable, boolean honorFieldInitializers) {
+  protected DataFlowRunner(boolean unknownMembersAreNullable, boolean honorFieldInitializers, boolean shouldCheckLimitTime) {
+    myShouldCheckLimitTime = shouldCheckLimitTime;
     myValueFactory = new DfaValueFactory(honorFieldInitializers, unknownMembersAreNullable);
   }
 
@@ -270,7 +271,7 @@ public class DataFlowRunner {
   }
 
   protected boolean shouldCheckTimeLimit() {
-    return !ApplicationManager.getApplication().isUnitTestMode();
+    return myShouldCheckLimitTime && !ApplicationManager.getApplication().isUnitTestMode();
   }
 
   @NotNull
