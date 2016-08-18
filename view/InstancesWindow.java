@@ -354,7 +354,8 @@ public class InstancesWindow extends DialogWrapper {
                   new ValueMarkup(expression.replace("@", ""), new JBColor(0, 0), null));
             }
 
-            myInstancesTree.rebuildAndRestore(XDebuggerTreeState.saveState(myInstancesTree));
+            SwingUtilities.invokeLater(() ->
+                myInstancesTree.rebuildAndRestore(XDebuggerTreeState.saveState(myInstancesTree)));
           }
         }
       }
