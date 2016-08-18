@@ -109,7 +109,7 @@ public class InstancesWindow extends DialogWrapper {
   @NotNull
   @Override
   protected String getDimensionServiceKey() {
-    return "#org.jetbrains.plugin.view.InstancesWindow";
+    return "#org.jetbrains.debugger.memory.view.InstancesWindow";
   }
 
   @Nullable
