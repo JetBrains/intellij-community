@@ -147,7 +147,10 @@ public abstract class ChangeListManager implements ChangeListModification {
   @Nullable
   public abstract String getSwitchedBranch(VirtualFile file);
   public abstract String getDefaultListName();
+
+  @Deprecated
   public abstract void freeze(final ContinuationPause context, String reason);
+
   public abstract void letGo();
   public abstract String isFreezed();
   public abstract boolean isFreezedWithNotification(@Nullable String modalTitle);
