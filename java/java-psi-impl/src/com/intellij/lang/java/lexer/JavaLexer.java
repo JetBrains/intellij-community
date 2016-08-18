@@ -37,10 +37,17 @@ public class JavaLexer extends LexerBase {
     RETURN, SHORT, STATIC, STRICTFP, SUPER, SWITCH, SYNCHRONIZED, THIS, THROW, THROWS, TRANSIENT, TRY, VOID, VOLATILE, WHILE,
     TRUE, FALSE, NULL);
 
+  private static final Set<String> JAVA9_KEYWORDS = ContainerUtil.newTroveSet(
+    MODULE, REQUIRES, EXPORTS, USES, PROVIDES, TO, WITH);
+
   public static boolean isKeyword(String id, @NotNull LanguageLevel level) {
     return KEYWORDS.contains(id) ||
            level.isAtLeast(LanguageLevel.JDK_1_4) && ASSERT.equals(id) ||
            level.isAtLeast(LanguageLevel.JDK_1_5) && ENUM.equals(id);
+  }
+
+  public static boolean isSoftKeyword(String id, @NotNull LanguageLevel level) {
+    return level.isAtLeast(LanguageLevel.JDK_1_9) && JAVA9_KEYWORDS.contains(id);
   }
 
   private final _JavaLexer myFlexLexer;
