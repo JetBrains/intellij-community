@@ -419,7 +419,7 @@ public class InstancesWindow extends DialogWrapper {
         }
 
         myFilterButton.setEnabled(true);
-        myProgress.complete(myCompletionReason);
+        SwingUtilities.invokeLater(() -> myProgress.complete(myCompletionReason));
       }
 
       @Override
