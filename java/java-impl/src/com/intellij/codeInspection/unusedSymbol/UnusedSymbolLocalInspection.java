@@ -46,6 +46,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.Hashtable;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * User: anna
@@ -81,31 +82,22 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
       myCheckFieldsCheckBox.setSelected(FIELD);
       myCheckMethodsCheckBox.setSelected(METHOD);
       myInnerClassesCheckBox.setSelected(INNER_CLASS);
-
       myCheckParametersCheckBox.setSelected(PARAMETER);
-      myAccessors.setSelected(isIgnoreAccessors());
-      myAccessors.setEnabled(PARAMETER);
+      myAccessors.setSelected(!isIgnoreAccessors());
+      updateEnableState();
 
       final ActionListener listener = new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
           LOCAL_VARIABLE = myCheckLocalVariablesCheckBox.isSelected();
           CLASS = myCheckClassesCheckBox.isSelected();
-          UIUtil.setEnabled(myClassVisibilityCb, CLASS, true);
-
           INNER_CLASS = myInnerClassesCheckBox.isSelected();
-          UIUtil.setEnabled(myInnerClassVisibilityCb, INNER_CLASS, true);
-
           FIELD = myCheckFieldsCheckBox.isSelected();
-          UIUtil.setEnabled(myFieldVisibilityCb, FIELD, true);
-
           METHOD = myCheckMethodsCheckBox.isSelected();
-          UIUtil.setEnabled(myMethodVisibilityCb, METHOD, true);
-          myAccessors.setEnabled(METHOD);
           setIgnoreAccessors(!myAccessors.isSelected());
-
           PARAMETER = myCheckParametersCheckBox.isSelected();
-          UIUtil.setEnabled(myMethodParameterVisibilityCb, PARAMETER, true);
+
+          updateEnableState();
         }
       };
       myCheckLocalVariablesCheckBox.addActionListener(listener);
@@ -123,16 +115,31 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
       ((MyLabel)myMethodParameterVisibilityCb).setupVisibilityLabel(() -> myParameterVisibility, modifier -> setParameterVisibility(modifier));
     }
 
+    private void updateEnableState() {
+      UIUtil.setEnabled(myClassVisibilityCb, CLASS, true);
+      UIUtil.setEnabled(myInnerClassVisibilityCb, INNER_CLASS, true);
+      UIUtil.setEnabled(myFieldVisibilityCb, FIELD, true);
+      UIUtil.setEnabled(myMethodVisibilityCb, METHOD, true);
+      UIUtil.setEnabled(myMethodParameterVisibilityCb, PARAMETER, true);
+      myAccessors.setEnabled(METHOD);
+    }
+
     public JComponent getPanel() {
       return myPanel;
     }
 
     private void createUIComponents() {
-      myClassVisibilityCb = new MyLabel();
-      myInnerClassVisibilityCb = new MyLabel();
-      myFieldVisibilityCb = new MyLabel();
-      myMethodVisibilityCb = new MyLabel();
-      myMethodParameterVisibilityCb = new MyLabel();
+      myClassVisibilityCb = new MyLabel(() -> CLASS);
+      myInnerClassVisibilityCb = new MyLabel(() -> INNER_CLASS);
+      myFieldVisibilityCb = new MyLabel(() -> FIELD);
+      myMethodVisibilityCb = new MyLabel(() -> METHOD);
+      myMethodParameterVisibilityCb = new MyLabel(() -> PARAMETER);
+      myAccessors = new JCheckBox() {
+        @Override
+        public void setEnabled(boolean b) {
+          super.setEnabled(b && METHOD);
+        }
+      };
     }
   }
 
@@ -140,10 +147,12 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
 
     @PsiModifier.ModifierConstant private static final String[] MODIFIERS =
       new String[]{PsiModifier.PUBLIC, PsiModifier.PROTECTED, PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE};
+    private final Supplier<Boolean> myCanBeEnabled;
 
     private Set<ChangeListener> myListeners = new HashSet<>();
 
-    public MyLabel() {
+    public MyLabel(Supplier<Boolean> canBeEnabled) {
+      myCanBeEnabled = canBeEnabled;
       setIcon(AllIcons.General.Combo2);
       setDisabledIcon(AllIcons.General.Combo2);
       setIconTextGap(0);
@@ -204,6 +213,11 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
     @Override
     public void setForeground(Color fg) {
       super.setForeground(isEnabled() ? UI.getColor("link.foreground") : fg);
+    }
+
+    @Override
+    public void setEnabled(boolean enabled) {
+      super.setEnabled(enabled && myCanBeEnabled.get());
     }
 
     @Override
