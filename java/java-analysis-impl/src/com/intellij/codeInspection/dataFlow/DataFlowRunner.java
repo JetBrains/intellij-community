@@ -127,14 +127,6 @@ public class DataFlowRunner {
         }
       }
 
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Analyzing code block: " + psiBlock.getText());
-        for (int i = 0; i < myInstructions.length; i++) {
-          LOG.debug(i + ": " + myInstructions[i]);
-        }
-      }
-      //for (int i = 0; i < myInstructions.length; i++) System.out.println(i + ": " + myInstructions[i].toString());
-      
       Integer tooExpensiveHash = psiBlock.getUserData(TOO_EXPENSIVE_HASH);
       if (tooExpensiveHash != null && tooExpensiveHash == psiBlock.getText().hashCode()) {
         LOG.debug("Too complex because hasn't changed since being too complex already");
@@ -149,7 +141,7 @@ public class DataFlowRunner {
       MultiMap<BranchingInstruction, DfaMemoryState> processedStates = MultiMap.createSet();
       MultiMap<BranchingInstruction, DfaMemoryState> incomingStates = MultiMap.createSet();
 
-      long msLimit = shouldCheckTimeLimit() ? Registry.intValue("ide.dfa.time.limit.online") : Registry.intValue("ide.dfa.time.limit.offline");
+      long msLimit = Registry.intValue(shouldCheckTimeLimit() ? "ide.dfa.time.limit.online" : "ide.dfa.time.limit.offline");
       WorkingTimeMeasurer measurer = new WorkingTimeMeasurer(msLimit * 1000 * 1000);
       int count = 0;
       while (!queue.isEmpty()) {
@@ -161,11 +153,6 @@ public class DataFlowRunner {
             return RunnerResult.TOO_COMPLEX;
           }
           ProgressManager.checkCanceled();
-
-          if (LOG.isDebugEnabled()) {
-            LOG.debug(instructionState.toString());
-          }
-          //System.out.println(instructionState.toString());
 
           Instruction instruction = instructionState.getInstruction();
 
@@ -207,14 +194,9 @@ public class DataFlowRunner {
       }
 
       psiBlock.putUserData(TOO_EXPENSIVE_HASH, null);
-      LOG.debug("Analysis ok");
       return RunnerResult.OK;
     }
-    catch (ArrayIndexOutOfBoundsException e) {
-      LOG.error(psiBlock.getText(), e);
-      return RunnerResult.ABORTED;
-    }
-    catch (EmptyStackException e) {
+    catch (ArrayIndexOutOfBoundsException | EmptyStackException e) {
       LOG.error(psiBlock.getText(), e);
       return RunnerResult.ABORTED;
     }

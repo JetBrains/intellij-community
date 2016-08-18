@@ -153,7 +153,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
   }
 
   @Nullable
-  public static HighlightUsagesHandlerBase createCustomHandler(final Editor editor, final PsiFile file) {
+  public static HighlightUsagesHandlerBase createCustomHandler(@NotNull Editor editor, @NotNull PsiFile file) {
     for (HighlightUsagesHandlerFactory factory : Extensions.getExtensions(HighlightUsagesHandlerFactory.EP_NAME)) {
       final HighlightUsagesHandlerBase handler = factory.createHighlightUsagesHandler(editor, file);
       if (handler != null) {

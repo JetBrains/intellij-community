@@ -132,13 +132,9 @@ public class ModuleRootModificationUtil {
     });
     try {
       task.consume(model);
-      doWriteAction(() -> model.commit());
+      doWriteAction(model::commit);
     }
-    catch (RuntimeException e) {
-      model.dispose();
-      throw e;
-    }
-    catch (Error e) {
+    catch (RuntimeException | Error e) {
       model.dispose();
       throw e;
     }
