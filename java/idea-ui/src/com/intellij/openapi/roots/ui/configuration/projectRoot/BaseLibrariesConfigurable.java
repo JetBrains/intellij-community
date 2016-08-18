@@ -185,6 +185,10 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     }
   }
 
+  public void removeLibraryNode(@NotNull final Library library) {
+    removeLibrary(new LibraryProjectStructureElement(myContext, library));
+  }
+
   @Override
   public void dispose() {
     if (myContext != null) {
