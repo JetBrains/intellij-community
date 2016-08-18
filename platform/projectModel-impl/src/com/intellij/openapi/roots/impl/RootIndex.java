@@ -92,7 +92,7 @@ public class RootIndex {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
 
       for (final VirtualFile contentRoot : moduleRootManager.getContentRoots()) {
-        if (!info.contentRootOf.containsKey(contentRoot)) {
+        if (!info.contentRootOf.containsKey(contentRoot) && ensureValid(contentRoot, module)) {
           info.contentRootOf.put(contentRoot, module);
         }
       }
@@ -100,6 +100,8 @@ public class RootIndex {
       for (ContentEntry contentEntry : moduleRootManager.getContentEntries()) {
         if (!(contentEntry instanceof ContentEntryImpl) || !((ContentEntryImpl)contentEntry).isDisposed()) {
           for (VirtualFile excludeRoot : contentEntry.getExcludeFolderFiles()) {
+            if (!ensureValid(excludeRoot, contentEntry)) continue;
+
             info.excludedFromModule.put(excludeRoot, module);
           }
         }
@@ -107,7 +109,7 @@ public class RootIndex {
         // Init module sources
         for (final SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
           final VirtualFile sourceFolderRoot = sourceFolder.getFile();
-          if (sourceFolderRoot != null) {
+          if (sourceFolderRoot != null && ensureValid(sourceFolderRoot, sourceFolder)) {
             info.rootTypeId.put(sourceFolderRoot, getRootTypeId(sourceFolder.getRootType()));
             info.classAndSourceRoots.add(sourceFolderRoot);
             info.sourceRootOf.putValue(sourceFolderRoot, module);
@@ -124,6 +126,8 @@ public class RootIndex {
 
           // Init library sources
           for (final VirtualFile sourceRoot : sourceRoots) {
+            if (!ensureValid(sourceRoot, entry)) continue;
+
             info.classAndSourceRoots.add(sourceRoot);
             info.libraryOrSdkSources.add(sourceRoot);
             info.packagePrefix.put(sourceRoot, "");
@@ -131,6 +135,8 @@ public class RootIndex {
 
           // init library classes
           for (final VirtualFile classRoot : classRoots) {
+            if (!ensureValid(classRoot, entry)) continue;
+
             info.classAndSourceRoots.add(classRoot);
             info.libraryOrSdkClasses.add(classRoot);
             info.packagePrefix.put(classRoot, "");
@@ -140,12 +146,18 @@ public class RootIndex {
             Library library = ((LibraryOrderEntry)orderEntry).getLibrary();
             if (library != null) {
               for (VirtualFile root : ((LibraryEx)library).getExcludedRoots()) {
+                if (!ensureValid(root, library)) continue;
+
                 info.excludedFromLibraries.putValue(root, library);
               }
               for (VirtualFile root : sourceRoots) {
+                if (!ensureValid(root, library)) continue;
+
                 info.sourceOfLibraries.putValue(root, library);
               }
               for (VirtualFile root : classRoots) {
+                if (!ensureValid(root, library)) continue;
+
                 info.classOfLibraries.putValue(root, library);
               }
             }
@@ -155,14 +167,23 @@ public class RootIndex {
     }
 
     for (AdditionalLibraryRootsProvider provider : Extensions.getExtensions(AdditionalLibraryRootsProvider.EP_NAME)) {
-      Collection<VirtualFile> roots = provider.getAdditionalProjectLibrarySourceRoots(project);
+      Collection<VirtualFile> roots = ContainerUtil.filter(provider.getAdditionalProjectLibrarySourceRoots(project),
+                                                           file -> ensureValid(file, provider));
       info.libraryOrSdkSources.addAll(roots);
       info.classAndSourceRoots.addAll(roots);
     }
     for (DirectoryIndexExcludePolicy policy : Extensions.getExtensions(DirectoryIndexExcludePolicy.EP_NAME, project)) {
-      Collections.addAll(info.excludedFromProject, policy.getExcludeRootsForProject());
+      info.excludedFromProject.addAll(ContainerUtil.filter(policy.getExcludeRootsForProject(), file -> ensureValid(file, policy)));
     }
     return info;
+  }
+
+  private static boolean ensureValid(@NotNull VirtualFile file, @NotNull Object container) {
+    if (!file.isValid()) {
+      LOG.error("Invalid root " + file + " in " + container);
+      return false;
+    }
+    return true;
   }
 
   @NotNull
