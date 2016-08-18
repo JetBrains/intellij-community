@@ -103,7 +103,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       updateExtension = false
     }
 
-    if (useVfs && (provider == null || !provider.enabled)) {
+    if (useVfs && (provider == null || !provider.isApplicable(fileSpec, roamingType))) {
       try {
         refreshVirtualDirectoryAndAddListener()
       }

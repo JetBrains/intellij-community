@@ -218,8 +218,16 @@ open class StateStorageManagerImpl(private val rootTagName: String,
       return constructor.newInstance(componentManager!!, this) as StateStorage
     }
 
+    val effectiveRoamingType: RoamingType
+    if (roamingType != RoamingType.DISABLED && (collapsedPath == StoragePathMacros.WORKSPACE_FILE || collapsedPath == "other.xml")) {
+      effectiveRoamingType = RoamingType.DISABLED
+    }
+    else {
+      effectiveRoamingType = roamingType
+    }
+
     if (isUseVfsListener == ThreeState.UNSURE) {
-      isUseVfsListener = ThreeState.fromBoolean(streamProvider == null || !streamProvider!!.enabled)
+      isUseVfsListener = ThreeState.fromBoolean(streamProvider == null || !streamProvider!!.isApplicable(collapsedPath, effectiveRoamingType))
     }
 
     val filePath = expandMacros(collapsedPath)
@@ -234,14 +242,6 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment && PathUtilRt.getFileName(filePath).lastIndexOf('.') < 0) {
       throw IllegalArgumentException("Extension is missing for storage file: $filePath")
-    }
-
-    val effectiveRoamingType: RoamingType
-    if (roamingType != RoamingType.DISABLED && (collapsedPath == StoragePathMacros.WORKSPACE_FILE || collapsedPath == "other.xml")) {
-      effectiveRoamingType = RoamingType.DISABLED
-    }
-    else {
-      effectiveRoamingType = roamingType
     }
 
     val storage = createFileBasedStorage(filePath, collapsedPath, effectiveRoamingType, if (exclusive) null else this.rootTagName)
