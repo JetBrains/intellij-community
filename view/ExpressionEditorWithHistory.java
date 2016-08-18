@@ -37,8 +37,6 @@ class ExpressionEditorWithHistory extends XDebuggerExpressionEditor {
     super(project, debuggerEditorsProvider, HISTORY_ID_PREFIX + referenceType.name(), null,
         XExpressionImpl.EMPTY_EXPRESSION, false, true, true);
 
-
-
     new AnAction("InstancesWindow.ShowHistory") {
       @Override
       public void actionPerformed(AnActionEvent e) {
