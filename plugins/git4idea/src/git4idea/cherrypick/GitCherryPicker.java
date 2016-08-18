@@ -296,7 +296,7 @@ public class GitCherryPicker extends VcsCherryPicker {
 
   @NotNull
   private static String createCommitMessage(@NotNull VcsFullCommitDetails commit) {
-    return commit.getFullMessage() + "\n(cherry picked from commit " + commit.getId().toShortString() + ")";
+    return commit.getFullMessage() + "\n\n(cherry picked from commit " + commit.getId().toShortString() + ")";
   }
 
   private boolean showCommitDialogAndWaitForCommit(@NotNull final GitRepository repository, @NotNull final GitCommitWrapper commit,
