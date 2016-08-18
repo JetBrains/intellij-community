@@ -2,7 +2,6 @@ package org.jetbrains.debugger.memory.view;
 
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -19,14 +18,11 @@ import com.intellij.debugger.ui.tree.render.CachedEvaluator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBLabel;
@@ -40,7 +36,6 @@ import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActionBase;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
@@ -145,7 +140,6 @@ public class InstancesWindow extends DialogWrapper {
   }
 
   private class MyInstancesView extends JBPanel implements Disposable {
-    private static final String HISTORY_ID_PREFIX = "filtering";
     private static final int MAX_TREE_NODE_COUNT = 2000;
     private static final int FILTERING_CHUNK_SIZE = 30;
 
@@ -172,9 +166,8 @@ public class InstancesWindow extends DialogWrapper {
       myDebugSession.addSessionListener(myDebugSessionListener, InstancesWindow.this.myDisposable);
       JavaDebuggerEditorsProvider editorsProvider = new JavaDebuggerEditorsProvider();
 
-      myFilterConditionEditor = new ExpressionEditorWithHistory(myProject, editorsProvider,
-          HISTORY_ID_PREFIX + myReferenceType.name(), null, InstancesWindow.this.myDisposable);
-      setSourcePositionForEditor();
+      myFilterConditionEditor = new ExpressionEditorWithHistory(myProject, myReferenceType,
+          editorsProvider, InstancesWindow.this.myDisposable);
 
       myFilterButton.setBorder(BorderFactory.createEmptyBorder());
       Dimension filteringButtonSize = myFilterConditionEditor.getEditorComponent().getPreferredSize();
@@ -298,21 +291,6 @@ public class InstancesWindow extends DialogWrapper {
       if (root != null) {
         ((XValueNodeImpl) root).addChildren(children, last);
       }
-    }
-
-    private void setSourcePositionForEditor() {
-      new SwingWorker<Void, Void>() {
-        @Override
-        protected Void doInBackground() throws Exception {
-          ApplicationManager.getApplication().runReadAction(() -> {
-            final PsiClass psiClass = DebuggerUtils.findClass(myReferenceType.name(),
-                myProject, GlobalSearchScope.allScope(myProject));
-            XSourcePositionImpl position = XSourcePositionImpl.createByElement(psiClass);
-            SwingUtilities.invokeLater(() -> myFilterConditionEditor.setSourcePosition(position));
-          });
-          return null;
-        }
-      }.execute();
     }
 
     @NotNull
