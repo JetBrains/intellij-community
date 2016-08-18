@@ -19,6 +19,7 @@ import com.intellij.credentialStore.macOs.isMacOsCredentialStoreSupported
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NotNullLazyValue
+import com.intellij.util.nullize
 import com.intellij.util.ui.UIUtil
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.transport.CredentialItem
@@ -28,7 +29,6 @@ import org.jetbrains.keychain.Credentials
 import org.jetbrains.keychain.CredentialsStore
 import org.jetbrains.keychain.isFulfilled
 import org.jetbrains.settingsRepository.LOG
-import org.jetbrains.settingsRepository.nullize
 import org.jetbrains.settingsRepository.showAuthenticationForm
 
 class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<CredentialsStore>, private val repository: Repository) : CredentialsProvider() {
