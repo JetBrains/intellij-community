@@ -170,7 +170,8 @@ public class ClassesTable extends JBTable implements DataProvider {
     showContent();
 
     if (newSelectedIndex != -1 && !myModel.isHided()) {
-      changeSelection(convertRowIndexToView(newSelectedIndex),
+      int ix = convertRowIndexToView(newSelectedIndex);
+      changeSelection(ix,
           DiffViewTableModel.CLASSNAME_COLUMN_INDEX, false, false);
     }
   }
@@ -251,7 +252,7 @@ public class ClassesTable extends JBTable implements DataProvider {
         mySelectedClassWhenHided = getSelectedClass();
         myIsWithContent = false;
         clearSelection();
-        getRowSorter().allRowsChanged();
+        fireTableDataChanged();
       }
     }
 
