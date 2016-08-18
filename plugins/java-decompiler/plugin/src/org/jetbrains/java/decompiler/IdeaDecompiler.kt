@@ -20,7 +20,6 @@ import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -108,7 +107,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
               app.invokeLater({
                 RefreshQueue.getInstance().processSingleEvent(
                     VFileContentChangeEvent(this@IdeaDecompiler, file, file.modificationStamp, -1, false))
-              }, ModalityState.any())
+              })
 
               connection.disconnect()
             }
