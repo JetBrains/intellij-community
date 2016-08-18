@@ -23,7 +23,6 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
-import com.intellij.util.continuation.ContinuationPause;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -304,11 +303,6 @@ public class MockChangeListManager extends ChangeListManagerEx {
 
   @Override
   public String getDefaultListName() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void freeze(ContinuationPause context, String reason) {
     throw new UnsupportedOperationException();
   }
 

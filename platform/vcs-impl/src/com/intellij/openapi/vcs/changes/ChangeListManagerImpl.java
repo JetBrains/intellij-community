@@ -51,7 +51,6 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.continuation.ContinuationPause;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -403,19 +402,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       if (pi != null) pi.checkCanceled();
       free = sem.waitFor(500);
     }
-  }
-
-  @Deprecated
-  @Override
-  public void freeze(final ContinuationPause context, final String reason) {
-    myUpdater.setIgnoreBackgroundOperation(true);
-    invokeAfterUpdate(() -> {
-      myUpdater.setIgnoreBackgroundOperation(false);
-      myUpdater.pause();
-      myFreezeName.set(reason);
-      context.ping();
-    }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, "", ModalityState.defaultModalityState());
-    context.suspend();
   }
 
   @Override
