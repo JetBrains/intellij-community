@@ -69,7 +69,7 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
     AbstractVcs vcs = getVcs(e);
     if (vcs == null) return false;
 
-    AnnotationProvider provider = vcs.getCachingAnnotationProvider();
+    AnnotationProvider provider = vcs.getAnnotationProvider();
     if (provider == null || !provider.isAnnotationValid(fileRevision)) return false;
 
     if (VcsAnnotateUtil.getBackgroundableLock(vcs.getProject(), file).isLocked()) return false;
@@ -90,7 +90,7 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
     final CharSequence oldContent = editor == null ? null : editor.getDocument().getImmutableCharSequence();
     final int oldLine = getAnnotatedLine(e);
 
-    final AnnotationProvider annotationProvider = vcs.getCachingAnnotationProvider();
+    final AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
     assert annotationProvider != null;
 
     final Ref<FileAnnotation> fileAnnotationRef = new Ref<>();

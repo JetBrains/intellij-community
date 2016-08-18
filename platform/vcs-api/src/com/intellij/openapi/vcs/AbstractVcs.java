@@ -21,7 +21,6 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
-import com.intellij.openapi.vcs.annotate.VcsCacheableAnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeListEditHandler;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
@@ -29,7 +28,6 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
-import com.intellij.openapi.vcs.history.VcsAnnotationCachedProxy;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeProvider;
@@ -589,15 +587,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
       }
     };
     return VcsSynchronousProgressWrapper.wrap(runnable, getProject(), "Load revision contents") ? list[0] : null;
-  }
-
-  @Nullable
-  public AnnotationProvider getCachingAnnotationProvider() {
-    final AnnotationProvider ap = getAnnotationProvider();
-    if (ap instanceof VcsCacheableAnnotationProvider) {
-      return new VcsAnnotationCachedProxy(this, ProjectLevelVcsManager.getInstance(myProject).getVcsHistoryCache());
-    }
-    return ap;
   }
 
   @Override

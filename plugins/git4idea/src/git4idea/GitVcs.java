@@ -49,6 +49,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ComparatorDelegate;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.AnnotationProviderEx;
 import com.intellij.vcs.log.VcsUserRegistry;
 import git4idea.annotate.GitAnnotationProvider;
 import git4idea.annotate.GitRepositoryForAnnotationsListener;
@@ -225,7 +226,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   @NotNull
-  public GitAnnotationProvider getAnnotationProvider() {
+  public AnnotationProviderEx getAnnotationProvider() {
     return myAnnotationProvider;
   }
 

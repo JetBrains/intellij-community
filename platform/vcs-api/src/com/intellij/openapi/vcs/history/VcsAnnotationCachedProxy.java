@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
@@ -44,11 +45,11 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider {
   private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.history.VcsAnnotationCachedProxy");
   private final AnnotationProvider myAnnotationProvider;
 
-  public VcsAnnotationCachedProxy(final AbstractVcs vcs, final VcsHistoryCache cache) {
-    assert vcs.getAnnotationProvider() instanceof VcsCacheableAnnotationProvider;
+  public VcsAnnotationCachedProxy(@NotNull AbstractVcs vcs, @NotNull AnnotationProvider provider) {
+    assert provider instanceof VcsCacheableAnnotationProvider;
     myVcs = vcs;
-    myCache = cache;
-    myAnnotationProvider = myVcs.getAnnotationProvider();
+    myCache = ProjectLevelVcsManager.getInstance(vcs.getProject()).getVcsHistoryCache();
+    myAnnotationProvider = provider;
   }
 
   @Override
@@ -72,6 +73,11 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider {
         return myAnnotationProvider.annotate(file, revision);
       }
     });
+  }
+
+  @Override
+  public boolean isCaching() {
+    return true;
   }
 
   /**

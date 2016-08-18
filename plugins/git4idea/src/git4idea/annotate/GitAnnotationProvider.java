@@ -25,8 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.annotate.*;
-import com.intellij.openapi.vcs.history.VcsAbstractHistorySession;
+import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
@@ -51,7 +50,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheableAnnotationProvider {
+public class GitAnnotationProvider implements AnnotationProviderEx {
   private final Project myProject;
   @NonNls private static final String AUTHOR_KEY = "author";
   @NonNls private static final String COMMITTER_TIME_KEY = "committer-time";
@@ -227,40 +226,5 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
                                      return Pair.create(revision.getRevisionNumber(), revision);
                                    }
                                  });
-  }
-
-  @Override
-  public VcsAnnotation createCacheable(FileAnnotation fileAnnotation) {
-    final GitFileAnnotation gitFileAnnotation = (GitFileAnnotation) fileAnnotation;
-    final int size = gitFileAnnotation.getNumLines();
-    final VcsUsualLineAnnotationData basicData = new VcsUsualLineAnnotationData(size);
-    for (int i = 0; i < size; i++) {
-      basicData.put(i,  gitFileAnnotation.getLineRevisionNumber(i));
-    }
-    return new VcsAnnotation(VcsUtil.getFilePath(gitFileAnnotation.getFile()), basicData, null);
-  }
-
-  @Nullable
-  @Override
-  public FileAnnotation restore(@NotNull VcsAnnotation vcsAnnotation,
-                                @NotNull VcsAbstractHistorySession session,
-                                @NotNull String annotatedContent,
-                                boolean forCurrentRevision,
-                                VcsRevisionNumber revisionNumber) {
-    VirtualFile virtualFile = vcsAnnotation.getFilePath().getVirtualFile();
-    if (virtualFile == null) return null;
-    final VcsLineAnnotationData basicAnnotation = vcsAnnotation.getBasicAnnotation();
-    final int size = basicAnnotation.getNumLines();
-    final Map<VcsRevisionNumber, VcsFileRevision> historyAsMap = session.getHistoryAsMap();
-    final List<LineInfo> lines = new ArrayList<>();
-    for (int i = 0; i < size; i++) {
-      final GitRevisionNumber revision = (GitRevisionNumber)basicAnnotation.getRevision(i);
-      final GitFileRevision vcsFileRevision = (GitFileRevision)historyAsMap.get(revision);
-      if (vcsFileRevision == null) {
-        return null;
-      }
-      lines.add(new LineInfo(vcsFileRevision.getRevisionDate(), revision, vcsFileRevision, vcsFileRevision.getAuthor()));
-    }
-    return new GitFileAnnotation(myProject, virtualFile, revisionNumber, annotatedContent, lines, session.getRevisionList());
   }
 }
