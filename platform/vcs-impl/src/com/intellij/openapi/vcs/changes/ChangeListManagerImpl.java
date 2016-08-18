@@ -290,7 +290,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       public void run() {
         synchronized (myDataLock) {
           if (myWorker.isEmpty()) {
-            final LocalChangeList list = myWorker.addChangeList(VcsBundle.message("changes.default.changelist.name"), null, null);
+            final LocalChangeList list = myWorker.addChangeList(LocalChangeList.DEFAULT_NAME, null, null);
             setDefaultChangeList(list);
 
             if (myIgnoredIdeaLevel.isEmpty()) {

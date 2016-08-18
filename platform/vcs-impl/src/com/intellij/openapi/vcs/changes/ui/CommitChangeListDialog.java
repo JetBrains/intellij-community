@@ -766,10 +766,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
   }
 
-  private static boolean isDefaultList(final LocalChangeList list) {
-    return VcsBundle.message("changes.default.changelist.name").equals(list.getName());
-  }
-
   private void updateComment() {
     if (myVcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) return;
     final LocalChangeList list = (LocalChangeList) myBrowser.getSelectedChangeList();
@@ -783,7 +779,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     String listComment = list.getComment();
     if (StringUtil.isEmptyOrSpaces(listComment)) {
       final String listTitle = list.getName();
-      if (! isDefaultList(list)) {
+      if (!list.hasDefaultName()) {
         listComment = listTitle;
       }
       else {
@@ -940,13 +936,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       final int selectedSize = getIncludedChanges().size();
       final ChangeList selectedList = myBrowser.getSelectedChangeList();
       final int totalSize = selectedList.getChanges().size();
-      myToClean = (totalSize == selectedSize) && (isDefaultList((LocalChangeList) selectedList));
+      myToClean = (totalSize == selectedSize) && (((LocalChangeList)selectedList).hasDefaultName());
     }
 
     void clean() {
       if (myToClean) {
         final ChangeListManager clManager = ChangeListManager.getInstance(myProject);
-        clManager.editComment(VcsBundle.message("changes.default.changelist.name"), "");
+        clManager.editComment(LocalChangeList.DEFAULT_NAME, "");
       }
     }
   }

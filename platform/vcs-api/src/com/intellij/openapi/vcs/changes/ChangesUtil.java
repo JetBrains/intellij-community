@@ -25,7 +25,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -355,11 +358,6 @@ public class ChangesUtil {
 
   public static boolean isInternalOperation(@NotNull VirtualFile file) {
     return Boolean.TRUE.equals(file.getUserData(INTERNAL_OPERATION_KEY));
-  }
-
-  @NotNull
-  public static String getDefaultChangeListName() {
-    return VcsBundle.message("changes.default.changelist.name");
   }
 
   /**
