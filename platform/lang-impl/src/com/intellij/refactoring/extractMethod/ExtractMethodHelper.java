@@ -94,6 +94,7 @@ public class ExtractMethodHelper {
                                                     @NotNull PsiElement generatedMethod) {
     final Project project = generatedMethod.getProject();
     try {
+      //noinspection RedundantCast
       return ProgressManager.getInstance().runProcessWithProgressSynchronously(
         (ThrowableComputable<List<SimpleMatch>, RuntimeException>)() -> {
           ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
