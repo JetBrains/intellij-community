@@ -54,7 +54,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
                                    private val virtualFileTracker: StorageVirtualFileTracker? = StateStorageManagerImpl.createDefaultVirtualTracker(componentManager) ) : StateStorageManager {
   private val macros: MutableList<Macro> = ContainerUtil.createLockFreeCopyOnWriteList()
   private val storageLock = ReentrantReadWriteLock()
-  val storages = THashMap<String, StateStorage>()
+  private val storages = THashMap<String, StateStorage>()
 
   private val streamWrapper = StreamProviderWrapper()
   var streamProvider: StreamProvider?
@@ -178,6 +178,8 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   }
 
   fun getCachedFileStorages() = storageLock.read { storages.values.toSet() }
+
+  fun findCachedFileStorage(name: String) : StateStorage? = storageLock.read { storages[name] }
 
   fun getCachedFileStorages(changed: Collection<String>, deleted: Collection<String>, pathNormalizer: ((String) -> String)? = null) = storageLock.read {
     Pair(getCachedFileStorages(changed, pathNormalizer), getCachedFileStorages(deleted, pathNormalizer))
