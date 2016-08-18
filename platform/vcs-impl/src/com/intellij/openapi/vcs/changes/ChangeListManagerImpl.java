@@ -385,6 +385,27 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   static class DisposedException extends RuntimeException {}
 
+  public void freeze(@NotNull String reason) {
+    myUpdater.setIgnoreBackgroundOperation(true);
+    Semaphore sem = new Semaphore();
+    sem.down();
+
+    invokeAfterUpdate(() -> {
+      myUpdater.setIgnoreBackgroundOperation(false);
+      myUpdater.pause();
+      myFreezeName.set(reason);
+      sem.up();
+    }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, "", ModalityState.defaultModalityState());
+
+    boolean free = false;
+    while (!free) {
+      ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
+      if (pi != null) pi.checkCanceled();
+      free = sem.waitFor(500);
+    }
+  }
+
+  @Deprecated
   @Override
   public void freeze(final ContinuationPause context, final String reason) {
     myUpdater.setIgnoreBackgroundOperation(true);
