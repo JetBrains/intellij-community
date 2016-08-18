@@ -21,7 +21,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public interface ContinuationContext extends ContinuationPause {
+public interface ContinuationContext {
+  void suspend();
+
+  void ping();
+
   @CalledInAny
   void next(TaskDescriptor... next);
   @CalledInAny
