@@ -60,6 +60,18 @@ class MacDistributionBuilder {
     customIdeaProperties.putAll(customizer.customIdeaProperties(buildContext.applicationInfo))
     layoutMacApp(ideaPropertiesFile, customIdeaProperties, docTypes)
     customizer.copyAdditionalFiles(buildContext, macDistPath)
+
+    if (!customizer.binariesToSign.empty) {
+      if (buildContext.proprietaryBuildTools.macHostProperties == null) {
+        buildContext.messages.info("A Mac OS build agent isn't configured, binary files won't be signed")
+      }
+      else {
+        buildContext.executeStep("Sign binaries for Mac OS distribution", BuildOptions.MAC_SIGN_STEP) {
+          MacDmgBuilder.signBinaryFiles(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macDistPath)
+        }
+      }
+    }
+
     def macZipPath = buildMacZip()
     if (buildContext.proprietaryBuildTools.macHostProperties == null) {
       buildContext.messages.info("A Mac OS build agent isn't configured, dmg artifact won't be produced")

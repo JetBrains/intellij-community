@@ -86,6 +86,11 @@ abstract class MacDistributionCustomizer {
   List<String> extraExecutables = []
 
   /**
+   * Relative paths to files in Mac OS distribution which should be signed
+   */
+  List<String> binariesToSign = []
+
+  /**
    * An unique identifier string that specifies the app type of the bundle. The string should be in reverse DNS format using only the Roman alphabet in upper and lower case (A–Z, a–z), the dot (“.”), and the hyphen (“-”)
    * See <a href="https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070">CFBundleIdentifier</a> for details
    */

@@ -19,6 +19,7 @@ import com.intellij.util.PathUtilRt
 import org.apache.tools.ant.types.Path
 import org.apache.tools.ant.util.SplitClassLoader
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.MacDistributionCustomizer
 import org.jetbrains.intellij.build.MacHostProperties
 
@@ -42,14 +43,14 @@ class MacDmgBuilder {
     this.remoteDir = remoteDir
   }
 
-  public static void signAndBuildDmg(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties, String macZipPath) {
-    defineTasks(buildContext.ant, "${buildContext.paths.communityHome}/lib")
+  public static void signBinaryFiles(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties,
+                                     String macDistPath) {
+    def dmgBuilder = createInstance(buildContext, customizer, macHostProperties)
+    dmgBuilder.doSignBinaryFiles(macDistPath)
+  }
 
-    String remoteDir = "intellij-builds/${buildContext.fullBuildNumber}"
-    if (remoteDir.toLowerCase().endsWith("snapshot")) {
-      remoteDir += "-" + LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME).replace(':', '-')
-    }
-    def dmgBuilder = new MacDmgBuilder(buildContext, customizer, remoteDir, macHostProperties)
+  public static void signAndBuildDmg(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties, String macZipPath) {
+    MacDmgBuilder dmgBuilder = createInstance(buildContext, customizer, macHostProperties)
     def jreArchivePath = buildContext.bundledJreManager.findMacJreArchive()
     if (jreArchivePath != null) {
       dmgBuilder.doSignAndBuildDmg(macZipPath, jreArchivePath)
@@ -59,6 +60,56 @@ class MacDmgBuilder {
     }
     if (buildContext.options.buildDmgWithoutBundledJre) {
       dmgBuilder.doSignAndBuildDmg(macZipPath, null)
+    }
+  }
+
+  private static MacDmgBuilder createInstance(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties) {
+    defineTasks(buildContext.ant, "${buildContext.paths.communityHome}/lib")
+
+    String remoteDir = "intellij-builds/${buildContext.fullBuildNumber}"
+    if (remoteDir.toLowerCase().endsWith("snapshot")) {
+      remoteDir += "-" + LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME).replace(':', '-')
+    }
+    new MacDmgBuilder(buildContext, customizer, remoteDir, macHostProperties)
+  }
+
+  private void doSignBinaryFiles(String macDistPath) {
+    ftpAction("mkdir") {}
+    ftpAction("put", false, "777") {
+      ant.fileset(file: "${buildContext.paths.communityHome}/build/mac/signbin.sh")
+    }
+
+    String signedFilesDir = "$buildContext.paths.temp/signed-files"
+    ant.mkdir(dir: signedFilesDir)
+
+    List<String> failedToSign = []
+    customizer.binariesToSign.each { relativePath ->
+      buildContext.messages.progress("Signing $relativePath")
+      def fullPath = "$macDistPath/$relativePath"
+      ftpAction("put") {
+        ant.fileset(file: fullPath)
+      }
+      ant.delete(file: fullPath)
+      def fileName = PathUtilRt.getFileName(fullPath)
+      sshExec("$remoteDir/signbin.sh \"$fileName\" ${macHostProperties.userName}" +
+              " ${macHostProperties.password} \"${this.macHostProperties.codesignString}\" 2>&1 | tee $remoteDir/signbin.log")
+
+      ftpAction("get", true, null, 3) {
+        ant.fileset(dir: signedFilesDir) {
+          ant.include(name: fileName)
+        }
+      }
+      if (new File(signedFilesDir, fileName).exists()) {
+        ant.move(file: "$signedFilesDir/$fileName", tofile: fullPath)
+      }
+      else {
+        failedToSign << relativePath
+      }
+    }
+
+    deleteRemoteDir()
+    if (!failedToSign.empty) {
+      buildContext.messages.error("Failed to sign files: $failedToSign")
     }
   }
 
@@ -95,6 +146,15 @@ class MacDmgBuilder {
         include(name: "${targetFileName}.dmg")
       }
     }
+    deleteRemoteDir()
+    def dmgFilePath = "$artifactsPath/${targetFileName}.dmg"
+    if (!new File(dmgFilePath).exists()) {
+      buildContext.messages.error("Failed to build .dmg file")
+    }
+    buildContext.notifyArtifactBuilt(dmgFilePath)
+  }
+
+  private void deleteRemoteDir() {
     ftpAction("delete") {
       ant.fileset() {
         include(name: "**")
@@ -105,11 +165,6 @@ class MacDmgBuilder {
         include(name: "${PathUtilRt.getFileName(remoteDir)}/**")
       }
     }
-    def dmgFilePath = "$artifactsPath/${targetFileName}.dmg"
-    if (!new File(dmgFilePath).exists()) {
-      buildContext.messages.error("Failed to build .dmg file")
-    }
-    buildContext.notifyArtifactBuilt(dmgFilePath)
   }
 
   private def signMacZip(String sitFilePath, String targetFileName, String jreArchivePath) {
