@@ -98,7 +98,12 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
       @NotNull
       @Override
       public SchemeState getState(@NotNull EditorColorsScheme scheme) {
-        return scheme instanceof EditorColorsSchemeImpl && !(scheme instanceof ReadOnlyColorsScheme) && ((EditorColorsSchemeImpl)scheme).isSaveNeeded() ? SchemeState.POSSIBLY_CHANGED : SchemeState.NON_PERSISTENT;
+        if (scheme instanceof EditorColorsSchemeImpl && !(scheme instanceof ReadOnlyColorsScheme)) {
+          return ((EditorColorsSchemeImpl)scheme).isSaveNeeded() ? SchemeState.POSSIBLY_CHANGED : SchemeState.UNCHANGED;
+        }
+        else {
+          return SchemeState.NON_PERSISTENT;
+        }
       }
 
       @Override
