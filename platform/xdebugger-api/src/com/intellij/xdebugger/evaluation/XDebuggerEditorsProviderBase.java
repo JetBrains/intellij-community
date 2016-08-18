@@ -52,7 +52,14 @@ public abstract class XDebuggerEditorsProviderBase extends XDebuggerEditorsProvi
     if (sourcePosition != null) {
       context = getContextElement(sourcePosition.getFile(), sourcePosition.getOffset(), project);
     }
+    return createDocument(project, expression, context, mode);
+  }
 
+  @NotNull
+  public Document createDocument(@NotNull Project project,
+                                 @NotNull XExpression expression,
+                                 @Nullable PsiElement context,
+                                 @NotNull EvaluationMode mode) {
     PsiFile codeFragment = createExpressionCodeFragment(project, expression, context, true);
     Document document = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
     assert document != null;

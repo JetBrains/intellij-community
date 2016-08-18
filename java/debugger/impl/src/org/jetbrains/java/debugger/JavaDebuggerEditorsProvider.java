@@ -19,6 +19,7 @@ import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
@@ -87,12 +88,17 @@ public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase {
       JavaCodeFragment codeFragment = factory.createPresentationCodeFragment(text, context, project);
       codeFragment.forceResolveScope(GlobalSearchScope.allScope(project));
 
-      final PsiClass contextClass = PsiTreeUtil.getNonStrictParentOfType(context, PsiClass.class);
-      if (contextClass != null) {
-        final PsiClassType contextType =
-          JavaPsiFacade.getInstance(codeFragment.getProject()).getElementFactory().createType(contextClass);
+      if (context != null) {
+        PsiType contextType = context.getUserData(DebuggerUtilsImpl.PSI_TYPE_KEY);
+        if (contextType == null) {
+          PsiClass contextClass = PsiTreeUtil.getNonStrictParentOfType(context, PsiClass.class);
+          if (contextClass != null) {
+            contextType = JavaPsiFacade.getInstance(codeFragment.getProject()).getElementFactory().createType(contextClass);
+          }
+        }
         codeFragment.setThisType(contextType);
       }
+
       return codeFragment;
     }
     else {

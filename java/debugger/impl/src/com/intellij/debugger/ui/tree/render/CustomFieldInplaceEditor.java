@@ -29,7 +29,6 @@ import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.frame.XValuePlace;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
-import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeRestorer;
@@ -61,8 +60,7 @@ public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {
     ValueDescriptorImpl parentDescriptor = ((JavaValue)((XValueContainerNode)node.getParent()).getValueContainer()).getDescriptor();
     Pair<PsiClass, PsiType> pair = DebuggerUtilsImpl.getPsiClassAndType(getTypeName(parentDescriptor), getProject());
     if (pair.first != null) {
-      XSourcePositionImpl position = XSourcePositionImpl.createByElement(pair.first);
-      myExpressionEditor.setSourcePosition(position);
+      myExpressionEditor.setContext(pair.first);
     }
   }
 
