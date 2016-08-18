@@ -20,18 +20,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
-import com.intellij.util.ui.HtmlPanel;
 import com.intellij.openapi.vcs.ui.FontUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.HtmlPanel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VisiblePack;
@@ -371,7 +370,7 @@ class CommitPanel extends JBPanel {
       long authorTime = commit.getAuthorTime();
       long commitTime = commit.getCommitTime();
 
-      String authorText = VcsUserUtil.getShortPresentation(commit.getAuthor()) + formatDateTime(authorTime);
+      String authorText = getUserNameText(commit.getAuthor()) + formatDateTime(authorTime);
       if (!VcsUserUtil.isSamePerson(commit.getAuthor(), commit.getCommitter())) {
         String commitTimeText;
         if (authorTime != commitTime) {
@@ -380,12 +379,19 @@ class CommitPanel extends JBPanel {
         else {
           commitTimeText = "";
         }
-        authorText += " (committed by " + VcsUserUtil.getShortPresentation(commit.getCommitter()) + commitTimeText + ")";
+        authorText += " (committed by " + getUserNameText(commit.getCommitter()) + commitTimeText + ")";
       }
       else if (authorTime != commitTime) {
         authorText += " (committed " + formatDateTime(commitTime) + ")";
       }
       return authorText;
+    }
+
+    @NotNull
+    private static String getUserNameText(@NotNull VcsUser user) {
+      String username = VcsUserUtil.getShortPresentation(user);
+      if (user.getEmail().isEmpty()) return username;
+      return "<a href='mailto:" + user.getEmail() + "'>" + username + "</a>";
     }
 
     @Override
