@@ -14,16 +14,12 @@
  * limitations under the License.
  */
 
-/**
- * @author Alexey
- */
 package com.intellij.lang.properties.editor;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesHighlighter;
-import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.inspections.InspectedPropertyNodeInfo;
 import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorProblemDescriptor;
 import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorRenderer;
@@ -58,7 +54,7 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
 
   private volatile InspectedPropertyNodeInfo myInspectedPropertyNodeInfo;
 
-  public ResourceBundlePropertyStructureViewElement(final ResourceBundle resourceBundle, final @NotNull PropertiesAnchorizer.PropertyAnchor anchor) {
+  public ResourceBundlePropertyStructureViewElement(final @NotNull PropertiesAnchorizer.PropertyAnchor anchor) {
     myAnchor = anchor;
   }
 

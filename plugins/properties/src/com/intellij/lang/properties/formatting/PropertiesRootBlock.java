@@ -33,8 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static java.io.File.separator;
-
 /**
  * @author Dmitry Batkovich
  */
@@ -44,8 +42,8 @@ public class PropertiesRootBlock extends AbstractBlock {
   private Alignment mySeparatorAlignment;
 
   protected PropertiesRootBlock(@NotNull ASTNode node,
-                                @Nullable Wrap wrap, CodeStyleSettings settings) {
-    super(node, wrap, Alignment.createAlignment());
+                                CodeStyleSettings settings) {
+    super(node, null, Alignment.createAlignment());
     mySettings = settings;
     mySeparatorAlignment = Alignment.createAlignment(true, Alignment.Anchor.LEFT);
   }
