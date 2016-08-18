@@ -30,6 +30,7 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
@@ -176,10 +177,15 @@ public class InstancesWindow extends DialogWrapper {
       myFilterButton.setPreferredSize(filteringButtonSize);
 
       JBPanel filteringPane = new JBPanel(new BorderLayout(JBUI.scale(BORDER_LAYOUT_DEFAULT_GAP), 0));
+      JBLabel sideEffectsWarning = new JBLabel("Warning: filtering may have side effects", SwingConstants.RIGHT);
+      sideEffectsWarning.setBorder(JBUI.Borders.empty(1, 0, 0, 0));
+      sideEffectsWarning.setComponentStyle(UIUtil.ComponentStyle.SMALL);
+      sideEffectsWarning.setFontColor(UIUtil.FontColor.BRIGHTER);
 
       filteringPane.add(new JBLabel("Condition:"), BorderLayout.WEST);
       filteringPane.add(myFilterConditionEditor.getComponent(), BorderLayout.CENTER);
       filteringPane.add(myFilterButton, BorderLayout.EAST);
+      filteringPane.add(sideEffectsWarning, BorderLayout.SOUTH);
 
       myProgress.addStopActionListener(this::cancelFilteringTask);
 
