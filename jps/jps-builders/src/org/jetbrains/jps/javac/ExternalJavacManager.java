@@ -317,7 +317,8 @@ public class ExternalJavacManager {
       });
     }
 
-    public int getExitCode() {
+    @NotNull
+    public Integer getExitCode() {
       return myExitCode;
     }
   }

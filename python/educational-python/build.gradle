@@ -43,8 +43,8 @@ subprojects {
 
   repositories {
     ivy {
-      ivyPattern      'http://buildserver.labs.intellij.net/guestAuth/repository/download/ijplatform_master_PyCharm_Installers/lastSuccessful/teamcity-ivy.xml'
-      artifactPattern 'http://buildserver.labs.intellij.net/guestAuth/repository/download/ijplatform_master_PyCharm_Installers/lastSuccessful/[artifact].[ext]'
+      ivyPattern      'http://buildserver.labs.intellij.net/guestAuth/repository/download/ijplatform_IjPlatform162_PyCharm_Installers/lastSuccessful/teamcity-ivy.xml'
+      artifactPattern 'http://buildserver.labs.intellij.net/guestAuth/repository/download/ijplatform_IjPlatform162_PyCharm_Installers/lastSuccessful/[artifact].[ext]'
     }
   }
 
@@ -53,7 +53,7 @@ subprojects {
   }
 
   dependencies {
-    pycharm ('org:ijplatform_master_PyCharm_Installers:lastSuccessful')
+    pycharm ('org:ijplatform_IjPlatform162_PyCharm_Installers:lastSuccessful')
     compileOnly fileTree(dir: rootProject.projectDir.toString() + "/gradleBuild/pycharm", include: ['**/*.jar'])
   }
 

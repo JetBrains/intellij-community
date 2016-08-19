@@ -111,12 +111,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
-  public void testDebug() { //TODO: merge it into pydev tests
-    unittests("tests_pydevd/test_egg_zip_exist.py");
-  }
-
-  @Test
   public void testConditionalBreakpoint() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test1.py") {
       @Override
@@ -941,6 +935,12 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         eval(PyDebugValue.RETURN_VALUES_PREFIX + "['foo']").hasValue("33");
         resume();
       }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-iron");
+      }
     });
   }
 
@@ -948,6 +948,11 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   @Staging
   public void testSuspendAllThreadsPolicy() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_two_threads.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
       @Override
       public void before() throws Exception {
         toggleBreakpoint(getFilePath(getScriptName()), 12);
@@ -959,6 +964,28 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForPause();
         eval("m").hasValue("42");
         assertNull(getRunningThread());
+        resume();
+      }
+    });
+  }
+
+  @Test
+  @Staging
+  public void testSuspendAllThreadsResume() throws Exception {
+    runPythonTest(new PyDebuggerTask("/debug", "test_two_threads_resume.py") {
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getFilePath(getScriptName()), 10);
+        setBreakpointSuspendPolicy(getProject(), 10, SuspendPolicy.ALL);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("x").hasValue("12");
+        resume();
+        waitForPause();
+        eval("x").hasValue("12");
         resume();
       }
     });

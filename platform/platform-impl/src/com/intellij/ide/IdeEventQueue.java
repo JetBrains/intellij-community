@@ -436,85 +436,15 @@ public class IdeEventQueue extends EventQueue {
 
     KeyEvent ke = (KeyEvent)e;
 
-    // Try to get it from editor
-    Component sourceComponent = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
-
-    if (ke.getID() == KeyEvent.KEY_PRESSED) {
-      switch (ke.getKeyCode()) {
-        case KeyEvent.VK_CONTROL:
-          if ((ke.getModifiersEx() & (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) != (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) {
-            ctrlIsPressedCount++;
-          }
-          break;
-        case KeyEvent.VK_ALT:
-          if (ke.getKeyLocation() == KeyEvent.KEY_LOCATION_LEFT) {
-            if ((ke.getModifiersEx() & (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) != (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) {
-              leftAltIsPressed = true;
-            }
-          }
-          break;
-      }
-    }
-    else if (ke.getID() == KeyEvent.KEY_RELEASED) {
-      switch (ke.getKeyCode()) {
-        case KeyEvent.VK_CONTROL:
-          ctrlIsPressedCount--;
-          break;
-        case KeyEvent.VK_ALT:
-          if (ke.getKeyLocation() == KeyEvent.KEY_LOCATION_LEFT) {
-            leftAltIsPressed = false;
-          }
-          break;
-      }
-    }
-
-    if (!leftAltIsPressed && KeyboardSettingsExternalizable.getInstance().isUkrainianKeyboard(sourceComponent)) {
-      if ('ґ' == ke.getKeyChar() || ke.getKeyCode() == KeyEvent.VK_U) {
-        ke = new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), 0,
-                          KeyEvent.VK_UNDEFINED, 'ґ', ke.getKeyLocation());
-        ke.setKeyCode(KeyEvent.VK_U);
-        ke.setKeyChar('ґ');
-        return ke;
-      }
-    }
-
     Integer keyCodeFromChar = CharToVKeyMap.get(ke.getKeyChar());
-    if (keyCodeFromChar != null) {
-      if (keyCodeFromChar != ke.getKeyCode()) {
-        // non-english layout
-        ke.setKeyCode(keyCodeFromChar);
-      }
 
-      //for (int i = 0; sourceComponent == null && i < WindowManagerEx.getInstanceEx().getAllProjectFrames().length; i++) {
-      //  sourceComponent = WindowManagerEx.getInstanceEx().getAllProjectFrames()[i].getComponent();
-      //}
+    if (keyCodeFromChar == ke.getKeyCode() || keyCodeFromChar == KeyEvent.VK_UNDEFINED) {
+      return e;
+    }
 
-      if (sourceComponent != null) {
-        if (KeyboardSettingsExternalizable.isSupportedKeyboardLayout(sourceComponent)) {
-          if ((ke.getModifiersEx() & (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) != 0 /*&& ke.getKeyLocation() == KeyEvent.KEY_LOCATION_RIGHT*/) {
-            // On German keyboard layout on Windows  we are getting on key press
-            // ctrl + alt instead of AltGr
-
-            int modifiers = ke.getModifiersEx() ^ InputEvent.ALT_DOWN_MASK ^ InputEvent.CTRL_DOWN_MASK;
-
-            if (ctrlIsPressedCount > 1) {
-              modifiers |= InputEvent.CTRL_DOWN_MASK;
-            }
-
-            if (leftAltIsPressed) {
-              modifiers |= InputEvent.ALT_MASK;
-            }
-
-            int oldKeyCode = ke.getKeyCode();
-
-            //noinspection MagicConstant
-            ke = new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), modifiers,
-                             KeyEvent.VK_UNDEFINED, ke.getKeyChar(), KeyEvent.KEY_LOCATION_UNKNOWN);
-
-            ke.setKeyCode(oldKeyCode);
-          }
-        }
-      }
+    if (keyCodeFromChar != ke.getKeyCode()) {
+      // non-english layout
+      ke.setKeyCode(keyCodeFromChar);
     }
 
     return ke;

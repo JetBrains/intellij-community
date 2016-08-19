@@ -12,13 +12,13 @@ class A(object):
     pass
 
   x1 = property(__getX, __setX, __delX, "doc of x1")
-  x2 = property(__setX) # should return
-  x3 = property(__getX, __getX) # should not return
-  x4 = property(__getX, fdel=__getX) # should not return
-  x5 = property(__getX, doc=123) # bad doc
+  x2 = property(<warning descr="Getter should return or yield something"><warning descr="Getter signature should be (self)">__setX</warning></warning>)
+  x3 = property(__getX, <warning descr="Setter should not return a value"><warning descr="Setter signature should be (self, value)">__getX</warning></warning>)
+  x4 = property(__getX, fdel=<warning descr="Deleter should not return a value">__getX</warning>)
+  x5 = property(__getX, doc=<warning descr="The doc parameter should be a string">123</warning>)
 
   x6 = property(lambda self: self._x)
-  x7 = property(lambda self: self._x, lambda self: self._x) # setter should not return
+  x7 = property(lambda self: self._x, <warning descr="Setter should not return a value"><warning descr="Setter signature should be (self, value)">lambda self: self._x</warning></warning>)
 
   @property
   def foo(self):
@@ -45,7 +45,7 @@ class A(object):
     pass
  
   @property
-  def moo(self): # should return
+  def <warning descr="Getter should return or yield something">moo</warning>(self):
     pass
 
   @moo.setter
@@ -71,9 +71,9 @@ class Ghostbusters(object):
 gb = Ghostbusters()
 
 class B(object):
-  x = property(gb) # pass
-  y = property(Ghostbusters()) # pass
-  z = property(Ghostbusters) # pass
+  x = property(gb)
+  y = property(Ghostbusters())
+  z = property(Ghostbusters)
 
 class Eternal(object):
   def give(self):
@@ -85,5 +85,5 @@ class Eternal(object):
     while True:
       x = (yield x)
 
-  one = property(give) # should pass
-  anything = property(giveAndTake) # should pass
+  one = property(give)
+  anything = property(giveAndTake)

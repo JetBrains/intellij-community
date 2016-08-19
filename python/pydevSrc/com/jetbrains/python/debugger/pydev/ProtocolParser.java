@@ -257,7 +257,7 @@ public class ProtocolParser {
 
     final String name = readString(reader, "name", null);
     final String type = readString(reader, "type", null);
-    final String qualifier = readString(reader, "qualifier", null); //to be able to get the fully qualified type if necessary
+    final String qualifier = readString(reader, "qualifier", ""); //to be able to get the fully qualified type if necessary
 
     String value = readString(reader, "value", null);
     final String isContainer = readString(reader, "isContainer", "");

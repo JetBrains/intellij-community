@@ -400,6 +400,30 @@ class PyDB:
                                          "matplotlib.pyplot": activate_pyplot,
                                          "pylab": activate_pylab }
 
+    def suspend_all_other_threads(self, thread_suspended_at_bp):
+        all_threads = threadingEnumerate()
+        for t in all_threads:
+            if getattr(t, 'is_pydev_daemon_thread', False):
+                pass # I.e.: skip the DummyThreads created from pydev daemon threads
+            elif hasattr(t, 'pydev_do_not_trace'):
+                pass  # skip some other threads, i.e. ipython history saving thread from debug console
+            else:
+                if t is thread_suspended_at_bp:
+                    continue
+                additional_info = None
+                try:
+                    additional_info = t.additional_info
+                except AttributeError:
+                    pass  # that's ok, no info currently set
+
+                if additional_info is not None:
+                    for frame in additional_info.iter_frames(t):
+                        self.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=True)
+                        del frame
+
+                    self.set_suspend(t, CMD_THREAD_SUSPEND)
+                else:
+                    sys.stderr.write("Can't suspend thread: %s\n" % (t,))
 
     def process_internal_commands(self):
         '''This function processes internal commands
@@ -1418,7 +1442,7 @@ if __name__ == '__main__':
 
     pydevd_vm_type.setup_type(setup.get('vm_type', None))
 
-    if os.getenv('PYCHARM_DEBUG') or os.getenv('PYDEV_DEBUG'):
+    if os.getenv('PYCHARM_DEBUG') == 'True' or os.getenv('PYDEV_DEBUG') == 'True':
         set_debug(setup)
 
     DebugInfoHolder.DEBUG_RECORD_SOCKET_READS = setup.get('DEBUG_RECORD_SOCKET_READS', DebugInfoHolder.DEBUG_RECORD_SOCKET_READS)

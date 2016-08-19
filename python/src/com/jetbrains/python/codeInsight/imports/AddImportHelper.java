@@ -89,6 +89,7 @@ public class AddImportHelper {
     for (PyImportElement importElement : importStatement.getImportElements()) {
       final QualifiedName qualifiedName = importElement.getImportedQName();
       result.add(Objects.toString(qualifiedName, ""));
+      result.add(StringUtil.notNullize(importElement.getAsName()));
     }
     return result;
   }

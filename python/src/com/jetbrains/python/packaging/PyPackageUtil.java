@@ -15,11 +15,11 @@
  */
 package com.jetbrains.python.packaging;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -50,9 +50,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author vlan
@@ -282,6 +282,7 @@ public class PyPackageUtil {
   @Nullable
   public static List<PyPackage> refreshAndGetPackagesModally(@NotNull Sdk sdk) {
     final Ref<List<PyPackage>> packagesRef = Ref.create();
+    @SuppressWarnings("ThrowableInstanceNeverThrown") final Throwable callStacktrace = new Throwable();
     LOG.debug("Showing modal progress for collecting installed packages", new Throwable());
     PyUtil.runWithProgress(null, PyBundle.message("sdk.scanning.installed.packages"), true, false, indicator -> {
       indicator.setIndeterminate(true);
@@ -289,7 +290,13 @@ public class PyPackageUtil {
         packagesRef.set(PyPackageManager.getInstance(sdk).refreshAndGetPackages(false));
       }
       catch (ExecutionException e) {
-        LOG.warn(e);
+        if (LOG.isDebugEnabled()) {
+          e.initCause(callStacktrace);
+          LOG.debug(e);
+        }
+        else {
+          LOG.warn(e.getMessage());
+        }
       }
     });
     return packagesRef.get();
@@ -314,8 +321,7 @@ public class PyPackageUtil {
       }
       manager.refreshAndGetPackages(true);
     }
-    catch (ExecutionException e) {
-      LOG.warn(e);
+    catch (ExecutionException ignored) {
     }
     finally {
       isUpdating.set(false);

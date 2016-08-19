@@ -19,7 +19,6 @@ import com.google.common.base.Preconditions;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -620,6 +619,14 @@ public class PyPsiUtils {
 
   public static void assertValid(@NotNull final Module module) {
     Preconditions.checkArgument(!module.isDisposed(), String.format("Module %s is disposed", module));
+  }
+
+  @NotNull
+  public static PsiFileSystemItem getFileSystemItem(@NotNull PsiElement element) {
+    if (element instanceof PsiFileSystemItem) {
+      return (PsiFileSystemItem)element;
+    }
+    return element.getContainingFile();
   }
 
   private static abstract class TopLevelVisitor extends PyRecursiveElementVisitor {

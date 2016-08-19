@@ -169,7 +169,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         }
         if (assignedValue != null) {
           if (assignedValue instanceof PyYieldExpression) {
-            return null;
+            PyYieldExpression assignedYield = (PyYieldExpression)assignedValue;
+            return assignedYield.isDelegating() ? context.getType(assignedValue) : null;
           }
           return context.getType(assignedValue);
         }

@@ -41,14 +41,16 @@ public abstract class UsagesCollector {
   public abstract GroupDescriptor getGroupId();
 
   public static void doPersistProjectUsages(@NotNull Project project) {
-    synchronized (LOCK) {
-      if (!project.isInitialized() || DumbService.isDumb(project)) {
-        return;
-      }
+    if (StatisticsUploadAssistant.isSendAllowed()) {
+      synchronized (LOCK) {
+        if (!project.isInitialized() || DumbService.isDumb(project)) {
+          return;
+        }
 
-      for (UsagesCollector usagesCollector : EP_NAME.getExtensions()) {
-        if (usagesCollector instanceof AbstractApplicationUsagesCollector) {
-          ((AbstractApplicationUsagesCollector)usagesCollector).persistProjectUsages(project);
+        for (UsagesCollector usagesCollector : EP_NAME.getExtensions()) {
+          if (usagesCollector instanceof AbstractApplicationUsagesCollector) {
+            ((AbstractApplicationUsagesCollector)usagesCollector).persistProjectUsages(project);
+          }
         }
       }
     }
