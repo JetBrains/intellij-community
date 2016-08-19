@@ -140,14 +140,14 @@ class CommunityRepositoryModules {
       withOptionalModule("IntelliLang-java", "IntelliLang.jar")
       withOptionalModule("IntelliLang-xml", "IntelliLang.jar")
       withOptionalModule("intellilang-jps-plugin", "intellilang-jps-plugin.jar")
-      doNotCreateSeperateJarForLocalizableResources()
+      doNotCreateSeparateJarForLocalizableResources()
     },
     plugin("tasks-core") {
       directoryName = "tasks"
       withModule("tasks-api")
       withModule("jira")
       withOptionalModule("tasks-java")
-      doNotCreateSeperateJarForLocalizableResources()
+      doNotCreateSeparateJarForLocalizableResources()
     },
     plugin("terminal") {
       withResource("lib/jediterm.in", "lib")
