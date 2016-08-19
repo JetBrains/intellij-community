@@ -19,6 +19,7 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.IdeaCommunityProperties
+import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.jps.util.JpsPathUtil
 
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
@@ -30,7 +31,8 @@ target('default': "Developers update") {
   String projectHome = isDefined("devIdeaHome") ? devIdeaHome : home
   def options = new BuildOptions()
   options.useCompiledClassesFromProjectOutput = true
-  def context = BuildContext.createContext(ant, projectBuilder, project, global, home, projectHome, "$home/out/release-ce", new IdeaCommunityProperties(home), options)
+  def context = BuildContext.createContext(ant, projectBuilder, project, global, home, projectHome, "$home/out/release-ce", new IdeaCommunityProperties(home),
+                                           ProprietaryBuildTools.DUMMY, options)
   context.paths.distAll = deploy
   layoutFull(context)
 }
