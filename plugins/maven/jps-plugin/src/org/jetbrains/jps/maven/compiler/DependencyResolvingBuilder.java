@@ -48,6 +48,8 @@ import org.jetbrains.jps.model.serialization.JpsPathVariablesConfiguration;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
@@ -66,6 +68,10 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
 
   public DependencyResolvingBuilder() {
     super(BuilderCategory.INITIAL);
+  }
+
+  public List<String> getCompilableFileExtensions() {
+    return Collections.emptyList();
   }
 
   @NotNull
