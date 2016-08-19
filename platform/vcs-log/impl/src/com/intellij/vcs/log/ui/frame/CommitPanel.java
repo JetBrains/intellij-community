@@ -21,7 +21,9 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.ui.FontUtil;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.UI;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -45,6 +47,9 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.MatteBorder;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.DefaultCaret;
+import javax.swing.text.EditorKit;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.util.Collection;
 import java.util.Collections;
@@ -186,8 +191,8 @@ class CommitPanel extends JBPanel {
       caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
 
       setBorder(JBUI.Borders.empty(BOTTOM_BORDER, ReferencesPanel.H_GAP, 0, 0));
+      customizeLinks();
     }
-
     @Override
     public void hyperlinkUpdate(HyperlinkEvent e) {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && LINK_HREF.equals(e.getDescription())) {
@@ -215,6 +220,15 @@ class CommitPanel extends JBPanel {
                                          (myMultiRoot ? " [" + commit.getRoot().getName() + "]" : ""));
         String body = getMessageText(commit);
         myMainText = header + "<br/>" + body;
+      }
+    }
+
+    private void customizeLinks() {
+      EditorKit editorKit = getEditorKit();
+      if (editorKit instanceof HTMLEditorKit) {
+        StyleSheet styleSheet = ((HTMLEditorKit)editorKit).getStyleSheet();
+        String linkColor = "#" + ColorUtil.toHex(UI.getColor("link.foreground"));
+        styleSheet.addRule("a { color: " + linkColor + "; text-decoration: none;}");
       }
     }
 
