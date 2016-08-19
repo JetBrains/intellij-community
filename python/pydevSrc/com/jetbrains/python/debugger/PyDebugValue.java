@@ -170,7 +170,7 @@ public class PyDebugValue extends XNamedValue {
       return RETURN_VALUES_PREFIX + "[\"" + name + "\"]";
     }
     else {
-      return getName();
+      return name;
     }
   }
 
