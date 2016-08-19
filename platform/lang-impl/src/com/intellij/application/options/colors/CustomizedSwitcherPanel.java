@@ -123,40 +123,27 @@ class CustomizedSwitcherPanel extends JPanel implements OptionsPanelImpl.ColorDe
                                       @Nullable List<HighlightData> showLineData,
                                       @NotNull List<HighlightData> data,
                                       @NotNull RainbowHighlighter rainbowHighlighter,
-                                      @NotNull List<TextAttributesKey> rainbowTempKeys) {
-    if (!rainbowTempKeys.isEmpty()) {
-      List<HighlightData> newData = new ArrayList<HighlightData>();
+                                      @NotNull TextAttributesKey[] rainbowTempKeys) {
+    int colorCount = rainbowTempKeys.length;
+    if (colorCount != 0) {
+      List<HighlightData> newData = new ArrayList<>();
       if (showLineData != null) newData.addAll(showLineData);
 
-      HashMap<String, Integer> id2index = new HashMap<String, Integer>();
-
+      int[] index2usage = new int[colorCount];
       for (HighlightData d : data) {
         if (((RainbowColorSettingsPage)myPage).isRainbowType(d.getHighlightKey())) {
           String id = document.getText(TextRange.create(d.getStartOffset(), d.getEndOffset()));
 
-          int index = rainbowHighlighter.getColorIndex(id2index, id, RainbowHighlighter.getRainbowHash(id));
-          HighlightData rainbow = new HighlightData(d.getStartOffset(), d.getEndOffset(), rainbowTempKeys.get(index));
+          int index = RainbowHighlighter.getColorIndex(index2usage, RainbowHighlighter.hashColor(id, colorCount), colorCount);
+          ++index2usage[index];
+          HighlightData rainbow = new HighlightData(d.getStartOffset(), d.getEndOffset(), rainbowTempKeys[index]);
 
           //fixme: twisted coloring in editor. We need add rainbow-tag twice.
           newData.add(rainbow);
           newData.add(d);
           newData.add(rainbow);
         }
-        else if (!RainbowHighlighter.isRainbowTempKey(d.getHighlightKey())) {
-          newData.add(d);
-        }
-      }
-      data.clear();
-      data.addAll(newData);
-    }
-  }
-
-  private static void removeRainbowHighlighting(@NotNull List<HighlightData> data) {
-    List<TextAttributesKey> keys = RainbowHighlighter.getRainbowKeys();
-    if (!keys.isEmpty()) {
-      List<HighlightData> newData = new ArrayList<HighlightData>();
-      for (HighlightData d : data) {
-        if (!keys.contains(d.getHighlightKey())) {
+        else {
           newData.add(d);
         }
       }
@@ -185,7 +172,7 @@ class CustomizedSwitcherPanel extends JPanel implements OptionsPanelImpl.ColorDe
 
       if (myPage instanceof RainbowColorSettingsPage && myRainbowPanel.myGlobalState.isRainbowOn()) {
         RainbowHighlighter highlighter = new RainbowHighlighter(descriptor.getScheme());
-        List<TextAttributesKey> tempKeys = highlighter.getRainbowTempKeys();
+        TextAttributesKey[] tempKeys = highlighter.getRainbowTempKeys();
         EditorEx editor = simpleEditorPreview.getEditor();
         if (myActive == myRainbowPanel) {
           Pair<String, List<HighlightData>> demo = getColorDemoLine(highlighter, tempKeys);
@@ -203,7 +190,6 @@ class CustomizedSwitcherPanel extends JPanel implements OptionsPanelImpl.ColorDe
       }
       else {
         simpleEditorPreview.setDemoText(demoText);
-        removeRainbowHighlighting(simpleEditorPreview.getHighlightDataForExtension());
       }
 
       simpleEditorPreview.updateView();
@@ -214,10 +200,10 @@ class CustomizedSwitcherPanel extends JPanel implements OptionsPanelImpl.ColorDe
   }
 
   @NotNull
-  private static Pair<String, List<HighlightData>> getColorDemoLine(RainbowHighlighter highlighter, List<TextAttributesKey> tempKeys) {
+  private static Pair<String, List<HighlightData>> getColorDemoLine(RainbowHighlighter highlighter, TextAttributesKey[] tempKeys) {
     int colorsCount = highlighter.getColorsCount();
-    int stopCount = RainbowHighlighter.getRainbowKeys().size();
-    List<HighlightData> markup = new ArrayList<HighlightData>(colorsCount);
+    int stopCount = RainbowHighlighter.RAINBOW_COLOR_KEYS.length;
+    List<HighlightData> markup = new ArrayList<>(colorsCount);
     StringBuilder sb = new StringBuilder();
     int pos = 0;
     int i = 0;

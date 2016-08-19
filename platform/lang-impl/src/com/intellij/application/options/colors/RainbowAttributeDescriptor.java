@@ -83,14 +83,14 @@ class RainbowAttributeDescriptor implements EditorSchemeAttributeDescriptorWithP
   }
 
   public Color getDefaultColor(int index) {
-    return RainbowHighlighter.getRainbowKeys().get(index).getDefaultAttributes().getForegroundColor();
+    return RainbowHighlighter.RAINBOW_COLOR_KEYS[index].getDefaultAttributes().getForegroundColor();
   }
 
   public static class RainbowInSchemeState {
     private final List<Pair<Boolean, Color>> myRainbowState = new ArrayList<>();
 
     public RainbowInSchemeState(@NotNull EditorColorsScheme scheme) {
-      for (TextAttributesKey rainbowKey : RainbowHighlighter.getRainbowKeys()) {
+      for (TextAttributesKey rainbowKey : RainbowHighlighter.RAINBOW_COLOR_KEYS) {
         myRainbowState.add(getColorStateFromScheme(scheme, rainbowKey));
       }
     }
@@ -108,7 +108,7 @@ class RainbowAttributeDescriptor implements EditorSchemeAttributeDescriptorWithP
 
     public void apply(@NotNull EditorColorsScheme scheme) {
       int i = 0;
-      for (TextAttributesKey rainbowKey : RainbowHighlighter.getRainbowKeys()) {
+      for (TextAttributesKey rainbowKey : RainbowHighlighter.RAINBOW_COLOR_KEYS) {
         Pair<Boolean, Color> pair = myRainbowState.get(i);
         scheme.setAttributes(rainbowKey, pair.first ? new TextAttributes(pair.second, null, null, null, Font.PLAIN)
                                                     : rainbowKey.getDefaultAttributes());

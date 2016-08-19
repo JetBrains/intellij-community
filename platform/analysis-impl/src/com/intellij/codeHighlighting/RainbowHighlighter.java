@@ -25,11 +25,13 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +46,7 @@ public class RainbowHighlighter {
     new JBColor(0x005910, 0xbe9970),
     new JBColor(0xbc5150, 0x9d527c),
   };
-  private static final TextAttributesKey[] RAINBOW_COLOR_KEYS = new TextAttributesKey[RAINBOW_JB_COLORS_DEFAULT.length];
+  public static final TextAttributesKey[] RAINBOW_COLOR_KEYS = new TextAttributesKey[RAINBOW_JB_COLORS_DEFAULT.length];
   private static final int RAINBOW_COLORS_BETWEEN = 4;
   private static final String UNIT_TEST_COLORS = "#000001,#000002,#000003,#000004"; // Do not modify!
   static {
@@ -54,6 +56,8 @@ public class RainbowHighlighter {
       RAINBOW_COLOR_KEYS[i] = TextAttributesKey.createTextAttributesKey("RAINBOW_COLOR" + i, textAttributes);
     }
   }
+  public final static String RAINBOW_TYPE = "rainbow";
+  private final static String RAINBOW_TEMP_PREF = "RAINBOW_TEMP_";
 
   @NotNull private final TextAttributesScheme myColorsScheme;
   @NotNull private final Color[] myRainbowColors;
@@ -73,7 +77,32 @@ public class RainbowHighlighter {
     Registry.get("editor.rainbow.identifiers").setValue(enabled);
   }
 
+  public static int hashColor(@NotNull String name, int colorsCount) {
+    return Math.abs(StringHash.murmur(name, 0x55AA)) % colorsCount;
+  }
+
+  public static int getColorIndex(@NotNull int[] index2usage, int hashedIndex, int colorsCount) {
+    int minIndex1 = indexOfMin(index2usage, hashedIndex, colorsCount);
+    int minIndex2 = indexOfMin(index2usage, 0, hashedIndex);
+    return index2usage[minIndex1] <= index2usage[minIndex2] ? minIndex1 : minIndex2;
+  }
+
+  @Contract(pure = true)
+  private static int indexOfMin(@NotNull int[] index2usage, int start, int end) {
+    int min = Integer.MAX_VALUE;
+    int minIndex = start;
+    for (int i = start; i < end; i++) {
+      int value = index2usage[i];
+      if (value < min) {
+        min = value;
+        minIndex = i;
+      }
+    }
+    return minIndex;
+  }
+
   @NotNull
+  @Contract(pure = true)
   private Color calculateForeground(int colorIndex) {
     return myRainbowColors[colorIndex];
   }
@@ -93,9 +122,24 @@ public class RainbowHighlighter {
       return registryColors.stream().map(s -> ColorUtil.fromHex(s.trim())).toArray(Color[]::new);
     }
 
-    List<Color> foregroundColors = ContainerUtil.map(RAINBOW_COLOR_KEYS, key -> colorsScheme.getAttributes(key).getForegroundColor());
-    List<Color> colors = ColorGenerator.generateLinearColorSequence(foregroundColors, RAINBOW_COLORS_BETWEEN);
+    List<Color> stopColors = ContainerUtil.map(RAINBOW_COLOR_KEYS, key -> colorsScheme.getAttributes(key).getForegroundColor());
+    List<Color> colors = ColorGenerator.generateLinearColorSequence(stopColors, RAINBOW_COLORS_BETWEEN);
     return colors.toArray(new Color[colors.size()]);
+  }
+
+  @NotNull
+  public TextAttributesKey[] getRainbowTempKeys() {
+    TextAttributesKey[] keys = new TextAttributesKey[myRainbowColors.length];
+    for (int i = 0; i < myRainbowColors.length; ++i) {
+      TextAttributesKey key = TextAttributesKey.createTextAttributesKey(RAINBOW_TEMP_PREF + i, new TextAttributes());
+      key.getDefaultAttributes().setForegroundColor(myRainbowColors[i]);
+      keys[i] = key;
+    }
+    return keys;
+  }
+
+  public static boolean isRainbowTempKey(TextAttributesKey key) {
+    return key.getExternalName().startsWith(RAINBOW_TEMP_PREF);
   }
 
   public HighlightInfo getInfo(int colorIndex, @Nullable PsiElement id, @Nullable TextAttributesKey colorKey) {
