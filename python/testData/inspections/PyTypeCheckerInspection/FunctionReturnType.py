@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Union
 
 def a(x):
     # type: (List[int]) -> List[str]
@@ -13,7 +13,7 @@ def c():
     return <warning descr="Expected type 'int', got 'str' instead">'abc'</warning>
 
 def d(x):
-    # type: (x: int) -> List[str]
+    # type: (int) -> List[str]
     return [str(x)]
 
 def e():
@@ -36,3 +36,15 @@ def g(x):
         return <warning descr="Expected type 'int', got 'str' instead">'abc'</warning>
     else:
         return <warning descr="Expected type 'int', got 'dict' instead">{}</warning>
+
+def h(x):
+    # type: (Any) -> int
+    <warning descr="Expected type 'int', got 'None' instead">return</warning>
+
+def i():
+    # type: () -> Union[int, str]
+    pass
+
+def j(x):
+    <warning descr="Expected to return 'Union[int, str]', got no return"># type: () -> Union[int, str]</warning>
+    x = 42

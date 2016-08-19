@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -90,22 +91,53 @@ public class PyTypeCheckerInspection extends PyInspection {
 
     @Override
     public void visitPyReturnStatement(PyReturnStatement node) {
-      final PyExpression returnExpr = node.getExpression();
-      if (returnExpr != null) {
-        ScopeOwner owner = ScopeUtil.getScopeOwner(returnExpr);
-        if (owner instanceof PyFunction) {
-          final PyFunction function = (PyFunction)owner;
-          final PyAnnotation annotation = function.getAnnotation();
-          final String typeCommentAnnotation = function.getTypeCommentAnnotation();
-          if (annotation != null || typeCommentAnnotation != null) {
-            final PyType actual = myTypeEvalContext.getType(returnExpr);
-            final PyType expected = myTypeEvalContext.getReturnType(function);
-            if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
-              final String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
-              final String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
-              registerProblem(returnExpr, String.format("Expected type '%s', got '%s' instead", expectedName, actualName));
-            }
+      final ScopeOwner owner = ScopeUtil.getScopeOwner(node);
+      if (owner instanceof PyFunction) {
+        final PyFunction function = (PyFunction)owner;
+        final PyAnnotation annotation = function.getAnnotation();
+        final String typeCommentAnnotation = function.getTypeCommentAnnotation();
+        if (annotation != null || typeCommentAnnotation != null) {
+          final PyExpression returnExpr = node.getExpression();
+          final PyType actual = returnExpr != null ? myTypeEvalContext.getType(returnExpr) : PyNoneType.INSTANCE;
+          final PyType expected = myTypeEvalContext.getReturnType(function);
+          if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
+            final String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
+            final String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
+            registerProblem(returnExpr != null ? returnExpr : node,
+                            String.format("Expected type '%s', got '%s' instead", expectedName, actualName));
           }
+        }
+      }
+    }
+
+    @Override
+    public void visitPyFunction(PyFunction node) {
+      final PyAnnotation annotation = node.getAnnotation();
+      final String typeCommentAnnotation = node.getTypeCommentAnnotation();
+      if (annotation != null || typeCommentAnnotation != null) {
+        final PyStatementList statements = node.getStatementList();
+        ReturnVisitor visitor = new ReturnVisitor(node);
+        statements.accept(visitor);
+        if (!visitor.myHasReturns && !PyUtil.isEmptyFunction(node)) {
+          final String expectedName = PythonDocumentationProvider.getTypeName(myTypeEvalContext.getReturnType(node), myTypeEvalContext);
+          registerProblem(annotation != null ? annotation : node.getTypeComment(),
+                          String.format("Expected to return '%s', got no return", expectedName));
+        }
+      }
+    }
+
+    private static class ReturnVisitor extends PyRecursiveElementVisitor {
+      private final PyFunction myFunction;
+      private boolean myHasReturns = false;
+
+      public ReturnVisitor(PyFunction function) {
+        myFunction = function;
+      }
+
+      @Override
+      public void visitPyReturnStatement(PyReturnStatement node) {
+        if (PsiTreeUtil.getParentOfType(node, ScopeOwner.class, true) == myFunction) {
+          myHasReturns = true;
         }
       }
     }
