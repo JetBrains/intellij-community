@@ -68,7 +68,7 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
 
     ClasspathStorageProvider provider = getProvider(storageType);
     if (provider == null) {
-      throw new IllegalStateException("Classpath storage provider not found, please ensure that Eclipse plugin is installed");
+      throw new IllegalStateException("Classpath storage provider " + storageType + " not found, please make sure the plugin is installed");
     }
     myConverter = provider.createConverter(module);
 
@@ -252,7 +252,13 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
     }
     else {
       module.setOption(JpsProjectLoader.CLASSPATH_ATTRIBUTE, storageId);
-      module.setOption(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE, provider.getContentRoot(model));
+      String root = provider.getContentRoot(model);
+      if (root == null) {
+        module.clearOption(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE);
+      }
+      else {
+        module.setOption(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE, root);
+      }
     }
   }
 
