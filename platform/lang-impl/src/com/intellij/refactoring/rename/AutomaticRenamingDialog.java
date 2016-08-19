@@ -137,12 +137,16 @@ public class AutomaticRenamingDialog extends DialogWrapper {
   }
 
   private void handleChanges() {
-    final int selectedRow = myTable.getSelectedRow();
-    if (selectedRow > -1) {
-      final boolean validName = RenameUtil.isValidName(myProject, myRenames[selectedRow], myNewNames[selectedRow]);
-      getOKAction().setEnabled(validName);
-      setErrorText(validName ? null : "Identifier \'" + myNewNames[selectedRow] + "\' is invalid");
+    for (int i = 0; i < myNewNames.length; i++) {
+      String newName = myNewNames[i];
+      if (myShouldRename[i] && !RenameUtil.isValidName(myProject, myRenames[i], newName)) {
+        getOKAction().setEnabled(false);
+        setErrorText("Identifier \'" + newName + "\' is invalid");
+        return;
+      }
     }
+    getOKAction().setEnabled(true);
+    setErrorText(null);
   }
 
   @Override
