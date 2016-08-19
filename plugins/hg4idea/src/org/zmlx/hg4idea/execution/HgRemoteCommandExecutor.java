@@ -73,8 +73,8 @@ public class HgRemoteCommandExecutor extends HgCommandExecutor {
     try {
       int passPort = passServer.start();
       HgCommandResult result = super.executeInCurrentThread(repo, operation, prepareArguments(arguments, passPort));
-      if (!HgErrorUtil.isAuthorizationError(result)) {
-        passReceiver.saveCredentials();
+      if (HgErrorUtil.isAuthorizationError(result)) {
+        passReceiver.forgetPassword();
       }
       return result;
     }
@@ -133,7 +133,7 @@ public class HgRemoteCommandExecutor extends HgCommandExecutor {
       String path = new String(readDataBlock(dataInputStream));
       String proposedLogin = new String(readDataBlock(dataInputStream));
 
-      HgCommandAuthenticator authenticator = new HgCommandAuthenticator(myProject, myForceAuthorization, mySilentMode);
+      HgCommandAuthenticator authenticator = new HgCommandAuthenticator(myForceAuthorization, mySilentMode);
       boolean ok = authenticator.promptForAuthentication(myProject, proposedLogin, uri, path, myState);
       if (ok) {
         myAuthenticator = authenticator;
@@ -143,9 +143,9 @@ public class HgRemoteCommandExecutor extends HgCommandExecutor {
       return true;
     }
 
-    public void saveCredentials() {
+    public void forgetPassword() {
       if (myAuthenticator == null) return;
-      myAuthenticator.saveCredentials();
+      myAuthenticator.forgetPassword();
     }
   }
 }
