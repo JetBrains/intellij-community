@@ -1,13 +1,12 @@
 import os
+import pydevd_file_utils
 import sys
 import traceback
-
 from _pydev_bundle import pydev_log
 from _pydevd_bundle import pydevd_traceproperty, pydevd_tracing, pydevd_dont_trace
-import pydevd_file_utils
 from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint, update_exception_hook
 from _pydevd_bundle.pydevd_comm import CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, CMD_THREAD_KILL, InternalTerminateThread, \
-    CMD_THREAD_SUSPEND, pydevd_find_thread_by_id, CMD_THREAD_RUN, InternalRunThread, CMD_STEP_INTO, CMD_STEP_OVER, \
+    CMD_THREAD_SUSPEND, pydevd_find_thread_by_id, CMD_THREAD_RUN, CMD_STEP_INTO, CMD_STEP_OVER, \
     CMD_STEP_RETURN, CMD_STEP_INTO_MY_CODE, InternalStepThread, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT, \
     CMD_SMART_STEP_INTO, InternalSetNextStatementThread, CMD_RELOAD_CODE, ReloadCodeCommand, CMD_CHANGE_VARIABLE, \
     InternalChangeVariable, CMD_GET_VARIABLE, InternalGetVariable, CMD_GET_ARRAY, InternalGetArray, CMD_GET_COMPLETIONS, \
@@ -17,10 +16,9 @@ from _pydevd_bundle.pydevd_comm import CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, C
     CMD_REMOVE_EXCEPTION_BREAK, CMD_LOAD_SOURCE, CMD_ADD_DJANGO_EXCEPTION_BREAK, CMD_REMOVE_DJANGO_EXCEPTION_BREAK, \
     CMD_EVALUATE_CONSOLE_EXPRESSION, InternalEvaluateConsoleExpression, InternalConsoleGetCompletions, \
     CMD_RUN_CUSTOM_OPERATION, InternalRunCustomOperation, CMD_IGNORE_THROWN_EXCEPTION_AT, CMD_ENABLE_DONT_TRACE,\
-    CMD_SHOW_RETURN_VALUES, ID_TO_MEANING
+    CMD_SHOW_RETURN_VALUES
 from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K, DebugInfoHolder, dict_contains, dict_keys, dict_pop, \
     STATE_RUN
-import pydevd_file_utils
 
 
 def process_net_command(py_db, cmd_id, seq, text):
@@ -370,9 +368,9 @@ def process_net_command(py_db, cmd_id, seq, text):
             elif cmd_id == CMD_EVALUATE_EXPRESSION or cmd_id == CMD_EXEC_EXPRESSION:
                 #command to evaluate the given expression
                 #text is: thread\tstackframe\tLOCAL\texpression
-                thread_id, frame_id, scope, expression, trim = text.split('\t', 4)
+                thread_id, frame_id, scope, expression, trim, temp_name = text.split('\t', 5)
                 int_cmd = InternalEvaluateExpression(seq, thread_id, frame_id, expression,
-                    cmd_id == CMD_EXEC_EXPRESSION, int(trim) == 1)
+                    cmd_id == CMD_EXEC_EXPRESSION, int(trim) == 1, temp_name)
                 py_db.post_internal_command(int_cmd, thread_id)
 
             elif cmd_id == CMD_CONSOLE_EXEC:

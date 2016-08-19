@@ -223,8 +223,10 @@ public class PyDebugValue extends XNamedValue {
   }
   
   public PyDebugValue setName(String newName) {
-    return new PyDebugValue(newName, myType, myTypeQualifier, myValue, myContainer, myIsReturnedVal, myErrorOnEval, myParent,
-                            myFrameAccessor);
+    PyDebugValue value = new PyDebugValue(newName, myType, myTypeQualifier, myValue, myContainer, myIsReturnedVal, myErrorOnEval, myParent,
+                       myFrameAccessor);
+    value.setTempName(myTempName);
+    return value;
   }
 
   @Nullable
