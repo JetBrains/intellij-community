@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.util.continuation.SemaphoreContinuationContext
 import com.intellij.vcs.test.VcsPlatformTest
 import com.intellij.vcsUtil.VcsUtil.getFilePath
 
@@ -150,7 +149,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
   }
 
   private fun disableChangeListManager() {
-    (ChangeListManager.getInstance(myProject) as ChangeListManagerEx).freeze(SemaphoreContinuationContext(), "For tests")
+    (ChangeListManager.getInstance(myProject) as ChangeListManagerImpl).freeze("For tests")
   }
 
   private fun createSubRoot(parent: VirtualFile, name: String): FilePath {

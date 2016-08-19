@@ -118,9 +118,11 @@ class WindowsDistributionBuilder {
       //todo[nik] rename idea.bat in sources to something more generic
       buildContext.ant.move(file: "$winDistPath/bin/idea.bat", tofile: "$winDistPath/bin/$batName")
     }
-    String inspectScript = buildContext.productProperties.inspectScriptName
+    String inspectScript = buildContext.productProperties.inspectCommandName
     if (inspectScript != "inspect") {
-      buildContext.ant.move(file: "$winDistPath/bin/inspect.bat", tofile: "$winDistPath/bin/${inspectScript}.bat")
+      String targetPath = "$winDistPath/bin/${inspectScript}.bat"
+      buildContext.ant.move(file: "$winDistPath/bin/inspect.bat", tofile: targetPath)
+      buildContext.patchInspectScript(targetPath)
     }
 
 

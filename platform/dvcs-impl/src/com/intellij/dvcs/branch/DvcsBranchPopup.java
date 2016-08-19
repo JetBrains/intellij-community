@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -148,12 +148,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
   @NotNull
   protected List<Repo> filterRepositoriesNotOnThisBranch(@NotNull final String branch,
                                                          @NotNull List<Repo> allRepositories) {
-    return ContainerUtil.filter(allRepositories, new Condition<Repo>() {
-      @Override
-      public boolean value(Repo repository) {
-        return !branch.equals(repository.getCurrentBranchName());
-      }
-    });
+    return ContainerUtil.filter(allRepositories, repository -> !branch.equals(repository.getCurrentBranchName()));
   }
 
   private void warnThatBranchesDivergedIfNeeded() {

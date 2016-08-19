@@ -50,9 +50,10 @@ public abstract class ProductProperties {
   List<String> brandingResourcePaths = []
 
   /**
-   * Name of the sh/bat script (without extension) which will contain the commands to run IDE in 'offline inspections' mode
+   * Name of the command which runs IDE in 'offline inspections' mode (returned by 'getCommandName' in com.intellij.openapi.application.ApplicationStarter).
+   * This property will be also used to name sh/bat scripts which execute this command.
    */
-  String inspectScriptName = "inspect"
+  String inspectCommandName = "inspect"
 
   /**
    * {@code true} if tools.jar from JDK must be added to IDE's classpath

@@ -76,11 +76,6 @@ public class PsiEnumConstantInitializerImpl extends PsiClassImpl implements PsiE
   }
 
   @Override
-  public PsiElement getParent() {
-    return getParentByStub();
-  }
-
-  @Override
   @NotNull
   public PsiEnumConstant getEnumConstant() {
     return (PsiEnumConstant) getParent();

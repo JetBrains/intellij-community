@@ -63,6 +63,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ExecutionManagerImpl extends ExecutionManager implements Disposable {
   public static final Key<Object> EXECUTION_SESSION_ID_KEY = Key.create("EXECUTION_SESSION_ID_KEY");
@@ -296,7 +297,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
       final DataContext projectContext = context != null ? context : SimpleDataContext.getProjectContext(myProject);
       final long finalId = id;
       final Long executionSessionId = new Long(id);
-      ApplicationManager.getApplication().executeOnPooledThread((Runnable)() -> {
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
         for (BeforeRunTask task : beforeRunTasks) {
           if (myProject.isDisposed()) {
             return;
@@ -391,7 +392,27 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
             }
             project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStarted(executor.getId(), environment, processHandler);
             started = true;
-            processHandler.addProcessListener(new ProcessExecutionListener(project, profile, processHandler, descriptor));
+
+            ProcessExecutionListener listener = new ProcessExecutionListener(project, executor.getId(), environment, processHandler, descriptor);
+            processHandler.addProcessListener(listener);
+            
+            // Since we cannot guarantee that the listener is added before process handled is start notified,
+            // we have to make sure the process termination events are delivered to the clients.
+            // Here we check the current process state and manually deliver events, while 
+            // the ProcessExecutionListener guarantees each such event is only delivered once 
+            // either by this code, or by the ProcessHandler.
+
+            boolean terminating = processHandler.isProcessTerminating();
+            boolean terminated = processHandler.isProcessTerminated();
+            if (terminating || terminated) {
+              listener.processWillTerminate(new ProcessEvent(processHandler), false /*doesn't matter*/);
+
+              if (terminated) {
+                //noinspection ConstantConditions
+                int exitCode = processHandler.getExitCode();
+                listener.processTerminated(new ProcessEvent(processHandler, exitCode));
+              }
+            }
           }
           environment.setContentToReuse(descriptor);
         }
@@ -566,17 +587,22 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
   }
 
   private static class ProcessExecutionListener extends ProcessAdapter {
-    private final Project myProject;
-    private final RunProfile myProfile;
-    private final ProcessHandler myProcessHandler;
-    private final RunContentDescriptor myDescriptor;
+    @NotNull private final Project myProject;
+    @NotNull private final String myExecutorId;
+    @NotNull private final ExecutionEnvironment myEnvironment;
+    @NotNull private final ProcessHandler myProcessHandler;
+    @NotNull private final RunContentDescriptor myDescriptor;
+    @NotNull private final AtomicBoolean myWillTerminateNotified = new AtomicBoolean();
+    @NotNull private final AtomicBoolean myTerminateNotified = new AtomicBoolean();
 
     public ProcessExecutionListener(@NotNull Project project,
-                                    @NotNull RunProfile profile,
+                                    @NotNull String executorId,
+                                    @NotNull ExecutionEnvironment environment,
                                     @NotNull ProcessHandler processHandler,
                                     @NotNull RunContentDescriptor descriptor) {
       myProject = project;
-      myProfile = profile;
+      myExecutorId = executorId;
+      myEnvironment = environment;
       myProcessHandler = processHandler;
       myDescriptor = descriptor;
     }
@@ -584,6 +610,8 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
     @Override
     public void processTerminated(ProcessEvent event) {
       if (myProject.isDisposed()) return;
+      if (!myTerminateNotified.compareAndSet(false, true)) return;
+      
       ApplicationManager.getApplication().invokeLater(() -> {
         RunnerLayoutUi ui = myDescriptor.getRunnerLayoutUi();
         if (ui != null && !ui.isDisposed()) {
@@ -591,7 +619,13 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
         }
       }, ModalityState.any());
 
-      myProject.getMessageBus().syncPublisher(EXECUTION_TOPIC).processTerminated(myProfile, myProcessHandler);
+      //noinspection ConstantConditions
+      int exitCode = myProcessHandler.getExitCode();
+      
+      myProject.getMessageBus().syncPublisher(EXECUTION_TOPIC).processTerminated(myExecutorId,
+                                                                                 myEnvironment,
+                                                                                 myProcessHandler,
+                                                                                 exitCode);
 
       SaveAndSyncHandler saveAndSyncHandler = SaveAndSyncHandler.getInstance();
       if (saveAndSyncHandler != null) {
@@ -600,10 +634,11 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
     }
 
     @Override
-    public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
+    public void processWillTerminate(ProcessEvent event, boolean shouldNotBeUsed) {
       if (myProject.isDisposed()) return;
+      if (!myWillTerminateNotified.compareAndSet(false, true)) return;
 
-      myProject.getMessageBus().syncPublisher(EXECUTION_TOPIC).processTerminating(myProfile, myProcessHandler);
+      myProject.getMessageBus().syncPublisher(EXECUTION_TOPIC).processTerminating(myExecutorId, myEnvironment, myProcessHandler);
     }
   }
 }

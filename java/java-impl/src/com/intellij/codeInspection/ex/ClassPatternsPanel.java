@@ -37,7 +37,7 @@ class ClassPatternsPanel extends JPanel {
 
   public ClassPatternsPanel(List<EntryPointsManagerBase.ClassPattern> patterns) {
     super(new BorderLayout());
-    myModifiedPatterns = new ArrayList<>(patterns);
+    myModifiedPatterns = patterns;
     final JBTable table = createTableForPatterns();
     final ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(table)
       .setAddAction(new AnActionButtonRunnable() {

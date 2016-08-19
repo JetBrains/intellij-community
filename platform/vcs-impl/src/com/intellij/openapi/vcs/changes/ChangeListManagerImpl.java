@@ -51,7 +51,6 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.continuation.ContinuationPause;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -385,16 +384,24 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   static class DisposedException extends RuntimeException {}
 
-  @Override
-  public void freeze(final ContinuationPause context, final String reason) {
+  public void freeze(@NotNull String reason) {
     myUpdater.setIgnoreBackgroundOperation(true);
+    Semaphore sem = new Semaphore();
+    sem.down();
+
     invokeAfterUpdate(() -> {
       myUpdater.setIgnoreBackgroundOperation(false);
       myUpdater.pause();
       myFreezeName.set(reason);
-      context.ping();
+      sem.up();
     }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, "", ModalityState.defaultModalityState());
-    context.suspend();
+
+    boolean free = false;
+    while (!free) {
+      ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
+      if (pi != null) pi.checkCanceled();
+      free = sem.waitFor(500);
+    }
   }
 
   @Override

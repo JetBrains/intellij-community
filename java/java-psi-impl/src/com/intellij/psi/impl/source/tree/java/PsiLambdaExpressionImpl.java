@@ -72,11 +72,6 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
   }
 
   @Override
-  public PsiElement getParent() {
-    return getParentByTree();
-  }
-
-  @Override
   public PsiElement getBody() {
     final PsiElement element = getLastChild();
     return element instanceof PsiExpression || element instanceof PsiCodeBlock ? element : null;

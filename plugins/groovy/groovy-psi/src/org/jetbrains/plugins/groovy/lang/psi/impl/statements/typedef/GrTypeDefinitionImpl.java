@@ -86,11 +86,6 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   }
 
   @Override
-  public PsiElement getParent() {
-    return getDefinitionParent();
-  }
-
-  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitTypeDefinition(this);
   }

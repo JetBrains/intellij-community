@@ -136,6 +136,12 @@ class CommunityRepositoryModules {
     plugin("xpath") {
       withModule("xslt-rt", "rt/xslt-rt.jar")
     },
+    plugin("IntelliLang") {
+      withOptionalModule("IntelliLang-java", "IntelliLang.jar")
+      withOptionalModule("IntelliLang-xml", "IntelliLang.jar")
+      withOptionalModule("intellilang-jps-plugin", "intellilang-jps-plugin.jar")
+      doNotCreateSeperateJarForLocalizableResources()
+    },
     plugin("tasks-core") {
       directoryName = "tasks"
       withModule("tasks-api")

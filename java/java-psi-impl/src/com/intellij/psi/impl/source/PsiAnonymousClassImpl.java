@@ -201,8 +201,4 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
     return parent instanceof PsiNewExpression && ((PsiNewExpression)parent).getQualifier() != null;
   }
 
-  @Override
-  public PsiElement getParent() {
-    return SharedImplUtil.getParent(getNode());
-  }
 }

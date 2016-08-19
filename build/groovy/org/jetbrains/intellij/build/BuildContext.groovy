@@ -65,6 +65,8 @@ abstract class BuildContext {
 
   abstract boolean includeBreakGenLibraries()
 
+  abstract void patchInspectScript(String path)
+
   abstract String getAdditionalJvmArguments()
 
   abstract void notifyArtifactBuilt(String artifactPath)

@@ -30,30 +30,22 @@ import org.zmlx.hg4idea.HgVcsMessages;
  */
 class HgCommandAuthenticator {
   private GetPasswordRunnable myGetPassword;
-  private final Project myProject;
-  private boolean myForceAuthorization;
+  private final boolean myForceAuthorization;
   //todo replace silent mode and/or force authorization
-  private boolean mySilentMode;
+  private final boolean mySilentMode;
 
-  public HgCommandAuthenticator(Project project, boolean forceAuthorization, boolean silent) {
-    myProject = project;
+  public HgCommandAuthenticator(boolean forceAuthorization, boolean silent) {
     myForceAuthorization = forceAuthorization;
     mySilentMode = silent;
   }
 
-  public void saveCredentials() {
-    if (myGetPassword == null) return;
-
-    final String url = VirtualFileManager.extractPath(myGetPassword.getURL());
-    final String key = keyForUrlAndLogin(url, myGetPassword.getUserName());
-    PasswordSafe.getInstance().setPassword(HgCommandAuthenticator.class, key, myGetPassword.getPassword(), !myGetPassword.isRememberPassword());
-    final HgVcs vcs = HgVcs.getInstance(myProject);
-    if (vcs != null) {
-      vcs.getGlobalSettings().addRememberedUrl(url, myGetPassword.getUserName());
-    }
+  public void forgetPassword() {
+    if (myGetPassword == null) return;    // prompt was not suggested;
+    String url = VirtualFileManager.extractPath(myGetPassword.getURL());
+    PasswordSafe.getInstance().setPassword(HgCommandAuthenticator.class, keyForUrlAndLogin(url, getUserName()), null);
   }
 
-  public boolean promptForAuthentication(Project project, String proposedLogin, String uri, String path, @Nullable ModalityState state) {
+  public boolean promptForAuthentication(Project project, @NotNull String proposedLogin, @NotNull String uri, @NotNull String path, @Nullable ModalityState state) {
     GetPasswordRunnable runnable = new GetPasswordRunnable(project, proposedLogin, uri, path, myForceAuthorization, mySilentMode);
     ApplicationManager.getApplication().invokeAndWait(runnable, state == null ? ModalityState.defaultModalityState() : state);
     myGetPassword = runnable;
@@ -71,23 +63,23 @@ class HgCommandAuthenticator {
   private static class GetPasswordRunnable implements Runnable {
     private String myUserName;
     private String myPassword;
-    private Project myProject;
-    private final String myProposedLogin;
+    private final Project myProject;
+    @NotNull private final String myProposedLogin;
     private boolean ok = false;
-    @Nullable private String myURL;
+    @NotNull private final String myURL;
     private boolean myRememberPassword;
-    private boolean myForceAuthorization;
+    private final boolean myForceAuthorization;
     private final boolean mySilent;
 
     public GetPasswordRunnable(Project project,
-                               String proposedLogin,
-                               String uri,
-                               String path,
+                               @NotNull String proposedLogin,
+                               @NotNull String uri,
+                               @NotNull String path,
                                boolean forceAuthorization, boolean silent) {
-      this.myProject = project;
-      this.myProposedLogin = proposedLogin;
-      this.myURL = uri + path;
-      this.myForceAuthorization = forceAuthorization;
+      myProject = project;
+      myProposedLogin = proposedLogin;
+      myURL = uri + path;
+      myForceAuthorization = forceAuthorization;
       mySilent = silent;
     }
 
@@ -101,8 +93,9 @@ class HgCommandAuthenticator {
 
       @NotNull final HgGlobalSettings hgGlobalSettings = vcs.getGlobalSettings();
       @Nullable String rememberedLoginsForUrl = null;
+      String url = VirtualFileManager.extractPath(myURL);
       if (!StringUtil.isEmptyOrSpaces(myURL)) {
-        rememberedLoginsForUrl = hgGlobalSettings.getRememberedUserName(VirtualFileManager.extractPath(myURL));
+        rememberedLoginsForUrl = hgGlobalSettings.getRememberedUserName(url);
       }
 
       String login = myProposedLogin;
@@ -112,9 +105,9 @@ class HgCommandAuthenticator {
       }
 
       String password = null;
-      if (!StringUtil.isEmptyOrSpaces(login) && myURL != null) {
+      if (!StringUtil.isEmptyOrSpaces(login)) {
         // if we've logged in with this login, search for password
-        password = PasswordSafe.getInstance().getPassword(HgCommandAuthenticator.class, keyForUrlAndLogin(myURL, login));
+        password = PasswordSafe.getInstance().getPassword(HgCommandAuthenticator.class, keyForUrlAndLogin(url, login));
       }
 
       // don't show dialog if we don't have to (both fields are known) except force authorization required
@@ -137,8 +130,10 @@ class HgCommandAuthenticator {
       if (dialog.showAndGet()) {
         myUserName = dialog.getUsername();
         myPassword = dialog.getPassword();
-        myRememberPassword = dialog.isRememberPassword();
         ok = true;
+        PasswordSafe.getInstance()
+          .setPassword(HgCommandAuthenticator.class, keyForUrlAndLogin(url, myUserName), myPassword, !dialog.isRememberPassword());
+        hgGlobalSettings.addRememberedUrl(url, myUserName);
       }
     }
 
@@ -154,13 +149,9 @@ class HgCommandAuthenticator {
       return ok;
     }
 
-    @Nullable
+    @NotNull
     public String getURL() {
       return myURL;
-    }
-
-    public boolean isRememberPassword() {
-      return myRememberPassword;
     }
   }
 

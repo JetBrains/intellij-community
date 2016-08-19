@@ -370,9 +370,9 @@ def process_net_command(py_db, cmd_id, seq, text):
             elif cmd_id == CMD_EVALUATE_EXPRESSION or cmd_id == CMD_EXEC_EXPRESSION:
                 #command to evaluate the given expression
                 #text is: thread\tstackframe\tLOCAL\texpression
-                thread_id, frame_id, scope, expression, trim = text.split('\t', 4)
+                thread_id, frame_id, scope, expression, trim, temp_name = text.split('\t', 5)
                 int_cmd = InternalEvaluateExpression(seq, thread_id, frame_id, expression,
-                    cmd_id == CMD_EXEC_EXPRESSION, int(trim) == 1)
+                    cmd_id == CMD_EXEC_EXPRESSION, int(trim) == 1, temp_name)
                 py_db.post_internal_command(int_cmd, thread_id)
 
             elif cmd_id == CMD_CONSOLE_EXEC:

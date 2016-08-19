@@ -712,11 +712,12 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
   private fun deleteFiles(errors: MutableList<Throwable>, filesToDelete: MutableSet<String>) {
     if (provider != null && provider.enabled) {
-      for (name in filesToDelete) {
+      val iterator = filesToDelete.iterator()
+      for (name in iterator) {
         errors.catch {
           val spec = "$fileSpec/$name"
           if (provider.isApplicable(spec, roamingType)) {
-            filesToDelete.remove(name)
+            iterator.remove()
             provider.delete(spec, roamingType)
           }
         }

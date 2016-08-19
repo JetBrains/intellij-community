@@ -1083,7 +1083,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
                         additionalAttributes);
                   }
                   else {
-                    myHyperlinks.highlightHyperlinks(additionalHighlight);
+                    myHyperlinks.highlightHyperlinks(additionalHighlight, myFilters);
                   }
                 }
 

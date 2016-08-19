@@ -38,6 +38,7 @@ class BuildOptions {
   static final SOURCES_ARCHIVE_STEP = "sources_archive"
   static final MAC_DISTRIBUTION_STEP = "mac_dist"
   static final MAC_DMG_STEP = "mac_dmg"
+  static final MAC_SIGN_STEP = "mac_sign"
   static final LINUX_DISTRIBUTION_STEP = "linux_dist"
   static final WINDOWS_DISTRIBUTION_STEP = "windows_dist"
   static final WINDOWS_EXE_INSTALLER_STEP = "windows_exe_installer"

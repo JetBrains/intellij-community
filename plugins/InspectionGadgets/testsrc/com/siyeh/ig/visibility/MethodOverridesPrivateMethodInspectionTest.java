@@ -50,7 +50,7 @@ public class MethodOverridesPrivateMethodInspectionTest extends LightInspectionT
   public void testSimple() {
     doTest("import test.Super;" +
            "class B extends Super {" +
-           "  private void /*Method 'other()' overrides a private method of a superclass*/other/**/() {}" +
+           "  private void /*Method 'other()' overrides a 'private' method of a superclass*/other/**/() {}" +
            "}");
   }
 }

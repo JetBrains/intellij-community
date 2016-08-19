@@ -67,11 +67,6 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
   }
 
   @Override
-  public PsiElement getParent() {
-    return getParentByStub();
-  }
-
-  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitAnnotation(this);
   }

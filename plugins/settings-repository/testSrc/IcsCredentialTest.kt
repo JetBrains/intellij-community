@@ -1,12 +1,12 @@
 package org.jetbrains.settingsRepository.test
 
+import com.intellij.credentialStore.Credentials
 import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.testFramework.ApplicationRule
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.transport.CredentialItem
 import org.eclipse.jgit.transport.URIish
-import org.jetbrains.keychain.Credentials
 import org.jetbrains.keychain.CredentialsStore
 import org.jetbrains.keychain.FileCredentialsStore
 import org.jetbrains.settingsRepository.git.JGitCredentialsProvider

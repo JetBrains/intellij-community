@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
-import com.intellij.util.continuation.ContinuationPause;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -147,7 +146,7 @@ public abstract class ChangeListManager implements ChangeListModification {
   @Nullable
   public abstract String getSwitchedBranch(VirtualFile file);
   public abstract String getDefaultListName();
-  public abstract void freeze(final ContinuationPause context, String reason);
+
   public abstract void letGo();
   public abstract String isFreezed();
   public abstract boolean isFreezedWithNotification(@Nullable String modalTitle);

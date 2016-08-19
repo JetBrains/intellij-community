@@ -339,13 +339,17 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   }
 
   /**
-   * By default, delegates to {@link #getParentByTree()} which loads AST and returns parent based on the AST. Can be quite slow, therefore
-   * it's advised to override this method in specific implementations and use {@link #getParentByStub()} where possible.
-   * @return the parent of this element
+   * @return the parent of this element. Uses stub hierarchy if possible, but might cause an expensive switch to AST
+   * if the parent stub doesn't correspond to the parent AST node.
    */
   @Override
   public PsiElement getParent() {
-    return getParentByTree();
+    T stub = getStub();
+    if (stub != null && !((ObjectStubBase)stub).isDangling()) {
+      return stub.getParentStub().getPsi();
+    }
+
+    return SharedImplUtil.getParent(getNode());
   }
 
   @NotNull

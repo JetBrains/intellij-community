@@ -50,6 +50,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class StorageUtil {
+  public static final String NOTIFICATION_GROUP_ID = "Load Error";
+  
   @TestOnly
   public static String DEBUG_LOG = null;
 
@@ -65,7 +67,7 @@ public class StorageUtil {
                      "and allow project file sharing in version control systems.<br>" +
                      "Some of the files describing the current project settings contain unknown path variables " +
                      "and " + productName + " cannot restore those paths.";
-    new UnknownMacroNotification("Load Error", "Load error: undefined path variables", content, NotificationType.ERROR,
+    new UnknownMacroNotification(NOTIFICATION_GROUP_ID, "Load error: undefined path variables", content, NotificationType.ERROR,
                                  new NotificationListener() {
                                    @Override
                                    public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {

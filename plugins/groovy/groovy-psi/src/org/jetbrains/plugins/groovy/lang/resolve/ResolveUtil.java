@@ -62,6 +62,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
@@ -202,6 +203,7 @@ public class ResolveUtil {
       PsiClassType categoryType = GdkMethodUtil.getCategoryType((PsiClass)scope);
       if (categoryType != null) {
         if (!processNonCodeMembers(categoryType, processor, place, state)) return false;
+        if (!GdkMethodUtil.processCategoryMethods(place, processor, state, (PsiClass)scope)) return false;
       }
 
     }

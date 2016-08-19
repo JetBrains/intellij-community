@@ -88,25 +88,25 @@ public abstract class AnnotationsChangeTracker {
 
   /**
    * Invoked when changes in annotation list for some field are detected
-   * @param context
+   * @param context for conversion between string and numeric name representations in dependency graph
    * @param field the field in question
    * @param annotationsDiff differences descriptor for annotations on the field
    * @return a set of specifiers, determining what places in the program should be recompiled, see {@link Recompile}
    */
   @NotNull
-  public Set<Recompile> fieldAnnotationsChanged(DependencyContext context, FieldRepr field, Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff) {
+  public Set<Recompile> fieldAnnotationsChanged(NamingContext context, FieldRepr field, Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff) {
     return RECOMPILE_NONE;
   }
 
   /**
    * Invoked when changes in annotation list for some class are detected
-   * @param context
+   * @param context for conversion between string and numeric name representations in dependency graph
    * @param aClass the class in question
    * @param annotationsDiff differences descriptor for the class annotations
    * @return a set of specifiers, determining what places in the program should be recompiled, see {@link Recompile}
    */
   @NotNull
-  public Set<Recompile> classAnnotationsChanged(DependencyContext context, ClassRepr aClass, Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff) {
+  public Set<Recompile> classAnnotationsChanged(NamingContext context, ClassRepr aClass, Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff) {
     return RECOMPILE_NONE;
   }
 }

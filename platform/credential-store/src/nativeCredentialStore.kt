@@ -61,13 +61,13 @@ private class CredentialStoreWrapper(private val store: CredentialStore) : Passw
       return null
     }
 
-    if (value == null) {
+    if (value == null && requestor == null) {
       LOG.catchAndLog {
         val oldKey = toOldKey(rawKey)
         value = store.get(oldKey)
         if (value != null) {
           LOG.catchAndLog { store.set(oldKey, null) }
-          store.set(key, value!!.toByteArray())
+          store.set(rawKey, value!!.toByteArray())
         }
       }
     }

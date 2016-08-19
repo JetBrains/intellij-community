@@ -105,20 +105,6 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   }
 
   @Override
-  public PsiElement getParent() {
-    final PsiClassStub stub = getStub();
-    if (stub != null) {
-      final StubElement parentStub = stub.getParentStub();
-      if (parentStub instanceof PsiFileStub || parentStub instanceof PsiClassStub
-        ) {
-        return parentStub.getPsi();
-      }
-    }
-
-    return SharedImplUtil.getParent(getNode());
-  }
-
-  @Override
   public PsiElement getOriginalElement() {
     return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiClass>() {
       @Nullable

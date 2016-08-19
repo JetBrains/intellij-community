@@ -58,11 +58,6 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   }
 
   @Override
-  public PsiElement getParent() {
-    return getParentByTree();
-  }
-
-  @Override
   @NotNull
   public GrCodeReferenceElement getBaseClassReferenceGroovy() {
     GrTypeDefinitionStub stub = getStub();

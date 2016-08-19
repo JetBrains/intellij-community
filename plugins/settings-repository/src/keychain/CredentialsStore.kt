@@ -15,25 +15,10 @@
  */
 package org.jetbrains.keychain
 
+import com.intellij.credentialStore.Credentials
 import com.intellij.openapi.diagnostic.Logger
 
 val LOG: Logger = Logger.getInstance(CredentialsStore::class.java)
-
-class Credentials(id: String?, token: String?) {
-  val id: String? = if (id.isNullOrEmpty()) null else id
-  val token: String? = if (token.isNullOrEmpty()) null else token
-
-  override fun equals(other: Any?): Boolean {
-    if (other !is Credentials) return false
-    return id == other.id && token == other.token
-  }
-
-  override fun hashCode(): Int {
-    return (id?.hashCode() ?: 0) * 37 + (token?.hashCode() ?: 0)
-  }
-}
-
-fun Credentials?.isFulfilled(): Boolean = this != null && id != null && token != null
 
 interface CredentialsStore {
   fun get(host: String?, sshKeyFile: String? = null): Credentials?
