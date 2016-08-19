@@ -2,12 +2,11 @@
     resolution/conversion to XML.
 """
 import pickle
+from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle.pydevd_constants import *  # @UnusedWildImport
-from types import *  # @UnusedWildImport
-
 from _pydevd_bundle.pydevd_custom_frames import get_custom_frame
 from _pydevd_bundle.pydevd_xml import *
-from _pydev_imps._pydev_saved_modules import thread
+from types import *  # @UnusedWildImport
 
 try:
     from StringIO import StringIO
@@ -18,7 +17,7 @@ import sys  # @Reimport
 from _pydev_imps._pydev_saved_modules import threading
 import traceback
 from _pydevd_bundle import pydevd_save_locals
-from _pydev_bundle.pydev_imports import Exec, quote, execfile
+from _pydev_bundle.pydev_imports import Exec, execfile
 from _pydevd_bundle.pydevd_utils import to_string
 
 
@@ -369,7 +368,7 @@ def evaluate_expression(thread_id, frame_id, expression, doExec):
         del frame
 
 
-def change_attr_expression(thread_id, frame_id, attr, expression, dbg):
+def change_attr_expression(thread_id, frame_id, attr, expression, dbg, value=None):
     '''Changes some attribute in a given frame.
     '''
     frame = find_frame(thread_id, frame_id)
@@ -387,16 +386,22 @@ def change_attr_expression(thread_id, frame_id, attr, expression, dbg):
         if attr[:7] == "Globals":
             attr = attr[8:]
             if attr in frame.f_globals:
-                frame.f_globals[attr] = eval(expression, frame.f_globals, frame.f_locals)
+                if value is None:
+                    value = eval(expression, frame.f_globals, frame.f_locals)
+                frame.f_globals[attr] = value
                 return frame.f_globals[attr]
         else:
             if pydevd_save_locals.is_save_locals_available():
-                frame.f_locals[attr] = eval(expression, frame.f_globals, frame.f_locals)
+                if value is None:
+                    value = eval(expression, frame.f_globals, frame.f_locals)
+                frame.f_locals[attr] = value
                 pydevd_save_locals.save_locals(frame)
                 return frame.f_locals[attr]
 
             # default way (only works for changing it in the topmost frame)
-            result = eval(expression, frame.f_globals, frame.f_locals)
+            if value is None:
+                value = eval(expression, frame.f_globals, frame.f_locals)
+            result = value
             Exec('%s=%s' % (attr, expression), frame.f_globals, frame.f_locals)
             return result
 
