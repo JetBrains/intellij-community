@@ -15,11 +15,7 @@
  */
 
 
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.BuildTasks
-import org.jetbrains.intellij.build.IdeaCommunityProperties
-import org.jetbrains.intellij.build.ProprietaryBuildTools
+import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.util.JpsPathUtil
 
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
@@ -339,6 +335,9 @@ public def layoutCommunityPlugins(String home, BuildContext buildContext = null)
     layoutPlugin("maven") {
       jar("maven-jps-plugin.jar") {
         module("maven-jps-plugin")
+      }
+      jar("aether-dependency-resolver.jar") {
+        module("aether-dependency-resolver")
       }
       jar("maven-server-api.jar") {
         module("maven-server-api")
