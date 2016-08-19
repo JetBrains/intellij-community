@@ -38,8 +38,6 @@ public class ClassesTable extends JBTable implements DataProvider {
   private static final int DIFF_COLUMN_MIN_WIDTH = 80;
   private static final int DIFF_COLUMN_MAX_WIDTH = 100;
 
-  private static final String EMPTY_TABLE_CONTENT = "The application is running";
-
   private final DiffViewTableModel myModel = new DiffViewTableModel();
   private final UnknownDiffValue myUnknownValue = new UnknownDiffValue();
   private final XDebugSession myDebugSession;
@@ -59,8 +57,6 @@ public class ClassesTable extends JBTable implements DataProvider {
     myDebugSession = session;
     myOnlyWithDiff = onlyWithDiff;
     myOnlyWithInstances = onlyWithInstances;
-
-    getEmptyText().setText(EMPTY_TABLE_CONTENT);
 
     TableColumn classesColumn = getColumnModel().getColumn(DiffViewTableModel.CLASSNAME_COLUMN_INDEX);
     TableColumn countColumn = getColumnModel().getColumn(DiffViewTableModel.COUNT_COLUMN_INDEX);

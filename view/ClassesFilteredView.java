@@ -42,6 +42,9 @@ public class ClassesFilteredView extends BorderLayoutPanel {
   private static final Logger LOG = Logger.getInstance(ClassesFilteredView.class);
   private final static double DELAY_BEFORE_INSTANCES_QUERY_COEFFICIENT = 0.5;
   private final static int DEFAULT_BATCH_SIZE = Integer.MAX_VALUE;
+  private static final String EMPTY_TABLE_CONTENT_WHEN_RUNNED = "The application is running";
+  private static final String EMPTY_TABLE_CONTENT_WHEN_SUSPENDED = "Nothing to show";
+
 
   private final Project myProject;
   private final XDebugSession myDebugSession;
@@ -127,7 +130,10 @@ public class ClassesFilteredView extends BorderLayoutPanel {
     myDebugSession.addSessionListener(new XDebugSessionListener() {
       @Override
       public void sessionResumed() {
-        SwingUtilities.invokeLater(myTable::hideContent);
+        SwingUtilities.invokeLater(() -> {
+          myTable.getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_RUNNED);
+          myTable.hideContent();
+        });
         mySingleAlarm.cancelAllRequests();
       }
 
@@ -139,6 +145,7 @@ public class ClassesFilteredView extends BorderLayoutPanel {
 
       @Override
       public void sessionPaused() {
+        SwingUtilities.invokeLater(() -> myTable.getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_SUSPENDED));
         if (myNeedReloadClasses) {
           updateClassesAndCounts();
         }
