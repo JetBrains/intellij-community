@@ -78,19 +78,20 @@ public class CharArrayCharSequence implements CharSequenceBackedByArray, CharSeq
     if (this == anObject) {
       return true;
     }
-    if (anObject instanceof CharSequence) {
-      CharSequence anotherString = (CharSequence)anObject;
-      int n = myEnd - myStart;
-      if (n == anotherString.length()) {
-        for (int i = 0; i < n; i++) {
-          if (myChars[myStart + i] != anotherString.charAt(i)) {
-            return false;
-          }
-        }
-        return true;
+    if (anObject == null || getClass() != anObject.getClass()) {
+      return false;
+    }
+    final CharArrayCharSequence anotherString = (CharArrayCharSequence)anObject;
+    if (length() != anotherString.length()) {
+      return false;
+    }
+
+    for (int i = 0; i < length(); i++) {
+      if (charAt(i) != anotherString.charAt(i)) {
+        return false;
       }
     }
-    return false;
+    return true;
   }
 
   /**
