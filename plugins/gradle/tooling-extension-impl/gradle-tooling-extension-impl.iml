@@ -15,6 +15,7 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../lib/gradle-tooling-api-3.0.jar!/" />
           <root url="jar://$MODULE_DIR$/../lib/gradle-core-3.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-dependency-management-3.0.jar!/" />
           <root url="jar://$MODULE_DIR$/../lib/gradle-model-core-3.0.jar!/" />
           <root url="jar://$MODULE_DIR$/../lib/gradle-model-groovy-3.0.jar!/" />
           <root url="jar://$MODULE_DIR$/../lib/gradle-messaging-3.0.jar!/" />
@@ -26,6 +27,7 @@
         <JAVADOC />
         <SOURCES>
           <root url="jar://$MODULE_DIR$/../lib/gradle-3.0-src.zip!/gradle-3.0/subprojects/core/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-3.0-src.zip!/gradle-3.0/subprojects/dependency-management/src/main/java" />
           <root url="jar://$MODULE_DIR$/../lib/gradle-3.0-src.zip!/gradle-3.0/subprojects/messaging/src/main/java" />
           <root url="jar://$MODULE_DIR$/../lib/gradle-3.0-src.zip!/gradle-3.0/subprojects/wrapper/src/main/java" />
           <root url="jar://$MODULE_DIR$/../lib/gradle-3.0-src.zip!/gradle-3.0/subprojects/base-services/src/main/java" />
