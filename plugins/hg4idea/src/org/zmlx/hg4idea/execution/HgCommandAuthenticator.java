@@ -31,9 +31,9 @@ import org.zmlx.hg4idea.HgVcsMessages;
 class HgCommandAuthenticator {
   private GetPasswordRunnable myGetPassword;
   private final Project myProject;
-  private boolean myForceAuthorization;
+  private final boolean myForceAuthorization;
   //todo replace silent mode and/or force authorization
-  private boolean mySilentMode;
+  private final boolean mySilentMode;
 
   public HgCommandAuthenticator(Project project, boolean forceAuthorization, boolean silent) {
     myProject = project;
@@ -53,7 +53,7 @@ class HgCommandAuthenticator {
     }
   }
 
-  public boolean promptForAuthentication(Project project, String proposedLogin, String uri, String path, @Nullable ModalityState state) {
+  public boolean promptForAuthentication(Project project, @NotNull String proposedLogin, @NotNull String uri, @NotNull String path, @Nullable ModalityState state) {
     GetPasswordRunnable runnable = new GetPasswordRunnable(project, proposedLogin, uri, path, myForceAuthorization, mySilentMode);
     ApplicationManager.getApplication().invokeAndWait(runnable, state == null ? ModalityState.defaultModalityState() : state);
     myGetPassword = runnable;
@@ -71,23 +71,23 @@ class HgCommandAuthenticator {
   private static class GetPasswordRunnable implements Runnable {
     private String myUserName;
     private String myPassword;
-    private Project myProject;
-    private final String myProposedLogin;
+    private final Project myProject;
+    @NotNull private final String myProposedLogin;
     private boolean ok = false;
-    @Nullable private String myURL;
+    @NotNull private final String myURL;
     private boolean myRememberPassword;
-    private boolean myForceAuthorization;
+    private final boolean myForceAuthorization;
     private final boolean mySilent;
 
     public GetPasswordRunnable(Project project,
-                               String proposedLogin,
-                               String uri,
-                               String path,
+                               @NotNull String proposedLogin,
+                               @NotNull String uri,
+                               @NotNull String path,
                                boolean forceAuthorization, boolean silent) {
-      this.myProject = project;
-      this.myProposedLogin = proposedLogin;
-      this.myURL = uri + path;
-      this.myForceAuthorization = forceAuthorization;
+      myProject = project;
+      myProposedLogin = proposedLogin;
+      myURL = uri + path;
+      myForceAuthorization = forceAuthorization;
       mySilent = silent;
     }
 
@@ -112,7 +112,7 @@ class HgCommandAuthenticator {
       }
 
       String password = null;
-      if (!StringUtil.isEmptyOrSpaces(login) && myURL != null) {
+      if (!StringUtil.isEmptyOrSpaces(login)) {
         // if we've logged in with this login, search for password
         password = PasswordSafe.getInstance().getPassword(HgCommandAuthenticator.class, keyForUrlAndLogin(myURL, login));
       }
@@ -154,7 +154,7 @@ class HgCommandAuthenticator {
       return ok;
     }
 
-    @Nullable
+    @NotNull
     public String getURL() {
       return myURL;
     }

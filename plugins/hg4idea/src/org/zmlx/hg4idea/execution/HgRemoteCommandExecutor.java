@@ -29,15 +29,11 @@ import java.util.List;
 
 public class HgRemoteCommandExecutor extends HgCommandExecutor {
 
-  @Nullable private ModalityState myState;
+  @Nullable private final ModalityState myState;
   final boolean myIgnoreAuthorizationRequest;
 
   public HgRemoteCommandExecutor(@NotNull Project project, @Nullable String destination) {
     this(project, destination, null, false);
-  }
-
-  public HgRemoteCommandExecutor(@NotNull Project project, @Nullable String destination, boolean ignoreAuthorizationRequest) {
-    this(project, destination, null, ignoreAuthorizationRequest);
   }
 
   public HgRemoteCommandExecutor(@NotNull Project project,
@@ -114,9 +110,9 @@ public class HgRemoteCommandExecutor extends HgCommandExecutor {
   private static class PassReceiver extends SocketServer.Protocol {
     private final Project myProject;
     private HgCommandAuthenticator myAuthenticator;
-    private boolean myForceAuthorization;
-    private boolean mySilentMode;
-    @Nullable private ModalityState myState;
+    private final boolean myForceAuthorization;
+    private final boolean mySilentMode;
+    @Nullable private final ModalityState myState;
 
     private PassReceiver(Project project, boolean forceAuthorization, boolean silent, @Nullable ModalityState state) {
       myProject = project;
