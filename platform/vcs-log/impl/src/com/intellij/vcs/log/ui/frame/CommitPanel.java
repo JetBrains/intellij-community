@@ -210,7 +210,8 @@ class CommitPanel extends JBPanel {
         myMainText = null;
       }
       else {
-        String header = getHtmlWithFonts(commit.getId().toShortString() + " " + getAuthorText(commit) +
+        String hash = commit.getId().toShortString();
+        String header = getHtmlWithFonts(hash + " " + getAuthorText(commit, hash.length() + 1) +
                                          (myMultiRoot ? " [" + commit.getRoot().getName() + "]" : ""));
         String body = getMessageText(commit);
         myMainText = header + "<br/>" + body;
@@ -366,7 +367,7 @@ class CommitPanel extends JBPanel {
     }
 
     @NotNull
-    private static String getAuthorText(@NotNull VcsFullCommitDetails commit) {
+    private static String getAuthorText(@NotNull VcsFullCommitDetails commit, int offset) {
       long authorTime = commit.getAuthorTime();
       long commitTime = commit.getCommitTime();
 
@@ -379,19 +380,25 @@ class CommitPanel extends JBPanel {
         else {
           commitTimeText = "";
         }
-        authorText += " (committed by " + getUserNameText(commit.getCommitter()) + commitTimeText + ")";
+        authorText += getCommitterText("committed by " + getUserNameText(commit.getCommitter()) + commitTimeText, offset);
       }
       else if (authorTime != commitTime) {
-        authorText += " (committed " + formatDateTime(commitTime) + ")";
+        authorText += getCommitterText("committed " + formatDateTime(commitTime), offset);
       }
       return authorText;
+    }
+
+    @NotNull
+    private static String getCommitterText(String committerText, int offset) {
+      String alignment = "<br/>" + StringUtil.repeat("&nbsp;", offset);
+      return alignment + committerText;
     }
 
     @NotNull
     private static String getUserNameText(@NotNull VcsUser user) {
       String username = VcsUserUtil.getShortPresentation(user);
       if (user.getEmail().isEmpty()) return username;
-      return "<a href='mailto:" + user.getEmail() + "'>" + username + "</a>";
+      return username + " <a href='mailto:" + user.getEmail() + "'>&lt;" + user.getEmail() + "&gt;</a>";
     }
 
     @Override
