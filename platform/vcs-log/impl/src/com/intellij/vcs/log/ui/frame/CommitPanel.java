@@ -385,7 +385,7 @@ class CommitPanel extends JBPanel {
       long authorTime = commit.getAuthorTime();
       long commitTime = commit.getCommitTime();
 
-      String authorText = getUserNameText(commit.getAuthor()) + formatDateTime(authorTime);
+      String authorText = getAuthorName(commit.getAuthor()) + formatDateTime(authorTime);
       if (!VcsUserUtil.isSamePerson(commit.getAuthor(), commit.getCommitter())) {
         String commitTimeText;
         if (authorTime != commitTime) {
@@ -394,25 +394,41 @@ class CommitPanel extends JBPanel {
         else {
           commitTimeText = "";
         }
-        authorText += getCommitterText("committed by " + getUserNameText(commit.getCommitter()) + commitTimeText, offset);
+        authorText += getCommitterText(commit.getCommitter(), commitTimeText, offset);
       }
       else if (authorTime != commitTime) {
-        authorText += getCommitterText("committed " + formatDateTime(commitTime), offset);
+        authorText += getCommitterText(null, formatDateTime(commitTime), offset);
       }
       return authorText;
     }
 
     @NotNull
-    private static String getCommitterText(String committerText, int offset) {
+    private static String getCommitterText(@Nullable VcsUser committer, @NotNull String commitTimeText, int offset) {
       String alignment = "<br/>" + StringUtil.repeat("&nbsp;", offset);
-      return alignment + committerText;
+      String gray = ColorUtil.toHex(UIManager.getColor("Button.disabledText"));
+
+      String graySpan = "<span style='color:#" + gray + "'>";
+
+      String text = alignment + graySpan + "committed";
+      if (committer != null) {
+        text += " by " + VcsUserUtil.getShortPresentation(committer);
+        if (!committer.getEmail().isEmpty()) {
+          text += "</span>" + getEmailText(committer) + graySpan;
+        }
+      }
+      text += commitTimeText + "</span>";
+      return text;
     }
 
     @NotNull
-    private static String getUserNameText(@NotNull VcsUser user) {
+    private static String getAuthorName(@NotNull VcsUser user) {
       String username = VcsUserUtil.getShortPresentation(user);
-      if (user.getEmail().isEmpty()) return username;
-      return username + " <a href='mailto:" + user.getEmail() + "'>&lt;" + user.getEmail() + "&gt;</a>";
+      return user.getEmail().isEmpty() ? username : username + getEmailText(user);
+    }
+
+    @NotNull
+    private static String getEmailText(@NotNull VcsUser user) {
+      return " <a href='mailto:" + user.getEmail() + "'>&lt;" + user.getEmail() + "&gt;</a>";
     }
 
     @Override
