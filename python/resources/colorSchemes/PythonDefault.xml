@@ -3,12 +3,6 @@
   <option name="MAKO.SUBSTITUTION">
     <value>
       <option name="BACKGROUND" value="E6E6FA" />
-      <option name="EFFECT_TYPE" value="-1" />
-    </value>
-  </option>
-  <option name="MAKO.TAG">
-    <value>
-      <option name="EFFECT_TYPE" value="-1" />
     </value>
   </option>
   <option name="PY.BUILTIN_NAME">
