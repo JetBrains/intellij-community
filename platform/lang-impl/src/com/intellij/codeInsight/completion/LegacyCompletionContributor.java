@@ -73,7 +73,8 @@ public class LegacyCompletionContributor extends CompletionContributor {
         if (resultSet.getPrefixMatcher().prefixMatches(item)) {
           if (!item.isValid()) {
             LOG.error(completionData + " has returned an invalid lookup element " + item + " of " + item.getClass() +
-                      " in " + parameters.getOriginalFile() + " of " + parameters.getOriginalFile().getClass());
+                      " in " + parameters.getOriginalFile() + " of " + parameters.getOriginalFile().getClass() +
+                      "; reference=" + reference + " of " + reference.getClass());
           }
           hasVariants.set(true);
           resultSet.addElement(item);
