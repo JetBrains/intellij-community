@@ -438,4 +438,14 @@ public class StepicConnectorGet {
     }
     return Collections.emptyList();
   }
+
+  public static StepicWrappers.SubmissionContainer getSubmissions(List<NameValuePair> nvps){
+    try {
+      return getFromStepic(EduStepicNames.SUBMISSIONS, StepicWrappers.SubmissionContainer.class, StepicConnectorLogin.getHttpClient(), nvps);
+    }
+    catch (IOException e) {
+      LOG.warn("Can't get submissions\n"+e.getMessage());
+      return null;
+    }
+  }
 }

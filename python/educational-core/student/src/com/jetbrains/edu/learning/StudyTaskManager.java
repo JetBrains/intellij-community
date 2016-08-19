@@ -48,7 +48,7 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   private StudyToolWindow.StudyToolWindowMode myToolWindowMode = StudyToolWindow.StudyToolWindowMode.TEXT;
   private boolean myTurnEditingMode = false;
 
-  public String defaultLang = "java";
+  private String defaultLang = "python3";
 
   @Transient private final Project myProject;
 
