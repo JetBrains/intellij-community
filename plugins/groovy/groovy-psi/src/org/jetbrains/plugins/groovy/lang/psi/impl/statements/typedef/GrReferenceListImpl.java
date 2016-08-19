@@ -85,11 +85,6 @@ public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceL
     return null;
   }
 
-  @Override
-  public PsiElement getParent() {
-    return getParentByStub();
-  }
-
   public GrReferenceListImpl(final GrReferenceListStub stub, IStubElementType elementType) {
     super(stub, elementType);
   }

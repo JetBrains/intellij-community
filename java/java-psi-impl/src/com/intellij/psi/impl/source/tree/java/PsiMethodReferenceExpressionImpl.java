@@ -60,12 +60,6 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
     super(node);
   }
 
-
-  @Override
-  public PsiElement getParent() {
-    return getParentByTree();
-  }
-
   @Override
   public PsiTypeElement getQualifierType() {
     final PsiElement qualifier = getQualifier();

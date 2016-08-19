@@ -54,11 +54,6 @@ public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptySt
   }
 
   @Override
-  public PsiElement getParent() {
-    return getParentByStub();
-  }
-
-  @Override
   public abstract void accept(GroovyElementVisitor visitor);
 
   public String toString() {

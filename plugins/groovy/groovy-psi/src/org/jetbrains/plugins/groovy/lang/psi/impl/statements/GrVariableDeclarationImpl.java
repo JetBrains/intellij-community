@@ -67,11 +67,6 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> impl
   }
 
   @Override
-  public PsiElement getParent() {
-    return getDefinitionParent();
-  }
-
-  @Override
   public <T extends GrStatement> T replaceWithStatement(T statement) {
     return GroovyPsiElementImpl.replaceWithStatement(this, statement);
   }

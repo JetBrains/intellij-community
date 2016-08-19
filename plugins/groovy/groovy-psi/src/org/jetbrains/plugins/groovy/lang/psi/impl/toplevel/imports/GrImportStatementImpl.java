@@ -63,12 +63,6 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
     super(stub, nodeType);
   }
 
-
-  @Override
-  public PsiElement getParent() {
-    return getParentByStub();
-  }
-
   @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitImportStatement(this);
