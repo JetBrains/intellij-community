@@ -31,6 +31,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -80,7 +81,7 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
   public void testLocalHistoryActionDisabledWithoutProject() throws IOException {
     LocalHistoryAction a = new LocalHistoryAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
       }
     };
     assertStatus(a, myRoot, myProject, true);
