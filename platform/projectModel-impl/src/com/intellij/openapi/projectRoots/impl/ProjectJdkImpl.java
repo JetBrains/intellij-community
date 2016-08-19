@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.ex.ProjectRoot;
-import com.intellij.openapi.projectRoots.ex.ProjectRootContainer;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.roots.impl.RootProviderBaseImpl;
@@ -42,7 +41,7 @@ import java.util.List;
 
 public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModificator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectJdkImpl");
-  private final ProjectRootContainerImpl myRootContainer;
+  final ProjectRootContainerImpl myRootContainer;
   private String myName;
   private String myVersionString;
   private boolean myVersionDefined;
@@ -248,26 +247,22 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
     final String name = getName();
     dest.setName(name);
     dest.setHomePath(getHomePath());
-    if (myVersionDefined) {
-      dest.setVersionString(getVersionString());
-    }
-    else {
-      dest.resetVersionString();
-    }
+    dest.myVersionDefined = myVersionDefined;
+    dest.myVersionString = myVersionString;
     dest.setSdkAdditionalData(getSdkAdditionalData());
+    copyRoots(myRootContainer, dest);
+  }
+
+  static void copyRoots(@NotNull ProjectRootContainerImpl rootContainer, @NotNull ProjectJdkImpl dest) {
     dest.myRootContainer.startChange();
     dest.myRootContainer.removeAllRoots();
     for (OrderRootType rootType : OrderRootType.getAllTypes()) {
-      copyRoots(myRootContainer, dest.myRootContainer, rootType);
+      final ProjectRoot[] newRoots = rootContainer.getRoots(rootType);
+      for (ProjectRoot newRoot : newRoots) {
+        dest.myRootContainer.addRoot(newRoot, rootType);
+      }
     }
     dest.myRootContainer.finishChange();
-  }
-
-  private static void copyRoots(ProjectRootContainer srcContainer, ProjectRootContainer destContainer, OrderRootType type) {
-    final ProjectRoot[] newRoots = srcContainer.getRoots(type);
-    for (ProjectRoot newRoot : newRoots) {
-      destContainer.addRoot(newRoot, type);
-    }
   }
 
   private class MyRootProvider extends RootProviderBaseImpl implements ProjectRootListener {
