@@ -42,9 +42,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.compiled.ClassFileDecompilers;
+import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.impl.PsiFileEx;
+import com.intellij.psi.impl.file.PsiFileImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
@@ -151,6 +153,15 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   @Override
   public boolean isValid() {
     return !myInvalidated && (myIsForDecompiling || getVirtualFile().isValid());
+  }
+
+  @Override
+  public void checkDelete() throws IncorrectOperationException {}
+
+  @Override
+  public void delete() throws IncorrectOperationException {
+    checkDelete();
+    PsiFileImplUtil.doDelete(this);
   }
 
   boolean isForDecompiling() {
