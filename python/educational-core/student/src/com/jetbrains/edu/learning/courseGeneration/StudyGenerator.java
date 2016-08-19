@@ -33,13 +33,11 @@ public class StudyGenerator {
    */
   public static void createTaskFile(@NotNull final VirtualFile taskDir, @NotNull final File resourceRoot,
                                     @NotNull final String name) throws IOException {
-    String systemIndependentName = FileUtil.toSystemIndependentName(name);
-    final int index = systemIndependentName.lastIndexOf("/");
-    if (index > 0) {
-      systemIndependentName = systemIndependentName.substring(index + 1);
-    }
-    File resourceFile = new File(resourceRoot, name);
-    File fileInProject = new File(taskDir.getPath(), systemIndependentName);
+    final String pathToResourceFile = FileUtil.join(resourceRoot.getPath(), name);
+    File resourceFile = new File(pathToResourceFile);
+
+    final String pathToFileInProject = FileUtil.join(taskDir.getPath(), name);
+    File fileInProject = new File(pathToFileInProject);
     FileUtil.copy(resourceFile, fileInProject);
   }
 
@@ -68,6 +66,10 @@ public class StudyGenerator {
         if (!task.isTaskFile(fileName)) {
           File resourceFile = new File(newResourceRoot, fileName);
           File fileInProject = new File(taskDir.getCanonicalPath(), fileName);
+          if (file.isDirectory()) {
+            FileUtil.copyDir(resourceFile, fileInProject);
+            continue;
+          }
           FileUtil.copy(resourceFile, fileInProject);
           if (!StudyUtils.isTestsFile(project, fileName) && !StudyUtils.isTaskDescriptionFile(fileName)) {
             StudyTaskManager.getInstance(project).addInvisibleFiles(FileUtil.toSystemIndependentName(fileInProject.getPath()));

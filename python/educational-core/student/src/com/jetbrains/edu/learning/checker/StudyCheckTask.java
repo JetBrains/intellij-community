@@ -108,8 +108,9 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
     final CapturingProcessHandler handler = new CapturingProcessHandler(myTestProcess, null, myCommandLine);
     final ProcessOutput output = handler.runProcessWithProgressIndicator(indicator);
 
-    ApplicationManager.getApplication().invokeLater(() ->
-                                                      Messages.showErrorDialog(output.getStdout(), "StudyCheckTask#GetTestOutput()"));
+    // Uncomment for debugging purposes
+    //ApplicationManager.getApplication().invokeLater(() ->
+    //                                                  Messages.showErrorDialog(output.getStdout(), "StudyCheckTask#GetTestOutput()"));
 
     if (indicator.isCanceled()) {
       ApplicationManager.getApplication().invokeLater(

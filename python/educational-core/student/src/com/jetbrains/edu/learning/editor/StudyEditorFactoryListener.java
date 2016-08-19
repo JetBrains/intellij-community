@@ -1,6 +1,7 @@
 package com.jetbrains.edu.learning.editor;
 
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -68,11 +69,13 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
       final TaskFile taskFile = StudyUtils.getTaskFile(project, openedFile);
       if (taskFile != null) {
         WolfTheProblemSolver.getInstance(project).clearProblems(openedFile);
-        final ToolWindow studyToolWindow = ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
-        if (studyToolWindow != null) {
-          StudyUtils.updateToolWindows(project);
-          studyToolWindow.show(null);
-        }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          final ToolWindow studyToolWindow = ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
+          if (studyToolWindow != null) {
+            StudyUtils.updateToolWindows(project);
+            studyToolWindow.show(null);
+          }
+        });
         Course course = StudyTaskManager.getInstance(project).getCourse();
         if (course == null) {
           return;
