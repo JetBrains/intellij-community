@@ -82,12 +82,15 @@ public abstract class NumericContainerViewTable implements TableChunkDatasource 
       myComponent.getSliceTextField().setText(chunk.getSlicePresentation());
       myComponent.getFormatTextField().setText(chunk.getFormat());
       myDialog.setTitle(getTitlePresentation(chunk.getSlicePresentation()));
+      boolean shouldSetColored = myTableCellRenderer == null || myTableCellRenderer.getColored();
       myTableCellRenderer = createCellRenderer(Double.MIN_VALUE, Double.MIN_VALUE, chunk);
       if (!isNumeric()) {
         disableColor();
       }
       else {
         myComponent.getColoredCheckbox().setEnabled(true);
+        myComponent.getColoredCheckbox().setSelected(shouldSetColored);
+        myTableCellRenderer.setColored(shouldSetColored);
       }
 
       if (!inPlace) {
