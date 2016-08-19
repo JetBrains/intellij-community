@@ -41,11 +41,14 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   public int VERSION = 3;
 
   public Map<Task, List<UserTest>> myUserTests = new HashMap<>();
+  public Map<Task, String> currentLanguage = new HashMap<>();
   public List<String> myInvisibleFiles = new ArrayList<>();
 
   public boolean myShouldUseJavaFx = StudyUtils.hasJavaFx();
   private StudyToolWindow.StudyToolWindowMode myToolWindowMode = StudyToolWindow.StudyToolWindowMode.TEXT;
   private boolean myTurnEditingMode = false;
+
+  public String defaultLang = "java";
 
   @Transient private final Project myProject;
 
@@ -201,5 +204,21 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
 
   public void setUser(@NotNull final StepicUser user) {
     myUser = user;
+  }
+
+  public Map<Task, String> getCurrentLanguage() {
+    return currentLanguage;
+  }
+
+  public void setCurrentLanguage(Map<Task, String> currentLanguage) {
+    this.currentLanguage = currentLanguage;
+  }
+
+  public String getLang(Task task){
+    return currentLanguage.getOrDefault(task, defaultLang);
+  }
+
+  public void setLang(Task task, String lang){
+    currentLanguage.put(task, lang);
   }
 }

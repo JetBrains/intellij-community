@@ -363,12 +363,22 @@ public class StepicConnectorGet {
       task.setText(task.getText() + builder);
     }
 
-    final TaskFile taskFile = new TaskFile();
-    taskFile.name = "Main.java";
-    //final String templateForTask = getCodeTemplateForTask();
-    final String templateForTask = step.options.codeTemplates.getTemplateForLanguage("java");
-    taskFile.text = templateForTask == null ? "# write your answer here \n" : templateForTask;
-    task.taskFiles.put(taskFile.name, taskFile);
+    String templateForTask;
+    templateForTask = step.options.codeTemplates.getTemplateForLanguage("java");
+    if (templateForTask != null) {
+      final TaskFile taskFile = new TaskFile();
+      taskFile.name = "Main.java";
+      taskFile.text = templateForTask;
+      task.taskFiles.put(taskFile.name, taskFile);
+    }
+
+    templateForTask = step.options.codeTemplates.getTemplateForLanguage("python3");
+    if (templateForTask != null) {
+      final TaskFile taskFile = new TaskFile();
+      taskFile.name = "main.py";
+      taskFile.text = templateForTask;
+      task.taskFiles.put(taskFile.name, taskFile);
+    }
   }
 
   public static StepicWrappers.StepContainer getSteps(List<Integer> steps) throws IOException {
