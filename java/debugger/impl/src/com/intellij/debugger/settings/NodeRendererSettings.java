@@ -263,10 +263,6 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     return allRenderers;
   }
 
-  public boolean isBase(final Renderer renderer) {
-    return renderer == myPrimitiveRenderer || renderer == myArrayRenderer || renderer == myClassRenderer;
-  }
-
   public Renderer readRenderer(Element root) throws InvalidDataException {
     if (root == null) {
       return null;

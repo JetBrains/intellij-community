@@ -243,7 +243,7 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
       List<FilteringNode> nodes = myNodesCache.get(this);
       if (nodes == null) {
         return myDelegate instanceof SimpleNode ? ContainerUtil.map(((SimpleNode)myDelegate).getChildren(),
-                                                                    node -> new FilteringNode(FilteringNode.this, node), NO_CHILDREN) : NO_CHILDREN;
+                                                                    node -> new FilteringNode(this, node), NO_CHILDREN) : NO_CHILDREN;
       }
 
       ArrayList<FilteringNode> result = new ArrayList<>();

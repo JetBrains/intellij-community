@@ -25,7 +25,7 @@ import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.openapi.roots.JavaProjectModelModifier;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
@@ -85,9 +85,10 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
                                       @Nullable String minVersion,
                                       @Nullable String maxVersion,
                                       @NotNull final DependencyScope scope) {
-    final List<Pair<MavenDomProjectModel, MavenId>> models = new ArrayList<>(fromModules.size());
+    final List<Trinity<MavenDomProjectModel, MavenId, String>> models = new ArrayList<>(fromModules.size());
     List<XmlFile> files = new ArrayList<>(fromModules.size());
     List<MavenProject> projectToUpdate = new ArrayList<>(fromModules.size());
+    final String mavenScope = getMavenScope(scope);
     for (Module from : fromModules) {
       if (!myProjectsManager.isMavenizedModule(from)) return null;
       MavenProject fromProject = myProjectsManager.findProject(from);
@@ -96,16 +97,24 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
       final MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(myProject, fromProject.getFile());
       if (model == null) return null;
 
+      String scopeToSet = null;
       String version = null;
       if (mavenId.getGroupId() != null && mavenId.getArtifactId() != null) {
         MavenDomDependency managedDependency =
           MavenDependencyCompletionUtil.findManagedDependency(model, myProject, mavenId.getGroupId(), mavenId.getArtifactId());
+        if (managedDependency != null) {
+          String managedScope = StringUtil.nullize(managedDependency.getScope().getStringValue(), true);
+          scopeToSet = (managedScope == null && MavenConstants.SCOPE_COMPILE.equals(mavenScope)) ||
+                       StringUtil.equals(managedScope, mavenScope)
+                       ? null : mavenScope;
+        }
+
         if (managedDependency == null || StringUtil.isEmpty(managedDependency.getVersion().getStringValue())) {
           version = selectVersion(mavenId, minVersion, maxVersion);
         }
       }
 
-      models.add(Pair.create(model, new MavenId(mavenId.getGroupId(), mavenId.getArtifactId(), version)));
+      models.add(Trinity.create(model, new MavenId(mavenId.getGroupId(), mavenId.getArtifactId(), version), scopeToSet));
       files.add(DomUtil.getFile(model));
       projectToUpdate.add(fromProject);
     }
@@ -113,10 +122,10 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
     new WriteCommandAction(myProject, "Add Maven Dependency", PsiUtilCore.toPsiFileArray(files)) {
       @Override
       protected void run(@NotNull Result result) throws Throwable {
-        for (Pair<MavenDomProjectModel, MavenId> pair : models) {
-          final MavenDomProjectModel model = pair.first;
-          MavenDomDependency dependency = MavenDomUtil.createDomDependency(model, null, pair.second);
-          String mavenScope = getMavenScope(scope);
+        for (Trinity<MavenDomProjectModel, MavenId, String> trinity : models) {
+          final MavenDomProjectModel model = trinity.first;
+          MavenDomDependency dependency = MavenDomUtil.createDomDependency(model, null, trinity.second);
+          String mavenScope = trinity.third;
           if (mavenScope != null) {
             dependency.getScope().setStringValue(mavenScope);
           }
@@ -222,10 +231,12 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
   }
 
   @Nullable
-  private static String getMavenScope(DependencyScope scope) {
+  private static String getMavenScope(@NotNull DependencyScope scope) {
     switch (scope) {
       case RUNTIME:
         return MavenConstants.SCOPE_RUNTIME;
+      case COMPILE:
+        return MavenConstants.SCOPE_COMPILE;
       case TEST:
         return MavenConstants.SCOPE_TEST;
       case PROVIDED:

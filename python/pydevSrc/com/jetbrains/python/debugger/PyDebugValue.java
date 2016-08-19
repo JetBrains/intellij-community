@@ -126,6 +126,10 @@ public class PyDebugValue extends XNamedValue {
     }
   }
 
+  public String getFullName() {
+    return wrapWithPrefix(getName());
+  }
+
   private static String removeId(@NotNull String name) {
     if (name.indexOf('(') != -1) {
       name = name.substring(0, name.indexOf('(')).trim();
@@ -160,7 +164,17 @@ public class PyDebugValue extends XNamedValue {
     }
   }
 
-  private String getFullName() {
+  private String wrapWithPrefix(String name) {
+    if (isReturnedVal()) {
+      // return values are saved in dictionary on Python side, so the variable's name should be transformed
+      return RETURN_VALUES_PREFIX + "[\"" + name + "\"]";
+    }
+    else {
+      return name;
+    }
+  }
+
+  private String getFullTreeName() {
     String result = "";
     String curNodeName = myName;
     PyDebugValue parent = myParent;
@@ -169,7 +183,7 @@ public class PyDebugValue extends XNamedValue {
       curNodeName = parent.getName();
       parent = parent.getParent();
     }
-    return curNodeName.concat(result);
+    return wrapWithPrefix(curNodeName.concat(result));
   }
 
   @Override
@@ -177,7 +191,7 @@ public class PyDebugValue extends XNamedValue {
     String value = PyTypeHandler.format(this);
 
     if (value.length() >= MAX_VALUE) {
-      node.setFullValueEvaluator(new PyFullValueEvaluator(myFrameAccessor, getFullName()));
+      node.setFullValueEvaluator(new PyFullValueEvaluator(myFrameAccessor, getFullTreeName()));
       value = value.substring(0, MAX_VALUE);
     }
 
@@ -191,7 +205,7 @@ public class PyDebugValue extends XNamedValue {
       if (myFrameAccessor == null) return;
 
       try {
-        final XValueChildrenList values = myFrameAccessor.loadVariable(PyDebugValue.this);
+        final XValueChildrenList values = myFrameAccessor.loadVariable(this);
         if (!node.isObsolete()) {
           node.addChildren(values, true);
         }
@@ -223,8 +237,10 @@ public class PyDebugValue extends XNamedValue {
   }
   
   public PyDebugValue setName(String newName) {
-    return new PyDebugValue(newName, myType, myTypeQualifier, myValue, myContainer, myIsReturnedVal, myErrorOnEval, myParent,
-                            myFrameAccessor);
+    PyDebugValue value = new PyDebugValue(newName, myType, myTypeQualifier, myValue, myContainer, myIsReturnedVal, myErrorOnEval, myParent,
+                       myFrameAccessor);
+    value.setTempName(myTempName);
+    return value;
   }
 
   @Nullable

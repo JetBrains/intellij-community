@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -288,7 +289,7 @@ public class GeneralCommandLineTest {
     assertNotNull(url);
 
     GeneralCommandLine commandLine = createCommandLine();
-    commandLine.setExePath(System.getProperty("java.home") + (SystemInfo.isWindows ? "\\bin\\java.exe" : "/bin/java"));
+    commandLine.setExePath(PlatformTestUtil.getJavaExe());
 
     String encoding = System.getProperty("file.encoding");
     if (encoding != null) {

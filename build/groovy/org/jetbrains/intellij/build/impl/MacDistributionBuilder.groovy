@@ -60,14 +60,26 @@ class MacDistributionBuilder {
     customIdeaProperties.putAll(customizer.customIdeaProperties(buildContext.applicationInfo))
     layoutMacApp(ideaPropertiesFile, customIdeaProperties, docTypes)
     customizer.copyAdditionalFiles(buildContext, macDistPath)
+
+    if (!customizer.binariesToSign.empty) {
+      if (buildContext.proprietaryBuildTools.macHostProperties == null) {
+        buildContext.messages.info("A Mac OS build agent isn't configured, binary files won't be signed")
+      }
+      else {
+        buildContext.executeStep("Sign binaries for Mac OS distribution", BuildOptions.MAC_SIGN_STEP) {
+          MacDmgBuilder.signBinaryFiles(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macDistPath)
+        }
+      }
+    }
+
     def macZipPath = buildMacZip()
-    if (buildContext.macHostProperties == null) {
+    if (buildContext.proprietaryBuildTools.macHostProperties == null) {
       buildContext.messages.info("A Mac OS build agent isn't configured, dmg artifact won't be produced")
       buildContext.notifyArtifactBuilt(macZipPath)
     }
     else {
       buildContext.executeStep("Build dmg artifact for Mac OS X", BuildOptions.MAC_DMG_STEP) {
-        MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.macHostProperties, macZipPath)
+        MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath)
         buildContext.ant.delete(file: macZipPath)
       }
     }
@@ -201,9 +213,11 @@ class MacDistributionBuilder {
       replacefilter(token: "@@product_full@@", value: fullName)
       replacefilter(token: "@@script_name@@", value: executable)
     }
-    String inspectScript = buildContext.productProperties.inspectScriptName
+    String inspectScript = buildContext.productProperties.inspectCommandName
     if (inspectScript != "inspect") {
-      buildContext.ant.move(file: "$target/bin/inspect.sh", tofile: "$target/bin/${inspectScript}.sh")
+      String targetPath = "$target/bin/${inspectScript}.sh"
+      buildContext.ant.move(file: "$target/bin/inspect.sh", tofile: targetPath)
+      buildContext.patchInspectScript(targetPath)
     }
 
     buildContext.ant.fixcrlf(srcdir: "$target/bin", includes: "*.sh", eol: "unix")

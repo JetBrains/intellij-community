@@ -48,6 +48,12 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
                                 @NotNull InspectionTreeNode parentNode,
                                 final boolean showStructure,
                                 final boolean groupBySeverity);
+
+  @NotNull
+  default RefElementNode createRefNode(@Nullable RefEntity entity) {
+    return new RefElementNode(entity, this);
+  }
+
   void updateContent();
 
   boolean hasReportedProblems();

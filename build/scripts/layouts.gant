@@ -15,10 +15,7 @@
  */
 
 
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.BuildTasks
-import org.jetbrains.intellij.build.IdeaCommunityProperties
+import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.util.JpsPathUtil
 
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
@@ -30,7 +27,8 @@ target('default': "Developers update") {
   String projectHome = isDefined("devIdeaHome") ? devIdeaHome : home
   def options = new BuildOptions()
   options.useCompiledClassesFromProjectOutput = true
-  def context = BuildContext.createContext(ant, projectBuilder, project, global, home, projectHome, "$home/out/release-ce", new IdeaCommunityProperties(home), options)
+  def context = BuildContext.createContext(ant, projectBuilder, project, global, home, projectHome, "$home/out/release-ce", new IdeaCommunityProperties(home),
+                                           ProprietaryBuildTools.DUMMY, options)
   context.paths.distAll = deploy
   layoutFull(context)
 }
@@ -338,6 +336,9 @@ public def layoutCommunityPlugins(String home, BuildContext buildContext = null)
       jar("maven-jps-plugin.jar") {
         module("maven-jps-plugin")
       }
+      jar("aether-dependency-resolver.jar") {
+        module("aether-dependency-resolver")
+      }
       jar("maven-server-api.jar") {
         module("maven-server-api")
       }
@@ -350,8 +351,8 @@ public def layoutCommunityPlugins(String home, BuildContext buildContext = null)
       jar("maven30-server-impl.jar") {
         module("maven30-server-impl")
       }
-      jar("maven32-server-impl.jar") {
-        module("maven32-server-impl")
+      jar("maven3-server-impl.jar") {
+        module("maven3-server-impl")
       }
 
       jar("artifact-resolver-m2.jar") {
@@ -373,7 +374,7 @@ public def layoutCommunityPlugins(String home, BuildContext buildContext = null)
         fileset(dir: "$home/plugins/maven/maven3-server-common/lib") {include(name: "*.jar")}
       }
       dir("maven3") {
-        fileset(dir: "$home/plugins/maven/maven30-server-impl/lib/maven3")
+        fileset(dir: "$home/plugins/maven/maven3-server-impl/lib/maven3")
       }
 
       dir("maven2-server-lib") {

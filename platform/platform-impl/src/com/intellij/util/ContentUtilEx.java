@@ -195,4 +195,13 @@ public class ContentUtilEx extends ContentsUtil {
     }
     return -1;
   }
+
+  @Nullable
+  public static String getTabNameWithoutPrefix(@NotNull TabbedContent content, @NotNull String fullTabName) {
+    int fullPrefixLength = getFullPrefix(content.getTitlePrefix()).length();
+    if (fullTabName.startsWith(content.getTitlePrefix())) {
+      return fullTabName.substring(fullPrefixLength);
+    }
+    return null;
+  }
 }

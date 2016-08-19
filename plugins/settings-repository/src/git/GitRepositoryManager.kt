@@ -216,13 +216,11 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
       // KT-8632
       override fun merge(): UpdateResult? = lock.write {
         val committed = commit(pullTask.indicator)
-        if (refToMerge == null && !committed && getAheadCommitsCount() == 0) {
-          definitelySkipPush = true
+        if (refToMerge == null) {
+          definitelySkipPush = !committed && getAheadCommitsCount() == 0
           return null
         }
-        else {
-          return pullTask.pull(prefetchedRefToMerge = refToMerge)
-        }
+        return pullTask.pull(prefetchedRefToMerge = refToMerge)
       }
     }
   }

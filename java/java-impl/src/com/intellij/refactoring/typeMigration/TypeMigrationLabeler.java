@@ -339,7 +339,7 @@ public class TypeMigrationLabeler {
         if (usageInfo instanceof OverridenUsageInfo) {
           final String migrationName = ((OverridenUsageInfo)usageInfo).getMigrateMethodName();
           if (migrationName != null) {
-            new RenameProcessor(project, element, migrationName, false, false).run();
+            ApplicationManager.getApplication().invokeLater(() -> new RenameProcessor(project, element, migrationName, false, false).run());
           }
         }
       }
@@ -735,7 +735,7 @@ public class TypeMigrationLabeler {
         if (getter.isEquivalentTo(method)) {
           final String suggestedName = GenerateMembersUtil.suggestGetterName(field.getName(), migrationType, method.getProject());
           if (!suggestedName.equals(method.getName())) {
-            if (getter.getContainingClass().findMethodsByName(suggestedName, true).length == 0) {
+            if (getter.getContainingClass().findMethodsByName(suggestedName, true).length != 0) {
               return null;
             }
             return suggestedName;

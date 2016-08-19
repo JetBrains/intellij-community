@@ -65,7 +65,8 @@ public class HgUpdateDialog {
 
   @NotNull
   public JComponent createCenterPanel() {
-    MigLayout migLayout = new MigLayout("flowy,ins 0, fill");
+    String panelConstraints = "flowy, ins 0, fill";
+    MigLayout migLayout = new MigLayout(panelConstraints);
     JPanel contentPane = new JPanel(migLayout);
 
     myPullCheckBox = new JBCheckBox("Pull", true);
@@ -98,7 +99,7 @@ public class HgUpdateDialog {
 
 
     contentPane.add(myPullCheckBox, "left");
-    JPanel strategyPanel = new JPanel(migLayout);
+    JPanel strategyPanel = new JPanel(new MigLayout(panelConstraints));
     strategyPanel.setBorder(IdeBorderFactory.createTitledBorder("Update Strategy", false));
     strategyPanel.add(myOnlyUpdateButton, "left");
     strategyPanel.add(myMergeRadioButton, "left");

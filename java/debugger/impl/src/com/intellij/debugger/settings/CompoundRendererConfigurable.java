@@ -39,7 +39,6 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.JBUI;
-import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionEditor;
 import org.jetbrains.annotations.NonNls;
@@ -210,12 +209,12 @@ class CompoundRendererConfigurable extends JPanel {
       Project project = myProject;
       if (project != null) {
         Pair<PsiClass, PsiType> pair = DebuggerUtilsImpl.getPsiClassAndType(qName, project);
-        if (pair.first != null) {
-          XSourcePositionImpl position = XSourcePositionImpl.createByElement(pair.first);
-          myLabelEditor.setSourcePosition(position);
-          myChildrenEditor.setSourcePosition(position);
-          myChildrenExpandedEditor.setSourcePosition(position);
-          myListChildrenEditor.setSourcePosition(position);
+        PsiClass context = pair.first;
+        if (context != null) {
+          myLabelEditor.setContext(context);
+          myChildrenEditor.setContext(context);
+          myChildrenExpandedEditor.setContext(context);
+          myListChildrenEditor.setContext(context);
         }
       }
     });
@@ -357,11 +356,10 @@ class CompoundRendererConfigurable extends JPanel {
 
     final ValueLabelRenderer labelRenderer = myRenderer.getLabelRenderer();
     final ChildrenRenderer childrenRenderer = myRenderer.getChildrenRenderer();
-    final NodeRendererSettings rendererSettings = NodeRendererSettings.getInstance();
 
     myShowTypeCheckBox.setSelected(myRenderer.isShowType());
 
-    if (rendererSettings.isBase(labelRenderer)) {
+    if (myRenderer.isBaseRenderer(labelRenderer)) {
       myLabelEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
       myRbDefaultLabel.setSelected(true);
     }
@@ -373,7 +371,7 @@ class CompoundRendererConfigurable extends JPanel {
     getTableModel().clear();
     myAppendDefaultChildren.setSelected(false);
 
-    if (rendererSettings.isBase(childrenRenderer)) {
+    if (myRenderer.isBaseRenderer(childrenRenderer)) {
       myRbDefaultChildrenRenderer.setSelected(true);
       myChildrenEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
       myChildrenExpandedEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));

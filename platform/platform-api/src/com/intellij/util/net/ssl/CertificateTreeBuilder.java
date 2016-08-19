@@ -58,7 +58,7 @@ public class CertificateTreeBuilder extends AbstractTreeBuilder {
     }
     // expand organization nodes at the same time
     //initRootNode();
-    queueUpdateFrom(RootDescriptor.ROOT, true).doWhenDone(() -> CertificateTreeBuilder.this.expandAll(null));
+    queueUpdateFrom(RootDescriptor.ROOT, true).doWhenDone(() -> this.expandAll(null));
   }
 
   public void addCertificate(@NotNull X509Certificate certificate) {

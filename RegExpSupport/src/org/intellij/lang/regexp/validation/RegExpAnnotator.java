@@ -290,7 +290,8 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
     final RegExpGroup group = groupRef.resolve();
     if (group == null) {
-      final Annotation a = myHolder.createErrorAnnotation(groupRef, "Unresolved named group reference");
+      final ASTNode node = groupRef.getNode().findChildByType(RegExpTT.NAME);
+      final Annotation a = myHolder.createErrorAnnotation(node, "Unresolved named group reference");
       if (a != null) {
         // IDEA-9381
         a.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);

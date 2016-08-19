@@ -532,7 +532,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     myAutoscrollAlarm.addRequest(
       () -> {
         if (myAbstractTreeBuilder == null) return;
-        if (UIUtil.isFocusAncestor(StructureViewComponent.this)) return;
+        if (UIUtil.isFocusAncestor(this)) return;
         scrollToSelectedElementInner();
       }, 1000);
   }

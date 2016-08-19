@@ -15,17 +15,15 @@
  */
 package com.intellij.ide.hierarchy.method;
 
-import com.intellij.ide.hierarchy.HierarchyProvider;
 import com.intellij.ide.hierarchy.HierarchyBrowser;
+import com.intellij.ide.hierarchy.HierarchyProvider;
 import com.intellij.ide.hierarchy.MethodHierarchyBrowserBase;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,8 +67,6 @@ public class JavaMethodHierarchyProvider implements HierarchyProvider {
     if (psiFile == null) {
       return null;
     }
-
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     final int offset = editor.getCaretModel().getOffset();
     if (offset < 1) {

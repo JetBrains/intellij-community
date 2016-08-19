@@ -84,7 +84,7 @@ public class BugzillaRepository extends BaseRepositoryImpl {
     Hashtable<String, Object> response = createIssueSearchRequest(query, offset, limit, withClosed).execute();
 
     Vector<Hashtable<String, Object>> bugs = (Vector<Hashtable<String, Object>>)response.get("bugs");
-    return ContainerUtil.map2Array(bugs, BugzillaTask.class, hashTable -> new BugzillaTask(hashTable, BugzillaRepository.this));
+    return ContainerUtil.map2Array(bugs, BugzillaTask.class, hashTable -> new BugzillaTask(hashTable, this));
   }
 
   private BugzillaXmlRpcRequest createIssueSearchRequest(String query, int offset, int limit, boolean withClosed) throws Exception {

@@ -26,7 +26,7 @@ import groovy.transform.Immutable
 @Immutable
 class LogMessage {
   enum Kind {
-    ERROR, WARNING, INFO, PROGRESS, BLOCK_STARTED, BLOCK_FINISHED
+    ERROR, WARNING, INFO, PROGRESS, BLOCK_STARTED, BLOCK_FINISHED, ARTIFACT_BUILT
   }
   final Kind kind
   final String text

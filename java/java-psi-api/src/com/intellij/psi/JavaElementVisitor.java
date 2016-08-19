@@ -391,8 +391,8 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitElement(module);
   }
 
-  public void visitModuleReference(PsiJavaModuleReferenceElement moduleRef) {
-    visitElement(moduleRef);
+  public void visitModuleReferenceElement(PsiJavaModuleReferenceElement refElement) {
+    visitElement(refElement);
   }
 
   public void visitModuleStatement(PsiElement statement) {

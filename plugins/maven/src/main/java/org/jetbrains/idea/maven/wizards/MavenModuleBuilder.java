@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import icons.MavenIcons;
@@ -230,5 +231,15 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     MavenArchetypesStep step = new MavenArchetypesStep(this, null);
     Disposer.register(parentDisposable, step);
     return step;
+  }
+
+  @Nullable
+  @Override
+  public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
+    final JTextField moduleNameField = settingsStep.getModuleNameField();
+    if (moduleNameField != null && myProjectId != null && myProjectId.getArtifactId() != null) {
+      moduleNameField.setText(StringUtil.sanitizeJavaIdentifier(myProjectId.getArtifactId()));
+    }
+    return super.modifySettingsStep(settingsStep);
   }
 }

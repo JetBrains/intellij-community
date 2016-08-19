@@ -36,14 +36,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@SuppressWarnings("UndeclaredTests")
 public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
   @BeforeMethod
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.addClass("package org.testng.annotations; @interface Test {public String[] dependsOnMethods() default {};}");
+    myFixture.addClass("package org.testng.annotations; @interface Test {String[] dependsOnMethods() default {};}");
     myFixture.addClass("package org.testng.annotations; @interface BeforeClass {}");
-    myFixture.addClass("package org.testng.annotations; @interface BeforeGroups {public String[] value() default {};}");
+    myFixture.addClass("package org.testng.annotations; @interface BeforeGroups { String[] value() default {};}");
   }
 
   @AfterMethod
@@ -157,7 +158,7 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
   }
   
   public void testRerunFailedParameterized() throws Exception {
-    final PsiClass aClass =
+    @SuppressWarnings("TestNGDataProvider") final PsiClass aClass =
       myFixture.addClass("package a; " +
                          "import org.testng.annotations.DataProvider;\n" +
                          "import org.testng.annotations.Test;\n" +

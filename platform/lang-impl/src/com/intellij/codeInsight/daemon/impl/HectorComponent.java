@@ -38,7 +38,11 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
+import com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurable;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -165,9 +169,7 @@ public class HectorComponent extends JPanel {
         }
         if (!DaemonCodeAnalyzer.getInstance(myFile.getProject()).isHighlightingAvailable(myFile)) return;
         final Project project = myFile.getProject();
-        final ErrorsConfigurable errorsConfigurable = ErrorsConfigurable.SERVICE.createConfigurable(project);
-        assert errorsConfigurable != null;
-        ShowSettingsUtil.getInstance().editConfigurable(project, errorsConfigurable);
+        ShowSettingsUtil.getInstance().editConfigurable(project, new ProjectInspectionToolsConfigurable(ProjectInspectionProfileManager.getInstanceImpl(myFile.getProject())));
       }
     });
 

@@ -78,7 +78,7 @@ public class TextRange implements Segment, Serializable {
   }
 
   public boolean containsRange(int startOffset, int endOffset) {
-    return getStartOffset() <= startOffset && getEndOffset() >= endOffset;
+    return getStartOffset() <= startOffset && endOffset <= getEndOffset();
   }
 
   public static boolean containsRange(@NotNull Segment outer, @NotNull Segment inner) {

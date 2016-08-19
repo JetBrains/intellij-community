@@ -100,9 +100,11 @@ class LinuxDistributionBuilder {
       //todo[nik] rename idea.sh in sources to something more generic
       buildContext.ant.move(file: "${unixDistPath}/bin/idea.sh", tofile: "${unixDistPath}/bin/$name")
     }
-    String inspectScript = buildContext.productProperties.inspectScriptName
+    String inspectScript = buildContext.productProperties.inspectCommandName
     if (inspectScript != "inspect") {
-      buildContext.ant.move(file: "${unixDistPath}/bin/inspect.sh", tofile: "${unixDistPath}/bin/${inspectScript}.sh")
+      String targetPath = "${unixDistPath}/bin/${inspectScript}.sh"
+      buildContext.ant.move(file: "${unixDistPath}/bin/inspect.sh", tofile: targetPath)
+      buildContext.patchInspectScript(targetPath)
     }
 
     buildContext.ant.fixcrlf(srcdir: "${unixDistPath}/bin", includes: "*.sh", eol: "unix")
@@ -127,7 +129,7 @@ class LinuxDistributionBuilder {
   }
 
   private void buildTarGz(String jreDirectoryPath) {
-    def tarRoot = customizer.rootDirectoryName(buildContext.buildNumber)
+    def tarRoot = customizer.rootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
     def suffix = jreDirectoryPath != null ? "" : "-no-jdk"
     def tarPath = "$buildContext.paths.artifacts/${buildContext.productProperties.baseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${suffix}.tar"
     def extraBins = customizer.extraExecutables

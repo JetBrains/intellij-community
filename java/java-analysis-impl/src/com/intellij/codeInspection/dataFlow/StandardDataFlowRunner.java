@@ -27,9 +27,9 @@ package com.intellij.codeInspection.dataFlow;
 public class StandardDataFlowRunner extends DataFlowRunner {
 
   public StandardDataFlowRunner() {
-    this(false, true);
+    this(false, true, false);
   }
-  public StandardDataFlowRunner(boolean unknownMembersAreNullable, boolean honorFieldInitializers) {
-    super(unknownMembersAreNullable, honorFieldInitializers);
+  public StandardDataFlowRunner(boolean unknownMembersAreNullable, boolean honorFieldInitializers, boolean shouldCheckLimitTime) {
+    super(unknownMembersAreNullable, honorFieldInitializers, shouldCheckLimitTime);
   }
 }

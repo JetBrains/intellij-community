@@ -112,9 +112,12 @@ public class FocusTracesDialog extends DialogWrapper {
     JBSplitter splitter = new JBSplitter(true, .5F, .2F, .8F);
     splitter.setFirstComponent(new JBScrollPane(myRequestsTable, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER));
 
-    final JComponent consoleComponent = new JPanel(new BorderLayout());
+    JComponent consoleComponent = new JPanel(new BorderLayout());
     consoleComponent.add(consoleView.getComponent(), BorderLayout.CENTER);
-    consoleView.print(ExceptionUtil.getThrowableText(myRequests.get(myRequestsTable.getSelectedRow()).trace), ConsoleViewContentType.NORMAL_OUTPUT);
+    int row = myRequestsTable.getSelectedRow();
+    if (row >= 0) {
+      consoleView.print(ExceptionUtil.getThrowableText(myRequests.get(row).trace), ConsoleViewContentType.NORMAL_OUTPUT);
+    }
 
     splitter.setSecondComponent(
       new JBScrollPane(consoleComponent, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER));

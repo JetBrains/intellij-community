@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -28,6 +27,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -54,6 +54,25 @@ public class TreeModelBuilder {
   @Nullable private ChangesGroupingPolicy myPolicy;
   @NotNull private HashMap<String, ChangesBrowserNode> myFoldersCache;
 
+  @SuppressWarnings("unchecked")
+  private static final Comparator<ChangesBrowserNode> BROWSER_NODE_COMPARATOR = (node1, node2) -> {
+    int sortWeightDiff = Comparing.compare(node1.getSortWeight(), node2.getSortWeight());
+    if (sortWeightDiff != 0) return sortWeightDiff;
+
+    if (node1 instanceof Comparable && node1.getClass().equals(node2.getClass())) {
+      return ((Comparable)node1).compareTo(node2);
+    }
+    return node1.compareUserObjects(node2.getUserObject());
+  };
+
+  private final static Comparator<Change> PATH_LENGTH_COMPARATOR = (o1, o2) -> {
+    FilePath fp1 = ChangesUtil.getFilePath(o1);
+    FilePath fp2 = ChangesUtil.getFilePath(o2);
+
+    return Comparing.compare(fp1.getPath().length(), fp2.getPath().length());
+  };
+
+
   public TreeModelBuilder(@NotNull Project project, final boolean showFlatten) {
     myProject = project;
     this.showFlatten = showFlatten;
@@ -69,16 +88,11 @@ public class TreeModelBuilder {
 
   @NotNull
   public TreeModelBuilder setChanges(@NotNull List<Change> changes, @Nullable final ChangeNodeDecorator changeNodeDecorator) {
-    Collections.sort(changes, MyChangePathLengthComparator.getInstance());
+    Collections.sort(changes, PATH_LENGTH_COMPARATOR);
 
     final ChangesGroupingPolicy policy = createGroupingPolicy();
     for (final Change change : changes) {
-      insertChangeNode(change, policy, root, new Computable<ChangesBrowserNode>() {
-        @Override
-        public ChangesBrowserNode compute() {
-          return new ChangesBrowserChangeNode(myProject, change, changeNodeDecorator);
-        }
-      });
+      insertChangeNode(change, policy, root, createChangeNode(change, changeNodeDecorator));
     }
 
     return this;
@@ -125,25 +139,6 @@ public class TreeModelBuilder {
     buildFilePaths(files, root);
 
     return build();
-  }
-
-  private static class MyChangeNodeUnderChangeListDecorator extends RemoteStatusChangeNodeDecorator {
-    @NotNull private final ChangeListRemoteState.Reporter myReporter;
-
-    private MyChangeNodeUnderChangeListDecorator(final RemoteRevisionsCache remoteRevisionsCache,
-                                                 @NotNull ChangeListRemoteState.Reporter reporter) {
-      super(remoteRevisionsCache);
-      myReporter = reporter;
-    }
-
-    @Override
-    protected void reportState(boolean state) {
-      myReporter.report(state);
-    }
-
-    @Override
-    public void preDecorate(Change change, ChangesBrowserNodeRenderer renderer, boolean showFlatten) {
-    }
   }
 
   @NotNull
@@ -211,49 +206,47 @@ public class TreeModelBuilder {
     final RemoteRevisionsCache revisionsCache = RemoteRevisionsCache.getInstance(myProject);
     for (ChangeList list : changeLists) {
       final List<Change> changes = new ArrayList<>(list.getChanges());
-      final ChangeListRemoteState listRemoteState = new ChangeListRemoteState(changes.size());
-      ChangesBrowserNode listNode = new ChangesBrowserChangeListNode(myProject, list, listRemoteState);
+      ChangesBrowserChangeListNode listNode = createChangeListNode(list, changes);
       model.insertNodeInto(listNode, root, 0);
       resetGrouping();
       final ChangesGroupingPolicy policy = createGroupingPolicy();
-      int i = 0;
-      Collections.sort(changes, MyChangePathLengthComparator.getInstance());
-      for (final Change change : changes) {
-        final MyChangeNodeUnderChangeListDecorator decorator =
-          new MyChangeNodeUnderChangeListDecorator(revisionsCache, new ChangeListRemoteState.Reporter(i, listRemoteState));
-        insertChangeNode(change, policy, listNode, new Computable<ChangesBrowserNode>() {
-          @Override
-          public ChangesBrowserNode compute() {
-            return new ChangesBrowserChangeNode(myProject, change, decorator);
-          }
-        });
-        ++ i;
+      Collections.sort(changes, PATH_LENGTH_COMPARATOR);
+      for (int i = 0; i < changes.size(); i++) {
+        insertChangeNode(changes.get(i), policy, listNode, createChangeListChild(revisionsCache, listNode, changes, i));
       }
     }
     return model;
+  }
+
+  protected ChangesBrowserChangeListNode createChangeListNode(@NotNull ChangeList list, List<Change> changes) {
+    final ChangeListRemoteState listRemoteState = new ChangeListRemoteState(changes.size());
+    return new ChangesBrowserChangeListNode(myProject, list, listRemoteState);
+  }
+
+  protected ChangesBrowserNode createChangeListChild(RemoteRevisionsCache revisionsCache, ChangesBrowserChangeListNode node, List<Change> changes, int i) {
+    return createChangeNode(changes.get(i), new RemoteStatusChangeNodeDecorator(revisionsCache) {
+      @NotNull private final ChangeListRemoteState.Reporter myReporter =
+        new ChangeListRemoteState.Reporter(i, node.getChangeListRemoteState());
+
+      @Override
+      protected void reportState(boolean state) {
+        myReporter.report(state);
+      }
+
+      @Override
+      public void preDecorate(Change change, ChangesBrowserNodeRenderer renderer, boolean showFlatten1) {
+      }
+    });
+  }
+
+  protected ChangesBrowserNode createChangeNode(Change change, ChangeNodeDecorator decorator) {
+    return new ChangesBrowserChangeNode(myProject, change, decorator);
   }
 
   @NotNull
   public TreeModelBuilder setChangeLists(@NotNull List<? extends ChangeList> changeLists) {
     buildModel(changeLists);
     return this;
-  }
-
-  private static class MyChangePathLengthComparator implements Comparator<Change> {
-    private final static MyChangePathLengthComparator ourInstance = new MyChangePathLengthComparator();
-
-    @NotNull
-    public static MyChangePathLengthComparator getInstance() {
-      return ourInstance;
-    }
-
-    @Override
-    public int compare(@NotNull Change o1, @NotNull Change o2) {
-      FilePath fp1 = ChangesUtil.getFilePath(o1);
-      FilePath fp2 = ChangesUtil.getFilePath(o2);
-
-      return Comparing.compare(fp1.getPath().length(), fp2.getPath().length());
-    }
   }
 
   private void buildVirtualFiles(@NotNull List<VirtualFile> files, @Nullable Object tag) {
@@ -280,7 +273,7 @@ public class TreeModelBuilder {
     Collections.sort(files, VirtualFileHierarchicalComparator.getInstance());
     
     for (VirtualFile file : files) {
-      insertChangeNode(file, policy, baseNode, defaultNodeCreator(file));
+      insertChangeNode(file, policy, baseNode, ChangesBrowserNode.create(myProject, file));
     }
   }
 
@@ -333,24 +326,21 @@ public class TreeModelBuilder {
       final ContentRevision cr = new CurrentContentRevision(VcsUtil.getFilePath(vf));
       final Change change = new Change(cr, cr, FileStatus.NOT_CHANGED);
       final String branchName = switchedRoots.get(vf);
-      insertChangeNode(vf, policy, rootsHeadNode, new Computable<ChangesBrowserNode>() {
+      insertChangeNode(vf, policy, rootsHeadNode, createChangeNode(change, new ChangeNodeDecorator() {
         @Override
-        public ChangesBrowserNode compute() {
-          return new ChangesBrowserChangeNode(myProject, change, new ChangeNodeDecorator() {
-            @Override
-            public void decorate(Change change, SimpleColoredComponent component, boolean isShowFlatten) {
-            }
-            @Override
-            public List<Pair<String, Stress>> stressPartsOfFileName(Change change, String parentPath) {
-              return null;
-            }
-            @Override
-            public void preDecorate(Change change, ChangesBrowserNodeRenderer renderer, boolean showFlatten) {
-              renderer.append("[" + branchName + "] ", SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
-            }
-          });
+        public void decorate(Change change1, SimpleColoredComponent component, boolean isShowFlatten) {
         }
-      });
+
+        @Override
+        public List<Pair<String, Stress>> stressPartsOfFileName(Change change1, String parentPath) {
+          return null;
+        }
+
+        @Override
+        public void preDecorate(Change change1, ChangesBrowserNodeRenderer renderer, boolean showFlatten) {
+          renderer.append("[" + branchName + "] ", SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
+        }
+      }));
     }
   }
 
@@ -366,7 +356,7 @@ public class TreeModelBuilder {
         final ChangesGroupingPolicy policy = createGroupingPolicy();
         Collections.sort(switchedFileList, VirtualFileHierarchicalComparator.getInstance());
         for (VirtualFile file : switchedFileList) {
-          insertChangeNode(file, policy, branchNode, defaultNodeCreator(file));
+          insertChangeNode(file, policy, branchNode, ChangesBrowserNode.create(myProject, file));
         }
       }
     }
@@ -382,26 +372,15 @@ public class TreeModelBuilder {
     for (final VirtualFile file : keys) {
       final LogicalLock lock = logicallyLockedFiles.get(file);
       final ChangesBrowserLogicallyLockedFile obj = new ChangesBrowserLogicallyLockedFile(myProject, file, lock);
-      insertChangeNode(obj, policy, baseNode, defaultNodeCreator(obj));
+      insertChangeNode(obj, policy, baseNode, ChangesBrowserNode.create(myProject, obj));
     }
   }
 
-  @NotNull
-  private Computable<ChangesBrowserNode> defaultNodeCreator(@NotNull final Object change) {
-    return new Computable<ChangesBrowserNode>() {
-      @Override
-      public ChangesBrowserNode compute() {
-        return ChangesBrowserNode.create(myProject, change);
-      }
-    };
-  }
-
-  private void insertChangeNode(@NotNull Object change,
+  protected void insertChangeNode(@NotNull Object change,
                                 @Nullable ChangesGroupingPolicy policy,
                                 @NotNull ChangesBrowserNode listNode,
-                                @NotNull Computable<ChangesBrowserNode> nodeCreator) {
+                                @NotNull ChangesBrowserNode node) {
     final StaticFilePath pathKey = getKey(change);
-    final ChangesBrowserNode node = nodeCreator.compute();
     ChangesBrowserNode parentNode = getParentNodeFor(pathKey, policy, listNode);
     model.insertNodeInto(node, parentNode, model.getChildCount(parentNode));
 
@@ -411,29 +390,9 @@ public class TreeModelBuilder {
   }
 
   private void sortNodes() {
-    TreeUtil.sort(model, MyChangesBrowserNodeComparator.getInstance());
+    TreeUtil.sort(model, BROWSER_NODE_COMPARATOR);
 
     model.nodeStructureChanged((TreeNode)model.getRoot());
-  }
-
-  private static class MyChangesBrowserNodeComparator implements Comparator<ChangesBrowserNode> {
-    private static final MyChangesBrowserNodeComparator ourInstance = new MyChangesBrowserNodeComparator();
-
-    @NotNull
-    public static MyChangesBrowserNodeComparator getInstance() {
-      return ourInstance;
-    }
-
-    @Override
-    public int compare(@NotNull ChangesBrowserNode node1, @NotNull ChangesBrowserNode node2) {
-      int sortWeightDiff = Comparing.compare(node1.getSortWeight(), node2.getSortWeight());
-      if (sortWeightDiff != 0) return sortWeightDiff;
-
-      if (node1 instanceof Comparable && node1.getClass().equals(node2.getClass())) {
-        return ((Comparable)node1).compareTo(node2);
-      }
-      return node1.compareUserObjects(node2.getUserObject());
-    }
   }
 
   private static void collapseDirectories(@NotNull DefaultTreeModel model, @NotNull ChangesBrowserNode node) {
@@ -531,14 +490,21 @@ public class TreeModelBuilder {
 
     ChangesBrowserNode parentNode = myFoldersCache.get(parentPath.getKey());
     if (parentNode == null) {
-      FilePath filePath = parentPath.getVf() == null ? VcsUtil.getFilePath(parentPath.getPath(), true) : VcsUtil.getFilePath(parentPath.getVf());
-      parentNode = ChangesBrowserNode.create(myProject, filePath);
-      ChangesBrowserNode grandPa = getParentNodeFor(parentPath, policy, rootNode);
-      model.insertNodeInto(parentNode, grandPa, grandPa.getChildCount());
-      myFoldersCache.put(parentPath.getKey(), parentNode);
+      parentNode = createPathNode(parentPath);
+      if (parentNode != null) {
+        ChangesBrowserNode grandPa = getParentNodeFor(parentPath, policy, rootNode);
+        model.insertNodeInto(parentNode, grandPa, grandPa.getChildCount());
+        myFoldersCache.put(parentPath.getKey(), parentNode);
+      }
     }
 
-    return parentNode;
+    return ObjectUtils.chooseNotNull(parentNode, rootNode);
+  }
+
+  @Nullable
+  protected ChangesBrowserNode createPathNode(StaticFilePath parentPath) {
+    FilePath filePath = parentPath.getVf() == null ? VcsUtil.getFilePath(parentPath.getPath(), true) : VcsUtil.getFilePath(parentPath.getVf());
+    return ChangesBrowserNode.create(myProject, filePath);
   }
 
   @NotNull

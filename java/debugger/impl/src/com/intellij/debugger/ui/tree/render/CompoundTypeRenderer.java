@@ -18,14 +18,20 @@ package com.intellij.debugger.ui.tree.render;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
+import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Type;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 public class CompoundTypeRenderer extends CompoundNodeRenderer {
   public static final @NonNls String UNIQUE_ID = "CompoundTypeRenderer";
   protected static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.CompoundReferenceRenderer");
+  private static final AutoToStringRenderer AUTO_TO_STRING_RENDERER = new AutoToStringRenderer();
 
   public CompoundTypeRenderer(NodeRendererSettings rendererSettings,
                               String name,
@@ -46,7 +53,7 @@ public class CompoundTypeRenderer extends CompoundNodeRenderer {
 
   public void setLabelRenderer(ValueLabelRenderer labelRenderer) {
     final ValueLabelRenderer prevRenderer = getLabelRenderer();
-    super.setLabelRenderer(myRendererSettings.isBase(labelRenderer) ? null : labelRenderer);
+    super.setLabelRenderer(isBaseRenderer(labelRenderer) ? null : labelRenderer);
     final ValueLabelRenderer currentRenderer = getLabelRenderer();
     if (prevRenderer != currentRenderer) {
       if (currentRenderer instanceof TypeRenderer) {
@@ -57,7 +64,7 @@ public class CompoundTypeRenderer extends CompoundNodeRenderer {
 
   public void setChildrenRenderer(ChildrenRenderer childrenRenderer) {
     final ChildrenRenderer prevRenderer = getChildrenRenderer();
-    super.setChildrenRenderer(myRendererSettings.isBase(childrenRenderer) ? null : childrenRenderer);
+    super.setChildrenRenderer(isBaseRenderer(childrenRenderer) ? null : childrenRenderer);
     final ChildrenRenderer currentRenderer = getChildrenRenderer();
     if (prevRenderer != currentRenderer) {
       if (currentRenderer instanceof TypeRenderer) {
@@ -76,7 +83,7 @@ public class CompoundTypeRenderer extends CompoundNodeRenderer {
     if (TypeConversionUtil.isPrimitive(name)) {
       return myRendererSettings.getPrimitiveRenderer();
     }
-    return name.endsWith("]") ? myRendererSettings.getArrayRenderer() : myRendererSettings.getClassRenderer();
+    return name.endsWith("]") ? myRendererSettings.getArrayRenderer() : AUTO_TO_STRING_RENDERER;
   }
 
   public ValueLabelRenderer getLabelRenderer() {
@@ -141,5 +148,37 @@ public class CompoundTypeRenderer extends CompoundNodeRenderer {
     Project project = node.getProject();
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
     return elementFactory.createExpressionFromText(text, getContext(project, context));
+  }
+
+  public boolean isBaseRenderer(Renderer renderer) {
+    return renderer == AUTO_TO_STRING_RENDERER ||
+           renderer == myRendererSettings.getClassRenderer() ||
+           renderer == myRendererSettings.getPrimitiveRenderer() ||
+           renderer == myRendererSettings.getArrayRenderer();
+  }
+
+  private static class AutoToStringRenderer extends ToStringRenderer {
+    @Override
+    public String getUniqueId() {
+      return "AutoToString";
+    }
+
+    @Override
+    public boolean isApplicable(Type type) {
+      return type instanceof ReferenceType;
+    }
+
+    @Override
+    public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener)
+      throws EvaluateException {
+      NodeRendererSettings nodeRendererSettings = NodeRendererSettings.getInstance();
+      ToStringRenderer toStringRenderer = nodeRendererSettings.getToStringRenderer();
+      if (toStringRenderer.isEnabled() && toStringRenderer.isApplicable(descriptor.getType())) {
+        return toStringRenderer.calcLabel(descriptor, evaluationContext, listener);
+      }
+      else {
+        return nodeRendererSettings.getClassRenderer().calcLabel(descriptor, evaluationContext, listener);
+      }
+    }
   }
 }

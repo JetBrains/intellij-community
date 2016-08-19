@@ -17,6 +17,7 @@ package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XStackFrame;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +42,6 @@ public class XStandaloneVariablesView extends XVariablesViewBase {
   }
 
   @Override
-  public void processSessionEvent(@NotNull SessionEvent event) {
+  public void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSession session) {
   }
 }

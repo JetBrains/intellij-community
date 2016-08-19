@@ -373,12 +373,12 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
     map.put(namespace, CachedValuesManager.getManager(getManager().getProject()).createCachedValue(() -> {
       XmlNSDescriptor descriptor = getImplicitNamespaceDescriptor(fileLocation);
       if (descriptor != null) {
-        return new CachedValueProvider.Result<>(descriptor, ArrayUtil.append(descriptor.getDependences(), XmlTagImpl.this));
+        return new CachedValueProvider.Result<>(descriptor, ArrayUtil.append(descriptor.getDependences(), this));
       }
 
       XmlFile currentFile = retrieveFile(fileLocation, version, namespace, nsDecl);
       if (currentFile == null) {
-        final XmlDocument document = XmlUtil.getContainingFile(XmlTagImpl.this).getDocument();
+        final XmlDocument document = XmlUtil.getContainingFile(this).getDocument();
         if (document != null) {
           final String uri = XmlUtil.getDtdUri(document);
           if (uri != null) {
@@ -389,13 +389,13 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
 
           // We want to get fixed xmlns attr from dtd and check its default with requested namespace
           if (descriptor instanceof com.intellij.xml.impl.dtd.XmlNSDescriptorImpl) {
-            final XmlElementDescriptor elementDescriptor = descriptor.getElementDescriptor(XmlTagImpl.this);
+            final XmlElementDescriptor elementDescriptor = descriptor.getElementDescriptor(this);
             if (elementDescriptor != null) {
-              final XmlAttributeDescriptor attributeDescriptor = elementDescriptor.getAttributeDescriptor("xmlns", XmlTagImpl.this);
+              final XmlAttributeDescriptor attributeDescriptor = elementDescriptor.getAttributeDescriptor("xmlns", this);
               if (attributeDescriptor != null && attributeDescriptor.isFixed()) {
                 final String defaultValue = attributeDescriptor.getDefaultValue();
                 if (defaultValue != null && defaultValue.equals(namespace)) {
-                  return new CachedValueProvider.Result<>(descriptor, descriptor.getDependences(), XmlTagImpl.this,
+                  return new CachedValueProvider.Result<>(descriptor, descriptor.getDependences(), this,
                                                           ExternalResourceManager.getInstance());
                 }
               }
@@ -407,11 +407,11 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
       if (currentOwner != null) {
         descriptor = (XmlNSDescriptor)currentOwner.getMetaData();
         if (descriptor != null) {
-          return new CachedValueProvider.Result<>(descriptor, descriptor.getDependences(), XmlTagImpl.this,
+          return new CachedValueProvider.Result<>(descriptor, descriptor.getDependences(), this,
                                                   ExternalResourceManager.getInstance());
         }
       }
-      return new CachedValueProvider.Result<>(null, XmlTagImpl.this, currentFile == null ? XmlTagImpl.this : currentFile,
+      return new CachedValueProvider.Result<>(null, this, currentFile == null ? this : currentFile,
                                               ExternalResourceManager.getInstance());
     }, false));
 
@@ -788,7 +788,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
       String result = ourGuard.doPreventingRecursion("getNsByPrefix", true, () -> {
         final String nsFromEmptyPrefix = getNamespaceByPrefix("");
         final XmlNSDescriptor nsDescriptor = getNSDescriptor(nsFromEmptyPrefix, false);
-        final XmlElementDescriptor descriptor = nsDescriptor != null ? nsDescriptor.getElementDescriptor(XmlTagImpl.this) : null;
+        final XmlElementDescriptor descriptor = nsDescriptor != null ? nsDescriptor.getElementDescriptor(this) : null;
         final String nameFromRealDescriptor =
           descriptor != null && descriptor.getDeclaration() != null && descriptor.getDeclaration().isPhysical()
           ? descriptor.getName()
@@ -1123,7 +1123,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
     else {
       final ASTNode treePrev = child.getTreePrev();
       final ASTNode treeNext = child.getTreeNext();
-      XmlTagImpl.super.deleteChildInternal(child);
+      super.deleteChildInternal(child);
       if (treePrev != null &&
           treeNext != null &&
           treePrev.getElementType() == XmlElementType.XML_TEXT &&

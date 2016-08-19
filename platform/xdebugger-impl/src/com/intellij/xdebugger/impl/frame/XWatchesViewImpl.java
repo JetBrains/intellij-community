@@ -26,10 +26,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.ui.CaptionPanel;
-import com.intellij.ui.ClickListener;
-import com.intellij.ui.DoubleClickListener;
-import com.intellij.ui.ListenerUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
@@ -87,6 +84,11 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     DebuggerUIUtil.registerActionOnComponent(XDebuggerActions.XREMOVE_WATCH, tree, myDisposables);
     DebuggerUIUtil.registerActionOnComponent(XDebuggerActions.XCOPY_WATCH, tree, myDisposables);
     DebuggerUIUtil.registerActionOnComponent(XDebuggerActions.XEDIT_WATCH, tree, myDisposables);
+
+    EmptyAction.registerWithShortcutSet(XDebuggerActions.XNEW_WATCH,
+                                        CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD), tree);
+    EmptyAction.registerWithShortcutSet(XDebuggerActions.XREMOVE_WATCH,
+                                        CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.REMOVE), tree);
 
     DnDManager.getInstance().registerTarget(this, tree);
 

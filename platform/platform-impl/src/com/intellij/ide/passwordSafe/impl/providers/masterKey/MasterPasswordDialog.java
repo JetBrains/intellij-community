@@ -18,78 +18,40 @@ package com.intellij.ide.passwordSafe.impl.providers.masterKey;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.util.List;
 
-/**
- * The dialog used to prompt for the master password to the password database
- */
 public class MasterPasswordDialog extends DialogWrapper {
   private final static int NUMBER_OF_RETRIES = 5;
 
-  private final JPanel myRootPanel = new JPanel(new CardLayout());
-  private final List<PasswordComponentBase> myComponents = ContainerUtil.newArrayList();
-  private final DialogWrapperAction myCardAction;
+  private final JPanel myRootPanel;
+  private final PasswordComponentBase myComponent;
   private int myRetriesCount;
 
   public MasterPasswordDialog(@NotNull PasswordComponentBase component) {
     super(false);
+    myComponent = component;
 
     setResizable(false);
-    myComponents.add(component);
-    myRootPanel.add(component.getComponent(), component.getTitle());
-    myCardAction = new DialogWrapperAction("") {
-      @Override
-      protected void doAction(ActionEvent e) {
-        show(getNextComponent(getSelectedComponent()));
-      }
-    };
-    show(myComponents.get(0));
+    myRootPanel = component.getComponent();
+    setTitle("Password Manager Database Updated");
+    getOKAction().putValue(Action.NAME, "Convert");
+    getCancelAction().putValue(Action.NAME, "Clear Passwords");
     init();
   }
 
   @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return getSelectedComponent().getPreferredFocusedComponent();
+    return myComponent.getPreferredFocusedComponent();
   }
 
   @Nullable
   @Override
   protected String getHelpId() {
-    return getSelectedComponent().getHelpId();
-  }
-
-  private CardLayout getLayout() {
-    return (CardLayout)myRootPanel.getLayout();
-  }
-
-  private PasswordComponentBase getSelectedComponent() {
-    for (PasswordComponentBase component : myComponents) {
-      if (component.getComponent().isVisible()) return component;
-    }
-    throw new AssertionError("no visible components");
-  }
-
-  @NotNull
-  private PasswordComponentBase getNextComponent(@NotNull PasswordComponentBase component) {
-    int idx = myComponents.indexOf(component);
-    int next = idx < myComponents.size() - 1 ? idx + 1 : 0;
-    return myComponents.get(next);
-  }
-
-  private void show(@NotNull PasswordComponentBase component) {
-    setTitle(component.getTitle() + " Master Password");
-    getLayout().show(myRootPanel, component.getTitle());
-    myCardAction.putValue(Action.NAME, getNextComponent(component).getTitle() + "...");
-    component.getPreferredFocusedComponent().requestFocus();
+    return myComponent.getHelpId();
   }
 
   @Override
@@ -97,29 +59,9 @@ public class MasterPasswordDialog extends DialogWrapper {
     return myRootPanel;
   }
 
-  @NotNull
-  @Override
-  protected Action[] createActions() {
-    Action[] result = {
-      getHelpAction(),
-      getOKAction(),
-      getCancelAction()};
-    if (myComponents.size() > 1) {
-      return ArrayUtil.append(result, myCardAction);
-    }
-    return result;
-  }
-
-  @Nullable
-  @Override
-  protected ValidationInfo doValidate() {
-    return getSelectedComponent().doValidate();
-  }
-
   @Override
   public void doOKAction() {
-    PasswordComponentBase component = getSelectedComponent();
-    ValidationInfo info = component.apply();
+    ValidationInfo info = myComponent.apply();
     if (info == null) {
       super.doOKAction();
     }

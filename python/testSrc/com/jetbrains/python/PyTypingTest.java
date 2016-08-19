@@ -543,6 +543,18 @@ public class PyTypingTest extends PyTestCase {
           "expr = f"); 
   }
 
+  // PY-20421
+  public void testFunctionTypeCommentSingleElementTuple() {
+    doTest("Tuple[int]",
+           "from typing import Tuple\n" +
+           "\n" +
+           "def f():\n" +
+           "    # type: () -> Tuple[int]\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = f()");
+  }
+
   // PY-18762
   public void testHomogeneousTuple() {
     doTest("Tuple[int, ...]", 
@@ -699,7 +711,7 @@ public class PyTypingTest extends PyTestCase {
            "    sublist = x[0]\n" +
            "    expr = sublist[0]\n");
   }
-
+  
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

@@ -209,6 +209,10 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testEscapes23() throws IOException { doCodeTest("a\\Qabc?*+.))]][]\\E)"); }
   public void testEscapes24() throws IOException { doCodeTest("\\Q\\j\\E"); }
   public void testEscapes25() throws IOException { doCodeTest("\\c0"); }
+  public void testEscapes26() throws IOException { doCodeTest("[\\]]"); }
+  public void testEscapes27() throws IOException { doCodeTest("[^\\]]"); }
+  public void testEscapes28() throws IOException { doCodeTest("[a\\]]"); }
+  public void testEscapes29() throws IOException { doCodeTest("[^a\\]]"); }
 
   public void testAnchors1() throws IOException { doCodeTest("^*"); }
   public void testAnchors2() throws IOException { doCodeTest("$*"); }

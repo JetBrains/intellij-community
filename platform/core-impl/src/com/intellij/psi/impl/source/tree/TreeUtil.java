@@ -16,6 +16,7 @@
 
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,10 +40,7 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Set;
+import java.util.*;
 
 public class TreeUtil {
   public static final Key<String> UNCLOSED_ELEMENT_PROPERTY = Key.create("UNCLOSED_ELEMENT_PROPERTY");
@@ -453,7 +451,7 @@ public class TreeUtil {
   }
 
   public static void bindStubsToTree(@NotNull PsiFileImpl file, @NotNull StubTree stubTree, @NotNull FileElement tree) throws StubBindingException {
-    final Iterator<StubElement<?>> stubs = stubTree.getPlainList().iterator();
+    final ListIterator<StubElement<?>> stubs = stubTree.getPlainList().listIterator();
     stubs.next();  // skip file root stub
 
     final IStubFileElementType type = file.getElementTypeForStubBuilder();
@@ -474,8 +472,10 @@ public class TreeUtil {
             throw new StubBindingException("stub:" + stub + ", AST:" + type);
           }
 
+          StubBasedPsiElementBase psi = (StubBasedPsiElementBase)node.getPsi();
           //noinspection unchecked
-          ((StubBase)stub).setPsi(node.getPsi());
+          ((StubBase)stub).setPsi(psi);
+          psi.setStubIndex(stubs.previousIndex());
         }
 
         super.visitNode(node);

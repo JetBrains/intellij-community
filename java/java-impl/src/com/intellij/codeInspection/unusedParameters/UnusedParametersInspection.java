@@ -233,15 +233,6 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     return UnusedSymbolLocalInspectionBase.UNUSED_PARAMETERS_SHORT_NAME;
   }
 
-  @Override
-  public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new GridBagLayout());
-    panel.add(EntryPointsManagerImpl.createConfigureAnnotationsButton(),
-              new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                     JBUI.emptyInsets(), 0, 0));
-    return panel;
-  }
-
   private static class AcceptSuggested implements LocalQuickFix {
     private final RefManager myManager;
     private final String myHint;

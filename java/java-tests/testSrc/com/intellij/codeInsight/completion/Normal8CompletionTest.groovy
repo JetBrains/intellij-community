@@ -18,23 +18,15 @@ package com.intellij.codeInsight.completion
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.annotations.NotNull
+
 /**
- * User: anna
+ * @author anna
  */
 public class Normal8CompletionTest extends LightFixtureCompletionTestCase {
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
-  }
+  final LightProjectDescriptor projectDescriptor = JAVA_8
+  final String basePath = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/lambda/completion/normal/"
 
-  @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/lambda/completion/normal/";
-  }
-
-  public void testSelfStaticsOnly() throws Exception {
+  public void testSelfStaticsOnly() {
     configureByFile("SelfStaticsOnly.java");
     assertStringItems("ba", "bar");
   }
@@ -117,7 +109,7 @@ class Test {
     assert items.find { LookupElementPresentation.renderElement(it).itemText.contains('this::bar') } != null
   }
 
-  public void "test suggest receiver method reference"() throws Exception {
+  public void "test suggest receiver method reference"() {
     myFixture.configureByText "a.java", """
 class MethodRef {
 
@@ -256,12 +248,13 @@ class Test88 {
     configureByTestName()
     myFixture.assertPreferredCompletionItems(0, 'toString', 'wait')
   }
+
   public void testLambdaWithSuperWildcardInAmbiguousCall() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems(0, 'substring', 'substring', 'subSequence')
   }
-  public void testUnexpectedLambdaInAmbiguousCall() { doAntiTest() }
 
+  public void testUnexpectedLambdaInAmbiguousCall() { doAntiTest() }
   public void testNoCollectorsInComment() { doAntiTest() }
   public void testNoContinueInsideLambdaInLoop() { doAntiTest(); }
 }

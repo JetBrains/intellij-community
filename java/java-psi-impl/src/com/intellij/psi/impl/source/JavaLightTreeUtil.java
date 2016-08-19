@@ -21,6 +21,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +35,7 @@ import static com.intellij.psi.impl.source.tree.JavaElementType.EXPRESSION_LIST;
  */
 public class JavaLightTreeUtil {
   @Nullable
+  @Contract("_,null->null")
   public static List<LighterASTNode> getArgList(@NotNull LighterAST tree, @Nullable LighterASTNode call) {
     LighterASTNode anonClass = LightTreeUtil.firstChildOfType(tree, call, ANONYMOUS_CLASS);
     LighterASTNode exprList = LightTreeUtil.firstChildOfType(tree, anonClass != null ? anonClass : call, EXPRESSION_LIST);
@@ -41,6 +43,7 @@ public class JavaLightTreeUtil {
   }
 
   @Nullable
+  @Contract("_,null->null")
   public static String getNameIdentifierText(@NotNull LighterAST tree, @Nullable LighterASTNode idOwner) {
     LighterASTNode id = LightTreeUtil.firstChildOfType(tree, idOwner, JavaTokenType.IDENTIFIER);
     return id != null ? RecordUtil.intern(tree.getCharTable(), id) : null;

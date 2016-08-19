@@ -20,6 +20,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.*;
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -38,22 +39,23 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -77,12 +79,28 @@ import java.util.function.Predicate;
 public class UnusedDeclarationPresentation extends DefaultInspectionToolPresentation {
   private final Map<String, Set<RefEntity>> myPackageContents = Collections.synchronizedMap(new HashMap<String, Set<RefEntity>>());
 
-  private final Set<RefEntity> myIgnoreElements = new HashSet<>();
+  private final Set<RefEntity> myIgnoreElements = ContainerUtil.newConcurrentSet(TObjectHashingStrategy.IDENTITY);
+  private final Map<RefEntity, UnusedDeclarationHint> myFixedElements = ContainerUtil.newConcurrentMap(TObjectHashingStrategy.IDENTITY);
+
   private WeakUnreferencedFilter myFilter;
   private DeadHTMLComposer myComposer;
   @NonNls private static final String DELETE = "delete";
   @NonNls private static final String COMMENT = "comment";
-  @NonNls private static final String [] HINTS = {COMMENT, DELETE};
+
+  private enum UnusedDeclarationHint {
+    COMMENT("Commented out"),
+    DELETE("Deleted");
+
+    private final String myDescription;
+
+    UnusedDeclarationHint(String description) {
+      myDescription = description;
+    }
+
+    public String getDescription() {
+      return myDescription;
+    }
+  }
 
   public UnusedDeclarationPresentation(@NotNull InspectionToolWrapper toolWrapper, @NotNull GlobalInspectionContextImpl context) {
     super(toolWrapper, context);
@@ -150,9 +168,9 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
       @NonNls Element hintsElement = new Element("hints");
 
-      for (String hint : HINTS) {
+      for (UnusedDeclarationHint hint : UnusedDeclarationHint.values()) {
         @NonNls Element hintElement = new Element("hint");
-        hintElement.setAttribute("value", hint);
+        hintElement.setAttribute("value", hint.toString().toLowerCase());
         hintsElement.addContent(hintElement);
       }
       element.addContent(hintsElement);
@@ -206,7 +224,12 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
         final Project project = getContext().getProject();
         if (isDisposed() || project.isDisposed()) return;
         SafeDeleteHandler.invoke(project, psiElements, false,
-                                 () -> removeElements(refElements, project, myToolWrapper));
+                                 () -> {
+                                   removeElements(refElements, project, myToolWrapper);
+                                   for (RefEntity ref : refElements) {
+                                     myFixedElements.put(ref, UnusedDeclarationHint.DELETE);
+                                   }
+                                 });
       });
 
       return false; //refresh after safe delete dialog is closed
@@ -278,6 +301,9 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
         entryPointsManager.removeEntryPoint(refElement);
       }
 
+      for (RefElement ref : deletedRefs) {
+        myFixedElements.put(ref, UnusedDeclarationHint.COMMENT);
+      }
       return true;
     }
   }
@@ -375,14 +401,37 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     return entryPointsNode;
   }
 
+  @NotNull
+  @Override
+  public RefElementNode createRefNode(@Nullable RefEntity entity) {
+    return new RefElementNode(entity, this) {
+      @Nullable
+      @Override
+      public String getCustomizedTailText() {
+        final UnusedDeclarationHint hint = myFixedElements.get(getElement());
+        if (hint != null) {
+          return hint.getDescription();
+        }
+        return super.getCustomizedTailText();
+      }
+
+      @Override
+      public boolean isQuickFixAppliedFromView() {
+        return myFixedElements.containsKey(getElement());
+      }
+    };
+  }
+
   @Override
   public void updateContent() {
     getTool().checkForReachableRefs(getContext());
     myPackageContents.clear();
+    final UnusedSymbolLocalInspectionBase localInspectionTool = getTool().getSharedLocalInspectionTool();
     getContext().getRefManager().iterate(new RefJavaVisitor() {
       @Override public void visitElement(@NotNull RefEntity refEntity) {
         if (!(refEntity instanceof RefJavaElement)) return;//dead code doesn't work with refModule | refPackage
         RefJavaElement refElement = (RefJavaElement)refEntity;
+        if (!compareVisibilities(refElement, localInspectionTool)) return;
         if (!(getContext().getUIOptions().FILTER_RESOLVED_ITEMS && getIgnoredRefElements().contains(refElement)) && refElement.isValid() && getFilter().accepts(refElement)) {
           String packageName = RefJavaUtil.getInstance().getPackageName(refEntity);
           Set<RefEntity> content = myPackageContents.get(packageName);
@@ -394,6 +443,51 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
         }
       }
     });
+  }
+
+  @PsiModifier.ModifierConstant
+  private static String getAcceptedVisibility(UnusedSymbolLocalInspectionBase tool, RefJavaElement element) {
+    if (element instanceof RefClass) {
+      return tool.getClassVisibility();
+    }
+    if (element instanceof RefField) {
+      return tool.getFieldVisibility();
+    }
+    if (element instanceof RefMethod) {
+      final String methodVisibility = tool.getMethodVisibility();
+      if (methodVisibility != null &&
+          //todo store in the graph
+          tool.isIgnoreAccessors()) {
+        final PsiModifierListOwner listOwner = ((RefMethod)element).getElement();
+        if (listOwner instanceof PsiMethod && PropertyUtil.isSimplePropertyAccessor((PsiMethod)listOwner)) {
+          return null;
+        }
+      }
+      return methodVisibility;
+    }
+    if (element instanceof RefParameter) {
+      return tool.getParameterVisibility();
+    }
+    return PsiModifier.PUBLIC;
+  }
+
+  private static boolean compareVisibilities(RefJavaElement listOwner, UnusedSymbolLocalInspectionBase localInspectionTool) {
+    final String visibility = getAcceptedVisibility(localInspectionTool, listOwner);
+    if (visibility != null) {
+      while (listOwner != null) {
+        if (VisibilityUtil.compare(listOwner.getAccessModifier(), visibility) >= 0) {
+          return true;
+        }
+        final RefEntity parent = listOwner.getOwner();
+        if (parent instanceof RefJavaElement) {
+          listOwner = (RefJavaElement)parent;
+        }
+        else {
+          break;
+        }
+      }
+    }
+    return false;
   }
 
   @Override

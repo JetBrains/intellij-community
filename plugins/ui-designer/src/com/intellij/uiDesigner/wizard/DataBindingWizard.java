@@ -63,7 +63,7 @@ public final class DataBindingWizard extends AbstractWizard<StepAdapter> {
         () -> {
           try {
             Generator.generateDataBindingMethods(myData);
-            DataBindingWizard.super.doOKAction();
+            super.doOKAction();
           }
           catch (Generator.MyException exc) {
             Messages.showErrorDialog(

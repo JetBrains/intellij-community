@@ -21,12 +21,12 @@ import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ThreeState;
@@ -54,6 +54,10 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
   public void appendPositionManager(PositionManager manager) {
     myPositionManagers.remove(manager);
     myPositionManagers.add(0, manager);
+    clearCache();
+  }
+
+  public void clearCache() {
     mySourcePositionCache.clear();
   }
 
@@ -65,19 +69,17 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
 
   private <T> T iterate(Processor<T> processor, T defaultValue, SourcePosition position) {
     for (PositionManager positionManager : myPositionManagers) {
-      try {
-        if (position != null) {
-          Set<? extends FileType> types = positionManager.getAcceptedFileTypes();
-          if (types != null && !types.contains(position.getFile().getFileType())) {
-            continue;
-          }
+      if (position != null) {
+        Set<? extends FileType> types = positionManager.getAcceptedFileTypes();
+        if (types != null && !types.contains(position.getFile().getFileType())) {
+          continue;
         }
-        return processor.process(positionManager);
       }
-      catch (NoDataException | ProcessCanceledException ignored) {}
-      catch (VMDisconnectedException | ObjectCollectedException e) {throw e;}
-      catch (InternalException e) {LOG.info(e);}
-      catch (Exception | AssertionError e) {LOG.error(e);}
+      try {
+        return DebuggerUtilsImpl.suppressExceptions(() -> processor.process(positionManager), defaultValue, NoDataException.class);
+      }
+      catch (NoDataException ignored) {
+      }
     }
     return defaultValue;
   }

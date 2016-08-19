@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,6 +124,7 @@ public class CustomizableActionsPanel {
         }
         myAddSeparatorButton.setEnabled(isSingleSelection);
         myRemoveActionButton.setEnabled(selectionPaths != null);
+        myRestoreDefaultButton.setEnabled(!findActionsUnderSelection().isEmpty());
         if (selectionPaths != null) {
           for (TreePath selectionPath : selectionPaths) {
             if (selectionPath.getPath().length <= 2) {
@@ -134,7 +135,6 @@ public class CustomizableActionsPanel {
         }
         myMoveActionUpButton.setEnabled(isMoveSupported(myActionsTree, -1));
         myMoveActionDownButton.setEnabled(isMoveSupported(myActionsTree, 1));
-        myRestoreDefaultButton.setEnabled(!findActionsUnderSelection().isEmpty());
       }
     });
 

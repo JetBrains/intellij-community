@@ -51,6 +51,9 @@ class ConsoleBuildMessageLogger extends BuildMessageLogger {
       case LogMessage.Kind.BLOCK_FINISHED:
         indent--
         break
+      case LogMessage.Kind.ARTIFACT_BUILT:
+        printMessage("Artifact built: $message.text")
+        break
     }
   }
 

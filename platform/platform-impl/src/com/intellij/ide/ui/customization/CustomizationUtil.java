@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,11 +137,13 @@ public class CustomizationUtil {
       @Override
       public boolean accept(Object node) {
         DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)node;
-        if (treeNode.isLeaf()) {
+        Object userObject = treeNode.getUserObject();
+        if (treeNode.isLeaf() && !(userObject instanceof Group)) {
           return true;
         }
-        final ActionUrl url = getActionUrl(new TreePath(treeNode.getPath()), 0);
-        url.getGroupPath().add(((Group)treeNode.getUserObject()).getName());
+        ActionUrl url = getActionUrl(new TreePath(treeNode.getPath()), 0);
+        String groupName = ((Group)userObject).getName();
+        url.getGroupPath().add(groupName);
         final TreePath treePath = getTreePath(defaultTree, url);
         if (treePath != null) {
           final DefaultMutableTreeNode visited = (DefaultMutableTreeNode)treePath.getLastPathComponent();
@@ -152,7 +154,7 @@ public class CustomizationUtil {
           //customizations at the new place
           url.getGroupPath().remove(url.getParentGroup());
           if (actions.contains(url)){
-            url.getGroupPath().add(((Group)treeNode.getUserObject()).getName());
+            url.getGroupPath().add(groupName);
             actions.addAll(schema.getChildActions(url));
           }
         }

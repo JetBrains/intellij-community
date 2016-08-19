@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -36,9 +35,7 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.NullUsage;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.usages.rules.UsageInFiles;
-import com.intellij.util.ProxyComparator;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,15 +50,8 @@ import java.util.*;
  * Time: 6:51 PM
  */
 public class UsageFavoriteNodeProvider extends FavoriteNodeProvider {
-  private final static Map<String, TreeSet<WorkingSetSerializable>> ourSerializables =
-    new HashMap<>();
-  private final static Comparator<VirtualFile> VIRTUAL_FILE_COMPARATOR =
-    new ProxyComparator<>(new Convertor<VirtualFile, String>() {
-      @Override
-      public String convert(VirtualFile o) {
-        return o.getPath();
-      }
-    });
+  private final static Map<String, TreeSet<WorkingSetSerializable>> ourSerializables = new HashMap<>();
+  private final static Comparator<VirtualFile> VIRTUAL_FILE_COMPARATOR = (o1, o2) -> o1.getPath().compareTo(o2.getPath());
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.favoritesTreeView.UsageFavoriteNodeProvider");
 
   static {

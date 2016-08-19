@@ -288,7 +288,7 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
 
         myQueuedToRemove.remove(activity);
         myActivities.remove(activity);
-        myContainer.onActivityRemoved(BusyImpl.this, activity);
+        myContainer.onActivityRemoved(this, activity);
 
         onReady();
       };

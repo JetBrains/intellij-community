@@ -47,7 +47,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
@@ -106,12 +105,29 @@ public class PsiUtil {
   private PsiUtil() {
   }
 
-  @Nullable
-  public static PsiElement findModifierInList(@NotNull GrModifierList list, @GrModifier.GrModifierConstant @NotNull String modifier) {
-    for (PsiElement element : list.getModifiers()) {
-      if (modifier.equals(element.getText())) return element;
+  /**
+   * @param owner modifier list owner
+   * @return <ul>
+   * <li>{@code true} when owner has explicit type or it's not required for owner to have explicit type</li>
+   * <li>{@code false} when doesn't have explicit type and it's required to have a type or modifier</li>
+   * <li>{@code defaultValue} for the other owners</li>
+   * </ul>
+   */
+  public static boolean modifierListMayBeEmpty(@Nullable PsiElement owner) {
+    if (owner instanceof GrParameter) {
+      return true;
     }
-    return null;
+    if (owner instanceof GrMethod) {
+      GrMethod method = (GrMethod)owner;
+      return method.isConstructor() || method.getReturnTypeElementGroovy() != null && !method.hasTypeParameters();
+    }
+    else if (owner instanceof GrVariable) {
+      return ((GrVariable)owner).getTypeElementGroovy() != null;
+    }
+    else if (owner instanceof GrVariableDeclaration) {
+      return ((GrVariableDeclaration)owner).getTypeElementGroovy() != null;
+    }
+    return true;
   }
 
   @Nullable

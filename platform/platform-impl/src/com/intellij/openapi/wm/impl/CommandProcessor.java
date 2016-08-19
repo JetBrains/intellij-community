@@ -83,7 +83,7 @@ public final class CommandProcessor implements Runnable {
       ModalityState modalityState = Registry.is("ide.perProjectModality") ? ModalityState.defaultModalityState() : ModalityState.NON_MODAL;
       application.getInvokator().invokeLater(command, modalityState, expire == null ? application.getDisposed() : expire).doWhenDone(() -> {
         if (queueNext) {
-          CommandProcessor.this.run();
+          this.run();
         }
       });
     }

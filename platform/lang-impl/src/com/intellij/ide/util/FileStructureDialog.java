@@ -397,7 +397,7 @@ public class FileStructureDialog extends DialogWrapper {
       final Ref<Boolean> succeeded = new Ref<>();
       final CommandProcessor commandProcessor = CommandProcessor.getInstance();
       commandProcessor.executeCommand(myProject, () -> {
-        succeeded.set(MyCommanderPanel.super.navigateSelectedElement());
+        succeeded.set(super.navigateSelectedElement());
         IdeDocumentHistory.getInstance(myProject).includeCurrentCommandAsNavigation();
       }, "Navigate", null);
       if (succeeded.get()) {

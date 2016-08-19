@@ -851,7 +851,21 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myHolder.add(HighlightNamesUtil.highlightClassName(null, element, colorsScheme));
     }
     else if (resolved instanceof PsiClass) {
-      myHolder.add(HighlightNamesUtil.highlightClassName((PsiClass)resolved, element, colorsScheme));
+      final PsiElement qualifier = element.getQualifier();
+      boolean highlightByItem = qualifier instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifier).getTypeParameters().length > 0 ||
+                                PsiTreeUtil.findChildOfType(element, PsiComment.class) != null;
+      final PsiElement referenceNameElement = element.getReferenceNameElement();
+      final List<PsiElement> toHighlight = new ArrayList<>();
+      if (highlightByItem && referenceNameElement != null) {
+        toHighlight.add(referenceNameElement);
+        toHighlight.addAll(PsiTreeUtil.findChildrenOfType(element, PsiJavaCodeReferenceElement.class));
+      }
+      else {
+        toHighlight.add(element);
+      }
+      for (PsiElement psiElement : toHighlight) {
+        myHolder.add(HighlightNamesUtil.highlightClassName((PsiClass)resolved, psiElement, colorsScheme));
+      }
     }
   }
 
@@ -1619,9 +1633,17 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitModule(module);
     if (!myHolder.hasErrorResults()) myHolder.add(checkFeature(module, Feature.MODULES));
     if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkFileName(module, myFile));
-    if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkModuleDuplicates(module, myFile));
     if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkFileDuplicates(module, myFile));
     if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkFileLocation(module, myFile));
+  }
+
+  @Override
+  public void visitRequiresStatement(PsiRequiresStatement statement) {
+    super.visitRequiresStatement(statement);
+    if (PsiUtil.isLanguageLevel9OrHigher(myFile)) {
+      PsiJavaModuleReferenceElement ref = statement.getReferenceElement();
+      if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkModuleReference(ref));
+    }
   }
 
   @Nullable

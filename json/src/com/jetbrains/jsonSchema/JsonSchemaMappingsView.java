@@ -96,7 +96,7 @@ public class JsonSchemaMappingsView implements Disposable {
     myError = SwingHelper.createHtmlLabel("Warning: conflicting mappings. <a href=\"#\">Show details</a>", null, s -> {
       final BalloonBuilder builder = JBPopupFactory.getInstance().
         createHtmlTextBalloonBuilder(myErrorText, UIUtil.getBalloonWarningIcon(), MessageType.WARNING.getPopupBackground(), null);
-      builder.setDisposable(JsonSchemaMappingsView.this);
+      builder.setDisposable(this);
       builder.setHideOnClickOutside(true);
       builder.setCloseButtonEnabled(true);
       builder.createBalloon().showInCenterOf(myError);

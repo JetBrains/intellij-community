@@ -85,9 +85,9 @@ public class IDEARemoteTestNG extends TestNG {
   private void attachListeners(IDEATestNGRemoteListener listener) {
     addListener((Object)new IDEATestNGSuiteListener(listener));
     addListener((Object)new IDEATestNGTestListener(listener));
-    final IDEATestNGConfigurationListener configurationListener = new IDEATestNGConfigurationListener(listener);
-    addListener((Object)configurationListener);
     try {
+      final IDEATestNGConfigurationListener configurationListener = new IDEATestNGConfigurationListener(listener);
+      addListener((Object)configurationListener);
       addListener((Object)new IDEATestNGInvokedMethodListener(listener));
       configurationListener.setIgnoreStarted();
     }

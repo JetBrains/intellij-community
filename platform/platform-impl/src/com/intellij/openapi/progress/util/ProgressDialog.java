@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl;
 import com.intellij.openapi.ui.impl.FocusTrackbackProvider;
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.FocusTrackback;
@@ -33,6 +34,7 @@ import com.intellij.ui.TitlePanel;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -127,7 +129,7 @@ class ProgressDialog implements Disposable {
     if (SystemInfo.isMac) {
       UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myText2Label);
     }
-    myInnerPanel.setPreferredSize(new Dimension(SystemInfo.isMac ? 350 : 450, -1));
+    myInnerPanel.setPreferredSize(new Dimension(SystemInfo.isMac ? 350 : JBUI.scale(450), -1));
 
     myCancelButton.addActionListener(new ActionListener() {
       @Override
@@ -402,7 +404,9 @@ class ProgressDialog implements Disposable {
       super.init();
       setUndecorated(true);
       getRootPane().setWindowDecorationStyle(JRootPane.NONE);
-      myPanel.setBorder(PopupBorder.Factory.create(true, true));
+      if (! (SystemInfo.isWindows && UIUtil.isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.win10.ui"))) {
+        myPanel.setBorder(PopupBorder.Factory.create(true, true));
+      }
     }
 
     @Override

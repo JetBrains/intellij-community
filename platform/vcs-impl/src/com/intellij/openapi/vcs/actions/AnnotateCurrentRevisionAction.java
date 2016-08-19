@@ -3,7 +3,7 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsRevisionDescription;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -14,19 +14,19 @@ import java.util.List;
 import java.util.Map;
 
 class AnnotateCurrentRevisionAction extends AnnotateRevisionAction {
-  @Nullable private final List<VcsFileRevision> myRevisions;
+  @Nullable private final List<VcsRevisionDescription> myRevisions;
 
   public AnnotateCurrentRevisionAction(@NotNull FileAnnotation annotation, @NotNull AbstractVcs vcs) {
     super("Annotate Revision", "Annotate selected revision in new tab", AllIcons.Actions.Annotate,
           annotation, vcs);
-    List<VcsFileRevision> revisions = annotation.getRevisions();
+    List<? extends VcsRevisionDescription> revisions = annotation.getRevisionDescriptions();
     if (revisions == null) {
       myRevisions = null;
       return;
     }
 
-    Map<VcsRevisionNumber, VcsFileRevision> map = new HashMap<>();
-    for (VcsFileRevision revision : revisions) {
+    Map<VcsRevisionNumber, VcsRevisionDescription> map = new HashMap<>();
+    for (VcsRevisionDescription revision : revisions) {
       map.put(revision.getRevisionNumber(), revision);
     }
 
@@ -38,7 +38,7 @@ class AnnotateCurrentRevisionAction extends AnnotateRevisionAction {
 
   @Override
   @Nullable
-  public List<VcsFileRevision> getRevisions() {
+  public List<VcsRevisionDescription> getRevisions() {
     return myRevisions;
   }
 }

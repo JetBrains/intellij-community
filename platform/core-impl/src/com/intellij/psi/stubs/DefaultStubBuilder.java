@@ -22,6 +22,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.BooleanStack;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,14 +56,18 @@ public class DefaultStubBuilder implements StubBuilder {
   protected StubElement buildStubTreeFor(@NotNull ASTNode root, @NotNull StubElement parentStub) {
     Stack<StubElement> parentStubs = new Stack<StubElement>();
     Stack<ASTNode> parentNodes = new Stack<ASTNode>();
+    BooleanStack parentNodesStubbed = new BooleanStack();
     parentNodes.push(root);
     parentStubs.push(parentStub);
+    parentNodesStubbed.push(true);
 
     while (!parentStubs.isEmpty()) {
       StubElement stub = parentStubs.pop();
       ASTNode node = parentNodes.pop();
+      boolean immediateParentStubbed = parentNodesStubbed.pop();
       IElementType nodeType = node.getElementType();
 
+      boolean hasStub = node == root;
       if (nodeType instanceof IStubElementType) {
         final IStubElementType type = (IStubElementType)nodeType;
 
@@ -72,7 +77,12 @@ public class DefaultStubBuilder implements StubBuilder {
             LOG.error("Non-StubBasedPsiElement requests stub creation. Stub type: " + type + ", PSI: " + element);
           }
           @SuppressWarnings("unchecked") StubElement s = type.createStub(element, stub);
+          if (!immediateParentStubbed) {
+            ((ObjectStubBase) s).markDangling();
+          }
           stub = s;
+          hasStub = true;
+          //noinspection ConstantConditions
           LOG.assertTrue(stub != null, element);
         }
       }
@@ -81,6 +91,7 @@ public class DefaultStubBuilder implements StubBuilder {
         if (!skipChildProcessingWhenBuildingStubs(node, childNode)) {
           parentNodes.push(childNode);
           parentStubs.push(stub);
+          parentNodesStubbed.push(hasStub);
         }
       }
     }

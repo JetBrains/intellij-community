@@ -2515,22 +2515,22 @@
                      key="size.replaceable.by.isempty.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.style.SizeReplaceableByIsEmptyInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ExpandOneLineLambda2CodeBlock" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="expand.one.line.lambda2.code.block.name" groupBundle="messages.InspectionsBundle"
+    <localInspection groupPath="Java" language="JAVA" shortName="LambdaBodyCanBeCodeBlock" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="lambda.body.can.be.code.block.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.siyeh.ig.style.ExpandOneLineLambda2CodeBlockInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="InferLambdaParameterType" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="infer.lambda.parameter.type.name" groupBundle="messages.InspectionsBundle"
+                     implementationClass="com.siyeh.ig.style.LambdaBodyCanBeCodeBlockInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="LambdaParameterTypeCanBeSpecified" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="lambda.parameter.type.can.be.specified.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.siyeh.ig.style.InferLambdaParameterTypeInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ReplaceDiamondWithExplicitTypeArguments" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="replace.diamond.with.explicit.type.arguments.name" groupBundle="messages.InspectionsBundle"
+                     implementationClass="com.siyeh.ig.style.LambdaParameterTypeCanBeSpecifiedInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="DiamondCanBeReplacedWithExplicitTypeArguments" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="diamond.can.be.replaced.with.explicit.type.arguments.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.siyeh.ig.style.ReplaceDiamondWithExplicitTypeArgumentsInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ReplaceLambdaWithAnonymous" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="replace.lambda.with.anonymous.name" groupBundle="messages.InspectionsBundle"
+                     implementationClass="com.siyeh.ig.style.DiamondCanBeReplacedWithExplicitTypeArgumentsInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="LambdaCanBeReplacedWithAnonymous" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="lambda.can.be.replaced.with.anonymous.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.siyeh.ig.style.ReplaceLambdaWithAnonymousInspection"/>
+                     implementationClass="com.siyeh.ig.style.LambdaCanBeReplacedWithAnonymousInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="MethodRefCanBeReplacedWithLambda" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="method.ref.can.be.replaced.with.lambda.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
@@ -2539,10 +2539,10 @@
                      key="try.statement.with.multiple.resources.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.exceptions.TryStatementWithMultipleResourcesInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="SplitMultiCatch" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="split.multi.catch.name" groupBundle="messages.InspectionsBundle"
+    <localInspection groupPath="Java" language="JAVA" shortName="MultiCatchCanBeSplit" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="multi.catch.can.be.split.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.siyeh.ig.exceptions.SplitMultiCatchInspection"/>
+                     implementationClass="com.siyeh.ig.exceptions.MultiCatchCanBeSplitInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SingleElementAnnotation" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="single.element.annotation.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"

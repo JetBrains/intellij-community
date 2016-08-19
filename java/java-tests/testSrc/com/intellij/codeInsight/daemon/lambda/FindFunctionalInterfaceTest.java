@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.search.JavaFunctionalExpressionSearcher;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -101,9 +102,14 @@ public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase
 
   public void testFindSubInterfaceLambdas() {
     configure();
+
     assertSize(5, FunctionalExpressionSearch.search(findClass("DumbAwareRunnable")).findAll());
     assertSize(3, FunctionalExpressionSearch.search(findClass("DumbAwareRunnable2")).findAll());
     assertSize(6, FunctionalExpressionSearch.search(findClass("DumbAware")).findAll());
+
+    assertSize(1, FunctionalExpressionSearch.search(findClass("WithDefaultMethods")).findAll());
+    assertSize(1, FunctionalExpressionSearch.search(findClass("WithManyMethods")).findAll());
+    assertSize(1, FunctionalExpressionSearch.search(findClass("WithManyMethods2")).findAll());
   }
 
   public void testArraysStreamLikeApi() {
@@ -117,11 +123,53 @@ public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase
   }
 
   public void testStreamOfLikeApiWithField() {
-    assertFalse(JavaFunctionalExpressionSearcher.hasStreamLikeApi(getProject()));
     myFixture.addClass("class Base { StrType Stream = null; }");
     configure();
-    assertTrue(JavaFunctionalExpressionSearcher.hasStreamLikeApi(getProject()));
     assertSize(1, FunctionalExpressionSearch.search(findClass("I")).findAll());
+  }
+
+  public void testCallWithQualifiedName() {
+    myFixture.addClass("package pkg.p1.p2.p3; public interface I { void run() {} }");
+    myFixture.addClass("package pkg.p1.p2.p3; public class Util { public static void foo(I i) {} }");
+    configure();
+    assertSize(1, FunctionalExpressionSearch.search(findClass("pkg.p1.p2.p3.I")).findAll());
+  }
+
+  public void testCallOnGenericParameter() {
+    configure();
+    assertSize(1, FunctionalExpressionSearch.search(findClass("I")).findAll());
+  }
+
+  public void testDontVisitInapplicableFiles() {
+    PsiClass sam = myFixture.addClass("interface I { void foo(); }");
+    myFixture.addClass("class Some { " +
+                       "{ I i = () -> {}; }" +
+                       "void doTest(int a) {} " +
+                       "void doTest(I i, I j) {} " +
+                       "Some intermediate() {} " +
+                       "Object intermediate(int a, int b) {} " +
+                       "}");
+    myFixture.addClass("class _WrongSignature {{ I i = a -> {}; I j = () -> true; }}");
+    myFixture.addClass("class _CallArgumentCountMismatch extends Some {{ " +
+                       "  doTest(() -> {}); " +
+                       "  intermediate(4).doTest(() -> {}, () -> {}); " +
+                       "}}");
+    myFixture.addClass("class _KnownTypeVariableAssignment {" +
+                       "static Runnable field;" +
+                       "{ Runnable r = () -> {}; field = () -> {}; } " +
+                       "}");
+    myFixture.addClass("class _SuperFieldAssignment extends _KnownTypeVariableAssignment {" +
+                       "{ field = () -> {}; } " +
+                       "}");
+    myFixture.addClass("import static _KnownTypeVariableAssignment.*; " +
+                       "class _StaticallyImportedFieldAssignment {" +
+                       "{ field = () -> {}; } " +
+                       "}");
+
+    assertSize(1, FunctionalExpressionSearch.search(sam).findAll());
+    for (VirtualFile file : JavaFunctionalExpressionSearcher.getFilesToSearchInPsi(sam)) {
+      assertFalse(file.getName(), file.getName().startsWith("_"));
+    }
   }
 
   private PsiClass findClass(String i) {

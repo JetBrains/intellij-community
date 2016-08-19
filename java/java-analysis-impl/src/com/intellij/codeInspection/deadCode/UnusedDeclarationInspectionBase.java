@@ -754,11 +754,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     myContext = null;
   }
 
-  @Override
-  public boolean isGraphNeeded() {
-    return true;
-  }
-
   @TestOnly
   public List<EntryPoint> getExtensions() {
     return myExtensions;

@@ -15,15 +15,13 @@
  */
 package com.intellij.refactoring.typeMigration.rules;
 
-import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.controlflow.UnnecessaryReturnInspection;
+import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,46 +36,22 @@ public class VoidConversionRule extends TypeConversionRule {
                                                      PsiMember member,
                                                      PsiExpression context,
                                                      TypeMigrationLabeler labeler) {
-    if (PsiType.VOID.equals(to) && context.getParent() instanceof PsiReturnStatement) {
-      final boolean isPure = PsiTreeUtil.processElements(context, new PsiElementProcessor() {
+    if (PsiType.VOID.equals(to) &&
+        context.getParent() instanceof PsiReturnStatement &&
+        !SideEffectChecker.mayHaveSideEffects(context)) {
+      return new TypeConversionDescriptorBase() {
         @Override
-        public boolean execute(@NotNull PsiElement element) {
-          if (element instanceof PsiPrefixExpression) {
-            return analyzeUnaryExpressionOperand(((PsiPrefixExpression)element).getOperand());
-          }
-          if (element instanceof PsiPostfixExpression) {
-            return analyzeUnaryExpressionOperand(((PsiPostfixExpression)element).getOperand());
-          }
-          if (element instanceof PsiMethodCallExpression) {
-            final PsiMethod method = ((PsiMethodCallExpression)element).resolveMethod();
-            return method != null && ControlFlowAnalyzer.isPure(method);
-          }
-          return true;
-        }
-
-        private boolean analyzeUnaryExpressionOperand(PsiExpression operand) {
-          if (!(operand instanceof PsiReferenceExpression)) return false;
-          final PsiElement resolved = ((PsiReferenceExpression)operand).resolve();
-          return !(resolved instanceof PsiField);
-        }
-      });
-      if (isPure) {
-        return new TypeConversionDescriptorBase() {
-          @Override
-          public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) throws IncorrectOperationException {
-            final PsiElement parent = expression.getParent();
-            if (parent instanceof PsiReturnStatement) {
-              expression.delete();
-              if (UnnecessaryReturnInspection.isReturnRedundant((PsiReturnStatement)parent, false, null)) {
-                parent.delete();
-              }
+        public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) throws IncorrectOperationException {
+          final PsiElement parent = expression.getParent();
+          if (parent instanceof PsiReturnStatement) {
+            expression.delete();
+            if (UnnecessaryReturnInspection.isReturnRedundant((PsiReturnStatement)parent, false, null)) {
+              parent.delete();
             }
-            return null;
           }
-        };
-      } else {
-        return null;
-      }
+          return null;
+        }
+      };
     }
     return null;
   }

@@ -346,7 +346,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     UIUtil.invokeLaterIfNeeded(() -> {
       if (getProject().isDisposed()) return;
       List<Pair<NamedScope, NamedScopesHolder>> scopeList = new ArrayList<>();
-      addScopesToList(scopeList, DependencyValidationManagerImpl.this);
+      addScopesToList(scopeList, this);
       addScopesToList(scopeList, myNamedScopeManager);
       myScopePairs.clear();
       myScopePairs.addAll(scopeList);

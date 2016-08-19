@@ -118,7 +118,6 @@ public final class PythonSdkType extends SdkType {
     super("Python SDK");
   }
 
-
   public Icon getIcon() {
     return PythonIcons.Python.Python;
   }
@@ -905,6 +904,16 @@ public final class PythonSdkType extends SdkType {
       return null;
     }
     return ModuleRootManager.getInstance(module).getSdk();
+  }
+
+  @NotNull
+  public static String getSdkKey(@NotNull Sdk sdk) {
+    return sdk.getName();
+  }
+
+  @Nullable
+  public static Sdk findSdkByKey(@NotNull String key) {
+    return ProjectJdkTable.getInstance().findJdk(key);
   }
 }
 

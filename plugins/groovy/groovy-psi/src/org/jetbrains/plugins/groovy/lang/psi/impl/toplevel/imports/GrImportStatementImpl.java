@@ -63,12 +63,6 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
     super(stub, nodeType);
   }
 
-
-  @Override
-  public PsiElement getParent() {
-    return getParentByStub();
-  }
-
   @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitImportStatement(this);
@@ -132,7 +126,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
       GrCodeReferenceElement qualifier = reference == null ? null : reference.getQualifier();
       PsiElement target = qualifier == null ? null : qualifier.resolve();
       PsiClass clazz = target instanceof PsiClass ? (PsiClass)target : null;
-      return CachedValueProvider.Result.create(clazz, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, GrImportStatementImpl.this);
+      return CachedValueProvider.Result.create(clazz, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, this);
     });
   }
 

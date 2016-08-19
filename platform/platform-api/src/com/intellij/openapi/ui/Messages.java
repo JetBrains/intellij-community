@@ -677,7 +677,7 @@ public class Messages {
   public static void showErrorDialog(@NotNull Component component, String message, @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title) {
     try {
       if (canShowMacSheetPanel()) {
-        MacMessages.getInstance().showErrorDialog(title, message, OK_BUTTON, SwingUtilities.getWindowAncestor(component));
+        MacMessages.getInstance().showErrorDialog(title, message, OK_BUTTON, UIUtil.getWindow(component));
         return;
       }
     }

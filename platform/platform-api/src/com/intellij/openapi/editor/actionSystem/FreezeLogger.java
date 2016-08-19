@@ -32,6 +32,11 @@ public class FreezeLogger {
   private static final int MAX_ALLOWED_TIME = 500;
   
   public static void runUnderPerformanceMonitor(@Nullable Project project, @NotNull Runnable action) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      action.run();
+      return;
+    }
+    
     final ModalityState initial = ModalityState.current();
     ALARM.cancelAllRequests();
     ALARM.addRequest(() -> dumpThreads(project, initial), MAX_ALLOWED_TIME);

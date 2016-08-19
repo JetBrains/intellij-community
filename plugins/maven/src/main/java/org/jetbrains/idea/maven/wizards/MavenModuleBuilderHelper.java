@@ -106,9 +106,11 @@ public class MavenModuleBuilderHelper {
 
         if (myAggregatorProject != null) {
           MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(project, myAggregatorProject.getFile());
-          model.getPackaging().setStringValue("pom");
-          MavenDomModule module = model.getModules().addModule();
-          module.setValue(getPsiFile(project, file));
+          if (model != null) {
+            model.getPackaging().setStringValue("pom");
+            MavenDomModule module = model.getModules().addModule();
+            module.setValue(getPsiFile(project, file));
+          }
         }
       }
     }.execute().getResultObject();
@@ -166,8 +168,10 @@ public class MavenModuleBuilderHelper {
         pom.putUserData(MavenProjectsManagerWatcher.FORCE_IMPORT_AND_RESOLVE_ON_REFRESH, Boolean.TRUE);
         try {
           Document doc = FileDocumentManager.getInstance().getDocument(pom);
-          PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(doc);
-          FileDocumentManager.getInstance().saveDocument(doc);
+          if (doc != null) {
+            PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(doc);
+            FileDocumentManager.getInstance().saveDocument(doc);
+          }
         }
         finally {
           pom.putUserData(MavenProjectsManagerWatcher.FORCE_IMPORT_AND_RESOLVE_ON_REFRESH, null);
@@ -194,7 +198,7 @@ public class MavenModuleBuilderHelper {
     MavenRunnerParameters params = new MavenRunnerParameters(
       false, workingDir.getPath(),
       Collections.singletonList("org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate"),
-      Collections.<String>emptyList());
+      Collections.emptyList());
 
     MavenRunner runner = MavenRunner.getInstance(project);
     MavenRunnerSettings settings = runner.getState().clone();
@@ -217,7 +221,10 @@ public class MavenModuleBuilderHelper {
 
   private void copyGeneratedFiles(File workingDir, VirtualFile pom, Project project) {
     try {
-      FileUtil.copyDir(new File(workingDir, myProjectId.getArtifactId()), new File(pom.getParent().getPath()));
+      String artifactId = myProjectId.getArtifactId();
+      if (artifactId != null) {
+        FileUtil.copyDir(new File(workingDir, artifactId), new File(pom.getParent().getPath()));
+      }
     }
     catch (IOException e) {
       showError(project, e);

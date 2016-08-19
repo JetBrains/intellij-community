@@ -900,7 +900,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     protected abstract boolean hasGetterOrSetter(final PsiMethod[] getters);
 
     protected boolean isProhibitedReference(PsiExpression expression) {
-      return BackpointerUtil.isBackpointerReference(expression, field -> NecessaryAccessorsVisitor.this.isProhibitedReference(field));
+      return BackpointerUtil.isBackpointerReference(expression, field -> this.isProhibitedReference(field));
     }
 
     protected abstract boolean isProhibitedReference(PsiField field);

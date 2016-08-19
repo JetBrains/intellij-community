@@ -175,7 +175,7 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
     final PsiMethod existingMethod = ((MethodHierarchyNodeDescriptor)descriptor).getMethod(psiClass, false);
     if (existingMethod != null) {
       FunctionalExpressionSearch.search(existingMethod).forEach(expression -> {
-        descriptors.add(new MethodHierarchyNodeDescriptor(myProject, descriptor, expression, false, MethodHierarchyTreeStructure.this));
+        descriptors.add(new MethodHierarchyNodeDescriptor(myProject, descriptor, expression, false, this));
         return true;
       });
     }

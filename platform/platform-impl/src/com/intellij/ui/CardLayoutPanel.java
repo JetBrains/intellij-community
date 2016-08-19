@@ -132,7 +132,7 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
             select(callback, key, ui1);
           }
           else callback.setRejected();
-        }, ModalityState.stateForComponent(CardLayoutPanel.this));
+        }, ModalityState.stateForComponent(this));
       }
       else callback.setRejected();
     });

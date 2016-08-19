@@ -264,6 +264,9 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
         }
       }
       else if (member instanceof PsiClass) {
+        if (sourceClass.isInterface() && !targetClass.isInterface()) {
+          PsiUtil.setModifierProperty(member, PsiModifier.PUBLIC, true);
+        }
         if (Boolean.FALSE.equals(memberInfo.getOverrides())) {
           final PsiClass psiClass = (PsiClass)memberInfo.getMember();
           PsiClassType classType = null;

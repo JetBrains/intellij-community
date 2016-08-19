@@ -28,8 +28,8 @@ import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.InspectionTestCase;
 import com.intellij.testFramework.PsiTestUtil;
@@ -55,18 +55,26 @@ public class NullableStuffInspectionAncientTest extends InspectionTestCase {
   }
 
   @Override
-  protected void setupRootModel(@NotNull String testDir, @NotNull VirtualFile[] sourceDir, String sdkName) {
-    super.setupRootModel(testDir, sourceDir, sdkName);
-    Sdk sdk = ModuleRootManager.getInstance(myModule).getSdk();
-    removeAnnotationsJar(sdk);
+  protected Sdk getTestProjectSdk() {
+    Sdk sdk = super.getTestProjectSdk();
+    sdk = removeAnnotationsJar(sdk);
     if ("testJdkAnnotationsWithoutJetBrainsAnnotations".equals(getName())) {
-      PsiTestUtil.addJdkAnnotations(sdk);
+      sdk = PsiTestUtil.addJdkAnnotations(sdk);
     }
+    return sdk;
   }
 
-  private static void removeAnnotationsJar(final Sdk sdk) {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      final SdkModificator sdkMod = sdk.getSdkModificator();
+  @NotNull
+  private static Sdk removeAnnotationsJar(@NotNull Sdk sdk) {
+    return ApplicationManager.getApplication().runWriteAction((Computable<Sdk>)() -> {
+      Sdk clone;
+      try {
+        clone = (Sdk)sdk.clone();
+      }
+      catch (CloneNotSupportedException e) {
+        throw new RuntimeException(e);
+      }
+      final SdkModificator sdkMod = clone.getSdkModificator();
       for (VirtualFile file : sdkMod.getRoots(OrderRootType.CLASSES)) {
         if ("annotations.jar".equals(file.getName())) {
           sdkMod.removeRoot(file, OrderRootType.CLASSES);
@@ -74,6 +82,7 @@ public class NullableStuffInspectionAncientTest extends InspectionTestCase {
         }
       }
       sdkMod.commitChanges();
+      return clone;
     });
   }
 }

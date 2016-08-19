@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.PairConvertor;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.containers.hash.HashMap;
@@ -41,6 +40,7 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.function.BiFunction;
 
 /**
  * Created with IntelliJ IDEA.
@@ -204,11 +204,11 @@ public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiEle
 
     queue.add(new SchemaTypeInfo(localName, true, nsUri));
 
-    final PairConvertor<String,String,List<Set<SchemaTypeInfo>>> worker =
+    final BiFunction<String, String, List<Set<SchemaTypeInfo>>> worker =
       SchemaTypeInheritanceIndex.getWorker(project, file.getContainingFile().getVirtualFile());
     while (! queue.isEmpty()) {
       final SchemaTypeInfo info = queue.removeFirst();
-      final List<Set<SchemaTypeInfo>> childrenOfType = worker.convert(info.getNamespaceUri(), info.getTagName());
+      final List<Set<SchemaTypeInfo>> childrenOfType = worker.apply(info.getNamespaceUri(), info.getTagName());
       for (Set<SchemaTypeInfo> infos : childrenOfType) {
         for (SchemaTypeInfo typeInfo : infos) {
           if (typeInfo.isIsTypeName()) {

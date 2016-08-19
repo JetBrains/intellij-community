@@ -46,11 +46,6 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub> implements
   }
 
   @Override
-  public PsiElement getParent() {
-    return getParentByStub();
-  }
-
-  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitParameterList(this);
   }

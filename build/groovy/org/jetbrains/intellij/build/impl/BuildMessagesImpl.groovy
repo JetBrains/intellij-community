@@ -15,6 +15,7 @@
  */
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.util.text.UniqueNameGenerator
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.BuildException
 import org.apache.tools.ant.DefaultLogger
@@ -40,12 +41,14 @@ class BuildMessagesImpl implements BuildMessages {
   private final BuildMessagesImpl parentInstance
   private final List<BuildMessagesImpl> forkedInstances = []
   private final List<LogMessage> delayedMessages = []
+  private final UniqueNameGenerator taskNameGenerator = new UniqueNameGenerator()
 
-  static BuildMessagesImpl create(JpsGantProjectBuilder builder, Project antProject, boolean underTeamCity) {
+  static BuildMessagesImpl create(JpsGantProjectBuilder builder, Project antProject) {
     String key = "IntelliJBuildMessages"
     def registered = antProject.getReference(key)
     if (registered != null) return registered as BuildMessagesImpl
 
+    boolean underTeamCity = System.getProperty("teamcity.buildType.id") != null
     BuildInfoPrinter buildInfoPrinter = underTeamCity ? new TeamCityBuildInfoPrinter() : new DefaultBuildInfoPrinter()
     builder.buildInfoPrinter = buildInfoPrinter
     disableAntLogging(antProject)
@@ -119,6 +122,11 @@ class BuildMessagesImpl implements BuildMessages {
     }
   }
 
+  @Override
+  void artifactBuild(String relativeArtifactPath) {
+    processMessage(new LogMessage(LogMessage.Kind.ARTIFACT_BUILT, relativeArtifactPath))
+  }
+
   void processMessage(LogMessage message) {
     if (parentInstance != null) {
       //It appears that TeamCity currently cannot properly handle log messages from parallel tasks (https://youtrack.jetbrains.com/issue/TW-46515)
@@ -131,7 +139,8 @@ class BuildMessagesImpl implements BuildMessages {
   }
 
   @Override
-  BuildMessages forkForParallelTask(String taskName) {
+  BuildMessages forkForParallelTask(String suggestedTaskName) {
+    String taskName = taskNameGenerator.generateUniqueName(suggestedTaskName)
     def forked = new BuildMessagesImpl(loggerFactory.apply(taskName), loggerFactory, antTaskLogger, this)
     forkedInstances << forked
     return forked

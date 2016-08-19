@@ -47,7 +47,7 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
   public JComponent createOptionsPanel() {
     JTabbedPane tabs = new JBTabbedPane(SwingConstants.TOP);
     tabs.add("Entry points", new OptionsPanel());
-    tabs.add("On the fly editor settings", myLocalInspectionBase.createOptionsPanel());
+    tabs.add("Members to report", myLocalInspectionBase.createOptionsPanel());
     return tabs;
   }
 
@@ -126,18 +126,8 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
       });
 
       gc.gridy++;
-      add(myNonJavaCheckbox, gc);
-
-      final JButton configureClassPatternsButton = EntryPointsManagerImpl.createConfigureClassPatternsButton();
-      gc.fill = GridBagConstraints.NONE;
-      gc.gridy++;
-      add(configureClassPatternsButton, gc);
-
-      JButton configureAnnotations = EntryPointsManagerImpl.createConfigureAnnotationsButton();
-      gc.gridy++;
       gc.weighty = 1;
-
-      add(configureAnnotations, gc);
+      add(myNonJavaCheckbox, gc);
     }
 
   }

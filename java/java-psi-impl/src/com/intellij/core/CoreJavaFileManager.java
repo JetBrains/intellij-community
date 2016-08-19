@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +37,6 @@ public class CoreJavaFileManager implements JavaFileManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.core.CoreJavaFileManager");
 
   private final List<VirtualFile> myClasspath = new ArrayList<VirtualFile>();
-
   private final PsiManager myPsiManager;
 
   public CoreJavaFileManager(PsiManager psiManager) {
@@ -198,6 +198,29 @@ public class CoreJavaFileManager implements JavaFileManager {
   @Override
   public Collection<String> getNonTrivialPackagePrefixes() {
     return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  public Collection<PsiJavaModule> findModules(@NotNull String moduleName) {
+    Collection<PsiJavaModule> result = null;
+
+    for (VirtualFile root : roots()) {
+      VirtualFile moduleInfo = root.findChild(PsiJavaModule.MODULE_INFO_FILE);
+      if (moduleInfo == null)moduleInfo = root.findChild(PsiJavaModule.MODULE_INFO_CLS_FILE);
+      if (moduleInfo != null) {
+        PsiFile file = myPsiManager.findFile(moduleInfo);
+        if (file instanceof PsiJavaFile) {
+          PsiJavaModule module = ((PsiJavaFile)file).getModuleDeclaration();
+          if (module != null) {
+            if (result == null) result = ContainerUtil.newSmartList();
+            result.add(module);
+          }
+        }
+      }
+    }
+
+    return result != null ? result : Collections.<PsiJavaModule>emptySet();
   }
 
   public void addToClasspath(VirtualFile root) {

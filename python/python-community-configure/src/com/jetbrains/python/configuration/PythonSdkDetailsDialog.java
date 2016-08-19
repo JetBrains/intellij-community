@@ -154,6 +154,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
           updateOkButton();
         }
       })
+      .setRemoveActionUpdater(e -> !(getSelectedSdk() instanceof PyDetectedSdk))
       .addExtraAction(new ToggleVirtualEnvFilterButton())
       .addExtraAction(new ShowPathButton());
 
@@ -279,9 +280,6 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   private void addCreatedSdk(@Nullable final Sdk sdk, boolean newVirtualEnv) {
     if (sdk != null) {
-      final PySdkService sdkService = PySdkService.getInstance();
-      sdkService.restoreSdk(sdk);
-
       boolean isVirtualEnv = PythonSdkType.isVirtualEnv(sdk);
       if (isVirtualEnv && !newVirtualEnv) {
         AddVEnvOptionsDialog dialog = new AddVEnvOptionsDialog(myMainPanel);
@@ -390,8 +388,6 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     final Sdk currentSdk = getSelectedSdk();
     if (currentSdk != null) {
       final Sdk sdk = myProjectSdksModel.findSdk(currentSdk);
-      final PySdkService sdkService = PySdkService.getInstance();
-      sdkService.removeSdk(currentSdk);
       DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, () -> SdkConfigurationUtil.removeSdk(sdk));
 
       myProjectSdksModel.removeSdk(sdk);

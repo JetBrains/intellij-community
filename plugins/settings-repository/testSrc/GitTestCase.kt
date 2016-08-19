@@ -41,7 +41,7 @@ internal abstract class GitTestCase : IcsTestCase() {
           mergeSession.conflictResolvedForFile(file, MergeSession.Resolution.AcceptedTheirs)
         }
         else if (Arrays.equals(mergeData.LAST, AM.MARKER_ACCEPT_MY)) {
-          file.setBinaryContent(mergeData.LAST!!)
+          file.setBinaryContent(mergeData.LAST)
           mergeProvider.conflictResolvedForFile(file)
         }
         else {
@@ -51,7 +51,7 @@ internal abstract class GitTestCase : IcsTestCase() {
     }
   }
 
-  data class FileInfo(val name: String, val data: ByteArray)
+  class FileInfo(val name: String, val data: ByteArray)
 
   protected fun addAndCommit(path: String): FileInfo {
     val data = """<file path="$path" />""".toByteArray()

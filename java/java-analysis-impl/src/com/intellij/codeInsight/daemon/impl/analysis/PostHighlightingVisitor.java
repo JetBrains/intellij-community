@@ -223,8 +223,7 @@ class PostHighlightingVisitor {
       return processParameter(myProject, (PsiParameter)parent, identifier, progress);
     }
     if (parent instanceof PsiMethod) {
-      final boolean propertyAccessor = PropertyUtil.isSimplePropertyAccessor((PsiMethod)parent);
-      if (propertyAccessor && myUnusedSymbolInspection.isIgnoreAccessors()) {
+      if (myUnusedSymbolInspection.isIgnoreAccessors() && PropertyUtil.isSimplePropertyAccessor((PsiMethod)parent)) {
         return null;
       }
       if (compareVisibilities((PsiModifierListOwner)parent, myUnusedSymbolInspection.getMethodVisibility())) {

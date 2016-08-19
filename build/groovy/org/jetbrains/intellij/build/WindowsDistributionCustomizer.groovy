@@ -56,7 +56,7 @@ abstract class WindowsDistributionCustomizer {
   /**
    * Name of the root directory in Windows .zip archive
    */
-  abstract String rootDirectoryName(String buildNumber)
+  abstract String rootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber)
 
   /**
    * Override this method to copy additional files to Windows distribution of the product.

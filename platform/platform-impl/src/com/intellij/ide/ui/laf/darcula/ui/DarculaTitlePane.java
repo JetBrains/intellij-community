@@ -19,14 +19,16 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.imgscalr.Scalr;
 import sun.swing.SwingUtilities2;
 
@@ -35,7 +37,6 @@ import javax.swing.*;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.Method;
@@ -312,8 +313,8 @@ public class DarculaTitlePane extends JComponent {
     myCloseButton = createButton("Close", AllIcons.Windows.CloseActive, AllIcons.Windows.CloseHover, myCloseAction, Color.red);
 
     if (getWindowDecorationStyle() == JRootPane.FRAME) {
-      myMaximizeIcon = UIManager.getIcon("InternalFrame.maximizeIcon");
-      myMinimizeIcon = UIManager.getIcon("InternalFrame.minimizeIcon");
+      myMaximizeIcon = AllIcons.Windows.MaximizeInactive;
+      myMinimizeIcon = AllIcons.Windows.MinimizeInactive;
 
       myIconifyButton = createButton("Iconify", AllIcons.Windows.MinimizeInactive, AllIcons.Windows.Minimize, myIconifyAction, BUTTON_HOVER_BG);
       myToggleButton = createButton("Maximize", AllIcons.Windows.MaximizeInactive, AllIcons.Windows.MaximizeInactive, myRestoreAction, BUTTON_HOVER_BG);
@@ -324,7 +325,7 @@ public class DarculaTitlePane extends JComponent {
 
   private JButton createHelpButton() {
     Ref<WindowButton> button = Ref.create();
-    button.set(new WindowButton("Help", AllIcons.Actions.Help, AllIcons.Actions.Help, new AbstractAction("Help") {
+    button.set(new WindowButton("Help", AllIcons.Windows.HelpButton, AllIcons.Windows.HelpButton, new AbstractAction("Help") {
       @Override
       public void actionPerformed(ActionEvent e) {
         final DialogWrapper dialog = DialogWrapper.findInstance(button.get());
@@ -348,8 +349,15 @@ public class DarculaTitlePane extends JComponent {
 
       @Override
       public void paint(Graphics g) {
-        g.setColor(getBackground());
-        g.fillRect(0, 0, getWidth(), getHeight());
+        if (isHelpAvailable()) {
+          super.paint(g);
+        } else {
+          g.setColor(getBackground());
+          g.fillRect(0, 0, getWidth(), getHeight());
+        }
+      }
+
+      private boolean isHelpAvailable() {
         final DialogWrapper dialog = DialogWrapper.findInstance(this);
         if (dialog != null) {
           try {
@@ -357,26 +365,14 @@ public class DarculaTitlePane extends JComponent {
             getHelpAction.setAccessible(true);
             final Object helpAction = getHelpAction.invoke(dialog);
             if (helpAction instanceof Action && ((Action)helpAction).isEnabled()) {
-              if (mouseOverButton) {
-                g.setColor(BUTTON_HOVER_BG);
-                g.fillRect(0, 0, getWidth(), getHeight());
-              }
-              final Font font = new Font("Segoe UI Regular", Font.PLAIN, JBUI.scale(15));
-              g.setFont(font);
-              final FontMetrics fm = getFontMetrics(font);
-              final Rectangle2D bounds = fm.getStringBounds("?", g);
-              int x = (int)((getWidth() - bounds.getWidth()) / 2);
-              int y = (int)(getHeight() - bounds.getHeight() / 2);
-              final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-              g.setColor(Color.black);
-              g.drawString("?", x, y);
-              config.restore();
+              return true;
             }
           }
           catch (Exception e) {
             e.printStackTrace();
           }
         }
+        return false;
       }
     });
     return button.get();

@@ -204,10 +204,10 @@ public class SafeDeleteDialog extends DialogWrapper {
     DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> {
       NonProjectFileWritingAccessProvider.disableChecksDuring(() -> {
         if (myCallback != null && isSafeDelete()) {
-          myCallback.run(SafeDeleteDialog.this);
+          myCallback.run(this);
         }
         else {
-          SafeDeleteDialog.super.doOKAction();
+          super.doOKAction();
         }
       });
     });

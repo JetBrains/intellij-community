@@ -38,10 +38,8 @@ abstract class BuildContext {
   WindowsDistributionCustomizer windowsDistributionCustomizer
   LinuxDistributionCustomizer linuxDistributionCustomizer
   MacDistributionCustomizer macDistributionCustomizer
-  MacHostProperties macHostProperties
+  ProprietaryBuildTools proprietaryBuildTools
   BuildOptions options
-  SignTool signTool
-  ScrambleTool scrambleTool
   BundledJreManager bundledJreManager
 
   /**
@@ -67,6 +65,8 @@ abstract class BuildContext {
 
   abstract boolean includeBreakGenLibraries()
 
+  abstract void patchInspectScript(String path)
+
   abstract String getAdditionalJvmArguments()
 
   abstract void notifyArtifactBuilt(String artifactPath)
@@ -88,10 +88,10 @@ abstract class BuildContext {
 
   public static BuildContext createContext(AntBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
                                            String communityHome, String projectHome, String buildOutputRoot, ProductProperties productProperties,
-                                           BuildOptions options = new BuildOptions(), MacHostProperties macHostProperties = null, SignTool signTool = null,
-                                           ScrambleTool scrambleTool = null) {
+                                           ProprietaryBuildTools proprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+                                           BuildOptions options = new BuildOptions()) {
     return BuildContextImpl.create(ant, projectBuilder, project, global, communityHome, projectHome, buildOutputRoot, productProperties,
-                                   options, macHostProperties, signTool, scrambleTool)
+                                   proprietaryBuildTools, options)
   }
 
   /**
@@ -155,6 +155,8 @@ interface BuildMessages {
 
   void progress(String message)
   public <V> V block(String blockName, Closure<V> body)
+
+  void artifactBuild(String relativeArtifactPath)
 
   BuildMessages forkForParallelTask(String taskName)
 

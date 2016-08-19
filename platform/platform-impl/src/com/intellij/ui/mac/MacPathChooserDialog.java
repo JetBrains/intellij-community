@@ -23,27 +23,27 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.CommandProcessorEx;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.UIBundle;
-import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.OwnerOptional;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -52,25 +52,30 @@ import java.util.stream.Stream;
  * @author Denis Fokin
  */
 
-public class MacPathChooserDialog implements PathChooserDialog {
+public class MacPathChooserDialog implements PathChooserDialog, FileChooserDialog{
 
-  private final FileDialog myFileDialog;
+  private FileDialog myFileDialog;
   private final FileChooserDescriptor myFileChooserDescriptor;
-  private final Component myParent;
+  private final WeakReference<Component> myParent;
+  private final Project myProject;
   private final String myTitle;
+  private VirtualFile [] virtualFiles;
 
   public MacPathChooserDialog(FileChooserDescriptor descriptor, Component parent, Project project) {
 
-    //StackingPopupDispatcher.getInstance().hidePersistentPopups();
-    //myDisposeActions.add(() -> StackingPopupDispatcher.getInstance().restorePersistentPopups());
-
-    myFileDialog = parent != null
-                   ? createFileDialogWithOwner(findOwnerByComponent(parent), descriptor.getTitle(), FileDialog.LOAD)
-                   : createFileDialogWithoutOwner(descriptor.getTitle(), FileDialog.LOAD);
-
     myFileChooserDescriptor = descriptor;
-    myParent = parent;
+    myParent = new WeakReference<>(parent);
+    myProject = project;
     myTitle = getChooserTitle(descriptor);
+
+    Consumer<Dialog> dialogConsumer = owner -> myFileDialog = new FileDialog(owner, myTitle, FileDialog.LOAD);
+    Consumer<Frame> frameConsumer = owner -> myFileDialog = new FileDialog(owner, myTitle, FileDialog.LOAD);
+
+    OwnerOptional
+      .fromComponent(parent)
+      .ifDialog(dialogConsumer)
+      .ifFrame(frameConsumer)
+      .ifNull(frameConsumer);
   }
 
   private static String getChooserTitle(final FileChooserDescriptor descriptor) {
@@ -97,8 +102,12 @@ public class MacPathChooserDialog implements PathChooserDialog {
 
   @Override
   public void choose(@Nullable VirtualFile toSelect, @NotNull Consumer<List<VirtualFile>> callback) {
-    String path = toSelect != null ? toSelect.getCanonicalPath() : null;
-    myFileDialog.setFile(path);
+    if (toSelect != null && toSelect.getParent() != null) {
+      myFileDialog.setDirectory(toSelect.getParent().getCanonicalPath());
+      myFileDialog.setFile(toSelect.getPath());
+    }
+
+    myFileDialog.setMultipleMode(myFileChooserDescriptor.isChooseMultiple());
 
     final CommandProcessorEx commandProcessor =
       ApplicationManager.getApplication() != null ? (CommandProcessorEx)CommandProcessor.getInstance() : null;
@@ -110,6 +119,7 @@ public class MacPathChooserDialog implements PathChooserDialog {
       LaterInvocator.enterModal(myFileDialog);
     }
 
+    Component parent = myParent.get();
     try {
       myFileDialog.setVisible(true);
     }
@@ -117,84 +127,39 @@ public class MacPathChooserDialog implements PathChooserDialog {
       if (appStarted) {
         commandProcessor.leaveModal();
         LaterInvocator.leaveModal(myFileDialog);
+        if (parent != null) parent.requestFocus();
       }
     }
 
     File[] files = myFileDialog.getFiles();
-    List<VirtualFile> virtualFilesList = getChosenFiles(Stream.of(files));
+    List<VirtualFile> virtualFileList = getChosenFiles(Stream.of(files));
+    virtualFiles = virtualFileList.toArray(VirtualFile.EMPTY_ARRAY);
 
-    try {
-      myFileChooserDescriptor.validateSelectedFiles(virtualFilesList.toArray(VirtualFile.EMPTY_ARRAY));
-    }
-    catch (Exception e) {
-      Messages.showErrorDialog(myParent, e.getMessage(), myTitle);
-      return;
-    }
-
-    if (!ArrayUtil.isEmpty(files)) {
-      callback.consume(virtualFilesList);
-    }
-    else if (callback instanceof FileChooser.FileChooserConsumer) {
-      ((FileChooser.FileChooserConsumer)callback).cancelled();
-    }
-  }
-
-  @NotNull
-  private static Window findOwnerByComponent(@NotNull Component component) {
-    return (component instanceof Window) ? (Window) component : SwingUtilities.getWindowAncestor(component);
-  }
-
-  @NotNull
-  private static FileDialog createFileDialogWithOwner(@NotNull Window owner, String title, int mode) {
-    FileDialog fileDialog;
-
-    IdePopupManager manager = IdeEventQueue.getInstance().getPopupManager();
-
-    if (manager.isPopupWindow(owner)) {
-
-      manager.closeAllPopups();
-
-      owner = owner.getOwner();
-
-      while (owner != null
-             && !(owner instanceof Dialog)
-             && !(owner instanceof Frame)) {
-        owner = owner.getOwner();
-      }
-    }
-
-    if (owner instanceof Dialog) {
-      Dialog ownerDialog = (Dialog)owner;
-      if (ownerDialog.isModal()) {
-        owner = ownerDialog;
-      }
-      else {
-        while (owner instanceof Dialog && !((Dialog)owner).isModal()) {
-          owner = owner.getOwner();
+    if (!virtualFileList.isEmpty()) {
+      try {
+        if (virtualFileList.size() == 1) {
+          myFileChooserDescriptor.isFileSelectable(virtualFileList.get(0));
         }
+        myFileChooserDescriptor.validateSelectedFiles(virtualFiles);
       }
-    }
-
-    if (owner == null) {
-      fileDialog = createFileDialogWithoutOwner(title, mode);
-    }
-    else {
-      if (owner instanceof Frame) {
-        if (owner instanceof IdeFrame.Child) {
-          IdeFrame.Child ideFrameChild = (IdeFrame.Child)owner;
-          owner = WindowManager.getInstance().getFrame(ideFrameChild.getProject());
+      catch (Exception e) {
+        if (parent == null) {
+          Messages.showErrorDialog(myProject, e.getMessage(), myTitle);
         }
-        fileDialog = new FileDialog((Frame)owner, title, mode);
+        else {
+          Messages.showErrorDialog(parent, e.getMessage(), myTitle);
+        }
+
+        return;
       }
-      else if (owner instanceof Dialog) {
-        fileDialog = new FileDialog((Dialog)owner, title, mode);
+
+      if (!ArrayUtil.isEmpty(files)) {
+        callback.consume(virtualFileList);
       }
-      else {
-        throw new RuntimeException("Owner should be a frame or a dialog");
+      else if (callback instanceof FileChooser.FileChooserConsumer) {
+        ((FileChooser.FileChooserConsumer)callback).cancelled();
       }
     }
-
-    return fileDialog;
   }
 
   @NotNull
@@ -203,5 +168,18 @@ public class MacPathChooserDialog implements PathChooserDialog {
     // On the other hand, it is a bit strange to show a file dialog without an owner
     // Therefore we should minimize usage of this case.
     return new FileDialog((Frame)null, title, load);
+  }
+
+  @NotNull
+  @Override
+  public VirtualFile[] choose(@Nullable VirtualFile toSelect, @Nullable Project project) {
+    choose(toSelect, files -> {});
+    return virtualFiles;
+  }
+
+  @NotNull
+  @Override
+  public VirtualFile[] choose(@Nullable Project project, @NotNull VirtualFile... toSelect) {
+    return choose((toSelect.length > 0 ? toSelect[0] : null), project);
   }
 }

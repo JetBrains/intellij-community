@@ -1161,6 +1161,7 @@ public class KeyVO {
   }
 
   public void testAmbiguousClassQualifier() {
+    myFixture.addFileToProject("Util-invalid.groovy", "println 42")
     myFixture.addClass("package foo; public class Util { public static void foo() {} }")
     myFixture.addClass("package bar; public class Util { public static void bar() {} }")
     myFixture.configureByText 'a.groovy', 'Util.<caret>'

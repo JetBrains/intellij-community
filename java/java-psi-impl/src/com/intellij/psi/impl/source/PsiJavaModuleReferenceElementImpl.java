@@ -21,6 +21,8 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiJavaModuleReferenceElementImpl extends CompositePsiElement implements PsiJavaModuleReferenceElement {
+  private final PsiJavaModuleReference myReference = new PsiJavaModuleReference(this);
+
   public PsiJavaModuleReferenceElementImpl() {
     super(JavaElementType.MODULE_REFERENCE);
   }
@@ -38,9 +40,14 @@ public class PsiJavaModuleReferenceElementImpl extends CompositePsiElement imple
   }
 
   @Override
+  public PsiPolyVariantReference getReference() {
+    return getParent() instanceof PsiJavaModule ? null : myReference;
+  }
+
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
-      ((JavaElementVisitor)visitor).visitModuleReference(this);
+      ((JavaElementVisitor)visitor).visitModuleReferenceElement(this);
     }
     else {
       visitor.visitElement(this);

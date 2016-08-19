@@ -158,7 +158,7 @@ public class MavenConsoleImpl extends MavenConsole {
 
       Content content = ContentFactory.SERVICE.getInstance().createContent(
         myConsoleView.getComponent(), myTitle, true);
-      content.putUserData(CONSOLE_KEY, MavenConsoleImpl.this);
+      content.putUserData(CONSOLE_KEY, this);
       messageView.getContentManager().addContent(content);
       messageView.getContentManager().setSelectedContent(content);
 

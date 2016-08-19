@@ -79,7 +79,7 @@ public class JsonSchemaExportedDefinitions {
         if (!myInitialized || !myId2Key.containsValue(key)) {
           final JsonSchemaObject object = value.getValue();
           if (object != null) {
-            JsonSchemaReader.registerObjectsExportedDefinitions(key, JsonSchemaExportedDefinitions.this, object);
+            JsonSchemaReader.registerObjectsExportedDefinitions(key, this, object);
           }
         }
       });

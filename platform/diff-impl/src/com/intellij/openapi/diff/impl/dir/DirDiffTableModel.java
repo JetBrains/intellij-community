@@ -321,7 +321,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
         myElements.addAll(elements);
         myUpdating.set(false);
         fireTableDataChanged();
-        DirDiffTableModel.this.text.set("");
+        this.text.set("");
         if (loadingPanel.isLoading()) {
           loadingPanel.stopLoading();
         }

@@ -52,20 +52,21 @@ public class JavaHighlightingLexer extends LayeredLexer {
   public IElementType getTokenType() {
     IElementType t = super.getTokenType();
 
-    if (myAtStart && !ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(t)) {
+    if (myAtStart && !isLayerActive() && !ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(t)) {
       myAtStart = false;
       myModuleInfo = t == JavaTokenType.IDENTIFIER && PsiKeyword.MODULE.equals(getTokenText());
     }
 
     if (myModuleInfo && t == JavaTokenType.IDENTIFIER) {
-      String text = getTokenText();
-      if (PsiKeyword.MODULE.equals(text)) t = JavaTokenType.MODULE_KEYWORD;
-      else if (PsiKeyword.REQUIRES.equals(text)) t = JavaTokenType.REQUIRES_KEYWORD;
-      else if (PsiKeyword.EXPORTS.equals(text)) t = JavaTokenType.EXPORTS_KEYWORD;
-      else if (PsiKeyword.USES.equals(text)) t = JavaTokenType.USES_KEYWORD;
-      else if (PsiKeyword.PROVIDES.equals(text)) t = JavaTokenType.PROVIDES_KEYWORD;
-      else if (PsiKeyword.TO.equals(text)) t = JavaTokenType.TO_KEYWORD;
-      else if (PsiKeyword.WITH.equals(text)) t = JavaTokenType.WITH_KEYWORD;
+      switch (getTokenText()) {
+        case PsiKeyword.MODULE: t = JavaTokenType.MODULE_KEYWORD; break;
+        case PsiKeyword.REQUIRES: t = JavaTokenType.REQUIRES_KEYWORD; break;
+        case PsiKeyword.EXPORTS: t = JavaTokenType.EXPORTS_KEYWORD; break;
+        case PsiKeyword.USES: t = JavaTokenType.USES_KEYWORD; break;
+        case PsiKeyword.PROVIDES: t = JavaTokenType.PROVIDES_KEYWORD; break;
+        case PsiKeyword.TO: t = JavaTokenType.TO_KEYWORD; break;
+        case PsiKeyword.WITH: t = JavaTokenType.WITH_KEYWORD; break;
+      }
     }
 
     return t;

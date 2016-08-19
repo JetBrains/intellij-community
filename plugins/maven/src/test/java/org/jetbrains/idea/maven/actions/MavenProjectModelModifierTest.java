@@ -91,6 +91,29 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     assertModuleLibDep("project", "Maven: commons-io:commons-io:2.4");
   }
 
+  public void testAddManagedLibraryDependencyWithDifferentScope() throws IOException {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<dependencyManagement>\n" +
+                  "    <dependencies>\n" +
+                  "        <dependency>\n" +
+                  "            <groupId>commons-io</groupId>\n" +
+                  "            <artifactId>commons-io</artifactId>\n" +
+                  "            <version>2.4</version>\n" +
+                  "            <scope>test</scope>\n" +
+                  "        </dependency>\n" +
+                  "    </dependencies>\n" +
+                  "</dependencyManagement>");
+
+    Promise<Void> result =
+      getExtension().addExternalLibraryDependency(Collections.singletonList(getModule("project")), new CommonsIoLibraryDescriptor_2_4(),
+                                                  DependencyScope.COMPILE);
+    assertNotNull(result);
+    waitUntilImported(result);
+    assertModuleLibDepScope("project", "Maven: commons-io:commons-io:2.4", DependencyScope.COMPILE);
+  }
+
   public void testAddLibraryDependencyReleaseVersion() throws IOException {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

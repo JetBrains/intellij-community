@@ -212,11 +212,11 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
 
     ApplicationManager.getApplication().runWriteAction(() -> {
-      if (psiVariable.getInitializer() != null) {
-        appendTypeCasts(getOccurrenceMarkers(), file, myProject, psiVariable);
-      }
       if (myConflictResolver != null && myInsertedName != null && isIdentifier(myInsertedName, psiVariable.getLanguage())) {
         myConflictResolver.apply(psiVariable.getName());
+      }
+      if (psiVariable.getInitializer() != null) {
+        appendTypeCasts(getOccurrenceMarkers(), file, myProject, psiVariable);
       }
     });
   }

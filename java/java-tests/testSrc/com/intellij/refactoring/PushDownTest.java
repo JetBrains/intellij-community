@@ -97,6 +97,10 @@ public class PushDownTest extends LightRefactoringTestCase {
     doTestImplements(true, true);
   }
 
+  public void testInterfaceVisibilityInClass() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

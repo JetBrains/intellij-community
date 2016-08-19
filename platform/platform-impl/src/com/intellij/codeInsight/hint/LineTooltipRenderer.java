@@ -50,9 +50,15 @@ import java.net.URL;
 public class LineTooltipRenderer extends ComparableObject.Impl implements TooltipRenderer {
 
   @NonNls protected String myText;
+  private JEditorPane myPane;
 
   private boolean myActiveLink = false;
   private int myCurrentWidth;
+
+  public LineTooltipRenderer(String text) {
+    super(text);
+    myText = text;
+  }
 
   public LineTooltipRenderer(String text, Object[] comparable) {
     super(comparable);
@@ -83,13 +89,13 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     if (!editorComponent.isShowing()) return null;
     final JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
 
-    final JEditorPane pane = IdeTooltipManager.initPane(new Html(myText).setKeepFont(true), hintHint, layeredPane);
+    myPane = IdeTooltipManager.initPane(new Html(myText).setKeepFont(true), hintHint, layeredPane);
     hintHint.setContentActive(isActiveHtml(myText));
     if (!hintHint.isAwtTooltip()) {
-      correctLocation(editor, pane, p, alignToRight, expanded, myCurrentWidth);
+      correctLocation(editor, myPane, p, alignToRight, expanded, myCurrentWidth);
     }
 
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(pane);
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myPane);
     scrollPane.setBorder(null);
 
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -104,14 +110,17 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     scrollPane.setViewportBorder(null);
 
     if (hintHint.isRequestFocus()) {
-      pane.setFocusable(true);
+      myPane.setFocusable(true);
     }
 
     final Ref<AnAction> actionRef = new Ref<>();
     final LightweightHint hint = new LightweightHint(scrollPane) {
       @Override
       public void hide() {
-        onHide(pane);
+        if (myPane != null) {
+          onHide(myPane);
+        }
+        myPane = null;
         super.hide();
         final AnAction action = actionRef.get();
         if (action != null) {
@@ -131,11 +140,11 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       public void actionPerformed(final AnActionEvent e) {
         // The tooltip gets the focus if using a screen reader and invocation through a keyboard shortcut.
         hintHint.setRequestFocus(ScreenReader.isActive() && (e.getInputEvent() instanceof KeyEvent));
-        expand(hint, editor, p, pane, alignToRight, group, hintHint);
+        expand(hint, editor, p, myPane, alignToRight, group, hintHint);
       }
     });
 
-    pane.addHyperlinkListener(new HyperlinkListener() {
+    myPane.addHyperlinkListener(new HyperlinkListener() {
       @Override
       public void hyperlinkUpdate(final HyperlinkEvent e) {
         myActiveLink = true;
@@ -159,7 +168,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
           }
 
           if (!expanded) {
-            expand(hint, editor, p, pane, alignToRight, group, hintHint);
+            expand(hint, editor, p, myPane, alignToRight, group, hintHint);
           }
           else {
             stripDescription();
@@ -172,7 +181,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
 
     // This listener makes hint transparent for mouse events. It means that hint is closed
     // by MousePressed and this MousePressed goes into the underlying editor component.
-    pane.addMouseListener(new MouseAdapter() {
+    myPane.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseReleased(final MouseEvent e) {
         if (!myActiveLink) {
@@ -338,5 +347,12 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
 
   public String getText() {
     return myText;
+  }
+
+  public void updateText(String newText) {
+    myText = newText;
+    if (myPane != null) {
+      myPane.setText(myText);
+    }
   }
 }

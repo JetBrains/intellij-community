@@ -26,13 +26,13 @@ import com.intellij.openapi.options.*;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.templateLanguages.TemplateDataLanguagePatterns;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.PairConvertor;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +44,8 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
+
+import static com.intellij.openapi.util.Pair.pair;
 
 /**
  * @author Eugene Belyaev
@@ -422,40 +424,59 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
       mySpeedSearch = new MySpeedSearch(myFileTypesList);
     }
 
-    private static class MySpeedSearch extends MultipleTraitsListSpeedSearch {
+    private static class MySpeedSearch extends SpeedSearchBase<JList> {
+      private final List<Condition<Pair<Object, String>>> myOrderedConvertors;
       private FileTypeConfigurable myController;
       private Object myCurrentType;
       private String myExtension;
 
       private MySpeedSearch(JList component) {
-        super(component, new ArrayList<>());
-        initConvertors();
+        super(component);
+        myOrderedConvertors = Arrays.asList(
+          // simple
+          p -> {
+            String value = p.first.toString();
+            if (p.first instanceof FileType) {
+              value = ((FileType)p.first).getDescription();
+            }
+            return getComparator().matchingFragments(p.second, value) != null;
+          },
+          // by-extension
+          p -> (p.first instanceof FileType && myCurrentType != null) && myCurrentType.equals(p.first)
+        );
+      }
+
+      @Override
+      protected boolean isMatchingElement(Object element, String pattern) {
+        for (Condition<Pair<Object, String>> convertor : myOrderedConvertors) {
+          boolean matched = convertor.value(pair(element, pattern));
+          if (matched) return true;
+        }
+        return false;
+      }
+
+      @Nullable
+      @Override
+      protected final String getElementText(Object element) {
+        throw new IllegalStateException();
+      }
+
+      @Override
+      protected int getSelectedIndex() {
+        return myComponent.getSelectedIndex();
+      }
+
+      @Override
+      protected Object[] getAllElements() {
+        return ListSpeedSearch.getAllListElements(myComponent);
       }
 
       @Override
       protected void selectElement(Object element, String selectedText) {
-        super.selectElement(element, selectedText);
+        ScrollingUtil.selectItem(myComponent, element);
         if (myCurrentType != null && myCurrentType.equals(element) && myController != null) {
           myController.myPatterns.select(myExtension);
         }
-      }
-
-      private void initConvertors() {
-        final PairConvertor<Object, String, Boolean> simpleConvertor = (element, s) -> {
-          String value = element.toString();
-          if (element instanceof FileType) {
-             value = ((FileType)element).getDescription();
-          }
-          return getComparator().matchingFragments(s, value) != null;
-        };
-        final PairConvertor<Object, String, Boolean> byExtensionsConvertor = (element, s) -> {
-          if (element instanceof FileType && myCurrentType != null) {
-            return myCurrentType.equals(element);
-          }
-          return false;
-        };
-        myOrderedConvertors.add(simpleConvertor);
-        myOrderedConvertors.add(byExtensionsConvertor);
       }
 
       @Override

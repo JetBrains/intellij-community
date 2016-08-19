@@ -53,6 +53,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrModifierListStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -118,11 +119,6 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
 
   public GrModifierListImpl(@NotNull ASTNode node) {
     super(node);
-  }
-
-  @Override
-  public PsiElement getParent() {
-    return getParentByStub();
   }
 
   public GrModifierListImpl(GrModifierListStub stub) {
@@ -293,6 +289,9 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     else {
       setModifierPropertyInternal(name, doSet);
     }
+    if (isEmptyModifierList() && !PsiUtil.modifierListMayBeEmpty(this.getParent())) {
+      setModifierPropertyInternal(GrModifier.DEF, true);
+    }
   }
 
   @NotNull
@@ -372,7 +371,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
   public GrAnnotation[] getAnnotations() {
     return CachedValuesManager.getCachedValue(this,
                                               () -> CachedValueProvider.Result
-                                                .create(GrAnnotationCollector.getResolvedAnnotations(GrModifierListImpl.this), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+                                                .create(GrAnnotationCollector.getResolvedAnnotations(this), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
   }
 
   @Override

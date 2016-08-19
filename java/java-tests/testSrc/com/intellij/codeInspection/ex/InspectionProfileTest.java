@@ -325,11 +325,12 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     InspectionToolWrapper toolWrapper = model.getInspectionTool("unused", getProject());
     UnusedDeclarationInspectionBase tool = (UnusedDeclarationInspectionBase)toolWrapper.getTool();
     UnusedSymbolLocalInspectionBase inspectionTool = tool.getSharedLocalInspectionTool();
-    inspectionTool.setClassVisibility("none");
+    inspectionTool.setClassVisibility(PsiModifier.PUBLIC);
+    inspectionTool.CLASS = false;
     model.commit();
     String mergedText = "<profile version=\"1.0\">\n" +
                         "  <option name=\"myName\" value=\"ToConvert\" />\n" +
-                        "  <inspection_tool class=\"unused\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" inner_class=\"none\">\n" +
+                        "  <inspection_tool class=\"unused\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
                         "    <option name=\"LOCAL_VARIABLE\" value=\"true\" />\n" +
                         "    <option name=\"FIELD\" value=\"true\" />\n" +
                         "    <option name=\"METHOD\" value=\"true\" />\n" +

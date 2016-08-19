@@ -15,8 +15,6 @@
  */
 package com.jetbrains.python.configuration;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -24,7 +22,10 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.util.Comparing;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.*;
+import com.jetbrains.python.sdk.PyDetectedSdk;
+import com.jetbrains.python.sdk.PySdkUtil;
+import com.jetbrains.python.sdk.PythonSdkAdditionalData;
+import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
 import org.jetbrains.annotations.NotNull;
@@ -76,7 +77,6 @@ public class PyConfigurableInterpreterList {
   }
 
   private void addDetectedSdks(@NotNull final List<Sdk> result) {
-    final PySdkService sdkService = PySdkService.getInstance();
     final List<String> sdkHomes = new ArrayList<>();
     sdkHomes.addAll(VirtualEnvSdkFlavor.INSTANCE.suggestHomePaths());
     for (PythonSdkFlavor flavor : PythonSdkFlavor.getApplicableFlavors()) {
@@ -84,16 +84,9 @@ public class PyConfigurableInterpreterList {
       sdkHomes.addAll(flavor.suggestHomePaths());
     }
     Collections.sort(sdkHomes);
-    sdkHomes.addAll(sdkService.getAddedSdks());
     for (String sdkHome : SdkConfigurationUtil.filterExistingPaths(PythonSdkType.getInstance(), sdkHomes, getModel().getSdks())) {
       result.add(new PyDetectedSdk(sdkHome));
     }
-    Iterables.removeIf(result, new Predicate<Sdk>() {
-      @Override
-      public boolean apply(@Nullable Sdk input) {
-        return input != null && sdkService.isRemoved(input);
-      }
-    });
   }
 
   public List<Sdk> getAllPythonSdks() {

@@ -118,9 +118,11 @@ class WindowsDistributionBuilder {
       //todo[nik] rename idea.bat in sources to something more generic
       buildContext.ant.move(file: "$winDistPath/bin/idea.bat", tofile: "$winDistPath/bin/$batName")
     }
-    String inspectScript = buildContext.productProperties.inspectScriptName
+    String inspectScript = buildContext.productProperties.inspectCommandName
     if (inspectScript != "inspect") {
-      buildContext.ant.move(file: "$winDistPath/bin/inspect.bat", tofile: "$winDistPath/bin/${inspectScript}.bat")
+      String targetPath = "$winDistPath/bin/${inspectScript}.bat"
+      buildContext.ant.move(file: "$winDistPath/bin/inspect.bat", tofile: targetPath)
+      buildContext.patchInspectScript(targetPath)
     }
 
 
@@ -167,9 +169,6 @@ IDS_VM_OPTIONS=$vmOptions
       String inputPath = "$communityHome/bin/WinLauncher/WinLauncher${arch.fileSuffix}.exe"
       def outputPath = "$winDistPath/bin/$exeFileName"
       def resourceModules = [buildContext.findApplicationInfoModule(), buildContext.findModule("icons")]
-      if (buildContext.productProperties.brandingModule != null) {
-        resourceModules << buildContext.findRequiredModule(buildContext.productProperties.brandingModule)
-      }
       buildContext.ant.java(classname: "com.pme.launcher.LauncherGeneratorMain", fork: "true", failonerror: "true") {
         sysproperty(key: "java.awt.headless", value: "true")
         arg(value: inputPath)
@@ -187,6 +186,9 @@ IDS_VM_OPTIONS=$vmOptions
           resourceModules.collectMany { it.sourceRoots }.each { JpsModuleSourceRoot root ->
             pathelement(location: root.file.absolutePath)
           }
+          buildContext.productProperties.brandingResourcePaths.each {
+            pathelement(location: it)
+          }
         }
       }
     }
@@ -195,7 +197,7 @@ IDS_VM_OPTIONS=$vmOptions
   private void buildWinZip(String jreDirectoryPath, String zipNameSuffix) {
     buildContext.messages.block("Build Windows ${zipNameSuffix}.zip distribution") {
       def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.baseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${zipNameSuffix}.zip"
-      def zipPrefix = customizer.rootDirectoryName(buildContext.buildNumber)
+      def zipPrefix = customizer.rootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
       def dirs = [buildContext.paths.distAll, winDistPath]
       if (jreDirectoryPath != null) {
         dirs += jreDirectoryPath

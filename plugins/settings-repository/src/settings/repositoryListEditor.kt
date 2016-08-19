@@ -114,6 +114,7 @@ private fun deleteRepository() {
     indicator.isIndeterminate = true
 
     repositoryManager.deleteRepository()
+    icsManager.repositoryActive = false
   }
 
   val store = ApplicationManager.getApplication().stateStore as ComponentStoreImpl

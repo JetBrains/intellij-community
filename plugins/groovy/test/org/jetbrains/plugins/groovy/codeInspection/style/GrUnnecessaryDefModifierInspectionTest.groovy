@@ -32,6 +32,7 @@ public class GrUnnecessaryDefModifierInspectionTest extends LightGroovyTestCase 
 def foo(<warning descr="Modifier 'def' is not necessary">def</warning> Object a) {}
 def baw(<warning descr="Modifier 'def' is not necessary">def</warning> a) {}
 <warning descr="Modifier 'def' is not necessary">d<caret>ef</warning> boolean baz(a) {}
+def <T> T bax() {}
 <warning descr="Modifier 'def' is not necessary">def</warning> Object bar
 def baf
 def (int a, b) = [1, 2]
@@ -45,6 +46,7 @@ class A {
 def foo(Object a) {}
 def baw(a) {}
 boolean baz(a) {}
+def <T> T bax() {}
 Object bar
 def baf
 def (int a, b) = [1, 2]

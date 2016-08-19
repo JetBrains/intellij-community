@@ -41,15 +41,11 @@ public class RegExpHighlightingTest extends LightPlatformCodeInsightFixtureTestC
   static class Test {
     final String pattern;
     final Result expectedResult;
-    boolean showWarnings = true;
-    boolean showInfo = false;
     String regExpHost = null;
 
-    Test(String pattern, Result result, boolean warn, boolean info, String host) {
+    Test(String pattern, Result result, String host) {
       this.pattern = pattern;
       expectedResult = result;
-      showWarnings = warn;
-      showInfo = info;
       regExpHost = host;
     }
   }
@@ -73,14 +69,13 @@ public class RegExpHighlightingTest extends LightPlatformCodeInsightFixtureTestC
           name = "test-" + t + ++i + ".regexp";
         }
         final Result result = Result.valueOf((String)XPath.selectSingleNode(element, "string(expected)"));
-        final boolean warn = !"false".equals(element.getAttributeValue("warning"));
-        final boolean info = "true".equals(element.getAttributeValue("info"));
         final String host = element.getAttributeValue("host");
 
         final String pattern = (String)XPath.selectSingleNode(element, "string(pattern)");
-        myMap.put(name, new Test(pattern, result, warn, info, host));
+        myMap.put(name, new Test(pattern, result, host));
         if (!"false".equals(element.getAttributeValue("verify")) && host == null) {
           try {
+            //noinspection ResultOfMethodCallIgnored
             Pattern.compile(pattern);
             if (result == Result.ERR) {
               System.out.println("Incorrect FAIL value for " + pattern);
@@ -164,7 +159,7 @@ public class RegExpHighlightingTest extends LightPlatformCodeInsightFixtureTestC
         }
         try {
           myFixture.configureByText(RegExpFileType.INSTANCE, test.pattern);
-          myFixture.testHighlighting(test.showWarnings, true, test.showInfo);
+          myFixture.testHighlighting(true, true, true);
         } finally {
           RegExpLanguageHosts.setRegExpHost(null);
         }

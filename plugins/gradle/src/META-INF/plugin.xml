@@ -155,6 +155,8 @@
                      key="multiple.repository.urls" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.MultipleRepositoryUrlsInspection"/>
 
+    <copyPastePreProcessor implementation="org.jetbrains.plugins.gradle.action.PasteMvnDependencyPreProcessor"/>
+    
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.groovy">

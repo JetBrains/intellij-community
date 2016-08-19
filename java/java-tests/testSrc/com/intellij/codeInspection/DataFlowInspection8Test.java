@@ -50,6 +50,18 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testPrimitiveInVoidLambda() { doTest(); }
   public void testNotNullLambdaParameter() { doTest(); }
 
+  public void testNullArgumentIsFailingMethodCall() {
+    doTest();
+  }
+
+  public void testNullArgumentIsNotFailingMethodCall() {
+    doTest();
+  }
+
+  public void testNullArgumentButParameterIsReassigned() {
+    doTest();
+  }
+
   public void testNullableArrayComponent() {
     setupCustomAnnotations();
     DataFlowInspection inspection = new DataFlowInspection();

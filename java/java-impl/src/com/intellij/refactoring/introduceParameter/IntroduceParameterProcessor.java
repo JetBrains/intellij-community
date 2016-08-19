@@ -16,6 +16,7 @@
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
@@ -415,6 +416,12 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
       IntroduceParameterUtil.changeMethodSignatureAndResolveFieldConflicts(new UsageInfo(myMethodToReplaceIn), usages, this);
       if (myMethodToSearchFor != myMethodToReplaceIn) {
         IntroduceParameterUtil.changeMethodSignatureAndResolveFieldConflicts(new UsageInfo(myMethodToSearchFor), usages, this);
+      }
+      else if (myGenerateDelegate && myMethodToReplaceIn.findSuperMethods().length == 0) {
+        final PsiAnnotation annotation = AnnotationUtil.findAnnotation(myMethodToReplaceIn, true, Override.class.getName());
+        if (annotation != null) {
+          annotation.delete();
+        }
       }
       ChangeContextUtil.clearContextInfo(myParameterInitializer);
 

@@ -3,6 +3,7 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.siyeh.ig.LightInspectionTestCase;
 
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
 
   @Override

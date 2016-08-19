@@ -867,7 +867,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       if (newEditor) {
         clearWindowIfNeeded(window);
 
-        getProject().getMessageBus().syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER).beforeFileOpened(FileEditorManagerImpl.this, file);
+        getProject().getMessageBus().syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER).beforeFileOpened(this, file);
 
         FileEditor[] newEditors = new FileEditor[newProviders.length];
         for (int i = 0; i < newProviders.length; i++) {
@@ -954,7 +954,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         notifyPublisher(() -> {
           if (isFileOpen(file)) {
             getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
-              .fileOpened(FileEditorManagerImpl.this, file);
+              .fileOpened(this, file);
           }
         });
         ourOpenFilesSetModificationCount.incrementAndGet();

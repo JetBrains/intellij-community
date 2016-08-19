@@ -318,9 +318,11 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
   private static void addAfter(PsiIfStatement ifStatement, PsiStatement thenBranch) throws IncorrectOperationException {
     if (thenBranch instanceof PsiBlockStatement) {
       PsiBlockStatement blockStatement = (PsiBlockStatement) thenBranch;
-      PsiStatement[] statements = blockStatement.getCodeBlock().getStatements();
-      if (statements.length > 0) {
-        ifStatement.getParent().addRangeAfter(statements[0], statements[statements.length - 1], ifStatement);
+      final PsiCodeBlock block = blockStatement.getCodeBlock();
+      final PsiElement firstBodyElement = block.getFirstBodyElement();
+      final PsiElement lastBodyElement = block.getLastBodyElement();
+      if (firstBodyElement != null && lastBodyElement != null) {
+        ifStatement.getParent().addRangeAfter(firstBodyElement, lastBodyElement, ifStatement);
       }
     } else {
       ifStatement.getParent().addAfter(thenBranch, ifStatement);

@@ -42,19 +42,19 @@ public class MockAnnotationsChangeTracker extends AnnotationsChangeTracker{
   }
 
   @NotNull
-  public Set<Recompile> fieldAnnotationsChanged(DependencyContext context, FieldRepr field, Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff) {
+  public Set<Recompile> fieldAnnotationsChanged(NamingContext context, FieldRepr field, Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff) {
     //return RECOMPILE_NONE;
     return handleChanges(context, ContainerUtil.concat(annotationsDiff.added(), annotationsDiff.removed()));
   }
 
   @NotNull
-  public Set<Recompile> classAnnotationsChanged(DependencyContext context, ClassRepr aClass, Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff) {
+  public Set<Recompile> classAnnotationsChanged(NamingContext context, ClassRepr aClass, Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff) {
     //return RECOMPILE_NONE;
     return handleChanges(context, ContainerUtil.concat(annotationsDiff.added(), annotationsDiff.removed()));
   }
 
   @NotNull
-  public Set<Recompile> handleChanges(DependencyContext context, Iterable<TypeRepr.ClassType> changes) {
+  public Set<Recompile> handleChanges(NamingContext context, Iterable<TypeRepr.ClassType> changes) {
     final int annot = context.get(ANOTATION_NAME);
     final Set<Recompile> result = EnumSet.noneOf(Recompile.class);
     if (containsAnnotation(annot, changes)) {

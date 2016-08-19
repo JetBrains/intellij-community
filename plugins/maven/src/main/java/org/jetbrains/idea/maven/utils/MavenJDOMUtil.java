@@ -20,7 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
@@ -42,7 +42,7 @@ public class MavenJDOMUtil {
       if (!file.isValid()) return null;
 
       try {
-        text = VfsUtil.loadText(file);
+        text = VfsUtilCore.loadText(file);
       }
       catch (IOException e) {
         if (handler != null) handler.onReadError(e);

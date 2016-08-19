@@ -110,8 +110,8 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
     }
   }
 
-  private static void invokeOnDeclarationStatement(PsiDeclarationStatement decl, PsiManager psiManager,
-                                                   Project project) throws IncorrectOperationException {
+  public static PsiAssignmentExpression invokeOnDeclarationStatement(PsiDeclarationStatement decl, PsiManager psiManager,
+                                                                     Project project) throws IncorrectOperationException {
     if (decl.getDeclaredElements().length == 1) {
       PsiLocalVariable var = (PsiLocalVariable)decl.getDeclaredElements()[0];
       var.normalizeDeclaration();
@@ -140,7 +140,7 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
         }
 
         final PsiElement parent = block.getParent();
-        decl.replace(statement);
+        final PsiAssignmentExpression replaced = (PsiAssignmentExpression)decl.replace(statement);
         if (!(parent instanceof PsiCodeBlock)) {
           final PsiBlockStatement blockStatement =
             (PsiBlockStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText("{}", null);
@@ -152,13 +152,15 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
         else {
           parent.addBefore(varDeclStatement, block);
         }
+        return replaced;
       }
       else {
-        block.addAfter(statement, decl);
+        return (PsiAssignmentExpression)((PsiExpressionStatement)block.addAfter(statement, decl)).getExpression();
       }
     }
     else {
       ((PsiLocalVariable)decl.getDeclaredElements()[0]).normalizeDeclaration();
     }
+    return null;
   }
 }

@@ -451,10 +451,6 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     }
   }
 
-  public boolean isAnnotationValid( VcsFileRevision rev ){
-    return true;
-  }
-
   @Nullable
   private static DiffOptions getLogClientOptions(@NotNull SvnVcs vcs) {
     return SvnConfiguration.getInstance(vcs.getProject()).isIgnoreSpacesInAnnotate() ? new DiffOptions(true, true, true) : null;

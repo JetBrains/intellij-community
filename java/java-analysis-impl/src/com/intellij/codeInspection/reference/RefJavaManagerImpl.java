@@ -25,7 +25,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NullableFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -371,9 +370,6 @@ public class RefJavaManagerImpl extends RefJavaManager {
         public void configureAnnotations() {
 
         }
-
-        @Override
-        public void configureEntryClassPatterns() {}
 
         @Override
         public JButton createConfigureAnnotationsBtn() {

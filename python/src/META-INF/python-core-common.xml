@@ -428,8 +428,6 @@
                         serviceImplementation="com.jetbrains.python.codeInsight.PyCodeInsightSettings"/>
     <applicationService serviceInterface="com.jetbrains.python.testing.PyTestFrameworkService"
                         serviceImplementation="com.jetbrains.python.testing.PyTestFrameworkService"/>
-    <applicationService serviceInterface="com.jetbrains.python.sdk.PySdkService"
-                        serviceImplementation="com.jetbrains.python.sdk.PySdkService"/>
     <autoImportOptionsProvider instance="com.jetbrains.python.codeInsight.imports.PyAutoImportOptions"/>
 
     <completion.contributor language="Python"
@@ -626,6 +624,7 @@
     <extensionPoint qualifiedName="Pythonid.pyRootTypeProvider" interface="com.jetbrains.python.module.PyRootTypeProvider"/>
     <extensionPoint qualifiedName="Pythonid.runConfigurationEditorExtension" interface="com.jetbrains.python.run.PyRunConfigurationEditorExtension"/>
     <extensionPoint qualifiedName="Pythonid.pyCustomSdkUiProvider" interface="com.jetbrains.python.sdk.PyCustomSdkUiProvider"/>
+    <extensionPoint qualifiedName="Pythonid.pep8ProblemSuppressor" interface="com.jetbrains.python.validation.Pep8ProblemSuppressor"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">

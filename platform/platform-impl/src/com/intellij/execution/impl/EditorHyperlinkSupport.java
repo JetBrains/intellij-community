@@ -196,7 +196,7 @@ public class EditorHyperlinkSupport {
 
   /**
    * @deprecated for binary compatibility with older plugins
-   * @see #createHyperlink(int, int, com.intellij.openapi.editor.markup.TextAttributes, com.intellij.execution.filters.HyperlinkInfo)
+   * @see #createHyperlink(int, int, TextAttributes, HyperlinkInfo)
    */
   public void addHyperlink(final int highlightStartOffset,
                            final int highlightEndOffset,
@@ -274,18 +274,18 @@ public class EditorHyperlinkSupport {
       final String text = getLineText(document, line, true);
       Filter.Result result = customFilter.applyFilter(text, endOffset);
       if (result != null) {
-        highlightHyperlinks(result);
+        highlightHyperlinks(result, customFilter);
       }
     }
   }
 
-  public void highlightHyperlinks(@NotNull Filter.Result result) {
+  void highlightHyperlinks(@NotNull Filter.Result result, @NotNull Filter filter) {
     Document document = myEditor.getDocument();
     for (Filter.ResultItem resultItem : result.getResultItems()) {
       int start = resultItem.getHighlightStartOffset();
       int end = resultItem.getHighlightEndOffset();
       if (end < start || end > document.getTextLength()) {
-        LOG.error("Filter returned wrong range: start=" + start + "; end=" + end + "; length=" + document.getTextLength());
+        LOG.error("Filter returned wrong range: start=" + start + "; end=" + end + "; length=" + document.getTextLength() + "; filter=" + filter);
         continue;
       }
 
@@ -338,7 +338,7 @@ public class EditorHyperlinkSupport {
     while (newIndex < ranges.size() && newIndex >= 0) {
       newIndex = (newIndex + delta + ranges.size()) % ranges.size();
       final RangeHighlighter next = ranges.get(newIndex);
-      HyperlinkInfo info = EditorHyperlinkSupport.getHyperlinkInfo(next);
+      HyperlinkInfo info = getHyperlinkInfo(next);
       assert info != null;
       if (info.includeInOccurenceNavigation()) {
         boolean inCollapsedRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(next.getStartOffset()) != null;

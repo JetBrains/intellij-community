@@ -42,7 +42,7 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
 
   private int myCachedHashCode;
 
-  public LibraryRuntimeClasspathScope(@NotNull Project project, @NotNull Module[] modules) {
+  public LibraryRuntimeClasspathScope(@NotNull Project project, @NotNull Collection<Module> modules) {
     super(project);
     myIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final Set<Sdk> processedSdk = new THashSet<>();

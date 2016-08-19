@@ -36,17 +36,21 @@ import java.util.stream.Collectors;
 public class BoundedTaskExecutorTest extends TestCase {
   @Override
   protected void tearDown() throws Exception {
-    awaitAppPoolQuiescence();
-    super.tearDown();
+    try {
+      awaitAppPoolQuiescence("After tear down ");
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    awaitAppPoolQuiescence();
+    awaitAppPoolQuiescence("Can't start test: ");
   }
 
-  private static void awaitAppPoolQuiescence() {
+  private static void awaitAppPoolQuiescence(String msg) {
     long start = System.currentTimeMillis();
     while (true) {
       List<Thread> alive = Thread.getAllStackTraces().keySet().stream()
@@ -59,7 +63,7 @@ public class BoundedTaskExecutorTest extends TestCase {
       if (alive.isEmpty()) break;
       if (finish-start > 10000) {
         System.err.println(ThreadDumper.dumpThreadsToString());
-        throw new RuntimeException(alive.size() +" threads are still alive: "+alive);
+        throw new RuntimeException(msg+alive.size() +" threads are still alive: "+alive);
       }
     }
   }

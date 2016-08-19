@@ -18,7 +18,7 @@ import java.util.Map;
  */
 public class MavenArtifactIndex {
 
-  private static final MavenArtifactIndex EMPTY_INDEX = new MavenArtifactIndex(Collections.<String, Map<String, List<MavenArtifact>>>emptyMap());
+  private static final MavenArtifactIndex EMPTY_INDEX = new MavenArtifactIndex(Collections.emptyMap());
 
   private final Map<String, Map<String, List<MavenArtifact>>> myData;
 
@@ -36,7 +36,7 @@ public class MavenArtifactIndex {
     if (groupMap == null) return Collections.emptyList();
 
     List<MavenArtifact> res = groupMap.get(artifactId);
-    return res == null ? Collections.<MavenArtifact>emptyList() : res;
+    return res == null ? Collections.emptyList() : res;
   }
 
   @NotNull

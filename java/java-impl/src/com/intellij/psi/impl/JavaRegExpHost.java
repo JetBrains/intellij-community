@@ -28,12 +28,89 @@ import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Locale;
+
 /**
  * @author yole
  */
 public class JavaRegExpHost implements RegExpLanguageHost {
 
   private final DefaultRegExpPropertiesProvider myPropertiesProvider;
+
+  private final String[][] myPropertyNames = {
+    {"Cn", "Unassigned"},
+    {"Lu", "Uppercase letter"},
+    {"Ll", "Lowercase letter"},
+    {"Lt", "Titlecase letter"},
+    {"Lm", "Modifier letter"},
+    {"Lo", "Other letter"},
+    {"Mn", "Non spacing mark"},
+    {"Me", "Enclosing mark"},
+    {"Mc", "Combining spacing mark"},
+    {"Nd", "Decimal digit number"},
+    {"Nl", "Letter number"},
+    {"No", "Other number"},
+    {"Zs", "Space separator"},
+    {"Zl", "Line separator"},
+    {"Zp", "Paragraph separator"},
+    {"Cc", "Control"},
+    {"Cf", "Format"},
+    {"Co", "Private use"},
+    {"Cs", "Surrogate"},
+    {"Pd", "Dash punctuation"},
+    {"Ps", "Start punctuation"},
+    {"Pe", "End punctuation"},
+    {"Pc", "Connector punctuation"},
+    {"Po", "Other punctuation"},
+    {"Sm", "Math symbol"},
+    {"Sc", "Currency symbol"},
+    {"Sk", "Modifier symbol"},
+    {"So", "Other symbol"},
+    {"Pi", "Initial quote punctuation"},
+    {"Pf", "Final quote punctuation"},
+    {"L", "Letter"},
+    {"M", "Mark"},
+    {"N", "Number"},
+    {"Z", "Separator"},
+    {"C", "Control"},
+    {"P", "Punctuation"},
+    {"S", "Symbol"},
+    {"LC", "Letter"},
+    {"LD", "Letter or digit"},
+    {"L1", "Latin-1"},
+    {"all", "All"},
+    {"ASCII", "Ascii"},
+    {"Alnum", "Alphanumeric characters"},
+    {"Alpha", "Alphabetic characters"},
+    {"Blank", "Space and tab characters"},
+    {"Cntrl", "Control characters"},
+    {"Digit", "Numeric characters"},
+    {"Graph", "Printable and visible"},
+    {"Lower", "Lowercase Alphabetic"},
+    {"Print", "Printable characters"},
+    {"Punct", "Punctuation characters"},
+    {"Space", "Space characters"},
+    {"Upper", "Uppercase alphabetic"},
+    {"XDigit", "Hexadecimal digits"},
+    {"javaLowerCase", },
+    {"javaUpperCase", },
+    {"javaTitleCase", },
+    {"javaAlphabetic", },
+    {"javaIdeographic", },
+    {"javaDigit", },
+    {"javaDefined", },
+    {"javaLetter", },
+    {"javaLetterOrDigit", },
+    {"javaJavaIdentifierStart", },
+    {"javaJavaIdentifierPart", },
+    {"javaUnicodeIdentifierStart", },
+    {"javaUnicodeIdentifierPart", },
+    {"javaIdentifierIgnorable", },
+    {"javaSpaceChar", },
+    {"javaWhitespace", },
+    {"javaISOControl", },
+    {"javaMirrored", },
+  };
 
   public JavaRegExpHost() {
     myPropertiesProvider = DefaultRegExpPropertiesProvider.getInstance();
@@ -58,7 +135,7 @@ public class JavaRegExpHost implements RegExpLanguageHost {
 
   @Override
   public boolean characterNeedsEscaping(char c) {
-    return c == ']' || c == '}';
+    return false;
   }
 
   @Override
@@ -158,7 +235,73 @@ public class JavaRegExpHost implements RegExpLanguageHost {
 
   @Override
   public boolean isValidCategory(@NotNull String category) {
-    return myPropertiesProvider.isValidCategory(category);
+    if (category.startsWith("In")) {
+      return isValidUnicodeBlock(category);
+    }
+    if (category.startsWith("Is")) {
+      category = category.substring(2);
+      if (isValidProperty(category)) return true;
+
+      // Unicode properties and scripts available since JDK 1.7
+      category = category.toUpperCase(Locale.ENGLISH);
+      switch (category) { // see java.util.regex.UnicodeProp
+        // 4 aliases
+        case "WHITESPACE":
+        case "HEXDIGIT":
+        case "NONCHARACTERCODEPOINT":
+        case "JOINCONTROL":
+
+        case "ALPHABETIC":
+        case "LETTER":
+        case "IDEOGRAPHIC":
+        case "LOWERCASE":
+        case "UPPERCASE":
+        case "TITLECASE":
+        case "WHITE_SPACE":
+        case "CONTROL":
+        case "PUNCTUATION":
+        case "HEX_DIGIT":
+        case "ASSIGNED":
+        case "NONCHARACTER_CODE_POINT":
+        case "DIGIT":
+        case "ALNUM":
+        case "BLANK":
+        case "GRAPH":
+        case "PRINT":
+        case "WORD":
+        case "JOIN_CONTROL":
+          return true;
+      }
+      return isValidUnicodeScript(category);
+    }
+    return isValidProperty(category);
+  }
+
+  private boolean isValidProperty(@NotNull String category) {
+    for (String[] name : myPropertyNames) {
+      if (name[0].equals(category)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean isValidUnicodeBlock(@NotNull String category) {
+    try {
+      return Character.UnicodeBlock.forName(category.substring(2)) != null;
+    }
+    catch (IllegalArgumentException e) {
+      return false;
+    }
+  }
+
+  private boolean isValidUnicodeScript(@NotNull String category) {
+    try {
+      return Character.UnicodeScript.forName(category) != null;
+    }
+    catch (IllegalArgumentException ignore) {
+      return false;
+    }
   }
 
   @NotNull

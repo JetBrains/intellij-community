@@ -20,23 +20,15 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.NotNullLazyKey;
-import com.intellij.openapi.util.text.StringHash;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public abstract class RainbowVisitor implements HighlightVisitor {
   private HighlightInfoHolder myHolder;
   private RainbowHighlighter myRainbowHighlighter;
-
-  protected static final NotNullLazyKey<HashMap<String, Integer>, PsiElement> USED_COLORS =
-    NotNullLazyKey.create("USED_COLORS", psiElement -> new HashMap<String, Integer>());
 
   @NotNull
   @Override
@@ -48,10 +40,10 @@ public abstract class RainbowVisitor implements HighlightVisitor {
   }
 
   @Override
-  public boolean analyze(@NotNull PsiFile file,
-                         boolean updateWholeFile,
-                         @NotNull HighlightInfoHolder holder,
-                         @NotNull Runnable action) {
+  public final boolean analyze(@NotNull PsiFile file,
+                               boolean updateWholeFile,
+                               @NotNull HighlightInfoHolder holder,
+                               @NotNull Runnable action) {
     myHolder = holder;
     myRainbowHighlighter = new RainbowHighlighter(myHolder.getColorsScheme());
     try {
@@ -69,32 +61,15 @@ public abstract class RainbowVisitor implements HighlightVisitor {
     return 1;
   }
 
-  protected void addInfo(HighlightInfo highlightInfo) {
+  protected void addInfo(@Nullable HighlightInfo highlightInfo) {
     myHolder.add(highlightInfo);
   }
 
-  public static boolean existsPassSuitableForFile(@NotNull PsiFile file) {
-    for (HighlightVisitor visitor : Extensions.getExtensions(HighlightVisitor.EP_HIGHLIGHT_VISITOR, file.getProject())) {
-      if (visitor instanceof RainbowVisitor && visitor.suitableForFile(file)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  protected HighlightInfo getInfo(@NotNull PsiElement context,
-                                  @NotNull PsiElement rainbowElement,
-                                  @NotNull String id,
-                                  @Nullable TextAttributesKey colorKey) {
-    //noinspection SynchronizationOnLocalVariableOrMethodParameter
-    synchronized (context) {
-      return getHighlighter()
-        .getInfo(getHighlighter().getColorIndex(
-          USED_COLORS.getValue(context),
-          id,
-          RainbowHighlighter.getRainbowHash(id)),
-                 rainbowElement,
-                 colorKey);
-    }
+  protected HighlightInfo getInfo(@NotNull final PsiElement context,
+                                  @NotNull final PsiElement rainbowElement,
+                                  @NotNull final String name,
+                                  @Nullable final TextAttributesKey colorKey) {
+    int colorIndex = UsedColors.getOrAddColorIndex((UserDataHolderEx)context, name, getHighlighter());
+    return getHighlighter().getInfo(colorIndex, rainbowElement, colorKey);
   }
 }

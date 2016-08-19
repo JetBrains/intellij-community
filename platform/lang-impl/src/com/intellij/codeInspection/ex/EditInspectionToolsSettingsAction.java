@@ -101,19 +101,13 @@ public class EditInspectionToolsSettingsAction implements IntentionAction, Icona
                                      final boolean canChooseDifferentProfile,
                                      final Consumer<ErrorsConfigurable> configurableAction) {
     final ShowSettingsUtil settingsUtil = ShowSettingsUtil.getInstance();
-    final ErrorsConfigurable errorsConfigurable;
-    if (!canChooseDifferentProfile) {
-      errorsConfigurable = new ProjectInspectionToolsConfigurable(ProjectInspectionProfileManager.getInstanceImpl(project)) {
+    final ErrorsConfigurable errorsConfigurable = new ProjectInspectionToolsConfigurable(ProjectInspectionProfileManager.getInstanceImpl(project)) {
 
-        @Override
-        protected boolean setActiveProfileAsDefaultOnApply() {
-          return false;
-        }
-      };
-    }
-    else {
-      errorsConfigurable = ErrorsConfigurable.SERVICE.createConfigurable(project);
-    }
+      @Override
+      protected boolean setActiveProfileAsDefaultOnApply() {
+        return false;
+      }
+    };
     return settingsUtil.editConfigurable(project, errorsConfigurable, () -> {
       errorsConfigurable.selectProfile(inspectionProfile);
       ApplicationManager.getApplication().invokeLater(() -> configurableAction.accept(errorsConfigurable));

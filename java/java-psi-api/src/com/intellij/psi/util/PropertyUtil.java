@@ -121,9 +121,9 @@ public class PropertyUtil {
   @NotNull
   public static String getPropertyNameByGetter(PsiMethod getterMethod) {
     @NonNls String methodName = getterMethod.getName();
-    return methodName.startsWith("get") ?
-           StringUtil.decapitalize(methodName.substring(3)) :
-           StringUtil.decapitalize(methodName.substring(2));
+    if (methodName.startsWith("get")) return StringUtil.decapitalize(methodName.substring(3));
+    if (methodName.startsWith("is")) return StringUtil.decapitalize(methodName.substring(2));
+    return methodName;
   }
 
   @NotNull

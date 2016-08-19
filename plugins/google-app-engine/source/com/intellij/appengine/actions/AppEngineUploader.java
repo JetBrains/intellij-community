@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.KeyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -69,7 +68,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * @author nik
@@ -180,13 +178,7 @@ public class AppEngineUploader {
       parameters.setMainClass("com.google.appengine.tools.admin.AppCfg");
       parameters.getClassPath().add(mySdk.getToolsApiJarFile().getAbsolutePath());
 
-      final List<KeyValue<String,String>> list = HttpConfigurable.getJvmPropertiesList(false, null);
-      if (! list.isEmpty()) {
-        final ParametersList parametersList = parameters.getVMParametersList();
-        for (KeyValue<String, String> value : list) {
-          parametersList.defineProperty(value.getKey(), value.getValue());
-        }
-      }
+      HttpConfigurable.getInstance().getJvmProperties(false, null).forEach(p -> parameters.getVMParametersList().addProperty(p.first, p.second));
 
       final ParametersList programParameters = parameters.getProgramParametersList();
       if (myAuthData.isOAuth2()) {

@@ -1692,14 +1692,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       if (item instanceof LazyParseableToken) {
         final FlyweightCapableTreeStructure<LighterASTNode> tree = ((LazyParseableToken)item).parseContents();
         final LighterASTNode root = tree.getRoot();
-        int count = tree.getChildren(tree.prepareForGetChildren(root), into);
-        for (int i = 0; i < count; i++) {
-          LighterASTNode child = into.get()[i];
-          if (child instanceof ProductionMarker) {
-            ((ProductionMarker)child).myParent = ((LazyParseableToken)item).myParentNode;
-          }
+        if (root instanceof ProductionMarker) {
+          ((ProductionMarker)root).myParent = ((LazyParseableToken)item).myParentNode;
         }
-        return count;  // todo: set offset shift for kids?
+        return tree.getChildren(tree.prepareForGetChildren(root), into);  // todo: set offset shift for kids?
       }
 
       if (item instanceof Token || item instanceof ErrorItem) return 0;

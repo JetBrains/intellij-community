@@ -19,15 +19,16 @@ import com.intellij.BundleBase
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.UIUtil
-import net.miginfocom.layout.CC
-import net.miginfocom.layout.ConstraintParser
-import net.miginfocom.layout.LC
+import net.miginfocom.layout.*
 import net.miginfocom.swing.MigLayout
 import java.awt.BorderLayout
 import java.awt.Component
+import java.awt.Font
 import java.awt.LayoutManager
 import java.awt.event.ActionEvent
 import javax.swing.*
+
+// http://www.migcalendar.com/miglayout/mavensite/docs/cheatsheet.pdf
 
 enum class LCFlags {
   /**
@@ -52,7 +53,17 @@ enum class LCFlags {
 }
 
 enum class CCFlags {
-  wrap, grow, push, pushY, pushX, right
+  /**
+   * Wrap to the next line/column **after** the component that this constraint belongs to.
+   */
+  wrap,
+
+  /**
+   * Span cells in both x and y.
+   */
+  span,
+
+  grow, push, pushY, pushX, right, skip
 }
 
 inline fun panel(vararg layoutConstraints: LCFlags, init: Panel.() -> Unit): JPanel {
@@ -75,7 +86,7 @@ fun JPanel.titledPanel(title: String, wrappedComponent: Component, vararg constr
   add(panel, *constraints)
 }
 
-fun JPanel.label(text: String, constraints: CC? = null, componentStyle: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null) {
+fun JPanel.label(text: String, vararg constraints: CCFlags, componentStyle: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null, bold: Boolean = false, gapLeft: Int = 0, gapBottom: Int = 0, gapAfter: Int = 0) {
   val finalText = BundleBase.replaceMnemonicAmpersand(text)
   val label = if (componentStyle == null && fontColor == null) {
     JLabel(finalText)
@@ -84,15 +95,38 @@ fun JPanel.label(text: String, constraints: CC? = null, componentStyle: UIUtil.C
     JBLabel(finalText, componentStyle ?: UIUtil.ComponentStyle.REGULAR, fontColor ?: UIUtil.FontColor.NORMAL)
   }
 
-  add(label, constraints)
+  if (bold) {
+    label.font = label.font.deriveFont(Font.BOLD)
+  }
+
+  var _cc = constraints.create()
+  fun cc(): CC {
+    if (_cc == null) {
+      _cc = CC()
+    }
+    return _cc!!
+  }
+
+  if (gapLeft != 0) {
+    cc().horizontal.gapBefore = gapToBoundSize(gapLeft, true)
+  }
+  if (gapAfter != 0) {
+    cc().horizontal.gapAfter = gapToBoundSize(gapAfter, true)
+  }
+  if (gapBottom != 0) {
+    cc().vertical.gapAfter = gapToBoundSize(gapBottom, false)
+  }
+  add(label, _cc)
 }
 
-fun JPanel.hint(text: String, constraints: CC = CC()) {
-  if (constraints.horizontal.gapBefore == null) {
-    // default gap 10 * indent 3
-    constraints.gapLeft("30")
-  }
-  label(text, constraints, componentStyle = UIUtil.ComponentStyle.SMALL, fontColor = UIUtil.FontColor.BRIGHTER)
+private fun gapToBoundSize(value: Int, isHorizontal: Boolean): BoundSize {
+  val unitValue = UnitValue(value.toFloat(), "", isHorizontal, UnitValue.STATIC, null)
+  return BoundSize(unitValue, unitValue, null, false, null)
+}
+
+fun JPanel.hint(text: String, vararg constraints: CCFlags) {
+  // default gap 10 * indent 3
+  label(text, componentStyle = UIUtil.ComponentStyle.SMALL, fontColor = UIUtil.FontColor.BRIGHTER, constraints = *constraints, gapLeft = 30)
 }
 
 fun RadioButton(text: String) = JRadioButton(BundleBase.replaceMnemonicAmpersand(text))
@@ -173,6 +207,9 @@ fun CC.apply(flags: Array<out CCFlags>): CC {
       CCFlags.push -> push()
       CCFlags.pushX -> pushX()
       CCFlags.pushY -> pushY()
+
+      CCFlags.span -> span()
+      CCFlags.skip -> skip()
     }
   }
   return this

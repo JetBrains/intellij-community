@@ -22,6 +22,8 @@ import com.intellij.psi.impl.java.stubs.PsiJavaModuleStub;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub> implements PsiJavaModule {
@@ -58,6 +60,11 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
   @Override
   public String getName() {
     return getModuleName();
+  }
+
+  @Override
+  public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
+    throw cannotModifyException(this);
   }
 
   @Override

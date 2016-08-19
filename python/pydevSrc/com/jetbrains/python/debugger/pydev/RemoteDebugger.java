@@ -258,6 +258,12 @@ public class RemoteDebugger implements ProcessDebugger {
     }
   }
 
+  public String generateSaveTempName(final String threadId, final String frameId) {
+    final String tempName = generateTempName();
+    myTempVars.put(threadId, frameId, tempName);
+    return tempName;
+  }
+
   private void clearTempVariables(final String threadId) {
     final Map<String, Set<String>> threadVars = myTempVars.get(threadId);
     if (threadVars == null || threadVars.size() == 0) return;

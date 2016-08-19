@@ -27,5 +27,6 @@
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="library" scope="TEST" name="memoryfilesystem" level="project" />
+    <orderEntry type="module" module-name="boot" />
   </component>
 </module>

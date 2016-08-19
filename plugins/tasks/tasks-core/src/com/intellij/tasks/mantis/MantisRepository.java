@@ -1,9 +1,24 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.tasks.mantis;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.KeyValue;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskBundle;
@@ -11,7 +26,6 @@ import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.mantis.model.*;
-import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HttpConfigurable;
@@ -26,7 +40,10 @@ import org.jetbrains.annotations.Nullable;
 import java.math.BigInteger;
 import java.net.URL;
 import java.rmi.RemoteException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -128,7 +145,7 @@ public class MantisRepository extends BaseRepositoryImpl {
       if (issueData.getId() == null || issueData.getSummary() == null) {
         return null;
       }
-      return new MantisTask(issueData, MantisRepository.this);
+      return new MantisTask(issueData, this);
     });
   }
 
@@ -234,8 +251,8 @@ public class MantisRepository extends BaseRepositoryImpl {
   @NotNull
   private MantisConnectPortType createSoap() throws Exception {
     if (isUseProxy()) {
-      for (KeyValue<String, String> pair : HttpConfigurable.getJvmPropertiesList(false, null)) {
-        String key = pair.getKey(), value = pair.getValue();
+      for (Pair<String, String> pair : HttpConfigurable.getInstance().getJvmProperties(false, null)) {
+        String key = pair.first, value = pair.second;
         // Axis uses another names for username and password properties
         // see http://axis.apache.org/axis/java/client-side-axis.html for complete list
         if (key.equals(JavaProxyProperty.HTTP_USERNAME)) {

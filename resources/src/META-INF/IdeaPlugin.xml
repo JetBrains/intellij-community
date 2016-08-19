@@ -547,6 +547,9 @@
 
     <projectService serviceInterface="com.intellij.codeInspection.ex.EntryPointsManager"
                     serviceImplementation="com.intellij.codeInspection.ex.EntryPointsManagerImpl"/>
+    <projectConfigurable id="EntryPoints" displayName="Project Entry Points"
+                         parentId="Errors" instance = "com.intellij.codeInspection.ex.EntryPointsConfigurable"/>
+
 
     <projectService serviceInterface="com.intellij.codeInsight.NullableNotNullManager"
                     serviceImplementation="com.intellij.codeInsight.NullableNotNullManagerImpl"/>
@@ -637,10 +640,10 @@
                      key="inspection.suspicious.collections.method.calls.display.name" groupKey="group.names.probable.bugs" enabledByDefault="true"
                      level="WARNING"
                      implementationClass="com.intellij.codeInspection.miscGenerics.SuspiciousCollectionsMethodCallsInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="MakeTypeGeneric" bundle="messages.InspectionsBundle"
-                     key="inspection.suspicious.collections.method.calls.display.name" groupKey="group.names.code.style.issues"
+    <localInspection groupPath="Java" language="JAVA" shortName="RawTypeCanBeGeneric" bundle="messages.InspectionsBundle"
+                     key="inspection.raw.variable.type.can.be.generic.name" groupKey="group.names.code.style.issues"
                      enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.intellij.codeInspection.miscGenerics.MakeTypeGenericInspection"/>
+                     implementationClass="com.intellij.codeInspection.miscGenerics.RawTypeCanBeGenericInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="LocalCanBeFinal" bundle="messages.InspectionsBundle" key="inspection.local.can.be.final.display.name"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal"/>
@@ -1400,6 +1403,7 @@
     <internalFileTemplate name="Enum"/>
     <internalFileTemplate name="AnnotationType" subject="@interface"/>
     <internalFileTemplate name="package-info"/>
+    <internalFileTemplate name="module-info"/>
 
     <saveFileAsTemplateHandler implementation="com.intellij.ide.fileTemplates.SaveJavaAsTemplateHandler"/>
 
@@ -1758,6 +1762,8 @@
                                           implementationClass="com.intellij.refactoring.introduceparameterobject.JavaIntroduceParameterObjectDelegate"/>
     <refactoring.pushDown language="JAVA" implementationClass="com.intellij.refactoring.memberPushDown.JavaPushDownDelegate" id="java"/>
     <library.javaSourceRootDetector implementation="com.intellij.openapi.roots.ui.configuration.LibraryJavaSourceRootDetector"/>
+
+    <fileBasedIndex implementation="com.intellij.psi.impl.search.JavaNullMethodArgumentIndex"/>
   </extensions>
 
   <actions>

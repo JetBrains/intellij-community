@@ -16,8 +16,7 @@
 package com.intellij.psi;
 
 /**
- * Represents a Java keyword. Constants defined in this interface represent all
- * keywords of the Java language.
+ * Represents a Java keyword. Constants defined in this interface represent all keywords and literals of the Java language.
  */
 public interface PsiKeyword extends PsiJavaToken {
   String ABSTRACT = "abstract";
@@ -57,6 +56,8 @@ public interface PsiKeyword extends PsiJavaToken {
   String PUBLIC = "public";
   String RETURN = "return";
   String SHORT = "short";
+  String STATIC = "static";
+  String STRICTFP = "strictfp";
   String SUPER = "super";
   String SWITCH = "switch";
   String SYNCHRONIZED = "synchronized";
@@ -66,10 +67,8 @@ public interface PsiKeyword extends PsiJavaToken {
   String TRANSIENT = "transient";
   String TRY = "try";
   String VOID = "void";
-  String STATIC = "static";
-  String STRICTFP = "strictfp";
-  String WHILE = "while";
   String VOLATILE = "volatile";
+  String WHILE = "while";
 
   String TRUE = "true";
   String FALSE = "false";

@@ -21,7 +21,6 @@ import com.intellij.history.LocalHistoryAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.actions.RefreshAction;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -54,7 +53,6 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AnnotateRevisionActionBase;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction;
-import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
@@ -79,6 +77,7 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.TableViewModel;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -230,7 +229,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
         updateAlarm.addRequest(this, 20000);
 
         if (refresh) {
-          refreshImpl(true);
+          refreshUiAndScheduleDataRefresh(true);
         }
       }
     }, 20000);
@@ -286,8 +285,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     return historyPanel.getFilePath().equals(path) && Comparing.equal(existingRevision, newRevision);
   }
 
-  public void scheduleRefresh(final boolean canUseLastRevision) {
-    ApplicationManager.getApplication().invokeLater(() -> refreshImpl(canUseLastRevision));
+  @CalledInAwt
+  void scheduleRefresh(boolean canUseLastRevision) {
+    refreshUiAndScheduleDataRefresh(canUseLastRevision);
   }
 
   @Nullable
@@ -457,7 +457,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     result.add(new MyCreatePatch());
     result.add(new MyGetVersionAction());
     result.add(new MyAnnotateAction());
-    AnAction[] additionalActions = myProvider.getAdditionalActions(() -> refreshImpl(true));
+    AnAction[] additionalActions = myProvider.getAdditionalActions(() -> refreshUiAndScheduleDataRefresh(true));
     if (additionalActions != null) {
       for (AnAction additionalAction : additionalActions) {
         if (popup || additionalAction.getTemplatePresentation().getIcon() != null) {
@@ -477,19 +477,17 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     return result;
   }
 
-  private void refreshImpl(final boolean useLastRevision) {
-    new AbstractCalledLater(myVcs.getProject(), ModalityState.NON_MODAL) {
-      public void run() {
-        if (myInRefresh) return;
-        myInRefresh = true;
-        myTargetSelection = myDualView.getFlatView().getSelectedObjects();
+  private void refreshUiAndScheduleDataRefresh(boolean canUseLastRevisionCheck) {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      if (myInRefresh) return;
+      myInRefresh = true;
+      myTargetSelection = myDualView.getFlatView().getSelectedObjects();
 
-        mySplitter.revalidate();
-        mySplitter.repaint();
+      mySplitter.revalidate();
+      mySplitter.repaint();
 
-        myRefresherI.run(true, useLastRevision);
-      }
-    }.callMe();
+      myRefresherI.run(true, canUseLastRevisionCheck);
+    }, ModalityState.defaultModalityState());
   }
 
   @NotNull
@@ -1375,7 +1373,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
     public void actionPerformed(AnActionEvent e) {
       if (myInRefresh) return;
-      refreshImpl(false);
+      refreshUiAndScheduleDataRefresh(false);
     }
 
     @Override

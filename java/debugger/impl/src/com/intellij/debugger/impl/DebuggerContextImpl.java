@@ -167,7 +167,7 @@ public final class DebuggerContextImpl implements DebuggerContext {
     if (myFrameProxy != null) {
       PsiDocumentManager.getInstance(getProject()).commitAndRunReadAction(() -> {
         if (mySourcePosition == null) {
-          mySourcePosition = ContextUtil.getSourcePosition(DebuggerContextImpl.this);
+          mySourcePosition = ContextUtil.getSourcePosition(this);
         }
         myContextElement = ContextUtil.getContextElement(mySourcePosition);
       });

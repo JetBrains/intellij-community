@@ -22,6 +22,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SubstrateRef;
 import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.stubs.Stub;
+import com.intellij.psi.stubs.StubTree;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -52,6 +54,15 @@ public abstract class AstPath extends SubstrateRef {
   }
 
   protected abstract int getDepth();
+
+  @Nullable
+  @Override
+  public Stub getGreenStub(int stubIndex) {
+    if (stubIndex < 0) return null;
+
+    StubTree stubTree = getContainingFile().getGreenStubTree();
+    return stubTree == null ? null : stubTree.getPlainList().get(stubIndex);
+  }
 
   @Nullable
   public static AstPath getNodePath(@NotNull CompositeElement node) {

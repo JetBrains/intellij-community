@@ -144,10 +144,10 @@ class LayoutBuilder {
      * Include the patched outputs of {@code moduleNames} modules to the current place in the layout. This method is supposed to be called
      * in the {@code body} of {@link #jar} with 'preserveDuplicates' set to {@code true}
      */
-    def modulePatches(Collection<String> moduleNames) {
+    def modulePatches(Collection<String> moduleNames, Closure body = {}) {
       moduleNames.each {
         moduleOutputPatches.get(it)?.each {
-          ant.fileset(dir: it)
+          ant.fileset(dir: it, body)
         }
       }
     }

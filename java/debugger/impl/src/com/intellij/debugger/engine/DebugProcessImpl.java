@@ -222,7 +222,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
 
     return myNodeRenderersMap.computeIfAbsent(type, t ->
-      myRenderers.stream().filter(r -> r.isApplicable(type)).findFirst().orElseGet(() -> getDefaultRenderer(type)));
+      myRenderers.stream().
+        filter(r -> DebuggerUtilsImpl.suppressExceptions(() -> r.isApplicable(type), false)).
+        findFirst().orElseGet(() -> getDefaultRenderer(type)));
   }
 
   @NotNull

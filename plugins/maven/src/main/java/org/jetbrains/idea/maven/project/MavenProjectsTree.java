@@ -626,7 +626,7 @@ public class MavenProjectsTree {
                  mavenProject,
                  isNewModule,
                  recursive,
-                 recursive ? force : false, // do not force update modules if only this project was requested to be updated
+                 recursive && force, // do not force update modules if only this project was requested to be updated
                  explicitProfiles,
                  updateContext,
                  updateStack,
@@ -1108,7 +1108,7 @@ public class MavenProjectsTree {
     try {
       List<MavenProject> modules = myAggregatorToModuleMapping.get(aggregator);
       return modules == null
-             ? Collections.<MavenProject>emptyList()
+             ? Collections.emptyList()
              : new ArrayList<>(modules);
     }
     finally {
@@ -1164,7 +1164,7 @@ public class MavenProjectsTree {
         }
       }
 
-      return result == null ? Collections.<MavenProject>emptyList() : result;
+      return result == null ? Collections.emptyList() : result;
     }
     finally {
       readUnlock();
@@ -1214,7 +1214,7 @@ public class MavenProjectsTree {
         }
       }
 
-      return result == null ? Collections.<MavenProject>emptyList() : result;
+      return result == null ? Collections.emptyList() : result;
     }
     finally {
       readUnlock();
@@ -1501,10 +1501,10 @@ public class MavenProjectsTree {
     public void fireUpdatedIfNecessary() {
       if (updatedProjectsWithChanges.isEmpty() && deletedProjects.isEmpty()) return;
       List<MavenProject> mavenProjects = deletedProjects.isEmpty()
-                                         ? Collections.<MavenProject>emptyList()
+                                         ? Collections.emptyList()
                                          : new ArrayList<>(deletedProjects);
       List<Pair<MavenProject, MavenProjectChanges>> updated = updatedProjectsWithChanges.isEmpty()
-                                                              ? Collections.<Pair<MavenProject, MavenProjectChanges>>emptyList()
+                                                              ? Collections.emptyList()
                                                               : MavenUtil.mapToList(updatedProjectsWithChanges);
       fireProjectsUpdated(updated, mavenProjects);
     }

@@ -1438,7 +1438,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         visitedElements.add(element);
       }
     }
-    final MyVisitor visitor = new MyVisitor();
     final LocalInspectionTool tool = new LocalInspectionTool() {
       @Nls
       @NotNull
@@ -1463,7 +1462,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       @NotNull
       @Override
       public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-        return visitor;
+        return new MyVisitor();
       }
     };
     disposeOnTearDown(() -> disableInspectionTool(tool.getShortName()));

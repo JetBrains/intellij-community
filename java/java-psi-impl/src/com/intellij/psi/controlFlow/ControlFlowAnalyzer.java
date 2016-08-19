@@ -1121,8 +1121,12 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         generateWriteInstruction(catchBlockParameters[i]);
       }
       PsiCodeBlock catchBlock = catchBlocks[i];
-      assert catchBlock != null : i + statement.getText();
-      catchBlock.accept(this);
+      if (catchBlock != null) {
+        catchBlock.accept(this);
+      }
+      else {
+        LOG.error("Catch body is null (" + i + ") " + statement.getText());
+      }
 
       myCurrentFlow.addInstruction(new GoToInstruction(finallyBlock == null ? 0 : -6));
       if (finallyBlock == null) {

@@ -72,6 +72,10 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     }
   }
 
+  public ChangeListRemoteState getChangeListRemoteState() {
+    return myChangeListRemoteState;
+  }
+
   @Override
   public String getTextPresentation() {
     return getUserObject().getName().trim();

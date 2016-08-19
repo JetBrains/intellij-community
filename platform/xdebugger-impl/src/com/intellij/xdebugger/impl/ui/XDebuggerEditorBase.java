@@ -33,6 +33,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.ClickListener;
 import com.intellij.util.ui.JBUI;
@@ -41,6 +42,7 @@ import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.evaluation.XDebuggerEditorsProviderBase;
 import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.evaluate.CodeFragmentInputComponent;
@@ -66,6 +68,7 @@ public abstract class XDebuggerEditorBase {
   @Nullable private final String myHistoryId;
   @Nullable private XSourcePosition mySourcePosition;
   private int myHistoryIndex = -1;
+  @Nullable private PsiElement myContext;
 
   private final JLabel myChooseFactory = new JLabel();
   private WeakReference<ListPopup> myPopup;
@@ -141,6 +144,13 @@ public abstract class XDebuggerEditorBase {
     }
 
     return panel;
+  }
+
+  public void setContext(@Nullable PsiElement context) {
+    if (myContext != context) {
+      myContext = context;
+      setExpression(getExpression());
+    }
   }
 
   public void setSourcePosition(@Nullable XSourcePosition sourcePosition) {
@@ -255,7 +265,13 @@ public abstract class XDebuggerEditorBase {
   }
 
   protected Document createDocument(final XExpression text) {
-    return getEditorsProvider().createDocument(getProject(), text, mySourcePosition, myMode);
+    XDebuggerEditorsProvider provider = getEditorsProvider();
+    if (myContext != null && provider instanceof XDebuggerEditorsProviderBase) {
+      return ((XDebuggerEditorsProviderBase)provider).createDocument(getProject(), text, myContext, myMode);
+    }
+    else {
+      return provider.createDocument(getProject(), text, mySourcePosition, myMode);
+    }
   }
 
   public boolean canGoBackward() {

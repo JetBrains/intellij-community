@@ -193,7 +193,7 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
   @Override
   public void hide(boolean ok) {
     super.hide(ok);
-    ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(EmmetPreviewHint.this));
+    ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(this));
   }
 
   @Override

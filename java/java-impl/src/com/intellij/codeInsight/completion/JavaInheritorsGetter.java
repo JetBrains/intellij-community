@@ -84,7 +84,8 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
     addArrayTypes(parameters.getPosition(), infos, consumer);
 
     List<PsiClassType> classTypes = extractClassTypes(infos);
-    boolean arraysWelcome = classTypes.stream().anyMatch(t -> t.equalsToText(CommonClassNames.JAVA_LANG_OBJECT));
+    boolean arraysWelcome = ContainerUtil.exists(ExpectedTypesGetter.extractTypes(infos, true),
+                                                 t -> t.getDeepComponentType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT));
     processInheritors(parameters, classTypes, prefixMatcher, type -> {
       final LookupElement element = addExpectedType(type, parameters);
       if (element != null) {

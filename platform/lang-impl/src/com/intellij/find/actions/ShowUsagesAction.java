@@ -407,11 +407,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
         public UsageNode valueOf(UsageNode node) {
           return node;
         }
-
-        @Override
-        public boolean isCellEditable(UsageNode node) {
-          return usageView.isOriginUsage(node.getUsage());
-        }
       };
       List<ColumnInfo<UsageNode, UsageNode>> list = Collections.nCopies(cols, o);
       return list.toArray(new ColumnInfo[list.size()]);
@@ -652,7 +647,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       new DumbAwareAction() {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          cancel(popup);
+          cancel(popup[0]);
           showDialogAndFindUsages(handler, popupPosition, editor, maxUsages);
         }
       }.registerCustomShortcutSet(new CustomShortcutSet(shortcut.getFirstKeyStroke()), table);
@@ -662,13 +657,13 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       new DumbAwareAction() {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          cancel(popup);
+          cancel(popup[0]);
           searchEverywhere(options, handler, editor, popupPosition, maxUsages);
         }
       }.registerCustomShortcutSet(new CustomShortcutSet(shortcut.getFirstKeyStroke()), table);
     }
 
-    InplaceButton settingsButton = createSettingsButton(handler, popupPosition, editor, maxUsages, () -> cancel(popup));
+    InplaceButton settingsButton = createSettingsButton(handler, popupPosition, editor, maxUsages, () -> cancel(popup[0]));
 
     ActiveComponent spinningProgress = new ActiveComponent.Adapter() {
       @Override
@@ -726,7 +721,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           hideHints();
-          cancel(popup);
+          cancel(popup[0]);
           FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(usageView.getProject())).getFindUsagesManager();
           findUsagesManager.findUsages(handler.getPrimaryElements(), handler.getSecondaryElements(), handler, options,
                                        FindSettings.getInstance().isSkipResultsWithOneUsage());
@@ -747,9 +742,9 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     };
   }
 
-  private static void cancel(@Nullable JBPopup... popup) {
-    if (popup != null && popup.length>0 && popup[0] != null) {
-      popup[0].cancel();
+  private static void cancel(@Nullable JBPopup popup) {
+    if (popup != null) {
+      popup.cancel();
     }
   }
 
@@ -957,6 +952,13 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       newSelection = table.getSelectedRow();
     }
     else {
+      // do not pre-select the usage under caret by default
+      if (newSelection == 0 && table.getModel().getRowCount() > 1) {
+        Object valueInTopRow = table.getModel().getValueAt(0, 0);
+        if (valueInTopRow instanceof UsageNode && usageView.isOriginUsage(((UsageNode)valueInTopRow).getUsage())) {
+          newSelection++;
+        }
+      }
       table.getSelectionModel().setSelectionInterval(newSelection, newSelection);
     }
     ScrollingUtil.ensureIndexIsVisible(table, newSelection, 0);

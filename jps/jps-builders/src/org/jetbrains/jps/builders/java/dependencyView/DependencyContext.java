@@ -30,7 +30,7 @@ import java.util.Map;
  * @author: db
  * Date: 14.02.11
  */
-class DependencyContext {
+class DependencyContext implements NamingContext {
   private final static String STRING_TABLE_NAME = "strings.tab";
   private final PersistentStringEnumerator myEnumerator;
 

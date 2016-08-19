@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.KeyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -140,7 +139,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     final ProjectImportAction projectImportAction = new ProjectImportAction(resolverCtx.isPreviewMode());
 
-    final List<KeyValue<String, String>> extraJvmArgs = new ArrayList<>();
+    final List<Pair<String, String>> extraJvmArgs = new ArrayList<>();
     final List<String> commandLineArgs = ContainerUtil.newArrayList();
     final Set<Class> toolingExtensionClasses = ContainerUtil.newHashSet();
 
@@ -178,8 +177,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
 
     final ParametersList parametersList = new ParametersList();
-    for (KeyValue<String, String> jvmArg : extraJvmArgs) {
-      parametersList.addProperty(jvmArg.getKey(), jvmArg.getValue());
+    for (Pair<String, String> jvmArg : extraJvmArgs) {
+      parametersList.addProperty(jvmArg.first, jvmArg.second);
     }
 
     final BuildEnvironment buildEnvironment = GradleExecutionHelper.getBuildEnvironment(resolverCtx.getConnection());

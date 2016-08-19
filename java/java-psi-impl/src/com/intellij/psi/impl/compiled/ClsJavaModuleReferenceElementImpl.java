@@ -15,21 +15,21 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.psi.JavaElementVisitor;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiJavaModuleReferenceElement;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiJavaModuleReference;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
 
-public class ClsJavaModuleReferenceElementImpl extends ClsElementImpl implements PsiJavaModuleReferenceElement {
+class ClsJavaModuleReferenceElementImpl extends ClsElementImpl implements PsiJavaModuleReferenceElement {
   private final PsiElement myParent;
   private final String myText;
+  private final PsiJavaModuleReference myReference;
 
   public ClsJavaModuleReferenceElementImpl(PsiElement parent, String text) {
     myParent = parent;
     myText = text;
+    myReference = myParent instanceof PsiJavaModule ? null : new PsiJavaModuleReference(this);
   }
 
   @NotNull
@@ -60,9 +60,14 @@ public class ClsJavaModuleReferenceElementImpl extends ClsElementImpl implements
   }
 
   @Override
+  public PsiPolyVariantReference getReference() {
+    return myReference;
+  }
+
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
-      ((JavaElementVisitor)visitor).visitModuleReference(this);
+      ((JavaElementVisitor)visitor).visitModuleReferenceElement(this);
     }
     else {
       visitor.visitElement(this);

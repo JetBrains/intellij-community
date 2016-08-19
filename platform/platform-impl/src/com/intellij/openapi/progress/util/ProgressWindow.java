@@ -287,11 +287,11 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
         }
       }
 
-      synchronized (ProgressWindow.this) {
+      synchronized (this) {
         myStoppedAlready = true;
       }
 
-      Disposer.dispose(ProgressWindow.this);
+      Disposer.dispose(this);
     });
 
     SwingUtilities.invokeLater(EmptyRunnable.INSTANCE); // Just to give blocking dispatching a chance to go out.

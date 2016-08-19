@@ -17,10 +17,7 @@ package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
-import com.intellij.debugger.engine.JavaExecutionStack;
-import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -166,6 +163,11 @@ class ReloadClassesWorker {
     }
     catch (Throwable e) {
       processException(e);
+    }
+
+    CompoundPositionManager positionManager = debugProcess.getPositionManager();
+    if (positionManager != null) {
+      positionManager.clearCache();
     }
 
     DebuggerContextImpl context = myDebuggerSession.getContextManager().getContext();

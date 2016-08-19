@@ -60,11 +60,6 @@ public class PsiLiteralExpressionImpl
   }
 
   @Override
-  public PsiElement getParent() {
-    return getParentByStub();
-  }
-
-  @Override
   @NotNull
   public PsiElement[] getChildren() {
     return ((CompositeElement)getNode()).getChildrenAsPsiElements((TokenSet)null, PsiElement.ARRAY_FACTORY);

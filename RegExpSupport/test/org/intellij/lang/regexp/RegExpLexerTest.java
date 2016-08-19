@@ -63,11 +63,51 @@ public class RegExpLexerTest extends LexerTestCase {
   public void testNegatedPosixBracketExpression() {
     final RegExpLexer lexer = new RegExpLexer(EnumSet.of(RegExpCapability.POSIX_BRACKET_EXPRESSIONS));
     doTest("[[:^xdigit:]]", "CLASS_BEGIN ('[')\n" +
-                           "BRACKET_EXPRESSION_BEGIN ('[:')\n" +
-                           "CARET ('^')\n" +
-                           "NAME ('xdigit')\n" +
-                           "BRACKET_EXPRESSION_END (':]')\n" +
-                           "CLASS_END (']')", lexer);
+                            "BRACKET_EXPRESSION_BEGIN ('[:')\n" +
+                            "CARET ('^')\n" +
+                            "NAME ('xdigit')\n" +
+                            "BRACKET_EXPRESSION_END (':]')\n" +
+                            "CLASS_END (']')", lexer);
+  }
+
+  public void testOctalWithoutLeadingZero() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.of(RegExpCapability.OCTAL_NO_LEADING_ZERO));
+    doTest("\\0\\123[\\123]", "OCT_CHAR ('\\0')\n" +
+                              "OCT_CHAR ('\\123')\n" +
+                              "CLASS_BEGIN ('[')\n" +
+                              "OCT_CHAR ('\\123')\n" +
+                              "CLASS_END (']')", lexer);
+  }
+
+  public void testOctalFollowedByDigit() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.of(RegExpCapability.OCTAL_NO_LEADING_ZERO));
+    doTest("\\39[\\39]", "OCT_CHAR ('\\3')\n" +
+                         "CHARACTER ('9')\n" +
+                         "CLASS_BEGIN ('[')\n" +
+                         "OCT_CHAR ('\\3')\n" +
+                         "CHARACTER ('9')\n" +
+                         "CLASS_END (']')", lexer);
+  }
+
+  public void testOctalWithLeadingZero() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
+    doTest("\\0\\123[\\123]", "BAD_OCT_VALUE ('\\0')\n" +
+                              "BACKREF ('\\1')\n" +
+                              "CHARACTER ('2')\n" +
+                              "CHARACTER ('3')\n" +
+                              "CLASS_BEGIN ('[')\n" +
+                              "REDUNDANT_ESCAPE ('\\1')\n" +
+                              "CHARACTER ('2')\n" +
+                              "CHARACTER ('3')\n" +
+                              "CLASS_END (']')", lexer);
+  }
+
+  public void testNoNestedCharacterClasses() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
+    doTest("[[\\]]", "CLASS_BEGIN ('[')\n" +
+                     "CHARACTER ('[')\n" +
+                     "ESC_CHARACTER ('\\]')\n" +
+                     "CLASS_END (']')", lexer);
   }
 
   @Override

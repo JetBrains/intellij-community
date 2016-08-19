@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -140,7 +141,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     VirtualFile entryRoot = JarFileSystem.getInstance().getJarRootForLocalFile(entryFile);
     assertNull(entryRoot);
 
-    VirtualFile nonJarFile = LocalFileSystem.getInstance().findFileByPath(System.getProperty("java.home") + "/lib/calendars.properties");
+    VirtualFile nonJarFile = LocalFileSystem.getInstance().findFileByPath(SystemProperties.getJavaHome() + "/lib/calendars.properties");
     assertNotNull(nonJarFile);
     VirtualFile nonJarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(nonJarFile);
     assertNull(nonJarRoot);

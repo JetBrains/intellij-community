@@ -19,9 +19,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPInputStream;
 
+/**
+ * A stream for reading compressed data in the GZIP file format.
+ * Total amount of compressed read bytes can be accessed via {@link #getCompressedBytesRead()}.
+ *
+ * Note that this implementation is not thread safe.
+ */
 public class CountingGZIPInputStream extends GZIPInputStream {
   private final CountingInputStream myInputStream;
 
@@ -31,7 +36,7 @@ public class CountingGZIPInputStream extends GZIPInputStream {
   }
 
   public long getCompressedBytesRead() {
-    return myInputStream.myBytesRead.get();
+    return myInputStream.myBytesRead;
   }
 
   @NotNull
@@ -41,7 +46,7 @@ public class CountingGZIPInputStream extends GZIPInputStream {
 
   private static class CountingInputStream extends InputStream {
     private final InputStream myInputStream;
-    private final AtomicLong myBytesRead = new AtomicLong(0);
+    private long myBytesRead = 0;
 
     public CountingInputStream(@NotNull InputStream inputStream) {
       myInputStream = inputStream;
@@ -49,27 +54,27 @@ public class CountingGZIPInputStream extends GZIPInputStream {
 
     public int read() throws IOException {
       int data = myInputStream.read();
-      myBytesRead.incrementAndGet();
+      myBytesRead++;
       return data;
     }
 
     @Override
     public int read(@NotNull byte[] b) throws IOException {
       int bytesRead = myInputStream.read(b);
-      myBytesRead.addAndGet(bytesRead);
+      myBytesRead += bytesRead;
       return bytesRead;
     }
 
     @Override
     public int read(@NotNull byte[] b, int off, int len) throws IOException {
       int bytesRead = myInputStream.read(b, off, len);
-      myBytesRead.addAndGet(bytesRead);
+      myBytesRead += bytesRead;
       return bytesRead;
     }
 
     public long skip(long n) throws IOException {
       long bytesSkipped = myInputStream.skip(n);
-      myBytesRead.addAndGet(bytesSkipped);
+      myBytesRead += bytesSkipped;
       return bytesSkipped;
     }
 

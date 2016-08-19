@@ -18,32 +18,23 @@ package com.intellij.ide.passwordSafe.impl.providers.masterKey;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
 
 /**
  * @author gregsh
  */
 public abstract class PasswordComponentBase {
-  private final String myTitle;
-
   private JPanel myRootPanel;
   private JLabel myIconLabel;
   protected JLabel myPromptLabel;
 
   protected JPanel myPasswordPanel;
-  protected JPanel myNewPasswordPanel;
   protected JPasswordField myPasswordField;
-  protected JPasswordField myNewPasswordField;
-  protected JPasswordField myConfirmPasswordField;
   protected JLabel myPasswordLabel;
-  protected JLabel myNewPasswordLabel;
 
-  public PasswordComponentBase(@NotNull String title) {
-    myTitle = title;
+  public PasswordComponentBase() {
     myIconLabel.setText("");
     myIconLabel.setIcon(AllIcons.General.PasswordLock);
     myIconLabel.setDisabledIcon(AllIcons.General.PasswordLock);
@@ -51,25 +42,12 @@ public abstract class PasswordComponentBase {
     myPromptLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
   }
 
-  public JComponent getComponent() {
+  public JPanel getComponent() {
     return myRootPanel;
   }
 
   public JComponent getPreferredFocusedComponent() {
-    if (myPasswordField.isEnabled()) return myPasswordField;
-    else if (myNewPasswordField.isEnabled()) return myNewPasswordField;
-    throw new AssertionError("no visible fields found");
-  }
-
-  public String getTitle() {
-    return myTitle;
-  }
-
-  public ValidationInfo doValidate() {
-    if (myNewPasswordField.isEnabled() && !Arrays.equals(myNewPasswordField.getPassword(), myConfirmPasswordField.getPassword())) {
-      return new ValidationInfo("New passwords do not match", myConfirmPasswordField);
-    }
-    return null;
+    return myPasswordField;
   }
 
   @Nullable

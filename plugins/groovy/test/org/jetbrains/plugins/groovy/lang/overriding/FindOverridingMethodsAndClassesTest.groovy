@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.overriding
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.searches.ClassInheritorsSearch
+import com.intellij.psi.search.searches.FunctionalExpressionSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
@@ -61,5 +62,11 @@ public class FindOverridingMethodsAndClassesTest extends LightCodeInsightFixture
 
     final Collection<PsiClass> classes = ClassInheritorsSearch.search(psiClass).findAll()
     assertEquals("Class count is wrong", classCount, classes.size())
+  }
+
+  public void "test find java functional expression passed into a groovy method"() {
+    myFixture.addFileToProject("a.groovy", "interface I { void foo(); }; class C { static void bar(I i) {}}")
+    myFixture.addFileToProject("a.java", "class D {{  C.bar(() -> {}); }")
+    assertSize(1, FunctionalExpressionSearch.search(myFixture.findClass("I")).findAll());
   }
 }

@@ -189,7 +189,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
         final XmlNSDescriptor defaultNSDescriptorInner = getDefaultNSDescriptorInner(namespace, strict);
 
         if (isGeneratedFromDtd(defaultNSDescriptorInner)) {
-          return new CachedValueProvider.Result<>(defaultNSDescriptorInner, XmlDocumentImpl.this, ExternalResourceManager.getInstance());
+          return new CachedValueProvider.Result<>(defaultNSDescriptorInner, this, ExternalResourceManager.getInstance());
         }
 
         return new CachedValueProvider.Result<>(defaultNSDescriptorInner, defaultNSDescriptorInner != null

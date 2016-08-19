@@ -18,6 +18,7 @@ package com.intellij.psi.codeStyle;
 import com.intellij.configurationStore.UnknownElementCollector;
 import com.intellij.configurationStore.UnknownElementWriter;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionException;
@@ -672,6 +673,14 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
           }
         }
       }
+      
+      Language language = LanguageUtil.getLanguageForPsi(file.getProject(), file.getVirtualFile());
+      if (language != null) {
+        IndentOptions options = getIndentOptions(language);
+        if (options != null) {
+          return options;
+        }
+      }
 
       return getIndentOptions(file.getFileType());
     }
@@ -699,6 +708,11 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   private IndentOptions getLanguageIndentOptions(@Nullable FileType fileType) {
     if (fileType == null || !(fileType instanceof LanguageFileType)) return null;
     Language lang = ((LanguageFileType)fileType).getLanguage();
+    return getIndentOptions(lang);
+  }
+
+  @Nullable
+  private IndentOptions getIndentOptions(Language lang) {
     CommonCodeStyleSettings langSettings = getCommonSettings(lang);
     return langSettings == this ? null : langSettings.getIndentOptions();
   }

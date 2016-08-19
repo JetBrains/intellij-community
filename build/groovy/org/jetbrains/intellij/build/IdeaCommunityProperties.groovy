@@ -55,7 +55,7 @@ class IdeaCommunityProperties extends ProductProperties {
       }
 
       @Override
-      String rootDirectoryName(String buildNumber) { "" }
+      String rootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) { "" }
 
       @Override
       String fullNameIncludingEdition(ApplicationInfoProperties applicationInfo) { "IntelliJ IDEA Community Edition" }
@@ -78,7 +78,7 @@ class IdeaCommunityProperties extends ProductProperties {
       }
 
       @Override
-      String rootDirectoryName(String buildNumber) { "idea-IC-$buildNumber" }
+      String rootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) { "idea-IC-$buildNumber" }
     }
   }
 

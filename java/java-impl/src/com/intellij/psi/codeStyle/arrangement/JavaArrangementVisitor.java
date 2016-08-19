@@ -131,7 +131,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
         if (current == null) {
           break;
         }
-        current.accept(JavaArrangementVisitor.this);
+        current.accept(this);
       }
     });
   }
@@ -476,7 +476,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     if (nextPsiRoot == null) {
       return;
     }
-    processChildrenWithinEntryScope(entry, () -> nextPsiRoot.acceptChildren(JavaArrangementVisitor.this));
+    processChildrenWithinEntryScope(entry, () -> nextPsiRoot.acceptChildren(this));
   }
 
   private void processChildrenWithinEntryScope(@NotNull JavaElementArrangementEntry entry, @NotNull Runnable childrenProcessing) {

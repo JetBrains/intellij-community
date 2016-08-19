@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.PseudoSplitter;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.changes.RefreshablePanel;
-import com.intellij.util.OnOffListener;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -37,6 +36,11 @@ import java.awt.event.MouseWheelEvent;
  * Time: 2:33 PM
  */
 public abstract class SplitterWithSecondHideable {
+  public interface OnOffListener<T> {
+    void on(T t);
+    void off(T t);
+  }
+
   private final PseudoSplitter mySplitter;
   private final AbstractTitledSeparatorWithIcon myTitledSeparator;
   private final boolean myVertical;

@@ -129,7 +129,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     public void actionPerformed(AnActionEvent e) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ARROWS);
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(CommonDataKeys.EDITOR.getData(e.getDataContext()));
-      assert lookup != null;
+      assert lookup != null : LookupImpl.getLastLookupDisposeTrace();
       lookup.hideLookup(true);
       ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN).actionPerformed(e);
     }

@@ -50,7 +50,7 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
     if (projects.isEmpty()) return Collections.emptyList();
     if (findArtifacts(projects, orderEntries).isEmpty()) return Collections.emptyList();
 
-    return Collections.<AttachSourcesAction>singleton(new AttachSourcesAction() {
+    return Collections.singleton(new AttachSourcesAction() {
       @Override
       public String getName() {
         return ProjectBundle.message("maven.action.download.sources");

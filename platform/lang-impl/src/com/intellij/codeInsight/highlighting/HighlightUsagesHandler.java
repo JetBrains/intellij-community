@@ -51,12 +51,14 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageTargetUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class HighlightUsagesHandler extends HighlightHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.highlighting.HighlightUsagesHandler");
@@ -151,7 +153,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
   }
 
   @Nullable
-  public static HighlightUsagesHandlerBase createCustomHandler(final Editor editor, final PsiFile file) {
+  public static HighlightUsagesHandlerBase createCustomHandler(@NotNull Editor editor, @NotNull PsiFile file) {
     for (HighlightUsagesHandlerFactory factory : Extensions.getExtensions(HighlightUsagesHandlerFactory.EP_NAME)) {
       final HighlightUsagesHandlerBase handler = factory.createHighlightUsagesHandler(editor, file);
       if (handler != null) {
@@ -341,7 +343,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
   }
 
-  public static boolean isClearHighlights(Editor editor) {
+  public static boolean isClearHighlights(@NotNull Editor editor) {
     if (editor instanceof EditorWindow) editor = ((EditorWindow)editor).getDelegate();
 
     RangeHighlighter[] highlighters = ((HighlightManagerImpl)HighlightManager.getInstance(editor.getProject())).getHighlighters(editor);

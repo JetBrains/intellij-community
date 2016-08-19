@@ -134,7 +134,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
                                   : new IdeModifiableModelsProviderImpl(project));
   }
 
-  private void appendProfilesFromString(Collection<String> selectedProfiles, String profilesList) {
+  private static void appendProfilesFromString(Collection<String> selectedProfiles, String profilesList) {
     if (profilesList == null) return;
 
     for (String profile : StringUtil.split(profilesList, ",")) {

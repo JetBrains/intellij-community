@@ -48,7 +48,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
     final Project project = myFile.getProject();
     
     myTargets = new PsiCachedValueImpl<>(PsiManager.getInstance(project), () -> {
-      final Pair<List<AntBuildTargetBase>, Collection<Object>> result = getTargetListImpl(AntBuildModelImpl.this);
+      final Pair<List<AntBuildTargetBase>, Collection<Object>> result = getTargetListImpl(this);
       final Collection<Object> deps = result.getSecond();
       return CachedValueProvider.Result.create(result.getFirst(), ArrayUtil.toObjectArray(deps));
     });
