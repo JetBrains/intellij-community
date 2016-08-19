@@ -64,6 +64,9 @@ public class StubSerializationHelper {
   private void doSerialize(@NotNull Stub rootStub, @NotNull StubOutputStream stream) throws IOException {
     final ObjectStubSerializer serializer = StubSerializationUtil.getSerializer(rootStub);
 
+    if (((ObjectStubBase)rootStub).isDangling()) {
+      stream.writeByte(0);
+    }
     DataInputOutputUtil.writeINT(stream, getClassId(serializer));
     serializer.serialize(rootStub, stream);
 
@@ -109,7 +112,7 @@ public class StubSerializationHelper {
 
   private int getClassId(final ObjectStubSerializer serializer) {
     final int idValue = mySerializerToId.get(serializer);
-    assert idValue != 0: "No ID found for serializer " + LogUtil.objectAndClass(serializer);
+    assert idValue > 0: "No ID found for serializer " + LogUtil.objectAndClass(serializer);
     return idValue;
   }
 
@@ -162,7 +165,13 @@ public class StubSerializationHelper {
 
   @NotNull
   private Stub deserialize(@NotNull StubInputStream stream, @Nullable Stub parentStub) throws IOException, SerializerNotFoundException {
-    final int id = DataInputOutputUtil.readINT(stream);
+    boolean dangling = false;
+    int id = DataInputOutputUtil.readINT(stream);
+    if (id == 0) {
+      dangling = true;
+      id = DataInputOutputUtil.readINT(stream);
+    }
+
     final ObjectStubSerializer serializer = getClassById(id);
     if (serializer == null) {
       String externalId = null;
@@ -175,6 +184,9 @@ public class StubSerializationHelper {
     }
 
     Stub stub = serializer.deserialize(stream, parentStub);
+    if (dangling) {
+      ((ObjectStubBase) stub).markDangling();
+    }
     int childCount = DataInputOutputUtil.readINT(stream);
     for (int i = 0; i < childCount; i++) {
       deserialize(stream, stub);
