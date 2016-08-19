@@ -328,12 +328,16 @@ public class InstancesWindow extends DialogWrapper {
 
           root.setMessage("The application is running", XDebuggerUIConstants.INFORMATION_MESSAGE_ICON,
               SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
+          myProgress.setVisible(false);
         });
       }
 
       @Override
       public void sessionPaused() {
-        SwingUtilities.invokeLater(() -> myInstancesTree.rebuildAndRestore(myTreeState));
+        SwingUtilities.invokeLater(() -> {
+          myProgress.setVisible(true);
+          myInstancesTree.rebuildAndRestore(myTreeState);
+        });
       }
     }
 
