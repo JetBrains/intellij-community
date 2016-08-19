@@ -288,8 +288,8 @@ public class JavaFxGenerateDefaultPropertyValuesScript extends Application {
 
     void add(String name, Class<?> type, Object value) {
       names.add(name);
-      types.computeIfAbsent(name, n -> new HashSet<Type>()).add(type);
-      values.computeIfAbsent(name, n -> new HashSet<Object>()).add(value);
+      types.computeIfAbsent(name, n -> new HashSet<>()).add(type);
+      values.computeIfAbsent(name, n -> new HashSet<>()).add(value);
     }
 
     boolean isEmpty() {

@@ -130,7 +130,6 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
   @Override
   public boolean process(T member) {
     ProgressManager.checkCanceled();
-    if (JavaCompletionUtil.isInExcludedPackage(member, false) || !member.hasModifierProperty(PsiModifier.STATIC)) return true;
     final PsiClass containingClass = member.getContainingClass();
     if (containingClass != null) {
       final String qualifiedName = containingClass.getQualifiedName();
@@ -156,18 +155,24 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
                               Collection<T> members,
                               List<T> list,
                               List<T> applicableList) {
-    final Boolean alreadyMentioned = myPossibleClasses.get(containingClass);
+    Boolean alreadyMentioned = myPossibleClasses.get(containingClass);
     if (alreadyMentioned == Boolean.TRUE) return;
     if (containingClass.getQualifiedName() == null) {
       return;
     }
     if (alreadyMentioned == null) {
-      if (!members.isEmpty()) {
-        list.add(members.iterator().next());
-      }
       myPossibleClasses.put(containingClass, false);
     }
     for (T member : members) {
+      if (JavaCompletionUtil.isInExcludedPackage(member, false) || !member.hasModifierProperty(PsiModifier.STATIC)) {
+        continue;
+      }
+
+      if (alreadyMentioned == null) {
+        list.add(member);
+        alreadyMentioned = Boolean.FALSE;
+      }
+
       if (!PsiUtil.isAccessible(myPlace.getProject(), member, myPlace, containingClass)) {
         continue;
       }

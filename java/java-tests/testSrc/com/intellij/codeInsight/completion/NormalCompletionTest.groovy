@@ -1589,4 +1589,24 @@ class Bar {
     configure()
     assert 'B' == LookupElementPresentation.renderElement(myFixture.lookup.items[0]).typeText
   }
+
+  public void testShowVarInitializers() {
+    configure()
+    assert LookupElementPresentation.renderElement(myFixture.lookup.items[0]).tailText == '( "x")'
+    assert LookupElementPresentation.renderElement(myFixture.lookup.items[1]).tailText == '("y") {...}'
+    assert !LookupElementPresentation.renderElement(myFixture.lookup.items[2]).tailText
+    assert LookupElementPresentation.renderElement(myFixture.lookup.items[3]).tailText == ' = 42'
+  }
+
+  public void testSuggestInterfaceArrayWhenObjectIsExpected() {
+    configure()
+    assert LookupElementPresentation.renderElement(myFixture.lookup.items[0]).tailText.contains('{...}')
+    assert LookupElementPresentation.renderElement(myFixture.lookup.items[1]).tailText.contains('[]')
+  }
+
+  public void testSuggestInterfaceArrayWhenObjectArrayIsExpected() {
+    configure()
+    assert LookupElementPresentation.renderElement(myFixture.lookup.items[0]).tailText.contains('{...}')
+    assert LookupElementPresentation.renderElement(myFixture.lookup.items[1]).tailText.contains('[]')
+  }
 }

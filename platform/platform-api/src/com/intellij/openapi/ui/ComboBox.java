@@ -17,7 +17,6 @@ package com.intellij.openapi.ui;
 
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBList;
@@ -27,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
@@ -67,7 +65,7 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
    * @param width preferred width of the combobox. Value <code>-1</code> means undefined.
    */
   public ComboBox(final int width) {
-    this(new DefaultComboBoxModel<E>(), width);
+    this(new DefaultComboBoxModel<>(), width);
   }
 
 
@@ -242,14 +240,7 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
   }
 
   public final void setEditor(final ComboBoxEditor editor) {
-    ComboBoxEditor _editor = editor;
-    if (SystemInfo.isMac && (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderIntelliJLaF())) {
-      if (editor instanceof UIResource) {
-        _editor = new FixedComboBoxEditor();
-      }
-    }
-
-    super.setEditor(new MyEditor(this, _editor));
+    super.setEditor(new MyEditor(this, editor));
   }
 
   public final Dimension getMinimumSize() {
@@ -264,23 +255,6 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     }
 
     return new Dimension(width, UIUtil.fixComboBoxHeight(preferredSize.height));
-  }
-
-  @Override
-  public Insets getInsets() {
-    Insets insets = super.getInsets();
-    if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel() && isEditable) {
-      insets.right += 2;
-    }
-    return insets;
-  }
-
-  @Override
-  public boolean hasFocus() {
-    if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel() && myPaintingNow && isEditable) {
-      return false;
-    }
-    return super.hasFocus();
   }
 
   protected Dimension getOriginalPreferredSize() {

@@ -46,7 +46,7 @@ public class PythonTRunnerConsoleProperties extends SMTRunnerConsoleProperties {
   @Nullable
   @Override
   public SMTestLocator getTestLocator() {
-    final Map<String, SMTestLocator> locators = new HashMap<String, SMTestLocator>();
+    final Map<String, SMTestLocator> locators = new HashMap<>();
 
     for (final PythonTestLocator locator : PythonTestLocator.EP_NAME.getExtensions()) {
       locators.put(locator.getProtocolId(), locator);

@@ -127,7 +127,7 @@ public class VcsPushDialog extends DialogWrapper {
   @Override
   @NotNull
   protected Action[] createActions() {
-    final List<Action> actions = new ArrayList<Action>();
+    final List<Action> actions = new ArrayList<>();
     myForcePushAction = new ForcePushAction();
     myForcePushAction.setEnabled(canForcePush());
     myForcePushAction.putValue(Action.NAME, "&Force Push");

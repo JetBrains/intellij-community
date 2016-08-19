@@ -131,8 +131,8 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
       final PsiElement topBlock = ControlFlowUtils.findControlFlowOwner(firstOperand);
       final LocalSearchScope searchScope = new LocalSearchScope(new PsiElement[]{topBlock instanceof GrCodeBlock
                                                                                  ? topBlock : firstOperand.getContainingFile()}, "", true);
-      final THashSet<PsiModifierListOwner> visitedVars = new THashSet<PsiModifierListOwner>();
-      final LinkedList<PsiElement> places = new LinkedList<PsiElement>();
+      final THashSet<PsiModifierListOwner> visitedVars = new THashSet<>();
+      final LinkedList<PsiElement> places = new LinkedList<>();
       places.add(firstOperand);
       final GrInjectionUtil.AnnotatedElementVisitor visitor = new GrInjectionUtil.AnnotatedElementVisitor() {
         @Override

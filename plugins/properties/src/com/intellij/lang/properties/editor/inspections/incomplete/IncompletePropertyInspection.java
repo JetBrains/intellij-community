@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * @author Dmitry Batkovich
@@ -51,7 +52,7 @@ public class IncompletePropertyInspection extends LocalInspectionTool implements
   private static final String SUFFIXES_TAG_NAME = "suffixes";
   private static final String TOOL_KEY = "IncompleteProperty";
 
-  SortedSet<String> mySuffixes = new TreeSet<String>();
+  SortedSet<String> mySuffixes = new TreeSet<>();
 
   @Nullable
   @Override
@@ -75,15 +76,17 @@ public class IncompletePropertyInspection extends LocalInspectionTool implements
     }
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public ResourceBundleEditorProblemDescriptor[] checkPropertyGroup(@NotNull List<IProperty> properties, @NotNull ResourceBundle resourceBundle) {
-    return !isPropertyComplete(properties, resourceBundle)
-           ? new ResourceBundleEditorProblemDescriptor[] {new ResourceBundleEditorProblemDescriptor(ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                                                                                    PropertiesBundle.message("incomplete.property.inspection.description",
-                                                                                           properties.get(0).getName()),
-                                                                                                    new IgnoreLocalesQuickFix(properties.get(0), resourceBundle))}
-           : null;
+  public Function<IProperty[], ResourceBundleEditorProblemDescriptor[]> buildPropertyGroupVisitor(@NotNull ResourceBundle resourceBundle) {
+    return properties -> !isPropertyComplete(properties, resourceBundle)
+    ? new ResourceBundleEditorProblemDescriptor[]{new ResourceBundleEditorProblemDescriptor(ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                                                            PropertiesBundle.message(
+                                                                                              "incomplete.property.inspection.description",
+                                                                                              properties[0].getName()),
+                                                                                            new IgnoreLocalesQuickFix(properties[0],
+                                                                                                                      resourceBundle))}
+    : null;
   }
 
   @NotNull
@@ -135,8 +138,8 @@ public class IncompletePropertyInspection extends LocalInspectionTool implements
       }
 
 
-      final TreeSet<String> suffixesToIgnore = new TreeSet<String>(ContainerUtil.map(allFilesWithoutTranslation,
-                                                                                     file -> PropertiesUtil.getSuffix(file)));
+      final TreeSet<String> suffixesToIgnore = new TreeSet<>(ContainerUtil.map(allFilesWithoutTranslation,
+                                                                               file -> PropertiesUtil.getSuffix(file)));
       if (new IncompletePropertyInspectionOptionsPanel(suffixesToIgnore).showDialogAndGet(project)) {
         DisableInspectionToolAction.modifyAndCommitProjectProfile(
           modifiableModel -> ((IncompletePropertyInspection)modifiableModel.getInspectionTool(TOOL_KEY, element).getTool()).addSuffixes(suffixesToIgnore), project);
@@ -145,11 +148,11 @@ public class IncompletePropertyInspection extends LocalInspectionTool implements
   }
 
   public boolean isPropertyComplete(final String key, final ResourceBundle resourceBundle) {
-    return isPropertyComplete(ContainerUtil.mapNotNull(resourceBundle.getPropertiesFiles(), file -> file.findPropertyByKey(key)), resourceBundle);
+    return isPropertyComplete(resourceBundle.getPropertiesFiles().stream().map(f -> f.findPropertyByKey(key)).filter(Objects::nonNull).toArray(IProperty[]::new), resourceBundle);
   }
 
-  private boolean isPropertyComplete(final List<IProperty> properties, final ResourceBundle resourceBundle) {
-    final Set<PropertiesFile> existed = ContainerUtil.map2Set(properties, property -> property.getPropertiesFile());
+  private boolean isPropertyComplete(final IProperty[] properties, final ResourceBundle resourceBundle) {
+    final Set<PropertiesFile> existed = ContainerUtil.map2Set(properties, IProperty::getPropertiesFile);
     for (PropertiesFile file : resourceBundle.getPropertiesFiles()) {
       if (!existed.contains(file) && !getIgnoredSuffixes().contains(PropertiesUtil.getSuffix(file))) {
         return false;

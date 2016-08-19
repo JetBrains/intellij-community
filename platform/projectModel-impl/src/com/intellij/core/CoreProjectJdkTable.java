@@ -28,7 +28,7 @@ import java.util.List;
  * @author yole
  */
 public class CoreProjectJdkTable extends ProjectJdkTable {
-  private final List<Sdk> mySdks = new ArrayList<Sdk>();
+  private final List<Sdk> mySdks = new ArrayList<>();
 
   @Override
   public Sdk findJdk(String name) {
@@ -56,7 +56,7 @@ public class CoreProjectJdkTable extends ProjectJdkTable {
 
   @Override
   public List<Sdk> getSdksOfType(SdkTypeId type) {
-    List<Sdk> result = new ArrayList<Sdk>();
+    List<Sdk> result = new ArrayList<>();
     synchronized (mySdks) {
       for (Sdk sdk : mySdks) {
         if (sdk.getSdkType() == type) {

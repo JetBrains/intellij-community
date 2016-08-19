@@ -80,11 +80,11 @@ public class BuildArtifactAction extends DumbAwareAction {
     final List<Artifact> artifacts = ArtifactUtil.getArtifactWithOutputPaths(project);
     if (artifacts.isEmpty()) return;
 
-    List<ArtifactPopupItem> items = new ArrayList<ArtifactPopupItem>();
+    List<ArtifactPopupItem> items = new ArrayList<>();
     if (artifacts.size() > 1) {
       items.add(0, new ArtifactPopupItem(null, "All Artifacts", EmptyIcon.ICON_16));
     }
-    Set<Artifact> selectedArtifacts = new HashSet<Artifact>(ArtifactsWorkspaceSettings.getInstance(project).getArtifactsToBuild());
+    Set<Artifact> selectedArtifacts = new HashSet<>(ArtifactsWorkspaceSettings.getInstance(project).getArtifactsToBuild());
     TIntArrayList selectedIndices = new TIntArrayList();
     if (Comparing.haveEqualElements(artifacts, selectedArtifacts) && selectedArtifacts.size() > 1) {
       selectedIndices.add(0);
@@ -130,7 +130,7 @@ public class BuildArtifactAction extends DumbAwareAction {
   }
 
   private static Set<Artifact> getArtifacts(final List<ArtifactPopupItem> items, final Project project) {
-    Set<Artifact> artifacts = new LinkedHashSet<Artifact>();
+    Set<Artifact> artifacts = new LinkedHashSet<>();
     for (ArtifactPopupItem item : items) {
       artifacts.addAll(item.getArtifacts(project));
     }
@@ -155,7 +155,7 @@ public class BuildArtifactAction extends DumbAwareAction {
 
     @Override
     public void run() {
-      Set<VirtualFile> parents = new HashSet<VirtualFile>();
+      Set<VirtualFile> parents = new HashSet<>();
       final VirtualFile[] roots = ProjectRootManager.getInstance(myProject).getContentSourceRoots();
       for (VirtualFile root : roots) {
         VirtualFile parent = root;
@@ -165,8 +165,8 @@ public class BuildArtifactAction extends DumbAwareAction {
         }
       }
 
-      Map<String, String> outputPathContainingSourceRoots = new HashMap<String, String>();
-      final List<Pair<File, Artifact>> toClean = new ArrayList<Pair<File, Artifact>>();
+      Map<String, String> outputPathContainingSourceRoots = new HashMap<>();
+      final List<Pair<File, Artifact>> toClean = new ArrayList<>();
       Set<Artifact> artifacts = getArtifacts(myArtifactPopupItems, myProject);
       for (Artifact artifact : artifacts) {
         String outputPath = artifact.getOutputFilePath();
@@ -203,7 +203,7 @@ public class BuildArtifactAction extends DumbAwareAction {
       new Task.Backgroundable(myProject, "Cleaning Artifacts", true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          List<File> deleted = new ArrayList<File>();
+          List<File> deleted = new ArrayList<>();
           for (Pair<File, Artifact> pair : toClean) {
             indicator.checkCanceled();
             File file = pair.getFirst();
@@ -336,7 +336,7 @@ public class BuildArtifactAction extends DumbAwareAction {
       if (finalChoice) {
         return doFinalStep(() -> doBuild(myProject, selectedValues, false));
       }
-      final List<ArtifactActionItem> actions = new ArrayList<ArtifactActionItem>();
+      final List<ArtifactActionItem> actions = new ArrayList<>();
       actions.add(new BuildArtifactItem(selectedValues, myProject));
       actions.add(new RebuildArtifactItem(selectedValues, myProject));
       actions.add(new CleanArtifactItem(selectedValues, myProject));

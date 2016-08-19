@@ -44,7 +44,7 @@ public class XsltFunctionContext extends DefaultFunctionContext {
   public static final String SAXON_7 = "http://saxon.sf.net/";
 
   static {
-    final Map<Pair<QName, Integer>, Function> decls = new HashMap<Pair<QName, Integer>, Function>();
+    final Map<Pair<QName, Integer>, Function> decls = new HashMap<>();
 
     final Parameter optional_string = new Parameter(XPathType.STRING, Parameter.Kind.OPTIONAL);
     final Parameter required_string = new Parameter(XPathType.STRING, Parameter.Kind.REQUIRED);

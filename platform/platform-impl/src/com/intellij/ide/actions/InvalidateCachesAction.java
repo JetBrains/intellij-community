@@ -56,7 +56,7 @@ public class InvalidateCachesAction extends AnAction implements DumbAware {
       options[3] = "&Just Restart";
     }
 
-    List<String> descriptions = new SmartList<String>();
+    List<String> descriptions = new SmartList<>();
     descriptions.add("Local History");
     for (CachesInvalidator invalidater : CachesInvalidator.EP_NAME.getExtensions()) {
       ContainerUtil.addIfNotNull(descriptions, invalidater.getDescription());

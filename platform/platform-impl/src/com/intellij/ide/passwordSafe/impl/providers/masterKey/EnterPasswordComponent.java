@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,40 +15,41 @@
  */
 package com.intellij.ide.passwordSafe.impl.providers.masterKey;
 
-import com.intellij.ide.passwordSafe.HelpID;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Function;
 
 /**
  * @author gregsh
  */
 public class EnterPasswordComponent extends PasswordComponentBase {
+  @NotNull
+  private final Function<String, Boolean> myPasswordConsumer;
 
-  public EnterPasswordComponent(@NotNull MasterKeyPasswordSafe safe, @NotNull Class<?> requestor) {
-    super(safe, "Enter");
-    String requestorName = getRequestorTitle(requestor);
-    myPromptLabel.setText("<html><br>Master password is required to unlock the password database.<br>" +
-                          "The password database will be unlocked during this session<br>" +
-                          "for all subsystems.<br>" +
-                          "<br><b>Requested by</b>: " + requestorName + "</html>");
-    UIUtil.setEnabled(myNewPasswordPanel, false, true);
-    myNewPasswordPanel.setVisible(false);
+  public EnterPasswordComponent(@NotNull Function<String, Boolean> passwordConsumer) {
+    myPasswordConsumer = passwordConsumer;
+
+    myPromptLabel.setText("Master password is required to convert saved password.");
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      myPasswordField.setText("pass");
+    }
   }
 
   @Override
-  public ValidationInfo doValidate() {
+  public ValidationInfo apply() {
+    // enter password — only and only old key, so, we use EncryptionUtil.genPasswordKey
+    String password = new String(myPasswordField.getPassword());
+    if (!myPasswordConsumer.apply(password)) {
+      return new ValidationInfo("Password is incorrect", myPasswordField);
+    }
     return null;
   }
 
   @Override
-  public boolean apply() {
-    String password = new String(myPasswordField.getPassword());
-    return mySafe.changeMasterPassword(password, password, myEncryptCheckBox.isSelected());
-  }
-
-  @Override
   public String getHelpId() {
-    return HelpID.ENTER_PASSWORD;
+    return "settings_passwords_master_password_enter";
   }
 }

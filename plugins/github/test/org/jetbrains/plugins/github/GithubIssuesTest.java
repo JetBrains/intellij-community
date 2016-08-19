@@ -20,7 +20,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubConnection;
-import org.jetbrains.plugins.github.api.GithubIssue;
+import org.jetbrains.plugins.github.api.data.GithubIssue;
 import org.jetbrains.plugins.github.test.GithubTest;
 
 import java.util.Arrays;

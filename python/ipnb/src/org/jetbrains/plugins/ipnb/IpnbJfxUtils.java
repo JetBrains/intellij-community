@@ -12,11 +12,9 @@ import com.intellij.util.ui.UIUtil;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
-import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.web.WebEngine;
-import javafx.scene.web.WebEvent;
 import javafx.scene.web.WebView;
 import netscape.javascript.JSException;
 import org.jetbrains.annotations.NotNull;
@@ -77,20 +75,13 @@ public class IpnbJfxUtils {
 
     Platform.runLater(() -> {
       final WebView webView = new WebView();
-      webView.setOnDragDetected(new EventHandler<javafx.scene.input.MouseEvent>() {
-        @Override
-        public void handle(javafx.scene.input.MouseEvent event) {
-        }
+      webView.setOnDragDetected(event -> {
       });
       final WebEngine engine = webView.getEngine();
       initHyperlinkListener(engine);
-      engine.setOnStatusChanged(new EventHandler<WebEvent<String>>() {
-        public void handle(WebEvent<String> status) {
-          adjustHeight(webView, javafxPanel, source);
-        }
-      });
+      engine.setOnStatusChanged(status -> adjustHeight(webView, javafxPanel, source));
 
-      final String prefix = String.format(ourPrefix, EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize());
+      final String prefix = String.format(ourPrefix, EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize() + 4);
       engine.loadContent(prefix + convertToHtml(source) + ourPostfix);
       final BorderPane pane = new BorderPane(webView);
       final Scene scene = new Scene(pane, width != 0 ? width : 20, 20);
@@ -218,13 +209,10 @@ public class IpnbJfxUtils {
         final int width = (int)(webView.getWidth() == 0 ? 1500 : webView.getWidth());
         final Dimension size = new Dimension(width, (int)height);
 
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            javafxPanel.setPreferredSize(size);
-            javafxPanel.revalidate();
-            javafxPanel.repaint();
-          }
+        UIUtil.invokeLaterIfNeeded(() -> {
+          javafxPanel.setPreferredSize(size);
+          javafxPanel.revalidate();
+          javafxPanel.repaint();
         });
       }
     }

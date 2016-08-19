@@ -41,15 +41,15 @@ public class ProjectCategoryUsagesCollector extends UsagesCollector {
   };
 
   public static void projectTypeUsed(@NotNull String projectTypeId) {
-    ServiceManager.getService(ProjectCategoryUsagesCollector.class).myUsageDescriptors.get("project.category." + projectTypeId).advance();
+    getUsageDescriptors().get("project.category." + projectTypeId).advance();
   }
 
   @NotNull
   @Override
   public Set<UsageDescriptor> getUsages() throws CollectUsagesException {
     HashSet<UsageDescriptor> descriptors = new HashSet<>();
-    descriptors.addAll(myUsageDescriptors.values());
-    myUsageDescriptors.clear();
+    descriptors.addAll(getUsageDescriptors().values());
+    getUsageDescriptors().clear();
     return descriptors;
   }
 
@@ -57,5 +57,9 @@ public class ProjectCategoryUsagesCollector extends UsagesCollector {
   @Override
   public GroupDescriptor getGroupId() {
     return GroupDescriptor.create("Project Category");
+  }
+
+  private static FactoryMap<String, UsageDescriptor> getUsageDescriptors() {
+    return ServiceManager.getService(ProjectCategoryUsagesCollector.class).myUsageDescriptors;
   }
 }

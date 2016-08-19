@@ -31,7 +31,7 @@ public class ParameterCanBeLocalInspectionBase extends BaseJavaBatchLocalInspect
 
   @NotNull
   private static List<PsiParameter> filterFinal(PsiParameter[] parameters) {
-    final List<PsiParameter> result = new ArrayList<PsiParameter>(parameters.length);
+    final List<PsiParameter> result = new ArrayList<>(parameters.length);
     for (PsiParameter parameter : parameters) {
       if (!parameter.hasModifierProperty(PsiModifier.FINAL)) {
         result.add(parameter);
@@ -58,9 +58,9 @@ public class ParameterCanBeLocalInspectionBase extends BaseJavaBatchLocalInspect
   }
 
   private static Set<PsiParameter> filterParameters(@NotNull ControlFlow controlFlow, @NotNull Collection<PsiParameter> parameters) {
-    final Set<PsiVariable> usedVars = new HashSet<PsiVariable>(ControlFlowUtil.getUsedVariables(controlFlow, 0, controlFlow.getSize()));
+    final Set<PsiVariable> usedVars = new HashSet<>(ControlFlowUtil.getUsedVariables(controlFlow, 0, controlFlow.getSize()));
 
-    final Set<PsiParameter> result = new HashSet<PsiParameter>();
+    final Set<PsiParameter> result = new HashSet<>();
     for (PsiParameter parameter : parameters) {
       if (usedVars.contains(parameter)) {
         result.add(parameter);
@@ -110,7 +110,7 @@ public class ParameterCanBeLocalInspectionBase extends BaseJavaBatchLocalInspect
       return ProblemDescriptor.EMPTY_ARRAY;
     }
 
-    final List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
+    final List<ProblemDescriptor> result = new ArrayList<>();
     for (PsiParameter parameter : getWriteBeforeRead(parameters, body)) {
       final PsiIdentifier identifier = parameter.getNameIdentifier();
       if (identifier != null && identifier.isPhysical()) {

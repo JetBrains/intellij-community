@@ -354,7 +354,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
 
     if (psiClass instanceof PsiTypeParameter) {
       PsiClass[] supers = psiClass.getSupers();
-      List<PsiClass> filtered = new ArrayList<PsiClass>();
+      List<PsiClass> filtered = new ArrayList<>();
       for (PsiClass aSuper : supers) {
         if (!aSuper.getManager().isInProject(aSuper)) continue;
         if (!(aSuper instanceof PsiTypeParameter)) filtered.add(aSuper);
@@ -367,12 +367,12 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       }
 
       if (!allowOuterClasses || !isAllowOuterTargetClass()) {
-        final ArrayList<PsiClass> classes = new ArrayList<PsiClass>();
+        final ArrayList<PsiClass> classes = new ArrayList<>();
         collectSupers(psiClass, classes);
         return classes;
       }
 
-      List<PsiClass> result = new ArrayList<PsiClass>();
+      List<PsiClass> result = new ArrayList<>();
 
       while (psiClass != null) {
         result.add(psiClass);
@@ -437,7 +437,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     int numParams = ref.getTypeParameters().length;
     if (numParams == 0) return;
     final PsiElementFactory factory = JavaPsiFacade.getInstance(ref.getProject()).getElementFactory();
-    final Set<String> typeParamNames = new HashSet<String>();
+    final Set<String> typeParamNames = new HashSet<>();
     for (PsiType type : ref.getTypeParameters()) {
       final PsiClass psiClass = PsiUtil.resolveClassInType(type);
       if (psiClass instanceof PsiTypeParameter) {

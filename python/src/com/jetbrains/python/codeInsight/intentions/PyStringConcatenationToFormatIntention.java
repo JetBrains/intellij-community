@@ -97,7 +97,7 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
   }
 
   private static Collection<PyExpression> getSimpleExpressions(@NotNull PyBinaryExpression expression) {
-    List<PyExpression> res = new ArrayList<PyExpression>();
+    List<PyExpression> res = new ArrayList<>();
     if (expression.getLeftExpression() instanceof PyBinaryExpression) {
       res.addAll(getSimpleExpressions((PyBinaryExpression) expression.getLeftExpression()));
     }
@@ -113,7 +113,7 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
   }
 
   private static Collection<PyElementType> getOperators(@NotNull PyBinaryExpression expression) {
-    List<PyElementType> res = new ArrayList<PyElementType>();
+    List<PyElementType> res = new ArrayList<>();
     if (expression.getLeftExpression() instanceof PyBinaryExpression) {
       res.addAll(getOperators((PyBinaryExpression)expression.getLeftExpression()));
     }
@@ -133,7 +133,7 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
 
     NotNullFunction<String,String> escaper = StringUtil.escaper(false, "\"\'\\");
     StringBuilder stringLiteral = new StringBuilder();
-    List<String> parameters = new ArrayList<String>();
+    List<String> parameters = new ArrayList<>();
     Pair<String, String> quotes = Pair.create("\"", "\"");
     boolean quotesDetected = false;
     final TypeEvalContext context = TypeEvalContext.userInitiated(file.getProject(), file);

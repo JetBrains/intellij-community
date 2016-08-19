@@ -30,7 +30,7 @@ import java.util.Map;
 
 public class DupIconsFinder {
 
-  private static final MultiMap<Integer, String> hashes = new MultiMap<Integer, String>();
+  private static final MultiMap<Integer, String> hashes = new MultiMap<>();
   private static int totalClusters;
   private static int totalDups;
 

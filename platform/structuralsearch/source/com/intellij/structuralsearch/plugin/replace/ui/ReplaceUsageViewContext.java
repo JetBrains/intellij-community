@@ -29,7 +29,7 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 class ReplaceUsageViewContext extends UsageViewContext {
-  private final HashMap<Usage,ReplacementInfo> usage2ReplacementInfo = new HashMap<Usage, ReplacementInfo>();
+  private final HashMap<Usage,ReplacementInfo> usage2ReplacementInfo = new HashMap<>();
   private final Replacer replacer = new Replacer(mySearchContext.getProject(), ((ReplaceConfiguration)myConfiguration).getOptions());
   private UsageView myUsageView;
   private Set<Usage> myExcludedSet;
@@ -150,7 +150,7 @@ class ReplaceUsageViewContext extends UsageViewContext {
 
   private void doReplace() {
     List<Usage> infos = myUsageView.getSortedUsages();
-    List<ReplacementInfo> results = new ArrayList<ReplacementInfo>(infos.size());
+    List<ReplacementInfo> results = new ArrayList<>(infos.size());
 
     for (final Usage info : infos) {
       UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)info;

@@ -236,7 +236,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
       GitRebaseEntry e = myEntries.get(rowIndex);
       switch (columnIndex) {
         case ACTION_COLUMN:
-          return new ListWithSelection<GitRebaseEntry.Action>(Arrays.asList(GitRebaseEntry.Action.values()), e.getAction());
+          return new ListWithSelection<>(Arrays.asList(GitRebaseEntry.Action.values()), e.getAction());
         case HASH_COLUMN:
           return e.getCommit();
         case SUBJECT_COLUMN:

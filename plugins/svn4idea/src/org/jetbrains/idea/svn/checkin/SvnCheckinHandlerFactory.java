@@ -75,7 +75,7 @@ public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
         if (executor instanceof LocalCommitExecutor) return ReturnResult.COMMIT;
         final SvnVcs vcs = SvnVcs.getInstance(project);
         final MultiMap<String, WorkingCopyFormat> copiesInfo = splitIntoCopies(vcs, myChanges);
-        final List<String> repoUrls = new ArrayList<String>();
+        final List<String> repoUrls = new ArrayList<>();
         for (Map.Entry<String, Collection<WorkingCopyFormat>> entry : copiesInfo.entrySet()) {
           if (entry.getValue().size() > 1) {
             repoUrls.add(entry.getKey());
@@ -101,7 +101,7 @@ public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       public void checkinSuccessful() {
         if (SvnConfiguration.getInstance(project).isAutoUpdateAfterCommit()) {
           final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(SvnVcs.getInstance(project));
-          final List<FilePath> paths = new ArrayList<FilePath>();
+          final List<FilePath> paths = new ArrayList<>();
           for (VirtualFile root : roots) {
             boolean take = false;
             for (VirtualFile commitRoot : commitRoots) {

@@ -25,7 +25,7 @@ import javax.swing.*;
  * @author Konstantin Bulenkov
  */
 public class MacIntelliJIconCache {
-  private static final HashMap<String, Icon> cache = new HashMap<String, Icon>();
+  private static final HashMap<String, Icon> cache = new HashMap<>();
 
   public static Icon getIcon(String name, boolean selected, boolean focused, boolean enabled) {
     String key = name;

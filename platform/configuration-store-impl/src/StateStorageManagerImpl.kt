@@ -56,7 +56,12 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   private val storageLock = ReentrantReadWriteLock()
   private val storages = THashMap<String, StateStorage>()
 
-  var streamProvider: StreamProvider? = null
+  private val streamWrapper = StreamProviderWrapper()
+  var streamProvider: StreamProvider?
+    get() = streamWrapper
+    set (value) {
+      streamWrapper.setStreamProvider(value)
+    }
 
   // access under storageLock
   private var isUseVfsListener = if (componentManager == null) ThreeState.NO else ThreeState.UNSURE // unsure because depends on stream provider state
@@ -113,7 +118,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
     // you must not add duplicated macro, but our ModuleImpl.setModuleFilePath does it (it will be fixed later)
     for (macro in macros) {
-      if (key.equals(macro.key)) {
+      if (key == macro.key) {
         macro.value = value
         return false
       }
@@ -126,7 +131,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   // system-independent paths
   open fun pathRenamed(oldPath: String, newPath: String, event: VFileEvent?) {
     for (macro in macros) {
-      if (oldPath.equals(macro.value)) {
+      if (oldPath == macro.value) {
         macro.value = newPath
       }
     }
@@ -163,7 +168,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
       key = storageClass.name!!
     }
     storageLock.read {
-      var storage = storages[key]
+      var storage = storages.get(key)
       if (storage == null) {
         storage = createStateStorage(storageClass, normalizedCollapsedPath, roamingType, stateSplitter, exclusive)
         storages.put(key, storage)
@@ -171,6 +176,10 @@ open class StateStorageManagerImpl(private val rootTagName: String,
       return storage
     }
   }
+
+  fun getCachedFileStorages() = storageLock.read { storages.values.toSet() }
+
+  fun findCachedFileStorage(name: String) : StateStorage? = storageLock.read { storages[name] }
 
   fun getCachedFileStorages(changed: Collection<String>, deleted: Collection<String>, pathNormalizer: ((String) -> String)? = null) = storageLock.read {
     Pair(getCachedFileStorages(changed, pathNormalizer), getCachedFileStorages(deleted, pathNormalizer))
@@ -204,13 +213,21 @@ open class StateStorageManagerImpl(private val rootTagName: String,
                                         @Suppress("DEPRECATION") stateSplitter: Class<out StateSplitter>,
                                         exclusive: Boolean = false): StateStorage {
     if (storageClass != StateStorage::class.java) {
-      val constructor = storageClass.constructors[0]!!
+      val constructor = storageClass.constructors.get(0)!!
       constructor.isAccessible = true
       return constructor.newInstance(componentManager!!, this) as StateStorage
     }
 
+    val effectiveRoamingType: RoamingType
+    if (roamingType != RoamingType.DISABLED && (collapsedPath == StoragePathMacros.WORKSPACE_FILE || collapsedPath == "other.xml")) {
+      effectiveRoamingType = RoamingType.DISABLED
+    }
+    else {
+      effectiveRoamingType = roamingType
+    }
+
     if (isUseVfsListener == ThreeState.UNSURE) {
-      isUseVfsListener = ThreeState.fromBoolean(streamProvider == null || !streamProvider!!.enabled)
+      isUseVfsListener = ThreeState.fromBoolean(streamProvider == null || !streamProvider!!.isApplicable(collapsedPath, effectiveRoamingType))
     }
 
     val filePath = expandMacros(collapsedPath)
@@ -225,14 +242,6 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment && PathUtilRt.getFileName(filePath).lastIndexOf('.') < 0) {
       throw IllegalArgumentException("Extension is missing for storage file: $filePath")
-    }
-
-    val effectiveRoamingType: RoamingType
-    if (roamingType != RoamingType.DISABLED && (collapsedPath == StoragePathMacros.WORKSPACE_FILE || collapsedPath == "other.xml")) {
-      effectiveRoamingType = RoamingType.DISABLED
-    }
-    else {
-      effectiveRoamingType = roamingType
     }
 
     val storage = createFileBasedStorage(filePath, collapsedPath, effectiveRoamingType, if (exclusive) null else this.rootTagName)
@@ -433,7 +442,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
 private fun String.startsWithMacro(macro: String): Boolean {
   val i = macro.length
-  return length > i && this[i] == '/' && startsWith(macro)
+  return length > i && this.get(i) == '/' && startsWith(macro)
 }
 
 fun removeMacroIfStartsWith(path: String, macro: String) = if (path.startsWithMacro(macro)) path.substring(macro.length + 1) else path

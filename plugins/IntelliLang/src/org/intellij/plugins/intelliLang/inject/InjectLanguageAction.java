@@ -73,7 +73,7 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
 
   public static List<Injectable> getAllInjectables() {
     Language[] languages = InjectedLanguage.getAvailableLanguages();
-    List<Injectable> list = new ArrayList<Injectable>();
+    List<Injectable> list = new ArrayList<>();
     for (Language language : languages) {
       list.add(Injectable.fromLanguage(language));
     }

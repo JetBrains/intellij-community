@@ -96,7 +96,7 @@ public class GitShelveUtils {
   }
 
   private static void refreshFilesBeforeUnshelve(final Project project, ShelvedChangeList shelvedChangeList, String projectPath) {
-    HashSet<File> filesToRefresh = new HashSet<File>();
+    HashSet<File> filesToRefresh = new HashSet<>();
     for (ShelvedChange c : shelvedChangeList.getChanges(project)) {
       if (c.getBeforePath() != null) {
         filesToRefresh.add(new File(projectPath + c.getBeforePath()));

@@ -68,7 +68,7 @@ public class HighlighterUtil {
     public static void addHighlighter(Editor editor, RangeHighlighter highlighter) {
         List<RangeHighlighter> hl = editor.getUserData(HIGHLIGHTERS_KEY);
         if (hl == null) {
-            hl = new LinkedList<RangeHighlighter>();
+            hl = new LinkedList<>();
             editor.putUserData(HIGHLIGHTERS_KEY, hl);
         } else {
             purgeInvalidHighlighters(editor, hl);
@@ -137,7 +137,7 @@ public class HighlighterUtil {
         }
 
         // TODO: break at line boundaries
-        final ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>(1);
+        final ArrayList<RangeHighlighter> highlighters = new ArrayList<>(1);
         final HighlightManager mgr = HighlightManager.getInstance(editor.getProject());
         mgr.addRangeHighlight(editor, range.getStartOffset(), range.getEndOffset(), attrs, false, highlighters);
         final RangeHighlighter rangeHighlighter = highlighters.get(0);

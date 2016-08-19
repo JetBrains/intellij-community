@@ -186,8 +186,8 @@ public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineReposit
     protected List<RedmineProjectItem> fetch(@NotNull ProgressIndicator indicator) throws Exception {
       // Seems that Redmine always return its project hierarchy in DFS order.
       // So it's easy to find level of each project using stack of parents.
-      Stack<RedmineProject> parents = new Stack<RedmineProject>();
-      List<RedmineProjectItem> items = new ArrayList<RedmineProjectItem>();
+      Stack<RedmineProject> parents = new Stack<>();
+      List<RedmineProjectItem> items = new ArrayList<>();
       for (RedmineProject project : myRepository.fetchProjects()) {
         RedmineProject parentProject = project.getParent();
         if (parentProject == null) {

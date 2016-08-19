@@ -141,7 +141,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements NamedCompo
 
     private final Editor myEditor;
     private State myState = State.INITIAL;
-    private final List<Couple<RangeMarker>> myMarkers = new SmartList<Couple<RangeMarker>>();
+    private final List<Couple<RangeMarker>> myMarkers = new SmartList<>();
 
     public TagNameSynchronizer(Editor editor, Project project, Language language) {
       myEditor = editor;
@@ -185,7 +185,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements NamedCompo
         final PsiFile file = myDocumentManager.getPsiFile(document);
         if (file == null || myDocumentManager.getSynchronizer().isInSynchronization(document)) return;
 
-        final SmartList<RangeMarker> leaders = new SmartList<RangeMarker>();
+        final SmartList<RangeMarker> leaders = new SmartList<>();
         for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
           final RangeMarker leader = createTagNameMarker(caret);
           if (leader == null) {

@@ -82,7 +82,7 @@ public class InspectionListCellRenderer extends DefaultListCellRenderer {
       final String matchingText = inspectionName + "|" + groupName;
       Matcher matcher = MatcherHolder.getAssociatedMatcher(list);
       List<TextRange> fragments = matcher == null ? null : ((MinusculeMatcher)matcher).matchingFragments(matchingText);
-      List<TextRange> adjustedFragments = new ArrayList<TextRange>();
+      List<TextRange> adjustedFragments = new ArrayList<>();
       if (fragments != null) {
         adjustedFragments.addAll(fragments);
       }

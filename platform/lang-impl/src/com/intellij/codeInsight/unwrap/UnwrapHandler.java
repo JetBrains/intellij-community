@@ -64,7 +64,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
   }
 
   private List<AnAction> collectOptions(Project project, Editor editor, PsiFile file) {
-    List<AnAction> result = new ArrayList<AnAction>();
+    List<AnAction> result = new ArrayList<>();
 
     UnwrapDescriptor d = getUnwrapDescription(file);
 
@@ -116,7 +116,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
 
         MyUnwrapAction a = (MyUnwrapAction)options.get(index);
 
-        List<PsiElement> toExtract = new ArrayList<PsiElement>();
+        List<PsiElement> toExtract = new ArrayList<>();
         PsiElement wholeRange = a.collectAffectedElements(toExtract);
         highlighter.highlight(wholeRange, toExtract);
       }
@@ -149,7 +149,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
   }
 
   private static class MyUnwrapAction extends AnAction {
-    private static final Key<Integer> CARET_POS_KEY = new Key<Integer>("UNWRAP_HANDLER_CARET_POSITION");
+    private static final Key<Integer> CARET_POS_KEY = new Key<>("UNWRAP_HANDLER_CARET_POSITION");
 
     private final Project myProject;
     private final Editor myEditor;

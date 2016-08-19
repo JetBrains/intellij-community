@@ -94,7 +94,7 @@ public class ExtractExternalResourceLinksTest extends LightCodeInsightTestCase {
   }
 
   private void doExtractionOfEmbeddedFiles(String[] shortFileName,String[][] expectedFileNames) {
-    final List<VirtualFile> files = new ArrayList<VirtualFile>(shortFileName.length);
+    final List<VirtualFile> files = new ArrayList<>(shortFileName.length);
     for(String s: shortFileName) {
       if (FileUtilRt.getExtension(s).length() < 3) {
         s += ".xsd";

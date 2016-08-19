@@ -107,7 +107,7 @@ class NestingDepthVisitor extends JavaRecursiveElementWalkingVisitor {
     exitScope(element);
   }
 
-  private final Set<PsiElement> scopeEntered = new THashSet<PsiElement>();
+  private final Set<PsiElement> scopeEntered = new THashSet<>();
   private void enterScope(PsiElement element) {
     scopeEntered.add(element);
     m_currentDepth++;

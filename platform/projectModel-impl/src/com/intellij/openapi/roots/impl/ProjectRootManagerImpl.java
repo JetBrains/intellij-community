@@ -151,7 +151,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   @Override
   @NotNull
   public List<String> getContentRootUrls() {
-    final List<String> result = new ArrayList<String>();
+    final List<String> result = new ArrayList<>();
     for (Module module : getModuleManager().getModules()) {
       final String[] urls = ModuleRootManager.getInstance(module).getContentRootUrls();
       ContainerUtil.addAll(result, urls);
@@ -162,7 +162,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   @Override
   @NotNull
   public VirtualFile[] getContentRoots() {
-    final List<VirtualFile> result = new ArrayList<VirtualFile>();
+    final List<VirtualFile> result = new ArrayList<>();
     for (Module module : getModuleManager().getModules()) {
       final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
       ContainerUtil.addAll(result, contentRoots);
@@ -173,7 +173,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   @NotNull
   @Override
   public VirtualFile[] getContentSourceRoots() {
-    final List<VirtualFile> result = new ArrayList<VirtualFile>();
+    final List<VirtualFile> result = new ArrayList<>();
     for (Module module : getModuleManager().getModules()) {
       final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
       ContainerUtil.addAll(result, sourceRoots);
@@ -184,7 +184,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   @NotNull
   @Override
   public List<VirtualFile> getModuleSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
-    List<VirtualFile> roots = new ArrayList<VirtualFile>();
+    List<VirtualFile> roots = new ArrayList<>();
     for (Module module : getModuleManager().getModules()) {
       roots.addAll(ModuleRootManager.getInstance(module).getSourceRoots(rootTypes));
     }
@@ -205,13 +205,13 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   @Override
   public VirtualFile[] getContentRootsFromAllModules() {
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
+    List<VirtualFile> result = new ArrayList<>();
     final Module[] modules = getModuleManager().getSortedModules();
     for (Module module : modules) {
       final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
       ContainerUtil.addAll(result, files);
     }
-    ContainerUtil.addIfNotNull(myProject.getBaseDir(), result);
+    ContainerUtil.addIfNotNull(result, myProject.getBaseDir());
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
@@ -447,7 +447,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   void subscribeToRootProvider(OrderEntry owner, final RootProvider provider) {
     Set<OrderEntry> owners = myRegisteredRootProviders.get(provider);
     if (owners == null) {
-      owners = new HashSet<OrderEntry>();
+      owners = new HashSet<>();
       myRegisteredRootProviders.put(provider, owners);
       provider.addRootSetChangedListener(myRootProviderChangeListener);
     }
@@ -493,10 +493,10 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   }
 
   private final Object myLibraryTableListenersLock = new Object();
-  private final Map<LibraryTable, LibraryTableMultiListener> myLibraryTableMultiListeners = new HashMap<LibraryTable, LibraryTableMultiListener>();
+  private final Map<LibraryTable, LibraryTableMultiListener> myLibraryTableMultiListeners = new HashMap<>();
 
   private class LibraryTableMultiListener implements LibraryTable.Listener {
-    private final Set<LibraryTable.Listener> myListeners = new LinkedHashSet<LibraryTable.Listener>();
+    private final Set<LibraryTable.Listener> myListeners = new LinkedHashSet<>();
     private LibraryTable.Listener[] myListenersArray;
 
     private synchronized void addListener(LibraryTable.Listener listener) {
@@ -561,7 +561,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   private final JdkTableMultiListener myJdkTableMultiListener;
 
   private class JdkTableMultiListener implements ProjectJdkTable.Listener {
-    private final Set<ProjectJdkTable.Listener> myListeners = new LinkedHashSet<ProjectJdkTable.Listener>();
+    private final Set<ProjectJdkTable.Listener> myListeners = new LinkedHashSet<>();
     private final MessageBusConnection listenerConnection;
     private ProjectJdkTable.Listener[] myListenersArray;
 
@@ -621,7 +621,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
   }
 
-  private final Map<RootProvider, Set<OrderEntry>> myRegisteredRootProviders = new HashMap<RootProvider, Set<OrderEntry>>();
+  private final Map<RootProvider, Set<OrderEntry>> myRegisteredRootProviders = new HashMap<>();
 
   void addJdkTableListener(ProjectJdkTable.Listener jdkTableListener) {
     myJdkTableMultiListener.addListener(jdkTableListener);

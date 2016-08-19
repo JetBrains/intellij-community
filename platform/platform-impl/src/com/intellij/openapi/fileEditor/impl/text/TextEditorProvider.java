@@ -263,7 +263,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     if (state.CARETS != null && state.CARETS.length > 0) {
       if (editor.getCaretModel().supportsMultipleCarets()) {
         CaretModel caretModel = editor.getCaretModel();
-        List<CaretState> states = new ArrayList<CaretState>(state.CARETS.length);
+        List<CaretState> states = new ArrayList<>(state.CARETS.length);
         for (TextEditorState.CaretState caretState : state.CARETS) {
           states.add(new CaretState(new LogicalPosition(caretState.LINE, caretState.COLUMN),
                                     new LogicalPosition(caretState.SELECTION_START_LINE, caretState.SELECTION_START_COLUMN),

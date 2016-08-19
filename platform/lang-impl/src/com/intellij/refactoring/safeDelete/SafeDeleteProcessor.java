@@ -174,7 +174,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usages = refUsages.get();
-    ArrayList<String> conflicts = new ArrayList<String>();
+    ArrayList<String> conflicts = new ArrayList<>();
 
     for (PsiElement element : myElements) {
       for(SafeDeleteProcessorDelegate delegate: Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
@@ -305,7 +305,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     public void run() {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       myUsageView.close();
-      ArrayList<PsiElement> elements = new ArrayList<PsiElement>();
+      ArrayList<PsiElement> elements = new ArrayList<>();
       for (SmartPsiElementPointer pointer : myPointers) {
         final PsiElement element = pointer.getElement();
         if (element != null) {
@@ -323,7 +323,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
    * @return Map from elements to UsageHolders
    */
   private static HashMap<PsiElement,UsageHolder> sortUsages(@NotNull UsageInfo[] usages) {
-    HashMap<PsiElement,UsageHolder> result = new HashMap<PsiElement, UsageHolder>();
+    HashMap<PsiElement,UsageHolder> result = new HashMap<>();
 
     for (final UsageInfo usage : usages) {
       if (usage instanceof SafeDeleteUsageInfo) {
@@ -353,7 +353,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
   private static UsageInfo[] filterToBeDeleted(UsageInfo[] infos) {
-    ArrayList<UsageInfo> list = new ArrayList<UsageInfo>();
+    ArrayList<UsageInfo> list = new ArrayList<>();
     for (UsageInfo info : infos) {
       if (!(info instanceof SafeDeleteReferenceUsageInfo) || ((SafeDeleteReferenceUsageInfo) info).isSafeDelete()) {
         list.add(info);
@@ -462,8 +462,8 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   public static SafeDeleteProcessor createInstance(Project project, @Nullable Runnable prepareSuccessfulCallBack,
                                                    PsiElement[] elementsToDelete, boolean isSearchInComments, boolean isSearchNonJava,
                                                    boolean askForAccessors) {
-    ArrayList<PsiElement> elements = new ArrayList<PsiElement>(Arrays.asList(elementsToDelete));
-    HashSet<PsiElement> elementsToDeleteSet = new HashSet<PsiElement>(Arrays.asList(elementsToDelete));
+    ArrayList<PsiElement> elements = new ArrayList<>(Arrays.asList(elementsToDelete));
+    HashSet<PsiElement> elementsToDeleteSet = new HashSet<>(Arrays.asList(elementsToDelete));
 
     for (PsiElement psiElement : elementsToDelete) {
       for(SafeDeleteProcessorDelegate delegate: Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {

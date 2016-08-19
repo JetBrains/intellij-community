@@ -82,7 +82,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
     }
 
     public List<File> get(AbstractProperty.AbstractPropertyContainer container) {
-      ArrayList<File> classpath = new ArrayList<File>();
+      ArrayList<File> classpath = new ArrayList<>();
       collectClasspath(classpath, ADDITIONAL_CLASSPATH, container);
       AntInstallation antInstallation = ANT_INSTALLATION.get(container);
       if (antInstallation != null) {
@@ -123,7 +123,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   public static final ListProperty<BuildFileProperty> ANT_PROPERTIES = ListProperty.create("properties");
   public static final StringProperty ANT_COMMAND_LINE_PARAMETERS = new StringProperty("antCommandLine", "");
   public static final AbstractProperty<AntReference> ANT_REFERENCE =
-    new ValueProperty<AntReference>("antReference", AntReference.PROJECT_DEFAULT);
+    new ValueProperty<>("antReference", AntReference.PROJECT_DEFAULT);
   public static final ListProperty<AntClasspathEntry> ADDITIONAL_CLASSPATH = ListProperty.create("additionalClassPath");
   public static final AbstractProperty<AntInstallation> RUN_WITH_ANT = new AbstractProperty<AntInstallation>() {
     public String getName() {
@@ -184,7 +184,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   public static List<File> getUserHomeLibraries() {
-    ArrayList<File> classpath = new ArrayList<File>();
+    ArrayList<File> classpath = new ArrayList<>();
     final String homeDir = SystemProperties.getUserHome();
     new AllJarsUnderDirEntry(new File(homeDir, ANT_LIB)).addFilesTo(classpath);
     return classpath;
@@ -276,7 +276,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   public void updateProperties() {
     // do not change position
     final AntBuildTarget[] targets = getModel().getTargets();
-    final Map<String, AntBuildTarget> targetByName = new LinkedHashMap<String, AntBuildTarget>(targets.length);
+    final Map<String, AntBuildTarget> targetByName = new LinkedHashMap<>(targets.length);
     for (AntBuildTarget target : targets) {
       String targetName = target.getName();
       if(targetName != null) {
@@ -382,7 +382,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
       synchronized (myOptionsLock) {
         result = myCachedExternalProperties;
         if (result == null) {
-          result = new HashMap<String, String>();
+          result = new HashMap<>();
 
           final DataContext context = SimpleDataContext.getProjectContext(myProject);
           final MacroManager macroManager = MacroManager.getInstance();

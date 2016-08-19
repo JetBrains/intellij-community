@@ -20,7 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
@@ -42,7 +42,7 @@ public class MavenJDOMUtil {
       if (!file.isValid()) return null;
 
       try {
-        text = VfsUtil.loadText(file);
+        text = VfsUtilCore.loadText(file);
       }
       catch (IOException e) {
         if (handler != null) handler.onReadError(e);
@@ -63,7 +63,7 @@ public class MavenJDOMUtil {
 
   @Nullable
   private static Element doRead(String text, final ErrorHandler handler) {
-    final LinkedList<Element> stack = new LinkedList<Element>();
+    final LinkedList<Element> stack = new LinkedList<>();
 
     final Element[] result = {null};
     XmlBuilderDriver driver = new XmlBuilderDriver(text);
@@ -164,7 +164,7 @@ public class MavenJDOMUtil {
   }
 
   public static List<String> findChildrenValuesByPath(@Nullable Element element, String path, String childrenName) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     for (Element each : findChildrenByPath(element, path, childrenName)) {
       String value = each.getTextTrim();
       if (!value.isEmpty()) {
@@ -186,7 +186,7 @@ public class MavenJDOMUtil {
     String childName = subPath.substring(0, firstDot);
     String pathInChild = subPath.substring(firstDot + 1);
 
-    List<Element> result = new ArrayList<Element>();
+    List<Element> result = new ArrayList<>();
 
     for (Element each : container.getChildren(childName)) {
       Element child = findChildByPath(each, pathInChild);

@@ -116,7 +116,7 @@ public class FontInfo {
              (normalizedName.endsWith(".otf") || normalizedName.endsWith(".ttf")) &&
              (style == -1 || style == getFontStyle(normalizedName));
     };
-    List<File> files = new ArrayList<File>();
+    List<File> files = new ArrayList<>();
     
     File[] userFiles = new File(System.getProperty("user.home"), "Library/Fonts").listFiles(filter);
     if (userFiles != null) files.addAll(Arrays.asList(userFiles));

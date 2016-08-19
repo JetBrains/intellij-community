@@ -25,7 +25,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 
 public class ReorderableListToolbar<T> extends ReorderableListController<T> {
-  private final ArrayList<ActionDescription> myActions = new ArrayList<ActionDescription>();
+  private final ArrayList<ActionDescription> myActions = new ArrayList<>();
 
   public ReorderableListToolbar(final JList list) {
     super(list);

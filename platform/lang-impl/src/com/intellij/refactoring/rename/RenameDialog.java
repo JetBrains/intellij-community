@@ -66,7 +66,7 @@ public class RenameDialog extends RefactoringDialog {
   private final Editor myEditor;
   private static final String REFACTORING_NAME = RefactoringBundle.message("rename.title");
   private NameSuggestionsField.DataChanged myNameChangedListener;
-  private final Map<AutomaticRenamerFactory, JCheckBox> myAutomaticRenamers = new HashMap<AutomaticRenamerFactory, JCheckBox>();
+  private final Map<AutomaticRenamerFactory, JCheckBox> myAutomaticRenamers = new HashMap<>();
   private String myOldName;
 
   public RenameDialog(@NotNull Project project, @NotNull PsiElement psiElement, @Nullable PsiElement nameSuggestionContext,
@@ -173,7 +173,7 @@ public class RenameDialog extends RefactoringDialog {
   }
 
   public String[] getSuggestedNames() {
-    final LinkedHashSet<String> result = new LinkedHashSet<String>();
+    final LinkedHashSet<String> result = new LinkedHashSet<>();
     final String initialName = VariableInplaceRenameHandler.getInitialName();
     if (initialName != null) {
       result.add(initialName);

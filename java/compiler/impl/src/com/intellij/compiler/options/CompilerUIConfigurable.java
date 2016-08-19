@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -244,7 +244,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   private static void applyResourcePatterns(String extensionString, final CompilerConfigurationImpl configuration)
     throws ConfigurationException {
     StringTokenizer tokenizer = new StringTokenizer(extensionString, ";", false);
-    List<String[]> errors = new ArrayList<String[]>();
+    List<String[]> errors = new ArrayList<>();
 
     while (tokenizer.hasMoreTokens()) {
       String namePattern = tokenizer.nextToken();
@@ -313,10 +313,6 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   @NotNull
   public String getId() {
     return "compiler.general";
-  }
-
-  public Runnable enableSearch(String option) {
-    return null;
   }
 
   public JComponent createComponent() {

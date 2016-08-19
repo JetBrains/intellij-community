@@ -45,7 +45,7 @@ class MethodRepr extends ProtoMember {
   public final TypeRepr.AbstractType[] myArgumentTypes;
   public final Set<TypeRepr.AbstractType> myExceptions;
 
-  public static abstract class Diff extends ProtoMember.Diff {
+  public static abstract class Diff extends Difference {
 
     public abstract Specifier<ParamAnnotation, Difference> parameterAnnotations();
 
@@ -61,13 +61,12 @@ class MethodRepr extends ProtoMember {
     final MethodRepr m = (MethodRepr)past;
     final Difference diff = super.difference(past);
     final Difference.Specifier<TypeRepr.AbstractType, Difference> excs = Difference.make(m.myExceptions, myExceptions);
-    final Difference.Specifier<TypeRepr.ClassType, Difference> annotations = Difference.make(m.myAnnotations, myAnnotations);
     final Difference.Specifier<ParamAnnotation, Difference> paramAnnotations = Difference.make(m.myParameterAnnotations, myParameterAnnotations);
 
     return new Diff() {
       @Override
       public Specifier<TypeRepr.ClassType, Difference> annotations() {
-        return annotations;
+        return diff.annotations();
       }
 
       @Override

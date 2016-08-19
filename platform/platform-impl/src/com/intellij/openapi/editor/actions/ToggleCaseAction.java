@@ -50,7 +50,7 @@ public class ToggleCaseAction extends TextComponentEditorAction {
   private static class Handler extends EditorWriteActionHandler {
     @Override
     public void executeWriteAction(final Editor editor, @Nullable Caret caret, DataContext dataContext) {
-      final Ref<Boolean> toLowerCase = new Ref<Boolean>(Boolean.FALSE);
+      final Ref<Boolean> toLowerCase = new Ref<>(Boolean.FALSE);
       runForCaret(editor, caret, new CaretAction() {
         @Override
         public void perform(Caret caret) {

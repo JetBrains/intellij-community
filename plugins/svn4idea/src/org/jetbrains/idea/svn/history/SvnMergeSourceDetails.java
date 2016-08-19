@@ -61,7 +61,7 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
     myProject = project;
     myRevision = revision;
     myFile = file;
-    myListsMap = new HashMap<Long, SvnChangeList>();
+    myListsMap = new HashMap<>();
     initTree();
     fillTree();
 
@@ -165,7 +165,7 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
     myTree.setCellRenderer(new MyTreeCellRenderer());
     myRoot.removeAllChildren();
 
-    final List<TreePath> nodesToExpand = new ArrayList<TreePath>();
+    final List<TreePath> nodesToExpand = new ArrayList<>();
     addRecursively(myRevision, myRoot, nodesToExpand);
 
     ((DefaultTreeModel) myTree.getModel()).reload(myRoot);

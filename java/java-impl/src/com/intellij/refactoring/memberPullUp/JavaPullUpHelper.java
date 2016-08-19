@@ -362,12 +362,12 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
   }
 
   private void tryToMoveInitializers(PsiMethod constructor, HashSet<PsiMethod> subConstructors, LinkedHashSet<PsiField> movedFields) throws IncorrectOperationException {
-    final LinkedHashMap<PsiField, Initializer> fieldsToInitializers = new LinkedHashMap<PsiField, Initializer>();
+    final LinkedHashMap<PsiField, Initializer> fieldsToInitializers = new LinkedHashMap<>();
     boolean anyFound = false;
 
     for (PsiField field : movedFields) {
       PsiStatement commonInitializer = null;
-      final ArrayList<PsiElement> fieldInitializersToRemove = new ArrayList<PsiElement>();
+      final ArrayList<PsiElement> fieldInitializersToRemove = new ArrayList<>();
       for (PsiMethod subConstructor : subConstructors) {
         commonInitializer = hasCommonInitializer(commonInitializer, subConstructor, field, fieldInitializersToRemove);
         if (commonInitializer == null) break;
@@ -414,7 +414,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
     }
 
 
-    ArrayList<PsiField> initializedFields = new ArrayList<PsiField>(fieldsToInitializers.keySet());
+    ArrayList<PsiField> initializedFields = new ArrayList<>(fieldsToInitializers.keySet());
 
     Collections.sort(initializedFields, (field1, field2) -> {
       Initializer i1 = fieldsToInitializers.get(field1);
@@ -498,7 +498,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
     // no write usages afterwards.
     PsiStatement commonInitializerCandidate = null;
     for (PsiStatement statement : statements) {
-      final HashSet<PsiStatement> collectedStatements = new HashSet<PsiStatement>();
+      final HashSet<PsiStatement> collectedStatements = new HashSet<>();
       collectPsiStatements(statement, collectedStatements);
       boolean doLookup = true;
       for (PsiStatement collectedStatement : collectedStatements) {
@@ -578,11 +578,11 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
     private final Set<PsiField> myMovedFields;
     private final Set<PsiField> myUsedFields;
 
-    private final Set<PsiParameter> myUsedParameters = new LinkedHashSet<PsiParameter>();
+    private final Set<PsiParameter> myUsedParameters = new LinkedHashSet<>();
 
     private ParametersAndMovedFieldsUsedCollector(HashSet<PsiField> movedFields) {
       myMovedFields = movedFields;
-      myUsedFields = new HashSet<PsiField>();
+      myUsedFields = new HashSet<>();
     }
 
     public Set<PsiParameter> getUsedParameters() {
@@ -652,9 +652,9 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
   }
 
   private HashMap<PsiMethod,HashSet<PsiMethod>> buildConstructorsToSubConstructorsMap(final PsiMethod[] constructors) {
-    final HashMap<PsiMethod,HashSet<PsiMethod>> constructorsToSubConstructors = new HashMap<PsiMethod, HashSet<PsiMethod>>();
+    final HashMap<PsiMethod,HashSet<PsiMethod>> constructorsToSubConstructors = new HashMap<>();
     for (PsiMethod constructor : constructors) {
-      final HashSet<PsiMethod> referencingSubConstructors = new HashSet<PsiMethod>();
+      final HashSet<PsiMethod> referencingSubConstructors = new HashSet<>();
       constructorsToSubConstructors.put(constructor, referencingSubConstructors);
       if (constructor != null) {
         // find references
@@ -719,9 +719,9 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
 
     private StaticReferencesCollector() {
       super(mySourceClass);
-      myReferees = new ArrayList<PsiElement>();
-      myRefereeClasses = new ArrayList<PsiClass>();
-      myReferences = new ArrayList<PsiJavaCodeReferenceElement>();
+      myReferees = new ArrayList<>();
+      myRefereeClasses = new ArrayList<>();
+      myReferences = new ArrayList<>();
     }
 
     public ArrayList<PsiElement> getReferees() {

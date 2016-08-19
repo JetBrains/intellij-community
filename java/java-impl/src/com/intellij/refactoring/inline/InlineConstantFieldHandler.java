@@ -73,7 +73,7 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
     }
 
     if (!field.hasModifierProperty(PsiModifier.FINAL)) {
-      final Ref<Boolean> hasWriteUsages = new Ref<Boolean>(false);
+      final Ref<Boolean> hasWriteUsages = new Ref<>(false);
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
         for (PsiReference reference : ReferencesSearch.search(field)) {
           final PsiElement referenceElement = reference.getElement();
@@ -122,7 +122,7 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
           if (element instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand((PsiExpression)element)) {
             PsiAssignmentExpression assignmentExpression = PsiTreeUtil.getParentOfType(element, PsiAssignmentExpression.class);
             if (assignmentExpression != null) {
-              ContainerUtil.addIfNotNull(assignmentExpression.getRExpression(), result);
+              ContainerUtil.addIfNotNull(result, assignmentExpression.getRExpression());
             }
           }
         }

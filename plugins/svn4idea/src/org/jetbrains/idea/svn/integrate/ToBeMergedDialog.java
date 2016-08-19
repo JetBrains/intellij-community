@@ -17,7 +17,6 @@ package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -40,7 +39,6 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TableViewSpeedSearch;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -76,7 +74,6 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
   private final JPanel myPanel;
   private final Project myProject;
   private final PageEngine<List<CommittedChangeList>> myListsEngine;
-  private final Alarm myAlarm;
   private TableView<CommittedChangeList> myRevisionsList;
   private RepositoryChangesBrowser myRepositoryChangesBrowser;
   private Splitter mySplitter;
@@ -109,17 +106,16 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
 
     // Paging is not used - "Load Xxx" buttons load corresponding new elements and add them to the end of the table. Single (first) page is
     // always used.
-    myListsEngine = new BasePageEngine<CommittedChangeList>(lists, lists.size());
+    myListsEngine = new BasePageEngine<>(lists, lists.size());
 
     myPanel = new JPanel(new BorderLayout());
-    myWiseSelection = new QuantitySelection<Long>(myEverythingLoaded);
-    myAlreadyMerged = new HashSet<Change>();
+    myWiseSelection = new QuantitySelection<>(myEverythingLoaded);
+    myAlreadyMerged = new HashSet<>();
     setOKButtonText("Merge Selected");
     initUI();
     init();
     enableMore();
 
-    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getDisposable());
     if (! myAlreadyCalculatedState) {
       refreshListStatus(lists);
     }
@@ -158,9 +154,16 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
     refreshListStatus(list);
   }
 
-  public void refreshListStatus(@NotNull final List<CommittedChangeList> changeLists) {
-    if (myAlarm.isDisposed()) return;
-    myAlarm.addRequest(new Runnable() {
+  private boolean myDisposed;
+  @Override
+  protected void dispose() {
+    super.dispose();
+    myDisposed = true;
+  }
+
+  private void refreshListStatus(@NotNull final List<CommittedChangeList> changeLists) {
+    if (myDisposed) return;
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
         int cnt = 10;
@@ -183,7 +186,7 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
         myRevisionsList.revalidate();
         myRevisionsList.repaint();
       }
-    }, 0);
+    });
   }
 
   @NotNull
@@ -225,7 +228,7 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
     final SelectionResult<Long> selected = myWiseSelection.getSelected();
     final SelectionResult<Long> unselected = myWiseSelection.getUnselected();
 
-    final List<CommittedChangeList> result = new LinkedList<CommittedChangeList>();
+    final List<CommittedChangeList> result = new LinkedList<>();
     result.addAll(myListsEngine.getCurrent());
     while (myListsEngine.hasNext()) {
       result.addAll(myListsEngine.next());
@@ -303,7 +306,7 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
         return element.getComment();
       }
     };
-    final ListTableModel<CommittedChangeList> flatModel = new ListTableModel<CommittedChangeList>(FAKE_COLUMN);
+    final ListTableModel<CommittedChangeList> flatModel = new ListTableModel<>(FAKE_COLUMN);
     myRevisionsList.setModelAndUpdateColumns(flatModel);
     myRevisionsList.setTableHeader(null);
     myRevisionsList.setShowGrid(false);
@@ -340,8 +343,8 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
     myMore100Action = new MoreXAction(100);
     myMore500Action = new MoreXAction(500);
     final PagedListWithActions<CommittedChangeList> byRevisions =
-      new PagedListWithActions<CommittedChangeList>(myListsEngine, listsManager, new MySelectAll(), new MyUnselectAll(),
-                                                    myMore100Action, myMore500Action);
+      new PagedListWithActions<>(myListsEngine, listsManager, new MySelectAll(), new MyUnselectAll(),
+                                 myMore100Action, myMore500Action);
 
     mySplitter = new Splitter(false, 0.7f);
     mySplitter.setFirstComponent(byRevisions.getComponent());

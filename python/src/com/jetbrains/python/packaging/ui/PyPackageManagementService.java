@@ -28,6 +28,7 @@ import com.intellij.webcore.packaging.InstalledPackage;
 import com.intellij.webcore.packaging.PackageManagementServiceEx;
 import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.packaging.*;
+import com.jetbrains.python.packaging.PyPIPackageUtil.PackageDetails;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -43,7 +44,6 @@ import java.util.regex.Pattern;
 /**
  * @author yole
  */
-@SuppressWarnings("UseOfObsoleteCollectionType")
 public class PyPackageManagementService extends PackageManagementServiceEx {
   @NotNull private static final Pattern PATTERN_ERROR_LINE = Pattern.compile(".*error:.*", Pattern.CASE_INSENSITIVE);
   @NonNls private static final String TEXT_PREFIX = "<html><head>" +
@@ -93,7 +93,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   public List<RepoPackage> getAllPackages() throws IOException {
     final Map<String, String> packageToVersionMap = PyPIPackageUtil.INSTANCE.loadAndGetPackages();
     final List<RepoPackage> packages = versionMapToPackageList(packageToVersionMap);
-    packages.addAll(PyPIPackageUtil.INSTANCE.getAdditionalPackageNames());
+    packages.addAll(PyPIPackageUtil.INSTANCE.getAdditionalPackages());
     return packages;
   }
 
@@ -237,29 +237,15 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
 
   @Override
   public void fetchPackageVersions(String packageName, CatchingConsumer<List<String>, Exception> consumer) {
-    PyPIPackageUtil.INSTANCE.usePackageReleases(packageName, new CatchingConsumer<List<String>, Exception>() {
-      @Override
-      public void consume(List<String> releases) {
-        if (releases != null) {
-          PyPIPackageUtil.INSTANCE.addPackageReleases(packageName, releases);
-          consumer.consume(releases);
-        }
-      }
-
-      @Override
-      public void consume(Exception e) {
-        consumer.consume(e);
-      }
-    });
+    PyPIPackageUtil.INSTANCE.usePackageReleases(packageName, consumer);
   }
 
   @Override
   public void fetchPackageDetails(@NotNull String packageName, @NotNull CatchingConsumer<String, Exception> consumer) {
-    PyPIPackageUtil.INSTANCE.fillPackageDetails(packageName, new CatchingConsumer<Hashtable, Exception>() {
+    PyPIPackageUtil.INSTANCE.fillPackageDetails(packageName, new CatchingConsumer<PackageDetails.Info, Exception>() {
       @Override
-      public void consume(Hashtable details) {
-        PyPIPackageUtil.INSTANCE.addPackageDetails(packageName, details);
-        consumer.consume(formatPackageDetails(details));
+      public void consume(PackageDetails.Info details) {
+        consumer.consume(formatPackageInfo(details));
       }
 
       @Override
@@ -269,31 +255,31 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     });
   }
 
-  private static String formatPackageDetails(@NotNull Hashtable details) {
-    final Object description = details.get("summary");
+  private static String formatPackageInfo(@NotNull PackageDetails.Info info) {
     final StringBuilder stringBuilder = new StringBuilder(TEXT_PREFIX);
-    if (description instanceof String) {
+    final String description = info.getSummary();
+    if (StringUtil.isNotEmpty(description)) {
       stringBuilder.append(description).append("<br/>");
     }
-    final Object version = details.get("version");
-    if (version instanceof String && !StringUtil.isEmpty((String)version)) {
+    final String version = info.getVersion();
+    if (StringUtil.isNotEmpty(version)) {
       stringBuilder.append("<h4>Version</h4>");
       stringBuilder.append(version);
     }
-    final Object author = details.get("author");
-    if (author instanceof String && !StringUtil.isEmpty((String)author)) {
+    final String author = info.getAuthor();
+    if (StringUtil.isNotEmpty(author)) {
       stringBuilder.append("<h4>Author</h4>");
       stringBuilder.append(author).append("<br/><br/>");
     }
-    final Object authorEmail = details.get("author_email");
-    if (authorEmail instanceof String && !StringUtil.isEmpty((String)authorEmail)) {
+    final String authorEmail = info.getAuthorEmail();
+    if (StringUtil.isNotEmpty(authorEmail)) {
       stringBuilder.append("<br/>");
       stringBuilder.append(composeHref("mailto:" + authorEmail));
     }
-    final Object homePage = details.get("home_page");
-    if (homePage instanceof String && !StringUtil.isEmpty((String)homePage)) {
+    final String homePage = info.getHomePage();
+    if (StringUtil.isNotEmpty(homePage)) {
       stringBuilder.append("<br/>");
-      stringBuilder.append(composeHref((String)homePage));
+      stringBuilder.append(composeHref(homePage));
     }
     stringBuilder.append(TEXT_SUFFIX);
     return stringBuilder.toString();
@@ -389,7 +375,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         PyPIPackageUtil.INSTANCE.loadAndGetPackages();
-        final String version = PyPIPackageUtil.fetchLatestPackageVersion(pkg.getName());
+        final String version = PyPIPackageUtil.INSTANCE.fetchLatestPackageVersion(pkg.getName());
         consumer.consume(StringUtil.notNullize(version));
       }
       catch (IOException e) {

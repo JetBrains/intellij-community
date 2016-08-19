@@ -1,6 +1,5 @@
 package com.jetbrains.edu.learning;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -8,12 +7,12 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.stepic.StepicUser;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jdom.Element;
@@ -147,9 +146,9 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
       if (myCourse != null) {
         myCourse.initCourse(true);
         if (version != VERSION) {
-          String updatedCoursePath = FileUtil.join(PathManager.getConfigPath(), "courses", myCourse.getName());
-          if (new File(updatedCoursePath).exists()) {
-            myCourse.setCourseDirectory(updatedCoursePath);
+          final File updatedCourse = new File(StudyProjectGenerator.OUR_COURSES_DIR, myCourse.getName());
+          if (updatedCourse.exists()) {
+            myCourse.setCourseDirectory(updatedCourse.getAbsolutePath());
           }
         }
       }

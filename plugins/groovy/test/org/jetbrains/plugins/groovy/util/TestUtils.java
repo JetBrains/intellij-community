@@ -155,7 +155,7 @@ public abstract class TestUtils {
     }
     Assert.assertNotNull(content);
 
-    List<String> input = new ArrayList<String>();
+    List<String> input = new ArrayList<>();
 
     int separatorIndex;
     content = StringUtil.replace(content, "\r", ""); // for MACs
@@ -217,7 +217,7 @@ public abstract class TestUtils {
   }
 
   public static void checkResolve(PsiFile file, final String ... expectedUnresolved) {
-    final List<String> actualUnresolved = new ArrayList<String>();
+    final List<String> actualUnresolved = new ArrayList<>();
 
     final StringBuilder sb = new StringBuilder();
     final String text = file.getText();
@@ -238,7 +238,7 @@ public abstract class TestUtils {
           }
 
           if (psiReference.resolve() == null) {
-            CollectConsumer<PomTarget> consumer = new CollectConsumer<PomTarget>();
+            CollectConsumer<PomTarget> consumer = new CollectConsumer<>();
 
             for (PomDeclarationSearcher searcher : PomDeclarationSearcher.EP_NAME.getExtensions()) {
               searcher.findDeclarationsAt(psiReference, 0, consumer);

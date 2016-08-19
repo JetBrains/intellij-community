@@ -44,7 +44,7 @@ class TemporaryDirectory : ExternalResource() {
     val errors = SmartList<Throwable>()
     for (path in paths) {
       try {
-        path.deleteRecursively()
+        path.delete()
       }
       catch (e: Throwable) {
         errors.add(e)
@@ -68,7 +68,7 @@ class TemporaryDirectory : ExternalResource() {
       fileName += "_$suffix"
     }
 
-    var path = generateTemporaryPath(fileName)
+    val path = generateTemporaryPath(fileName)
     paths.add(path)
     return path
   }

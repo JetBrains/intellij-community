@@ -84,7 +84,7 @@ public class StubResolver {
 
   @NotNull
   private Set<Symbol> findIdent(Symbol startScope, UnitInfo info, @ShortName int name, boolean processPackages) throws IncompleteHierarchyException {
-    Set<Symbol> result = new HashSet<Symbol>();
+    Set<Symbol> result = new HashSet<>();
     findType(startScope, name, result);
     findGlobalType(info, name, result);
 

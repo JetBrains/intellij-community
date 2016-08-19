@@ -17,12 +17,14 @@ package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 
 /**
  * Created by Max Medvedev on 10/02/14
  */
 class TypeInference2_3Test extends TypeInferenceTestBase {
+  @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
     return GroovyLightProjectDescriptor.GROOVY_2_3

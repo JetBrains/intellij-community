@@ -105,11 +105,12 @@ public class HighlightMethodUtil {
                                                      PsiUtil.getAccessModifier(superAccessLevel));
       TextRange textRange;
       if (includeRealPositionInfo) {
-        if (modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
+        PsiElement keyword = PsiUtil.findModifierInList(modifierList, accessModifier);
+        if (keyword == null) {
+          // in case of package-private or some crazy third-party plugin where some access modifier implied even if it's absent
           textRange = method.getNameIdentifier().getTextRange();
         }
         else {
-          PsiElement keyword = PsiUtil.findModifierInList(modifierList, accessModifier);
           textRange = keyword.getTextRange();
         }
       }
@@ -365,7 +366,7 @@ public class HighlightMethodUtil {
           highlightInfo = checkVarargParameterErasureToBeAccessible((MethodCandidateInfo)resolveResult, methodCall);
         }
 
-        if (highlightInfo == null && resolveResult instanceof MethodCandidateInfo) {
+        if (highlightInfo == null) {
           final String errorMessage = ((MethodCandidateInfo)resolveResult).getInferenceErrorMessage();
           if (errorMessage != null) {
             highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(errorMessage).range(fixRange).create();
@@ -1539,7 +1540,10 @@ public class HighlightMethodUtil {
 
       boolean applicable = true;
       try {
-        applicable = constructor != null && result.isApplicable();
+        final PsiDiamondType diamondType = constructorCall instanceof PsiNewExpression ? PsiDiamondType.getDiamondType((PsiNewExpression)constructorCall) : null;
+        final JavaResolveResult staticFactory = diamondType != null ? diamondType.getStaticFactory() : null;
+        applicable = staticFactory instanceof MethodCandidateInfo ? ((MethodCandidateInfo)staticFactory).isApplicable()
+                                                                  : result != null && result.isApplicable();
       }
       catch (IndexNotReadyException e) {
         // ignore

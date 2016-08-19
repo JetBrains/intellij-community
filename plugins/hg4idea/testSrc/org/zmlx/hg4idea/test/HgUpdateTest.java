@@ -261,7 +261,7 @@ public class HgUpdateTest extends HgCollaborativeTest {
     HgRegularUpdater updater = new HgRegularUpdater(myProject, projectRepoVirtualFile, new HgUpdateConfigurationSettings());
     UpdatedFiles updatedFiles = UpdatedFiles.create();
     EmptyProgressIndicator indicator = new EmptyProgressIndicator();
-    ArrayList<VcsException> nonFatalWarnings = new ArrayList<VcsException>();
+    ArrayList<VcsException> nonFatalWarnings = new ArrayList<>();
     updater.update(updatedFiles, indicator, nonFatalWarnings);
     return nonFatalWarnings;
   }

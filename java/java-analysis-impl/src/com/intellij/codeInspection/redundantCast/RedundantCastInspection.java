@@ -59,7 +59,7 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
   public ProblemDescriptor[] getDescriptions(@NotNull PsiElement where, @NotNull InspectionManager manager, boolean isOnTheFly) {
     List<PsiTypeCastExpression> redundantCasts = RedundantCastUtil.getRedundantCastsInside(where);
     if (redundantCasts.isEmpty()) return null;
-    List<ProblemDescriptor> descriptions = new ArrayList<ProblemDescriptor>(redundantCasts.size());
+    List<ProblemDescriptor> descriptions = new ArrayList<>(redundantCasts.size());
     for (PsiTypeCastExpression redundantCast : redundantCasts) {
       ProblemDescriptor descriptor = createDescription(redundantCast, manager, isOnTheFly);
       if (descriptor != null) {
@@ -116,7 +116,7 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
       final PsiElement gParent = parent.getParent();
       if (gParent instanceof PsiMethodCallExpression && IGNORE_SUSPICIOUS_METHOD_CALLS) {
         final String message = SuspiciousMethodCallUtil
-          .getSuspiciousMethodCallMessage((PsiMethodCallExpression)gParent, operand, operand.getType(), true, new ArrayList<PsiMethod>(),
+          .getSuspiciousMethodCallMessage((PsiMethodCallExpression)gParent, operand, operand.getType(), true, new ArrayList<>(),
                                           new IntArrayList());
         if (message != null) {
           return null;

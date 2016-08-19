@@ -32,7 +32,7 @@ public class CollectionListModel<T> extends AbstractListModel<T> implements Edit
   private final List<T> myItems;
 
   public CollectionListModel(@NotNull final Collection<? extends T> items) {
-    myItems = new ArrayList<T>(items);
+    myItems = new ArrayList<>(items);
   }
 
   @SuppressWarnings("UnusedParameters")
@@ -41,7 +41,7 @@ public class CollectionListModel<T> extends AbstractListModel<T> implements Edit
   }
 
   public CollectionListModel(@NotNull final List<? extends T> items) {
-    myItems = new ArrayList<T>(items);
+    myItems = new ArrayList<>(items);
   }
 
   public CollectionListModel(final T... items) {
@@ -157,7 +157,7 @@ public class CollectionListModel<T> extends AbstractListModel<T> implements Edit
   }
 
   public List<T> toList() {
-    return new ArrayList<T>(myItems);
+    return new ArrayList<>(myItems);
   }
 
   public int getElementIndex(T item) {

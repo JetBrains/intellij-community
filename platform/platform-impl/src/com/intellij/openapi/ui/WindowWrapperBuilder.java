@@ -50,7 +50,7 @@ public class WindowWrapperBuilder {
 
   @NotNull
   public WindowWrapperBuilder setPreferredFocusedComponent(@Nullable JComponent preferredFocusedComponent) {
-    myPreferredFocusedComponent = new Computable.PredefinedValueComputable<JComponent>(preferredFocusedComponent);
+    myPreferredFocusedComponent = new Computable.PredefinedValueComputable<>(preferredFocusedComponent);
     return this;
   }
 

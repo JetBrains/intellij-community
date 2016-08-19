@@ -102,9 +102,12 @@ public class PyRunCythonExtensionsFilter implements Filter {
         cmdline.addAll(Arrays.asList(CYTHON_ARGS));
         LOG.info("Compile Cython Extensions " + StringUtil.join(cmdline, " "));
 
-        final Map<String, String> environment = new HashMap<String, String>(System.getenv());
+        final Map<String, String> environment = new HashMap<>(System.getenv());
         PythonEnvUtil.setPythonUnbuffered(environment);
         PythonEnvUtil.setPythonDontWriteBytecode(environment);
+        if (sdkPath != null) {
+          PythonEnvUtil.resetHomePathChanges(sdkPath, environment);
+        }
         GeneralCommandLine commandLine = new GeneralCommandLine(cmdline).withEnvironment(environment);
 
         final boolean canCreate = FileUtil.ensureCanCreateFile(new File(helpersPath));

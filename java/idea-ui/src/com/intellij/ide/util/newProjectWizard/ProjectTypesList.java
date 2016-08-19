@@ -81,7 +81,7 @@ public class ProjectTypesList implements Disposable {
       }
     };
     items.add(myLoadingItem);
-    myModel = new CollectionListModel<TemplateItem>(items);
+    myModel = new CollectionListModel<>(items);
 
     final RemoteTemplatesFactory factory = new RemoteTemplatesFactory();
     ProgressManager.getInstance().run(new Task.Backgroundable(context.getProject(), "Loading Templates") {
@@ -90,7 +90,7 @@ public class ProjectTypesList implements Disposable {
         try {
           myList.setPaintBusy(true);
           String[] groups = factory.getGroups();
-          final List<TemplateItem> items = new ArrayList<TemplateItem>();
+          final List<TemplateItem> items = new ArrayList<>();
           for (String group : groups) {
             TemplatesGroup templatesGroup = new TemplatesGroup(group, "", factory.getGroupIcon(group), 0, null, null, null);
             ProjectTemplate[] templates = factory.createTemplates(group, context);
@@ -183,8 +183,8 @@ public class ProjectTypesList implements Disposable {
   }
 
   private List<TemplateItem> buildItems(MultiMap<TemplatesGroup, ProjectTemplate> map) {
-    List<TemplateItem> items = new ArrayList<TemplateItem>();
-    List<TemplatesGroup> groups = new ArrayList<TemplatesGroup>(map.keySet());
+    List<TemplateItem> items = new ArrayList<>();
+    List<TemplatesGroup> groups = new ArrayList<>(map.keySet());
     Collections.sort(groups);
     for (TemplatesGroup group : groups) {
       for (ProjectTemplate template : map.get(group)) {

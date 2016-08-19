@@ -38,7 +38,7 @@ public interface ScopeInfo {
     }
 
     public FilePath[] getRoots(VcsContext context, final ActionInfo actionInfo) {
-      ArrayList<FilePath> result = new ArrayList<FilePath>();
+      ArrayList<FilePath> result = new ArrayList<>();
       Project project = context.getProject();
       final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
       final AbstractVcs[] vcses = vcsManager.getAllActiveVcss();

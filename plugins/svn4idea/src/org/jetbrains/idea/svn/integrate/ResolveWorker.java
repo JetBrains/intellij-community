@@ -42,7 +42,7 @@ public class ResolveWorker {
     myChangesUnderProjectRoot = changesUnderProjectRoot;
     myProject = project;
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
-    myConflictedVirtualFiles = new ArrayList<VirtualFile>();
+    myConflictedVirtualFiles = new ArrayList<>();
   }
 
   private void refreshChangeListsFindConflicts(final UpdatedFiles updatedFiles) {

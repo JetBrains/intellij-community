@@ -2,6 +2,9 @@ package com.intellij.vcs.log;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -59,4 +62,21 @@ public interface VcsLogRefManager {
    */
   @NotNull
   List<RefGroup> group(Collection<VcsRef> refs);
+
+  /**
+   * Writes given reference type to the output.
+   *
+   * @param out output to write type into
+   * @param type type to serialize
+   */
+  void serialize(@NotNull DataOutput out, @NotNull VcsRefType type) throws IOException;
+
+  /**
+   * Reads reference type from given input.
+   *
+   * @param in input to read type from
+   * @return reference type read from the input
+   */
+  @NotNull
+  VcsRefType deserialize(@NotNull DataInput in) throws IOException;
 }

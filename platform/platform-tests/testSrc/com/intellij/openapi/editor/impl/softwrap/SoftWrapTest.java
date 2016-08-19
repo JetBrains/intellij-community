@@ -44,8 +44,8 @@ public class SoftWrapTest extends AbstractEditorTest {
   private static final String TAGS_PATTERN = "(<fold(\\stext=\'([^\']*)\')?>)|(</fold>)|<wrap>";
 
   private void doTestSoftWraps(int wrapWidth, String text) throws IOException {
-    List<MyFoldRegion> foldRegions = new ArrayList<MyFoldRegion>();
-    List<Integer> wrapPositions = new ArrayList<Integer>();
+    List<MyFoldRegion> foldRegions = new ArrayList<>();
+    List<Integer> wrapPositions = new ArrayList<>();
     int foldInsertPosition = 0;
     int pos = 0;
     int docPos = 0;
@@ -80,7 +80,7 @@ public class SoftWrapTest extends AbstractEditorTest {
 
     EditorTestUtil.configureSoftWraps(myEditor, wrapWidth);
 
-    List<Integer> actualWrapPositions = new ArrayList<Integer>();
+    List<Integer> actualWrapPositions = new ArrayList<>();
     for (SoftWrap wrap : myEditor.getSoftWrapModel().getSoftWrapsForRange(0, myEditor.getDocument().getTextLength())) {
       actualWrapPositions.add(wrap.getStart());
     }

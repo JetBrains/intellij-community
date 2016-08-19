@@ -150,7 +150,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
   @Override
   public Task[] getIssues(@Nullable String query, int offset, int limit, boolean withClosed) throws Exception {
     List<RedmineIssue> issues = fetchIssues(query, offset, limit, withClosed);
-    List<Task> result = ContainerUtil.map(issues, issue -> new RedmineTask(RedmineRepository.this, issue));
+    List<Task> result = ContainerUtil.map(issues, issue -> new RedmineTask(this, issue));
     if (query != null && ID_PATTERN.matcher(query).matches()) {
       LOG.debug("Query '" + query + "' looks like an issue ID. Requesting it explicitly from the server " + this);
       final Task found = findTask(query);
@@ -169,7 +169,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     //}
     HttpClient client = getHttpClient();
     HttpGet method = new HttpGet(getIssuesUrl(offset, limit, withClosed));
-    IssuesWrapper wrapper = client.execute(method, new GsonSingleObjectDeserializer<IssuesWrapper>(GSON, IssuesWrapper.class));
+    IssuesWrapper wrapper = client.execute(method, new GsonSingleObjectDeserializer<>(GSON, IssuesWrapper.class));
     return wrapper == null ? Collections.<RedmineIssue>emptyList() : wrapper.getIssues();
   }
 
@@ -192,13 +192,13 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
   public List<RedmineProject> fetchProjects() throws Exception {
     HttpClient client = getHttpClient();
     // Download projects with pagination (IDEA-125056, IDEA-125157)
-    List<RedmineProject> allProjects = new ArrayList<RedmineProject>();
+    List<RedmineProject> allProjects = new ArrayList<>();
     int offset = 0;
     ProjectsWrapper wrapper;
     do {
 
       HttpGet method = new HttpGet(getProjectsUrl(offset, 50));
-      wrapper = client.execute(method, new GsonSingleObjectDeserializer<ProjectsWrapper>(GSON, ProjectsWrapper.class));
+      wrapper = client.execute(method, new GsonSingleObjectDeserializer<>(GSON, ProjectsWrapper.class));
       offset += wrapper.getProjects().size();
       allProjects.addAll(wrapper.getProjects());
     }
@@ -221,7 +221,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
   public Task findTask(@NotNull String id) throws Exception {
     ensureProjectsDiscovered();
     HttpGet method = new HttpGet(createUriBuilderWithApiKey("issues", id + ".json").build());
-    IssueWrapper wrapper = getHttpClient().execute(method, new GsonSingleObjectDeserializer<IssueWrapper>(GSON, IssueWrapper.class, true));
+    IssueWrapper wrapper = getHttpClient().execute(method, new GsonSingleObjectDeserializer<>(GSON, IssueWrapper.class, true));
     if (wrapper == null) {
       return null;
     }

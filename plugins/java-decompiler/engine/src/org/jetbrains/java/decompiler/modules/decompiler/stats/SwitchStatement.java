@@ -37,15 +37,15 @@ public class SwitchStatement extends Statement {
   // private fields
   // *****************************************************************************
 
-  private List<Statement> caseStatements = new ArrayList<Statement>();
+  private List<Statement> caseStatements = new ArrayList<>();
 
-  private List<List<StatEdge>> caseEdges = new ArrayList<List<StatEdge>>();
+  private List<List<StatEdge>> caseEdges = new ArrayList<>();
 
-  private List<List<ConstExprent>> caseValues = new ArrayList<List<ConstExprent>>();
+  private List<List<ConstExprent>> caseValues = new ArrayList<>();
 
   private StatEdge default_edge;
 
-  private final List<Exprent> headexprent = new ArrayList<Exprent>();
+  private final List<Exprent> headexprent = new ArrayList<>();
 
   // *****************************************************************************
   // constructors
@@ -65,7 +65,7 @@ public class SwitchStatement extends Statement {
     stats.addWithKey(head, head.id);
 
     // find post node
-    Set<Statement> lstNodes = new HashSet<Statement>(head.getNeighbours(StatEdge.TYPE_REGULAR, DIRECTION_FORWARD));
+    Set<Statement> lstNodes = new HashSet<>(head.getNeighbours(StatEdge.TYPE_REGULAR, DIRECTION_FORWARD));
 
     // cluster nodes
     if (poststat != null) {
@@ -88,7 +88,7 @@ public class SwitchStatement extends Statement {
 
     if (head.type == Statement.TYPE_BASICBLOCK && head.getLastBasicType() == Statement.LASTBASICTYPE_SWITCH) {
 
-      List<Statement> lst = new ArrayList<Statement>();
+      List<Statement> lst = new ArrayList<>();
       if (DecHelper.isChoiceStatement(head, lst)) {
         Statement post = lst.remove(0);
 
@@ -160,7 +160,7 @@ public class SwitchStatement extends Statement {
 
   public List<Object> getSequentialObjects() {
 
-    List<Object> lst = new ArrayList<Object>(stats);
+    List<Object> lst = new ArrayList<>(stats);
     lst.add(1, headexprent.get(0));
 
     return lst;
@@ -200,7 +200,7 @@ public class SwitchStatement extends Statement {
 
   public void sortEdgesAndNodes() {
 
-    HashMap<StatEdge, Integer> mapEdgeIndex = new HashMap<StatEdge, Integer>();
+    HashMap<StatEdge, Integer> mapEdgeIndex = new HashMap<>();
 
     List<StatEdge> lstFirstSuccs = first.getSuccessorEdges(STATEDGE_DIRECT_ALL);
     for (int i = 0; i < lstFirstSuccs.size(); i++) {
@@ -211,15 +211,15 @@ public class SwitchStatement extends Statement {
     BasicBlockStatement bbstat = (BasicBlockStatement)first;
     int[] values = ((SwitchInstruction)bbstat.getBlock().getLastInstruction()).getValues();
 
-    List<Statement> nodes = new ArrayList<Statement>();
-    List<List<Integer>> edges = new ArrayList<List<Integer>>();
+    List<Statement> nodes = new ArrayList<>();
+    List<List<Integer>> edges = new ArrayList<>();
 
     // collect regular edges
     for (int i = 1; i < stats.size(); i++) {
 
       Statement stat = stats.get(i);
 
-      List<Integer> lst = new ArrayList<Integer>();
+      List<Integer> lst = new ArrayList<>();
       for (StatEdge edge : stat.getPredecessorEdges(StatEdge.TYPE_REGULAR)) {
         if (edge.getSource() == first) {
           lst.add(mapEdgeIndex.get(edge));
@@ -236,7 +236,7 @@ public class SwitchStatement extends Statement {
     while (!lstExitEdges.isEmpty()) {
       StatEdge edge = lstExitEdges.get(0);
 
-      List<Integer> lst = new ArrayList<Integer>();
+      List<Integer> lst = new ArrayList<>();
       for (int i = lstExitEdges.size() - 1; i >= 0; i--) {
         StatEdge edgeTemp = lstExitEdges.get(i);
         if (edgeTemp.getDestination() == edge.getDestination() && edgeTemp.getType() == edge.getType()) {
@@ -265,7 +265,7 @@ public class SwitchStatement extends Statement {
       Statement stat = nodes.get(index);
 
       if (stat != null) {
-        HashSet<Statement> setPreds = new HashSet<Statement>(stat.getNeighbours(StatEdge.TYPE_REGULAR, DIRECTION_BACKWARD));
+        HashSet<Statement> setPreds = new HashSet<>(stat.getNeighbours(StatEdge.TYPE_REGULAR, DIRECTION_BACKWARD));
         setPreds.remove(first);
 
         if (!setPreds.isEmpty()) {
@@ -293,12 +293,12 @@ public class SwitchStatement extends Statement {
     }
 
     // translate indices back into edges
-    List<List<StatEdge>> lstEdges = new ArrayList<List<StatEdge>>();
-    List<List<ConstExprent>> lstValues = new ArrayList<List<ConstExprent>>();
+    List<List<StatEdge>> lstEdges = new ArrayList<>();
+    List<List<ConstExprent>> lstValues = new ArrayList<>();
 
     for (List<Integer> lst : edges) {
-      List<StatEdge> lste = new ArrayList<StatEdge>();
-      List<ConstExprent> lstv = new ArrayList<ConstExprent>();
+      List<StatEdge> lste = new ArrayList<>();
+      List<ConstExprent> lstv = new ArrayList<>();
 
       List<StatEdge> lstSuccs = first.getSuccessorEdges(STATEDGE_DIRECT_ALL);
       for (Integer in : lst) {

@@ -20,10 +20,22 @@ import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * A token which is more convenient to parse separately. Parsing is done when leaf elements are created.
+ * An additional interface to be implemented by {@link IElementType} instances for tokens which are more convenient to parse separately.
+ * Parsing is done when leaf elements are created.<p/>
+ *
+ * Use this for cases similar to {@link ILazyParseableElementType}, but when its default implementation isn't sufficient.
+ * For example, default lazy-parseable elements can't be stub-based (see {@link com.intellij.psi.stubs.IStubElementType}),
+ * while {@link ICustomParsingType} gives you flexibility to achieve that.
  */
 public interface ICustomParsingType {
 
+  /**
+   * Invoked by {@link com.intellij.lang.PsiBuilder} when it finds a token of this type,
+   * instead of creating the leaf element for it in a default way.
+   * @param text token text
+   * @param table {@link CharTable} object used for interning string in the file
+   * @return a tree element of this type with a given text.
+   */
   @NotNull
   ASTNode parse(@NotNull CharSequence text, @NotNull CharTable table);
 }

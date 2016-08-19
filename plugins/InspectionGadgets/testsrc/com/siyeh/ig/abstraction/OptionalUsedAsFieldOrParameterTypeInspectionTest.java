@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class OptionalUsedAsFieldOrParameterTypeInspectionTest extends LightInspectionTestCase {
 
   public void testOptionalField() {

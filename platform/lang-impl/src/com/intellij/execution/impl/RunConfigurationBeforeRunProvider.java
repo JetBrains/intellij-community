@@ -18,8 +18,6 @@ package com.intellij.execution.impl;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
@@ -33,6 +31,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -40,8 +39,8 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -145,7 +144,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
       return Collections.emptyList();
     }
 
-    List<RunnerAndConfigurationSettings> configurations = new ArrayList<RunnerAndConfigurationSettings>(RunManagerImpl.getInstanceImpl(project).getSortedConfigurations());
+    List<RunnerAndConfigurationSettings> configurations = new ArrayList<>(RunManagerImpl.getInstanceImpl(project).getSortedConfigurations());
     String executorId = DefaultRunExecutor.getRunExecutorInstance().getId();
     for (Iterator<RunnerAndConfigurationSettings> iterator = configurations.iterator(); iterator.hasNext();) {
       RunnerAndConfigurationSettings settings = iterator.next();
@@ -188,11 +187,14 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
     if (builder == null) {
       return false;
     }
-    final ExecutionEnvironment environment = builder.target(env.getExecutionTarget()).build();
-    environment.setExecutionId(env.getExecutionId());
-    if (!ExecutionTargetManager.canRun(settings, environment.getExecutionTarget())) {
+
+    ExecutionTarget compatibleTarget = getCompatibleTarget(env, settings);
+    if (compatibleTarget == null) {
       return false;
     }
+
+    final ExecutionEnvironment environment = builder.target(compatibleTarget).build();
+    environment.setExecutionId(env.getExecutionId());
 
     if (!environment.getRunner().canRun(executorId, environment.getRunProfile())) {
       return false;
@@ -203,21 +205,37 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
     }
   }
 
+  @Nullable
+  private static ExecutionTarget getCompatibleTarget(@NotNull ExecutionEnvironment env, @NotNull RunnerAndConfigurationSettings settings) {
+    if (ExecutionTargetManager.canRun(settings, env.getExecutionTarget())) {
+      return env.getExecutionTarget();
+    }
+
+    List<ExecutionTarget> targets = ApplicationManager.getApplication().runReadAction(new Computable<List<ExecutionTarget>>() {
+      @Override
+      public List<ExecutionTarget> compute() {
+        return ExecutionTargetManager.getTargetsFor(env.getProject(), settings);
+      }
+    });
+
+    return ContainerUtil.getFirstItem(targets);
+  }
+
   public static boolean doRunTask(final String executorId, final ExecutionEnvironment environment, ProgramRunner<?> runner) {
     final Semaphore targetDone = new Semaphore();
-    final Ref<Boolean> result = new Ref<Boolean>(false);
+    final Ref<Boolean> result = new Ref<>(false);
     final Disposable disposable = Disposer.newDisposable();
 
-    environment.getProject().getMessageBus().connect(disposable).subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionAdapter() {
+    environment.getProject().getMessageBus().connect(disposable).subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
       @Override
-      public void processStartScheduled(final String executorIdLocal, final ExecutionEnvironment environmentLocal) {
+      public void processStartScheduled(@NotNull final String executorIdLocal, @NotNull final ExecutionEnvironment environmentLocal) {
         if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
           targetDone.down();
         }
       }
 
       @Override
-      public void processNotStarted(final String executorIdLocal, @NotNull final ExecutionEnvironment environmentLocal) {
+      public void processNotStarted(@NotNull final String executorIdLocal, @NotNull final ExecutionEnvironment environmentLocal) {
         if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
           Boolean skipRun = environment.getUserData(ExecutionManagerImpl.EXECUTION_SKIP_RUN);
           if (skipRun != null && skipRun) {
@@ -228,23 +246,13 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
       }
 
       @Override
-      public void processStarted(final String executorIdLocal,
-                                 @NotNull final ExecutionEnvironment environmentLocal,
-                                 @NotNull final ProcessHandler handler) {
+      public void processTerminated(@NotNull String executorIdLocal,
+                                    @NotNull ExecutionEnvironment environmentLocal,
+                                    @NotNull ProcessHandler handler,
+                                    int exitCode) {
         if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
-          Consumer<Integer> onFinish = (exitCode) -> {
-            result.set(exitCode == 0);
-            targetDone.up();
-          };
-          handler.addProcessListener(new ProcessAdapter() {
-            public void processTerminated(ProcessEvent event) {
-              onFinish.consume(event.getExitCode());
-            }
-          });
-          int exitCode = handler.getExitCode();
-          if (exitCode != -1) {
-            onFinish.consume(exitCode);
-          }
+          result.set(exitCode == 0);
+          targetDone.up();
         }
       }
     });

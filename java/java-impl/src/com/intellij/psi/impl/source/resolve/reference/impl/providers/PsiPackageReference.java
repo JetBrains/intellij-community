@@ -39,7 +39,7 @@ public class PsiPackageReference extends PsiPolyVariantReferenceBase<PsiElement>
   @NotNull
   private Set<PsiPackage> getContext() {
     if (myIndex == 0) return myReferenceSet.getInitialContext();
-    Set<PsiPackage> psiPackages = new HashSet<PsiPackage>();
+    Set<PsiPackage> psiPackages = new HashSet<>();
     for (ResolveResult resolveResult : myReferenceSet.getReference(myIndex - 1).doMultiResolve()) {
       PsiElement psiElement = resolveResult.getElement();
       if (psiElement instanceof PsiPackage) {
@@ -52,7 +52,7 @@ public class PsiPackageReference extends PsiPolyVariantReferenceBase<PsiElement>
   @Override
   @NotNull
   public Object[] getVariants() {
-    Set<PsiPackage> subPackages = new HashSet<PsiPackage>();
+    Set<PsiPackage> subPackages = new HashSet<>();
     for (PsiPackage psiPackage : getContext()) {
          subPackages.addAll(Arrays.asList(psiPackage.getSubPackages(myReferenceSet.getResolveScope())));
     }
@@ -74,7 +74,7 @@ public class PsiPackageReference extends PsiPolyVariantReferenceBase<PsiElement>
 
   @NotNull
   protected ResolveResult[] doMultiResolve() {
-    final Collection<PsiPackage> packages = new HashSet<PsiPackage>();
+    final Collection<PsiPackage> packages = new HashSet<>();
     for (PsiPackage parentPackage : getContext()) {
       packages.addAll(myReferenceSet.resolvePackageName(parentPackage, getValue()));
     }

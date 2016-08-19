@@ -55,8 +55,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author cdr
  */
 public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
-  private final Map<VirtualFile, ProblemFileInfo> myProblems = new THashMap<VirtualFile, ProblemFileInfo>(); // guarded by myProblems
-  private final Collection<VirtualFile> myCheckingQueue = new THashSet<VirtualFile>(10);
+  private final Map<VirtualFile, ProblemFileInfo> myProblems = new THashMap<>(); // guarded by myProblems
+  private final Collection<VirtualFile> myCheckingQueue = new THashSet<>(10);
 
   private final Project myProject;
   private final List<ProblemListener> myProblemListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -100,7 +100,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   }
 
   private static class ProblemFileInfo {
-    private final Collection<Problem> problems = new THashSet<Problem>();
+    private final Collection<Problem> problems = new THashSet<>();
     private boolean hasSyntaxErrors;
 
     public boolean equals(@Nullable final Object o) {
@@ -224,7 +224,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
     List<VirtualFile> files;
     synchronized (myCheckingQueue) {
-      files = new ArrayList<VirtualFile>(myCheckingQueue);
+      files = new ArrayList<>(myCheckingQueue);
     }
     long progressLimit = 0;
     for (VirtualFile file : files) {
@@ -263,7 +263,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document == null) return false;
 
-    final AtomicReference<HighlightInfo> error = new AtomicReference<HighlightInfo>();
+    final AtomicReference<HighlightInfo> error = new AtomicReference<>();
     final AtomicBoolean hasErrorElement = new AtomicBoolean();
     try {
       GeneralHighlightingPass pass = new GeneralHighlightingPass(myProject, psiFile, document, 0, document.getTextLength(),

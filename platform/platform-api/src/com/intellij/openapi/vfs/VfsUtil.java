@@ -138,7 +138,7 @@ public class VfsUtil extends VfsUtilCore {
   @NotNull
   public static VirtualFile[] getCommonAncestors(@NotNull VirtualFile[] files) {
     // Separate files by first component in the path.
-    HashMap<VirtualFile,Set<VirtualFile>> map = new HashMap<VirtualFile, Set<VirtualFile>>();
+    HashMap<VirtualFile,Set<VirtualFile>> map = new HashMap<>();
     for (VirtualFile aFile : files) {
       VirtualFile directory = aFile.isDirectory() ? aFile : aFile.getParent();
       if (directory == null) return VirtualFile.EMPTY_ARRAY;
@@ -149,13 +149,13 @@ public class VfsUtil extends VfsUtilCore {
         filesSet = map.get(firstPart);
       }
       else {
-        filesSet = new THashSet<VirtualFile>();
+        filesSet = new THashSet<>();
         map.put(firstPart, filesSet);
       }
       filesSet.add(directory);
     }
     // Find common ancestor for each set of files.
-    ArrayList<VirtualFile> ancestorsList = new ArrayList<VirtualFile>();
+    ArrayList<VirtualFile> ancestorsList = new ArrayList<>();
     for (Set<VirtualFile> filesSet : map.values()) {
       VirtualFile ancestor = null;
       for (VirtualFile file : filesSet) {
@@ -461,7 +461,7 @@ public class VfsUtil extends VfsUtilCore {
    */
   @NotNull
   public static List<VirtualFile> collectChildrenRecursively(@NotNull final VirtualFile root) {
-    final List<VirtualFile> result = new ArrayList<VirtualFile>();
+    final List<VirtualFile> result = new ArrayList<>();
     processFilesRecursively(root, t -> {
       result.add(t);
       return true;
@@ -566,7 +566,7 @@ public class VfsUtil extends VfsUtilCore {
 
   @NotNull
   public static List<VirtualFile> markDirty(boolean recursive, boolean reloadChildren, @NotNull VirtualFile... files) {
-    List<VirtualFile> list = ContainerUtil.filter(Condition.NOT_NULL, files);
+    List<VirtualFile> list = ContainerUtil.filter(files, Condition.NOT_NULL);
     if (list.isEmpty()) {
       return Collections.emptyList();
     }

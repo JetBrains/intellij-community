@@ -97,7 +97,7 @@ public class XmlCompletionContributor extends CompletionContributor {
                  return;
                }
 
-               final Set<String> usedWords = new THashSet<String>();
+               final Set<String> usedWords = new THashSet<>();
                final Ref<Boolean> addWordVariants = Ref.create(true);
                result.runRemainingContributors(parameters, r -> {
                  if (r.getLookupElement().getUserData(WORD_COMPLETION_COMPATIBLE) == null) {

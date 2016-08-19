@@ -135,7 +135,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
   @NotNull
   private static List<GrParametersOwner> findScopes(@NotNull InitialInfo initialInfo) {
     PsiElement place = initialInfo.getContext();
-    final List<GrParametersOwner> scopes = new ArrayList<GrParametersOwner>();
+    final List<GrParametersOwner> scopes = new ArrayList<>();
     while (true) {
       final GrParametersOwner parent = PsiTreeUtil.getParentOfType(place, GrMethod.class, GrClosableBlock.class);
       if (parent == null) break;

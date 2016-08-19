@@ -204,14 +204,14 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
 
       parameters.addParametersString(myConfiguration.OTHER_OPTIONS);
 
-      final Set<Module> modules = new LinkedHashSet<Module>();
+      final Set<Module> modules = new LinkedHashSet<>();
       try {
         final File sourcePathTempFile = FileUtil.createTempFile("javadoc", "args.txt", true);
         parameters.add("@" + sourcePathTempFile.getCanonicalPath());
         final PrintWriter writer = new PrintWriter(new FileWriter(sourcePathTempFile));
         try {
-          final Collection<String> packages = new HashSet<String>();
-          final Collection<String> sources = new HashSet<String>();
+          final Collection<String> packages = new HashSet<>();
+          final Collection<String> sources = new HashSet<>();
           final Runnable findRunnable = () -> {
             final int scopeType = myGenerationOptions.getScopeType();
             final boolean usePackageNotation = scopeType == AnalysisScope.MODULE ||

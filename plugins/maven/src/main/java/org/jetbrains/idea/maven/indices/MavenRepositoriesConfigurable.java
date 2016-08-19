@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable implements S
   private Timer myRepaintTimer;
   private ActionListener myTimerListener;
   private final Project myProject;
-  private final CollectionListModel<String> myModel = new CollectionListModel<String>();
+  private final CollectionListModel<String> myModel = new CollectionListModel<>();
 
   public MavenRepositoriesConfigurable(Project project) {
     myProject = project;
@@ -199,7 +199,7 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable implements S
   }
 
   private List<MavenIndex> getSelectedIndices() {
-    List<MavenIndex> result = new ArrayList<MavenIndex>();
+    List<MavenIndex> result = new ArrayList<>();
     for (int i : myIndicesTable.getSelectedRows()) {
       result.add(getIndexAt(i));
     }
@@ -222,10 +222,6 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable implements S
   @NotNull
   public String getId() {
     return getHelpTopic();
-  }
-
-  public Runnable enableSearch(String option) {
-    return null;
   }
 
   public JComponent createComponent() {

@@ -51,7 +51,7 @@ public class ArtifactsGenerator {
   public ArtifactsGenerator(Project project, GenerationOptions genOptions) {
     myResolvingContext = ArtifactManager.getInstance(project).getResolvingContext();
 
-    myAllArtifacts = new ArrayList<Artifact>(Arrays.asList(ArtifactManager.getInstance(project).getSortedArtifacts()));
+    myAllArtifacts = new ArrayList<>(Arrays.asList(ArtifactManager.getInstance(project).getSortedArtifacts()));
 
     myContext = new ArtifactAntGenerationContextImpl(project, genOptions, myAllArtifacts);
   }
@@ -61,7 +61,7 @@ public class ArtifactsGenerator {
   }
 
   public List<Generator> generate() {
-    final List<Generator> generators = new ArrayList<Generator>();
+    final List<Generator> generators = new ArrayList<>();
 
     final Target initTarget = new Target(INIT_ARTIFACTS_TARGET, null, null, null);
     generators.add(initTarget);
@@ -155,7 +155,7 @@ public class ArtifactsGenerator {
 
     final DirectoryAntCopyInstructionCreator creator = new DirectoryAntCopyInstructionCreator(outputPath);
 
-    List<Generator> copyInstructions = new ArrayList<Generator>();
+    List<Generator> copyInstructions = new ArrayList<>();
     if (needAntArtifactInstructions(artifact.getArtifactType())) {
       copyInstructions.addAll(artifact.getRootElement().computeAntInstructions(myResolvingContext, creator, myContext, artifact.getArtifactType()));
     }
@@ -198,7 +198,7 @@ public class ArtifactsGenerator {
   }
 
   public List<String> getCleanTargetNames() {
-    final List<String> targets = new ArrayList<String>();
+    final List<String> targets = new ArrayList<>();
     for (Artifact artifact : myAllArtifacts) {
       if (!myContext.shouldBuildIntoTempDirectory(artifact)) {
         targets.add(myContext.getCleanTargetName(artifact));

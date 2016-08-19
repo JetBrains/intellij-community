@@ -41,7 +41,7 @@ public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
 
   public CloudLoggingHandlerImpl(DeploymentLogManager logManager) {
     myMainLoggingHandler = logManager.getMainLoggingHandler();
-    myPipeName2LogListener = new HashMap<String, LogListener>();
+    myPipeName2LogListener = new HashMap<>();
     myLogManager = logManager;
   }
 

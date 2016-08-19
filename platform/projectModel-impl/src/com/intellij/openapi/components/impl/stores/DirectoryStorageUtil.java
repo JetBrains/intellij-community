@@ -42,7 +42,7 @@ public class DirectoryStorageUtil {
     }
 
     StringInterner interner = new StringInterner();
-    Map<String, Element> fileToState = new THashMap<String, Element>();
+    Map<String, Element> fileToState = new THashMap<>();
     for (VirtualFile file : dir.getChildren()) {
       // ignore system files like .DS_Store on Mac
       if (!StringUtilRt.endsWithIgnoreCase(file.getNameSequence(), FileStorageCoreUtil.DEFAULT_EXT)) {

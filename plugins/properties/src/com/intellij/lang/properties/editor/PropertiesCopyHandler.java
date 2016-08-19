@@ -42,7 +42,7 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.SyntheticFileSystemItem;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.refactoring.copy.CopyHandlerDelegateBase;
 import com.intellij.ui.ComboboxSpeedSearch;
@@ -118,7 +118,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
   private static void copyPropertyToAnotherBundle(@NotNull Collection<IProperty> properties,
                                                   @NotNull final String newName,
                                                   @NotNull ResourceBundle targetResourceBundle) {
-    final Map<IProperty, PropertiesFile> propertiesFileMapping = new HashMap<IProperty, PropertiesFile>();
+    final Map<IProperty, PropertiesFile> propertiesFileMapping = new HashMap<>();
     for (IProperty property : properties) {
       final PropertiesFile containingFile = property.getPropertiesFile();
       final PropertiesFile matched = findWithMatchedSuffix(containingFile, targetResourceBundle);
@@ -238,7 +238,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
 
       final Collection<PropertiesFile> propertiesFiles = new ArrayList<>();
 
-      GlobalSearchScope searchScope = GlobalSearchScopesCore.projectProductionScope(myProject).union(GlobalSearchScopesCore.projectTestScope(myProject));
+      GlobalSearchScope searchScope = ProjectScope.getContentScope(myProject);
       PropertiesReferenceManager
         .getInstance(myProject)
         .processPropertiesFiles(searchScope,
@@ -248,7 +248,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
                                     propertiesFiles.add(propertiesFile);
                                     return true;
                                   }
-                                }, BundleNameEvaluator.DEFAULT);
+                                }, BundleNameEvaluator.BASE_NAME);
 
       final List<PsiFileSystemItem> resourceBundlesAsFileSystemItems = propertiesFiles
         .stream()

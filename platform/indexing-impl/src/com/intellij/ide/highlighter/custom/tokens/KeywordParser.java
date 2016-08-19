@@ -35,7 +35,7 @@ import java.util.Set;
  */
 public class KeywordParser {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.highlighter.custom.tokens.KeywordParser");
-  private final List<Set<String>> myKeywordSets = new ArrayList<Set<String>>();
+  private final List<Set<String>> myKeywordSets = new ArrayList<>();
   private final CharTrie myTrie = new CharTrie();
   private final TIntHashSet myHashCodes = new TIntHashSet();
   private final boolean myIgnoreCase;
@@ -54,10 +54,10 @@ public class KeywordParser {
 
   private Set<String> normalizeKeywordSet(Set<String> keywordSet) {
     if (!myIgnoreCase) {
-      return new THashSet<String>(keywordSet);
+      return new THashSet<>(keywordSet);
     }
 
-    final Set<String> result = new THashSet<String>();
+    final Set<String> result = new THashSet<>();
     for (String s : keywordSet) {
       result.add(StringUtil.toUpperCase(s));
     }
@@ -96,12 +96,7 @@ public class KeywordParser {
       return true;
     }
     
-    return !isWordPart(offset - 1, sequence) || !isWordPart(offset, sequence);
-  }
-
-  static boolean isWordPart(int offset, CharSequence sequence) {
-    char ch = sequence.charAt(offset);
-    return ch == '-' || Character.isJavaIdentifierPart(ch);
+    return !Character.isJavaIdentifierPart(sequence.charAt(offset - 1)) || !Character.isJavaIdentifierPart(sequence.charAt(offset));
   }
 
   private static IElementType getToken(int keywordSetIndex) {

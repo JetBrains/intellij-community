@@ -26,7 +26,7 @@ import java.io.File;
  * @author yole
  */
 public class ProjectAttachProcessor {
-  public static final ExtensionPointName<ProjectAttachProcessor> EP_NAME = new ExtensionPointName<ProjectAttachProcessor>("com.intellij.projectAttachProcessor");
+  public static final ExtensionPointName<ProjectAttachProcessor> EP_NAME = new ExtensionPointName<>("com.intellij.projectAttachProcessor");
 
   /**
    * Called to attach the directory projectDir as a module to the specified project.

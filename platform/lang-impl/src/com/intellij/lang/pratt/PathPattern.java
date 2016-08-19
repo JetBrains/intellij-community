@@ -30,7 +30,7 @@ import java.util.ListIterator;
  * @author peter
  */
 public class PathPattern {
-  private final List<ElementPattern> myPath = new SmartList<ElementPattern>();
+  private final List<ElementPattern> myPath = new SmartList<>();
 
   private PathPattern() {
   }

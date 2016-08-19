@@ -45,7 +45,7 @@ public class PlainTextLineSelectioner extends ExtendWordSelectionHandlerBase {
 
     final TextRange range = new TextRange(start, end);
     if (!e.getParent().getTextRange().contains(range)) return null;
-    List<TextRange> result = new ArrayList<TextRange>();
+    List<TextRange> result = new ArrayList<>();
     result.add(range);
     return result;
   }

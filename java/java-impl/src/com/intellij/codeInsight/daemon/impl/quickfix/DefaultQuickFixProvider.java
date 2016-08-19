@@ -85,7 +85,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
                                               @NotNull PsiReferenceExpression refExpr) {
     final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(refExpr.getProject());
 
-    final Map<VariableKind, IntentionAction> map = new EnumMap<VariableKind, IntentionAction>(VariableKind.class);
+    final Map<VariableKind, IntentionAction> map = new EnumMap<>(VariableKind.class);
     map.put(VariableKind.FIELD, new CreateFieldFromUsageFix(refExpr));
     map.put(VariableKind.STATIC_FINAL_FIELD, new CreateConstantFieldFromUsageFix(refExpr));
     if (!refExpr.isQualified()) {

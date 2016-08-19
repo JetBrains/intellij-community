@@ -52,7 +52,7 @@ public class CloseAllUnpinnedEditorsAction extends CloseEditorsActionBase {
   protected boolean isActionEnabled(final Project project, final AnActionEvent event) {
     final ArrayList<Pair<EditorComposite,EditorWindow>> filesToClose = getFilesToClose(event);
     if (filesToClose.isEmpty()) return false;
-    Set<EditorWindow> checked = new HashSet<EditorWindow>();
+    Set<EditorWindow> checked = new HashSet<>();
     boolean hasPinned = false;
     boolean hasUnpinned = false;
     for (Pair<EditorComposite, EditorWindow> pair : filesToClose) {

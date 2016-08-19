@@ -115,9 +115,9 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   private boolean myTransparentIconBackground;
 
   public SimpleColoredComponent() {
-    myFragments = new ArrayList<String>(3);
-    myLayouts = new ArrayList<TextLayout>(3);
-    myAttributes = new ArrayList<SimpleTextAttributes>(3);
+    myFragments = new ArrayList<>(3);
+    myLayouts = new ArrayList<>(3);
+    myAttributes = new ArrayList<>(3);
     myIpad = new JBInsets(1, 2, 1, 2);
     myIconTextGap = JBUI.scale(2);
     myBorder = new MyBorder();
@@ -214,7 +214,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   private synchronized void _append(String fragment, SimpleTextAttributes attributes, Object tag) {
     append(fragment, attributes);
     if (myFragmentTags == null) {
-      myFragmentTags = new ArrayList<Object>();
+      myFragmentTags = new ArrayList<>();
     }
     while (myFragmentTags.size() < myFragments.size() - 1) {
       myFragmentTags.add(null);
@@ -754,7 +754,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       offset += myBorder.getBorderInsets(this).left;
     }
 
-    final List<Object[]> searchMatches = new ArrayList<Object[]>();
+    final List<Object[]> searchMatches = new ArrayList<>();
 
     applyAdditionalHints(g);
     final Font baseFont = getBaseFont();

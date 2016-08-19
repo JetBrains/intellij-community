@@ -68,7 +68,7 @@ import java.util.List;
  */
 public class GenerateXmlTagAction extends SimpleCodeInsightAction {
 
-  public static final ThreadLocal<String> TEST_THREAD_LOCAL = new ThreadLocal<String>();
+  public static final ThreadLocal<String> TEST_THREAD_LOCAL = new ThreadLocal<>();
   private final static Logger LOG = Logger.getInstance(GenerateXmlTagAction.class);
 
   @Override
@@ -266,7 +266,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
         for (XmlElementsGroup subGroup : group.getSubGroups()) {
           List<XmlElementDescriptor> descriptors = computeRequiredSubTags(subGroup);
           if (set == null) {
-            set = new LinkedHashSet<XmlElementDescriptor>(descriptors);
+            set = new LinkedHashSet<>(descriptors);
           }
           else {
             set.retainAll(descriptors);
@@ -275,10 +275,10 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
         if (set == null || set.isEmpty()) {
           return Collections.singletonList(null); // placeholder for smart completion
         }
-        return new ArrayList<XmlElementDescriptor>(set);
+        return new ArrayList<>(set);
 
       default:
-        ArrayList<XmlElementDescriptor> list = new ArrayList<XmlElementDescriptor>();
+        ArrayList<XmlElementDescriptor> list = new ArrayList<>();
         for (XmlElementsGroup subGroup : group.getSubGroups()) {
           list.addAll(computeRequiredSubTags(subGroup));
         }

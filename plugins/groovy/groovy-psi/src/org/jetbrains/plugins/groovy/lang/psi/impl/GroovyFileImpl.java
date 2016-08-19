@@ -470,7 +470,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   @Override
   public PsiType getInferredScriptReturnType() {
     return CachedValuesManager.getCachedValue(this, () -> CachedValueProvider.Result
-      .create(GroovyPsiManager.inferType(GroovyFileImpl.this, new MethodTypeInferencer(GroovyFileImpl.this)),
+      .create(GroovyPsiManager.inferType(this, new MethodTypeInferencer(this)),
               PsiModificationTracker.MODIFICATION_COUNT));
   }
 

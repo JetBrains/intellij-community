@@ -106,7 +106,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         overrides[i] = (PsiMethod)navigationElement;
       }
     }
-    List<PsiElement> elementsToSearch = new ArrayList<PsiElement>(overrides.length + 1);
+    List<PsiElement> elementsToSearch = new ArrayList<>(overrides.length + 1);
     elementsToSearch.add(parameter);
     int idx = method.getParameterList().getParameterIndex(parameter);
     for (PsiMethod override : overrides) {
@@ -153,7 +153,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       if (containingClass != null) {
         String fieldName = field.getName();
         final String propertyName = JavaCodeStyleManager.getInstance(getProject()).variableNameToPropertyName(fieldName, VariableKind.FIELD);
-        Set<PsiMethod> accessors = new THashSet<PsiMethod>();
+        Set<PsiMethod> accessors = new THashSet<>();
         boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
         PsiMethod getter = PropertyUtil.findPropertyGetterWithType(propertyName, isStatic, field.getType(),
                                      ContainerUtil.iterate(containingClass.getMethods()));
@@ -171,7 +171,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
                                                                CommonBundle.getNoButtonText(), Messages.getQuestionIcon()) ==
                                    Messages.OK;
           if (doSearch) {
-            final Set<PsiElement> elements = new THashSet<PsiElement>();
+            final Set<PsiElement> elements = new THashSet<>();
             for (PsiMethod accessor : accessors) {
               ContainerUtil.addAll(elements, SuperMethodWarningUtil.checkSuperMethods(accessor, ACTION_STRING));
             }
@@ -231,7 +231,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       if (superMethods.length == 0) {
         return MethodReferencesSearch.search((PsiMethod)target, searchScope, true).findAll();
       }
-      final Collection<PsiReference> result = new ArrayList<PsiReference>();
+      final Collection<PsiReference> result = new ArrayList<>();
       for (PsiMethod superMethod : superMethods) {
         result.addAll(MethodReferencesSearch.search(superMethod, searchScope, true).findAll());
       }

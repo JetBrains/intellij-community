@@ -253,7 +253,7 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
   @NotNull
   private static List<PropertyData> getPropertyList(@NotNull SvnVcs vcs, @NotNull SvnTarget target, @Nullable SVNRevision revision)
     throws VcsException {
-    final List<PropertyData> lines = new ArrayList<PropertyData>();
+    final List<PropertyData> lines = new ArrayList<>();
     final PropertyConsumer propertyHandler = createHandler(revision, lines);
 
     vcs.getFactory(target).createPropertyClient().list(target, revision, Depth.EMPTY, propertyHandler);

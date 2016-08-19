@@ -47,7 +47,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
@@ -97,7 +96,7 @@ import java.util.*;
  */
 public class PsiUtil {
   public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil");
-  public static final Key<JavaIdentifier> NAME_IDENTIFIER = new Key<JavaIdentifier>("Java Identifier");
+  public static final Key<JavaIdentifier> NAME_IDENTIFIER = new Key<>("Java Identifier");
   public static final Set<String> OPERATOR_METHOD_NAMES = ContainerUtil.newHashSet(
     "plus", "minus", "multiply", "power", "div", "mod", "or", "and", "xor", "next", "previous", "getAt", "putAt", "leftShift", "rightShift",
     "isCase", "bitwiseNegate", "negative", "positive", "call"
@@ -106,12 +105,29 @@ public class PsiUtil {
   private PsiUtil() {
   }
 
-  @Nullable
-  public static PsiElement findModifierInList(@NotNull GrModifierList list, @GrModifier.GrModifierConstant @NotNull String modifier) {
-    for (PsiElement element : list.getModifiers()) {
-      if (modifier.equals(element.getText())) return element;
+  /**
+   * @param owner modifier list owner
+   * @return <ul>
+   * <li>{@code true} when owner has explicit type or it's not required for owner to have explicit type</li>
+   * <li>{@code false} when doesn't have explicit type and it's required to have a type or modifier</li>
+   * <li>{@code defaultValue} for the other owners</li>
+   * </ul>
+   */
+  public static boolean modifierListMayBeEmpty(@Nullable PsiElement owner) {
+    if (owner instanceof GrParameter) {
+      return true;
     }
-    return null;
+    if (owner instanceof GrMethod) {
+      GrMethod method = (GrMethod)owner;
+      return method.isConstructor() || method.getReturnTypeElementGroovy() != null && !method.hasTypeParameters();
+    }
+    else if (owner instanceof GrVariable) {
+      return ((GrVariable)owner).getTypeElementGroovy() != null;
+    }
+    else if (owner instanceof GrVariableDeclaration) {
+      return ((GrVariableDeclaration)owner).getTypeElementGroovy() != null;
+    }
+    return true;
   }
 
   @Nullable
@@ -313,7 +329,7 @@ public class PsiUtil {
                                            boolean nullAsBottom,
                                            @Nullable GrExpression stopAt,
                                            boolean byShape) {
-    List<PsiType> result = new ArrayList<PsiType>();
+    List<PsiType> result = new ArrayList<>();
 
     if (namedArgs.length > 0) {
       GrNamedArgument context = namedArgs[0];
@@ -417,10 +433,10 @@ public class PsiUtil {
       public Iterator<PsiClass> iterator() {
         return new Iterator<PsiClass>() {
           TIntStack indices = new TIntStack();
-          Stack<PsiClassType[]> superTypesStack = new Stack<PsiClassType[]>();
+          Stack<PsiClassType[]> superTypesStack = new Stack<>();
           PsiClass current;
           boolean nextObtained;
-          Set<PsiClass> visited = new HashSet<PsiClass>();
+          Set<PsiClass> visited = new HashSet<>();
 
           {
             if (includeSelf) {
@@ -777,7 +793,8 @@ public class PsiUtil {
     return skipSet(elem, forward, TokenSets.WHITE_SPACES_OR_COMMENTS, true);
   }
 
-  private static PsiElement skipSet(PsiElement elem, boolean forward, TokenSet set, boolean skipNLs) {
+  @Nullable
+  public static PsiElement skipSet(PsiElement elem, boolean forward, TokenSet set, boolean skipNLs) {
     while (elem != null &&
            elem.getNode() != null &&
            set.contains(elem.getNode().getElementType()) &&
@@ -1271,7 +1288,7 @@ public class PsiUtil {
 
   @NotNull
   public static List<GrImportStatement> getValidImportStatements(final GroovyFile file) {
-    final List<GrImportStatement> oldImports = new ArrayList<GrImportStatement>();
+    final List<GrImportStatement> oldImports = new ArrayList<>();
     for (GrImportStatement statement : file.getImportStatements()) {
       if (!ErrorUtil.containsError(statement)) {
         oldImports.add(statement);

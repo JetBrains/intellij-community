@@ -47,7 +47,7 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
   private JTextPane myDescriptionArea;
   private JButton myEnableAllButton;
   private JButton myDisableAllButton;
-  private final List<IdeaPluginDescriptor> myPlugins = new ArrayList<IdeaPluginDescriptor>();
+  private final List<IdeaPluginDescriptor> myPlugins = new ArrayList<>();
   private final StartupWizardModel myModel;
   private final String myRequirePlugin;
 

@@ -41,6 +41,7 @@ message Message {
     repeated string classpath = 5;
     repeated string sourcepath = 6;
     repeated OutputGroup output = 7;
+    repeated string module_path = 8;
   }
 
   message Response {

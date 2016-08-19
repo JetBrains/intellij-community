@@ -96,7 +96,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
 
   public List<String> getGlobalGroupRepositories(final Collection<String> all) {
     // i.e. all-[all used]
-    final List<String> result = new LinkedList<String>(all);
+    final List<String> result = new LinkedList<>(all);
 
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final MyNode node = (MyNode) myRoot.getChildAt(i);
@@ -110,8 +110,8 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
   }
 
   public boolean validate(final ValidationListener listener) {
-    final Ref<String> errorMessageRef = new Ref<String>();
-    final Set<String> checkSet = new HashSet<String>();
+    final Ref<String> errorMessageRef = new Ref<>();
+    final Set<String> checkSet = new HashSet<>();
     final AmbiguousPatternsFinder ambiguousPatternsFinder = new AmbiguousPatternsFinder();
     
     for (int i = 0; i < myRoot.getChildCount(); i++) {
@@ -150,7 +150,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
   }
 
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
-    ArrayList<AnAction> result = new ArrayList<AnAction>();
+    ArrayList<AnAction> result = new ArrayList<>();
     result.add(new AnAction("Add", "Add", IconUtil.getAddIcon()) {
         {
             registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
@@ -215,7 +215,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
   }
 
   public void apply() throws ConfigurationException {
-    final List<ProxyGroup> groups = new ArrayList<ProxyGroup>(myRoot.getChildCount());
+    final List<ProxyGroup> groups = new ArrayList<>(myRoot.getChildCount());
 
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final MyNode node = (MyNode) myRoot.getChildAt(i);

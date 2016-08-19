@@ -137,7 +137,7 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
 
 
     final PsiFile[] files = dir.getFiles();
-    Set<String> fileNames = new HashSet<String>();
+    Set<String> fileNames = new HashSet<>();
     for (PsiFile psiFile : files) {
       fileNames.add(psiFile.getName());
     }

@@ -435,16 +435,16 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     if (TypeUtils.isFinal(sc.getModifiers())) {
       throw new IllegalArgumentException("Cannot subclass final class " + sc);
     }
-    List<Constructor> constructors = new ArrayList<Constructor>(Arrays.asList(sc.getDeclaredConstructors()));
+    List<Constructor> constructors = new ArrayList<>(Arrays.asList(sc.getDeclaredConstructors()));
     filterConstructors(sc, constructors);
 
     // Order is very important: must add superclass, then
     // its superclass chain, then each interface and
     // its superinterfaces.
     final Set forcePublic = new HashSet();
-    List<Method> actualMethods = new ArrayList<Method>();
-    final Map<Method, Method> covariantMethods = new HashMap<Method, Method>();
-    getMethods(sc, interfaces, actualMethods, new ArrayList<Method>(), forcePublic);
+    List<Method> actualMethods = new ArrayList<>();
+    final Map<Method, Method> covariantMethods = new HashMap<>();
+    getMethods(sc, interfaces, actualMethods, new ArrayList<>(), forcePublic);
 
     //Changes by Peter Gromov & Gregory Shrago
 
@@ -481,7 +481,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     for (int i = 0; i < callbackTypes.length; i++) {
       e.declare_field(Constants.ACC_PRIVATE, getCallbackField(i), callbackTypes[i], null);
     }
-    final Map<Method, MethodInfo> methodInfoMap = new HashMap<Method, MethodInfo>();
+    final Map<Method, MethodInfo> methodInfoMap = new HashMap<>();
     for (Method method : actualMethods) {
       if (isJdk8DefaultMethod(method)) {
         continue;
@@ -809,7 +809,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
 
   private void emitMethods(final ClassEmitter ce, Map<Method, MethodInfo> methodMap, final Map<Method, Method> covariantMethods) {
     CallbackGenerator[] generators = CallbackInfo.getGenerators(callbackTypes);
-    Map<MethodInfo, MethodInfo> covariantInfoMap = new HashMap<MethodInfo, MethodInfo>();
+    Map<MethodInfo, MethodInfo> covariantInfoMap = new HashMap<>();
     for (Method method : methodMap.keySet()) {
       final Method delegate = covariantMethods.get(method);
       if (delegate != null) {
@@ -818,10 +818,10 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     }
     BridgeMethodGenerator bridgeMethodGenerator = new BridgeMethodGenerator(covariantInfoMap);
 
-    Map<CallbackGenerator,List<MethodInfo>> groups = new HashMap<CallbackGenerator, List<MethodInfo>>();
-    final Map<MethodInfo,Integer> indexes = new HashMap<MethodInfo, Integer>();
-    final Map<MethodInfo,Integer> originalModifiers = new HashMap<MethodInfo, Integer>();
-    final Map positions = CollectionUtils.getIndexMap(new ArrayList<MethodInfo>(methodMap.values()));
+    Map<CallbackGenerator,List<MethodInfo>> groups = new HashMap<>();
+    final Map<MethodInfo,Integer> indexes = new HashMap<>();
+    final Map<MethodInfo,Integer> originalModifiers = new HashMap<>();
+    final Map positions = CollectionUtils.getIndexMap(new ArrayList<>(methodMap.values()));
 
     for (Method actualMethod : methodMap.keySet()) {
       MethodInfo method = methodMap.get(actualMethod);
@@ -834,7 +834,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
       final CallbackGenerator generator = covariantMethods.containsKey(actualMethod)? bridgeMethodGenerator : generators[index];
       List<MethodInfo> group = groups.get(generator);
       if (group == null) {
-        groups.put(generator, group = new ArrayList<MethodInfo>(methodMap.size()));
+        groups.put(generator, group = new ArrayList<>(methodMap.size()));
       }
       group.add(method);
     }
@@ -884,7 +884,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
         return e;
       }
     };
-    Set<CallbackGenerator> seenGen = new HashSet<CallbackGenerator>();
+    Set<CallbackGenerator> seenGen = new HashSet<>();
     for (int i = 0; i < callbackTypes.length + 1; i++) {
       CallbackGenerator gen = i == callbackTypes.length? bridgeMethodGenerator : generators[i];
       if (!seenGen.contains(gen)) {

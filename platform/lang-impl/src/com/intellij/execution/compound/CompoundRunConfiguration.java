@@ -39,8 +39,8 @@ public class CompoundRunConfiguration extends RunConfigurationBase implements Wi
     int i = o1.getType().getDisplayName().compareTo(o2.getType().getDisplayName());
     return (i != 0) ? i : o1.getName().compareTo(o2.getName());
   };
-  private Set<Pair<String, String>> myPairs = new HashSet<Pair<String, String>>();
-  private Set<RunConfiguration> mySetToRun = new TreeSet<RunConfiguration>(COMPARATOR);
+  private Set<Pair<String, String>> myPairs = new HashSet<>();
+  private Set<RunConfiguration> mySetToRun = new TreeSet<>(COMPARATOR);
   private boolean myInitialized = false;
 
   public CompoundRunConfiguration(Project project, @NotNull CompoundRunConfigurationType type, String name) {
@@ -133,9 +133,9 @@ public class CompoundRunConfiguration extends RunConfigurationBase implements Wi
   @Override
   public RunConfiguration clone() {
     CompoundRunConfiguration clone = (CompoundRunConfiguration)super.clone();
-    clone.myPairs = new HashSet<Pair<String, String>>();
+    clone.myPairs = new HashSet<>();
     clone.myPairs.addAll(myPairs);
-    clone.mySetToRun = new TreeSet<RunConfiguration>(COMPARATOR);
+    clone.mySetToRun = new TreeSet<>(COMPARATOR);
     clone.mySetToRun.addAll(getSetToRun());
     return clone;
   }

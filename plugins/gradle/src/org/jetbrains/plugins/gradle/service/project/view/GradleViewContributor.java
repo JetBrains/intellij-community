@@ -60,7 +60,7 @@ public class GradleViewContributor extends ExternalSystemViewContributor {
   @NotNull
   @Override
   public List<ExternalSystemNode<?>> createNodes(ExternalProjectsView externalProjectsView, MultiMap<Key<?>, DataNode<?>> dataNodes) {
-    final List<ExternalSystemNode<?>> result = new SmartList<ExternalSystemNode<?>>();
+    final List<ExternalSystemNode<?>> result = new SmartList<>();
     addCustomSourceSetsNodes(externalProjectsView, dataNodes, result);
     return result;
   }

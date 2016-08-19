@@ -44,15 +44,15 @@ import java.util.*;
  */
 public class ProjectFacetsConfigurator implements FacetsProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ProjectFacetsConfigurator");
-  private final Map<Module, ModifiableFacetModel> myModifiableModels = new HashMap<Module, ModifiableFacetModel>();
-  private final Map<Facet, FacetEditorImpl> myEditors = new LinkedHashMap<Facet, FacetEditorImpl>();
-  private final Map<Module, FacetTreeModel> myTreeModels = new HashMap<Module, FacetTreeModel>();
-  private final Map<FacetInfo, Facet> myInfo2Facet = new HashMap<FacetInfo, Facet>();
-  private final Map<Facet, FacetInfo> myFacet2Info = new HashMap<Facet, FacetInfo>();
-  private final Map<Module, UserDataHolder> mySharedModuleData = new HashMap<Module, UserDataHolder>();
-  private final Set<Facet> myFacetsToDispose = new HashSet<Facet>();
-  private final Set<Facet> myChangedFacets = new HashSet<Facet>();
-  private final Set<Facet> myCreatedFacets = new HashSet<Facet>();
+  private final Map<Module, ModifiableFacetModel> myModifiableModels = new HashMap<>();
+  private final Map<Facet, FacetEditorImpl> myEditors = new LinkedHashMap<>();
+  private final Map<Module, FacetTreeModel> myTreeModels = new HashMap<>();
+  private final Map<FacetInfo, Facet> myInfo2Facet = new HashMap<>();
+  private final Map<Facet, FacetInfo> myFacet2Info = new HashMap<>();
+  private final Map<Module, UserDataHolder> mySharedModuleData = new HashMap<>();
+  private final Set<Facet> myFacetsToDispose = new HashSet<>();
+  private final Set<Facet> myChangedFacets = new HashSet<>();
+  private final Set<Facet> myCreatedFacets = new HashSet<>();
   private final StructureConfigurableContext myContext;
   private UserDataHolderBase myProjectData = new UserDataHolderBase();
 
@@ -76,7 +76,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
     FacetInfo facetInfo = myFacet2Info.get(facet);
     if (facetInfo == null) return Collections.emptyList();
 
-    final List<Facet> removed = new ArrayList<Facet>();
+    final List<Facet> removed = new ArrayList<>();
     List<FacetInfo> childrenList = treeModel.getChildren(facetInfo);
     FacetInfo[] children = childrenList.toArray(new FacetInfo[childrenList.size()]);
     for (FacetInfo child : children) {
@@ -338,7 +338,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
   }
 
   public List<Facet> removeAllFacets(final Module module) {
-    List<Facet> facets = new ArrayList<Facet>();
+    List<Facet> facets = new ArrayList<>();
     FacetModel facetModel = getOrCreateModifiableModel(module);
     for (Facet facet : facetModel.getAllFacets()) {
       if (!myCreatedFacets.contains(facet)) {

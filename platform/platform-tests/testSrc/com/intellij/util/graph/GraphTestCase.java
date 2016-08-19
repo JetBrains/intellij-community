@@ -29,11 +29,11 @@ public abstract class GraphTestCase extends TestCase {
   }
 
   protected static Graph<String> initGraph(final Map<String, String> graph) {
-    final Map<String, List<String>> out = new HashMap<String, List<String>>();
-    final Map<String, List<String>> in = new HashMap<String, List<String>>();
+    final Map<String, List<String>> out = new HashMap<>();
+    final Map<String, List<String>> in = new HashMap<>();
     for (String s : graph.keySet()) {
-      out.put(s, new ArrayList<String>());
-      in.put(s, new ArrayList<String>());
+      out.put(s, new ArrayList<>());
+      in.put(s, new ArrayList<>());
     }
     for (Map.Entry<String, String> entry : graph.entrySet()) {
       String from = entry.getKey();

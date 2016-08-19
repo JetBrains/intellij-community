@@ -36,7 +36,7 @@ public class ReplacementContext {
   }
 
   public Map<String, String> getNewName2PatternNameMap() {
-    Map<String, String> newNameToSearchPatternNameMap = new HashMap<String, String>(1);
+    Map<String, String> newNameToSearchPatternNameMap = new HashMap<>(1);
     final Map<String, MatchResult> variableMap = replacementInfo.getVariableMap();
 
     if (variableMap != null) {

@@ -205,7 +205,7 @@ public abstract class ResourceInspection extends BaseInspection {
   }
 
   private static boolean isSignificant(@NotNull PsiStatement statement) {
-    final Ref<Boolean> result = new Ref<Boolean>(Boolean.TRUE);
+    final Ref<Boolean> result = new Ref<>(Boolean.TRUE);
     statement.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitExpression(PsiExpression expression) {

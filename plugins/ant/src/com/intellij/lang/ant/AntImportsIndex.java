@@ -39,7 +39,7 @@ public class AntImportsIndex extends ScalarIndexExtension<Integer>{
     @Override
     @NotNull
     public Map<Integer, Void> map(@NotNull final FileContent inputData) {
-      final Map<Integer, Void> map = new HashMap<Integer, Void>();
+      final Map<Integer, Void> map = new HashMap<>();
 
       NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()), new NanoXmlUtil.IXMLBuilderAdapter() {
         private boolean isFirstElement = true;

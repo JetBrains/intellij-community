@@ -60,7 +60,7 @@ public class StringCompareToInspection extends BaseInspection {
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
     final PsiMethodCallExpression methodCallExpression =
       (PsiMethodCallExpression)infos[0];
-    final List<InspectionGadgetsFix> result = new ArrayList<InspectionGadgetsFix>();
+    final List<InspectionGadgetsFix> result = new ArrayList<>();
     final PsiReferenceExpression methodExpression =
       methodCallExpression.getMethodExpression();
     final PsiModifierListOwner annotatableQualifier =

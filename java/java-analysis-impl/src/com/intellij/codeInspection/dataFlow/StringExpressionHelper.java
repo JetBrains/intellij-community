@@ -32,7 +32,7 @@ public class StringExpressionHelper {
 
   @Nullable
   public static Pair<PsiElement, String> evaluateExpression(@NotNull PsiElement expression) {
-    return evaluateExpression(expression, new HashSet<PsiElement>());
+    return evaluateExpression(expression, new HashSet<>());
   }
 
   @Nullable
@@ -59,7 +59,7 @@ public class StringExpressionHelper {
       if (element instanceof PsiMethod) {
         PsiCodeBlock body = ((PsiMethod)element).getBody();
         if (body != null) {
-          final Set<PsiExpression> returns = new com.intellij.util.containers.HashSet<PsiExpression>();
+          final Set<PsiExpression> returns = new com.intellij.util.containers.HashSet<>();
 
           body.accept(new JavaRecursiveElementWalkingVisitor() {
             @Override
@@ -149,7 +149,7 @@ public class StringExpressionHelper {
   public static Set<Pair<PsiElement, String>> searchStringExpressions(@NotNull final PsiMethod psiMethod,
                                                                       @NotNull SearchScope searchScope,
                                                                       int expNum) {
-    Set<Pair<PsiElement, String>> pairs = new com.intellij.util.containers.HashSet<Pair<PsiElement, String>>();
+    Set<Pair<PsiElement, String>> pairs = new com.intellij.util.containers.HashSet<>();
     for (PsiMethodCallExpression methodCallExpression : searchMethodCalls(psiMethod, searchScope)) {
       final PsiExpression[] expressions = methodCallExpression.getArgumentList().getExpressions();
       if (expressions.length > expNum) {
@@ -166,8 +166,8 @@ public class StringExpressionHelper {
 
   @NotNull
   public static Set<PsiMethodCallExpression> searchMethodCalls(@NotNull final PsiMethod psiMethod, @NotNull SearchScope searchScope) {
-    final Set<PsiMethodCallExpression> callExpressions = new com.intellij.util.containers.HashSet<PsiMethodCallExpression>();
-    final CommonProcessors.CollectUniquesProcessor<PsiReference> consumer = new CommonProcessors.CollectUniquesProcessor<PsiReference>();
+    final Set<PsiMethodCallExpression> callExpressions = new com.intellij.util.containers.HashSet<>();
+    final CommonProcessors.CollectUniquesProcessor<PsiReference> consumer = new CommonProcessors.CollectUniquesProcessor<>();
 
     MethodReferencesSearch.search(psiMethod, searchScope, true).forEach(consumer);
 

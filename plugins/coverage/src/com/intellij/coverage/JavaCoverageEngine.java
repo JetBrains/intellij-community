@@ -262,7 +262,7 @@ public class JavaCoverageEngine extends CoverageEngine {
 
   @Nullable
   public List<Integer> collectSrcLinesForUntouchedFile(@NotNull final File classFile, @NotNull final CoverageSuitesBundle suite) {
-    final List<Integer> uncoveredLines = new ArrayList<Integer>();
+    final List<Integer> uncoveredLines = new ArrayList<>();
 
     final byte[] content;
     try {
@@ -305,7 +305,7 @@ public class JavaCoverageEngine extends CoverageEngine {
         return ((PsiClassOwner)sourceFile).getClasses();
       }
     });
-    final Set<String> qNames = new HashSet<String>();
+    final Set<String> qNames = new HashSet<>();
     for (final JavaCoverageEngineExtension nameExtension : Extensions.getExtensions(JavaCoverageEngineExtension.EP_NAME)) {
       if (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
         public Boolean compute() {
@@ -335,7 +335,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     if (module == null) {
       return Collections.emptySet();
     }
-    final Set<File> classFiles = new HashSet<File>();
+    final Set<File> classFiles = new HashSet<>();
     final VirtualFile outputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
     final VirtualFile testOutputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests();
 
@@ -346,7 +346,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     final String packageFQName = getPackageName(srcFile);
     final String packageVmName = packageFQName.replace('.', '/');
 
-    final List<File> children = new ArrayList<File>();
+    final List<File> children = new ArrayList<>();
     final File vDir =
       outputpath == null
       ? null : packageVmName.length() > 0
@@ -413,7 +413,7 @@ public class JavaCoverageEngine extends CoverageEngine {
       }
     }
 
-    final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
+    final List<PsiExpression> expressions = new ArrayList<>();
 
     final Project project = editor.getProject();
     for(int offset = startOffset; offset < endOffset; offset++) {
@@ -518,7 +518,7 @@ public class JavaCoverageEngine extends CoverageEngine {
 
   @NotNull
   public List<PsiElement> findTestsByNames(@NotNull String[] testNames, @NotNull Project project) {
-    final List<PsiElement> elements = new ArrayList<PsiElement>();
+    final List<PsiElement> elements = new ArrayList<>();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
     for (String testName : testNames) {

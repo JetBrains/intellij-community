@@ -127,7 +127,7 @@ public class StdArrangementEntryMatcher implements ArrangementEntryMatcher {
      * {@link #onCondition(ArrangementAtomMatchCondition) onCondition} calls.
      */
     @NotNull protected final MultiValuesMap<StdArrangementTokenType, ArrangementAtomMatchCondition> context =
-      new MultiValuesMap<StdArrangementTokenType, ArrangementAtomMatchCondition>();
+      new MultiValuesMap<>();
     @Nullable private String myNamePattern;
     @Nullable private String myNamespacePattern;
     @Nullable private String myText;

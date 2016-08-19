@@ -479,7 +479,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     @Override
     public void addDocumentListener(javax.swing.event.DocumentListener documentListener) {
       if (myListeners == null) {
-        myListeners = new ArrayList<javax.swing.event.DocumentListener>(2);
+        myListeners = new ArrayList<>(2);
       }
       myListeners.add(documentListener);
     }

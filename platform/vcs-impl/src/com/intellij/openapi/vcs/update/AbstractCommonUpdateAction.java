@@ -163,7 +163,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
   }
 
   private LinkedHashMap<Configurable, AbstractVcs> createConfigurableToEnvMap(Map<AbstractVcs, Collection<FilePath>> updateEnvToVirtualFiles) {
-    LinkedHashMap<Configurable, AbstractVcs> envToConfMap = new LinkedHashMap<Configurable, AbstractVcs>();
+    LinkedHashMap<Configurable, AbstractVcs> envToConfMap = new LinkedHashMap<>();
     for (AbstractVcs vcs : updateEnvToVirtualFiles.keySet()) {
       Configurable configurable = myActionInfo.getEnvironment(vcs).createConfigurable(updateEnvToVirtualFiles.get(vcs));
       if (configurable != null) {
@@ -185,17 +185,17 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       }
     }
 
-    final Map<AbstractVcs, Collection<FilePath>> result = new THashMap<AbstractVcs, Collection<FilePath>>();
+    final Map<AbstractVcs, Collection<FilePath>> result = new THashMap<>();
     for (Map.Entry<AbstractVcs, Collection<FilePath>> entry : resultPrep.entrySet()) {
       AbstractVcs vcs = entry.getKey();
-      result.put(vcs, vcs.filterUniqueRoots(new ArrayList<FilePath>(entry.getValue()), ObjectsConvertor.FILEPATH_TO_VIRTUAL));
+      result.put(vcs, vcs.filterUniqueRoots(new ArrayList<>(entry.getValue()), ObjectsConvertor.FILEPATH_TO_VIRTUAL));
     }
     return result;
   }
 
   @NotNull
   private FilePath[] filterRoots(FilePath[] roots, VcsContext vcsContext) {
-    final ArrayList<FilePath> result = new ArrayList<FilePath>();
+    final ArrayList<FilePath> result = new ArrayList<>();
     final Project project = vcsContext.getProject();
     assert project != null;
     for (FilePath file : roots) {
@@ -316,11 +316,11 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       myVcsToVirtualFiles = vcsToVirtualFiles;
 
       myUpdatedFiles = UpdatedFiles.create();
-      myGroupedExceptions = new HashMap<HotfixData, List<VcsException>>();
-      myUpdateSessions = new ArrayList<UpdateSession>();
+      myGroupedExceptions = new HashMap<>();
+      myUpdateSessions = new ArrayList<>();
 
       // create from outside without any context; context is created by vcses
-      myContextInfo = new HashMap<AbstractVcs, SequentialUpdatesContext>();
+      myContextInfo = new HashMap<>();
       myUpdateNumber = 1;
     }
 
@@ -353,7 +353,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           Collection<FilePath> files = myVcsToVirtualFiles.get(vcs);
 
           final SequentialUpdatesContext context = myContextInfo.get(vcs);
-          final Ref<SequentialUpdatesContext> refContext = new Ref<SequentialUpdatesContext>(context);
+          final Ref<SequentialUpdatesContext> refContext = new Ref<>(context);
 
           // actual update
           UpdateSession updateSession =
@@ -402,7 +402,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       if (list.isEmpty()) return;
       List<VcsException> exceptionList = myGroupedExceptions.get(key);
       if (exceptionList == null) {
-        exceptionList = new ArrayList<VcsException>();
+        exceptionList = new ArrayList<>();
         myGroupedExceptions.put(key, exceptionList);
       }
       exceptionList.addAll(list);
@@ -475,7 +475,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       myAfter = LocalHistory.getInstance().putSystemLabel(myProject, "After update");
 
       if (myActionInfo.canChangeFileStatus()) {
-        final List<VirtualFile> files = new ArrayList<VirtualFile>();
+        final List<VirtualFile> files = new ArrayList<>();
         final RemoteRevisionsCache revisionsCache = RemoteRevisionsCache.getInstance(myProject);
         revisionsCache.invalidate(myUpdatedFiles);
         UpdateFilesHelper.iterateFileGroupFiles(myUpdatedFiles, new UpdateFilesHelper.Callback() {

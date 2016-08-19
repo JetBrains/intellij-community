@@ -55,7 +55,7 @@ public class PyBuiltinCache {
   /**
    * Stores the most often used types, returned by getNNNType().
    */
-  @NotNull private final Map<String, PyClassTypeImpl> myTypeCache = new HashMap<String, PyClassTypeImpl>();
+  @NotNull private final Map<String, PyClassTypeImpl> myTypeCache = new HashMap<>();
 
   @Nullable private PyFile myBuiltinsFile;
   @Nullable private PyFile myExceptionsFile;

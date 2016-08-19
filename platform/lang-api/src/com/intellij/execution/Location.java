@@ -91,7 +91,7 @@ public abstract class Location<E extends PsiElement> {
 
   @NotNull
   public PsiLocation<E> toPsiLocation() {
-    return new PsiLocation<E>(getProject(), getPsiElement());
+    return new PsiLocation<>(getProject(), getPsiElement());
   }
 
   @Nullable

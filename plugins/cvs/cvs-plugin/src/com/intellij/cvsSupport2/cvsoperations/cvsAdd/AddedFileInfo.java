@@ -123,7 +123,7 @@ public class AddedFileInfo extends DefaultMutableTreeNode {
   }
 
   public Collection<AddedFileInfo> collectAllIncludedFiles() {
-    final ArrayList<AddedFileInfo> result = new ArrayList<AddedFileInfo>();
+    final ArrayList<AddedFileInfo> result = new ArrayList<>();
     if (!myIncluded) return result;
     result.add(this);
 

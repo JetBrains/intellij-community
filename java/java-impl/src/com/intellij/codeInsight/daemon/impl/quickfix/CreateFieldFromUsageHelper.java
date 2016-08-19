@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class CreateFieldFromUsageHelper {
   private static final LanguageExtension<CreateFieldFromUsageHelper> EP_NAME =
-    new LanguageExtension<CreateFieldFromUsageHelper>("com.intellij.codeInsight.createFieldFromUsageHelper");
+    new LanguageExtension<>("com.intellij.codeInsight.createFieldFromUsageHelper");
 
   public static Template setupTemplate(PsiField field,
                                        Object expectedTypes,

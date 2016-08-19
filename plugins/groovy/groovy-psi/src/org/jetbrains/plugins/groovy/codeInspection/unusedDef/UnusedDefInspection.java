@@ -89,7 +89,7 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
     final Instruction[] flow = owner.getControlFlow();
     final ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance(flow);
     final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
-    final DFAEngine<DefinitionMap> engine = new DFAEngine<DefinitionMap>(flow, dfaInstance, lattice);
+    final DFAEngine<DefinitionMap> engine = new DFAEngine<>(flow, dfaInstance, lattice);
     final List<DefinitionMap> dfaResult = engine.performDFAWithTimeout();
     if (dfaResult == null) {
       return;

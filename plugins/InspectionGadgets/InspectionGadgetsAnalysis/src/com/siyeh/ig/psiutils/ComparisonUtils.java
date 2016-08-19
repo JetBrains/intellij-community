@@ -31,11 +31,11 @@ public class ComparisonUtils {
 
   private ComparisonUtils() {}
 
-  private static final Set<IElementType> s_comparisonTokens = new HashSet<IElementType>(6);
+  private static final Set<IElementType> s_comparisonTokens = new HashSet<>(6);
 
-  private static final Map<IElementType, String> s_swappedComparisons = new HashMap<IElementType, String>(6);
+  private static final Map<IElementType, String> s_swappedComparisons = new HashMap<>(6);
 
-  private static final Map<IElementType, String> s_invertedComparisons = new HashMap<IElementType, String>(6);
+  private static final Map<IElementType, String> s_invertedComparisons = new HashMap<>(6);
 
   static {
     s_comparisonTokens.add(JavaTokenType.EQEQ);

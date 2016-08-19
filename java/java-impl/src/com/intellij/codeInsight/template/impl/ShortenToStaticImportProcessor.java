@@ -62,7 +62,7 @@ public class ShortenToStaticImportProcessor implements TemplateOptionalProcessor
        return;
     }
 
-    List<Pair<PsiElement, StaticImporter>> staticImportTargets = new ArrayList<Pair<PsiElement, StaticImporter>>();
+    List<Pair<PsiElement, StaticImporter>> staticImportTargets = new ArrayList<>();
     for (
       PsiElement element = PsiUtilCore.getElementAtOffset(file, templateRange.getStartOffset());
       element != null && element.getTextRange().getStartOffset() < templateRange.getEndOffset();

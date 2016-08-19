@@ -1,0 +1,17 @@
+<html>
+<body>
+This inspection reports <b>==</b> and <b>!=</b> equality operators that compare two objects.
+For example:<br> <code><b>if</b> (object1 == object2) {}</code>
+<p>Quick fix replaces '==' with <b>.equals()</b>:
+<p><code>object1.equals(object2);</code>
+<p>or with safe <b>.equals()</b>:
+  <ul>
+  <li>
+    <code>java.util.Objects.equals(object1, object2)</code><br> (under Java7+) or
+  </li>
+  <li>
+    <code>object1 == null ? object2 == null : object1.equals(object2)</code><br> (under old JDKs)
+  </li>
+</ul>
+</body>
+</html>

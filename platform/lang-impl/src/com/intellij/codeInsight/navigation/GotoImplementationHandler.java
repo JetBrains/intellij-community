@@ -109,7 +109,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     private final Editor myEditor;
     private final int myOffset;
     private final GotoData myGotoData;
-    private final Map<Object, PsiElementListCellRenderer> renderers = new HashMap<Object, PsiElementListCellRenderer>();
+    private final Map<Object, PsiElementListCellRenderer> renderers = new HashMap<>();
     private final PsiReference myReference;
 
     ImplementationsUpdaterTask(@NotNull GotoData gotoData, @NotNull Editor editor, int offset, final PsiReference reference) {

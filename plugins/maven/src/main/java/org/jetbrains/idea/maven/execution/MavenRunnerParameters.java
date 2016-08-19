@@ -32,13 +32,13 @@ import java.util.*;
 public class MavenRunnerParameters implements Cloneable {
   private boolean isPomExecution;
   private Path myWorkingDirPath;
-  private final List<String> myGoals = new ArrayList<String>();
+  private final List<String> myGoals = new ArrayList<>();
 
   private boolean myResolveToWorkspace;
 
-  private final Map<String, Boolean> myProfilesMap = new LinkedHashMap<String, Boolean>();
+  private final Map<String, Boolean> myProfilesMap = new LinkedHashMap<>();
 
-  private final Collection<String> myEnabledProfilesForXmlSerializer = new TreeSet<String>();
+  private final Collection<String> myEnabledProfilesForXmlSerializer = new TreeSet<>();
 
   public MavenRunnerParameters() {
     this(true, "", null, null, null);

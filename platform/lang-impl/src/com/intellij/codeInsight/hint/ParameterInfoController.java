@@ -36,10 +36,12 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -118,7 +120,7 @@ public class ParameterInfoController implements Disposable {
 
     final Object[] objects = myComponent.getObjects();
     int selectedParameterIndex = myComponent.getCurrentParameterIndex();
-    List<Object> params = new ArrayList<Object>(objects.length);
+    List<Object> params = new ArrayList<>(objects.length);
 
     final Object highlighted = myComponent.getHighlighted();
     for(Object o:objects) {
@@ -150,7 +152,7 @@ public class ParameterInfoController implements Disposable {
   private static List<ParameterInfoController> getAllControllers(@NotNull Editor editor) {
     List<ParameterInfoController> array = editor.getUserData(ALL_CONTROLLERS_KEY);
     if (array == null){
-      array = new ArrayList<ParameterInfoController>();
+      array = new ArrayList<>();
       editor.putUserData(ALL_CONTROLLERS_KEY, array);
     }
     return array;
@@ -275,7 +277,11 @@ public class ParameterInfoController implements Disposable {
 
     final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
     CharSequence chars = myEditor.getDocument().getCharsSequence();
-    final int offset = CharArrayUtil.shiftBackward(chars, myEditor.getCaretModel().getOffset() - 1, " \t") + 1;
+    boolean noDelimiter = myHandler instanceof ParameterInfoHandlerWithTabActionSupport &&
+                          ((ParameterInfoHandlerWithTabActionSupport)myHandler).getActualParameterDelimiterType() == TokenType.WHITE_SPACE;
+    int caretOffset = myEditor.getCaretModel().getOffset();
+    final int offset = noDelimiter ? caretOffset :
+                       CharArrayUtil.shiftBackward(chars, caretOffset - 1, " \t") + 1;
 
     final UpdateParameterInfoContext context = new MyUpdateParameterInfoContext(offset, file);
     final Object elementForUpdating = myHandler.findElementForUpdatingParameterInfo(context);
@@ -289,9 +295,9 @@ public class ParameterInfoController implements Disposable {
         short position = tooltip != null
                          ? toShort(tooltip.getPreferredPosition())
                          : HintManager.UNDER;
-        Pair<Point, Short> pos = myProvider.getBestPointPosition(myHint, elementForUpdating instanceof PsiElement
-                                                                         ? (PsiElement)elementForUpdating : null,
-                                                                 myEditor.getCaretModel().getOffset(), true, position);
+        Pair<Point, Short> pos = myProvider.getBestPointPosition(
+          myHint, elementForUpdating instanceof PsiElement ? (PsiElement)elementForUpdating : null,
+          caretOffset, true, position);
         HintManagerImpl.adjustEditorHintPosition(myHint, myEditor, pos.getFirst(), pos.getSecond());
       }
     }
@@ -340,18 +346,21 @@ public class ParameterInfoController implements Disposable {
 
   private int getPrevOrNextParameterOffset(boolean isNext) {
     if (!(myHandler instanceof ParameterInfoHandlerWithTabActionSupport)) return -1;
+    ParameterInfoHandlerWithTabActionSupport handler = (ParameterInfoHandlerWithTabActionSupport)myHandler;
 
-    int offset = CharArrayUtil.shiftBackward(myEditor.getDocument().getCharsSequence(), myEditor.getCaretModel().getOffset() - 1, " \t") + 1;
+    boolean noDelimiter = handler.getActualParameterDelimiterType() == TokenType.WHITE_SPACE;
+    int caretOffset = myEditor.getCaretModel().getOffset();
+    int offset = noDelimiter ? caretOffset : CharArrayUtil.shiftBackward(myEditor.getDocument().getCharsSequence(), caretOffset - 1, " \t") + 1;
     int lbraceOffset = myLbraceMarker.getStartOffset();
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
     PsiElement argList = lbraceOffset < offset ? findArgumentList(file, offset, lbraceOffset) : null;
     if (argList == null) return -1;
 
-    ParameterInfoHandlerWithTabActionSupport handler = (ParameterInfoHandlerWithTabActionSupport)myHandler;
-    int currentParameterIndex = ParameterInfoUtils.getCurrentParameterIndex(argList.getNode(), offset, handler.getActualParameterDelimiterType());
-    if (currentParameterIndex == -1) return -1;
-
     @SuppressWarnings("unchecked") PsiElement[] parameters = handler.getActualParameters(argList);
+    int currentParameterIndex =
+      noDelimiter ? JBIterable.of(parameters).indexOf((o) -> o.getTextRange().containsOffset(offset)) :
+      ParameterInfoUtils.getCurrentParameterIndex(argList.getNode(), offset, handler.getActualParameterDelimiterType());
+
     int prevOrNextParameterIndex = isNext && currentParameterIndex < parameters.length - 1 ? currentParameterIndex + 1 :
                                    !isNext && currentParameterIndex > 0 ? currentParameterIndex - 1 : -1;
     return prevOrNextParameterIndex != -1 ? parameters[prevOrNextParameterIndex].getTextRange().getStartOffset() : -1;

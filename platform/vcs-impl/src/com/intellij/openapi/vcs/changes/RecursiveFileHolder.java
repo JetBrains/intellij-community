@@ -19,8 +19,8 @@ public class RecursiveFileHolder<T> extends AbstractIgnoredFilesHolder {
 
   public RecursiveFileHolder(final Project project, final HolderType holderType) {
     super(project);
-    myMap = new TreeMap<VirtualFile, T>(FilePathComparator.getInstance());
-    myDirMap = new TreeMap<VirtualFile, T>(FilePathComparator.getInstance());
+    myMap = new TreeMap<>(FilePathComparator.getInstance());
+    myDirMap = new TreeMap<>(FilePathComparator.getInstance());
     myHolderType = holderType;
   }
 
@@ -59,7 +59,7 @@ public class RecursiveFileHolder<T> extends AbstractIgnoredFilesHolder {
   }
 
   public RecursiveFileHolder copy() {
-    final RecursiveFileHolder<T> copyHolder = new RecursiveFileHolder<T>(myProject, myHolderType);
+    final RecursiveFileHolder<T> copyHolder = new RecursiveFileHolder<>(myProject, myHolderType);
     copyHolder.myMap.putAll(myMap);
     copyHolder.myDirMap.putAll(myDirMap);
     return copyHolder;

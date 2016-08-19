@@ -78,7 +78,7 @@ public class OutputChecker {
     testName = Character.toLowerCase(testName.charAt(0)) + testName.substring(1);
     myTestName = testName;
     synchronized (this) {
-      myBuffers = new HashMap<Key, StringBuffer>();
+      myBuffers = new HashMap<>();
     }
   }
 
@@ -226,7 +226,7 @@ public class OutputChecker {
           final String[] classPathElements = classPath.split(File.pathSeparator);
 
           // Combine all JDK jars into one marker
-          List<String> classpathRes = new ArrayList<String>();
+          List<String> classpathRes = new ArrayList<>();
           boolean hasJdkJars = false;
           for (String element : classPathElements) {
             if (!element.startsWith(JDK_HOME_STR)) {

@@ -41,7 +41,7 @@ import java.util.Map;
 public class CheckBoxList<T> extends JBList {
   private final CellRenderer myCellRenderer;
   private CheckBoxListListener checkBoxListListener;
-  private final BidirectionalMap<T, JCheckBox> myItemMap = new BidirectionalMap<T, JCheckBox>();
+  private final BidirectionalMap<T, JCheckBox> myItemMap = new BidirectionalMap<>();
 
   public CheckBoxList(final CheckBoxListListener checkBoxListListener) {
     this(new DefaultListModel(), checkBoxListListener);

@@ -38,7 +38,6 @@ import org.apache.maven.model.Activation;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.Profile;
-import org.apache.maven.model.building.ModelBuildingRequest;
 import org.apache.maven.model.building.ModelProblem;
 import org.apache.maven.model.interpolation.ModelInterpolator;
 import org.apache.maven.model.profile.DefaultProfileInjector;
@@ -95,7 +94,7 @@ import java.util.*;
  * <p/>
  * maven-compat:
  * org.jetbrains.idea.maven.server.embedder.CustomMaven3RepositoryMetadataManager <-> org.apache.maven.artifact.repository.metadata.DefaultRepositoryMetadataManager
- * org.jetbrains.idea.maven.server.embedder.CustomMaven3ArtifactResolver <-> org.apache.maven.artifact.resolver.DefaultArtifactResolver
+ * org.jetbrains.idea.maven.server.embedder.CustomMaven30ArtifactResolver <-> org.apache.maven.artifact.resolver.DefaultArtifactResolver
  * org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator <-> org.apache.maven.project.interpolation.StringSearchModelInterpolator
  * <p/>
  * maven-core:
@@ -492,7 +491,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       customizeComponents();
 
       ((CustomMaven3ArtifactFactory)getComponent(ArtifactFactory.class)).customize();
-      ((CustomMaven3ArtifactResolver)getComponent(ArtifactResolver.class)).customize(workspaceMap, failOnUnresolvedDependency);
+      ((CustomMaven30ArtifactResolver)getComponent(ArtifactResolver.class)).customize(workspaceMap, failOnUnresolvedDependency);
       ((CustomMaven3RepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).customize(workspaceMap);
       //((CustomMaven3WagonManager)getComponent(WagonManager.class)).customize(failOnUnresolvedDependency);
 
@@ -604,26 +603,17 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       @Override
       public void run() {
         try {
-          // copied from DefaultMavenProjectBuilder.buildWithDependencies
-          ProjectBuilder builder = getComponent(ProjectBuilder.class);
+          RepositorySystemSession repositorySession = getComponent(LegacySupport.class).getRepositorySession();
+          if (repositorySession instanceof DefaultRepositorySystemSession) {
+            ((DefaultRepositorySystemSession)repositorySession)
+              .setTransferListener(new Maven30TransferListenerAdapter(myCurrentIndicator));
 
-          CustomMaven3ModelInterpolator2 modelInterpolator = (CustomMaven3ModelInterpolator2)getComponent(ModelInterpolator.class);
+            if (myWorkspaceMap != null) {
+              ((DefaultRepositorySystemSession)repositorySession).setWorkspaceReader(new Maven30WorkspaceReader(myWorkspaceMap));
+            }
+          }
 
-          String savedLocalRepository = modelInterpolator.getLocalRepository();
-          modelInterpolator.setLocalRepository(request.getLocalRepositoryPath().getAbsolutePath());
-          List<ProjectBuildingResult> buildingResults;
-
-          try {
-            ProjectBuildingRequest projectBuildingRequest = request.getProjectBuildingRequest();
-            projectBuildingRequest.setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL);
-            buildingResults = builder.build(new ArrayList<File>(files), false, projectBuildingRequest);
-          }
-          catch (ProjectBuildingException e) {
-            buildingResults = e.getResults();
-          }
-          finally {
-            modelInterpolator.setLocalRepository(savedLocalRepository);
-          }
+          List<ProjectBuildingResult> buildingResults = getProjectBuildingResults(request, files);
 
           for (ProjectBuildingResult buildingResult : buildingResults) {
             MavenProject project = buildingResult.getProject();
@@ -638,16 +628,6 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
               continue;
             }
 
-            RepositorySystemSession repositorySession = getComponent(LegacySupport.class).getRepositorySession();
-            if (repositorySession instanceof DefaultRepositorySystemSession) {
-              ((DefaultRepositorySystemSession)repositorySession)
-                .setTransferListener(new Maven30TransferListenerAdapter(myCurrentIndicator));
-
-              if (myWorkspaceMap != null) {
-                ((DefaultRepositorySystemSession)repositorySession).setWorkspaceReader(new Maven30WorkspaceReader(myWorkspaceMap));
-              }
-            }
-
             List<Exception> exceptions = new ArrayList<Exception>();
             loadExtensions(project, exceptions);
 
@@ -658,23 +638,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
             //
 
             if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING) {
-              ArtifactResolutionRequest resolutionRequest = new ArtifactResolutionRequest();
-              resolutionRequest.setArtifactDependencies(project.getDependencyArtifacts());
-              resolutionRequest.setArtifact(project.getArtifact());
-              resolutionRequest.setManagedVersionMap(project.getManagedVersionMap());
-              resolutionRequest.setLocalRepository(myLocalRepository);
-              resolutionRequest.setRemoteRepositories(project.getRemoteArtifactRepositories());
-              resolutionRequest.setListeners(listeners);
-
-              resolutionRequest.setResolveRoot(false);
-              resolutionRequest.setResolveTransitively(true);
-
-              ArtifactResolver resolver = getComponent(ArtifactResolver.class);
-              ArtifactResolutionResult result = resolver.resolve(resolutionRequest);
-
-              project.setArtifacts(result.getArtifacts());
-              // end copied from DefaultMavenProjectBuilder.buildWithDependencies
-              executionResults.add(new MavenExecutionResult(project, exceptions));
+              addMvn2CompatResults(project, exceptions, listeners, myLocalRepository, executionResults);
             }
             else {
               final DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
@@ -960,7 +924,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     Set<MavenId> result = new THashSet<MavenId>();
     // TODO collect unresolved artifacts
     //((CustomMaven3WagonManager)getComponent(WagonManager.class)).getUnresolvedCollector().retrieveUnresolvedIds(result);
-    //((CustomMaven3ArtifactResolver)getComponent(ArtifactResolver.class)).getUnresolvedCollector().retrieveUnresolvedIds(result);
+    //((CustomMaven30ArtifactResolver)getComponent(ArtifactResolver.class)).getUnresolvedCollector().retrieveUnresolvedIds(result);
     return result;
   }
 
@@ -1168,8 +1132,8 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
         ((CustomMaven3ArtifactFactory)artifactFactory).reset();
       }
       final ArtifactResolver artifactResolver = getComponent(ArtifactResolver.class);
-      if(artifactResolver instanceof CustomMaven3ArtifactResolver) {
-        ((CustomMaven3ArtifactResolver)artifactResolver).reset();
+      if(artifactResolver instanceof CustomMaven30ArtifactResolver) {
+        ((CustomMaven30ArtifactResolver)artifactResolver).reset();
       }
       final RepositoryMetadataManager repositoryMetadataManager = getComponent(RepositoryMetadataManager.class);
       if(repositoryMetadataManager instanceof CustomMaven3RepositoryMetadataManager) {

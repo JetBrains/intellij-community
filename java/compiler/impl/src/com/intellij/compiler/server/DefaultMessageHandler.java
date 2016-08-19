@@ -169,7 +169,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
             if (classes.length > 0) {
               final Collection<PsiField> changedFields = ApplicationManager.getApplication().runReadAction(new Computable<Collection<PsiField>>() {
                 public Collection<PsiField> compute() {
-                  final List<PsiField> fields = new SmartList<PsiField>();
+                  final List<PsiField> fields = new SmartList<>();
                   for (PsiClass aClass : classes) {
                     if (!aClass.isValid()) {
                       return Collections.emptyList();
@@ -263,7 +263,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
   private boolean performRemovedConstantSearch(@Nullable final PsiClass aClass, String fieldName, int fieldAccessFlags, final Set<String> affectedPaths) {
     final PsiSearchHelper psiSearchHelper = PsiSearchHelper.SERVICE.getInstance(myProject);
 
-    final Ref<Boolean> result = new Ref<Boolean>(Boolean.TRUE);
+    final Ref<Boolean> result = new Ref<>(Boolean.TRUE);
     final PsiFile fieldContainingFile = aClass != null? aClass.getContainingFile() : null;
 
     processIdentifiers(psiSearchHelper, new PsiElementProcessor<PsiIdentifier>() {
@@ -331,7 +331,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
     ApplicationManager.getApplication().runReadAction(() -> {
       if (psiField.isValid()) {
         final PsiFile fieldContainingFile = psiField.getContainingFile();
-        final Set<PsiFile> processedFiles = new HashSet<PsiFile>();
+        final Set<PsiFile> processedFiles = new HashSet<>();
         if (fieldContainingFile != null) {
           processedFiles.add(fieldContainingFile);
         }
@@ -353,7 +353,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
   }
 
   private Collection<PsiReferenceExpression> doFindReferences(final PsiField psiField, boolean ignoreAccessScope) {
-    final SmartList<PsiReferenceExpression> result = new SmartList<PsiReferenceExpression>();
+    final SmartList<PsiReferenceExpression> result = new SmartList<>();
 
     final SearchScope searchScope = (ignoreAccessScope? psiField.getContainingFile() : psiField).getUseScope();
 

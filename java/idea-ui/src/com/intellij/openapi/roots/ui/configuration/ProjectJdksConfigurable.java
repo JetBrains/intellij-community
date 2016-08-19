@@ -118,7 +118,7 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
   public void apply() throws ConfigurationException {
     final Ref<ConfigurationException> exceptionRef = Ref.create();
     try {
-      ProjectJdksConfigurable.super.apply();
+      super.apply();
       boolean modifiedJdks = false;
       for (int i = 0; i < myRoot.getChildCount(); i++) {
         final NamedConfigurable configurable = ((MyNode)myRoot.getChildAt(i)).getConfigurable();
@@ -129,7 +129,7 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
       }
 
       if (myProjectJdksModel.isModified() || modifiedJdks) {
-        myProjectJdksModel.apply(ProjectJdksConfigurable.this);
+        myProjectJdksModel.apply(this);
       }
       myProjectJdksModel.setProjectSdk(getSelectedJdk());
     }
@@ -160,7 +160,7 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
     if (myProjectJdksModel == null) {
       return null;
     }
-    final ArrayList<AnAction> actions = new ArrayList<AnAction>();
+    final ArrayList<AnAction> actions = new ArrayList<>();
     DefaultActionGroup group = new DefaultActionGroup(ProjectBundle.message("add.new.jdk.text"), true);
     group.getTemplatePresentation().setIcon(IconUtil.getAddIcon());
     myProjectJdksModel.createAddActions(group, myTree, projectJdk -> {
@@ -174,13 +174,13 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
 
   @Override
   protected void processRemovedItems() {
-    final Set<Sdk> jdks = new HashSet<Sdk>();
+    final Set<Sdk> jdks = new HashSet<>();
     for(int i = 0; i < myRoot.getChildCount(); i++){
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)myRoot.getChildAt(i);
       final NamedConfigurable namedConfigurable = (NamedConfigurable)node.getUserObject();
       jdks.add(((JdkConfigurable)namedConfigurable).getEditableObject());
     }
-    final HashMap<Sdk, Sdk> sdks = new HashMap<Sdk, Sdk>(myProjectJdksModel.getProjectSdks());
+    final HashMap<Sdk, Sdk> sdks = new HashMap<>(myProjectJdksModel.getProjectSdks());
     for (Sdk sdk : sdks.values()) {
       if (!jdks.contains(sdk)) {
         myProjectJdksModel.removeSdk(sdk);

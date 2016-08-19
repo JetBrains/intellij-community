@@ -45,6 +45,6 @@ public class MergingBackgroundExecutor<T> {
 
   @NotNull
   public static MergingBackgroundExecutor<Runnable> newRunnableExecutor(int maxThreads) {
-    return new MergingBackgroundExecutor<Runnable>(maxThreads, runnable -> runnable.run());
+    return new MergingBackgroundExecutor<>(maxThreads, runnable -> runnable.run());
   }
 }

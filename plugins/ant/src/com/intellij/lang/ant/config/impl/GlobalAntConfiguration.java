@@ -59,7 +59,7 @@ public class GlobalAntConfiguration implements PersistentStateComponent<Element>
     }
   };
 
-  public static final AbstractProperty<GlobalAntConfiguration> INSTANCE = new ValueProperty<GlobalAntConfiguration>(
+  public static final AbstractProperty<GlobalAntConfiguration> INSTANCE = new ValueProperty<>(
     "$GlobalAntConfiguration.INSTANCE", null);
   @NonNls public static final String ANT_FILE = "ant";
   @NonNls public static final String LIB_DIR = "lib";

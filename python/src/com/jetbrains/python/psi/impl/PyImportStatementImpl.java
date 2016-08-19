@@ -89,7 +89,7 @@ public class PyImportStatementImpl extends PyBaseElementImpl<PyImportStatementSt
    */
   @NotNull
   public static List<String> getImportElementNames(@NotNull final PyImportElement... elements) {
-    final List<String> result = new ArrayList<String>(elements.length);
+    final List<String> result = new ArrayList<>(elements.length);
     for (final PyImportElement element : elements) {
       final QualifiedName qName = element.getImportedQName();
       if (qName != null) {

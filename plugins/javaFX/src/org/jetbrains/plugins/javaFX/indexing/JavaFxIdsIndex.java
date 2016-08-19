@@ -78,9 +78,9 @@ public class JavaFxIdsIndex extends FileBasedIndexExtension<String, Set<String>>
 
   @NotNull
   public static Collection<String> getAllRegisteredIds(Project project) {
-    CommonProcessors.CollectUniquesProcessor<String> processor = new CommonProcessors.CollectUniquesProcessor<String>();
+    CommonProcessors.CollectUniquesProcessor<String> processor = new CommonProcessors.CollectUniquesProcessor<>();
     FileBasedIndex.getInstance().processAllKeys(KEY, processor, project);
-    final Collection<String> results = new ArrayList<String>(processor.getResults());
+    final Collection<String> results = new ArrayList<>(processor.getResults());
     final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
     for (Iterator<String> iterator = results.iterator(); iterator.hasNext(); ) {
       final String id = iterator.next();

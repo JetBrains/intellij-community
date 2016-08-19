@@ -40,7 +40,7 @@ public class DFAEngine<E> {
 
 
   public List<E> performDFA() throws DFALimitExceededException {
-    final ArrayList<E> info = new ArrayList<E>(myFlow.length);
+    final ArrayList<E> info = new ArrayList<>(myFlow.length);
     return performDFA(info);
   }
 
@@ -81,7 +81,7 @@ public class DFAEngine<E> {
       final int number = instruction.num();
 
       if (!visited[number]) {
-        final Queue<Instruction> worklist = new LinkedList<Instruction>();
+        final Queue<Instruction> worklist = new LinkedList<>();
         worklist.add(instruction);
         visited[number] = true;
 
@@ -147,7 +147,7 @@ public class DFAEngine<E> {
 
   private E join(final Instruction instruction, final List<E> info) {
     final Iterable<? extends Instruction> prev = myDfa.isForward() ? instruction.allPred() : instruction.allSucc();
-    final ArrayList<E> prevInfos = new ArrayList<E>();
+    final ArrayList<E> prevInfos = new ArrayList<>();
     for (Instruction i : prev) {
       prevInfos.add(info.get(i.num()));
     }

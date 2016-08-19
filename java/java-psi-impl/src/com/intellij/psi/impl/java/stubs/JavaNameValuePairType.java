@@ -30,6 +30,7 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -79,7 +80,7 @@ public class JavaNameValuePairType extends JavaStubElementType<PsiNameValuePairS
 
   @Override
   public void serialize(@NotNull PsiNameValuePairStub stub, @NotNull StubOutputStream dataStream) throws IOException {
-    dataStream.writeUTFFast(stub.getName());
+    dataStream.writeName(stub.getName());
 
     String value = stub.getValue();
     boolean hasValue = value != null;
@@ -92,7 +93,7 @@ public class JavaNameValuePairType extends JavaStubElementType<PsiNameValuePairS
   @NotNull
   @Override
   public PsiNameValuePairStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
-    String name = dataStream.readUTFFast();
+    String name = StringRef.toString(dataStream.readName());
     boolean hasValue = dataStream.readBoolean();
     return new PsiNameValuePairStubImpl(parentStub, name, hasValue ? dataStream.readUTFFast() : null);
   }

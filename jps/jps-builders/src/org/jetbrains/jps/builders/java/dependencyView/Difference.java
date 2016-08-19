@@ -153,4 +153,6 @@ abstract class Difference {
   public abstract boolean packageLocalOn();
 
   public abstract boolean hadValue();
+
+  public abstract Specifier<TypeRepr.ClassType, Difference> annotations();
 }

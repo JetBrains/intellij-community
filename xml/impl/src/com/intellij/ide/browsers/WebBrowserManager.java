@@ -58,7 +58,7 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
   DefaultBrowserPolicy defaultBrowserPolicy = DefaultBrowserPolicy.SYSTEM;
 
   public WebBrowserManager() {
-    browsers = new ArrayList<ConfigurableWebBrowser>(PREDEFINED_BROWSERS);
+    browsers = new ArrayList<>(PREDEFINED_BROWSERS);
   }
 
   public static WebBrowserManager getInstance() {
@@ -214,7 +214,7 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
 
     myShowBrowserHover = !"false".equals(element.getAttributeValue("showHover"));
 
-    List<ConfigurableWebBrowser> list = new ArrayList<ConfigurableWebBrowser>();
+    List<ConfigurableWebBrowser> list = new ArrayList<>();
     for (Element child : element.getChildren("browser")) {
       BrowserFamily family = readFamily(child.getAttributeValue("family"));
       if (family == null) {
@@ -294,7 +294,7 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
 
   @NotNull
   public List<WebBrowser> getBrowsers(@NotNull Condition<WebBrowser> condition, boolean onlyActive) {
-    List<WebBrowser> result = new SmartList<WebBrowser>();
+    List<WebBrowser> result = new SmartList<>();
     for (ConfigurableWebBrowser browser : browsers) {
       if ((!onlyActive || browser.isActive()) && condition.value(browser)) {
         result.add(browser);

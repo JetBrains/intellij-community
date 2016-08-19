@@ -33,12 +33,12 @@ import java.util.*;
  */
 public class PyFunctionBuilder {
   private final String myName;
-  private final List<String> myParameters = new ArrayList<String>();
-  private final List<String> myStatements = new ArrayList<String>();
-  private final List<String> myDecorators = new ArrayList<String>();
+  private final List<String> myParameters = new ArrayList<>();
+  private final List<String> myStatements = new ArrayList<>();
+  private final List<String> myDecorators = new ArrayList<>();
   private String myAnnotation = null;
   @NotNull
-  private final Map<String, String> myDecoratorValues = new HashMap<String, String>();
+  private final Map<String, String> myDecoratorValues = new HashMap<>();
   private boolean myAsync = false;
   private PyDocstringGenerator myDocStringGenerator;
 

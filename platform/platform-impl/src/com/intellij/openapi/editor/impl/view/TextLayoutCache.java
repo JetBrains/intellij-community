@@ -46,7 +46,7 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   private final EditorView myView;
   private final Document myDocument;
   private final LineLayout myBidiNotRequiredMarker;
-  private ArrayList<LineLayout> myLines = new ArrayList<LineLayout>();
+  private ArrayList<LineLayout> myLines = new ArrayList<>();
   private int myDocumentChangeOldEndLine;
   
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") 

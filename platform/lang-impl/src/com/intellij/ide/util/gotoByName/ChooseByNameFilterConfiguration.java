@@ -81,7 +81,7 @@ public abstract class ChooseByNameFilterConfiguration<T> implements PersistentSt
     /**
      * a set of file types
      */
-    private Set<String> filteredOutFileTypeNames = new LinkedHashSet<String>();
+    private Set<String> filteredOutFileTypeNames = new LinkedHashSet<>();
 
     /**
      * @return names for file types

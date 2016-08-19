@@ -60,9 +60,9 @@ import java.util.*;
 public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   private static final Logger LOG = Logger.getInstance(ControlFlowBuilder.class);
 
-  private final List<InstructionImpl> myInstructions = new ArrayList<InstructionImpl>();
+  private final List<InstructionImpl> myInstructions = new ArrayList<>();
 
-  private final Deque<InstructionImpl> myProcessingStack = new ArrayDeque<InstructionImpl>();
+  private final Deque<InstructionImpl> myProcessingStack = new ArrayDeque<>();
   private final PsiConstantEvaluationHelper myConstantEvaluator;
   private GroovyPsiElement myScope;
 
@@ -70,12 +70,12 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   /**
    * stack of current catch blocks
    */
-  private final Deque<ExceptionInfo> myCaughtExceptionInfos = new ArrayDeque<ExceptionInfo>();
+  private final Deque<ExceptionInfo> myCaughtExceptionInfos = new ArrayDeque<>();
 
   /**
    * stack of current conditions
    */
-  private final Deque<ConditionInstruction> myConditions = new ArrayDeque<ConditionInstruction>();
+  private final Deque<ConditionInstruction> myConditions = new ArrayDeque<>();
 
 
   /**
@@ -91,7 +91,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   /**
    * list of pending nodes and corresponding scopes sorted by scopes from the biggest to smallest.
    */
-  private List<Pair<InstructionImpl, GroovyPsiElement>> myPending = new ArrayList<Pair<InstructionImpl, GroovyPsiElement>>();
+  private List<Pair<InstructionImpl, GroovyPsiElement>> myPending = new ArrayList<>();
 
   private int myInstructionNumber;
   private final GrControlFlowPolicy myPolicy;
@@ -486,7 +486,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   private List<GotoInstruction> collectAndRemoveAllPendingNegations(GroovyPsiElement currentScope) {
-    List<GotoInstruction> negations = new ArrayList<GotoInstruction>();
+    List<GotoInstruction> negations = new ArrayList<>();
     for (Iterator<Pair<InstructionImpl, GroovyPsiElement>> iterator = myPending.iterator(); iterator.hasNext(); ) {
       Pair<InstructionImpl, GroovyPsiElement> pair = iterator.next();
       InstructionImpl instruction = pair.first;
@@ -1019,7 +1019,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     List<Pair<InstructionImpl, GroovyPsiElement>> oldPending = null;
     if (finallyClause != null) {
       oldPending = myPending;
-      myPending = new ArrayList<Pair<InstructionImpl, GroovyPsiElement>>();
+      myPending = new ArrayList<>();
     }
 
     InstructionImpl tryBegin = startNode(tryBlock);
@@ -1027,7 +1027,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     InstructionImpl tryEnd = myHead;
     finishNode(tryBegin);
 
-    Set<Pair<InstructionImpl, GroovyPsiElement>> pendingAfterTry = new LinkedHashSet<Pair<InstructionImpl, GroovyPsiElement>>(myPending);
+    Set<Pair<InstructionImpl, GroovyPsiElement>> pendingAfterTry = new LinkedHashSet<>(myPending);
 
     @SuppressWarnings("unchecked")
     List<InstructionImpl>[] throwers = new List[catchClauses.length];
@@ -1055,16 +1055,16 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
 
     pendingAfterTry.addAll(myPending);
-    myPending = new ArrayList<Pair<InstructionImpl, GroovyPsiElement>>(pendingAfterTry);
+    myPending = new ArrayList<>(pendingAfterTry);
 
     if (finallyClause != null) {
       myFinallyCount--;
       interruptFlow();
       final InstructionImpl finallyInstruction = startNode(finallyClause, false);
-      Set<AfterCallInstruction> postCalls = new LinkedHashSet<AfterCallInstruction>();
+      Set<AfterCallInstruction> postCalls = new LinkedHashSet<>();
 
       final List<Pair<InstructionImpl, GroovyPsiElement>> copy = myPending;
-      myPending = new ArrayList<Pair<InstructionImpl, GroovyPsiElement>>();
+      myPending = new ArrayList<>();
       for (Pair<InstructionImpl, GroovyPsiElement> pair : copy) {
         postCalls.add(addCallNode(finallyInstruction, pair.getSecond(), pair.getFirst()));
       }
@@ -1081,7 +1081,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
       //save added postcalls into separate list because we don't want returnInstruction grabbed their pending edges
       List<Pair<InstructionImpl, GroovyPsiElement>> pendingPostCalls = myPending;
-      myPending = new ArrayList<Pair<InstructionImpl, GroovyPsiElement>>();
+      myPending = new ArrayList<>();
 
       myHead = finallyInstruction;
       finallyClause.accept(this);
@@ -1256,7 +1256,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     /**
      * list of nodes containing throw statement with corresponding exception
      */
-    final List<InstructionImpl> myThrowers = new ArrayList<InstructionImpl>();
+    final List<InstructionImpl> myThrowers = new ArrayList<>();
 
     private ExceptionInfo(GrCatchClause clause) {
       myClause = clause;

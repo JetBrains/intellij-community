@@ -823,6 +823,15 @@
                      displayName="Java-style property access"
                      groupName="Style" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.JavaStylePropertiesInvocationInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" groupName="Style"
+                     displayName="Unnecessary 'def'" cleanupTool="true"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessaryDefModifierInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" groupName="Style"
+                     displayName="Unnecessary 'public'" cleanupTool="true"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessaryPublicModifierInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" groupName="Style"
+                     displayName="Unnecessary semicolon" cleanupTool="true"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessarySemicolonInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="ChangeToOperator"
                      displayName="Change to operator"
                      groupName="Style" enabledByDefault="true" level="WEAK WARNING"
@@ -1436,11 +1445,6 @@
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
       <categoryKey>intention.category.groovy.style</categoryKey>
-      <className>org.jetbrains.plugins.groovy.intentions.style.RemoveUnnecessarySemicolonsIntention</className>
-    </intentionAction>
-    <intentionAction>
-      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
-      <categoryKey>intention.category.groovy.style</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.style.ImportStaticIntention</className>
     </intentionAction>
     <intentionAction>
@@ -1606,6 +1610,8 @@
     <refactoring.introduceParameterObject language="Groovy"
                                           implementationClass="org.jetbrains.plugins.groovy.refactoring.introduceParameterObject.GroovyIntroduceParameterObjectDelegate"/>
     <documentationDelegateProvider implementation="org.jetbrains.plugins.groovy.lang.documentation.GrLightDocumentationDelegateProvider"/>
+    <breadcrumbsInfoProvider implementation="org.jetbrains.plugins.groovy.editor.GroovyBreadcrumbsInfoProvider"/>
+    <stripTrailingSpacesFilterFactory implementation="org.jetbrains.plugins.groovy.editor.GroovyStripTrailingSpacesFilterFactory"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">

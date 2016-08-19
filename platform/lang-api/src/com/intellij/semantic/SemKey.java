@@ -76,7 +76,7 @@ public class SemKey<T extends SemElement> {
   }
 
   public static <T extends SemElement> SemKey<T> createKey(String debugName, SemKey<? super T>... supers) {
-    return new SemKey<T>(debugName, supers);
+    return new SemKey<>(debugName, supers);
   }
 
   @Override
@@ -90,8 +90,8 @@ public class SemKey<T extends SemElement> {
 
   public <K extends T> SemKey<K> subKey(@NonNls String debugName, SemKey<? super T>... otherSupers) {
     if (otherSupers.length == 0) {
-      return new SemKey<K>(debugName, this);
+      return new SemKey<>(debugName, this);
     }
-    return new SemKey<K>(debugName, ArrayUtil.append(otherSupers, this));
+    return new SemKey<>(debugName, ArrayUtil.append(otherSupers, this));
   }
 }

@@ -160,7 +160,7 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
   }
 
   protected final void runTestBare() throws Throwable {
-    LightCodeInsightFixtureTestCase.super.runTest();
+    super.runTest();
   }
 
   protected Project getProject() {

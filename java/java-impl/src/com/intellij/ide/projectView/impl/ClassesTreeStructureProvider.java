@@ -48,7 +48,7 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
   @NotNull
   @Override
   public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent, @NotNull Collection<AbstractTreeNode> children, ViewSettings settings) {
-    ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+    ArrayList<AbstractTreeNode> result = new ArrayList<>();
     for (final AbstractTreeNode child : children) {
       Object o = child.getValue();
       if (o instanceof PsiClassOwner && !(o instanceof ServerPageFile)) {
@@ -169,7 +169,7 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
     @Override
     public Collection<AbstractTreeNode> getChildrenImpl() {
       final ViewSettings settings = getSettings();
-      final ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+      final ArrayList<AbstractTreeNode> result = new ArrayList<>();
       for (PsiClass aClass : ((PsiClassOwner)getValue()).getClasses()) {
         if (!(aClass instanceof SyntheticElement)) {
           result.add(new ClassTreeNode(myProject, aClass, settings));

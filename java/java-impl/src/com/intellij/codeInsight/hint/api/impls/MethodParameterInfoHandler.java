@@ -317,7 +317,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
     if (call instanceof PsiCallExpression) {
       CandidateInfo[] candidates = getCandidates((PsiCallExpression)call);
-      ArrayList<CandidateInfo> result = new ArrayList<CandidateInfo>();
+      ArrayList<CandidateInfo> result = new ArrayList<>();
 
       if (!(argList.getParent() instanceof PsiAnonymousClass)) {
         cand:
@@ -397,9 +397,10 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
         if (substitutor != null) {
           returnType = substitutor.substitute(returnType);
         }
+        assert returnType != null : method;
 
         appendModifierList(buffer, method);
-        buffer.append(returnType.getPresentableText());
+        buffer.append(returnType.getPresentableText(true));
         buffer.append(" ");
       }
       buffer.append(method.getName());
@@ -426,7 +427,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
             paramType = substitutor.substitute(paramType);
           }
           appendModifierList(buffer, param);
-          buffer.append(paramType.getPresentableText());
+          buffer.append(paramType.getPresentableText(true));
           String name = param.getName();
           if (name != null) {
             buffer.append(" ");

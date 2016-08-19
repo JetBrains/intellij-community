@@ -186,7 +186,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
                                    final String preparedComment,
                                    @NotNull NullableFunction<Object, Object> parametersHolder,
                                    final Set<String> feedback) {
-    final List<VcsException> exception = new ArrayList<VcsException>();
+    final List<VcsException> exception = new ArrayList<>();
     final List<FilePath> committables = getCommitables(changes);
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
 
@@ -212,7 +212,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> filePaths) {
-    List<VcsException> exceptions = new ArrayList<VcsException>();
+    List<VcsException> exceptions = new ArrayList<>();
     List<File> files = ChangesUtil.filePathsToFiles(filePaths);
 
     for (File file : files) {
@@ -251,7 +251,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       }
     };
 
-    List<VcsException> exceptions = new ArrayList<VcsException>();
+    List<VcsException> exceptions = new ArrayList<>();
     Depth depth = Depth.allOrEmpty(recursive);
 
     for (VirtualFile file : files) {

@@ -51,7 +51,7 @@ public class DeclarationSearchUtils {
     if (statements.length == 0) {
       return false;
     }
-    final List<PsiCodeBlock> followingBlocks = new ArrayList<PsiCodeBlock>();
+    final List<PsiCodeBlock> followingBlocks = new ArrayList<>();
     collectFollowingBlocks(block.getParent().getNextSibling(), followingBlocks);
     final Project project = block.getProject();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);

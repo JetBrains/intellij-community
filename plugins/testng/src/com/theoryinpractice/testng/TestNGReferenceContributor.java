@@ -113,7 +113,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
 
     @NotNull
     public Object[] getVariants() {
-      List<Object> list = new ArrayList<Object>();
+      List<Object> list = new ArrayList<>();
       @NonNls String val = getValue();
       int hackIndex = val.indexOf(CompletionUtil.DUMMY_IDENTIFIER);
       if (hackIndex > -1) {
@@ -153,7 +153,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
 
     @NotNull
     public Object[] getVariants() {
-      List<Object> list = new ArrayList<Object>();
+      List<Object> list = new ArrayList<>();
 
       InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
       DependsOnGroupsInspection inspection = (DependsOnGroupsInspection)inspectionProfile.getUnwrappedTool(

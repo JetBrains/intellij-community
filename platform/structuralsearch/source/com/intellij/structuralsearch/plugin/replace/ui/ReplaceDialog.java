@@ -147,7 +147,7 @@ public class ReplaceDialog extends SearchDialog {
   protected java.util.List<Variable> getVariablesFromListeners() {
     ArrayList<Variable> vars = getVarsFrom(replaceCriteriaEdit);
     List<Variable> searchVars = super.getVariablesFromListeners();
-    Map<String, Variable> varsMap = new LinkedHashMap<String, Variable>(searchVars.size());
+    Map<String, Variable> varsMap = new LinkedHashMap<>(searchVars.size());
 
     for(Variable var:searchVars) varsMap.put(var.getName(), var);
     for(Variable var:vars) {
@@ -156,7 +156,7 @@ public class ReplaceDialog extends SearchDialog {
         varsMap.put(newVarName, new Variable(newVarName, null, null, false, false));
       }
     }
-    return new ArrayList<Variable>(varsMap.values());
+    return new ArrayList<>(varsMap.values());
   }
 
   protected boolean isValid() {

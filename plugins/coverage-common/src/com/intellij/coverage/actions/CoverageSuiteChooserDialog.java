@@ -111,7 +111,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   }
 
   private Set<CoverageEngine> collectEngines() {
-    final Set<CoverageEngine> engines = new HashSet<CoverageEngine>();
+    final Set<CoverageEngine> engines = new HashSet<>();
     for (CoverageSuite suite : myCoverageManager.getSuites()) {
       engines.add(suite.getCoverageEngine());
     }
@@ -131,7 +131,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   }
 
   private List<CoverageSuite> collectSelectedSuites() {
-    final List<CoverageSuite> suites = new ArrayList<CoverageSuite>();
+    final List<CoverageSuite> suites = new ArrayList<>();
     TreeUtil.traverse(myRootNode, new TreeUtil.Traverse() {
       @Override
       public boolean accept(Object treeNode) {
@@ -150,10 +150,10 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   private void initTree() {
     myRootNode.removeAllChildren();
     final HashMap<CoverageRunner, Map<String, List<CoverageSuite>>> grouped =
-      new HashMap<CoverageRunner, Map<String, List<CoverageSuite>>>();
+      new HashMap<>();
     groupSuites(grouped, myCoverageManager.getSuites(), myEngine);
     final CoverageSuitesBundle currentSuite = myCoverageManager.getCurrentSuitesBundle();
-    final List<CoverageRunner> runners = new ArrayList<CoverageRunner>(grouped.keySet());
+    final List<CoverageRunner> runners = new ArrayList<>(grouped.keySet());
     Collections.sort(runners, (o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
     for (CoverageRunner runner : runners) {
       final DefaultMutableTreeNode runnerNode = new DefaultMutableTreeNode(getCoverageRunnerTitle(runner));
@@ -204,7 +204,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
       final CoverageRunner runner = suite.getRunner();
       Map<String, List<CoverageSuite>> byProviders = grouped.get(runner);
       if (byProviders == null) {
-        byProviders = new HashMap<String, List<CoverageSuite>>();
+        byProviders = new HashMap<>();
         grouped.put(runner, byProviders);
       }
       final String sourceProvider = provider instanceof DefaultCoverageFileProvider
@@ -212,7 +212,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
                                     : provider.getClass().getName();
       List<CoverageSuite> list = byProviders.get(sourceProvider);
       if (list == null) {
-        list = new ArrayList<CoverageSuite>();
+        list = new ArrayList<>();
         byProviders.put(sourceProvider, list);
       }
       list.add(suite);

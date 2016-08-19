@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,7 +110,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
 
     final String confPath = getConfPath(groovyHomeDependentName);
     params.getVMParametersList().add("-Dgroovy.starter.conf=" + confPath);
-    params.getVMParametersList().addAll(HttpConfigurable.convertArguments(HttpConfigurable.getJvmPropertiesList(false, null)));
+    HttpConfigurable.getInstance().getJvmProperties(false, null).forEach(p -> params.getVMParametersList().addProperty(p.first, p.second));
 
     params.setMainClass("org.codehaus.groovy.tools.GroovyStarter");
 

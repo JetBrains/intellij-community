@@ -143,7 +143,7 @@ public class LibraryOptionsPanel implements Disposable {
     }
     else {
       showSettingsPanel(libraryDescription, pathProvider, versionFilter, showDoNotCreateOption,
-                        new ArrayList<FrameworkLibraryVersion>());
+                        new ArrayList<>());
     }
   }
 
@@ -208,7 +208,7 @@ public class LibraryOptionsPanel implements Disposable {
     });
 
     myDoNotCreateRadioButton.setVisible(showDoNotCreateOption);
-    myLibraryComboBoxModel = new SortedComboBoxModel<LibraryEditor>((o1, o2) -> {
+    myLibraryComboBoxModel = new SortedComboBoxModel<>((o1, o2) -> {
       final String name1 = o1.getName();
       final String name2 = o2.getName();
       return -StringUtil.notNullize(name1).compareToIgnoreCase(StringUtil.notNullize(name2));
@@ -383,7 +383,7 @@ public class LibraryOptionsPanel implements Disposable {
   }
 
   private List<Library> calculateSuitableLibraries() {
-    List<Library> suitableLibraries = new ArrayList<Library>();
+    List<Library> suitableLibraries = new ArrayList<>();
     for (Library library : myLibrariesContainer.getAllLibraries()) {
       if (myLibraryDescription instanceof OldCustomLibraryDescription &&
           ((OldCustomLibraryDescription)myLibraryDescription).isSuitableLibrary(library, myLibrariesContainer)

@@ -158,5 +158,74 @@ trait A {
     assert map.size() == 1 // need to implement only foo(a, b, c)
   }
 
+  void 'test non-static inner class in trait not allowed'() {
+    testHighlighting '''\
+interface I {}
+
+trait T {
+  def a = new <error descr="Non-static inner classes are not allowed in traits">I</error>() {}
+  def foo() {
+    new <error descr="Non-static inner classes are not allowed in traits">I</error>() {}
+  }
+  class <error descr="Non-static inner classes are not allowed in traits">A</error> {}
+  static class B {
+    def foo() {
+      new I() {} //no error here
+    }
+  }
+}
+'''
+  }
+
+  void 'test static trait members not resolved in direct access'() {
+    testHighlighting '''\
+trait StaticsContainer {
+  public static boolean CALLED = false
+  static void init() { CALLED = true }
+  static foo() { init() }
+}
+
+class NoName implements StaticsContainer {}
+
+NoName.init()
+assert NoName.StaticsContainer__CALLED
+
+StaticsContainer.<warning descr="Cannot resolve symbol 'init'">init</warning>()
+StaticsContainer.<warning descr="Cannot resolve symbol 'CALLED'">CALLED</warning>
+'''
+    fixture.configureByText 'Consumer.java', '''\
+public class Consumer {
+  public static void main(String[] args) {
+    System.out.println(NoName.StaticsContainer__CALLED);
+    System.out.println(StaticsContainer.<error descr="Cannot resolve symbol 'CALLED'">CALLED</error>);
+  }
+}
+'''
+    fixture.testHighlighting()
+  }
+
+  void 'test class initializers in traits'() {
+    testHighlighting '''\
+trait T {
+  static {
+  }
+
+  {
+  }
+}
+'''
+  }
+
+  void 'test abstract property in class'() {
+    fixture.with {
+      configureByText '_.groovy', '''\
+class A {
+    abstract f
+}
+'''
+      checkHighlighting()
+    }
+  }
+
   final InspectionProfileEntry[] customInspections = [new GroovyAssignabilityCheckInspection(), new GrUnresolvedAccessInspection()]
 }

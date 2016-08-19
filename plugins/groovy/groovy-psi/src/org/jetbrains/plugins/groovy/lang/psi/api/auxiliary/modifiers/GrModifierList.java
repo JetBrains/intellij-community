@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.PsiModifierList;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 
@@ -33,12 +34,14 @@ public interface GrModifierList extends GroovyPsiElement, PsiModifierList {
   @NotNull
   PsiElement[] getModifiers();
 
+  @Nullable
+  PsiElement getModifier(@GrModifier.GrModifierConstant @NotNull @NonNls String name);
+
   boolean hasExplicitVisibilityModifiers();
 
   @Override
   @NotNull
   GrAnnotation[] getAnnotations();
-
 
   @Override
   boolean hasModifierProperty(@GrModifier.GrModifierConstant @NotNull @NonNls String name);

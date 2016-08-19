@@ -54,7 +54,7 @@ class PassiveDecorationLayer extends JComponent{
     // Paint component bounds and grid markers
     Painter.paintComponentDecoration(myEditor, component, g);
 
-    final Set<RadButtonGroup> paintedGroups = new HashSet<RadButtonGroup>();
+    final Set<RadButtonGroup> paintedGroups = new HashSet<>();
     final RadRootContainer rootContainer = myEditor.getRootContainer();
     final ComponentTree componentTree = DesignerToolWindowManager.getInstance(myEditor).getComponentTree();
     final Collection<RadButtonGroup> selectedGroups = componentTree != null

@@ -58,7 +58,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   public static final ExtensionPointName<ModuleBuilderFactory> EP_NAME = ExtensionPointName.create("com.intellij.moduleBuilder");
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.ModuleBuilder");
-  private final Set<ModuleConfigurationUpdater> myUpdaters = new HashSet<ModuleConfigurationUpdater>();
+  private final Set<ModuleConfigurationUpdater> myUpdaters = new HashSet<>();
   private final EventDispatcher<ModuleBuilderListener> myDispatcher = EventDispatcher.create(ModuleBuilderListener.class);
   protected Sdk myJdk;
   private String myName;
@@ -67,7 +67,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
 
   @NotNull
   public static List<ModuleBuilder> getAllBuilders() {
-    final ArrayList<ModuleBuilder> result = new ArrayList<ModuleBuilder>();
+    final ArrayList<ModuleBuilder> result = new ArrayList<>();
     for (final ModuleType moduleType : ModuleTypeManager.getInstance().getRegisteredTypes()) {
       result.add(moduleType.createModuleBuilder());
     }

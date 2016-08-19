@@ -35,7 +35,7 @@ public class ScreenUtil {
   public static final String DISPOSE_TEMPORARY = "dispose.temporary";
 
   @Nullable private static final Map<GraphicsConfiguration, Pair<Insets, Long>> ourInsetsCache =
-    Patches.isJdkBugId8004103() ? new WeakHashMap<GraphicsConfiguration, Pair<Insets, Long>>() : null;
+    Patches.isJdkBugId8004103() ? new WeakHashMap<>() : null;
   private static final int ourInsetsTimeout = 5000;  // shouldn't be too long
 
   private ScreenUtil() { }

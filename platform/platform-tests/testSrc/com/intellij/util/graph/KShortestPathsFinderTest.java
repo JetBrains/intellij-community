@@ -26,21 +26,21 @@ import java.util.*;
  */
 public class KShortestPathsFinderTest extends GraphTestCase {
   public void testEmpty() {
-    Map<String, String> graph = new HashMap<String, String>();
+    Map<String, String> graph = new HashMap<>();
     graph.put("s", "");
     graph.put("t", "");
     doTest(graph);
   }
 
   public void testOneEdge() {
-    final Map<String, String> graph = new HashMap<String, String>();
+    final Map<String, String> graph = new HashMap<>();
     graph.put("s", "t");
     graph.put("t", "");
     doTest(graph, "st");
   }
 
   public void testNoPaths() {
-    final Map<String, String> graph = new HashMap<String, String>();
+    final Map<String, String> graph = new HashMap<>();
     graph.put("s", "a");
     graph.put("a", "s");
     graph.put("b", "at");
@@ -49,13 +49,13 @@ public class KShortestPathsFinderTest extends GraphTestCase {
   }
 
   public void testOneVertex() {
-    Map<String, String> graph = new HashMap<String, String>();
+    Map<String, String> graph = new HashMap<>();
     graph.put("s", "");
     doTest(graph, "s", "s", 5, "s");
   }
 
   public void testTwoPaths() {
-    final Map<String, String> graph = new HashMap<String, String>();
+    final Map<String, String> graph = new HashMap<>();
     graph.put("s", "ta");
     graph.put("a", "t");
     graph.put("t", "");
@@ -63,7 +63,7 @@ public class KShortestPathsFinderTest extends GraphTestCase {
   }
 
   public void testManyEdgesToTarget() {
-    final Map<String, String> graph = new HashMap<String, String>();
+    final Map<String, String> graph = new HashMap<>();
     graph.put("s", "a");
     graph.put("a", "bt");
     graph.put("b", "ct");
@@ -74,7 +74,7 @@ public class KShortestPathsFinderTest extends GraphTestCase {
   }
 
   public void testManyEdgesFromSource() {
-    final Map<String, String> graph = new HashMap<String, String>();
+    final Map<String, String> graph = new HashMap<>();
     graph.put("s", "abcdt");
     graph.put("a", "b");
     graph.put("b", "c");
@@ -85,7 +85,7 @@ public class KShortestPathsFinderTest extends GraphTestCase {
   }
 
   public void testTwoParts() {
-    final Map<String, String> graph = new HashMap<String, String>();
+    final Map<String, String> graph = new HashMap<>();
     graph.put("s", "ab");
     graph.put("a", "b");
     graph.put("b", "cd");
@@ -97,7 +97,7 @@ public class KShortestPathsFinderTest extends GraphTestCase {
   }
 
   public void testHangingEdges() {
-    final Map<String, String> graph = new HashMap<String, String>();
+    final Map<String, String> graph = new HashMap<>();
     graph.put("s", "ae");
     graph.put("a", "bc");
     graph.put("b", "ac");
@@ -109,14 +109,14 @@ public class KShortestPathsFinderTest extends GraphTestCase {
   }
 
   public void testSimpleCycle() {
-    final Map<String, String> graph = new HashMap<String, String>();
+    final Map<String, String> graph = new HashMap<>();
     graph.put("s", "t");
     graph.put("t", "s");
     doTest(graph, 4, "st", "stst", "ststst", "stststst");
   }
 
   public void testComplexCycle() {
-    final Map<String, String> graph = new HashMap<String, String>();
+    final Map<String, String> graph = new HashMap<>();
     graph.put("s", "p");
     graph.put("p", "qt");
     graph.put("q", "vt");
@@ -126,7 +126,7 @@ public class KShortestPathsFinderTest extends GraphTestCase {
   }
 
   public void testHeap() {
-    final Map<String, String> graph = new HashMap<String, String>();
+    final Map<String, String> graph = new HashMap<>();
     graph.put("s", "a");
     graph.put("a", "bd");
     graph.put("b", "cd");
@@ -139,7 +139,7 @@ public class KShortestPathsFinderTest extends GraphTestCase {
   }
 
   public void testBigHeap() {
-    final Map<String, String> graph = new HashMap<String, String>();
+    final Map<String, String> graph = new HashMap<>();
     graph.put("s", "lo");
     graph.put("a", "tb");
     graph.put("b", "t");
@@ -172,8 +172,8 @@ public class KShortestPathsFinderTest extends GraphTestCase {
   private static void doTest(Map<String, String> graph, final String start, final String finish, final int k, String... expectedPaths) {
     final Graph<String> generator = initGraph(graph);
     final List<List<String>> paths = getAlgorithmsInstance().findKShortestPaths(generator, start, finish, k, new EmptyProgressIndicator());
-    List<String> pathStrings = new ArrayList<String>();
-    Set<Integer> sizes = new HashSet<Integer>();
+    List<String> pathStrings = new ArrayList<>();
+    Set<Integer> sizes = new HashSet<>();
     for (List<String> path : paths) {
       pathStrings.add(StringUtil.join(path, ""));
       sizes.add(path.size());

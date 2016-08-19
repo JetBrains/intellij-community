@@ -213,26 +213,26 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
     boolean p2Ok = p2.y >= 0;
 
     if (isLookupShown) {
-      if (p1Ok) return new Pair<Point, Short>(p1, HintManager.UNDER);
-      if (p2Ok) return new Pair<Point, Short>(p2, HintManager.ABOVE);
+      if (p1Ok) return new Pair<>(p1, HintManager.UNDER);
+      if (p2Ok) return new Pair<>(p2, HintManager.ABOVE);
     }
     else {
       if (preferredPosition != HintManager.DEFAULT) {
         if (preferredPosition == HintManager.ABOVE) {
-          if (p2Ok) return new Pair<Point, Short>(p2, HintManager.ABOVE);
+          if (p2Ok) return new Pair<>(p2, HintManager.ABOVE);
         } else if (preferredPosition == HintManager.UNDER) {
-          if (p1Ok) return new Pair<Point, Short>(p1, HintManager.UNDER);
+          if (p1Ok) return new Pair<>(p1, HintManager.UNDER);
         }
       }
 
-      if (p1Ok) return new Pair<Point, Short>(p1, HintManager.UNDER);
-      if (p2Ok) return new Pair<Point, Short>(p2, HintManager.ABOVE);
+      if (p1Ok) return new Pair<>(p1, HintManager.UNDER);
+      if (p2Ok) return new Pair<>(p2, HintManager.ABOVE);
     }
 
     int underSpace = layeredPane.getHeight() - p1.y;
     int aboveSpace = p2.y;
-    return aboveSpace > underSpace ? new Pair<Point, Short>(new Point(p2.x, 0), HintManager.UNDER) : new Pair<Point, Short>(p1,
-                                                                                                                            HintManager.ABOVE);
+    return aboveSpace > underSpace ? new Pair<>(new Point(p2.x, 0), HintManager.UNDER) : new Pair<>(p1,
+                                                                                                    HintManager.ABOVE);
   }
 
   public void setRequestFocus(boolean requestFocus) {
@@ -277,7 +277,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
       }
       else {
         Point p = HintManagerImpl.getHintPosition(hint, myEditor, pos, HintManager.ABOVE);
-        position = new Pair<Point, Short>(p, HintManager.ABOVE);
+        position = new Pair<>(p, HintManager.ABOVE);
       }
       previousBestPoint = position.getFirst();
       previousBestPosition = position.getSecond();

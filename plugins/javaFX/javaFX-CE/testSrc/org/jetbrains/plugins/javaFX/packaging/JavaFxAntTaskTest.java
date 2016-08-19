@@ -302,7 +302,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
   }
 
   public void testJarDeployPreloader() throws Exception {
-    final HashMap<String, String> options = new HashMap<String, String>();
+    final HashMap<String, String> options = new HashMap<>();
     options.put(PRELOADER_CLASS, "MyPreloader");
     options.put(PRELOADER_JAR, "preloader.jar");
     doTest("<fx:fileset id=\"jarDeployPreloader_preloader_files\" requiredFor=\"preloader\" dir=\"temp\" includes=\"preloader.jar\">\n" +

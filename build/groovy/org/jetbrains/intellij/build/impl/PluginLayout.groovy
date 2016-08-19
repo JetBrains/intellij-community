@@ -49,7 +49,7 @@ class PluginLayout {
   final MultiValuesMap<String, String> moduleExcludes = new MultiValuesMap<>(true)
   final List<String> includedProjectLibraries = []
   final List<ModuleLibraryData> includedModuleLibraries = []
-  private final Set<String> optionalModules = new LinkedHashSet<>()
+  final Set<String> optionalModules = new LinkedHashSet<>()
   private final Set<String> modulesWithLocalizableResourcesInCommonJar = new LinkedHashSet<>()
   private boolean doNotCreateSeparateJarForLocalizableResources
 

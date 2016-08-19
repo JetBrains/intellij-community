@@ -68,7 +68,7 @@ public class ExistingTemplatesComponent {
 
     DefaultMutableTreeNode parent = null;
     String lastCategory = null;
-    final List<DefaultMutableTreeNode> nodesToExpand = new ArrayList<DefaultMutableTreeNode>();
+    final List<DefaultMutableTreeNode> nodesToExpand = new ArrayList<>();
 
     final List<Configuration> predefined = StructuralSearchUtil.getPredefinedTemplates();
     for (final Configuration info : predefined) {
@@ -146,7 +146,7 @@ public class ExistingTemplatesComponent {
 
     configureSelectTemplateAction(patternTree);
 
-    historyModel = new CollectionListModel<Configuration>(configurationManager.getHistoryConfigurations());
+    historyModel = new CollectionListModel<>(configurationManager.getHistoryConfigurations());
     historyPanel = new JPanel(new BorderLayout());
     historyPanel.add(BorderLayout.NORTH, new JLabel(SSRBundle.message("used.templates")));
 

@@ -70,6 +70,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   public boolean TREAT_UNKNOWN_MEMBERS_AS_NULLABLE;
   public boolean IGNORE_ASSERT_STATEMENTS;
   public boolean REPORT_CONSTANT_REFERENCE_VALUES = true;
+  public boolean REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER = true;
 
   @Override
   public JComponent createOptionsPanel() {
@@ -103,6 +104,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       @Override
       public void visitMethod(PsiMethod method) {
         analyzeCodeBlock(method.getBody(), holder, isOnTheFly);
+        analyzeNullLiteralMethodArguments(method, holder, isOnTheFly);
       }
 
       @Override
@@ -137,20 +139,31 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     };
   }
 
+  protected LocalQuickFix createNavigateToNullParameterUsagesFix(PsiParameter parameter) {
+    return null;
+  }
+
+  private void analyzeNullLiteralMethodArguments(PsiMethod method, ProblemsHolder holder, boolean isOnTheFly) {
+    if (REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER) {
+      for (PsiParameter parameter : NullParameterConstraintChecker.checkMethodParameters(method, isOnTheFly)) {
+        final String name = parameter.getName();
+        holder.registerProblem(parameter.getNameIdentifier(),
+                               InspectionsBundle.message("dataflow.method.fails.with.null.argument", name),
+                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                               NullableStuffInspectionBase.getWrappedUiDependentQuickFix(this::createNavigateToNullParameterUsagesFix, parameter, isOnTheFly));
+      }
+    }
+  }
+
   private void analyzeCodeBlock(@Nullable final PsiElement scope, ProblemsHolder holder, final boolean onTheFly) {
     if (scope == null) return;
 
     PsiClass containingClass = PsiTreeUtil.getParentOfType(scope, PsiClass.class);
     if (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass) && !(containingClass instanceof PsiEnumConstantInitializer)) return;
 
-    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, !isInsideConstructorOrInitializer(
-      scope)) {
-      @Override
-      protected boolean shouldCheckTimeLimit() {
-        if (!onTheFly) return false;
-        return super.shouldCheckTimeLimit();
-      }
-    };
+    final StandardDataFlowRunner dfaRunner =
+      new StandardDataFlowRunner(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE,
+                                 !isInsideConstructorOrInitializer(scope), onTheFly);
     analyzeDfaWithNestedClosures(scope, holder, dfaRunner, Collections.singletonList(dfaRunner.createMemoryState()), onTheFly);
   }
 
@@ -221,7 +234,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     if (qualifier instanceof PsiMethodCallExpression) return null;
 
     try {
-      final List<LocalQuickFix> fixes = new SmartList<LocalQuickFix>();
+      final List<LocalQuickFix> fixes = new SmartList<>();
 
       if (isVolatileFieldReference(qualifier)) {
         ContainerUtil.addIfNotNull(fixes, createIntroduceVariableFix(qualifier));
@@ -273,13 +286,13 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     Set<Instruction> trueSet = constConditions.getFirst();
     Set<Instruction> falseSet = constConditions.getSecond();
 
-    ArrayList<Instruction> allProblems = new ArrayList<Instruction>();
+    ArrayList<Instruction> allProblems = new ArrayList<>();
     allProblems.addAll(trueSet);
     allProblems.addAll(falseSet);
     allProblems.addAll(visitor.myCCEInstructions);
     allProblems.addAll(ContainerUtil.filter(runner.getInstructions(), instruction1 -> instruction1 instanceof InstanceofInstruction && visitor.isInstanceofRedundant((InstanceofInstruction)instruction1)));
 
-    HashSet<PsiElement> reportedAnchors = new HashSet<PsiElement>();
+    HashSet<PsiElement> reportedAnchors = new HashSet<>();
     for (PsiElement element : visitor.getProblems(NullabilityProblem.callNPE)) {
       if (reportedAnchors.add(element)) {
         reportCallMayProduceNpe(holder, (PsiMethodCallExpression)element, holder.isOnTheFly());
@@ -303,7 +316,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       }
     }
 
-    reportConstantPushes(runner, holder, visitor);
+    reportConstantPushes(runner, holder, visitor, reportedAnchors);
 
     reportNullableArguments(visitor, holder, reportedAnchors);
     reportNullableAssignments(visitor, holder, reportedAnchors);
@@ -323,13 +336,14 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
   private void reportConstantPushes(StandardDataFlowRunner runner,
                                     ProblemsHolder holder,
-                                    DataFlowInstructionVisitor visitor) {
+                                    DataFlowInstructionVisitor visitor,
+                                    Set<PsiElement> reportedAnchors) {
     for (Instruction instruction : runner.getInstructions()) {
       if (instruction instanceof PushInstruction) {
         PsiExpression place = ((PushInstruction)instruction).getPlace();
         DfaValue value = ((PushInstruction)instruction).getValue();
         Object constant = value instanceof DfaConstValue ? ((DfaConstValue)value).getValue() : null;
-        if (place instanceof PsiPolyadicExpression && constant instanceof Boolean) {
+        if (place instanceof PsiPolyadicExpression && constant instanceof Boolean && reportedAnchors.add(place)) {
           reportConstantCondition(holder, visitor, place, (Boolean)constant);
         }
       }
@@ -832,7 +846,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   }
 
   private static class DataFlowInstructionVisitor extends StandardInstructionVisitor {
-    private final MultiMap<NullabilityProblem, PsiElement> myProblems = new MultiMap<NullabilityProblem, PsiElement>();
+    private final MultiMap<NullabilityProblem, PsiElement> myProblems = new MultiMap<>();
     private final Map<Pair<NullabilityProblem, PsiElement>, StateInfo> myStateInfos = ContainerUtil.newHashMap();
     private final Set<Instruction> myCCEInstructions = ContainerUtil.newHashSet();
 

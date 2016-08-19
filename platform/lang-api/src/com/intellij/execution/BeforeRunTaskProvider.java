@@ -34,7 +34,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public abstract class BeforeRunTaskProvider<T extends BeforeRunTask> {
-  public static final ExtensionPointName<BeforeRunTaskProvider<BeforeRunTask>> EXTENSION_POINT_NAME = new ExtensionPointName<BeforeRunTaskProvider<BeforeRunTask>>("com.intellij.stepsBeforeRunProvider");
+  public static final ExtensionPointName<BeforeRunTaskProvider<BeforeRunTask>> EXTENSION_POINT_NAME =
+    new ExtensionPointName<>("com.intellij.stepsBeforeRunProvider");
 
   public abstract Key<T> getId();
 

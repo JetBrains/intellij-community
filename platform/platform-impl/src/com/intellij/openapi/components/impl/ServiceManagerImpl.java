@@ -19,7 +19,6 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -30,7 +29,6 @@ import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.PlatformUtils;
@@ -49,8 +47,8 @@ import java.util.List;
 public class ServiceManagerImpl implements BaseComponent {
   private static final Logger LOG = Logger.getInstance(ServiceManagerImpl.class);
 
-  private static final ExtensionPointName<ServiceDescriptor> APP_SERVICES = new ExtensionPointName<ServiceDescriptor>("com.intellij.applicationService");
-  private static final ExtensionPointName<ServiceDescriptor> PROJECT_SERVICES = new ExtensionPointName<ServiceDescriptor>("com.intellij.projectService");
+  private static final ExtensionPointName<ServiceDescriptor> APP_SERVICES = new ExtensionPointName<>("com.intellij.applicationService");
+  private static final ExtensionPointName<ServiceDescriptor> PROJECT_SERVICES = new ExtensionPointName<>("com.intellij.projectService");
   private ExtensionPointName<ServiceDescriptor> myExtensionPointName;
   private ExtensionPointListener<ServiceDescriptor> myExtensionPointListener;
 
@@ -82,7 +80,7 @@ public class ServiceManagerImpl implements BaseComponent {
           }
         }
 
-        if (!ComponentManagerImpl.isComponentSuitableForOs(descriptor.os)) {
+        if (!Extensions.isComponentSuitableForOs(descriptor.os)) {
           return;
         }
 
@@ -208,49 +206,37 @@ public class ServiceManagerImpl implements BaseComponent {
         return instance;
       }
 
-      // we must take read action before adapter lock - if service requested from EDT (2) and pooled (1), will be a deadlock, because EDT waits adapter lock and Pooled waits read lock
-      boolean useReadActionToInitService = isUseReadActionToInitService();
-      AccessToken readToken = useReadActionToInitService ? ReadAction.start() : null;
-      try {
-        synchronized (this) {
-          instance = myInitializedComponentInstance;
-          if (instance != null) {
-            // DCL is fine, field is volatile
-            return instance;
-          }
-
-          ComponentAdapter delegate = getDelegate();
-
-          // useReadActionToInitService is enabled currently only in internal or test mode or explicitly (registry) - we have enough feedback to fix, so, don't disturb all users
-          if (!useReadActionToInitService &&
-              LOG.isDebugEnabled() &&
-              ApplicationManager.getApplication().isWriteAccessAllowed() &&
-              !ApplicationManager.getApplication().isUnitTestMode() &&
-              PersistentStateComponent.class.isAssignableFrom(delegate.getComponentImplementation())) {
-            LOG.warn(new Throwable("Getting service from write-action leads to possible deadlock. Service implementation " + myDescriptor.getImplementation()));
-          }
-
-          // prevent storages from flushing and blocking FS
-          AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Creating component '" + myDescriptor.getImplementation() + "'");
-          try {
-            instance = delegate.getComponentInstance(container);
-            if (instance instanceof Disposable) {
-              Disposer.register(myComponentManager, (Disposable)instance);
-            }
-
-            myComponentManager.initializeComponent(instance, true);
-
-            myInitializedComponentInstance = instance;
-            return instance;
-          }
-          finally {
-            token.finish();
-          }
+      synchronized (this) {
+        instance = myInitializedComponentInstance;
+        if (instance != null) {
+          // DCL is fine, field is volatile
+          return instance;
         }
-      }
-      finally {
-        if (readToken != null) {
-          readToken.finish();
+
+        ComponentAdapter delegate = getDelegate();
+
+        if (LOG.isDebugEnabled() &&
+            ApplicationManager.getApplication().isWriteAccessAllowed() &&
+            !ApplicationManager.getApplication().isUnitTestMode() &&
+            PersistentStateComponent.class.isAssignableFrom(delegate.getComponentImplementation())) {
+          LOG.warn(new Throwable("Getting service from write-action leads to possible deadlock. Service implementation " + myDescriptor.getImplementation()));
+        }
+
+        // prevent storages from flushing and blocking FS
+        AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Creating component '" + myDescriptor.getImplementation() + "'");
+        try {
+          instance = delegate.getComponentInstance(container);
+          if (instance instanceof Disposable) {
+            Disposer.register(myComponentManager, (Disposable)instance);
+          }
+
+          myComponentManager.initializeComponent(instance, true);
+
+          myInitializedComponentInstance = instance;
+          return instance;
+        }
+        finally {
+          token.finish();
         }
       }
     }
@@ -291,9 +277,5 @@ public class ServiceManagerImpl implements BaseComponent {
     public String toString() {
       return "ServiceComponentAdapter[" + myDescriptor.getInterface() + "]: implementation=" + myDescriptor.getImplementation() + ", plugin=" + myPluginDescriptor;
     }
-  }
-
-  public static boolean isUseReadActionToInitService() {
-    return Registry.is("use.read.action.to.init.service", true);
   }
 }

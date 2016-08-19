@@ -16,9 +16,12 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildTasks
+import org.jetbrains.intellij.build.ProductModulesLayout
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
@@ -90,7 +93,6 @@ class BuildTasksImpl extends BuildTasks {
 
 //todo[nik] do we need 'cp' and 'jvmArgs' parameters?
   void buildSearchableOptions(File targetDirectory, List<String> modulesToIndex, List<String> pathsToLicenses) {
-    //todo[nik] create searchableOptions.xml in a separate directory instead of modifying it in the module output
     buildContext.executeStep("Build searchable options index", BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, {
       def javaRuntimeClasses = "${buildContext.projectBuilder.moduleOutput(buildContext.findModule("java-runtime"))}"
       if (!new File(javaRuntimeClasses).exists()) {
@@ -208,31 +210,43 @@ idea.fatal.error.notification=disabled
     def propertiesFile = patchIdeaPropertiesFile()
 
     WindowsDistributionBuilder windowsBuilder = null
-    def windowsDistributionCustomizer = buildContext.windowsDistributionCustomizer
-    if (windowsDistributionCustomizer != null) {
-      buildContext.executeStep("Build Windows distribution", BuildOptions.WINDOWS_DISTRIBUTION_STEP, {
-        windowsBuilder = new WindowsDistributionBuilder(buildContext, windowsDistributionCustomizer)
-        windowsBuilder.layoutWin(propertiesFile)
-      })
-    }
-
     LinuxDistributionBuilder linuxBuilder = null
-    def linuxDistributionCustomizer = buildContext.linuxDistributionCustomizer
-    if (linuxDistributionCustomizer != null) {
-      buildContext.executeStep("Build Linux distribution", BuildOptions.LINUX_DISTRIBUTION_STEP) {
-        linuxBuilder = new LinuxDistributionBuilder(buildContext, linuxDistributionCustomizer)
-        linuxBuilder.layoutUnix(propertiesFile)
-      }
-    }
-
     MacDistributionBuilder macBuilder = null
-    def macDistributionCustomizer = buildContext.macDistributionCustomizer
-    if (macDistributionCustomizer != null) {
-      buildContext.executeStep("Build Mac OS distribution", BuildOptions.MAC_DISTRIBUTION_STEP) {
-        macBuilder = new MacDistributionBuilder(buildContext, macDistributionCustomizer)
-        macBuilder.layoutMac(propertiesFile)
+    runInParallel([new BuildTaskRunnable("win") {
+      @Override
+      void run(BuildContext buildContext) {
+        def windowsDistributionCustomizer = buildContext.windowsDistributionCustomizer
+        if (windowsDistributionCustomizer != null) {
+          buildContext.executeStep("Build Windows distribution", BuildOptions.WINDOWS_DISTRIBUTION_STEP, {
+            windowsBuilder = new WindowsDistributionBuilder(buildContext, windowsDistributionCustomizer)
+            windowsBuilder.layoutWin(propertiesFile)
+          })
+        }
+      }
+    }, new BuildTaskRunnable("linux") {
+      @Override
+      void run(BuildContext buildContext) {
+        def linuxDistributionCustomizer = buildContext.linuxDistributionCustomizer
+        if (linuxDistributionCustomizer != null) {
+          buildContext.executeStep("Build Linux distribution", BuildOptions.LINUX_DISTRIBUTION_STEP) {
+            linuxBuilder = new LinuxDistributionBuilder(buildContext, linuxDistributionCustomizer)
+            linuxBuilder.layoutUnix(propertiesFile)
+          }
+        }
+      }
+    }, new BuildTaskRunnable("mac") {
+      @Override
+      void run(BuildContext buildContext) {
+        def macDistributionCustomizer = buildContext.macDistributionCustomizer
+        if (macDistributionCustomizer != null) {
+          buildContext.executeStep("Build Mac OS distribution", BuildOptions.MAC_DISTRIBUTION_STEP) {
+            macBuilder = new MacDistributionBuilder(buildContext, macDistributionCustomizer)
+            macBuilder.layoutMac(propertiesFile)
+          }
+        }
       }
     }
+    ])
 
     if (buildContext.productProperties.buildCrossPlatformDistribution) {
       if (windowsBuilder != null && linuxBuilder != null && macBuilder != null) {
@@ -250,6 +264,7 @@ idea.fatal.error.notification=disabled
   @Override
   void compileModulesAndBuildDistributions(List<PluginLayout> allPlugins) {
     def productLayout = buildContext.productProperties.productLayout
+    checkProductLayout(productLayout, allPlugins)
     cleanOutput()
     def includedModules = productLayout.getIncludedModules(allPlugins)
     compileModules(includedModules)
@@ -257,14 +272,41 @@ idea.fatal.error.notification=disabled
       new DistributionJARsBuilder(buildContext, includedModules, allPlugins).buildJARs()
     }
     if (buildContext.productProperties.scrambleMainJar) {
-      if (buildContext.scrambleTool != null) {
-        buildContext.scrambleTool.scramble(buildContext.productProperties.productLayout.mainJarName, buildContext)
+      if (buildContext.proprietaryBuildTools.scrambleTool != null) {
+        buildContext.proprietaryBuildTools.scrambleTool.scramble(buildContext.productProperties.productLayout.mainJarName, buildContext)
       }
       else {
-        buildContext.messages.warning("Scrambling skipped: 'srambleTool' isn't defined")
+        buildContext.messages.warning("Scrambling skipped: 'scrambleTool' isn't defined")
       }
     }
     buildDistributions()
+  }
+
+  private void checkProductLayout(ProductModulesLayout layout, List<PluginLayout> allPlugins) {
+    def allPluginModules = allPlugins.collectMany { [it.mainModule] + it.optionalModules } as Set<String>
+    checkPluginModules(layout.bundledPluginModules, "bundledPluginModules", allPluginModules)
+    checkPluginModules(layout.pluginModulesToPublish, "pluginModulesToPublish", allPluginModules)
+
+    checkModules(layout.platformApiModules, "platformApiModules")
+    checkModules(layout.platformImplementationModules, "platformImplementationModules")
+    checkModules(layout.additionalPlatformModules.keySet(), "additionalPlatformModules")
+  }
+
+  private void checkModules(Collection<String> modules, String fieldName) {
+    def unknownModules = modules.findAll {buildContext.findModule(it) == null}
+    if (!unknownModules.empty) {
+      buildContext.messages.error("The following modules from productProperties.$fieldName aren't found in the project.")
+    }
+  }
+
+  private void checkPluginModules(List<String> pluginModules, String fieldName, Set<String> allPluginModules) {
+    def unknownBundledPluginModules = pluginModules.findAll { !allPluginModules.contains(it) }
+    if (!unknownBundledPluginModules.empty) {
+      buildContext.messages.error(
+        "The following modules from productProperties.productLayout.$fieldName aren't found in the registered plugins: $unknownBundledPluginModules. " +
+        "Make sure that the plugin layouts are specified in one of *_REPOSITORY_PLUGINS lists and you refer to either main plugin module or an optional module."
+      )
+    }
   }
 
   @Override
@@ -305,7 +347,7 @@ idea.fatal.error.notification=disabled
     }
     else {
       List<String> modulesToBuild = ((moduleNames as Set<String>) + DistributionJARsBuilder.ADDITIONAL_MODULES_TO_COMPILE
-        + buildContext.scrambleTool?.additionalModulesToCompile ?: []) as List<String>
+        + buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: []) as List<String>
       List<String> invalidModules = modulesToBuild.findAll {buildContext.findModule(it) == null}
       if (!invalidModules.empty) {
         buildContext.messages.warning("The following modules won't be compiled: $invalidModules")
@@ -315,5 +357,60 @@ idea.fatal.error.notification=disabled
     for (String moduleName : includingTestsInModules) {
       buildContext.projectBuilder.makeModuleTests(buildContext.findModule(moduleName))
     }
+  }
+
+  private void runInParallel(List<BuildTaskRunnable> tasks) {
+    if (!buildContext.options.runBuildStepsInParallel) {
+      tasks.each {
+        it.run(buildContext)
+      }
+      return
+    }
+
+    List<Thread> threads = []
+    List<BuildMessages> messages = []
+    List<Throwable> errors = Collections.synchronizedList([])
+    tasks.each { task ->
+      def childContext = buildContext.forkForParallelTask(task.taskName)
+      def thread = new Thread("Thread for build task '$task.taskName'") {
+        @Override
+        void run() {
+          def start = System.currentTimeMillis()
+          childContext.messages.onForkStarted()
+          try {
+            task.run(childContext)
+          }
+          catch (Throwable t) {
+            errors << t
+          }
+          finally {
+            buildContext.messages.info("'$task.taskName' task finished in ${StringUtil.formatDuration(System.currentTimeMillis() - start)}")
+            childContext.messages.onForkFinished()
+          }
+        }
+      }
+      threads << thread
+      messages << childContext.messages
+    }
+    buildContext.messages.block("Run parallel tasks") {
+      buildContext.messages.info("Started ${tasks.size()} tasks in parallel: ${tasks.collect { it.taskName }}")
+      threads.each { it.start() }
+      threads.each { it.join() }
+    }
+    buildContext.messages.onAllForksFinished()
+    if (!errors.empty) {
+      errors.subList(1, errors.size()).each { it.printStackTrace() }
+      throw errors.first()
+    }
+  }
+
+  private abstract static class BuildTaskRunnable {
+    final String taskName
+
+    BuildTaskRunnable(String name) {
+      taskName = name
+    }
+
+    abstract void run(BuildContext context)
   }
 }

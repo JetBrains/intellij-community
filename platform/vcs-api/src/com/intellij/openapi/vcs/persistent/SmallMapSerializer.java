@@ -46,7 +46,7 @@ public class SmallMapSerializer<K,V> implements Forceable {
     myFile = file;
     myKeyDescriptor = keyDescriptor;
     myValueExternalizer = valueExternalizer;
-    myMap = new HashMap<KeyWrapper<K>, V>();
+    myMap = new HashMap<>();
     init();
   }
 
@@ -56,7 +56,7 @@ public class SmallMapSerializer<K,V> implements Forceable {
       final DataInputStream dis = new DataInputStream(new UnsyncByteArrayInputStream(bytes));
       final int size = dis.readInt();
       for (int i = 0; i < size; i++) {
-        final KeyWrapper<K> keyWrapper = new KeyWrapper<K>(myKeyDescriptor, myKeyDescriptor.read(dis));
+        final KeyWrapper<K> keyWrapper = new KeyWrapper<>(myKeyDescriptor, myKeyDescriptor.read(dis));
         final V value = myValueExternalizer.read(dis);
         myMap.put(keyWrapper, value);
       }
@@ -67,12 +67,12 @@ public class SmallMapSerializer<K,V> implements Forceable {
   }
 
   public void put(final K key, final V value) {
-    myMap.put(new KeyWrapper<K>(myKeyDescriptor, key), value);
+    myMap.put(new KeyWrapper<>(myKeyDescriptor, key), value);
     myDirty = true;
   }
 
   public V get(final K key) {
-    return myMap.get(new KeyWrapper<K>(myKeyDescriptor, key));
+    return myMap.get(new KeyWrapper<>(myKeyDescriptor, key));
   }
 
   @Override
@@ -125,7 +125,7 @@ public class SmallMapSerializer<K,V> implements Forceable {
   }
 
   public Collection<K> keySet() {
-    final ArrayList<K> result = new ArrayList<K>(myMap.size());
+    final ArrayList<K> result = new ArrayList<>(myMap.size());
     for (KeyWrapper<K> keyWrapper : myMap.keySet()) {
       result.add(keyWrapper.myKey);
     }

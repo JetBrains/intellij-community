@@ -103,7 +103,7 @@ public abstract class VcsIntegrationEnabler<VcsT extends AbstractVcs> {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     List<VirtualFile> currentVcsRoots = Arrays.asList(vcsManager.getRootsUnderVcs(myVcs));
 
-    List<VcsDirectoryMapping> mappings = new ArrayList<VcsDirectoryMapping>(vcsManager.getDirectoryMappings(myVcs));
+    List<VcsDirectoryMapping> mappings = new ArrayList<>(vcsManager.getDirectoryMappings(myVcs));
 
     for (VirtualFile root : roots) {
       if (!currentVcsRoots.contains(root)) {

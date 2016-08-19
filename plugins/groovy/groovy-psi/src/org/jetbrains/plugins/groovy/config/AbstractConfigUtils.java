@@ -151,7 +151,7 @@ public abstract class AbstractConfigUtils {
   }
 
   public Library[] getAllUsedSDKLibraries(Project project) {
-    final List<Library> libraries = new ArrayList<Library>();
+    final List<Library> libraries = new ArrayList<>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       libraries.addAll(Arrays.asList(getSDKLibrariesByModule(module)));
     }

@@ -59,7 +59,7 @@ public class Util {
   public static final HashMap<String, String> RESERVED_NAMES_MAP;
 
   static {
-    RESERVED_NAMES_MAP = new HashMap<String, String>();
+    RESERVED_NAMES_MAP = new HashMap<>();
     for (String aRESERVED_NAMES_TABLE : RESERVED_NAMES_TABLE) {
       // RESERVED_NAMES_MAP.put(RESERVED_NAMES_TABLE[i], RESERVED_NAMES_TABLE[i]+"_");
       // as far as there is no actual field but setters/getters:

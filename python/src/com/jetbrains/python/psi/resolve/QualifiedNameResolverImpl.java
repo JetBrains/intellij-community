@@ -46,12 +46,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.as;
+import static com.jetbrains.python.psi.PyUtil.turnDirIntoInit;
 
 /**
  * Resolves the specified qualified name in the specified context (module, all modules or a file) to a file or directory.
@@ -218,12 +216,36 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
   }
 
   private void addRoot(PsiElement resolveResult, boolean isModuleSource) {
-    if (isModuleSource && (mySourceResults.isEmpty() || myQualifiedName.getComponentCount() == 0)) {
-      mySourceResults.add(resolveResult);
+    final Set<PsiElement> results = isModuleSource ? mySourceResults : myLibResults;
+    final boolean allNamespacePackages = allNamespacePackages(results);
+    if (allNamespacePackages) {
+      if (!isNamespacePackage(resolveResult)) {
+        results.clear();
+      }
     }
-    else if (myLibResults.isEmpty() || myQualifiedName.getComponentCount() == 0) {
-      myLibResults.add(resolveResult);
+    if (allNamespacePackages || results.isEmpty() || myQualifiedName.getComponentCount() == 0) {
+      results.add(resolveResult);
     }
+  }
+
+  private static boolean isNamespacePackage(@NotNull PsiElement element) {
+    final PsiDirectory dir = as(element, PsiDirectory.class);
+    if (dir != null) {
+      final LanguageLevel level = PyUtil.getLanguageLevelForVirtualFile(dir.getProject(), dir.getVirtualFile());
+      if (level.isAtLeast(LanguageLevel.PYTHON33)) {
+        return turnDirIntoInit(dir) == null;
+      }
+    }
+    return false;
+  }
+
+  private static boolean allNamespacePackages(@NotNull Collection<PsiElement> elements) {
+    for (PsiElement element : elements) {
+      if (!isNamespacePackage(element)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override
@@ -387,7 +409,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
   @NotNull
   public <T extends PsiElement> List<T> resultsOfType(Class<T> clazz) {
     checkAccess();
-    List<T> result = new ArrayList<T>();
+    List<T> result = new ArrayList<>();
     for (PsiElement element : resultsAsList()) {
       if (clazz.isInstance(element)) {
         //noinspection unchecked

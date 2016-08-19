@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -226,6 +226,16 @@ public class JavaCompletionContributor extends CompletionContributor {
     PrefixMatcher matcher = result.getPrefixMatcher();
     PsiElement parent = position.getParent();
 
+    if (JavaModuleCompletion.isModuleFile(position.getContainingFile())) {
+      JavaModuleCompletion.addVariants(position, element -> {
+        if (element.getLookupString().startsWith(result.getPrefixMatcher().getPrefix())) {
+          result.addElement(element);
+        }
+      });
+      result.stopHere();
+      return;
+    }
+
     if (position instanceof PsiIdentifier) {
       addIdentifierVariants(parameters, position, result, matcher, parent, session);
     }
@@ -256,13 +266,16 @@ public class JavaCompletionContributor extends CompletionContributor {
         StringUtil.isNotEmpty(matcher.getPrefix())) {
       new JavaStaticMemberProcessor(parameters).processStaticMethodsGlobally(matcher, result);
     }
+
     result.stopHere();
   }
 
   private static void addIdentifierVariants(@NotNull CompletionParameters parameters,
                                             PsiElement position,
-                                            final CompletionResultSet result,
-                                            PrefixMatcher matcher, PsiElement parent, @NotNull JavaCompletionSession session) {
+                                            CompletionResultSet result,
+                                            PrefixMatcher matcher,
+                                            PsiElement parent,
+                                            @NotNull JavaCompletionSession session) {
     if (TypeArgumentCompletionProvider.IN_TYPE_ARGS.accepts(position)) {
       new TypeArgumentCompletionProvider(false, session).addCompletions(parameters, new ProcessingContext(), result);
     }
@@ -355,7 +368,7 @@ public class JavaCompletionContributor extends CompletionContributor {
   }
 
   private static Set<String> addReferenceVariants(final CompletionParameters parameters, CompletionResultSet result, JavaCompletionSession session) {
-    final Set<String> usedWords = new HashSet<String>();
+    final Set<String> usedWords = new HashSet<>();
     final PsiElement position = parameters.getPosition();
     final boolean first = parameters.getInvocationCount() <= 1;
     final boolean isSwitchLabel = SWITCH_LABEL.accepts(position);

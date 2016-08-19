@@ -70,7 +70,7 @@ public class DependsOnMethodInspection extends BaseJavaLocalInspectionTool
 
         PsiAnnotation[] annotations = TestNGUtil.getTestNGAnnotations(psiClass);
         if(annotations.length == 0) return ProblemDescriptor.EMPTY_ARRAY;
-        List<ProblemDescriptor> problemDescriptors = new ArrayList<ProblemDescriptor>();
+        List<ProblemDescriptor> problemDescriptors = new ArrayList<>();
 
         for (PsiAnnotation annotation : annotations) {
           final PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue("dependsOnMethods");
@@ -85,7 +85,7 @@ public class DependsOnMethodInspection extends BaseJavaLocalInspectionTool
                 }
               }
             }
-            final Set<String> names = new HashSet<String>();
+            final Set<String> names = new HashSet<>();
             final Matcher matcher = PATTERN.matcher(text);
             int idx = 0;
             while (matcher.find()) {

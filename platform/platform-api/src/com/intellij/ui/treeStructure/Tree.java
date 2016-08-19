@@ -748,7 +748,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     TreePath[] paths = getSelectionPaths();
     if (paths == null) return (T[])Array.newInstance(nodeType, 0);
 
-    ArrayList<T> nodes = new ArrayList<T>();
+    ArrayList<T> nodes = new ArrayList<>();
     for (TreePath path : paths) {
       Object last = path.getLastPathComponent();
       if (nodeType.isAssignableFrom(last.getClass())) {

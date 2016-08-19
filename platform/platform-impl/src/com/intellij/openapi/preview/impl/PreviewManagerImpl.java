@@ -67,15 +67,15 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
   private Content myEmptyStateContent;
   private final JPanel myEmptyStatePanel;
 
-  private ArrayList<PreviewInfo> myHistory = new ArrayList<PreviewInfo>();
+  private ArrayList<PreviewInfo> myHistory = new ArrayList<>();
 
 
-  private TreeSet<PreviewPanelProvider> myProviders = new TreeSet<PreviewPanelProvider>((o1, o2) -> {
+  private TreeSet<PreviewPanelProvider> myProviders = new TreeSet<>((o1, o2) -> {
     int result = Float.compare(o1.getMenuOrder(), o2.getMenuOrder());
     return result != 0 ? result : o1.toString().compareTo(o2.toString());
   });
-  private Set<PreviewProviderId> myActiveProviderIds = new HashSet<PreviewProviderId>();
-  private Set<PreviewProviderId> myLockedProviderIds = new HashSet<PreviewProviderId>();
+  private Set<PreviewProviderId> myActiveProviderIds = new HashSet<>();
+  private Set<PreviewProviderId> myLockedProviderIds = new HashSet<>();
   private boolean myInnerSelectionChange;
 
   private static boolean isAvailable() {
@@ -107,7 +107,7 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
   @Override
   public PreviewManagerState getState() {
     PreviewManagerState state = new PreviewManagerState();
-    state.myArtifactFilesMap = new HashMap<String, Boolean>();
+    state.myArtifactFilesMap = new HashMap<>();
     for (PreviewPanelProvider provider : myProviders) {
       state.myArtifactFilesMap.put(provider.toString(), myActiveProviderIds.contains(provider.getId()));
     }
@@ -178,7 +178,7 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
       }, myToolWindow.getComponent());
 
       myToolWindow.setTitleActions(moveToStandardViewAction);
-      ArrayList<AnAction> myGearActions = new ArrayList<AnAction>();
+      ArrayList<AnAction> myGearActions = new ArrayList<>();
       for (PreviewPanelProvider provider : myProviders) {
         myGearActions.add(new ContentTypeToggleAction(provider));
       }
@@ -395,7 +395,7 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
 
       painter.appendLine("No files are open");//.underlined(new JBColor(Gray._150, Gray._180));
       painter.draw(g, (width, height) -> {
-        Dimension s = EmptyStatePanel.this.getSize();
+        Dimension s = this.getSize();
         return Couple.of((s.width - width) / 2, (s.height - height) / 2);
       });
     }

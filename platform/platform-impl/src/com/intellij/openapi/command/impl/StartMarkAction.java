@@ -32,7 +32,7 @@ import java.util.Map;
 * Date: 11/8/11
 */
 public class StartMarkAction extends BasicUndoableAction {
-  private static final Map<Project, StartMarkAction> ourCurrentMarks = new HashMap<Project, StartMarkAction>();
+  private static final Map<Project, StartMarkAction> ourCurrentMarks = new HashMap<>();
   private String myCommandName;
   private boolean myGlobal;
   private Document myDocument;

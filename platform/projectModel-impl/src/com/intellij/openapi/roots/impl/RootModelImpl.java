@@ -46,7 +46,7 @@ import java.util.*;
 public class RootModelImpl extends RootModelBase implements ModifiableRootModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.RootModelImpl");
 
-  private final Set<ContentEntry> myContent = new TreeSet<ContentEntry>(ContentComparator.INSTANCE);
+  private final Set<ContentEntry> myContent = new TreeSet<>(ContentComparator.INSTANCE);
 
   private final List<OrderEntry> myOrderEntries = new Order();
   // cleared by myOrderEntries modification, see Order
@@ -57,7 +57,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   private boolean myWritable;
   private final VirtualFilePointerManager myFilePointerManager;
   private boolean myDisposed = false;
-  private final Set<ModuleExtension> myExtensions = new TreeSet<ModuleExtension>();
+  private final Set<ModuleExtension> myExtensions = new TreeSet<>();
 
   private final RootConfigurationAccessor myConfigurationAccessor;
 
@@ -301,7 +301,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     if (newEntries.length != myOrderEntries.size()) {
       return "Size mismatch: old size=" + myOrderEntries.size() + "; new size=" + newEntries.length;
     }
-    Set<OrderEntry> set = new HashSet<OrderEntry>();
+    Set<OrderEntry> set = new HashSet<>();
     for (OrderEntry newEntry : newEntries) {
       if (!myOrderEntries.contains(newEntry)) {
         return "Trying to add nonexisting order entry " + newEntry;

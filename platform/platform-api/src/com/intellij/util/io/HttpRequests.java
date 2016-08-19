@@ -42,7 +42,6 @@ import java.net.*;
 import java.nio.charset.Charset;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.zip.GZIPInputStream;
 
 /**
  * Handy class for reading data from HTTP connections with built-in support for HTTP redirects and gzipped content and automatic cleanup.
@@ -279,8 +278,7 @@ public final class HttpRequests {
       if (myInputStream == null) {
         myInputStream = getConnection().getInputStream();
         if (myBuilder.myGzip && "gzip".equalsIgnoreCase(getConnection().getContentEncoding())) {
-          //noinspection IOResourceOpenedButNotSafelyClosed
-          myInputStream = new GZIPInputStream(myInputStream);
+          myInputStream = CountingGZIPInputStream.create(myInputStream);
         }
       }
       return myInputStream;

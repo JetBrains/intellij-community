@@ -89,7 +89,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   public UnusedDeclarationInspectionBase(boolean enabledInEditor) {
     ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL);
     EntryPoint[] extensions = point.getExtensions();
-    List<EntryPoint> deadCodeAddIns = new ArrayList<EntryPoint>(extensions.length);
+    List<EntryPoint> deadCodeAddIns = new ArrayList<>(extensions.length);
     for (EntryPoint entryPoint : extensions) {
       try {
         deadCodeAddIns.add(entryPoint.clone());
@@ -364,7 +364,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
       }, null);
     }
 
-    myProcessedSuspicious = new HashSet<RefElement>();
+    myProcessedSuspicious = new HashSet<>();
     myPhase = 1;
   }
 
@@ -602,10 +602,10 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   }
 
   private static class CodeScanner extends RefJavaVisitor {
-    private final Map<RefClass, Set<RefMethod>> myClassIDtoMethods = new HashMap<RefClass, Set<RefMethod>>();
-    private final Set<RefClass> myInstantiatedClasses = new HashSet<RefClass>();
+    private final Map<RefClass, Set<RefMethod>> myClassIDtoMethods = new HashMap<>();
+    private final Set<RefClass> myInstantiatedClasses = new HashSet<>();
     private int myInstantiatedClassesCount;
-    private final Set<RefMethod> myProcessedMethods = new HashSet<RefMethod>();
+    private final Set<RefMethod> myProcessedMethods = new HashSet<>();
 
     @Override public void visitMethod(@NotNull RefMethod method) {
       if (!myProcessedMethods.contains(method)) {
@@ -688,7 +688,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     private void addDelayedMethod(RefMethod refMethod) {
       Set<RefMethod> methods = myClassIDtoMethods.get(refMethod.getOwnerClass());
       if (methods == null) {
-        methods = new HashSet<RefMethod>();
+        methods = new HashSet<>();
         myClassIDtoMethods.put(refMethod.getOwnerClass(), methods);
       }
       methods.add(refMethod);
@@ -752,11 +752,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   public void cleanup(@NotNull Project project) {
     super.cleanup(project);
     myContext = null;
-  }
-
-  @Override
-  public boolean isGraphNeeded() {
-    return true;
   }
 
   @TestOnly

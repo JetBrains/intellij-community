@@ -156,8 +156,8 @@ public class InitializerProcessor {
 
     boolean isAnonymous = DecompilerContext.getClassProcessor().getMapRootClasses().get(cl.qualifiedName).type == ClassNode.CLASS_ANONYMOUS;
 
-    List<List<Exprent>> lstFirst = new ArrayList<List<Exprent>>();
-    List<MethodWrapper> lstMethodWrappers = new ArrayList<MethodWrapper>();
+    List<List<Exprent>> lstFirst = new ArrayList<>();
+    List<MethodWrapper> lstMethodWrappers = new ArrayList<>();
 
     for (MethodWrapper method : wrapper.getMethods()) {
       if (CodeConstants.INIT_NAME.equals(method.methodStruct.getName()) && method.root != null) { // successfully decompiled constructor

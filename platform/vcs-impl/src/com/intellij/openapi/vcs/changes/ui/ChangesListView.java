@@ -52,8 +52,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterRevisionsFiles;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
 import static com.intellij.vcsUtil.VcsUtil.getIfSingle;
+import static com.intellij.vcsUtil.VcsUtil.toStream;
 import static java.util.stream.Collectors.toList;
 
 // TODO: Check if we could extend DnDAwareTree here instead of directly implementing DnDAware
@@ -64,7 +67,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
 
   @NonNls public static final String HELP_ID_KEY = "helpId";
   @NonNls public static final String ourHelpId = "ideaInterface.changes";
-  @NonNls public static final DataKey<List<VirtualFile>> UNVERSIONED_FILES_DATA_KEY = DataKey.create("ChangeListView.UnversionedFiles");
+  @NonNls public static final DataKey<Stream<VirtualFile>> UNVERSIONED_FILES_DATA_KEY = DataKey.create("ChangeListView.UnversionedFiles");
   @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY = DataKey.create("ChangeListView.MissingFiles");
   @NonNls public static final DataKey<List<LocallyDeletedChange>> LOCALLY_DELETED_CHANGES = DataKey.create("ChangeListView.LocallyDeletedChanges");
   @NonNls public static final DataKey<String> HELP_ID_DATA_KEY = DataKey.create(HELP_ID_KEY);
@@ -158,8 +161,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
       }
     }
     else if (key == CommonDataKeys.NAVIGATABLE_ARRAY) {
-      sink
-        .put(CommonDataKeys.NAVIGATABLE_ARRAY, ChangesUtil.getNavigatableArray(myProject, getSelectedFiles().toArray(VirtualFile[]::new)));
+      sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, ChangesUtil.getNavigatableArray(myProject, getSelectedFiles()));
     }
     else if (key == PlatformDataKeys.DELETE_ELEMENT_PROVIDER) {
       if (getSelectionObjectsStream().anyMatch(userObject -> !(userObject instanceof ChangeList))) {
@@ -170,7 +172,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
       sink.put(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
     }
     else if (key == UNVERSIONED_FILES_DATA_KEY) {
-      sink.put(UNVERSIONED_FILES_DATA_KEY, getSelectedUnversionedFiles().collect(toList()));
+      sink.put(UNVERSIONED_FILES_DATA_KEY, getSelectedUnversionedFiles());
     }
     else if (key == VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY) {
       sink.put(VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY, getSelectedModifiedWithoutEditing().collect(toList()));
@@ -234,11 +236,6 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
   }
 
   @NotNull
-  static Stream<TreePath> toStream(@Nullable TreePath[] paths) {
-    return paths == null ? Stream.empty() : Stream.of(paths);
-  }
-
-  @NotNull
   static Stream<VirtualFile> getVirtualFiles(@Nullable TreePath[] paths, @Nullable Object tag) {
     return toStream(paths)
       .filter(path -> isUnderTag(path, tag))
@@ -299,15 +296,10 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
 
   @NotNull
   protected Stream<VirtualFile> getSelectedFiles() {
-    Stream<VirtualFile> filesFromChanges = getSelectedChanges()
-      .map(Change::getAfterRevision)
-      .filter(Objects::nonNull)
-      .map(ContentRevision::getFile)
-      .map(FilePath::getVirtualFile)
-      .filter(Objects::nonNull)
-      .filter(VirtualFile::isValid);
-
-    return Stream.concat(filesFromChanges, getSelectedVirtualFiles(null)).distinct();
+    return Stream.concat(
+      getAfterRevisionsFiles(getSelectedChanges()),
+      getSelectedVirtualFiles(null)
+    ).distinct();
   }
 
   // TODO: Does not correspond to getSelectedChanges() - for instance, hijacked changes are not tracked here

@@ -195,7 +195,7 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
 
         @Override
         public void actionPerformed(ActionEvent e) {
-          ArrayList<String> selected = new ArrayList<String>();
+          ArrayList<String> selected = new ArrayList<>();
           JBList list = JBList.this;
           ListCellRenderer renderer = list.getCellRenderer();
           if (renderer != null) {
@@ -349,7 +349,7 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
     public AccessibleRole getAccessibleRole() {
       // In some cases, this method is called from the Access Bridge thread
       // instead of the AWT thread. See https://code.google.com/p/android/issues/detail?id=193072
-      return UIUtil.invokeAndWaitIfNeeded(() -> AccessibleJBList.super.getAccessibleRole());
+      return UIUtil.invokeAndWaitIfNeeded(() -> super.getAccessibleRole());
     }
 
     protected class AccessibleJBListChild extends AccessibleJListChild {
@@ -361,7 +361,7 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
       public AccessibleRole getAccessibleRole() {
         // In some cases, this method is called from the Access Bridge thread
         // instead of the AWT thread. See https://code.google.com/p/android/issues/detail?id=193072
-        return UIUtil.invokeAndWaitIfNeeded(() -> AccessibleJBListChild.super.getAccessibleRole());
+        return UIUtil.invokeAndWaitIfNeeded(() -> super.getAccessibleRole());
       }
     }
   }

@@ -44,7 +44,7 @@ public class DumpVfsInfoForExcludedFilesAction extends DumbAwareAction {
     Project project = e.getProject();
     if (project == null) return;
 
-    Set<String> excludeRoots = new HashSet<String>();
+    Set<String> excludeRoots = new HashSet<>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       Collections.addAll(excludeRoots, ModuleRootManager.getInstance(module).getExcludeRootUrls());
     }
@@ -74,7 +74,7 @@ public class DumpVfsInfoForExcludedFilesAction extends DumbAwareAction {
       return;
     }
 
-    List<VirtualFile> dirs = new ArrayList<VirtualFile>();
+    List<VirtualFile> dirs = new ArrayList<>();
     int inDb = 0, contentInDb = 0, nullChildren = 0;
     PersistentFS persistentFS = PersistentFS.getInstance();
     if (persistentFS.wereChildrenAccessed(dir)) {

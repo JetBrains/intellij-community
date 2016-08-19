@@ -82,7 +82,7 @@ public class XPathLanguageInjector implements MultiHostInjector {
 
       final TextRange[] ranges;
       if (XsltSupport.mayBeAVT(attribute)) {
-        final List<TextRange> avtRanges = new SmartList<TextRange>();
+        final List<TextRange> avtRanges = new SmartList<>();
 
         int i;
         int j = 0;

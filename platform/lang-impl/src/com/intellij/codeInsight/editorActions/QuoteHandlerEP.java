@@ -25,7 +25,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
  * @author yole
  */
 public class QuoteHandlerEP extends AbstractExtensionPointBean {
-  public static final ExtensionPointName<QuoteHandlerEP> EP_NAME = new ExtensionPointName<QuoteHandlerEP>("com.intellij.quoteHandler");
+  public static final ExtensionPointName<QuoteHandlerEP> EP_NAME = new ExtensionPointName<>("com.intellij.quoteHandler");
 
   // these must be public for scrambling compatibility
   @Attribute("fileType")

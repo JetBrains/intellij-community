@@ -42,7 +42,7 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
     synchronized (KEY) {
       Map<Project, PythonSdkPathCache> cacheMap = sdk.getUserData(KEY);
       if (cacheMap == null) {
-        cacheMap = new WeakHashMap<Project, PythonSdkPathCache>();
+        cacheMap = new WeakHashMap<>();
         sdk.putUserData(KEY, cacheMap);
       }
       PythonSdkPathCache cache = cacheMap.get(project);
@@ -56,7 +56,7 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
 
   private final Project myProject;
   private final Sdk mySdk;
-  private final AtomicReference<PyBuiltinCache> myBuiltins = new AtomicReference<PyBuiltinCache>();
+  private final AtomicReference<PyBuiltinCache> myBuiltins = new AtomicReference<>();
 
   public PythonSdkPathCache(@NotNull final Project project, @NotNull final Sdk sdk) {
     myProject = project;

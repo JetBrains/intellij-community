@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutterAction;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
@@ -100,6 +101,12 @@ public class AnnotationFieldGutter implements ActiveAnnotationGutter {
   @Nullable
   public String getToolTip(final int line, final Editor editor) {
     return isAvailable() ? XmlStringUtil.escapeString(myAnnotation.getToolTip(line)) : null;
+  }
+
+  @Nullable
+  @Override
+  public Computable<String> getToolTipAsync(int line, Editor editor) {
+    return isAvailable() ? myAnnotation.getToolTipAsync(line) : null;
   }
 
   public void doAction(int line) {

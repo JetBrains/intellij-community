@@ -34,7 +34,7 @@ public class OverrideImplementsAnnotationsHandlerImpl implements OverrideImpleme
   @Override
   public String[] getAnnotations(Project project) {
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
-    final Collection<String> anns = new ArrayList<String>(manager.getNotNulls());
+    final Collection<String> anns = new ArrayList<>(manager.getNotNulls());
     anns.addAll(manager.getNullables());
     anns.add(AnnotationUtil.NLS);
     return ArrayUtil.toStringArray(anns);

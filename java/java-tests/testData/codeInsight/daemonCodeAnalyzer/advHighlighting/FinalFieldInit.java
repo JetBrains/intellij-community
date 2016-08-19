@@ -283,3 +283,19 @@ class AssignInAssert {
     assert b = true;
   }
 }
+
+class DefiniteAssignmentInFinally {
+  private final String S;
+  {
+    try {
+      try {
+      } finally {
+        try {
+        } catch (Exception e) {
+        }
+      }
+    } finally {
+      S = null;
+    }
+  }
+}

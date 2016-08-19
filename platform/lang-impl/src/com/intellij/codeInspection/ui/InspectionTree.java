@@ -192,7 +192,7 @@ public class InspectionTree extends Tree {
       InspectionToolWrapper toolWrapper = getSelectedToolWrapper(true);
       if (toolWrapper == null) return RefEntity.EMPTY_ELEMENTS_ARRAY;
 
-      Set<RefEntity> result = new LinkedHashSet<RefEntity>();
+      Set<RefEntity> result = new LinkedHashSet<>();
       for (TreePath selectionPath : selectionPaths) {
         final InspectionTreeNode node = (InspectionTreeNode)selectionPath.getLastPathComponent();
         addElementsInNode(node, result);
@@ -234,7 +234,7 @@ public class InspectionTree extends Tree {
     final TreePath[] paths = getSelectionPaths();
     if (paths == null) return CommonProblemDescriptor.EMPTY_ARRAY;
     final TreePath[] selectionPaths = TreeUtil.selectMaximals(paths);
-    final List<CommonProblemDescriptor> descriptors = new ArrayList<CommonProblemDescriptor>();
+    final List<CommonProblemDescriptor> descriptors = new ArrayList<>();
 
     MultiMap<Object, ProblemDescriptionNode> parentToChildNode = new MultiMap<>();
     final List<InspectionTreeNode> nonDescriptorNodes = new SmartList<>();

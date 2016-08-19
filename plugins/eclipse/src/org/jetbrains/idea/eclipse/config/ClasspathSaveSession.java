@@ -45,8 +45,8 @@ import java.util.Map;
 import java.util.Set;
 
 final class ClasspathSaveSession implements StateStorage.ExternalizationSession, StateStorage.SaveSession, SafeWriteRequestor {
-  private final Map<String, Element> modifiedContent = new THashMap<String, Element>();
-  private final Set<String> deletedContent = new THashSet<String>();
+  private final Map<String, Element> modifiedContent = new THashMap<>();
+  private final Set<String> deletedContent = new THashSet<>();
 
   private final Module module;
 

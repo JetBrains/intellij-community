@@ -56,7 +56,7 @@ public class PyStdlibClassMembersProvider extends PyClassMembersProviderBase {
   }
 
   private static List<PyCustomMember> calcSocketMembers(PyFile socketFile) {
-    List<PyCustomMember> result = new ArrayList<PyCustomMember>();
+    List<PyCustomMember> result = new ArrayList<>();
     addMethodsFromAttr(socketFile, result, "_socketmethods");
     addMethodsFromAttr(socketFile, result, "_delegate_methods");
     return result;

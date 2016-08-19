@@ -210,7 +210,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
                   Disposable disposable = Disposer.newDisposable();
                   Configurable composite = new TabbedConfigurable(disposable) {
                         protected List<Configurable> createConfigurables() {
-                            List<Configurable> res = new ArrayList<Configurable>();
+                            List<Configurable> res = new ArrayList<>();
                             res.add(new GenerateToStringConfigurable(clazz.getProject()));
                             res.add(ui);
                             return res;

@@ -119,9 +119,9 @@ public class GitChangeProvider implements ChangeProvider {
     }
 
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    final Set<VirtualFile> rootsUnderGit = new HashSet<VirtualFile>(Arrays.asList(vcsManager.getRootsUnderVcs(vcs)));
-    final Set<VirtualFile> inputColl = new HashSet<VirtualFile>(rootsUnderGit);
-    final Set<VirtualFile> existingInScope = new HashSet<VirtualFile>();
+    final Set<VirtualFile> rootsUnderGit = new HashSet<>(Arrays.asList(vcsManager.getRootsUnderVcs(vcs)));
+    final Set<VirtualFile> inputColl = new HashSet<>(rootsUnderGit);
+    final Set<VirtualFile> existingInScope = new HashSet<>();
     for (FilePath dir : recursivelyDirtyDirectories) {
       VirtualFile vf = dir.getVirtualFile();
       if (vf == null) {

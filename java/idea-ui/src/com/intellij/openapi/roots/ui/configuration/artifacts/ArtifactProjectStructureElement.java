@@ -64,7 +64,7 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
   @Override
   public List<ProjectStructureElementUsage> getUsagesInElement() {
     final Artifact artifact = myArtifactsStructureContext.getArtifactModel().getArtifactByOriginal(myOriginalArtifact);
-    final List<ProjectStructureElementUsage> usages = new ArrayList<ProjectStructureElementUsage>();
+    final List<ProjectStructureElementUsage> usages = new ArrayList<>();
     final CompositePackagingElement<?> rootElement = myArtifactsStructureContext.getRootElement(artifact);
     ArtifactUtil.processPackagingElements(rootElement, null, new PackagingElementProcessor<PackagingElement<?>>() {
       @Override

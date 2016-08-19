@@ -309,7 +309,7 @@ public class MovablePopup {
         @SuppressWarnings("unchecked")
         ArrayDeque<Window> cache = (ArrayDeque<Window>)root.getClientProperty(CACHE);
         if (cache == null) {
-          cache = new ArrayDeque<Window>();
+          cache = new ArrayDeque<>();
           root.putClientProperty(CACHE, cache);
         }
         cache.push(window);

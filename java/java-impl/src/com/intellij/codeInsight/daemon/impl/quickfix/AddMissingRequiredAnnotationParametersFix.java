@@ -83,7 +83,7 @@ public class AddMissingRequiredAnnotationParametersFix implements IntentionActio
 
     final TObjectIntHashMap<String> annotationsOrderMap = getAnnotationsOrderMap();
     final SortedSet<Pair<String, PsiAnnotationMemberValue>>
-      newParameters = new TreeSet<Pair<String, PsiAnnotationMemberValue>>(
+      newParameters = new TreeSet<>(
       (o1, o2) -> annotationsOrderMap.get(o1.getFirst()) - annotationsOrderMap.get(o2.getFirst()));
     final boolean order = isAlreadyAddedOrdered(annotationsOrderMap, addedParameters);
     if (order) {
@@ -135,7 +135,7 @@ public class AddMissingRequiredAnnotationParametersFix implements IntentionActio
   }
 
   private TObjectIntHashMap<String> getAnnotationsOrderMap() {
-    final TObjectIntHashMap<String> map = new TObjectIntHashMap<String>();
+    final TObjectIntHashMap<String> map = new TObjectIntHashMap<>();
     for (int i = 0; i < myAnnotationMethods.length; i++) {
       map.put(myAnnotationMethods[i].getName(), i);
     }

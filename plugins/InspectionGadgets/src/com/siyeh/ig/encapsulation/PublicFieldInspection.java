@@ -48,7 +48,7 @@ public class PublicFieldInspection extends PublicFieldInspectionBase {
   @NotNull
   @Override
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
-    final List<InspectionGadgetsFix> fixes = new ArrayList<InspectionGadgetsFix>();
+    final List<InspectionGadgetsFix> fixes = new ArrayList<>();
     final PsiField field = (PsiField)infos[0];
     fixes.add(new EncapsulateVariableFix(field.getName()));
     AddToIgnoreIfAnnotatedByListQuickFix.build(field, ignorableAnnotations, fixes);

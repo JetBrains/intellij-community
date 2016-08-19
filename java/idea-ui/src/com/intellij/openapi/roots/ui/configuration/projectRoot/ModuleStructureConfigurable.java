@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,7 +114,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   public ModuleStructureConfigurable(Project project, ModuleManager manager) {
     super(project);
     myModuleManager = manager;
-    myRemoveHandlers = new ArrayList<RemoveConfigurableHandler<?>>();
+    myRemoveHandlers = new ArrayList<>();
     myRemoveHandlers.add(new ModuleRemoveHandler());
     myRemoveHandlers.add(new FacetInModuleRemoveHandler());
     for (ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
@@ -135,7 +135,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   @Override
   protected ArrayList<AnAction> getAdditionalActions() {
-    final ArrayList<AnAction> result = new ArrayList<AnAction>();
+    final ArrayList<AnAction> result = new ArrayList<>();
     result.add(ActionManager.getInstance().getAction(IdeActions.GROUP_MOVE_MODULE_TO_GROUP));
     return result;
   }
@@ -175,7 +175,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   @NotNull
   @Override
   protected Collection<? extends ProjectStructureElement> getProjectStructureElements() {
-    final List<ProjectStructureElement> result = new ArrayList<ProjectStructureElement>();
+    final List<ProjectStructureElement> result = new ArrayList<>();
     for (Module module : myModuleManager.getModules()) {
       result.add(new ModuleProjectStructureElement(myContext, module));
     }
@@ -219,7 +219,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
 
   private void createProjectNodes() {
-    final Map<ModuleGroup, MyNode> moduleGroup2NodeMap = new HashMap<ModuleGroup, MyNode>();
+    final Map<ModuleGroup, MyNode> moduleGroup2NodeMap = new HashMap<>();
     final Module[] modules = myModuleManager.getModules();
     for (final Module module : modules) {
       ModuleConfigurable configurable = new ModuleConfigurable(myContext.myModulesConfigurator, module, TREE_UPDATER);
@@ -307,7 +307,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   protected Comparator<MyNode> getNodeComparator() {
     List<Comparator<MyNode>> comparators = ContainerUtil
       .mapNotNull(ModuleStructureExtension.EP_NAME.getExtensions(), moduleStructureExtension -> moduleStructureExtension.getNodeComparator());
-    return new MergingComparator<MyNode>(ContainerUtil.concat(comparators, Collections.singletonList(NODE_COMPARATOR)));
+    return new MergingComparator<>(ContainerUtil.concat(comparators, Collections.singletonList(NODE_COMPARATOR)));
   }
 
   @Override
@@ -385,7 +385,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     super.disposeUIResources();
     myFacetEditorFacade.clearMaps(true);
     myContext.myModulesConfigurator.disposeUIResources();
-    ModuleStructureConfigurable.super.disposeUIResources();
+    super.disposeUIResources();
 
     for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
       extension.disposeUIResources();
@@ -588,13 +588,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return "project.structure";
   }
 
-  @Override
-  @Nullable
-  public Runnable enableSearch(String option) {
-    return null;
-  }
-
-
   @Nullable
   public Module getModule(final String moduleName) {
     if (moduleName == null) return null;
@@ -606,10 +599,10 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   private static TextConfigurable<ModuleGroup> createModuleGroupConfigurable(final ModuleGroup moduleGroup) {
-    return new TextConfigurable<ModuleGroup>(moduleGroup, moduleGroup.toString(),
-                                             ProjectBundle.message("module.group.banner.text", moduleGroup.toString()),
-                                             ProjectBundle.message("project.roots.module.groups.text"),
-                                             PlatformIcons.CLOSED_MODULE_GROUP_ICON);
+    return new TextConfigurable<>(moduleGroup, moduleGroup.toString(),
+                                  ProjectBundle.message("module.group.banner.text", moduleGroup.toString()),
+                                  ProjectBundle.message("project.roots.module.groups.text"),
+                                  PlatformIcons.CLOSED_MODULE_GROUP_ICON);
   }
 
   private boolean canBeCopiedByExtension(final NamedConfigurable configurable) {
@@ -679,7 +672,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       if (DataKeys.MODULE_CONTEXT_ARRAY.is(dataId)){
         final TreePath[] paths = myTree.getSelectionPaths();
         if (paths != null) {
-          ArrayList<Module> modules = new ArrayList<Module>();
+          ArrayList<Module> modules = new ArrayList<>();
           for (TreePath path : paths) {
             MyNode node = (MyNode)path.getLastPathComponent();
             final NamedConfigurable configurable = node.getConfigurable();
@@ -771,7 +764,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       @NotNull
       public AnAction[] getChildren(@Nullable final AnActionEvent e) {
 
-        ArrayList<AnAction> result = new ArrayList<AnAction>();
+        ArrayList<AnAction> result = new ArrayList<>();
 
         AnAction addModuleAction = new AddModuleAction(false);
         addModuleAction.getTemplatePresentation().setText("New Module");
@@ -797,7 +790,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           return null;
         };
 
-        Collection<AnAction> actionsFromExtensions = new ArrayList<AnAction>();
+        Collection<AnAction> actionsFromExtensions = new ArrayList<>();
         for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
           actionsFromExtensions.addAll(extension.createAddActions(selectedNodeRetriever, TREE_UPDATER, myProject, myRoot));
         }

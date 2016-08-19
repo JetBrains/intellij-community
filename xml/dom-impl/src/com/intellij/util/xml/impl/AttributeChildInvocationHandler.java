@@ -174,7 +174,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
       try {
         XmlAttribute attribute = tag.setAttribute(attributeName, namespace, newValue);
         setXmlElement(attribute);
-        getManager().cacheHandler(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY, attribute, AttributeChildInvocationHandler.this);
+        getManager().cacheHandler(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY, attribute, this);
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);

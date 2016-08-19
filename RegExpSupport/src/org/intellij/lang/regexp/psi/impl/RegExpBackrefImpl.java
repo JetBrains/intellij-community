@@ -50,18 +50,19 @@ public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackre
     public RegExpGroup resolve() {
         final int index = getIndex();
 
-        final PsiElementProcessor.FindFilteredElement<RegExpElement> processor = new PsiElementProcessor.FindFilteredElement<RegExpElement>(new PsiElementFilter() {
+        final PsiElementProcessor.FindFilteredElement<RegExpElement> processor =
+          new PsiElementProcessor.FindFilteredElement<>(new PsiElementFilter() {
             int groupCount;
 
             public boolean isAccepted(PsiElement element) {
-                if (element instanceof RegExpGroup) {
-                    if (((RegExpGroup)element).isCapturing() && ++groupCount == index) {
-                        return true;
-                    }
+              if (element instanceof RegExpGroup) {
+                if (((RegExpGroup)element).isCapturing() && ++groupCount == index) {
+                  return true;
                 }
-                return element == RegExpBackrefImpl.this;
+              }
+              return element == RegExpBackrefImpl.this;
             }
-        });
+          });
 
         PsiTreeUtil.processElements(getContainingFile(), processor);
         if (processor.getFoundElement() instanceof RegExpGroup) {

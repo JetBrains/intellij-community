@@ -35,9 +35,9 @@ import java.util.Collection;
 import java.util.List;
 
 public class AnActionListEditor<T> extends JPanel {
-  private final Form<T> myForm = new Form<T>();
-  private final ArrayList<T> myRemoved = new ArrayList<T>();
-  private final ArrayList<T> myAdded = new ArrayList<T>();
+  private final Form<T> myForm = new Form<>();
+  private final ArrayList<T> myRemoved = new ArrayList<>();
+  private final ArrayList<T> myAdded = new ArrayList<>();
 
   public AnActionListEditor() {
     super(new BorderLayout());
@@ -134,12 +134,12 @@ public class AnActionListEditor<T> extends JPanel {
     public Form() {
       myList.setModel(new DefaultListModel());
       if (ApplicationManager.getApplication() == null) {
-        myListController = new ReorderableListToolbar<T>(myList);
+        myListController = new ReorderableListToolbar<>(myList);
         return;  // Preview mode
       }
       DefaultActionGroup actionGroup = new DefaultActionGroup();
       ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, true);
-      myListController = new ReorderableListToolbar<T>(myList);
+      myListController = new ReorderableListToolbar<>(myList);
     }
 
     public void createToolbar() {

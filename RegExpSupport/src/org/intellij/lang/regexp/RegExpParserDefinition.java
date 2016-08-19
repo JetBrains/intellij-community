@@ -20,7 +20,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -30,21 +32,32 @@ import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.intellij.lang.regexp.psi.impl.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.EnumSet;
 
 public class RegExpParserDefinition implements ParserDefinition {
     private static final TokenSet COMMENT_TOKENS = TokenSet.create(RegExpTT.COMMENT);
+    private static final EnumSet<RegExpCapability> CAPABILITIES = EnumSet.of(RegExpCapability.NESTED_CHARACTER_CLASSES,
+                                                                             RegExpCapability.ALLOW_HORIZONTAL_WHITESPACE_CLASS,
+                                                                             RegExpCapability.UNICODE_CATEGORY_SHORTHAND);
 
+    @TestOnly
+    public static void setTestCapability(@Nullable RegExpCapability capability, @NotNull Disposable parentDisposable) {
+        if (!CAPABILITIES.contains(capability)) {
+            CAPABILITIES.add(capability);
+            Disposer.register(parentDisposable, () -> CAPABILITIES.remove(capability));
+        }
+    }
+    
     @NotNull
     public Lexer createLexer(Project project) {
-        return new RegExpLexer(EnumSet.of(RegExpCapability.NESTED_CHARACTER_CLASSES,
-                                          RegExpCapability.ALLOW_HORIZONTAL_WHITESPACE_CLASS,
-                                          RegExpCapability.UNICODE_CATEGORY_SHORTHAND));
+        return new RegExpLexer(CAPABILITIES);
     }
 
     public PsiParser createParser(Project project) {
-        return new RegExpParser();
+        return new RegExpParser(CAPABILITIES);
     }
 
     public IFileElementType getFileNodeType() {

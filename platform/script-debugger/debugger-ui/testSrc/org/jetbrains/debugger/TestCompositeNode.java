@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TestCompositeNode implements XCompositeNode {
-  private final AsyncPromise<XValueChildrenList> result = new AsyncPromise<XValueChildrenList>();
+  private final AsyncPromise<XValueChildrenList> result = new AsyncPromise<>();
   private final XValueChildrenList children = new XValueChildrenList();
 
   private final XValueGroup valueGroup;
@@ -124,7 +124,7 @@ public class TestCompositeNode implements XCompositeNode {
       @NotNull
       @Override
       public Promise<Content> fun(XValueChildrenList list) {
-        List<Promise<?>> promises = new ArrayList<Promise<?>>();
+        List<Promise<?>> promises = new ArrayList<>();
         resolveGroups(children.getTopGroups(), content.topGroups, promises);
 
         for (int i = 0; i < children.size(); i++) {

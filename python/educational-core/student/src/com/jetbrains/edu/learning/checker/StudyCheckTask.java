@@ -118,9 +118,10 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
     if (course != null) {
       final StudyTestsOutputParser.TestsOutput testsOutput = StudyTestsOutputParser.getTestsOutput(output, course.isAdaptive());
       String stderr = output.getStderr();
-      if (!stderr.isEmpty()) {
+      if (!stderr.isEmpty() && output.getStdout().isEmpty()) {
         //log error output of tests
         LOG.info("#educational " + stderr);
+        return new StudyTestsOutputParser.TestsOutput(false, stderr);
       }
       return testsOutput;
     }
@@ -141,7 +142,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
           if (pair.getFirst()) {
             onTaskSolved("Congratulations! Remote tests passed.");
             if (myStatusBeforeCheck != StudyStatus.Solved) {
-              EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, 2);
+              EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, 2, indicator);
             }
           }
           else {

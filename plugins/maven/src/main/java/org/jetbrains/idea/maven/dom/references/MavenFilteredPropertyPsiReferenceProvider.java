@@ -151,7 +151,7 @@ public class MavenFilteredPropertyPsiReferenceProvider extends PsiReferenceProvi
       assert propertyName != null;
 
       if (res == null) {
-        res = new ArrayList<PsiReference>();
+        res = new ArrayList<>();
       }
 
       TextRange range = TextRange.from(from, propertyName.length());

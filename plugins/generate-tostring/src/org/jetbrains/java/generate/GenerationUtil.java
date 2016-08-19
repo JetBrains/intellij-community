@@ -107,7 +107,7 @@ public class GenerationUtil {
       if (classMemberList == null || classMemberList.isEmpty()) {
         return Collections.emptyList();
       }
-      List<PsiMember> psiMemberList = new ArrayList<PsiMember>();
+      List<PsiMember> psiMemberList = new ArrayList<>();
 
       for (PsiElementClassMember classMember : classMemberList) {
           psiMemberList.add(classMember.getElement());

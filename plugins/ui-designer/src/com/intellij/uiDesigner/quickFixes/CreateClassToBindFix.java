@@ -117,7 +117,7 @@ public final class CreateClassToBindFix extends QuickFix{
     final GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
     final PsiManager psiManager = PsiManager.getInstance(myEditor.getProject());
 
-    final Ref<IncorrectOperationException> exception = new Ref<IncorrectOperationException>();
+    final Ref<IncorrectOperationException> exception = new Ref<>();
     FormEditingUtil.iterate(myEditor.getRootContainer(), new FormEditingUtil.ComponentVisitor() {
       public boolean visit(final IComponent component) {
         if (component.getBinding() != null) {

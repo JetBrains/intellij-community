@@ -41,9 +41,9 @@ public class HtmlParsing {
   @NonNls private static final String TABLE_TAG = "table";
 
   private final PsiBuilder myBuilder;
-  private final Stack<String> myTagNamesStack = new Stack<String>();
-  private final Stack<String> myOriginalTagNamesStack = new Stack<String>();
-  private final Stack<PsiBuilder.Marker> myTagMarkersStack = new Stack<PsiBuilder.Marker>();
+  private final Stack<String> myTagNamesStack = new Stack<>();
+  private final Stack<String> myOriginalTagNamesStack = new Stack<>();
+  private final Stack<PsiBuilder.Marker> myTagMarkersStack = new Stack<>();
   @NonNls private static final String COMPLETION_NAME = CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED.toLowerCase();
 
   public HtmlParsing(final PsiBuilder builder) {

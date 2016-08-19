@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
   @NotNull
   @Override
   public Map<Bytes, HEquations> map(@NotNull FileContent inputData) {
-    HashMap<Bytes, HEquations> map = new HashMap<Bytes, HEquations>();
+    HashMap<Bytes, HEquations> map = new HashMap<>();
     try {
       MessageDigest md = BytecodeAnalysisConverter.getMessageDigest();
       Map<Key, List<Equation>> allEquations = processClass(new ClassReader(inputData.getContent()), inputData.getFile().getPresentableUrl());
@@ -62,7 +62,7 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
         List<Equation> rawMethodEquations = entry.getValue();
         //
         List<DirectionResultPair> compressedMethodEquations =
-          new ArrayList<DirectionResultPair>(rawMethodEquations.size());
+          new ArrayList<>(rawMethodEquations.size());
         for (Equation equation : rawMethodEquations) {
           compressedMethodEquations.add(BytecodeAnalysisConverter.convert(equation, md));
         }
@@ -89,9 +89,9 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
     final State[] sharedPendingStates = new State[Analysis.STEPS_LIMIT];
     final PendingAction[] sharedPendingActions = new PendingAction[Analysis.STEPS_LIMIT];
     final PResults.PResult[] sharedResults = new PResults.PResult[Analysis.STEPS_LIMIT];
-    final Map<Key, List<Equation>> equations = new HashMap<Key, List<Equation>>();
+    final Map<Key, List<Equation>> equations = new HashMap<>();
 
-    classReader.accept(new ClassVisitor(Opcodes.ASM5) {
+    classReader.accept(new ClassVisitor(Opcodes.API_VERSION) {
       private String className;
       private boolean stableClass;
 
@@ -104,8 +104,8 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
 
       @Override
       public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-        final MethodNode node = new MethodNode(Opcodes.ASM5, access, name, desc, signature, exceptions);
-        return new MethodVisitor(Opcodes.ASM5, node) {
+        final MethodNode node = new MethodNode(Opcodes.API_VERSION, access, name, desc, signature, exceptions);
+        return new MethodVisitor(Opcodes.API_VERSION, node) {
           private boolean jsr;
 
           @Override
@@ -147,7 +147,7 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
 
         // 4*n: for each reference parameter: @NotNull IN, @Nullable, null -> ... contract, !null -> contract
         // 3: @NotNull OUT, @Nullable OUT, purity analysis
-        List<Equation> equations = new ArrayList<Equation>(argumentTypes.length * 4 + 3);
+        List<Equation> equations = new ArrayList<>(argumentTypes.length * 4 + 3);
         equations.add(PurityAnalysis.analyze(method, methodNode, stable));
 
         if (argumentTypes.length == 0 && !isInterestingResult) {
@@ -429,7 +429,7 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
                                                       boolean isInterestingResult,
                                                       boolean stable) {
         // 4 = @NotNull parameter, @Nullable parameter, null -> ..., !null -> ...
-        List<Equation> result = new ArrayList<Equation>(argumentTypes.length * 4 + 2);
+        List<Equation> result = new ArrayList<>(argumentTypes.length * 4 + 2);
         if (isReferenceResult) {
           result.add(new Equation(new Key(method, Out, stable), FINAL_TOP));
           result.add(new Equation(new Key(method, NullableOut, stable), FINAL_BOT));

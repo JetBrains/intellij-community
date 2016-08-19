@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ public class CustomizationUtil {
                                           AnActionEvent e) {
     String text = group.getTemplatePresentation().getText();
     ActionManager actionManager = ActionManager.getInstance();
-    final ArrayList<AnAction> reorderedChildren = new ArrayList<AnAction>();
+    final ArrayList<AnAction> reorderedChildren = new ArrayList<>();
     ContainerUtil.addAll(reorderedChildren, group.getChildren(e));
     final List<ActionUrl> actions = schema.getActions();
     for (ActionUrl actionUrl : actions) {
@@ -132,16 +132,18 @@ public class CustomizationUtil {
     schema.fillActionGroups(root);
     final JTree defaultTree = new Tree(new DefaultTreeModel(root));
 
-    final List<ActionUrl> actions = new ArrayList<ActionUrl>();
+    final List<ActionUrl> actions = new ArrayList<>();
     TreeUtil.traverseDepth((TreeNode)tree.getModel().getRoot(), new TreeUtil.Traverse() {
       @Override
       public boolean accept(Object node) {
         DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)node;
-        if (treeNode.isLeaf()) {
+        Object userObject = treeNode.getUserObject();
+        if (treeNode.isLeaf() && !(userObject instanceof Group)) {
           return true;
         }
-        final ActionUrl url = getActionUrl(new TreePath(treeNode.getPath()), 0);
-        url.getGroupPath().add(((Group)treeNode.getUserObject()).getName());
+        ActionUrl url = getActionUrl(new TreePath(treeNode.getPath()), 0);
+        String groupName = ((Group)userObject).getName();
+        url.getGroupPath().add(groupName);
         final TreePath treePath = getTreePath(defaultTree, url);
         if (treePath != null) {
           final DefaultMutableTreeNode visited = (DefaultMutableTreeNode)treePath.getLastPathComponent();
@@ -152,7 +154,7 @@ public class CustomizationUtil {
           //customizations at the new place
           url.getGroupPath().remove(url.getParentGroup());
           if (actions.contains(url)){
-            url.getGroupPath().add(((Group)treeNode.getUserObject()).getName());
+            url.getGroupPath().add(groupName);
             actions.addAll(schema.getChildActions(url));
           }
         }
@@ -192,7 +194,7 @@ public class CustomizationUtil {
   }
 
   public static TreePath getPathByUserObjects(JTree tree, TreePath treePath){
-    List<String>  path = new ArrayList<String>();
+    List<String>  path = new ArrayList<>();
     for (int i = 0; i < treePath.getPath().length; i++) {
       Object o = ((DefaultMutableTreeNode)treePath.getPath()[i]).getUserObject();
       if (o instanceof Group) {
@@ -267,8 +269,8 @@ public class CustomizationUtil {
 
 
   private static ActionUrl[] getChildUserObjects(DefaultMutableTreeNode node, ActionUrl parent) {
-    ArrayList<ActionUrl> result = new ArrayList<ActionUrl>();
-    ArrayList<String> groupPath = new ArrayList<String>();
+    ArrayList<ActionUrl> result = new ArrayList<>();
+    ArrayList<String> groupPath = new ArrayList<>();
     groupPath.addAll(parent.getGroupPath());
     for (int i = 0; i < node.getChildCount(); i++) {
       DefaultMutableTreeNode child = (DefaultMutableTreeNode)node.getChildAt(i);

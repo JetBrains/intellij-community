@@ -118,7 +118,6 @@ public final class PythonSdkType extends SdkType {
     super("Python SDK");
   }
 
-
   public Icon getIcon() {
     return PythonIcons.Python.Python;
   }
@@ -188,7 +187,7 @@ public final class PythonSdkType extends SdkType {
   @NotNull
   @Override
   public Collection<String> suggestHomePaths() {
-    List<String> candidates = new ArrayList<String>();
+    List<String> candidates = new ArrayList<>();
     for (PythonSdkFlavor flavor : PythonSdkFlavor.getApplicableFlavors()) {
       candidates.addAll(flavor.suggestHomePaths());
     }
@@ -196,7 +195,7 @@ public final class PythonSdkType extends SdkType {
   }
 
   private static TreeSet<String> createVersionSet() {
-    return new TreeSet<String>((o1, o2) -> findDigits(o1).compareTo(findDigits(o2)));
+    return new TreeSet<>((o1, o2) -> findDigits(o1).compareTo(findDigits(o2)));
   }
 
   private static String findDigits(String s) {
@@ -298,7 +297,7 @@ public final class PythonSdkType extends SdkType {
     PythonSdkDetailsStep
       .show(project, sdkModel.getSdks(), null, parentComponent, point, sdk -> {
         if (sdk != null) {
-          sdk.putUserData(SDK_CREATOR_COMPONENT_KEY, new WeakReference<Component>(parentComponent));
+          sdk.putUserData(SDK_CREATOR_COMPONENT_KEY, new WeakReference<>(parentComponent));
           sdkCreatedCallback.consume(sdk);
         }
       });
@@ -603,7 +602,7 @@ public final class PythonSdkType extends SdkType {
       return getSysPathsFromScript(bin_path);
     }
     else { // mock sdk
-      List<String> ret = new ArrayList<String>(1);
+      List<String> ret = new ArrayList<>(1);
       ret.add(working_dir);
       return ret;
     }
@@ -905,6 +904,16 @@ public final class PythonSdkType extends SdkType {
       return null;
     }
     return ModuleRootManager.getInstance(module).getSdk();
+  }
+
+  @NotNull
+  public static String getSdkKey(@NotNull Sdk sdk) {
+    return sdk.getName();
+  }
+
+  @Nullable
+  public static Sdk findSdkByKey(@NotNull String key) {
+    return ProjectJdkTable.getInstance().findJdk(key);
   }
 }
 

@@ -55,6 +55,11 @@ public abstract class BaseRefactoringAction extends AnAction {
 
   protected abstract boolean isEnabledOnElements(@NotNull PsiElement[] elements);
 
+  @Override
+  public boolean startInTransaction() {
+    return true;
+  }
+
   protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element, @NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
     return true;
   }
@@ -252,7 +257,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     List<PsiElement> filtered = null;
     for (PsiElement element : psiElements) {
       if (element instanceof SyntheticElement) {
-        if (filtered == null) filtered = new ArrayList<PsiElement>(Collections.singletonList(element));
+        if (filtered == null) filtered = new ArrayList<>(Collections.singletonList(element));
         filtered.remove(element);
       }
     }

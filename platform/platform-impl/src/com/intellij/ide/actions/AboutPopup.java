@@ -127,9 +127,9 @@ public class AboutPopup {
     private final Icon myImage;
     private Font myFont;
     private Font myBoldFont;
-    private final List<AboutBoxLine> myLines = new ArrayList<AboutBoxLine>();
+    private final List<AboutBoxLine> myLines = new ArrayList<>();
     private StringBuilder myInfo = new StringBuilder();
-    private final List<Link> myLinks = new ArrayList<Link>();
+    private final List<Link> myLinks = new ArrayList<>();
     private Link myActiveLink;
     private boolean myShowCopy = false;
     private float myShowCopyAlpha;

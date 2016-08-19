@@ -40,7 +40,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 public final class MacroManager {
-  private final HashMap<String, Macro> myMacrosMap = new HashMap<String, Macro>();
+  private final HashMap<String, Macro> myMacrosMap = new HashMap<>();
 
   public static MacroManager getInstance() {
     return ServiceManager.getService(MacroManager.class);
@@ -174,7 +174,7 @@ public final class MacroManager {
           int j = str.indexOf(macroNameWithParamEnd, i + macroNameWithParamStart.length());
           if(j > i) {
             String param = str.substring(i + macroNameWithParamStart.length(), j);
-            if(toReplace == null) toReplace = new THashMap<String, String>();
+            if(toReplace == null) toReplace = new THashMap<>();
             String expanded = macro.expand(dataContext, param);
             if (expanded == null) {
               expanded = "";

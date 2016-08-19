@@ -95,7 +95,7 @@ public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
       // group by name if same type
       return template1.getName().compareTo(template2.getName());
     });
-    List<AnAction> result = new ArrayList<AnAction>();
+    List<AnAction> result = new ArrayList<>();
 
     for (FileTemplate template : templates) {
       if (canCreateFromTemplate(e, template)) {

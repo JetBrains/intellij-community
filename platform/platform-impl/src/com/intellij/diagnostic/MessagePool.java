@@ -66,7 +66,7 @@ public class MessagePool {
   }
 
   public List<AbstractMessage> getFatalErrors(boolean aIncludeReadMessages, boolean aIncludeSubmittedMessages) {
-    List<AbstractMessage> result = new ArrayList<AbstractMessage>();
+    List<AbstractMessage> result = new ArrayList<>();
     for (AbstractMessage each : myIdeFatals) {
       if (!each.isRead() && !each.isSubmitted()) {
         result.add(each);
@@ -116,7 +116,7 @@ public class MessagePool {
   private class MessageGrouper implements Runnable {
     private final int myTimeOut;
     private final int myMaxGroupSize;
-    private final List<AbstractMessage> myMessages = new ArrayList<AbstractMessage>();
+    private final List<AbstractMessage> myMessages = new ArrayList<>();
     private final Alarm myAlarm;
 
     public MessageGrouper(int timeout, int maxGroupSize) {
@@ -138,7 +138,7 @@ public class MessagePool {
       if (myMessages.size() == 1) {
         message = myMessages.get(0);
       } else {
-        message = new GroupedLogMessage(new ArrayList<AbstractMessage>(myMessages));
+        message = new GroupedLogMessage(new ArrayList<>(myMessages));
       }
       myMessages.clear();
       myIdeFatals.add(message);

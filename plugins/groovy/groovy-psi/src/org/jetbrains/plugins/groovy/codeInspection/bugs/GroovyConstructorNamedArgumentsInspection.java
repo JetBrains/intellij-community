@@ -137,7 +137,7 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
               element = ((PsiMember)element).getContainingClass();
             }
 
-            List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>(2);
+            List<LocalQuickFix> fixes = new ArrayList<>(2);
             if (element instanceof GrTypeDefinition) {
               fixes.add(GroovyQuickFixFactory.getInstance().createCreateFieldFromConstructorLabelFix((GrTypeDefinition)element, label.getNamedArgument()));
             }

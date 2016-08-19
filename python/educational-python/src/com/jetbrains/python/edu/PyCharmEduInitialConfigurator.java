@@ -41,6 +41,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
@@ -63,6 +64,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.platform.DirectoryProjectConfigurator;
 import com.intellij.platform.PlatformProjectViewOpener;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -146,6 +148,7 @@ public class PyCharmEduInitialConfigurator {
     if (!propertiesComponent.getBoolean(CONFIGURED_V2)) {
       EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
       editorSettings.setEnsureNewLineAtEOF(true);
+
       propertiesComponent.setValue(CONFIGURED_V2, true);
     }
     if (!propertiesComponent.getBoolean(CONFIGURED_V1)) {
@@ -329,6 +332,11 @@ public class PyCharmEduInitialConfigurator {
       if ("org.intellij.lang.regexp.intention.CheckRegExpIntentionAction".equals(ep.className)) {
         rootArea.getExtensionPoint(IntentionManager.EP_INTENTION_ACTIONS).unregisterExtension(ep);
       }
+    }
+
+    final ExtensionPoint<ProjectAttachProcessor> point = Extensions.getRootArea().getExtensionPoint(ProjectAttachProcessor.EP_NAME);
+    for (ProjectAttachProcessor attachProcessor : Extensions.getExtensions(ProjectAttachProcessor.EP_NAME)) {
+      point.unregisterExtension(attachProcessor);
     }
   }
 

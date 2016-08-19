@@ -35,7 +35,7 @@ class InstrumentationAdapter extends MethodVisitor implements Opcodes {
 
   private final PatternValidationInstrumenter myInstrumenter;
 
-  private final List<PatternValue> myParameterPatterns = new ArrayList<PatternValue>();
+  private final List<PatternValue> myParameterPatterns = new ArrayList<>();
   private PatternValue myMethodPattern;
 
   private Label myAssertLabel;
@@ -46,7 +46,7 @@ class InstrumentationAdapter extends MethodVisitor implements Opcodes {
                                 Type returnType,
                                 int access,
                                 String name) {
-    super(Opcodes.ASM5, methodvisitor);
+    super(Opcodes.API_VERSION, methodvisitor);
     myInstrumenter = instrumenter;
     myArgTypes = argTypes;
     myReturnType = returnType;
@@ -213,7 +213,7 @@ class InstrumentationAdapter extends MethodVisitor implements Opcodes {
     private final PatternValue myPatternValue;
 
     public MyAnnotationVisitor(AnnotationVisitor annotationvisitor, PatternValue v) {
-      super(Opcodes.ASM5);
+      super(Opcodes.API_VERSION);
       av = annotationvisitor;
       myPatternValue = v;
     }

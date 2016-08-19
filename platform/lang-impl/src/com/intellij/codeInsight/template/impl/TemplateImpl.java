@@ -57,7 +57,7 @@ public class TemplateImpl extends Template implements SchemeElement {
     if (!myString.equals(template.myString)) return false;
     if (myTemplateText != null ? !myTemplateText.equals(template.myTemplateText) : template.myTemplateText != null) return false;
 
-    if (!new HashSet<Variable>(myVariables).equals(new HashSet<Variable>(template.myVariables))) return false;
+    if (!new HashSet<>(myVariables).equals(new HashSet<>(template.myVariables))) return false;
     if (isDeactivated != template.isDeactivated) return false;
 
     return true;
@@ -85,8 +85,8 @@ public class TemplateImpl extends Template implements SchemeElement {
   @NonNls public static final String SELECTION_END = "SELECTION_END";
   @NonNls public static final String ARG = "ARG";
 
-  public static final Set<String> INTERNAL_VARS_SET = new HashSet<String>(Arrays.asList(
-      END, SELECTION, SELECTION_START, SELECTION_END));
+  public static final Set<String> INTERNAL_VARS_SET = new HashSet<>(Arrays.asList(
+    END, SELECTION, SELECTION_START, SELECTION_END));
 
   private boolean isDeactivated = false;
 
@@ -462,7 +462,7 @@ public class TemplateImpl extends Template implements SchemeElement {
   }
 
   public Map<TemplateOptionalProcessor, Boolean> createOptions() {
-    Map<TemplateOptionalProcessor, Boolean> context = new LinkedHashMap<TemplateOptionalProcessor, Boolean>();
+    Map<TemplateOptionalProcessor, Boolean> context = new LinkedHashMap<>();
     for (TemplateOptionalProcessor processor : Extensions.getExtensions(TemplateOptionalProcessor.EP_NAME)) {
       context.put(processor, processor.isEnabled(this));
     }

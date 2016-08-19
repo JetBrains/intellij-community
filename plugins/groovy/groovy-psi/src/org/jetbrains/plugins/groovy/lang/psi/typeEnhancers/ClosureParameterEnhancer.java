@@ -49,8 +49,8 @@ import static com.intellij.psi.CommonClassNames.*;
  * @author peter
  */
 public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
-  private static final Map<String, String> simpleTypes = new HashMap<String, String>();
-  private static final Set<String> iterations = new HashSet<String>();
+  private static final Map<String, String> simpleTypes = new HashMap<>();
+  private static final Set<String> iterations = new HashSet<>();
 
   static {
     simpleTypes.put("times", JAVA_LANG_INTEGER);

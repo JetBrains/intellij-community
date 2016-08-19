@@ -16,7 +16,7 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.ui.tree.render.CompoundNodeRenderer;
+import com.intellij.debugger.ui.tree.render.CompoundTypeRenderer;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.Disposable;
@@ -200,6 +200,7 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
 
   public void addRenderer(NodeRenderer renderer) {
     myRendererChooser.addElement(renderer, renderer.isEnabled());
+    myRendererChooser.moveElement(renderer, 0);
   }
 
   private class AddAction implements AnActionButtonRunnable {
@@ -209,10 +210,9 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
 
     @Override
     public void run(AnActionButton button) {
-      final NodeRenderer renderer = (NodeRenderer)NodeRendererSettings.getInstance().createRenderer(CompoundNodeRenderer.UNIQUE_ID);
+      NodeRenderer renderer = (NodeRenderer)NodeRendererSettings.getInstance().createRenderer(CompoundTypeRenderer.UNIQUE_ID);
       renderer.setEnabled(true);
       addRenderer(renderer);
-      SwingUtilities.invokeLater(myNameField::requestFocus);
     }
   }
 

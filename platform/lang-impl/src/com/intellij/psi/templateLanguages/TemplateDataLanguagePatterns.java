@@ -40,7 +40,7 @@ import java.util.List;
     name = "TemplateDataLanguagePatterns",
     storages = @Storage("templateLanguages.xml") )
 public class TemplateDataLanguagePatterns implements PersistentStateComponent<Element> {
-  private FileTypeAssocTable<Language> myAssocTable = new FileTypeAssocTable<Language>();
+  private FileTypeAssocTable<Language> myAssocTable = new FileTypeAssocTable<>();
   @NonNls private static final String SEPARATOR = ";";
 
   public static TemplateDataLanguagePatterns getInstance() {
@@ -62,9 +62,9 @@ public class TemplateDataLanguagePatterns implements PersistentStateComponent<El
 
   @Override
   public void loadState(Element state) {
-    myAssocTable = new FileTypeAssocTable<Language>();
+    myAssocTable = new FileTypeAssocTable<>();
 
-    final THashMap<String, Language> dialectMap = new THashMap<String, Language>();
+    final THashMap<String, Language> dialectMap = new THashMap<>();
     for (Language dialect : TemplateDataLanguageMappings.getTemplateableLanguages()) {
       dialectMap.put(dialect.getID(), dialect);
     }

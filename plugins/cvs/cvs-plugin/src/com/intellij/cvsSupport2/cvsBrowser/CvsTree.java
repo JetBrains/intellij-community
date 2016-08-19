@@ -93,7 +93,7 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
   }
 
   private void setCurrentSelection(TreePath[] paths) {
-    final ArrayList<CvsElement> selection = new ArrayList<CvsElement>();
+    final ArrayList<CvsElement> selection = new ArrayList<>();
     if (paths != null) {
       for (TreePath path : paths) {
         final Object selectedObject = path.getLastPathComponent();

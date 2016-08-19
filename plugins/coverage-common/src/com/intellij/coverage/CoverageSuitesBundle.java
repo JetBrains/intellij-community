@@ -35,7 +35,7 @@ public class CoverageSuitesBundle {
 
   private CachedValue<GlobalSearchScope> myCachedValue;
 
-  private SoftReference<ProjectData> myData = new SoftReference<ProjectData>(null);
+  private SoftReference<ProjectData> myData = new SoftReference<>(null);
   private static final Logger LOG = Logger.getInstance("#" + CoverageSuitesBundle.class.getName());
 
   public CoverageSuitesBundle(CoverageSuite suite) {
@@ -94,7 +94,7 @@ public class CoverageSuitesBundle {
         data.merge(coverageData);
       }
     }
-    myData = new SoftReference<ProjectData>(data);
+    myData = new SoftReference<>(data);
     return data;
   }
 
@@ -130,11 +130,11 @@ public class CoverageSuitesBundle {
   }
 
   public void setCoverageData(ProjectData projectData) {
-    myData = new SoftReference<ProjectData>(projectData);
+    myData = new SoftReference<>(projectData);
   }
 
   public void restoreCoverageData() {
-    myData = new SoftReference<ProjectData>(null);
+    myData = new SoftReference<>(null);
   }
 
   public String getPresentableName() {
@@ -147,7 +147,7 @@ public class CoverageSuitesBundle {
 
   public void checkModule(final Module module) {
     if (myProcessedModules == null) {
-      myProcessedModules = new HashSet<Module>();
+      myProcessedModules = new HashSet<>();
     }
     myProcessedModules.add(module);
   }
@@ -168,7 +168,7 @@ public class CoverageSuitesBundle {
   public GlobalSearchScope getSearchScope(final Project project) {
     if (myCachedValue == null) {
       myCachedValue = CachedValuesManager.getManager(project).createCachedValue(
-        () -> new CachedValueProvider.Result<GlobalSearchScope>(getSearchScopeInner(project), ProjectRootModificationTracker.getInstance(project)), false);
+        () -> new CachedValueProvider.Result<>(getSearchScopeInner(project), ProjectRootModificationTracker.getInstance(project)), false);
     }
     return myCachedValue.getValue();
     

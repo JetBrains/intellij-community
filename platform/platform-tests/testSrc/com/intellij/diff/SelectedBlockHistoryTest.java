@@ -224,7 +224,7 @@ public class SelectedBlockHistoryTest extends TestCase {
   }
 
   private static String[] composeVersion(String[] beforeBlock, String[] block, String[] afterBlock) {
-    List<String> beforeList = new ArrayList<String>();
+    List<String> beforeList = new ArrayList<>();
     ContainerUtil.addAll(beforeList, beforeBlock);
     ContainerUtil.addAll(beforeList, block);
     ContainerUtil.addAll(beforeList, afterBlock);

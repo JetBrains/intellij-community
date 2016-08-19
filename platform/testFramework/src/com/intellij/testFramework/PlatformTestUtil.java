@@ -184,7 +184,7 @@ public class PlatformTestUtil {
                                                 boolean withSelection,
                                                 @Nullable Queryable.PrintInfo printInfo,
                                                 Condition<String> nodePrintCondition) {
-    Collection<String> strings = new ArrayList<String>();
+    Collection<String> strings = new ArrayList<>();
     printImpl(tree, root, strings, 0, withSelection, printInfo, nodePrintCondition);
     return strings;
   }
@@ -319,6 +319,7 @@ public class PlatformTestUtil {
   public static void dispatchAllEventsInIdeEventQueue() throws InterruptedException {
     assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
     final IdeEventQueue eventQueue = (IdeEventQueue)Toolkit.getDefaultToolkit().getSystemEventQueue();
+    //noinspection StatementWithEmptyBody
     while (dispatchNextEventIfAny(eventQueue) != null);
   }
 
@@ -376,7 +377,7 @@ public class PlatformTestUtil {
     Object[] children = structure.getChildElements(node);
 
     if (comparator != null) {
-      ArrayList<?> list = new ArrayList<Object>(Arrays.asList(children));
+      ArrayList<?> list = new ArrayList<>(Arrays.asList(children));
       @SuppressWarnings({"UnnecessaryLocalVariable", "unchecked"}) Comparator<Object> c = comparator;
       Collections.sort(list, c);
       children = ArrayUtil.toObjectArray(list);
@@ -507,8 +508,13 @@ public class PlatformTestUtil {
   }
 
   @NotNull
+  public static String getJavaExe() {
+    return SystemProperties.getJavaHome() + (SystemInfo.isWindows ? "\\bin\\java.exe" : "/bin/java");
+  }
+
+  @NotNull
   public static String getRtJarPath() {
-    String home = System.getProperty("java.home");
+    String home = SystemProperties.getJavaHome();
     return SystemInfo.isAppleJvm ? FileUtil.toCanonicalPath(home + "/../Classes/classes.jar") : home + "/lib/rt.jar";
   }
 
@@ -596,7 +602,7 @@ public class PlatformTestUtil {
           logMessage += ": " + percentage + "% longer";
         }
         logMessage +=
-          ". Expected: " + formatTime(expectedOnMyMachine) + ". Actual: " + formatTime(duration) + "." + Timings.getStatistics();
+          "\n  Expected: " + formatTime(expectedOnMyMachine) + "\n  Actual: " + formatTime(duration) + "\n " + Timings.getStatistics();
         final double acceptableChangeFactor = 1.1;
         if (duration < expectedOnMyMachine) {
           int percentage = (int)(100.0 * (expectedOnMyMachine - duration) / expectedOnMyMachine);
@@ -700,7 +706,7 @@ public class PlatformTestUtil {
   }
 
   private static HashMap<String, VirtualFile> buildNameToFileMap(VirtualFile[] files, @Nullable VirtualFileFilter filter) {
-    HashMap<String, VirtualFile> map = new HashMap<String, VirtualFile>();
+    HashMap<String, VirtualFile> map = new HashMap<>();
     for (VirtualFile file : files) {
       if (filter != null && !filter.accept(file)) continue;
       map.put(file.getName(), file);
@@ -749,12 +755,12 @@ public class PlatformTestUtil {
   }
 
   private static void shallowCompare(VirtualFile[] vfs, @Nullable File[] io) {
-    List<String> vfsPaths = new ArrayList<String>();
+    List<String> vfsPaths = new ArrayList<>();
     for (VirtualFile file : vfs) {
       vfsPaths.add(file.getPath());
     }
 
-    List<String> ioPaths = new ArrayList<String>();
+    List<String> ioPaths = new ArrayList<>();
     if (io != null) {
       for (File file : io) {
         ioPaths.add(file.getPath().replace(File.separatorChar, '/'));
@@ -970,5 +976,4 @@ public class PlatformTestUtil {
     }
     ourProjectCleanups.clear();
   }
-  
 }

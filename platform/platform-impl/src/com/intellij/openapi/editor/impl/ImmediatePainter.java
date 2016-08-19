@@ -53,11 +53,11 @@ import java.util.Set;
 public class ImmediatePainter {
   // Characters that excluded from zero-latency painting after key typing
   private static final Set<Character> KEY_CHARS_TO_SKIP =
-    new HashSet<Character>(Arrays.asList('\n', '\t', '(', ')', '[', ']', '{', '}', '"', '\''));
+    new HashSet<>(Arrays.asList('\n', '\t', '(', ')', '[', ']', '{', '}', '"', '\''));
 
   // Characters that excluded from zero-latency painting after document update
   private static final Set<Character> DOCUMENT_CHARS_TO_SKIP =
-    new HashSet<Character>(Arrays.asList(')', ']', '}', '"', '\''));
+    new HashSet<>(Arrays.asList(')', ']', '}', '"', '\''));
 
   // Although it's possible to paint arbitrary line changes immediately,
   // our primary interest is direct user editing actions, where visual delay is crucial.
@@ -65,16 +65,16 @@ public class ImmediatePainter {
   // and can trigger multiple write actions / document changes sequentially, we need to avoid possible flickering during such an activity.
   // There seems to be no other way to determine whether particular document change is triggered by direct user editing
   // (raw character typing is handled separately, even before write action).
-  private static final Set<Class> IMMEDIATE_EDITING_ACTIONS = new HashSet<Class>(Arrays.asList(BackspaceAction.class,
-                                                                                               DeleteAction.class,
-                                                                                               DeleteToWordStartAction.class,
-                                                                                               DeleteToWordEndAction.class,
-                                                                                               DeleteToWordStartInDifferentHumpsModeAction.class,
-                                                                                               DeleteToWordEndInDifferentHumpsModeAction.class,
-                                                                                               DeleteToLineStartAction.class,
-                                                                                               DeleteToLineEndAction.class,
-                                                                                               CutAction.class,
-                                                                                               PasteAction.class));
+  private static final Set<Class> IMMEDIATE_EDITING_ACTIONS = new HashSet<>(Arrays.asList(BackspaceAction.class,
+                                                                                          DeleteAction.class,
+                                                                                          DeleteToWordStartAction.class,
+                                                                                          DeleteToWordEndAction.class,
+                                                                                          DeleteToWordStartInDifferentHumpsModeAction.class,
+                                                                                          DeleteToWordEndInDifferentHumpsModeAction.class,
+                                                                                          DeleteToLineStartAction.class,
+                                                                                          DeleteToLineEndAction.class,
+                                                                                          CutAction.class,
+                                                                                          PasteAction.class));
   public static final String ZERO_LATENCY_TYPING_KEY = "editor.zero.latency.typing";
 
   public static final String ZERO_LATENCY_TYPING_DEBUG_KEY = "editor.zero.latency.typing.debug";

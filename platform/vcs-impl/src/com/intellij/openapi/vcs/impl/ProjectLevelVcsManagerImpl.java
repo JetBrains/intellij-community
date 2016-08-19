@@ -27,7 +27,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
@@ -81,7 +81,8 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements ProjectComponent, JDOMExternalizable {
+@State(name = "ProjectLevelVcsManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements ProjectComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl");
   @NonNls public static final String SETTINGS_EDITED_MANUALLY = "settingsEditedManually";
 
@@ -596,10 +597,21 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     VcsRootIterator.iterateVcsRoot(myProject, root, iterator, directoryFilter);
   }
 
+  @Nullable
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    mySerialization.readExternalUtil(element, myOptionsAndConfirmations);
-    final Attribute attribute = element.getAttribute(SETTINGS_EDITED_MANUALLY);
+  public Element getState() {
+    Element element = new Element("state");
+    mySerialization.writeExternalUtil(element, myOptionsAndConfirmations);
+    if (myHaveLegacyVcsConfiguration) {
+      element.setAttribute(SETTINGS_EDITED_MANUALLY, "true");
+    }
+    return element;
+  }
+
+  @Override
+  public void loadState(Element state) {
+    mySerialization.readExternalUtil(state, myOptionsAndConfirmations);
+    final Attribute attribute = state.getAttribute(SETTINGS_EDITED_MANUALLY);
     if (attribute != null) {
       try {
         myHaveLegacyVcsConfiguration = attribute.getBooleanValue();
@@ -607,12 +619,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       catch (DataConversionException ignored) {
       }
     }
-  }
-
-  @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-    mySerialization.writeExternalUtil(element, myOptionsAndConfirmations);
-    element.setAttribute(SETTINGS_EDITED_MANUALLY, String.valueOf(myHaveLegacyVcsConfiguration));
   }
 
   @Override
@@ -637,7 +643,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return myOptionsAndConfirmations.getConfirmation(option);
   }
 
-  private final Map<VcsListener, MessageBusConnection> myAdapters = new HashMap<VcsListener, MessageBusConnection>();
+  private final Map<VcsListener, MessageBusConnection> myAdapters = new HashMap<>();
 
   @Override
   public void addVcsListener(VcsListener listener) {
@@ -690,7 +696,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   public VirtualFile[] getAllVersionedRoots() {
-    List<VirtualFile> vFiles = new ArrayList<VirtualFile>();
+    List<VirtualFile> vFiles = new ArrayList<>();
     final AbstractVcs[] vcses = myMappings.getActiveVcses();
     for (AbstractVcs vcs : vcses) {
       Collections.addAll(vFiles, getRootsUnderVcs(vcs));
@@ -701,7 +707,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @Override
   @NotNull
   public VcsRoot[] getAllVcsRoots() {
-    List<VcsRoot> vcsRoots = new ArrayList<VcsRoot>();
+    List<VcsRoot> vcsRoots = new ArrayList<>();
     final AbstractVcs[] vcses = myMappings.getActiveVcses();
     for (AbstractVcs vcs : vcses) {
       final VirtualFile[] roots = getRootsUnderVcs(vcs);
@@ -725,7 +731,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   public void readDirectoryMappings(final Element element) {
     myMappings.clear();
 
-    final List<VcsDirectoryMapping> mappingsList = new ArrayList<VcsDirectoryMapping>();
+    final List<VcsDirectoryMapping> mappingsList = new ArrayList<>();
     boolean haveNonEmptyMappings = false;
     for (Element child : element.getChildren(ELEMENT_MAPPING)) {
       final String vcs = child.getAttributeValue(ATTRIBUTE_VCS);
@@ -923,7 +929,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   // inner roots disclosed
   public static List<VirtualFile> getRootsUnder(final List<VirtualFile> roots, final VirtualFile underWhat) {
-    final List<VirtualFile> result = new ArrayList<VirtualFile>(roots.size());
+    final List<VirtualFile> result = new ArrayList<>(roots.size());
     for (VirtualFile root : roots) {
       if (VfsUtilCore.isAncestor(underWhat, root, false)) {
         result.add(root);

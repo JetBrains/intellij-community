@@ -58,7 +58,7 @@ public class MethodImplementationsSearch implements QueryExecutor<PsiElement, De
   @SuppressWarnings("UnusedDeclaration")
   @Deprecated
   public static PsiMethod[] getMethodImplementations(final PsiMethod method, SearchScope scope) {
-    List<PsiMethod> result = new ArrayList<PsiMethod>();
+    List<PsiMethod> result = new ArrayList<>();
     processOverridingMethods(method, scope, new CommonProcessors.CollectProcessor<>(result));
     return result.toArray(new PsiMethod[result.size()]);
   }

@@ -16,7 +16,7 @@ import java.awt.*;
 import java.util.Map;
 
 public abstract class DiffPanelComboBoxAction<T> extends ComboBoxAction implements DumbAware {
-  @NotNull private final Map<T, AnAction> myActions = new HashMap<T, AnAction>();
+  @NotNull private final Map<T, AnAction> myActions = new HashMap<>();
   @NotNull private final T[] myActionOrder;
 
   protected DiffPanelComboBoxAction(@NotNull T[] actionOrder) {

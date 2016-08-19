@@ -44,7 +44,7 @@ import java.util.*;
 public class PyCustomType implements PyClassLikeType {
 
   @NotNull
-  private final List<PyClassLikeType> myTypesToMimic = new ArrayList<PyClassLikeType>();
+  private final List<PyClassLikeType> myTypesToMimic = new ArrayList<>();
 
   @Nullable
   private final Processor<PyElement> myFilter;
@@ -108,7 +108,7 @@ public class PyCustomType implements PyClassLikeType {
                                                                 @NotNull final AccessDirection direction,
                                                                 @NotNull final PyResolveContext resolveContext,
                                                                 final boolean inherited) {
-    final List<RatedResolveResult> globalResult = new ArrayList<RatedResolveResult>();
+    final List<RatedResolveResult> globalResult = new ArrayList<>();
 
     // Delegate calls to classes, we mimic but filter if filter is set.
     for (final PyClassLikeType typeToMimic : myTypesToMimic) {
@@ -184,17 +184,17 @@ public class PyCustomType implements PyClassLikeType {
   @NotNull
   @Override
   public final List<PyClassLikeType> getAncestorTypes(@NotNull final TypeEvalContext context) {
-    final Collection<PyClassLikeType> result = new LinkedHashSet<PyClassLikeType>();
+    final Collection<PyClassLikeType> result = new LinkedHashSet<>();
     for (final PyClassLikeType type : myTypesToMimic) {
       result.addAll(type.getAncestorTypes(context));
     }
 
-    return new ArrayList<PyClassLikeType>(result);
+    return new ArrayList<>(result);
   }
 
   @Override
   public final Object[] getCompletionVariants(final String completionPrefix, final PsiElement location, final ProcessingContext context) {
-    final Collection<Object> lookupElements = new ArrayList<Object>();
+    final Collection<Object> lookupElements = new ArrayList<>();
 
     for (final PyClassLikeType parentType : myTypesToMimic) {
       lookupElements.addAll(Collections2.filter(Arrays.asList(parentType.getCompletionVariants(completionPrefix, location, context)),
@@ -207,7 +207,7 @@ public class PyCustomType implements PyClassLikeType {
   @Nullable
   @Override
   public final String getName() {
-    final Collection<String> classNames = new ArrayList<String>(myTypesToMimic.size());
+    final Collection<String> classNames = new ArrayList<>(myTypesToMimic.size());
     for (final PyClassLikeType type : myTypesToMimic) {
       String name = type.getName();
       if (name == null && (type instanceof PyClassType)) {

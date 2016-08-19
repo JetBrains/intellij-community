@@ -240,7 +240,7 @@ public class GitPullDialog extends DialogWrapper {
 
     GitBranchTrackInfo trackInfo = GitUtil.getTrackInfoForCurrentBranch(repository);
     GitRemoteBranch currentRemoteBranch = trackInfo == null ? null : trackInfo.getRemoteBranch();
-    List<GitRemoteBranch> remoteBranches = new ArrayList<GitRemoteBranch>(repository.getBranches().getRemoteBranches());
+    List<GitRemoteBranch> remoteBranches = new ArrayList<>(repository.getBranches().getRemoteBranches());
     Collections.sort(remoteBranches);
     myBranchChooser.setElements(ContainerUtil.mapNotNull(remoteBranches, new Function<GitRemoteBranch, String>() {
       @Override
@@ -346,7 +346,7 @@ public class GitPullDialog extends DialogWrapper {
   }
 
   private void createUIComponents() {
-    myBranchChooser = new ElementsChooser<String>(true);
+    myBranchChooser = new ElementsChooser<>(true);
   }
 
   protected JComponent createCenterPanel() {

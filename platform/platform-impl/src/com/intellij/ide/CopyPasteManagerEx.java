@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwner {
-  private final List<Transferable> myData = new ArrayList<Transferable>();
+  private final List<Transferable> myData = new ArrayList<>();
   private final EventDispatcher<ContentChangedListener> myDispatcher = EventDispatcher.create(ContentChangedListener.class);
   private final ClipboardSynchronizer myClipboardSynchronizer;
   private boolean myOwnContent = false;

@@ -29,6 +29,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.openapi.util.Conditions.not;
+import static com.intellij.util.containers.JBIterable.SeparatorOption.*;
 
 /**
  * @author gregsh
@@ -289,6 +290,39 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(Arrays.asList(1, 1, 2, 3, 5, 8, 13, 21), it.toList());
   }
 
+  public void testFindIndexReduceMap() {
+    JBIterable<Integer> it = JBIterable.of(1, 2, 3, 4, 5);
+    assertEquals(15, (int)it.reduce(0, (Integer v, Integer o) -> v + o));
+    assertEquals(3, (int)it.find((o)-> o.intValue() == 3));
+    assertEquals(2, it.indexOf((o)-> o.intValue() == 3));
+    assertEquals(-1, it.indexOf((o)-> o.intValue() == 33));
+    assertEquals(Arrays.asList(1, 4, 9, 16, 25), it.map(o -> o * o).toList());
+    assertEquals(Arrays.asList(0, 1, 0, 2, 0, 3, 0, 4, 0, 5), it.flatMap(o -> ContainerUtil.list(0, o)).toList());
+  }
+
+  public void testPartition() {
+    JBIterable<Integer> it = JBIterable.of(1, 2, 3, 4, 5);
+    assertEquals(Arrays.asList(Arrays.asList(1, 2), Arrays.asList(3, 4)), it.partition(2, true).toList());
+    assertEquals(Arrays.asList(Arrays.asList(1, 2), Arrays.asList(3, 4), Arrays.asList(5)), it.partition(2, false).toList());
+
+    assertEquals("[[1, 2], [4, 5]]", it.partition(SKIP, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1, 2], [3], [4, 5]]", it.partition(EXTRACT, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1, 2, 3], [4, 5]]", it.partition(HEAD, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1, 2], [3, 4, 5]]", it.partition(TAIL, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1, 2, 3, 4], [5]]", it.partition(EXTRACT, o -> o == 5).map(o -> o.toList()).toList().toString());
+    assertEquals("[[], [1], [2, 3, 4, 5]]", it.partition(EXTRACT, o -> o == 1).map(o -> o.toList()).toList().toString());
+
+    assertEquals("[[], [], [], [], []]", it.partition(SKIP, o -> true).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1], [2], [3], [4], [5]]", it.partition(HEAD, o -> true).map(o -> o.toList()).toList().toString());
+    assertEquals("[[], [1], [2], [3], [4], [5]]", it.partition(TAIL, o -> true).map(o -> o.toList()).toList().toString());
+    assertEquals("[[], [1], [], [2], [], [3], [], [4], [], [5]]", it.partition(EXTRACT, o -> true).map(o -> o.toList()).toList().toString());
+
+    assertEquals(3, it.partition(EXTRACT, o -> o % 3 == 0).size());
+    assertEquals(10, it.partition(EXTRACT, o -> true).size());
+
+    assertEquals(it.partition(2, false).toList(), it.partition(HEAD, o -> o % 2 == 0).map(o -> o.toList()).toList());
+  }
+
   // TreeTraversal ----------------------------------------------
 
   @NotNull
@@ -465,7 +499,7 @@ public class TreeTraverserTest extends TestCase {
 
   @NotNull
   private static JBTreeTraverser<Integer> filteredTraverser() {
-    return new JBTreeTraverser<Integer>(Functions.fromMap(numbers()));
+    return new JBTreeTraverser<>(Functions.fromMap(numbers()));
   }
 
   public void testSimpleFilter() {
@@ -540,7 +574,7 @@ public class TreeTraverserTest extends TestCase {
   }
 
   public void testEndlessGraph() {
-    JBTreeTraverser<Integer> t = new JBTreeTraverser<Integer>(new Function<Integer, Iterable<Integer>>() {
+    JBTreeTraverser<Integer> t = new JBTreeTraverser<>(new Function<Integer, Iterable<Integer>>() {
       @Override
       public Iterable<Integer> fun(Integer k) {
         return JBIterable.generate(k, INCREMENT).transform(SQUARE).take(3);
@@ -550,7 +584,7 @@ public class TreeTraverserTest extends TestCase {
   }
 
   public void testEndlessGraphParents() {
-    JBTreeTraverser<Integer> t = new JBTreeTraverser<Integer>(new Function<Integer, Iterable<Integer>>() {
+    JBTreeTraverser<Integer> t = new JBTreeTraverser<>(new Function<Integer, Iterable<Integer>>() {
       @Override
       public Iterable<Integer> fun(Integer k) {
         return JBIterable.generate(1, k, FIBONACCI).skip(2).take(3);

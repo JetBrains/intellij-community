@@ -541,7 +541,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     regexp = createRegexComponent();
     regexprForExprType = createRegexComponent();
     formalArgType = createRegexComponent();
-    customScriptCode = new ComponentWithBrowseButton<EditorTextField>(createScriptComponent(), null);
+    customScriptCode = new ComponentWithBrowseButton<>(createScriptComponent(), null);
 
     myRegExHelpLabel = RegExHelpPopup.createRegExLink(SSRBundle.message("regular.expression.help.label"), regexp, LOG);
     myRegExHelpLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));

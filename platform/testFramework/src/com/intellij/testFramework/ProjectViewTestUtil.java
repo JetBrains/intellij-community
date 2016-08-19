@@ -86,7 +86,7 @@ public class ProjectViewTestUtil {
   public static void checkContainsMethod(final Object rootElement,
                                          final AbstractTreeStructure structure,
                                          Function<AbstractTreeNode, VirtualFile[]> converterFunction) {
-    MultiValuesMap<VirtualFile, AbstractTreeNode> map = new MultiValuesMap<VirtualFile, AbstractTreeNode>();
+    MultiValuesMap<VirtualFile, AbstractTreeNode> map = new MultiValuesMap<>();
     collect((AbstractTreeNode)rootElement, map, structure, converterFunction);
 
     for (VirtualFile eachFile : map.keySet()) {

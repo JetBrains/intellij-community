@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -264,6 +264,25 @@ public class PythonHighlightingTest extends PyTestCase {
 
   public void testUnpackingStar() {
     doTest(LanguageLevel.PYTHON35, false, false);
+  }
+
+  // PY-19927
+  public void testMagicMethods() {
+    EditorColorsManager manager = EditorColorsManager.getInstance();
+    EditorColorsScheme scheme = (EditorColorsScheme)manager.getGlobalScheme().clone();
+    manager.addColorsScheme(scheme);
+    EditorColorsManager.getInstance().setGlobalScheme(scheme);
+
+    TextAttributesKey xKey = TextAttributesKey.find("PY.PREDEFINED_DEFINITION");
+    TextAttributes xAttributes = new TextAttributes(Color.green, Color.black, Color.white, EffectType.BOXED, Font.BOLD);
+    scheme.setAttributes(xKey, xAttributes);
+
+    doTest();
+  }
+
+  // PY-19775
+  public void testAsyncBuiltinMethods() {
+    doTest(LanguageLevel.PYTHON35, true, false);
   }
 
   // ---

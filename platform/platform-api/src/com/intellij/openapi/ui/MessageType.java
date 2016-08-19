@@ -25,15 +25,15 @@ import java.awt.*;
 
 public class MessageType {
 
-  public static MessageType ERROR = new MessageType(AllIcons.General.NotificationError,
+  public static final MessageType ERROR = new MessageType(AllIcons.General.NotificationError,
                                                           new JBColor(0xffcccc, 0x704745),
                                                           new JBColor(0xac0013, 0xef5f65));
 
-  public static MessageType INFO = new MessageType(AllIcons.General.NotificationInfo,
+  public static final MessageType INFO = new MessageType(AllIcons.General.NotificationInfo,
                                                          new JBColor(0xbaeeba, 0x33412E),
                                                          new JBColor(0x000000, 0xbbbbbb));
 
-  public static MessageType WARNING = new MessageType(AllIcons.General.NotificationWarning,
+  public static final MessageType WARNING = new MessageType(AllIcons.General.NotificationWarning,
                                                             new JBColor(0xf9f78e, 0x5a5221),
                                                             new JBColor(0xa49152, 0xbbb529));
 

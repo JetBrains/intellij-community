@@ -145,7 +145,7 @@ public class MigrationMapSet {
   }
 
   private void loadMaps() {
-    myMaps = new ArrayList<MigrationMap>();
+    myMaps = new ArrayList<>();
 
     File[] files = getMapFiles();
     for(int i = 0; i < files.length; i++){

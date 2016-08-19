@@ -53,7 +53,7 @@ public abstract class PyComprehensionElementImpl extends PyElementImpl implement
    * @return all "for components"
    */
   public List<ComprhForComponent> getForComponents() {
-    final List<ComprhForComponent> list = new ArrayList<ComprhForComponent>(5);
+    final List<ComprhForComponent> list = new ArrayList<>(5);
     visitComponents(new ComprehensionElementVisitor() {
       @Override
       void visitForComponent(ComprhForComponent component) {
@@ -97,7 +97,7 @@ public abstract class PyComprehensionElementImpl extends PyElementImpl implement
   }
 
   public List<ComprhIfComponent> getIfComponents() {
-    final List<ComprhIfComponent> list = new ArrayList<ComprhIfComponent>(5);
+    final List<ComprhIfComponent> list = new ArrayList<>(5);
     visitComponents(new ComprehensionElementVisitor() {
       @Override
       void visitIfComponent(ComprhIfComponent component) {
@@ -108,7 +108,7 @@ public abstract class PyComprehensionElementImpl extends PyElementImpl implement
   }
 
   public List<ComprehensionComponent> getComponents() {
-    final List<ComprehensionComponent> list = new ArrayList<ComprehensionComponent>(5);
+    final List<ComprehensionComponent> list = new ArrayList<>(5);
     visitComponents(new ComprehensionElementVisitor() {
       @Override
       void visitForComponent(ComprhForComponent component) {

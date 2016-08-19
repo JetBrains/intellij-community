@@ -34,7 +34,7 @@ public class MemberDependenciesStorage<T extends NavigatablePsiElement, C extend
   public MemberDependenciesStorage(C aClass, C superClass) {
     myClass = aClass;
     mySuperClass = superClass;
-    myDependencyGraph = new HashMap<T, Set<T>>();
+    myDependencyGraph = new HashMap<>();
   }
 
   public void setSuperClass(C superClass) {

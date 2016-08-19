@@ -40,9 +40,9 @@ import java.io.IOException;
  */
 public class FileWithBranchComparer extends ElementWithBranchComparer {
 
-  @NotNull private final Ref<byte[]> content = new Ref<byte[]>();
+  @NotNull private final Ref<byte[]> content = new Ref<>();
   @NotNull private final StringBuilder remoteTitleBuilder = new StringBuilder();
-  @NotNull private final Ref<Boolean> success = new Ref<Boolean>();
+  @NotNull private final Ref<Boolean> success = new Ref<>();
 
   public FileWithBranchComparer(@NotNull Project project,
                                 @NotNull VirtualFile virtualFile,

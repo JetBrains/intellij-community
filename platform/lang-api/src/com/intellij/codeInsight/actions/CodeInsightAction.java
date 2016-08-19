@@ -23,7 +23,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +39,11 @@ public abstract class CodeInsightAction extends AnAction {
       Editor editor = getEditor(e.getDataContext(), project, false);
       actionPerformedImpl(project, editor);
     }
+  }
+
+  @Override
+  public boolean startInTransaction() {
+    return true;
   }
 
   @Nullable

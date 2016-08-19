@@ -85,7 +85,7 @@ public class RepositoryUtils {
       String url = StringUtil.trimStart(urlWithPrefix, JarFileSystem.PROTOCOL_PREFIX);
       return url.startsWith(localRepositoryPath) ? null : FileUtil.toSystemDependentName(PathUtil.getParentPath(url));
     }).toList();
-    Map<String, Integer> counts = new HashMap<String, Integer>();
+    Map<String, Integer> counts = new HashMap<>();
     for (String root : roots) {
       int count = counts.get(root) != null ? counts.get(root) : 0;
       counts.put(root, count + 1);

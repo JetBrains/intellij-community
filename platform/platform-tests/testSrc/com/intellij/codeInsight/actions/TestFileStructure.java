@@ -40,13 +40,13 @@ public class TestFileStructure {
   @NotNull private Project myProject;
   @NotNull private Module myModule;
   @NotNull private PsiDirectory myCurrentLevelDirectory;
-  private List<List<PsiFile>> myFilesForLevel = new ArrayList<List<PsiFile>>();
+  private List<List<PsiFile>> myFilesForLevel = new ArrayList<>();
 
   public TestFileStructure(@NotNull Module module, @NotNull PsiDirectory root) {
     myProject = module.getProject();
     myModule = module;
     myCurrentLevelDirectory = root;
-    myFilesForLevel.add(new ArrayList<PsiFile>());
+    myFilesForLevel.add(new ArrayList<>());
     myLevel = 0;
   }
 
@@ -70,7 +70,7 @@ public class TestFileStructure {
   @NotNull
   public PsiDirectory createDirectoryAndMakeItCurrent(String name) throws IOException {
     myLevel++;
-    myFilesForLevel.add(new ArrayList<PsiFile>());
+    myFilesForLevel.add(new ArrayList<>());
     myCurrentLevelDirectory = createDirectory(myProject, myCurrentLevelDirectory.getVirtualFile(), name);
     return myCurrentLevelDirectory;
   }

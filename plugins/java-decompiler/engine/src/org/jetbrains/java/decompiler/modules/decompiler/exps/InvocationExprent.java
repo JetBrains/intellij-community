@@ -65,7 +65,7 @@ public class InvocationExprent extends Exprent {
   private String stringDescriptor;
   private String invokeDynamicClassSuffix;
   private int invocationTyp = INVOKE_VIRTUAL;
-  private List<Exprent> lstParameters = new ArrayList<Exprent>();
+  private List<Exprent> lstParameters = new ArrayList<>();
   private List<PooledConstant> bootstrapArguments;
 
   public InvocationExprent() {
@@ -162,7 +162,7 @@ public class InvocationExprent extends Exprent {
     invokeDynamicClassSuffix = expr.getInvokeDynamicClassSuffix();
     stringDescriptor = expr.getStringDescriptor();
     descriptor = expr.getDescriptor();
-    lstParameters = new ArrayList<Exprent>(expr.getLstParameters());
+    lstParameters = new ArrayList<>(expr.getLstParameters());
     ExprProcessor.copyEntries(lstParameters);
 
     addBytecodeOffsets(expr.bytecode);
@@ -192,7 +192,7 @@ public class InvocationExprent extends Exprent {
 
   @Override
   public List<Exprent> getAllExprents() {
-    List<Exprent> lst = new ArrayList<Exprent>();
+    List<Exprent> lst = new ArrayList<>();
     if (instance != null) {
       lst.add(instance);
     }
@@ -321,7 +321,7 @@ public class InvocationExprent extends Exprent {
         }
         else {
           if (newNode.type == ClassNode.CLASS_MEMBER && (newNode.access & CodeConstants.ACC_STATIC) == 0) { // non-static member class
-            sigFields = new ArrayList<VarVersionPair>(Collections.nCopies(lstParameters.size(), (VarVersionPair)null));
+            sigFields = new ArrayList<>(Collections.nCopies(lstParameters.size(), (VarVersionPair)null));
             sigFields.set(0, new VarVersionPair(-1, 0));
           }
         }
@@ -358,7 +358,7 @@ public class InvocationExprent extends Exprent {
     if (cl == null) return EMPTY_BIT_SET;
 
     // check number of matches
-    List<MethodDescriptor> matches = new ArrayList<MethodDescriptor>();
+    List<MethodDescriptor> matches = new ArrayList<>();
     nextMethod:
     for (StructMethod mt : cl.getMethods()) {
       if (name.equals(mt.getName())) {

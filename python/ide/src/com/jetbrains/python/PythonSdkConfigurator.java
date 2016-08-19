@@ -47,7 +47,7 @@ public class PythonSdkConfigurator implements DirectoryProjectConfigurator {
     // it it a virtualenv?
     final PythonSdkType sdkType = PythonSdkType.getInstance();
     //find virtualEnv in project directory
-    final List<String> candidates = new ArrayList<String>();
+    final List<String> candidates = new ArrayList<>();
     if (project == null) return;
     final VirtualFile rootDir = project.getBaseDir();
     if (rootDir != null)

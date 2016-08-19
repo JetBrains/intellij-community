@@ -10,7 +10,7 @@ import java.util.List;
 * @author nik
 */
 public class ProjectFileVersionState {
-  private List<String> myPerformedConversionIds = new ArrayList<String>();
+  private List<String> myPerformedConversionIds = new ArrayList<>();
 
   @Tag("performed-conversions")
   @AbstractCollection(surroundWithTag = false, elementTag = "converter", elementValueAttribute = "id")

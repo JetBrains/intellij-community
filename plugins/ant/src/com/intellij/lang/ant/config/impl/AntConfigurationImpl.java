@@ -70,8 +70,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 @State(name = "AntConfiguration", storages = @Storage("ant.xml"))
 public class AntConfigurationImpl extends AntConfigurationBase implements PersistentStateComponent<Element> {
-  public static final ValueProperty<AntReference> DEFAULT_ANT = new ValueProperty<AntReference>("defaultAnt", AntReference.BUNDLED_ANT);
-  private static final ValueProperty<AntConfiguration> INSTANCE = new ValueProperty<AntConfiguration>("$instance", null);
+  public static final ValueProperty<AntReference> DEFAULT_ANT = new ValueProperty<>("defaultAnt", AntReference.BUNDLED_ANT);
+  private static final ValueProperty<AntConfiguration> INSTANCE = new ValueProperty<>("$instance", null);
   public static final AbstractProperty<String> DEFAULT_JDK_NAME = new AbstractProperty<String>() {
     public String getName() {
       return "$defaultJDKName";
@@ -108,12 +108,12 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
   private final PsiManager myPsiManager;
   private final Map<ExecutionEvent, Pair<AntBuildFile, String>> myEventToTargetMap =
-    new HashMap<ExecutionEvent, Pair<AntBuildFile, String>>();
+    new HashMap<>();
 
   private final List<AntBuildFileBase> myBuildFiles = new CopyOnWriteArrayList<>();
 
-  private final Map<AntBuildFile, AntBuildModelBase> myModelToBuildFileMap = new HashMap<AntBuildFile, AntBuildModelBase>();
-  private final Map<VirtualFile, VirtualFile> myAntFileToContextFileMap = new java.util.HashMap<VirtualFile, VirtualFile>();
+  private final Map<AntBuildFile, AntBuildModelBase> myModelToBuildFileMap = new HashMap<>();
+  private final Map<VirtualFile, VirtualFile> myAntFileToContextFileMap = new java.util.HashMap<>();
   private final EventDispatcher<AntConfigurationListener> myEventDispatcher = EventDispatcher.create(AntConfigurationListener.class);
   private final AntWorkspaceConfiguration myAntWorkspaceConfiguration;
   private final StartupManager myStartupManager;
@@ -185,7 +185,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
           state.addContent(element);
         }
 
-        final List<VirtualFile> files = new ArrayList<VirtualFile>(myAntFileToContextFileMap.keySet());
+        final List<VirtualFile> files = new ArrayList<>(myAntFileToContextFileMap.keySet());
         // sort in order to minimize changes
         Collections.sort(files, (o1, o2) -> o1.getUrl().compareTo(o2.getUrl()));
         for (VirtualFile file : files) {
@@ -214,7 +214,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       return;
     }
 
-    List<Pair<Element, String>> files = new ArrayList<Pair<Element, String>>();
+    List<Pair<Element, String>> files = new ArrayList<>();
     for (Iterator<Element> iterator = state.getChildren(BUILD_FILE).iterator(); iterator.hasNext(); ) {
       Element element = iterator.next();
       iterator.remove();
@@ -260,7 +260,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
                 myBuildFiles.clear();
 
                 // then fill the configuration with the files configured in xml
-                List<Pair<Element, AntBuildFileBase>> buildFiles = new ArrayList<Pair<Element, AntBuildFileBase>>(files.size());
+                List<Pair<Element, AntBuildFileBase>> buildFiles = new ArrayList<>(files.size());
                 for (Pair<Element, String> pair : files) {
                   final Element element = pair.getFirst();
                   final VirtualFile file = vfManager.findFileByUrl(pair.getSecond());
@@ -440,7 +440,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     if (events.size() == 0) {
       return AntBuildTargetBase.EMPTY_ARRAY;
     }
-    final List<AntBuildTargetBase> targets = new ArrayList<AntBuildTargetBase>();
+    final List<AntBuildTargetBase> targets = new ArrayList<>();
     for (ExecutionEvent event : events) {
       final MetaTarget target = (MetaTarget)getTargetForEvent(event);
       if (target != null && buildFile.equals(target.getBuildFile())) {
@@ -451,7 +451,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   public List<ExecutionEvent> getEventsForTarget(final AntBuildTarget target) {
-    final List<ExecutionEvent> list = new ArrayList<ExecutionEvent>();
+    final List<ExecutionEvent> list = new ArrayList<>();
     synchronized (myEventToTargetMap) {
       for (final ExecutionEvent event : myEventToTargetMap.keySet()) {
         final AntBuildTarget targetForEvent = getTargetForEvent(event);
@@ -542,7 +542,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
   private void saveEvents(final Element element, final AntBuildFile buildFile) {
     List<Element> events = null;
-    final Set<String> savedEvents = new HashSet<String>();
+    final Set<String> savedEvents = new HashSet<>();
     synchronized (myEventToTargetMap) {
       for (final ExecutionEvent event : myEventToTargetMap.keySet()) {
         final Pair<AntBuildFile, String> pair = myEventToTargetMap.get(event);
@@ -558,7 +558,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
         savedEvents.add(id);
 
         if (events == null) {
-          events = new ArrayList<Element>();
+          events = new ArrayList<>();
         }
         events.add(eventElement);
       }
@@ -620,14 +620,14 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     if (project.isDisposed()) {
       return;
     }
-    final List<Pair<String, AnAction>> actionList = new ArrayList<Pair<String, AnAction>>();
+    final List<Pair<String, AnAction>> actionList = new ArrayList<>();
     for (final AntBuildFile buildFile : myBuildFiles) {
       final AntBuildModelBase model = (AntBuildModelBase)buildFile.getModel();
       String defaultTargetActionId = model.getDefaultTargetActionId();
       if (defaultTargetActionId != null) {
         final TargetAction action =
           new TargetAction(buildFile, TargetAction.DEFAULT_TARGET_NAME, new String[]{TargetAction.DEFAULT_TARGET_NAME}, null);
-        actionList.add(new Pair<String, AnAction>(defaultTargetActionId, action));
+        actionList.add(new Pair<>(defaultTargetActionId, action));
       }
 
       collectTargetActions(model.getFilteredTargets(), actionList, buildFile);
@@ -665,7 +665,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       if (actionId != null) {
         final TargetAction action =
           new TargetAction(buildFile, target.getName(), new String[]{target.getName()}, target.getNotEmptyDescription());
-        actionList.add(new Pair<String, AnAction>(actionId, action));
+        actionList.add(new Pair<>(actionId, action));
       }
     }
   }
@@ -738,7 +738,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     if (initThread == null || initThread != Thread.currentThread()) {
       ensureInitialized();
     }
-    final List<ExecutionEvent> list = new ArrayList<ExecutionEvent>();
+    final List<ExecutionEvent> list = new ArrayList<>();
     synchronized (myEventToTargetMap) {
       for (final ExecutionEvent event : myEventToTargetMap.keySet()) {
         if (eventClass.isInstance(event)) {
@@ -847,7 +847,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
         }
         return null;
       }
-    }.findContext(file, new HashSet<PsiElement>());
+    }.findContext(file, new HashSet<>());
   }
 
   private static class EventElementComparator implements Comparator<Element> {

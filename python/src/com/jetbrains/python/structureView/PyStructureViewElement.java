@@ -120,7 +120,7 @@ public class PyStructureViewElement implements StructureViewTreeElement {
 
   @NotNull
   public StructureViewTreeElement[] getChildren() {
-    final Collection<StructureViewTreeElement> children = new ArrayList<StructureViewTreeElement>();
+    final Collection<StructureViewTreeElement> children = new ArrayList<>();
     for (PyElement e : getElementChildren(myElement)) {
       children.add(createChild(e, getElementVisibility(e), false, elementIsField(e)));
     }
@@ -152,7 +152,7 @@ public class PyStructureViewElement implements StructureViewTreeElement {
   }
 
   private Collection<PyElement> getElementChildren(final PyElement element) {
-    final Collection<PyElement> children = new ArrayList<PyElement>();
+    final Collection<PyElement> children = new ArrayList<>();
     PyPsiUtils.assertValid(element);
     element.acceptChildren(new PyElementVisitor() {
       @Override
@@ -167,8 +167,8 @@ public class PyStructureViewElement implements StructureViewTreeElement {
     });
     if (element instanceof PyClass) {
       final List<PyElement> attrs = getClassAttributes((PyClass)element);
-      final List<PyElement> filtered = new ArrayList<PyElement>();
-      final Set<String> names = new HashSet<String>();
+      final List<PyElement> filtered = new ArrayList<>();
+      final Set<String> names = new HashSet<>();
       for (PyElement attr : attrs) {
         final String name = attr.getName();
         PyPsiUtils.assertValid(attr);
@@ -189,7 +189,7 @@ public class PyStructureViewElement implements StructureViewTreeElement {
   }
 
   protected List<PyElement> getClassAttributes(PyClass cls) {
-    final List<PyElement> results = new ArrayList<PyElement>();
+    final List<PyElement> results = new ArrayList<>();
     results.addAll(cls.getInstanceAttributes());
     results.addAll(cls.getClassAttributes());
     return results;

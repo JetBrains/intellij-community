@@ -81,7 +81,7 @@ public class GuessManagerImpl extends GuessManager {
 
   @Override
   public PsiType[] guessContainerElementType(PsiExpression containerExpr, TextRange rangeToIgnore) {
-    HashSet<PsiType> typesSet = new HashSet<PsiType>();
+    HashSet<PsiType> typesSet = new HashSet<>();
 
     PsiType type = containerExpr.getType();
     PsiType elemType;
@@ -95,7 +95,7 @@ public class GuessManagerImpl extends GuessManager {
         if (file == null){
           file = containerExpr.getContainingFile(); // implicit variable in jsp
         }
-        HashSet<PsiVariable> checkedVariables = new HashSet<PsiVariable>();
+        HashSet<PsiVariable> checkedVariables = new HashSet<>();
         addTypesByVariable(typesSet, (PsiVariable)refElement, file, checkedVariables, CHECK_USAGE | CHECK_DOWN, rangeToIgnore);
         checkedVariables.clear();
         addTypesByVariable(typesSet, (PsiVariable)refElement, file, checkedVariables, CHECK_UP, rangeToIgnore);
@@ -119,9 +119,9 @@ public class GuessManagerImpl extends GuessManager {
 
   @Override
   public PsiType[] guessTypeToCast(PsiExpression expr) { //TODO : make better guess based on control flow
-    LinkedHashSet<PsiType> types = new LinkedHashSet<PsiType>();
+    LinkedHashSet<PsiType> types = new LinkedHashSet<>();
 
-    ContainerUtil.addIfNotNull(getControlFlowExpressionType(expr), types);
+    ContainerUtil.addIfNotNull(types, getControlFlowExpressionType(expr));
     addExprTypesWhenContainerElement(types, expr);
     addExprTypesByDerivedClasses(types, expr);
 
@@ -169,7 +169,7 @@ public class GuessManagerImpl extends GuessManager {
   private static Map<PsiExpression, PsiType> getAllTypeCasts(PsiExpression forPlace) {
     assert forPlace.isValid();
     final int start = forPlace.getTextRange().getStartOffset();
-    final Map<PsiExpression, PsiType> allCasts = new THashMap<PsiExpression, PsiType>(ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY);
+    final Map<PsiExpression, PsiType> allCasts = new THashMap<>(ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY);
     getTopmostBlock(forPlace).accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitTypeCastExpression(PsiTypeCastExpression expression) {
@@ -229,8 +229,8 @@ public class GuessManagerImpl extends GuessManager {
     if (refClass == null) return;
 
     PsiManager manager = PsiManager.getInstance(myProject);
-    PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiClass>(5);
-    ClassInheritorsSearch.search(refClass).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
+    PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = new PsiElementProcessor.CollectElementsWithLimit<>(5);
+    ClassInheritorsSearch.search(refClass).forEach(new PsiElementProcessorAdapter<>(processor));
     if (processor.isOverflow()) return;
 
     for (PsiClass derivedClass : processor.getCollection()) {
@@ -436,7 +436,7 @@ public class GuessManagerImpl extends GuessManager {
 
     private void addToResult(Map<PsiExpression, PsiType> map) {
       if (myResult == null) {
-        myResult = new THashMap<PsiExpression, PsiType>(map, ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY);
+        myResult = new THashMap<>(map, ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY);
       } else {
         final Iterator<PsiExpression> iterator = myResult.keySet().iterator();
         while (iterator.hasNext()) {

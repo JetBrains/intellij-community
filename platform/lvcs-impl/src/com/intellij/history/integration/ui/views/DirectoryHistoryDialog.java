@@ -194,10 +194,10 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
     @Override
     protected void doPerform(DirectoryHistoryDialogModel model, List<DirectoryChange> selected) {
-      final Set<DirectoryChange> selectedSet = new THashSet<DirectoryChange>(selected);
+      final Set<DirectoryChange> selectedSet = new THashSet<>(selected);
 
       int index = 0;
-      List<Change> changes = new ArrayList<Change>();
+      List<Change> changes = new ArrayList<>();
       for (DirectoryChange change : iterFileChanges()) {
         if (selectedSet.contains(change)) index = changes.size();
         changes.add(change);
@@ -223,7 +223,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
     @Override
     protected void doPerform(DirectoryHistoryDialogModel model, List<DirectoryChange> selected) {
-      List<Difference> diffs = new ArrayList<Difference>();
+      List<Difference> diffs = new ArrayList<>();
       for (DirectoryChange each : selected) {
         diffs.add(each.getModel().getDifference());
       }

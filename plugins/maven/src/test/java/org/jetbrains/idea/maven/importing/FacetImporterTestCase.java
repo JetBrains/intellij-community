@@ -12,7 +12,7 @@ public abstract class FacetImporterTestCase<FACET_TYPE extends Facet> extends Ma
   protected abstract FacetTypeId<FACET_TYPE> getFacetTypeId();
 
   protected void doAssertSourceRoots(List<String> actualRoots, String... roots) {
-    List<String> expectedRootUrls = new ArrayList<String>();
+    List<String> expectedRootUrls = new ArrayList<>();
 
     for (String r : roots) {
       String url = VfsUtilCore.pathToUrl(getProjectPath() + "/" + r);

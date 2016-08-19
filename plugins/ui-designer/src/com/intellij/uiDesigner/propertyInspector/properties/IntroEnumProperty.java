@@ -42,7 +42,7 @@ public class IntroEnumProperty extends IntrospectedProperty<Enum> {
   @NotNull
   public PropertyRenderer<Enum> getRenderer() {
     if (myRenderer == null) {
-      myRenderer = new LabelPropertyRenderer<Enum>();
+      myRenderer = new LabelPropertyRenderer<>();
     }
     return myRenderer;
   }

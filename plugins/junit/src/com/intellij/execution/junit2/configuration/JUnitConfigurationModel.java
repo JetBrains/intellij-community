@@ -138,7 +138,7 @@ public class JUnitConfigurationModel {
         data.setCategoryName(getJUnitTextValue(CATEGORY));
       }
       else {
-        final LinkedHashSet<String> set = new LinkedHashSet<String>();
+        final LinkedHashSet<String> set = new LinkedHashSet<>();
         final String[] patterns = getJUnitTextValue(PATTERN).split("\\|\\|");
         for (String pattern : patterns) {
           if (pattern.length() > 0) {

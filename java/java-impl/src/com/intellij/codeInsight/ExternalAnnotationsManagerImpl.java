@@ -172,7 +172,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     if (psiFiles == null) {
       return null;
     }
-    List<XmlFile> xmlFiles = new ArrayList<XmlFile>();
+    List<XmlFile> xmlFiles = new ArrayList<>();
     for (PsiFile psiFile : psiFiles) {
       if (psiFile instanceof XmlFile) {
         xmlFiles.add((XmlFile)psiFile);
@@ -211,7 +211,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
         else {
           final XmlFile annotationsXml = createAnnotationsXml(newRoot, packageName);
           if (annotationsXml != null) {
-            List<PsiFile> createdFiles = new SmartList<PsiFile>(annotationsXml);
+            List<PsiFile> createdFiles = new SmartList<>(annotationsXml);
             cacheExternalAnnotations(packageName, fromFile, createdFiles);
           }
           annotateExternally(listOwner, annotationFQName, annotationsXml, fromFile, value);
@@ -293,7 +293,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
       return;
     }
 
-    final Set<PsiFile> annotationFiles = xmlFiles == null ? new THashSet<PsiFile>() : new THashSet<PsiFile>(xmlFiles);
+    final Set<PsiFile> annotationFiles = xmlFiles == null ? new THashSet<>() : new THashSet<>(xmlFiles);
 
     new WriteCommandAction(project) {
       @Override
@@ -308,7 +308,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
           }
           else {
             annotationFiles.add(newXml);
-            cacheExternalAnnotations(packageName, fromFile, new SmartList<PsiFile>(annotationFiles));
+            cacheExternalAnnotations(packageName, fromFile, new SmartList<>(annotationFiles));
             annotateExternally(listOwner, annotationFQName, newXml, fromFile, value);
           }
         }
@@ -385,7 +385,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
         }
         final String externalName = getExternalName(listOwner, false);
 
-        final List<XmlTag> tagsToProcess = new ArrayList<XmlTag>();
+        final List<XmlTag> tagsToProcess = new ArrayList<>();
         for (XmlTag tag : rootTag.getSubTags()) {
           String className = StringUtil.unescapeXml(tag.getAttributeValue("name"));
           if (!Comparing.strEqual(className, externalName)) {
@@ -458,7 +458,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
                                             : element.getNavigationElement();
         LOG.assertTrue(highlightElement != null);
         final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-        final List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
+        final List<RangeHighlighter> highlighters = new ArrayList<>();
         final boolean highlight =
           editor != null && editor.getDocument() == PsiDocumentManager.getInstance(project).getDocument(containingFile);
         try {
@@ -592,7 +592,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
       return;
     }
 
-    List<XmlTag> itemTags = new ArrayList<XmlTag>();
+    List<XmlTag> itemTags = new ArrayList<>();
     for (XmlTag item : rootTag.getSubTags()) {
       if (item.getAttributeValue("name") != null) {
         itemTags.add(item);
@@ -602,7 +602,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
       }
     }
 
-    List<XmlTag> sorted = new ArrayList<XmlTag>(itemTags);
+    List<XmlTag> sorted = new ArrayList<>(itemTags);
     Collections.sort(sorted, (item1, item2) -> {
       String externalName1 = item1.getAttributeValue("name");
       String externalName2 = item2.getAttributeValue("name");

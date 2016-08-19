@@ -155,7 +155,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     }
     final DefaultMutableTreeNode node = (DefaultMutableTreeNode)root;
     final HierarchyNodeDescriptor descriptor = getDescriptor(node);
-    final Set<PsiElement> result = new HashSet<PsiElement>();
+    final Set<PsiElement> result = new HashSet<>();
     collectElements(descriptor, result);
     return result.toArray(PsiElement.EMPTY_ARRAY);
   }
@@ -189,7 +189,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     if (paths == null || paths.length == 0) {
       return EMPTY_DESCRIPTORS;
     }
-    final ArrayList<HierarchyNodeDescriptor> list = new ArrayList<HierarchyNodeDescriptor>(paths.length);
+    final ArrayList<HierarchyNodeDescriptor> list = new ArrayList<>(paths.length);
     for (final TreePath path : paths) {
       final Object lastPathComponent = path.getLastPathComponent();
       if (lastPathComponent instanceof DefaultMutableTreeNode) {
@@ -206,7 +206,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
   @NotNull
   protected PsiElement[] getSelectedElements() {
     HierarchyNodeDescriptor[] descriptors = getSelectedDescriptors();
-    ArrayList<PsiElement> elements = new ArrayList<PsiElement>();
+    ArrayList<PsiElement> elements = new ArrayList<>();
     for (HierarchyNodeDescriptor descriptor : descriptors) {
       PsiElement element = getElementFromDescriptor(descriptor);
       if (element != null) elements.add(element);
@@ -218,7 +218,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
   private Navigatable[] getNavigatables() {
     final HierarchyNodeDescriptor[] selectedDescriptors = getSelectedDescriptors();
     if (selectedDescriptors == null || selectedDescriptors.length == 0) return null;
-    final ArrayList<Navigatable> result = new ArrayList<Navigatable>();
+    final ArrayList<Navigatable> result = new ArrayList<>();
     for (HierarchyNodeDescriptor descriptor : selectedDescriptors) {
       Navigatable navigatable = getNavigatable(descriptor);
       if (navigatable != null) {

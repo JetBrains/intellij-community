@@ -1,6 +1,5 @@
 package com.jetbrains.edu.learning.actions;
 
-import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -33,11 +32,10 @@ import java.awt.*;
 public class StudyShowHintAction extends StudyActionWithShortcut {
   public static final String ACTION_ID = "ShowHintAction";
   public static final String SHORTCUT = "ctrl pressed 7";
-  private static final String ourWarningMessage = "Put the caret in the answer placeholder to get hint";
-  public static final String HINT_NOT_AVAILABLE = "There is no hint for this answer placeholder";
 
   public StudyShowHintAction() {
-    super("Show hint (" + KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(SHORTCUT), null)) + ")", "Show hint", InteractiveLearningIcons.ShowHint);
+    super("Show hint (" + KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(SHORTCUT), null)) + ")", "Show hint",
+          InteractiveLearningIcons.ShowHint);
   }
 
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -60,21 +58,21 @@ public class StudyShowHintAction extends StudyActionWithShortcut {
     PsiFile file = PsiManager.getInstance(project).findFile(studyState.getVirtualFile());
     final Editor editor = studyState.getEditor();
     int offset = editor.getCaretModel().getOffset();
-    AnswerPlaceholder answerPlaceholder = studyState.getTaskFile().getAnswerPlaceholder(
-      offset);
+    AnswerPlaceholder answerPlaceholder = studyState.getTaskFile().getAnswerPlaceholder(offset);
     if (file == null) {
       return;
     }
     EduUsagesCollector.hintShown();
-    
+
     final StudyToolWindow hintComponent = new StudyHint(answerPlaceholder, project).getStudyToolWindow();
+    hintComponent.setPreferredSize(new Dimension(400, 150));
     showHintPopUp(project, studyState, editor, hintComponent);
   }
 
   private static void showHintPopUp(Project project, StudyState studyState, Editor editor, StudyToolWindow hintComponent) {
-    final JBPopup popup = 
+    final JBPopup popup =
       JBPopupFactory.getInstance().createComponentPopupBuilder(hintComponent, hintComponent)
-        .setDimensionServiceKey(project, DocumentationManager.JAVADOC_LOCATION_AND_SIZE, false)
+        .setDimensionServiceKey(project, "StudyHint", false)
         .setResizable(true)
         .setMovable(true)
         .setRequestFocus(true)
@@ -89,6 +87,15 @@ public class StudyShowHintAction extends StudyActionWithShortcut {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
+    final Project project = e.getProject();
+    if (project != null) {
+      final Course course = StudyTaskManager.getInstance(project).getCourse();
+      if (course != null && course.isAdaptive()) {
+        e.getPresentation().setEnabled(false);
+        return;
+      }
+    }
+    
     StudyUtils.updateAction(e);
   }
 

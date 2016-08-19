@@ -735,9 +735,13 @@
       <action id="XDebugger.NewWatch" class="com.intellij.xdebugger.impl.frame.actions.XNewWatchAction" icon="AllIcons.Debugger.NewWatch"/>
       <action id="XDebugger.EditWatch" class="com.intellij.xdebugger.impl.frame.actions.XEditWatchAction" use-shortcut-of="XDebugger.SetValue"/>
       <action id="XDebugger.CopyWatch" class="com.intellij.xdebugger.impl.frame.actions.XCopyWatchAction" icon="AllIcons.Actions.Copy"
-              text="Copy Watch" use-shortcut-of="EditorDuplicate"/>
+              text="Duplicate Watch" use-shortcut-of="EditorDuplicate"/>
       <action id="XDebugger.RemoveWatch" class="com.intellij.xdebugger.impl.frame.actions.XRemoveWatchAction" icon="AllIcons.Actions.Delete"
               use-shortcut-of="$Delete"/>
+      <action id="XDebugger.MoveWatchUp" class="com.intellij.xdebugger.impl.frame.actions.XMoveWatchUp" use-shortcut-of="MethodUp"/>
+      <action id="XDebugger.MoveWatchDown" class="com.intellij.xdebugger.impl.frame.actions.XMoveWatchDown" use-shortcut-of="MethodDown"/>
+      <action id="XDebugger.SwitchWatchesInVariables" class="com.intellij.xdebugger.impl.frame.actions.XSwitchWatchesInVariables"
+              icon="AllIcons.Debugger.Watches"/>
       <action id="XDebugger.RemoveAllWatches" class="com.intellij.xdebugger.impl.frame.actions.XRemoveAllWatchesAction"/>
       <action id="XDebugger.MuteBreakpoints" class="com.intellij.xdebugger.impl.actions.MuteBreakpointAction"
               icon="AllIcons.Debugger.MuteBreakpoints"/>
@@ -817,6 +821,10 @@
     <group id="XDebugger.Watches.Tree.Toolbar">
       <reference ref="XDebugger.NewWatch"/>
       <reference ref="XDebugger.RemoveWatch"/>
+      <reference ref="XDebugger.MoveWatchUp"/>
+      <reference ref="XDebugger.MoveWatchDown"/>
+      <reference ref="XDebugger.CopyWatch"/>
+      <reference ref="XDebugger.SwitchWatchesInVariables"/>
     </group>
 
     <group id="XDebugger.Inspect.Tree.Popup">

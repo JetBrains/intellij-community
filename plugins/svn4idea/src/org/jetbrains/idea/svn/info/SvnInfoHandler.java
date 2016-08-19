@@ -52,11 +52,11 @@ public class SvnInfoHandler extends DefaultHandler {
     myBase = base;
     myInfoConsumer = infoConsumer;
     myPending = createPending();
-    myElementsMap = new HashMap<String, Getter<ElementHandlerBase>>();
+    myElementsMap = new HashMap<>();
     fillElements();
-    myParseStack = new ArrayList<ElementHandlerBase>();
+    myParseStack = new ArrayList<>();
     myParseStack.add(new Fake());
-    myResultsMap = new HashMap<File, org.jetbrains.idea.svn.info.Info>();
+    myResultsMap = new HashMap<>();
     mySb = new StringBuilder();
   }
 
@@ -938,8 +938,8 @@ public class SvnInfoHandler extends DefaultHandler {
     private ElementHandlerBase parent;
 
     ElementHandlerBase(String[] awaitedChildren, String[] awaitedChildrenMultiple) {
-      myAwaitedChildren = new HashSet<String>(Arrays.asList(awaitedChildren));
-      myAwaitedChildrenMultiple = new HashSet<String>(Arrays.asList(awaitedChildrenMultiple));
+      myAwaitedChildren = new HashSet<>(Arrays.asList(awaitedChildren));
+      myAwaitedChildrenMultiple = new HashSet<>(Arrays.asList(awaitedChildrenMultiple));
     }
 
     @NotNull

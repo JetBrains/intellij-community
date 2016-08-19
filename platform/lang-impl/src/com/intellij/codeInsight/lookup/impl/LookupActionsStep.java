@@ -38,7 +38,7 @@ public class LookupActionsStep extends BaseListPopupStep<LookupElementAction> im
   private final Icon myEmptyIcon;
 
   public LookupActionsStep(Collection<LookupElementAction> actions, LookupImpl lookup, LookupElement lookupElement) {
-    super(null, new ArrayList<LookupElementAction>(actions));
+    super(null, new ArrayList<>(actions));
     myLookup = lookup;
     myLookupElement = lookupElement;
 

@@ -54,20 +54,20 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.content.impl.ContentManagerImpl");
 
   private ContentUI myUI;
-  private final List<Content> myContents = new ArrayList<Content>();
+  private final List<Content> myContents = new ArrayList<>();
   private final EventDispatcher<ContentManagerListener> myDispatcher = EventDispatcher.create(ContentManagerListener.class);
-  private final List<Content> mySelection = new ArrayList<Content>();
+  private final List<Content> mySelection = new ArrayList<>();
   private final boolean myCanCloseContents;
 
   private MyNonOpaquePanel myComponent;
 
-  private final Set<Content> myContentWithChangedComponent = new HashSet<Content>();
+  private final Set<Content> myContentWithChangedComponent = new HashSet<>();
 
   private boolean myDisposed;
   private final Project myProject;
 
-  private final List<DataProvider> dataProviders = new SmartList<DataProvider>();
-  private ArrayList<Content> mySelectionHistory = new ArrayList<Content>();
+  private final List<DataProvider> dataProviders = new SmartList<>();
+  private ArrayList<Content> mySelectionHistory = new ArrayList<>();
 
   /**
    * WARNING: as this class adds listener to the ProjectManager which is removed on projectClosed event, all instances of this class

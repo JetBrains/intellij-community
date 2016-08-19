@@ -14,10 +14,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.Base64;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -423,7 +420,7 @@ public class MavenResourceCompilerConfigurationGenerator {
   }
 
   private void addNonMavenResources(MavenProjectConfiguration projectCfg) {
-    Set<VirtualFile> processedRoots = new HashSet<VirtualFile>();
+    Set<VirtualFile> processedRoots = new HashSet<>();
 
     for (MavenProject project : myMavenProjectsManager.getProjects()) {
       for (String dir : ContainerUtil.concat(project.getSources(), project.getTestSources())) {
@@ -468,7 +465,7 @@ public class MavenResourceCompilerConfigurationGenerator {
                                        ? compilerModuleExtension.getCompilerOutputUrlForTests()
                                        : compilerModuleExtension.getCompilerOutputUrl();
 
-            cfg.targetPath = VfsUtil.urlToPath(compilerOutputUrl);
+            cfg.targetPath = VfsUtilCore.urlToPath(compilerOutputUrl);
 
             convertIdeaExcludesToMavenExcludes(cfg, (CompilerConfigurationImpl)compilerConfiguration);
 

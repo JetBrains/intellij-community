@@ -29,7 +29,7 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenProject;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class MavenProjectOpenProcessor extends ProjectOpenProcessorBase<MavenProjectBuilder> {
@@ -43,7 +43,7 @@ public class MavenProjectOpenProcessor extends ProjectOpenProcessorBase<MavenPro
   }
 
   public boolean doQuickImport(VirtualFile file, WizardContext wizardContext) {
-    getBuilder().setFiles(Arrays.asList(file));
+    getBuilder().setFiles(Collections.singletonList(file));
 
     if (!getBuilder().setSelectedProfiles(MavenExplicitProfiles.NONE)) return false;
 

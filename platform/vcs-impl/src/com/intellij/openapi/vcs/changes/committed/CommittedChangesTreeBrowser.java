@@ -37,11 +37,9 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsActions;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.pom.Navigatable;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
@@ -69,6 +67,9 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterRevisionsFiles;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
+
 /**
  * @author yole
  */
@@ -89,7 +90,8 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   private final TreeExpander myTreeExpander;
   private String myHelpId;
 
-  public static final Topic<CommittedChangesReloadListener> ITEMS_RELOADED = new Topic<CommittedChangesReloadListener>("ITEMS_RELOADED", CommittedChangesReloadListener.class);
+  public static final Topic<CommittedChangesReloadListener> ITEMS_RELOADED =
+    new Topic<>("ITEMS_RELOADED", CommittedChangesReloadListener.class);
 
   private final List<CommittedChangeListDecorator> myDecorators;
 
@@ -103,7 +105,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     super(new BorderLayout());
 
     myProject = project;
-    myDecorators = new LinkedList<CommittedChangeListDecorator>();
+    myDecorators = new LinkedList<>();
     myChangeLists = changeLists;
     myChangesTree = new ChangesBrowserTree();
     myChangesTree.setRootVisible(false);
@@ -261,7 +263,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   }
 
   private void updateBySelectionChange() {
-    List<CommittedChangeList> selection = new ArrayList<CommittedChangeList>();
+    List<CommittedChangeList> selection = new ArrayList<>();
     final TreePath[] selectionPaths = myChangesTree.getSelectionPaths();
     if (selectionPaths != null) {
       for(TreePath path: selectionPaths) {
@@ -282,7 +284,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   public static List<Change> collectChanges(final List<? extends CommittedChangeList> selectedChangeLists, final boolean withMovedTrees) {
     Collections.sort(selectedChangeLists, CommittedChangeListByDateComparator.ASCENDING);
 
-    List<Change> changes = new ArrayList<Change>();
+    List<Change> changes = new ArrayList<>();
     for (CommittedChangeList cl : selectedChangeLists) {
       changes.addAll(withMovedTrees ? cl.getChangesWithMovedTrees() : cl.getChanges());
     }
@@ -316,7 +318,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
 
     // key - after path (nullable)
-    LinkedMultiMap<FilePath, Change> map = new LinkedMultiMap<FilePath, Change>();
+    LinkedMultiMap<FilePath, Change> map = new LinkedMultiMap<>();
 
     for (Change change : changes) {
       ContentRevision bRev = change.getBeforeRevision();
@@ -353,7 +355,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       }
     }
 
-    return new ArrayList<Change>(map.values());
+    return new ArrayList<>(map.values());
   }
 
   private List<CommittedChangeList> getSelectedChangeLists() {
@@ -442,9 +444,8 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       }
     }
     else if (key.equals(CommonDataKeys.NAVIGATABLE_ARRAY)) {
-      final Collection<Change> changes = collectChanges(getSelectedChangeLists(), false);
-      Navigatable[] result = ChangesUtil.getNavigatableArray(myProject, ChangesUtil.getFilesFromChanges(changes));
-      sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, result);
+      Collection<Change> changes = collectChanges(getSelectedChangeLists(), false);
+      sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, getNavigatableArray(myProject, getAfterRevisionsFiles(changes.stream())));
     }
     else if (key.equals(PlatformDataKeys.HELP_ID)) {
       sink.put(PlatformDataKeys.HELP_ID, myHelpId);

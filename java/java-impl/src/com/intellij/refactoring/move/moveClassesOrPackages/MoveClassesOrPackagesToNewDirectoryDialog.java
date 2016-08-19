@@ -103,7 +103,7 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends MoveDialogBase {
     });
 
     if (canShowPreserveSourceRoots) {
-      final Set<VirtualFile> sourceRoots = new HashSet<VirtualFile>();
+      final Set<VirtualFile> sourceRoots = new HashSet<>();
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(directory.getProject()).getFileIndex();
       final Module destinationModule = fileIndex.getModuleForFile(directory.getVirtualFile());
       boolean sameModule = true;

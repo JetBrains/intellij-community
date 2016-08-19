@@ -200,7 +200,8 @@ public class HighlightNamesUtil {
              : var.hasModifierProperty(PsiModifier.FINAL) ? JavaHighlightInfoTypes.INSTANCE_FINAL_FIELD : JavaHighlightInfoTypes.INSTANCE_FIELD;
     }
     if (var instanceof PsiParameter) {
-      return JavaHighlightInfoTypes.PARAMETER;
+      return ((PsiParameter)var).getDeclarationScope() instanceof PsiLambdaExpression ? JavaHighlightInfoTypes.LAMBDA_PARAMETER
+                                                                                      : JavaHighlightInfoTypes.PARAMETER;
     }
     return null;
   }

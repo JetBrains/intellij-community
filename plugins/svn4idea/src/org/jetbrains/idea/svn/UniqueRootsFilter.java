@@ -33,7 +33,7 @@ import java.util.List;
 public class UniqueRootsFilter {
 
   public <T extends RootUrlPair> List<T> filter(@NotNull final List<T> list) {
-    List<T> result = new ArrayList<T>();
+    List<T> result = new ArrayList<>();
 
     sort(list);
     for (final T child : list) {

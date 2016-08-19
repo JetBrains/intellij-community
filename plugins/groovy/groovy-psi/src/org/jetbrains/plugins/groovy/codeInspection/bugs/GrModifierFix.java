@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 
 /**
  * @author Max Medvedev
@@ -41,20 +42,22 @@ public class GrModifierFix extends GroovyFix {
     return ((PsiModifierListOwner)element).getModifierList();
   };
 
+  public static final Function<ProblemDescriptor, PsiModifierList> MODIFIER_LIST_CHILD = descriptor -> {
+    final PsiElement element = descriptor.getPsiElement().getParent();
+    assert element instanceof PsiModifierList : element;
+    return (PsiModifierList)element;
+  };
 
   private final String myModifier;
   private final String myText;
   private final boolean myDoSet;
   private final Function<ProblemDescriptor, PsiModifierList> myModifierListProvider;
 
-  public GrModifierFix(@NotNull PsiVariable member,
+  public GrModifierFix(@NotNull GrVariable member,
                        @GrModifier.GrModifierConstant String modifier,
                        boolean doSet,
                        @NotNull Function<ProblemDescriptor, PsiModifierList> modifierListProvider) {
-    myModifier = modifier;
-    myDoSet = doSet;
-    myModifierListProvider = modifierListProvider;
-    myText = initText(doSet, member.getName(), modifier);
+    this(initText(doSet, member.getName(), modifier), modifier, doSet, modifierListProvider);
   }
 
   public GrModifierFix(@NotNull PsiMember member,
@@ -62,10 +65,17 @@ public class GrModifierFix extends GroovyFix {
                        boolean showContainingClass,
                        boolean doSet,
                        @NotNull Function<ProblemDescriptor, PsiModifierList> modifierListProvider) {
+    this(initText(doSet, getMemberName(member, showContainingClass), modifier), modifier, doSet, modifierListProvider);
+  }
+
+  public GrModifierFix(@NotNull String text,
+                       @GrModifier.GrModifierConstant String modifier,
+                       boolean doSet,
+                       @NotNull Function<ProblemDescriptor, PsiModifierList> modifierListProvider) {
+    myText = text;
     myModifier = modifier;
-    myDoSet = doSet;
     myModifierListProvider = modifierListProvider;
-    myText = initText(doSet, getMemberName(member, showContainingClass), modifier);
+    myDoSet = doSet;
   }
 
   public static String initText(boolean doSet, @NotNull String name, @NotNull String modifier) {

@@ -32,10 +32,10 @@ public class VcsLogBranchFilterImpl implements VcsLogBranchFilter {
 
   @Deprecated
   public VcsLogBranchFilterImpl(@NotNull Collection<String> branches, @NotNull Collection<String> excludedBranches) {
-    myBranches = new ArrayList<String>(branches);
-    myPatterns = new ArrayList<Pattern>();
-    myExcludedBranches = new ArrayList<String>(excludedBranches);
-    myExcludedPatterns = new ArrayList<Pattern>();
+    myBranches = new ArrayList<>(branches);
+    myPatterns = new ArrayList<>();
+    myExcludedBranches = new ArrayList<>(excludedBranches);
+    myExcludedPatterns = new ArrayList<>();
   }
 
   @Nullable
@@ -46,10 +46,10 @@ public class VcsLogBranchFilterImpl implements VcsLogBranchFilter {
 
   @NotNull
   public static VcsLogBranchFilterImpl fromTextPresentation(@NotNull Collection<String> strings, @NotNull Set<String> existingBranches) {
-    List<String> branchNames = new ArrayList<String>();
-    List<String> excludedBranches = new ArrayList<String>();
-    List<Pattern> patterns = new ArrayList<Pattern>();
-    List<Pattern> excludedPatterns = new ArrayList<Pattern>();
+    List<String> branchNames = new ArrayList<>();
+    List<String> excludedBranches = new ArrayList<>();
+    List<Pattern> patterns = new ArrayList<>();
+    List<Pattern> excludedPatterns = new ArrayList<>();
 
     for (String string : strings) {
       boolean isExcluded = string.startsWith("-");
@@ -92,7 +92,7 @@ public class VcsLogBranchFilterImpl implements VcsLogBranchFilter {
   @NotNull
   @Override
   public Collection<String> getTextPresentation() {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
 
     result.addAll(myBranches);
     result.addAll(ContainerUtil.map(myPatterns, pattern -> pattern.pattern()));

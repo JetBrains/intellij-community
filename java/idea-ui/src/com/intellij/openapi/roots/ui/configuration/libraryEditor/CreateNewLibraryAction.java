@@ -102,7 +102,7 @@ public class CreateNewLibraryAction extends DumbAwareAction {
 
   public static AnAction[] createActionOrGroup(@NotNull String text, @NotNull BaseLibrariesConfigurable librariesConfigurable, final @NotNull Project project) {
     final LibraryType<?>[] extensions = LibraryType.EP_NAME.getExtensions();
-    List<LibraryType<?>> suitableTypes = new ArrayList<LibraryType<?>>();
+    List<LibraryType<?>> suitableTypes = new ArrayList<>();
     if (librariesConfigurable instanceof ProjectLibrariesConfigurable || !project.isDefault()) {
       final ModuleStructureConfigurable configurable = ModuleStructureConfigurable.getInstance(project);
       for (LibraryType<?> extension : extensions) {
@@ -118,7 +118,7 @@ public class CreateNewLibraryAction extends DumbAwareAction {
     if (suitableTypes.isEmpty()) {
       return new AnAction[]{new CreateNewLibraryAction(text, PlatformIcons.LIBRARY_ICON, null, librariesConfigurable, project)};
     }
-    List<AnAction> actions = new ArrayList<AnAction>();
+    List<AnAction> actions = new ArrayList<>();
     actions.add(new CreateNewLibraryAction(IdeBundle.message("create.default.library.type.action.name"), PlatformIcons.LIBRARY_ICON, null, librariesConfigurable, project));
     for (LibraryType<?> type : suitableTypes) {
       final String actionName = type.getCreateActionName();

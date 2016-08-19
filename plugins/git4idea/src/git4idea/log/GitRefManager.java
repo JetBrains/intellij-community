@@ -20,6 +20,9 @@ import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
@@ -32,6 +35,8 @@ public class GitRefManager implements VcsLogRefManager {
   public static final VcsRefType REMOTE_BRANCH = new SimpleRefType(true, VcsLogStandardColors.Refs.BRANCH_REF, "REMOTE_BRANCH");
   public static final VcsRefType TAG = new SimpleRefType(false, VcsLogStandardColors.Refs.TAG, "TAG");
   public static final VcsRefType OTHER = new SimpleRefType(false, VcsLogStandardColors.Refs.TAG, "OTHER");
+
+  private static final List<VcsRefType> REF_TYPE_INDEX = Arrays.asList(HEAD, LOCAL_BRANCH, REMOTE_BRANCH, TAG, OTHER);
 
   private static final String MASTER = "master";
   private static final String ORIGIN_MASTER = "origin/master";
@@ -130,6 +135,19 @@ public class GitRefManager implements VcsLogRefManager {
     return result;
   }
 
+  @Override
+  public void serialize(@NotNull DataOutput out, @NotNull VcsRefType type) throws IOException {
+    out.writeInt(REF_TYPE_INDEX.indexOf(type));
+  }
+
+  @NotNull
+  @Override
+  public VcsRefType deserialize(@NotNull DataInput in) throws IOException {
+    int id = in.readInt();
+    if (id < 0 || id > REF_TYPE_INDEX.size() - 1) throw new IOException("Reference type by id " + id + " does not exist");
+    return REF_TYPE_INDEX.get(id);
+  }
+
   private static Set<String> getLocalBranches(GitRepository repository) {
     return ContainerUtil.map2Set(repository.getBranches().getLocalBranches(), new Function<GitBranch, String>() {
       @Override
@@ -141,8 +159,8 @@ public class GitRefManager implements VcsLogRefManager {
 
   @NotNull
   private static Set<String> getTrackedRemoteBranches(@NotNull GitRepository repository) {
-    Set<GitRemoteBranch> all = new HashSet<GitRemoteBranch>(repository.getBranches().getRemoteBranches());
-    Set<String> tracked = new HashSet<String>();
+    Set<GitRemoteBranch> all = new HashSet<>(repository.getBranches().getRemoteBranches());
+    Set<String> tracked = new HashSet<>();
     for (GitBranchTrackInfo info : repository.getBranchTrackInfos()) {
       GitRemoteBranch trackedRemoteBranch = info.getRemoteBranch();
       if (all.contains(trackedRemoteBranch)) { // check that this branch really exists, not just written in .git/config
@@ -154,7 +172,7 @@ public class GitRefManager implements VcsLogRefManager {
 
   @NotNull
   private static Map<String, GitRemote> getAllRemoteBranches(@NotNull GitRepository repository) {
-    Set<GitRemoteBranch> all = new HashSet<GitRemoteBranch>(repository.getBranches().getRemoteBranches());
+    Set<GitRemoteBranch> all = new HashSet<>(repository.getBranches().getRemoteBranches());
     Map<String, GitRemote> allRemote = ContainerUtil.newHashMap();
     for (GitRemoteBranch remoteBranch : all) {
       allRemote.put(remoteBranch.getName(), remoteBranch.getRemote());
@@ -289,7 +307,6 @@ public class GitRefManager implements VcsLogRefManager {
     public Color getBgColor() {
       return VcsLogStandardColors.Refs.BRANCH_REF;
     }
-
   }
 
   private static class GitLabelComparator extends GitRefComparator {

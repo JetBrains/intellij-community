@@ -135,7 +135,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
           }
         }
       });
-      myTabs = new ArrayList<CodeStyleAbstractPanel>();
+      myTabs = new ArrayList<>();
       myPanel.add(myTabbedPane.getComponent());
       initTabs(getSettings());
     }
@@ -313,7 +313,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   private void fillLanguages(JComponent parentMenu) {
       Language[] languages = LanguageCodeStyleSettingsProvider.getLanguagesWithCodeStyleSettings();
       @SuppressWarnings("UnnecessaryFullyQualifiedName")
-      java.util.List<JMenuItem> langItems = new ArrayList<JMenuItem>();
+      java.util.List<JMenuItem> langItems = new ArrayList<>();
       for (final Language lang : languages) {
         if (!lang.equals(getDefaultLanguage())) {
           final String langName = LanguageCodeStyleSettingsProvider.getLanguageName(lang);
@@ -348,7 +348,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
   private PredefinedCodeStyle[] getPredefinedStyles() {
     final Language language = getDefaultLanguage();
-    final List<PredefinedCodeStyle> result = new ArrayList<PredefinedCodeStyle>();
+    final List<PredefinedCodeStyle> result = new ArrayList<>();
 
     for (PredefinedCodeStyle codeStyle : PredefinedCodeStyle.EP_NAME.getExtensions()) {
       if (codeStyle.getLanguage().equals(language)) {
@@ -530,7 +530,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
   @Override
   public Set<String> processListOptions() {
-    final Set<String> result = new HashSet<String>();
+    final Set<String> result = new HashSet<>();
     for (CodeStyleAbstractPanel tab : myTabs) {
       result.addAll(tab.processListOptions());
     }

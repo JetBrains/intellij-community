@@ -34,7 +34,7 @@ public class GenerateAccessorProviderRegistrar {
 
   public final static ExtensionPointName<NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>>> EP_NAME = ExtensionPointName.create("com.intellij.generateAccessorProvider");
 
-  private static final List<NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>>> ourProviders = new ArrayList<NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>>>();
+  private static final List<NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>>> ourProviders = new ArrayList<>();
 
   static {
     ourProviders.addAll(Arrays.asList(Extensions.getExtensions(EP_NAME)));

@@ -63,7 +63,7 @@ public class MyLookupExpression extends Expression {
                                                  PsiElement nameSuggestionContext,
                                                  final boolean shouldSelectAll) {
     if (names == null) {
-      names = new LinkedHashSet<String>();
+      names = new LinkedHashSet<>();
       for (NameSuggestionProvider provider : Extensions.getExtensions(NameSuggestionProvider.EP_NAME)) {
         final SuggestedNameInfo suggestedNameInfo = provider.getSuggestedNames(elementToRename, nameSuggestionContext, names);
         if (suggestedNameInfo != null &&

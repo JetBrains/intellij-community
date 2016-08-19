@@ -58,7 +58,7 @@ public class FieldConflictsResolver {
     myField = oldVariable instanceof PsiField ? (PsiField) oldVariable : null;
     if (!(oldVariable instanceof PsiField)) return;
 
-    myReferenceExpressions = new ArrayList<GrReferenceExpression>();
+    myReferenceExpressions = new ArrayList<>();
     for (PsiReference reference : ReferencesSearch.search(myField, new LocalSearchScope(myScope), false)) {
       final PsiElement element = reference.getElement();
       if (element instanceof GrReferenceExpression) {

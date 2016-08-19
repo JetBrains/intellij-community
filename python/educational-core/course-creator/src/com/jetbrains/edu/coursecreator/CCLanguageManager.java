@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 public interface CCLanguageManager {
-  LanguageExtension<CCLanguageManager> INSTANCE = new LanguageExtension<CCLanguageManager>("Edu.CCLanguageManager");
+  LanguageExtension<CCLanguageManager> INSTANCE = new LanguageExtension<>("Edu.CCLanguageManager");
 
   @Nullable
   String getDefaultTaskFileExtension();

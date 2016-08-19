@@ -29,7 +29,7 @@ import java.util.List;
  */
 public class DefaultArrangementEntry implements ArrangementEntry {
 
-  @NotNull private final List<ArrangementEntry> myChildren = new ArrayList<ArrangementEntry>();
+  @NotNull private final List<ArrangementEntry> myChildren = new ArrayList<>();
 
   @Nullable private final ArrangementEntry       myParent;
   @Nullable private       List<ArrangementEntry> myDependencies;
@@ -70,7 +70,7 @@ public class DefaultArrangementEntry implements ArrangementEntry {
 
   public void addDependency(@NotNull ArrangementEntry dependency) {
     if (myDependencies == null) {
-      myDependencies = new ArrayList<ArrangementEntry>();
+      myDependencies = new ArrayList<>();
     }
     myDependencies.add(dependency);
   }

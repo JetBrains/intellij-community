@@ -245,7 +245,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
       }
     }
 
-    Set<RunnerAndConfigurationSettings> settings = new THashSet<RunnerAndConfigurationSettings>(
+    Set<RunnerAndConfigurationSettings> settings = new THashSet<>(
       RunManager.getInstance(project).getConfigurationSettingsList(configurationType));
 
     final ExternalSystemShortcutsManager shortcutsManager = ExternalProjectsManager.getInstance(project).getShortcutsManager();

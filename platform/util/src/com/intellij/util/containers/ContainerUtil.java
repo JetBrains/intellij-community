@@ -766,11 +766,17 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   public static <K, V> Map<K, V> newMapFromValues(@NotNull Iterator<V> values, @NotNull Convertor<V, K> keyConvertor) {
     Map<K, V> map = newHashMap();
+    fillMapWithValues(map, values, keyConvertor);
+    return map;
+  }
+
+  public static <K, V> void fillMapWithValues(@NotNull Map<K, V> map,
+                                              @NotNull Iterator<V> values,
+                                              @NotNull Convertor<V, K> keyConvertor) {
     while (values.hasNext()) {
       V value = values.next();
       map.put(keyConvertor.convert(value), value);
     }
-    return map;
   }
 
   @NotNull
@@ -981,12 +987,6 @@ public class ContainerUtil extends ContainerUtilRt {
       }
     }
     return result.isEmpty() ? ArrayUtil.EMPTY_INT_ARRAY : result.toNativeArray();
-  }
-
-  @NotNull
-  @Contract(pure=true)
-  public static <T> List<T> filter(@NotNull Condition<? super T> condition, @NotNull T... collection) {
-    return findAll(collection, condition);
   }
 
   @NotNull
@@ -1902,7 +1902,7 @@ public class ContainerUtil extends ContainerUtilRt {
   public static <T> List<T> packNullables(@NotNull T... elements) {
     List<T> list = new ArrayList<T>();
     for (T element : elements) {
-      addIfNotNull(element, list);
+      addIfNotNull(list, element);
     }
     return list.isEmpty() ? ContainerUtil.<T>emptyList() : list;
   }
@@ -2617,6 +2617,10 @@ public class ContainerUtil extends ContainerUtilRt {
     return new LockFreeCopyOnWriteArrayList<T>(collection);
   }
 
+  /**
+   * @see #addIfNotNull(Collection, Object)
+   */
+  @Deprecated
   public static <T> void addIfNotNull(@Nullable T element, @NotNull Collection<T> result) {
     ContainerUtilRt.addIfNotNull(element, result);
   }

@@ -944,4 +944,12 @@ public class ArrayUtil extends ArrayUtilRt {
     int middlePartLength = n / part;
     return middlePartLength == 0 ? 0 : total / middlePartLength;
   }
+
+  public static int min(int[] values) {
+    int min = Integer.MAX_VALUE;
+    for (int value : values) {
+      if (value < min) min = value;
+    }
+    return min;
+  }
 }

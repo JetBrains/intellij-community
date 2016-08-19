@@ -25,6 +25,7 @@
     <renameHandler implementation="com.jetbrains.edu.coursecreator.handlers.CCLessonRenameHandler" order="first"/>
     <applicationService serviceInterface="com.jetbrains.edu.coursecreator.settings.CCSettings"
                         serviceImplementation="com.jetbrains.edu.coursecreator.settings.CCSettings"/>
+    <highlightErrorFilter implementation="com.jetbrains.edu.coursecreator.CCHighlightErrorFilter"/>
   </extensions>
   <extensions defaultExtensionNs="Edu">
     <studyActionsProvider implementation="com.jetbrains.edu.coursecreator.CCStudyActionsProvider"/>
@@ -52,11 +53,11 @@
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
     </action>
 
-    <action id="ChangeCourseInfo" class="com.jetbrains.edu.coursecreator.PyCCChangeCourseInfo"/>
+    <action id="ChangeCourseInfo" class="com.jetbrains.edu.coursecreator.actions.CCChangeCourseInfo"/>
 
     <group id="CCProjectViewGroup" popup="true" text="Course Creator" class="com.jetbrains.edu.coursecreator.actions.CCProjectViewActionGroup">
-      <action id="AddTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCAddAsTaskFile" text="Make Visible to Student"/>
-      <action id="HideTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCHideFromStudent" text="Hide from Student"/>
+      <action id="AddTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCAddAsTaskFile"/>
+      <action id="HideTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCHideFromStudent"/>
       <action id="ShowPreview" class="com.jetbrains.edu.coursecreator.actions.CCShowPreview">
         <add-to-group group-id="EditorTabPopupMenu"/>
       </action>
@@ -85,6 +86,7 @@
     </group>
 
     <action id="UnpackCourse" class="com.jetbrains.edu.coursecreator.actions.CCFromCourseArchive"/>
+    <action id="GetCourse" class="com.jetbrains.edu.coursecreator.actions.CCGetCourseFromStepic"/>
   </actions>
 
 

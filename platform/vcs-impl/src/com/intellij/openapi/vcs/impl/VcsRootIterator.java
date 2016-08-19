@@ -43,7 +43,7 @@ public class VcsRootIterator {
   public VcsRootIterator(final Project project, final AbstractVcs vcs) {
     myProject = project;
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
-    myOtherVcsFolders = new HashMap<String, MyRootFilter>();
+    myOtherVcsFolders = new HashMap<>();
     myExcludedFileIndex = PeriodicalTasksCloser.getInstance().safeGetService(project, FileIndexFacade.class);
 
     final VcsRoot[] allRoots = myVcsManager.getAllVcsRoots();
@@ -84,7 +84,7 @@ public class VcsRootIterator {
       myRoot = root;
       myVcsName = vcsName;
 
-      myExcludedByOthers = new LinkedList<String>();
+      myExcludedByOthers = new LinkedList<>();
     }
 
     private void init(final VcsRoot[] allRoots) {

@@ -27,14 +27,14 @@ import java.util.Collection;
  * @author peter
  */
 public class PrattRegistry {
-  private final MultiMap<IElementType, Trinity<Integer, PathPattern, TokenParser>> myMap = new MultiMap<IElementType, Trinity<Integer, PathPattern, TokenParser>>();
+  private final MultiMap<IElementType, Trinity<Integer, PathPattern, TokenParser>> myMap = new MultiMap<>();
 
   public void registerParser(@NotNull final IElementType type, final int priority, final TokenParser parser) {
     registerParser(type, priority, PathPattern.path(), parser);
   }
 
   public void registerParser(@NotNull final IElementType type, final int priority, final PathPattern pattern, final TokenParser parser) {
-    myMap.putValue(type, new Trinity<Integer, PathPattern, TokenParser>(priority, pattern, parser));
+    myMap.putValue(type, new Trinity<>(priority, pattern, parser));
   }
 
   @NotNull

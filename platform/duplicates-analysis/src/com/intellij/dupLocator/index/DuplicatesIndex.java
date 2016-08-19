@@ -123,7 +123,7 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
         FileContentImpl fileContent = (FileContentImpl)inputData;
 
         if (profile instanceof LightDuplicateProfile && ourEnabledLightProfiles) {
-          final THashMap<Integer, TIntArrayList> result = new THashMap<Integer, TIntArrayList>();
+          final THashMap<Integer, TIntArrayList> result = new THashMap<>();
           LighterAST ast = fileContent.getLighterASTForPsiDependentIndex();
 
           ((LightDuplicateProfile)profile).process(ast, new LightDuplicateProfile.Callback() {
@@ -205,7 +205,7 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
   private static final TracingData myTracingData = null;
 
   private static class MyFragmentsCollector implements FragmentsCollector {
-    private final THashMap<Integer, TIntArrayList> myMap = new THashMap<Integer, TIntArrayList>();
+    private final THashMap<Integer, TIntArrayList> myMap = new THashMap<>();
     private final DuplicatesProfile myProfile;
     private final DuplocatorState myDuplocatorState;
 

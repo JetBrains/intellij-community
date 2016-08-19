@@ -3,6 +3,7 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.siyeh.ig.LightInspectionTestCase;
 
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
 
   @Override
@@ -20,6 +21,7 @@ public class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
       "package java.util.regex; public class Matcher {" +
       "  public boolean find() {return true;}" +
       "}",
+
       "package javax.annotation;\n" +
       "\n" +
       "import java.lang.annotation.Documented;\n" +
@@ -36,8 +38,35 @@ public class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
       "@Retention(RetentionPolicy.RUNTIME)\n" +
       "public @interface CheckReturnValue {\n" +
       "    When when() default When.ALWAYS;\n" +
-      "}"
+      "}",
+
+      "package com.google.errorprone.annotations;" +
+      "import java.lang.annotation.ElementType;\n" +
+      "import java.lang.annotation.Retention;\n" +
+      "import java.lang.annotation.RetentionPolicy;\n" +
+      "import java.lang.annotation.Target;\n" +
+      "@Target(value={ElementType.METHOD, ElementType.TYPE})\n" +
+      "@Retention(value=RetentionPolicy.CLASS)\n" +
+      "public @interface CanIgnoreReturnValue {}"
     ] as String[]
+  }
+
+  public void testCanIgnoreReturnValue() {
+    doTest("import com.google.errorprone.annotations.CanIgnoreReturnValue;\n" +
+           "import javax.annotation.CheckReturnValue;\n" +
+           "\n" +
+           "@CheckReturnValue\n" +
+           "class Test {\n" +
+           "  int lookAtMe() { return 1; }\n" +
+           "\n" +
+           "  @CanIgnoreReturnValue\n" +
+           "  int ignoreMe() { return 2; }\n" +
+           "\n" +
+           "  void run() {\n" +
+           "    /*Result of 'Test.lookAtMe()' is ignored*/lookAtMe/**/(); // Bad!  This line should produce a warning.\n" +
+           "    ignoreMe(); // OK.  This line should *not* produce a warning.\n" +
+           "  }\n" +
+           "}");
   }
 
   public void testObjectMethods() {

@@ -261,7 +261,7 @@ abstract class BaseHtmlLexer extends DelegateLexer {
     }
   }
 
-  private final HashMap<IElementType,TokenHandler> tokenHandlers = new HashMap<IElementType, TokenHandler>();
+  private final HashMap<IElementType,TokenHandler> tokenHandlers = new HashMap<>();
 
   protected BaseHtmlLexer(Lexer _baseLexer, boolean _caseInsensitive)  {
     super(_baseLexer);

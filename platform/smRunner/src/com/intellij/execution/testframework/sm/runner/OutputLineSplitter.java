@@ -30,8 +30,8 @@ public abstract class OutputLineSplitter {
 
   private final boolean myStdinSupportEnabled;
 
-  private final Map<Key, StringBuilder> myBuffers = new THashMap<Key, StringBuilder>();
-  private final List<OutputChunk> myStdOutChunks = new ArrayList<OutputChunk>();
+  private final Map<Key, StringBuilder> myBuffers = new THashMap<>();
+  private final List<OutputChunk> myStdOutChunks = new ArrayList<>();
 
   public OutputLineSplitter(boolean stdinEnabled) {
     myBuffers.put(ProcessOutputTypes.SYSTEM, new StringBuilder());
@@ -116,7 +116,7 @@ public abstract class OutputLineSplitter {
     // successfully process broken messages across several flushes
     // size of parts may tell us either \n was single in original flushed data or it was
     // separated by process handler
-    List<OutputChunk> chunks = new ArrayList<OutputChunk>();
+    List<OutputChunk> chunks = new ArrayList<>();
     OutputChunk lastChunk = null;
     synchronized (myStdOutChunks) {
       for (OutputChunk chunk : myStdOutChunks) {

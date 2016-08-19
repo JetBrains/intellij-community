@@ -42,7 +42,7 @@ public abstract class IncludedXmlElement<T extends XmlElement> extends LightElem
     //noinspection unchecked
     T realOriginal = original instanceof IncludedXmlElement ? ((IncludedXmlElement<T>)original).getOriginal() : original;
     myOriginal = PsiAnchor.create(realOriginal);
-    myRef = new SoftReference<T>(realOriginal);
+    myRef = new SoftReference<>(realOriginal);
     myParent = parent;
   }
 
@@ -86,7 +86,7 @@ public abstract class IncludedXmlElement<T extends XmlElement> extends LightElem
     if (element == null) {
       throw new PsiInvalidElementAccessException(this);
     }
-    myRef = new SoftReference<T>(element);
+    myRef = new SoftReference<>(element);
     return element;
   }
 

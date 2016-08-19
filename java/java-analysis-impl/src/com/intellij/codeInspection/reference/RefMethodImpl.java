@@ -93,7 +93,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     if (myParameters == null) return superChildren;
     if (superChildren == null || superChildren.isEmpty()) return Arrays.<RefEntity>asList(myParameters);
     
-    List<RefEntity> allChildren = new ArrayList<RefEntity>(superChildren.size() + myParameters.length);
+    List<RefEntity> allChildren = new ArrayList<>(superChildren.size() + myParameters.length);
     allChildren.addAll(superChildren);
     Collections.addAll(allChildren, myParameters);
     return allChildren;
@@ -256,7 +256,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   public void addSuperMethod(RefMethodImpl refSuperMethod) {
     if (!getSuperMethods().contains(refSuperMethod) && !refSuperMethod.getSuperMethods().contains(this)) {
       if (mySuperMethods == null){
-        mySuperMethods = new ArrayList<RefMethod>(1);
+        mySuperMethods = new ArrayList<>(1);
       }
       mySuperMethods.add(refSuperMethod);
     }
@@ -265,7 +265,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   public void markExtended(RefMethodImpl method) {
     if (!getDerivedMethods().contains(method) && !method.getDerivedMethods().contains(this)) {
       if (myDerivedMethods == null) {
-        myDerivedMethods = new ArrayList<RefMethod>(1);
+        myDerivedMethods = new ArrayList<>(1);
       }
       myDerivedMethods.add(method);
     }
@@ -310,7 +310,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     if (getSuperMethods().isEmpty()) {
       PsiClassType[] throwsList = method.getThrowsList().getReferencedTypes();
       if (throwsList.length > 0) {
-        myUnThrownExceptions = throwsList.length == 1 ? new SmartList<String>() : new ArrayList<String>(throwsList.length);
+        myUnThrownExceptions = throwsList.length == 1 ? new SmartList<>() : new ArrayList<>(throwsList.length);
         for (final PsiClassType type : throwsList) {
           PsiClass aClass = type.resolve();
           String fqn = aClass == null ? null : aClass.getQualifiedName();
@@ -339,7 +339,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   @Override
   public void accept(@NotNull final RefVisitor visitor) {
     if (visitor instanceof RefJavaVisitor) {
-      ApplicationManager.getApplication().runReadAction(() -> ((RefJavaVisitor)visitor).visitMethod(RefMethodImpl.this));
+      ApplicationManager.getApplication().runReadAction(() -> ((RefJavaVisitor)visitor).visitMethod(this));
     } else {
       super.accept(visitor);
     }
@@ -347,7 +347,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   @Override
   public boolean isExternalOverride() {
-    return isLibraryOverride(new HashSet<RefMethod>());
+    return isLibraryOverride(new HashSet<>());
   }
 
   private boolean isLibraryOverride(@NotNull Collection<RefMethod> processed) {
@@ -492,7 +492,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       subMethod.getSuperMethods().remove(this);
     }
 
-    ArrayList<RefElement> deletedRefs = new ArrayList<RefElement>();
+    ArrayList<RefElement> deletedRefs = new ArrayList<>();
     for (RefParameter parameter : getParameters()) {
       getRefManager().removeRefElement(parameter, deletedRefs);
     }
@@ -619,7 +619,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     }
     if (myUnThrownExceptions == null) return null;
     JavaPsiFacade facade = JavaPsiFacade.getInstance(myManager.getProject());
-    List<PsiClass> result = new ArrayList<PsiClass>(myUnThrownExceptions.size());
+    List<PsiClass> result = new ArrayList<>(myUnThrownExceptions.size());
     for (String exception : myUnThrownExceptions) {
       PsiClass element = facade.findClass(exception, GlobalSearchScope.allScope(myManager.getProject()));
       if (element != null) result.add(element);

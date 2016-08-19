@@ -73,7 +73,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
   }
 
   private static boolean findClassInheritors(final PsiClass element) {
-    final Collection<PsiElement> inheritors = new ArrayList<PsiElement>();
+    final Collection<PsiElement> inheritors = new ArrayList<>();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
       final PsiClass inheritor = ClassInheritorsSearch.search(element).findFirst();
       if (inheritor != null) {
@@ -114,7 +114,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
       return;
     }
 
-    final Ref<String> errorMessage = new Ref<String>();
+    final Ref<String> errorMessage = new Ref<>();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> errorMessage.set(getCannotInlineMessage(psiClass))), "Check if inline is possible...", true, project)) return;
     if (errorMessage.get() != null) {
       CommonRefactoringUtil.showErrorHint(project, editor, errorMessage.get(), RefactoringBundle.message("inline.to.anonymous.refactoring"), null);

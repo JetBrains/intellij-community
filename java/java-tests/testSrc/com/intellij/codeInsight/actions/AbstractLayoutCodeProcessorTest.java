@@ -121,7 +121,7 @@ public abstract class AbstractLayoutCodeProcessorTest extends PsiTestCase {
   @NotNull
   protected List<PsiFile> createTestFiles(@NotNull VirtualFile parentDirectory, @NotNull String[] fileNames) throws IOException {
     String[] fileText = createTestJavaClassesWithAdditionalImports(fileNames);
-    List<PsiFile> files = new ArrayList<PsiFile>();
+    List<PsiFile> files = new ArrayList<>();
     for (int i = 0; i < fileNames.length; i++) {
       String fileName = fileNames[i] + ".java";
       files.add(createFile(getModule(), parentDirectory, fileName, fileText[i]));

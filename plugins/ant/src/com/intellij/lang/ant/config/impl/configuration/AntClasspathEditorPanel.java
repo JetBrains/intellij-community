@@ -75,7 +75,7 @@ public class AntClasspathEditorPanel extends JPanel {
     private JButton myMoveDownButton;
     private JPanel myWholePanel;
     private JList myClasspathList;
-    private final ArrayList<ListUtil.Updatable> myUpdatables = new ArrayList<ListUtil.Updatable>();
+    private final ArrayList<ListUtil.Updatable> myUpdatables = new ArrayList<>();
 
     public Form() {
       myClasspathList.setCellRenderer(new AntUIUtil.ClasspathRenderer());

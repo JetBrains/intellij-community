@@ -126,7 +126,7 @@ public abstract class ReorderableListController <T> {
   }
 
   public static abstract class CustomActionDescription <V> extends ActionDescription {
-    private final ArrayList<ActionNotification<V>> myPostHandlers = new ArrayList<ActionNotification<V>>(1);
+    private final ArrayList<ActionNotification<V>> myPostHandlers = new ArrayList<>(1);
     private boolean myShowText = false;
 
     public void addPostHandler(final ActionNotification<V> runnable) {

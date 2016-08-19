@@ -90,7 +90,7 @@ public class XmlBlock extends AbstractXmlBlock {
     }
 
     if (myNode.getElementType() == XmlElementType.XML_COMMENT) {
-      List<Block> result = new SmartList<Block>();
+      List<Block> result = new SmartList<>();
       if (buildInjectedPsiBlocks(result, myNode, myWrap, null, Indent.getNoneIndent())) {
         return result;
       }
@@ -99,7 +99,7 @@ public class XmlBlock extends AbstractXmlBlock {
 
     if (myNode.getFirstChildNode() != null) {
       boolean keepWhitespaces = shouldKeepWhitespaces();
-      final ArrayList<Block> result = new ArrayList<Block>(5);
+      final ArrayList<Block> result = new ArrayList<>(5);
       ASTNode child = myNode.getFirstChildNode();
       while (child != null) {
         if (child.getTextLength() > 0) {
@@ -144,7 +144,7 @@ public class XmlBlock extends AbstractXmlBlock {
 
 
   protected List<Block> splitAttribute(ASTNode node, XmlFormattingPolicy formattingPolicy) {
-    final ArrayList<Block> result = new ArrayList<Block>(3);
+    final ArrayList<Block> result = new ArrayList<>(3);
     ASTNode child = node.getFirstChildNode();
     while (child != null) {
       if (child.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER ||
@@ -201,7 +201,7 @@ public class XmlBlock extends AbstractXmlBlock {
 
   protected List<Block> splitComment() {
     if (myNode.getElementType() != XmlElementType.XML_COMMENT) return EMPTY;
-    final ArrayList<Block> result = new ArrayList<Block>(3);
+    final ArrayList<Block> result = new ArrayList<>(3);
     ASTNode child = myNode.getFirstChildNode();
     boolean hasOuterLangElements = false;
     while (child != null) {

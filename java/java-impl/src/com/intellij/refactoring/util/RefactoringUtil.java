@@ -350,7 +350,7 @@ public class RefactoringUtil {
   public static boolean canBeDeclaredFinal(@NotNull PsiVariable variable) {
     LOG.assertTrue(variable instanceof PsiLocalVariable || variable instanceof PsiParameter);
     final boolean isReassigned = HighlightControlFlowUtil
-      .isReassigned(variable, new THashMap<PsiElement, Collection<ControlFlowUtil.VariableInfo>>());
+      .isReassigned(variable, new THashMap<>());
     return !isReassigned;
   }
 
@@ -578,7 +578,7 @@ public class RefactoringUtil {
    * @return List of highlighters
    */
   public static List<RangeHighlighter> highlightAllOccurrences(Project project, PsiElement[] occurrences, Editor editor) {
-    ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
+    ArrayList<RangeHighlighter> highlighters = new ArrayList<>();
     HighlightManager highlightManager = HighlightManager.getInstance(project);
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
@@ -801,7 +801,7 @@ public class RefactoringUtil {
                                                       final Iterable<PsiTypeParameter> parametersIterable,
                                                       final PsiSubstitutor substitutor,
                                                       final PsiElementFactory factory) {
-    final Map<PsiElement, PsiElement> replacement = new LinkedHashMap<PsiElement, PsiElement>();
+    final Map<PsiElement, PsiElement> replacement = new LinkedHashMap<>();
     for (PsiTypeParameter parameter : parametersIterable) {
       final PsiType substitutedType = substitutor.substitute(parameter);
       final PsiType erasedType = substitutedType == null ? TypeConversionUtil.erasure(factory.createType(parameter))
@@ -1026,7 +1026,7 @@ public class RefactoringUtil {
    * @return subset of graph.getVertices()
    */
   public static <T> Set<T> transitiveClosure(Graph<T> graph, Condition<T> initialRelation) {
-    Set<T> result = new HashSet<T>();
+    Set<T> result = new HashSet<>();
 
     final Set<T> vertices = graph.getVertices();
     boolean anyChanged;
@@ -1069,7 +1069,7 @@ public class RefactoringUtil {
   }
 
   public static List<PsiVariable> collectReferencedVariables(PsiElement scope) {
-    final List<PsiVariable> result = new ArrayList<PsiVariable>();
+    final List<PsiVariable> result = new ArrayList<>();
     scope.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         final PsiElement element = expression.resolve();
@@ -1118,7 +1118,7 @@ public class RefactoringUtil {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     final PsiDocTag[] paramTags = docComment.findTagsByName("param");
     if (parameters.length > 0 && newParameters.size() < parameters.length && paramTags.length == 0) return;
-    Map<PsiParameter, PsiDocTag> tagForParam = new HashMap<PsiParameter, PsiDocTag>();
+    Map<PsiParameter, PsiDocTag> tagForParam = new HashMap<>();
     for (PsiParameter parameter : parameters) {
       boolean found = false;
       for (PsiDocTag paramTag : paramTags) {
@@ -1143,7 +1143,7 @@ public class RefactoringUtil {
       }
     }
 
-    List<PsiDocTag> newTags = new ArrayList<PsiDocTag>();
+    List<PsiDocTag> newTags = new ArrayList<>();
 
     for (PsiDocTag paramTag : paramTags) {
       final String paramName = getNameOfReferencedParameter(paramTag);
@@ -1253,8 +1253,8 @@ public class RefactoringUtil {
 
   public static class ConditionCache<T> implements Condition<T> {
     private final Condition<T> myCondition;
-    private final HashSet<T> myProcessedSet = new HashSet<T>();
-    private final HashSet<T> myTrueSet = new HashSet<T>();
+    private final HashSet<T> myProcessedSet = new HashSet<>();
+    private final HashSet<T> myTrueSet = new HashSet<>();
 
     public ConditionCache(Condition<T> condition) {
       myCondition = condition;
@@ -1280,7 +1280,7 @@ public class RefactoringUtil {
 
     public IsDescendantOf(PsiClass aClass) {
       myClass = aClass;
-      myConditionCache = new ConditionCache<PsiClass>(aClass1 -> InheritanceUtil.isInheritorOrSelf(aClass1, myClass, true));
+      myConditionCache = new ConditionCache<>(aClass1 -> InheritanceUtil.isInheritorOrSelf(aClass1, myClass, true));
     }
 
     public boolean value(PsiClass aClass) {
@@ -1304,7 +1304,7 @@ public class RefactoringUtil {
                                                                                    Condition<PsiTypeParameter> filter,
                                                                                    @NotNull final PsiElement... elements) {
     if (elements.length == 0) return null;
-    final Set<PsiTypeParameter> used = new HashSet<PsiTypeParameter>();
+    final Set<PsiTypeParameter> used = new HashSet<>();
     for (final PsiElement element : elements) {
       if (element == null) continue;
       collectTypeParameters(used, element, filter);  //pull up extends cls class with type params
@@ -1371,7 +1371,7 @@ public class RefactoringUtil {
       }
 
       class TypeParameterSearcher extends PsiTypeVisitor<Boolean> {
-        private final Set<PsiTypeParameter> myTypeParams = new java.util.HashSet<PsiTypeParameter>();
+        private final Set<PsiTypeParameter> myTypeParams = new java.util.HashSet<>();
 
         public Boolean visitType(final PsiType type) {
           return false;

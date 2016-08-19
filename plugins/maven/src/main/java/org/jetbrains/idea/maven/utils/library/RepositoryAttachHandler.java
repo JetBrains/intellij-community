@@ -137,7 +137,7 @@ public class RepositoryAttachHandler {
                                          @Nullable final String copyTo,
                                          List<MavenRepositoryInfo> repositories,
                                          ProgressIndicator indicator) {
-    final SmartList<MavenExtraArtifactType> extraTypes = new SmartList<MavenExtraArtifactType>();
+    final SmartList<MavenExtraArtifactType> extraTypes = new SmartList<>();
     if (attachSources) extraTypes.add(MavenExtraArtifactType.SOURCES);
     if (attachJavaDoc) extraTypes.add(MavenExtraArtifactType.DOCS);
     final Ref<List<OrderRoot>> result = Ref.create(null);
@@ -173,7 +173,7 @@ public class RepositoryAttachHandler {
   }
 
   public static List<OrderRoot> createRoots(@NotNull Collection<MavenArtifact> artifacts, @Nullable String copyTo) {
-    final List<OrderRoot> result = new ArrayList<OrderRoot>();
+    final List<OrderRoot> result = new ArrayList<>();
     final VirtualFileManager manager = VirtualFileManager.getInstance();
     for (MavenArtifact each : artifacts) {
       try {
@@ -232,7 +232,7 @@ public class RepositoryAttachHandler {
 
         for (int i = 0, length = urls.length; i < length; i++) {
           if (!proceedFlag.get()) break;
-          final List<Pair<MavenArtifactInfo, MavenRepositoryInfo>> resultList = new ArrayList<Pair<MavenArtifactInfo, MavenRepositoryInfo>>();
+          final List<Pair<MavenArtifactInfo, MavenRepositoryInfo>> resultList = new ArrayList<>();
           try {
             String serviceUrl = urls[i];
             final List<MavenArtifactInfo> artifacts;
@@ -243,7 +243,7 @@ public class RepositoryAttachHandler {
               }
 
               List<MavenRepositoryInfo> repositories = MavenRepositoryServicesManager.getRepositories(serviceUrl);
-              Map<String, MavenRepositoryInfo> map = new THashMap<String, MavenRepositoryInfo>();
+              Map<String, MavenRepositoryInfo> map = new THashMap<>();
               for (MavenRepositoryInfo repository : repositories) {
                 map.put(repository.getId(), repository);
               }
@@ -283,7 +283,7 @@ public class RepositoryAttachHandler {
       public void run(@NotNull ProgressIndicator indicator) {
         final Ref<List<MavenRepositoryInfo>> result = Ref.create(Collections.<MavenRepositoryInfo>emptyList());
         try {
-          final ArrayList<MavenRepositoryInfo> repoList = new ArrayList<MavenRepositoryInfo>();
+          final ArrayList<MavenRepositoryInfo> repoList = new ArrayList<>();
           for (String nexusUrl : nexusUrls) {
             final List<MavenRepositoryInfo> repositories;
             try {
@@ -314,7 +314,7 @@ public class RepositoryAttachHandler {
                                     @Nullable final Processor<List<MavenArtifact>> resultProcessor,
                                     ProgressIndicator indicator) {
     boolean cancelled = false;
-    final Collection<MavenArtifact> result = new LinkedHashSet<MavenArtifact>();
+    final Collection<MavenArtifact> result = new LinkedHashSet<>();
     MavenEmbeddersManager manager = MavenProjectsManager.getInstance(project).getEmbeddersManager();
     MavenEmbedderWrapper embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD);
     try {
@@ -337,7 +337,7 @@ public class RepositoryAttachHandler {
         List<MavenArtifactInfo> resolve = JBIterable.from(extraTypes).transform(
           extraType -> new MavenArtifactInfo(mavenId, extraType.getDefaultExtension(), extraType.getDefaultClassifier())).toList();
         // skip sources/javadoc for dependencies
-        for (MavenArtifact artifact : embedder.resolveTransitively(new ArrayList<MavenArtifactInfo>(resolve), remoteRepositories)) {
+        for (MavenArtifact artifact : embedder.resolveTransitively(new ArrayList<>(resolve), remoteRepositories)) {
           if (!artifact.isResolved() || MavenConstants.SCOPE_TEST.equals(artifact.getScope()) || !allowedClassifiers.contains(artifact.getClassifier())) {
             continue;
           }
@@ -352,13 +352,14 @@ public class RepositoryAttachHandler {
       manager.release(embedder);
       if (!cancelled && resultProcessor != null) {
         ApplicationManager.getApplication().invokeAndWait(() -> DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND,
-                                                                                                    () -> resultProcessor.process(new ArrayList<MavenArtifact>(result))), indicator.getModalityState());
+                                                                                                    () -> resultProcessor.process(
+                                                                                                      new ArrayList<>(result))), indicator.getModalityState());
       }
     }
   }
 
   private static List<MavenRemoteRepository> convertRepositories(Collection<MavenRepositoryInfo> infos) {
-    List<MavenRemoteRepository> result = new ArrayList<MavenRemoteRepository>(infos.size());
+    List<MavenRemoteRepository> result = new ArrayList<>(infos.size());
     for (MavenRepositoryInfo each : infos) {
       if (each.getUrl() != null) {
         result.add(new MavenRemoteRepository(each.getId(), each.getName(), each.getUrl(), null, null, null));

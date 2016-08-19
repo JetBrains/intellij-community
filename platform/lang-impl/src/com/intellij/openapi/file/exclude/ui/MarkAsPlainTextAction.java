@@ -37,7 +37,7 @@ public class MarkAsPlainTextAction extends DumbAwareAction {
     if (selectedFiles == null || selectedFiles.length == 0) return;
     EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
     assert typeManager != null;
-    Collection<VirtualFile> filesToMark = new ArrayList<VirtualFile>();
+    Collection<VirtualFile> filesToMark = new ArrayList<>();
     for (VirtualFile file : selectedFiles) {
       if (file != null &&
           !file.isDirectory() &&

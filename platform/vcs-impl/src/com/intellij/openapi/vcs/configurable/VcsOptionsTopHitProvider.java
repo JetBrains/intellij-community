@@ -53,7 +53,7 @@ public final class VcsOptionsTopHitProvider extends OptionsTopHitProvider {
     if (vcs == null) {
       return Collections.emptyList();
     }
-    ArrayList<BooleanOptionDescription> options = new ArrayList<BooleanOptionDescription>();
+    ArrayList<BooleanOptionDescription> options = new ArrayList<>();
 
     String id = "project.propVCSSupport.Mappings"; // process Version Control settings
     options.add(option(vcs, id, "Limit history by " + vcs.MAXIMUM_HISTORY_ROWS + " rows", "LIMIT_HISTORY"));

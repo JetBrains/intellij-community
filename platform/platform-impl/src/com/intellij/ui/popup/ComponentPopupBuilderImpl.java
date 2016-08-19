@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private Project myProject;
   private boolean myCancelOnClickOutside = true;
   private boolean myCancelOnWindowDeactivation = true;
-  private final Set<JBPopupListener> myListeners = new LinkedHashSet<JBPopupListener>();
+  private final Set<JBPopupListener> myListeners = new LinkedHashSet<>();
   private boolean myUseDimServiceForXYLocation;
 
   private IconButton myCancelButton;
@@ -313,7 +313,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   @NotNull
   public ComponentPopupBuilder addUserData(final Object object) {
     if (myUserData == null) {
-      myUserData = new ArrayList<Object>();
+      myUserData = new ArrayList<>();
     }
     myUserData.add(object);
     return this;

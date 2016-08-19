@@ -334,8 +334,8 @@ public class TabPostFormatProcessorTest {
   }
   
   private void doPsiTest(@NotNull String initial, @NotNull String expected, boolean useTabs, boolean smartTabs, int tabWidth) {
-    final List<ASTNode> children = new ArrayList<ASTNode>();
-    final List<StringBuilder> childrenText = new ArrayList<StringBuilder>();
+    final List<ASTNode> children = new ArrayList<>();
+    final List<StringBuilder> childrenText = new ArrayList<>();
     Pair<String, TextRange> pair = parse(initial);
     final String text = pair.first;
     int start = 0;

@@ -44,7 +44,7 @@ import java.util.Set;
 
 public class VcsLogData implements Disposable, VcsLogDataProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogData.class);
-  private static final int RECENT_COMMITS_COUNT = Registry.intValue("vcs.log.recent.commits.count");
+  static final int RECENT_COMMITS_COUNT = Registry.intValue("vcs.log.recent.commits.count");
 
   @NotNull private final Project myProject;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
@@ -64,9 +64,9 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
    * which is important because these details will be constantly visible to the user,
    * thus it would be annoying to re-load them from VCS if the cache overflows.
    */
-  @NotNull private final ConcurrentIntObjectMap<VcsCommitMetadata> myTopCommitsDetailsCache = ContainerUtil.createConcurrentIntObjectMap();
+  @NotNull private final TopCommitsCache myTopCommitsDetailsCache;
   @NotNull private final VcsUserRegistryImpl myUserRegistry;
-  @NotNull private final VcsLogHashMap myHashMap;
+  @NotNull private final VcsLogStorage myHashMap;
   @NotNull private final ContainingBranchesGetter myContainingBranchesGetter;
   @NotNull private final VcsLogRefresherImpl myRefresher;
   @NotNull private final List<DataPackChangeListener> myDataPackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -83,6 +83,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     myFatalErrorsConsumer = fatalErrorsConsumer;
 
     myHashMap = createLogHashMap();
+    myTopCommitsDetailsCache = new TopCommitsCache(myHashMap);
     myMiniDetailsGetter = new MiniDetailsGetter(myHashMap, logProviders, myTopCommitsDetailsCache, this);
     myDetailsGetter = new CommitDetailsGetter(myHashMap, logProviders, this);
 
@@ -98,13 +99,13 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   }
 
   @NotNull
-  private VcsLogHashMap createLogHashMap() {
-    VcsLogHashMap hashMap;
+  private VcsLogStorage createLogHashMap() {
+    VcsLogStorage hashMap;
     try {
-      hashMap = new VcsLogHashMapImpl(myProject, myLogProviders, myFatalErrorsConsumer, this);
+      hashMap = new VcsLogStorageImpl(myProject, myLogProviders, myFatalErrorsConsumer, this);
     }
     catch (IOException e) {
-      hashMap = new InMemoryHashMap();
+      hashMap = new InMemoryStorage();
       LOG.error("Falling back to in-memory hashes", e);
     }
     return hashMap;
@@ -148,7 +149,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   }
 
   @NotNull
-  public VcsLogHashMap getHashMap() {
+  public VcsLogStorage getHashMap() {
     return myHashMap;
   }
 
@@ -214,8 +215,8 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   }
 
   @NotNull
-  public Collection<VcsLogProvider> getLogProviders() {
-    return myLogProviders.values();
+  public Map<VirtualFile, VcsLogProvider> getLogProviders() {
+    return myLogProviders;
   }
 
   @NotNull
@@ -283,5 +284,10 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   @NotNull
   public VcsLogProgress getProgress() {
     return myRefresher.getProgress();
+  }
+
+  @NotNull
+  public TopCommitsCache getTopCommitsCache() {
+    return myTopCommitsDetailsCache;
   }
 }

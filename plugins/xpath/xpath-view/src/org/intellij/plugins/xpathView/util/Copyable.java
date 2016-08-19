@@ -27,7 +27,7 @@ public interface Copyable<T> {
 
         @SuppressWarnings({"unchecked"})
         public static <T extends Copyable> List<T> copy(Collection<T> stuff) {
-            final List<Copyable<T>> l = new ArrayList<Copyable<T>>(stuff.size());
+            final List<Copyable<T>> l = new ArrayList<>(stuff.size());
             for (Copyable<T> copyable : stuff) {
                 if (copyable != null) l.add(copyable.copy());
             }

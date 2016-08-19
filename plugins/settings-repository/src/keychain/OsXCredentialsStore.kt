@@ -1,5 +1,23 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.keychain
 
+import com.intellij.credentialStore.macOs.deleteGenericPassword
+import com.intellij.credentialStore.macOs.findGenericPassword
+import com.intellij.credentialStore.macOs.saveGenericPassword
 import com.intellij.openapi.util.PasswordUtil
 import gnu.trove.THashMap
 
@@ -17,13 +35,13 @@ class OsXCredentialsStore(serviceName: String) : CredentialsStore {
       return null
     }
 
-    val accountName: String = sshKeyFile ?: host
-    var credentials = accountToCredentials[accountName]
+    val accountName = sshKeyFile ?: host
+    var credentials = accountToCredentials.get(accountName)
     if (credentials != null) {
       return credentials
     }
 
-    val data = OSXKeychainLibrary.findGenericPassword(getServiceName(sshKeyFile), accountName) ?: return null
+    val data = findGenericPassword(getServiceName(sshKeyFile), accountName) ?: return null
     if (sshKeyFile == null) {
       val separatorIndex = data.indexOf('@')
       if (separatorIndex > 0) {
@@ -39,7 +57,7 @@ class OsXCredentialsStore(serviceName: String) : CredentialsStore {
       credentials = Credentials(sshKeyFile, data)
     }
 
-    accountToCredentials[accountName] = credentials
+    accountToCredentials.set(accountName, credentials)
     return credentials
   }
 
@@ -51,18 +69,18 @@ class OsXCredentialsStore(serviceName: String) : CredentialsStore {
    */
   override fun save(host: String?, credentials: Credentials, sshKeyFile: String?) {
     val accountName: String = sshKeyFile ?: host!!
-    var oldCredentials = accountToCredentials.put(accountName, credentials)
-    if (credentials.equals(oldCredentials)) {
+    val oldCredentials = accountToCredentials.put(accountName, credentials)
+    if (credentials == oldCredentials) {
       return
     }
 
     val data = if (sshKeyFile == null) "${PasswordUtil.encodePassword(credentials.id)}@${PasswordUtil.encodePassword(credentials.token)}" else credentials.token!!
-    OSXKeychainLibrary.saveGenericPassword(getServiceName(sshKeyFile), accountName, data)
+    saveGenericPassword(getServiceName(sshKeyFile), accountName, data.toByteArray())
   }
 
   override fun reset(host: String) {
     if (accountToCredentials.remove(host) != null) {
-      OSXKeychainLibrary.deleteGenericPassword(serviceName, host)
+      deleteGenericPassword(serviceName, host)
     }
   }
 }

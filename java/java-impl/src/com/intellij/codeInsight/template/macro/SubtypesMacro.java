@@ -67,7 +67,7 @@ public class SubtypesMacro extends Macro {
       final PsiFile file = PsiDocumentManager.getInstance(context.getProject()).getPsiFile(context.getEditor().getDocument());
       final PsiElement element = file.findElementAt(context.getStartOffset());
 
-      final Set<LookupElement> set = new LinkedHashSet<LookupElement>();
+      final Set<LookupElement> set = new LinkedHashSet<>();
       JavaTemplateUtil.addTypeLookupItem(set, type);
       CodeInsightUtil.processSubTypes(type, element, false, PrefixMatcher.ALWAYS_TRUE,
                                       psiType -> JavaTemplateUtil.addTypeLookupItem(set, psiType));

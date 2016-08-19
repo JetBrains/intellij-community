@@ -63,7 +63,7 @@ public class ReachableNodes {
   }
 
   public Set<Integer> getContainingBranches(int nodeIndex, @NotNull final Collection<Integer> branchNodeIndexes) {
-    final Set<Integer> result = new HashSet<Integer>();
+    final Set<Integer> result = new HashSet<>();
 
     walk(Collections.singletonList(nodeIndex), false, new Consumer<Integer>() {
       @Override

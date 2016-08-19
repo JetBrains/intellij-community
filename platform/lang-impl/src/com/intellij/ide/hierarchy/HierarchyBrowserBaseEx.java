@@ -67,8 +67,8 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   @NonNls private static final String HELP_ID = "reference.toolWindows.hierarchy";
 
-  protected final Hashtable<String, HierarchyTreeBuilder> myBuilders = new Hashtable<String, HierarchyTreeBuilder>();
-  private final Hashtable<String, JTree> myType2TreeMap = new Hashtable<String, JTree>();
+  protected final Hashtable<String, HierarchyTreeBuilder> myBuilders = new Hashtable<>();
+  private final Hashtable<String, JTree> myType2TreeMap = new Hashtable<>();
 
   private final RefreshAction myRefreshAction = new RefreshAction();
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
@@ -79,7 +79,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   private boolean myCachedIsValidBase;
 
-  private final Map<String, OccurenceNavigator> myOccurrenceNavigators = new HashMap<String, OccurenceNavigator>();
+  private final Map<String, OccurenceNavigator> myOccurrenceNavigators = new HashMap<>();
 
   private static final OccurenceNavigator EMPTY_NAVIGATOR = new OccurenceNavigator() {
     @Override
@@ -116,7 +116,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   public static final String SCOPE_ALL = IdeBundle.message("hierarchy.scope.all");
   public static final String SCOPE_TEST = IdeBundle.message("hierarchy.scope.test");
   public static final String SCOPE_CLASS = IdeBundle.message("hierarchy.scope.this.class");
-  private final Map<String, String> myType2ScopeMap = new HashMap<String, String>();
+  private final Map<String, String> myType2ScopeMap = new HashMap<>();
 
   public HierarchyBrowserBaseEx(@NotNull Project project, @NotNull PsiElement element) {
     super(project);
@@ -461,7 +461,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   }
 
   private void disposeBuilders() {
-    final Collection<HierarchyTreeBuilder> builders = new ArrayList<HierarchyTreeBuilder>(myBuilders.values());
+    final Collection<HierarchyTreeBuilder> builders = new ArrayList<>(myBuilders.values());
     for (final HierarchyTreeBuilder builder : builders) {
       Disposer.dispose(builder);
     }
@@ -475,7 +475,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
     if (getCurrentBuilder() == null) return; // seems like we are in the middle of refresh already
 
-    final Ref<Pair<List<Object>, List<Object>>> storedInfo = new Ref<Pair<List<Object>, List<Object>>>();
+    final Ref<Pair<List<Object>, List<Object>>> storedInfo = new Ref<>();
     if (myCurrentViewType != null) {
       final HierarchyTreeBuilder builder = getCurrentBuilder();
       storedInfo.set(builder.storeExpandedAndSelectedInfo());
@@ -657,7 +657,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
 
     private Collection<String> getValidScopeNames() {
-      List<String> result = new ArrayList<String>();
+      List<String> result = new ArrayList<>();
       result.add(SCOPE_PROJECT);
       result.add(SCOPE_TEST);
       result.add(SCOPE_ALL);

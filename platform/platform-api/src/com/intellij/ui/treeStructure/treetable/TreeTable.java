@@ -247,7 +247,7 @@ public class TreeTable extends JBTable {
       if (!updatingListSelectionModel) {
         updatingListSelectionModel = true;
         try {
-          Set<Integer> selectedRows = new HashSet<Integer>();
+          Set<Integer> selectedRows = new HashSet<>();
           int min = listSelectionModel.getMinSelectionIndex();
           int max = listSelectionModel.getMaxSelectionIndex();
 
@@ -301,7 +301,7 @@ public class TreeTable extends JBTable {
 
           clearSelection();
           if (min != -1 && max != -1) {
-            List<TreePath> selectionPaths = new ArrayList<TreePath>();
+            List<TreePath> selectionPaths = new ArrayList<>();
             for (int counter = min; counter <= max; counter++) {
               if (listSelectionModel.isSelectedIndex(counter)) {
                 TreePath selPath = myTree.getPathForRow(counter);

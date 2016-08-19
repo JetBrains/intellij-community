@@ -195,7 +195,7 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   public List<VirtualFile> getEffectiveSettingsFiles() {
-    List<VirtualFile> result = new ArrayList<VirtualFile>(2);
+    List<VirtualFile> result = new ArrayList<>(2);
     VirtualFile file = getEffectiveUserSettingsFile();
     if (file != null) result.add(file);
     file = getEffectiveGlobalSettingsFile();
@@ -247,7 +247,7 @@ public class MavenGeneralSettings implements Cloneable {
     Set<String> result = myDefaultPluginsCache;
     if (result != null) return result;
 
-    result = new THashSet<String>();
+    result = new THashSet<>();
 
     VirtualFile effectiveSuperPom = getEffectiveSuperPom();
     if (effectiveSuperPom != null) {

@@ -65,7 +65,7 @@ import java.util.List;
  */
 public abstract class RecentProjectsManagerBase extends RecentProjectsManager implements PersistentStateComponent<RecentProjectsManagerBase.State> {
   private static final int MAX_PROJECTS_IN_MAIN_MENU = 6;
-  private static final Map<String, MyIcon> ourProjectIcons = new HashMap<String, MyIcon>();
+  private static final Map<String, MyIcon> ourProjectIcons = new HashMap<>();
   private static Icon ourSmallAppIcon;
   private final Alarm myNamesResolver = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
   private final Set<String> myNamesToResolve = new HashSet<>(MAX_PROJECTS_IN_MAIN_MENU);
@@ -75,10 +75,10 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   public static class State {
-    public List<String> recentPaths = new SmartList<String>();
-    public List<String> openPaths = new SmartList<String>();
+    public List<String> recentPaths = new SmartList<>();
+    public List<String> openPaths = new SmartList<>();
     public Map<String, String> names = ContainerUtil.newLinkedHashMap();
-    public List<ProjectGroup> groups = new SmartList<ProjectGroup>();
+    public List<ProjectGroup> groups = new SmartList<>();
     public String lastPath;
     public Map<String, RecentProjectMetaInfo> additionalInfo = ContainerUtil.newLinkedHashMap();
 
@@ -140,7 +140,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   protected void removeDuplicates(State state) {
-    for (String path : new ArrayList<String>(state.recentPaths)) {
+    for (String path : new ArrayList<>(state.recentPaths)) {
       if (path.endsWith(File.separator)) {
         state.recentPaths.remove(path);
         state.additionalInfo.remove(path);
@@ -379,7 +379,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
       paths = ContainerUtil.newLinkedHashSet(myState.recentPaths);
     }
 
-    Set<String> openedPaths = new THashSet<String>();
+    Set<String> openedPaths = new THashSet<>();
     for (Project openProject : ProjectManager.getInstance().getOpenProjects()) {
       ContainerUtil.addIfNotNull(openedPaths, getProjectPath(openProject));
     }
@@ -387,11 +387,11 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     paths.remove(null);
     paths.removeAll(openedPaths);
 
-    List<AnAction> actions = new SmartList<AnAction>();
+    List<AnAction> actions = new SmartList<>();
     Set<String> duplicates = getDuplicateProjectNames(openedPaths, paths);
     if (useGroups) {
-      final List<ProjectGroup> groups = new ArrayList<ProjectGroup>(new ArrayList<ProjectGroup>(myState.groups));
-      final List<String> projectPaths = new ArrayList<String>(paths);
+      final List<ProjectGroup> groups = new ArrayList<>(new ArrayList<>(myState.groups));
+      final List<String> projectPaths = new ArrayList<>(paths);
       Collections.sort(groups, new Comparator<ProjectGroup>() {
         @Override
         public int compare(ProjectGroup o1, ProjectGroup o2) {
@@ -417,7 +417,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
       }
 
       for (ProjectGroup group : groups) {
-        final List<AnAction> children = new ArrayList<AnAction>();
+        final List<AnAction> children = new ArrayList<>();
         for (String path : group.getProjects()) {
           final AnAction action = createOpenAction(path, duplicates);
           if (action != null) {
@@ -553,7 +553,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     myNamesResolver.addRequest(() -> {
       final Set<String> paths;
       synchronized (myNamesToResolve) {
-        paths = new HashSet<String>(myNamesToResolve);
+        paths = new HashSet<>(myNamesToResolve);
         myNamesToResolve.clear();
       }
       for (String p : paths) {

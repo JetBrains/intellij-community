@@ -107,7 +107,7 @@ public class MvcRunTargetDialog extends DialogWrapper {
     myVmOptionLabel.setLabelFor(myVmOptionsField);
     myVmOptionsField.setText(MvcRunTargetHistoryService.getInstance().getVmOptions());
 
-    List<Module> mvcModules = new ArrayList<Module>();
+    List<Module> mvcModules = new ArrayList<>();
     for (Module module : ModuleManager.getInstance(myModule.getProject()).getModules()) {
       if (module == myModule || myFramework.hasSupport(module)) {
         mvcModules.add(module);

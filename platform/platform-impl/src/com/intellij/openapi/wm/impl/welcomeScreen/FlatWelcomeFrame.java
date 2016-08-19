@@ -347,7 +347,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     }
 
     private JComponent createActionLink(final String text, final String groupId, Icon icon, boolean focusListOnLeft) {
-      final Ref<ActionLink> ref = new Ref<ActionLink>(null);
+      final Ref<ActionLink> ref = new Ref<>(null);
       AnAction action = new AnAction() {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
@@ -815,11 +815,15 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
        }
 
        @Override
+       protected Color getBackground() {
+         return getProjectsBackground();
+       }
+
+       @Override
        protected void customizeComponent(JList list, Object value, boolean isSelected) {
          if (myTextLabel != null) {
            myTextLabel.setText(getActionText(((AnAction)value)));
            myTextLabel.setIcon(((AnAction)value).getTemplatePresentation().getIcon());
-           myTextLabel.setBackground(isSelected ? UIUtil.getListBackground(true) : getProjectsBackground());
          }
        }
      }

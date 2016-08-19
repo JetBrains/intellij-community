@@ -39,9 +39,13 @@ public class FileSetFormatterTest extends LightPlatformTestCase {
     javaSettings.getIndentOptions().INDENT_SIZE = 2;
     javaSettings.CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     File sourceDir = createSourceDir("original");
-    String fileSpec = sourceDir.getCanonicalPath() + File.separator + "**.java";
+    String fileSpec = sourceDir.getCanonicalPath();
     MessageOutput messageOutput = new MessageOutput(new PrintWriter(System.out), new PrintWriter(System.err));
-    FileSetFormatter formatter = new FileSetFormatter(fileSpec, settings, messageOutput);
+    FileSetFormatter formatter = new FileSetFormatter(messageOutput);
+    formatter.addEntry(fileSpec);
+    formatter.addFileMask("*.java");
+    formatter.setRecursive();
+    formatter.setCodeStyleSettings(settings);
     formatter.processFiles();
     compareDirs(new File(BASE_PATH + File.separator + "expected"), sourceDir);
   }

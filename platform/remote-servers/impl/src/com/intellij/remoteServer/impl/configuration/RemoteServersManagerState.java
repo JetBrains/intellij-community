@@ -12,5 +12,5 @@ import java.util.List;
 public class RemoteServersManagerState {
   @Property(surroundWithTag = false)
   @AbstractCollection(surroundWithTag = false)
-  public List<RemoteServerState> myServers = new ArrayList<RemoteServerState>();
+  public List<RemoteServerState> myServers = new ArrayList<>();
 }

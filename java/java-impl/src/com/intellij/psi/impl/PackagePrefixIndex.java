@@ -56,7 +56,7 @@ public class PackagePrefixIndex {
       return getAllPackagePrefixes(scope, map);
     }
 
-    map = new MultiMap<String, Module>();
+    map = new MultiMap<>();
     for (final Module module : ModuleManager.getInstance(myProject).getModules()) {
       for (final ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
         for (final SourceFolder folder : entry.getSourceFolders(JavaModuleSourceRootTypes.SOURCES)) {
@@ -79,7 +79,7 @@ public class PackagePrefixIndex {
   private static Collection<String> getAllPackagePrefixes(final GlobalSearchScope scope, final MultiMap<String, Module> map) {
     if (scope == null) return map.keySet();
 
-    List<String> result = new SmartList<String>();
+    List<String> result = new SmartList<>();
     for (final String prefix : map.keySet()) {
       modules: for (final Module module : map.get(prefix)) {
         if (scope.isSearchInModuleContent(module)) {

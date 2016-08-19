@@ -27,7 +27,7 @@ import java.util.*;
 
 public class SelectInManager  {
   private final Project myProject;
-  private final List<SelectInTarget> myTargets = new ArrayList<SelectInTarget>();
+  private final List<SelectInTarget> myTargets = new ArrayList<>();
   private boolean myLoadedExtensions = false;
   @NonNls public static final String PROJECT = IdeBundle.message("select.in.project");
   @NonNls public static final String PACKAGES = IdeBundle.message("select.in.packages");

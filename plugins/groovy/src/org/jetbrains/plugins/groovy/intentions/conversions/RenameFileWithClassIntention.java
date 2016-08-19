@@ -60,4 +60,9 @@ public class RenameFileWithClassIntention extends Intention implements Consumer<
     final PsiFile file = def.getContainingFile();
     myNewFileName = name + "." + FileUtilRt.getExtension(file.getName());
   }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
 }

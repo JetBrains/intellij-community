@@ -16,14 +16,10 @@
 package org.jetbrains.plugins.github.util;
 
 import com.intellij.ide.passwordSafe.PasswordSafe;
-import com.intellij.ide.passwordSafe.PasswordSafeException;
-import com.intellij.ide.passwordSafe.config.PasswordSafeSettings;
-import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +34,6 @@ import static org.jetbrains.plugins.github.util.GithubAuthData.AuthType;
 @SuppressWarnings("MethodMayBeStatic")
 @State(name = "GithubSettings", storages = @Storage("github_settings.xml"))
 public class GithubSettings implements PersistentStateComponent<GithubSettings.State> {
-  private static final Logger LOG = GithubUtil.LOG;
   private static final String GITHUB_SETTINGS_PASSWORD_KEY = "GITHUB_SETTINGS_PASSWORD_KEY";
 
   private State myState = new State();
@@ -129,8 +124,7 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
   }
 
   public boolean isSavePasswordMakesSense() {
-    final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
-    return passwordSafe.getSettings().getProviderType() == PasswordSafeSettings.ProviderType.MASTER_PASSWORD;
+    return !PasswordSafe.getInstance().isMemoryOnly();
   }
 
   public boolean isCloneGitUsingSsh() {
@@ -172,33 +166,12 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
 
   @NotNull
   private String getPassword() {
-    String password;
-    try {
-      password = PasswordSafe.getInstance().getPassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY);
-    }
-    catch (PasswordSafeException e) {
-      LOG.info("Couldn't get password for key [" + GITHUB_SETTINGS_PASSWORD_KEY + "]", e);
-      password = "";
-    }
-
-    return StringUtil.notNullize(password);
+    return StringUtil.notNullize(PasswordSafe.getInstance().getPassword(GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY));
   }
 
   private void setPassword(@NotNull String password, boolean rememberPassword) {
-    try {
-      if (rememberPassword) {
-        PasswordSafe.getInstance().storePassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, password);
-      }
-      else {
-        final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
-        if (passwordSafe.getSettings().getProviderType() != PasswordSafeSettings.ProviderType.DO_NOT_STORE) {
-          passwordSafe.getMemoryProvider().storePassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, password);
-        }
-      }
-    }
-    catch (PasswordSafeException e) {
-      LOG.info("Couldn't set password for key [" + GITHUB_SETTINGS_PASSWORD_KEY + "]", e);
-    }
+    if (!rememberPassword) return;
+    PasswordSafe.getInstance().setPassword(GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, password);
   }
 
   private static boolean isValidGitAuth(@NotNull GithubAuthData auth) {
@@ -224,7 +197,7 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
       case TOKEN:
         return GithubAuthData.createTokenAuth(getHost(), getPassword());
       case ANONYMOUS:
-        return GithubAuthData.createAnonymous();
+        return GithubAuthData.createAnonymous(getHost());
       default:
         throw new IllegalStateException("GithubSettings: getAuthData - wrong AuthType: " + getAuthType());
     }

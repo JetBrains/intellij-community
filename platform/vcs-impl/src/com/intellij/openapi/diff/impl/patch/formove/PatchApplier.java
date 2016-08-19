@@ -86,9 +86,9 @@ public class PatchApplier<BinaryType extends FilePatch> {
     myReverseConflict = reverseConflict;
     myLeftConflictPanelTitle = leftConflictPanelTitle;
     myRightConflictPanelTitle = rightConflictPanelTitle;
-    myRemainingPatches = new ArrayList<FilePatch>();
-    myFailedPatches = new ArrayList<FilePatch>();
-    myVerifier = new PathsVerifier<BinaryType>(myProject, myBaseDirectory, myPatches, new PathsVerifier.BaseMapper() {
+    myRemainingPatches = new ArrayList<>();
+    myFailedPatches = new ArrayList<>();
+    myVerifier = new PathsVerifier<>(myProject, myBaseDirectory, myPatches, new PathsVerifier.BaseMapper() {
       @Override
       @Nullable
       public VirtualFile getFile(FilePatch patch, String path) {
@@ -269,7 +269,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
     }
     final Label beforeLabel = LocalHistory.getInstance().putSystemLabel(project, "Before patch");
     final TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(project);
-    final Ref<ApplyPatchStatus> refStatus = new Ref<ApplyPatchStatus>(result);
+    final Ref<ApplyPatchStatus> refStatus = new Ref<>(result);
     try {
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
         @Override
@@ -297,8 +297,8 @@ public class PatchApplier<BinaryType extends FilePatch> {
     result = result == null ? ApplyPatchStatus.FAILURE : result;
 
     trigger.processIt();
-    final Set<FilePath> directlyAffected = new HashSet<FilePath>();
-    final Set<VirtualFile> indirectlyAffected = new HashSet<VirtualFile>();
+    final Set<FilePath> directlyAffected = new HashSet<>();
+    final Set<VirtualFile> indirectlyAffected = new HashSet<>();
     for (PatchApplier applier : group) {
       directlyAffected.addAll(applier.getDirectlyAffected());
       indirectlyAffected.addAll(applier.getIndirectlyAffected());
@@ -598,7 +598,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
 
     @Override
     public void consume(Collection<FilePath> directlyAffected) {
-      List<Change> changes = new ArrayList<Change>();
+      List<Change> changes = new ArrayList<>();
       for(FilePath file: directlyAffected) {
         final Change change = myChangeListManager.getChange(file);
         if (change != null) {

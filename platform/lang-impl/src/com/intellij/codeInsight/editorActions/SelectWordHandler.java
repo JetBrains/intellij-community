@@ -155,7 +155,7 @@ public class SelectWordHandler extends EditorActionHandler {
 
     final TextRange selectionRange = new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
 
-    final Ref<TextRange> minimumRange = new Ref<TextRange>(new TextRange(0, editor.getDocument().getTextLength()));
+    final Ref<TextRange> minimumRange = new Ref<>(new TextRange(0, editor.getDocument().getTextLength()));
 
     SelectWordUtil.processRanges(element, editor.getDocument().getCharsSequence(), caretOffset, editor, range -> {
       if (range.contains(selectionRange) && !range.equals(selectionRange)) {

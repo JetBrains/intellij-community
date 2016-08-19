@@ -66,9 +66,9 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   private static final Key<RunContentDescriptor> DESCRIPTOR_KEY = Key.create("Descriptor");
 
   private final Project myProject;
-  private final Map<String, ContentManager> myToolwindowIdToContentManagerMap = new THashMap<String, ContentManager>();
-  private final Map<String, Icon> myToolwindowIdToBaseIconMap = new THashMap<String, Icon>();
-  private final LinkedList<String> myToolwindowIdZBuffer = new LinkedList<String>();
+  private final Map<String, ContentManager> myToolwindowIdToContentManagerMap = new THashMap<>();
+  private final Map<String, Icon> myToolwindowIdToBaseIconMap = new THashMap<>();
+  private final LinkedList<String> myToolwindowIdZBuffer = new LinkedList<>();
 
   public RunContentManagerImpl(@NotNull Project project, @NotNull DockManager dockManager) {
     myProject = project;
@@ -98,7 +98,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
         }
 
         ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-        Set<String> currentWindows = new THashSet<String>();
+        Set<String> currentWindows = new THashSet<>();
         ContainerUtil.addAll(currentWindows, toolWindowManager.getToolWindowIds());
         myToolwindowIdZBuffer.retainAll(currentWindows);
 
@@ -419,7 +419,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
 
   @Nullable
   private static Content getContentFromManager(ContentManager contentManager, @Nullable String preferredName, long executionId) {
-    ArrayList<Content> contents = new ArrayList<Content>(Arrays.asList(contentManager.getContents()));
+    ArrayList<Content> contents = new ArrayList<>(Arrays.asList(contentManager.getContents()));
     Content first = contentManager.getSelectedContent();
     if (first != null && contents.remove(first)) {//selected content should be checked first
       contents.add(0, first);
@@ -502,7 +502,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       return Collections.emptyList();
     }
 
-    List<RunContentDescriptor> descriptors = new SmartList<RunContentDescriptor>();
+    List<RunContentDescriptor> descriptors = new SmartList<>();
     for (String id : myToolwindowIdToContentManagerMap.keySet()) {
       for (Content content : myToolwindowIdToContentManagerMap.get(id).getContents()) {
         RunContentDescriptor descriptor = getRunContentDescriptorByContent(content);

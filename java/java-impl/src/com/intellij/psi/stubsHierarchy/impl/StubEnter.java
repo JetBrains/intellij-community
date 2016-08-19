@@ -33,7 +33,7 @@ public class StubEnter {
   private final Symbols mySymbols;
   private final StubHierarchyConnector myStubHierarchyConnector;
 
-  private ArrayList<ClassSymbol> uncompleted = new ArrayList<ClassSymbol>();
+  private ArrayList<ClassSymbol> uncompleted = new ArrayList<>();
 
   StubEnter(Symbols symbols) {
     mySymbols = symbols;
@@ -89,7 +89,7 @@ public class StubEnter {
     for (ClassSymbol classSymbol : uncompleted) {
       classSymbol.connect(myStubHierarchyConnector);
     }
-    uncompleted = new ArrayList<ClassSymbol>();
+    uncompleted = new ArrayList<>();
   }
 
   public void connect2() {

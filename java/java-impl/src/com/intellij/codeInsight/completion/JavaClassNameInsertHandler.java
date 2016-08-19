@@ -72,7 +72,9 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     }
 
     String qname = psiClass.getQualifiedName();
-    if (qname != null && PsiTreeUtil.getParentOfType(position, PsiDocComment.class, false) != null && shouldInsertFqnInJavadoc(item, file, project)) {
+    if (qname != null && PsiTreeUtil.getParentOfType(position, PsiDocComment.class, false) != null &&
+        (ref == null || !ref.isQualified()) &&
+        shouldInsertFqnInJavadoc(item, file, project)) {
       context.getDocument().replaceString(context.getStartOffset(), context.getTailOffset(), qname);
       return;
     }

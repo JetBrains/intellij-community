@@ -38,7 +38,7 @@ public class JavaFormatterUtil {
   /**
    * Holds type of AST elements that are considered to be assignments.
    */
-  private static final Set<IElementType> ASSIGNMENT_ELEMENT_TYPES = new HashSet<IElementType>(asList(
+  private static final Set<IElementType> ASSIGNMENT_ELEMENT_TYPES = new HashSet<>(asList(
     JavaElementType.ASSIGNMENT_EXPRESSION, JavaElementType.LOCAL_VARIABLE, JavaElementType.FIELD
   ));
 

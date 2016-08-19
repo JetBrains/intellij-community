@@ -112,7 +112,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
   private JLabel myMessageLabel;
   private HoverHyperlinkLabel myFixLink;
   private JPanel myTablePanel;
-  private final List<String> myWarnings = new ArrayList<String>();
+  private final List<String> myWarnings = new ArrayList<>();
   private Fix myFixRunnable;
 
   protected abstract Item cloneOf(Item item);
@@ -251,7 +251,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
 
   private void removeSelected() {
     myTable.stopEditing();
-    List<Item> items = new ArrayList<Item>(doGetItems());
+    List<Item> items = new ArrayList<>(doGetItems());
     final int[] rows = myTable.getSelectedRows();
     for (int i = rows.length - 1; i >= 0; i--) {
       items.remove(rows[i]);
@@ -271,7 +271,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     if (newItem == null) {
       return;
     }
-    List<Item> items = new ArrayList<Item>(doGetItems());
+    List<Item> items = new ArrayList<>(doGetItems());
     items.add(newItem);
 
     setItems(items);
@@ -304,7 +304,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     }
 
     myTable.stopEditing();
-    myTable.setModelAndUpdateColumns(new ListTableModel<Item>(columns));
+    myTable.setModelAndUpdateColumns(new ListTableModel<>(columns));
     if (maxHeight > 0) {
       myTable.setRowHeight(maxHeight);
     }
@@ -318,7 +318,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
   }
 
   private List<Item> doGetItems() {
-    List<Item> items = new ArrayList<Item>(getTableModel().getItems());
+    List<Item> items = new ArrayList<>(getTableModel().getItems());
     if (myTable.isEditing()) {
       Object value = ChangesTrackingTableView.getValue(myTable.getEditorComponent());
       ColumnInfo column = ((ListTableModel)myTable.getModel()).getColumnInfos()[myTable.getEditingColumn()];
@@ -337,7 +337,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
       for (Item item : items) {
         myWarnings.add(null);
       }
-      getTableModel().setItems(new ArrayList<Item>(items));
+      getTableModel().setItems(new ArrayList<>(items));
     }
     updateButtons();
   }
@@ -351,7 +351,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
   }
 
   public void updateMessage(int index, @Nullable Item override) {
-    List<Item> current = new ArrayList<Item>(doGetItems());
+    List<Item> current = new ArrayList<>(doGetItems());
     if (override != null) {
       current.set(index, override);
     }

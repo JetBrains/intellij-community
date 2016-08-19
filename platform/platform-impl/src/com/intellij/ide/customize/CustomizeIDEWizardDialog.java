@@ -43,7 +43,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
   private final JButton myNextButton = new JButton("Next");
 
   private final JBCardLayout myCardLayout = new JBCardLayout();
-  private final List<AbstractCustomizeWizardStep> mySteps = new ArrayList<AbstractCustomizeWizardStep>();
+  private final List<AbstractCustomizeWizardStep> mySteps = new ArrayList<>();
   private int myIndex = 0;
   private final JBLabel myNavigationLabel = new JBLabel();
   private final JBLabel myHeaderLabel = new JBLabel();

@@ -82,7 +82,7 @@ public class LambdaRefactoringUtil {
     final PsiParameterList parameterList = interfaceMethod.getParameterList();
     final PsiParameter[] parameters = parameterList.getParameters();
 
-    final Map<PsiParameter, String> map = new HashMap<PsiParameter, String>();
+    final Map<PsiParameter, String> map = new HashMap<>();
     final UniqueNameGenerator nameGenerator = new UniqueNameGenerator();
     final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(referenceExpression.getProject());
     final String paramsString = StringUtil.join(parameters, parameter -> {
@@ -251,7 +251,7 @@ public class LambdaRefactoringUtil {
       }
 
       if (qualifierExpression != null) {
-        final List<PsiElement> sideEffects = new ArrayList<PsiElement>();
+        final List<PsiElement> sideEffects = new ArrayList<>();
         SideEffectChecker.checkSideEffects(qualifierExpression, sideEffects);
         if (!sideEffects.isEmpty()) {
           if (ApplicationManager.getApplication().isUnitTestMode() ||

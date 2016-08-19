@@ -87,7 +87,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
       unblock();
     }
     public static <T> BlockExtensions<T> create(ExtensionPoint<T> extensionPoint) {
-      return new BlockExtensions<T>(extensionPoint);
+      return new BlockExtensions<>(extensionPoint);
     }
   }
 

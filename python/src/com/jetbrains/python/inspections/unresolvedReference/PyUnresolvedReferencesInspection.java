@@ -89,7 +89,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
   public static final Key<PyUnresolvedReferencesInspection> SHORT_NAME_KEY =
     Key.create(PyUnresolvedReferencesInspection.class.getSimpleName());
 
-  public List<String> ignoredIdentifiers = new ArrayList<String>();
+  public List<String> ignoredIdentifiers = new ArrayList<>();
 
   public static PyUnresolvedReferencesInspection getInstance(PsiElement element) {
     final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
@@ -254,7 +254,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         final ScopeOwner owner = ScopeUtil.getDeclarationScopeOwner(node, nodeName);
         PyElement e = PsiTreeUtil.getParentOfType(node, PyConditionalStatementPart.class, PyConditionalExpression.class);
         while (e != null && PsiTreeUtil.isAncestor(owner, e, true)) {
-          final ArrayList<PyCallExpression> calls = new ArrayList<PyCallExpression>();
+          final ArrayList<PyCallExpression> calls = new ArrayList<>();
           PyExpression cond = null;
           if (e instanceof PyConditionalStatementPart) {
             cond = ((PyConditionalStatementPart)e).getCondition();
@@ -435,7 +435,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         final ScopeOwner owner = ScopeUtil.getScopeOwner(importElement);
         if (visibleName != null && owner != null) {
           final Collection<PsiElement> allWrites = ScopeUtil.getReadWriteElements(visibleName, owner, false, true);
-          final Collection<PsiElement> writesInsideGuard = new ArrayList<PsiElement>();
+          final Collection<PsiElement> writesInsideGuard = new ArrayList<>();
           for (PsiElement write : allWrites) {
             if (PsiTreeUtil.isAncestor(guard, write, false)) {
               writesInsideGuard.add(write);
@@ -467,7 +467,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         refText = rangeInElement.substring(text);
       }
 
-      final List<LocalQuickFix> actions = new ArrayList<LocalQuickFix>(2);
+      final List<LocalQuickFix> actions = new ArrayList<>(2);
       final String refName = (element instanceof PyQualifiedExpression) ? ((PyQualifiedExpression)element).getReferencedName() : refText;
       // Empty text, nothing to highlight
       if (refName == null || refName.length() <= 0) {
@@ -686,7 +686,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     @NotNull
     private static List<QualifiedName> getCanonicalNames(@NotNull PsiReference reference, @NotNull TypeEvalContext context) {
       final PsiElement element = reference.getElement();
-      final List<QualifiedName> result = new SmartList<QualifiedName>();
+      final List<QualifiedName> result = new SmartList<>();
       if (reference instanceof PyOperatorReference && element instanceof PyQualifiedExpression) {
         final PyExpression receiver = ((PyOperatorReference)reference).getReceiver();
         if (receiver != null) {
@@ -1032,13 +1032,13 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       if (first.getContainingFile() instanceof PyExpressionCodeFragment || PydevConsoleRunner.isInPydevConsole(first)) {
         return Collections.emptyList();
       }
-      List<PsiElement> result = new ArrayList<PsiElement>();
+      List<PsiElement> result = new ArrayList<>();
 
-      Set<PyImportedNameDefiner> unusedImports = new HashSet<PyImportedNameDefiner>(myAllImports);
+      Set<PyImportedNameDefiner> unusedImports = new HashSet<>(myAllImports);
       unusedImports.removeAll(myUsedImports);
 
       // Remove those unsed, that are reported to be skipped by extension points
-      final Set<PyImportedNameDefiner> unusedImportToSkip = new HashSet<PyImportedNameDefiner>();
+      final Set<PyImportedNameDefiner> unusedImportToSkip = new HashSet<>();
       for (final PyImportedNameDefiner unusedImport : unusedImports) {
         if (importShouldBeSkippedByExtPoint(unusedImport)) { // Pass to extension points
           unusedImportToSkip.add(unusedImport);
@@ -1047,14 +1047,14 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
       unusedImports.removeAll(unusedImportToSkip);
 
-      Set<String> usedImportNames = new HashSet<String>();
+      Set<String> usedImportNames = new HashSet<>();
       for (PyImportedNameDefiner usedImport : myUsedImports) {
         for (PyElement e : usedImport.iterateNames()) {
           usedImportNames.add(e.getName());
         }
       }
 
-      Set<PyImportStatementBase> unusedStatements = new HashSet<PyImportStatementBase>();
+      Set<PyImportStatementBase> unusedStatements = new HashSet<>();
       final PyUnresolvedReferencesInspection suppressableInspection = new PyUnresolvedReferencesInspection();
       QualifiedName packageQName = null;
       List<String> dunderAll = null;

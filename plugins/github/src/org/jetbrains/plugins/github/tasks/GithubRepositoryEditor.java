@@ -13,6 +13,7 @@ import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.util.AuthLevel;
 import org.jetbrains.plugins.github.util.GithubAuthDataHolder;
 import org.jetbrains.plugins.github.util.GithubNotifications;
 import org.jetbrains.plugins.github.util.GithubUtil;
@@ -125,7 +126,7 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
   private void generateToken() {
     try {
       String token = GithubUtil.computeValueInModalIO(myProject, "Access to GitHub", indicator ->
-        GithubUtil.runTaskWithBasicAuthForHost(myProject, GithubAuthDataHolder.createFromSettings(), indicator, getHost(), connection ->
+        GithubUtil.runTask(myProject, GithubAuthDataHolder.createFromSettings(), indicator, AuthLevel.basicOnetime(getHost()), connection ->
           GithubApiUtil.getTasksToken(connection, getRepoAuthor(), getRepoName(), "IntelliJ tasks plugin")
         ));
       myToken.setText(token);

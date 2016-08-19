@@ -64,7 +64,7 @@ public class CharArrayCharSequence implements CharSequenceBackedByArray, CharSeq
   public char[] getChars() {
     if (myStart == 0) return myChars;
     char[] chars = new char[length()];
-    System.arraycopy(myChars, myStart, chars, 0, length());
+    getChars(chars, 0);
     return chars;
   }
 

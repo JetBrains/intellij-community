@@ -62,12 +62,12 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
   private final CardLayout myPropertiesPanelLayout;
   private final JPanel myPropertiesPanel;
   private final JBPanelWithEmptyText myMessagePanel;
-  private final Map<String, JComponent> myLogComponents = new HashMap<String, JComponent>();
+  private final Map<String, JComponent> myLogComponents = new HashMap<>();
 
   private final DefaultTreeModel myTreeModel;
   private TreeBuilderBase myBuilder;
   private AbstractTreeNode<?> myLastSelection;
-  private Set<Object> myCollapsedTreeNodeValues = new HashSet<Object>();
+  private Set<Object> myCollapsedTreeNodeValues = new HashSet<>();
 
   private final Project myProject;
   private final RemoteServersViewContribution myContribution;

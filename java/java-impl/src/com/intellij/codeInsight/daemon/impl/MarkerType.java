@@ -226,8 +226,8 @@ public class MarkerType {
   });
 
   private static String getOverriddenMethodTooltip(@NotNull PsiMethod method) {
-    PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(5);
-    OverridingMethodsSearch.search(method).forEach(new PsiElementProcessorAdapter<PsiMethod>(processor));
+    PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor = new PsiElementProcessor.CollectElementsWithLimit<>(5);
+    OverridingMethodsSearch.search(method).forEach(new PsiElementProcessorAdapter<>(processor));
 
     boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
 
@@ -260,12 +260,12 @@ public class MarkerType {
     }
 
     final PsiElementProcessor.CollectElementsWithLimit<PsiMethod> collectProcessor =
-      new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(2, new THashSet<PsiMethod>());
-    final PsiElementProcessor.CollectElementsWithLimit<PsiFunctionalExpression> collectExprProcessor = 
-      new PsiElementProcessor.CollectElementsWithLimit<PsiFunctionalExpression>(2, new THashSet<PsiFunctionalExpression>());
+      new PsiElementProcessor.CollectElementsWithLimit<>(2, new THashSet<>());
+    final PsiElementProcessor.CollectElementsWithLimit<PsiFunctionalExpression> collectExprProcessor =
+      new PsiElementProcessor.CollectElementsWithLimit<>(2, new THashSet<>());
     final boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      OverridingMethodsSearch.search(method).forEach(new PsiElementProcessorAdapter<PsiMethod>(collectProcessor));
+      OverridingMethodsSearch.search(method).forEach(new PsiElementProcessorAdapter<>(collectProcessor));
       if (isAbstract && collectProcessor.getCollection().size() < 2) {
         final PsiClass aClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
           @Override
@@ -274,7 +274,7 @@ public class MarkerType {
           }
         });
         if (aClass != null) {
-          FunctionalExpressionSearch.search(aClass).forEach(new PsiElementProcessorAdapter<PsiFunctionalExpression>(collectExprProcessor));
+          FunctionalExpressionSearch.search(aClass).forEach(new PsiElementProcessorAdapter<>(collectExprProcessor));
         }
       }
     }, SEARCHING_FOR_OVERRIDING_METHODS, true, method.getProject(), (JComponent)e.getComponent())) {
@@ -282,7 +282,7 @@ public class MarkerType {
     }
 
     final PsiMethod[] methodOverriders = collectProcessor.toArray(PsiMethod.EMPTY_ARRAY);
-    final List<NavigatablePsiElement> overridings = new ArrayList<NavigatablePsiElement>();
+    final List<NavigatablePsiElement> overridings = new ArrayList<>();
     overridings.addAll(collectProcessor.getCollection());
     overridings.addAll(collectExprProcessor.getCollection());
     if (overridings.isEmpty()) return;
@@ -312,8 +312,9 @@ public class MarkerType {
 
   // Used in Kotlin, please don't make private
   public static String getSubclassedClassTooltip(@NotNull PsiClass aClass) {
-    PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiClass>(5, new THashSet<PsiClass>());
-    ClassInheritorsSearch.search(aClass).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
+    PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = new PsiElementProcessor.CollectElementsWithLimit<>(5,
+                                                                                                                          new THashSet<>());
+    ClassInheritorsSearch.search(aClass).forEach(new PsiElementProcessorAdapter<>(processor));
 
     if (processor.isOverflow()) {
       return aClass.isInterface()
@@ -324,8 +325,8 @@ public class MarkerType {
     PsiClass[] subclasses = processor.toArray(PsiClass.EMPTY_ARRAY);
     if (subclasses.length == 0) {
       final PsiElementProcessor.CollectElementsWithLimit<PsiFunctionalExpression> functionalImplementations =
-        new PsiElementProcessor.CollectElementsWithLimit<PsiFunctionalExpression>(2, new THashSet<PsiFunctionalExpression>());
-      FunctionalExpressionSearch.search(aClass).forEach(new PsiElementProcessorAdapter<PsiFunctionalExpression>(functionalImplementations));
+        new PsiElementProcessor.CollectElementsWithLimit<>(2, new THashSet<>());
+      FunctionalExpressionSearch.search(aClass).forEach(new PsiElementProcessorAdapter<>(functionalImplementations));
       if (!functionalImplementations.getCollection().isEmpty()) {
         return "Has functional implementations";
       }
@@ -349,18 +350,21 @@ public class MarkerType {
       return;
     }
 
-    final PsiElementProcessor.CollectElementsWithLimit<PsiClass> collectProcessor = new PsiElementProcessor.CollectElementsWithLimit<PsiClass>(2, new THashSet<PsiClass>());
-    final PsiElementProcessor.CollectElementsWithLimit<PsiFunctionalExpression> collectExprProcessor = new PsiElementProcessor.CollectElementsWithLimit<PsiFunctionalExpression>(2, new THashSet<PsiFunctionalExpression>());
+    final PsiElementProcessor.CollectElementsWithLimit<PsiClass> collectProcessor = new PsiElementProcessor.CollectElementsWithLimit<>(2,
+                                                                                                                                       new THashSet<>());
+    final PsiElementProcessor.CollectElementsWithLimit<PsiFunctionalExpression> collectExprProcessor =
+      new PsiElementProcessor.CollectElementsWithLimit<>(2,
+                                                         new THashSet<>());
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      ClassInheritorsSearch.search(aClass).forEach(new PsiElementProcessorAdapter<PsiClass>(collectProcessor));
+      ClassInheritorsSearch.search(aClass).forEach(new PsiElementProcessorAdapter<>(collectProcessor));
       if (collectProcessor.getCollection().size() < 2) {
-        FunctionalExpressionSearch.search(aClass).forEach(new PsiElementProcessorAdapter<PsiFunctionalExpression>(collectExprProcessor));
+        FunctionalExpressionSearch.search(aClass).forEach(new PsiElementProcessorAdapter<>(collectExprProcessor));
       }
     }, SEARCHING_FOR_OVERRIDDEN_METHODS, true, aClass.getProject(), (JComponent)e.getComponent())) {
       return;
     }
 
-    final List<NavigatablePsiElement> inheritors = new ArrayList<NavigatablePsiElement>();
+    final List<NavigatablePsiElement> inheritors = new ArrayList<>();
     inheritors.addAll(collectProcessor.getCollection());
     inheritors.addAll(collectExprProcessor.getCollection());
     if (inheritors.isEmpty()) return;

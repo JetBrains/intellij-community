@@ -60,7 +60,7 @@ public class XmlTagNamesIndex extends XmlIndex<Void> {
         CharSequence text = inputData.getContentAsText();
         if (StringUtil.indexOf(text, XmlUtil.XML_SCHEMA_URI) == -1) return Collections.emptyMap();
         Collection<String> tags = XsdTagNameBuilder.computeTagNames(CharArrayUtil.readerFromCharSequence(text));
-        Map<String, Void> map = new HashMap<String, Void>(tags.size());
+        Map<String, Void> map = new HashMap<>(tags.size());
         for (String tag : tags) {
           map.put(tag, null);
         }

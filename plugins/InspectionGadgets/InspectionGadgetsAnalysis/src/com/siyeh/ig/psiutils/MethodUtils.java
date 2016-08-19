@@ -49,6 +49,10 @@ public class MethodUtils {
     return method != null && methodMatches(method, null, PsiType.INT, HardcodedMethodConstants.HASH_CODE);
   }
 
+  public static boolean isFinalize(@Nullable PsiMethod method) {
+    return method != null && methodMatches(method, null, PsiType.VOID, HardcodedMethodConstants.FINALIZE);
+  }
+
   public static boolean isToString(@Nullable PsiMethod method) {
     if (method == null) {
       return false;
@@ -196,14 +200,19 @@ public class MethodUtils {
 
   @Nullable
   public static PsiMethod getSuper(@NotNull PsiMethod method) {
-    if (method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC) || method.hasModifierProperty(PsiModifier.PRIVATE)) {
-      return null;
-    }
-    final MethodSignatureBackedByPsiMethod signature = SuperMethodsSearch.search(method, null, true, false).findFirst();
+    final MethodSignatureBackedByPsiMethod signature = getSuperMethodSignature(method);
     if (signature == null) {
       return null;
     }
     return signature.getMethod();
+  }
+
+  @Nullable
+  public static MethodSignatureBackedByPsiMethod getSuperMethodSignature(@NotNull PsiMethod method) {
+    if (method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC) || method.hasModifierProperty(PsiModifier.PRIVATE)) {
+      return null;
+    }
+    return SuperMethodsSearch.search(method, null, true, false).findFirst();
   }
 
   public static boolean isOverridden(PsiMethod method) {
@@ -244,6 +253,9 @@ public class MethodUtils {
    * also when it is a constructor which only calls super, contains empty statements or "if (false)" statements.
    */
   public static boolean isTrivial(PsiMethod method, boolean throwIsTrivial) {
+    if (method.hasModifierProperty(PsiModifier.NATIVE)) {
+      return false;
+    }
     return isTrivial(method.getBody(), throwIsTrivial);
   }
 

@@ -70,7 +70,7 @@ public class CreateVirtualEnvDialog extends AbstractCreateVirtualEnvDialog {
                PythonSdkType.isCondaVirtualEnv(s);
       }
     });
-    List<Sdk> sortedSdks = new ArrayList<Sdk>(allSdks);
+    List<Sdk> sortedSdks = new ArrayList<>(allSdks);
     Collections.sort(sortedSdks, new PreferredSdkComparator());
     updateSdkList(allSdks, sortedSdks.isEmpty() ? null : sortedSdks.get(0));
   }
@@ -139,8 +139,6 @@ public class CreateVirtualEnvDialog extends AbstractCreateVirtualEnvDialog {
     myMainPanel.add(myMakeAvailableToAllProjectsCheckbox, c);
     button.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final PySdkService sdkService = PySdkService.getInstance();
-
         final PythonSdkType sdkType = PythonSdkType.getInstance();
         final FileChooserDescriptor descriptor = sdkType.getHomeChooserDescriptor();
 
@@ -152,7 +150,6 @@ public class CreateVirtualEnvDialog extends AbstractCreateVirtualEnvDialog {
           if (sdk == null) return;
           if (!allSdks.contains(sdk)) {
             allSdks.add(sdk);
-            sdkService.addSdk(sdk);
           }
           updateSdkList(allSdks, sdk);
         };
@@ -208,7 +205,7 @@ public class CreateVirtualEnvDialog extends AbstractCreateVirtualEnvDialog {
 
   private void updateSdkList(final List<Sdk> allSdks, @Nullable Sdk initialSelection) {
     mySdkCombo.setRenderer(new PySdkListCellRenderer(false));
-    mySdkCombo.setModel(new CollectionComboBoxModel<Sdk>(allSdks, initialSelection));
+    mySdkCombo.setModel(new CollectionComboBoxModel<>(allSdks, initialSelection));
     checkValid();
   }
 

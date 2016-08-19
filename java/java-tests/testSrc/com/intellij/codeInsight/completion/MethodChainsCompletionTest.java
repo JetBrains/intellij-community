@@ -245,7 +245,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   private List<WeightableChainLookupElement> doCompletion() {
     compileAndIndexData(TEST_INDEX_FILE_NAME);
     final LookupElement[] allLookupElements = runCompletion();
-    final List<WeightableChainLookupElement> targetLookupElements = new SmartList<WeightableChainLookupElement>();
+    final List<WeightableChainLookupElement> targetLookupElements = new SmartList<>();
     for (final LookupElement lookupElement : allLookupElements) {
       if (lookupElement instanceof WeightableChainLookupElement) {
         targetLookupElements.add((WeightableChainLookupElement)lookupElement);

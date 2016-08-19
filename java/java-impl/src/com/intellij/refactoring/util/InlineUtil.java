@@ -29,9 +29,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -44,6 +42,7 @@ public class InlineUtil {
 
   private InlineUtil() {}
 
+  @NotNull
   public static PsiExpression inlineVariable(PsiVariable variable, PsiExpression initializer, PsiJavaCodeReferenceElement ref)
     throws IncorrectOperationException {
     PsiManager manager = initializer.getManager();
@@ -312,7 +311,7 @@ public class InlineUtil {
   }
 
   public static void substituteTypeParams(PsiElement scope, final PsiSubstitutor substitutor, final PsiElementFactory factory) {
-    final Map<PsiElement, PsiElement> replacement = new HashMap<PsiElement, PsiElement>();
+    final Map<PsiElement, PsiElement> replacement = new HashMap<>();
     scope.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitTypeElement(PsiTypeElement typeElement) {
         super.visitTypeElement(typeElement);

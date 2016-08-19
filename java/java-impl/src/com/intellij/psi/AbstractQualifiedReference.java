@@ -246,7 +246,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
 
   protected abstract static class AbstractQualifiedReferenceResolvingProcessor extends BaseScopeProcessor {
     private boolean myFound;
-    private final Set<ResolveResult> myResults = new LinkedHashSet<ResolveResult>();
+    private final Set<ResolveResult> myResults = new LinkedHashSet<>();
 
     @Override
     public boolean execute(@NotNull final PsiElement element, @NotNull final ResolveState state) {

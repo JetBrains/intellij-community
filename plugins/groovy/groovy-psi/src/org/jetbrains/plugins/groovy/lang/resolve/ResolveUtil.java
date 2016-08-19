@@ -62,6 +62,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
@@ -202,6 +203,7 @@ public class ResolveUtil {
       PsiClassType categoryType = GdkMethodUtil.getCategoryType((PsiClass)scope);
       if (categoryType != null) {
         if (!processNonCodeMembers(categoryType, processor, place, state)) return false;
+        if (!GdkMethodUtil.processCategoryMethods(place, processor, state, (PsiClass)scope)) return false;
       }
 
     }
@@ -422,17 +424,17 @@ public class ResolveUtil {
   public static Pair<GrStatement, GrLabeledStatement> resolveLabelTargets(@Nullable String labelName,
                                                                           @Nullable PsiElement element,
                                                                           boolean isBreak) {
-    if (element == null) return new Pair<GrStatement, GrLabeledStatement>(null, null);
+    if (element == null) return new Pair<>(null, null);
 
     if (labelName == null) {
       do {
         element = element.getContext();
         if (element == null || element instanceof GrClosableBlock || element instanceof GrMember || element instanceof GroovyFile) {
-          return new Pair<GrStatement, GrLabeledStatement>(null, null);
+          return new Pair<>(null, null);
         }
       }
       while (!(element instanceof GrLoopStatement) && !(isBreak && element instanceof GrSwitchStatement));
-      return new Pair<GrStatement, GrLabeledStatement>(((GrStatement)element), null);
+      return new Pair<>(((GrStatement)element), null);
     }
 
     GrStatement statement = null;
@@ -454,7 +456,7 @@ public class ResolveUtil {
       if (element instanceof GrClosableBlock) break;
     }
     while (true);
-    return new Pair<GrStatement, GrLabeledStatement>(null, null);
+    return new Pair<>(null, null);
   }
 
   private static boolean isApplicableLabelStatement(PsiElement element, String labelName) {
@@ -544,7 +546,7 @@ public class ResolveUtil {
     if (candidates.size() == 0) return GroovyResolveResult.EMPTY_ARRAY;
     if (candidates.size() == 1) return candidates.toArray(new GroovyResolveResult[candidates.size()]);
 
-    final List<GroovyResolveResult> result = new ArrayList<GroovyResolveResult>();
+    final List<GroovyResolveResult> result = new ArrayList<>();
 
     final Iterator<? extends GroovyResolveResult> allIterator = candidates.iterator();
     result.add(allIterator.next());
@@ -785,7 +787,7 @@ public class ResolveUtil {
       allPropertyCandidates = GroovyResolveResult.EMPTY_ARRAY;
     }
 
-    List<GroovyResolveResult> propertyCandidates = new ArrayList<GroovyResolveResult>(allPropertyCandidates.length);
+    List<GroovyResolveResult> propertyCandidates = new ArrayList<>(allPropertyCandidates.length);
     for (GroovyResolveResult candidate : allPropertyCandidates) {
       final PsiElement resolved = candidate.getElement();
       if (!(resolved instanceof GrField)) continue;
@@ -805,7 +807,7 @@ public class ResolveUtil {
       }
     }
 
-    List<GroovyResolveResult> allCandidates = new ArrayList<GroovyResolveResult>();
+    List<GroovyResolveResult> allCandidates = new ArrayList<>();
     if (hasApplicableMethods) {
       ContainerUtil.addAll(allCandidates, methodCandidates);
     }
@@ -817,7 +819,7 @@ public class ResolveUtil {
         new AccessorResolverProcessor(getterName, methodName, place, true, thisType, PsiType.EMPTY_ARRAY);
       processAllDeclarations(thisType, getterResolver, state, place);
       final GroovyResolveResult[] candidates = getterResolver.getCandidates(); //can be only one candidate
-      final List<GroovyResolveResult> applicable = new ArrayList<GroovyResolveResult>();
+      final List<GroovyResolveResult> applicable = new ArrayList<>();
       for (GroovyResolveResult candidate : candidates) {
         PsiMethod method = (PsiMethod)candidate.getElement();
         assert method != null;

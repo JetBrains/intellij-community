@@ -88,7 +88,7 @@ public class GitTask {
   // this is always sync
   @NotNull
   public GitTaskResult execute(boolean modal) {
-    final AtomicReference<GitTaskResult> result = new AtomicReference<GitTaskResult>(GitTaskResult.INITIAL);
+    final AtomicReference<GitTaskResult> result = new AtomicReference<>(GitTaskResult.INITIAL);
     execute(true, modal, new GitTaskResultHandlerAdapter() {
       @Override
       protected void run(GitTaskResult res) {

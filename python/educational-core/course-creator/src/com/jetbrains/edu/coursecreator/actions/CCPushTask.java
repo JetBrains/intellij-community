@@ -11,15 +11,18 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
+import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.stepic.EduStepicNames;
 import org.jetbrains.annotations.NotNull;
 
 public class CCPushTask extends DumbAwareAction {
   public CCPushTask() {
-    super("Update Task on Stepic", "Update Task on Stepic", null);
+    super("Update Task on Stepik", "Update Task on Stepik", null);
   }
 
   @Override
@@ -34,15 +37,20 @@ public class CCPushTask extends DumbAwareAction {
     if (course == null) {
       return;
     }
+    if (!course.getCourseMode().equals(CCUtils.COURSE_MODE)) return;
     PsiDirectory taskDir = DirectoryChooserUtil.getOrChooseDirectory(view);
-    if (taskDir == null || !taskDir.getName().contains("task")) {
+    if (taskDir == null || !taskDir.getName().contains(EduNames.TASK)) {
       return;
     }
     final PsiDirectory lessonDir = taskDir.getParentDirectory();
     if (lessonDir == null) return;
     final Lesson lesson = course.getLesson(lessonDir.getName());
-    if (lesson != null && lesson.getId() > 0) {
+    if (lesson != null && lesson.getId() > 0 && course.getId() > 0) {
       e.getPresentation().setEnabledAndVisible(true);
+      final com.jetbrains.edu.learning.courseFormat.Task task = lesson.getTask(taskDir.getName());
+      if (task.getStepicId() <= 0) {
+        e.getPresentation().setText("Upload Task to Stepik");
+      }
     }
   }
 
@@ -58,7 +66,7 @@ public class CCPushTask extends DumbAwareAction {
       return;
     }
     PsiDirectory taskDir = DirectoryChooserUtil.getOrChooseDirectory(view);
-    if (taskDir == null || !taskDir.getName().contains("task")) {
+    if (taskDir == null || !taskDir.getName().contains(EduNames.TASK)) {
       return;
     }
     final PsiDirectory lessonDir = taskDir.getParentDirectory();
@@ -72,8 +80,13 @@ public class CCPushTask extends DumbAwareAction {
     ProgressManager.getInstance().run(new Task.Modal(project, "Uploading Task", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        indicator.setText("Uploading task to http://stepic.org");
-        EduStepicConnector.updateTask(project, task);
+        indicator.setText("Uploading task to " + EduStepicNames.STEPIC_URL);
+        if (task.getStepicId() <= 0) {
+          EduStepicConnector.postTask(project, task, lesson.getId());
+        }
+        else {
+          EduStepicConnector.updateTask(project, task);
+        }
       }
     });
   }

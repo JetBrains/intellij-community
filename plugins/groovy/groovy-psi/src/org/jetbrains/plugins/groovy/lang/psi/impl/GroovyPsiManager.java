@@ -58,7 +58,7 @@ public class GroovyPsiManager {
                                                                                 CommonClassNames.JAVA_LANG_STRING);
   private final Project myProject;
 
-  private final Map<String, GrTypeDefinition> myArrayClass = new HashMap<String, GrTypeDefinition>();
+  private final Map<String, GrTypeDefinition> myArrayClass = new HashMap<>();
 
   private final ConcurrentMap<GroovyPsiElement, PsiType> myCalculatedTypes = ContainerUtil.createConcurrentWeakMap();
   private final ConcurrentMap<PsiMember, Boolean> myCompileStatic = ContainerUtil.createConcurrentWeakMap();

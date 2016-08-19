@@ -25,7 +25,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.psi.PyIndentUtil;
@@ -66,41 +65,28 @@ public class PyStructuredDocstringFormatter {
       module = modules[0];
     }
     if (module == null) return Lists.newArrayList();
-    final List<String> result = new ArrayList<String>();
+    final List<String> result = new ArrayList<>();
 
     final String preparedDocstring = PyIndentUtil.removeCommonIndent(docstring, true).trim();
 
-    final HelperPackage formatter;
-    final StructuredDocString structuredDocString;
     final DocStringFormat format = DocStringUtil.guessDocStringFormat(preparedDocstring, element);
-    if (format == DocStringFormat.GOOGLE) {
-      formatter = PythonHelper.GOOGLE_FORMATTER;
-      structuredDocString = DocStringUtil.parseDocStringContent(DocStringFormat.GOOGLE, preparedDocstring);
-    }
-    else if (format == DocStringFormat.NUMPY) {
-      formatter = PythonHelper.NUMPY_FORMATTER;
-      structuredDocString = DocStringUtil.parseDocStringContent(DocStringFormat.NUMPY, preparedDocstring);
-    }
-    else if (format == DocStringFormat.EPYTEXT) {
-      formatter = PythonHelper.EPYDOC_FORMATTER;
-      structuredDocString = DocStringUtil.parseDocStringContent(DocStringFormat.EPYTEXT, preparedDocstring);
-      result.add(formatStructuredDocString(structuredDocString));
-    }
-    else if (format == DocStringFormat.REST) {
-      formatter = PythonHelper.REST_FORMATTER;
-      structuredDocString = DocStringUtil.parseDocStringContent(DocStringFormat.REST, preparedDocstring);
-    }
-
-    else {
+    if (format == DocStringFormat.PLAIN) {
       return null;
     }
 
-    final String output = runExternalTool(module, formatter, preparedDocstring);
+    final StructuredDocString structuredDocString = DocStringUtil.parseDocStringContent(format, preparedDocstring);
+
+    final String output = runExternalTool(module, format, preparedDocstring);
     if (output != null) {
-      result.add(0, output);
+      result.add(output);
     }
     else {
-      result.add(0, structuredDocString.getDescription());
+      result.add(structuredDocString.getDescription());
+    }
+
+    // Information about parameters in Epytext-style docstrings are formatter on our side
+    if (format == DocStringFormat.EPYTEXT) {
+      result.add(formatStructuredDocString(structuredDocString));
     }
 
     return result;
@@ -108,11 +94,11 @@ public class PyStructuredDocstringFormatter {
 
   @Nullable
   private static String runExternalTool(@NotNull final Module module,
-                                        @NotNull final HelperPackage formatter,
+                                        @NotNull final DocStringFormat format,
                                         @NotNull final String docstring) {
     final Sdk sdk;
     final String missingInterpreterMessage;
-    if (formatter == PythonHelper.EPYDOC_FORMATTER) {
+    if (format == DocStringFormat.EPYTEXT) {
       sdk = PythonSdkType.findPython2Sdk(module);
       missingInterpreterMessage = PyBundle.message("QDOC.epydoc.python2.sdk.not.found");
     }
@@ -121,7 +107,7 @@ public class PyStructuredDocstringFormatter {
       missingInterpreterMessage = PyBundle.message("QDOC.sdk.not.found");
     }
     if (sdk == null) {
-      LOG.warn("Python SDK for docstring formatter " + formatter +  " is not found");
+      LOG.warn("Python SDK for docstring formatter " + format +  " is not found");
       return "<p color=\"red\">" + missingInterpreterMessage + "</p>";
     }
 
@@ -132,9 +118,10 @@ public class PyStructuredDocstringFormatter {
     final byte[] data = new byte[encoded.limit()];
     encoded.get(data);
 
-    final GeneralCommandLine commandLine = formatter.newCommandLine(sdk, Lists.newArrayList());
+    final ArrayList<String> arguments = Lists.newArrayList(format.getFormatterCommand());
+    final GeneralCommandLine commandLine = PythonHelper.DOCSTRING_FORMATTER.newCommandLine(sdk, arguments);
     commandLine.setCharset(DEFAULT_CHARSET);
-    
+
     LOG.debug("Command for launching docstring formatter: " + commandLine.getCommandLineString());
     
     final ProcessOutput output = PySdkUtil.getProcessOutput(commandLine, new File(sdkHome).getParent(), null, 5000, data, false);

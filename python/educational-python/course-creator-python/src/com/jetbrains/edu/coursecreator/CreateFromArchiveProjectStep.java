@@ -49,7 +49,7 @@ class CreateFromArchiveProjectStep extends PyCharmNewProjectStep {
         String zipName = FileUtil.sanitizeFileName(course.getName());
         String locationDir = folder.getPath();
         CCCreateCourseArchive.createCourseArchive(myProject, myModule, zipName, locationDir, false);
-        String path = FileUtil.join(folder.getPath(), zipName + ".zip");
+        String path = FileUtil.join(FileUtil.toSystemDependentName(folder.getPath()), zipName + ".zip");
         StudyProjectGenerator generator = myGenerator.getGenerator();
         CourseInfo info = generator.addLocalCourse(path);
         assert info != null;

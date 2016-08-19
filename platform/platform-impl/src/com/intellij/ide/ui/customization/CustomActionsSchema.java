@@ -59,13 +59,13 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
   @NonNls private static final String ATTRIBUTE_ID = "id";
   @NonNls private static final String ATTRIBUTE_ICON = "icon";
 
-  private final Map<String, String> myIconCustomizations = new HashMap<String, String>();
+  private final Map<String, String> myIconCustomizations = new HashMap<>();
 
-  private List<ActionUrl> myActions = new ArrayList<ActionUrl>();
+  private List<ActionUrl> myActions = new ArrayList<>();
 
-  private final Map<String, ActionGroup> myIdToActionGroup = new HashMap<String, ActionGroup>();
+  private final Map<String, ActionGroup> myIdToActionGroup = new HashMap<>();
 
-  private final List<Pair> myIdToNameList = new ArrayList<Pair>();
+  private final List<Pair> myIdToNameList = new ArrayList<>();
 
   @NonNls private static final String GROUP = "group";
   private static final Logger LOG = Logger.getInstance(CustomActionsSchema.class);
@@ -123,7 +123,7 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
     myIconCustomizations.clear();
 
     for (ActionUrl actionUrl : result.myActions) {
-      final ActionUrl url = new ActionUrl(new ArrayList<String>(actionUrl.getGroupPath()), actionUrl.getComponent(),
+      final ActionUrl url = new ActionUrl(new ArrayList<>(actionUrl.getGroupPath()), actionUrl.getComponent(),
                                           actionUrl.getActionType(), actionUrl.getAbsolutePosition());
       url.setInitialPosition(actionUrl.getInitialPosition());
       myActions.add(url);
@@ -306,7 +306,7 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
   }
 
   public List<ActionUrl> getChildActions(final ActionUrl url) {
-    ArrayList<ActionUrl> result = new ArrayList<ActionUrl>();
+    ArrayList<ActionUrl> result = new ArrayList<>();
     final ArrayList<String> groupPath = url.getGroupPath();
     for (ActionUrl actionUrl : myActions) {
       int index = 0;

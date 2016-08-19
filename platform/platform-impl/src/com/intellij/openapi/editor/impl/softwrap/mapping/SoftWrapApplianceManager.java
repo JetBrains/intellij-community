@@ -71,7 +71,7 @@ public class SoftWrapApplianceManager implements Dumpable {
     CUSTOM
   }
 
-  private final List<SoftWrapAwareDocumentParsingListener> myListeners            = new ArrayList<SoftWrapAwareDocumentParsingListener>();
+  private final List<SoftWrapAwareDocumentParsingListener> myListeners            = new ArrayList<>();
   private final ProcessingContext                          myContext              = new ProcessingContext();
   private final FontTypesStorage                           myOffset2fontType      = new FontTypesStorage();
   private final WidthsStorage                              myOffset2widthInPixels = new WidthsStorage();

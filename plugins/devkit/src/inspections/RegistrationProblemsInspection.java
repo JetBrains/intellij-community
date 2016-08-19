@@ -150,7 +150,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
   }
 
   private List<ProblemDescriptor> addProblem(List<ProblemDescriptor> problems, ProblemDescriptor problemDescriptor) {
-    if (problems == null) problems = new SmartList<ProblemDescriptor>();
+    if (problems == null) problems = new SmartList<>();
     problems.add(problemDescriptor);
     return problems;
   }
@@ -180,7 +180,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
     private final XmlFile myXmlFile;
     private final PsiManager myPsiManager;
     private final GlobalSearchScope myScope;
-    private final Set<String> myInterfaceClasses = new THashSet<String>();
+    private final Set<String> myInterfaceClasses = new THashSet<>();
     private final boolean myOnTheFly;
 
     public RegistrationChecker(InspectionManager manager, XmlFile xmlFile, boolean onTheFly) {
@@ -275,7 +275,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
       for (XmlTag child : children) {
         if ("type".equals(child.getAttributeValue("name"))) {
           final String value = child.getAttributeValue("value");
-          final SmartList<String> names = new SmartList<String>();
+          final SmartList<String> names = new SmartList<>();
           if (value != null) {
             final String[] moduleTypes = value.split(";");
             for (String moduleType : moduleTypes) {
@@ -337,7 +337,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
     }
 
     private void addProblem(PsiElement element, String problem, ProblemHighlightType type, boolean onTheFly, LocalQuickFix... fixes) {
-      if (myList == null) myList = new SmartList<ProblemDescriptor>();
+      if (myList == null) myList = new SmartList<>();
       myList.add(myManager.createProblemDescriptor(element, problem, onTheFly, fixes, type));
     }
 

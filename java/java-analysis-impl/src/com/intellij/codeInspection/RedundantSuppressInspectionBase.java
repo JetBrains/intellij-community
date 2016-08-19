@@ -18,7 +18,6 @@ package com.intellij.codeInspection;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.RemoveSuppressWarningAction;
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
@@ -72,7 +71,7 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Ignore @SuppressWarning(\"ALL\")", this, "IGNORE_ALL");
+    return new SingleCheckboxOptionsPanel("Ignore '@SuppressWarning(\"ALL\")'", this, "IGNORE_ALL");
   }
 
   @Override
@@ -117,7 +116,7 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
   }
 
   public CommonProblemDescriptor[] checkElement(@NotNull final PsiElement psiElement, @NotNull final InspectionManager manager) {
-    final Map<PsiElement, Collection<String>> suppressedScopes = new THashMap<PsiElement, Collection<String>>();
+    final Map<PsiElement, Collection<String>> suppressedScopes = new THashMap<>();
     psiElement.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitModifierList(PsiModifierList list) {
         super.visitModifierList(list);
@@ -162,7 +161,7 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
 
     if (suppressedScopes.values().isEmpty()) return null;
     // have to visit all file from scratch since inspections can be written in any pervasive way including checkFile() overriding
-    Map<InspectionToolWrapper, String> suppressedTools = new THashMap<InspectionToolWrapper, String>();
+    Map<InspectionToolWrapper, String> suppressedTools = new THashMap<>();
     InspectionToolWrapper[] toolWrappers = getInspectionTools(psiElement, manager);
     for (Collection<String> ids : suppressedScopes.values()) {
       for (Iterator<String> iterator = ids.iterator(); iterator.hasNext(); ) {
@@ -182,7 +181,7 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
           else if (toolWrapper.getShortName().equals(shortName)) {
             //ignore global unused as it won't be checked anyway
             if (toolWrapper instanceof LocalInspectionToolWrapper ||
-                toolWrapper instanceof GlobalInspectionToolWrapper && !isGlobalInspectionRunCustomly(toolWrapper.getTool())) {
+                toolWrapper instanceof GlobalInspectionToolWrapper && !((GlobalInspectionToolWrapper)toolWrapper).getTool().isGraphNeeded()) {
               suppressedTools.put(toolWrapper, shortName);
             }
             else {
@@ -203,7 +202,7 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
     refManager.inspectionReadActionStarted();
     final List<ProblemDescriptor> result;
     try {
-      result = new ArrayList<ProblemDescriptor>();
+      result = new ArrayList<>();
       for (InspectionToolWrapper toolWrapper : suppressedTools.keySet()) {
         String toolId = suppressedTools.get(toolWrapper);
         toolWrapper.initialize(globalContext);
@@ -212,16 +211,14 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
           LocalInspectionToolWrapper local = (LocalInspectionToolWrapper)toolWrapper;
           if (local.isUnfair()) continue; //cant't work with passes other than LocalInspectionPass
           List<ProblemDescriptor> results = local.getTool().processFile(file, manager);
-          descriptors = new ArrayList<CommonProblemDescriptor>(results);
+          descriptors = new ArrayList<>(results);
         }
         else if (toolWrapper instanceof GlobalInspectionToolWrapper) {
           final GlobalInspectionToolWrapper global = (GlobalInspectionToolWrapper)toolWrapper;
           GlobalInspectionTool globalTool = global.getTool();
-          if (isGlobalInspectionRunCustomly(globalTool)) continue;
-          if (globalTool.isGraphNeeded()) {
-            refManager.findAllDeclarations();
-          }
-          descriptors = new ArrayList<CommonProblemDescriptor>();
+          //when graph is needed, results probably depend on outer files so absence of results on one file (in current context) doesn't guarantee anything
+          if (globalTool.isGraphNeeded()) continue;
+          descriptors = new ArrayList<>();
           globalContext.getRefManager().iterate(new RefVisitor() {
             @Override public void visitElement(@NotNull RefEntity refEntity) {
               CommonProblemDescriptor[] descriptors1 = global.getTool().checkElement(refEntity, scope, manager, globalContext, new ProblemDescriptionsProcessor() {});
@@ -264,7 +261,7 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
           }
           if (psiMember != null && psiMember.isValid()) {
             String description = InspectionsBundle.message("inspection.redundant.suppression.description");
-            if (myQuickFixes == null) myQuickFixes = new BidirectionalMap<String, QuickFix>();
+            if (myQuickFixes == null) myQuickFixes = new BidirectionalMap<>();
             final String key = toolId + (problemLine != null ? ";" + problemLine : "");
             QuickFix fix = myQuickFixes.get(key);
             if (fix == null) {
@@ -299,10 +296,6 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
       globalContext.close(true);
     }
     return result.toArray(new ProblemDescriptor[result.size()]);
-  }
-
-  private static boolean isGlobalInspectionRunCustomly(InspectionProfileEntry tool) {
-    return tool instanceof UnusedDeclarationInspectionBase;
   }
 
   protected GlobalInspectionContextBase createContext(PsiFile file) {

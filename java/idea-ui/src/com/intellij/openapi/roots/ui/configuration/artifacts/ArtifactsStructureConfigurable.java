@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -195,7 +195,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   @NotNull
   @Override
   protected Collection<? extends ProjectStructureElement> getProjectStructureElements() {
-    final List<ProjectStructureElement> elements = new ArrayList<ProjectStructureElement>();
+    final List<ProjectStructureElement> elements = new ArrayList<>();
     for (Artifact artifact : myPackagingEditorContext.getArtifactModel().getAllArtifactsIncludingInvalid()) {
       elements.add(myPackagingEditorContext.getOrCreateArtifactElement(artifact));
     }
@@ -359,11 +359,6 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   @NotNull
   public String getId() {
     return "project.artifacts";
-  }
-
-  @Override
-  public Runnable enableSearch(String option) {
-    return null;
   }
 
   @Override

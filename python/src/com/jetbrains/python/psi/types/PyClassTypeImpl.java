@@ -59,7 +59,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   private static ThreadLocal<Set<Pair<PyClass, String>>> ourResolveMemberStack = new ThreadLocal<Set<Pair<PyClass, String>>>() {
     @Override
     protected Set<Pair<PyClass, String>> initialValue() {
-      return new HashSet<Pair<PyClass, String>>();
+      return new HashSet<>();
     }
   };
 
@@ -519,7 +519,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   public Object[] getCompletionVariants(String prefix, PsiElement location, ProcessingContext context) {
     Set<PyClassType> visited = context.get(CTX_VISITED);
     if (visited == null) {
-      visited = new HashSet<PyClassType>();
+      visited = new HashSet<>();
       context.put(CTX_VISITED, visited);
     }
     if (visited.contains(this)) {
@@ -528,9 +528,9 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     visited.add(this);
     Set<String> namesAlready = context.get(CTX_NAMES);
     if (namesAlready == null) {
-      namesAlready = new HashSet<String>();
+      namesAlready = new HashSet<>();
     }
-    List<Object> ret = new ArrayList<Object>();
+    List<Object> ret = new ArrayList<>();
 
     boolean suppressParentheses = context.get(CTX_SUPPRESS_PARENTHESES) != null;
     addOwnClassMembers(location, namesAlready, suppressParentheses, ret, prefix);
@@ -574,8 +574,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   public void visitMembers(@NotNull final Processor<PsiElement> processor,
                            final boolean inherited,
                            @NotNull final TypeEvalContext context) {
-    myClass.visitMethods(new MyProcessorWrapper<PyFunction>(processor), false, context);
-    myClass.visitClassAttributes(new MyProcessorWrapper<PyTargetExpression>(processor), false, context);
+    myClass.visitMethods(new MyProcessorWrapper<>(processor), false, context);
+    myClass.visitClassAttributes(new MyProcessorWrapper<>(processor), false, context);
 
     for (PyTargetExpression expression : myClass.getInstanceAttributes()) {
       processor.process(expression);

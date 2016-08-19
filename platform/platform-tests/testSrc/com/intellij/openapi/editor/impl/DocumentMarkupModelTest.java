@@ -42,7 +42,7 @@ import java.awt.*;
 public class DocumentMarkupModelTest extends LightPlatformCodeInsightFixtureTestCase {
 
   public void testInfoTestAttributes() throws Exception {
-    LanguageExtensionPoint<Annotator> extension = new LanguageExtensionPoint<Annotator>();
+    LanguageExtensionPoint<Annotator> extension = new LanguageExtensionPoint<>();
     extension.language="TEXT";
     extension.implementationClass = TestAnnotator.class.getName();
     PlatformTestUtil.registerExtension(ExtensionPointName.create(LanguageAnnotators.EP_NAME), extension, getTestRootDisposable());

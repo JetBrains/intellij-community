@@ -53,7 +53,7 @@ public class ResourceBundleImpl extends ResourceBundle {
         }
       });
     final String baseName = getBaseName();
-    List<PropertiesFile> result = new SmartList<PropertiesFile>();
+    List<PropertiesFile> result = new SmartList<>();
     for (PsiFile file : children) {
       if (!file.isValid()) continue;
       PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file);

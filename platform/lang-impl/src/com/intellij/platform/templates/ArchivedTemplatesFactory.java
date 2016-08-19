@@ -82,7 +82,7 @@ public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
       for (String child : UrlUtil.getChildrenRelativePaths(url)) {
         if (child.endsWith(ZIP)) {
           if (templates == null) {
-            templates = new SmartList<ProjectTemplate>();
+            templates = new SmartList<>();
           }
           templates.add(new LocalArchivedTemplate(new URL(url.toExternalForm() + '/' + child), ClassLoader.getSystemClassLoader()));
         }

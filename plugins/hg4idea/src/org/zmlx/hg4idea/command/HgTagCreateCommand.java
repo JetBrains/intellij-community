@@ -43,7 +43,7 @@ public class HgTagCreateCommand {
     if (StringUtil.isEmptyOrSpaces(tagName)) {
       throw new HgCommandException("tag name is empty");
     }
-    List<String> arguments = new ArrayList<String>();
+    List<String> arguments = new ArrayList<>();
     arguments.add(tagName);
     if (!StringUtil.isEmptyOrSpaces(revisionNumberOrHash)) {
       arguments.add("--rev");

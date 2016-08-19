@@ -46,7 +46,7 @@ public class SummaryNode extends BaseToDoNode<ToDoSummary> {
   @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
-    ArrayList<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
+    ArrayList<AbstractTreeNode> children = new ArrayList<>();
 
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
     if (myToDoSettings.isModulesShown()) {

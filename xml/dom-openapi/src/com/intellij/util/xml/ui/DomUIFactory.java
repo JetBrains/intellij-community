@@ -64,7 +64,8 @@ public abstract class DomUIFactory {
   }
 
   public static DomUIControl createLargeDescriptionControl(DomElement parent, final boolean commitOnEveryChange) {
-    return getDomUIFactory().createTextControl(new DomCollectionWrapper<String>(parent, parent.getGenericInfo().getCollectionChildDescription("description")), commitOnEveryChange);
+    return getDomUIFactory().createTextControl(
+      new DomCollectionWrapper<>(parent, parent.getGenericInfo().getCollectionChildDescription("description")), commitOnEveryChange);
   }
 
   @NotNull
@@ -141,7 +142,7 @@ public abstract class DomUIFactory {
   public DomUIControl createCollectionControl(DomElement element, DomCollectionChildDescription description) {
     final ColumnInfo columnInfo = createColumnInfo(description, element);
     final Class aClass = DomUtil.extractParameterClassFromGenericType(description.getType());
-    return new DomCollectionControl<GenericDomValue<?>>(element, description, aClass == null, columnInfo);
+    return new DomCollectionControl<>(element, description, aClass == null, columnInfo);
   }
 
   public ColumnInfo createColumnInfo(final DomCollectionChildDescription description,

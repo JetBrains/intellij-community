@@ -42,7 +42,7 @@ public class IntentionsOptionsTopHitProvider extends OptionsTopHitProvider {
       return Collections.emptyList();
     }
 
-    Collection<BooleanOptionDescription> options = new ArrayList<BooleanOptionDescription>();
+    Collection<BooleanOptionDescription> options = new ArrayList<>();
     for (IntentionActionMetaData data : settings.getMetaData()) {
       options.add(new Option(settings, data));
     }

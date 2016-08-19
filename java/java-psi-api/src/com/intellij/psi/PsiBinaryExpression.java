@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import com.intellij.psi.tree.IElementType;
@@ -24,6 +25,10 @@ import com.intellij.psi.tree.IElementType;
  * N.B Please use {@link PsiPolyadicExpression} instead as a more general form of an infix operator-expression.
  */
 public interface PsiBinaryExpression extends PsiPolyadicExpression {
+  TokenSet BOOLEAN_OPERATION_TOKENS = TokenSet.create(JavaTokenType.EQEQ, JavaTokenType.NE,
+                                                      JavaTokenType.LT, JavaTokenType.GT, JavaTokenType.LE, JavaTokenType.GE,
+                                                      JavaTokenType.OROR, JavaTokenType.ANDAND);
+
   /**
    * Returns the left operand of the expression.
    *

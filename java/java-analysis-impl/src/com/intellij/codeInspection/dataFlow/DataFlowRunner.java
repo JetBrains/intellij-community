@@ -50,19 +50,20 @@ public class DataFlowRunner {
   private static final Key<Integer> TOO_EXPENSIVE_HASH = Key.create("TOO_EXPENSIVE_HASH");
 
   private Instruction[] myInstructions;
-  private final MultiMap<PsiElement, DfaMemoryState> myNestedClosures = new MultiMap<PsiElement, DfaMemoryState>();
+  private final MultiMap<PsiElement, DfaMemoryState> myNestedClosures = new MultiMap<>();
   @NotNull
   private final DfaValueFactory myValueFactory;
-
+  private final boolean myShouldCheckLimitTime;
   // Maximum allowed attempts to process instruction. Fail as too complex to process if certain instruction
   // is executed more than this limit times.
   static final int MAX_STATES_PER_BRANCH = 300;
 
   protected DataFlowRunner() {
-    this(false, true);
+    this(false, true, false);
   }
 
-  protected DataFlowRunner(boolean unknownMembersAreNullable, boolean honorFieldInitializers) {
+  protected DataFlowRunner(boolean unknownMembersAreNullable, boolean honorFieldInitializers, boolean shouldCheckLimitTime) {
+    myShouldCheckLimitTime = shouldCheckLimitTime;
     myValueFactory = new DfaValueFactory(honorFieldInitializers, unknownMembersAreNullable);
   }
 
@@ -126,14 +127,6 @@ public class DataFlowRunner {
         }
       }
 
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Analyzing code block: " + psiBlock.getText());
-        for (int i = 0; i < myInstructions.length; i++) {
-          LOG.debug(i + ": " + myInstructions[i]);
-        }
-      }
-      //for (int i = 0; i < myInstructions.length; i++) System.out.println(i + ": " + myInstructions[i].toString());
-      
       Integer tooExpensiveHash = psiBlock.getUserData(TOO_EXPENSIVE_HASH);
       if (tooExpensiveHash != null && tooExpensiveHash == psiBlock.getText().hashCode()) {
         LOG.debug("Too complex because hasn't changed since being too complex already");
@@ -148,7 +141,7 @@ public class DataFlowRunner {
       MultiMap<BranchingInstruction, DfaMemoryState> processedStates = MultiMap.createSet();
       MultiMap<BranchingInstruction, DfaMemoryState> incomingStates = MultiMap.createSet();
 
-      long msLimit = shouldCheckTimeLimit() ? Registry.intValue("ide.dfa.time.limit.online") : Registry.intValue("ide.dfa.time.limit.offline");
+      long msLimit = Registry.intValue(shouldCheckTimeLimit() ? "ide.dfa.time.limit.online" : "ide.dfa.time.limit.offline");
       WorkingTimeMeasurer measurer = new WorkingTimeMeasurer(msLimit * 1000 * 1000);
       int count = 0;
       while (!queue.isEmpty()) {
@@ -160,11 +153,6 @@ public class DataFlowRunner {
             return RunnerResult.TOO_COMPLEX;
           }
           ProgressManager.checkCanceled();
-
-          if (LOG.isDebugEnabled()) {
-            LOG.debug(instructionState.toString());
-          }
-          //System.out.println(instructionState.toString());
 
           Instruction instruction = instructionState.getInstruction();
 
@@ -206,14 +194,9 @@ public class DataFlowRunner {
       }
 
       psiBlock.putUserData(TOO_EXPENSIVE_HASH, null);
-      LOG.debug("Analysis ok");
       return RunnerResult.OK;
     }
-    catch (ArrayIndexOutOfBoundsException e) {
-      LOG.error(psiBlock.getText(), e);
-      return RunnerResult.ABORTED;
-    }
-    catch (EmptyStackException e) {
+    catch (ArrayIndexOutOfBoundsException | EmptyStackException e) {
       LOG.error(psiBlock.getText(), e);
       return RunnerResult.ABORTED;
     }
@@ -252,7 +235,7 @@ public class DataFlowRunner {
     })) return;
 
     // now remove obsolete memory states
-    final Set<BranchingInstruction> mayRemoveStatesFor = new THashSet<BranchingInstruction>();
+    final Set<BranchingInstruction> mayRemoveStatesFor = new THashSet<>();
     for (Instruction instruction : myInstructions) {
       if (inSameLoop(prevInstruction, instruction, loopNumber) && instruction instanceof BranchingInstruction) {
         mayRemoveStatesFor.add((BranchingInstruction)instruction);
@@ -270,7 +253,7 @@ public class DataFlowRunner {
   }
 
   protected boolean shouldCheckTimeLimit() {
-    return !ApplicationManager.getApplication().isUnitTestMode();
+    return myShouldCheckLimitTime && !ApplicationManager.getApplication().isUnitTestMode();
   }
 
   @NotNull
@@ -327,13 +310,13 @@ public class DataFlowRunner {
 
   @NotNull
   MultiMap<PsiElement, DfaMemoryState> getNestedClosures() {
-    return new MultiMap<PsiElement, DfaMemoryState>(myNestedClosures);
+    return new MultiMap<>(myNestedClosures);
   }
 
   @NotNull
   public Pair<Set<Instruction>,Set<Instruction>> getConstConditionalExpressions() {
-    Set<Instruction> trueSet = new HashSet<Instruction>();
-    Set<Instruction> falseSet = new HashSet<Instruction>();
+    Set<Instruction> trueSet = new HashSet<>();
+    Set<Instruction> falseSet = new HashSet<>();
 
     for (Instruction instruction : myInstructions) {
       if (instruction instanceof BranchingInstruction) {
@@ -369,7 +352,7 @@ public class DataFlowRunner {
   private static DfaMemoryStateImpl createClosureState(@NotNull DfaMemoryState memState) {
     DfaMemoryStateImpl copy = (DfaMemoryStateImpl)memState.createCopy();
     copy.flushFields();
-    Set<DfaVariableValue> vars = new HashSet<DfaVariableValue>(copy.getVariableStates().keySet());
+    Set<DfaVariableValue> vars = new HashSet<>(copy.getVariableStates().keySet());
     for (DfaVariableValue value : vars) {
       copy.flushDependencies(value);
     }

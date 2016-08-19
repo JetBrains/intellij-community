@@ -110,7 +110,7 @@ public final class LoaderFactory {
   }
 
   private static ClassLoader createClassLoader(final String runClasspath, final String moduleName) {
-    final ArrayList<URL> urls = new ArrayList<URL>();
+    final ArrayList<URL> urls = new ArrayList<>();
     final VirtualFileManager manager = VirtualFileManager.getInstance();
     final JarFileSystemImpl fileSystem = (JarFileSystemImpl)JarFileSystem.getInstance();
     final StringTokenizer tokenizer = new StringTokenizer(runClasspath, File.pathSeparator);

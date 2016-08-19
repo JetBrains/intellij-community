@@ -28,7 +28,7 @@ import java.util.List;
 
 public class CompoundTestFailedState extends TestFailedState {
   
-  final List<TestFailedState> myStates = new ArrayList<TestFailedState>();
+  final List<TestFailedState> myStates = new ArrayList<>();
 
   public CompoundTestFailedState(@Nullable String localizedMessage, @Nullable String stackTrace) {
     super(localizedMessage, stackTrace);

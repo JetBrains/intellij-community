@@ -321,7 +321,7 @@ public class FindManagerImpl extends FindManager {
       myFindModel = model.clone();
       myText = ImmutableCharSequence.asImmutable(text);
 
-      TreeMap<Integer, Integer> result = new TreeMap<Integer, Integer>();
+      TreeMap<Integer, Integer> result = new TreeMap<>();
 
       if (model.isExceptComments() || model.isExceptCommentsAndStringLiterals()) {
         addRanges(file, model, text, result, FindModel.SearchContext.IN_COMMENTS);
@@ -563,7 +563,7 @@ public class FindManagerImpl extends FindManager {
           relevantLanguages = ApplicationManager.getApplication().runReadAction(new Computable<Set<Language>>() {
             @Override
             public Set<Language> compute() {
-              THashSet<Language> result = new THashSet<Language>();
+              THashSet<Language> result = new THashSet<>();
 
               FileViewProvider viewProvider = PsiManager.getInstance(myProject).findViewProvider(file);
               if (viewProvider != null) {
@@ -1095,7 +1095,7 @@ public class FindManagerImpl extends FindManager {
     if (i >= regions.length) {
       return;
     }
-    final List<FoldRegion> toExpand = new ArrayList<FoldRegion>();
+    final List<FoldRegion> toExpand = new ArrayList<>();
     for (; i < regions.length; i++) {
       final FoldRegion region = regions[i];
       if (region.getStartOffset() >= endOffset) {

@@ -22,5 +22,5 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MavenArtifactSearchResult {
-  public List<MavenArtifactInfo> versions = new ArrayList<MavenArtifactInfo>();
+  public List<MavenArtifactInfo> versions = new ArrayList<>();
 }

@@ -49,7 +49,7 @@ public class InjectionCache {
   public InjectionCache(final Project project, final Configuration configuration) {
 
     myXmlIndex = CachedValuesManager.getManager(project).createCachedValue(() -> {
-      final Map<ElementPattern<?>, BaseInjection> map = new THashMap<ElementPattern<?>, BaseInjection>();
+      final Map<ElementPattern<?>, BaseInjection> map = new THashMap<>();
       for (BaseInjection injection : configuration.getInjections(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID)) {
         for (InjectionPlace place : injection.getInjectionPlaces()) {
           if (!place.isEnabled() || place.getElementPattern() == null) continue;
@@ -62,8 +62,8 @@ public class InjectionCache {
 
     myAnnoIndex = CachedValuesManager.getManager(project).createCachedValue(() -> {
       final String annotationClass = configuration.getAdvancedConfiguration().getLanguageAnnotationClass();
-      final Collection<String> result = new THashSet<String>();
-      final ArrayList<String> annoClasses = new ArrayList<String>(3);
+      final Collection<String> result = new THashSet<>();
+      final ArrayList<String> annoClasses = new ArrayList<>(3);
       annoClasses.add(StringUtil.getShortName(annotationClass));
       for (int cursor = 0; cursor < annoClasses.size(); cursor++) {
         final String annoClass = annoClasses.get(cursor);
@@ -74,10 +74,10 @@ public class InjectionCache {
           if (element instanceof PsiParameter) {
             final PsiElement scope = ((PsiParameter)element).getDeclarationScope();
             if (scope instanceof PsiNamedElement) {
-              ContainerUtil.addIfNotNull(((PsiNamedElement)scope).getName(), result);
+              ContainerUtil.addIfNotNull(result, ((PsiNamedElement)scope).getName());
             }
             else {
-              ContainerUtil.addIfNotNull(((PsiNamedElement)element).getName(), result);
+              ContainerUtil.addIfNotNull(result, ((PsiNamedElement)element).getName());
             }
           }
           else if (element instanceof PsiNamedElement) {
@@ -86,12 +86,12 @@ public class InjectionCache {
               if (!annoClasses.contains(s)) annoClasses.add(s);
             }
             else {
-              ContainerUtil.addIfNotNull(((PsiNamedElement)element).getName(), result);
+              ContainerUtil.addIfNotNull(result, ((PsiNamedElement)element).getName());
             }
           }
         }
       }
-      return new CachedValueProvider.Result<Collection<String>>(result, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, configuration);
+      return new CachedValueProvider.Result<>(result, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, configuration);
     }, false);
   }
 

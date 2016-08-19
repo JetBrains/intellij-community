@@ -35,9 +35,9 @@ public class DisposerTest extends TestCase {
   private MyDisposable myLeaf1;
   private MyDisposable myLeaf2;
 
-  private final List<MyDisposable> myDisposedObjects = new ArrayList<MyDisposable>();
+  private final List<MyDisposable> myDisposedObjects = new ArrayList<>();
 
-  @NonNls private final List<String> myDisposeActions = new ArrayList<String>();
+  @NonNls private final List<String> myDisposeActions = new ArrayList<>();
 
   @Override
   protected void setUp() throws Exception {
@@ -89,7 +89,7 @@ public class DisposerTest extends TestCase {
 
     Disposer.dispose(myRoot);
 
-    List<MyDisposable> expected = new ArrayList<MyDisposable>();
+    List<MyDisposable> expected = new ArrayList<>();
     expected.add(myFolder2);
     expected.add(myLeaf1);
     expected.add(myFolder1);
@@ -197,7 +197,7 @@ public class DisposerTest extends TestCase {
     Disposer.dispose(root);
 
 
-    @NonNls ArrayList<String> expected = new ArrayList<String>();
+    @NonNls ArrayList<String> expected = new ArrayList<>();
     expected.add("beforeDispose: root");
     expected.add("beforeDispose: subFolder");
     expected.add("dispose: leaf1");

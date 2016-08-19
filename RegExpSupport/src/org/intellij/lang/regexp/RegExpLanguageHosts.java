@@ -73,8 +73,7 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     final RegExpLanguageHost host = findRegExpHost(ch);
     if (host != null) {
       final char c = text.charAt(1);
-      final boolean needsEscaping = host.characterNeedsEscaping(c);
-      return !needsEscaping;
+      return !host.characterNeedsEscaping(c);
     }
     else {
       return !("\\]".equals(text) || "\\}".equals(text));
@@ -129,6 +128,11 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
   public boolean supportsPossessiveQuantifiers(@Nullable final RegExpQuantifier quantifier) {
     final RegExpLanguageHost host = findRegExpHost(quantifier);
     return host == null || host.supportsPossessiveQuantifiers();
+  }
+
+  public boolean supportsBoundary(@Nullable final RegExpBoundary boundary) {
+    final RegExpLanguageHost host = findRegExpHost(boundary);
+    return host == null || host.supportsBoundary(boundary);
   }
 
   public boolean supportsSimpleClass(@Nullable final RegExpSimpleClass simpleClass) {

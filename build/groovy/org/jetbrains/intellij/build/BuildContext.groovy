@@ -15,7 +15,7 @@
  */
 package org.jetbrains.intellij.build
 
-import org.codehaus.gant.GantBuilder
+import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.BundledJreManager
 import org.jetbrains.jps.gant.JpsGantProjectBuilder
@@ -26,8 +26,9 @@ import org.jetbrains.jps.model.module.JpsModule
 /**
  * @author nik
  */
+@CompileStatic
 abstract class BuildContext {
-  GantBuilder ant
+  AntBuilder ant
   BuildMessages messages
   BuildPaths paths
   JpsProject project
@@ -37,10 +38,8 @@ abstract class BuildContext {
   WindowsDistributionCustomizer windowsDistributionCustomizer
   LinuxDistributionCustomizer linuxDistributionCustomizer
   MacDistributionCustomizer macDistributionCustomizer
-  MacHostProperties macHostProperties
+  ProprietaryBuildTools proprietaryBuildTools
   BuildOptions options
-  SignTool signTool
-  ScrambleTool scrambleTool
   BundledJreManager bundledJreManager
 
   /**
@@ -85,13 +84,20 @@ abstract class BuildContext {
    */
   abstract void executeStep(String stepMessage, String stepId, Closure step)
 
-  public static BuildContext createContext(GantBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
+  public static BuildContext createContext(AntBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
                                            String communityHome, String projectHome, String buildOutputRoot, ProductProperties productProperties,
-                                           BuildOptions options = new BuildOptions(), MacHostProperties macHostProperties = null, SignTool signTool = null,
-                                           ScrambleTool scrambleTool = null) {
-    return new BuildContextImpl(ant, projectBuilder, project, global, communityHome, projectHome, buildOutputRoot, productProperties,
-                                options, macHostProperties, signTool, scrambleTool)
+                                           ProprietaryBuildTools proprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+                                           BuildOptions options = new BuildOptions()) {
+    return BuildContextImpl.create(ant, projectBuilder, project, global, communityHome, projectHome, buildOutputRoot, productProperties,
+                                   proprietaryBuildTools, options)
   }
+
+  /**
+   * Creates copy of this context which can be used to start a parallel task.
+   * @param taskName short name of the task. It will be prepended to the messages from that task to distinguish them from messages from
+   * other tasks running in parallel
+   */
+  abstract BuildContext forkForParallelTask(String taskName)
 }
 
 /**
@@ -143,6 +149,28 @@ interface BuildMessages {
    */
   void error(String message)
 
+  void error(String message, Throwable cause)
+
   void progress(String message)
   public <V> V block(String blockName, Closure<V> body)
+
+  void artifactBuild(String relativeArtifactPath)
+
+  BuildMessages forkForParallelTask(String taskName)
+
+  /**
+   * Must be invoked from the main thread when all forks have been finished
+   */
+  void onAllForksFinished()
+
+  /**
+   * Must be invoked for the forked instance on the thread where it is executing before the task is started.
+   * It's required to correctly handle messages from Ant tasks.
+   */
+  void onForkStarted()
+
+  /**
+   * Must be invoked for the forked instance on the thread where it is executing when the task is finished
+   */
+  void onForkFinished()
 }

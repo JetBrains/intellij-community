@@ -80,8 +80,10 @@ public class HardcodedContracts {
     }
     else if ("junit.framework.Assert".equals(className) ||
              "org.junit.Assert".equals(className) ||
+             "org.junit.Assume".equals(className) ||
              "junit.framework.TestCase".equals(className) ||
              "com.google.common.truth.Truth".equals(className) ||
+             "com.google.common.truth.TestVerb".equals(className) ||
              className.startsWith("org.assertj.core.api.") ||
              "org.testng.Assert".equals(className) ||
              "org.testng.AssertJUnit".equals(className)) {
@@ -114,7 +116,7 @@ public class HardcodedContracts {
 
   private static List<MethodContract> handleTestFrameworks(int paramCount, String className, String methodName,
                                                            @Nullable PsiMethodCallExpression call) {
-    if ("assertThat".equals(methodName) && call != null) {
+    if (("assertThat".equals(methodName) || "assumeThat".equals(methodName) || "that".equals(methodName)) && call != null) {
       PsiExpression[] args = call.getArgumentList().getExpressions();
       if (args.length == paramCount) {
         for (int i = 1; i < args.length; i++) {
@@ -139,6 +141,7 @@ public class HardcodedContracts {
     if (!"junit.framework.Assert".equals(className) &&
         !"junit.framework.TestCase".equals(className) &&
         !"org.junit.Assert".equals(className) &&
+        !"org.junit.Assume".equals(className) &&
         !"org.testng.Assert".equals(className) &&
         !"org.testng.AssertJUnit".equals(className)) {
       return Collections.emptyList();
@@ -153,11 +156,11 @@ public class HardcodedContracts {
 
     int checkedParam = testng ? 0 : paramCount - 1;
     MethodContract.ValueConstraint[] constraints = createConstraintArray(paramCount);
-    if ("assertTrue".equals(methodName)) {
+    if ("assertTrue".equals(methodName) || "assumeTrue".equals(methodName)) {
       constraints[checkedParam] = FALSE_VALUE;
       return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
     }
-    if ("assertFalse".equals(methodName)) {
+    if ("assertFalse".equals(methodName) || "assumeFalse".equals(methodName)) {
       constraints[checkedParam] = TRUE_VALUE;
       return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
     }
@@ -165,7 +168,7 @@ public class HardcodedContracts {
       constraints[checkedParam] = NOT_NULL_VALUE;
       return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
     }
-    if ("assertNotNull".equals(methodName)) {
+    if ("assertNotNull".equals(methodName) || "assumeNotNull".equals(methodName)) {
       constraints[checkedParam] = NULL_VALUE;
       return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
     }

@@ -33,7 +33,7 @@ public class LabelHelper {
 
     liftClosures(root);
 
-    lowContinueLabels(root, new HashSet<StatEdge>());
+    lowContinueLabels(root, new HashSet<>());
 
     lowClosures(root);
   }
@@ -63,7 +63,7 @@ public class LabelHelper {
           if (dest.type != Statement.TYPE_DUMMYEXIT) {
             Statement parent = dest.getParent();
 
-            List<Statement> lst = new ArrayList<Statement>();
+            List<Statement> lst = new ArrayList<>();
             if (parent.type == Statement.TYPE_SEQUENCE) {
               lst.addAll(parent.getStats());
             }
@@ -131,14 +131,14 @@ public class LabelHelper {
         lowContinueLabels(st, edges);
       }
       else {
-        lowContinueLabels(st, new HashSet<StatEdge>());
+        lowContinueLabels(st, new HashSet<>());
       }
     }
   }
 
   public static void lowClosures(Statement stat) {
 
-    for (StatEdge edge : new ArrayList<StatEdge>(stat.getLabelEdges())) {
+    for (StatEdge edge : new ArrayList<>(stat.getLabelEdges())) {
 
       if (edge.getType() == StatEdge.TYPE_BREAK) {  // FIXME: ?
         for (Statement st : stat.getStats()) {
@@ -181,7 +181,7 @@ public class LabelHelper {
 
   private static HashMap<Statement, List<StatEdge>> setExplicitEdges(Statement stat) {
 
-    HashMap<Statement, List<StatEdge>> mapEdges = new HashMap<Statement, List<StatEdge>>();
+    HashMap<Statement, List<StatEdge>> mapEdges = new HashMap<>();
 
     if (stat.getExprents() != null) {
       return mapEdges;
@@ -279,7 +279,7 @@ public class LabelHelper {
           Statement stlast = swst.getCaseStatements().get(last);
           if (stlast.getExprents() != null && stlast.getExprents().isEmpty()) {
             StatEdge edge = stlast.getAllSuccessorEdges().get(0);
-            mapEdges.put(edge.getDestination(), new ArrayList<StatEdge>(Arrays.asList(new StatEdge[]{edge})));
+            mapEdges.put(edge.getDestination(), new ArrayList<>(Arrays.asList(new StatEdge[]{edge})));
           }
           else {
             mapEdges = setExplicitEdges(stlast);
@@ -340,7 +340,7 @@ public class LabelHelper {
             edge.explicit = false;
           }
 
-          mapEdges.put(newedge.getDestination(), new ArrayList<StatEdge>(Arrays.asList(new StatEdge[]{newedge})));
+          mapEdges.put(newedge.getDestination(), new ArrayList<>(Arrays.asList(new StatEdge[]{newedge})));
         }
       }
     }
@@ -388,7 +388,7 @@ public class LabelHelper {
     }
 
     if (statedge != null) {
-      mapEdges.put(statedge.getDestination(), new ArrayList<StatEdge>(Arrays.asList(new StatEdge[]{statedge})));
+      mapEdges.put(statedge.getDestination(), new ArrayList<>(Arrays.asList(new StatEdge[]{statedge})));
     }
   }
 
@@ -422,8 +422,8 @@ public class LabelHelper {
 
   private static HashSet<Statement>[] processStatementLabel(Statement stat) {
 
-    HashSet<Statement> setBreak = new HashSet<Statement>();
-    HashSet<Statement> setContinue = new HashSet<Statement>();
+    HashSet<Statement> setBreak = new HashSet<>();
+    HashSet<Statement> setContinue = new HashSet<>();
 
     if (stat.getExprents() == null) {
       for (Statement st : stat.getStats()) {

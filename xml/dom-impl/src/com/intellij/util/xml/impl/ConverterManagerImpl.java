@@ -40,7 +40,7 @@ class ConverterManagerImpl implements ConverterManager {
       return super.create(implementation == null ? key : implementation);
     }
   };
-  private final Map<Class,Converter> mySimpleConverters = new HashMap<Class, Converter>();
+  private final Map<Class,Converter> mySimpleConverters = new HashMap<>();
 
   ConverterManagerImpl() {
     mySimpleConverters.put(int.class, Converter.INTEGER_CONVERTER);

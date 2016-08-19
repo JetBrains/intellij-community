@@ -28,8 +28,8 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
     myProject = project;
 
     if (myFindMatchingFiles && filesToScan == null) {
-      filesToScan = new THashSet<PsiFile>();
-      filesToScan2 = new THashSet<PsiFile>();
+      filesToScan = new THashSet<>();
+      filesToScan2 = new THashSet<>();
     }
     myFileProcessor = new MyFileProcessor();
   }

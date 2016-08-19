@@ -129,7 +129,7 @@ public class ConsoleBufferTest {
     List<TokenInfo> actualTokens = myBuffer.getDeferredTokens();
     assertEquals(expectedTokens.length, actualTokens.size());
     i = 0;
-    Set<ConsoleViewContentType> contentTypes = new HashSet<ConsoleViewContentType>();
+    Set<ConsoleViewContentType> contentTypes = new HashSet<>();
     for (TokenInfo actual : actualTokens) {
       TokenInfo expected = expectedTokens[i++];
       assertEquals(expected.contentType, actual.contentType);

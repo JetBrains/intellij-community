@@ -57,8 +57,8 @@ public abstract class MavenImporter {
     for (MavenImporter importer : EXTENSION_POINT_NAME.getExtensions()) {
       if (importer.isApplicable(p)) {
         if (result == null) {
-          result = new ArrayList<MavenImporter>();
-          moduleTypes = new THashSet<ModuleType>();
+          result = new ArrayList<>();
+          moduleTypes = new THashSet<>();
         }
 
         result.add(importer);
@@ -78,7 +78,7 @@ public abstract class MavenImporter {
     // Now we select one module type and return only those importers that are ok with it.
     // If possible - return at least one importer that explicitly supports packaging of the given maven project.
     ModuleType moduleType = result.get(0).getModuleType();
-    List<String> supportedPackagings = new ArrayList<String>();
+    List<String> supportedPackagings = new ArrayList<>();
     for (MavenImporter importer : result) {
       supportedPackagings.clear();
       importer.getSupportedPackagings(supportedPackagings);
@@ -157,12 +157,12 @@ public abstract class MavenImporter {
   }
 
   public void collectSourceRoots(MavenProject mavenProject, PairConsumer<String, JpsModuleSourceRootType<?>> result) {
-    List<String> sources = new ArrayList<String>();
+    List<String> sources = new ArrayList<>();
     collectSourceFolders(mavenProject, sources);
     for (String path : sources) {
       result.consume(path, JavaSourceRootType.SOURCE);
     }
-    List<String> testSources = new ArrayList<String>();
+    List<String> testSources = new ArrayList<>();
     collectTestFolders(mavenProject, testSources);
     for (String path : testSources) {
       result.consume(path, JavaSourceRootType.TEST_SOURCE);

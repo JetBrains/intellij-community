@@ -61,7 +61,7 @@ public class ModuleGroup {
   @NotNull
   public Collection<Module> modulesInGroup(Project project, boolean recursively) {
     final Module[] allModules = ModuleManager.getInstance(project).getModules();
-    List<Module> result = new ArrayList<Module>();
+    List<Module> result = new ArrayList<>();
     for (final Module module : allModules) {
       String[] group = ModuleManager.getInstance(project).getModuleGroupPath(module);
       if (group == null) continue;
@@ -88,7 +88,7 @@ public class ModuleGroup {
       allModules = ModuleManager.getInstance(project).getModules();
     }
 
-    Set<ModuleGroup> result = new THashSet<ModuleGroup>();
+    Set<ModuleGroup> result = new THashSet<>();
     for (Module module : allModules) {
       String[] group;
       if ( model != null ) {

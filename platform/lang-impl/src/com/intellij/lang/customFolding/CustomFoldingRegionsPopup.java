@@ -105,7 +105,7 @@ public class CustomFoldingRegionsPopup {
   }
 
   private static Collection<FoldingDescriptor> orderByPosition(Collection<FoldingDescriptor> descriptors) {
-    List<FoldingDescriptor> sorted = new ArrayList<FoldingDescriptor>(descriptors.size());
+    List<FoldingDescriptor> sorted = new ArrayList<>(descriptors.size());
     sorted.addAll(descriptors);
     Collections.sort(sorted, (descriptor1, descriptor2) -> {
       int pos1 = descriptor1.getElement().getTextRange().getStartOffset();

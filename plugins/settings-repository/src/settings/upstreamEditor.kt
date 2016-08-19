@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ArrayUtil
+import com.intellij.util.nullize
 import org.jetbrains.settingsRepository.actions.NOTIFICATION_GROUP
 import java.awt.Container
 import java.awt.event.ActionEvent
@@ -41,7 +42,7 @@ internal fun checkUrl(url: String?): Boolean {
 fun updateSyncButtonState(url: String?, syncActions: Array<Action>) {
   val enabled = checkUrl(url)
   for (syncAction in syncActions) {
-    syncAction.isEnabled = enabled;
+    syncAction.isEnabled = enabled
   }
 }
 
@@ -57,7 +58,7 @@ fun createMergeActions(project: Project?, urlTextField: TextFieldWithBrowseButto
     val syncType = syncTypes[it]
     object : AbstractAction(icsMessage("action.${if (syncType == SyncType.MERGE) "Merge" else (if (syncType == SyncType.OVERWRITE_LOCAL) "ResetToTheirs" else "ResetToMy")}Settings.text")) {
       private fun saveRemoteRepositoryUrl(): Boolean {
-        val url = StringUtil.nullize(urlTextField.text)
+        val url = urlTextField.text.nullize()
         if (url != null && !icsManager.repositoryService.checkUrl(url, true, project)) {
           return false
         }
@@ -80,6 +81,10 @@ fun createMergeActions(project: Project?, urlTextField: TextFieldWithBrowseButto
             return
           }
           upstreamSet = true
+
+          if (repositoryWillBeCreated) {
+            icsManager.newStreamProvider()
+          }
 
           if (repositoryWillBeCreated && syncType != SyncType.OVERWRITE_LOCAL) {
             ApplicationManager.getApplication().saveSettings()

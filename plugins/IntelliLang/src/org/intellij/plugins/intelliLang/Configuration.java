@@ -192,19 +192,19 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   };
 
   protected Collection<BaseInjection> getAllInjections() {
-    List<BaseInjection> injections = new ArrayList<BaseInjection>();
+    List<BaseInjection> injections = new ArrayList<>();
     for (List<BaseInjection> list : myInjections.values()) {
       injections.addAll(list);
     }
     return injections;
   }
 
-  private final CachedValue<MultiMap<String, BaseInjection>> myInjectionsById = new CachedValueImpl<MultiMap<String, BaseInjection>>(() -> {
-    MultiMap<String, BaseInjection> map = new MultiMap<String, BaseInjection>();
+  private final CachedValue<MultiMap<String, BaseInjection>> myInjectionsById = new CachedValueImpl<>(() -> {
+    MultiMap<String, BaseInjection> map = new MultiMap<>();
     for (BaseInjection injection : getAllInjections()) {
       map.putValue(injection.getInjectedLanguageId(), injection);
     }
-    return CachedValueProvider.Result.create(map, Configuration.this);
+    return CachedValueProvider.Result.create(map, this);
   });
 
   public Configuration() {
@@ -220,7 +220,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
 
     List<Element> injectionElements = element.getChildren("injection");
     if (!injectionElements.isEmpty()) {
-      final Map<String, LanguageInjectionSupport> supports = new THashMap<String, LanguageInjectionSupport>();
+      final Map<String, LanguageInjectionSupport> supports = new THashMap<>();
       for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
         supports.put(support.getId(), support);
       }
@@ -258,8 +258,8 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   }
 
   private static List<BaseInjection> loadDefaultInjections() {
-    final List<Configuration> cfgList = new ArrayList<Configuration>();
-    final Set<Object> visited = new THashSet<Object>();
+    final List<Configuration> cfgList = new ArrayList<>();
+    final Set<Object> visited = new THashSet<>();
     for (LanguageInjectionConfigBean configBean : Extensions.getExtensions(LanguageInjectionSupport.CONFIG_EP_NAME)) {
       PluginDescriptor descriptor = configBean.getPluginDescriptor();
       final ClassLoader loader = descriptor.getPluginClassLoader();
@@ -293,7 +293,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
       }
     }
 
-    final List<BaseInjection> defaultInjections = new ArrayList<BaseInjection>();
+    final List<BaseInjection> defaultInjections = new ArrayList<>();
     for (String supportId : InjectorUtils.getActiveInjectionSupportIds()) {
       for (Configuration cfg : cfgList) {
         final List<BaseInjection> imported = cfg.getInjections(supportId);
@@ -349,7 +349,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
 
   @Nullable
   public static Configuration load(final InputStream is) throws IOException, JDOMException {
-    final List<Element> elements = new ArrayList<Element>();
+    final List<Element> elements = new ArrayList<>();
     final Element rootElement = JDOMUtil.load(is);
     final Element state;
     if (rootElement.getName().equals(COMPONENT_NAME)) {
@@ -376,8 +376,8 @@ public class Configuration extends SimpleModificationTracker implements Persiste
         return o.getSupportId();
       }
     });
-    List<BaseInjection> originalInjections = new ArrayList<BaseInjection>();
-    List<BaseInjection> newInjections = new ArrayList<BaseInjection>();
+    List<BaseInjection> originalInjections = new ArrayList<>();
+    List<BaseInjection> newInjections = new ArrayList<>();
     for (String supportId : InjectorUtils.getActiveInjectionSupportIds()) {
       final Set<BaseInjection> importingInjections = map.get(supportId);
       if (importingInjections == null) continue;
@@ -390,7 +390,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
 
   static void importInjections(final Collection<BaseInjection> existingInjections, final Collection<BaseInjection> importingInjections,
                                final Collection<BaseInjection> originalInjections, final Collection<BaseInjection> newInjections) {
-    final MultiValuesMap<InjectionPlace, BaseInjection> placeMap = new MultiValuesMap<InjectionPlace, BaseInjection>();
+    final MultiValuesMap<InjectionPlace, BaseInjection> placeMap = new MultiValuesMap<>();
     for (BaseInjection exising : existingInjections) {
       for (InjectionPlace place : exising.getInjectionPlaces()) {
         placeMap.put(place, exising);
@@ -440,13 +440,13 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   }
 
   public boolean setHostInjectionEnabled(final PsiLanguageInjectionHost host, final Collection<String> languages, final boolean enabled) {
-    List<BaseInjection> originalInjections = new ArrayList<BaseInjection>();
-    List<BaseInjection> newInjections = new ArrayList<BaseInjection>();
+    List<BaseInjection> originalInjections = new ArrayList<>();
+    List<BaseInjection> newInjections = new ArrayList<>();
     for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
       for (BaseInjection injection : getInjections(support.getId())) {
         if (!languages.contains(injection.getInjectedLanguageId())) continue;
         boolean replace = false;
-        final ArrayList<InjectionPlace> newPlaces = new ArrayList<InjectionPlace>();
+        final ArrayList<InjectionPlace> newPlaces = new ArrayList<>();
         for (InjectionPlace place : injection.getInjectionPlaces()) {
           if (place.isEnabled() != enabled && place.getElementPattern() != null &&
               (place.getElementPattern().accepts(host) || place.getElementPattern().accepts(host.getParent()))) {

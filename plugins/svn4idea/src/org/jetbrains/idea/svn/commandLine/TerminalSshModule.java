@@ -89,7 +89,7 @@ public class TerminalSshModule extends BaseTerminalModule {
 
   private void handleUnknownHost() {
     final Project project = myRuntime.getVcs().getProject();
-    final Ref<Integer> answer = new Ref<Integer>();
+    final Ref<Integer> answer = new Ref<>();
 
     Runnable command = new Runnable() {
       @Override

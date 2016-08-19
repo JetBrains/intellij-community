@@ -74,7 +74,7 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
             }
 
             @Suppress("UNCHECKED_CAST")
-            if (reloadStore(storages as Set<StateStorage>, store, false) == ReloadComponentStoreStatus.RESTART_AGREED) {
+            if (reloadStore(storages as Set<StateStorage>, store) == ReloadComponentStoreStatus.RESTART_AGREED) {
               projectsToReload.add(project)
             }
           }
@@ -206,18 +206,22 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
     val changes = LinkedHashSet<StateStorage>(changedApplicationFiles)
     changedApplicationFiles.clear()
 
-    val status = reloadStore(changes, ApplicationManager.getApplication().stateStore as ComponentStoreImpl, true)
-    if (status == ReloadComponentStoreStatus.RESTART_AGREED) {
-      ApplicationManagerEx.getApplicationEx().restart(true)
-      return false
-    }
-    else {
-      return status == ReloadComponentStoreStatus.SUCCESS || status == ReloadComponentStoreStatus.RESTART_CANCELLED
-    }
+    return reloadAppStore(changes)
   }
 }
 
-private fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentStoreImpl, isApp: Boolean): ReloadComponentStoreStatus {
+fun reloadAppStore(changes: Set<StateStorage>): Boolean {
+  val status = reloadStore(changes, ApplicationManager.getApplication().stateStore as ComponentStoreImpl)
+  if (status == ReloadComponentStoreStatus.RESTART_AGREED) {
+    ApplicationManagerEx.getApplicationEx().restart(true)
+    return false
+  }
+  else {
+    return status == ReloadComponentStoreStatus.SUCCESS || status == ReloadComponentStoreStatus.RESTART_CANCELLED
+  }
+}
+
+fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentStoreImpl): ReloadComponentStoreStatus {
   val notReloadableComponents: Collection<String>?
   var willBeReloaded = false
   try {
@@ -234,7 +238,7 @@ private fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentStor
       return ReloadComponentStoreStatus.SUCCESS
     }
 
-    willBeReloaded = askToRestart(store, notReloadableComponents, changedStorages, isApp)
+    willBeReloaded = askToRestart(store, notReloadableComponents, changedStorages, store.project == null)
     return if (willBeReloaded) ReloadComponentStoreStatus.RESTART_AGREED else ReloadComponentStoreStatus.RESTART_CANCELLED
   }
   finally {

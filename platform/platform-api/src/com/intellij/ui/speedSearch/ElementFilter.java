@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,14 @@
 package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public interface ElementFilter<T> {
-
-  ElementFilter PASS_THROUGH = new ElementFilter() {
-    public boolean shouldBeShowing(Object value) {
-      return true;
-    }
-  };
-
   boolean shouldBeShowing(T value);
 
   interface Active<T> extends ElementFilter<T> {
@@ -39,10 +32,11 @@ public interface ElementFilter<T> {
     void addListener(Listener<T> listener, Disposable parent);
 
     abstract class Impl<T> implements Active<T> {
-      Set<Listener<T>> myListeners = new CopyOnWriteArraySet<Listener<T>>();
+      Set<Listener<T>> myListeners = new CopyOnWriteArraySet<>();
 
       public ActionCallback fireUpdate(@Nullable final T preferredSelection, final boolean adjustSelection, final boolean now) {
         final ActionCallback result = new ActionCallback(myListeners.size());
+        
         for (final Listener<T> myListener : myListeners) {
           myListener.update(preferredSelection, adjustSelection, now).doWhenProcessed(result.createSetDoneRunnable());
         }
@@ -58,13 +52,10 @@ public interface ElementFilter<T> {
           }
         });
       }
-
     }
-
   }
 
   interface Listener<T> {
     ActionCallback update(@Nullable final T preferredSelection, final boolean adjustSelection, final boolean now);
   }
-
 }

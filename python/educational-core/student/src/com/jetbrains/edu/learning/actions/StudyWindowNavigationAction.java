@@ -22,35 +22,26 @@ abstract public class StudyWindowNavigationAction extends StudyActionWithShortcu
   }
 
   private void navigateToPlaceholder(@NotNull final Project project) {
-      final Editor selectedEditor = StudyUtils.getSelectedEditor(project);
-      if (selectedEditor != null) {
-        final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-        final VirtualFile openedFile = fileDocumentManager.getFile(selectedEditor.getDocument());
-        if (openedFile != null) {
-          final TaskFile selectedTaskFile = StudyUtils.getTaskFile(project, openedFile);
-          if (selectedTaskFile != null) {
-            final AnswerPlaceholder selectedAnswerPlaceholder = getSelectedAnswerPlaceholder(selectedEditor, selectedTaskFile);
-            if (selectedAnswerPlaceholder == null) {
-              return;
-            }
-            final AnswerPlaceholder nextAnswerPlaceholder = getNextAnswerPlaceholder(selectedAnswerPlaceholder);
-            if (nextAnswerPlaceholder == null) {
-              return;
-            }
-            StudyNavigator.navigateToAnswerPlaceholder(selectedEditor, nextAnswerPlaceholder);
-            selectedEditor.getSelectionModel().removeSelection();
-            }
+    final Editor selectedEditor = StudyUtils.getSelectedEditor(project);
+    if (selectedEditor != null) {
+      final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+      final VirtualFile openedFile = fileDocumentManager.getFile(selectedEditor.getDocument());
+      if (openedFile != null) {
+        final TaskFile selectedTaskFile = StudyUtils.getTaskFile(project, openedFile);
+        if (selectedTaskFile != null) {
+          final int offset = selectedEditor.getCaretModel().getOffset();
+          final AnswerPlaceholder targetPlaceholder = getTargetPlaceholder(selectedTaskFile, offset);
+          if (targetPlaceholder == null) {
+            return;
           }
+          StudyNavigator.navigateToAnswerPlaceholder(selectedEditor, targetPlaceholder);
         }
       }
-
-  @Nullable
-  private static AnswerPlaceholder getSelectedAnswerPlaceholder(@NotNull final Editor editor, @NotNull final TaskFile file) {
-    return file.getAnswerPlaceholder(editor.getCaretModel().getOffset());
+    }
   }
 
   @Nullable
-  protected abstract AnswerPlaceholder getNextAnswerPlaceholder(@NotNull final AnswerPlaceholder window);
+  protected abstract AnswerPlaceholder getTargetPlaceholder(@NotNull final TaskFile taskFile, int offset);
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

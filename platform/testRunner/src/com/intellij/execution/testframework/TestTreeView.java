@@ -104,7 +104,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       TreePath[] paths = getSelectionPaths();
       if (paths != null && paths.length > 1) {
-        final List<PsiElement> els = new ArrayList<PsiElement>(paths.length);
+        final List<PsiElement> els = new ArrayList<>(paths.length);
         for (TreePath path : paths) {
           if (isPathSelected(path.getParentPath())) continue;
           AbstractTestProxy test = getSelectedTest(path);
@@ -122,7 +122,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     if (Location.DATA_KEYS.is(dataId)) {
       TreePath[] paths = getSelectionPaths();
       if (paths != null && paths.length > 1) {
-        final List<Location<?>> locations = new ArrayList<Location<?>>(paths.length);
+        final List<Location<?>> locations = new ArrayList<>(paths.length);
         for (TreePath path : paths) {
           if (isPathSelected(path.getParentPath())) continue;
           AbstractTestProxy test = getSelectedTest(path);

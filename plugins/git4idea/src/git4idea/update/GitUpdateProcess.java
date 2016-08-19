@@ -74,7 +74,7 @@ public class GitUpdateProcess {
   @NotNull private final ProgressIndicator myProgressIndicator;
   private final GitMerger myMerger;
 
-  private final Map<VirtualFile, GitBranchPair> myTrackedBranches = new HashMap<VirtualFile, GitBranchPair>();
+  private final Map<VirtualFile, GitBranchPair> myTrackedBranches = new HashMap<>();
 
   public GitUpdateProcess(@NotNull Project project,
                           @Nullable ProgressIndicator progressIndicator,
@@ -246,7 +246,7 @@ public class GitUpdateProcess {
 
   @NotNull
   private Map<VirtualFile, GitUpdater> tryFastForwardMergeForRebaseUpdaters(@NotNull Map<VirtualFile, GitUpdater> updaters) {
-    Map<VirtualFile, GitUpdater> modifiedUpdaters = new HashMap<VirtualFile, GitUpdater>();
+    Map<VirtualFile, GitUpdater> modifiedUpdaters = new HashMap<>();
     Map<VirtualFile, Collection<Change>> changesUnderRoots =
       new LocalChangesUnderRoots(ChangeListManager.getInstance(myProject), ProjectLevelVcsManager.getInstance(myProject)).
         getChangesUnderRoots(updaters.keySet());
@@ -268,7 +268,7 @@ public class GitUpdateProcess {
 
   @NotNull
   private Map<VirtualFile, GitUpdater> defineUpdaters(@NotNull UpdateMethod updateMethod) throws VcsException {
-    final Map<VirtualFile, GitUpdater> updaters = new HashMap<VirtualFile, GitUpdater>();
+    final Map<VirtualFile, GitUpdater> updaters = new HashMap<>();
     LOG.info("updateImpl: defining updaters...");
     for (GitRepository repository : myRepositories) {
       VirtualFile root = repository.getRoot();

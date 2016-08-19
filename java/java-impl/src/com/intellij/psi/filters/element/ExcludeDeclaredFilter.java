@@ -36,18 +36,18 @@ public class ExcludeDeclaredFilter extends PositionElementFilter{
     setFilter(filter);
   }
 
-  SoftReference<PsiElement> myCachedVar = new SoftReference<PsiElement>(null);
-  SoftReference<PsiElement> myCurrentContext = new SoftReference<PsiElement>(null);
+  SoftReference<PsiElement> myCachedVar = new SoftReference<>(null);
+  SoftReference<PsiElement> myCurrentContext = new SoftReference<>(null);
 
   @Override
   public boolean isAcceptable(Object element, PsiElement context){
     PsiElement cachedVar = context;
 
     if(myCurrentContext.get() != context){
-      myCurrentContext = new SoftReference<PsiElement>(context);
+      myCurrentContext = new SoftReference<>(context);
       while(cachedVar != null && !(getFilter().isAcceptable(cachedVar, cachedVar.getContext())))
         cachedVar = cachedVar.getContext();
-      myCachedVar = new SoftReference<PsiElement>(cachedVar);
+      myCachedVar = new SoftReference<>(cachedVar);
     }
 
     if (element instanceof PsiMethod && myCachedVar.get() instanceof PsiMethod)  {

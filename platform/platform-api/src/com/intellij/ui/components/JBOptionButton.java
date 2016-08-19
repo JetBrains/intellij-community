@@ -55,7 +55,7 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
 
   private String myOptionTooltipText;
 
-  private Set<OptionInfo> myOptionInfos = new HashSet<OptionInfo>();
+  private Set<OptionInfo> myOptionInfos = new HashSet<>();
   private boolean myOkToProcessDefaultMnemonics = true;
 
   private IdeGlassPane myGlassPane;
@@ -193,7 +193,7 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
 
     final JPopupMenu popup = above ? myAbovePopup : myUnderPopup;
 
-    final Ref<PopupMenuListener> listener = new Ref<PopupMenuListener>();
+    final Ref<PopupMenuListener> listener = new Ref<>();
     listener.set(new PopupMenuListener() {
       @Override
       public void popupMenuWillBecomeVisible(PopupMenuEvent e) {

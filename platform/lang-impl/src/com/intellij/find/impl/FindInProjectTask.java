@@ -252,7 +252,7 @@ class FindInProjectTask {
       return true;
     };
     //virtualFiles.forEach(processor::process);
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<VirtualFile>(virtualFiles), myProgress, false, processor);
+    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(virtualFiles), myProgress, false, processor);
   }
 
   // must return non-binary files
@@ -266,7 +266,7 @@ class FindInProjectTask {
     final boolean hasTrigrams = hasTrigrams(myStringToFindInIndices);
 
     class EnumContentIterator implements ContentIterator {
-      private final Set<VirtualFile> myFiles = new LinkedHashSet<VirtualFile>();
+      private final Set<VirtualFile> myFiles = new LinkedHashSet<>();
 
       @Override
       public boolean processFile(@NotNull final VirtualFile virtualFile) {
@@ -404,7 +404,7 @@ class FindInProjectTask {
       return Collections.emptySet();
     }
 
-    final Set<VirtualFile> resultFiles = new LinkedHashSet<VirtualFile>();
+    final Set<VirtualFile> resultFiles = new LinkedHashSet<>();
     for(VirtualFile file:myFilesToScanInitially) {
       if (myFileMask.value(file)) {
         resultFiles.add(file);
@@ -425,7 +425,7 @@ class FindInProjectTask {
       });
 
       if (!keys.isEmpty()) {
-        final List<VirtualFile> hits = new ArrayList<VirtualFile>();
+        final List<VirtualFile> hits = new ArrayList<>();
         ApplicationManager.getApplication().runReadAction(() -> {
           FileBasedIndex.getInstance().getFilesWithKey(TrigramIndex.INDEX_ID, keys, Processors.cancelableCollectProcessor(hits), scope);
         });

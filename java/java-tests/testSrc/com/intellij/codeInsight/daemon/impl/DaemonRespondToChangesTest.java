@@ -607,7 +607,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   
-  public void testOverriddenMethodMarkersDoNotClearedByCHangingWhitespaceNearby() throws Exception {
+  public void testOverriddenMethodMarkersDoNotClearedByChangingWhitespaceNearby() throws Exception {
     configureByFile(BASE_PATH + "OverriddenMethodMarkers.java");
     highlightErrors();
 
@@ -873,7 +873,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         String msg = "provider.getLineMarkerInfo(" + element + ") called\n";
         LineMarkerInfo<PsiComment> info = null;
         if (element instanceof PsiComment) {
-          info = new LineMarkerInfo<>((PsiComment)element, element.getTextRange(), null, Pass.UPDATE_ALL, null, null, GutterIconRenderer.Alignment.LEFT);
+          info = new LineMarkerInfo<>((PsiComment)element, element.getTextRange(), null, Pass.LINE_MARKERS, null, null, GutterIconRenderer.Alignment.LEFT);
           msg += " provider info: "+info + "\n";
         }
         log.append(msg);
@@ -1438,7 +1438,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         visitedElements.add(element);
       }
     }
-    final MyVisitor visitor = new MyVisitor();
     final LocalInspectionTool tool = new LocalInspectionTool() {
       @Nls
       @NotNull
@@ -1463,7 +1462,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       @NotNull
       @Override
       public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-        return visitor;
+        return new MyVisitor();
       }
     };
     disposeOnTearDown(() -> disableInspectionTool(tool.getShortName()));

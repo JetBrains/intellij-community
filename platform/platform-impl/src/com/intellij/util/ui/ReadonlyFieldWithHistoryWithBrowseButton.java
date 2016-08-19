@@ -19,7 +19,6 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton;
-import com.intellij.util.PairConvertor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
@@ -27,10 +26,10 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.List;
+import java.util.function.BiFunction;
 
 /**
  * @author Irina.Chernushina on 1/5/2016.
@@ -43,7 +42,7 @@ public interface ReadonlyFieldWithHistoryWithBrowseButton {
   void setPreferredWidthToFitText();
 
   class Builder {
-    private PairConvertor<ActionEvent, String, String> myActionListener;
+    private BiFunction<ActionEvent, String, String> myActionListener;
     private Getter<List<String>> myHistoryProvider;
     private Convertor<TextFieldWithHistory, ListCellRenderer> myRendererCreator;
 
@@ -57,7 +56,7 @@ public interface ReadonlyFieldWithHistoryWithBrowseButton {
       return this;
     }
 
-    public Builder withActionListener(@NotNull final PairConvertor<ActionEvent, String, String> listener) {
+    public Builder withActionListener(@NotNull final BiFunction<ActionEvent, String, String> listener) {
       myActionListener = listener;
       return this;
     }
@@ -72,13 +71,10 @@ public interface ReadonlyFieldWithHistoryWithBrowseButton {
       final ReadonlyFieldWithHistoryWithBrowseButton wrapper = createReadonlyFieldWrapper(field);
 
       if (myActionListener != null) {
-        field.getButton().addActionListener(new ActionListener() {
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            final String value = myActionListener.convert(e, wrapper.get());
-            if (value != null) {
-              wrapper.set(value);
-            }
+        field.getButton().addActionListener(e -> {
+          final String value = myActionListener.apply(e, wrapper.get());
+          if (value != null) {
+            wrapper.set(value);
           }
         });
       }

@@ -54,7 +54,7 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
   public CorruptedProjectFilesDialog(Project project,
                                      Collection<MergedWithConflictProjectOrModuleFile> mergedFiles) {
     super(project, true);
-    myCorruptedFiles = new ArrayList<MergedWithConflictProjectOrModuleFile>(mergedFiles);
+    myCorruptedFiles = new ArrayList<>(mergedFiles);
     myProject = project;
 
     myIconLabel.setIcon(Messages.getInformationIcon());

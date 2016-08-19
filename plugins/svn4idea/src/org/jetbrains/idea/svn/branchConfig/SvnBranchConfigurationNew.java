@@ -43,7 +43,7 @@ public class SvnBranchConfigurationNew {
 
   public SvnBranchConfigurationNew() {
     myTrunkUrl = "";
-    myBranchMap = new HashMap<String, InfoStorage<List<SvnBranchItem>>>();
+    myBranchMap = new HashMap<>();
   }
 
   public boolean isUserinfoInUrl() {
@@ -63,7 +63,7 @@ public class SvnBranchConfigurationNew {
   }
 
   public List<String> getBranchUrls() {
-    final ArrayList<String> result = new ArrayList<String>(myBranchMap.keySet());
+    final ArrayList<String> result = new ArrayList<>(myBranchMap.keySet());
     final List<String> cutList = ObjectsConvertor.convert(result, new Convertor<String, String>() {
       @Override
       public String convert(String s) {
@@ -115,11 +115,11 @@ public class SvnBranchConfigurationNew {
     SvnBranchConfigurationNew result = new SvnBranchConfigurationNew();
     result.myUserinfoInUrl = myUserinfoInUrl;
     result.myTrunkUrl = myTrunkUrl;
-    result.myBranchMap = new HashMap<String, InfoStorage<List<SvnBranchItem>>>();
+    result.myBranchMap = new HashMap<>();
     for (Map.Entry<String, InfoStorage<List<SvnBranchItem>>> entry : myBranchMap.entrySet()) {
       final InfoStorage<List<SvnBranchItem>> infoStorage = entry.getValue();
-      result.myBranchMap.put(entry.getKey(), new InfoStorage<List<SvnBranchItem>>(
-        new ArrayList<SvnBranchItem>(infoStorage.getValue()), infoStorage.getInfoReliability()));
+      result.myBranchMap.put(entry.getKey(), new InfoStorage<>(
+        new ArrayList<>(infoStorage.getValue()), infoStorage.getInfoReliability()));
     }
     return result;
   }
@@ -208,7 +208,7 @@ public class SvnBranchConfigurationNew {
 
     private BranchRootSearcher(final SvnVcs vcs, final VirtualFile root) throws SVNException {
       myRoot = root;
-      myBranchesUnder = new HashMap<String, String>();
+      myBranchesUnder = new HashMap<>();
       final Info info = vcs.getInfo(myRoot.getPath());
       myRootUrl = info != null ? info.getURL() : null;
     }

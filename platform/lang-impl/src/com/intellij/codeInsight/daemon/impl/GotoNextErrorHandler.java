@@ -52,11 +52,11 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
   private void gotoNextError(Project project, Editor editor, PsiFile file, int caretOffset) {
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
-    int maxSeverity = settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST ? severityRegistrar.getSeveritiesCount() - 1 : 0;
+    int maxSeverity = settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST ? severityRegistrar.getSeveritiesCount() - 1
+                                                                      : SeverityRegistrar.SHOWN_SEVERITIES_OFFSET;
 
-    for (int idx = maxSeverity; idx >= 0; idx--) {
+    for (int idx = maxSeverity; idx >= SeverityRegistrar.SHOWN_SEVERITIES_OFFSET; idx--) {
       final HighlightSeverity minSeverity = severityRegistrar.getSeverityByIndex(idx);
-      if (minSeverity != null && minSeverity.myVal <= HighlightSeverity.INFORMATION.myVal) continue;
       HighlightInfo infoToGo = findInfo(project, editor, caretOffset, minSeverity);
       if (infoToGo != null) {
         navigateToError(project, editor, infoToGo);

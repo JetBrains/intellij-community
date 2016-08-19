@@ -31,10 +31,10 @@ public class DiffFiles {
     Set<String> used = load(file1);
     Set<String> all = load(file2);
 
-    Set<String> missing = new HashSet<String>(used);
+    Set<String> missing = new HashSet<>(used);
     missing.removeAll(all);
 
-    Set<String> unused = new HashSet<String>(all);
+    Set<String> unused = new HashSet<>(all);
     unused.removeAll(used);
 
     System.out.println("Missing:");
@@ -47,7 +47,7 @@ public class DiffFiles {
   }
 
   private static void printOrdered(Set<String> set) {
-    List<String> ordered = new ArrayList<String>(set);
+    List<String> ordered = new ArrayList<>(set);
 
     Collections.sort(ordered);
     for (String item : ordered) {
@@ -56,7 +56,7 @@ public class DiffFiles {
   }
 
   private static Set<String> load(String file) throws Exception {
-    Set<String> answer = new HashSet<String>();
+    Set<String> answer = new HashSet<>();
     BufferedReader reader = new BufferedReader(new FileReader(file));
     String line;
     do {

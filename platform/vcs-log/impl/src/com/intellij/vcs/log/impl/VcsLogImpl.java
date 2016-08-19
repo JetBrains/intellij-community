@@ -16,22 +16,23 @@
 package com.intellij.vcs.log.impl;
 
 import com.google.common.primitives.Ints;
+import com.google.common.util.concurrent.SettableFuture;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
+import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.AbstractList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Future;
+import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 public class VcsLogImpl implements VcsLog {
   @NotNull private final VcsLogData myLogData;
@@ -45,41 +46,19 @@ public class VcsLogImpl implements VcsLog {
   @Override
   @NotNull
   public List<CommitId> getSelectedCommits() {
-    final int[] rows = myUi.getTable().getSelectedRows();
-    return new AbstractList<CommitId>() {
-      @Nullable
-      @Override
-      public CommitId get(int index) {
-        return getTable().getModel().getCommitIdAtRow(rows[index]);
-      }
-
-      @Override
-      public int size() {
-        return rows.length;
-      }
-    };
+    return getSelectedDataFromTable(GraphTableModel::getCommitIdAtRow);
   }
 
-  private VcsLogGraphTable getTable() {
-    return myUi.getTable();
+  @NotNull
+  @Override
+  public List<VcsShortCommitDetails> getSelectedShortDetails() {
+    return getSelectedDataFromTable(GraphTableModel::getShortDetails);
   }
 
   @NotNull
   @Override
   public List<VcsFullCommitDetails> getSelectedDetails() {
-    final int[] rows = myUi.getTable().getSelectedRows();
-    return new AbstractList<VcsFullCommitDetails>() {
-      @NotNull
-      @Override
-      public VcsFullCommitDetails get(int index) {
-        return getTable().getModel().getFullDetails(rows[index]);
-      }
-
-      @Override
-      public int size() {
-        return rows.length;
-      }
-    };
+    return getSelectedDataFromTable(GraphTableModel::getFullDetails);
   }
 
   @Override
@@ -97,27 +76,49 @@ public class VcsLogImpl implements VcsLog {
 
   @NotNull
   @Override
-  public Collection<VcsRef> getAllReferences() {
-    return myUi.getDataPack().getRefs().getAllRefs();
-  }
-
-  @NotNull
-  @Override
   public Future<Boolean> jumpToReference(final String reference) {
-    Collection<VcsRef> references = getAllReferences();
-    List<VcsRef> matchingRefs = ContainerUtil.findAll(references, ref -> ref.getName().startsWith(reference));
-    if (matchingRefs.isEmpty()) {
-      return myUi.jumpToCommitByPartOfHash(reference);
-    }
-    else {
-      VcsRef ref = Collections.min(matchingRefs, new VcsGoToRefComparator(myUi.getDataPack().getLogProviders()));
-      return myUi.jumpToCommit(ref.getCommitHash(), ref.getRoot());
-    }
+    SettableFuture<Boolean> future = SettableFuture.create();
+    VcsLogRefs refs = myUi.getDataPack().getRefs();
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      List<VcsRef> matchingRefs = refs.stream().filter(ref -> ref.getName().startsWith(reference)).collect(Collectors.toList());
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (matchingRefs.isEmpty()) {
+          myUi.jumpToCommitByPartOfHash(reference, future);
+        }
+        else {
+          VcsRef ref = Collections.min(matchingRefs, new VcsGoToRefComparator(myUi.getDataPack().getLogProviders()));
+          myUi.jumpToCommit(ref.getCommitHash(), ref.getRoot(), future);
+        }
+      });
+    });
+    return future;
   }
 
   @NotNull
   @Override
-  public Collection<VcsLogProvider> getLogProviders() {
+  public Map<VirtualFile, VcsLogProvider> getLogProviders() {
     return myLogData.getLogProviders();
+  }
+
+  @NotNull
+  private VcsLogGraphTable getTable() {
+    return myUi.getTable();
+  }
+
+  @NotNull
+  private <T> List<T> getSelectedDataFromTable(@NotNull BiFunction<GraphTableModel, Integer, T> dataGetter) {
+    final int[] rows = myUi.getTable().getSelectedRows();
+    return new AbstractList<T>() {
+      @NotNull
+      @Override
+      public T get(int index) {
+        return dataGetter.apply(getTable().getModel(), rows[index]);
+      }
+
+      @Override
+      public int size() {
+        return rows.length;
+      }
+    };
   }
 }

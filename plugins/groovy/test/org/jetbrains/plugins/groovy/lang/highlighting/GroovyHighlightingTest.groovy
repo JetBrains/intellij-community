@@ -955,8 +955,8 @@ enum Ee <error descr="Enums may not have 'extends' clause">extends Enum</error> 
 
   void testVarInTupleDuplicate() {
     testHighlighting('''\
-def (a, b)
-def (<error descr="Variable 'b' already defined">b</error>, c, <error descr="Variable 'c' already defined">c</error>)
+def (a, b) = []
+def (<error descr="Variable 'b' already defined">b</error>, c, <error descr="Variable 'c' already defined">c</error>) = []
 ''')
   }
 
@@ -1957,7 +1957,7 @@ class Target {
 import groovy.transform.Field
 
 @Field
-def (,<error descr="Identifier expected">)</error>
+def (,<error descr="Identifier expected">)</error> = []
 '''
   }
 
@@ -2007,4 +2007,8 @@ def doParse() {
 def foo = new <error descr="Cannot resolve symbol 'Rrrrrrrr'">Rrrrrrrr</error>() {}
 '''
   }
+
+  void testLocalVariableModifiers() { doTest() }
+
+  void testFieldModifiers() { doTest() }
 }

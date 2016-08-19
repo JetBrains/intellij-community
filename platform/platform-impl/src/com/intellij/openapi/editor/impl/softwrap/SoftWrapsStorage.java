@@ -37,7 +37,7 @@ import java.util.List;
  */
 public class SoftWrapsStorage implements Dumpable {
 
-  private final List<SoftWrapImpl>        myWraps     = new ArrayList<SoftWrapImpl>();
+  private final List<SoftWrapImpl>        myWraps     = new ArrayList<>();
   private final List<SoftWrapImpl>        myWrapsView = Collections.unmodifiableList(myWraps);
   private final List<SoftWrapChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -169,7 +169,7 @@ public class SoftWrapsStorage implements Dumpable {
     }
 
     List<SoftWrapImpl> tail = myWraps.subList(startIndex, myWraps.size());
-    List<SoftWrapImpl> result = new ArrayList<SoftWrapImpl>(tail);
+    List<SoftWrapImpl> result = new ArrayList<>(tail);
     tail.clear();
     return result;
   }

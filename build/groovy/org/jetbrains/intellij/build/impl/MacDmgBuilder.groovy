@@ -18,7 +18,6 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.util.PathUtilRt
 import org.apache.tools.ant.types.Path
 import org.apache.tools.ant.util.SplitClassLoader
-import org.codehaus.gant.GantBuilder
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.MacDistributionCustomizer
 import org.jetbrains.intellij.build.MacHostProperties
@@ -28,7 +27,7 @@ import java.time.format.DateTimeFormatter
 
 class MacDmgBuilder {
   private final BuildContext buildContext
-  private final GantBuilder ant
+  private final AntBuilder ant
   private final String artifactsPath
   private final MacHostProperties macHostProperties
   private final String remoteDir
@@ -90,7 +89,7 @@ class MacDmgBuilder {
       }
     }
 
-    sshExec("$remoteDir/makedmg.sh ${targetFileName} ${buildContext.fullBuildNumber}")
+    sshExec("$remoteDir/makedmg.sh ${targetFileName} ${buildContext.fullBuildNumber} 2>&1 | tee $remoteDir/makedmg.log")
     ftpAction("get", true, null, 3) {
       ant.fileset(dir: artifactsPath) {
         include(name: "${targetFileName}.dmg")
@@ -135,7 +134,7 @@ class MacDmgBuilder {
 
     String jreFileNameArgument = jreArchivePath != null ? " \"${PathUtilRt.getFileName(jreArchivePath)}\"" : ""
     sshExec("$remoteDir/signapp.sh ${targetFileName} ${buildContext.fullBuildNumber} ${this.macHostProperties.userName}"
-              + " ${this.macHostProperties.password} \"${this.macHostProperties.codesignString}\"$jreFileNameArgument")
+              + " ${this.macHostProperties.password} \"${this.macHostProperties.codesignString}\"$jreFileNameArgument 2>&1 | tee $remoteDir/signapp.log")
     ftpAction("get", true, null, 3) {
       ant.fileset(dir: artifactsPath) {
         include(name: "${targetFileName}.sit")

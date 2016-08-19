@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 public abstract class GrMethodMayBeStaticInspectionFilter {
 
   public static final ExtensionPointName<GrMethodMayBeStaticInspectionFilter> EP_NAME =
-    new ExtensionPointName<GrMethodMayBeStaticInspectionFilter>("org.intellij.groovy.methodMayBeStaticInspectionFilter");
+    new ExtensionPointName<>("org.intellij.groovy.methodMayBeStaticInspectionFilter");
 
   public abstract boolean isIgnored(@NotNull GrMethod method);
 

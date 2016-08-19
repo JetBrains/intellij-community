@@ -77,7 +77,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   private static final String SUITE = "SUITE";
 
   private final Project myProject;
-  private final Set<CoverageSuite> myCoverageSuites = new HashSet<CoverageSuite>();
+  private final Set<CoverageSuite> myCoverageSuites = new HashSet<>();
   private boolean myIsProjectClosing = false;
 
   private final Object myLock = new Object();
@@ -90,7 +90,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   private CoverageSuitesBundle myCurrentSuitesBundle;
 
   private final Object ANNOTATORS_LOCK = new Object();
-  private final Map<Editor, SrcFileAnnotator> myAnnotators = new HashMap<Editor, SrcFileAnnotator>();
+  private final Map<Editor, SrcFileAnnotator> myAnnotators = new HashMap<>();
 
   public CoverageDataManagerImpl(final Project project) {
     myProject = project;
@@ -448,7 +448,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     final ProjectData data = suite.getCoverageData();
     if (data == null) return;
     mySubCoverageIsActive = true;
-    final Map<String, Set<Integer>> executionTrace = new HashMap<String, Set<Integer>>();
+    final Map<String, Set<Integer>> executionTrace = new HashMap<>();
     for (CoverageSuite coverageSuite : suite.getSuites()) {
       final String fileName = coverageSuite.getCoverageDataFileName();
       final File tracesDir = getTracesDirectory(fileName);
@@ -464,7 +464,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
               final int linesSize = in.readInt();
               Set<Integer> lines = executionTrace.get(className);
               if (lines == null) {
-                lines = new HashSet<Integer>();
+                lines = new HashSet<>();
                 executionTrace.put(className, lines);
               }
               for(int l = 0; l < linesSize; l++) {
@@ -625,7 +625,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
 
   private class CoverageEditorFactoryListener implements EditorFactoryListener {
     private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, myProject);
-    private final Map<Editor, Runnable> myCurrentEditors = new HashMap<Editor, Runnable>();
+    private final Map<Editor, Runnable> myCurrentEditors = new HashMap<>();
 
     public void editorCreated(@NotNull EditorFactoryEvent event) {
       synchronized (myLock) {

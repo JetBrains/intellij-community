@@ -136,7 +136,7 @@ public class AddVariableInitializerFix implements IntentionAction {
     PsiType type = variable.getType();
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(variable.getProject());
 
-    final List<LookupElement> result = new SmartList<LookupElement>();
+    final List<LookupElement> result = new SmartList<>();
     final String defaultValue = PsiTypesUtil.getDefaultValueOfType(type);
     final ExpressionLookupItem defaultExpression = new ExpressionLookupItem(elementFactory.createExpressionFromText(defaultValue, variable));
     result.add(defaultExpression);

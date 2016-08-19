@@ -48,7 +48,7 @@ public class ExceptionDeobfuscator {
 
   public static void restorePopRanges(ControlFlowGraph graph) {
 
-    List<Range> lstRanges = new ArrayList<Range>();
+    List<Range> lstRanges = new ArrayList<>();
 
     // aggregate ranges
     for (ExceptionRangeCFG range : graph.getExceptions()) {
@@ -63,7 +63,7 @@ public class ExceptionDeobfuscator {
 
       if (!found) {
         // doesn't matter, which range chosen
-        lstRanges.add(new Range(range.getHandler(), range.getUniqueExceptionsString(), new HashSet<BasicBlock>(range.getProtectedRange()), range));
+        lstRanges.add(new Range(range.getHandler(), range.getUniqueExceptionsString(), new HashSet<>(range.getProtectedRange()), range));
       }
     }
 
@@ -81,13 +81,13 @@ public class ExceptionDeobfuscator {
 
           if (firstinstr.opcode == CodeConstants.opc_pop ||
               firstinstr.opcode == CodeConstants.opc_astore) {
-            Set<BasicBlock> setrange = new HashSet<BasicBlock>(range.protectedRange);
+            Set<BasicBlock> setrange = new HashSet<>(range.protectedRange);
 
             for (Range range_super : lstRanges) { // finally or strict superset
 
               if (range != range_super) {
 
-                Set<BasicBlock> setrange_super = new HashSet<BasicBlock>(range_super.protectedRange);
+                Set<BasicBlock> setrange_super = new HashSet<>(range_super.protectedRange);
 
                 if (!setrange.contains(range_super.handler) && !setrange_super.contains(handler)
                     && (range_super.uniqueStr == null || setrange_super.containsAll(setrange))) {
@@ -113,7 +113,7 @@ public class ExceptionDeobfuscator {
                       graph.getBlocks().addWithKey(newblock, newblock.id);
 
 
-                      List<BasicBlock> lstTemp = new ArrayList<BasicBlock>();
+                      List<BasicBlock> lstTemp = new ArrayList<>();
                       lstTemp.addAll(handler.getPreds());
                       lstTemp.addAll(handler.getPredExceptions());
 
@@ -159,7 +159,7 @@ public class ExceptionDeobfuscator {
 
   public static void insertEmptyExceptionHandlerBlocks(ControlFlowGraph graph) {
 
-    Set<BasicBlock> setVisited = new HashSet<BasicBlock>();
+    Set<BasicBlock> setVisited = new HashSet<>();
 
     for (ExceptionRangeCFG range : graph.getExceptions()) {
       BasicBlock handler = range.getHandler();
@@ -172,7 +172,7 @@ public class ExceptionDeobfuscator {
       BasicBlock emptyblock = new BasicBlock(++graph.last_id);
       graph.getBlocks().addWithKey(emptyblock, emptyblock.id);
 
-      List<BasicBlock> lstTemp = new ArrayList<BasicBlock>();
+      List<BasicBlock> lstTemp = new ArrayList<>();
       // only exception predecessors considered
       lstTemp.addAll(handler.getPredExceptions());
 
@@ -231,7 +231,7 @@ public class ExceptionDeobfuscator {
       }
 
       public Set<? extends IGraphNode> getRoots() {
-        return new HashSet<IGraphNode>(Arrays.asList(new IGraphNode[]{graph.getFirst()}));
+        return new HashSet<>(Arrays.asList(new IGraphNode[]{graph.getFirst()}));
       }
     });
 
@@ -264,10 +264,10 @@ public class ExceptionDeobfuscator {
 
   private static List<BasicBlock> getReachableBlocksRestricted(ExceptionRangeCFG range, GenericDominatorEngine engine) {
 
-    List<BasicBlock> lstRes = new ArrayList<BasicBlock>();
+    List<BasicBlock> lstRes = new ArrayList<>();
 
-    LinkedList<BasicBlock> stack = new LinkedList<BasicBlock>();
-    Set<BasicBlock> setVisited = new HashSet<BasicBlock>();
+    LinkedList<BasicBlock> stack = new LinkedList<>();
+    Set<BasicBlock> setVisited = new HashSet<>();
 
     BasicBlock handler = range.getHandler();
     stack.addFirst(handler);
@@ -280,7 +280,7 @@ public class ExceptionDeobfuscator {
       if (range.getProtectedRange().contains(block) && engine.isDominator(block, handler)) {
         lstRes.add(block);
 
-        List<BasicBlock> lstSuccs = new ArrayList<BasicBlock>(block.getSuccs());
+        List<BasicBlock> lstSuccs = new ArrayList<>(block.getSuccs());
         lstSuccs.addAll(block.getSuccExceptions());
 
         for (BasicBlock succ : lstSuccs) {
@@ -297,20 +297,20 @@ public class ExceptionDeobfuscator {
 
   public static boolean hasObfuscatedExceptions(ControlFlowGraph graph) {
 
-    Map<BasicBlock, Set<BasicBlock>> mapRanges = new HashMap<BasicBlock, Set<BasicBlock>>();
+    Map<BasicBlock, Set<BasicBlock>> mapRanges = new HashMap<>();
     for (ExceptionRangeCFG range : graph.getExceptions()) {
       Set<BasicBlock> set = mapRanges.get(range.getHandler());
       if (set == null) {
-        mapRanges.put(range.getHandler(), set = new HashSet<BasicBlock>());
+        mapRanges.put(range.getHandler(), set = new HashSet<>());
       }
       set.addAll(range.getProtectedRange());
     }
 
     for (Entry<BasicBlock, Set<BasicBlock>> ent : mapRanges.entrySet()) {
-      Set<BasicBlock> setEntries = new HashSet<BasicBlock>();
+      Set<BasicBlock> setEntries = new HashSet<>();
 
       for (BasicBlock block : ent.getValue()) {
-        Set<BasicBlock> setTemp = new HashSet<BasicBlock>(block.getPreds());
+        Set<BasicBlock> setTemp = new HashSet<>(block.getPreds());
         setTemp.removeAll(ent.getValue());
 
         if (!setTemp.isEmpty()) {

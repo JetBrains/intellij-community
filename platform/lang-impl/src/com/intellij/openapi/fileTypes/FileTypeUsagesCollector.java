@@ -50,7 +50,7 @@ public class FileTypeUsagesCollector extends AbstractApplicationUsagesCollector 
   @NotNull
   @Override
   public Set<UsageDescriptor> getProjectUsages(@NotNull final Project project) throws CollectUsagesException {
-    final Set<FileType> usedFileTypes = new HashSet<FileType>();
+    final Set<FileType> usedFileTypes = new HashSet<>();
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     if (fileTypeManager == null) {
       throw new CollectUsagesException("Cannot get instance of FileTypeManager");

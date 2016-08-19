@@ -19,6 +19,7 @@ import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startupWizard.StartupWizard;
+import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ConfigImportHelper;
@@ -37,7 +38,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.lang.UrlClassLoader;
-import com.sun.jna.Native;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
@@ -74,11 +74,6 @@ public class StartupUtil {
     if (ourSocketLock != null) {
       ourSocketLock.setExternalInstanceListener(consumer);
     }
-  }
-
-  public static int getAcquiredPort() {
-    BuiltInServer server = getServer();
-    return server == null ? -1 : server.getPort();
   }
 
   @Nullable
@@ -345,8 +340,7 @@ public class StartupUtil {
       System.setProperty("jna.nosys", "true");  // prefer bundled JNA dispatcher lib
     }
     try {
-      long t = System.currentTimeMillis();
-      log.info("JNA library loaded (" + (Native.POINTER_SIZE * 8) + "-bit) in " + (System.currentTimeMillis() - t) + " ms");
+      JnaLoader.load(log);
     }
     catch (Throwable t) {
       logError(log, "Unable to load JNA library", t);

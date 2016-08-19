@@ -164,7 +164,7 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
 
   @Override
   protected void doOKAction() {
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     if (myCreateInnerClassRb.isSelected()) {
       final PsiClass innerClass = myTargetClass.findInnerClassByName(myInnerClassName.getText(), false);
       if (innerClass != null) {

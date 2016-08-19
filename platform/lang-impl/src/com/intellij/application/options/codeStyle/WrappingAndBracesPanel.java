@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
-  private MultiMap<String, String> myGroupToFields = new MultiMap<String, String>();
+  private MultiMap<String, String> myGroupToFields = new MultiMap<>();
   private Map<String, SettingsGroup> myFieldNameToGroup;
 
   public WrappingAndBracesPanel(CodeStyleSettings settings) {

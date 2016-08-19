@@ -28,8 +28,8 @@ import java.util.*;
  */
 public class PsiTypeVariableFactory {
   private int myCurrent;
-  private final List<Set<PsiTypeVariable>> myClusters = new LinkedList<Set<PsiTypeVariable>>();
-  private final Map<Integer, Set<PsiTypeVariable>> myVarCluster = new HashMap<Integer, Set<PsiTypeVariable>>();
+  private final List<Set<PsiTypeVariable>> myClusters = new LinkedList<>();
+  private final Map<Integer, Set<PsiTypeVariable>> myVarCluster = new HashMap<>();
 
   public final int getNumber() {
     return myCurrent;

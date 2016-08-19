@@ -36,7 +36,7 @@ import java.util.List;
 public class ExecuteGradleTaskHistoryService implements PersistentStateComponent<String[]> {
 
   private static final int MAX_HISTORY_LENGTH = 20;
-  private final LinkedList<String> myHistory = new LinkedList<String>();
+  private final LinkedList<String> myHistory = new LinkedList<>();
   private String myWorkDirectory = "";
   private String myCanceledCommand;
 
@@ -69,7 +69,7 @@ public class ExecuteGradleTaskHistoryService implements PersistentStateComponent
   }
 
   public List<String> getHistory() {
-    return new ArrayList<String>(myHistory);
+    return new ArrayList<>(myHistory);
   }
 
   @NotNull

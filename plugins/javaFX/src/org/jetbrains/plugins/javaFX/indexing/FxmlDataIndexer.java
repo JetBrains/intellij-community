@@ -51,7 +51,7 @@ public class FxmlDataIndexer implements DataIndexer<String, Set<String>, FileCon
       return null;
     }
 
-    final Map<String, Set<String>> map = new HashMap<String, Set<String>>();
+    final Map<String, Set<String>> map = new HashMap<>();
     final String path = file.getPath();
     final IXMLBuilder handler = createParseHandler(path, map);
     try {
@@ -72,7 +72,7 @@ public class FxmlDataIndexer implements DataIndexer<String, Set<String>, FileCon
         if (value != null && FxmlConstants.FX_ID.equals(nsPrefix + ":" + key)) {
           Set<String> paths = map.get(value);
           if (paths == null) {
-            paths = new HashSet<String>();
+            paths = new HashSet<>();
             map.put(value, paths);
           }
           paths.add(path);

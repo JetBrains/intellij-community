@@ -127,7 +127,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
   @Override
   public void showSavedChanges() {
-    GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<VirtualFile>(myStashedRoots), myStashedRoots.iterator().next());
+    GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<>(myStashedRoots), myStashedRoots.iterator().next());
   }
 
   /**
@@ -201,7 +201,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
                                                                       if (event.getDescription().equals("saver")) {
                                                                         // we don't use #showSavedChanges to specify unmerged root first
                                                                         GitUnstashDialog.showUnstashDialog(myProject,
-                                                                                                           new ArrayList<VirtualFile>(
+                                                                                                           new ArrayList<>(
                                                                                                              myStashedRoots),
                                                                                                            myStashedRoots.iterator().next()
                                                                         );

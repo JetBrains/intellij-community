@@ -16,8 +16,6 @@
 package com.intellij.junit3;
 
 import com.intellij.rt.execution.junit.*;
-import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
-import com.intellij.rt.execution.junit.segments.PacketProcessor;
 import junit.framework.*;
 import junit.textui.ResultPrinter;
 import junit.textui.TestRunner;
@@ -27,24 +25,17 @@ import java.io.StringWriter;
 import java.util.*;
 
 public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
-  private TestListener myTestsListener;
-  private JUnit3OutputObjectRegistry myRegistry;
+  private SMTestListener myTestsListener;
   private ArrayList myListeners;
-  private boolean mySendTree;
 
   public JUnit3IdeaTestRunner() {
     super(DeafStream.DEAF_PRINT_STREAM);
   }
 
   public int startRunnerWithArgs(String[] args, ArrayList listeners, String name, int count, boolean sendTree) {
+    myTestsListener = new SMTestListener();
     myListeners = listeners;
-    mySendTree = sendTree && !(myTestsListener instanceof SMTestListener);
-    if (mySendTree) {
-      setPrinter(new TimeSender(myRegistry));
-    }
-    else {
-      setPrinter(new MockResultPrinter());
-    }
+    setPrinter(new MockResultPrinter());
     try {
       Test suite = TestRunnerUtil.getTestSuite(this, args);
       if (suite == null) return -1;
@@ -68,25 +59,12 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
     super.runFailed(message);
   }
 
-  public void setStreams(Object segmentedOut, Object segmentedErr, int lastIdx) {
-    if (JUnitStarter.SM_RUNNER) {
-      myTestsListener = new SMTestListener();
-    } else {
-      myRegistry = new JUnit3OutputObjectRegistry((PacketProcessor)segmentedOut, lastIdx);
-      myTestsListener = new TestResultsSender(myRegistry);
-    }
-  }
-
   public Object getTestToStart(String[] args, String name) {
     return TestRunnerUtil.getTestSuite(this, args);
   }
 
   public List getChildTests(Object description) {
     return getTestCasesOf((Test)description);
-  }
-
-  public OutputObjectRegistry getRegistry() {
-    return myRegistry;
   }
 
   public String getTestClassName(Object child) {
@@ -133,18 +111,9 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
   }
 
   public TestResult doRun(Test suite, boolean wait) {  //todo
-    try {
-      TreeSender.sendTree(this, suite, mySendTree);
-    }
-    catch (Exception e) {
-      //noinspection HardCodedStringLiteral
-      System.err.println("Internal Error occured.");
-      e.printStackTrace(System.err);
-    }
     final TestResult testResult = super.doRun(suite, wait);
-    if (myTestsListener instanceof SMTestListener) {
-      ((SMTestListener)myTestsListener).finishSuite();
-    }
+    myTestsListener.finishSuite();
+
     return testResult;
   }
 

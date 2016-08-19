@@ -104,7 +104,7 @@ public class SceneBuilderInfo {
   private static VirtualFile getPredefinedPath() {
     String path = null;
     if (SystemInfo.isWindows) {
-      List<String> suspiciousPaths = new ArrayList<String>();
+      List<String> suspiciousPaths = new ArrayList<>();
       String programFiles = "C:\\Program Files";
 
       String sb20 = "\\JavaFX Scene Builder 2.0\\JavaFX Scene Builder 2.0.exe";

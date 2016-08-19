@@ -53,6 +53,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -303,7 +304,7 @@ public class GradleInstallationManager {
         if (startFile.isFile()) {
           File candidate = dir.getParentFile();
           if (isGradleSdkHome(candidate)) {
-            myCachedGradleHomeFromPath = new Ref<File>(candidate);
+            myCachedGradleHomeFromPath = new Ref<>(candidate);
             return candidate;
           }
         }
@@ -465,8 +466,27 @@ public class GradleInstallationManager {
     return null;
   }
 
+  @Nullable
+  public static String getGradleVersion(@Nullable String gradleHome) {
+    if (gradleHome == null) return null;
+    File libs = new File(gradleHome, "lib");
+    if(!libs.isDirectory()) return null;
+
+    File[] files = libs.listFiles();
+    if (files != null) {
+      for (File file : files) {
+        final Matcher matcher = GRADLE_JAR_FILE_PATTERN.matcher(file.getName());
+        if (matcher.matches()) {
+          return matcher.group(2);
+        }
+      }
+    }
+    return null;
+  }
+
+
   private List<File> findGradleSdkClasspath(Project project, String rootProjectPath) {
-    List<File> result = new ArrayList<File>();
+    List<File> result = new ArrayList<>();
 
     if (StringUtil.isEmpty(rootProjectPath)) return result;
 

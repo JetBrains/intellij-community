@@ -32,7 +32,7 @@ import java.util.Map;
 public abstract class JsonObjectMixin extends JsonContainerImpl implements JsonObject {
   private final CachedValueProvider<Map<String, JsonProperty>> myPropertyCache =
     () -> {
-      final Map<String, JsonProperty> cache = new HashMap<String, JsonProperty>();
+      final Map<String, JsonProperty> cache = new HashMap<>();
       for (JsonProperty property : getPropertyList()) {
         final String propertyName = property.getName();
         // Preserve the old behavior - return the first value in findProperty()
@@ -41,7 +41,7 @@ public abstract class JsonObjectMixin extends JsonContainerImpl implements JsonO
         }
       }
       // Cached value is invalidated every time file containing this object is modified
-      return CachedValueProvider.Result.createSingleDependency(cache, JsonObjectMixin.this);
+      return CachedValueProvider.Result.createSingleDependency(cache, this);
     };
 
   public JsonObjectMixin(@NotNull ASTNode node) {

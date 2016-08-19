@@ -15,18 +15,17 @@
  */
 package com.intellij.lang.ant.config.execution;
 
-import com.intellij.execution.junit.JUnitProcessHandler;
-import com.intellij.execution.junit2.segments.*;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.lang.ant.config.AntBuildFile;
+import com.intellij.lang.ant.segments.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.rt.ant.execution.IdeaAntLogger2;
-import com.intellij.rt.execution.junit.segments.PacketProcessor;
+import com.intellij.rt.ant.execution.PacketProcessor;
 
 import java.io.IOException;
 
@@ -87,7 +86,7 @@ final class OutputParser2 extends OutputParser implements PacketProcessor, Input
   }
 
   public static OutputParser attachParser(final Project myProject,
-                                          JUnitProcessHandler handler,
+                                          AntProcessHandler handler,
                                           final AntBuildMessageView errorView,
                                           final ProgressIndicator progress,
                                           final AntBuildFile buildFile) {

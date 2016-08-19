@@ -21,7 +21,7 @@ import java.util.LinkedList;
 
 public class RevisionItem {
   public final Revision revision;
-  public final LinkedList<Revision> labels = new LinkedList<Revision>();
+  public final LinkedList<Revision> labels = new LinkedList<>();
 
   public RevisionItem(Revision revision) {
     this.revision = revision;

@@ -58,7 +58,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
 
   public boolean AUTO_POPUP_PARAMETER_INFO = true;
   public int PARAMETER_INFO_DELAY = 1000;
-  public boolean AUTO_POPUP_JAVADOC_INFO = false;
+  public boolean AUTO_POPUP_JAVADOC_INFO;
   public int JAVADOC_INFO_DELAY = 1000;
   public boolean AUTO_POPUP_COMPLETION_LOOKUP = true;
 
@@ -68,20 +68,20 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public static final int NONE = 2;
   public static final int FIRST_LETTER = 3;
 
-  public boolean SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false;
+  public boolean SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS;
   public boolean AUTOCOMPLETE_ON_CODE_COMPLETION = true;
   public boolean AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION = true;
 
   /** todo remove in IDEA 16 */
-  @Deprecated public boolean AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION = false;
+  @Deprecated public boolean AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION;
 
   public boolean AUTOCOMPLETE_COMMON_PREFIX = true;
 
   /** todo remove in IDEA 16 */
   @Deprecated
-  public boolean SHOW_STATIC_AFTER_INSTANCE = false;
+  public boolean SHOW_STATIC_AFTER_INSTANCE;
 
-  public boolean SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO = false;
+  public boolean SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO;
 
   public boolean SHOW_SOURCE_INFERRED_ANNOTATIONS = true;
 
@@ -107,7 +107,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean SMART_END_ACTION = true;
   public boolean JAVADOC_GENERATE_CLOSING_TAG = true;
 
-  public boolean SURROUND_SELECTION_ON_QUOTE_TYPED = false;
+  public boolean SURROUND_SELECTION_ON_QUOTE_TYPED;
 
   public boolean AUTOINSERT_PAIR_BRACKET = true;
   public boolean AUTOINSERT_PAIR_QUOTE = true;
@@ -120,7 +120,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public static final int INDENT_EACH_LINE = 3;
   public static final int REFORMAT_BLOCK = 4;
 
-  public boolean INDENT_TO_CARET_ON_PASTE = false;
+  public boolean INDENT_TO_CARET_ON_PASTE;
 
   @MagicConstant(intValues = {YES, NO, ASK})
   public int ADD_IMPORTS_ON_PASTE = ASK;
@@ -129,17 +129,17 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public static final int ASK = 3;
 
   public boolean HIGHLIGHT_BRACES = true;
-  public boolean HIGHLIGHT_SCOPE = false;
+  public boolean HIGHLIGHT_SCOPE;
 
-  public boolean USE_INSTANCEOF_ON_EQUALS_PARAMETER = false;
-  public boolean USE_ACCESSORS_IN_EQUALS_HASHCODE = false;
+  public boolean USE_INSTANCEOF_ON_EQUALS_PARAMETER;
+  public boolean USE_ACCESSORS_IN_EQUALS_HASHCODE;
 
   public boolean HIGHLIGHT_IDENTIFIER_UNDER_CARET = true;
 
-  public boolean OPTIMIZE_IMPORTS_ON_THE_FLY = false;
-  public boolean ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false;
+  public boolean OPTIMIZE_IMPORTS_ON_THE_FLY;
+  public boolean ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
   public boolean ADD_MEMBER_IMPORTS_ON_THE_FLY = true;
-  public boolean JSP_ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false;
+  public boolean JSP_ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
 
   /**
    * Names of classes and packages excluded from (Java) auto-import and completion. These are only IDE-specific settings

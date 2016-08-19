@@ -59,7 +59,12 @@ public interface VcsContext extends PlaceProvider<String> {
 
   @NotNull
   FilePath[] getSelectedFilePaths();
-  
+
+  @NotNull
+  default Stream<FilePath> getSelectedFilePathsStream() {
+    return Arrays.stream(getSelectedFilePaths());
+  }
+
   @Nullable
   FilePath getSelectedFilePath();
 

@@ -83,8 +83,9 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
   private boolean myUserCaretChange = true;
   private final MergingUpdateQueue myQueue;
   private final BreadcrumbsInfoProvider myInfoProvider;
+  private final Update myUpdate = new MyUpdate(this);
 
-  public static final Key<BreadcrumbsXmlWrapper> BREADCRUMBS_COMPONENT_KEY = new Key<BreadcrumbsXmlWrapper>("BREADCRUMBS_KEY");
+  public static final Key<BreadcrumbsXmlWrapper> BREADCRUMBS_COMPONENT_KEY = new Key<>("BREADCRUMBS_KEY");
 
   public BreadcrumbsXmlWrapper(@NotNull final Editor editor) {
     myEditor = editor;
@@ -116,7 +117,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
       @Override
       public void uiSettingsChanged(UISettings source) {
-        queueUpdate(myEditor);
+        queueUpdate();
       }
     }, this);
 
@@ -127,7 +128,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
       @Override
       public void caretPositionChanged(final CaretEvent e) {
         if (myUserCaretChange) {
-          queueUpdate(editor);
+          queueUpdate();
         }
 
         myUserCaretChange = true;
@@ -148,7 +149,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
         PsiFile psiFile = event.getFile();
         VirtualFile file = psiFile == null ? null : psiFile.getVirtualFile();
         if (!Comparing.equal(file, myFile)) return;
-        queueUpdate(editor);
+        queueUpdate();
       }
 
       @Override
@@ -177,7 +178,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
       }
     },this);
 
-    myComponent = new BreadcrumbsComponent<BreadcrumbsPsiItem>();
+    myComponent = new BreadcrumbsComponent<>();
     myComponent.addBreadcrumbsItemListener(this);
     myComponent.setFont(getEditorFont(myEditor));
 
@@ -186,7 +187,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
       @Override
       public void componentResized(final ComponentEvent e) {
         myComponent.setOffset(gutterComponent.getWhitespaceSeparatorOffset());
-        queueUpdate(editor);
+        queueUpdate();
       }
     };
 
@@ -206,7 +207,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     Disposer.register(this, myQueue);
 
     myComponent.setBorder(new JBEmptyBorder(JBUI.insets(2, 0, 1, 2)));
-    queueUpdate(editor);
+    queueUpdate();
   }
 
   private void updateCrumbs() {
@@ -216,9 +217,9 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     }
   }
 
-  public void queueUpdate(Editor editor) {
+  public void queueUpdate() {
     myQueue.cancelAllUpdates();
-    myQueue.queue(new MyUpdate(this, editor));
+    myQueue.queue(myUpdate);
   }
 
   private void moveEditorCaretTo(@NotNull final PsiElement element) {
@@ -297,7 +298,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     PsiElement element = findFirstBreadcrumbedElement(offset, file, project, defaultInfoProvider);
     if (element == null) return null;
 
-    final LinkedList<BreadcrumbsPsiItem> result = new LinkedList<BreadcrumbsPsiItem>();
+    final LinkedList<BreadcrumbsPsiItem> result = new LinkedList<>();
     while (element != null) {
       BreadcrumbsInfoProvider provider = findProviderForElement(element, defaultInfoProvider);
 
@@ -317,12 +318,13 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
                                                          final BreadcrumbsInfoProvider defaultInfoProvider) {
     if (file == null || !file.isValid()) return null;
 
-    PriorityQueue<PsiElement> leafs = new PriorityQueue<PsiElement>(3, (o1, o2) -> o2.getTextRange().getStartOffset() - o1.getTextRange().getStartOffset());
+    PriorityQueue<PsiElement> leafs =
+      new PriorityQueue<>(3, (o1, o2) -> o2.getTextRange().getStartOffset() - o1.getTextRange().getStartOffset());
     FileViewProvider viewProvider = findViewProvider(file, project);
     if (viewProvider == null) return null;
 
     for (final Language language : viewProvider.getLanguages()) {
-      ContainerUtil.addIfNotNull(viewProvider.findElementAt(offset, language), leafs);
+      ContainerUtil.addIfNotNull(leafs, viewProvider.findElementAt(offset, language));
     }
     while (!leafs.isEmpty()) {
       final PsiElement element = leafs.remove();
@@ -333,7 +335,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
         return element;
       }
       if (!(element instanceof PsiFile)) {
-        ContainerUtil.addIfNotNull(element.getParent(), leafs);
+        ContainerUtil.addIfNotNull(leafs, element.getParent());
       }
     }
     return null;
@@ -409,7 +411,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
                           : BreadcrumbsComponent.ButtonSettings.getBackgroundColor(false, false, false, false);
       final Color background = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.CARET_ROW_COLOR);
       attributes.setBackgroundColor(XmlTagTreeHighlightingUtil.makeTransparent(color, background != null ? background : Gray._200, 0.3));
-      myHighlighed = new ArrayList<RangeHighlighter>(1);
+      myHighlighed = new ArrayList<>(1);
       int flags = HighlightManager.HIDE_BY_ESCAPE | HighlightManager.HIDE_BY_TEXT_CHANGE | HighlightManager.HIDE_BY_ANY_KEY;
       hm.addOccurrenceHighlight(myEditor, range.getStartOffset(), range.getEndOffset(), attributes, flags, myHighlighed, null);
     }
@@ -443,13 +445,11 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
 
   private static class MyUpdate extends Update {
     private final BreadcrumbsXmlWrapper myBreadcrumbsComponent;
-    private final Editor myEditor;
 
-    public MyUpdate(@NonNls final BreadcrumbsXmlWrapper c, @NotNull final Editor editor) {
+    public MyUpdate(@NonNls final BreadcrumbsXmlWrapper c) {
       super(c);
 
       myBreadcrumbsComponent = c;
-      myEditor = editor;
     }
 
     @Override
@@ -464,7 +464,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
   }
 
   private void updateEditorFont(PropertyChangeEvent event) {
-    if (EditorEx.PROP_FONT_SIZE.equals(event.getPropertyName())) queueUpdate(myEditor);
+    if (EditorEx.PROP_FONT_SIZE.equals(event.getPropertyName())) queueUpdate();
   }
 
   private static Font getEditorFont(Editor editor) {

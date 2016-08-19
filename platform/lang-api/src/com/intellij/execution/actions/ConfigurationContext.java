@@ -103,12 +103,12 @@ public class ConfigurationContext {
       myLocation = null;
       return;
     }
-    myLocation = new PsiLocation<PsiElement>(project, myModule, element);
+    myLocation = new PsiLocation<>(project, myModule, element);
   }
 
   public ConfigurationContext(PsiElement element) {
     myModule = ModuleUtilCore.findModuleForPsiElement(element);
-    myLocation = new PsiLocation<PsiElement>(element.getProject(), myModule, element);
+    myLocation = new PsiLocation<>(element.getProject(), myModule, element);
     myRuntimeConfiguration = null;
     myContextComponent = null;
   }
@@ -175,7 +175,7 @@ public class ConfigurationContext {
   @Nullable
   public RunnerAndConfigurationSettings findExisting() {
     if (myExistingConfiguration != null) return myExistingConfiguration.get();
-    myExistingConfiguration = new Ref<RunnerAndConfigurationSettings>();
+    myExistingConfiguration = new Ref<>();
     if (myLocation == null) {
       return null;
     }

@@ -118,8 +118,8 @@ public class EnterHandler extends BaseEnterHandler {
 
     boolean forceIndent = false;
     boolean forceSkipIndent = false;
-    Ref<Integer> caretOffsetRef = new Ref<Integer>(caretOffset);
-    Ref<Integer> caretAdvanceRef = new Ref<Integer>(0);
+    Ref<Integer> caretOffsetRef = new Ref<>(caretOffset);
+    Ref<Integer> caretAdvanceRef = new Ref<>(0);
 
     final EnterHandlerDelegate[] delegates = Extensions.getExtensions(EnterHandlerDelegate.EP_NAME);
     for(EnterHandlerDelegate delegate: delegates) {

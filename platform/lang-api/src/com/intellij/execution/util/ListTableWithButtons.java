@@ -228,7 +228,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
       return Collections.emptyList();
     }
     else {
-      List<T> result = new ArrayList<T>(selection.length);
+      List<T> result = new ArrayList<>(selection.length);
       for (int row : selection) {
         result.add(myElements.get(row));
       }

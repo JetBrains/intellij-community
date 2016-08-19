@@ -68,13 +68,13 @@ public abstract class InspectionRVContentProvider {
       if (myEntity == null) return null;
       final RefEntity entity = myEntity.getOwner();
       return entity instanceof RefElement && !(entity instanceof RefDirectory)
-             ? new RefEntityContainer<Descriptor>(entity, myDescriptors)
+             ? new RefEntityContainer<>(entity, myDescriptors)
              : null;
     }
 
     @NotNull
     public RefElementNode createNode(@NotNull InspectionToolPresentation presentation) {
-      return ReadAction.compute(() -> new RefElementNode(myEntity, presentation));
+      return ReadAction.compute(() -> presentation.createRefNode(myEntity));
     }
 
     @Nullable
@@ -172,7 +172,7 @@ public abstract class InspectionRVContentProvider {
                                @NotNull Function<T, RefEntityContainer<?>> computeContainer,
                                final boolean showStructure,
                                final UnaryOperator<InspectionTreeNode> createdNodesConsumer) {
-    final Map<String, Map<String, InspectionPackageNode>> module2PackageMap = new HashMap<String, Map<String, InspectionPackageNode>>();
+    final Map<String, Map<String, InspectionPackageNode>> module2PackageMap = new HashMap<>();
     boolean supportStructure = showStructure;
     final MultiMap<InspectionPackageNode, RefEntityContainer<?>> packageDescriptors = new MultiMap<>();
     for (String packageName : packageContents.keySet()) {
@@ -183,7 +183,7 @@ public abstract class InspectionRVContentProvider {
         final String moduleName = showStructure ? container.getModule() : null;
         Map<String, InspectionPackageNode> packageNodes = module2PackageMap.get(moduleName);
         if (packageNodes == null) {
-          packageNodes = new HashMap<String, InspectionPackageNode>();
+          packageNodes = new HashMap<>();
           module2PackageMap.put(moduleName, packageNodes);
         }
         InspectionPackageNode pNode = packageNodes.get(packageName);
@@ -197,7 +197,7 @@ public abstract class InspectionRVContentProvider {
     }
 
     if (supportStructure) {
-      final HashMap<String, InspectionModuleNode> moduleNodes = new HashMap<String, InspectionModuleNode>();
+      final HashMap<String, InspectionModuleNode> moduleNodes = new HashMap<>();
       for (final String moduleName : module2PackageMap.keySet()) {
         final Map<String, InspectionPackageNode> packageNodes = module2PackageMap.get(moduleName);
         InspectionModuleNode moduleNode = moduleNodes.get(moduleName);
@@ -260,7 +260,7 @@ public abstract class InspectionRVContentProvider {
             }
             LOG.assertTrue(childNode instanceof RefElementNode, childNode.getClass().getName());
             final RefElementNode elementNode = (RefElementNode)childNode;
-            final Set<RefElementNode> parentNodes = new LinkedHashSet<RefElementNode>();
+            final Set<RefElementNode> parentNodes = new LinkedHashSet<>();
             if (pNode.getPackageName() != null) {
               parentNodes.add(elementNode);
             } else {
@@ -280,7 +280,7 @@ public abstract class InspectionRVContentProvider {
               }
             }
             for (RefElementNode parentNode : parentNodes) {
-              final List<ProblemDescriptionNode> nodes = new ArrayList<ProblemDescriptionNode>();
+              final List<ProblemDescriptionNode> nodes = new ArrayList<>();
               TreeUtil.traverse(parentNode, new TreeUtil.Traverse() {
                 @Override
                 public boolean accept(final Object node) {
@@ -310,9 +310,9 @@ public abstract class InspectionRVContentProvider {
                                                   @NotNull InspectionToolPresentation presentation,
                                                   final InspectionTreeNode parentNode) {
     final RefElementNode nodeToBeAdded = container.createNode(presentation);
-    final Ref<Boolean> firstLevel = new Ref<Boolean>(true);
+    final Ref<Boolean> firstLevel = new Ref<>(true);
     RefElementNode prevNode = null;
-    final Ref<RefElementNode> result = new Ref<RefElementNode>();
+    final Ref<RefElementNode> result = new Ref<>();
     while (true) {
       final RefElementNode currentNode = firstLevel.get() ? nodeToBeAdded : container.createNode(presentation);
       final RefEntityContainer finalContainer = container;

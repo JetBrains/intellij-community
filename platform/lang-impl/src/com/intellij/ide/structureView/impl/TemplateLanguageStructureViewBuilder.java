@@ -139,7 +139,7 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
   }
 
   private static List<PsiAnchor> collectAnchors(final Object[] expandedElements) {
-    List<PsiAnchor> expanded = new ArrayList<PsiAnchor>(expandedElements == null ? 0 : expandedElements.length);
+    List<PsiAnchor> expanded = new ArrayList<>(expandedElements == null ? 0 : expandedElements.length);
     if (expandedElements != null) {
       for (Object element : expandedElements) {
         if (element instanceof PsiElement && ((PsiElement) element).isValid()) {
@@ -154,7 +154,7 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
   @NotNull
   public StructureView createStructureView(FileEditor fileEditor, @NotNull Project project) {
     myFileEditor = fileEditor;
-    List<StructureViewComposite.StructureViewDescriptor> viewDescriptors = new ArrayList<StructureViewComposite.StructureViewDescriptor>();
+    List<StructureViewComposite.StructureViewDescriptor> viewDescriptors = new ArrayList<>();
     final FileViewProvider provider = getViewProvider();
     assert provider != null : myVirtualFile;
 
@@ -173,7 +173,7 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
       final Language dataLanguage = ((TemplateLanguageFileViewProvider)provider).getTemplateDataLanguage();
       for (final Language language : provider.getLanguages()) {
         if (language != dataLanguage && language != provider.getBaseLanguage()) {
-          ContainerUtil.addIfNotNull(createBaseLanguageStructureView(fileEditor, language), viewDescriptors);
+          ContainerUtil.addIfNotNull(viewDescriptors, createBaseLanguageStructureView(fileEditor, language));
         }
       }
     }

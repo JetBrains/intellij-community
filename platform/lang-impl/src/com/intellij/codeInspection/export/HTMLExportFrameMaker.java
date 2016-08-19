@@ -37,7 +37,7 @@ import java.util.List;
 public class HTMLExportFrameMaker {
   private final String myRootFolder;
   private final Project myProject;
-  private final List<InspectionToolWrapper> myInspectionToolWrappers = new ArrayList<InspectionToolWrapper>();
+  private final List<InspectionToolWrapper> myInspectionToolWrappers = new ArrayList<>();
 
   public HTMLExportFrameMaker(String rootFolder, Project project) {
     myRootFolder = rootFolder;

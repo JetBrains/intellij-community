@@ -56,7 +56,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
   private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.empty.method.display.name");
   @NonNls private static final String SHORT_NAME = "EmptyMethod";
 
-  private final BidirectionalMap<Boolean, QuickFix> myQuickFixes = new BidirectionalMap<Boolean, QuickFix>();
+  private final BidirectionalMap<Boolean, QuickFix> myQuickFixes = new BidirectionalMap<>();
 
   public final JDOMExternalizableStringList EXCLUDE_ANNOS = new JDOMExternalizableStringList();
   @SuppressWarnings("PublicField")
@@ -136,7 +136,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     }
 
     if (message != null) {
-      final ArrayList<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
+      final ArrayList<LocalQuickFix> fixes = new ArrayList<>();
       fixes.add(getFix(processor, needToDeleteHierarchy));
       if (globalContext instanceof GlobalInspectionContextBase && ((GlobalInspectionContextBase)globalContext).getCurrentProfile().getSingleTool() == null) {
         SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(refMethod.getElement(), qualifiedName -> {
@@ -323,7 +323,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class, false);
       if (psiMethod != null) {
-        final List<PsiElement> psiElements = new ArrayList<PsiElement>();
+        final List<PsiElement> psiElements = new ArrayList<>();
         psiElements.add(psiMethod);
         if (Boolean.valueOf(myHint).booleanValue()) {
           final Query<Pair<PsiMethod, PsiMethod>> query = AllOverridingMethodsSearch.search(psiMethod.getContainingClass());
@@ -358,7 +358,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
 
     @Override
     public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
-       applyFix(project, new ProblemDescriptor[]{descriptor}, new ArrayList<PsiElement>(), null);
+       applyFix(project, new ProblemDescriptor[]{descriptor}, new ArrayList<>(), null);
     }
 
     @Override

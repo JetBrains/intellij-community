@@ -159,7 +159,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
       String text = getConsoleEditor().getDocument().getText();
 
       setInputText(code);
-      myExecuteActionHandler.runExecuteAction(PythonConsoleView.this);
+      myExecuteActionHandler.runExecuteAction(this);
 
       if (!StringUtil.isEmpty(text)) {
         setInputText(text);

@@ -50,7 +50,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class EmmetPreviewHint extends LightweightHint implements Disposable {
-  private static final Key<EmmetPreviewHint> KEY = new Key<EmmetPreviewHint>("emmet.preview");
+  private static final Key<EmmetPreviewHint> KEY = new Key<>("emmet.preview");
   @NotNull private final Editor myParentEditor;
   @NotNull private final Editor myEditor;
   @NotNull private final Alarm myAlarm = new Alarm(this);
@@ -193,7 +193,7 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
   @Override
   public void hide(boolean ok) {
     super.hide(ok);
-    ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(EmmetPreviewHint.this));
+    ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(this));
   }
 
   @Override
@@ -222,13 +222,13 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
     boolean p1Ok = p1.y + getComponent().getPreferredSize().height < layeredPane.getHeight();
     boolean p2Ok = p2.y >= 0;
 
-    if (p1Ok) return new Pair<Point, Short>(p1, HintManager.UNDER);
-    if (p2Ok) return new Pair<Point, Short>(p2, HintManager.ABOVE);
+    if (p1Ok) return new Pair<>(p1, HintManager.UNDER);
+    if (p2Ok) return new Pair<>(p2, HintManager.ABOVE);
 
     int underSpace = layeredPane.getHeight() - p1.y;
     int aboveSpace = p2.y;
     return aboveSpace > underSpace
-           ? new Pair<Point, Short>(new Point(p2.x, 0), HintManager.UNDER)
-           : new Pair<Point, Short>(p1, HintManager.ABOVE);
+           ? new Pair<>(new Point(p2.x, 0), HintManager.UNDER)
+           : new Pair<>(p1, HintManager.ABOVE);
   }
 }

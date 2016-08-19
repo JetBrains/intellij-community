@@ -55,7 +55,7 @@ public class MigrationNode extends AbstractTreeNode<TypeMigrationUsageInfo> impl
 
     Set<MigrationNode> alreadyAdded = myProcessed.get(info);
     if (alreadyAdded == null) {
-      alreadyAdded = new HashSet<MigrationNode>();
+      alreadyAdded = new HashSet<>();
       myProcessed.put(info, alreadyAdded);
       myInfo = info;
     }
@@ -74,7 +74,7 @@ public class MigrationNode extends AbstractTreeNode<TypeMigrationUsageInfo> impl
   @NotNull
   public Collection<? extends AbstractTreeNode> getChildren() {
     if (myCachedChildren == null) {
-      myCachedChildren = new ArrayList<MigrationNode>();
+      myCachedChildren = new ArrayList<>();
       
       final PsiElement element = myInfo.getElement();
       if (element != null) {
@@ -92,7 +92,7 @@ public class MigrationNode extends AbstractTreeNode<TypeMigrationUsageInfo> impl
             final TypeMigrationUsageInfo info = root.getFirst();
 
             if (myParents.contains(info)) continue;
-            final HashSet<TypeMigrationUsageInfo> parents = new HashSet<TypeMigrationUsageInfo>(myParents);
+            final HashSet<TypeMigrationUsageInfo> parents = new HashSet<>(myParents);
             parents.add(info);
 
             final MigrationNode migrationNode =

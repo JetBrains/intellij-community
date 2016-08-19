@@ -196,7 +196,7 @@ public class ApplyPatchAction extends DumbAwareAction {
 
     if (localContent == null) return ApplyPatchStatus.FAILURE;
 
-    final Ref<ApplyPatchStatus> applyPatchStatusReference = new Ref<ApplyPatchStatus>();
+    final Ref<ApplyPatchStatus> applyPatchStatusReference = new Ref<>();
     Consumer<MergeResult> callback = new Consumer<MergeResult>() {
       @Override
       public void consume(MergeResult result) {

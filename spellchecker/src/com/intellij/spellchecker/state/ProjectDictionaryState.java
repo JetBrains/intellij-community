@@ -32,7 +32,7 @@ import java.util.Set;
 @State(name = "ProjectDictionaryState", storages = @Storage(value = "dictionaries", stateSplitter = ProjectDictionarySplitter.class))
 public class ProjectDictionaryState implements PersistentStateComponent<ProjectDictionaryState> {
   @Property(surroundWithTag = false) @AbstractCollection(surroundWithTag = false, elementTypes = DictionaryState.class)
-  public List<DictionaryState> dictionaryStates = new ArrayList<DictionaryState>();
+  public List<DictionaryState> dictionaryStates = new ArrayList<>();
 
   private ProjectDictionary projectDictionary;
 
@@ -76,7 +76,7 @@ public class ProjectDictionaryState implements PersistentStateComponent<ProjectD
   }
 
   private void retrieveProjectDictionaries() {
-    Set<EditableDictionary> dictionaries = new THashSet<EditableDictionary>();
+    Set<EditableDictionary> dictionaries = new THashSet<>();
     if (dictionaryStates != null) {
       for (DictionaryState dictionaryState : dictionaryStates) {
         dictionaryState.loadState(dictionaryState);

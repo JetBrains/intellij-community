@@ -101,9 +101,12 @@ public abstract class PsiBasedStripTrailingSpacesFilter implements StripTrailing
     return null;
   }
 
-  protected final void disableRange(@NotNull TextRange range) {
+  protected final void disableRange(@NotNull TextRange range, boolean includeEndLine) {
     int startLine = myDocument.getLineNumber(range.getStartOffset());
     int endLine = myDocument.getLineNumber(range.getEndOffset());
+    if (includeEndLine) {
+      endLine++;
+    }
     myDisabledLinesBitSet.set(startLine, endLine);
   }
 }

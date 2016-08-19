@@ -15,22 +15,21 @@
  */
 package org.jetbrains.intellij.build
 
+import groovy.transform.CompileStatic
+import groovy.transform.Immutable
+
 
 /**
- * @author nik
- */
-
-/**
- * The necessary software for MacBuilder:
+ * The purpose of using Mac host is preparation and signing OS X specific artifacts.
+ * The necessary software for Mac host:
  *    OS X 10.9
  *    FTP server (it is part of OS X installation).
  *    Perl 5.16 (it is part of OS X installation).
  *    DSStore perl module
  *    Private key and digital certificate for signing apps.
  *
- *  How to setup MacBuilder:
+ *  How to setup Mac host:
  *  1. Install OS X 10.9.
- *     The dmg image can be taken from file://///msdc.labs.intellij.net/Distrib/System/Mac/
  *  2. Import private key and signing certificate
  *     https://developer.apple.com/library/mac/documentation/Security/Conceptual/CodeSigningGuide/Procedures/Procedures.html
  *  3. Enable FTP Server. Run the command in terminal:
@@ -42,21 +41,23 @@ package org.jetbrains.intellij.build
  *  7. Set environment variable VERSIONER_PERL_PREFER_32_BIT to "true"
  *     http://apple.stackexchange.com/questions/83109/macosx-10-8-and-32-bit-perl-modules
  */
+@CompileStatic
+@Immutable
 public class MacHostProperties {
   /**
-   * MacBuilder host name.
+   * Mac host host name.
    */
-  String host
+  final String host
 
   /**
-   * userName and password for access to MacBuilder via FTP
+   * userName and password for access to Mac host via FTP
    */
-  String userName
-  String password
+  final String userName
+  final String password
 
   /**
    * Full name of a keychain identity (Applications > Utilities > Keychain Access).
    * More info in SIGNING IDENTITIES (https://developer.apple.com/legacy/library/documentation/Darwin/Reference/ManPages/man1/codesign.1.html)
    */
-  String codesignString
+  final String codesignString
 }

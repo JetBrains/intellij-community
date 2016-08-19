@@ -74,10 +74,10 @@ public class ChangeExtendsImplementsQuickFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    Set<String> classes = new LinkedHashSet<String>();
-    Set<String> interfaces = new LinkedHashSet<String>();
-    Set<String> unknownClasses = new LinkedHashSet<String>();
-    Set<String> unknownInterfaces = new LinkedHashSet<String>();
+    Set<String> classes = new LinkedHashSet<>();
+    Set<String> interfaces = new LinkedHashSet<>();
+    Set<String> unknownClasses = new LinkedHashSet<>();
+    Set<String> unknownInterfaces = new LinkedHashSet<>();
 
     if (myExtendsClause != null) {
       collectRefs(myExtendsClause.getReferenceElementsGroovy(), classes, interfaces, myClass.isInterface() ? unknownInterfaces : unknownClasses);

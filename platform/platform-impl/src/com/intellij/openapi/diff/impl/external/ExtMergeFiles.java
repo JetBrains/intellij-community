@@ -61,7 +61,7 @@ public class ExtMergeFiles extends BaseExternalTool {
   @Override
   @NotNull
   protected List<String> getParameters(@NotNull DiffRequest request) throws Exception {
-    final List<String> params = new ArrayList<String>();
+    final List<String> params = new ArrayList<>();
     String result = ((MergeRequestImpl)request).getResultContent().getFile().getPath();
     String left = externalize(request, 0).getContentFile().getPath();
     String base = new ExternalToolContentExternalizer(request, 1).getContentFile().getPath();

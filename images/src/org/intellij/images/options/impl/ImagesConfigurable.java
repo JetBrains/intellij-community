@@ -24,7 +24,6 @@ import org.intellij.images.options.Options;
 import org.intellij.images.options.OptionsManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.beans.PropertyChangeEvent;
@@ -99,10 +98,5 @@ public final class ImagesConfigurable extends BaseConfigurableWithChangeSupport 
   @NonNls
   public String getId() {
     return "Images";
-  }
-
-  @Nullable
-  public Runnable enableSearch(String option) {
-    return null;
   }
 }

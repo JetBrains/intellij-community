@@ -72,8 +72,8 @@ public class DiffTest extends TestCase {
   }
 
   public void testPerformance() throws FilesTooBigForDiffException {
-    ArrayList<String> first = new ArrayList<String>();
-    ArrayList<String> second = new ArrayList<String>();
+    ArrayList<String> first = new ArrayList<>();
+    ArrayList<String> second = new ArrayList<>();
     int max = 1000;
     for (int i = 0; i < max; i++) {
       first.add(Integer.toString(i));

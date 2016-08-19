@@ -29,7 +29,7 @@ public abstract class DocStringBuilder<This extends DocStringBuilder> {
   private final List<String> myLines;
   
   public DocStringBuilder() {
-    myLines = new ArrayList<String>();
+    myLines = new ArrayList<>();
   }
 
   @NotNull

@@ -16,7 +16,6 @@
 package com.jetbrains.python.packaging.requirement;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public enum PyRequirementRelation {
 
@@ -40,33 +39,5 @@ public enum PyRequirementRelation {
   @Override
   public String toString() {
     return myValue;
-  }
-
-  @Nullable
-  public static PyRequirementRelation fromString(@NotNull String value) {
-    for (PyRequirementRelation relation : PyRequirementRelation.values()) {
-      if (relation.myValue.equals(value)) {
-        return relation;
-      }
-    }
-    return null;
-  }
-
-  public boolean isSuccessful(int comparisonResult) {
-    switch (this) {
-      case LT:
-        return comparisonResult < 0;
-      case LTE:
-        return comparisonResult <= 0;
-      case GT:
-        return comparisonResult > 0;
-      case GTE:
-        return comparisonResult >= 0;
-      case EQ:
-        return comparisonResult == 0;
-      case NE:
-        return comparisonResult != 0;
-    }
-    return false;
   }
 }

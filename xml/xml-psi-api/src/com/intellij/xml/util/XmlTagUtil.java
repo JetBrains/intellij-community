@@ -41,7 +41,7 @@ public class XmlTagUtil extends XmlTagUtilBase {
   private static final Map<String, Character> ourCharacterEntities;
 
   static {
-    ourCharacterEntities = new HashMap<String, Character>();
+    ourCharacterEntities = new HashMap<>();
     ourCharacterEntities.put("lt", '<');
     ourCharacterEntities.put("gt", '>');
     ourCharacterEntities.put("apos", '\'');

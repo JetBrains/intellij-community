@@ -65,7 +65,7 @@ public class PyMoveModuleMembersHelper {
    * {@link #isTargetOfSimpleAssignment(PsiElement)}.
    */
   public static List<PyElement> getTopLevelModuleMembers(@NotNull PyFile pyFile) {
-    final List<PyElement> result = new ArrayList<PyElement>();
+    final List<PyElement> result = new ArrayList<>();
     for (PyTargetExpression attr : pyFile.getTopLevelAttributes()) {
       if (isMovableModuleMember(attr)) {
         result.add(attr);

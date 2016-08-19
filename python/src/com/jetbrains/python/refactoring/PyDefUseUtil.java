@@ -59,12 +59,12 @@ public class PyDefUseUtil {
       }
     }
     final Collection<Instruction> result = getLatestDefs(varName, instructions, instr, acceptTypeAssertions, acceptImplicitImports);
-    return new ArrayList<Instruction>(result);
+    return new ArrayList<>(result);
   }
 
   private static Collection<Instruction> getLatestDefs(final String varName, final Instruction[] instructions, final int instr,
                                                        final boolean acceptTypeAssertions, final boolean acceptImplicitImports) {
-    final Collection<Instruction> result = new LinkedHashSet<Instruction>();
+    final Collection<Instruction> result = new LinkedHashSet<>();
     ControlFlowUtil.iteratePrev(instr, instructions,
                                 instruction -> {
                                   final PsiElement element = instruction.getElement();

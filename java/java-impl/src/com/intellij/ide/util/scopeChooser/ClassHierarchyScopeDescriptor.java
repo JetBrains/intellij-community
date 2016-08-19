@@ -72,7 +72,7 @@ public class ClassHierarchyScopeDescriptor extends ScopeDescriptor {
       if (aClass == null) {
         myCachedScope = GlobalSearchScope.EMPTY_SCOPE;
       } else {
-        final List<PsiElement> classesToSearch = new LinkedList<PsiElement>();
+        final List<PsiElement> classesToSearch = new LinkedList<>();
         classesToSearch.add(aClass);
 
         classesToSearch.addAll(ClassInheritorsSearch.search(aClass).findAll());

@@ -44,8 +44,8 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 public class GenerateSchemaFromInstanceDocumentAction extends AnAction {
-  private static final Map<String, String> DESIGN_TYPES = new HashMap<String, String>();
-  private static final Map<String, String> CONTENT_TYPES = new HashMap<String, String>();
+  private static final Map<String, String> DESIGN_TYPES = new HashMap<>();
+  private static final Map<String, String> CONTENT_TYPES = new HashMap<>();
   static {
     DESIGN_TYPES.put(GenerateSchemaFromInstanceDocumentDialog.LOCAL_ELEMENTS_GLOBAL_COMPLEX_TYPES, "vb");
     DESIGN_TYPES.put(GenerateSchemaFromInstanceDocumentDialog.LOCAL_ELEMENTS_TYPES, "ss");
@@ -94,7 +94,7 @@ public class GenerateSchemaFromInstanceDocumentAction extends AnAction {
       return;
     }
 
-    @NonNls List<String> parameters = new LinkedList<String>();
+    @NonNls List<String> parameters = new LinkedList<>();
     parameters.add("-design");
     parameters.add(DESIGN_TYPES.get(dialog.getDesignType()));
 

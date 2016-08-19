@@ -49,7 +49,7 @@ public final class CommandLineSuggestionTest extends PyTestCase {
    */
   private void ensureSuggestions(@NotNull final String initialPositionText, @NotNull final String... expectedSuggestions) {
     moveByText(initialPositionText);
-    final Set<String> completions = new HashSet<String>();
+    final Set<String> completions = new HashSet<>();
     for (final LookupElement element : myFixture.completeBasic()) {
       completions.add(element.getLookupString());
     }

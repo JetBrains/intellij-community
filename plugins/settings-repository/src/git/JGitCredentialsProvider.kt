@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
  */
 package org.jetbrains.settingsRepository.git
 
+import com.intellij.credentialStore.macOs.isMacOsCredentialStoreSupported
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NotNullLazyValue
+import com.intellij.util.nullize
 import com.intellij.util.ui.UIUtil
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.transport.CredentialItem
@@ -26,9 +28,7 @@ import org.eclipse.jgit.transport.URIish
 import org.jetbrains.keychain.Credentials
 import org.jetbrains.keychain.CredentialsStore
 import org.jetbrains.keychain.isFulfilled
-import org.jetbrains.keychain.isOSXCredentialsStoreSupported
 import org.jetbrains.settingsRepository.LOG
-import org.jetbrains.settingsRepository.nullize
 import org.jetbrains.settingsRepository.showAuthenticationForm
 
 class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<CredentialsStore>, private val repository: Repository) : CredentialsProvider() {
@@ -94,7 +94,7 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
     }
     else {
       // we open password protected SSH key file using OS X keychain - "git credentials" is pointless in this case
-      if (sshKeyFile == null || !isOSXCredentialsStoreSupported) {
+      if (sshKeyFile == null || !isMacOsCredentialStoreSupported) {
         if (credentialsFromGit == null) {
           credentialsFromGit = getCredentialsUsingGit(uri, repository)
         }

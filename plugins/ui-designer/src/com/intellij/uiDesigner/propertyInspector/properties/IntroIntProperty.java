@@ -54,7 +54,7 @@ public final class IntroIntProperty extends IntrospectedProperty<Integer> {
   @NotNull
   public PropertyRenderer<Integer> getRenderer() {
     if (myRenderer == null) {
-      myRenderer = new LabelPropertyRenderer<Integer>();
+      myRenderer = new LabelPropertyRenderer<>();
     }
     return myRenderer;
   }

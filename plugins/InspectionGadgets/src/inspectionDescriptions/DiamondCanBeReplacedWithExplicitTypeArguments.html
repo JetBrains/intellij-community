@@ -1,0 +1,10 @@
+<html>
+<body>
+This inspection reports instantiation of generic classes where <b>&lt;&gt;</b> (diamond) is used instead of type parameters.
+<p>The quick fix replaces the <b>&lt;&gt;</b> (diamond) with the explicit type parameters.
+<p>Example of use of the diamond:
+<pre><code>List &lt;String&gt; list = new ArrayList&lt;&gt;()</code></pre>
+<p>The statement above is replaced with the following:
+<pre><code>List &lt;String&gt; list = new ArrayList&lt;String&gt;()</code></pre>
+</body>
+</html>

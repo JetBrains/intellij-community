@@ -56,7 +56,7 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
   @NotNull
   @Override
   public List<BalloonImpl.ActionButton> createActions() {
-    myActions = new ArrayList<BalloonImpl.ActionButton>();
+    myActions = new ArrayList<>();
 
     if (!myLayoutData.showSettingButton || myDisplayGroupId == null ||
         !NotificationsConfigurationImpl.getInstanceImpl().isRegistered(myDisplayGroupId)) {

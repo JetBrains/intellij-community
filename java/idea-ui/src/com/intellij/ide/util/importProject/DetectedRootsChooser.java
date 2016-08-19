@@ -141,8 +141,8 @@ public class DetectedRootsChooser {
   private final EventDispatcher<RootSelectionListener> myDispatcher = EventDispatcher.create(RootSelectionListener.class);
 
   public DetectedRootsChooser() {
-    myModel = new ListTableModel<DetectedRootData>();
-    myTable = new TableView<DetectedRootData>(myModel);
+    myModel = new ListTableModel<>();
+    myTable = new TableView<>(myModel);
     myTable.setTableHeader(null);
     myTable.setShowGrid(false);
     myComponent = ScrollPaneFactory.createScrollPane(myTable);
@@ -193,7 +193,7 @@ public class DetectedRootsChooser {
   }
 
   public List<DetectedRootData> getMarkedElements() {
-    final List<DetectedRootData> result = new ArrayList<DetectedRootData>();
+    final List<DetectedRootData> result = new ArrayList<>();
     for (DetectedRootData data : myModel.getItems()) {
       if (data.isIncluded()) {
         result.add(data);
@@ -203,7 +203,7 @@ public class DetectedRootsChooser {
   }
 
   public void setElements(List<? extends DetectedRootData> roots) {
-    Set<String> rootTypes = new HashSet<String>();
+    Set<String> rootTypes = new HashSet<>();
     for (DetectedRootData root : roots) {
       for (DetectedProjectRoot projectRoot : root.getAllRoots()) {
         rootTypes.add(projectRoot.getRootTypeName());
@@ -219,7 +219,7 @@ public class DetectedRootsChooser {
     column.setPreferredWidth(width);
     column.setMaxWidth(width);
     myTable.updateColumnSizes();
-    List<DetectedRootData> sortedRoots = new ArrayList<DetectedRootData>(roots);
+    List<DetectedRootData> sortedRoots = new ArrayList<>(roots);
     Collections.sort(sortedRoots, (o1, o2) -> o1.getDirectory().compareTo(o2.getDirectory()));
     myModel.setItems(sortedRoots);
   }

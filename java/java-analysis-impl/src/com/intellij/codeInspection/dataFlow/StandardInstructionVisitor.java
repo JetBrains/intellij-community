@@ -40,11 +40,11 @@ import static com.intellij.psi.JavaTokenType.*;
 public class StandardInstructionVisitor extends InstructionVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.StandardInstructionVisitor");
   private static final Object ANY_VALUE = new Object();
-  private final Set<BinopInstruction> myReachable = new THashSet<BinopInstruction>();
-  private final Set<BinopInstruction> myCanBeNullInInstanceof = new THashSet<BinopInstruction>();
+  private final Set<BinopInstruction> myReachable = new THashSet<>();
+  private final Set<BinopInstruction> myCanBeNullInInstanceof = new THashSet<>();
   private final MultiMap<PushInstruction, Object> myPossibleVariableValues = MultiMap.createSet();
-  private final Set<PsiElement> myNotToReportReachability = new THashSet<PsiElement>();
-  private final Set<InstanceofInstruction> myUsefulInstanceofs = new THashSet<InstanceofInstruction>();
+  private final Set<PsiElement> myNotToReportReachability = new THashSet<>();
+  private final Set<InstanceofInstruction> myUsefulInstanceofs = new THashSet<>();
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final FactoryMap<MethodCallInstruction, Nullness> myReturnTypeNullability = new FactoryMap<MethodCallInstruction, Nullness>() {
     @Override
@@ -426,7 +426,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     myCanBeNullInInstanceof.add(instruction);
 
-    ArrayList<DfaInstructionState> states = new ArrayList<DfaInstructionState>();
+    ArrayList<DfaInstructionState> states = new ArrayList<>();
 
     final DfaMemoryState trueCopy = memState.createCopy();
     if (trueCopy.applyCondition(dfaRelation)) {

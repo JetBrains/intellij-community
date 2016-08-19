@@ -60,9 +60,9 @@ public class XmlPropertiesFileImpl extends XmlPropertiesFile {
   private void ensurePropertiesLoaded() {
     while (myFileModificationStamp != myFile.getModificationStamp() || myPropertiesMap == null) {
       myFileModificationStamp = myFile.getModificationStamp();
-      MostlySingularMultiMap<String, IProperty> propertiesMap = new MostlySingularMultiMap<String, IProperty>();
+      MostlySingularMultiMap<String, IProperty> propertiesMap = new MostlySingularMultiMap<>();
       XmlTag rootTag = myFile.getRootTag();
-      final List<IProperty> propertiesOrder = new ArrayList<IProperty>();
+      final List<IProperty> propertiesOrder = new ArrayList<>();
       if (rootTag != null) {
         XmlTag[] entries = rootTag.findSubTags(ENTRY_TAG_NAME);
         for (XmlTag entry : entries) {
@@ -217,7 +217,7 @@ public class XmlPropertiesFileImpl extends XmlPropertiesFile {
   @NotNull
   @Override
   public Map<String, String> getNamesMap() {
-    Map<String, String> result = new THashMap<String, String>();
+    Map<String, String> result = new THashMap<>();
     for (IProperty property : getProperties()) {
       result.put(property.getUnescapedKey(), property.getValue());
     }

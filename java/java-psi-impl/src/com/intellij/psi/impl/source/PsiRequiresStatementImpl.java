@@ -17,14 +17,23 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaModuleReferenceElement;
 import com.intellij.psi.PsiRequiresStatement;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiRequiresStatementImpl extends CompositePsiElement implements PsiRequiresStatement {
   public PsiRequiresStatementImpl() {
     super(JavaElementType.REQUIRES_STATEMENT);
+  }
+
+  @Nullable
+  @Override
+  public PsiJavaModuleReferenceElement getReferenceElement() {
+    return PsiTreeUtil.getChildOfType(this, PsiJavaModuleReferenceElement.class);
   }
 
   @Override

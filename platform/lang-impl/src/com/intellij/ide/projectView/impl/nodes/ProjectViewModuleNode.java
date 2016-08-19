@@ -50,7 +50,7 @@ public class ProjectViewModuleNode extends AbstractModuleNode {
     ModuleFileIndex moduleFileIndex = rootManager.getFileIndex();
 
     final VirtualFile[] contentRoots = rootManager.getContentRoots();
-    final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>(contentRoots.length + 1);
+    final List<AbstractTreeNode> children = new ArrayList<>(contentRoots.length + 1);
     final PsiManager psiManager = PsiManager.getInstance(module.getProject());
     for (final VirtualFile contentRoot : contentRoots) {
       if (!moduleFileIndex.isInContent(contentRoot)) continue;

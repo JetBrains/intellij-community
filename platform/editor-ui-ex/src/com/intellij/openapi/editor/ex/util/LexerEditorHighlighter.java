@@ -51,7 +51,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.ex.util.LexerEditorHighlighter");
   private HighlighterClient myEditor;
   private final Lexer myLexer;
-  private final Map<IElementType, TextAttributes> myAttributesMap = new HashMap<IElementType, TextAttributes>();
+  private final Map<IElementType, TextAttributes> myAttributesMap = new HashMap<>();
   private final SegmentArrayWithData mySegments;
   private final SyntaxHighlighter myHighlighter;
   private EditorColorsScheme myScheme;

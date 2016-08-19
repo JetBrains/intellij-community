@@ -30,7 +30,7 @@ import java.util.List;
 public class VcsActionPromoter implements ActionPromoter {
   @Override
   public List<AnAction> promote(List<AnAction> actions, DataContext context) {
-    List<AnAction> list = new ArrayList<AnAction>(0);
+    List<AnAction> list = new ArrayList<>(0);
 
     for (AnAction action : actions) {
       if (action instanceof RollbackLineStatusAction) {

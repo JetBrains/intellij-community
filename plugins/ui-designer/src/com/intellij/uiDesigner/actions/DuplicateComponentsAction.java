@@ -48,8 +48,8 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
     FormEditingUtil.remapToActionTargets(selection);
     RadContainer parent = FormEditingUtil.getSelectionParent(selection);
     assert parent != null;
-    List<RadComponent> duplicates = new ArrayList<RadComponent>();
-    Map<RadComponent, RadComponent> duplicateMap = new HashMap<RadComponent, RadComponent>();
+    List<RadComponent> duplicates = new ArrayList<>();
+    Map<RadComponent, RadComponent> duplicateMap = new HashMap<>();
     TIntHashSet insertedRows = new TIntHashSet();
     boolean incrementRow = true;
     if (selection.size() > 1 && canDuplicate(selection, false) && FormEditingUtil.getSelectionBounds(selection).width == 1) {

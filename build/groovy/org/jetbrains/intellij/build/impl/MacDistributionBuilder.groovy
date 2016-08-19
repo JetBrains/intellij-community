@@ -38,6 +38,7 @@ class MacDistributionBuilder {
   }
 
   public layoutMac(File ideaPropertiesFile) {
+    buildContext.messages.progress("Building distributions for Mac OS")
     def docTypes = (customizer.associateIpr ? """
       <dict>
         <key>CFBundleTypeExtensions</key>
@@ -60,13 +61,13 @@ class MacDistributionBuilder {
     layoutMacApp(ideaPropertiesFile, customIdeaProperties, docTypes)
     customizer.copyAdditionalFiles(buildContext, macDistPath)
     def macZipPath = buildMacZip()
-    if (buildContext.macHostProperties == null) {
+    if (buildContext.proprietaryBuildTools.macHostProperties == null) {
       buildContext.messages.info("A Mac OS build agent isn't configured, dmg artifact won't be produced")
       buildContext.notifyArtifactBuilt(macZipPath)
     }
     else {
       buildContext.executeStep("Build dmg artifact for Mac OS X", BuildOptions.MAC_DMG_STEP) {
-        MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.macHostProperties, macZipPath)
+        MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath)
         buildContext.ant.delete(file: macZipPath)
       }
     }
@@ -215,6 +216,7 @@ class MacDistributionBuilder {
       def allPaths = [buildContext.paths.distAll, macDistPath]
       String zipRoot = "${customizer.rootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)}/Contents"
       def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.baseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}.mac.zip"
+      buildContext.messages.progress("Building zip archive for Mac OS")
       buildContext.ant.zip(zipfile: targetPath) {
         allPaths.each {
           zipfileset(dir: it, prefix: zipRoot) {
@@ -307,11 +309,10 @@ class MacDistributionBuilder {
        "java.endorsed.dirs"                    : "",
        "idea.smooth.progress"                  : "false",
        "apple.laf.useScreenMenuBar"            : "true",
+       "apple.awt.fileDialogForDirectories"    : "true",
        "apple.awt.graphics.UseQuartz"          : "true",
        "apple.awt.fullscreencapturealldisplays": "false"]
-    if (buildContext.productProperties.platformPrefix != null
-//todo[nik] remove later. This is added to keep current behavior (platform prefix for CE is set in MainImpl anyway)
-      && buildContext.productProperties.platformPrefix != "Idea") {
+    if (buildContext.productProperties.platformPrefix != null) {
       properties["idea.platform.prefix"] = buildContext.productProperties.platformPrefix
     }
 

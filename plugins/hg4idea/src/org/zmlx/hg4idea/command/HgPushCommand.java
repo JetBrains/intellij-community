@@ -62,7 +62,7 @@ public class HgPushCommand {
   }
 
   public HgCommandResult executeInCurrentThread() {
-    final List<String> arguments = new LinkedList<String>();
+    final List<String> arguments = new LinkedList<>();
     if (!StringUtil.isEmptyOrSpaces(myRevision)) {
       arguments.add("-r");
       arguments.add(myRevision);

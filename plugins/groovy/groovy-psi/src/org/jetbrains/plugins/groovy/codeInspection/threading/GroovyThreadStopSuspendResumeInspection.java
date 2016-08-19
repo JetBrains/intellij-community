@@ -31,7 +31,7 @@ import java.util.Set;
 
 public class GroovyThreadStopSuspendResumeInspection extends BaseInspection {
 
-  private static final Set<String> METHOD_NAMES = new HashSet<String>();
+  private static final Set<String> METHOD_NAMES = new HashSet<>();
 
   static {
     METHOD_NAMES.add("stop");

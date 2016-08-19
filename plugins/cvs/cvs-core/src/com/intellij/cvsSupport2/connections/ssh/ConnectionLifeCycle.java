@@ -37,7 +37,7 @@ class ConnectionLifeCycle {
     myCheckGranularity = checkGranularity;
     myFactory = factory;
     myState = LifeStages.NOT_EXIST;
-    mySupportsPing = new Ref<Boolean>();
+    mySupportsPing = new Ref<>();
     myLastTs = -1;
     SshLogger.debug("Connection lifecycle created");
   }

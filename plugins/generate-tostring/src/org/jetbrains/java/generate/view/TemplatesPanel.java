@@ -85,7 +85,7 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
 
   public TemplatesPanel(Project project, TemplatesManager templatesManager) {
         super(NAMER, FACTORY, CLONER, COMPARER,
-                new ArrayList<TemplateResource>(templatesManager.getAllTemplates()));
+              new ArrayList<>(templatesManager.getAllTemplates()));
 
         //ServiceManager.getService(project, MasterDetailsStateService.class).register("ToStringTemplates.UI", this);
     myProject = project;

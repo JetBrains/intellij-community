@@ -124,7 +124,7 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
 
   @NotNull
   protected List<Filter> createFilters() {
-    final ArrayList<Filter> result = new ArrayList<Filter>();
+    final ArrayList<Filter> result = new ArrayList<>();
     addDateFilter(USE_DATE_BEFORE_FILTER, getDateBefore(), result, true);
     addDateFilter(USE_DATE_AFTER_FILTER, getDateAfter(), result, false);
 

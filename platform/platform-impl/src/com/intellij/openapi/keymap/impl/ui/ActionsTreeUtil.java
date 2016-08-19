@@ -89,11 +89,11 @@ public class ActionsTreeUtil {
     Group pluginsGroup = new Group(KeyMapBundle.message("plugins.group.title"), null, null);
     final KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
     ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
-    final List<IdeaPluginDescriptor> plugins = new ArrayList<IdeaPluginDescriptor>();
+    final List<IdeaPluginDescriptor> plugins = new ArrayList<>();
     Collections.addAll(plugins, PluginManagerCore.getPlugins());
     Collections.sort(plugins, (o1, o2) -> o1.getName().compareTo(o2.getName()));
 
-    List<PluginId> collected = new ArrayList<PluginId>();
+    List<PluginId> collected = new ArrayList<>();
     for (IdeaPluginDescriptor plugin : plugins) {
       collected.add(plugin.getPluginId());
       Group pluginGroup;
@@ -280,7 +280,7 @@ public class ActionsTreeUtil {
   private static Group createEditorActionsGroup(Condition<AnAction> filtered) {
     ActionManager actionManager = ActionManager.getInstance();
     DefaultActionGroup editorGroup = (DefaultActionGroup)actionManager.getActionOrStub(IdeActions.GROUP_EDITOR);
-    ArrayList<String> ids = new ArrayList<String>();
+    ArrayList<String> ids = new ArrayList<>();
 
     addEditorActions(filtered, editorGroup, ids);
 
@@ -361,7 +361,7 @@ public class ActionsTreeUtil {
 
   private static Group createOtherGroup(Condition<AnAction> filtered, Group addedActions, final Keymap keymap) {
     addedActions.initIds();
-    ArrayList<String> result = new ArrayList<String>();
+    ArrayList<String> result = new ArrayList<>();
 
     if (keymap != null) {
       String[] actionIds = keymap.getActionIds();

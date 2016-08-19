@@ -449,7 +449,7 @@ public class CvsChangeProvider implements ChangeProvider {
     final CvsInfo cvsInfo = CvsEntriesManager.getInstance().getCvsInfoFor(directory);
     final DirectoryContent result = new DirectoryContent(cvsInfo);
 
-    final HashMap<String, VirtualFile> nameToFileMap = new HashMap<String, VirtualFile>();
+    final HashMap<String, VirtualFile> nameToFileMap = new HashMap<>();
     for (VirtualFile child : CvsVfsUtil.getChildrenOf(directory)) {
       nameToFileMap.put(child.getName(), child);
     }

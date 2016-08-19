@@ -34,7 +34,7 @@ import java.util.Map;
  * @see com.intellij.openapi.actionSystem.PlatformDataKeys
  */
 public class DataKey<T> {
-  private static final Map<String, DataKey> ourDataKeyIndex = new HashMap<String, DataKey>();
+  private static final Map<String, DataKey> ourDataKeyIndex = new HashMap<>();
 
   private final String myName;
 
@@ -48,7 +48,7 @@ public class DataKey<T> {
     if (key != null) {
       return key;
     }
-    key = new DataKey<T>(name);
+    key = new DataKey<>(name);
     ourDataKeyIndex.put(name, key);
     return key;
   }

@@ -51,7 +51,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
   @NotNull
   @Override
   protected List<PsiClass> getTargetClasses(PsiElement element) {
-    final List<PsiClass> targetClasses = new ArrayList<PsiClass>();
+    final List<PsiClass> targetClasses = new ArrayList<>();
     for (PsiClass psiClass : super.getTargetClasses(element)) {
       if (psiClass.getManager().isInProject(psiClass) && 
           (!psiClass.isInterface() && !psiClass.isAnnotationType() || shouldCreateStaticMember(myReferenceExpression, psiClass))) {

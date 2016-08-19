@@ -97,7 +97,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
         return;
       }
       final PsiElement[] tryBlockChildren = tryBlock.getChildren();
-      final Set<PsiLocalVariable> variables = new LinkedHashSet<PsiLocalVariable>();
+      final Set<PsiLocalVariable> variables = new LinkedHashSet<>();
       for (final PsiLocalVariable variable : collectVariables(tryStatement)) {
         if (!isVariableUsedOutsideContext(variable, tryBlock)) {
           variables.add(variable);
@@ -105,7 +105,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       }
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       @NonNls final StringBuilder newTryStatementText = new StringBuilder("try (");
-      final Set<Integer> unwantedChildren = new HashSet<Integer>(2);
+      final Set<Integer> unwantedChildren = new HashSet<>(2);
       boolean separator = false;
       for (final PsiLocalVariable variable : variables) {
         final boolean hasInitializer;
@@ -168,7 +168,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       final PsiElement[] finallyChildren = finallyBlock.getChildren();
       boolean appended = false;
       final int finallyChildrenLength = finallyChildren.length - 1;
-      final List<PsiElement> savedComments = new ArrayList<PsiElement>();
+      final List<PsiElement> savedComments = new ArrayList<>();
       for (int i = 1; i < finallyChildrenLength; i++) {
         final PsiElement child = finallyChildren[i];
         if (isCloseStatement(child, variables)) {
@@ -356,7 +356,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     if (statements.length == 0) {
       return Collections.emptyList();
     }
-    final List<PsiLocalVariable> variables = new ArrayList<PsiLocalVariable>();
+    final List<PsiLocalVariable> variables = new ArrayList<>();
     for (PsiStatement statement : statements) {
       final PsiLocalVariable variable = findAutoCloseableVariable(statement);
       if (variable != null) {

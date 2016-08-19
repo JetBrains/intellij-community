@@ -54,7 +54,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   private boolean myLoaded = false;
   private boolean isModuleAdded = false;
   private final OrderRootsCache myOrderRootsCache;
-  private final Map<RootModelImpl, Throwable> myModelCreations = new THashMap<RootModelImpl, Throwable>();
+  private final Map<RootModelImpl, Throwable> myModelCreations = new THashMap<>();
 
 
   public ModuleRootManagerImpl(Module module,
@@ -97,7 +97,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
     if (Disposer.isDebugMode()) {
       final Set<Map.Entry<RootModelImpl, Throwable>> entries = myModelCreations.entrySet();
-      for (final Map.Entry<RootModelImpl, Throwable> entry : new ArrayList<Map.Entry<RootModelImpl, Throwable>>(entries)) {
+      for (final Map.Entry<RootModelImpl, Throwable> entry : new ArrayList<>(entries)) {
         System.err.println("***********************************************************************************************");
         System.err.println("***                        R O O T   M O D E L   N O T   D I S P O S E D                    ***");
         System.err.println("***********************************************************************************************");

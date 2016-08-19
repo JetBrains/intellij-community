@@ -92,7 +92,7 @@ class DragHelper extends MouseDragHelper {
     // since selection change can cause tabs to be reordered, we need to remember the tab on which the mouse was pressed, otherwise
     // we'll end up dragging the wrong tab (IDEA-65073)
     TabLabel label = findLabel(new RelativePoint(event).getPoint(myTabs));
-    myPressedTabLabel = label == null ? null : new WeakReference<TabLabel>(label);
+    myPressedTabLabel = label == null ? null : new WeakReference<>(label);
   }
 
   protected void processDrag(MouseEvent event, Point targetScreenPoint, Point startPointScreen) {

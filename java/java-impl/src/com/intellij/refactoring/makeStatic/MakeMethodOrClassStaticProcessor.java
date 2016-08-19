@@ -109,7 +109,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
         refUsages.set(filterInternalUsages(usagesIn));
       }
     }
-    final Set<UsageInfo> toMakeStatic = new LinkedHashSet<UsageInfo>();
+    final Set<UsageInfo> toMakeStatic = new LinkedHashSet<>();
     refUsages.set(filterOverriding(usagesIn, toMakeStatic));
     if (!findAdditionalMembers(toMakeStatic)) return false;
     prepareSuccessful();
@@ -119,7 +119,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
   protected boolean findAdditionalMembers(Set<UsageInfo> toMakeStatic) {return true;}
 
   private static UsageInfo[] filterOverriding(UsageInfo[] usages, Set<UsageInfo> suggestToMakeStatic) {
-    ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
+    ArrayList<UsageInfo> result = new ArrayList<>();
     for (UsageInfo usage : usages) {
       if (usage instanceof ChainedCallUsageInfo) {
         suggestToMakeStatic.add(usage);
@@ -131,7 +131,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
   }
 
   private static UsageInfo[] filterInternalUsages(UsageInfo[] usages) {
-    ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
+    ArrayList<UsageInfo> result = new ArrayList<>();
     for (UsageInfo usage : usages) {
       if (!(usage instanceof InternalUsageInfo)) {
         result.add(usage);
@@ -141,8 +141,8 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
   }
 
   protected MultiMap<PsiElement,String> getConflictDescriptions(UsageInfo[] usages) {
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
-    HashSet<PsiElement> processed = new HashSet<PsiElement>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    HashSet<PsiElement> processed = new HashSet<>();
     String typeString = StringUtil.capitalize(UsageViewUtil.getType(myMember));
     for (UsageInfo usageInfo : usages) {
       if (usageInfo instanceof InternalUsageInfo && !(usageInfo instanceof SelfUsageInfo)) {
@@ -184,7 +184,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
         if (processed.contains(container)) continue;
         processed.add(container);
         List<Settings.FieldParameter> fieldParameters = mySettings.getParameterOrderList();
-        ArrayList<PsiField> inaccessible = new ArrayList<PsiField>();
+        ArrayList<PsiField> inaccessible = new ArrayList<>();
 
         for (final Settings.FieldParameter fieldParameter : fieldParameters) {
           if (!PsiUtil.isAccessible(fieldParameter.field, element, null)) {
@@ -222,7 +222,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
 
   @NotNull
   protected UsageInfo[] findUsages() {
-    ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
+    ArrayList<UsageInfo> result = new ArrayList<>();
 
     ContainerUtil.addAll(result, MakeStaticUtil.findClassRefsInMember(myMember, true));
 

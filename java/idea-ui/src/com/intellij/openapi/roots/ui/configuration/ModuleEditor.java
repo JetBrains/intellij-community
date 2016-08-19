@@ -75,7 +75,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   private String myName;
   private final Module myModule;
 
-  protected final List<ModuleConfigurationEditor> myEditors = new ArrayList<ModuleConfigurationEditor>();
+  protected final List<ModuleConfigurationEditor> myEditors = new ArrayList<>();
   private ModifiableRootModel myModifiableRootModelProxy;
 
   private final EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
@@ -221,7 +221,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     }
   }
 
-  private static Set<Class<?>> ourReportedDeprecatedClasses = new HashSet<Class<?>>();
+  private static Set<Class<?>> ourReportedDeprecatedClasses = new HashSet<>();
   private static void reportDeprecatedModuleEditor(Class<?> aClass) {
     if (ourReportedDeprecatedClasses.add(aClass)) {
       LOG.warn(aClass.getName() + " uses deprecated way to register itself as a module editor. " + ModuleConfigurationEditorProvider.class.getName() + " extension point should be used instead");
@@ -229,7 +229,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   }
 
   private static ModuleConfigurationEditorProvider[] collectProviders(@NotNull Module module) {
-    List<ModuleConfigurationEditorProvider> result = new ArrayList<ModuleConfigurationEditorProvider>();
+    List<ModuleConfigurationEditorProvider> result = new ArrayList<>();
     result.addAll(ServiceKt.getComponents(module, ModuleConfigurationEditorProvider.class));
     for (ModuleConfigurationEditorProvider component : result) {
       reportDeprecatedModuleEditor(component.getClass());
@@ -351,9 +351,10 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
   private class ModifiableRootModelInvocationHandler implements InvocationHandler, ProxyDelegateAccessor {
     private final ModifiableRootModel myDelegateModel;
-    @NonNls private final Set<String> myCheckedNames = new HashSet<String>(
+    @NonNls private final Set<String> myCheckedNames = new HashSet<>(
       Arrays.asList("addOrderEntry", "addLibraryEntry", "addInvalidLibrary", "addModuleOrderEntry", "addInvalidModuleEntry",
-                    "removeOrderEntry", "setSdk", "inheritSdk", "inheritCompilerOutputPath", "setExcludeOutput", "replaceEntryOfType", "rearrangeOrderEntries"));
+                    "removeOrderEntry", "setSdk", "inheritSdk", "inheritCompilerOutputPath", "setExcludeOutput", "replaceEntryOfType",
+                    "rearrangeOrderEntries"));
 
     ModifiableRootModelInvocationHandler(ModifiableRootModel model) {
       myDelegateModel = model;
@@ -388,7 +389,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
   private class LibraryTableInvocationHandler implements InvocationHandler, ProxyDelegateAccessor {
     private final LibraryTable myDelegateTable;
-    @NonNls private final Set<String> myCheckedNames = new HashSet<String>(Arrays.asList("removeLibrary" /*,"createLibrary"*/));
+    @NonNls private final Set<String> myCheckedNames = new HashSet<>(Arrays.asList("removeLibrary" /*,"createLibrary"*/));
 
     LibraryTableInvocationHandler(LibraryTable table) {
       myDelegateTable = table;

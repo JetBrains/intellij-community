@@ -125,7 +125,7 @@ public class GitSSHGUIHandler {
                                          final Vector<String> prompt,
                                          final Vector<Boolean> echo,
                                          final String lastError) {
-    final AtomicReference<Vector<String>> rc = new AtomicReference<Vector<String>>();
+    final AtomicReference<Vector<String>> rc = new AtomicReference<>();
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       public void run() {
         showError(lastError);
@@ -326,7 +326,7 @@ public class GitSSHGUIHandler {
      */
     @SuppressWarnings({"UseOfObsoleteCollectionType"})
     public Vector<String> getResults() {
-      Vector<String> rc = new Vector<String>(myNumPrompts);
+      Vector<String> rc = new Vector<>(myNumPrompts);
       for (int i = 0; i < myNumPrompts; i++) {
         rc.add(inputs[i].getText());
       }

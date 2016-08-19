@@ -787,7 +787,7 @@ public class PythonCompletionTest extends PyTestCase {
     final List<String> suggested = doTestSmartByFile();
     assertNotNull(suggested);
     // Remove duplicates for assertContainsElements(), "append" comes from bytearray
-    assertContainsElements(new HashSet<String>(suggested), "lower", "capitalize", "join", "append");
+    assertContainsElements(new HashSet<>(suggested), "lower", "capitalize", "join", "append");
   }
 
   public void testSmartFromUsedAttributesOfClass() {
@@ -931,6 +931,11 @@ public class PythonCompletionTest extends PyTestCase {
 
   // PY-18684
   public void testRPowSignature() {
+    doTest();
+  }
+
+  // PY-20017
+  public void testAncestorHasDunderNewMethod() {
     doTest();
   }
 

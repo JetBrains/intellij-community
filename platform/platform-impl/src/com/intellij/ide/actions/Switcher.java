@@ -386,8 +386,8 @@ public class Switcher extends AnAction implements DumbAware {
 
       int selectionIndex = -1;
       final FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
-      final ArrayList<FileInfo> filesData = new ArrayList<FileInfo>();
-      final ArrayList<FileInfo> editors = new ArrayList<FileInfo>();
+      final ArrayList<FileInfo> filesData = new ArrayList<>();
+      final ArrayList<FileInfo> editors = new ArrayList<>();
       if (!pinned) {
         if (UISettings.getInstance().EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE) {
           for (Pair<VirtualFile, EditorWindow> pair : editorManager.getSelectionHistory()) {
@@ -634,7 +634,7 @@ public class Switcher extends AnAction implements DumbAware {
     private static void  addFocusTraversalKeys (Container focusCycleRoot, int focusTraversalType, String keyStroke) {
       Set<AWTKeyStroke> focusTraversalKeySet = focusCycleRoot.getFocusTraversalKeys(focusTraversalType);
 
-      Set<AWTKeyStroke> set = new HashSet<AWTKeyStroke>(focusTraversalKeySet);
+      Set<AWTKeyStroke> set = new HashSet<>(focusTraversalKeySet);
       set.add(KeyStroke.getKeyStroke(keyStroke));
       focusCycleRoot.setFocusTraversalKeys(focusTraversalType, set);
     }
@@ -646,8 +646,8 @@ public class Switcher extends AnAction implements DumbAware {
 
     @NotNull
     private static Map<String, ToolWindow> createShortcuts(@NotNull List<ToolWindow> windows) {
-      final Map<String, ToolWindow> keymap = new HashMap<String, ToolWindow>(windows.size());
-      final List<ToolWindow> otherTW = new ArrayList<ToolWindow>();
+      final Map<String, ToolWindow> keymap = new HashMap<>(windows.size());
+      final List<ToolWindow> otherTW = new ArrayList<>();
       for (ToolWindow window : windows) {
         int index = ActivateToolWindowAction.getMnemonicForToolWindow(((ToolWindowImpl)window).getId());
         if (index >= '0' && index <= '9') {

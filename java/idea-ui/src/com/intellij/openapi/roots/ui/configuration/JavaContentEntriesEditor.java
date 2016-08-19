@@ -65,8 +65,8 @@ public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
   }
 
   private static void addSourceRoots(@NotNull Project project, final ContentEntry[] contentEntries, final Runnable finishRunnable) {
-    final HashMap<ContentEntry, Collection<JavaModuleSourceRoot>> entryToRootMap = new HashMap<ContentEntry, Collection<JavaModuleSourceRoot>>();
-    final Map<File, ContentEntry> fileToEntryMap = new HashMap<File, ContentEntry>();
+    final HashMap<ContentEntry, Collection<JavaModuleSourceRoot>> entryToRootMap = new HashMap<>();
+    final Map<File, ContentEntry> fileToEntryMap = new HashMap<>();
     for (final ContentEntry contentEntry : contentEntries) {
       final VirtualFile file = contentEntry.getFile();
       if (file != null) {

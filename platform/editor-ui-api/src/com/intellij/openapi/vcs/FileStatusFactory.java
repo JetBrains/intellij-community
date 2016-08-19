@@ -27,7 +27,7 @@ import java.util.List;
 
 public class FileStatusFactory {
   private static final FileStatusFactory ourInstance = new FileStatusFactory();
-  private final List<FileStatus> myStatuses = new ArrayList<FileStatus>();
+  private final List<FileStatus> myStatuses = new ArrayList<>();
 
   private FileStatusFactory() {
   }

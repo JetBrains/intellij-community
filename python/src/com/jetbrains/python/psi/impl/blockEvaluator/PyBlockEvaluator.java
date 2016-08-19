@@ -38,7 +38,7 @@ public class PyBlockEvaluator {
   @NotNull
   private final PyEvaluationContext myContext;
   private final Set<PyFile> myVisitedFiles;
-  private final Set<String> myDeclarationsToTrack = new HashSet<String>();
+  private final Set<String> myDeclarationsToTrack = new HashSet<>();
   private String myCurrentFilePath;
   private Object myReturnValue;
   private boolean myEvaluateCollectionItems = true;
@@ -190,7 +190,7 @@ public class PyBlockEvaluator {
         PyExpression value = ((PyTargetExpression)expression).findAssignedValue();
         myEvaluationResult.myNamespace.put(name, prepareEvaluator().evaluate(value));
         if (myDeclarationsToTrack.contains(name)) {
-          List<PyExpression> declarations = new ArrayList<PyExpression>();
+          List<PyExpression> declarations = new ArrayList<>();
           PyPsiUtils.sequenceToList(declarations, value);
           myEvaluationResult.myDeclarations.put(name, declarations);
         }

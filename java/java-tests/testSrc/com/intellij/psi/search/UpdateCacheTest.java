@@ -411,7 +411,7 @@ public class UpdateCacheTest extends PsiTestCase {
     PsiReference[] refs = ReferencesSearch.search(element, GlobalSearchScope.projectScope(myProject), false).toArray(
       PsiReference.EMPTY_ARRAY);
 
-    List<PsiFile> files = new ArrayList<PsiFile>();
+    List<PsiFile> files = new ArrayList<>();
     for (PsiReference ref : refs) {
       PsiFile file = ref.getElement().getContainingFile();
       if (!files.contains(file)) {

@@ -197,10 +197,13 @@ public class GroovyPositionManager implements PositionManager {
       return parent == null ? null : parent + "$" + typeDefinition.getName() + suffix;
     }
 
-    for (ScriptPositionManagerHelper helper : ScriptPositionManagerHelper.EP_NAME.getExtensions()) {
-      final String s = helper.customizeClassName(typeDefinition);
-      if (s != null) {
-        return s;
+    PsiFile file = typeDefinition.getContainingFile();
+    if (file instanceof GroovyFile && ((GroovyFile)file).isScript()) {
+      for (ScriptPositionManagerHelper helper : ScriptPositionManagerHelper.EP_NAME.getExtensions()) {
+        String s = helper.isAppropriateScriptFile((GroovyFile)file) ? helper.customizeClassName(typeDefinition) : null;
+        if (s != null) {
+          return s;
+        }
       }
     }
 
@@ -339,7 +342,7 @@ public class GroovyPositionManager implements PositionManager {
           if (enclosingName == null) return null;
 
           final List<ReferenceType> outers = myDebugProcess.getVirtualMachineProxy().classesByName(enclosingName);
-          final List<ReferenceType> result = new ArrayList<ReferenceType>(outers.size());
+          final List<ReferenceType> result = new ArrayList<>(outers.size());
           for (ReferenceType outer : outers) {
             final ReferenceType nested = findNested(outer, sourceImage, position);
             if (nested != null) {

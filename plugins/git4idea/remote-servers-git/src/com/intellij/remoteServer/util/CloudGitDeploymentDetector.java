@@ -57,7 +57,7 @@ public abstract class CloudGitDeploymentDetector {
   }
 
   public List<String> collectApplicationNames(@NotNull GitRepository repository) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     for (GitRemote remote : repository.getRemotes()) {
       for (String url : remote.getUrls()) {
         Matcher matcher = myGitUrlPattern.matcher(url);

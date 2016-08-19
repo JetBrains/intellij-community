@@ -102,7 +102,7 @@ public class MethodBytecodeUtil {
         MethodVisitor mv = writer.visitMethod(Opcodes.ACC_PUBLIC, method.name(), method.signature(), method.signature(), null);
         mv.visitAttribute(createCode(writer, method, bytecodes));
 
-        new ClassReader(writer.toByteArray()).accept(new ClassVisitor(Opcodes.ASM5) {
+        new ClassReader(writer.toByteArray()).accept(new ClassVisitor(Opcodes.API_VERSION) {
           @Override
           public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
             assert name.equals(method.name());

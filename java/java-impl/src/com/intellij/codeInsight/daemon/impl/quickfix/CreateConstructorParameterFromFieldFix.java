@@ -132,7 +132,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         elements = Arrays.asList(members);
       } else {
-        final MemberChooser<PsiMethodMember> chooser = new MemberChooser<PsiMethodMember>(members, false, true, project);
+        final MemberChooser<PsiMethodMember> chooser = new MemberChooser<>(members, false, true, project);
         chooser.setTitle("Choose Constructors to Add Parameter to");
         chooser.show();
         elements = chooser.getSelectedElements();
@@ -149,7 +149,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       final Collection<SmartPsiElementPointer<PsiField>> fieldsToFix = getFieldsToFix();
       try {
         final PsiMethod constructor = filtered.get(0);
-        final LinkedHashSet<PsiField> fields = new LinkedHashSet<PsiField>();
+        final LinkedHashSet<PsiField> fields = new LinkedHashSet<>();
         getFieldsToFix().add(myField);
         for (SmartPsiElementPointer<PsiField> elementPointer : fieldsToFix) {
           final PsiField field = elementPointer.getElement();
@@ -163,7 +163,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
           for (PsiField field : fields) {
             members[i++] = new PsiFieldMember(field);
           }
-          MemberChooser<PsiElementClassMember> chooser = new MemberChooser<PsiElementClassMember>(members, false, true, project);
+          MemberChooser<PsiElementClassMember> chooser = new MemberChooser<>(members, false, true, project);
           chooser.setTitle("Choose Fields to Generate Constructor Parameters for");
           chooser.show();
           if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE) return;
@@ -218,7 +218,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
   }
 
   private static List<PsiMethod> filterConstructorsIfFieldAlreadyAssigned(PsiMethod[] constructors, PsiField field) {
-    final List<PsiMethod> result = new ArrayList<PsiMethod>(Arrays.asList(constructors));
+    final List<PsiMethod> result = new ArrayList<>(Arrays.asList(constructors));
     for (PsiReference reference : ReferencesSearch.search(field, new LocalSearchScope(constructors))) {
       final PsiElement element = reference.getElement();
       if (element instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand((PsiExpression)element)) {
@@ -237,13 +237,13 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     final PsiParameterList parameterList = constructor.getParameterList();
     final PsiParameter[] parameters = parameterList.getParameters();
     ParameterInfoImpl[] newParamInfos = new ParameterInfoImpl[parameters.length + fields.length];
-    final List<PsiVariable> params = new ArrayList<PsiVariable>(Arrays.asList(parameters));
+    final List<PsiVariable> params = new ArrayList<>(Arrays.asList(parameters));
     Collections.addAll(params, fields);
     Collections.sort(params, new FieldParameterComparator(parameterList));
 
     int i = 0;
-    final Map<PsiField, String> usedFields = new HashMap<PsiField, String>();
-    final MultiMap<PsiType, PsiVariable> types = new MultiMap<PsiType, PsiVariable>();
+    final Map<PsiField, String> usedFields = new HashMap<>();
+    final MultiMap<PsiType, PsiVariable> types = new MultiMap<>();
     for (PsiVariable param : params) {
       types.putValue(param.getType(), param);
     }

@@ -556,7 +556,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   private static Pair<PsiElement, CharTable> doFindWhiteSpaceNode(@NotNull PsiFile file, int offset) {
     ASTNode astNode = SourceTreeToPsiMap.psiElementToTree(file);
     if (!(astNode instanceof FileElement)) {
-      return new Pair<PsiElement, CharTable>(null, null);
+      return new Pair<>(null, null);
     }
     PsiElement elementAt = InjectedLanguageUtil.findInjectedElementNoCommit(file, offset);
     final CharTable charTable = ((FileElement)astNode).getCharTable();
@@ -565,11 +565,11 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
 
     if( elementAt == null) {
-      return new Pair<PsiElement, CharTable>(null, charTable);
+      return new Pair<>(null, charTable);
     }
     ASTNode node = elementAt.getNode();
     if (node == null || node.getElementType() != TokenType.WHITE_SPACE) {
-      return new Pair<PsiElement, CharTable>(null, charTable);
+      return new Pair<>(null, charTable);
     }
     return Pair.create(elementAt, charTable);
   }

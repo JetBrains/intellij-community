@@ -18,6 +18,7 @@ package com.intellij.lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public class FlexAdapter extends LexerBase {
 
   private static final Logger LOG = Logger.getInstance(FlexAdapter.class);
+  private static final boolean logLexerErrors = SystemProperties.getBooleanProperty("log.flex.adapter.errors", true); // Used by Upsource
 
   private final FlexLexer myFlex;
 
@@ -37,6 +39,7 @@ public class FlexAdapter extends LexerBase {
 
   private int myBufferEnd;
   private int myState;
+  private boolean myInconsistentState;
 
   public FlexAdapter(@NotNull FlexLexer flex) {
     myFlex = flex;
@@ -53,6 +56,7 @@ public class FlexAdapter extends LexerBase {
     myBufferEnd = endOffset;
     myFlex.reset(myText, startOffset, endOffset, initialState);    
     myTokenType = null;
+    myInconsistentState = false;
   }
 
   @Override
@@ -97,7 +101,7 @@ public class FlexAdapter extends LexerBase {
   }
 
   protected void locateToken() {
-    if (myTokenType != null) return;
+    if (myTokenType != null || myInconsistentState) return;
 
     try {
       myTokenStart = myFlex.getTokenEnd();
@@ -105,15 +109,21 @@ public class FlexAdapter extends LexerBase {
       myTokenType = myFlex.advance();
       myTokenEnd = myFlex.getTokenEnd();
     }
-    catch (Exception e) {
-      LOG.error(myFlex.getClass().getName(), e);
+    catch (Exception  e) {
+      if (logLexerErrors) {
+        LOG.error(myFlex.getClass().getName(), e);
+      }
       myTokenType = TokenType.WHITE_SPACE;
       myTokenEnd = myBufferEnd;
+      myInconsistentState = true;
     }
     catch (Error e) {
-      LOG.error(myFlex.getClass().getName(), e);
+      if (logLexerErrors) {
+        LOG.error(myFlex.getClass().getName(), e);
+      }
       myTokenType = TokenType.WHITE_SPACE;
       myTokenEnd = myBufferEnd;
+      myInconsistentState = true;
     }
   }
 }

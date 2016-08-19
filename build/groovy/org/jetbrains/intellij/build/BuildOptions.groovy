@@ -16,10 +16,12 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.util.SystemProperties
+import groovy.transform.CompileStatic
 
 /**
  * @author nik
  */
+@CompileStatic
 class BuildOptions {
   /**
    * By default build scripts compile project classes to a special output directory (to not interfere with the default project output if
@@ -57,4 +59,9 @@ class BuildOptions {
    * If {@code true} the project modules will be compiled incrementally
    */
   boolean incrementalCompilation = SystemProperties.getBooleanProperty("intellij.build.incremental.compilation", false)
+
+  /**
+   * By default some build steps are executed in parallel threads. Set this property to {@code false} to disable this.
+   */
+  boolean runBuildStepsInParallel = SystemProperties.getBooleanProperty("intellij.build.run.steps.in.parallel", true)
 }

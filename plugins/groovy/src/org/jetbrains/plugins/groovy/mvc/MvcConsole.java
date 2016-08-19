@@ -76,7 +76,7 @@ public class MvcConsole implements Disposable {
   private final Project myProject;
   private final ToolWindow myToolWindow;
   private final JPanel myPanel = new JPanel(new BorderLayout());
-  private final Queue<MyProcessInConsole> myProcessQueue = new LinkedList<MyProcessInConsole>();
+  private final Queue<MyProcessInConsole> myProcessQueue = new LinkedList<>();
 
 
 
@@ -264,7 +264,7 @@ public class MvcConsole implements Disposable {
       }
       writer.flush();
 
-      final Ref<Boolean> gotError = new Ref<Boolean>(false);
+      final Ref<Boolean> gotError = new Ref<>(false);
       handler.addProcessListener(new ProcessAdapter() {
         @Override
         public void onTextAvailable(ProcessEvent event, Key key) {

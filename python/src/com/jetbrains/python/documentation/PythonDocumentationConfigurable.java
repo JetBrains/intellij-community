@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,11 +45,6 @@ public class PythonDocumentationConfigurable implements SearchableConfigurable, 
   @Override
   public String getId() {
     return ID;
-  }
-
-  @Override
-  public Runnable enableSearch(String option) {
-    return null;
   }
 
   @Nls
@@ -111,7 +106,7 @@ public class PythonDocumentationConfigurable implements SearchableConfigurable, 
 
   private static class PythonDocumentationPanel extends AddEditRemovePanel<PythonDocumentationMap.Entry> {
     public PythonDocumentationPanel() {
-      super(ourModel, new ArrayList<PythonDocumentationMap.Entry>());
+      super(ourModel, new ArrayList<>());
       setRenderer(1, new ColoredTableCellRenderer() {
         @Override
         protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {

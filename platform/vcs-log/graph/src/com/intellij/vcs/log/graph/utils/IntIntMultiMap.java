@@ -24,7 +24,7 @@ import java.util.Collection;
 public class IntIntMultiMap {
 
   private final static int[] EMPTY = new int[0];
-  private final TIntObjectHashMap<int[]> myKeyToArrayMap = new TIntObjectHashMap<int[]>();
+  private final TIntObjectHashMap<int[]> myKeyToArrayMap = new TIntObjectHashMap<>();
 
 
   public void putValue(int key, int value) {

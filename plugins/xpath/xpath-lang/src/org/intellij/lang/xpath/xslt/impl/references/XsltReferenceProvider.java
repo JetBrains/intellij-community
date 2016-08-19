@@ -76,7 +76,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
       for (int i = 0; i < refs.length; i++) {
         refs[i] = referencesImpl[i].getElement();
       }
-      return new Result<PsiReference[]>(referencesImpl, ArrayUtil.append(refs, myAttribute.getValueElement()));
+      return new Result<>(referencesImpl, ArrayUtil.append(refs, myAttribute.getValueElement()));
     }
 
     private PsiReference[] getReferencesImpl(final XmlAttribute attribute) {
@@ -216,7 +216,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
     final Matcher matcher = pattern.matcher(attribute.getValue());
 
     if (matcher.find()) {
-      final List<PsiReference> refs = new SmartList<PsiReference>();
+      final List<PsiReference> refs = new SmartList<>();
       do {
         final int start = matcher.start(1);
         if (start >= 0) {

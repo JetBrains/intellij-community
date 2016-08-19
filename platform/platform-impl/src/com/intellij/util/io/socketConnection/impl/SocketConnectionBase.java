@@ -40,17 +40,17 @@ public abstract class SocketConnectionBase<Request extends AbstractRequest, Resp
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.socketConnection.impl.ServerSocketConnectionImpl");
   private final Object myLock = new Object();
   private int myPort = -1;
-  private final AtomicReference<ConnectionState> myState = new AtomicReference<ConnectionState>(new ConnectionState(ConnectionStatus.NOT_CONNECTED));
+  private final AtomicReference<ConnectionState> myState = new AtomicReference<>(new ConnectionState(ConnectionStatus.NOT_CONNECTED));
   private boolean myStopping;
   private final EventDispatcher<SocketConnectionListener> myDispatcher = EventDispatcher.create(SocketConnectionListener.class);
-  private final List<Thread> myThreadsToInterrupt = new ArrayList<Thread>();
+  private final List<Thread> myThreadsToInterrupt = new ArrayList<>();
   private final RequestResponseExternalizerFactory<Request, Response> myExternalizerFactory;
-  private final LinkedBlockingQueue<Request> myRequests = new LinkedBlockingQueue<Request>();
-  private final TIntObjectHashMap<TimeoutInfo> myTimeouts = new TIntObjectHashMap<TimeoutInfo>();
+  private final LinkedBlockingQueue<Request> myRequests = new LinkedBlockingQueue<>();
+  private final TIntObjectHashMap<TimeoutInfo> myTimeouts = new TIntObjectHashMap<>();
   private final ResponseProcessor<Response> myResponseProcessor;
 
   public SocketConnectionBase(@NotNull RequestResponseExternalizerFactory<Request, Response> factory) {
-    myResponseProcessor = new ResponseProcessor<Response>(this);
+    myResponseProcessor = new ResponseProcessor<>(this);
     myExternalizerFactory = factory;
   }
 

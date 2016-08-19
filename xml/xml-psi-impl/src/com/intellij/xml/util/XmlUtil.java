@@ -143,7 +143,7 @@ public class XmlUtil {
   @NonNls public static final String TARGET_NAMESPACE_ATTR_NAME = "targetNamespace";
   @NonNls public static final String XML_NAMESPACE_URI = "http://www.w3.org/XML/1998/namespace";
   public static final List<String> ourSchemaUrisList = Arrays.asList(SCHEMA_URIS);
-  public static final Key<Boolean> ANT_FILE_SIGN = new Key<Boolean>("FORCED ANT FILE");
+  public static final Key<Boolean> ANT_FILE_SIGN = new Key<>("FORCED ANT FILE");
   @NonNls public static final String TAG_DIR_NS_PREFIX = "urn:jsptagdir:";
   @NonNls public static final String VALUE_ATTR_NAME = "value";
   @NonNls public static final String ENUMERATION_TAG_NAME = "enumeration";
@@ -162,7 +162,7 @@ public class XmlUtil {
   @NonNls private static final String FILE = "file:";
   @NonNls private static final String CLASSPATH = "classpath:/";
   @NonNls private static final String URN = "urn:";
-  private final static Set<String> doNotVisitTags = new HashSet<String>(Arrays.asList("annotation", "element", "attribute"));
+  private final static Set<String> doNotVisitTags = new HashSet<>(Arrays.asList("annotation", "element", "attribute"));
 
   private XmlUtil() {
   }
@@ -214,7 +214,7 @@ public class XmlUtil {
     XmlAttribute[] attributes = tag.getAttributes();
 
 
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
 
     for (XmlAttribute attribute : attributes) {
       if (attribute.getName().startsWith("xmlns:") && attribute.getValue().equals(uri)) {
@@ -806,7 +806,7 @@ public class XmlUtil {
 
     List<MyAttributeInfo> list = attributesMap.get(tagName);
     if (list == null) {
-      list = new ArrayList<MyAttributeInfo>();
+      list = new ArrayList<>();
       final XmlAttribute[] attributes = tag.getAttributes();
       for (final XmlAttribute attribute : attributes) {
         list.add(new MyAttributeInfo(attribute.getName()));
@@ -818,7 +818,7 @@ public class XmlUtil {
       Arrays.sort(attributes, (attr1, attr2) -> attr1.getName().compareTo(attr2.getName()));
 
       final Iterator<MyAttributeInfo> iter = list.iterator();
-      list = new ArrayList<MyAttributeInfo>();
+      list = new ArrayList<>();
       int index = 0;
       while (iter.hasNext()) {
         final MyAttributeInfo info = iter.next();
@@ -850,7 +850,7 @@ public class XmlUtil {
       }
     }
     attributesMap.put(tagName, list);
-    final List<String> tags = tagsMap.get(tagName) != null ? tagsMap.get(tagName) : new ArrayList<String>();
+    final List<String> tags = tagsMap.get(tagName) != null ? tagsMap.get(tagName) : new ArrayList<>();
     tagsMap.put(tagName, tags);
     PsiFile file = tag.isValid() ? tag.getContainingFile() : null;
     processXmlElements(tag, new FilterElementProcessor(XmlTagFilter.INSTANCE) {
@@ -1146,8 +1146,8 @@ public class XmlUtil {
   }
 
   public static String generateDocumentDTD(XmlDocument doc, boolean full) {
-    final Map<String, List<String>> tags = new LinkedHashMap<String, List<String>>();
-    final Map<String, List<MyAttributeInfo>> attributes = new LinkedHashMap<String, List<MyAttributeInfo>>();
+    final Map<String, List<String>> tags = new LinkedHashMap<>();
+    final Map<String, List<MyAttributeInfo>> attributes = new LinkedHashMap<>();
 
     try {
       XmlEntityRefImpl.setNoEntityExpandOutOfDocument(doc, true);

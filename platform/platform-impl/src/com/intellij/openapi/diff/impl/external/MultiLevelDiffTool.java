@@ -148,7 +148,7 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
   }
 
   public Map<String, DiffRequest> discloseRequest(DiffRequest request) {
-    final Map<String, DiffRequest> pairs = new TreeMap<String, DiffRequest>((o1, o2) -> {
+    final Map<String, DiffRequest> pairs = new TreeMap<>((o1, o2) -> {
       if (ourDefaultTab.equals(o1)) return -1;
       if (ourDefaultTab.equals(o2)) return 1;
       return Comparing.compare(o1, o2);

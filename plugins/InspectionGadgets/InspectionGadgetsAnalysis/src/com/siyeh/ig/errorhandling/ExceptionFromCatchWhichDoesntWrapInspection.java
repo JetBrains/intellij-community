@@ -133,7 +133,7 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection 
 
   private class ReferenceFinder extends JavaRecursiveElementVisitor {
 
-    private final Set<PsiReferenceExpression> visited = new HashSet<PsiReferenceExpression>();
+    private final Set<PsiReferenceExpression> visited = new HashSet<>();
     private boolean argumentsContainCatchParameter;
     private final PsiParameter parameter;
 
@@ -166,7 +166,7 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection 
             final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
             final PsiExpression[] arguments = argumentList.getExpressions();
             for (PsiExpression argument : arguments) {
-              argument.accept(ReferenceFinder.this);
+              argument.accept(this);
             }
             return true;
           });

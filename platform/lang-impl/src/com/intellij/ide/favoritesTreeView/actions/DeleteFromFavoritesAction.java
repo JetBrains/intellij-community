@@ -69,7 +69,7 @@ public class DeleteFromFavoritesAction extends AnActionButton implements DumbAwa
     final DnDAwareTree tree = FavoritesTreeViewPanel.FAVORITES_TREE_KEY.getData(dataContext);
 
     assert roots != null && tree != null;
-    Map<String, List<AbstractTreeNode>> toRemove = new HashMap<String, List<AbstractTreeNode>>();
+    Map<String, List<AbstractTreeNode>> toRemove = new HashMap<>();
     for (FavoritesTreeNodeDescriptor root : roots) {
       final AbstractTreeNode node = root.getElement();
       if (node instanceof FavoritesListNode) {
@@ -80,7 +80,7 @@ public class DeleteFromFavoritesAction extends AnActionButton implements DumbAwa
         LOG.assertTrue(listNode != null);
         final String name = listNode.getName();
         if (!toRemove.containsKey(name)) {
-          toRemove.put(name, new ArrayList<AbstractTreeNode>());
+          toRemove.put(name, new ArrayList<>());
         }
         toRemove.get(name).add(node);
       }

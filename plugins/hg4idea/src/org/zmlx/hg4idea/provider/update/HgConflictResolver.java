@@ -51,7 +51,7 @@ public final class HgConflictResolver {
 
   public void resolve(final VirtualFile repo) {
     final Map<HgFile, HgResolveStatusEnum> resolves = new HgResolveCommand(myProject).getListSynchronously(repo);
-    final List<File> conflictFiles = new ArrayList<File>();
+    final List<File> conflictFiles = new ArrayList<>();
 
     for (HgFile hgFile : resolves.keySet()) {
       File file = hgFile.getFile();

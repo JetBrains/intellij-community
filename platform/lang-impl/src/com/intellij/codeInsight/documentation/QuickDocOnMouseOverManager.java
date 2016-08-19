@@ -62,7 +62,7 @@ public class QuickDocOnMouseOverManager {
   @NotNull private final DocumentListener          myDocumentListener    = new MyDocumentListener();
   @NotNull private final Alarm                     myAlarm;
   @NotNull private final Runnable                  myHintCloseCallback   = new MyCloseDocCallback();
-  @NotNull private final Map<Document, Boolean>    myMonitoredDocuments  = new WeakHashMap<Document, Boolean>();
+  @NotNull private final Map<Document, Boolean>    myMonitoredDocuments  = new WeakHashMap<>();
 
   private final Map<Editor, Reference<PsiElement> /* PSI element which is located under the current mouse position */> myActiveElements
     = new WeakHashMap<>();
@@ -335,7 +335,7 @@ public class QuickDocOnMouseOverManager {
                                 editor.offsetToVisualPosition(originalElement.getTextRange().getStartOffset()));
         try {
           docManager.showJavaDocInfo(editor, targetElement, originalElement, myHintCloseCallback, true);
-          myDocumentationManager = new WeakReference<DocumentationManager>(docManager);
+          myDocumentationManager = new WeakReference<>(docManager);
         }
         finally {
           editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION, null);

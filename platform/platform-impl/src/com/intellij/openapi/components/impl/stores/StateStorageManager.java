@@ -26,7 +26,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public interface StateStorageManager {
-  Topic<StorageManagerListener> STORAGE_TOPIC = new Topic<StorageManagerListener>("STORAGE_LISTENER", StorageManagerListener.class, Topic.BroadcastDirection.TO_PARENT);
+  Topic<StorageManagerListener> STORAGE_TOPIC =
+    new Topic<>("STORAGE_LISTENER", StorageManagerListener.class, Topic.BroadcastDirection.TO_PARENT);
 
   @Nullable
   TrackingPathMacroSubstitutor getMacroSubstitutor();

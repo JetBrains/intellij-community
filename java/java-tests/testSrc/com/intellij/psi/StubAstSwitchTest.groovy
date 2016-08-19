@@ -23,10 +23,13 @@ import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
+import com.intellij.psi.stubs.StubElement
+import com.intellij.psi.stubs.StubTree
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.reference.SoftReference
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.GCUtil
+import com.intellij.util.TimeoutUtil
 
 import java.util.concurrent.CountDownLatch
 /**
@@ -178,4 +181,41 @@ class B {
     assert file.classes[0].nameIdentifier.text == 'Foo'
     assert ((PsiFileImpl)file).contentsLoaded
   }
+
+  public void "test use green stub after AST loaded and gc-ed"() {
+    PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("a.java", "class A{public static void foo() { }}")
+    //noinspection GroovyUnusedAssignment
+    StubTree stubHardRef = ((PsiFileImpl)file).stubTree
+
+    assert file.classes[0].nameIdentifier
+    GCUtil.tryGcSoftlyReachableObjects()
+
+    assert !((PsiFileImpl)file).getTreeElement()
+    assert !((PsiFileImpl)file).getStub()
+
+    assert file.classes[0].methods[0].modifierList.hasExplicitModifier(PsiModifier.STATIC)
+    assert !((PsiFileImpl)file).getTreeElement()
+  }
+
+  public void "test use green stub after building it from AST"() {
+    PsiFileImpl file = (PsiFileImpl)myFixture.addFileToProject("a.java", "class A<T>{}")
+    PsiClass psiClass = ((PsiJavaFile)file).classes[0]
+    assert psiClass.nameIdentifier
+    GCUtil.tryGcSoftlyReachableObjects()
+
+    assert !file.treeElement
+    assert !file.greenStub
+
+    assert PsiAnchor.create(psiClass) instanceof PsiAnchor.StubIndexReference
+    StubElement hardRefToStub = file.greenStub
+    assert hardRefToStub
+
+    GCUtil.tryGcSoftlyReachableObjects();
+    assert !file.treeElement
+    assert hardRefToStub.is(file.greenStub)
+
+    assert psiClass.typeParameters.length == 1
+    assert !file.treeElement
+  }
+
 }

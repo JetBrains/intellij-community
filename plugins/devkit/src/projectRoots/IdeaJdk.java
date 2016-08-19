@@ -173,7 +173,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
   private static VirtualFile[] getIdeaLibrary(String home) {
     String plugins = home + File.separator + PLUGINS_DIR + File.separator;
-    ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
+    ArrayList<VirtualFile> result = new ArrayList<>();
     appendIdeaLibrary(home, result, "junit.jar");
     appendIdeaLibrary(plugins + "JavaEE", result, "javaee-impl.jar", "jpa-console.jar");
     appendIdeaLibrary(plugins + "PersistenceSupport", result, "persistence-impl.jar");
@@ -216,7 +216,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
     final SdkModificator sdkModificator = sdk.getSdkModificator();
 
-    final List<String> javaSdks = new ArrayList<String>();
+    final List<String> javaSdks = new ArrayList<>();
     final Sdk[] sdks = sdkModel.getSdks();
     for (Sdk jdk : sdks) {
       if (isValidInternalJdk(sdk, jdk)) {

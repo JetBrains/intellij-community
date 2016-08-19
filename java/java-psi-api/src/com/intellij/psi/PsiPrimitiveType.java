@@ -61,8 +61,8 @@ public class PsiPrimitiveType extends PsiType.Stub {
 
   @NotNull
   @Override
-  public String getPresentableText() {
-    return getText(false, true);
+  public String getPresentableText(boolean annotated) {
+    return getText(false, annotated);
   }
 
   @NotNull

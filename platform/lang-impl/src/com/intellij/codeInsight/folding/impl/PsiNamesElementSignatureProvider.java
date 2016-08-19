@@ -84,11 +84,11 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
       }
       return result;
     }
-    else if (DOC_COMMENT_MARKER.equals(elementMarker)) {
+    if (DOC_COMMENT_MARKER.equals(elementMarker)) {
       PsiElement candidate = parent.getFirstChild();
       return candidate instanceof PsiComment ? candidate : null; 
     }
-    else if (CODE_BLOCK_MARKER.equals(elementMarker)) {
+    if (CODE_BLOCK_MARKER.equals(elementMarker)) {
       int index = 0;
       if (tokenizer.hasMoreTokens()) {
         String indexStr = tokenizer.nextToken();
@@ -106,7 +106,7 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
           if (--index < 0) {
             return child;
           }
-        } 
+        }
       }
       return null;
     }
@@ -133,9 +133,8 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
   @Override
   public String getSignature(@NotNull final PsiElement element) {
     StringBuilder buffer = null;
-    int length;
     for (PsiElement current = element; current != null && !(current instanceof PsiFile); current = current.getParent()) {
-      length = buffer == null ? 0 : buffer.length();
+      int length = buffer == null ? 0 : buffer.length();
       StringBuilder b = getSignature(current, buffer);
       if (b == null && buffer != null && current.getParent() instanceof PsiFile && canResolveTopLevelChild(current)) {
         buffer.append(TYPE_MARKER).append(ELEMENT_TOKENS_SEPARATOR).append(TOP_LEVEL_CHILD_MARKER).append(ELEMENTS_SEPARATOR);
@@ -204,7 +203,7 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
         .append(ELEMENT_TOKENS_SEPARATOR).append(index);
       return bufferToUse;
     }
-    else if (element instanceof PsiComment) {
+    if (element instanceof PsiComment) {
       PsiElement parent = element.getParent();
       boolean nestedComment = false;
       if (parent instanceof PsiComment && parent.getTextRange().equals(element.getTextRange())) {
@@ -219,7 +218,7 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
         }
         bufferToUse.append(TYPE_MARKER).append(ELEMENT_TOKENS_SEPARATOR).append(DOC_COMMENT_MARKER);
         return bufferToUse;
-      } 
+      }
     }
 
     PsiElement parent = element.getParent();

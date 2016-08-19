@@ -161,7 +161,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
               final Couple<String> key = Couple.of(option, id);
               Set<String> foundSynonyms = myHighlightOption2Synonym.get(key);
               if (foundSynonyms == null) {
-                foundSynonyms = new THashSet<String>();
+                foundSynonyms = new THashSet<>();
                 myHighlightOption2Synonym.put(key, foundSynonyms);
               }
               foundSynonyms.add(synonym);
@@ -287,7 +287,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       }
     }
 
-    final Set<Configurable> currentConfigurables = new HashSet<Configurable>(contentHits);
+    final Set<Configurable> currentConfigurables = new HashSet<>(contentHits);
     if (options.isEmpty()) { //operate with substring
       String[] components = REG_EXP.split(optionToCheck);
       if (components.length > 0) {
@@ -303,7 +303,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
         contentHits.clear();
         return hits;
       }
-      final Set<String> ids = new HashSet<String>();
+      final Set<String> ids = new HashSet<>();
       for (OptionDescription id : optionIds) {
         ids.add(id.getConfigurableId());
       }
@@ -348,7 +348,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
         }
       }
       if (result == null) {
-        result = new THashSet<OptionDescription>();
+        result = new THashSet<>();
       }
       for (long description : descriptions) {
         OptionDescription desc = unpack(description);
@@ -367,7 +367,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     for (String word : words) {
       Set<OptionDescription> configs = getAcceptableDescriptions(word);
       if (configs == null) return null;
-      final Set<OptionDescription> paths = new HashSet<OptionDescription>();
+      final Set<OptionDescription> paths = new HashSet<>();
       for (OptionDescription config : configs) {
         if (Comparing.strEqual(config.getConfigurableId(), configurable.getId())) {
           paths.add(config);
@@ -415,7 +415,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   public Map<String, Set<String>> findPossibleExtension(@NotNull String prefix, final Project project) {
     loadHugeFilesIfNecessary();
     final boolean perProject = CodeStyleFacade.getInstance(project).projectUsesOwnSettings();
-    final Map<String, Set<String>> result = new THashMap<String, Set<String>>();
+    final Map<String, Set<String>> result = new THashMap<>();
     int count = 0;
     final Set<String> prefixes = getProcessedWordsWithoutStemming(prefix);
     for (String opt : prefixes) {
@@ -435,7 +435,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
         }
         Set<String> foundHits = result.get(groupName);
         if (foundHits == null) {
-          foundHits = new THashSet<String>();
+          foundHits = new THashSet<>();
           result.put(groupName, foundHits);
         }
         foundHits.add(description.getHit());
@@ -455,7 +455,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
 
   @Override
   public Set<String> getProcessedWordsWithoutStemming(@NotNull String text) {
-    Set<String> result = new HashSet<String>();
+    Set<String> result = new HashSet<>();
     @NonNls final String toLowerCase = text.toLowerCase();
     final String[] options = REG_EXP.split(toLowerCase);
     for (String opt : options) {
@@ -469,7 +469,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
 
   @Override
   public Set<String> getProcessedWords(@NotNull String text) {
-    Set<String> result = new HashSet<String>();
+    Set<String> result = new HashSet<>();
     @NonNls final String toLowerCase = text.toLowerCase();
     final String[] options = REG_EXP.split(toLowerCase);
     for (String opt : options) {
@@ -483,7 +483,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
 
   @Override
   public Set<String> replaceSynonyms(Set<String> options, SearchableConfigurable configurable) {
-    final Set<String> result = new HashSet<String>(options);
+    final Set<String> result = new HashSet<>(options);
     for (String option : options) {
       final Set<String> synonyms = getSynonym(option, configurable);
       if (synonyms != null) {

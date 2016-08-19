@@ -47,6 +47,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.DebuggerTreeInplaceEditor");
   private JComponent myInplaceEditorComponent;
   private final List<Runnable> myRemoveActions = new ArrayList<>();
+  protected final Disposable myDisposable = Disposer.newDisposable();
 
   protected abstract JComponent createInplaceEditorComponent();
 
@@ -82,6 +83,8 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
       action.run();
     }
     myRemoveActions.clear();
+
+    Disposer.dispose(myDisposable);
 
     final JTree tree = getTree();
     tree.repaint();
@@ -171,8 +174,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
       rootPane.removeComponentListener(componentListener);
     });
 
-    final Disposable disposable = Disposer.newDisposable();
-    getProject().getMessageBus().connect(disposable).subscribe(RunContentManager.TOPIC, new RunContentWithExecutorListener() {
+    getProject().getMessageBus().connect(myDisposable).subscribe(RunContentManager.TOPIC, new RunContentWithExecutorListener() {
       @Override
       public void contentSelected(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
         cancelEditing();
@@ -183,7 +185,6 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
         cancelEditing();
       }
     });
-    myRemoveActions.add(() -> Disposer.dispose(disposable));
 
     final JComponent editorComponent = getEditorComponent();
     editorComponent.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "enterStroke");

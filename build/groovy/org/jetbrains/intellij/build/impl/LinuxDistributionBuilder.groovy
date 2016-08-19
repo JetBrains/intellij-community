@@ -35,6 +35,7 @@ class LinuxDistributionBuilder {
 
   //todo[nik] rename
   void layoutUnix(File ideaProperties) {
+    buildContext.messages.progress("Building distributions for Linux")
     buildContext.ant.copy(todir: "$unixDistPath/bin") {
       fileset(dir: "$buildContext.paths.communityHome/bin/linux") {
         if (!buildContext.includeBreakGenLibraries()) {
@@ -126,7 +127,7 @@ class LinuxDistributionBuilder {
   }
 
   private void buildTarGz(String jreDirectoryPath) {
-    def tarRoot = customizer.rootDirectoryName(buildContext.buildNumber)
+    def tarRoot = customizer.rootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
     def suffix = jreDirectoryPath != null ? "" : "-no-jdk"
     def tarPath = "$buildContext.paths.artifacts/${buildContext.productProperties.baseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${suffix}.tar"
     def extraBins = customizer.extraExecutables
@@ -135,7 +136,9 @@ class LinuxDistributionBuilder {
       paths += jreDirectoryPath
       extraBins += "jre/jre/bin/*"
     }
-    buildContext.messages.block("Build Linux tar.gz archive${jreDirectoryPath != null ? "" : " (without JRE)"}") {
+    def description = "archive${jreDirectoryPath != null ? "" : " (without JRE)"}"
+    buildContext.messages.block("Build Linux tar.gz $description") {
+      buildContext.messages.progress("Building Linux tar $description")
       buildContext.ant.tar(tarfile: tarPath, longfile: "gnu") {
         paths.each {
           tarfileset(dir: it, prefix: tarRoot) {
@@ -161,6 +164,7 @@ class LinuxDistributionBuilder {
       }
 
       String gzPath = "${tarPath}.gz"
+      buildContext.messages.progress("Building Linux tar.gz $description")
       buildContext.ant.gzip(src: tarPath, zipfile: gzPath)
       buildContext.ant.delete(file: tarPath)
       buildContext.notifyArtifactBuilt(gzPath)

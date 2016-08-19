@@ -90,7 +90,7 @@ public class GrRefactoringConflictsUtil {
                                        @Nullable PsiClass targetClass,
                                        @NotNull PsiElement context,
                                        MultiMap<PsiElement, String> conflicts) {
-    final Set<PsiMember> moving = new HashSet<PsiMember>(membersToMove);
+    final Set<PsiMember> moving = new HashSet<>(membersToMove);
     if (abstractMethods != null) {
       moving.addAll(abstractMethods);
     }
@@ -152,7 +152,7 @@ public class GrRefactoringConflictsUtil {
 
 
     List<GroovyPsiElement> groovyScopes =
-      ContainerUtil.collect(scopes.iterator(), new FilteringIterator.InstanceOf<GroovyPsiElement>(GroovyPsiElement.class));
+      ContainerUtil.collect(scopes.iterator(), new FilteringIterator.InstanceOf<>(GroovyPsiElement.class));
     analyzeModuleConflicts(project, groovyScopes, usages, vFile, conflicts);
     scopes.removeAll(groovyScopes);
     RefactoringConflictsUtil.analyzeModuleConflicts(project, scopes, usages, vFile, conflicts);
@@ -171,7 +171,7 @@ public class GrRefactoringConflictsUtil {
     final Module targetModule = ModuleUtilCore.findModuleForFile(vFile, project);
     if (targetModule == null) return;
     final GlobalSearchScope resolveScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(targetModule);
-    final HashSet<PsiElement> reported = new HashSet<PsiElement>();
+    final HashSet<PsiElement> reported = new HashSet<>();
     for (final GroovyPsiElement scope : scopes) {
       scope.accept(new GroovyRecursiveElementVisitor() {
         @Override

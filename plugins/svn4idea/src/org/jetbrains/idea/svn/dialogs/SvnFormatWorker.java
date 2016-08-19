@@ -59,7 +59,7 @@ public class SvnFormatWorker extends Task.Backgroundable {
     super(project, SvnBundle.message("action.change.wcopy.format.task.title"), false, DEAF);
     myProject = project;
     myNewFormat = newFormat;
-    myExceptions = new ArrayList<Throwable>();
+    myExceptions = new ArrayList<>();
     myWcInfos = wcInfos;
     myVcs = SvnVcs.getInstance(myProject);
   }
@@ -84,7 +84,7 @@ public class SvnFormatWorker extends Task.Backgroundable {
     }
 
     if (! myExceptions.isEmpty()) {
-      final List<String> messages = new ArrayList<String>();
+      final List<String> messages = new ArrayList<>();
       for (Throwable exception : myExceptions) {
         messages.add(exception.getMessage());
       }

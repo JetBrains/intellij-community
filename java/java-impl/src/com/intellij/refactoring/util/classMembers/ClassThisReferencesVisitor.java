@@ -28,7 +28,7 @@ public abstract class ClassThisReferencesVisitor extends ClassMemberReferencesVi
   HashSet<PsiClass> myClassSuperClasses;
   public ClassThisReferencesVisitor(PsiClass aClass) {
     super(aClass);
-    myClassSuperClasses = new HashSet<PsiClass>();
+    myClassSuperClasses = new HashSet<>();
     myClassSuperClasses.add(aClass);
   }
 

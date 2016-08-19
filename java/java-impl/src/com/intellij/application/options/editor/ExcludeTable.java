@@ -111,7 +111,7 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
     @Nullable
     @Override
     public TableCellRenderer getRenderer(Item pair) {
-      return new ComboBoxTableRenderer<ExclusionScope>(ExclusionScope.values());
+      return new ComboBoxTableRenderer<>(ExclusionScope.values());
     }
 
     @Nullable

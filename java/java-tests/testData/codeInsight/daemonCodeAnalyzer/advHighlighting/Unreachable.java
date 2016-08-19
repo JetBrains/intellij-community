@@ -402,3 +402,90 @@ class Good3 {
     return false;
   }
 }
+
+class ContinueFromFinally {
+  void foo() {
+    while (true) {
+      try {
+        break;
+      } finally {
+        continue;
+      }
+    }
+    <error descr="Unreachable statement">System.out.println();</error>
+  }
+}
+
+class BreakFromNestedTry {
+  void foo() {
+    outer:
+    {
+      inner:
+      try {
+        try {
+          break inner;
+        } finally {
+          System.out.println();
+        }
+      } finally {
+        break outer;
+      }
+      <error descr="Unreachable statement">System.out.println();</error>
+    }
+  }
+}
+
+class BreakFromNestedFinally {
+  void foo() {
+    outer:
+    {
+      inner:
+      try {
+        try {
+        } finally {
+          break inner;
+        }
+      } finally {
+        break outer;
+      }
+      <error descr="Unreachable statement">System.out.println();</error>
+    }
+  }
+}
+
+class ContinueFromTry {
+  void foo() {
+    outer:
+    {
+      do {
+        try {
+          continue;
+        } finally {
+          break outer;
+        }
+      } while (false);
+      <error descr="Unreachable statement">System.out.println();</error>
+    }
+  }
+}
+
+class ManyExitsFromTry {
+  void f() {
+    final int i;
+    outer:
+    {
+      while (true) {
+        <error descr="Variable 'i' might be assigned in loop">i</error> = 1;
+        try {
+          if (i > 1) continue;
+          if (i > 2) break;
+          if (i > 3) break outer;
+          if (i > 4) return;
+          if (i > 5) throw new RuntimeException();
+        }
+        finally {
+        }
+      }
+    }
+  }
+}

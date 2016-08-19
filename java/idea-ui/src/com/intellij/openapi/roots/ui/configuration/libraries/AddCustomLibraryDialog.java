@@ -49,7 +49,7 @@ public class AddCustomLibraryDialog extends DialogWrapper {
   private final Module myModule;
   private final ModifiableRootModel myModifiableRootModel;
   private final @Nullable ParameterizedRunnable<ModifiableRootModel> myBeforeLibraryAdded;
-  private final List<Library> myAddedLibraries = new ArrayList<Library>();
+  private final List<Library> myAddedLibraries = new ArrayList<>();
 
   private AddCustomLibraryDialog(CustomLibraryDescription description, LibrariesContainer librariesContainer,
                                  Module module,
@@ -106,7 +106,7 @@ public class AddCustomLibraryDialog extends DialogWrapper {
         }
 
       }
-      AddCustomLibraryDialog.super.doOKAction();
+      super.doOKAction();
     });
   }
 

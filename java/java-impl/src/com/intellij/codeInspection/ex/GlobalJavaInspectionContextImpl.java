@@ -70,32 +70,32 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
 
   @Override
   public void enqueueClassUsagesProcessor(RefClass refClass, UsagesProcessor p) {
-    if (myClassUsagesRequests == null) myClassUsagesRequests = new THashMap<SmartPsiElementPointer, List<UsagesProcessor>>();
+    if (myClassUsagesRequests == null) myClassUsagesRequests = new THashMap<>();
     enqueueRequestImpl(refClass, myClassUsagesRequests, p);
 
   }
   @Override
   public void enqueueDerivedClassesProcessor(RefClass refClass, DerivedClassesProcessor p) {
-    if (myDerivedClassesRequests == null) myDerivedClassesRequests = new THashMap<SmartPsiElementPointer, List<DerivedClassesProcessor>>();
+    if (myDerivedClassesRequests == null) myDerivedClassesRequests = new THashMap<>();
     enqueueRequestImpl(refClass, myDerivedClassesRequests, p);
   }
 
   @Override
   public void enqueueDerivedMethodsProcessor(RefMethod refMethod, DerivedMethodsProcessor p) {
     if (refMethod.isConstructor() || refMethod.isStatic()) return;
-    if (myDerivedMethodsRequests == null) myDerivedMethodsRequests = new THashMap<SmartPsiElementPointer, List<DerivedMethodsProcessor>>();
+    if (myDerivedMethodsRequests == null) myDerivedMethodsRequests = new THashMap<>();
     enqueueRequestImpl(refMethod, myDerivedMethodsRequests, p);
   }
 
   @Override
   public void enqueueFieldUsagesProcessor(RefField refField, UsagesProcessor p) {
-    if (myFieldUsagesRequests == null) myFieldUsagesRequests = new THashMap<SmartPsiElementPointer, List<UsagesProcessor>>();
+    if (myFieldUsagesRequests == null) myFieldUsagesRequests = new THashMap<>();
     enqueueRequestImpl(refField, myFieldUsagesRequests, p);
   }
 
   @Override
   public void enqueueMethodUsagesProcessor(RefMethod refMethod, UsagesProcessor p) {
-    if (myMethodUsagesRequests == null) myMethodUsagesRequests = new THashMap<SmartPsiElementPointer, List<UsagesProcessor>>();
+    if (myMethodUsagesRequests == null) myMethodUsagesRequests = new THashMap<>();
     enqueueRequestImpl(refMethod, myMethodUsagesRequests, p);
   }
 
@@ -174,7 +174,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
   private static <T extends Processor> void enqueueRequestImpl(RefElement refElement, Map<SmartPsiElementPointer, List<T>> requestMap, T processor) {
     List<T> requests = requestMap.get(refElement.getPointer());
     if (requests == null) {
-      requests = new ArrayList<T>();
+      requests = new ArrayList<>();
       requestMap.put(refElement.getPointer(), requests);
     }
     requests.add(processor);
@@ -325,11 +325,11 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
 
   private static <Member extends PsiMember, P extends Processor<Member>> PsiElementProcessorAdapter<Member> createMembersProcessor(final List<P> processors,
                                                                                                                                    final AnalysisScope scope) {
-    return new PsiElementProcessorAdapter<Member>(new PsiElementProcessor<Member>() {
+    return new PsiElementProcessorAdapter<>(new PsiElementProcessor<Member>() {
       @Override
       public boolean execute(@NotNull Member member) {
         if (scope.contains(member)) return true;
-        final List<P> processorsArrayed = new ArrayList<P>(processors);
+        final List<P> processorsArrayed = new ArrayList<>(processors);
         for (P processor : processorsArrayed) {
           if (!processor.process(member)) {
             processors.remove(processor);
@@ -357,7 +357,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
   }
 
   private static List<SmartPsiElementPointer> getSortedIDs(final Map<SmartPsiElementPointer, ?> requests) {
-    final List<SmartPsiElementPointer> result = new ArrayList<SmartPsiElementPointer>();
+    final List<SmartPsiElementPointer> result = new ArrayList<>();
 
     ApplicationManager.getApplication().runReadAction(() -> {
       for (SmartPsiElementPointer id : requests.keySet()) {

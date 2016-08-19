@@ -52,11 +52,11 @@ public class KShortestPathsFinder<Node> {
   }
 
   private void computeDistancesToTarget() {
-    myNonTreeEdges = new MultiMap<Node, GraphEdge<Node>>();
-    mySortedNodes = new ArrayList<Node>();
-    myNextNodes = new HashMap<Node, Node>();
-    TObjectIntHashMap<Node> distances = new TObjectIntHashMap<Node>();
-    Deque<Node> nodes = new ArrayDeque<Node>();
+    myNonTreeEdges = new MultiMap<>();
+    mySortedNodes = new ArrayList<>();
+    myNextNodes = new HashMap<>();
+    TObjectIntHashMap<Node> distances = new TObjectIntHashMap<>();
+    Deque<Node> nodes = new ArrayDeque<>();
     nodes.addLast(myFinish);
     distances.put(myFinish, 0);
     while (!nodes.isEmpty()) {
@@ -69,7 +69,7 @@ public class KShortestPathsFinder<Node> {
         Node prev = iterator.next();
         if (distances.containsKey(prev)) {
           int dPrev = distances.get(prev);
-          myNonTreeEdges.putValue(prev, new GraphEdge<Node>(prev, node, d - dPrev));
+          myNonTreeEdges.putValue(prev, new GraphEdge<>(prev, node, d - dPrev));
           continue;
         }
         distances.put(prev, d);
@@ -80,16 +80,16 @@ public class KShortestPathsFinder<Node> {
   }
 
   private void buildOutHeaps() {
-    myOutRoots = new HashMap<Node, HeapNode<Node>>();
+    myOutRoots = new HashMap<>();
     for (Node node : mySortedNodes) {
       myProgressIndicator.checkCanceled();
-      List<HeapNode<Node>> heapNodes = new ArrayList<HeapNode<Node>>();
+      List<HeapNode<Node>> heapNodes = new ArrayList<>();
       Collection<GraphEdge<Node>> edges = myNonTreeEdges.get(node);
       if (edges.isEmpty()) continue;
 
       HeapNode<Node> root = null;
       for (GraphEdge<Node> edge : edges) {
-        HeapNode<Node> heapNode = new HeapNode<Node>(edge);
+        HeapNode<Node> heapNode = new HeapNode<>(edge);
         heapNodes.add(heapNode);
         if (root == null || root.myEdge.getDelta() > heapNode.myEdge.getDelta()) {
           root = heapNode;
@@ -113,7 +113,7 @@ public class KShortestPathsFinder<Node> {
   }
 
   private void buildMainHeaps() {
-    myHeaps = new HashMap<Node, Heap<Node>>();
+    myHeaps = new HashMap<>();
     for (Node node : mySortedNodes) {
       myProgressIndicator.checkCanceled();
       HeapNode<Node> outRoot = myOutRoots.get(node);
@@ -127,7 +127,7 @@ public class KShortestPathsFinder<Node> {
 
       final Heap<Node> nextHeap = myHeaps.get(next);
       if (nextHeap == null) {
-        myHeaps.put(node, new Heap<Node>(outRoot));
+        myHeaps.put(node, new Heap<>(outRoot));
         continue;
       }
 
@@ -169,13 +169,13 @@ public class KShortestPathsFinder<Node> {
       buildOutHeaps();
       buildMainHeaps();
 
-      PriorityQueue<Sidetracks<Node>> queue = new PriorityQueue<Sidetracks<Node>>();
-      List<FList<HeapNode<Node>>> sidetracks = new ArrayList<FList<HeapNode<Node>>>();
+      PriorityQueue<Sidetracks<Node>> queue = new PriorityQueue<>();
+      List<FList<HeapNode<Node>>> sidetracks = new ArrayList<>();
       sidetracks.add(FList.<HeapNode<Node>>emptyList());
 
       final Heap<Node> heap = myHeaps.get(myStart);
       if (heap != null) {
-        queue.add(new Sidetracks<Node>(0, FList.<HeapNode<Node>>emptyList().prepend(heap.getRoot())));
+        queue.add(new Sidetracks<>(0, FList.<HeapNode<Node>>emptyList().prepend(heap.getRoot())));
         for (int i = 2; i <= k; i++) {
           if (queue.isEmpty()) break;
           myProgressIndicator.checkCanceled();
@@ -185,12 +185,12 @@ public class KShortestPathsFinder<Node> {
           final Heap<Node> next = myHeaps.get(e.myEdge.getFinish());
           if (next != null) {
             final HeapNode<Node> f = next.getRoot();
-            queue.add(new Sidetracks<Node>(current.myLength + f.myEdge.getDelta(), current.myEdges.prepend(f)));
+            queue.add(new Sidetracks<>(current.myLength + f.myEdge.getDelta(), current.myEdges.prepend(f)));
           }
           for (HeapNode<Node> child : e.myChildren) {
             if (child != null) {
-              queue.add(new Sidetracks<Node>(current.myLength - e.myEdge.getDelta() + child.myEdge.getDelta(),
-                                             current.myEdges.getTail().prepend(child)));
+              queue.add(new Sidetracks<>(current.myLength - e.myEdge.getDelta() + child.myEdge.getDelta(),
+                                         current.myEdges.getTail().prepend(child)));
             }
           }
         }
@@ -204,16 +204,16 @@ public class KShortestPathsFinder<Node> {
   }
 
   private List<List<Node>> computePathsBySidetracks(List<FList<HeapNode<Node>>> sidetracks) {
-    final List<List<Node>> result = new ArrayList<List<Node>>();
+    final List<List<Node>> result = new ArrayList<>();
     for (FList<HeapNode<Node>> sidetrack : sidetracks) {
       myProgressIndicator.checkCanceled();
-      List<GraphEdge<Node>> edges = new ArrayList<GraphEdge<Node>>();
+      List<GraphEdge<Node>> edges = new ArrayList<>();
       while (!sidetrack.isEmpty()) {
         edges.add(sidetrack.getHead().myEdge);
         sidetrack = sidetrack.getTail();
       }
       Node current = myStart;
-      final List<Node> path = new ArrayList<Node>();
+      final List<Node> path = new ArrayList<>();
       path.add(current);
       int i = edges.size() - 1;
       while (!current.equals(myFinish) || i >= 0) {
@@ -274,7 +274,7 @@ public class KShortestPathsFinder<Node> {
       }
       HeapNode<Node> newRoot = myRoot.copy();
       HeapNode<Node> place = newRoot;
-      List<HeapNode<Node>> parents = new ArrayList<HeapNode<Node>>();
+      List<HeapNode<Node>> parents = new ArrayList<>();
       while (true) {
         parents.add(place);
         final int ind = (pos & pow) != 0 ? 1 : 0;
@@ -301,7 +301,7 @@ public class KShortestPathsFinder<Node> {
         node.myChildren[2] = t2;
         node = parent;
       }
-      return new Heap<Node>(mySize + 1, newRoot);
+      return new Heap<>(mySize + 1, newRoot);
     }
   }
 
@@ -320,7 +320,7 @@ public class KShortestPathsFinder<Node> {
     }
 
     public HeapNode<Node> copy() {
-      return new HeapNode<Node>(this);
+      return new HeapNode<>(this);
     }
   }
 }

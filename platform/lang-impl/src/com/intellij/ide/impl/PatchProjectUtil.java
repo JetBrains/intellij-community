@@ -101,7 +101,7 @@ public class PatchProjectUtil {
       for (final ContentEntry contentEntry : contentEntries) {
         final VirtualFile contentRoot = contentEntry.getFile();
         if (contentRoot == null) continue;
-        final Set<VirtualFile> included = new HashSet<VirtualFile>();
+        final Set<VirtualFile> included = new HashSet<>();
         iterate(contentRoot, new ContentIterator() {
           @Override
           public boolean processFile(final VirtualFile fileOrDir) {
@@ -141,7 +141,7 @@ public class PatchProjectUtil {
 
   public static void processIncluded(final ContentEntry contentEntry, final Set<VirtualFile> included) {
     if (included.isEmpty()) return;
-    final Set<VirtualFile> parents = new HashSet<VirtualFile>();
+    final Set<VirtualFile> parents = new HashSet<>();
     for (VirtualFile file : included) {
       if (Comparing.equal(file, contentEntry.getFile())) return;
       final VirtualFile parent = file.getParent();
@@ -181,7 +181,7 @@ public class PatchProjectUtil {
    *         ModulePattern may be null (meaning that a directory pattern is applied to all modules).
    */
   public static Map<Pattern, Set<Pattern>> loadPatterns(@NonNls String propertyKey) {
-    final Map<Pattern, Set<Pattern>> result = new HashMap<Pattern, Set<Pattern>>();
+    final Map<Pattern, Set<Pattern>> result = new HashMap<>();
     final String patterns = System.getProperty(propertyKey);
     if (patterns != null) {
       final String[] pathPatterns = patterns.split(";");
@@ -196,7 +196,7 @@ public class PatchProjectUtil {
         final Pattern pattern = Pattern.compile(FileUtil.convertAntToRegexp(excludedPattern.substring(idx)));
         Set<Pattern> dirPatterns = result.get(modulePattern);
         if (dirPatterns == null) {
-          dirPatterns = new HashSet<Pattern>();
+          dirPatterns = new HashSet<>();
           result.put(modulePattern, dirPatterns);
         }
         dirPatterns.add(pattern);

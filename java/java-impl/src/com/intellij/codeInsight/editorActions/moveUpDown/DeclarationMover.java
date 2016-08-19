@@ -202,7 +202,7 @@ class DeclarationMover extends LineMover {
         endLine == lineRange.endLine) {
       return true;
     }
-    List<PsiElement> memberSuspects = new ArrayList<PsiElement>();
+    List<PsiElement> memberSuspects = new ArrayList<>();
     PsiModifierList modifierList = member instanceof PsiMember ? ((PsiMember)member).getModifierList() : null;
     if (modifierList != null) memberSuspects.add(modifierList);
     if (member instanceof PsiClass) {

@@ -89,7 +89,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
       }
     }
     if (DomUtil.hasXml(element)) {
-      final SmartList<DomElementProblemDescriptor> list = new SmartList<DomElementProblemDescriptor>();
+      final SmartList<DomElementProblemDescriptor> list = new SmartList<>();
       final DomGenericInfo info = element.getGenericInfo();
       for (final AbstractDomChildrenDescription description : info.getChildrenDescriptions()) {
         if (description instanceof DomCollectionChildDescription && description.getValues(element).isEmpty()) {
@@ -115,7 +115,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
 
     final XmlElement valueElement = DomUtil.getValueElement(element);
     if (valueElement != null && !isSoftReference(element)) {
-      final SmartList<DomElementProblemDescriptor> list = new SmartList<DomElementProblemDescriptor>();
+      final SmartList<DomElementProblemDescriptor> list = new SmartList<>();
       final PsiReference[] psiReferences = myProvider.getReferencesByElement(valueElement, new ProcessingContext());
       GenericDomValueReference domReference = ContainerUtil.findInstance(psiReferences, GenericDomValueReference.class);
       final Converter converter = WrappingConverter.getDeepestConverter(element.getConverter(), element);

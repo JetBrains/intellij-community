@@ -74,7 +74,7 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
                            // became hidden. myLineWidths contents is irrelevant in such a state. Previously calculated preferred size
                            // is kept until soft wraps will be recalculated and size calculations will become possible
   
-  private final List<TextRange> myDeferredRanges = new ArrayList<TextRange>();
+  private final List<TextRange> myDeferredRanges = new ArrayList<>();
   
   private final SoftWrapAwareDocumentParsingListenerAdapter mySoftWrapChangeListener = new SoftWrapAwareDocumentParsingListenerAdapter() {
     @Override
@@ -113,6 +113,7 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
   public void documentChanged(DocumentEvent event) {
     if (myDocument.isInBulkUpdate()) return;
     doInvalidateRange(myDocumentChangeStartOffset, myDocumentChangeEndOffset);
+    assertValidState();
   }
   
   @Override
@@ -137,6 +138,7 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
       onTextLayoutPerformed(range.getStartOffset(), range.getEndOffset());
     }
     myDeferredRanges.clear();
+    assertValidState();
   }
 
   private void onSoftWrapRecalculationEnd(IncrementalCacheUpdateEvent event) {
@@ -236,18 +238,14 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
 
   private int calculatePreferredWidth() {
     if (checkDirty()) return 1;
-    if (myLineWidths.size() != myEditor.getVisibleLineCount()) {
-      LOG.error("Inconsistent state", new Attachment("editor.txt", myEditor.dumpState()));
-      reset();
-    }
-    assert myLineWidths.size() == myEditor.getVisibleLineCount();
+    assertValidState();
     VisualLinesIterator iterator = new VisualLinesIterator(myView, 0);
     int maxWidth = 0;
     while (!iterator.atEnd()) {
       int visualLine = iterator.getVisualLine();
       int width = myLineWidths.get(visualLine);
       if (width == UNKNOWN_WIDTH) {
-        final Ref<Boolean> approximateValue = new Ref<Boolean>(Boolean.FALSE);
+        final Ref<Boolean> approximateValue = new Ref<>(Boolean.FALSE);
         width = getVisualLineWidth(iterator, () -> approximateValue.set(Boolean.TRUE));
         if (approximateValue.get()) width = -width;
         myLineWidths.set(visualLine, width);
@@ -396,9 +394,17 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
            ", line widths: " + myLineWidths + "]";
   }
 
+  private void assertValidState() {
+    if (myDocument.isInBulkUpdate() || myDirty) return;
+    if (myLineWidths.size() != myEditor.getVisibleLineCount()) {
+      LOG.error("Inconsistent state", new Attachment("editor.txt", myEditor.dumpState()));
+      reset();
+    }
+    assert myLineWidths.size() == myEditor.getVisibleLineCount();
+  }
+
   @TestOnly
   public void validateState() {
-    if (myDocument.isInBulkUpdate() || myDirty) return;
-    LOG.assertTrue(myLineWidths.size() == myEditor.getVisibleLineCount());
+    assertValidState();
   }
 }

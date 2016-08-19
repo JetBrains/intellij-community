@@ -21,6 +21,7 @@ import com.siyeh.ig.LightInspectionTestCase;
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings("SuspiciousToArrayCall")
 public class SuspiciousToArrayCallInspectionTest extends LightInspectionTestCase {
 
   public void testCast() {

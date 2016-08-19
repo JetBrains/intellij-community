@@ -43,10 +43,10 @@ public class SidePanel extends JPanel {
   private final JList myList;
   private final DefaultListModel myModel;
   private final Place.Navigator myNavigator;
-  private final ArrayList<Place> myPlaces = new ArrayList<Place>();
+  private final ArrayList<Place> myPlaces = new ArrayList<>();
 
-  private final Map<Integer, String> myIndex2Separator = new HashMap<Integer, String>();
-  private final Map<Place, Presentation> myPlace2Presentation = new HashMap<Place, Presentation>();
+  private final Map<Integer, String> myIndex2Separator = new HashMap<>();
+  private final Map<Place, Presentation> myPlace2Presentation = new HashMap<>();
   private final History myHistory;
 
   public SidePanel(Place.Navigator navigator, History history) {

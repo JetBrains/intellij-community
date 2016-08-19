@@ -107,6 +107,14 @@ public class Interface8MethodsHighlightingTest extends LightCodeInsightFixtureTe
     doTest();
   }
 
+  public void testUnrelatedDefaultsWhenAbstractIsOverridden() throws Exception {
+    doTest();
+  }
+
+  public void testAbstractOverriddenBySecondDefault() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false, false);
   }

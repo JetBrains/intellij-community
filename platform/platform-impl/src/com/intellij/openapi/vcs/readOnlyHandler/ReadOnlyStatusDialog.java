@@ -169,7 +169,7 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
       }
     }
 
-    List<FileInfo> files = new ArrayList<FileInfo>();
+    List<FileInfo> files = new ArrayList<>();
     Collections.addAll(files, myFiles);
     String changelist = (String)myChangelist.getSelectedItem();
     ReadonlyStatusHandlerImpl.processFiles(files, changelist);

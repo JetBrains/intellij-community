@@ -41,7 +41,7 @@ public class StaticImportInspectionBase extends BaseInspection {
   @SuppressWarnings({"PublicField"}) public boolean ignoreSingeMethodImports = false;
   @SuppressWarnings({"PublicField", "UnusedDeclaration"})
   public boolean ignoreInTestCode = false; // keep for compatibility
-  @SuppressWarnings("PublicField") public OrderedSet<String> allowedClasses = new OrderedSet<String>();
+  @SuppressWarnings("PublicField") public OrderedSet<String> allowedClasses = new OrderedSet<>();
 
   @Override
   @NotNull
@@ -101,7 +101,7 @@ public class StaticImportInspectionBase extends BaseInspection {
       final PsiJavaFile file = (PsiJavaFile)importStatement.getContainingFile();
       file.accept(referenceCollector);
       final List<PsiJavaCodeReferenceElement> references = referenceCollector.getReferences();
-      final Map<PsiJavaCodeReferenceElement, PsiMember> referenceTargetMap = new HashMap<PsiJavaCodeReferenceElement, PsiMember>();
+      final Map<PsiJavaCodeReferenceElement, PsiMember> referenceTargetMap = new HashMap<>();
       for (PsiJavaCodeReferenceElement reference : references) {
         final PsiElement target = reference.resolve();
         if (target instanceof PsiMember) {
@@ -144,7 +144,7 @@ public class StaticImportInspectionBase extends BaseInspection {
 
       private final JavaResolveResult[] importTargets;
       private final boolean onDemand;
-      private final List<PsiJavaCodeReferenceElement> references = new ArrayList<PsiJavaCodeReferenceElement>();
+      private final List<PsiJavaCodeReferenceElement> references = new ArrayList<>();
 
       StaticImportReferenceCollector(@NotNull JavaResolveResult[] importTargets, boolean onDemand) {
         this.importTargets = importTargets;

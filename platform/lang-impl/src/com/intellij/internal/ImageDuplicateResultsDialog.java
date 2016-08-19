@@ -384,7 +384,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
     }
 
     public void remove(String value) {
-      final List<String> names = new ArrayList<String>(getModuleNames());
+      final List<String> names = new ArrayList<>(getModuleNames());
       names.remove(value);
       modules = StringUtil.join(names, "\n");
     }

@@ -11,9 +11,9 @@ public class CodeFragment {
   private final boolean returnInstructionInside;
 
   public CodeFragment(final Set<String> input, final Set<String> output, final boolean returnInside) {
-    inputVariables = new ArrayList<String>(input);
+    inputVariables = new ArrayList<>(input);
     Collections.sort(inputVariables);
-    outputVariables = new ArrayList<String>(output);
+    outputVariables = new ArrayList<>(output);
     Collections.sort(outputVariables);
     returnInstructionInside = returnInside;
   }

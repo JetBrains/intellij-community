@@ -15,12 +15,11 @@
  */
 package com.intellij.ide;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.IdePopupEventDispatcher;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
-import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 
@@ -127,5 +126,12 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
     if (!isPopupActive()) return false;
 
     return myDispatchStack.get(myDispatchStack.size() - 1).requestFocus();
+  }
+
+  public boolean isPopupWindow(Window w) {
+    return myDispatchStack.stream()
+             .flatMap(IdePopupEventDispatcher::getPopupStream)
+             .map(JBPopup::getContent)
+             .anyMatch(jbPopupContent -> SwingUtilities.getWindowAncestor(jbPopupContent) == w);
   }
 }

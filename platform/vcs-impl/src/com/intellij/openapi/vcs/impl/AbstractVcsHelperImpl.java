@@ -184,7 +184,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     if (dlg.showAndGet()) {
       final Collection<VirtualFile> selection = dlg.getSelectedFiles();
       // return items in the same order as they were passed to us
-      final List<VirtualFile> result = new ArrayList<VirtualFile>();
+      final List<VirtualFile> result = new ArrayList<>();
       for (VirtualFile file : files) {
         if (selection.contains(file)) {
           result.add(file);
@@ -262,7 +262,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   private static String[] getExceptionMessages(VcsException exception) {
     String[] messages = exception.getMessages();
     if (messages.length == 0) messages = new String[]{VcsBundle.message("exception.text.unknown.error")};
-    final List<String> list = new ArrayList<String>();
+    final List<String> list = new ArrayList<>();
     for (String message : messages) {
       list.addAll(StringUtil.split(StringUtil.convertLineSeparators(message), "\n"));
     }
@@ -318,7 +318,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
             addDirectMessages(vcsErrorViewPanel, entry.getValue());
           } else {
             final List<VcsException> exceptionList = entry.getValue();
-            final List<SimpleErrorData> list = new ArrayList<SimpleErrorData>(exceptionList.size());
+            final List<SimpleErrorData> list = new ArrayList<>(exceptionList.size());
             for (VcsException exception : exceptionList) {
               final String[] messages = getExceptionMessages(exception);
               list.add(new SimpleErrorData(
@@ -359,7 +359,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   public List<VcsException> runTransactionRunnable(AbstractVcs vcs, TransactionRunnable runnable, Object vcsParameters) {
-    List<VcsException> exceptions = new ArrayList<VcsException>();
+    List<VcsException> exceptions = new ArrayList<>();
 
     TransactionProvider transactionProvider = vcs.getTransactionProvider();
     boolean transactionSupported = transactionProvider != null;
@@ -550,7 +550,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     if (ok) {
       if (myProject.isDefault() || (ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss().length == 0) ||
           (! ModalityState.NON_MODAL.equals(ModalityState.current()))) {
-        final List<CommittedChangeList> versions = new ArrayList<CommittedChangeList>();
+        final List<CommittedChangeList> versions = new ArrayList<>();
 
         if (parent == null || !parent.isValid()) {
           parent = WindowManager.getInstance().suggestParentWindow(myProject);
@@ -801,7 +801,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       myLocation = location;
       mySettings = settings;
       myDlg = dlg;
-      myExceptions = new LinkedList<VcsException>();
+      myExceptions = new LinkedList<>();
     }
 
     public void cancel() {
@@ -810,7 +810,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
     public void run(@NotNull final ProgressIndicator indicator) {
       final AsynchConsumer<List<CommittedChangeList>> appender = myDlg.getAppender();
-      final BufferedListConsumer<CommittedChangeList> bufferedListConsumer = new BufferedListConsumer<CommittedChangeList>(10, appender, -1);
+      final BufferedListConsumer<CommittedChangeList> bufferedListConsumer = new BufferedListConsumer<>(10, appender, -1);
 
       final Application application = ApplicationManager.getApplication();
       try {

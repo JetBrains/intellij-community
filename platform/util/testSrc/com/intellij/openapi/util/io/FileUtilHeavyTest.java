@@ -69,7 +69,7 @@ public class FileUtilHeavyTest {
 
   @Test
   public void testProcessSimple() {
-    final Map<String, Integer> result = new HashMap<String, Integer>();
+    final Map<String, Integer> result = new HashMap<>();
     FileUtil.processFilesRecursively(myVisitorTestDirectory, file -> {
       Integer integer = result.get(file.getName());
       result.put(file.getName(), integer == null ? 1 : (integer + 1));
@@ -96,7 +96,7 @@ public class FileUtilHeavyTest {
 
   @Test
   public void testProcessDirectoryFilter() {
-    final Map<String, Integer> result = new HashMap<String, Integer>();
+    final Map<String, Integer> result = new HashMap<>();
     FileUtil.processFilesRecursively(myVisitorTestDirectory, file -> {
       Integer integer = result.get(file.getName());
       result.put(file.getName(), integer == null ? 1 : (integer + 1));

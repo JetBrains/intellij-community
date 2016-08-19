@@ -38,7 +38,7 @@ import java.util.List;
 public class RunContentExecutor implements Disposable {
   private final Project myProject;
   private final ProcessHandler myProcess;
-  private final List<Filter> myFilterList = new ArrayList<Filter>();
+  private final List<Filter> myFilterList = new ArrayList<>();
   private Runnable myRerunAction;
   private Runnable myStopAction;
   private Runnable myAfterCompletion;

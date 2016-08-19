@@ -36,7 +36,7 @@ class SequentialCleanupTask implements SequentialTask {
   private static final Logger LOG = Logger.getInstance(SequentialCleanupTask.class);
 
   private final Project myProject;
-  private final List<Pair<PsiFile, HighlightInfo>> myResults = new ArrayList<Pair<PsiFile, HighlightInfo>>();
+  private final List<Pair<PsiFile, HighlightInfo>> myResults = new ArrayList<>();
   private final SequentialModalProgressTask myProgressTask;
   private int myCount = 0;
   

@@ -28,7 +28,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -63,7 +62,7 @@ public class PythonTask {
   private String myRunnerScript;
   private HelperPackage myHelper = null;
 
-  private List<String> myParameters = new ArrayList<String>();
+  private List<String> myParameters = new ArrayList<>();
   private final String myRunTabTitle;
   private String myHelpId;
   private Runnable myAfterCompletion;
@@ -191,6 +190,9 @@ public class PythonTask {
     }
 
     PythonEnvUtil.setPythonUnbuffered(env);
+    if (homePath != null) {
+      PythonEnvUtil.resetHomePathChanges(homePath, env);
+    }
 
     List<String> pythonPath = setupPythonPath();
     PythonCommandLineState.initPythonPath(cmd, true, pythonPath, homePath);
@@ -228,7 +230,7 @@ public class PythonTask {
         try {
           process.destroyProcess(); // Stop process before rerunning it
           if (process.waitFor(TIME_TO_WAIT_PROCESS_STOP)) {
-            PythonTask.this.run(env, consoleView);
+            this.run(env, consoleView);
           }
           else {
             Messages.showErrorDialog(PyBundle.message("unable.to.stop"), myRunTabTitle);

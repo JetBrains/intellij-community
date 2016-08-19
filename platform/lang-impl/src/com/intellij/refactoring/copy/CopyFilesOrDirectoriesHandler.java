@@ -54,7 +54,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
 
   @Override
   public boolean canCopy(PsiElement[] elements, boolean fromUpdate) {
-    Set<String> names = new HashSet<String>();
+    Set<String> names = new HashSet<>();
     for (PsiElement element : elements) {
       if (!(element instanceof PsiFileSystemItem)) return false;
       if (!element.isValid()) return false;

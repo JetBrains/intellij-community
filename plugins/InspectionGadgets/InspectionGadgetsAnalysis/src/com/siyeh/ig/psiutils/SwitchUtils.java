@@ -306,10 +306,10 @@ public class SwitchUtils {
 
   public static class IfStatementBranch {
 
-    private final Set<String> topLevelVariables = new HashSet<String>(3);
-    private final LinkedList<String> comments = new LinkedList<String>();
-    private final LinkedList<String> statementComments = new LinkedList<String>();
-    private final List<PsiExpression> caseExpressions = new ArrayList<PsiExpression>(3);
+    private final Set<String> topLevelVariables = new HashSet<>(3);
+    private final LinkedList<String> comments = new LinkedList<>();
+    private final LinkedList<String> statementComments = new LinkedList<>();
+    private final List<PsiExpression> caseExpressions = new ArrayList<>(3);
     private final PsiStatement statement;
     private final boolean elseBranch;
 

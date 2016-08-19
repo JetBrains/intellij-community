@@ -762,7 +762,7 @@ public class CvsUtil {
 
     private Conflict(String name, String originalRevision, List<String> revisions, long time) {
       myName = name;
-      myRevisions = new ArrayList<String>();
+      myRevisions = new ArrayList<>();
       myRevisions.add(originalRevision);
       myRevisions.addAll(revisions);
       myPreviousTime = time;
@@ -770,7 +770,7 @@ public class CvsUtil {
 
     private Conflict(String name, List<String> revisions, long time) {
       myName = name;
-      myRevisions = new ArrayList<String>();
+      myRevisions = new ArrayList<>();
       myRevisions.addAll(revisions);
       myPreviousTime = time;
     }
@@ -819,7 +819,7 @@ public class CvsUtil {
     }
 
     public List<String> getRevisions() {
-      return new ArrayList<String>(myRevisions);
+      return new ArrayList<>(myRevisions);
     }
 
     public void setOriginalRevision(final String originalRevision) {
@@ -840,7 +840,7 @@ public class CvsUtil {
   }
 
   private static class Conflicts {
-    private final Map<String, Conflict> myNameToConflict = new com.intellij.util.containers.HashMap<String, Conflict>();
+    private final Map<String, Conflict> myNameToConflict = new com.intellij.util.containers.HashMap<>();
 
     @NotNull
     public static Conflicts readFrom(File file) throws IOException {
@@ -862,7 +862,7 @@ public class CvsUtil {
     }
 
     private List<String> getConflictLines() {
-      ArrayList<String> result = new ArrayList<String>();
+      ArrayList<String> result = new ArrayList<>();
       for (final Conflict conflict : myNameToConflict.values()) {
         result.add((conflict).toString());
       }
@@ -886,7 +886,7 @@ public class CvsUtil {
 
     public void addConflictForFile(String name) {
       if (!myNameToConflict.containsKey(name)) {
-        myNameToConflict.put(name, new Conflict(name, "", new ArrayList<String>(), -1));
+        myNameToConflict.put(name, new Conflict(name, "", new ArrayList<>(), -1));
       }
     }
 
@@ -895,7 +895,7 @@ public class CvsUtil {
     }
 
     public List<String> getRevisionsFor(String name) {
-      if (!myNameToConflict.containsKey(name)) return new ArrayList<String>();
+      if (!myNameToConflict.containsKey(name)) return new ArrayList<>();
       return (myNameToConflict.get(name)).getRevisions();
     }
 

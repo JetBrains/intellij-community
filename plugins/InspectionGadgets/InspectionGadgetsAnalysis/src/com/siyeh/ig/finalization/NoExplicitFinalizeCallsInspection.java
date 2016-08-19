@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,24 +59,16 @@ public class NoExplicitFinalizeCallsInspection extends BaseInspection {
     return new NoExplicitFinalizeCallsVisitor();
   }
 
-  private static class NoExplicitFinalizeCallsVisitor
-    extends BaseInspectionVisitor {
+  private static class NoExplicitFinalizeCallsVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      if (!MethodCallUtils.isCallToMethod(expression, null, PsiType.VOID,
-                                          HardcodedMethodConstants.FINALIZE)) {
+      if (!MethodCallUtils.isCallToMethod(expression, null, PsiType.VOID, HardcodedMethodConstants.FINALIZE)) {
         return;
       }
-      final PsiMethod containingMethod =
-        PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
-      if (containingMethod == null) {
-        return;
-      }
-      if (MethodUtils.methodMatches(containingMethod, null, PsiType.VOID,
-                                    HardcodedMethodConstants.FINALIZE)) {
+      final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
+      if (containingMethod == null || MethodUtils.isFinalize(containingMethod)) {
         return;
       }
       registerMethodCallError(expression);

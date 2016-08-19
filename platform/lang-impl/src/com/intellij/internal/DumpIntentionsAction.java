@@ -55,7 +55,7 @@ public class DumpIntentionsAction extends AnAction implements DumbAware {
       final List<IntentionActionMetaData> list = IntentionManagerSettings.getInstance().getMetaData();
       final File root = VfsUtil.virtualToIoFile(file);
       Element el = new Element("root");
-      Map<String, Element> categoryMap = new HashMap<String, Element>();
+      Map<String, Element> categoryMap = new HashMap<>();
       for (IntentionActionMetaData metaData : list) {
 
         try {

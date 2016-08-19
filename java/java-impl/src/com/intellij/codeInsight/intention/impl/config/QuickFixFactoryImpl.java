@@ -658,7 +658,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     UnusedParametersInspection unusedParametersInspection =
       (UnusedParametersInspection)profile.getUnwrappedTool(UnusedSymbolLocalInspectionBase.UNUSED_PARAMETERS_SHORT_NAME, parameter);
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || unusedParametersInspection != null);
-    List<IntentionAction> options = new ArrayList<IntentionAction>();
+    List<IntentionAction> options = new ArrayList<>();
     HighlightDisplayKey myUnusedSymbolKey = HighlightDisplayKey.find(UnusedSymbolLocalInspectionBase.SHORT_NAME);
     options.addAll(IntentionManager.getInstance().getStandardIntentionOptions(myUnusedSymbolKey, parameter));
     if (unusedParametersInspection != null) {

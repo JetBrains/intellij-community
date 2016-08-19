@@ -56,7 +56,7 @@ public class PsiFieldFavoriteNodeProvider extends FavoriteNodeProvider {
       }
     }
     if (elements != null) {
-      final Collection<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+      final Collection<AbstractTreeNode> result = new ArrayList<>();
       for (PsiElement element : elements) {
         if (element instanceof PsiField) {
           result.add(new FieldSmartPointerNode(project, element, viewSettings));

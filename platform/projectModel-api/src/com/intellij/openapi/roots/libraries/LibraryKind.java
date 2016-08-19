@@ -26,7 +26,7 @@ import java.util.Map;
  */
 public class LibraryKind {
   private final String myKindId;
-  private static final Map<String, LibraryKind> ourAllKinds = new HashMap<String, LibraryKind>();
+  private static final Map<String, LibraryKind> ourAllKinds = new HashMap<>();
 
   /**
    * @param kindId must be unique among all {@link com.intellij.openapi.roots.libraries.LibraryType} and {@link com.intellij.openapi.roots.libraries.LibraryPresentationProvider} implementations

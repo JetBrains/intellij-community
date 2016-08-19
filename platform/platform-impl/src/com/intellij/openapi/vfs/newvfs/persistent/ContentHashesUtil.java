@@ -72,7 +72,7 @@ public class ContentHashesUtil {
       return super.getLargestId() / SIGNATURE_LENGTH;
     }
 
-    private final ThreadLocal<Boolean> myProcessingKeyAtIndex = new ThreadLocal<Boolean>();
+    private final ThreadLocal<Boolean> myProcessingKeyAtIndex = new ThreadLocal<>();
 
     @Override
     protected boolean isKeyAtIndex(byte[] value, int idx) throws IOException {

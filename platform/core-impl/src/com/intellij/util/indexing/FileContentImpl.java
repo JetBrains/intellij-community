@@ -41,16 +41,18 @@ import java.nio.charset.Charset;
 
 /**
  * @author nik
+ *
+ * Class is not final since it is overridden in Upsource
  */
-public final class FileContentImpl extends UserDataHolderBase implements FileContent {
-  private final VirtualFile myFile;
-  private final String myFileName;
-  private final FileType myFileType;
-  private final Charset myCharset;
-  private byte[] myContent;
-  private CharSequence myContentAsText;
-  private final long myStamp;
-  private byte[] myHash;
+public class FileContentImpl extends UserDataHolderBase implements FileContent {
+  protected final VirtualFile myFile;
+  protected final String myFileName;
+  protected final FileType myFileType;
+  protected final Charset myCharset;
+  protected byte[] myContent;
+  protected CharSequence myContentAsText;
+  protected final long myStamp;
+  protected byte[] myHash;
 
   @Override
   public Project getProject() {

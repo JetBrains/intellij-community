@@ -101,7 +101,7 @@ public class GitXmlRpcSshService extends GitXmlRpcHandlerService<GitSSHGUIHandle
      */
     @SuppressWarnings({"UseOfObsoleteCollectionType"})
     private <T> Vector<T> adjustNull(final Vector<T> s) {
-      return s == null ? new Vector<T>() : s;
+      return s == null ? new Vector<>() : s;
     }
   }
 }

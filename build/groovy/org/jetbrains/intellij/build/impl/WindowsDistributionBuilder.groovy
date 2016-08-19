@@ -38,6 +38,7 @@ class WindowsDistributionBuilder {
 
   //todo[nik] rename
   void layoutWin(File ideaProperties) {
+    buildContext.messages.progress("Building distributions for Windows")
     buildContext.ant.copy(todir: "$winDistPath/bin") {
       fileset(dir: "$buildContext.paths.communityHome/bin/win") {
         if (!buildContext.includeBreakGenLibraries()) {
@@ -144,7 +145,7 @@ class WindowsDistributionBuilder {
       def upperCaseProductName = buildContext.applicationInfo.upperCaseProductName
       def lowerCaseProductName = buildContext.applicationInfo.shortProductName.toLowerCase()
       String vmOptions = "$buildContext.additionalJvmArguments -Didea.paths.selector=${buildContext.systemSelector}".trim()
-      def productName = buildContext.applicationInfo.upperCaseProductName //todo[nik] use '.productName' instead
+      def productName = buildContext.applicationInfo.shortProductName
 
       String jdkEnvVarSuffix = arch == JvmArchitecture.x64 ? "_64" : "";
       def envVarBaseName = buildContext.productProperties.environmentVariableBaseName(buildContext.applicationInfo)
@@ -166,9 +167,6 @@ IDS_VM_OPTIONS=$vmOptions
       String inputPath = "$communityHome/bin/WinLauncher/WinLauncher${arch.fileSuffix}.exe"
       def outputPath = "$winDistPath/bin/$exeFileName"
       def resourceModules = [buildContext.findApplicationInfoModule(), buildContext.findModule("icons")]
-      if (buildContext.productProperties.brandingModule != null) {
-        resourceModules << buildContext.findRequiredModule(buildContext.productProperties.brandingModule)
-      }
       buildContext.ant.java(classname: "com.pme.launcher.LauncherGeneratorMain", fork: "true", failonerror: "true") {
         sysproperty(key: "java.awt.headless", value: "true")
         arg(value: inputPath)
@@ -186,6 +184,9 @@ IDS_VM_OPTIONS=$vmOptions
           resourceModules.collectMany { it.sourceRoots }.each { JpsModuleSourceRoot root ->
             pathelement(location: root.file.absolutePath)
           }
+          buildContext.productProperties.brandingResourcePaths.each {
+            pathelement(location: it)
+          }
         }
       }
     }
@@ -194,11 +195,12 @@ IDS_VM_OPTIONS=$vmOptions
   private void buildWinZip(String jreDirectoryPath, String zipNameSuffix) {
     buildContext.messages.block("Build Windows ${zipNameSuffix}.zip distribution") {
       def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.baseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${zipNameSuffix}.zip"
-      def zipPrefix = customizer.rootDirectoryName(buildContext.buildNumber)
+      def zipPrefix = customizer.rootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
       def dirs = [buildContext.paths.distAll, winDistPath]
       if (jreDirectoryPath != null) {
         dirs += jreDirectoryPath
       }
+      buildContext.messages.progress("Building Windows ${zipNameSuffix}.zip archive")
       buildContext.ant.zip(zipfile: targetPath) {
         dirs.each {
           zipfileset(dir: it, prefix: zipPrefix)

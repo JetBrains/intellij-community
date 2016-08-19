@@ -39,7 +39,7 @@ public abstract class AbstractFieldPanel extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.AbstractFieldPanel");
   private final JComponent myComponent;
   private Runnable myChangeListener;
-  protected ArrayList<JButton> myButtons = new ArrayList<JButton>(1);
+  protected ArrayList<JButton> myButtons = new ArrayList<>(1);
   protected JLabel myLabel;
   private ActionListener myBrowseButtonActionListener;
   private String myViewerDialogTitle;

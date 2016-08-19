@@ -39,7 +39,7 @@ public class ToolbarDecoratorActionPromoter implements ActionPromoter {
 
   @Override
   public List<AnAction> promote(List<AnAction> actions, DataContext context) {
-    final SortedList<AnAction> result = new SortedList<AnAction>(ACTION_BUTTONS_SORTER);
+    final SortedList<AnAction> result = new SortedList<>(ACTION_BUTTONS_SORTER);
     result.addAll(actions);
     return result;
   }

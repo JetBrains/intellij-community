@@ -49,6 +49,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.DumbServiceImpl");
@@ -60,10 +61,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }
   };
   private static Throwable ourForcedTrace;
-  private volatile boolean myDumb;
+  private final AtomicReference<State> myState = new AtomicReference<>(State.SMART);
   private volatile Throwable myDumbStart;
   private volatile TransactionId myDumbStartTransaction;
-  private boolean myUpdateFinishedQueued;
   private final DumbModeListener myPublisher;
   private long myModificationCount;
   private final Set<Object> myQueuedEquivalences = new HashSet<>();
@@ -135,16 +135,17 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public boolean isDumb() {
-    return myDumb;
+    return myState.get() != State.SMART;
   }
 
   @TestOnly
   public void setDumb(boolean dumb) {
     if (dumb) {
-      myDumb = true;
+      myState.set(State.RUNNING_DUMB_TASKS);
       myPublisher.enteredDumbMode();
     }
     else {
+      myState.set(State.WAITING_FOR_FINISH);
       updateFinished(true);
     }
   }
@@ -207,8 +208,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         myProgresses.remove(task);
       });
       myUpdatesQueue.addLast(task);
-      // ok to test and set the flag like this, because the change is always done from dispatch thread
-      if (!myDumb) {
+      // ok to test and set myState like this, because the change is always done from dispatch thread
+      boolean wasSmart = !isDumb();
+      if (myState.get() != State.RUNNING_DUMB_TASKS) {
         if (permission == null) {
           LOG.info("Dumb mode not permitted in modal environment; see DumbService.allowStartingDumbModeInside documentation", trace);
         }
@@ -220,12 +222,12 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         // This will ensure all active read actions are completed before the app goes dumb
         application.runWriteAction(() -> {
           synchronized (myRunWhenSmartQueue) {
-            myDumb = true;
+            myState.set(State.RUNNING_DUMB_TASKS);
           }
           myDumbStart = trace;
           myDumbStartTransaction = contextTransaction;
           myModificationCount++;
-          if (!myUpdateFinishedQueued) {
+          if (wasSmart) {
             try {
               myPublisher.enteredDumbMode();
             }
@@ -291,15 +293,16 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   private void queueUpdateFinished(boolean modal) {
-    if (myUpdateFinishedQueued) return;
-    myUpdateFinishedQueued = true;
-    TransactionGuard.submitTransaction(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> updateFinished(modal)));
+    if (myState.compareAndSet(State.RUNNING_DUMB_TASKS, State.WAITING_FOR_FINISH)) {
+      TransactionGuard.getInstance().submitTransaction(myProject, myDumbStartTransaction, () -> WriteAction.run(() -> updateFinished(modal)));
+    }
   }
 
   private void updateFinished(boolean modal) {
-    myUpdateFinishedQueued = false;
     synchronized (myRunWhenSmartQueue) {
-      myDumb = false;
+      if (!myState.compareAndSet(State.WAITING_FOR_FINISH, State.SMART)) {
+        return;
+      }
     }
     myDumbStart = null;
     myModificationCount++;
@@ -321,7 +324,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     finally {
       // It may happen that one of the pending runWhenSmart actions triggers new dumb mode;
       // in this case we should quit processing pending actions and postpone them until the newly started dumb mode finishes.
-      while (!myDumb) {
+      while (!isDumb()) {
         final Runnable runnable;
         synchronized (myRunWhenSmartQueue) {
           if (myRunWhenSmartQueue.isEmpty()) {
@@ -516,7 +519,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     return result.get();
   }
 
-  private void invokeAndWaitIfNeeded(Runnable runnable) {
+  private static void invokeAndWaitIfNeeded(Runnable runnable) {
     Application app = ApplicationManager.getApplication();
     if (app.isDispatchThread()) {
       runnable.run();
@@ -525,14 +528,13 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     Semaphore semaphore = new Semaphore();
     semaphore.down();
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(() -> {
+    app.invokeLater(() -> {
       try {
         runnable.run();
       } finally {
         semaphore.up();
       }
-    });
+    }, ModalityState.any());
     try {
       semaphore.waitFor();
     }
@@ -574,4 +576,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       }
     }
   }
+
+  private enum State { SMART, RUNNING_DUMB_TASKS, WAITING_FOR_FINISH }
 }

@@ -153,7 +153,7 @@ public class AnalysisScope {
     myModule = null;
     myModules = null;
     myScope = null;
-    myVFiles = new HashSet<VirtualFile>(virtualFiles);
+    myVFiles = new HashSet<>(virtualFiles);
     myType = VIRTUAL_FILES;
   }
 
@@ -237,15 +237,15 @@ public class AnalysisScope {
 
   protected void initFilesSet() {
     if (myType == FILE) {
-      myFilesSet = new HashSet<VirtualFile>(1);
+      myFilesSet = new HashSet<>(1);
       myFilesSet.add(((PsiFileSystemItem)myElement).getVirtualFile());
     }
     else if (myType == DIRECTORY || myType == PROJECT || myType == MODULES || myType == MODULE || myType == CUSTOM) {
-      myFilesSet = new HashSet<VirtualFile>();
+      myFilesSet = new HashSet<>();
       accept(createFileSearcher(), false);
     }
     else if (myType == VIRTUAL_FILES) {
-      myFilesSet = new HashSet<VirtualFile>();
+      myFilesSet = new HashSet<>();
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
       for (Iterator<VirtualFile> iterator = myVFiles.iterator(); iterator.hasNext(); ) {
         final VirtualFile vFile = iterator.next();
@@ -311,7 +311,7 @@ public class AnalysisScope {
     }
     if (myScope instanceof LocalSearchScope) {
       final PsiElement[] psiElements = ((LocalSearchScope)myScope).getScope();
-      final Set<VirtualFile> files = new THashSet<VirtualFile>();
+      final Set<VirtualFile> files = new THashSet<>();
       for (final PsiElement element : psiElements) {
         VirtualFile file = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
           @Override
@@ -591,7 +591,7 @@ public class AnalysisScope {
   @NotNull
   public AnalysisScope getNarrowedComplementaryScope(@NotNull Project defaultProject) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(defaultProject).getFileIndex();
-    final HashSet<Module> modules = new HashSet<Module>();
+    final HashSet<Module> modules = new HashSet<>();
     if (myType == FILE || myType == DIRECTORY) {
       final VirtualFile vFile = ((PsiFileSystemItem)myElement).getVirtualFile();
       modules.addAll(getAllInterestingModules(fileIndex, vFile));
@@ -611,7 +611,7 @@ public class AnalysisScope {
       return new AnalysisScope(defaultProject);
     }
     final Module[] allModules = ModuleManager.getInstance(defaultProject).getModules();
-    Set<Module> modulesToAnalyze = new HashSet<Module>();
+    Set<Module> modulesToAnalyze = new HashSet<>();
     for (final Module module : modules) {
       modulesToAnalyze.addAll(getDirectBackwardDependencies(module, allModules));
       modulesToAnalyze.addAll(getExportBackwardDependencies(module, allModules));
@@ -622,7 +622,7 @@ public class AnalysisScope {
 
   @NotNull
   private static Set<Module> getExportBackwardDependencies(@NotNull Module fromModule, @NotNull Module[] allModules) {
-    Set<Module> result = new HashSet<Module>();
+    Set<Module> result = new HashSet<>();
     for (Module module : allModules) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
@@ -638,7 +638,7 @@ public class AnalysisScope {
 
   @NotNull
   private static Set<Module> getDirectBackwardDependencies(@NotNull Module module, @NotNull Module[] allModules) {
-    Set<Module> result = new HashSet<Module>();
+    Set<Module> result = new HashSet<>();
     for (Module dependency : allModules) {
       if (ArrayUtil.find(ModuleRootManager.getInstance(dependency).getDependencies(), module) > -1) {
         result.add(dependency);
@@ -649,7 +649,7 @@ public class AnalysisScope {
 
   @NotNull
   protected static HashSet<Module> getAllInterestingModules(@NotNull final ProjectFileIndex fileIndex, @NotNull final VirtualFile vFile) {
-    final HashSet<Module> modules = new HashSet<Module>();
+    final HashSet<Module> modules = new HashSet<>();
     if (fileIndex.isInLibrarySource(vFile) || fileIndex.isInLibraryClasses(vFile)) {
       for (OrderEntry orderEntry : fileIndex.getOrderEntriesForFile(vFile)) {
         modules.add(orderEntry.getOwnerModule());

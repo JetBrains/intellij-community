@@ -45,8 +45,8 @@ public class XPathProjectComponent implements PersistentStateComponent<Element> 
     protected static final String URI = "uri";
 
     /** A set that maintains the history */
-    private final LinkedHashMap<String, HistoryElement> history = new LinkedHashMap<String, HistoryElement>();
-    private final LinkedHashMap<String, HistoryElement> findHistory = new LinkedHashMap<String, HistoryElement>();
+    private final LinkedHashMap<String, HistoryElement> history = new LinkedHashMap<>();
+    private final LinkedHashMap<String, HistoryElement> findHistory = new LinkedHashMap<>();
 
 //    private Set<Namespace> namespaces = new HashSet();
 
@@ -64,13 +64,13 @@ public class XPathProjectComponent implements PersistentStateComponent<Element> 
                 final String expression = entry.getAttributeValue(EXPRESSION);
                 if (expression != null) {
                     List<Element> children = entry.getChildren(VARIABLE);
-                    final Collection<Variable> variables = new ArrayList<Variable>(children.size());
+                    final Collection<Variable> variables = new ArrayList<>(children.size());
                     for (Element e : children) {
                         variables.add(new Variable(e.getAttributeValue(NAME), e.getAttributeValue(EXPRESSION)));
                     }
 
                     children = entry.getChildren(NAMESPACE);
-                    final Collection<Namespace> namespaces = new ArrayList<Namespace>(children.size());
+                    final Collection<Namespace> namespaces = new ArrayList<>(children.size());
                     for (Element namespaceElement : children) {
                         namespaces.add(new Namespace(namespaceElement.getAttributeValue(PREFIX), namespaceElement.getAttributeValue(URI)));
                     }

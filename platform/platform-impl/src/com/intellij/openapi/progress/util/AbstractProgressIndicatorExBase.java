@@ -162,7 +162,7 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
       synchronized (this) {
         finished = myFinished;
         if (finished == null) {
-          myFinished = finished = new WeakList<TaskInfo>();
+          myFinished = finished = new WeakList<>();
         }
       }
     }

@@ -129,8 +129,8 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     };
 
     final ActionCallback done = new ActionCallback();
-    final Ref<ProgressIndicator> indicatorRef = new Ref<ProgressIndicator>();
-    final Ref<ActionCallback> ready = new Ref<ActionCallback>();
+    final Ref<ProgressIndicator> indicatorRef = new Ref<>();
+    final Ref<ActionCallback> ready = new Ref<>();
 
     myElementUpdateHook = new ElementUpdateHook() {
       @Override
@@ -238,12 +238,12 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   public void testReadyCallbackWhenReleased() throws Exception {
     buildStructure(myRoot);
 
-    final Ref<Boolean> done = new Ref<Boolean>(false);
-    final Ref<Boolean> rejected = new Ref<Boolean>(false);
-    final Ref<Boolean> processed = new Ref<Boolean>(false);
-    final Ref<Boolean> wasUiNull = new Ref<Boolean>(true);
+    final Ref<Boolean> done = new Ref<>(false);
+    final Ref<Boolean> rejected = new Ref<>(false);
+    final Ref<Boolean> processed = new Ref<>(false);
+    final Ref<Boolean> wasUiNull = new Ref<>(true);
 
-    final Ref<Runnable> addReadyCallbacks = new Ref<Runnable>(new Runnable() {
+    final Ref<Runnable> addReadyCallbacks = new Ref<>(new Runnable() {
       public void run() {
         getBuilder().getReady(this).doWhenDone(new NamedRunnable("on done") {
           @Override
@@ -266,7 +266,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       }
     });
 
-    final Ref<Boolean> disposeRequested = new Ref<Boolean>(false);
+    final Ref<Boolean> disposeRequested = new Ref<>(false);
     myElementUpdateHook = new ElementUpdateHook() {
       @Override
       public void onElementAction(String action, Object element) {
@@ -302,7 +302,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +org\n" +
                " +xUnit\n");
 
-    final Ref<StringBuffer> updates = new Ref<StringBuffer>(new StringBuffer());
+    final Ref<StringBuffer> updates = new Ref<>(new StringBuffer());
     notNull(getMyBuilder().getTreeModel()).addTreeModelListener(new TreeModelListener() {
       @Override
       public void treeNodesChanged(TreeModelEvent e) {
@@ -362,7 +362,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     myAlwaysShowPlus.add(new NodeElement("org"));
     myAlwaysShowPlus.add(new NodeElement("xUnit"));
 
-    final Ref<Boolean> cancelled = new Ref<Boolean>(false);
+    final Ref<Boolean> cancelled = new Ref<>(false);
     myElementUpdateHook = new ElementUpdateHook() {
       @Override
       public void onElementAction(String action, Object element) {
@@ -388,7 +388,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     };
 
     final ActionCallback done = new ActionCallback();
-    final Ref<ProgressIndicator> indicatorRef = new Ref<ProgressIndicator>();
+    final Ref<ProgressIndicator> indicatorRef = new Ref<>();
 
     invokeLaterIfNeeded(() -> getBuilder().batch(new Progressive() {
       @Override
@@ -412,7 +412,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     buildStructure(myRoot);
     assertTree("+/\n");
 
-    final Ref<Boolean> done = new Ref<Boolean>();
+    final Ref<Boolean> done = new Ref<>();
     doAndWaitForBuilder(() -> getBuilder().expandAll(() -> done.set(true)));
 
     assertTree("-/\n"
@@ -1107,7 +1107,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
     collapsePath(getPath("/"));
 
-    final Ref<Boolean> done = new Ref<Boolean>();
+    final Ref<Boolean> done = new Ref<>();
     invokeLaterIfNeeded(() -> getBuilder().expand(new NodeElement("com"), () -> {
       notNull(getBuilder().getTree()).collapsePath(getPath("com"));
       done.set(Boolean.TRUE);
@@ -1232,9 +1232,9 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   public void testDeferredSelection() throws Exception {
     buildStructure(myRoot, false);
 
-    final Ref<Boolean> queued = new Ref<Boolean>(false);
-    final Ref<Boolean> intellijSelected = new Ref<Boolean>(false);
-    final Ref<Boolean> jetbrainsSelected = new Ref<Boolean>(false);
+    final Ref<Boolean> queued = new Ref<>(false);
+    final Ref<Boolean> intellijSelected = new Ref<>(false);
+    final Ref<Boolean> jetbrainsSelected = new Ref<>(false);
     invokeLaterIfNeeded(() -> {
       try {
         getBuilder().select(new NodeElement("intellij"), () -> intellijSelected.set(true), true);
@@ -1994,7 +1994,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
         return !element.equals(intellij);
       }
     };
-    final Ref<Object> reValidatedElement = new Ref<Object>();
+    final Ref<Object> reValidatedElement = new Ref<>();
     myStructure.setReValidator(new ReValidator() {
       @Nullable
       @Override
@@ -2060,7 +2060,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   public void testGetChildrenOnInvalidNode() throws Exception {
     buildStructure(myRoot);
 
-    final Set<NodeElement> invalid = new HashSet<NodeElement>();
+    final Set<NodeElement> invalid = new HashSet<>();
     myValidator = new Validator<NodeElement>() {
       @Override
       public boolean isValid(NodeElement element) {

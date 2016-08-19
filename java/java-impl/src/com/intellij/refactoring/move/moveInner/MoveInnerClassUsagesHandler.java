@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 public interface MoveInnerClassUsagesHandler {
   LanguageExtension<MoveInnerClassUsagesHandler> EP_NAME =
-    new LanguageExtension<MoveInnerClassUsagesHandler>("com.intellij.refactoring.moveInnerClassUsagesHandler");
+    new LanguageExtension<>("com.intellij.refactoring.moveInnerClassUsagesHandler");
 
   void correctInnerClassUsage(@NotNull UsageInfo usage, @NotNull PsiClass outerClass);
 }

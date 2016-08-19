@@ -98,7 +98,7 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
   public static CvsRootConfiguration reconfigureCvsRoot(String root, Project project) {
     final CvsApplicationLevelConfiguration configuration = CvsApplicationLevelConfiguration.getInstance();
     final CvsRootConfiguration selectedConfig = configuration.getConfigurationForCvsRoot(root);
-    final ArrayList<CvsRootConfiguration> modifiableList = new ArrayList<CvsRootConfiguration>(configuration.CONFIGURATIONS);
+    final ArrayList<CvsRootConfiguration> modifiableList = new ArrayList<>(configuration.CONFIGURATIONS);
     final CvsConfigurationsListEditor editor = new CvsConfigurationsListEditor(modifiableList, project, true);
     editor.select(selectedConfig);
     if (editor.showAndGet()) {
@@ -264,7 +264,7 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
   }
 
   public List<CvsRootConfiguration> getConfigurations() {
-    final ArrayList<CvsRootConfiguration> result = new ArrayList<CvsRootConfiguration>();
+    final ArrayList<CvsRootConfiguration> result = new ArrayList<>();
     final Enumeration each = myModel.elements();
     while (each.hasMoreElements()) result.add((CvsRootConfiguration)each.nextElement());
     return result;

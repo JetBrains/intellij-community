@@ -40,7 +40,7 @@ public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddMethodFix");
 
   private final PsiMethod myMethodPrototype;
-  private final List<String> myExceptions = new ArrayList<String>();
+  private final List<String> myExceptions = new ArrayList<>();
   private String myText;
 
   public AddMethodFix(@NotNull PsiMethod methodPrototype, @NotNull PsiClass implClass) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,7 @@ import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValueProvider;
@@ -50,7 +48,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 
 public class TemplateManagerImpl extends TemplateManager implements Disposable {
-  protected Project myProject;
+  private final Project myProject;
   private boolean myTemplateTesting;
 
   private static final Key<TemplateState> TEMPLATE_STATE_KEY = Key.create("TEMPLATE_STATE_KEY");
@@ -112,7 +110,12 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
 
   @Nullable
   public static TemplateState getTemplateState(@NotNull Editor editor) {
-    return editor.getUserData(TEMPLATE_STATE_KEY);
+    TemplateState templateState = editor.getUserData(TEMPLATE_STATE_KEY);
+    if (templateState != null && templateState.isDisposed()) {
+      editor.putUserData(TEMPLATE_STATE_KEY, null);
+      return null;
+    }
+    return templateState;
   }
 
   static void clearTemplateState(@NotNull Editor editor) {
@@ -350,7 +353,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
 
     candidatesWithoutArgument = filterApplicableCandidates(file, caretOffset, candidatesWithoutArgument);
     candidatesWithArgument = filterApplicableCandidates(file, argumentOffset, candidatesWithArgument);
-    Map<TemplateImpl, String> candidate2Argument = new HashMap<TemplateImpl, String>();
+    Map<TemplateImpl, String> candidate2Argument = new HashMap<>();
     addToMap(candidate2Argument, candidatesWithoutArgument, null);
     addToMap(candidate2Argument, candidatesWithArgument, argument);
     return candidate2Argument;
@@ -440,7 +443,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
       editor.getSelectionModel().removeSelection();
       Map<String, String> predefinedVarValues = null;
       if (argument != null) {
-        predefinedVarValues = new HashMap<String, String>();
+        predefinedVarValues = new HashMap<>();
         predefinedVarValues.put(TemplateImpl.ARG, argument);
       }
       templateState.start(template, processor, predefinedVarValues);
@@ -454,7 +457,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
 
     PsiFile copy = insertDummyIdentifierIfNeeded(file, caretOffset, caretOffset, CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
 
-    List<TemplateImpl> result = new ArrayList<TemplateImpl>();
+    List<TemplateImpl> result = new ArrayList<>();
     for (TemplateImpl candidate : candidates) {
       if (isApplicable(copy, caretOffset - candidate.getKey().length(), candidate)) {
         result.add(candidate);
@@ -464,7 +467,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   }
 
   private static List<TemplateContextType> getBases(TemplateContextType type) {
-    ArrayList<TemplateContextType> list = new ArrayList<TemplateContextType>();
+    ArrayList<TemplateContextType> list = new ArrayList<>();
     while (true) {
       type = type.getBaseContextType();
       if (type == null) return list;
@@ -473,7 +476,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   }
 
   private static Set<TemplateContextType> getDirectlyApplicableContextTypes(@NotNull PsiFile file, int offset) {
-    LinkedHashSet<TemplateContextType> set = new LinkedHashSet<TemplateContextType>();
+    LinkedHashSet<TemplateContextType> set = new LinkedHashSet<>();
     LinkedList<TemplateContextType> contexts = buildOrderedContextTypes();
     for (TemplateContextType contextType : contexts) {
       if (contextType.isInContext(file, offset)) {
@@ -495,7 +498,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
 
   private static LinkedList<TemplateContextType> buildOrderedContextTypes() {
     final TemplateContextType[] typeCollection = getAllContextTypes();
-    LinkedList<TemplateContextType> userDefinedExtensionsFirst = new LinkedList<TemplateContextType>();
+    LinkedList<TemplateContextType> userDefinedExtensionsFirst = new LinkedList<>();
     for (TemplateContextType contextType : typeCollection) {
       if (contextType.getClass().getName().startsWith(Template.class.getPackage().getName())) {
         userDefinedExtensionsFirst.addLast(contextType);
@@ -551,7 +554,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   }
 
   public static List<CustomLiveTemplate> listApplicableCustomTemplates(@NotNull Editor editor, @NotNull PsiFile file, boolean selectionOnly) {
-    List<CustomLiveTemplate> result = new ArrayList<CustomLiveTemplate>();
+    List<CustomLiveTemplate> result = new ArrayList<>();
     for (CustomLiveTemplate template : CustomLiveTemplate.EP_NAME.getExtensions()) {
       if ((!selectionOnly || template.supportsWrapping()) && isApplicable(template, editor, file, selectionOnly)) {
         result.add(template);
@@ -584,10 +587,9 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     return result;
   }
   
-  public static PsiFile insertDummyIdentifier(final Editor editor, PsiFile file) {
-    boolean selection = editor.getSelectionModel().hasSelection();
-    final int startOffset = selection ? editor.getSelectionModel().getSelectionStart() : editor.getCaretModel().getOffset();
-    final int endOffset = selection ? editor.getSelectionModel().getSelectionEnd() : startOffset;
+  public static PsiFile insertDummyIdentifier(Editor editor, PsiFile file) {
+    int startOffset = editor.getSelectionModel().getSelectionStart();
+    int endOffset = editor.getSelectionModel().getSelectionEnd();
     return insertDummyIdentifierIfNeeded(file, startOffset, endOffset, CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
   }
 
@@ -599,23 +601,23 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
       return file;
     }
 
-    ConcurrentFactoryMap<Trinity<Integer, Integer, String>, PsiFile> map =
-      CachedValuesManager.getCachedValue(file, () -> CachedValueProvider.Result.create(new ConcurrentFactoryMap<Trinity<Integer, Integer, String>, PsiFile>() {
+    ConcurrentFactoryMap<Pair<ProperTextRange, String>, PsiFile> map =
+      CachedValuesManager.getCachedValue(file, () -> CachedValueProvider.Result.create(new ConcurrentFactoryMap<Pair<ProperTextRange, String>, PsiFile>() {
         @Nullable
         @Override
-        protected PsiFile create(Trinity<Integer, Integer, String> key) {
+        protected PsiFile create(Pair<ProperTextRange, String> key) {
           PsiFile copy = (PsiFile)file.copy();
 
           final Document document = copy.getViewProvider().getDocument();
           assert document != null;
 
           document.setText(originalDocument.getImmutableCharSequence()); // original file might be uncommitted
-          document.replaceString(key.first, key.second, key.third);
+          document.replaceString(key.first.getStartOffset(), key.first.getEndOffset(), key.second);
           PsiDocumentManager.getInstance(copy.getProject()).commitDocument(document);
           return copy;
         }
       }, file, originalDocument));
 
-    return map.get(Trinity.create(startOffset, endOffset, replacement));
+    return map.get(Pair.create(ProperTextRange.create(startOffset, endOffset), replacement));
   }
 }

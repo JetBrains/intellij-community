@@ -41,11 +41,11 @@ import java.util.*;
  * @author yole
  */
 public class NativeIconProvider extends IconProvider implements DumbAware {
-  private final Map<Ext, Icon> myIconCache = new HashMap<Ext, Icon>();
+  private final Map<Ext, Icon> myIconCache = new HashMap<>();
   // on Windows .exe and .ico files provide their own icons which can differ for each file, cache them by full file path
   private final Set<Ext> myCustomIconExtensions =
-    SystemInfo.isWindows ? new HashSet<Ext>(Arrays.asList(new Ext("exe"), new Ext("ico"))) : new HashSet<Ext>();
-  private final Map<String, Icon> myCustomIconCache = new HashMap<String, Icon>();
+    SystemInfo.isWindows ? new HashSet<>(Arrays.asList(new Ext("exe"), new Ext("ico"))) : new HashSet<>();
+  private final Map<String, Icon> myCustomIconCache = new HashMap<>();
 
   private static final Ext NO_EXT = new Ext(null);
 
@@ -80,7 +80,7 @@ public class NativeIconProvider extends IconProvider implements DumbAware {
     if (icon != null) {
       return icon;
     }
-    return new DeferredIconImpl<VirtualFile>(ElementBase.ICON_PLACEHOLDER.getValue(), file, false, virtualFile -> {
+    return new DeferredIconImpl<>(ElementBase.ICON_PLACEHOLDER.getValue(), file, false, virtualFile -> {
       final File f = new File(filePath);
       if (!f.exists()) {
         return null;

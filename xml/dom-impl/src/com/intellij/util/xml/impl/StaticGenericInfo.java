@@ -35,17 +35,18 @@ import java.util.*;
 public class StaticGenericInfo extends DomGenericInfoEx {
   private final Class myClass;
 
-  private final ChildrenDescriptionsHolder<AttributeChildDescriptionImpl> myAttributes = new ChildrenDescriptionsHolder<AttributeChildDescriptionImpl>();
-  private final ChildrenDescriptionsHolder<FixedChildDescriptionImpl> myFixed = new ChildrenDescriptionsHolder<FixedChildDescriptionImpl>();
-  private final ChildrenDescriptionsHolder<CollectionChildDescriptionImpl> myCollections = new ChildrenDescriptionsHolder<CollectionChildDescriptionImpl>();
+  private final ChildrenDescriptionsHolder<AttributeChildDescriptionImpl> myAttributes = new ChildrenDescriptionsHolder<>();
+  private final ChildrenDescriptionsHolder<FixedChildDescriptionImpl> myFixed = new ChildrenDescriptionsHolder<>();
+  private final ChildrenDescriptionsHolder<CollectionChildDescriptionImpl> myCollections = new ChildrenDescriptionsHolder<>();
 
   private Map<JavaMethodSignature, Pair<FixedChildDescriptionImpl, Integer>> myFixedChildrenMethods;
   private Map<JavaMethodSignature, CollectionChildDescriptionImpl> myCollectionChildrenGetterMethods;
-  private final Map<JavaMethodSignature, CollectionChildDescriptionImpl> myCollectionChildrenAdditionMethods = new THashMap<JavaMethodSignature, CollectionChildDescriptionImpl>();
+  private final Map<JavaMethodSignature, CollectionChildDescriptionImpl> myCollectionChildrenAdditionMethods = new THashMap<>();
   private Map<JavaMethodSignature, AttributeChildDescriptionImpl> myAttributeChildrenMethods;
 
-  private final Map<JavaMethodSignature, Set<CollectionChildDescriptionImpl>> myCompositeChildrenMethods = new THashMap<JavaMethodSignature, Set<CollectionChildDescriptionImpl>>();
-  private final Map<JavaMethodSignature, Pair<CollectionChildDescriptionImpl, Set<CollectionChildDescriptionImpl>>> myCompositeCollectionAdditionMethods = new THashMap<JavaMethodSignature, Pair<CollectionChildDescriptionImpl, Set<CollectionChildDescriptionImpl>>>();
+  private final Map<JavaMethodSignature, Set<CollectionChildDescriptionImpl>> myCompositeChildrenMethods = new THashMap<>();
+  private final Map<JavaMethodSignature, Pair<CollectionChildDescriptionImpl, Set<CollectionChildDescriptionImpl>>> myCompositeCollectionAdditionMethods =
+    new THashMap<>();
 
   @Nullable private JavaMethod myNameValueGetter;
   private boolean myValueElement;
@@ -170,7 +171,7 @@ public class StaticGenericInfo extends DomGenericInfoEx {
   private static Function<Object[], Type> getTypeGetter(final JavaMethod method) {
     final Class<?>[] parameterTypes = method.getParameterTypes();
     if (parameterTypes.length >= 1 && parameterTypes[0].equals(Class.class)) {
-      return new Function.First<Object, Type>();
+      return new Function.First<>();
     }
 
     if (parameterTypes.length == 2 && parameterTypes[1].equals(Class.class)) {
@@ -184,14 +185,14 @@ public class StaticGenericInfo extends DomGenericInfoEx {
   private static Function<Object[], Integer> getIndexGetter(final JavaMethod method) {
     final Class<?>[] parameterTypes = method.getParameterTypes();
     if (parameterTypes.length >= 1 && parameterTypes[0].equals(int.class)) {
-      return new Function.First<Object, Integer>();
+      return new Function.First<>();
     }
 
     if (parameterTypes.length == 2 && parameterTypes[1].equals(int.class)) {
       return s -> (Integer)s[1];
     }
 
-    return new ConstantFunction<Object[], Integer>(Integer.MAX_VALUE);
+    return new ConstantFunction<>(Integer.MAX_VALUE);
   }
 
   @Override
@@ -242,7 +243,7 @@ public class StaticGenericInfo extends DomGenericInfoEx {
   @NotNull
   public List<AbstractDomChildDescriptionImpl> getChildrenDescriptions() {
     buildMethodMaps();
-    final ArrayList<AbstractDomChildDescriptionImpl> list = new ArrayList<AbstractDomChildDescriptionImpl>();
+    final ArrayList<AbstractDomChildDescriptionImpl> list = new ArrayList<>();
     myAttributes.dumpDescriptions(list);
     myFixed.dumpDescriptions(list);
     myCollections.dumpDescriptions(list);
@@ -274,7 +275,7 @@ public class StaticGenericInfo extends DomGenericInfoEx {
   @NotNull
   public List<AttributeChildDescriptionImpl> getAttributeChildrenDescriptions() {
     buildMethodMaps();
-    return new ArrayList<AttributeChildDescriptionImpl>(myAttributeChildrenMethods.values());
+    return new ArrayList<>(myAttributeChildrenMethods.values());
   }
 
   @Override

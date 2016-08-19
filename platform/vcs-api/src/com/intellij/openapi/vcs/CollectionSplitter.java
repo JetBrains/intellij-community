@@ -10,14 +10,14 @@ public class CollectionSplitter<T> {
   }
 
   public List<List<T>> split(final Collection<T> in) {
-    if (in.size() <= myBunchSize) return Collections.<List<T>>singletonList(new ArrayList<T>(in));
+    if (in.size() <= myBunchSize) return Collections.<List<T>>singletonList(new ArrayList<>(in));
 
-    final List<List<T>> result = new LinkedList<List<T>>();
-    List<T> piece = new LinkedList<T>();
+    final List<List<T>> result = new LinkedList<>();
+    List<T> piece = new LinkedList<>();
     for (T path : in) {
       if (myBunchSize == piece.size()) {
         result.add(piece);
-        piece = new LinkedList<T>();
+        piece = new LinkedList<>();
       }
       piece.add(path);
     }

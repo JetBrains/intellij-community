@@ -88,7 +88,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   @Override
   protected PtyProcess createProcess(@Nullable String directory) throws ExecutionException {
-    Map<String, String> envs = new HashMap<String, String>(System.getenv());
+    Map<String, String> envs = new HashMap<>(System.getenv());
     if (!SystemInfo.isWindows) {
       envs.put("TERM", "xterm-256color");
     }

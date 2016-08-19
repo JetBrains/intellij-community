@@ -70,7 +70,7 @@ public class WrapImpl extends Wrap {
     if (parent == this) return;
     if (parent == null) return;
     if (parent.isChildOf(this, null)) return;
-    if (myParents == emptyParentsSet) myParents = new HashSet<WrapImpl>(5);
+    if (myParents == emptyParentsSet) myParents = new HashSet<>(5);
     myParents.add(parent);
   }
 
@@ -116,10 +116,10 @@ public class WrapImpl extends Wrap {
    */
   public void ignoreParentWrap(@Nullable final WrapImpl wrap, final LeafBlockWrapper currentBlock) {
     if (myIgnoredWraps == null) {
-      myIgnoredWraps = new HashMap<WrapImpl, Collection<LeafBlockWrapper>>(5);
+      myIgnoredWraps = new HashMap<>(5);
     }
     if (myIgnoredWraps.get(wrap) == null) {
-      myIgnoredWraps.put(wrap, new HashSet<LeafBlockWrapper>(2));
+      myIgnoredWraps.put(wrap, new HashSet<>(2));
     }
     myIgnoredWraps.get(wrap).add(currentBlock);
   }

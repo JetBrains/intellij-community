@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,13 +52,13 @@ public class PurityAnalysis {
 
     DataInterpreter dataInterpreter = new DataInterpreter(methodNode);
     try {
-      new Analyzer<DataValue>(dataInterpreter).analyze("this", methodNode);
+      new Analyzer<>(dataInterpreter).analyze("this", methodNode);
     }
     catch (AnalyzerException e) {
       return new Equation(key, new Effects(topEffect));
     }
     EffectQuantum[] quanta = dataInterpreter.effects;
-    Set<EffectQuantum> effects = new HashSet<EffectQuantum>();
+    Set<EffectQuantum> effects = new HashSet<>();
     for (EffectQuantum effectQuantum : quanta) {
       if (effectQuantum != null) {
         if (effectQuantum == EffectQuantum.TopEffectQuantum) {
@@ -231,7 +231,7 @@ class DataInterpreter extends Interpreter<DataValue> {
   final EffectQuantum[] effects;
 
   protected DataInterpreter(MethodNode methodNode) {
-    super(Opcodes.ASM5);
+    super(Opcodes.API_VERSION);
     this.methodNode = methodNode;
     shift = (methodNode.access & Opcodes.ACC_STATIC) == 0 ? 2 : 1;
     arity = Type.getArgumentTypes(methodNode.desc).length;
@@ -371,7 +371,7 @@ class DataInterpreter extends Interpreter<DataValue> {
         return DataValue.UnknownDataValue2;
       case Opcodes.GETFIELD:
         FieldInsnNode fieldInsn = ((FieldInsnNode)insn);
-        if (value == DataValue.ThisDataValue && HardCodedPurity.ownedFields.contains(new Couple<String>(fieldInsn.owner, fieldInsn.name))) {
+        if (value == DataValue.ThisDataValue && HardCodedPurity.ownedFields.contains(new Couple<>(fieldInsn.owner, fieldInsn.name))) {
           return DataValue.OwnedDataValue;
         } else {
           return ASMUtils.getSizeFast(fieldInsn.desc) == 1 ? DataValue.UnknownDataValue1 : DataValue.UnknownDataValue2;
@@ -422,11 +422,11 @@ class DataInterpreter extends Interpreter<DataValue> {
 }
 
 final class HardCodedPurity {
-  static Set<Couple<String>> ownedFields = new HashSet<Couple<String>>();
-  static Map<Method, Set<EffectQuantum>> solutions = new HashMap<Method, Set<EffectQuantum>>();
+  static Set<Couple<String>> ownedFields = new HashSet<>();
+  static Map<Method, Set<EffectQuantum>> solutions = new HashMap<>();
   static Set<EffectQuantum> thisChange = Collections.singleton(EffectQuantum.ThisChangeQuantum);
   static {
-    ownedFields.add(new Couple<String>("java/lang/AbstractStringBuilder", "value"));
+    ownedFields.add(new Couple<>("java/lang/AbstractStringBuilder", "value"));
 
     solutions.put(new Method("java/lang/Throwable", "fillInStackTrace", "(I)Ljava/lang/Throwable;"), thisChange);
     solutions.put(new Method("java/lang/System", "arraycopy", "(Ljava/lang/Object;ILjava/lang/Object;II)V"), Collections.<EffectQuantum>singleton(new EffectQuantum.ParamChangeQuantum(2)));
@@ -455,13 +455,13 @@ final class HardCodedPurity {
 }
 
 final class PuritySolver {
-  private HashMap<HKey, Set<HEffectQuantum>> solved = new HashMap<HKey, Set<HEffectQuantum>>();
-  private HashMap<HKey, Set<HKey>> dependencies = new HashMap<HKey, Set<HKey>>();
-  private final Stack<HKey> moving = new Stack<HKey>();
-  private HashMap<HKey, Set<HEffectQuantum>> pending = new HashMap<HKey, Set<HEffectQuantum>>();
+  private HashMap<HKey, Set<HEffectQuantum>> solved = new HashMap<>();
+  private HashMap<HKey, Set<HKey>> dependencies = new HashMap<>();
+  private final Stack<HKey> moving = new Stack<>();
+  private HashMap<HKey, Set<HEffectQuantum>> pending = new HashMap<>();
 
   void addEquation(HKey key, Set<HEffectQuantum> effects) {
-    Set<HKey> callKeys = new HashSet<HKey>();
+    Set<HKey> callKeys = new HashSet<>();
     for (HEffectQuantum effect : effects) {
       if (effect instanceof HEffectQuantum.CallQuantum) {
         callKeys.add(((HEffectQuantum.CallQuantum)effect).key);
@@ -476,7 +476,7 @@ final class PuritySolver {
       for (HKey callKey : callKeys) {
         Set<HKey> deps = dependencies.get(callKey);
         if (deps == null) {
-          deps = new HashSet<HKey>();
+          deps = new HashSet<>();
           dependencies.put(callKey, deps);
         }
         deps.add(key);
@@ -511,8 +511,8 @@ final class PuritySolver {
               // already solved, for example, solution is top
               continue;
             }
-            Set<HKey> callKeys = new HashSet<HKey>();
-            Set<HEffectQuantum> newEffects = new HashSet<HEffectQuantum>();
+            Set<HKey> callKeys = new HashSet<>();
+            Set<HEffectQuantum> newEffects = new HashSet<>();
             Set<HEffectQuantum> delta = null;
 
             for (HEffectQuantum dEffect : dEffects) {
@@ -558,7 +558,7 @@ final class PuritySolver {
       return effects;
     }
     else {
-      Set<HEffectQuantum> newEffects = new HashSet<HEffectQuantum>();
+      Set<HEffectQuantum> newEffects = new HashSet<>();
       int shift = isStatic ? 0 : 1;
       for (HEffectQuantum effect : effects) {
         if (effect == HEffectQuantum.ThisChangeQuantum) {

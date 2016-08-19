@@ -96,7 +96,7 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
     final boolean hadSideEffects;
     final String expressionText;
     final Project project = switchStatement.getProject();
-    if (RemoveUnusedVariableUtil.checkSideEffects(switchExpression, null, new ArrayList<PsiElement>())) {
+    if (RemoveUnusedVariableUtil.checkSideEffects(switchExpression, null, new ArrayList<>())) {
       hadSideEffects = true;
 
       final JavaCodeStyleManager javaCodeStyleManager =
@@ -125,11 +125,11 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
       return;
     }
     final List<SwitchStatementBranch> openBranches =
-      new ArrayList<SwitchStatementBranch>();
+      new ArrayList<>();
     final Set<PsiLocalVariable> declaredVariables =
-      new HashSet<PsiLocalVariable>();
+      new HashSet<>();
     final List<SwitchStatementBranch> allBranches =
-      new ArrayList<SwitchStatementBranch>();
+      new ArrayList<>();
     SwitchStatementBranch currentBranch = null;
     final PsiElement[] children = body.getChildren();
     for (int i = 1; i < children.length - 1; i++) {

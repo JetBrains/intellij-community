@@ -48,12 +48,12 @@ public final class Match {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.duplicates.Match");
   private final PsiElement myMatchStart;
   private final PsiElement myMatchEnd;
-  private final Map<PsiVariable, List<PsiElement>> myParameterValues = new HashMap<PsiVariable, List<PsiElement>>();
-  private final Map<PsiVariable, ArrayList<PsiElement>> myParameterOccurrences = new HashMap<PsiVariable, ArrayList<PsiElement>>();
-  private final Map<PsiElement, PsiElement> myDeclarationCorrespondence = new HashMap<PsiElement, PsiElement>();
+  private final Map<PsiVariable, List<PsiElement>> myParameterValues = new HashMap<>();
+  private final Map<PsiVariable, ArrayList<PsiElement>> myParameterOccurrences = new HashMap<>();
+  private final Map<PsiElement, PsiElement> myDeclarationCorrespondence = new HashMap<>();
   private ReturnValue myReturnValue;
   private Ref<PsiExpression> myInstanceExpression;
-  final Map<PsiVariable, PsiType> myChangedParams = new HashMap<PsiVariable, PsiType>();
+  final Map<PsiVariable, PsiType> myChangedParams = new HashMap<>();
   private final boolean myIgnoreParameterTypes;
 
   Match(PsiElement start, PsiElement end, boolean ignoreParameterTypes) {
@@ -143,10 +143,10 @@ public final class Match {
           if (!myIgnoreParameterTypes && !parameterType.isAssignableFrom(type)) return false;  //todo
         }
       }
-      final List<PsiElement> values = new ArrayList<PsiElement>();
+      final List<PsiElement> values = new ArrayList<>();
       values.add(value);
       myParameterValues.put(psiVariable, values);
-      final ArrayList<PsiElement> elements = new ArrayList<PsiElement>();
+      final ArrayList<PsiElement> elements = new ArrayList<>();
       myParameterOccurrences.put(psiVariable, elements);
       return true;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,6 +124,7 @@ public class CustomizableActionsPanel {
         }
         myAddSeparatorButton.setEnabled(isSingleSelection);
         myRemoveActionButton.setEnabled(selectionPaths != null);
+        myRestoreDefaultButton.setEnabled(!findActionsUnderSelection().isEmpty());
         if (selectionPaths != null) {
           for (TreePath selectionPath : selectionPaths) {
             if (selectionPath.getPath().length <= 2) {
@@ -134,7 +135,6 @@ public class CustomizableActionsPanel {
         }
         myMoveActionUpButton.setEnabled(isMoveSupported(myActionsTree, -1));
         myMoveActionDownButton.setEnabled(isMoveSupported(myActionsTree, 1));
-        myRestoreDefaultButton.setEnabled(!findActionsUnderSelection().isEmpty());
       }
     });
 
@@ -277,7 +277,7 @@ public class CustomizableActionsPanel {
     myRestoreDefaultButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final List<ActionUrl> otherActions = new ArrayList<ActionUrl>(mySelectedSchema.getActions());
+        final List<ActionUrl> otherActions = new ArrayList<>(mySelectedSchema.getActions());
         otherActions.removeAll(findActionsUnderSelection());
         mySelectedSchema.copyFrom(new CustomActionsSchema());
         for (ActionUrl otherAction : otherActions) {
@@ -296,12 +296,12 @@ public class CustomizableActionsPanel {
   }
 
   private List<ActionUrl> findActionsUnderSelection() {
-    final ArrayList<ActionUrl> actions = new ArrayList<ActionUrl>();
+    final ArrayList<ActionUrl> actions = new ArrayList<>();
     final TreePath[] selectionPaths = myActionsTree.getSelectionPaths();
     if (selectionPaths != null) {
       for (TreePath path : selectionPaths) {
         final ActionUrl selectedUrl = CustomizationUtil.getActionUrl(path, ActionUrl.MOVE);
-        final ArrayList<String> selectedGroupPath = new ArrayList<String>(selectedUrl.getGroupPath());
+        final ArrayList<String> selectedGroupPath = new ArrayList<>(selectedUrl.getGroupPath());
         final Object component = selectedUrl.getComponent();
         if (component instanceof Group) {
           selectedGroupPath.add(((Group)component).getName());
@@ -773,7 +773,7 @@ public class CustomizableActionsPanel {
       TreePath[] paths = myTree.getSelectionPaths();
       if (paths == null) return null;
 
-      Set<Object> actions = new HashSet<Object>();
+      Set<Object> actions = new HashSet<>();
       for (TreePath path : paths) {
         Object node = path.getLastPathComponent();
         if (node instanceof DefaultMutableTreeNode) {

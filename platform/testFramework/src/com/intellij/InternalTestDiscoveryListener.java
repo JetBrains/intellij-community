@@ -18,17 +18,22 @@ package com.intellij;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.io.ZipUtil;
 import junit.framework.AssertionFailedError;
 import junit.framework.Test;
 import junit.framework.TestListener;
 
 import java.io.Closeable;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Used in TestAll to collect data in command line
@@ -37,7 +42,7 @@ import java.util.List;
 public class InternalTestDiscoveryListener implements TestListener, Closeable {
   private final String myModuleName;
   private final String myTracesDirectory;
-  private List<String> myCompletedMethodNames = new ArrayList<String>();
+  private List<String> myCompletedMethodNames = new ArrayList<>();
   private final Alarm myProcessTracesAlarm;
   private Object myDiscoveryIndex;
   private Class<?> myDiscoveryIndexClass;
@@ -46,6 +51,7 @@ public class InternalTestDiscoveryListener implements TestListener, Closeable {
     myProcessTracesAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, null);
     myTracesDirectory = System.getProperty("org.jetbrains.instrumentation.trace.dir");
     myModuleName = System.getProperty("org.jetbrains.instrumentation.main.module");
+    System.out.println(getClass().getSimpleName() + " instantiated with module='" + myModuleName + "' , directory='" + myTracesDirectory + "'");
   }
 
   private Object getIndex() {
@@ -86,23 +92,27 @@ public class InternalTestDiscoveryListener implements TestListener, Closeable {
     myCompletedMethodNames.add("j" + className + "." + methodName);
 
     if (myCompletedMethodNames.size() > 50) {
-      flushCurrentTraces();
+      final String[] fullTestNames = ArrayUtil.toStringArray(myCompletedMethodNames);
+      myCompletedMethodNames.clear();
+      myProcessTracesAlarm.addRequest(() -> {
+        flushCurrentTraces(fullTestNames);
+      }, 0);
     }
   }
 
-  protected void flushCurrentTraces() {
-    final String[] fullTestNames = ArrayUtil.toStringArray(myCompletedMethodNames);
-    myCompletedMethodNames.clear();
-    myProcessTracesAlarm.addRequest(() -> {
-      try {
-        final Method method = Class.forName("com.intellij.execution.testDiscovery.TestDiscoveryExtension")
-          .getMethod("processAvailableTraces", fullTestNames.getClass(), myTracesDirectory.getClass(), String.class, String.class, myDiscoveryIndexClass);
-        method.invoke(null, fullTestNames, myTracesDirectory, myModuleName, "j", getIndex());
-      }
-      catch (Throwable e) {
-        e.printStackTrace();
-      }
-    }, 100);
+  protected void flushCurrentTraces(final String[] fullTestNames) {
+    System.out.println("Start compacting to index");
+    try {
+      final Object index = getIndex();
+      final Method method = Class.forName("com.intellij.execution.testDiscovery.TestDiscoveryExtension")
+        .getMethod("processAvailableTraces", fullTestNames.getClass(), myTracesDirectory.getClass(), String.class, String.class,
+                   myDiscoveryIndexClass);
+      method.invoke(null, fullTestNames, myTracesDirectory, myModuleName, "j", index);
+      System.out.println("Compacting done.");
+    }
+    catch (Throwable e) {
+      e.printStackTrace();
+    }
   }
 
   private static String getMethodName(Test test) {
@@ -136,10 +146,34 @@ public class InternalTestDiscoveryListener implements TestListener, Closeable {
 
   @Override
   public void close() throws IOException {
-    myProcessTracesAlarm.cancelAllRequests();
+    final String[] fullTestNames = ArrayUtil.toStringArray(myCompletedMethodNames);
+    myCompletedMethodNames.clear();
+    flushCurrentTraces(fullTestNames);
+    zipOutput(myTracesDirectory);
     myProcessTracesAlarm.addRequest(() -> {
-     flushCurrentTraces();
       Disposer.dispose(myProcessTracesAlarm);
     }, 0);
+  }
+
+  private static void zipOutput(String tracesDirectory) {
+    final File[] files = new File(tracesDirectory).listFiles();
+    if (files == null) {
+      System.out.println("No traces found.");
+      return;
+    }
+    System.out.println("Preparing zip.");
+    try (ZipOutputStream zipOutputStream = new ZipOutputStream(new FileOutputStream(tracesDirectory + File.separator + "out.zip"))) {
+      for (File file : files) {
+        ZipUtil.addFileToZip(zipOutputStream, file, "/" + file.getName(), null, null);
+      }
+      System.out.println("Zip prepared.");
+
+      for (File file : files) {
+        FileUtil.delete(file);
+      }
+    }
+    catch (Throwable ex) {
+      ex.printStackTrace();
+    }
   }
 }

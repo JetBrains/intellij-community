@@ -76,7 +76,7 @@ public class ActionCommand extends TypeCommand {
         final KeyStroke finalStroke = stroke;
 
         IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          final Ref<AnActionListener> listener = new Ref<AnActionListener>();
+          final Ref<AnActionListener> listener = new Ref<>();
           listener.set(new AnActionListener.Adapter() {
 
             @Override

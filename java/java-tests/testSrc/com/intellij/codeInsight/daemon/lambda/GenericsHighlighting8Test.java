@@ -1001,4 +1001,8 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testReifiableCapturedWildcards() throws Exception {
     doTest(true);
   }
+
+  public void testMembersContainedInCapturedWildcardType() throws Exception {
+    doTest();
+  }
 }

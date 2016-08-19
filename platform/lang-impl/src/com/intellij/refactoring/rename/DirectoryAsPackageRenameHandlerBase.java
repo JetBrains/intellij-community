@@ -222,8 +222,8 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
     message.append(RefactoringBundle.message("multiple.directories.correspond.to.package"));
     message.append(packageQname);
     message.append(":\n\n");
-    final List<PsiDirectory> generated = new ArrayList<PsiDirectory>();
-    final List<PsiDirectory> source = new ArrayList<PsiDirectory>();
+    final List<PsiDirectory> generated = new ArrayList<>();
+    final List<PsiDirectory> source = new ArrayList<>();
     for (PsiDirectory directory : directories) {
       final VirtualFile virtualFile = directory.getVirtualFile();
       if (GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(virtualFile, directory.getProject())) {

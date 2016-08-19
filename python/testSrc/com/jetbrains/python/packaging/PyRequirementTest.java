@@ -2072,6 +2072,22 @@ public class PyRequirementTest extends PyTestCase {
     doRequirementVersionNormalizationTest("0.1.*", "v0.1.*");
   }
 
+  // https://www.python.org/dev/peps/pep-0440/#normalization
+  public void testRequirementAlternateVersionNumber() {
+    doRequirementVersionNormalizationTest("900", "0900");
+    doRequirementVersionNormalizationTest("201607251407", "0201607251407");
+  }
+
+  // https://www.python.org/dev/peps/pep-0440/#normalization
+  public void testRequirementAlternateLocalVersionNumber() {
+    doRequirementVersionNormalizationTest("1.0+foo0100", "1.0+foo0100");
+  }
+
+  // PY-20223
+  public void testRequirementVersionWithBigInteger() {
+    assertEquals(new PyRequirement("pkg-name", "3.4.201607251407"), PyRequirement.fromLine("pkg-name==3.4.201607251407"));
+  }
+
   // PY-11835
   public void testRequirementNotNormalizableVersion() {
     final String name = "django_compressor";
@@ -2203,10 +2219,10 @@ public class PyRequirementTest extends PyTestCase {
 
   // PY-6355
   public void testTrailingZeroesInVersion() {
-    final PyRequirement req080 = PyRequirement.fromLine("foo==0.8.0");
-    final PyPackage pack08 = new PyPackage("foo", "0.8", null, Collections.<PyRequirement>emptyList());
-    assertNotNull(req080);
-    assertNotNull(req080.match(Collections.singletonList(pack08)));
+    final PyRequirement req = PyRequirement.fromLine("foo==0.8.0");
+    final PyPackage pkg = new PyPackage("foo", "0.8", null, Collections.<PyRequirement>emptyList());
+    assertNotNull(req);
+    assertEquals(pkg, req.match(Collections.singletonList(pkg)));
   }
 
   // PY-6438
@@ -2214,7 +2230,15 @@ public class PyRequirementTest extends PyTestCase {
     final PyRequirement req = PyRequirement.fromLine("pyramid_zcml");
     final PyPackage pkg = new PyPackage("pyramid-zcml", "0.1", null, Collections.<PyRequirement>emptyList());
     assertNotNull(req);
-    assertNotNull(req.match(Collections.singletonList(pkg)));
+    assertEquals(pkg, req.match(Collections.singletonList(pkg)));
+  }
+
+  // PY-20242
+  public void testVersionInterpretedAsString() {
+    final PyRequirement req = PyRequirement.fromLine("foo===version");
+    final PyPackage pkg = new PyPackage("foo", "version", null, Collections.emptyList());
+    assertNotNull(req);
+    assertEquals(pkg, req.match(Collections.singletonList(pkg)));
   }
 
   // OPTIONS

@@ -34,7 +34,7 @@ public class CycleFinder<Node> {
 
   @NotNull
   public Set<List<Node>> getNodeCycles(final Node node){
-    final Set<List<Node>> result = new HashSet<List<Node>>();
+    final Set<List<Node>> result = new HashSet<>();
 
 
     final Graph<Node> graphWithoutNode = new Graph<Node>() {
@@ -45,7 +45,7 @@ public class CycleFinder<Node> {
       }
 
       public Iterator<Node> getIn(final Node n) {
-        final HashSet<Node> nodes = new HashSet<Node>();
+        final HashSet<Node> nodes = new HashSet<>();
         final Iterator<Node> in = myGraph.getIn(n);
         while (in.hasNext()) {
           nodes.add(in.next());
@@ -55,7 +55,7 @@ public class CycleFinder<Node> {
       }
 
       public Iterator<Node> getOut(final Node n) {
-        final HashSet<Node> nodes = new HashSet<Node>();
+        final HashSet<Node> nodes = new HashSet<>();
         final Iterator<Node> out = myGraph.getOut(n);
         while (out.hasNext()) {
           nodes.add(out.next());
@@ -66,21 +66,21 @@ public class CycleFinder<Node> {
 
     };
 
-    final HashSet<Node> inNodes = new HashSet<Node>();
+    final HashSet<Node> inNodes = new HashSet<>();
     final Iterator<Node> in = myGraph.getIn(node);
     while (in.hasNext()) {
       inNodes.add(in.next());
     }
-    final HashSet<Node> outNodes = new HashSet<Node>();
+    final HashSet<Node> outNodes = new HashSet<>();
     final Iterator<Node> out = myGraph.getOut(node);
     while (out.hasNext()) {
       outNodes.add(out.next());
     }
 
-    final HashSet<Node> retainNodes = new HashSet<Node>(inNodes);
+    final HashSet<Node> retainNodes = new HashSet<>(inNodes);
     retainNodes.retainAll(outNodes);
     for (Node node1 : retainNodes) {
-      ArrayList<Node> oneNodeCycle = new ArrayList<Node>();
+      ArrayList<Node> oneNodeCycle = new ArrayList<>();
       oneNodeCycle.add(node1);
       oneNodeCycle.add(node);
       result.add(oneNodeCycle);
@@ -89,12 +89,12 @@ public class CycleFinder<Node> {
     inNodes.removeAll(retainNodes);
     outNodes.removeAll(retainNodes);
 
-    ShortestPathFinder<Node> finder = new ShortestPathFinder<Node>(graphWithoutNode);
+    ShortestPathFinder<Node> finder = new ShortestPathFinder<>(graphWithoutNode);
     for (Node fromNode : outNodes) {
       for (Node toNode : inNodes) {
         final List<Node> shortestPath = finder.findPath(fromNode, toNode);
         if (shortestPath != null) {
-          ArrayList<Node> path = new ArrayList<Node>();
+          ArrayList<Node> path = new ArrayList<>();
           path.addAll(shortestPath);
           path.add(node);
           result.add(path);

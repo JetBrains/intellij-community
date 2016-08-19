@@ -26,13 +26,24 @@ import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Optional;
+
 /**
  * @author vlan
  */
 public class DumbAwareHighlightingAnnotator extends PyAnnotator implements HighlightRangeExtension {
+
   @Override
   public void visitPyFunction(PyFunction node) {
-    highlightKeyword(node, PyTokenTypes.ASYNC_KEYWORD);
+    if (node.isAsyncAllowed()) {
+      highlightKeyword(node, PyTokenTypes.ASYNC_KEYWORD);
+    }
+    else {
+      Optional
+        .ofNullable(node.getNode())
+        .map(astNode -> astNode.findChildByType(PyTokenTypes.ASYNC_KEYWORD))
+        .ifPresent(asyncNode -> getHolder().createErrorAnnotation(asyncNode, "function \"" + node.getName() + "\" cannot be async"));
+    }
   }
 
   @Override

@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -43,9 +44,9 @@ public abstract class SimpleDomModelFactory<T extends DomElement, M extends DomM
   @Override
   @Nullable
   public DomFileElement<T> createMergedModelRoot(Set<XmlFile> configFiles) {
-    List<DomFileElement<T>> configs = new ArrayList<DomFileElement<T>>(configFiles.size());
+    List<DomFileElement<T>> configs = new ArrayList<>(configFiles.size());
     for (XmlFile configFile : configFiles) {
-      ContainerUtil.addIfNotNull(getDomRoot(configFile), configs);
+      ContainerUtil.addIfNotNull(configs, getDomRoot(configFile));
     }
     return configs.isEmpty() ? null : getModelMerger().mergeModels(DomFileElement.class, configs);
   }

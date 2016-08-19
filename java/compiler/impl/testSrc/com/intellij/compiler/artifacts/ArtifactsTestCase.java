@@ -157,7 +157,7 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
 
     @Override
     public List<Artifact> chooseArtifacts(List<? extends Artifact> artifacts, String title) {
-      return new ArrayList<Artifact>(artifacts);
+      return new ArrayList<>(artifacts);
     }
 
     @Override
@@ -173,9 +173,9 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
 
   public class MockArtifactsStructureConfigurableContext implements ArtifactsStructureConfigurableContext {
     private ModifiableArtifactModel myModifiableModel;
-    private final Map<Module, ModifiableRootModel> myModifiableRootModels = new HashMap<Module, ModifiableRootModel>();
+    private final Map<Module, ModifiableRootModel> myModifiableRootModels = new HashMap<>();
     private final Map<CompositePackagingElement<?>, ManifestFileConfiguration> myManifestFiles =
-      new HashMap<CompositePackagingElement<?>, ManifestFileConfiguration>();
+      new HashMap<>();
     private final ArtifactEditorManifestFileProvider myManifestFileProvider = new ArtifactEditorManifestFileProvider(this);
 
     @Override

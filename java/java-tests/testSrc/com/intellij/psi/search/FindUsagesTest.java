@@ -63,7 +63,7 @@ public class FindUsagesTest extends PsiTestCase{
     String[] fileNames = {"B.java", "A.java", "A.java", "B.java"};
     int[] starts = {};
     int[] ends = {};
-    final ArrayList<PsiFile> filesList = new ArrayList<PsiFile>();
+    final ArrayList<PsiFile> filesList = new ArrayList<>();
     final IntArrayList startsList = new IntArrayList();
     final IntArrayList endsList = new IntArrayList();
     PsiReference[] refs =
@@ -180,7 +180,7 @@ public class FindUsagesTest extends PsiTestCase{
   }
 
   public static void doTest(PsiElement element, String[] fileNames, int[] starts, int[] ends) throws Exception {
-    final ArrayList<PsiFile> filesList = new ArrayList<PsiFile>();
+    final ArrayList<PsiFile> filesList = new ArrayList<>();
     final IntArrayList startsList = new IntArrayList();
     final IntArrayList endsList = new IntArrayList();
     ReferencesSearch.search(element, GlobalSearchScope.projectScope(element.getProject()), false).forEach(new PsiReferenceProcessorAdapter(new PsiReferenceProcessor() {
@@ -236,13 +236,13 @@ public class FindUsagesTest extends PsiTestCase{
   }
 
   private static void checkResult(String[] fileNames, final ArrayList<PsiFile> filesList, int[] starts, final IntArrayList startsList, int[] ends, final IntArrayList endsList) {
-    List<SearchResult> expected = new ArrayList<SearchResult>();
+    List<SearchResult> expected = new ArrayList<>();
     for (int i = 0; i < fileNames.length; i++) {
       String fileName = fileNames[i];
       expected.add(new SearchResult(fileName, i < starts.length ? starts[i] : -1, i < ends.length ? ends[i] : -1));
     }
 
-    List<SearchResult> actual = new ArrayList<SearchResult>();
+    List<SearchResult> actual = new ArrayList<>();
     for (int i = 0; i < filesList.size(); i++) {
       PsiFile psiFile = filesList.get(i);
       actual.add(

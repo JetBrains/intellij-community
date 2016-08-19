@@ -23,19 +23,21 @@ import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * <code>NestingTreeStructureProvider</code> moves some files in the Project View to be shown as children of another peer file. Standard use
@@ -66,9 +68,13 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
   private static final Logger LOG = Logger.getInstance(NestingTreeStructureProvider.class);
   private Set<NestingRule> myNestingRules;
 
+  @NotNull
   private Collection<NestingRule> getNestingRules() {
     if (myNestingRules == null) {
       myNestingRules = new THashSet<>();
+
+      final MultiMap<String, String> childToParentSuffix = new MultiMap<>();
+      final MultiMap<String, String> parentToChildSuffix = new MultiMap<>();
 
       final NestingRulesConsumer consumer = new NestingRulesConsumer() {
         @Override
@@ -77,6 +83,21 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
           LOG.assertTrue(!parentFileSuffix.equals(childFileSuffix), "parent and child suffixes must be different: " + parentFileSuffix);
 
           myNestingRules.add(new NestingRule(parentFileSuffix, childFileSuffix));
+          childToParentSuffix.putValue(childFileSuffix, parentFileSuffix);
+          parentToChildSuffix.putValue(parentFileSuffix, childFileSuffix);
+
+          // for all cases like A -> B -> C we also add a rule A -> C
+          for (String s : parentToChildSuffix.get(childFileSuffix)) {
+            myNestingRules.add(new NestingRule(parentFileSuffix, s));
+            parentToChildSuffix.putValue(parentFileSuffix, s);
+            childToParentSuffix.putValue(s, parentFileSuffix);
+          }
+
+          for (String s : childToParentSuffix.get(parentFileSuffix)) {
+            myNestingRules.add(new NestingRule(s, childFileSuffix));
+            parentToChildSuffix.putValue(s, childFileSuffix);
+            childToParentSuffix.putValue(childFileSuffix, s);
+          }
         }
       };
 
@@ -86,6 +107,16 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
     }
 
     return myNestingRules;
+  }
+
+  @NotNull
+  private static Collection<NestingRule> getNestingRulesStatic(@NotNull final Project project) {
+    for (TreeStructureProvider provider : Extensions.getExtensions(TreeStructureProvider.EP_NAME, project)) {
+      if (provider instanceof NestingTreeStructureProvider) {
+        return ((NestingTreeStructureProvider)provider).getNestingRules();
+      }
+    }
+    return Collections.emptyList();
   }
 
   @Nullable
@@ -134,6 +165,92 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
     return newChildren;
   }
 
+  // Algorithm is similar to calcParentToChildren(), but a bit simpler, because we have one specific parentFile.
+  public static Collection<ChildFileInfo> getFilesShownAsChildrenInProjectView(@NotNull final Project project,
+                                                                               @NotNull final VirtualFile parentFile) {
+    LOG.assertTrue(!parentFile.isDirectory());
+
+    final VirtualFile dir = parentFile.getParent();
+    if (dir == null) return Collections.emptyList();
+
+    final Collection<NestingRule> rules = getNestingRulesStatic(project);
+    if (rules.isEmpty()) return Collections.emptyList();
+
+    final VirtualFile[] children = dir.getChildren();
+    if (children.length <= 1) return Collections.emptyList();
+
+    final Collection<NestingRule> rulesWhereItCanBeParent = filterRules(rules, parentFile.getName(), true);
+    if (rulesWhereItCanBeParent.isEmpty()) return Collections.emptyList();
+
+    final Collection<NestingRule> rulesWhereItCanBeChild = filterRules(rules, parentFile.getName(), false);
+
+    final SmartList<ChildFileInfo> result = new SmartList<>();
+
+    for (VirtualFile child : children) {
+      if (child.isDirectory()) continue;
+      if (child.equals(parentFile)) continue;
+
+      // if given parentFile itself appears to be a child of some other file, it means that it is not shown as parent node in Project View
+      for (NestingRule rule : rulesWhereItCanBeChild) {
+        final String childName = child.getName();
+
+        final Couple<Boolean> c = checkMatchingAsParentOrChild(rule, childName);
+        final boolean matchesParent = c.first;
+
+        if (matchesParent) {
+          final String baseName = childName.substring(0, childName.length() - rule.myParentFileSuffix.length());
+          if (parentFile.getName().equals(baseName + rule.myChildFileSuffix)) {
+            return Collections.emptyList(); // parentFile itself appears to be a child of childFile
+          }
+        }
+      }
+
+      for (NestingRule rule : rulesWhereItCanBeParent) {
+        final String childName = child.getName();
+
+        final Couple<Boolean> c = checkMatchingAsParentOrChild(rule, childName);
+        final boolean matchesChild = c.second;
+
+        if (matchesChild) {
+          final String baseName = childName.substring(0, childName.length() - rule.myChildFileSuffix.length());
+          if (parentFile.getName().equals(baseName + rule.myParentFileSuffix)) {
+            result.add(new ChildFileInfo(child, baseName));
+          }
+        }
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * @return only those rules where given <code>fileName</code> can potentially be a parent (if <code>parentNotChild</code> is <code>true</code>)
+   * or only those rules where given <code>fileName</code> can potentially be a child (if <code>parentNotChild</code> is <code>false</code>)
+   */
+  @NotNull
+  private static Collection<NestingRule> filterRules(@NotNull final Collection<NestingRule> rules,
+                                                     @NotNull final String fileName,
+                                                     final boolean parentNotChild) {
+    final SmartList<NestingRule> result = new SmartList<>();
+    for (NestingRule rule : rules) {
+      final Couple<Boolean> c = checkMatchingAsParentOrChild(rule, fileName);
+      final boolean matchesParent = c.first;
+      final boolean matchesChild = c.second;
+
+      if (!matchesChild && !matchesParent) continue;
+
+      if (matchesParent && parentNotChild) {
+        result.add(rule);
+      }
+
+      if (matchesChild && !parentNotChild) {
+        result.add(rule);
+      }
+    }
+
+    return result;
+  }
+
   /*
     This is a graph theory problem. PsiFileNodes are graph nodes.
     Edges go from parent file to child file according to NestingRules, for example foo.js->foo.min.js.
@@ -160,19 +277,12 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
 
       for (NestingRule rule : rules) {
         final String fileName = file.getName();
-        boolean matchesParent = !fileName.equals(rule.myParentFileSuffix) && fileName.endsWith(rule.myParentFileSuffix);
-        boolean matchesChild = !fileName.equals(rule.myChildFileSuffix) && fileName.endsWith(rule.myChildFileSuffix);
+
+        final Couple<Boolean> c = checkMatchingAsParentOrChild(rule, fileName);
+        final boolean matchesParent = c.first;
+        final boolean matchesChild = c.second;
 
         if (!matchesChild && !matchesParent) continue;
-
-        if (matchesParent && matchesChild) {
-          if (rule.myParentFileSuffix.length() > rule.myChildFileSuffix.length()) {
-            matchesChild = false;
-          }
-          else {
-            matchesParent = false;
-          }
-        }
 
         if (baseNameAndRuleToEdge == null) {
           baseNameAndRuleToEdge = new THashMap<>();
@@ -197,6 +307,22 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
     }
 
     return parentToChildren == null ? MultiMap.empty() : parentToChildren;
+  }
+
+  private static Couple<Boolean> checkMatchingAsParentOrChild(@NotNull final NestingRule rule, @NotNull final String fileName) {
+    boolean matchesParent = !fileName.equals(rule.myParentFileSuffix) && fileName.endsWith(rule.myParentFileSuffix);
+    boolean matchesChild = !fileName.equals(rule.myChildFileSuffix) && fileName.endsWith(rule.myChildFileSuffix);
+
+    if (matchesParent && matchesChild) {
+      if (rule.myParentFileSuffix.length() > rule.myChildFileSuffix.length()) {
+        matchesChild = false;
+      }
+      else {
+        matchesParent = false;
+      }
+    }
+
+    return Couple.of(matchesParent, matchesChild);
   }
 
   @NotNull
@@ -238,10 +364,32 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
     public String toString() {
       return myParentFileSuffix + "->" + myChildFileSuffix;
     }
+
+    @Override
+    public boolean equals(Object o) {
+      return o instanceof NestingRule &&
+             myParentFileSuffix.equals(((NestingRule)o).myParentFileSuffix) &&
+             myChildFileSuffix.equals(((NestingRule)o).myChildFileSuffix);
+    }
+
+    @Override
+    public int hashCode() {
+      return myParentFileSuffix.hashCode() + 239 * myChildFileSuffix.hashCode();
+    }
   }
 
   private static class Edge<T> {
     @Nullable private T from;
     @Nullable private T to;
+  }
+
+  public static class ChildFileInfo {
+    @NotNull public final VirtualFile file;
+    @NotNull public final String namePartCommonWithParentFile;
+
+    public ChildFileInfo(@NotNull final VirtualFile file, @NotNull final String namePartCommonWithParentFile) {
+      this.file = file;
+      this.namePartCommonWithParentFile = namePartCommonWithParentFile;
+    }
   }
 }

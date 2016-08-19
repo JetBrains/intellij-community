@@ -180,7 +180,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
     }
 
     private static VirtualFile[] getFiles(PsiFile file, MavenDomProjectModel model) {
-      Set<VirtualFile> virtualFiles = new HashSet<VirtualFile>();
+      Set<VirtualFile> virtualFiles = new HashSet<>();
       VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile != null) {
         virtualFiles.add(virtualFile);
@@ -265,7 +265,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
 
       public UsageSearcher create() {
         return new UsageSearcher() {
-          Set<UsageInfo> usages = new HashSet<UsageInfo>();
+          Set<UsageInfo> usages = new HashSet<>();
 
           public void generate(@NotNull final Processor<Usage> processor) {
             AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
@@ -324,7 +324,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
             int start = s.indexOf(mySelectedString);
             if (start == -1) return Collections.emptySet();
 
-            Set<UsageInfo> usages = new HashSet<UsageInfo>();
+            Set<UsageInfo> usages = new HashSet<>();
 
             List<TextRange> ranges = getPropertiesTextRanges(s);
             TextRange elementTextRange = xmlElement.getTextRange();
@@ -349,7 +349,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
   }
 
   private static List<TextRange> getPropertiesTextRanges(String s) {
-    List<TextRange> ranges = new ArrayList<TextRange>();
+    List<TextRange> ranges = new ArrayList<>();
     int startOffset = s.indexOf(PREFIX);
     while (startOffset >= 0) {
       int endOffset = s.indexOf(SUFFIX, startOffset);

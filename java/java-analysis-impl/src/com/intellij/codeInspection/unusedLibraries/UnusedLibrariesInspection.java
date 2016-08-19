@@ -49,11 +49,6 @@ import java.util.*;
 
 public class UnusedLibrariesInspection extends GlobalInspectionTool {
 
-  @Override
-  public boolean isGraphNeeded() {
-    return true;
-  }
-
   @Nullable
   @Override
   public RefGraphAnnotator getAnnotator(@NotNull RefManager refManager) {
@@ -74,14 +69,14 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       final Set<VirtualFile> usedRoots = refModule.getUserData(UnusedLibraryGraphAnnotator.USED_LIBRARY_ROOTS);
 
-      final List<CommonProblemDescriptor> result = new ArrayList<CommonProblemDescriptor>();
+      final List<CommonProblemDescriptor> result = new ArrayList<>();
       for (OrderEntry entry : moduleRootManager.getOrderEntries()) {
         if (entry instanceof LibraryOrderEntry && !((LibraryOrderEntry)entry).isExported()) {
           if (usedRoots == null) {
             String message = InspectionsBundle.message("unused.library.problem.descriptor", entry.getPresentableName());
             result.add(manager.createProblemDescriptor(message, new RemoveUnusedLibrary(refModule, entry, null)));
           } else {
-            final Set<VirtualFile> files = new HashSet<VirtualFile>(Arrays.asList(((LibraryOrderEntry)entry).getRootFiles(OrderRootType.CLASSES)));
+            final Set<VirtualFile> files = new HashSet<>(Arrays.asList(((LibraryOrderEntry)entry).getRootFiles(OrderRootType.CLASSES)));
             files.removeAll(usedRoots);
             if (!files.isEmpty()) {
               final String unusedLibraryRoots = StringUtil.join(files, file -> file.getPresentableName(), ",");
@@ -200,7 +195,7 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
               if (refModule != null) {
                 Set<VirtualFile> modules = refModule.getUserData(USED_LIBRARY_ROOTS);
                 if (modules == null){
-                  modules = new HashSet<VirtualFile>();
+                  modules = new HashSet<>();
                   refModule.putUserData(USED_LIBRARY_ROOTS, modules);
                 }
                 modules.add(libraryClassRoot);

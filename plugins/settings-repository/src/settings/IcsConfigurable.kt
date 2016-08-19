@@ -15,37 +15,51 @@
  */
 package org.jetbrains.settingsRepository
 
+import com.intellij.layout.*
+import com.intellij.layout.CCFlags.*
+import com.intellij.layout.LCFlags.*
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.options.ConfigurableUi
-import java.awt.BorderLayout
+import javax.swing.JCheckBox
 
-class IcsConfigurable : ConfigurableBase<IcsConfigurableUi, IcsSettings>("ics", icsMessage("ics.settings"), "reference.settings.ics") {
+internal class IcsConfigurable : ConfigurableBase<IcsConfigurableUi, IcsSettings>("ics", icsMessage("ics.settings"), "reference.settings.ics") {
   override fun getSettings() = icsManager.settings
 
   override fun createUi() = IcsConfigurableUi()
 }
 
-class IcsConfigurableUi : ConfigurableUi<IcsSettings> {
-  private val panel = IcsConfigurableForm()
+internal class IcsConfigurableUi : ConfigurableUi<IcsSettings>, Disposable {
+  private val editors = listOf(createRepositoryListEditor(), createReadOnlySourcesEditor())
+  private val autoSync = JCheckBox("Auto Sync")
 
-  private val readOnlyEditor = createReadOnlySourcesEditor()
-
-  init {
-    panel.readOnlySourcesPanel.add(readOnlyEditor.component, BorderLayout.CENTER)
+  override fun dispose() {
+    icsManager.autoSyncManager.enabled = true
   }
 
   override fun reset(settings: IcsSettings) {
-    panel.autoSyncCheckBox.isSelected = settings.autoSync
-    readOnlyEditor.reset(settings)
+    // do not set in constructor to avoid
+    icsManager.autoSyncManager.enabled = false
+
+    autoSync.isSelected = settings.autoSync
+
+    editors.forEach { it.reset(settings) }
   }
 
-  override fun isModified(settings: IcsSettings) = panel.autoSyncCheckBox.isSelected != settings.autoSync || readOnlyEditor.isModified(settings)
+  override fun isModified(settings: IcsSettings) = autoSync.isSelected != settings.autoSync || editors.any { it.isModified(settings) }
 
   override fun apply(settings: IcsSettings) {
-    settings.autoSync = panel.autoSyncCheckBox.isSelected
-    readOnlyEditor.apply(settings)
+    settings.autoSync = autoSync.isSelected
+
+    editors.forEach { it.apply(settings) }
+
     saveSettings(settings, icsManager.settingsFile)
   }
 
-  override fun getComponent() = panel.rootPanel!!
+  override fun getComponent() = panel(noGrid, flowY) {
+    editors.get(0).component()
+    autoSync()
+    hint("Use VCS -> Sync Settings to sync when you want")
+    titledPanel("Read-only Sources", editors.get(1).component, grow, push)
+  }
 }

@@ -313,7 +313,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
     }
     if (hasNonTrivialConstructor) {
       final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(psiClass, targetClass, PsiSubstitutor.EMPTY);
-      final List<PsiMethodMember> baseConstructors = new ArrayList<PsiMethodMember>();
+      final List<PsiMethodMember> baseConstructors = new ArrayList<>();
       for (PsiMethod baseConstr : constructors) {
         if (PsiUtil.isAccessible(project, baseConstr, targetClass, targetClass)) {
           baseConstructors.add(new PsiMethodMember(baseConstr, substitutor));

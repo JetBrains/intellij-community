@@ -15,9 +15,12 @@
  */
 package org.jetbrains.intellij.build
 
+import groovy.transform.CompileStatic
+
 /**
  * @author nik
  */
+@CompileStatic
 enum JvmArchitecture {
   x32(""), x64("64")
 

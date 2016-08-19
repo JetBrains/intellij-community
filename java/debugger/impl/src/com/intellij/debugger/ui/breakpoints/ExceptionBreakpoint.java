@@ -40,6 +40,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
@@ -282,5 +283,17 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
 
   void setPackageName(String packageName) {
     getProperties().myPackageName = packageName;
+  }
+
+  public void setCatchFiltersEnabled(boolean enabled) {
+    getProperties().setCatchFiltersEnabled(enabled);
+  }
+
+  public void setCatchClassFilters(ClassFilter[] filters) {
+    getProperties().setCatchClassFilters(filters);
+  }
+
+  public void setCatchClassExclusionFilters(ClassFilter[] filters) {
+    getProperties().setCatchClassExclusionFilters(filters);
   }
 }

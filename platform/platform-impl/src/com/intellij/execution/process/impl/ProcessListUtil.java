@@ -116,7 +116,7 @@ public class ProcessListUtil {
       return null;
     }
 
-    List<ProcessInfo> result = new ArrayList<ProcessInfo>();
+    List<ProcessInfo> result = new ArrayList<>();
 
     for (File each : processes) {
       int pid = StringUtil.parseInt(each.getName(), -1);
@@ -180,12 +180,12 @@ public class ProcessListUtil {
     List<MacProcessInfo> fulls = doParseMacOutput(full);
     if (commands == null || fulls == null) return null;
 
-    TIntObjectHashMap<String> idToCommand = new TIntObjectHashMap<String>();
+    TIntObjectHashMap<String> idToCommand = new TIntObjectHashMap<>();
     for (MacProcessInfo each : commands) {
       idToCommand.put(each.pid, each.commandLine);
     }
 
-    List<ProcessInfo> result = new ArrayList<ProcessInfo>();
+    List<ProcessInfo> result = new ArrayList<>();
     for (MacProcessInfo each : fulls) {
       if (!idToCommand.containsKey(each.pid)) continue;
 

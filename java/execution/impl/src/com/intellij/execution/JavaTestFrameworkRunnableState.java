@@ -23,6 +23,7 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testDiscovery.JavaAutoRunManager;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
@@ -48,7 +49,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.JavaPsiFacade;
@@ -122,12 +122,9 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     return module != null;
   }
 
-  protected ExecutionResult startSMRunner(Executor executor) throws ExecutionException {
-    if (!isSmRunnerUsed()) {
-      return null;
-    }
-    getJavaParameters().getVMParametersList().addProperty("idea." + getFrameworkId() + ".sm_runner");
-
+  @NotNull
+  @Override
+  public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
     final RunnerSettings runnerSettings = getRunnerSettings();
 
     final SMTRunnerConsoleProperties testConsoleProperties = getConfiguration().createTestConsoleProperties(executor);
@@ -138,7 +135,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     Disposer.register(getConfiguration().getProject(), consoleView);
 
     final OSProcessHandler handler = createHandler(executor);
-    
+
     consoleView.attachToProcess(handler);
     final AbstractTestProxy root = viewer.getRoot();
     if (root instanceof TestProxyRoot) {
@@ -178,10 +175,6 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, runnerSettings);
     return result;
-  }
-
-  protected boolean isSmRunnerUsed() {
-    return Registry.is(getFrameworkId() + "_sm");
   }
 
   protected abstract void configureRTClasspath(JavaParameters javaParameters);

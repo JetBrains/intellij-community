@@ -22,20 +22,23 @@ import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.impl.source.PsiTypeCodeFragmentImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.JBUI;
-import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionEditor;
 import org.jetbrains.annotations.NonNls;
@@ -52,8 +55,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 class CompoundRendererConfigurable extends JPanel {
-  private CompoundReferenceRenderer myRenderer;
-  private CompoundReferenceRenderer myOriginalRenderer;
+  private CompoundTypeRenderer myRenderer;
+  private CompoundTypeRenderer myOriginalRenderer;
   private Project myProject;
   private final ClassNameEditorWithBrowseButton myClassNameField;
   private final JRadioButton myRbDefaultLabel;
@@ -187,9 +190,9 @@ class CompoundRendererConfigurable extends JPanel {
   }
 
   public void setRenderer(NodeRenderer renderer) {
-    if (renderer instanceof CompoundReferenceRenderer) {
-      myRenderer = (CompoundReferenceRenderer)renderer;
-      myOriginalRenderer = (CompoundReferenceRenderer)renderer.clone();
+    if (renderer instanceof CompoundTypeRenderer) {
+      myRenderer = (CompoundTypeRenderer)renderer;
+      myOriginalRenderer = (CompoundTypeRenderer)renderer.clone();
     }
     else {
       myRenderer = myOriginalRenderer = null;
@@ -197,22 +200,23 @@ class CompoundRendererConfigurable extends JPanel {
     reset();
   }
 
-  public CompoundReferenceRenderer getRenderer() {
+  public CompoundTypeRenderer getRenderer() {
     return myRenderer;
   }
 
   private void updateContext(final String qName) {
     ApplicationManager.getApplication().runReadAction(() -> {
       Project project = myProject;
-      PsiClass psiClass = project != null ? DebuggerUtils.findClass(qName, project, GlobalSearchScope.allScope(project)) : null;
-      if (psiClass != null) {
-        psiClass = (PsiClass)psiClass.getNavigationElement();
+      if (project != null) {
+        Pair<PsiClass, PsiType> pair = DebuggerUtilsImpl.getPsiClassAndType(qName, project);
+        PsiClass context = pair.first;
+        if (context != null) {
+          myLabelEditor.setContext(context);
+          myChildrenEditor.setContext(context);
+          myChildrenExpandedEditor.setContext(context);
+          myListChildrenEditor.setContext(context);
+        }
       }
-      XSourcePositionImpl position = XSourcePositionImpl.createByElement(psiClass);
-      myLabelEditor.setSourcePosition(position);
-      myChildrenEditor.setSourcePosition(position);
-      myChildrenExpandedEditor.setSourcePosition(position);
-      myListChildrenEditor.setSourcePosition(position);
     });
   }
 
@@ -300,7 +304,7 @@ class CompoundRendererConfigurable extends JPanel {
     if (myRenderer == null) {
       return false;
     }
-    final CompoundReferenceRenderer cloned = (CompoundReferenceRenderer)myRenderer.clone();
+    final CompoundTypeRenderer cloned = (CompoundTypeRenderer)myRenderer.clone();
     flushDataTo(cloned);
     return !DebuggerUtilsEx.externalizableEqual(cloned, myOriginalRenderer);
   }
@@ -311,10 +315,10 @@ class CompoundRendererConfigurable extends JPanel {
     }
     flushDataTo(myRenderer);
     // update the renderer to compare with in order to find out whether we've been modified since last apply
-    myOriginalRenderer = (CompoundReferenceRenderer)myRenderer.clone();
+    myOriginalRenderer = (CompoundTypeRenderer)myRenderer.clone();
   }
 
-  private void flushDataTo(final CompoundReferenceRenderer renderer) { // label
+  private void flushDataTo(final CompoundTypeRenderer renderer) { // label
     LabelRenderer labelRenderer = null;
     renderer.setShowType(myShowTypeCheckBox.isSelected());
     if (myRbExpressionLabel.isSelected()) {
@@ -352,11 +356,10 @@ class CompoundRendererConfigurable extends JPanel {
 
     final ValueLabelRenderer labelRenderer = myRenderer.getLabelRenderer();
     final ChildrenRenderer childrenRenderer = myRenderer.getChildrenRenderer();
-    final NodeRendererSettings rendererSettings = NodeRendererSettings.getInstance();
 
     myShowTypeCheckBox.setSelected(myRenderer.isShowType());
 
-    if (rendererSettings.isBase(labelRenderer)) {
+    if (myRenderer.isBaseRenderer(labelRenderer)) {
       myLabelEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
       myRbDefaultLabel.setSelected(true);
     }
@@ -368,7 +371,7 @@ class CompoundRendererConfigurable extends JPanel {
     getTableModel().clear();
     myAppendDefaultChildren.setSelected(false);
 
-    if (rendererSettings.isBase(childrenRenderer)) {
+    if (myRenderer.isBaseRenderer(childrenRenderer)) {
       myRbDefaultChildrenRenderer.setSelected(true);
       myChildrenEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
       myChildrenExpandedEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
@@ -525,9 +528,12 @@ class CompoundRendererConfigurable extends JPanel {
     private ClassNameEditorWithBrowseButton(ActionListener browseActionListener, final Project project) {
       super(browseActionListener, project,
             s -> {
-              PsiPackage defaultPackage = JavaPsiFacade.getInstance(project).findPackage("");
-              final JavaCodeFragment fragment =
-                JavaCodeFragmentFactory.getInstance(project).createReferenceCodeFragment(s, defaultPackage, true, true);
+              JavaCodeFragment fragment = new PsiTypeCodeFragmentImpl(project, true, "fragment.java", s, 0, null) {
+                @Override
+                public boolean importClass(PsiClass aClass) {
+                  return false;
+                }
+              };
               fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
               return PsiDocumentManager.getInstance(project).getDocument(fragment);
             }, "");

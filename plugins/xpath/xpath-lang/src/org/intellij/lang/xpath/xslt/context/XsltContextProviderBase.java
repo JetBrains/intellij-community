@@ -61,7 +61,7 @@ import java.util.*;
 * Date: 08.01.11
 */
 public abstract class XsltContextProviderBase extends ContextProvider {
-  protected static final Set<String> IGNORED_URIS = new THashSet<String>();
+  protected static final Set<String> IGNORED_URIS = new THashSet<>();
 
   static {
     IGNORED_URIS.add(XsltSupport.XSLT_NS);
@@ -141,7 +141,7 @@ public abstract class XsltContextProviderBase extends ContextProvider {
         names.dependencies.add(rootDescriptor.getDescriptorFile());
 
         //noinspection unchecked
-        final Set<XmlElementDescriptor> history = new THashSet<XmlElementDescriptor>(150);
+        final Set<XmlElementDescriptor> history = new THashSet<>(150);
 
         final XmlElementDescriptor[] e = rootDescriptor.getRootElementsDescriptors(document);
         try {
@@ -207,7 +207,7 @@ public abstract class XsltContextProviderBase extends ContextProvider {
     final PsiFile psiFile = attribute.getContainingFile();
     assert psiFile != null;
 
-    final List<PsiFile> files = new ArrayList<PsiFile>();
+    final List<PsiFile> files = new ArrayList<>();
 
     psiFile.accept(new XmlRecursiveElementVisitor() {
       @Override
@@ -353,7 +353,7 @@ public abstract class XsltContextProviderBase extends ContextProvider {
         }
 
         //noinspection unchecked
-        return new Result<ElementNames>(names, ArrayUtil.toObjectArray(names.dependencies));
+        return new Result<>(names, ArrayUtil.toObjectArray(names.dependencies));
       }
     }, false);
   }
@@ -375,8 +375,8 @@ public abstract class XsltContextProviderBase extends ContextProvider {
   static class ElementNames {
     boolean validateNames;
 
-    final Set<QName> elementNames = new HashSet<QName>();
-    final Set<QName> attributeNames = new HashSet<QName>();
+    final Set<QName> elementNames = new HashSet<>();
+    final Set<QName> attributeNames = new HashSet<>();
 
     @SuppressWarnings({"RawUseOfParameterizedType"})
     final Set dependencies = new HashSet();

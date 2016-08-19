@@ -55,7 +55,7 @@ public abstract class DomHighlightingHelper {
     for (final DomCustomAnnotationChecker<?> checker : myCustomCheckers) {
       final List<DomElementProblemDescriptor> list = checkAnno(element, checker, holder);
       if (!list.isEmpty()) {
-        if (result == null) result = new SmartList<DomElementProblemDescriptor>();
+        if (result == null) result = new SmartList<>();
         result.addAll(list);
       }
     }

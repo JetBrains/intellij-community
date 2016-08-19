@@ -45,7 +45,7 @@ public class NumpyClassMembersProvider extends PyClassMembersProviderBase {
       if (reference != null) {
         final PsiElement resolved = reference.resolve();
         if (resolved instanceof PyFunction) {
-          final List<PyCustomMember> result = new ArrayList<PyCustomMember>();
+          final List<PyCustomMember> result = new ArrayList<>();
           if (NumpyUfuncs.isUFunc(((PyFunction)resolved).getName()) && NumpyDocStringTypeProvider.isInsideNumPy(resolved)) {
             for (String method : NumpyUfuncs.UFUNC_METHODS) {
               result.add(new PyCustomMember(method, resolved));

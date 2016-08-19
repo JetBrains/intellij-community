@@ -29,14 +29,14 @@ import java.util.Map;
  */
 public class ShortestPathTest extends GraphTestCase {
   public void testEmptyPath() {
-    final HashMap<String, String> graph = new HashMap<String, String>();
+    final HashMap<String, String> graph = new HashMap<>();
     graph.put("a", "");
     graph.put("b", "");
     doTest(graph, "a", "a", "a");
   }
 
   public void testNoPath() {
-    final HashMap<String, String> graph = new HashMap<String, String>();
+    final HashMap<String, String> graph = new HashMap<>();
     graph.put("a", "c");
     graph.put("b", "a");
     graph.put("c", "a");
@@ -44,7 +44,7 @@ public class ShortestPathTest extends GraphTestCase {
   }
 
   public void test1() {
-    final HashMap<String, String> graph = new HashMap<String, String>();
+    final HashMap<String, String> graph = new HashMap<>();
     graph.put("a", "");
     graph.put("b", "ac");
     graph.put("c", "ab");
@@ -53,7 +53,7 @@ public class ShortestPathTest extends GraphTestCase {
   }
 
   public void test2() {
-    final HashMap<String, String> graph = new HashMap<String, String>();
+    final HashMap<String, String> graph = new HashMap<>();
     graph.put("a", "cd");
     graph.put("b", "a");
     graph.put("c", "d");
@@ -62,7 +62,7 @@ public class ShortestPathTest extends GraphTestCase {
   }
 
   public void test3() {
-    final HashMap<String, String> graph = new HashMap<String, String>();
+    final HashMap<String, String> graph = new HashMap<>();
     graph.put("a", "bd");
     graph.put("b", "d");
     graph.put("c", "a");
@@ -71,7 +71,7 @@ public class ShortestPathTest extends GraphTestCase {
   }
 
   public void test4() {
-    final HashMap<String, String> graph = new HashMap<String, String>();
+    final HashMap<String, String> graph = new HashMap<>();
     graph.put("a", "be");
     graph.put("b", "d");
     graph.put("c", "a");

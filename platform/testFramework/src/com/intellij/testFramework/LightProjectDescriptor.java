@@ -25,6 +25,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -39,8 +40,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-
-import static com.intellij.openapi.roots.ModuleRootModificationUtil.updateModel;
 
 public class LightProjectDescriptor {
   public static final LightProjectDescriptor EMPTY_PROJECT_DESCRIPTOR = new LightProjectDescriptor();
@@ -59,7 +58,7 @@ public class LightProjectDescriptor {
 
   @NotNull
   public Module createMainModule(@NotNull Project project) {
-    return createModule(project, "light_idea_test_case.iml");
+    return createModule(project, FileUtil.join(FileUtil.getTempDirectory(), "light_idea_test_case.iml"));
   }
 
   protected Module createModule(@NotNull Project project, @NotNull String moduleFilePath) {
@@ -120,8 +119,8 @@ public class LightProjectDescriptor {
     return srcRoot;
   }
 
-  protected void createContentEntry(@NotNull Module module, @NotNull VirtualFile srcRoot) {
-    updateModel(module, model -> {
+  private void createContentEntry(@NotNull Module module, @NotNull VirtualFile srcRoot) {
+    ModuleRootModificationUtil.updateModel(module, model -> {
       Sdk sdk = getSdk();
       if (sdk != null) {
         model.setSdk(sdk);

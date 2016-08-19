@@ -113,5 +113,32 @@ class X {
     )
   }
 
+  
+  fun `test inserted closing brace`() {
+    myLineRange = TextRange(6, 6)
+    check(
+        """
+class X {
+    void test() {
+       while (true) {
+        int a = 2;
+        int b = 3;
+        }
+    }
+}
+""",
+        """
+class X {
+    void test() {
+        while (true) {
+            int a = 2;
+            int b = 3;
+        }
+    }
+}
+"""
+    )
+  }
+
 
 }

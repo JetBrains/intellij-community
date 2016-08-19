@@ -35,7 +35,7 @@ import java.util.List;
  */
 public class SoftWrapAwareVisualSizeManager extends SoftWrapAwareDocumentParsingListenerAdapter {
 
-  private final List<VisualSizeChangeListener> myListeners  = new ArrayList<VisualSizeChangeListener>();
+  private final List<VisualSizeChangeListener> myListeners  = new ArrayList<>();
   private final TIntIntHashMap                 myLineWidths = new TIntIntHashMap();
 
   private SoftWrapPainter myPainter;

@@ -37,11 +37,11 @@ import java.util.List;
  */
 public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.ui.MultipleFacetSettingsEditor");
-  private final List<AbstractBinding> myBindings = new ArrayList<AbstractBinding>();
+  private final List<AbstractBinding> myBindings = new ArrayList<>();
 
   @Override
   public void bind(@NotNull ThreeStateCheckBox common, @NotNull FacetEditor[] editors, @NotNull NotNullFunction<FacetEditor, JCheckBox> fun) {
-    List<JCheckBox> checkBoxesList = new ArrayList<JCheckBox>();
+    List<JCheckBox> checkBoxesList = new ArrayList<>();
     for (FacetEditor editor : editors) {
       checkBoxesList.add(fun.fun(editor));
     }
@@ -52,7 +52,7 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
 
   @Override
   public void bind(@NotNull JTextField common, @NotNull FacetEditor[] editors, @NotNull NotNullFunction<FacetEditor, JTextField> fun) {
-    List<JTextField> componentsList = new ArrayList<JTextField>();
+    List<JTextField> componentsList = new ArrayList<>();
     for (FacetEditor editor : editors) {
       componentsList.add(fun.fun(editor));
     }
@@ -63,7 +63,7 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
 
   @Override
   public void bind(@NotNull JComboBox common, @NotNull FacetEditor[] editors, @NotNull NotNullFunction<FacetEditor, JComboBox> fun) {
-    List<JComboBox> componentsList = new ArrayList<JComboBox>();
+    List<JComboBox> componentsList = new ArrayList<>();
     for (FacetEditor editor : editors) {
       componentsList.add(fun.fun(editor));
     }
@@ -95,7 +95,7 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
       myCheckBoxesList = checkBoxesList;
 
       Boolean initialValue = checkBoxesList.get(0).isSelected();
-      myInitialValues = new ArrayList<Boolean>();
+      myInitialValues = new ArrayList<>();
       for (JCheckBox checkBox : checkBoxesList) {
         boolean value = checkBox.isSelected();
         myInitialValues.add(value);
@@ -149,7 +149,7 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
       myCommon = common;
       myTextFields = textFields;
       String initialValue = myTextFields.get(0).getText();
-      myInitialValues = new ArrayList<String>();
+      myInitialValues = new ArrayList<>();
       for (JTextField field : myTextFields) {
         String value = field.getText();
         myInitialValues.add(value);
@@ -194,7 +194,7 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
       JComboBox first = componentsList.get(0);
       Object initialValue = first.getSelectedItem();
 
-      myInitialValues = new ArrayList<Object>();
+      myInitialValues = new ArrayList<>();
       for (JComboBox component : componentsList) {
         Object item = component.getSelectedItem();
         myInitialValues.add(item);

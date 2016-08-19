@@ -167,7 +167,7 @@ class NSScrollerHelper {
         }
       }
       if (toAdd != null) {
-        ourStyleListeners.add(new WeakReference<ScrollbarStyleListener>(toAdd));
+        ourStyleListeners.add(new WeakReference<>(toAdd));
       }
     }
   }

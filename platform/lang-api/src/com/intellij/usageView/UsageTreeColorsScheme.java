@@ -15,19 +15,13 @@
  */
 package com.intellij.usageView;
 
-import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jdom.Element;
-import org.jetbrains.annotations.Nullable;
 
-@State(name = "FindViewColorsScheme", defaultStateAsResource = true)
-public class UsageTreeColorsScheme implements PersistentStateComponent<Element> {
-  private EditorColorsScheme myColorsScheme;
+public class UsageTreeColorsScheme {
 
   /**
    * @noinspection UnusedParameters
@@ -40,20 +34,7 @@ public class UsageTreeColorsScheme implements PersistentStateComponent<Element> 
   }
 
   public EditorColorsScheme getScheme() {
-    return myColorsScheme;
+    return EditorColorsUtil.getColorSchemeForBackground(UIUtil.getTreeTextBackground());
   }
 
-  @Nullable
-  @Override
-  public Element getState() {
-    return null;
-  }
-
-  @Override
-  public void loadState(Element state) {
-    if (myColorsScheme == null) {
-      myColorsScheme = (EditorColorsScheme)EditorColorsUtil.getColorSchemeForBackground(UIUtil.getTreeTextBackground()).clone();
-    }
-    myColorsScheme.readExternal(state);
-  }
 }

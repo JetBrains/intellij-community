@@ -15,7 +15,6 @@
  */
 package com.intellij.rt.execution.junit;
 
-import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
 import com.intellij.rt.execution.testFrameworks.ChildVMStarter;
 
 import java.io.PrintStream;
@@ -39,16 +38,13 @@ public class JUnitForkedStarter extends ChildVMStarter {
 
   protected void configureFrameworkAndRun(String[] args, PrintStream out, PrintStream err)
     throws InstantiationException, IllegalAccessException, ClassNotFoundException {
-    final int lastIdx = Integer.parseInt(args[1]);
-    final String[] childTestDescription = {args[2]};
-    final String argentName = args[3];
+    final String[] childTestDescription = {args[1]};
+    final String argentName = args[2];
     final ArrayList listeners = new ArrayList();
-    for (int i = 4, argsLength = args.length; i < argsLength; i++) {
+    for (int i = 3, argsLength = args.length; i < argsLength; i++) {
       listeners.add(args[i]);
     }
     IdeaTestRunner testRunner = (IdeaTestRunner)JUnitStarter.getAgentClass(argentName).newInstance();
-    //noinspection IOResourceOpenedButNotSafelyClosed
-    testRunner.setStreams(new SegmentedOutputStream(out, true), new SegmentedOutputStream(err, true), lastIdx);
     System.exit(testRunner.startRunnerWithArgs(childTestDescription, listeners, null, JUnitStarter.ourCount, false));
   }
 

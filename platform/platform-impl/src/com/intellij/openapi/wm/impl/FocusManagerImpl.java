@@ -64,16 +64,16 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private final Application myApp;
 
   private FocusCommand myRequestFocusCmd;
-  private final List<FocusCommand> myFocusRequests = new ArrayList<FocusCommand>();
+  private final List<FocusCommand> myFocusRequests = new ArrayList<>();
 
-  private final List<KeyEvent> myToDispatchOnDone = new ArrayList<KeyEvent>();
+  private final List<KeyEvent> myToDispatchOnDone = new ArrayList<>();
 
   private Reference<FocusCommand> myLastForcedRequest;
 
   private FocusCommand myFocusCommandOnAppActivation;
   private ActionCallback myCallbackOnActivation;
   private final boolean isInternalMode = ApplicationManagerEx.getApplicationEx().isInternal();
-  private final LinkedList<FocusRequestInfo> myRequests = new LinkedList<FocusRequestInfo>();
+  private final LinkedList<FocusRequestInfo> myRequests = new LinkedList<>();
 
   private final IdeEventQueue myQueue;
   private final KeyProcessorContext myKeyProcessorContext = new KeyProcessorContext();
@@ -85,14 +85,14 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private final EdtAlarm myForcedFocusRequestsAlarm;
 
   private final EdtAlarm myIdleAlarm;
-  private final Set<Runnable> myIdleRequests = new LinkedHashSet<Runnable>();
+  private final Set<Runnable> myIdleRequests = new LinkedHashSet<>();
 
   private boolean myFlushWasDelayedToFixFocus;
   private ExpirableRunnable myFocusRevalidator;
 
-  private final Set<FurtherRequestor> myValidFurtherRequestors = new HashSet<FurtherRequestor>();
+  private final Set<FurtherRequestor> myValidFurtherRequestors = new HashSet<>();
 
-  private final Set<ActionCallback> myTypeAheadRequestors = new HashSet<ActionCallback>();
+  private final Set<ActionCallback> myTypeAheadRequestors = new HashSet<>();
   private final UiActivityMonitor myActivityMonitor;
   private boolean myTypeaheadEnabled = true;
   private int myModalityStateForLastForcedRequest;
@@ -124,8 +124,8 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
            && !(focusOwner == null && (!myValidFurtherRequestors.isEmpty() || myFocusRevalidator != null && !myFocusRevalidator.isExpired()));
   }
 
-  private final Map<IdeFrame, Component> myLastFocused = new WeakValueHashMap<IdeFrame, Component>();
-  private final Map<IdeFrame, Component> myLastFocusedAtDeactivation = new WeakValueHashMap<IdeFrame, Component>();
+  private final Map<IdeFrame, Component> myLastFocused = new WeakValueHashMap<>();
+  private final Map<IdeFrame, Component> myLastFocusedAtDeactivation = new WeakValueHashMap<>();
 
   private DataContext myRunContext;
 
@@ -410,7 +410,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   private void setLastEffectiveForcedRequest(@Nullable FocusCommand command) {
-    myLastForcedRequest = command == null ? null : new WeakReference<FocusCommand>(command);
+    myLastForcedRequest = command == null ? null : new WeakReference<>(command);
     myModalityStateForLastForcedRequest = getCurrentModalityCount();
   }
 
@@ -958,7 +958,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     @Override
     public ActionCallback requestFocus(@NotNull Component c, boolean forced) {
       final ActionCallback result = isExpired() ? ActionCallback.REJECTED : myManager.requestFocus(c, forced);
-      result.doWhenProcessed(() -> Disposer.dispose(FurtherRequestor.this));
+      result.doWhenProcessed(() -> Disposer.dispose(this));
       return result;
     }
 
@@ -980,7 +980,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
 
   static class EdtAlarm {
-    private final Set<EdtRunnable> myRequests = new HashSet<EdtRunnable>();
+    private final Set<EdtRunnable> myRequests = new HashSet<>();
     
     public void cancelAllRequests() {
       for (EdtRunnable each : myRequests) {

@@ -29,7 +29,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 public class ImportedTestContentHandler extends DefaultHandler {
   private final GeneralTestEventsProcessor myProcessor;
-  private final Stack<String> mySuites = new Stack<String>();
+  private final Stack<String> mySuites = new Stack<>();
   private String myCurrentTest;
   private String myDuration;
   private String myStatus;

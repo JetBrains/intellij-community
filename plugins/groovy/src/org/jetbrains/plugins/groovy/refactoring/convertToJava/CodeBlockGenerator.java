@@ -79,7 +79,7 @@ public class CodeBlockGenerator extends Generator {
   public CodeBlockGenerator(StringBuilder builder, ExpressionContext context, @Nullable Collection<GrStatement> exitPoints) {
     this.builder = builder;
     this.context = context;
-    myExitPoints = new HashSet<GrStatement>();
+    myExitPoints = new HashSet<>();
     if (exitPoints != null) {
       myExitPoints.addAll(exitPoints);
     }

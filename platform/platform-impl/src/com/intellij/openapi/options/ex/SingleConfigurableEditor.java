@@ -124,7 +124,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
 
   @Override
   public void show() {
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> SingleConfigurableEditor.super.show());
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> super.show());
   }
 
   public Configurable getConfigurable() {
@@ -154,7 +154,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
   @Override
   @NotNull
   protected Action[] createActions() {
-    List<Action> actions = new ArrayList<Action>();
+    List<Action> actions = new ArrayList<>();
     actions.add(getOKAction());
     actions.add(getCancelAction());
     if (myShowApplyButton) {

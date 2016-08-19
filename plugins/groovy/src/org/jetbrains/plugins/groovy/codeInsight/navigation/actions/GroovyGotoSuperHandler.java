@@ -94,7 +94,7 @@ public class GroovyGotoSuperHandler extends GotoTargetHandler implements Languag
   private static PsiElement[] findTargets(@NotNull PsiMember e) {
     if (e instanceof PsiClass) {
       PsiClass aClass = (PsiClass)e;
-      List<PsiClass> allSupers = new ArrayList<PsiClass>(Arrays.asList(aClass.getSupers()));
+      List<PsiClass> allSupers = new ArrayList<>(Arrays.asList(aClass.getSupers()));
       for (Iterator<PsiClass> iterator = allSupers.iterator(); iterator.hasNext(); ) {
         PsiClass superClass = iterator.next();
         if (CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) iterator.remove();
@@ -106,7 +106,7 @@ public class GroovyGotoSuperHandler extends GotoTargetHandler implements Languag
     }
     else {
       LOG.assertTrue(e instanceof GrField);
-      List<PsiMethod> supers = new ArrayList<PsiMethod>();
+      List<PsiMethod> supers = new ArrayList<>();
       for (GrAccessorMethod method : GroovyPropertyUtils.getFieldAccessors((GrField)e)) {
         supers.addAll(Arrays.asList(getSupers(method)));
       }

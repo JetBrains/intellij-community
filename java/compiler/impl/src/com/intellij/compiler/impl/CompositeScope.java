@@ -35,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class CompositeScope extends ExportableUserDataHolderBase implements CompileScope{
-  private final List<CompileScope> myScopes = new ArrayList<CompileScope>();
+  private final List<CompileScope> myScopes = new ArrayList<>();
 
   public CompositeScope(CompileScope scope1, CompileScope scope2) {
     addScope(scope1);
@@ -62,7 +62,7 @@ public class CompositeScope extends ExportableUserDataHolderBase implements Comp
 
   @NotNull
   public VirtualFile[] getFiles(FileType fileType, boolean inSourceOnly) {
-    Set<VirtualFile> allFiles = new THashSet<VirtualFile>();
+    Set<VirtualFile> allFiles = new THashSet<>();
     for (CompileScope scope : myScopes) {
       final VirtualFile[] files = scope.getFiles(fileType, inSourceOnly);
       if (files.length > 0) {
@@ -83,7 +83,7 @@ public class CompositeScope extends ExportableUserDataHolderBase implements Comp
 
   @NotNull
   public Module[] getAffectedModules() {
-    Set<Module> modules = new HashSet<Module>();
+    Set<Module> modules = new HashSet<>();
     for (final CompileScope compileScope : myScopes) {
       ContainerUtil.addAll(modules, compileScope.getAffectedModules());
     }

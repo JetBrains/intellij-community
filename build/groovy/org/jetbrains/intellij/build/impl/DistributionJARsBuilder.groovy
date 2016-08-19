@@ -62,23 +62,24 @@ class DistributionJARsBuilder {
     this.allPlugins = allPlugins
     buildContext.ant.patternset(id: RESOURCES_INCLUDED) {
       include(name: "**/*.properties")
-      include(name: "fileTemplates/**/*")
-      include(name: "inspectionDescriptions/**/*")
-      include(name: "intentionDescriptions/**/*")
-      include(name: "tips/**/*")
-      include(name: "search/**/*")
+      include(name: "fileTemplates/**")
+      include(name: "inspectionDescriptions/**")
+      include(name: "intentionDescriptions/**")
+      include(name: "tips/**")
+      include(name: "search/**")
     }
 
     buildContext.ant.patternset(id: RESOURCES_EXCLUDED) {
       exclude(name: "**/*.properties")
-      exclude(name: "fileTemplates/**/*")
+      exclude(name: "fileTemplates/**")
       exclude(name: "fileTemplates")
-      exclude(name: "inspectionDescriptions/**/*")
+      exclude(name: "inspectionDescriptions/**")
       exclude(name: "inspectionDescriptions")
-      exclude(name: "intentionDescriptions/**/*")
+      exclude(name: "intentionDescriptions/**")
       exclude(name: "intentionDescriptions")
-      exclude(name: "tips/**/*")
+      exclude(name: "tips/**")
       exclude(name: "tips")
+      exclude(name: "search/**")
     }
   }
 
@@ -128,8 +129,8 @@ class DistributionJARsBuilder {
 
     Set<String> usedJars = collectUsedJars(includedModules, []) - productLayout.additionalJarsToUnpackIntoMainJar.collect {FileUtil.toSystemIndependentName(it)}
 
-    if (buildContext.scrambleTool != null) {
-      def forbiddenJarNames = buildContext.scrambleTool.namesOfJarsRequiredToBeScrambled
+    if (buildContext.proprietaryBuildTools.scrambleTool != null) {
+      def forbiddenJarNames = buildContext.proprietaryBuildTools.scrambleTool.namesOfJarsRequiredToBeScrambled
       def forbiddenJars = usedJars.findAll { forbiddenJarNames.contains(PathUtilRt.getFileName(it)) }
       if (!forbiddenJars.empty) {
         buildContext.messages.error("The following JARs cannot be included into the product 'lib' directory, they need to be scrambled with the main jar: ${forbiddenJars}")
@@ -163,17 +164,23 @@ class DistributionJARsBuilder {
 
       jar("forms_rt.jar") { module("forms_rt") }
 
-      productLayout.additionalPlatformModules.entrySet().findAll { it.value != "resources_en.jar" }.each {
+      productLayout.additionalPlatformModules.entrySet().findAll { it.value != productLayout.mainJarName }.each {
         def moduleName = it.key
         jar(it.value) {
-          module(moduleName)
+          module(moduleName) {
+            ant.patternset(refid: resourcesExcluded)
+          }
         }
       }
 
       jar("resources_en.jar", true) {
-        productLayout.additionalPlatformModules.entrySet().findAll { it.value == "resources_en.jar"}.each {
-          modulePatches([it.key])
-          module(it.key)
+        productLayout.additionalPlatformModules.keySet().each {
+          modulePatches([it]) {
+            ant.patternset(refid: resourcesIncluded)
+          }
+          module(it) {
+            ant.patternset(refid: resourcesIncluded)
+          }
         }
         module("platform-resources-en")
         module("coverage-common") {
@@ -191,6 +198,14 @@ class DistributionJARsBuilder {
         module("coverage-common") {
           ant.patternset(refid: resourcesExcluded)
         }
+        productLayout.additionalPlatformModules.entrySet().findAll {it.value == productLayout.mainJarName}.each {
+          modulePatches([it.key]) {
+            ant.patternset(refid: resourcesExcluded)
+          }
+          module(it.key) {
+            ant.patternset(refid: resourcesExcluded)
+          }
+        }
         productLayout.additionalJarsToUnpackIntoMainJar.each {
           ant.zipfileset(src: it)
         }
@@ -204,9 +219,6 @@ class DistributionJARsBuilder {
         ant.fileset(dir: "$communityHome/lib/libpty") {
           exclude(name: "*.txt")
         }
-      }
-      dir("ext") {//why ext?
-        projectLibrary("CGLIB")
       }
 
       dir("src") {
@@ -317,7 +329,7 @@ class DistributionJARsBuilder {
           }
           plugin.resourcePaths.entrySet().each {
             def contentRoot = JpsPathUtil.urlToPath(findModule(plugin.mainModule).contentRootsList.urls.first())
-            def path = "$contentRoot/$it.key"
+            def path = FileUtil.toSystemIndependentName(new File("$contentRoot/$it.key").absolutePath)
             dir(it.value) {
               if (new File(path).isFile()) {
                 ant.fileset(file: path)
@@ -347,20 +359,24 @@ class DistributionJARsBuilder {
     buildContext.ant.replaceregexp(file: pluginXmlPath,
                       match: "<version>[\\d.]*</version>",
                       replace: "<version>${buildNumber}</version>")
+    def sinceBuild = buildNumber.matches(/\d+\.\d+\.\d+/) ? buildNumber.substring(0, buildNumber.lastIndexOf('.')) : buildNumber;
+    def dotIndex = buildNumber.indexOf('.')
+    def untilBuild = dotIndex > 0 ? Integer.parseInt(buildNumber.substring(0, dotIndex)) + ".*" : buildNumber
     buildContext.ant.replaceregexp(file: pluginXmlPath,
-                      match: "<idea-version\\s*since-build=\"\\d+\\.\\d+\"",
-                      replace: "<idea-version since-build=\"${buildNumber}\"")
+                      match: "<idea-version\\s*since-build=\"\\d+\\.\\d+\"\\s*until-build=\"\\d+\\.\\d+\"",
+                      replace: "<idea-version since-build=\"${buildNumber}\" until-build=\"${untilBuild}\"")
+    buildContext.ant.replaceregexp(file: pluginXmlPath,
+                                   match: "<idea-version\\s*since-build=\"\\d+\\.\\d+\"",
+                                   replace: "<idea-version since-build=\"${buildNumber}\"")
     buildContext.ant.replaceregexp(file: pluginXmlPath,
                       match: "<change-notes>\\s*<\\!\\[CDATA\\[\\s*Plugin version: \\\$\\{version\\}",
                       replace: "<change-notes>\n<![CDATA[\nPlugin version: ${buildNumber}")
     def file = new File(pluginXmlPath)
     def text = file.text
     if (!text.contains("<version>")) {
-      def dotIndex = buildNumber.indexOf('.')
-      def untilBuild = dotIndex > 0 ? Integer.parseInt(buildNumber.substring(0, dotIndex)) + ".*" : buildNumber
       def anchor = text.contains("</id>") ? "</id>" : "</name>"
       file.text = text.replace(anchor,
-                               "${anchor}\n  <version>${buildNumber}</version>\n  <idea-version since-build=\"${buildNumber}\" until-build=\"${untilBuild}\"/>\n")
+                               "${anchor}\n  <version>${buildNumber}</version>\n  <idea-version since-build=\"${sinceBuild}\" until-build=\"${untilBuild}\"/>\n")
     }
   }
 

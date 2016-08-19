@@ -108,8 +108,8 @@ public class ArrangementSectionRuleManager {
 
   @Nullable
   public ArrangementSectionRuleData getSectionRuleData(@NotNull ArrangementMatchCondition condition) {
-    final Ref<Boolean> isStart = new Ref<Boolean>();
-    final Ref<String> text = new Ref<String>();
+    final Ref<Boolean> isStart = new Ref<>();
+    final Ref<String> text = new Ref<>();
     condition.invite(new ArrangementMatchConditionVisitor() {
       @Override
       public void visit(@NotNull ArrangementAtomMatchCondition condition) {

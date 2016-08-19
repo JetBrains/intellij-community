@@ -427,22 +427,20 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     if (jdk == null) return false;
 
     String version = JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION);
-    if (version != null) {
-      if (version.compareTo("1.4") >= 0) {
-        return false;
-      }
-      if (version.startsWith("1.2") && SystemInfo.isWindows) {
-        return true;
-      }
-      version += ".0";
-      if (version.startsWith("1.3.0") && SystemInfo.isWindows) {
-        return true;
-      }
-      if ((version.startsWith("1.3.1_07") || version.startsWith("1.3.1_08")) && SystemInfo.isWindows) {
-        return false; // fixes bug for these JDKs that it cannot start with -classic option
-      }
+    if (version == null || StringUtil.compareVersionNumbers(version, "1.4") >= 0) {
+      return false;
     }
 
+    if (version.startsWith("1.2") && SystemInfo.isWindows) {
+      return true;
+    }
+    version += ".0";
+    if (version.startsWith("1.3.0") && SystemInfo.isWindows) {
+      return true;
+    }
+    if ((version.startsWith("1.3.1_07") || version.startsWith("1.3.1_08")) && SystemInfo.isWindows) {
+      return false; // fixes bug for these JDKs that it cannot start with -classic option
+    }
     return DebuggerSettings.getInstance().FORCE_CLASSIC_VM;
   }
 

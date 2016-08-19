@@ -62,8 +62,8 @@ public class ShowRunningListAction extends AnAction {
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null || project.isDisposed()) return;
-    final Ref<Pair<? extends JComponent, String>> stateRef = new Ref<Pair<? extends JComponent, String>>();
-    final Ref<Balloon> balloonRef = new Ref<Balloon>();
+    final Ref<Pair<? extends JComponent, String>> stateRef = new Ref<>();
+    final Ref<Balloon> balloonRef = new Ref<>();
 
     final Timer timer = UIUtil.createNamedTimer("runningLists", 250);
     ActionListener actionListener = new ActionListener() {

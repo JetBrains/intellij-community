@@ -59,9 +59,9 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
     }
   }
 
-  private final Set<String> myIgnoredActions = new LinkedHashSet<String>();
+  private final Set<String> myIgnoredActions = new LinkedHashSet<>();
 
-  private final Map<MetaDataKey, IntentionActionMetaData> myMetaData = new LinkedHashMap<MetaDataKey, IntentionActionMetaData>();
+  private final Map<MetaDataKey, IntentionActionMetaData> myMetaData = new LinkedHashMap<>();
   @NonNls private static final String IGNORE_ACTION_TAG = "ignoreAction";
   @NonNls private static final String NAME_ATT = "name";
   private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
@@ -114,7 +114,7 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
   @NotNull
   public synchronized List<IntentionActionMetaData> getMetaData() {
     IntentionManager.getInstance(); // TODO: Hack to make IntentionManager actually register metadata here. Dependencies between IntentionManager and IntentionManagerSettings should be revised.
-    return new ArrayList<IntentionActionMetaData>(myMetaData.values());
+    return new ArrayList<>(myMetaData.values());
   }
 
   public synchronized boolean isEnabled(@NotNull IntentionActionMetaData metaData) {

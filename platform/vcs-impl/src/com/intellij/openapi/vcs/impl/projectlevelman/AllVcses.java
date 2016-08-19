@@ -39,11 +39,11 @@ public class AllVcses implements AllVcsesI, Disposable {
 
   private AllVcses(final Project project) {
     myProject = project;
-    myVcses = new HashMap<String, AbstractVcs>();
+    myVcses = new HashMap<>();
     myLock = new Object();
 
     final VcsEP[] vcsEPs = Extensions.getExtensions(VcsEP.EP_NAME, myProject);
-    final HashMap<String, VcsEP> map = new HashMap<String, VcsEP>();
+    final HashMap<String, VcsEP> map = new HashMap<>();
     for (VcsEP vcsEP : vcsEPs) {
       map.put(vcsEP.name, vcsEP);
     }
@@ -140,7 +140,7 @@ public class AllVcses implements AllVcsesI, Disposable {
   }
 
   public VcsDescriptor[] getAll() {
-    final List<VcsDescriptor> result = new ArrayList<VcsDescriptor>(myExtensions.size());
+    final List<VcsDescriptor> result = new ArrayList<>(myExtensions.size());
     for (VcsEP vcsEP : myExtensions.values()) {
       result.add(vcsEP.createDescriptor());
     }

@@ -429,7 +429,7 @@ public class SwingHelper {
     fileChooserDescriptor = fileChooserDescriptor.withShowHiddenFiles(SystemInfo.isUnix);
     componentWithBrowseButton.addBrowseFolderListener(
       project,
-      new ComponentWithBrowseButton.BrowseFolderActionListener<T>(
+      new ComponentWithBrowseButton.BrowseFolderActionListener<>(
         browseDialogTitle,
         null,
         componentWithBrowseButton,
@@ -476,7 +476,7 @@ public class SwingHelper {
     List<String> toCheck = Arrays.asList("a", "h1", "h2", "h3", "h4");
     Document document = view.getDocument();
     if (document instanceof HTMLDocument) {
-      List<Element> list = new ArrayList<Element>();
+      List<Element> list = new ArrayList<>();
       for (Element root : document.getRootElements()) {
         getAllElements(root, list, toCheck);
       }
@@ -673,7 +673,7 @@ public class SwingHelper {
   public static <C extends JComponent> ComponentWithBrowseButton<C> wrapWithInfoButton(@NotNull final C component,
                                                                                        @NotNull String infoButtonTooltip,
                                                                                        @NotNull ActionListener listener) {
-    ComponentWithBrowseButton<C> comp = new ComponentWithBrowseButton<C>(component, listener);
+    ComponentWithBrowseButton<C> comp = new ComponentWithBrowseButton<>(component, listener);
     FixedSizeButton uiHelpButton = comp.getButton();
     uiHelpButton.setToolTipText(infoButtonTooltip);
     uiHelpButton.setIcon(UIUtil.getBalloonInformationIcon());

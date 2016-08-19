@@ -298,7 +298,7 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
       }
     }
 
-    Map<String, String> libLevels = new LinkedHashMap<String, String>();
+    Map<String, String> libLevels = new LinkedHashMap<>();
     for (OrderEntry entry : model.getOrderEntries()) {
       if (entry instanceof ModuleOrderEntry) {
         final DependencyScope scope = ((ModuleOrderEntry)entry).getScope();
@@ -424,7 +424,7 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
   public static void replaceModuleRelatedRoots(final Project project,
                                                final Library.ModifiableModel modifiableModel, final Element libElement,
                                                final OrderRootType orderRootType, final String relativeModuleName) {
-    final List<String> urls = new ArrayList<String>(Arrays.asList(modifiableModel.getUrls(orderRootType)));
+    final List<String> urls = new ArrayList<>(Arrays.asList(modifiableModel.getUrls(orderRootType)));
     for (Element r : libElement.getChildren(relativeModuleName)) {
       final String root = PathMacroManager.getInstance(project).expandPath(r.getAttributeValue(PROJECT_RELATED));
       for (Iterator<String> iterator = urls.iterator(); iterator.hasNext();) {

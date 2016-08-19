@@ -39,7 +39,7 @@ public class UnnecessaryModuleDependencyAnnotator extends RefGraphAnnotator {
         if (refModule != null) {
           Set<Module> modules = refModule.getUserData(DEPENDENCIES);
           if (modules == null){
-            modules = new HashSet<Module>();
+            modules = new HashSet<>();
             refModule.putUserData(DEPENDENCIES, modules);
           }
           modules.add(onModule);

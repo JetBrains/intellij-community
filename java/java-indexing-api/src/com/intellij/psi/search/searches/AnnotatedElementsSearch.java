@@ -56,7 +56,7 @@ public class AnnotatedElementsSearch extends ExtensibleQueryFactory<PsiModifierL
   }
 
   public static <T extends PsiModifierListOwner> Query<T> searchElements(@NotNull PsiClass annotationClass, @NotNull SearchScope scope, Class<? extends T>... types) {
-    return new InstanceofQuery<T>(createDelegateQuery(annotationClass, scope, types), types);
+    return new InstanceofQuery<>(createDelegateQuery(annotationClass, scope, types), types);
   }
 
   public static Query<PsiClass> searchPsiClasses(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {

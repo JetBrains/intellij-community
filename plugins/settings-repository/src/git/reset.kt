@@ -38,7 +38,7 @@ internal class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator
     // grab added/deleted/renamed/modified files
     val mergeStrategy = if (toTheirs) MergeStrategy.THEIRS else MergeStrategy.OURS
 
-    var refToMerge = fetch()
+    val refToMerge = fetch()
     val mergeResult = if (refToMerge == null) null else merge(refToMerge, mergeStrategy, forceMerge = true, commitMessage = commitMessage)
     val firstMergeResult = mergeResult?.result
 

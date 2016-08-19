@@ -150,11 +150,6 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   }
 
   @Override
-  public Runnable enableSearch(final String option) {
-    return null;
-  }
-
-  @Override
   public JComponent createComponent() {
     compute();
     return myRootConfigurable != null ? myRootConfigurable.createComponent() : null;

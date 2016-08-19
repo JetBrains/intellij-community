@@ -70,7 +70,7 @@ public class PluginsAdvertiser implements StartupActivity {
   public static final String DISPLAY_ID = "Plugins Suggestion";
   public static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup(DISPLAY_ID, NotificationDisplayType.STICKY_BALLOON, true);
 
-  private static SoftReference<KnownExtensions> ourKnownExtensions = new SoftReference<KnownExtensions>(null);
+  private static SoftReference<KnownExtensions> ourKnownExtensions = new SoftReference<>(null);
 
   public static List<Plugin> retrieve(UnknownFeature unknownFeature) {
     final String featureType = unknownFeature.getFeatureType();
@@ -86,7 +86,7 @@ public class PluginsAdvertiser implements StartupActivity {
         final JsonReader jsonReader = new JsonReader(request.getReader());
         jsonReader.setLenient(true);
         final JsonElement jsonRootElement = new JsonParser().parse(jsonReader);
-        final List<Plugin> result = new ArrayList<Plugin>();
+        final List<Plugin> result = new ArrayList<>();
         for (JsonElement jsonElement : jsonRootElement.getAsJsonArray()) {
           final JsonObject jsonObject = jsonElement.getAsJsonObject();
           final JsonElement pluginId = jsonObject.get("pluginId");
@@ -102,7 +102,7 @@ public class PluginsAdvertiser implements StartupActivity {
   }
 
   private static Map<String, Set<Plugin>> loadSupportedExtensions(@NotNull List<IdeaPluginDescriptor> allPlugins) {
-    final Map<String, IdeaPluginDescriptor> availableIds = new HashMap<String, IdeaPluginDescriptor>();
+    final Map<String, IdeaPluginDescriptor> availableIds = new HashMap<>();
     for (IdeaPluginDescriptor plugin : allPlugins) {
       availableIds.put(plugin.getPluginId().getIdString(), plugin);
     }
@@ -113,7 +113,7 @@ public class PluginsAdvertiser implements StartupActivity {
         final JsonReader jsonReader = new JsonReader(request.getReader());
         jsonReader.setLenient(true);
         final JsonElement jsonRootElement = new JsonParser().parse(jsonReader);
-        final Map<String, Set<Plugin>> result = new HashMap<String, Set<Plugin>>();
+        final Map<String, Set<Plugin>> result = new HashMap<>();
         for (JsonElement jsonElement : jsonRootElement.getAsJsonArray()) {
           final JsonObject jsonObject = jsonElement.getAsJsonObject();
 
@@ -137,7 +137,7 @@ public class PluginsAdvertiser implements StartupActivity {
           final String extension = StringUtil.unquoteString(ext.toString());
           Set<Plugin> pluginIds = result.get(extension);
           if (pluginIds == null) {
-            pluginIds = new HashSet<Plugin>();
+            pluginIds = new HashSet<>();
             result.put(extension, pluginIds);
           }
           final JsonElement pluginNameElement = jsonObject.get("pluginName");
@@ -160,7 +160,7 @@ public class PluginsAdvertiser implements StartupActivity {
       File file = getExtensionsFile();
       if (file.isFile()) {
         knownExtensions = XmlSerializer.deserialize(JDOMUtil.load(file), KnownExtensions.class);
-        ourKnownExtensions = new SoftReference<KnownExtensions>(knownExtensions);
+        ourKnownExtensions = new SoftReference<>(knownExtensions);
         return knownExtensions;
       }
     }
@@ -209,7 +209,7 @@ public class PluginsAdvertiser implements StartupActivity {
 
   static List<String> hasBundledPluginToInstall(Collection<Plugin> plugins) {
     if (PlatformUtils.isIdeaUltimate()) return null;
-    final List<String> bundled = new ArrayList<String>();
+    final List<String> bundled = new ArrayList<>();
     for (Plugin plugin : plugins) {
       if (plugin.myBundled && PluginManager.getPlugin(PluginId.getId(plugin.myPluginId)) == null) {
         bundled.add(plugin.myPluginName != null ? plugin.myPluginName : plugin.myPluginId);
@@ -220,7 +220,7 @@ public class PluginsAdvertiser implements StartupActivity {
 
   public static void installAndEnablePlugins(final @NotNull Set<String> pluginIds, final @NotNull Runnable onSuccess) {
     ProgressManager.getInstance().run(new Task.Modal(null, "Search for Plugins in Repository", true) {
-      private final Set<PluginDownloader> myPlugins = new HashSet<PluginDownloader>();
+      private final Set<PluginDownloader> myPlugins = new HashSet<>();
       private List<IdeaPluginDescriptor> myAllPlugins;
 
       @Override
@@ -277,12 +277,12 @@ public class PluginsAdvertiser implements StartupActivity {
 
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> application.executeOnPooledThread(new Runnable() {
-      private final Set<PluginDownloader> myPlugins = new HashSet<PluginDownloader>();
+      private final Set<PluginDownloader> myPlugins = new HashSet<>();
       private List<IdeaPluginDescriptor> myAllPlugins;
 
-      private final Map<Plugin, IdeaPluginDescriptor> myDisabledPlugins = new HashMap<Plugin, IdeaPluginDescriptor>();
+      private final Map<Plugin, IdeaPluginDescriptor> myDisabledPlugins = new HashMap<>();
       private List<String> myBundledPlugin;
-      private final MultiMap<String, UnknownFeature> myFeatures = new MultiMap<String, UnknownFeature>();
+      private final MultiMap<String, UnknownFeature> myFeatures = new MultiMap<>();
 
       @Override
       public void run() {
@@ -300,7 +300,7 @@ public class PluginsAdvertiser implements StartupActivity {
             if (project.isDisposed()) return;
             EditorNotifications.getInstance(project).updateAllNotifications();
           }
-          final Map<String, Plugin> ids = new HashMap<String, Plugin>();
+          final Map<String, Plugin> ids = new HashMap<>();
           for (UnknownFeature feature : unknownFeatures) {
             ProgressManager.checkCanceled();
             final List<Plugin> pluginId = retrieve(feature);
@@ -371,7 +371,7 @@ public class PluginsAdvertiser implements StartupActivity {
       @NotNull
       private String getAddressedMessagePresentation() {
         final MultiMap<String, String> addressedFeatures = MultiMap.createSet();
-        final Set<String> ids = new LinkedHashSet<String>();
+        final Set<String> ids = new LinkedHashSet<>();
         for (PluginDownloader plugin : myPlugins) {
           ids.add(plugin.getPluginId());
         }
@@ -397,7 +397,7 @@ public class PluginsAdvertiser implements StartupActivity {
   @Tag("exts")
   public static class KnownExtensions {
     @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
-    public Map<String, PluginSet> myExtensions = new HashMap<String, PluginSet>();
+    public Map<String, PluginSet> myExtensions = new HashMap<>();
 
     @SuppressWarnings("unused")
     public KnownExtensions() {
@@ -420,7 +420,7 @@ public class PluginsAdvertiser implements StartupActivity {
 
   @Tag("plugins")
   public static class PluginSet {
-    public Set<Plugin> myPlugins = new HashSet<Plugin>();
+    public Set<Plugin> myPlugins = new HashSet<>();
 
     @SuppressWarnings("unused")
     public PluginSet() {
