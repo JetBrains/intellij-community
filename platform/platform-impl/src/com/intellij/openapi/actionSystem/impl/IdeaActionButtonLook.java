@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -47,6 +48,9 @@ public class IdeaActionButtonLook extends ActionButtonLook {
       Color bg = opaque != null? opaque.getBackground() : null;
 
       paintBackground(g, component.getSize(), bg, state);
+    }
+    if (component.hasFocus()) {
+      DarculaUIUtil.paintFocusRing(g, 3, 3, component.getWidth() - 4, component.getHeight() - 4);
     }
   }
 
