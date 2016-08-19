@@ -101,8 +101,9 @@ class HgCommandAuthenticator {
 
       @NotNull final HgGlobalSettings hgGlobalSettings = vcs.getGlobalSettings();
       @Nullable String rememberedLoginsForUrl = null;
+      String url = VirtualFileManager.extractPath(myURL);
       if (!StringUtil.isEmptyOrSpaces(myURL)) {
-        rememberedLoginsForUrl = hgGlobalSettings.getRememberedUserName(VirtualFileManager.extractPath(myURL));
+        rememberedLoginsForUrl = hgGlobalSettings.getRememberedUserName(url);
       }
 
       String login = myProposedLogin;
@@ -114,7 +115,7 @@ class HgCommandAuthenticator {
       String password = null;
       if (!StringUtil.isEmptyOrSpaces(login)) {
         // if we've logged in with this login, search for password
-        password = PasswordSafe.getInstance().getPassword(HgCommandAuthenticator.class, keyForUrlAndLogin(myURL, login));
+        password = PasswordSafe.getInstance().getPassword(HgCommandAuthenticator.class, keyForUrlAndLogin(url, login));
       }
 
       // don't show dialog if we don't have to (both fields are known) except force authorization required
