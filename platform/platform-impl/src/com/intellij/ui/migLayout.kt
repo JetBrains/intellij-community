@@ -63,7 +63,7 @@ enum class CCFlags {
    */
   span,
 
-  grow, push, pushY, pushX, right
+  grow, push, pushY, pushX, right, skip
 }
 
 inline fun panel(vararg layoutConstraints: LCFlags, init: Panel.() -> Unit): JPanel {
@@ -209,6 +209,7 @@ fun CC.apply(flags: Array<out CCFlags>): CC {
       CCFlags.pushY -> pushY()
 
       CCFlags.span -> span()
+      CCFlags.skip -> skip()
     }
   }
   return this

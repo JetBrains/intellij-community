@@ -15,6 +15,8 @@
  */
 package org.jetbrains.settingsRepository.git
 
+import com.intellij.credentialStore.Credentials
+import com.intellij.credentialStore.isFulfilled
 import com.intellij.credentialStore.macOs.isMacOsCredentialStoreSupported
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
@@ -25,9 +27,7 @@ import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.transport.CredentialItem
 import org.eclipse.jgit.transport.CredentialsProvider
 import org.eclipse.jgit.transport.URIish
-import org.jetbrains.keychain.Credentials
 import org.jetbrains.keychain.CredentialsStore
-import org.jetbrains.keychain.isFulfilled
 import org.jetbrains.settingsRepository.LOG
 import org.jetbrains.settingsRepository.showAuthenticationForm
 
@@ -116,10 +116,10 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
 
         if (userFromUri != null) {
           // username is in url - read password only if it is for the same user
-          if (userFromUri != credentials?.id) {
+          if (userFromUri != credentials?.user) {
             credentials = Credentials(userFromUri, passwordFromUri)
           }
-          else if (passwordFromUri != null && passwordFromUri != credentials?.token) {
+          else if (passwordFromUri != null && passwordFromUri != credentials?.password) {
             credentials = Credentials(userFromUri, passwordFromUri)
           }
         }
@@ -134,13 +134,13 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
       credentialsStore.value.save(uri.host, credentials!!, sshKeyFile)
     }
 
-    userNameItem?.value = credentials?.id
+    userNameItem?.value = credentials?.user
     if (passwordItem != null) {
       if (passwordItem is CredentialItem.Password) {
-        passwordItem.value = credentials?.token?.toCharArray()
+        passwordItem.value = credentials?.password?.toCharArray()
       }
       else {
-        (passwordItem as CredentialItem.StringType).value = credentials?.token
+        (passwordItem as CredentialItem.StringType).value = credentials?.password
       }
     }
 

@@ -17,6 +17,6 @@ package com.intellij.util
 
 import com.intellij.openapi.util.text.StringUtil
 
-fun String?.nullize(): String? = StringUtil.nullize(this)
+fun String?.nullize(nullizeSpaces: Boolean = false): String? = StringUtil.nullize(this, nullizeSpaces)
 
 fun String.trimMiddle(maxLength: Int): String? = StringUtil.trimMiddle(this, maxLength)

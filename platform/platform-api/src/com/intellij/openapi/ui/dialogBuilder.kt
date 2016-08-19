@@ -17,13 +17,17 @@ package com.intellij.openapi.ui
 
 import javax.swing.JComponent
 
-fun dialog(title: String, centerPanel: JComponent, resizable: Boolean = true): DialogBuilder {
+fun dialog(title: String, centerPanel: JComponent, resizable: Boolean = true, preferedFocusComponent: JComponent? = null, okActionEnabled: Boolean = true): DialogBuilder {
   val builder = DialogBuilder()
   builder
       .title(title)
       .centerPanel(centerPanel)
+      .setPreferredFocusComponent(preferedFocusComponent)
   if (!resizable) {
     builder.resizable(false)
+  }
+  if (!okActionEnabled) {
+    builder.okActionEnabled(false)
   }
   return builder
 }

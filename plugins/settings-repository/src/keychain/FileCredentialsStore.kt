@@ -15,8 +15,9 @@
  */
 package org.jetbrains.keychain
 
+import com.intellij.credentialStore.Credentials
+import com.intellij.credentialStore.splitData
 import com.intellij.ide.passwordSafe.PasswordSafe
-import com.intellij.openapi.util.PasswordUtil
 
 class FileCredentialsStore() : CredentialsStore {
   override fun get(host: String?, sshKeyFile: String?): Credentials? {
@@ -24,22 +25,13 @@ class FileCredentialsStore() : CredentialsStore {
       return null
     }
 
-    val accountName = sshKeyFile ?: host
-
-    val data = PasswordSafe.getInstance().getPassword("ics-" + accountName) ?: return null
+    val data = PasswordSafe.getInstance().getPassword("ics-" + (sshKeyFile ?: host)) ?: return null
     if (sshKeyFile == null) {
-      val separatorIndex = data.indexOf('@')
-      if (separatorIndex > 0) {
-        val username = PasswordUtil.decodePassword(data.substring(0, separatorIndex))
-        val password = PasswordUtil.decodePassword(data.substring(separatorIndex + 1))
-        return Credentials(username, password)
-      }
+      return splitData(data)
     }
     else {
       return Credentials(sshKeyFile, data)
     }
-
-    return null
   }
 
   override fun reset(host: String) {
@@ -48,6 +40,6 @@ class FileCredentialsStore() : CredentialsStore {
 
   override fun save(host: String?, credentials: Credentials, sshKeyFile: String?) {
     val accountName: String = sshKeyFile ?: host!!
-    PasswordSafe.getInstance().setPassword("ics-" + accountName, if (sshKeyFile == null) "${PasswordUtil.encodePassword(credentials.id)}@${PasswordUtil.encodePassword(credentials.token)}" else credentials.token!!)
+    PasswordSafe.getInstance().setPassword("ics-" + accountName, if (sshKeyFile == null) credentials.toString() else credentials.password!!)
   }
 }
