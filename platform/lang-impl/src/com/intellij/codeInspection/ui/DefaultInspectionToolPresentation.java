@@ -69,7 +69,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
 
   private static final Object lock = new Object();
   private final Map<RefEntity, CommonProblemDescriptor[]> myProblemElements = ContainerUtil.newConcurrentMap(TObjectHashingStrategy.IDENTITY);
-  private final Map<String, Set<RefEntity>> myContents = Collections.synchronizedMap(new HashMap<String, Set<RefEntity>>(1)); // keys can be null
+  protected final Map<String, Set<RefEntity>> myContents = Collections.synchronizedMap(new HashMap<String, Set<RefEntity>>(1)); // keys can be null
   private final Set<RefModule> myModulesProblems = Collections.synchronizedSet(new THashSet<>(TObjectHashingStrategy.IDENTITY));
   private final Map<CommonProblemDescriptor, RefEntity> myProblemToElements = Collections.synchronizedMap(
     new THashMap<>(TObjectHashingStrategy.IDENTITY));
@@ -586,14 +586,18 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
       }
       else {
         String groupName = element instanceof RefElement ? element.getRefManager().getGroupName((RefElement)element) : element.getQualifiedName() ;
-        Set<RefEntity> content = myContents.get(groupName);
-        if (content == null) {
-          content = new HashSet<>();
-          myContents.put(groupName, content);
-        }
-        content.add(element);
+        registerContentEntry(element, groupName);
       }
     }
+  }
+
+  protected void registerContentEntry(RefEntity element, String packageName) {
+    Set<RefEntity> content = myContents.get(packageName);
+    if (content == null) {
+      content = new HashSet<>();
+      myContents.put(packageName, content);
+    }
+    content.add(element);
   }
 
   @NotNull
