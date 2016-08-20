@@ -547,9 +547,6 @@
 
     <projectService serviceInterface="com.intellij.codeInspection.ex.EntryPointsManager"
                     serviceImplementation="com.intellij.codeInspection.ex.EntryPointsManagerImpl"/>
-    <projectConfigurable id="EntryPoints" displayName="Project Entry Points"
-                         parentId="Errors" instance = "com.intellij.codeInspection.ex.EntryPointsConfigurable"/>
-
 
     <projectService serviceInterface="com.intellij.codeInsight.NullableNotNullManager"
                     serviceImplementation="com.intellij.codeInsight.NullableNotNullManagerImpl"/>

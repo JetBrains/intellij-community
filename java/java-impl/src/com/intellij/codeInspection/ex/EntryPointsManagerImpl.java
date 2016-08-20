@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -48,7 +49,7 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
   @Override
   public void configureAnnotations() {
     final List<String> list = new ArrayList<>(ADDITIONAL_ANNOTATIONS);
-    final JPanel listPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(list, "Do not check if annotated by", true);
+    final JPanel listPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(list, "Mark as entry point if annotated by", true);
     new DialogWrapper(myProject) {
       {
         init();
@@ -81,6 +82,39 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
       @Override
       public void actionPerformed(ActionEvent e) {
         getInstance(ProjectUtil.guessCurrentProject(configureAnnotations)).configureAnnotations();
+      }
+    });
+    return configureAnnotations;
+  }
+
+  public static JButton createConfigureClassPatternsButton() {
+    final JButton configureAnnotations = new JButton("Configure class patterns...");
+    configureAnnotations.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final EntryPointsManagerBase entryPointsManagerBase = getInstance(ProjectUtil.guessCurrentProject(configureAnnotations));
+        final ArrayList<ClassPattern> list = new ArrayList<>(entryPointsManagerBase.getPatterns());
+        new DialogWrapper(entryPointsManagerBase.myProject) {
+
+          {
+            init();
+            setTitle("Configure Class Patterns");
+          }
+
+          @Nullable
+          @Override
+          protected JComponent createCenterPanel() {
+            return new ClassPatternsPanel(list);
+          }
+
+          @Override
+          protected void doOKAction() {
+            final List<ClassPattern> patterns = entryPointsManagerBase.getPatterns();
+            patterns.clear();
+            patterns.addAll(list);
+            super.doOKAction();
+          }
+        }.show();
       }
     });
     return configureAnnotations;

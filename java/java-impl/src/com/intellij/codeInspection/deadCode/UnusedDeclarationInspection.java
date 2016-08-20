@@ -126,8 +126,18 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
       });
 
       gc.gridy++;
-      gc.weighty = 1;
       add(myNonJavaCheckbox, gc);
+
+      final JButton configureClassPatternsButton = EntryPointsManagerImpl.createConfigureClassPatternsButton();
+      gc.fill = GridBagConstraints.NONE;
+      gc.gridy++;
+      add(configureClassPatternsButton, gc);
+
+      JButton configureAnnotations = EntryPointsManagerImpl.createConfigureAnnotationsButton();
+      gc.gridy++;
+      gc.weighty = 1;
+
+      add(configureAnnotations, gc);
     }
 
   }
