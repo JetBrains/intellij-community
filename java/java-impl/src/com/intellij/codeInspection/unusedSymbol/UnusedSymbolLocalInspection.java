@@ -108,7 +108,7 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
       myInnerClassesCheckBox.addActionListener(listener);
       myAccessors.addActionListener(listener);
 
-      ((MyLabel)myClassVisibilityCb).setupVisibilityLabel(() -> myClassVisibility, modifier -> setClassVisibility(modifier), new String[]{PsiModifier.PUBLIC, PsiModifier.PACKAGE_LOCAL});
+      ((MyLabel)myClassVisibilityCb).setupVisibilityLabel(() -> myClassVisibility, modifier -> setClassVisibility(modifier), new String[]{PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC});
       ((MyLabel)myInnerClassVisibilityCb).setupVisibilityLabel(() -> myInnerClassVisibility, modifier -> setInnerClassVisibility(modifier));
       ((MyLabel)myFieldVisibilityCb).setupVisibilityLabel(() -> myFieldVisibility, modifier -> setFieldVisibility(modifier));
       ((MyLabel)myMethodVisibilityCb).setupVisibilityLabel(() -> myMethodVisibility, modifier -> setMethodVisibility(modifier));
@@ -146,7 +146,7 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
   private static class MyLabel extends JLabel implements UserActivityProviderComponent {
 
     @PsiModifier.ModifierConstant private static final String[] MODIFIERS =
-      new String[]{PsiModifier.PUBLIC, PsiModifier.PROTECTED, PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE};
+      new String[]{PsiModifier.PRIVATE, PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED, PsiModifier.PUBLIC};
     private final Supplier<Boolean> myCanBeEnabled;
 
     private Set<ChangeListener> myListeners = new HashSet<>();
