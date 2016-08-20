@@ -300,9 +300,7 @@ def getProperties(String home, String buildNumber) {
                 }
               }
               dir("testData") {
-                dir("guiTests") {
-                  fileset(dir: "${home}/$androidRoot/android/testData/guiTests")
-                }
+                fileset(dir: "${home}/$androidRoot/android-uitests/testData")
               }
 
               dir("ui-tests-dir") {
