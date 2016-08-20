@@ -263,15 +263,16 @@ public abstract class UsefulTestCase extends TestCase {
                           JDOMUtil.writeElement(currentCodeInsightSettings.getState(), "\n"));
     }
     catch (AssertionError error) {
-      CodeInsightSettings clean = new CodeInsightSettings();
-      for (Field field : clean.getClass().getFields()) {
+      exceptions.add(error);
+    }
+    finally {
+      for (Field field : oldCodeInsightSettings.getClass().getFields()) {
         try {
-          ReflectionUtil.copyFieldValue(clean, currentCodeInsightSettings, field);
+          ReflectionUtil.copyFieldValue(oldCodeInsightSettings, currentCodeInsightSettings, field);
         }
         catch (Exception ignored) {
         }
       }
-      exceptions.add(error);
     }
   }
 
@@ -284,7 +285,7 @@ public abstract class UsefulTestCase extends TestCase {
       exceptions.add(e);
     }
     finally {
-      currentCodeStyleSettings.clearCodeStyleSettings();
+      currentCodeStyleSettings.clearCodeStyleSettings(oldCodeStyleSettings);
     }
 
     try {
