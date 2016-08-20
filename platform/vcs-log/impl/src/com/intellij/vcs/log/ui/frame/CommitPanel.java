@@ -47,8 +47,8 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.MatteBorder;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.DefaultCaret;
-import javax.swing.text.EditorKit;
-import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.Document;
+import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.util.Collection;
@@ -224,9 +224,9 @@ class CommitPanel extends JBPanel {
     }
 
     private void customizeLinks() {
-      EditorKit editorKit = getEditorKit();
-      if (editorKit instanceof HTMLEditorKit) {
-        StyleSheet styleSheet = ((HTMLEditorKit)editorKit).getStyleSheet();
+      Document document = getDocument();
+      if (document instanceof HTMLDocument) {
+        StyleSheet styleSheet = ((HTMLDocument)document).getStyleSheet();
         String linkColor = "#" + ColorUtil.toHex(UI.getColor("link.foreground"));
         styleSheet.addRule("a { color: " + linkColor + "; text-decoration: none;}");
       }
