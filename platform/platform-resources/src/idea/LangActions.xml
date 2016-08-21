@@ -299,6 +299,10 @@
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="GoToMenu"/>
     </group>
 
+    <!-- Analyze -->
+    <action id="SliceBackward" class="com.intellij.slicer.SliceBackwardAction"/>
+    <action id="SliceForward" class="com.intellij.slicer.SliceForwardAction"/>
+
     <!-- Refactor -->
     <group id="RefactoringMenu" popup="true">
       <action id="Refactorings.QuickListPopupAction"
