@@ -28,15 +28,11 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
-import com.intellij.openapi.util.AtomicNotNullLazyValue
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SingleAlarm
 import com.intellij.util.SystemProperties
 import com.intellij.util.exists
 import com.intellij.util.move
-import org.jetbrains.keychain.CredentialsStore
-import org.jetbrains.keychain.FileCredentialsStore
-import org.jetbrains.keychain.OsXCredentialsStore
 import org.jetbrains.settingsRepository.git.GitRepositoryManager
 import org.jetbrains.settingsRepository.git.GitRepositoryService
 import org.jetbrains.settingsRepository.git.processChildren
@@ -54,15 +50,13 @@ val icsManager by lazy(LazyThreadSafetyMode.NONE) {
 }
 
 class IcsManager(dir: Path) {
-  val credentialsStore = object : AtomicNotNullLazyValue<CredentialsStore>() {
-    override fun compute(): CredentialsStore {
-      if (isMacOsCredentialStoreSupported && SystemProperties.getBooleanProperty("use.mac.keychain", true)) {
-        catchAndLog {
-          return OsXCredentialsStore("IntelliJ Platform Settings Repository")
-        }
+  val credentialsStore = lazy {
+    if (isMacOsCredentialStoreSupported && SystemProperties.getBooleanProperty("use.mac.keychain", true)) {
+      catchAndLog {
+        return@lazy IcsMacOsCredentialsStore("IntelliJ Platform Settings Repository")
       }
-      return FileCredentialsStore()
     }
+    IcsCredentialsStoreWrapper()
   }
 
   val settingsFile: Path = dir.resolve("config.json")

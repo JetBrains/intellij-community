@@ -20,18 +20,17 @@ import com.intellij.credentialStore.isFulfilled
 import com.intellij.credentialStore.macOs.isMacOsCredentialStoreSupported
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.util.nullize
 import com.intellij.util.ui.UIUtil
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.transport.CredentialItem
 import org.eclipse.jgit.transport.CredentialsProvider
 import org.eclipse.jgit.transport.URIish
-import org.jetbrains.keychain.CredentialsStore
-import org.jetbrains.settingsRepository.LOG
+import org.jetbrains.settingsRepository.IcsCredentialsStore
+import org.jetbrains.settingsRepository.catchAndLog
 import org.jetbrains.settingsRepository.showAuthenticationForm
 
-class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<CredentialsStore>, private val repository: Repository) : CredentialsProvider() {
+class JGitCredentialsProvider(private val credentialsStore: Lazy<IcsCredentialsStore>, private val repository: Repository) : CredentialsProvider() {
   private var credentialsFromGit: Credentials? = null
 
   override fun isInteractive() = true
@@ -105,11 +104,8 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
       }
 
       if (credentials == null) {
-        try {
+        catchAndLog {
           credentials = credentialsStore.value.get(uri.host, sshKeyFile)
-        }
-        catch (e: Throwable) {
-          LOG.error(e)
         }
 
         saveCredentialsToStore = true
@@ -131,7 +127,7 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
     }
 
     if (saveCredentialsToStore && credentials.isFulfilled()) {
-      credentialsStore.value.save(uri.host, credentials!!, sshKeyFile)
+      credentialsStore.value.set(uri.host, credentials!!, sshKeyFile)
     }
 
     userNameItem?.value = credentials?.user

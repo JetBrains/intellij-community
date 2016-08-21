@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.keychain
+package org.jetbrains.settingsRepository
 
 import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.macOs.deleteGenericPassword
@@ -22,7 +22,7 @@ import com.intellij.credentialStore.macOs.saveGenericPassword
 import com.intellij.openapi.util.PasswordUtil
 import gnu.trove.THashMap
 
-class OsXCredentialsStore(serviceName: String) : CredentialsStore {
+internal class IcsMacOsCredentialsStore(serviceName: String) : IcsCredentialsStore {
   private val serviceName = serviceName.toByteArray()
 
   companion object {
@@ -68,7 +68,7 @@ class OsXCredentialsStore(serviceName: String) : CredentialsStore {
    * Note - in case of SSH, our added password will not be used until ssh-agent will not be restarted (simply execute "killall ssh-agent").
    * Also, if you remove password from keychain, ssh-agent will continue to use cached password.
    */
-  override fun save(host: String?, credentials: Credentials, sshKeyFile: String?) {
+  override fun set(host: String?, credentials: Credentials, sshKeyFile: String?) {
     val accountName: String = sshKeyFile ?: host!!
     val oldCredentials = accountToCredentials.put(accountName, credentials)
     if (credentials == oldCredentials) {

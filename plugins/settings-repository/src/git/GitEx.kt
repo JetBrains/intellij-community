@@ -16,7 +16,6 @@
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.openapi.util.text.StringUtil
 import org.eclipse.jgit.api.CommitCommand
 import org.eclipse.jgit.api.ResetCommand
@@ -36,8 +35,8 @@ import org.eclipse.jgit.transport.Transport
 import org.eclipse.jgit.treewalk.FileTreeIterator
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.treewalk.filter.TreeFilter
-import org.jetbrains.keychain.CredentialsStore
 import org.jetbrains.settingsRepository.AuthenticationException
+import org.jetbrains.settingsRepository.IcsCredentialsStore
 import org.jetbrains.settingsRepository.LOG
 import java.io.InputStream
 import java.nio.file.Path
@@ -165,7 +164,7 @@ fun Repository.computeIndexDiff(): IndexDiff {
   }
 }
 
-fun cloneBare(uri: String, dir: Path, credentialsStore: NotNullLazyValue<CredentialsStore>? = null, progressMonitor: ProgressMonitor = NullProgressMonitor.INSTANCE): Repository {
+fun cloneBare(uri: String, dir: Path, credentialsStore: Lazy<IcsCredentialsStore>? = null, progressMonitor: ProgressMonitor = NullProgressMonitor.INSTANCE): Repository {
   val repository = createBareRepository(dir)
   val config = repository.setUpstream(uri)
   val remoteConfig = RemoteConfig(config, Constants.DEFAULT_REMOTE_NAME)
@@ -206,7 +205,7 @@ private fun findBranchToCheckout(result: FetchResult): Ref? {
   val idHead = result.getAdvertisedRef(Constants.HEAD) ?: return null
 
   val master = result.getAdvertisedRef(Constants.R_HEADS + Constants.MASTER)
-  if (master != null && master.objectId.equals(idHead.objectId)) {
+  if (master != null && master.objectId == idHead.objectId) {
     return master
   }
 
@@ -214,7 +213,7 @@ private fun findBranchToCheckout(result: FetchResult): Ref? {
     if (!r.name.startsWith(Constants.R_HEADS)) {
       continue
     }
-    if (r.objectId.equals(idHead.objectId)) {
+    if (r.objectId == idHead.objectId) {
       return r
     }
   }
@@ -308,7 +307,7 @@ private class InputStreamWrapper(private val delegate: InputStream, private val 
 
   override fun markSupported() = delegate.markSupported()
 
-  override fun equals(other: Any?) = delegate.equals(other)
+  override fun equals(other: Any?) = delegate == other
 
   override fun available() = delegate.available()
 
