@@ -25,7 +25,7 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.QueueProcessor
 import com.intellij.util.containers.ContainerUtil
 
-private const val nullPassword = "\u0000"
+private val nullPassword = Credentials("\u0000", "\u0000")
 
 private class CredentialStoreWrapper(private val store: CredentialStore) : PasswordStorage {
   private val fallbackStore = lazy { FileCredentialStore(memoryOnly = true) }
@@ -34,66 +34,65 @@ private class CredentialStoreWrapper(private val store: CredentialStore) : Passw
                                                             it()
                                                           })
 
-  private val postponedCredentials = ContainerUtil.newConcurrentMap<String, String>()
+  private val postponedCredentials = ContainerUtil.newConcurrentMap<CredentialAttributes, Credentials>()
 
-  override fun getPassword(requestor: Class<*>?, key: String): String? {
-    val rawKey = getRawKey(key, requestor)
-
-    postponedCredentials.get(rawKey)?.let {
-      return if (it == nullPassword) null else it
-    }
-
-    var store = if (fallbackStore.isInitialized()) fallbackStore.value else store
-
-    // try old key - as hash
-    @Suppress("CanBeVal")
-    var value: String?
-    try {
-      value = store.get(rawKey)
-    }
-    catch (e: UnsatisfiedLinkError) {
-      store = fallbackStore.value
-      LOG.error(e)
-      value = store.get(rawKey)
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
-      return null
-    }
-
-    if (value == null && requestor == null) {
+  @Suppress("OverridingDeprecatedMember")
+  override fun getPassword(requestor: Class<*>, accountName: String): String? {
+    @Suppress("DEPRECATION")
+    val value = super.getPassword(requestor, accountName)
+    if (value == null) {
       LOG.catchAndLog {
-        val oldKey = toOldKey(rawKey)
-        value = store.get(oldKey)
-        if (value != null) {
+        // try old key - as hash
+        val oldKey = toOldKey(requestor, accountName)
+        store.get(oldKey)?.let {
           LOG.catchAndLog { store.set(oldKey, null) }
-          store.set(rawKey, value!!.toByteArray())
+          set(CredentialAttributes(requestor, accountName), it)
+          return it.password
         }
       }
     }
     return value
   }
 
-  override fun setPassword(requestor: Class<*>?, key: String, value: String?) {
+  override fun get(attributes: CredentialAttributes): Credentials? {
+    postponedCredentials.get(attributes)?.let {
+      return if (it == nullPassword) null else it
+    }
+
+    var store = if (fallbackStore.isInitialized()) fallbackStore.value else store
+
+    try {
+      return store.get(attributes)
+    }
+    catch (e: UnsatisfiedLinkError) {
+      store = fallbackStore.value
+      LOG.error(e)
+      return store.get(attributes)
+    }
+    catch (e: Throwable) {
+      LOG.error(e)
+      return null
+    }
+  }
+
+  override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
     LOG.catchAndLog {
       val store = if (fallbackStore.isInitialized()) fallbackStore.value else store
-      val rawKey = getRawKey(key, requestor)
-      val passwordData = value?.toByteArray()
       if (fallbackStore.isInitialized()) {
-        store.set(rawKey, passwordData)
+        store.set(attributes, credentials)
       }
       else {
-        postponedCredentials.put(rawKey, value ?: nullPassword)
+        postponedCredentials.put(attributes, credentials ?: nullPassword)
         queueProcessor.add {
           if (!fallbackStore.isInitialized()) {
             LOG.catchAndLog {
-              store.set(rawKey, passwordData)
-              postponedCredentials.remove(rawKey)
+              store.set(attributes, credentials)
+              postponedCredentials.remove(attributes)
               return@add
             }
           }
-          fallbackStore.value.set(rawKey, passwordData)
-          postponedCredentials.remove(rawKey)
+          fallbackStore.value.set(attributes, credentials)
+          postponedCredentials.remove(attributes)
         }
       }
     }
@@ -103,7 +102,7 @@ private class CredentialStoreWrapper(private val store: CredentialStore) : Passw
 private class MacOsCredentialStoreFactory : CredentialStoreFactory {
   override fun create(): PasswordStorage? {
     if (isMacOsCredentialStoreSupported && SystemProperties.getBooleanProperty("use.mac.keychain", true)) {
-      return CredentialStoreWrapper(KeyChainCredentialStore("IntelliJ Platform"))
+      return CredentialStoreWrapper(KeyChainCredentialStore())
     }
     return null
   }

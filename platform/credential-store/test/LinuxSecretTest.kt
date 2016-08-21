@@ -1,11 +1,14 @@
 package com.intellij.credentialStore.linux
 
+import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.UsefulTestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import java.math.BigInteger
 import java.util.*
+
+private const val TEST_SERVICE_NAME = "IntelliJ Platform Test"
 
 class LinuxSecretTest {
   @Test
@@ -16,17 +19,18 @@ class LinuxSecretTest {
 
     val store = SecretCredentialStore("com.intellij.test")
     val pass = BigInteger(128, Random()).toString(32)
-    store.set("test", pass.toByteArray())
-    assertThat(store.get("test")).isEqualTo(pass)
+    store.setPassword(CredentialAttributes(TEST_SERVICE_NAME, "test"), pass)
+    assertThat(store.getPassword(CredentialAttributes(TEST_SERVICE_NAME, "test"))).isEqualTo(pass)
 
-    store.set("test", null)
-    assertThat(store.get("test")).isNull()
+    store.set(CredentialAttributes(TEST_SERVICE_NAME, "test"), null)
+    assertThat(store.get(CredentialAttributes(TEST_SERVICE_NAME, "test"))).isNull()
 
     val unicodePassword = "Gr\u00FCnwald"
-    store.set("test", unicodePassword.toByteArray())
-    assertThat(store.get("test")).isEqualTo(unicodePassword)
+    store.setPassword(CredentialAttributes(TEST_SERVICE_NAME, "test"), unicodePassword)
+    assertThat(store.get(CredentialAttributes(TEST_SERVICE_NAME, "test"))).isEqualTo(unicodePassword)
 
-    store.set(unicodePassword, pass.toByteArray())
-    assertThat(store.get(unicodePassword)).isEqualTo(pass)
+    val unicodeAttributes = CredentialAttributes(TEST_SERVICE_NAME, unicodePassword)
+    store.setPassword(unicodeAttributes, pass)
+    assertThat(store.getPassword(unicodeAttributes)).isEqualTo(pass)
   }
 }

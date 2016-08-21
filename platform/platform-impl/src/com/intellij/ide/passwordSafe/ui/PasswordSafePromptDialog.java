@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.passwordSafe.ui;
 
+import com.intellij.credentialStore.CredentialAttributes;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -38,6 +39,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
    */
   private PasswordSafePromptDialog(@Nullable Project project, @NotNull String title, @NotNull PasswordPromptComponent component) {
     super(project, true);
+
     setTitle(title);
     myComponent = component;
     setResizable(false);
@@ -123,42 +125,28 @@ public class PasswordSafePromptDialog extends DialogWrapper {
                        "Passphrase:", "Remember the passphrase");
   }
 
-
-  /**
-   * Ask password possibly asking password database first. The method could be invoked from any thread. If UI needs to be shown,
-   * the method invokes {@link UIUtil#invokeAndWaitIfNeeded(Runnable)}
-   * @param project       the context project
-   * @param title         the dialog title
-   * @param message       the message describing a resource for which password is asked
-   * @param requestor     the password requestor
-   * @param key           the password key
-   * @param resetPassword if true, the old password is removed from database and new password will be asked.
-   * @param error         the error text to show in the dialog
-   * @param promptLabel   the prompt label text
-   * @param checkboxLabel the checkbox text   @return null if dialog was cancelled or password (stored in database or a entered by user)
-   */
   @Nullable
-  private static String askPassword(final Project project,
-                                    final String title,
-                                    final String message,
-                                    @NotNull final Class<?> requestor,
-                                    final String key,
+  private static String askPassword(Project project,
+                                    String title,
+                                    String message,
+                                    @NotNull Class<?> requestor,
+                                    String accountName,
                                     boolean resetPassword,
-                                    final String error,
-                                    final String promptLabel,
-                                    final String checkboxLabel) {
+                                    String error,
+                                    String promptLabel,
+                                    String checkboxLabel) {
     PasswordSafe ps = PasswordSafe.getInstance();
     if (resetPassword) {
-      ps.setPassword(requestor, key, null);
+      ps.setPassword(requestor, accountName, null);
     }
     else {
-      String pw = ps.getPassword(requestor, key);
+      String pw = ps.getPassword(requestor, accountName);
       if (pw != null) {
         return pw;
       }
     }
 
-    final Ref<String> ref = Ref.create();
+    Ref<String> ref = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       final PasswordPromptComponent component = new PasswordPromptComponent(ps.isMemoryOnly(), message, false, promptLabel, checkboxLabel);
       PasswordSafePromptDialog d = new PasswordSafePromptDialog(project, title, component);
@@ -166,7 +154,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
       d.setErrorText(error);
       if (d.showAndGet()) {
         ref.set(new String(component.getPassword()));
-        ps.setPassword(requestor, key, ref.get(), !component.isRememberSelected());
+        ps.setPassword(new CredentialAttributes("IntelliJ Platform — " + requestor.getName(), accountName), ref.get(), !component.isRememberSelected());
       }
     }, ModalityState.any());
     return ref.get();

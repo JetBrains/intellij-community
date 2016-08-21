@@ -15,7 +15,9 @@
  */
 package com.intellij.credentialStore.macOs
 
+import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.CredentialStore
+import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.LOG
 import com.intellij.openapi.util.SystemInfo
 import com.sun.jna.Library
@@ -32,20 +34,20 @@ private val LIBRARY by lazy {
 private const val errSecItemNotFound = -25300
 private const val errSecInvalidRecord = -67701
 
-internal class KeyChainCredentialStore(serviceName: String) : CredentialStore {
-  private val serviceName = serviceName.toByteArray()
-
-  override fun get(key: String): String? {
-    return findGenericPassword(serviceName, key)
+internal class KeyChainCredentialStore() : CredentialStore {
+  override fun get(attributes: CredentialAttributes): Credentials? {
+    val password = findGenericPassword(attributes.serviceName.toByteArray(), attributes.accountName!!)
+    return password?.let { Credentials(attributes.accountName!!, it) }
   }
 
-  override fun set(key: String, password: ByteArray?) {
-    if (password == null) {
-      deleteGenericPassword(serviceName, key)
+  override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
+    if (credentials == null) {
+      deleteGenericPassword(attributes.serviceName.toByteArray(), attributes.accountName!!)
       return
     }
 
-    saveGenericPassword(serviceName, key, password, password.size)
+    val password = credentials.password!!.toByteArray()
+    saveGenericPassword(attributes.serviceName.toByteArray(), attributes.accountName!!, password, password.size)
     password.fill(0)
   }
 }

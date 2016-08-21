@@ -1,7 +1,6 @@
 package com.intellij.credentialStore.linux
 
-import com.intellij.credentialStore.CredentialStore
-import com.intellij.credentialStore.LOG
+import com.intellij.credentialStore.*
 import com.intellij.jna.DisposableMemory
 import com.sun.jna.Library
 import com.sun.jna.Native
@@ -22,36 +21,61 @@ internal fun stringPointer(data: ByteArray): DisposableMemory {
 
 // we use default collection, it seems no way to use custom
 internal class SecretCredentialStore(schemeName: String) : CredentialStore {
-  private val keyAttributeNamePointer by lazy { stringPointer("key".toByteArray()) }
-  private val scheme by lazy { LIBRARY.secret_schema_new(schemeName, SECRET_SCHEMA_NONE, keyAttributeNamePointer, SECRET_SCHEMA_ATTRIBUTE_STRING, null) }
+  private val serviceAttributeNamePointer by lazy { stringPointer("service".toByteArray()) }
+  private val accountAttributeNamePointer by lazy { stringPointer("account".toByteArray()) }
 
-  override fun get(key: String): String? {
-    val keyPointer = stringPointer(key.toByteArray())
-    return checkError("secret_password_lookup_sync") { errorRef ->
-      LIBRARY.secret_password_lookup_sync(scheme, null, errorRef, keyAttributeNamePointer, keyPointer, null)
-    }
+  private val scheme by lazy {
+    LIBRARY.secret_schema_new(schemeName, SECRET_SCHEMA_NONE,
+                              serviceAttributeNamePointer, SECRET_SCHEMA_ATTRIBUTE_STRING,
+                              accountAttributeNamePointer, SECRET_SCHEMA_ATTRIBUTE_STRING,
+                              null)
   }
 
-  override fun set(key: String, password: ByteArray?) {
-    val keyPointer = stringPointer(key.toByteArray())
+  override fun get(attributes: CredentialAttributes): Credentials? {
+    checkError("secret_password_lookup_sync") { errorRef ->
+      val serviceNamePointer = stringPointer(attributes.serviceName.toByteArray())
+      if (attributes.accountName == null) {
+        LIBRARY.secret_password_lookup_sync(scheme, null, errorRef, serviceAttributeNamePointer, serviceNamePointer, null)?.let {
+          // Secret Service doesn't allow to get attributes, so, we store joined data
+          return splitData(it)
+        }
+      }
+      else {
+        LIBRARY.secret_password_lookup_sync(scheme, null, errorRef,
+                                            serviceAttributeNamePointer, serviceNamePointer,
+                                            accountAttributeNamePointer, stringPointer(attributes.accountName!!.toByteArray()),
+                                            null)?.let {
+          return splitData(it)
+        }
+      }
+    }
 
-    if (password == null) {
+    return null
+  }
+
+  override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
+    val serviceNamePointer = stringPointer(attributes.serviceName.toByteArray())
+    val accountName = attributes.accountName!!
+    if (credentials == null) {
       checkError("secret_password_store_sync") { errorRef ->
-        LIBRARY.secret_password_clear_sync(scheme, null, errorRef, keyAttributeNamePointer, keyPointer, null)
+        LIBRARY.secret_password_clear_sync(scheme, null, errorRef,
+                                           serviceAttributeNamePointer, serviceNamePointer,
+                                           accountAttributeNamePointer, stringPointer(accountName.toByteArray()),
+                                           null)
       }
       return
     }
 
-    val passwordPointer = stringPointer(password)
-    password.fill(0)
-
+    val passwordPointer = stringPointer(joinData(accountName, credentials.password!!).toByteArray())
     checkError("secret_password_store_sync") { errorRef ->
       try {
-        LIBRARY.secret_password_store_sync(scheme, null, keyPointer, passwordPointer, null, errorRef, keyAttributeNamePointer, keyPointer, null)
+        LIBRARY.secret_password_store_sync(scheme, null, serviceNamePointer, passwordPointer, null, errorRef,
+                                           serviceAttributeNamePointer, serviceNamePointer,
+                                           accountAttributeNamePointer, stringPointer(accountName.toByteArray()),
+                                           null)
       }
       finally {
         passwordPointer.dispose()
-        keyPointer.dispose()
       }
     }
   }
@@ -73,7 +97,7 @@ private interface SecretLibrary : Library {
 
   fun secret_password_store_sync(scheme: Pointer, collection: Pointer?, label: Pointer, password: Pointer, cancellable: Pointer?, error: Array<GErrorStruct?>, vararg attributes: Pointer?)
 
-  fun secret_password_lookup_sync(scheme: Pointer, cancellable: Pointer?, error: Array<GErrorStruct?>, vararg attributes: Pointer?): String
+  fun secret_password_lookup_sync(scheme: Pointer, cancellable: Pointer?, error: Array<GErrorStruct?>, vararg attributes: Pointer?): String?
 
   fun secret_password_clear_sync(scheme: Pointer, cancellable: Pointer?, error: Array<GErrorStruct?>, vararg attributes: Pointer?)
 }

@@ -15,11 +15,8 @@
  */
 package com.intellij.ide.passwordSafe.impl
 
-import com.intellij.credentialStore.FileCredentialStore
-import com.intellij.credentialStore.LOG
-import com.intellij.credentialStore.PasswordSafeSettings
+import com.intellij.credentialStore.*
 import com.intellij.credentialStore.PasswordSafeSettings.ProviderType
-import com.intellij.credentialStore.PasswordSafeSettingsListener
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.openapi.application.ApplicationManager
@@ -67,34 +64,46 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
     })
   }
 
-  override fun getPassword(requestor: Class<*>?, key: String): String? {
-    val value = currentProvider.getPassword(requestor, key)
+  @Suppress("OverridingDeprecatedMember")
+  override fun getPassword(requestor: Class<*>, accountName: String): String? {
+    @Suppress("DEPRECATION")
+    val value = currentProvider.getPassword(requestor, accountName)
     if (value == null && memoryHelperProvider.isInitialized()) {
       // if password was set as `memoryOnly`
-      return memoryHelperProvider.value.getPassword(requestor, key)
+      return memoryHelperProvider.value.get(CredentialAttributes(requestor, accountName))?.password
     }
     return value
   }
 
-  override fun setPassword(requestor: Class<*>?, key: String, value: String?) {
-    currentProvider.setPassword(requestor, key, value)
+  override fun get(attributes: CredentialAttributes): Credentials? {
+    val value = currentProvider.get(attributes)
+    if (value == null && memoryHelperProvider.isInitialized()) {
+      // if password was set as `memoryOnly`
+      return memoryHelperProvider.value.get(attributes)
+    }
+    return value
+  }
+
+  override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
+    currentProvider.set(attributes, credentials)
     if (memoryHelperProvider.isInitialized()) {
       val memoryHelper = memoryHelperProvider.value
       // update password in the memory helper, but only if it was previously set
-      if (value == null || memoryHelper.getPassword(requestor, key) != null) {
-        memoryHelper.setPassword(requestor, key, value)
+      if (credentials == null || memoryHelper.get(attributes) != null) {
+        memoryHelper.set(attributes, credentials)
       }
     }
   }
 
-  override fun setPassword(requestor: Class<*>?, key: String, value: String?, memoryOnly: Boolean) {
+  override fun setPassword(attributes: CredentialAttributes, value: String?, memoryOnly: Boolean) {
+    val credentials = value?.let { Credentials(attributes.accountName, it) }
     if (memoryOnly) {
-      memoryHelperProvider.value.setPassword(requestor, key, value)
+      memoryHelperProvider.value.set(attributes, credentials)
       // remove to ensure that on getPassword we will not return some value from default provider
-      currentProvider.setPassword(requestor, key, null)
+      currentProvider.set(attributes, null)
     }
     else {
-      setPassword(requestor, key, value)
+      set(attributes, credentials)
     }
   }
 

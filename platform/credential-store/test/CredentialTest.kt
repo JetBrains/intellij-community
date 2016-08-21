@@ -6,11 +6,16 @@ class CredentialTest {
   @Test
   fun join() {
     test("foo", "pass", "foo@pass")
+    test("foo", "\\pass@", "foo@\\pass@")
     test("foo@", "pass", "foo\\@@pass")
     test("\\foo@", "pass", "\\\\foo\\@@pass")
     test("\\foo\\", "pass", "\\\\foo\\\\@pass")
-    test("", "pass", "@pass")
     test("foo", "", "foo@")
+  }
+
+  @Test
+  fun emptyUser() {
+    test("", "pass", "@pass")
   }
 
   private fun test(u: String, p: String, joined: String) {
