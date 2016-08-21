@@ -45,7 +45,7 @@ fun getCredentialsUsingGit(uri: URIish, repository: Repository): Credentials? {
   writer.write("url=")
   writer.write(uri.toPrivateString())
   writer.write("\n\n")
-  writer.close();
+  writer.close()
 
   val reader = process.inputStream.reader().buffered()
   var username: String? = null

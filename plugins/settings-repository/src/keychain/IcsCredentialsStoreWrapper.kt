@@ -13,18 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.keychain
+package org.jetbrains.settingsRepository
 
 import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
 import com.intellij.ide.passwordSafe.PasswordSafe
 
-class FileCredentialsStore() : CredentialsStore {
-  override fun get(host: String?, sshKeyFile: String?): Credentials? {
-    return if (host == null) null else PasswordSafe.getInstance().get(getAttributes(host, sshKeyFile))
-  }
+interface IcsCredentialsStore {
+  fun get(host: String?, sshKeyFile: String? = null): Credentials?
 
-  private fun getAttributes(host: String?, sshKeyFile: String?): CredentialAttributes {
+  fun set(host: String?, credentials: Credentials, sshKeyFile: String? = null)
+
+  fun reset(host: String)
+}
+
+class IcsCredentialsStoreWrapper() : IcsCredentialsStore {
+  override fun get(host: String?, sshKeyFile: String?) = getAttributes(host, sshKeyFile)?.let { PasswordSafe.getInstance().get(it) }
+
+  private fun getAttributes(host: String?, sshKeyFile: String?): CredentialAttributes? {
     if (sshKeyFile == null) {
       return CredentialAttributes("IntelliJ Platform Settings Repository — $host")
     }
@@ -37,7 +43,7 @@ class FileCredentialsStore() : CredentialsStore {
     PasswordSafe.getInstance().setPassword(CredentialAttributes("IntelliJ Platform Settings Repository — $host"), null)
   }
 
-  override fun save(host: String?, credentials: Credentials, sshKeyFile: String?) {
-    PasswordSafe.getInstance().set(getAttributes(host, sshKeyFile), credentials)
+  override fun set(host: String?, credentials: Credentials, sshKeyFile: String?) {
+    getAttributes(host, sshKeyFile)?.let { PasswordSafe.getInstance().set(it, credentials) }
   }
 }
