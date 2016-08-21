@@ -15,95 +15,72 @@
  */
 package com.intellij.credentialStore
 
+import com.intellij.credentialStore.kdbx.KdbxPassword
+import com.intellij.credentialStore.kdbx.KeePassDatabase
+import com.intellij.credentialStore.kdbx.loadKdbx
 import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.windows.WindowsCryptUtils
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.setOwnerPermissions
-import com.intellij.util.*
-import com.intellij.util.containers.ContainerUtil
-import java.io.DataInputStream
-import java.io.DataOutputStream
+import com.intellij.util.EncryptionSupport
+import com.intellij.util.delete
+import com.intellij.util.readBytes
+import com.intellij.util.writeSafe
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.security.Key
-import java.util.Base64
+import java.security.SecureRandom
+import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.crypto.spec.SecretKeySpec
 
+private const val GROUP_NAME = "IntelliJ Platform"
+
 internal class FileCredentialStore(keyToValue: Map<CredentialAttributes, Credentials>? = null, baseDirectory: Path = Paths.get(PathManager.getConfigPath()), var memoryOnly: Boolean = false) : PasswordStorage, CredentialStore {
-  private val db = ContainerUtil.newConcurrentMap<CredentialAttributes, Credentials>()
+  private val db: KeePassDatabase
 
-  private val dbFile = baseDirectory.resolve("cdb")
+  private val dbFile = baseDirectory.resolve("c.kdbx")
   private val masterKeyStorage = MasterKeyFileStorage(baseDirectory)
-
-  private var encryptionSupport: EncryptionSupport? = null
 
   private val needToSave: AtomicBoolean
 
   init {
     if (keyToValue == null) {
       needToSave = AtomicBoolean(false)
-      run {
-        encryptionSupport = EncryptionSupport(SecretKeySpec(masterKeyStorage.get() ?: return@run, "AES"))
-
-        val data: ByteArray
-        try {
-          data = encryptionSupport!!.decrypt(dbFile.readBytes())
-        }
-        catch (e: NoSuchFileException) {
-          LOG.warn("key file exists, but db file not")
-          return@run
-        }
-
-        val input = DataInputStream(data.inputStream())
-        while (input.available() > 0) {
-          val serviceName = input.readUTF()
-          val accountName = input.readUTF()
-          db.put(CredentialAttributes(serviceName, accountName), Credentials(accountName, input.readUTF()))
-        }
-      }
+      db = masterKeyStorage.get()?.let { loadKdbx(dbFile, KdbxPassword(it)) } ?: KeePassDatabase()
     }
     else {
       needToSave = AtomicBoolean(!memoryOnly)
-      db.putAll(keyToValue)
+
+      db = KeePassDatabase()
+      val group = db.rootGroup.getOrCreateGroup(GROUP_NAME)
+      for ((attributes, credentials) in keyToValue) {
+        val entry = db.newEntry(attributes.serviceName)
+        entry.userName = credentials.user
+        entry.password = credentials.password
+        group.addEntry(entry)
+      }
     }
   }
 
   @Synchronized
   fun save() {
-    if (memoryOnly || !needToSave.compareAndSet(true, false)) {
+    if (memoryOnly || !needToSave.compareAndSet(true, false) || !db.isDirty) {
       return
     }
 
     try {
-      var encryptionSupport = encryptionSupport
-      if (encryptionSupport == null) {
-        val masterKey = generateAesKey()
+      var masterKey = masterKeyStorage.get()
+      if (masterKey == null) {
+        val bytes = ByteArray(32)
+        SecureRandom().nextBytes(bytes)
+        masterKey = Base64.getEncoder().withoutPadding().encode(bytes)
         masterKeyStorage.set(masterKey)
-        // set only if key stored successfully
-        encryptionSupport = EncryptionSupport(SecretKeySpec(masterKey, "AES"))
-        this.encryptionSupport = encryptionSupport
       }
 
-      if (db.isEmpty()) {
-        dbFile.delete()
-        masterKeyStorage.set(null)
-        return
-      }
-
-      val byteOut = BufferExposingByteArrayOutputStream()
-      DataOutputStream(byteOut).use { out ->
-        for ((key, value) in db) {
-          out.writeUTF(key.serviceName)
-          out.writeUTF(key.accountName)
-          out.writeUTF(value.password)
-        }
-      }
-
-      dbFile.writeSafe(encryptionSupport.encrypt(byteOut.internalBuffer, byteOut.size()))
+      dbFile.writeSafe { db.save(KdbxPassword(masterKey!!), it) }
       dbFile.setOwnerPermissions()
     }
     catch (e: Throwable) {
@@ -120,12 +97,11 @@ internal class FileCredentialStore(keyToValue: Map<CredentialAttributes, Credent
     }
     finally {
       masterKeyStorage.set(null)
-      encryptionSupport = null
     }
   }
 
   fun clear() {
-    db.clear()
+    db.rootGroup.removeGroup(GROUP_NAME)
     needToSave.set(true)
   }
 
@@ -135,7 +111,8 @@ internal class FileCredentialStore(keyToValue: Map<CredentialAttributes, Credent
     val password = super<PasswordStorage>.getPassword(requestor, accountName)
     if (password == null) {
       // try old key - as hash
-      val credentials = db.remove(toOldKey(requestor, accountName))
+      val oldAttributes = toOldKey(requestor, accountName)
+      val credentials = db.rootGroup.getGroup(GROUP_NAME)?.removeEntry(oldAttributes.serviceName, oldAttributes.accountName!!)
       if (credentials != null) {
         set(CredentialAttributes(requestor, accountName), Credentials(accountName, credentials.password))
         return credentials.password
@@ -145,29 +122,33 @@ internal class FileCredentialStore(keyToValue: Map<CredentialAttributes, Credent
   }
 
   override fun get(attributes: CredentialAttributes): Credentials? {
-    if (attributes.accountName == null) {
-      for ((k, v) in db) {
-        if (k.serviceName == attributes.serviceName) {
-          return Credentials(attributes.serviceName, v.password)
-        }
-      }
-    }
-    return db.get(attributes)
+    val group = db.rootGroup.getGroup(GROUP_NAME) ?: return null
+    val entry = group.getEntry { it.title == attributes.serviceName && (it.userName == attributes.accountName || attributes.accountName == null) } ?: return null
+    return Credentials(entry.userName, entry.password)
   }
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
+    val group = db.rootGroup.getOrCreateGroup(GROUP_NAME)
     if (credentials == null) {
-      if (db.remove(attributes) != null) {
-        needToSave.set(true)
-      }
+      group.removeEntry(attributes.serviceName, attributes.accountName)
     }
-    else if (db.put(attributes, credentials) != credentials) {
+    else {
+      group.getOrCreateEntry(attributes.serviceName, attributes.accountName).password = credentials.password
+    }
+
+    if (db.isDirty) {
       needToSave.set(true)
     }
   }
 
   fun copyTo(store: PasswordStorage) {
-    copyTo(db, store)
+    val group = db.rootGroup.getGroup(GROUP_NAME) ?: return
+    for (entry in group.entries) {
+      val title = entry.title
+      if (title != null) {
+        store.set(CredentialAttributes(title, entry.userName), Credentials(entry.userName, entry.password))
+      }
+    }
   }
 }
 

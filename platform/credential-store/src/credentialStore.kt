@@ -15,7 +15,6 @@
  */
 package com.intellij.credentialStore
 
-import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.text.StringUtil
 import java.security.MessageDigest
@@ -28,8 +27,6 @@ private fun toOldKey(hash: ByteArray) = "old-hashed-key|" + Base64.getEncoder().
 internal fun toOldKeyAsIdentity(hash: ByteArray) = CredentialAttributes("IntelliJ Platform", toOldKey(hash))
 
 internal fun toOldKey(requestor: Class<*>, accountName: String) = CredentialAttributes("IntelliJ Platform", toOldKey(MessageDigest.getInstance("SHA-256").digest("${requestor.name}/$accountName".toByteArray())))
-
-internal fun CredentialAttributes(requestor: Class<*>, accountName: String) = PasswordStorage.createAttributes(requestor, accountName)
 
 fun joinData(user: String?, password: String?) = "${StringUtil.escapeChars(user.orEmpty(), '\\', '@')}@$password"
 

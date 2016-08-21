@@ -15,6 +15,8 @@
  */
 package org.jetbrains.settingsRepository.git
 
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheLoader
 import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.isFulfilled
 import com.intellij.credentialStore.macOs.isMacOsCredentialStoreSupported
@@ -29,9 +31,14 @@ import org.eclipse.jgit.transport.URIish
 import org.jetbrains.settingsRepository.IcsCredentialsStore
 import org.jetbrains.settingsRepository.catchAndLog
 import org.jetbrains.settingsRepository.showAuthenticationForm
+import java.util.concurrent.TimeUnit
 
 class JGitCredentialsProvider(private val credentialsStore: Lazy<IcsCredentialsStore>, private val repository: Repository) : CredentialsProvider() {
-  private var credentialsFromGit: Credentials? = null
+  private val credentialsFromGit = CacheBuilder.newBuilder()
+      .expireAfterAccess(5, TimeUnit.MINUTES)
+      .build(object : CacheLoader<URIish, Credentials>() {
+        override fun load(it: URIish) = getCredentialsUsingGit(it, repository) ?: Credentials(null, null)
+      })
 
   override fun isInteractive() = true
 
@@ -82,52 +89,29 @@ class JGitCredentialsProvider(private val credentialsStore: Lazy<IcsCredentialsS
   }
 
   private fun doGet(uri: URIish, userNameItem: CredentialItem.Username?, passwordItem: CredentialItem?, sshKeyFile: String?): Boolean {
-    var credentials: Credentials?
+    var credentials: Credentials? = null
 
     // SSH URL git@github.com:develar/_idea_settings.git, so, username will be "git", we ignore it because in case of SSH credentials account name equals to key filename, but not to username
     val userFromUri: String? = if (sshKeyFile == null) uri.user.nullize() else null
     val passwordFromUri: String? = uri.pass.nullize()
-    var saveCredentialsToStore = false
     if (userFromUri != null && passwordFromUri != null) {
       credentials = Credentials(userFromUri, passwordFromUri)
     }
     else {
-      // we open password protected SSH key file using OS X keychain - "git credentials" is pointless in this case
-      if (sshKeyFile == null || !isMacOsCredentialStoreSupported) {
-        if (credentialsFromGit == null) {
-          credentialsFromGit = getCredentialsUsingGit(uri, repository)
-        }
-        credentials = credentialsFromGit
-      }
-      else {
-        credentials = null
-      }
-
-      if (credentials == null) {
-        catchAndLog {
-          credentials = credentialsStore.value.get(uri.host, sshKeyFile)
-        }
-
-        saveCredentialsToStore = true
-
-        if (userFromUri != null) {
-          // username is in url - read password only if it is for the same user
-          if (userFromUri != credentials?.user) {
-            credentials = Credentials(userFromUri, passwordFromUri)
-          }
-          else if (passwordFromUri != null && passwordFromUri != credentials?.password) {
-            credentials = Credentials(userFromUri, passwordFromUri)
-          }
+      catchAndLog {
+        credentials = credentialsStore.value.get(uri.host, sshKeyFile, userFromUri)
+        // we open password protected SSH key file using OS X keychain - "git credentials" is pointless in this case
+        if (!credentials.isFulfilled() && (sshKeyFile == null || !isMacOsCredentialStoreSupported)) {
+          credentials = credentialsFromGit.get(uri)
         }
       }
     }
 
     if (!credentials.isFulfilled()) {
       credentials = showAuthenticationForm(credentials, uri.toStringWithoutCredentials(), uri.host, uri.path, sshKeyFile)
-    }
-
-    if (saveCredentialsToStore && credentials.isFulfilled()) {
-      credentialsStore.value.set(uri.host, credentials!!, sshKeyFile)
+      if (credentials.isFulfilled()) {
+        credentialsStore.value.set(uri.host, sshKeyFile, credentials)
+      }
     }
 
     userNameItem?.value = credentials?.user
@@ -144,12 +128,13 @@ class JGitCredentialsProvider(private val credentialsStore: Lazy<IcsCredentialsS
   }
 
   override fun reset(uri: URIish) {
-    credentialsFromGit = null
-    credentialsStore.value.reset(uri.host!!)
+    credentialsFromGit.invalidate(uri)
+    credentialsFromGit.cleanUp()
+    credentialsStore.value.set(uri.host!!, null, null)
   }
 }
 
-fun URIish.toStringWithoutCredentials(): String {
+private fun URIish.toStringWithoutCredentials(): String {
   val r = StringBuilder()
   if (scheme != null) {
     r.append(scheme)

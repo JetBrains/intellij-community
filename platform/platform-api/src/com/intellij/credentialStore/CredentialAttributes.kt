@@ -32,14 +32,4 @@ class Credentials(user: String?, val password: String?) {
   override fun hashCode() = (user?.hashCode() ?: 0) * 37 + (password?.hashCode() ?: 0)
 }
 
-interface CredentialStore {
-  fun get(attributes: CredentialAttributes): Credentials?
-
-  fun getPassword(attributes: CredentialAttributes) = get(attributes)?.password
-
-  fun set(attributes: CredentialAttributes, credentials: Credentials?)
-
-  fun setPassword(attributes: CredentialAttributes, password: String?) {
-    set(attributes, Credentials(attributes.accountName, password))
-  }
-}
+fun CredentialAttributes(requestor: Class<*>, accountName: String) = CredentialAttributes(requestor.name, accountName)

@@ -51,16 +51,4 @@ public abstract class BasePasswordSafeProvider implements PasswordStorage {
   }
 
   protected abstract void storeEncryptedPassword(byte[] key, byte[] encryptedPassword);
-
-  @Nullable
-  @Override
-  public final String getPassword(@NotNull CredentialAttributes attributes) {
-    Credentials credentials = get(attributes);
-    return credentials == null ? null : credentials.getPassword();
-  }
-
-  @Override
-  public final void setPassword(@NotNull CredentialAttributes attributes, @Nullable String password) {
-    set(attributes, new Credentials(attributes.getAccountName(), password));
-  }
 }
