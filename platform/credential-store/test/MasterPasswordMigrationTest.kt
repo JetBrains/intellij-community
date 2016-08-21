@@ -55,12 +55,12 @@ internal class MasterPasswordMigrationTest {
     assertThat(passwordSafe).isNotEmpty
 
     val provider = FileCredentialStore(passwordSafe)
-    assertThat(provider.getPassword("com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterKeyPasswordSafeTest/TEST")).isEqualTo("test")
+    assertThat(provider.getPassword(CredentialAttributes("IntelliJ Platform — com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterKeyPasswordSafeTest", "TEST"))).isEqualTo("test")
   }
 
   @Test
   fun nonEmptyPass() {
-    var passwordSafe: Map<String, String>? = null
+    var passwordSafe: Map<CredentialAttributes, Credentials>? = null
     runInEdtAndWait {
       passwordSafe = convertOldDb(getDb("""<State>
         <option name="MASTER_PASSWORD_INFO" value="" />
@@ -84,7 +84,7 @@ internal class MasterPasswordMigrationTest {
     }
     assertThat(passwordSafe).isNotEmpty
     val provider = FileCredentialStore(passwordSafe)
-    assertThat(provider.getPassword("com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterKeyPasswordSafeTest/TEST")).isEqualTo("test")
+    assertThat(provider.getPassword(CredentialAttributes("IntelliJ Platform — com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterKeyPasswordSafeTest", "TEST"))).isEqualTo("test")
   }
 
   @Suppress("DEPRECATION")

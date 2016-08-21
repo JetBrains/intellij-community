@@ -15,31 +15,29 @@
  */
 package org.jetbrains.keychain
 
+import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
-import com.intellij.credentialStore.splitData
 import com.intellij.ide.passwordSafe.PasswordSafe
 
 class FileCredentialsStore() : CredentialsStore {
   override fun get(host: String?, sshKeyFile: String?): Credentials? {
-    if (host == null) {
-      return null
-    }
+    return if (host == null) null else PasswordSafe.getInstance().get(getAttributes(host, sshKeyFile))
+  }
 
-    val data = PasswordSafe.getInstance().getPassword("ics-" + (sshKeyFile ?: host)) ?: return null
+  private fun getAttributes(host: String?, sshKeyFile: String?): CredentialAttributes {
     if (sshKeyFile == null) {
-      return splitData(data)
+      return CredentialAttributes("IntelliJ Platform Settings Repository — $host")
     }
     else {
-      return Credentials(sshKeyFile, data)
+      return CredentialAttributes("SSH", sshKeyFile)
     }
   }
 
   override fun reset(host: String) {
-    PasswordSafe.getInstance().setPassword("ics-" + host, null)
+    PasswordSafe.getInstance().setPassword(CredentialAttributes("IntelliJ Platform Settings Repository — $host"), null)
   }
 
   override fun save(host: String?, credentials: Credentials, sshKeyFile: String?) {
-    val accountName: String = sshKeyFile ?: host!!
-    PasswordSafe.getInstance().setPassword("ics-" + accountName, if (sshKeyFile == null) credentials.toString() else credentials.password!!)
+    PasswordSafe.getInstance().set(getAttributes(host, sshKeyFile), credentials)
   }
 }

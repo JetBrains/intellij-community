@@ -15,32 +15,32 @@
  */
 package com.intellij.ide.passwordSafe;
 
+import com.intellij.credentialStore.CredentialAttributes;
+import com.intellij.credentialStore.CredentialStore;
+import com.intellij.credentialStore.Credentials;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface PasswordStorage {
+public interface PasswordStorage extends CredentialStore {
+  @Deprecated
   @Nullable
-  default String getPassword(@NotNull String key) {
-    //noinspection deprecation
-    return getPassword(null, null, key);
+  default String getPassword(@NotNull Class<?> requestor, @NotNull String accountName) {
+    return getPassword(createAttributes(requestor, accountName));
   }
 
-  @Nullable
-  String getPassword(@Nullable Class<?> requestor, @NotNull String key);
-
-  default void setPassword(@NotNull String key, @Nullable String value) {
-    setPassword(null, key, value);
+  @Deprecated
+  default void setPassword(@NotNull Class<?> requestor, @NotNull String accountName, @Nullable String value) {
+    set(createAttributes(requestor, accountName), new Credentials(accountName, value));
   }
-
-  void setPassword(@Nullable Class<?> requestor, @NotNull String key, @Nullable String value);
 
   /**
    * @deprecated Please use {@link #setPassword} and pass value as null
    */
   @SuppressWarnings("unused")
   @Deprecated
-  default void removePassword(@SuppressWarnings("UnusedParameters") @Nullable Project project, @Nullable Class requestor, String key) {
+  default void removePassword(@SuppressWarnings("UnusedParameters") @Nullable Project project, @NotNull Class requestor, String key) {
+    //noinspection deprecation
     setPassword(requestor, key, null);
   }
 
@@ -48,13 +48,20 @@ public interface PasswordStorage {
    * @deprecated Please use {@link #setPassword}
    */
   @Deprecated
-  default void storePassword(@SuppressWarnings("UnusedParameters") @Nullable Project project, @Nullable Class requestor, @NotNull String key, @Nullable String value) {
+  default void storePassword(@SuppressWarnings("UnusedParameters") @Nullable Project project, @NotNull Class requestor, @NotNull String key, @Nullable String value) {
+    //noinspection deprecation
     setPassword(requestor, key, value);
   }
 
   @Deprecated
   @Nullable
-  default String getPassword(@SuppressWarnings("UnusedParameters") @Nullable Project project, @Nullable Class requestor, @NotNull String key) {
+  default String getPassword(@SuppressWarnings("UnusedParameters") @Nullable Project project, @NotNull Class requestor, @NotNull String key) {
+    //noinspection deprecation
     return getPassword(requestor, key);
+  }
+
+  @NotNull
+  static CredentialAttributes createAttributes(@NotNull Class<?> requestor, @NotNull String accountName) {
+    return new CredentialAttributes(requestor.getName(), accountName);
   }
 }

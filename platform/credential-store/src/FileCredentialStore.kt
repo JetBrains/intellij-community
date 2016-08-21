@@ -33,18 +33,10 @@ import java.util.Base64
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.crypto.spec.SecretKeySpec
 
-class FileCredentialStore(keyToValue: Map<String, String>? = null, baseDirectory: Path = Paths.get(PathManager.getConfigPath()), var memoryOnly: Boolean = false) : PasswordStorage, CredentialStore {
-  override fun get(key: String) = getPassword(null, key)
+internal class FileCredentialStore(keyToValue: Map<CredentialAttributes, Credentials>? = null, baseDirectory: Path = Paths.get(PathManager.getConfigPath()), var memoryOnly: Boolean = false) : PasswordStorage, CredentialStore {
+  private val db = ContainerUtil.newConcurrentMap<CredentialAttributes, Credentials>()
 
-  override fun set(key: String, password: ByteArray?) {
-    val string = password?.toString(Charsets.UTF_8)
-    password?.fill(0)
-    setPassword(key, string)
-  }
-
-  private val db = ContainerUtil.newConcurrentMap<String, String>()
-
-  private val dbFile = baseDirectory.resolve("pdb")
+  private val dbFile = baseDirectory.resolve("cdb")
   private val masterKeyStorage = MasterKeyFileStorage(baseDirectory)
 
   private var encryptionSupport: EncryptionSupport? = null
@@ -68,7 +60,9 @@ class FileCredentialStore(keyToValue: Map<String, String>? = null, baseDirectory
 
         val input = DataInputStream(data.inputStream())
         while (input.available() > 0) {
-          db.put(input.readUTF(), input.readUTF())
+          val serviceName = input.readUTF()
+          val accountName = input.readUTF()
+          db.put(CredentialAttributes(serviceName, accountName), Credentials(accountName, input.readUTF()))
         }
       }
     }
@@ -103,8 +97,9 @@ class FileCredentialStore(keyToValue: Map<String, String>? = null, baseDirectory
       val byteOut = BufferExposingByteArrayOutputStream()
       DataOutputStream(byteOut).use { out ->
         for ((key, value) in db) {
-          out.writeUTF(key)
-          out.writeUTF(value)
+          out.writeUTF(key.serviceName)
+          out.writeUTF(key.accountName)
+          out.writeUTF(value.password)
         }
       }
 
@@ -134,36 +129,51 @@ class FileCredentialStore(keyToValue: Map<String, String>? = null, baseDirectory
     needToSave.set(true)
   }
 
-  override fun getPassword(requestor: Class<*>?, key: String): String? {
-    val rawKey = getRawKey(key, requestor)
-    var value = db.get(rawKey)
-    if (value == null && (requestor != null || key.contains('/'))) {
+  @Suppress("OverridingDeprecatedMember")
+  override fun getPassword(requestor: Class<*>, accountName: String): String? {
+    @Suppress("DEPRECATION")
+    val password = super<PasswordStorage>.getPassword(requestor, accountName)
+    if (password == null) {
       // try old key - as hash
-      value = db.remove(toOldKey(rawKey))
-      if (value != null) {
-        db.put(rawKey, value)
-        needToSave.set(true)
+      val credentials = db.remove(toOldKey(requestor, accountName))
+      if (credentials != null) {
+        set(CredentialAttributes(requestor, accountName), Credentials(accountName, credentials.password))
+        return credentials.password
       }
     }
-    return value
+    return password
   }
 
-  override fun setPassword(requestor: Class<*>?, key: String, value: String?) {
-    val rawKey = getRawKey(key, requestor)
-    if (value == null) {
-      if (db.remove(rawKey) != null) {
+  override fun get(attributes: CredentialAttributes): Credentials? {
+    if (attributes.accountName == null) {
+      for ((k, v) in db) {
+        if (k.serviceName == attributes.serviceName) {
+          return Credentials(attributes.serviceName, v.password)
+        }
+      }
+    }
+    return db.get(attributes)
+  }
+
+  override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
+    if (credentials == null) {
+      if (db.remove(attributes) != null) {
         needToSave.set(true)
       }
     }
-    else if (db.put(rawKey, value) != value) {
+    else if (db.put(attributes, credentials) != credentials) {
       needToSave.set(true)
     }
   }
 
   fun copyTo(store: PasswordStorage) {
-    for ((k, v) in db) {
-      store.setPassword(k, v)
-    }
+    copyTo(db, store)
+  }
+}
+
+internal fun copyTo(from: Map<CredentialAttributes, Credentials>, store: PasswordStorage) {
+  for ((k, v) in from) {
+    store.set(k, v)
   }
 }
 
