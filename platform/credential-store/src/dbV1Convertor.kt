@@ -75,8 +75,7 @@ fun convertOldDb(@Suppress("DEPRECATION") db: PasswordDatabase): Map<String, Str
     }
   }
 
-  // if db contains only one entry (+ test entry) - do not ask master pass, just skip
-  if (db.myDatabase.size <= 2) {
+  if (db.myDatabase.size <= 1) {
     return null
   }
 
