@@ -15,19 +15,25 @@
  */
 package com.intellij.credentialStore.kdbx
 
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.util.SmartList
+import com.intellij.util.getOrCreate
 import com.intellij.util.inputStream
+import com.intellij.util.loadElement
+import org.bouncycastle.crypto.engines.Salsa20Engine
+import org.bouncycastle.crypto.params.KeyParameter
+import org.bouncycastle.crypto.params.ParametersWithIV
+import org.jdom.Element
+import org.linguafranca.pwdb.kdbx.KdbxSerializer
 import java.io.InputStream
+import java.io.OutputStream
 import java.nio.file.Path
 import java.security.MessageDigest
+import java.util.*
 import javax.xml.bind.DatatypeConverter
-import javax.xml.parsers.DocumentBuilderFactory
-import javax.xml.xpath.XPathConstants
-import javax.xml.xpath.XPathFactory
 
 internal fun loadKdbx(file: Path, credentials: KeePassCredentials) = file.inputStream().use {
-  val db = KeePassDatabase()
-  db.load(KdbxStreamFormat(), credentials, it)
-  db
+  KeePassDatabase(KdbxStreamFormat().load(credentials, it))
 }
 
 class KdbxPassword(password: ByteArray) : KeePassCredentials {
@@ -39,35 +45,178 @@ class KdbxPassword(password: ByteArray) : KeePassCredentials {
   }
 }
 
-@Suppress("unused")
-class KdbxKeyFile(password: ByteArray, inputStream: InputStream) : KeePassCredentials {
-  override val key: ByteArray
-
-  init {
-    val md = MessageDigest.getInstance("SHA-256")
-    val pwKey = md.digest(password)
-    md.update(pwKey)
-    key = md.digest(loadKdbxKeyFile(inputStream) ?: throw IllegalStateException("Could not read key file"))
-  }
-}
-
-fun loadKdbxKeyFile(inputStream: InputStream): ByteArray? {
-  val base64: String?
-  try {
-    val documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
-    val doc = documentBuilder.parse(inputStream)
-    base64 = XPathFactory.newInstance().newXPath().evaluate("//KeyFile/Key/Data/text()", doc, XPathConstants.STRING) as String?
-    if (base64 == null) {
-      return null
-    }
-  }
-  catch (e: Exception) {
-    return null
-  }
-
-  return DatatypeConverter.parseBase64Binary(base64)
-}
-
 interface KeePassCredentials {
   val key: ByteArray
+}
+
+class KdbxStreamFormat {
+  fun load(credentials: KeePassCredentials, inputStream: InputStream): Element {
+    val kdbxHeader = KdbxHeader()
+    KdbxSerializer.createUnencryptedInputStream(credentials, kdbxHeader, inputStream).use {
+      val encryption = Salsa20Encryption(kdbxHeader.protectedStreamKey)
+      return load(it, encryption)
+    }
+  }
+
+  fun save(element: Element, credentials: KeePassCredentials, outputStream: OutputStream) {
+    val kdbxHeader = KdbxHeader()
+    KdbxSerializer.createEncryptedOutputStream(credentials, kdbxHeader, outputStream).use {
+      val rootElement = element.clone()
+      rootElement.getOrCreate("HeaderHash").text = Base64.getEncoder().encodeToString(kdbxHeader.headerHash)
+      save(rootElement, it, Salsa20Encryption(kdbxHeader.protectedStreamKey))
+    }
+  }
+}
+
+private fun save(rootElement: Element, outputStream: OutputStream, encryption: KdbxEncryption) {
+  val meta = rootElement.getChild("Meta")?.getChild("MemoryProtection")
+  if (meta != null) {
+    val propertiesToProtect = SmartList<String>()
+    for (element in meta.children) {
+      val propertyName = element.name.removePrefix("Protect")
+      if (propertyName != element.name && element.text.equals("true", ignoreCase = true)) {
+        propertiesToProtect.add(propertyName)
+      }
+    }
+
+    rootElement.getChild("Root")?.getChild("Group")?.let { rootGroupElement ->
+      processEntries(rootGroupElement) { container, valueElement ->
+        val key = container.getChildText("Key") ?: return@processEntries
+        for (propertyName in propertiesToProtect) {
+          if (key == propertyName) {
+            valueElement.setAttribute("Protected", "True")
+            valueElement.text = Base64.getEncoder().encodeToString(encryption.encrypt(valueElement.text.toByteArray()))
+          }
+        }
+      }
+    }
+  }
+  JDOMUtil.writeElement(rootElement, outputStream.writer(), "\n")
+}
+
+private fun load(inputStream: InputStream, encryption: KdbxEncryption): Element {
+  val rootElement = loadElement(inputStream)
+  rootElement.getChild("Root")?.getChild("Group")?.let { rootGroupElement ->
+    processEntries(rootGroupElement) { container, valueElement ->
+      if (valueElement.getAttributeValue("Protected", "false").equals("true", ignoreCase = true)) {
+        valueElement.text = encryption.decrypt(Base64.getDecoder().decode(valueElement.text)).toString(Charsets.UTF_8)
+        valueElement.removeAttribute("Protected")
+      }
+    }
+  }
+  return rootElement
+}
+
+private fun processEntries(groupElement: Element, processor: (container: Element, valueElement: Element) -> Unit) {
+  // we must process in exact order
+  for (element in groupElement.children) {
+    if (element.name == GROUP_ELEMENT_NAME) {
+      processEntries(element, processor)
+    }
+    else if (element.name == ENTRY_ELEMENT_NAME) {
+      for (container in element.getChildren("String")) {
+        val valueElement = container.getChild("Value") ?: continue
+        processor(container, valueElement)
+      }
+    }
+  }
+}
+
+internal fun createEmptyDatabase(): Element {
+  val creationDate = formattedNow()
+  return loadElement("""<KeePassFile>
+      <Meta>
+          <Generator>IJ</Generator>
+          <HeaderHash></HeaderHash>
+          <DatabaseName>New Database</DatabaseName>
+          <DatabaseNameChanged>${creationDate}</DatabaseNameChanged>
+          <DatabaseDescription>Empty Database</DatabaseDescription>
+          <DatabaseDescriptionChanged>${creationDate}</DatabaseDescriptionChanged>
+          <DefaultUserName/>
+          <DefaultUserNameChanged>${creationDate}</DefaultUserNameChanged>
+          <MaintenanceHistoryDays>365</MaintenanceHistoryDays>
+          <Color/>
+          <MasterKeyChanged>${creationDate}</MasterKeyChanged>
+          <MasterKeyChangeRec>-1</MasterKeyChangeRec>
+          <MasterKeyChangeForce>-1</MasterKeyChangeForce>
+          <MemoryProtection>
+              <ProtectTitle>False</ProtectTitle>
+              <ProtectUserName>False</ProtectUserName>
+              <ProtectPassword>True</ProtectPassword>
+              <ProtectURL>False</ProtectURL>
+              <ProtectNotes>False</ProtectNotes>
+          </MemoryProtection>
+          <CustomIcons/>
+          <RecycleBinEnabled>True</RecycleBinEnabled>
+          <RecycleBinUUID>AAAAAAAAAAAAAAAAAAAAAA==</RecycleBinUUID>
+          <RecycleBinChanged>${creationDate}</RecycleBinChanged>
+          <EntryTemplatesGroup>AAAAAAAAAAAAAAAAAAAAAA==</EntryTemplatesGroup>
+          <EntryTemplatesGroupChanged>${creationDate}</EntryTemplatesGroupChanged>
+          <LastSelectedGroup>AAAAAAAAAAAAAAAAAAAAAA==</LastSelectedGroup>
+          <LastTopVisibleGroup>AAAAAAAAAAAAAAAAAAAAAA==</LastTopVisibleGroup>
+          <HistoryMaxItems>10</HistoryMaxItems>
+          <HistoryMaxSize>6291456</HistoryMaxSize>
+          <Binaries/>
+          <CustomData/>
+      </Meta>
+      <Root>
+          <Group>
+              <UUID>${base64RandomUuid()}</UUID>
+              <Name>Root</Name>
+              <Notes/>
+              <IconID>48</IconID>
+              <Times>
+                  <LastModificationTime>${creationDate}</LastModificationTime>
+                  <CreationTime>${creationDate}</CreationTime>
+                  <LastAccessTime>${creationDate}</LastAccessTime>
+                  <ExpiryTime>${creationDate}</ExpiryTime>
+                  <Expires>False</Expires>
+                  <UsageCount>0</UsageCount>
+                  <LocationChanged>${creationDate}</LocationChanged>
+              </Times>
+              <IsExpanded>True</IsExpanded>
+              <DefaultAutoTypeSequence/>
+              <EnableAutoType>True</EnableAutoType>
+              <EnableSearching>True</EnableSearching>
+              <LastTopVisibleEntry>AAAAAAAAAAAAAAAAAAAAAA==</LastTopVisibleEntry>
+          </Group>
+          <DeletedObjects/>
+      </Root>
+  </KeePassFile>""")
+}
+
+private interface KdbxEncryption {
+  val key: ByteArray
+
+  fun decrypt(encryptedText: ByteArray): ByteArray
+
+  fun encrypt(decryptedText: ByteArray): ByteArray
+}
+
+private val SALSA20_IV = DatatypeConverter.parseHexBinary("E830094B97205D2A")
+
+private fun createSalsa20(key: ByteArray): Salsa20Engine {
+  val keyParameter = KeyParameter(sha256MessageDigest().digest(key))
+  val engine = Salsa20Engine()
+  engine.init(true, ParametersWithIV(keyParameter, SALSA20_IV))
+  return engine
+}
+
+/**
+ * Salsa20 doesn't quite fit the KeePass memory model - all encrypted items have to be en/decrypted in order of encryption, i.e. in document order and at the same time.
+ */
+private class Salsa20Encryption(override val key: ByteArray) : KdbxEncryption {
+  private val salsa20 = createSalsa20(key)
+
+  override fun decrypt(encryptedText: ByteArray): ByteArray {
+    val output = ByteArray(encryptedText.size)
+    salsa20.processBytes(encryptedText, 0, encryptedText.size, output, 0)
+    return output
+  }
+
+  override fun encrypt(decryptedText: ByteArray): ByteArray {
+    val output = ByteArray(decryptedText.size)
+    salsa20.processBytes(decryptedText, 0, decryptedText.size, output, 0)
+    return output
+  }
 }

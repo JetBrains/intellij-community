@@ -57,7 +57,7 @@ internal class FileCredentialStore(keyToValue: Map<CredentialAttributes, Credent
       db = KeePassDatabase()
       val group = db.rootGroup.getOrCreateGroup(GROUP_NAME)
       for ((attributes, credentials) in keyToValue) {
-        val entry = db.newEntry(attributes.serviceName)
+        val entry = db.createEntry(attributes.serviceName)
         entry.userName = credentials.user
         entry.password = credentials.password
         group.addEntry(entry)
@@ -102,7 +102,7 @@ internal class FileCredentialStore(keyToValue: Map<CredentialAttributes, Credent
 
   fun clear() {
     db.rootGroup.removeGroup(GROUP_NAME)
-    needToSave.set(true)
+    needToSave.set(db.isDirty)
   }
 
   @Suppress("OverridingDeprecatedMember")
@@ -122,18 +122,16 @@ internal class FileCredentialStore(keyToValue: Map<CredentialAttributes, Credent
   }
 
   override fun get(attributes: CredentialAttributes): Credentials? {
-    val group = db.rootGroup.getGroup(GROUP_NAME) ?: return null
-    val entry = group.getEntry { it.title == attributes.serviceName && (it.userName == attributes.accountName || attributes.accountName == null) } ?: return null
+    val entry = db.rootGroup.getGroup(GROUP_NAME)?.getEntry(attributes.serviceName, attributes.accountName) ?: return null
     return Credentials(entry.userName, entry.password)
   }
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
-    val group = db.rootGroup.getOrCreateGroup(GROUP_NAME)
     if (credentials == null) {
-      group.removeEntry(attributes.serviceName, attributes.accountName)
+      db.rootGroup.getGroup(GROUP_NAME)?.removeEntry(attributes.serviceName, attributes.accountName)
     }
     else {
-      group.getOrCreateEntry(attributes.serviceName, attributes.accountName).password = credentials.password
+      db.rootGroup.getOrCreateGroup(GROUP_NAME).getOrCreateEntry(attributes.serviceName, attributes.accountName).password = credentials.password
     }
 
     if (db.isDirty) {

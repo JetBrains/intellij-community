@@ -28,7 +28,12 @@ internal fun toOldKeyAsIdentity(hash: ByteArray) = CredentialAttributes("Intelli
 
 internal fun toOldKey(requestor: Class<*>, accountName: String) = CredentialAttributes("IntelliJ Platform", toOldKey(MessageDigest.getInstance("SHA-256").digest("${requestor.name}/$accountName".toByteArray())))
 
-fun joinData(user: String?, password: String?) = "${StringUtil.escapeChars(user.orEmpty(), '\\', '@')}@$password"
+fun joinData(user: String?, password: String?): String? {
+  if (user == null && password == null) {
+    return null
+  }
+  return "${StringUtil.escapeChars(user.orEmpty(), '\\', '@')}${if (password == null) "" else "@$password"}"
+}
 
 fun splitData(data: String?): Credentials? {
   if (data.isNullOrEmpty()) {
@@ -73,3 +78,8 @@ private fun parseString(data: String, delimiter: Char): List<String> {
 }
 
 fun Credentials?.isFulfilled() = this != null && user != null && password != null
+
+fun Credentials?.isEmpty() = this == null || (user == null && password == null)
+
+// check isEmpty before
+fun Credentials.serialize() = joinData(user, password)!!.toByteArray()
