@@ -2,7 +2,8 @@ package com.intellij.credentialStore
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
-class CredentialTest {
+
+class CredentialSerializeTest {
   @Test
   fun join() {
     test("foo", "pass", "foo@pass")
@@ -18,7 +19,13 @@ class CredentialTest {
     test("", "pass", "@pass")
   }
 
-  private fun test(u: String, p: String, joined: String) {
+  @Test
+  fun nullPassword() {
+    test("foo", null, "foo")
+    test(null, "foo@", "@foo@")
+  }
+
+  private fun test(u: String?, p: String?, joined: String) {
     assertThat(joinData(u, p)).isEqualTo(joined)
     assertThat(splitData(joined)).isEqualTo(Credentials(u, p))
   }

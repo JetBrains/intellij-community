@@ -1,61 +1,36 @@
 package com.intellij.credentialStore.kdbx
 
 import com.intellij.util.containers.Stack
-import org.linguafranca.pwdb.kdbx.dom.DomHelper.*
-import org.w3c.dom.Element
+import com.intellij.util.getOrCreate
+import org.jdom.Element
 import java.util.*
 
-private val mandatoryGroupElements: Map<String, ValueCreator> = mapOf (
-    UUID_ELEMENT_NAME to UuidValueCreator(),
-    NAME_ELEMENT_NAME to ConstantValueCreator(""),
-    NOTES_ELEMENT_NAME to ConstantValueCreator(""),
-    ICON_ELEMENT_NAME to ConstantValueCreator("2"),
-    TIMES_ELEMENT_NAME to ConstantValueCreator(""),
-    LAST_MODIFICATION_TIME_ELEMENT_NAME to DateValueCreator(),
-    CREATION_TIME_ELEMENT_NAME to DateValueCreator(),
-    LAST_ACCESS_TIME_ELEMENT_NAME to DateValueCreator(),
-    EXPIRY_TIME_ELEMENT_NAME to DateValueCreator(),
-    EXPIRES_ELEMENT_NAME to ConstantValueCreator("False"),
-    USAGE_COUNT_ELEMENT_NAME to ConstantValueCreator("0"),
-    LOCATION_CHANGED to DateValueCreator()
-)
-
-class KdbxGroup(private val element: Element, private val database: KeePassDatabase, isNewGroup: Boolean) {
-  init {
-    if (isNewGroup) {
-      ensureElements(element, mandatoryGroupElements)
-    }
-  }
-
+class KdbxGroup(private val element: Element, private val database: KeePassDatabase) {
   val isRootGroup: Boolean
-    get() = parent != null && (element.parentNode as Element?)?.tagName == "Root"
+    get() = parent != null && element.parentElement?.name == "Root"
 
   var name: String
-    get() = getElementContent(NAME_ELEMENT_NAME, element)!!
+    get() = element.getChildText(NAME_ELEMENT_NAME)
     set(value) {
-      setElementContent(NAME_ELEMENT_NAME, element, value)
+      element.getOrCreate(NAME_ELEMENT_NAME).text = value
       database.isDirty = true
     }
 
   val uuid: UUID
-    get() = uuidFromBase64(getElementContent(UUID_ELEMENT_NAME, element)!!)
+    get() = uuidFromBase64(element.getChildText(UUID_ELEMENT_NAME))
 
   @Suppress("ConvertLambdaToReference")
   var icon: Icon?
-    get() = getElement(ICON_ELEMENT_NAME, element, false)?.let { DomIconWrapper(it) }
+    get() = element.getChild(ICON_ELEMENT_NAME)?.let { DomIconWrapper(it) }
     set(value) {
-      setElementContent(ICON_ELEMENT_NAME, element, icon!!.index.toString())
+      element.getOrCreate(ICON_ELEMENT_NAME).text = value!!.index.toString()
       database.isDirty = true
     }
 
   val parent: KdbxGroup?
     get() {
-      val parent = element.parentNode as Element? ?: return null
-      // if the element is the root group there is no parent
-      if (element === element.ownerDocument.documentElement.getElementsByTagName(GROUP_ELEMENT_NAME).item(0)) {
-        return null
-      }
-      return KdbxGroup(parent, database, false)
+      val parent = element.parentElement ?: return null
+      return if (isRootGroup) null else KdbxGroup(parent, database)
     }
 
   fun addGroup(group: KdbxGroup): KdbxGroup {
@@ -65,14 +40,15 @@ class KdbxGroup(private val element: Element, private val database: KeePassDatab
 
     // skip if this is a new group with no parent
     group.parent?.removeGroup(group)
-    element.appendChild(group.element)
-    touchElement("Times/LocationChanged", group.element)
+    element.addContent(group.element)
+
+    group.element.getOrCreate("Times").getOrCreate("LocationChanged").text = formattedNow()
     database.isDirty = true
     return group
   }
 
   fun removeGroup(group: KdbxGroup): KdbxGroup {
-    element.removeChild(group.element)
+    element.removeContent(group.element)
     database.isDirty = true
     return group
   }
@@ -85,14 +61,14 @@ class KdbxGroup(private val element: Element, private val database: KeePassDatab
 
   fun getOrCreateGroup(name: String) = getGroup(name) ?: createGroup(name)
 
-  fun createGroup(name: String) = addGroup(database.newGroup(name))
+  fun createGroup(name: String) = addGroup(database.createGroup(name))
 
-  val entries: List<Entry>
-    get() = getElements(ENTRY_ELEMENT_NAME, this.element).map { KdbxEntry(it, database, false) }
+  val entries: List<KdbxEntry>
+    get() = element.getChildren(ENTRY_ELEMENT_NAME).map { KdbxEntry(it, database) }
 
   private inline fun getGroup(matcher: (KdbxGroup) -> Boolean): KdbxGroup? {
-    for (groupElement in getElements(GROUP_ELEMENT_NAME, this.element)) {
-      val item = KdbxGroup(groupElement, database, false)
+    for (groupElement in element.getChildren(GROUP_ELEMENT_NAME)) {
+      val item = KdbxGroup(groupElement, database)
       if (matcher(item)) {
         return item
       }
@@ -100,9 +76,9 @@ class KdbxGroup(private val element: Element, private val database: KeePassDatab
     return null
   }
 
-  fun getEntry(matcher: (entry: Entry) -> Boolean): Entry? {
-    for (entryElement in getElements(ENTRY_ELEMENT_NAME, element)) {
-      val entry = KdbxEntry(entryElement, database, false)
+  fun getEntry(matcher: (entry: KdbxEntry) -> Boolean): KdbxEntry? {
+    for (entryElement in element.getChildren(ENTRY_ELEMENT_NAME)) {
+      val entry = KdbxEntry(entryElement, database)
       if (matcher(entry)) {
         return entry
       }
@@ -112,27 +88,26 @@ class KdbxGroup(private val element: Element, private val database: KeePassDatab
   }
 
   fun addEntry(entry: KdbxEntry): KdbxEntry {
-    if (entry.parent != null) {
-      entry.element.parentNode.removeChild(element)
+    entry.element.parentElement?.let {
+      it.removeContent(entry.element)
     }
-    element.appendChild(entry.element)
+    element.addContent(entry.element)
     database.isDirty = true
     return entry
   }
 
-  fun removeEntry(entry: Entry): Entry {
-    element.removeChild((entry as KdbxEntry).element)
+  fun removeEntry(entry: KdbxEntry): KdbxEntry {
+    element.removeContent(entry.element)
     database.isDirty = true
     return entry
   }
 
   fun getEntry(title: String, userName: String?) = getEntry { it.title == title && (it.userName == userName || userName == null) }
 
-  fun getOrCreateEntry(title: String, userName: String?): Entry {
+  fun getOrCreateEntry(title: String, userName: String?): KdbxEntry {
     var entry = getEntry(title, userName)
     if (entry == null) {
-      entry = database.newEntry()
-      entry.title = title
+      entry = database.createEntry(title)
       entry.userName = userName
       addEntry(entry)
     }
