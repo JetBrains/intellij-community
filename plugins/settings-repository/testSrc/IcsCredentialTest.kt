@@ -22,11 +22,11 @@ internal class IcsCredentialTest {
     return JGitCredentialsProvider(lazyOf(credentialsStore), FileRepositoryBuilder().setBare().setGitDir(File("/tmp/fake")).build())
   }
 
-  private fun createFileStore() = IcsCredentialsStoreWrapper()
+  private fun createStore() = IcsCredentialsStore()
 
   @Test
   fun explicitSpecifiedInURL() {
-    val credentialsStore = createFileStore()
+    val credentialsStore = createStore()
     val username = CredentialItem.Username()
     val password = CredentialItem.Password()
     val uri = URIish("https://develar:bike@github.com/develar/settings-repository.git")
@@ -34,17 +34,30 @@ internal class IcsCredentialTest {
     assertThat(username.value).isEqualTo("develar")
     assertThat(String(password.value!!)).isEqualTo("bike")
     // ensure that credentials store was not used
-    assertThat(credentialsStore.get(uri.host)).isNull()
+    assertThat(credentialsStore.get(uri.host, null, null)).isNull()
   }
 
   @Test
   fun gitCredentialHelper() {
-    val credentialStore = createFileStore()
-    credentialStore.set("bitbucket.org", Credentials("develar", "bike"))
+    val credentialStore = createStore()
+    credentialStore.set("bitbucket.org", null, Credentials("develar", "bike"))
 
     val username = CredentialItem.Username()
     val password = CredentialItem.Password()
     val uri = URIish("https://develar@bitbucket.org/develar/test-ics.git")
+    assertThat(createProvider(credentialStore).get(uri, username, password)).isTrue()
+    assertThat(username.value).isEqualTo("develar")
+    assertThat(String(password.value!!)).isNotEmpty()
+  }
+
+  @Test
+  fun userByServiceName() {
+    val credentialStore = createStore()
+    credentialStore.set("bitbucket.org", null, Credentials("develar", "bike"))
+
+    val username = CredentialItem.Username()
+    val password = CredentialItem.Password()
+    val uri = URIish("https://bitbucket.org/develar/test-ics.git")
     assertThat(createProvider(credentialStore).get(uri, username, password)).isTrue()
     assertThat(username.value).isEqualTo("develar")
     assertThat(String(password.value!!)).isNotEmpty()

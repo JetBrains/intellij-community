@@ -15,23 +15,24 @@
  */
 package com.intellij.ide.passwordSafe;
 
-import com.intellij.credentialStore.CredentialAttributes;
 import com.intellij.credentialStore.CredentialStore;
 import com.intellij.credentialStore.Credentials;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.credentialStore.CredentialAttributesKt.CredentialAttributes;
+
 public interface PasswordStorage extends CredentialStore {
   @Deprecated
   @Nullable
   default String getPassword(@NotNull Class<?> requestor, @NotNull String accountName) {
-    return getPassword(createAttributes(requestor, accountName));
+    return getPassword(CredentialAttributes(requestor, accountName));
   }
 
   @Deprecated
   default void setPassword(@NotNull Class<?> requestor, @NotNull String accountName, @Nullable String value) {
-    set(createAttributes(requestor, accountName), new Credentials(accountName, value));
+    set(CredentialAttributes(requestor, accountName), new Credentials(accountName, value));
   }
 
   /**
@@ -58,10 +59,5 @@ public interface PasswordStorage extends CredentialStore {
   default String getPassword(@SuppressWarnings("UnusedParameters") @Nullable Project project, @NotNull Class requestor, @NotNull String key) {
     //noinspection deprecation
     return getPassword(requestor, key);
-  }
-
-  @NotNull
-  static CredentialAttributes createAttributes(@NotNull Class<?> requestor, @NotNull String accountName) {
-    return new CredentialAttributes(requestor.getName(), accountName);
   }
 }

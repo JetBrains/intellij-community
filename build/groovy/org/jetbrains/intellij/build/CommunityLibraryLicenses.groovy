@@ -78,6 +78,8 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.html"),
     new LibraryLicense(name: "bouncy-castle", version: "1.48", license: "MIT License", url: "http://bouncycastle.org",
                        licenseUrl: "http://bouncycastle.org/licence.html"),
+    new LibraryLicense(name: "bouncy-castle-provider", version: "1.55", license: "MIT License", url: "http://bouncycastle.org",
+                       licenseUrl: "http://bouncycastle.org/licence.html"),
     new LibraryLicense(name: "CGLib", libraryName: "CGLIB", version: "2.2.2", license: "Apache", url: "http://cglib.sourceforge.net/",
                        licenseUrl: "http://www.apache.org/foundation/licence-FAQ.html"),
     new LibraryLicense(name: "classworlds", libraryName: "classworlds-1.1.jar", version: "1.1", license: "codehaus",

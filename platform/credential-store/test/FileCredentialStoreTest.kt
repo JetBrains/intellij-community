@@ -25,12 +25,14 @@ import java.util.*
 
 private const val TEST_SERVICE_NAME = "IntelliJ Platform Test"
 
+// part of specific tests in the IcsCredentialTest
 class FileCredentialStoreTest {
+  // we don't use in memory fs to check real file io
   private val tempDirManager = TemporaryDirectory()
 
-    @Rule
-    @JvmField
-    val ruleChain = RuleChain(tempDirManager)
+  @Rule
+  @JvmField
+  val ruleChain = RuleChain(tempDirManager)
 
   @Test
   fun many() {
@@ -49,13 +51,11 @@ class FileCredentialStoreTest {
 
     provider.deleteFileStorage()
 
-    val pdbFile = baseDir.resolve("pdb")
+    val pdbFile = baseDir.resolve("c.kdbx")
     val pdbPwdFile = baseDir.resolve("pdb.pwd")
-    val pdbPwdTmpFile = baseDir.resolve("pdb.pwd.tmp")
 
     assertThat(pdbFile).doesNotExist()
     assertThat(pdbPwdFile).doesNotExist()
-    assertThat(pdbPwdTmpFile).doesNotExist()
   }
 
   @Test
@@ -71,15 +71,13 @@ class FileCredentialStoreTest {
 
     assertThat(baseDir).doesNotExist()
 
-    val pdbFile = baseDir.resolve("pdb")
+    val pdbFile = baseDir.resolve("c.kdbx")
     val pdbPwdFile = baseDir.resolve("pdb.pwd")
-    val pdbPwdTmpFile = baseDir.resolve("pdb.pwd.tmp")
 
     provider.save()
 
     assertThat(pdbFile).isRegularFile()
     assertThat(pdbPwdFile).isRegularFile()
-    assertThat(pdbPwdTmpFile).doesNotExist()
 
     val amAttributes = CredentialAttributes(TEST_SERVICE_NAME, "am")
     provider.setPassword(amAttributes, "pass2")
@@ -94,7 +92,6 @@ class FileCredentialStoreTest {
 
     assertThat(pdbFile).isRegularFile()
     assertThat(pdbPwdFile).isRegularFile()
-    assertThat(pdbPwdTmpFile).doesNotExist()
 
     provider = FileCredentialStore(baseDirectory = baseDir)
 
@@ -106,14 +103,9 @@ class FileCredentialStoreTest {
 
     provider.save()
 
-    assertThat(pdbFile).doesNotExist()
-    assertThat(pdbPwdFile).doesNotExist()
-    assertThat(pdbPwdTmpFile).doesNotExist()
-
     provider.deleteFileStorage()
 
     assertThat(pdbFile).doesNotExist()
     assertThat(pdbPwdFile).doesNotExist()
-    assertThat(pdbPwdTmpFile).doesNotExist()
   }
 }

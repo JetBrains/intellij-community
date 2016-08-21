@@ -17,7 +17,6 @@ package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.StateStorageManagerImpl
 import com.intellij.configurationStore.StreamProvider
-import com.intellij.credentialStore.macOs.isMacOsCredentialStoreSupported
 import com.intellij.ide.ApplicationLoadListener
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
@@ -30,7 +29,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SingleAlarm
-import com.intellij.util.SystemProperties
 import com.intellij.util.exists
 import com.intellij.util.move
 import org.jetbrains.settingsRepository.git.GitRepositoryManager
@@ -50,14 +48,7 @@ val icsManager by lazy(LazyThreadSafetyMode.NONE) {
 }
 
 class IcsManager(dir: Path) {
-  val credentialsStore = lazy {
-    if (isMacOsCredentialStoreSupported && SystemProperties.getBooleanProperty("use.mac.keychain", true)) {
-      catchAndLog {
-        return@lazy IcsMacOsCredentialsStore("IntelliJ Platform Settings Repository")
-      }
-    }
-    IcsCredentialsStoreWrapper()
-  }
+  val credentialsStore = lazy { IcsCredentialsStore() }
 
   val settingsFile: Path = dir.resolve("config.json")
 
