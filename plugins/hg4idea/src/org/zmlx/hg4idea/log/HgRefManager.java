@@ -33,9 +33,9 @@ import java.util.Comparator;
 import java.util.List;
 
 public class HgRefManager implements VcsLogRefManager {
-  private static final Color CLOSED_BRANCH_COLOR = new JBColor(new Color(0xee7f8a), new Color(0xee7f8a).darker());
-  private static final Color LOCAL_TAG_COLOR = JBColor.CYAN;
-  private static final Color MQ_TAG_COLOR = new JBColor(new Color(0x1764ff), new Color(0x1764ff).darker());
+  private static final Color CLOSED_BRANCH_COLOR = new JBColor(new Color(0x823139), new Color(0xff5f6f));
+  private static final Color LOCAL_TAG_COLOR = new JBColor(new Color(0x009090), new Color(0x00f3f3));
+  private static final Color MQ_TAG_COLOR = new JBColor(new Color(0x002f90), new Color(0x0055ff));
 
   public static final VcsRefType TIP = new SimpleRefType(true, VcsLogStandardColors.Refs.TIP);
   public static final VcsRefType HEAD = new SimpleRefType(true, VcsLogStandardColors.Refs.LEAF);

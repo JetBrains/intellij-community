@@ -40,7 +40,6 @@ import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.render.TagIcon;
-import com.intellij.vcs.log.ui.render.TagLabelPainter;
 import com.intellij.vcs.log.ui.render.TextLabelPainter;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
@@ -506,7 +505,7 @@ class CommitPanel extends JBPanel {
         for (VcsRef reference : typeAndRefs.getValue()) {
           Icon icon = null;
           if (index == 0) {
-            Color color = TagLabelPainter.getTagColor(type);
+            Color color = type.getBackgroundColor();
             icon = new TagIcon(height, getBackground(),
                                typeAndRefs.getValue().size() > 1 ? new Color[]{color, color} : new Color[]{color});
           }
