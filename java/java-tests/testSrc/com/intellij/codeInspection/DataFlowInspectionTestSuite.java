@@ -31,6 +31,7 @@ public class DataFlowInspectionTestSuite {
     suite.addTestSuite(DataFlowInspection8Test.class);
     suite.addTestSuite(DataFlowInspectionAncientTest.class);
     suite.addTestSuite(ContractCheckTest.class);
+    suite.addTestSuite(HardcodedContractsTest.class);
 
     suite.addTestSuite(ContractInferenceFromSourceTest.class);
     suite.addTestSuite(NullityInferenceFromSourceTestCase.DfaInferenceTest.class);
