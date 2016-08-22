@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
 import com.intellij.openapi.vcs.annotate.TextAnnotationPresentation;
@@ -131,7 +132,7 @@ public class AnnotationFieldGutter implements ActiveAnnotationGutter {
   }
 
   public void gutterClosed() {
-    myAnnotation.unregister();
+    ProjectLevelVcsManager.getInstance(myAnnotation.getProject()).getAnnotationLocalChangesListener().unregisterAnnotation(myAnnotation.getFile(), myAnnotation);
     myAnnotation.dispose();
   }
 

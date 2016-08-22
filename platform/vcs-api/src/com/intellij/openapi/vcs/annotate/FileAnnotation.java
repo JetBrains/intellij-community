@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.annotate;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -35,6 +34,10 @@ public abstract class FileAnnotation {
 
   protected FileAnnotation(Project project) {
     myProject = project;
+  }
+
+  public Project getProject() {
+    return myProject;
   }
 
   /**
@@ -132,8 +135,4 @@ public abstract class FileAnnotation {
   }
 
   public abstract VirtualFile getFile();
-
-  public void unregister() {
-    ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener().unregisterAnnotation(getFile(), this);
-  }
 }
