@@ -185,6 +185,12 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
           }
 
           JSlider slider = new JSlider(SwingConstants.VERTICAL, 1, modifiers.length, 1);
+          slider.addChangeListener(val -> {
+            final String modifier = modifiers[slider.getValue() - 1];
+            setter.consume(modifier);
+            setText(getPresentableText(modifier));
+            fireStateChanged();
+          });
           slider.setLabelTable(sliderLabels);
           slider.putClientProperty(UIUtil.JSLIDER_ISFILLED, Boolean.TRUE);
           slider.setPreferredSize(JBUI.size(150, modifiers.length * 25));
@@ -193,17 +199,9 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
           slider.setValue(ArrayUtil.find(modifiers, visibilityProducer.produce()) + 1);
           final JBPopup popup = JBPopupFactory.getInstance()
             .createComponentPopupBuilder(slider, null)
+            .setTitle("Effective Visibility")
             .setCancelOnClickOutside(true)
             .createPopup();
-          popup.addListener(new JBPopupAdapter() {
-            @Override
-            public void onClosed(LightweightWindowEvent event) {
-              final String modifier = modifiers[slider.getValue() - 1];
-              setter.consume(modifier);
-              setText(getPresentableText(modifier));
-              fireStateChanged();
-            }
-          });
           popup.show(new RelativePoint(MyLabel.this, new Point(getWidth(), 0)));
           return true;
         }

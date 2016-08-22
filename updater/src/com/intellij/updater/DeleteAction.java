@@ -44,7 +44,10 @@ public class DeleteAction extends PatchAction {
 
   @Override
   protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException {
-    Utils.delete(toFile);
+    //NOTE: a folder can be deleted only in case if it does not contain any user's files/folders.
+    if (!toFile.isDirectory() || (toFile.listFiles() != null && toFile.listFiles().length == 0)) {
+      Utils.delete(toFile);
+    }
   }
 
   @Override

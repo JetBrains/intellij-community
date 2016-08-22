@@ -22,8 +22,12 @@ public class CreateAction extends PatchAction {
     Runner.logger.info("building PatchFile");
     patchOutput.putNextEntry(new ZipEntry(myPath));
     if (!newerFile.isDirectory()) {
-      writeExecutableFlag(patchOutput, newerFile);
-      Utils.copyFileToStream(newerFile, patchOutput);
+      if (Utils.isLink(newerFile)) {
+        writeLinkInfo(newerFile, patchOutput);
+      } else {
+        writeExecutableFlag(patchOutput, newerFile);
+        Utils.copyFileToStream(newerFile, patchOutput);
+      }
     }
 
     patchOutput.closeEntry();
@@ -64,9 +68,14 @@ public class CreateAction extends PatchAction {
     } else {
       InputStream in = Utils.findEntryInputStreamForEntry(patchFile, entry);
       try {
-        boolean executable = readExecutableFlag(in);
-        Utils.copyStreamToFile(in, toFile);
-        Utils.setExecutable(toFile, executable);
+        int filePermissions = in.read();
+        if (filePermissions > 1 ) {
+          Utils.createLink(readLinkInfo(in, filePermissions), toFile);
+        }
+        else {
+          Utils.copyStreamToFile(in, toFile);
+          Utils.setExecutable(toFile, filePermissions == 1 );
+        }
       }
       finally {
         in.close();
