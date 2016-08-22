@@ -38,6 +38,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 @State(name = "EntryPointsManager")
@@ -109,7 +110,7 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
 
           @Override
           protected void doOKAction() {
-            final List<ClassPattern> patterns = entryPointsManagerBase.getPatterns();
+            final LinkedHashSet<ClassPattern> patterns = entryPointsManagerBase.getPatterns();
             patterns.clear();
             patterns.addAll(list);
             super.doOKAction();

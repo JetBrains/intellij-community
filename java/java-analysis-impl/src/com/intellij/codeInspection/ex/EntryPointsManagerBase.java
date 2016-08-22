@@ -74,7 +74,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   }
   public JDOMExternalizableStringList ADDITIONAL_ANNOTATIONS = new JDOMExternalizableStringList();
   private final Map<String, SmartRefElementPointer> myPersistentEntryPoints;
-  private final List<ClassPattern> myPatterns = new ArrayList<>();
+  private final LinkedHashSet<ClassPattern> myPatterns = new LinkedHashSet<>();
   private final Set<RefElement> myTemporaryEntryPoints;
   private static final String VERSION = "2.0";
   @NonNls private static final String VERSION_ATTR = "version";
@@ -220,7 +220,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   public void addEntryPoint(@NotNull RefElement newEntryPoint, boolean isPersistent) {
     if (!newEntryPoint.isValid()) return;
     if (isPersistent) {
-      if (newEntryPoint instanceof RefMethod && ((RefMethod)newEntryPoint).isConstructor() || newEntryPoint instanceof RefClass) {
+      if (newEntryPoint instanceof RefImplicitConstructor || newEntryPoint instanceof RefClass) {
         final ClassPattern classPattern = new ClassPattern();
         classPattern.pattern = new SmartRefElementPointerImpl(newEntryPoint, true).getFQName();
         getPatterns().add(classPattern);
@@ -473,7 +473,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     return false;
   }
 
-  public List<ClassPattern> getPatterns() {
+  public LinkedHashSet<ClassPattern> getPatterns() {
     return myPatterns;
   }
 
