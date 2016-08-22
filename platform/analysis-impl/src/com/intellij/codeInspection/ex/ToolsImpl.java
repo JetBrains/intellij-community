@@ -262,6 +262,16 @@ public class ToolsImpl implements Tools {
     return myDefaultState;
   }
 
+  public void setDefaultEnabled(boolean isEnabled) {
+    getDefaultState().setEnabled(isEnabled);
+    if (isEnabled) {
+      setEnabled(true);
+    }
+    else {
+      disableWholeToolIfCan();
+    }
+  }
+
   public void removeScope(int scopeIdx) {
     if (myTools != null && scopeIdx >= 0 && myTools.size() > scopeIdx) {
       myTools.remove(scopeIdx);
@@ -409,6 +419,7 @@ public class ToolsImpl implements Tools {
           state.setEnabled(false);
         }
       }
+      disableWholeToolIfCan();
     }
   }
 
@@ -519,5 +530,19 @@ public class ToolsImpl implements Tools {
   @Nullable
   public List<ScopeToolState> getNonDefaultTools() {
     return myTools;
+  }
+
+  private void disableWholeToolIfCan() {
+    if (myDefaultState.isEnabled()) {
+      return;
+    }
+    if (myTools != null) {
+      for (ScopeToolState tool : myTools) {
+        if (tool.isEnabled()) {
+          return;
+        }
+      }
+    }
+    setEnabled(false);
   }
 }
