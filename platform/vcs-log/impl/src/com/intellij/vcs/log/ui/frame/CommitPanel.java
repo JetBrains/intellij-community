@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.ui.frame;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,7 +34,6 @@ import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.render.VcsRefPainter;
 import com.intellij.vcs.log.util.VcsUserUtil;
@@ -80,9 +78,6 @@ class CommitPanel extends JBPanel {
 
     add(myReferencesPanel);
     add(myDataPanel);
-  }
-
-  public void setDataPack() {
   }
 
   public void setCommit(@NotNull VcsFullCommitDetails commitData) {
@@ -188,6 +183,7 @@ class CommitPanel extends JBPanel {
       setBorder(JBUI.Borders.empty(BOTTOM_BORDER, ReferencesPanel.H_GAP, 0, 0));
       customizeLinks();
     }
+
     @Override
     public void hyperlinkUpdate(HyperlinkEvent e) {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && LINK_HREF.equals(e.getDescription())) {
