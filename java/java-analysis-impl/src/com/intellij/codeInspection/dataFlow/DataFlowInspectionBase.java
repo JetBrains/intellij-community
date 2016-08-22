@@ -90,6 +90,9 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     if (TREAT_UNKNOWN_MEMBERS_AS_NULLABLE) {
       node.addContent(new Element("option").setAttribute("name", "TREAT_UNKNOWN_MEMBERS_AS_NULLABLE").setAttribute("value", "true"));
     }
+    if (!REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER) {
+      node.addContent(new Element("option").setAttribute("name", "REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER").setAttribute("value", "false"));
+    }
   }
 
   @Override
