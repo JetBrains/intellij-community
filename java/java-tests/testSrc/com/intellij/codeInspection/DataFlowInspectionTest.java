@@ -43,6 +43,8 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testNullableAnonymousVolatileNotNull() throws Throwable { doTest(); }
   public void testLocalClass() throws Throwable { doTest(); }
 
+  public void testNotNullOnSuperParameter() { doTest(); }
+
   public void testFieldInAnonymous() throws Throwable { doTest(); }
   public void testFieldInitializerInAnonymous() throws Throwable { doTest(); }
   public void testNullableField() throws Throwable { doTest(); }
