@@ -31,9 +31,8 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
-import com.intellij.codeInspection.unusedParameters.UnusedParametersInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.diagnostic.AttachmentFactory;
@@ -656,8 +655,8 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   public void registerFixesForUnusedParameter(@NotNull PsiParameter parameter, @NotNull Object highlightInfo) {
     Project myProject = parameter.getProject();
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
-    UnusedDeclarationInspection unusedParametersInspection =
-      (UnusedDeclarationInspection)profile.getUnwrappedTool(UnusedSymbolLocalInspectionBase.SHORT_NAME, parameter);
+    UnusedDeclarationInspectionBase unusedParametersInspection =
+      (UnusedDeclarationInspectionBase)profile.getUnwrappedTool(UnusedSymbolLocalInspectionBase.SHORT_NAME, parameter);
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || unusedParametersInspection != null);
     List<IntentionAction> options = new ArrayList<>();
     HighlightDisplayKey myUnusedSymbolKey = HighlightDisplayKey.find(UnusedSymbolLocalInspectionBase.SHORT_NAME);
