@@ -60,17 +60,14 @@ class DetailsPanel extends JPanel implements EditorColorsListener {
   @NotNull private final JBLoadingPanel myLoadingPanel;
   @NotNull private final VcsLogColorManager myColorManager;
 
-  @NotNull private VisiblePack myDataPack;
   @NotNull private List<Integer> mySelection = ContainerUtil.emptyList();
   @NotNull private Set<VcsFullCommitDetails> myCommitDetails = Collections.emptySet();
 
   DetailsPanel(@NotNull VcsLogData logData,
                @NotNull VcsLogColorManager colorManager,
-               @NotNull VisiblePack initialDataPack,
                @NotNull Disposable parent) {
     myLogData = logData;
     myColorManager = colorManager;
-    myDataPack = initialDataPack;
 
     myScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     myScrollPane.getVerticalScrollBar().setUnitIncrement(JBUI.scale(10));
@@ -153,15 +150,6 @@ class DetailsPanel extends JPanel implements EditorColorsListener {
     graphTable.getSelectionModel().addListSelectionListener(new CommitSelectionListenerForDetails(graphTable));
   }
 
-  void updateDataPack(@NotNull VisiblePack dataPack) {
-    myDataPack = dataPack;
-
-    for (int i = 0; i < mySelection.size(); i++) {
-      CommitPanel commitPanel = getCommitPanel(i);
-      commitPanel.setDataPack(dataPack);
-    }
-  }
-
   public void branchesChanged() {
     for (int i = 0; i < mySelection.size(); i++) {
       CommitPanel commitPanel = getCommitPanel(i);
@@ -181,7 +169,7 @@ class DetailsPanel extends JPanel implements EditorColorsListener {
       if (i > 0) {
         myMainContentPanel.add(new SeparatorComponent(0, OnePixelDivider.BACKGROUND, null));
       }
-      myMainContentPanel.add(new CommitPanel(myLogData, myColorManager, myDataPack));
+      myMainContentPanel.add(new CommitPanel(myLogData, myColorManager));
     }
 
     // clear superfluous items

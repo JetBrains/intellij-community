@@ -83,7 +83,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myGraphTable = new VcsLogGraphTable(ui, logData, initialDataPack);
     myBranchesPanel = new BranchesPanel(logData, ui, initialDataPack.getRefs());
     setBranchesPanelVisible(uiProperties.isShowBranchesPanel());
-    myDetailsPanel = new DetailsPanel(logData, ui.getColorManager(), initialDataPack, this);
+    myDetailsPanel = new DetailsPanel(logData, ui.getColorManager(), this);
 
     myChangesBrowser = new RepositoryChangesBrowser(project, null, Collections.<Change>emptyList(), null);
     myChangesBrowser.getViewerScrollPane().setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
@@ -154,7 +154,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
    */
   public void updateDataPack(@NotNull VisiblePack dataPack, boolean permGraphChanged) {
     myFilterUi.updateDataPack(dataPack);
-    myDetailsPanel.updateDataPack(dataPack);
     myGraphTable.updateDataPack(dataPack, permGraphChanged);
     myBranchesPanel.updateDataPack(dataPack, permGraphChanged);
   }

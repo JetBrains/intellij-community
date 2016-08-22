@@ -68,13 +68,11 @@ class CommitPanel extends JBPanel {
   @NotNull private final ReferencesPanel myReferencesPanel;
   @NotNull private final DataPanel myDataPanel;
 
-  @NotNull private VisiblePack myDataPack;
   @Nullable private VcsFullCommitDetails myCommit;
 
-  public CommitPanel(@NotNull VcsLogData logData, @NotNull VcsLogColorManager colorManager, @NotNull VisiblePack dataPack) {
+  public CommitPanel(@NotNull VcsLogData logData, @NotNull VcsLogColorManager colorManager) {
     myLogData = logData;
     myColorManager = colorManager;
-    myDataPack = dataPack;
 
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     setOpaque(false);
@@ -86,8 +84,7 @@ class CommitPanel extends JBPanel {
     add(myDataPanel);
   }
 
-  public void setDataPack(@NotNull VisiblePack visiblePack) {
-    myDataPack = visiblePack;
+  public void setDataPack() {
   }
 
   public void setCommit(@NotNull VcsFullCommitDetails commitData) {
