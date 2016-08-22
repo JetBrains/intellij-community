@@ -94,18 +94,11 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
 
     editor.getGutter().closeAllAnnotations();
 
-    fileAnnotation.setCloser(new Runnable() {
-      @Override
-      public void run() {
+    fileAnnotation.setCloser(() -> {
+      UIUtil.invokeLaterIfNeeded(() -> {
         if (project.isDisposed()) return;
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            if (project.isDisposed()) return;
-            editor.getGutter().closeAllAnnotations();
-          }
-        });
-      }
+        editor.getGutter().closeAllAnnotations();
+      });
     });
 
 
