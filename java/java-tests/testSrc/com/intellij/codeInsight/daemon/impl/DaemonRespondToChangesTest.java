@@ -613,7 +613,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     Document document = getEditor().getDocument();
     List<LineMarkerInfo> markers = DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject());
-    assertEquals(3, markers.size());
+    assertEquals(markers.toString(), 3, markers.size());
 
     PsiElement element = ((PsiJavaFile)myFile).getClasses()[0].findMethodsByName("f", false)[0].getReturnTypeElement().getNextSibling();
     assertEquals("   ", element.getText());
@@ -622,7 +622,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     highlightErrors();
     markers = DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject());
-    assertEquals(3, markers.size());
+    assertEquals(markers.toString(), 3, markers.size());
   }
 
   private static void commentLine() {
