@@ -63,20 +63,8 @@ public class HgAnnotation extends FileAnnotation {
   }
 
   @Override
-  @Nullable
-  public AnnotationSourceSwitcher getAnnotationSourceSwitcher() {
-    return null;
-  }
-
-  @Override
   public int getLineCount() {
     return myLines.size();
-  }
-
-  @Override
-  @Nullable
-  public VcsRevisionNumber originalRevision(int lineNumber) {
-    return getLineRevisionNumber(lineNumber);
   }
 
   @Override
@@ -151,11 +139,6 @@ public class HgAnnotation extends FileAnnotation {
     List<VcsFileRevision> result = new LinkedList<>();
     result.addAll(myFileRevisions);
     return result;
-  }
-
-  @Override
-  public boolean revisionsNotEmpty() {
-    return true;
   }
 
   @Nullable

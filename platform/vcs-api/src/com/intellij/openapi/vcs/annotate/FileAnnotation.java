@@ -15,124 +15,175 @@
  */
 package com.intellij.openapi.vcs.annotate;
 
+import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 import java.util.List;
 
 /**
- * A provider of file annotations related to VCS
+ * Represents annotations ("vcs blame") for some file in a specific revision
+ * @see AnnotationProvider
  */
 public abstract class FileAnnotation {
-  private final Project myProject;
+  @NotNull private final Project myProject;
+
   private Runnable myCloser;
 
-  protected FileAnnotation(Project project) {
+  protected FileAnnotation(@NotNull Project project) {
     myProject = project;
   }
 
+  @NotNull
   public Project getProject() {
     return myProject;
   }
 
-  /**
-   * This method is invoked when the annotation provider is no
-   * more used by UI.
-   */
-  public abstract void dispose();
+  @Nullable
+  public VcsKey getVcsKey() {
+    return null;
+  }
 
   /**
-   * Get annotation aspects. The typical aspects are revision
-   * number, date, author. The aspects are displayed each
-   * in own column in the returned order.
-   *
-   * @return annotation aspects
-   */
-  public abstract LineAnnotationAspect[] getAspects();
-
-  /**
-   * <p>The tooltip that is shown over annotation.
-   * Typically this is a comment associated with commit that has added or modified the line.</p>
-   *
-   * <p>If the method returns null, the tooltip is not shown for this line.</p>
-   *
-   * @param lineNumber the line number
-   * @return the tooltip text
+   * @return annotated file
+   * <p>
+   * If annotations are called on a local file, it can be this file.
+   * If annotations are called on a specific revision, it can be corresponding {@link VcsVirtualFile}.
+   * Note: file content might differ from content in annotated revision {@link #getAnnotatedContent}.
    */
   @Nullable
-  public abstract String getToolTip(int lineNumber);
+  public VirtualFile getFile() {
+    return null;
+  }
 
   /**
-   * @return the text of the annotated file
+   * @return file content in the annotated revision
+   * <p>
+   * It might differ from {@code getFile()} content. Ex: annotations for a local file, that has non-committed changes.
+   * In this case {@link UpToDateLineNumberProvider} will be used to transfer lines between local and annotated revisions.
    */
+  @Nullable
   public abstract String getAnnotatedContent();
 
-  /**
-   * Get revision number for the line.
-   * when "show merge sources" is turned on, returns merge source revision
-   *
-   * @param lineNumber the line number
-   * @return the revision number or null for lines that contain uncommitted changes.
-   */
-  @Nullable
-  public abstract VcsRevisionNumber getLineRevisionNumber(int lineNumber);
-
-  @Nullable
-  public abstract Date getLineDate(int lineNumber);
 
   /**
-   * Get revision number for the line.
-   */
-  @Nullable
-  public abstract VcsRevisionNumber originalRevision(int lineNumber);
-
-  /**
-   * @return current revision of file for the moment when annotation was computed;
-   * null if provider does not provide this information
-   *
-   * ! needed for automatic annotation close when file current revision changes
+   * @return annotated revision
+   * <p>
+   * This information might be used to close annotations on local file if current revision was changed,
+   * and invocation of AnnotationProvider on this file will produce different results - see {@link #isBaseRevisionChanged}.
    */
   @Nullable
   public abstract VcsRevisionNumber getCurrentRevision();
 
   /**
-   * Get all revisions that are mentioned in the annotations.
-   * order: from newest to oldest
-   *
-   * @return the list of revisions that are mentioned in annotations. Or null
-   *   if before/after popups cannot be suported by the VCS system.
+   * @param number current revision number {@link DiffProvider#getCurrentRevision}
+   * @return whether annotations should be updated
+   */
+  public boolean isBaseRevisionChanged(@NotNull VcsRevisionNumber number) {
+    final VcsRevisionNumber currentRevision = getCurrentRevision();
+    return currentRevision != null && !currentRevision.equals(number);
+  }
+
+
+  /**
+   * This method is invoked when the file annotation is no longer used.
+   * NB: method might be invoked multiple times
+   */
+  public abstract void dispose();
+
+  /**
+   * Get annotation aspects.
+   * The typical aspects are revision number, date, author.
+   * The aspects are displayed each in own column in the returned order.
+   */
+  @NotNull
+  public abstract LineAnnotationAspect[] getAspects();
+
+
+  /**
+   * @return number of lines in annotated content
+   */
+  public abstract int getLineCount();
+
+  /**
+   * The tooltip that is shown over annotation.
+   * Typically, this is a detailed info about related revision. ex: long revision number, commit message
+   */
+  @Nullable
+  public abstract String getToolTip(int lineNumber);
+
+  /**
+   * @return last revision that modified this line.
+   */
+  @Nullable
+  public abstract VcsRevisionNumber getLineRevisionNumber(int lineNumber);
+
+  /**
+   * @return time of the last modification of this line.
+   * Typically, this is a timestamp associated with {@link #getLineRevisionNumber}
+   */
+  @Nullable
+  public abstract Date getLineDate(int lineNumber);
+
+
+  /**
+   * @return revisions that are mentioned in the annotations, from newest to oldest
+   * Can be used to sort revisions, if they can't be sorted by {@code Date} or show file modification number for a revision.
    */
   @Nullable
   public abstract List<VcsFileRevision> getRevisions();
 
-  public abstract boolean revisionsNotEmpty();
 
+  /**
+   * Allows to switch between different representation modes.
+   * <p>
+   * Ex: in SVN it's possible to show revision that modified line - "svn blame -g",
+   * or the commit that merged that change into current branch - "svn blame".
+   * <p>
+   * when "show merge sources" is turned on, {@link #getLineRevisionNumber} returns merge source revision,
+   * while {@link #originalRevision} returns merge revision.
+   */
   @Nullable
-  public abstract AnnotationSourceSwitcher getAnnotationSourceSwitcher();
-  
-  public abstract int getLineCount();
+  public AnnotationSourceSwitcher getAnnotationSourceSwitcher() {
+    return null;
+  }
 
+  /**
+   * @return last revision that modified this line in current branch.
+   * @see #getAnnotationSourceSwitcher()
+   * @see #getLineRevisionNumber(int)
+   */
+  @Nullable
+  public VcsRevisionNumber originalRevision(int lineNumber) {
+    return getLineRevisionNumber(lineNumber);
+  }
+
+
+  /**
+   * Notify that annotations should be closed
+   */
   public final void close() {
     myCloser.run();
   }
 
-  public void setCloser(Runnable closer) {
+  /**
+   * @see #close()
+   */
+  public final void setCloser(@NotNull Runnable closer) {
     myCloser = closer;
   }
 
-  public VcsKey getVcsKey() {
-    return null;
-  }
 
-  public boolean isBaseRevisionChanged(final VcsRevisionNumber number) {
-    final VcsRevisionNumber currentRevision = getCurrentRevision();
-    return currentRevision != null && ! currentRevision.equals(number);
+  @Deprecated
+  public boolean revisionsNotEmpty() {
+    return true;
   }
-
-  public abstract VirtualFile getFile();
 }

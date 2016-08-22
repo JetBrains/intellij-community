@@ -17,7 +17,10 @@ package git4idea.annotate;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vcs.annotate.*;
+import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
+import com.intellij.openapi.vcs.annotate.LineAnnotationAspectAdapter;
+import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -120,16 +123,6 @@ public class GitFileAnnotation extends FileAnnotation {
   }
 
   @Override
-  public boolean revisionsNotEmpty() {
-    return !myRevisions.isEmpty();
-  }
-
-  @Override
-  public AnnotationSourceSwitcher getAnnotationSourceSwitcher() {
-    return null;
-  }
-
-  @Override
   public int getLineCount() {
     return myLines.size();
   }
@@ -152,14 +145,6 @@ public class GitFileAnnotation extends FileAnnotation {
       return null;
     }
     return myLines.get(lineNumber).getDate();
-  }
-
-  /**
-   * Get revision number for the line.
-   */
-  @Override
-  public VcsRevisionNumber originalRevision(int lineNumber) {
-    return getLineRevisionNumber(lineNumber);
   }
 
   public int getNumLines() {

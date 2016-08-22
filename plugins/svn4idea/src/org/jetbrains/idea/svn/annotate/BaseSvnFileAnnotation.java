@@ -184,10 +184,6 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
     return result;
   }
 
-  public boolean revisionsNotEmpty() {
-    return ! myRevisionMap.isEmpty();
-  }
-
   @Nullable
   public AnnotationSourceSwitcher getAnnotationSourceSwitcher() {
     if (! myShowMergeSources) return null;
