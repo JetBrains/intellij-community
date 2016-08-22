@@ -142,10 +142,6 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
   protected void appendQualifiedName(StringBuffer buf, RefEntity refEntity) {
     if (refEntity == null) return;
-    if (Comparing.strEqual(refEntity.getName(), refEntity.getQualifiedName())) {
-      buf.append(refEntity.getName());
-      return;
-    }
 
     String qName = "";
 
@@ -165,6 +161,10 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
       }
 
       qName = name + qName;
+      if (Comparing.strEqual(refEntity.getName(), refEntity.getQualifiedName())) {
+        buf.append(qName);
+        return;
+      }
       refEntity = refEntity.getOwner();
     }
 
