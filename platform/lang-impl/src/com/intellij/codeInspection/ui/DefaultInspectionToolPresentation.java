@@ -578,6 +578,10 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   public void updateContent() {
     myContents.clear();
     myModulesProblems.clear();
+    updateProblemElements();
+  }
+
+  protected void updateProblemElements() {
     final Set<RefEntity> elements = getProblemElements().keySet();
     for (RefEntity element : elements) {
       if (getContext().getUIOptions().FILTER_RESOLVED_ITEMS && getIgnoredElements().containsKey(element)) continue;

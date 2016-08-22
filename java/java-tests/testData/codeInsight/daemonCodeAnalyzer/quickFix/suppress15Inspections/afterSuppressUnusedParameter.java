@@ -1,6 +1,6 @@
 // "Suppress for parameter" "true"
 public class Test {
-  private void run(@SuppressWarnings("UnusedParameters") String s<caret>ss) {
+  private void run(@SuppressWarnings("unused") String sss) {
   }
 
   public static void main(String[] args) {

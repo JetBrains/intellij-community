@@ -164,7 +164,10 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
   @Override
   @Nullable
   public String getHint(@NotNull final QuickFix fix) {
-    return ((AcceptSuggested)fix).getHint();
+    if (fix instanceof AcceptSuggested) {
+      return ((AcceptSuggested)fix).getHint();
+    }
+    return null;
   }
 
   @Override

@@ -436,6 +436,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
         }
       }
     });
+    updateProblemElements();
   }
 
   @PsiModifier.ModifierConstant
@@ -464,7 +465,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     return PsiModifier.PUBLIC;
   }
 
-  private static boolean compareVisibilities(RefJavaElement listOwner, UnusedSymbolLocalInspectionBase localInspectionTool) {
+  protected static boolean compareVisibilities(RefJavaElement listOwner, UnusedSymbolLocalInspectionBase localInspectionTool) {
     final String visibility = getAcceptedVisibility(localInspectionTool, listOwner);
     if (visibility != null) {
       while (listOwner != null) {
@@ -485,7 +486,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   @Override
   public boolean hasReportedProblems() {
-    return !myContents.isEmpty();
+    return !myContents.isEmpty() || super.hasReportedProblems();
   }
 
   @Override
@@ -544,6 +545,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       if (COMMENT.equals(hint)) {
         return new CommentOutFix(((ProblemDescriptor)descriptor).getPsiElement());
       }
+      return super.findQuickFixes(descriptor, hint);
     }
     return null;
   }

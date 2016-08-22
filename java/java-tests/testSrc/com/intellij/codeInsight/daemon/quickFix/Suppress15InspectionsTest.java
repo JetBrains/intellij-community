@@ -32,7 +32,7 @@ public class Suppress15InspectionsTest extends LightQuickFixParameterizedTestCas
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    enableInspectionTools(new UnusedParametersInspection(), new UnusedDeclarationInspection());
+    enableInspectionTools(new UnusedDeclarationInspection());
   }
 
   @NotNull

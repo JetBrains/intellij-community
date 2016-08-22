@@ -596,9 +596,6 @@
     <globalInspection groupPath="Java" language="JAVA" shortName="CanBeFinal" displayName="Declaration can have final modifier" groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle"
                       enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.canBeFinal.CanBeFinalInspection"/>
-    <globalInspection groupPath="Java" language="JAVA" shortName="UnusedParameters" bundle="messages.InspectionsBundle" key="inspection.unused.parameter.display.name"
-                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
-                      implementationClass="com.intellij.codeInspection.unusedParameters.UnusedParametersInspection"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="SameParameterValue" bundle="messages.InspectionsBundle" key="inspection.same.parameter.display.name"
                       groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection"/>
