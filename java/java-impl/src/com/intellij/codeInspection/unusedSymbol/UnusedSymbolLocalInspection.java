@@ -201,6 +201,7 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
             .createComponentPopupBuilder(slider, null)
             .setTitle("Effective Visibility")
             .setCancelOnClickOutside(true)
+            .setMovable(true)
             .createPopup();
           popup.show(new RelativePoint(MyLabel.this, new Point(getWidth(), 0)));
           return true;
