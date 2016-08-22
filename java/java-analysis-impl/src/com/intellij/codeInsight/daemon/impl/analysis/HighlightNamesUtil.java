@@ -118,8 +118,12 @@ public class HighlightNamesUtil {
       final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)elementToHighlight;
       PsiReferenceParameterList parameterList = referenceElement.getParameterList();
       if (parameterList != null) {
-        final TextRange paramListRange = parameterList.getTextRange();
-        if (paramListRange.getEndOffset() > paramListRange.getStartOffset()) {
+        TextRange paramListRange = parameterList.getTextRange();
+        PsiElement identifier = PsiTreeUtil.skipSiblingsBackward(parameterList, PsiWhiteSpace.class, PsiComment.class); // e.g. " List    <String>";
+        if (identifier != null) {
+          paramListRange = new TextRange(identifier.getTextRange().getEndOffset(), paramListRange.getEndOffset());
+        }
+        if (!paramListRange.isEmpty()) {
           range = new TextRange(range.getStartOffset(), paramListRange.getStartOffset());
         }
       }
@@ -136,7 +140,8 @@ public class HighlightNamesUtil {
     if (attributes != null) {
       builder.textAttributes(attributes);
     }
-    return builder.createUnconditionally();
+    HighlightInfo info = builder.createUnconditionally();
+    return info;
   }
 
   @Nullable
