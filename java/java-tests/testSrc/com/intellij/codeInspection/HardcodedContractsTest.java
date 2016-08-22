@@ -51,6 +51,7 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
                        "}");
     myFixture.addClass("package org.assertj.core.api; public class AbstractObjectAssert<S extends AbstractObjectAssert<S, A>, A> {" +
                        "public S isNotNull() {}" +
+                       "public S describedAs(String s) {}" +
                        "}");
 
     checkHighlighting();
