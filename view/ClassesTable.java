@@ -107,8 +107,8 @@ public class ClassesTable extends JBTable implements DataProvider {
         }
 
         String name = ref.name().toLowerCase();
-        String pattern = myFilteringPattern;
-        return name.contains(pattern) || match(pattern.toLowerCase(), name.substring(name.lastIndexOf('.') + 1));
+        String pattern = myFilteringPattern.toLowerCase();
+        return name.contains(pattern) || match(pattern, name.substring(name.lastIndexOf('.') + 1));
       }
     });
 
