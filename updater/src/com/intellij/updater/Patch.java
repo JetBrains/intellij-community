@@ -238,7 +238,8 @@ public class Patch {
     final File toDir = toBaseDir(rootDir);
     boolean checkWarnings = true;
     while (checkWarnings) {
-      files = Utils.collectRelativePaths(toDir, myIsStrict);
+      //always collect files and folders to avoid cases such as IDEA-152249
+      files = Utils.collectRelativePaths(toDir, true);
       checkWarnings = false;
       for (String file : files) {
         String warning = myWarnings.get(file);
@@ -376,7 +377,8 @@ public class Patch {
     throws IOException, OperationCancelledException {
     Map<String, Long> result = new LinkedHashMap<>();
 
-    LinkedHashSet<String> paths = Utils.collectRelativePaths(dir, myIsStrict);
+    //always collect files and folders to avoid cases such as IDEA-152249
+    LinkedHashSet<String> paths = Utils.collectRelativePaths(dir, true);
     for (String each : paths) {
       if (ignoredFiles.contains(each)) continue;
       ui.setStatus(each);

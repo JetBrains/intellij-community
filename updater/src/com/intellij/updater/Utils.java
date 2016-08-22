@@ -1,6 +1,9 @@
 package com.intellij.updater;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -81,6 +84,21 @@ public class Utils {
     }
   }
 
+  public static boolean isLink(File file) throws IOException {
+    return Files.isSymbolicLink(Paths.get(file.getAbsolutePath()));
+  }
+
+  public static void createLink(String target, File link) throws IOException {
+    if (target == "") {
+      Runner.logger.error("Can't create link for " +  link.getName());
+    } else {
+      if (link.exists()) {
+        delete(link);
+      }
+      Files.createSymbolicLink(Paths.get(link.getAbsolutePath()), Paths.get(target));
+    }
+  }
+
   public static void copy(File from, File to) throws IOException {
     Runner.logger.info("from " + from.getPath() + " to " + to.getPath());
     if (from.isDirectory()) {
@@ -92,14 +110,16 @@ public class Utils {
       }
     }
     else {
-      InputStream in = new BufferedInputStream(new FileInputStream(from));
-      try {
-        copyStreamToFile(in, to);
+      if (! isLink(from)) {
+        InputStream in = new BufferedInputStream(new FileInputStream(from));
+        try {
+          copyStreamToFile(in, to);
+        }
+        finally {
+          in.close();
+        }
+        setExecutable(to, from.canExecute());
       }
-      finally {
-        in.close();
-      }
-      setExecutable(to, from.canExecute());
     }
   }
 
