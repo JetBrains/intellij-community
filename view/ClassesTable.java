@@ -2,9 +2,14 @@ package org.jetbrains.debugger.memory.view;
 
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.containers.FList;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.ReferenceType;
@@ -41,6 +46,7 @@ public class ClassesTable extends JBTable implements DataProvider {
   private boolean myOnlyWithDiff;
   private boolean myOnlyWithInstances;
 
+  private MinusculeMatcher myMatcher = NameUtil.buildMatcher("*").build();
   private String myFilteringPattern = "";
   private ConcurrentHashMap<ReferenceType, DiffValue> myCounts = new ConcurrentHashMap<>();
 
@@ -78,7 +84,20 @@ public class ClassesTable extends JBTable implements DataProvider {
       protected void customizeCellRenderer(JTable table, @Nullable Object value,
                                            boolean isSelected, boolean hasFocus, int row, int column) {
         String presentation = value == null ? "null" : ((ReferenceType) value).name();
-        append(String.format(" %s", presentation), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+
+        append(" ");
+        if (value != null && isSelected) {
+          FList<TextRange> textRanges = myMatcher.matchingFragments(presentation);
+          if(textRanges != null) {
+            SimpleTextAttributes attributes = new SimpleTextAttributes(getBackground(), getForeground(), null,
+                SimpleTextAttributes.STYLE_SEARCH_MATCH);
+            SpeedSearchUtil.appendColoredFragments(this, presentation, textRanges,
+                SimpleTextAttributes.REGULAR_ATTRIBUTES, attributes);
+            return;
+          }
+        }
+
+        append(String.format("%s", presentation), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
     });
 
@@ -101,14 +120,9 @@ public class ClassesTable extends JBTable implements DataProvider {
         int ix = entry.getIdentifier();
         ReferenceType ref = myElems.get(ix);
         DiffValue diff = myCounts.getOrDefault(ref, myUnknownValue);
-        if (myOnlyWithDiff && diff.diff() == 0 ||
-            myOnlyWithInstances && !diff.hasInstance()) {
-          return false;
-        }
+        return !(myOnlyWithDiff && diff.diff() == 0 || myOnlyWithInstances && !diff.hasInstance())
+            && myMatcher.matches(ref.name());
 
-        String name = ref.name().toLowerCase();
-        String pattern = myFilteringPattern.toLowerCase();
-        return name.contains(pattern) || match(pattern, name.substring(name.lastIndexOf('.') + 1));
       }
     });
 
@@ -140,6 +154,7 @@ public class ClassesTable extends JBTable implements DataProvider {
   void setFilterPattern(String pattern) {
     if (!myFilteringPattern.equals(pattern)) {
       myFilteringPattern = pattern;
+      myMatcher = NameUtil.buildMatcher("*" + pattern).build();
       getRowSorter().allRowsChanged();
     }
   }
@@ -182,20 +197,6 @@ public class ClassesTable extends JBTable implements DataProvider {
 
   private void showContent() {
     myModel.show();
-  }
-
-  // TODO: use jb filter
-  private boolean match(String pattern, String value) {
-    int i = 0;
-    int j = 0;
-    while (j < value.length()) {
-      if (i < pattern.length() && value.charAt(j) == pattern.charAt(i)) {
-        i++;
-      }
-      j++;
-    }
-
-    return i == pattern.length();
   }
 
   @Nullable
