@@ -3,7 +3,8 @@ package com.intellij.stats.completion
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.openapi.application.PermanentInstallationID
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.stats.completion.events.*
 import java.util.*
 
@@ -21,7 +22,7 @@ class CompletionFileLoggerProvider(private val logFileManager: LogFileManager) :
     }
 
     override fun newCompletionLogger(): CompletionLogger {
-        val installationUID = PermanentInstallationID.get()
+        val installationUID = UpdateChecker.getInstallationUID(PropertiesComponent.getInstance())
         val completionUID = UUID.randomUUID().toString()
         return CompletionFileLogger(installationUID.shortedUUID(), completionUID.shortedUUID(), logFileManager)
     }
