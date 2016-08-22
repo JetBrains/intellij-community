@@ -128,7 +128,7 @@ public class DataFlowRunner {
       }
 
       if (LOG.isTraceEnabled()) {
-        LOG.debug("Analyzing code block: " + psiBlock.getText());
+        LOG.trace("Analyzing code block: " + psiBlock.getText());
         for (int i = 0; i < myInstructions.length; i++) {
           LOG.trace(i + ": " + myInstructions[i]);
         }
@@ -136,7 +136,7 @@ public class DataFlowRunner {
 
       Integer tooExpensiveHash = psiBlock.getUserData(TOO_EXPENSIVE_HASH);
       if (tooExpensiveHash != null && tooExpensiveHash == psiBlock.getText().hashCode()) {
-        LOG.debug("Too complex because hasn't changed since being too complex already");
+        LOG.trace("Too complex because hasn't changed since being too complex already");
         return RunnerResult.TOO_COMPLEX;
       }
 
@@ -155,7 +155,7 @@ public class DataFlowRunner {
         List<DfaInstructionState> states = queue.getNextInstructionStates(joinInstructions);
         for (DfaInstructionState instructionState : states) {
           if (count++ % 1024 == 0 && measurer.isTimeOver()) {
-            LOG.debug("Too complex because the analysis took too long");
+            LOG.trace("Too complex because the analysis took too long");
             psiBlock.putUserData(TOO_EXPENSIVE_HASH, psiBlock.getText().hashCode());
             return RunnerResult.TOO_COMPLEX;
           }
@@ -176,7 +176,7 @@ public class DataFlowRunner {
               continue;
             }
             if (processed.size() > MAX_STATES_PER_BRANCH) {
-              LOG.debug("Too complex because too many different possible states");
+              LOG.trace("Too complex because too many different possible states");
               return RunnerResult.TOO_COMPLEX; // Too complex :(
             }
             if (loopNumber[branching.getIndex()] != 0) {
