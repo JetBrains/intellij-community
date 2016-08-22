@@ -94,7 +94,10 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
       @Override
       public void actionPerformed(ActionEvent e) {
         final EntryPointsManagerBase entryPointsManagerBase = getInstance(ProjectUtil.guessCurrentProject(configureAnnotations));
-        final ArrayList<ClassPattern> list = new ArrayList<>(entryPointsManagerBase.getPatterns());
+        final ArrayList<ClassPattern> list = new ArrayList<>();
+        for (ClassPattern pattern : entryPointsManagerBase.getPatterns()) {
+          list.add(new ClassPattern(pattern));
+        }
         new DialogWrapper(entryPointsManagerBase.myProject) {
 
           {

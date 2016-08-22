@@ -480,9 +480,16 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   @Tag("pattern")
   public static class ClassPattern {
     @Attribute("value")
-    public String pattern;
+    public String pattern = "";
     @Attribute("hierarchically")
     public boolean hierarchically = false;
+
+    public ClassPattern(ClassPattern classPattern) {
+      hierarchically = classPattern.hierarchically;
+      pattern = classPattern.pattern;
+    }
+
+    public ClassPattern() {}
 
     @Override
     public boolean equals(Object o) {
