@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
@@ -223,7 +224,10 @@ public class ClassInnerStuffCache {
     Map<String, PsiClass> cachedInners = new THashMap<String, PsiClass>();
     for (PsiClass psiClass : classes) {
       String name = psiClass.getName();
-      if (!(psiClass instanceof ExternallyDefinedPsiElement) || !cachedInners.containsKey(name)) {
+      if (name == null) {
+        Logger.getInstance(ClassInnerStuffCache.class).error(psiClass);
+      }
+      else if (!(psiClass instanceof ExternallyDefinedPsiElement) || !cachedInners.containsKey(name)) {
         cachedInners.put(name, psiClass);
       }
     }
