@@ -80,10 +80,10 @@ public class LocalInspectionsPassFactory extends AbstractProjectComponent implem
   }
 
   private static class MyLocalInspectionsPass extends LocalInspectionsPass {
-    private MyLocalInspectionsPass(PsiFile file,
+    private MyLocalInspectionsPass(@NotNull PsiFile file,
                                    Document document,
                                    @NotNull TextRange textRange,
-                                   TextRange visibleRange,
+                                   @NotNull TextRange visibleRange,
                                    @NotNull HighlightInfoProcessor highlightInfoProcessor) {
       super(file, document, textRange.getStartOffset(), textRange.getEndOffset(), visibleRange, true, highlightInfoProcessor);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,11 +30,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
@@ -44,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class InspectionEngine {
@@ -117,11 +117,14 @@ public class InspectionEngine {
                                                                boolean failFastOnAcquireReadAction,
                                                                @NotNull final ProgressIndicator indicator) {
     if (toolWrappers.isEmpty()) return Collections.emptyMap();
-    final List<PsiElement> elements = new ArrayList<>();
+
 
     TextRange range = file.getTextRange();
-    Divider.divideInsideAndOutside(file, range.getStartOffset(), range.getEndOffset(), range, elements, new ArrayList<>(),
-                                   Collections.<PsiElement>emptyList(), Collections.<ProperTextRange>emptyList(), true, Conditions.<PsiFile>alwaysTrue());
+    List<Divider.DividedElements> allDivided = new ArrayList<>();
+    Divider.divideInsideAndOutsideAllRoots(file, range, range, Conditions.alwaysTrue(), new CommonProcessors.CollectProcessor<>(allDivided));
+
+    List<PsiElement> elements = ContainerUtil.concat(
+      (List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> ContainerUtil.concat(d.inside, d.outside, d.parents)));
 
     return inspectElements(toolWrappers, file, iManager, isOnTheFly, failFastOnAcquireReadAction, indicator, elements,
                            calcElementDialectIds(elements));
@@ -141,9 +144,9 @@ public class InspectionEngine {
     final LocalInspectionToolSession session = new LocalInspectionToolSession(file, range.getStartOffset(), range.getEndOffset());
 
     Map<LocalInspectionToolWrapper, Set<String>> toolToSpecifiedDialectIds = getToolsToSpecifiedLanguages(toolWrappers);
-    List<Map.Entry<LocalInspectionToolWrapper, Set<String>>> entries = new ArrayList<>(toolToSpecifiedDialectIds.entrySet());
+    List<Entry<LocalInspectionToolWrapper, Set<String>>> entries = new ArrayList<>(toolToSpecifiedDialectIds.entrySet());
     final Map<String, List<ProblemDescriptor>> resultDescriptors = new ConcurrentHashMap<>();
-    Processor<Map.Entry<LocalInspectionToolWrapper, Set<String>>> processor = entry -> {
+    Processor<Entry<LocalInspectionToolWrapper, Set<String>>> processor = entry -> {
       ProblemsHolder holder = new ProblemsHolder(iManager, file, isOnTheFly);
       final LocalInspectionTool tool = entry.getKey().getTool();
       Set<String> dialectIdsSpecifiedForTool = entry.getValue();
