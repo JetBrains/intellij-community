@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.*;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.memory.component.MemoryViewManager;
 import org.jetbrains.debugger.memory.component.MemoryViewManagerState;
 import org.jetbrains.debugger.memory.event.MemoryViewManagerListener;
+import org.jetbrains.debugger.memory.utils.AndroidUtil;
 import org.jetbrains.debugger.memory.utils.KeyboardUtils;
 import org.jetbrains.debugger.memory.utils.SingleAlarmWithMutableDelay;
 
@@ -31,12 +33,15 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 
 public class ClassesFilteredView extends BorderLayoutPanel {
   private static final Logger LOG = Logger.getInstance(ClassesFilteredView.class);
   private final static double DELAY_BEFORE_INSTANCES_QUERY_COEFFICIENT = 0.5;
+  private final static int DEFAULT_BATCH_SIZE = Integer.MAX_VALUE;
 
   private final Project myProject;
   private final XDebugSession myDebugSession;
@@ -199,17 +204,34 @@ public class ClassesFilteredView extends BorderLayoutPanel {
       }
 
       VirtualMachine vm = classes.get(0).virtualMachine();
-      long start = System.nanoTime();
-      long[] counts = vm.instanceCounts(classes);
-      long delay = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
-      mySingleAlarm.setDelay((int) (DELAY_BEFORE_INSTANCES_QUERY_COEFFICIENT * delay));
+      SwingUtilities.invokeAndWait(() -> myTable.setClasses(classes));
+      int batchSize = AndroidUtil.isAndroidVM(vm)
+          ? AndroidUtil.ANDROID_INSTANCES_COUNT_BATCH_SIZE
+          : DEFAULT_BATCH_SIZE;
 
-      LOG.info(String.format("Instances query time = %d ms. Count = %d", delay, classes.size()));
+      List<long[]> chunks = new SmartList<>();
+      int size = classes.size();
+      for (int begin = 0, end = Math.min(batchSize, size);
+           begin != size && contextIsValid();
+           begin = end, end = Math.min(end + batchSize, size)) {
+        final List<ReferenceType> batch = classes.subList(begin, end);
+
+        long start = System.nanoTime();
+        final long[] counts = vm.instanceCounts(batch);
+        long delay = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
+
+        chunks.add(counts);
+
+        mySingleAlarm.setDelay((int) (DELAY_BEFORE_INSTANCES_QUERY_COEFFICIENT * delay));
+        LOG.info(String.format("Instances query time = %d ms. Count = %d", delay, batch.size()));
+      }
+
+      long[] counts = chunks.size() == 1 ? chunks.get(0) : IntStream.range(0, chunks.size()).boxed()
+          .flatMapToLong(integer -> Arrays.stream(chunks.get(integer)))
+          .toArray();
+
       SwingUtilities.invokeLater(() -> {
-        if (contextIsValid()) {
-          myTable.setClassesAndCounts(classes, counts);
-        }
-
+        myTable.updateInstanceCounts(classes, counts);
         myTable.setBusy(false);
       });
     }

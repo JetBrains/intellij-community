@@ -79,39 +79,9 @@ public class ClassesTable extends JBTable implements DataProvider {
 
     setShowGrid(false);
 
-    setDefaultRenderer(ReferenceType.class, new ColoredTableCellRenderer() {
-      @Override
-      protected void customizeCellRenderer(JTable table, @Nullable Object value,
-                                           boolean isSelected, boolean hasFocus, int row, int column) {
-        String presentation = value == null ? "null" : ((ReferenceType) value).name();
+    setDefaultRenderer(ReferenceType.class, new MyClassTableCellRenderer());
 
-        append(" ");
-        if (value != null && isSelected) {
-          FList<TextRange> textRanges = myMatcher.matchingFragments(presentation);
-          if(textRanges != null) {
-            SimpleTextAttributes attributes = new SimpleTextAttributes(getBackground(), getForeground(), null,
-                SimpleTextAttributes.STYLE_SEARCH_MATCH);
-            SpeedSearchUtil.appendColoredFragments(this, presentation, textRanges,
-                SimpleTextAttributes.REGULAR_ATTRIBUTES, attributes);
-            return;
-          }
-        }
-
-        append(String.format("%s", presentation), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      }
-    });
-
-    setDefaultRenderer(Integer.class, new ColoredTableCellRenderer() {
-      @Override
-      protected void customizeCellRenderer(JTable table, @Nullable Object value,
-                                           boolean selected, boolean hasFocus, int row, int column) {
-        if (value != null) {
-          int val = (Integer) value;
-          append(String.format("%s%d", val > 0 ? "+" : "", val));
-          setTextAlign(SwingConstants.RIGHT);
-        }
-      }
-    });
+    setDefaultRenderer(Long.class, new MyNumberTableCellRenderer());
 
     TableRowSorter<DiffViewTableModel> sorter = new TableRowSorter<>(myModel);
     sorter.setRowFilter(new RowFilter<DiffViewTableModel, Integer>() {
@@ -173,14 +143,11 @@ public class ClassesTable extends JBTable implements DataProvider {
     }
   }
 
-  void setClassesAndCounts(List<ReferenceType> classes, long[] counts) {
+  void setClasses(@NotNull List<ReferenceType> classes) {
     ReferenceType selectedClass = myModel.getSelectedClassBeforeHided();
     final int newSelectedIndex = classes.indexOf(selectedClass);
     myElems = Collections.unmodifiableList(new ArrayList<>(classes));
-    for (int i = 0, size = myElems.size(); i < size; i++) {
-      ReferenceType ref = myElems.get(i);
-      myCounts.put(ref, myCounts.getOrDefault(ref, myUnknownValue).update(counts[i]));
-    }
+    myCounts.values().forEach(DiffValue::makeObsolete);
 
     showContent();
 
@@ -189,6 +156,15 @@ public class ClassesTable extends JBTable implements DataProvider {
       changeSelection(ix,
           DiffViewTableModel.CLASSNAME_COLUMN_INDEX, false, false);
     }
+  }
+
+  void updateInstanceCounts(@NotNull List<ReferenceType> refs, @NotNull long[] counts) {
+    for (int i = 0, size = refs.size(); i < size; i++) {
+      ReferenceType ref = refs.get(i);
+      myCounts.put(ref, myCounts.getOrDefault(ref, myUnknownValue).update(counts[i]));
+    }
+
+    getRowSorter().allRowsChanged();
   }
 
   void hideContent() {
@@ -235,7 +211,7 @@ public class ClassesTable extends JBTable implements DataProvider {
               return myCounts.getOrDefault(myElems.get(ix), myUnknownValue).myCurrentCount;
             }
           },
-          new AbstractTableColumnDescriptor("Diff", Integer.class) {
+          new AbstractTableColumnDescriptor("Diff", Long.class) {
             @Override
             public Object getValue(int ix) {
               return myCounts.getOrDefault(myElems.get(ix), myUnknownValue).diff();
@@ -274,6 +250,18 @@ public class ClassesTable extends JBTable implements DataProvider {
     }
   }
 
+  /**
+   * State transmissions for DiffValue and UnknownDiffValue
+   * unknown -> diff
+   * diff -> diff
+   * diff -> obsolete
+   * obsolete -> diff
+   *
+   * State descriptions:
+   * Unknown - instances count never executed
+   * Diff - actual value
+   * Obsolete - query for updating value is executing right now
+   */
   private static class UnknownDiffValue extends DiffValue {
     UnknownDiffValue() {
       super(0);
@@ -285,14 +273,24 @@ public class ClassesTable extends JBTable implements DataProvider {
     }
 
     @Override
+    boolean isObsolete() {
+      return true;
+    }
+
+    @Override
+    void makeObsolete() {
+    }
+
+    @Override
     DiffValue update(long count) {
-      return new DiffValue(count, count);
+      return new DiffValue(count);
     }
   }
 
   private static class DiffValue {
-    private final long myOldCount;
-    private final long myCurrentCount;
+    private long myOldCount;
+    private long myCurrentCount;
+    private boolean myIsObsolete = false;
 
     DiffValue(long count) {
       this(count, count);
@@ -304,15 +302,75 @@ public class ClassesTable extends JBTable implements DataProvider {
     }
 
     DiffValue update(long count) {
-      return new DiffValue(myCurrentCount, count);
+      myOldCount = myCurrentCount;
+      myIsObsolete = false;
+      myCurrentCount = count;
+      return this;
+    }
+
+    void makeObsolete() {
+      myIsObsolete = true;
+    }
+
+    boolean isObsolete() {
+      return myIsObsolete;
     }
 
     boolean hasInstance() {
       return myCurrentCount > 0;
     }
 
-    int diff() {
-      return (int) (myCurrentCount - myOldCount);
+    long diff() {
+      return myCurrentCount - myOldCount;
+    }
+  }
+
+  private class MyNumberTableCellRenderer extends ColoredTableCellRenderer {
+    @Override
+    protected void customizeCellRenderer(JTable table, @Nullable Object value,
+                                         boolean selected, boolean hasFocus, int row, int column) {
+      int ix = convertRowIndexToModel(row);
+      if(myCounts.getOrDefault(myElems.get(ix), myUnknownValue).isObsolete() || value == null) {
+        return;
+      }
+
+      long val = (long) value;
+      if (column == DiffViewTableModel.COUNT_COLUMN_INDEX) {
+        renderCount(val);
+      } else {
+        renderDiff(val);
+      }
+    }
+
+    private void renderDiff(long diff) {
+      append(String.format("%s%d", diff > 0 ? "+" : "", diff));
+      setTextAlign(SwingConstants.RIGHT);
+    }
+
+    private void renderCount(long count) {
+      append(String.valueOf(count));
+    }
+  }
+
+  private class MyClassTableCellRenderer extends ColoredTableCellRenderer {
+    @Override
+    protected void customizeCellRenderer(JTable table, @Nullable Object value,
+                                         boolean isSelected, boolean hasFocus, int row, int column) {
+      String presentation = value == null ? "null" : ((ReferenceType) value).name();
+
+      append(" ");
+      if (value != null && isSelected) {
+        FList<TextRange> textRanges = myMatcher.matchingFragments(presentation);
+        if (textRanges != null) {
+          SimpleTextAttributes attributes = new SimpleTextAttributes(getBackground(), getForeground(), null,
+              SimpleTextAttributes.STYLE_SEARCH_MATCH);
+          SpeedSearchUtil.appendColoredFragments(this, presentation, textRanges,
+              SimpleTextAttributes.REGULAR_ATTRIBUTES, attributes);
+          return;
+        }
+      }
+
+      append(String.format("%s", presentation), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
   }
 }
