@@ -75,8 +75,9 @@ public class GitBranchUtil {
    */
   @Nullable
   public static GitBranchTrackInfo getTrackInfoForBranch(@NotNull GitRepository repository, @NotNull GitLocalBranch branch) {
+    GitRemoteBranch remoteBranch = branch.findTrackedBranch(repository);
     for (GitBranchTrackInfo trackInfo : repository.getBranchTrackInfos()) {
-      if (trackInfo.getLocalBranch().equals(branch)) {
+      if (trackInfo.getLocalBranch().equals(branch) || trackInfo.getRemoteBranch().equals(remoteBranch)) {
         return trackInfo;
       }
     }
