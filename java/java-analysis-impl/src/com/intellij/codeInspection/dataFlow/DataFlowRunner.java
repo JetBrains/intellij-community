@@ -127,6 +127,13 @@ public class DataFlowRunner {
         }
       }
 
+      if (LOG.isTraceEnabled()) {
+        LOG.debug("Analyzing code block: " + psiBlock.getText());
+        for (int i = 0; i < myInstructions.length; i++) {
+          LOG.trace(i + ": " + myInstructions[i]);
+        }
+      }
+
       Integer tooExpensiveHash = psiBlock.getUserData(TOO_EXPENSIVE_HASH);
       if (tooExpensiveHash != null && tooExpensiveHash == psiBlock.getText().hashCode()) {
         LOG.debug("Too complex because hasn't changed since being too complex already");
@@ -154,6 +161,12 @@ public class DataFlowRunner {
           }
           ProgressManager.checkCanceled();
 
+          if (LOG.isTraceEnabled()) {
+            LOG.trace(instructionState.toString());
+          }
+          // useful for quick debugging by uncommenting and hot-swapping
+          //System.out.println(instructionState.toString());
+
           Instruction instruction = instructionState.getInstruction();
 
           if (instruction instanceof BranchingInstruction) {
@@ -180,7 +193,7 @@ public class DataFlowRunner {
             handleStepOutOfLoop(instruction, nextInstruction, loopNumber, processedStates, incomingStates, states, after, queue);
             if (nextInstruction instanceof BranchingInstruction) {
               BranchingInstruction branching = (BranchingInstruction)nextInstruction;
-              if (processedStates.get(branching).contains(state.getMemoryState()) || 
+              if (processedStates.get(branching).contains(state.getMemoryState()) ||
                   incomingStates.get(branching).contains(state.getMemoryState())) {
                 continue;
               }
@@ -194,6 +207,7 @@ public class DataFlowRunner {
       }
 
       psiBlock.putUserData(TOO_EXPENSIVE_HASH, null);
+      LOG.trace("Analysis ok");
       return RunnerResult.OK;
     }
     catch (ArrayIndexOutOfBoundsException | EmptyStackException e) {

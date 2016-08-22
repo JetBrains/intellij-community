@@ -66,7 +66,7 @@ class UnusedDeclarationClassPatternsTest : LightCodeInsightFixtureTestCase() {
       //add class as entry point
       entryPointsManager.addEntryPoint(refClass!!, true)
       assertSize(1, patterns)
-      assertEquals("Foo", patterns[0].pattern)
+      assertEquals("Foo", patterns.iterator().next().pattern)
       assertEmpty(entryPointsManager.entryPoints)
 
       //remove class entry point with constructors - ensure nothing is left in the entries

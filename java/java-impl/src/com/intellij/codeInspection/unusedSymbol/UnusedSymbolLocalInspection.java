@@ -178,6 +178,7 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
       new ClickListener() {
         @Override
         public boolean onClick(@NotNull MouseEvent e, int clickCount) {
+          if (!isEnabled()) return true;
           @SuppressWarnings("UseOfObsoleteCollectionType")
           Hashtable<Integer, JComponent> sliderLabels = new Hashtable<>();
           for (int i = 0; i < modifiers.length; i++) {
@@ -201,6 +202,7 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
             .createComponentPopupBuilder(slider, null)
             .setTitle("Effective Visibility")
             .setCancelOnClickOutside(true)
+            .setMovable(true)
             .createPopup();
           popup.show(new RelativePoint(MyLabel.this, new Point(getWidth(), 0)));
           return true;
