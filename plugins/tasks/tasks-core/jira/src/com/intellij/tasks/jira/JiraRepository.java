@@ -16,6 +16,7 @@
 package com.intellij.tasks.jira;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
@@ -206,18 +207,30 @@ public class JiraRepository extends BaseRepositoryImpl {
     // when JIRA 4.x support will be dropped 'versionNumber' array in response
     // may be used instead version string parsing
     myJiraVersion = serverInfo.get("version").getAsString();
-    final boolean hostedInCloud = hostEndsWith(serverInfo.get("baseUrl").getAsString(), "atlassian.net");
-    // Legacy JIRA onDemand versions contained "OD" abbreviation
-    myInCloud = StringUtil.notNullize(myJiraVersion).contains("OD") || hostedInCloud;
-    LOG.info("JIRA version (from serverInfo): " + myJiraVersion + (myInCloud ? " (Cloud)" : ""));
+    myInCloud = isHostedInCloud(serverInfo);
+    LOG.info("JIRA version (from serverInfo): " + getPresentableVersion());
     if (isInCloud()) {
-      LOG.info("Connecting to JIRA on-Demand. Cookie authentication is enabled unless 'tasks.jira.basic.auth.only' VM flag is used.");
+      LOG.info("Connecting to JIRA Cloud. Cookie authentication is enabled unless 'tasks.jira.basic.auth.only' VM flag is used.");
     }
     JiraRestApi restApi = JiraRestApi.fromJiraVersion(myJiraVersion, this);
     if (restApi == null) {
       throw new Exception(TaskBundle.message("jira.failure.no.REST"));
     }
     return restApi;
+  }
+
+  private static boolean isHostedInCloud(@NotNull JsonObject serverInfo) {
+    final JsonElement deploymentType = serverInfo.get("deploymentType");
+    if (deploymentType != null) {
+      return deploymentType.getAsString().equals("Cloud");  
+    }
+    // Legacy heuristics 
+    final boolean atlassianSubDomain = hostEndsWith(serverInfo.get("baseUrl").getAsString(), ".atlassian.net");
+    if (atlassianSubDomain) {
+      return true;
+    }
+    // JIRA OnDemand versions contained "OD" abbreviation
+    return serverInfo.get("version").getAsString().contains("OD") ;
   }
 
   private static boolean hostEndsWith(@NotNull String url, @NotNull String suffix) {
@@ -321,6 +334,11 @@ public class JiraRepository extends BaseRepositoryImpl {
     myInCloud = inCloud;
   }
 
+  @NotNull
+  String getPresentableVersion() {
+    return StringUtil.notNullize(myJiraVersion, "unknown") + (myInCloud ? " (Cloud)" : "");
+  }
+  
   private static boolean containsCookie(@NotNull HttpClient client, @NotNull String cookieName) {
     for (Cookie cookie : client.getState().getCookies()) {
       if (cookie.getName().equals(cookieName) && !cookie.isExpired()) {
