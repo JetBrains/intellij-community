@@ -46,6 +46,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -74,7 +75,8 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
 
     ClasspathStorageProvider provider = getProvider(storageType);
     if (provider == null) {
-      if (module.getUserData(ERROR_NOTIFIED_KEY) == null) {
+      if (module.getUserData(ERROR_NOTIFIED_KEY) == null 
+          && !PlatformUtils.isCidr() /* allow forward compatibility for CPP-5908 and OC-13028*/) {
         Notification n = new Notification(StorageUtil.NOTIFICATION_GROUP_ID, "Cannot load module '" + module.getName() + "'",
                                           "Support for " + storageType + " format is not installed.", NotificationType.ERROR);
         n.notify(module.getProject());
