@@ -30,7 +30,6 @@ import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.CaretAdapter;
 import com.intellij.openapi.editor.event.CaretEvent;
-import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -58,7 +57,7 @@ public class SimpleEditorPreview implements PreviewPanel {
 
   private final EditorEx myEditor;
   private final Alarm myBlinkingAlarm;
-  private final List<HighlightData> myHighlightData =  new ArrayList<HighlightData>();
+  private final List<HighlightData> myHighlightData = new ArrayList<>();
 
   private final ColorAndFontOptions myOptions;
 
@@ -79,27 +78,30 @@ public class SimpleEditorPreview implements PreviewPanel {
     myOptions = options;
     myPage = page;
 
-    String text = page.getDemoText();
-
     myHighlightsExtractor = new HighlightsExtractor(page.getAdditionalHighlightingTagToDescriptorMap());
-    String stripped = myHighlightsExtractor.extractHighlights(text, myHighlightData);
-    int selectedLine = -1;
-    myEditor = (EditorEx)FontEditorPreview.createPreviewEditor(stripped, 10, 3, selectedLine, myOptions, false);
+    myEditor = (EditorEx)FontEditorPreview.createPreviewEditor(
+      myHighlightsExtractor.extractHighlights(page.getDemoText(), myHighlightData), // text without tags
+      10, 3, -1, myOptions, false);
 
     FontEditorPreview.installTrafficLights(myEditor);
     myBlinkingAlarm = new Alarm().setActivationComponent(myEditor.getComponent());
     if (navigatable) {
-      addMouseMotionListener(myEditor, page.getHighlighter(), false);
+      myEditor.getContentComponent().addMouseMotionListener(new MouseMotionAdapter() {
+        @Override
+        public void mouseMoved(MouseEvent e) {
+          LogicalPosition pos = myEditor.xyToLogicalPosition(new Point(e.getX(), e.getY()));
+          navigate(myEditor, false, pos, page.getHighlighter(), false);
+        }
+      });
 
-      CaretListener listener = new CaretAdapter() {
+      myEditor.getCaretModel().addCaretListener(new CaretAdapter() {
         @Override
         public void caretPositionChanged(CaretEvent e) {
           if (!myTextIsChanging) {
             navigate(myEditor, true, e.getNewPosition(), page.getHighlighter(), false);
           }
         }
-      };
-      myEditor.getCaretModel().addCaretListener(listener);
+      });
     }
   }
 
@@ -110,26 +112,13 @@ public class SimpleEditorPreview implements PreviewPanel {
   public void setDemoText(final String text) {
     try {
       myTextIsChanging = true;
-      myHighlightData.clear();
-      String stripped = myHighlightsExtractor.extractHighlights(text, myHighlightData);
       myEditor.getSelectionModel().removeSelection();
-      myEditor.getDocument().setText(stripped);
+      myHighlightData.clear();
+      myEditor.getDocument().setText(myHighlightsExtractor.extractHighlights(text, myHighlightData));
     }
     finally {
       myTextIsChanging = false;
     }
-  }
-
-  private void addMouseMotionListener(final Editor view,
-                                      final SyntaxHighlighter highlighter,
-                                      final boolean isBackgroundImportant) {
-    view.getContentComponent().addMouseMotionListener(new MouseMotionAdapter() {
-      @Override
-      public void mouseMoved(MouseEvent e) {
-        LogicalPosition pos = view.xyToLogicalPosition(new Point(e.getX(), e.getY()));
-        navigate(view, false, pos, highlighter, isBackgroundImportant);
-      }
-    });
   }
 
   private void navigate(final Editor editor, boolean select,
