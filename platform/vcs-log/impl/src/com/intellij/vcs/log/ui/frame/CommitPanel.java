@@ -58,8 +58,6 @@ import java.util.List;
 import static com.intellij.openapi.vcs.history.VcsHistoryUtil.getCommitDetailsFont;
 
 class CommitPanel extends JBPanel {
-  private static final Logger LOG = Logger.getInstance("Vcs.Log");
-
   public static final int BOTTOM_BORDER = 2;
 
   @NotNull private final VcsLogData myLogData;
