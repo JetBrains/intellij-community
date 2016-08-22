@@ -16,9 +16,9 @@
 package com.intellij.lexer;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 public class FlexAdapter extends LexerBase {
 
   private static final Logger LOG = Logger.getInstance(FlexAdapter.class);
-  private static final boolean logLexerErrors = SystemProperties.getBooleanProperty("log.flex.adapter.errors", true); // Used by Upsource
 
   private final FlexLexer myFlex;
 
@@ -39,7 +38,6 @@ public class FlexAdapter extends LexerBase {
 
   private int myBufferEnd;
   private int myState;
-  private boolean myInconsistentState;
 
   public FlexAdapter(@NotNull FlexLexer flex) {
     myFlex = flex;
@@ -54,9 +52,8 @@ public class FlexAdapter extends LexerBase {
     myText = buffer;
     myTokenStart = myTokenEnd = startOffset;
     myBufferEnd = endOffset;
-    myFlex.reset(myText, startOffset, endOffset, initialState);    
+    myFlex.reset(myText, startOffset, endOffset, initialState);
     myTokenType = null;
-    myInconsistentState = false;
   }
 
   @Override
@@ -101,29 +98,23 @@ public class FlexAdapter extends LexerBase {
   }
 
   protected void locateToken() {
-    if (myTokenType != null || myInconsistentState) return;
+    if (myTokenType != null) return;
 
     try {
-      myTokenStart = myFlex.getTokenEnd();
+      myTokenStart = myTokenEnd;
       myState = myFlex.yystate();
-      myTokenType = myFlex.advance();
-      myTokenEnd = myFlex.getTokenEnd();
-    }
-    catch (Exception  e) {
-      if (logLexerErrors) {
-        LOG.error(myFlex.getClass().getName(), e);
+      if (myTokenStart < myBufferEnd) {
+        myTokenType = myFlex.advance();
+        myTokenEnd = myFlex.getTokenEnd();
       }
-      myTokenType = TokenType.WHITE_SPACE;
-      myTokenEnd = myBufferEnd;
-      myInconsistentState = true;
     }
-    catch (Error e) {
-      if (logLexerErrors) {
-        LOG.error(myFlex.getClass().getName(), e);
-      }
-      myTokenType = TokenType.WHITE_SPACE;
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      myTokenType = TokenType.BAD_CHARACTER;
       myTokenEnd = myBufferEnd;
-      myInconsistentState = true;
+      LOG.warn(myFlex.getClass().getName(), e);
     }
   }
 }
