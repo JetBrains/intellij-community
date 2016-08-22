@@ -57,9 +57,11 @@ public class JavaNullMethodArgumentUtil {
         }
         if (argumentList != null) {
           final PsiExpression[] arguments = argumentList.getExpressions();
-          final PsiExpression argument = arguments[argumentIdx];
-          if (argument instanceof PsiLiteralExpression && PsiKeyword.NULL.equals(argument.getText())) {
-            return nullArgumentProcessor.process(argument);
+          if (argumentIdx < arguments.length) {
+            final PsiExpression argument = arguments[argumentIdx];
+            if (argument instanceof PsiLiteralExpression && PsiKeyword.NULL.equals(argument.getText())) {
+              return nullArgumentProcessor.process(argument);
+            }
           }
         }
       }
