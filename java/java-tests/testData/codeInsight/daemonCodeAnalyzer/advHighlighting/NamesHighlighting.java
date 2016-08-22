@@ -1,4 +1,5 @@
 import <symbolName descr="null" type="CLASS_NAME">java.io</symbolName>.*; // highlight on demand import as class name
+import <symbolName descr="null" type="CLASS_NAME">java.util</symbolName>.*; // highlight on demand import as class name
 import <symbolName descr="null" type="CLASS_NAME"><symbolName descr="null" type="CLASS_NAME">java</symbolName>.lang</symbolName>/*comment*/.<symbolName descr="null" type="CLASS_NAME">String</symbolName>;
 import static <symbolName descr="null" type="CLASS_NAME">java.io.File</symbolName>.<symbolName descr="null" type="STATIC_FINAL_FIELD">pathSeparator</symbolName>;
 import static <symbolName descr="null" type="CLASS_NAME">java.io.File</symbolName>.*;
@@ -100,5 +101,8 @@ class <symbolName descr="null" type="CLASS_NAME">InheritedSymbolNames</symbolNam
 class <symbolName descr="null" type="CLASS_NAME">Node</symbolName><<symbolName descr="null" type="TYPE_PARAMETER_NAME">E</symbolName>> {
   public class <symbolName descr="null" type="CLASS_NAME">Details</symbolName> {}
 
-  <symbolName descr="null" type="CLASS_NAME">Node</symbolName><? extends <symbolName descr="null" type="CLASS_NAME">String</symbolName>>.<symbolName descr="null" type="CLASS_NAME">Details</symbolName> <symbolName descr="null" type="INSTANCE_FIELD">details</symbolName>;
+  <symbolName descr="null" type="CLASS_NAME">Node</symbolName> /* dd*/ <? extends <symbolName descr="null" type="CLASS_NAME">String</symbolName>>.<symbolName descr="null" type="CLASS_NAME">Details</symbolName> <symbolName descr="null" type="INSTANCE_FIELD">details</symbolName>;
+
+  <symbolName descr="null" type="INTERFACE_NAME">Map</symbolName> < <symbolName descr="null" type="CLASS_NAME">String</symbolName>, /****/ <symbolName descr="null" type="CLASS_NAME">String</symbolName> >
+     <symbolName descr="null" type="INSTANCE_FIELD">map</symbolName> = null;
 }
