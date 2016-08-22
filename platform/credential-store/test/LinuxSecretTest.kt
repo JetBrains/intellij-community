@@ -1,6 +1,7 @@
 package com.intellij.credentialStore.linux
 
 import com.intellij.credentialStore.CredentialAttributes
+import com.intellij.credentialStore.Credentials
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.UsefulTestCase
 import org.assertj.core.api.Assertions.assertThat
@@ -27,10 +28,14 @@ class LinuxSecretTest {
 
     val unicodePassword = "Gr\u00FCnwald"
     store.setPassword(CredentialAttributes(TEST_SERVICE_NAME, "test"), unicodePassword)
-    assertThat(store.get(CredentialAttributes(TEST_SERVICE_NAME, "test"))).isEqualTo(unicodePassword)
+    assertThat(store.getPassword(CredentialAttributes(TEST_SERVICE_NAME, "test"))).isEqualTo(unicodePassword)
 
     val unicodeAttributes = CredentialAttributes(TEST_SERVICE_NAME, unicodePassword)
     store.setPassword(unicodeAttributes, pass)
     assertThat(store.getPassword(unicodeAttributes)).isEqualTo(pass)
+
+    val serviceNameOnlyAttributes = CredentialAttributes("Test IJ - example.com")
+    store.set(serviceNameOnlyAttributes, Credentials("foo", "pass"))
+    assertThat(store.get(serviceNameOnlyAttributes)).isEqualTo(Credentials("foo", "pass"))
   }
 }

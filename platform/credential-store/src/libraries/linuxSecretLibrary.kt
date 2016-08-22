@@ -55,13 +55,20 @@ internal class SecretCredentialStore(schemeName: String) : CredentialStore {
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
     val serviceNamePointer = stringPointer(attributes.serviceName.toByteArray())
-    val accountName = attributes.accountName!!
+    val accountName = attributes.accountName ?: credentials?.user
     if (credentials.isEmpty()) {
       checkError("secret_password_store_sync") { errorRef ->
-        LIBRARY.secret_password_clear_sync(scheme, null, errorRef,
-                                           serviceAttributeNamePointer, serviceNamePointer,
-                                           accountAttributeNamePointer, stringPointer(accountName.toByteArray()),
-                                           null)
+        if (accountName == null) {
+          LIBRARY.secret_password_clear_sync(scheme, null, errorRef,
+                                             serviceAttributeNamePointer, serviceNamePointer,
+                                             null)
+        }
+        else {
+          LIBRARY.secret_password_clear_sync(scheme, null, errorRef,
+                                             serviceAttributeNamePointer, serviceNamePointer,
+                                             accountAttributeNamePointer, stringPointer(accountName.toByteArray()),
+                                             null)
+        }
       }
       return
     }
@@ -69,10 +76,17 @@ internal class SecretCredentialStore(schemeName: String) : CredentialStore {
     val passwordPointer = stringPointer(credentials!!.serialize())
     checkError("secret_password_store_sync") { errorRef ->
       try {
-        LIBRARY.secret_password_store_sync(scheme, null, serviceNamePointer, passwordPointer, null, errorRef,
-                                           serviceAttributeNamePointer, serviceNamePointer,
-                                           accountAttributeNamePointer, stringPointer(accountName.toByteArray()),
-                                           null)
+        if (accountName == null) {
+          LIBRARY.secret_password_store_sync(scheme, null, serviceNamePointer, passwordPointer, null, errorRef,
+                                             serviceAttributeNamePointer, serviceNamePointer,
+                                             null)
+        }
+        else {
+          LIBRARY.secret_password_store_sync(scheme, null, serviceNamePointer, passwordPointer, null, errorRef,
+                                             serviceAttributeNamePointer, serviceNamePointer,
+                                             accountAttributeNamePointer, stringPointer(accountName.toByteArray()),
+                                             null)
+        }
       }
       finally {
         passwordPointer.dispose()
