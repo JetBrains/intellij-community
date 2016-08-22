@@ -96,6 +96,10 @@ public class LayeredIcon extends AbstractSizeAdjustingIcon {
     adjustSize();
   }
 
+  /**
+   *
+   * @param constraint is expected to be one of compass-directions or CENTER
+   */
   public void setIcon(Icon icon, int layer, @MagicConstant(valuesFromClass = SwingConstants.class) int constraint) {
     int width = getIconWidth();
     int height = getIconHeight();
