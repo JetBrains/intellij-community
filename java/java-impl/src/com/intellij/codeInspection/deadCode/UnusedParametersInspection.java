@@ -22,7 +22,7 @@
  * To change template for new class use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
-package com.intellij.codeInspection.unusedParameters;
+package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.FileModificationService;
@@ -55,7 +55,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
+class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
   @Override
   @Nullable
   public CommonProblemDescriptor[] checkElement(@NotNull final RefEntity refEntity,
@@ -103,7 +103,6 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     return null;
   }
 
-  @Override
   protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager, @NotNull final GlobalJavaInspectionContext globalContext,
                                                 @NotNull final ProblemDescriptionsProcessor processor) {
     final Project project = manager.getProject();
@@ -161,8 +160,6 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     return false;
   }
 
-  @Override
-  @Nullable
   public String getHint(@NotNull final QuickFix fix) {
     if (fix instanceof AcceptSuggested) {
       return ((AcceptSuggested)fix).getHint();
@@ -170,20 +167,10 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     return null;
   }
 
-  @Override
+
   @Nullable
   public QuickFix getQuickFix(final String hint) {
     return new AcceptSuggested(null, null, hint);
-  }
-
-  @Override
-  public void compose(@NotNull final StringBuffer buf, @NotNull final RefEntity refEntity, @NotNull final HTMLComposer composer) {
-    if (refEntity instanceof RefMethod) {
-      final RefMethod refMethod = (RefMethod)refEntity;
-      final HTMLJavaHTMLComposer javaComposer = composer.getExtension(HTMLJavaHTMLComposer.COMPOSER);
-      javaComposer.appendDerivedMethods(buf, refMethod);
-      javaComposer.appendSuperMethods(buf, refMethod);
-    }
   }
 
   public static ArrayList<RefParameter> getUnusedParameters(RefMethod refMethod) {
@@ -216,24 +203,6 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
         clearUsedParameters(refOverride, params, checkDeep);
       }
     }
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.unused.parameter.display.name");
-  }
-
-  @Override
-  @NotNull
-  public String getGroupDisplayName() {
-    return GroupNames.DECLARATION_REDUNDANCY;
-  }
-
-  @Override
-  @NotNull
-  public String getShortName() {
-    return UnusedSymbolLocalInspectionBase.UNUSED_PARAMETERS_SHORT_NAME;
   }
 
   private static class AcceptSuggested implements LocalQuickFix {
@@ -304,11 +273,5 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
 
       csp.run();
     }
-  }
-
-  @Nullable
-  @Override
-  public String getAlternativeID() {
-    return UnusedSymbolLocalInspectionBase.UNUSED_ID;
   }
 }

@@ -24,7 +24,6 @@ import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclaration;
-import com.intellij.codeInspection.unusedParameters.UnusedParametersInspection;
 import org.jetbrains.annotations.NotNull;
 
 

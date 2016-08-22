@@ -22,7 +22,6 @@ import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefMethod;
 import com.intellij.codeInspection.reference.RefVisitor;
-import com.intellij.codeInspection.unusedParameters.UnusedParametersInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.ui.components.JBTabbedPane;
@@ -44,6 +43,12 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
   @TestOnly
   public UnusedDeclarationInspection(boolean enabledInEditor) {
     super(enabledInEditor);
+  }
+
+  @Nullable
+  @Override
+  public String getAlternativeID() {
+    return UnusedSymbolLocalInspectionBase.UNUSED_PARAMETERS_SHORT_NAME;
   }
 
   @Override
