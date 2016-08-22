@@ -355,7 +355,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     System.out.println(message + " - "+Thread.currentThread());
   }
 
-  private final BoundedTaskExecutor reDetectExecutor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, 1, this);
+  private final BoundedTaskExecutor reDetectExecutor = new BoundedTaskExecutor("FileTypeManager redetect pool", PooledThreadExecutor.INSTANCE, 1, this);
   private final BlockingQueue<VirtualFile> filesToRedetect = new LinkedBlockingDeque<>();
 
   private void awakeReDetectExecutor() {

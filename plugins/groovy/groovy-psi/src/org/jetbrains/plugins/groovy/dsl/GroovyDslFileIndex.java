@@ -80,7 +80,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   private static final MultiMap<String, LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>>> filesInProcessing =
     new ConcurrentMultiMap<>();
 
-  private static final ExecutorService ourPool = AppExecutorUtil.createBoundedApplicationPoolExecutor(4);
+  private static final ExecutorService ourPool = AppExecutorUtil.createBoundedApplicationPoolExecutor("GroovyDSLIndex pool",4);
 
   private final MyDataIndexer myDataIndexer = new MyDataIndexer();
 

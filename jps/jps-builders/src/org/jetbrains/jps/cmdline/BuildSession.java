@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -649,7 +649,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     private final Semaphore myProcessingEnabled = new Semaphore();
 
     private EventsProcessor() {
-      super(SharedThreadPool.getInstance());
+      super("BuildSession.EventsProcessor.EventsProcessor pool", SharedThreadPool.getInstance());
       myProcessingEnabled.down();
       execute(new Runnable() {
         @Override

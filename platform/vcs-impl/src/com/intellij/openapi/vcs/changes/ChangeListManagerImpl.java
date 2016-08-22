@@ -78,7 +78,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private final UpdateRequestsQueue myUpdater;
 
   private static final AtomicReference<Future> ourUpdateAlarm = new AtomicReference<>();
-  private final ScheduledExecutorService myScheduledExecutorService = AppExecutorUtil.createBoundedScheduledExecutorService(1);
+  private final ScheduledExecutorService myScheduledExecutorService = AppExecutorUtil.createBoundedScheduledExecutorService("ChangeListManagerImpl pool",1);
 
   private final Modifier myModifier;
 

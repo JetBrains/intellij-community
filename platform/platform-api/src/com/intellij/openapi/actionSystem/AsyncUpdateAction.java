@@ -31,7 +31,7 @@ import java.util.concurrent.ExecutorService;
 public abstract class AsyncUpdateAction<T> extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.AsyncUpdateAction");
 
-  private static final ExecutorService ourUpdaterService = AppExecutorUtil.createBoundedApplicationPoolExecutor(1);
+  private static final ExecutorService ourUpdaterService = AppExecutorUtil.createBoundedApplicationPoolExecutor("AsyncUpdateAction pool", 1);
 
   // Async update
   @Override
