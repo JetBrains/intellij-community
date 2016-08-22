@@ -9,16 +9,20 @@ class RealTextValidator {
     
     @Test
     fun test_NegativeIndexToErrChannel() {
-        val file = File("completion_data.txt")
+        val file = getFile("data/completion_data.txt")
         val output = ByteArrayOutputStream()
         val err = ByteArrayOutputStream()
         val separator = SessionsInputSeparator(FileInputStream(file), output, err)
         separator.processInput()
     }
-    
+
+    private fun getFile(path: String): File {
+        return File(javaClass.classLoader.getResource(path).file)
+    }
+
     @Test
     fun test0() {
-        val file = File("0")
+        val file = getFile("data/0")
         val output = ByteArrayOutputStream()
         val err = ByteArrayOutputStream()
         val separator = SessionsInputSeparator(FileInputStream(file), output, err)
@@ -29,7 +33,7 @@ class RealTextValidator {
 
     @Test
     fun testError0() {
-        val file = File("1")
+        val file = getFile("data/1")
         val output = ByteArrayOutputStream()
         val err = ByteArrayOutputStream()
         val separator = SessionsInputSeparator(FileInputStream(file), output, err)
