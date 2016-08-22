@@ -29,6 +29,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.util.SwitchBootJdkAction;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
@@ -37,6 +39,7 @@ import com.intellij.tests.gui.fixtures.IdeFrameFixture;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.ListPopupModel;
+import com.intellij.util.JdkBundle;
 import com.intellij.util.ui.EdtInvocationManager;
 import org.fest.swing.core.BasicRobot;
 import org.fest.swing.core.ComponentFinder;
@@ -66,6 +69,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -168,9 +172,11 @@ public final class GuiTests {
 
     String jdkHome = getSystemPropertyOrEnvironmentVariable(JDK_HOME_FOR_TESTS);
     if (isNullOrEmpty(jdkHome) || !checkForJdk(jdkHome)) {
-      fail("Please specify the path to a valid JDK using system property " + JDK_HOME_FOR_TESTS);
+      //than use bundled JDK
+      jdkHome = getBundledJdLocation();
     }
     final File jdkPath = new File(jdkHome);
+    //TODO: set IDE SDK
 
     //execute(new GuiTask() {
     //  @Override
@@ -241,7 +247,7 @@ public final class GuiTests {
       final MyProjectManagerListener listener = new MyProjectManagerListener();
 
       //[ACCEPT IntelliJ IDEA Privacy Policy Agreement]
-      acceptAgreement(robot);
+      //acceptAgreement(robot);
       //[Complete Installation]
 
       findFrame(new GenericTypeMatcher<Frame>(Frame.class) {
@@ -329,7 +335,7 @@ public final class GuiTests {
             }
           });
         }
-      });;
+      });
     }
     catch (WaitTimedOutError we) {
       System.out.println("Timed out waiting for \"" + policyAgreement + "\" JDialog. Continue...");
@@ -725,5 +731,14 @@ public final class GuiTests {
     else {
       return s;
     }
+  }
+
+  public static String getBundledJdLocation(){
+
+    ArrayList<JdkBundle> bundleList = SwitchBootJdkAction.findJdkPaths().toArrayList();
+    //we believe that Idea has at least one bundled jdk
+    JdkBundle jdkBundle = bundleList.get(0);
+    String homeSubPath = SystemInfo.isMac ? "/Contents/Home" : "";
+    return jdkBundle.getLocation().getAbsolutePath() + homeSubPath;
   }
 }

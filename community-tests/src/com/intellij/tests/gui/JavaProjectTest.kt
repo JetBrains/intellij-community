@@ -15,12 +15,12 @@
  */
 package com.intellij.tests.gui
 
-import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.tests.gui.fixtures.DialogFixtures.CreateDialogFixture
 import com.intellij.tests.gui.fixtures.EditorFixture
 import com.intellij.tests.gui.fixtures.JBPopupFixture
-import com.intellij.tests.gui.fixtures.newProjectWizard.NewProjectWizardFixture
-import com.intellij.tests.gui.framework.*
+import com.intellij.tests.gui.framework.GuiTestCase
+import com.intellij.tests.gui.framework.TestGroup
+import com.intellij.tests.gui.framework.createNewProject
 import org.junit.Ignore
 import org.junit.Test
 import java.io.File
@@ -63,7 +63,7 @@ class JavaProjectTest: GuiTestCase() {
       val node = paneFixture.selectByPath(projectName, "src")
 
       node.invokeContextMenu(robot())
-      val contextMenu = JBPopupFixture.findContextMenu(robot(), ideFrame)
+      val contextMenu = JBPopupFixture.findContextMenu(robot())
       waitForBackgroundTasksToFinish()
       with(contextMenu) {
         assertContainsAction("Cut")

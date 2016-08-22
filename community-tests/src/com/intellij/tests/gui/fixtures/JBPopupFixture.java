@@ -37,18 +37,16 @@ import static org.fest.swing.timing.Pause.pause;
 
 public class JBPopupFixture extends JComponentFixture<JBPopupFixture, JBPopupMenu> {
   private JBPopupMenu myContextMenu;
-  private IdeFrameFixture myIdeFrameFixture;
   private Robot myRobot;
 
-  private JBPopupFixture(JBPopupMenu menu, Robot robot, IdeFrameFixture ideFrameFixture) {
+  private JBPopupFixture(JBPopupMenu menu, Robot robot) {
     super(JBPopupFixture.class, robot, menu);
 
     myContextMenu = menu;
-    myIdeFrameFixture = ideFrameFixture;
     myRobot = robot;
   }
 
-  public static JBPopupFixture findContextMenu(Robot robot, IdeFrameFixture ideFrameFixture) {
+  public static JBPopupFixture findContextMenu(Robot robot) {
 
     pause(new Condition("Find context menu") {
       @Override
@@ -61,7 +59,7 @@ public class JBPopupFixture extends JComponentFixture<JBPopupFixture, JBPopupMen
     final JBPopupMenu contextMenu = robot.finder().findByType(JBPopupMenu.class);
     assertNotNull(contextMenu);
 
-    return new JBPopupFixture(contextMenu, robot, ideFrameFixture);
+    return new JBPopupFixture(contextMenu, robot);
   }
 
   public void assertContainsAction(String actionName) {
@@ -93,7 +91,7 @@ public class JBPopupFixture extends JComponentFixture<JBPopupFixture, JBPopupMen
             robot().click(point, MouseButton.LEFT_BUTTON, 1);
             //invoke action for a new JBPopupMenu
             final String actionName = actionPath[1];
-            final JBPopupFixture fixture = new JBPopupFixture(waitUntilFoundMenu(actionName), myRobot, myIdeFrameFixture);
+            final JBPopupFixture fixture = new JBPopupFixture(waitUntilFoundMenu(actionName), myRobot);
             fixture.invokeAction(ArrayUtil.remove(actionPath, 0));
             return;
           }

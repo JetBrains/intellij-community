@@ -59,7 +59,6 @@ public class JavaEEProjectTest extends GuiTestCase {
     findWelcomeFrame().createNewProject();
     NewProjectWizardFixture newProjectWizard = findNewProjectWizard();
 
-    //check Project SDK is not Empty
     setupJdk(newProjectWizard);
 
     //select project type and framework

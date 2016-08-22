@@ -164,6 +164,8 @@
       <with attribute="implementationClass" implements="com.intellij.internal.statistic.connect.StatisticsService"/>
     </extensionPoint>
 
+    <extensionPoint name="uiDropperActions" interface="com.intellij.internal.inspector.UiDropperActionExtension"/>
+
     <extensionPoint name="productivityFeaturesProvider" interface="com.intellij.featureStatistics.ProductivityFeaturesProvider"/>
 
     <extensionPoint name="fileIconProvider" interface="com.intellij.ide.FileIconProvider"/>

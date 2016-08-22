@@ -51,6 +51,12 @@ public class WelcomeFrameFixture extends ComponentFixture<WelcomeFrameFixture, F
   }
 
   @NotNull
+  public WelcomeFrameFixture checkoutFrom(){
+    findActionLinkByActionId("WelcomeScreen.GetFromVcs").click();
+    return this;
+  }
+
+  @NotNull
   private ActionLinkFixture findActionLinkByActionId(String actionId) {
     return ActionLinkFixture.findByActionId(actionId, robot(), target());
   }

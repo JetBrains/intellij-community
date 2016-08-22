@@ -50,5 +50,6 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="idea-ui" scope="TEST" />
+    <orderEntry type="module" module-name="dvcs-impl" scope="TEST" />
   </component>
 </module>

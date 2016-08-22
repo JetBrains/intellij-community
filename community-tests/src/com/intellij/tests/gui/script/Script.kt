@@ -20,18 +20,16 @@ import com.intellij.tests.gui.fixtures.WelcomeFrameFixture
 import com.intellij.tests.gui.framework.GuiTestCase
 import com.intellij.tests.gui.framework.TestGroup
 import com.intellij.tests.gui.framework.createNewProject
+import com.intellij.tests.gui.script.ScriptInterface
 import org.junit.Assert
-import org.junit.Ignore
-import org.junit.Test
 
 /**
  * Created by karashevich on 18/06/16.
  */
 @BelongsToTestGroups(TestGroup.PROJECT)
-class ZAnotherShortGuiTest: GuiTestCase() {
+class Script: GuiTestCase(), ScriptInterface {
 
-  @Test
-  fun testJavaProject(){
+  override fun script(){
     val createNewProject = createNewProject()
     val newProjectWizard = findNewProjectWizard()
     with(newProjectWizard) {
