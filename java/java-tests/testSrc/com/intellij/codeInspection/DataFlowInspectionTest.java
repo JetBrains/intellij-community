@@ -205,6 +205,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void _testSymmetricUncheckedCast() { doTest(); } // https://youtrack.jetbrains.com/issue/IDEABKL-6871
   public void testNullCheckDoesntAffectUncheckedCast() { doTest(); }
   public void testThrowNull() { doTest(); }
+  public void testThrowNullable() { doTest(); }
 
   public void testExplicitlyNullableLocalVar() { doTest(); }
 

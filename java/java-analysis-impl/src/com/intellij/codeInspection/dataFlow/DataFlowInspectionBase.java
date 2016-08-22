@@ -469,7 +469,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
                            fix);
   }
 
-  private void reportFieldAccessMayProduceNpe(ProblemsHolder holder, PsiElement elementToAssert, PsiExpression expression) {
+  private void reportFieldAccessMayProduceNpe(ProblemsHolder holder, PsiElement elementToAssert, @NotNull PsiExpression expression) {
     if (expression instanceof PsiArrayAccessExpression) {
       LocalQuickFix[] fix = createNPEFixes((PsiExpression)elementToAssert, expression, holder.isOnTheFly());
       holder.registerProblem(expression,
@@ -479,8 +479,11 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     else {
       LocalQuickFix[] fix = createNPEFixes((PsiExpression)elementToAssert, expression, holder.isOnTheFly());
       assert elementToAssert != null;
+      //noinspection ConditionalExpressionWithIdenticalBranches
       holder.registerProblem(elementToAssert,
-                             InspectionsBundle.message("dataflow.message.npe.field.access"),
+                             expression.textMatches("null")
+                             ? InspectionsBundle.message("dataflow.message.npe.field.access.sure")
+                             : InspectionsBundle.message("dataflow.message.npe.field.access"),
                              fix);
     }
   }
