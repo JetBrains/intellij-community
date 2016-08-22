@@ -357,6 +357,10 @@ class TerminalToolWindowPanel extends SimpleToolWindowPanel implements UISetting
 
   @Override
   public void uiSettingsChanged(UISettings source) {
+    updateDFState();
+  }
+
+  private void updateDFState() {
     if (isDfmSupportEnabled()) {
       setDistractionFree(shouldMakeDistractionFree());
     }
@@ -379,6 +383,12 @@ class TerminalToolWindowPanel extends SimpleToolWindowPanel implements UISetting
 
   private boolean shouldMakeDistractionFree() {
     return !myWindow.getAnchor().isHorizontal() && ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled();
+  }
+
+  @Override
+  public void addNotify() {
+    super.addNotify();
+    updateDFState();
   }
 
   private static boolean isDfmSupportEnabled() {
