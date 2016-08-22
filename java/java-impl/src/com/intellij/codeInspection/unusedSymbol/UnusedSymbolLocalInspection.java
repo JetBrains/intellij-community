@@ -178,6 +178,7 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
       new ClickListener() {
         @Override
         public boolean onClick(@NotNull MouseEvent e, int clickCount) {
+          if (!isEnabled()) return true;
           @SuppressWarnings("UseOfObsoleteCollectionType")
           Hashtable<Integer, JComponent> sliderLabels = new Hashtable<>();
           for (int i = 0; i < modifiers.length; i++) {
