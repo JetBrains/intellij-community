@@ -227,6 +227,11 @@ public class RegistryUi implements Disposable {
 
       Collections.sort(myAll, (o1, o2) -> {
         final String key1 = o1.getKey();
+        boolean changed1 = o1.isChangedFromDefault();
+        boolean changed2 = o2.isChangedFromDefault();
+        if (changed1 && !changed2) return -1;
+        if (!changed1 && changed2) return 1;
+
         final String key2 = o2.getKey();
         final int i1 = recent.indexOf(key1);
         final int i2 = recent.indexOf(key2);

@@ -34,6 +34,7 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.ProjectUtilCore;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -141,6 +142,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
   protected void appendQualifiedName(StringBuffer buf, RefEntity refEntity) {
     if (refEntity == null) return;
+
     String qName = "";
 
     while (!(refEntity instanceof RefProject)) {
@@ -159,6 +161,10 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
       }
 
       qName = name + qName;
+      if (Comparing.strEqual(refEntity.getName(), refEntity.getQualifiedName())) {
+        buf.append(qName);
+        return;
+      }
       refEntity = refEntity.getOwner();
     }
 

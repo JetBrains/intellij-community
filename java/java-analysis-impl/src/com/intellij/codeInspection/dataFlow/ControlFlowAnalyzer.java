@@ -21,7 +21,6 @@ import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -740,19 +739,20 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       exception.accept(this);
       CatchDescriptor cd = findNextCatch(false);
       if (cd == null) {
+        addInstruction(new FieldReferenceInstruction(exception, "thrown exception"));
         addInstruction(new ReturnInstruction(true, statement));
         finishElement(statement);
         return;
       }
-      
+
       addConditionalRuntimeThrow();
       addInstruction(new DupInstruction());
       addInstruction(new PushInstruction(myFactory.getConstFactory().getNull(), null));
       addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, myProject));
       ConditionalGotoInstruction gotoInstruction = new ConditionalGotoInstruction(null, true, null);
       addInstruction(gotoInstruction);
-      
-      addInstruction(new PopInstruction());
+
+      addInstruction(new FieldReferenceInstruction(exception, "thrown exception"));
       initException(myNpe, cd);
       addThrowCode(cd, statement);
 

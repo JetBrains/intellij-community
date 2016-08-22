@@ -25,7 +25,6 @@ import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.keymap.impl.MacOSDefaultKeymap;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import gnu.trove.THashMap;
@@ -111,7 +110,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control MINUS",            "CollapseAll", "CollapseRegion"},
     { "control PERIOD",           "EditorChooseLookupItemDot", "CollapseSelection"},
     { "shift DELETE",             "$Cut", "Maven.Uml.Exclude"},
-    { "shift ENTER",              "EditorStartNewLine", "Console.TableResult.EditValueMaximized"},
+    { "shift ENTER",              "EditorStartNewLine", "Console.TableResult.EditValueMaximized", "OpenElementInNewWindow"},
     { "shift F4",                 "Debugger.EditTypeSource", "EditSourceInNewWindow"},
     { "shift F7",                 "PreviousDiff", "SmartStepInto"},
     { "shift TAB",                "PreviousTemplateVariable", "PrevParameter", "EditorUnindentSelection", "PrevTemplateParameter"},
