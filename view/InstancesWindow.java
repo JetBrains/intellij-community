@@ -54,6 +54,7 @@ import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.debugger.memory.utils.AndroidUtil;
 import org.jetbrains.debugger.memory.utils.ErrorsValueGroup;
 import org.jetbrains.debugger.memory.utils.InstanceJavaValue;
 import org.jetbrains.debugger.memory.utils.InstanceValueDescriptor;
@@ -72,6 +73,7 @@ public class InstancesWindow extends DialogWrapper {
   private static final int DEFAULT_WINDOW_HEIGHT = 400;
   private static final int FILTERING_BUTTON_ADDITIONAL_WIDTH = 30;
   private static final int BORDER_LAYOUT_DEFAULT_GAP = 5;
+  private static final int DEFAULT_INSTANCES_COUNT = 0; // All
 
   private final Project myProject;
   private final XDebugSession myDebugSession;
@@ -240,9 +242,19 @@ public class InstancesWindow extends DialogWrapper {
 
         @Override
         public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-          List<ObjectReference> instances = myReferenceType.instances(0);
+          int limit = AndroidUtil.isAndroidVM(myReferenceType.virtualMachine())
+              ? AndroidUtil.ANDROID_INSTANCES_LIMIT
+              : DEFAULT_INSTANCES_COUNT;
+          List<ObjectReference> instances = myReferenceType.instances(limit);
+
           EvaluationContextImpl evaluationContext = debugProcess
               .getDebuggerContext().createEvaluationContext();
+
+          //noinspection StatementWithEmptyBody
+          if (AndroidUtil.isAndroidVM(myReferenceType.virtualMachine())
+              && instances.size() == AndroidUtil.ANDROID_INSTANCES_LIMIT) {
+            // TODO: show warning
+          }
 
           if (evaluationContext != null) {
             synchronized (myFilteringTaskLock) {

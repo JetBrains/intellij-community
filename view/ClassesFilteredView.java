@@ -204,7 +204,7 @@ public class ClassesFilteredView extends BorderLayoutPanel {
 
       VirtualMachine vm = classes.get(0).virtualMachine();
       int batchSize = AndroidUtil.isAndroidVM(vm)
-          ? AndroidUtil.ANDROID_INSTANCES_COUNT_BATCH_SIZE
+          ? AndroidUtil.ANDROID_COUNT_BY_CLASSES_BATCH_SIZE
           : DEFAULT_BATCH_SIZE;
 
       List<long[]> chunks = new SmartList<>();
