@@ -35,7 +35,7 @@ public class StudyTreeStructureProvider implements TreeStructureProvider, DumbAw
         if (node.getValue() instanceof PsiDirectory) {
           final PsiDirectory nodeValue = (PsiDirectory)node.getValue();
           final String name = nodeValue.getName();
-          if (!name.contains(EduNames.USER_TESTS) && !name.startsWith(".") && !"lib".equals(name) && !name.equals("hide")) {
+          if (!name.contains(EduNames.USER_TESTS) && !name.startsWith(".") && !"lib".equals(name)) {
             AbstractTreeNode newNode = createStudyDirectoryNode(settings, project, nodeValue);
             nodes.add(newNode);
           }
@@ -95,7 +95,7 @@ public class StudyTreeStructureProvider implements TreeStructureProvider, DumbAw
     if (course == null) {
       return false;
     }
-    return EduNames.STUDY.equals(course.getCourseMode()) || EduNames.STEPIC_CODE.equals(course.getCourseMode());
+    return EduNames.STUDY.equals(course.getCourseMode());
   }
 
   @Nullable

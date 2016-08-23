@@ -117,6 +117,17 @@ public class StepicConnectorPost {
     }
   }
 
+  public static StepicWrappers.SubmissionContainer postSubmission(StepicWrappers.SubmissionToPostWrapper submissionToPostWrapper) {
+    String requestBody = new Gson().toJson(submissionToPostWrapper);
+    try {
+      return postToStepic(EduStepicNames.SUBMISSIONS, StepicWrappers.SubmissionContainer.class, requestBody);
+    }
+    catch (IOException e) {
+      LOG.warn("Can not post Submission\n" + e.toString());
+      return null;
+    }
+  }
+
   // TODO realise
   public static void postAttempt(@NotNull final Task task) {
     if (task.getStepicId() <= 0) {

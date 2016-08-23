@@ -110,7 +110,24 @@ public class StepicConnectorGet {
     try {
       List<CourseInfo> result = new ArrayList<CourseInfo>();
       int pageNumber = 1;
-      while (addInformaticsCourses(result, pageNumber)) {
+      while (addCoursesFromStepic(result, pageNumber)) {
+        pageNumber += 1;
+      }
+      return result;
+    }
+    catch (IOException e) {
+      LOG.error("Cannot load course list " + e.getMessage());
+    }
+    return Collections.singletonList(CourseInfo.INVALID_COURSE);
+  }
+
+  public static List<CourseInfo> getEnrolledCourses() {
+    try {
+      List<CourseInfo> result = new ArrayList<CourseInfo>();
+      int pageNumber = 1;
+      List<NameValuePair> nvps = new ArrayList<>();
+      nvps.add(new BasicNameValuePair("enrolled", "true"));
+      while (addCoursesFromStepik(result, pageNumber, nvps)) {
         pageNumber += 1;
       }
       return result;
@@ -145,7 +162,7 @@ public class StepicConnectorGet {
       if (info.isAdaptive() || (typeLanguage.size() == 2 && PYCHARM_PREFIX.equals(typeLanguage.get(0)))) {
         for (Integer instructor : info.instructors) {
           final StepicUser author =
-            getFromStepic(EduStepicNames.USERS + "/" + String.valueOf(instructor), StepicWrappers.AuthorWrapper.class).users.get(0);
+            getFromStepicUnLogin(EduStepicNames.USERS + "/" + String.valueOf(instructor), StepicWrappers.AuthorWrapper.class).users.get(0);
           info.addAuthor(author);
         }
 
@@ -158,12 +175,10 @@ public class StepicConnectorGet {
     return coursesContainer.meta.containsKey("has_next") && coursesContainer.meta.get("has_next") == Boolean.TRUE;
   }
 
-  public static boolean addInformaticsCourses(List<CourseInfo> result, int pageNumber) throws IOException {
+  public static boolean addCoursesFromStepik(List<CourseInfo> result, int pageNumber, List<NameValuePair> nvps) throws IOException {
     final String url = pageNumber == 0 ? EduStepicNames.COURSES : EduStepicNames.COURSES_FROM_PAGE + String.valueOf(pageNumber);
-    List<NameValuePair> nvps = new ArrayList<>();
-    nvps.add(new BasicNameValuePair("tag", "22872"));
     final StepicWrappers.CoursesContainer coursesContainer =
-      getFromStepic(url, StepicWrappers.CoursesContainer.class, StepicConnectorInit.getHttpClient(), nvps);
+      getFromStepic(url, StepicWrappers.CoursesContainer.class, StepicConnectorLogin.getHttpClient(), nvps);
     final List<CourseInfo> courseInfos = coursesContainer.courses;
     for (CourseInfo info : courseInfos) {
       final String courseType = info.getType();
@@ -178,8 +193,8 @@ public class StepicConnectorGet {
         info.addAuthor(author);
       }
 
-      String name = info.getName().replaceAll("[^a-zA-Z0-9\\s]", "");
-      info.setName(name.trim());
+      //      String name = info.getName().replaceAll("[^a-zA-Z0-9\\s]", "");
+      //      info.setName(name.trim());
 
       result.add(info);
       //}
@@ -439,12 +454,45 @@ public class StepicConnectorGet {
     return Collections.emptyList();
   }
 
-  public static StepicWrappers.SubmissionContainer getSubmissions(List<NameValuePair> nvps){
+  public static StepicWrappers.SubmissionContainer getSubmissions(List<NameValuePair> nvps) {
     try {
-      return getFromStepic(EduStepicNames.SUBMISSIONS, StepicWrappers.SubmissionContainer.class, StepicConnectorLogin.getHttpClient(), nvps);
+      return getFromStepic(EduStepicNames.SUBMISSIONS, StepicWrappers.SubmissionContainer.class, StepicConnectorLogin.getHttpClient(),
+                           nvps);
     }
     catch (IOException e) {
-      LOG.warn("Can't get submissions\n"+e.getMessage());
+      LOG.warn("Can't get submissions\n" + e.getMessage());
+      return null;
+    }
+  }
+
+  public static StepicWrappers.UnitContainer getUnits(String unitId) {
+    try {
+      return getFromStepic(EduStepicNames.UNITS + "/" + unitId, StepicWrappers.UnitContainer.class, StepicConnectorLogin.getHttpClient());
+    }
+    catch (IOException e) {
+      LOG.warn("Can't get Units\n" + e.getMessage());
+      return null;
+    }
+  }
+
+  public static StepicWrappers.SectionContainer getSections(String sectionId) {
+    try {
+      return getFromStepic(EduStepicNames.SECTIONS + sectionId, StepicWrappers.SectionContainer.class,
+                           StepicConnectorLogin.getHttpClient());
+    }
+    catch (IOException e) {
+      LOG.warn("Can't get Sections\n" + e.getMessage());
+      return null;
+    }
+  }
+
+  public static StepicWrappers.CoursesContainer getCourseInfos(String courseId) {
+    try {
+      return getFromStepic(EduStepicNames.COURSES + "/" + courseId, StepicWrappers.CoursesContainer.class,
+                           StepicConnectorLogin.getHttpClient());
+    }
+    catch (IOException e) {
+      LOG.warn("Can't get courses Info\n" + e.getMessage());
       return null;
     }
   }

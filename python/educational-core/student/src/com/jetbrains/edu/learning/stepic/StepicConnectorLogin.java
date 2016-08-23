@@ -52,12 +52,13 @@ public class StepicConnectorLogin {
   public static CloseableHttpClient getHttpClient() {
     if (ourClient == null) {
       List<BasicHeader> headers = new ArrayList<>();
-      if (!currentUser.getAccessToken().isEmpty()) {
+      if (currentUser.getAccessToken() != null && !currentUser.getAccessToken().isEmpty()) {
         headers.add(new BasicHeader("Authorization", "Bearer " + currentUser.getAccessToken()));
         headers.add(new BasicHeader("Content-type", EduStepicNames.CONTENT_TYPE_APPL_JSON));
       }
       else {
-        LOG.warn("access_token is empty");
+        LOG.error("access_token is empty");
+//        showLoginDialog();
       }
       ourClient = StepicConnectorInit.getBuilder().setDefaultHeaders(headers).build();
     }
@@ -143,7 +144,7 @@ public class StepicConnectorLogin {
     return logged[0];
   }
 
-  private static void resetClient() {
+  public static void resetClient() {
     ourClient = null;
     currentUser = null;
   }

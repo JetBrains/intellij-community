@@ -153,7 +153,7 @@ public class StepicWrappers {
     }
   }
 
-  static class CoursesContainer {
+  public static class CoursesContainer {
     public List<CourseInfo> courses;
     public Map meta;
   }
@@ -224,9 +224,9 @@ public class StepicWrappers {
     }
   }
 
-  static class Section {
+  public static class Section {
     List<Integer> units;
-    int course;
+    public int course;
     String title;
     int position;
     int id;
@@ -236,24 +236,24 @@ public class StepicWrappers {
     Section section;
   }
 
-  static class SectionContainer {
-    List<Section> sections;
+  public static class SectionContainer {
+    public List<Section> sections;
     List<Lesson> lessons;
 
     List<Unit> units;
   }
 
-  static class Unit {
+  public static class Unit {
     int id;
-    int section;
+    public int section;
     int lesson;
     int position;
     List<Integer> assignments;
   }
 
-  static class UnitContainer {
+  public static class UnitContainer {
 
-    List<Unit> units;
+    public List<Unit> units;
   }
 
   static class UnitWrapper {
@@ -388,7 +388,7 @@ public class StepicWrappers {
   }
 
 
-  static class SubmissionToPostWrapper {
+  public static class SubmissionToPostWrapper {
     Submission submission;
 
     public SubmissionToPostWrapper(@NotNull String attemptId, @NotNull String language, @NotNull String code) {

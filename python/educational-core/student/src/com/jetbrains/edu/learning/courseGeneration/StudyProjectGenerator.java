@@ -54,7 +54,7 @@ public class StudyProjectGenerator {
   private static final Logger LOG = Logger.getInstance(StudyProjectGenerator.class.getName());
   private static final String COURSE_NAME_ATTRIBUTE = "name";
   private static final String COURSE_DESCRIPTION = "description";
-  private static final String CACHE_NAME = "courseNames.txt";
+  protected static final String CACHE_NAME = "courseNames.txt";
   private final List<SettingsListener> myListeners = ContainerUtil.newArrayList();
   @Nullable public StepicUser myUser;
   protected List<CourseInfo> myCourses = new ArrayList<>();
