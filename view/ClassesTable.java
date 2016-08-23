@@ -10,6 +10,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.FList;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.ReferenceType;
@@ -78,9 +79,9 @@ public class ClassesTable extends JBTable implements DataProvider {
     diffColumn.setResizable(false);
 
     setShowGrid(false);
+    setIntercellSpacing(new JBDimension(0, 0));
 
     setDefaultRenderer(ReferenceType.class, new MyClassTableCellRenderer());
-
     setDefaultRenderer(Long.class, new MyNumberTableCellRenderer());
 
     TableRowSorter<DiffViewTableModel> sorter = new TableRowSorter<>(myModel);
