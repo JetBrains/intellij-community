@@ -22,6 +22,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.builders.BuildTarget;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,6 +30,9 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
+ * In-memory representation of JVM *.class file produced by a compiler.
+ *
+ * @see ModuleLevelBuilder.OutputConsumer#registerCompiledClass(BuildTarget, CompiledClass)
  * @author Eugene Zhuravlev
  *         Date: 11/18/12
  */
@@ -46,6 +50,12 @@ public class CompiledClass extends UserDataHolderBase{
 
   private boolean myIsDirty = false;
 
+  /**
+   * @param outputFile  path where generated *.class file needs to be stored
+   * @param sourceFiles paths to classes which were used to produce the JVM class (for Java language it always contains single *.java file)
+   * @param className   fully qualified dot-separated name of the class
+   * @param content     content which need to be written to {@code outputFile}
+   */
   public CompiledClass(@NotNull File outputFile, @NotNull Collection<File> sourceFiles, @Nullable String className, @NotNull BinaryContent content) {
     myOutputFile = outputFile;
     mySourceFiles = sourceFiles;
@@ -58,7 +68,7 @@ public class CompiledClass extends UserDataHolderBase{
     this(outputFile, Collections.singleton(sourceFile), className, content);
   }
 
-  public  void save() throws IOException {
+  public void save() throws IOException {
     myContent.saveToFile(myOutputFile);
     myIsDirty = false;
   }
