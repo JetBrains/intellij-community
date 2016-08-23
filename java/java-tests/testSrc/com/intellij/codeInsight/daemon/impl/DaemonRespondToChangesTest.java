@@ -126,6 +126,7 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.CheckDtdReferencesInspection;
 import gnu.trove.THashSet;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -1423,10 +1424,11 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   
   public void testLIPGetAllParentsAfterCodeBlockModification() throws Throwable {
+    @Language("JAVA")
     String text = "class LQF {\n" +
                   "    int f;\n" +
                   "    public void me() {\n" +
-                  "        <caret>\n" +
+                  "        //<caret>\n" +
                   "    }\n" +
                   "}";
     configureByText(StdFileTypes.JAVA, text);
@@ -1476,11 +1478,11 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     // inside code block modification
     visitedElements.clear();
-    type("//");
+    backspace();
+    backspace();
 
     infos = highlightErrors();
     assertEmpty(infos);
-
 
     PsiMethod method = ((PsiJavaFile)myFile).getClasses()[0].getMethods()[0];
     List<PsiElement> methodAndParents =
