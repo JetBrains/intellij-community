@@ -54,7 +54,6 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
   private final Project myProject;
   @NonNls private static final String AUTHOR_KEY = "author";
   @NonNls private static final String COMMITTER_TIME_KEY = "committer-time";
-  @NonNls private static final String FILENAME_KEY = "filename";
   private static final Logger LOG = Logger.getInstance(GitAnnotationProvider.class);
 
   public GitAnnotationProvider(@NotNull Project project) {
@@ -130,8 +129,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
   private GitFileAnnotation annotate(@NotNull final FilePath repositoryFilePath,
                                      @Nullable final VcsRevisionNumber revision,
                                      @NotNull final VirtualFile file) throws VcsException {
-    VirtualFile root = GitUtil.getGitRoot(repositoryFilePath);
-    GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.BLAME);
+    GitSimpleHandler h = new GitSimpleHandler(myProject, GitUtil.getGitRoot(repositoryFilePath), GitCommand.BLAME);
     h.setStdoutSuppressed(true);
     h.setCharset(file.getCharset());
     h.addParameters("--porcelain", "-l", "-t", "-w");
@@ -144,13 +142,13 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
     h.endOptions();
     h.addRelativePaths(repositoryFilePath);
     String output = h.run();
-    return parseAnnotations(revision, file, output, root);
+    return parseAnnotations(revision, file, output);
   }
 
   @NotNull
   private GitFileAnnotation parseAnnotations(@Nullable VcsRevisionNumber revision,
                                              @NotNull VirtualFile file,
-                                             @NotNull String output, VirtualFile root) throws VcsException {
+                                             @NotNull String output) throws VcsException {
     try {
       List<LineInfo> lines = new ArrayList<>();
       HashMap<String, LineInfo> commits = new HashMap<>();
@@ -175,7 +173,6 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
           GitRevisionNumber revisionNumber = null;
           Date committerDate = null;
           String author = null;
-          String path = null;
 
           while (s.hasMoreData() && !s.startsWith('\t')) {
             String key = s.spaceToken();
@@ -187,11 +184,8 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
               committerDate = GitUtil.parseTimestamp(value);
               revisionNumber = new GitRevisionNumber(commitHash, committerDate);
             }
-            if (FILENAME_KEY.equals(key)) {
-              path = value;
-            }
           }
-          commit = new LineInfo(committerDate, revisionNumber, author, root.getPath() + "/" + path);
+          commit = new LineInfo(committerDate, revisionNumber, author);
           commits.put(commitHash, commit);
         }
         // parse line
@@ -248,7 +242,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
       if (vcsFileRevision == null) {
         return null;
       }
-      lines.add(new LineInfo(vcsFileRevision.getRevisionDate(), revision, vcsFileRevision.getAuthor(), ((LineInfo)vcsFileRevision).getPath()));
+      lines.add(new LineInfo(vcsFileRevision.getRevisionDate(), revision, vcsFileRevision.getAuthor()));
     }
     return new GitFileAnnotation(myProject, virtualFile, revisionNumber, lines);
   }
