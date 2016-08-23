@@ -62,3 +62,18 @@ private fun loadDocument(reader: Reader): Document {
 }
 
 fun Element?.isEmpty() = this == null || JDOMUtil.isEmpty(this)
+
+fun Element.getOrCreate(name: String): Element {
+  var element = getChild(name)
+  if (element == null) {
+    element = Element(name)
+    addContent(element)
+  }
+  return element
+}
+
+fun Element.element(name: String): Element {
+  val element = Element(name)
+  addContent(element)
+  return element
+}

@@ -15,6 +15,7 @@
  */
 package com.intellij.credentialStore
 
+import com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterKeyPasswordSafeTest
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.PasswordDatabase
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.ApplicationRule
@@ -55,12 +56,13 @@ internal class MasterPasswordMigrationTest {
     assertThat(passwordSafe).isNotEmpty
 
     val provider = FileCredentialStore(passwordSafe)
-    assertThat(provider.getPassword("com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterKeyPasswordSafeTest/TEST")).isEqualTo("test")
+    @Suppress("DEPRECATION")
+    assertThat(provider.getPassword(MasterKeyPasswordSafeTest::class.java, "TEST")).isEqualTo("test")
   }
 
   @Test
   fun nonEmptyPass() {
-    var passwordSafe: Map<String, String>? = null
+    var passwordSafe: Map<CredentialAttributes, Credentials>? = null
     runInEdtAndWait {
       passwordSafe = convertOldDb(getDb("""<State>
         <option name="MASTER_PASSWORD_INFO" value="" />
@@ -84,7 +86,8 @@ internal class MasterPasswordMigrationTest {
     }
     assertThat(passwordSafe).isNotEmpty
     val provider = FileCredentialStore(passwordSafe)
-    assertThat(provider.getPassword("com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterKeyPasswordSafeTest/TEST")).isEqualTo("test")
+    @Suppress("DEPRECATION")
+    assertThat(provider.getPassword(MasterKeyPasswordSafeTest::class.java, "TEST")).isEqualTo("test")
   }
 
   @Suppress("DEPRECATION")

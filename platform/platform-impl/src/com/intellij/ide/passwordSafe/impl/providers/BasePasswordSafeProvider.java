@@ -15,81 +15,40 @@
  */
 package com.intellij.ide.passwordSafe.impl.providers;
 
+import com.intellij.credentialStore.CredentialAttributes;
+import com.intellij.credentialStore.Credentials;
 import com.intellij.ide.passwordSafe.PasswordStorage;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ModalityState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Base Java-based provider for password safe that assumes a simple key-value storage.
- */
 public abstract class BasePasswordSafeProvider implements PasswordStorage {
-
   /**
-   * <p>Get secret key for the provider.</p>
-   * <p><b>NB: </b>
-   *    This method may be called from the background,
-   *    and it may need to ask user to enter the master password to access the database by calling
-   *    {@link Application#invokeAndWait(Runnable, ModalityState) invokeAndWait()} to show a modal dialog.
-   *    So make sure not to call it from the read action.
-   *    Calling this method from the dispatch thread is allowed.</p>
-   *
-   * @return the secret key to use
+   * Get secret key for the provider
    */
   @NotNull
   protected abstract byte[] key();
 
   @Nullable
-  public String getPassword(@Nullable Class requestor, @NotNull String key) {
+  public Credentials get(@NotNull CredentialAttributes attributes) {
     byte[] masterKey = key();
-    byte[] encryptedPassword = getEncryptedPassword(EncryptionUtil.dbKey(masterKey, requestor, key));
-    return encryptedPassword == null ? null : EncryptionUtil.decryptText(masterKey, encryptedPassword);
+    byte[] encryptedPassword = getEncryptedPassword(EncryptionUtil.encryptKey(masterKey, EncryptionUtil.rawKey(attributes)));
+    String password = encryptedPassword == null ? null : EncryptionUtil.decryptText(masterKey, encryptedPassword);
+    return password == null ? null : new Credentials(attributes.getAccountName(), password);
   }
 
-  /**
-   * Get encrypted password from database
-   *
-   * @param key the key to get
-   * @return the encrypted password
-   */
   protected abstract byte[] getEncryptedPassword(@NotNull byte[] key);
 
-  /**
-   * Get database key
-   *
-   * @param requestor the requestor class
-   * @param key       the key to use
-   * @return the key to use for map
-   */
-  @NotNull
-  private byte[] dbKey(@Nullable Class requestor, String key) {
-    return EncryptionUtil.dbKey(key(), requestor, key);
-  }
-
-  /**
-   * Remove encrypted password from database
-   *
-   * @param key the key to remote
-   */
   protected abstract void removeEncryptedPassword(byte[] key);
 
-  public void setPassword(@Nullable Class requestor, @NotNull String key, @Nullable String value) {
+  public final void set(@NotNull CredentialAttributes attributes, @Nullable Credentials value) {
+    byte[] key = EncryptionUtil.encryptKey(key(), EncryptionUtil.rawKey(attributes));
     if (value == null) {
-      removeEncryptedPassword(dbKey(requestor, key));
-      return;
+      removeEncryptedPassword(key);
     }
-
-    byte[] k = dbKey(requestor, key);
-    byte[] ct = EncryptionUtil.encryptText(key(), value);
-    storeEncryptedPassword(k, ct);
+    else {
+      storeEncryptedPassword(key, EncryptionUtil.encryptText(key(), value.getPassword()));
+    }
   }
 
-  /**
-   * Store encrypted password in the database
-   *
-   * @param key               the key to store
-   * @param encryptedPassword the password to store
-   */
   protected abstract void storeEncryptedPassword(byte[] key, byte[] encryptedPassword);
 }

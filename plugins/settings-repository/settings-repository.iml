@@ -51,5 +51,6 @@
     <orderEntry type="module" module-name="configuration-store-impl" />
     <orderEntry type="library" name="miglayout-swing" level="project" />
     <orderEntry type="module" module-name="credential-store" />
+    <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>

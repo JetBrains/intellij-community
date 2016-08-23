@@ -18,7 +18,6 @@ package org.jetbrains.settingsRepository.git
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.*
@@ -37,7 +36,6 @@ import org.jetbrains.jgit.dirCache.AddLoadedFile
 import org.jetbrains.jgit.dirCache.DeleteDirectory
 import org.jetbrains.jgit.dirCache.deletePath
 import org.jetbrains.jgit.dirCache.edit
-import org.jetbrains.keychain.CredentialsStore
 import org.jetbrains.settingsRepository.*
 import org.jetbrains.settingsRepository.RepositoryManager.Updater
 import java.io.IOException
@@ -45,7 +43,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.concurrent.write
 
-class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<CredentialsStore>, dir: Path) : BaseRepositoryManager(dir) {
+class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStore>, dir: Path) : BaseRepositoryManager(dir) {
   val repository: Repository
     get() {
       var r = _repository
