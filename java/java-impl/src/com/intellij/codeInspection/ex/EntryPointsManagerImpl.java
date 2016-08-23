@@ -79,6 +79,7 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
 
   public static JButton createConfigureAnnotationsButton() {
     final JButton configureAnnotations = new JButton("Configure annotations...");
+    configureAnnotations.setHorizontalAlignment(SwingConstants.LEFT);
     configureAnnotations.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -89,11 +90,12 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
   }
 
   public static JButton createConfigureClassPatternsButton() {
-    final JButton configureAnnotations = new JButton("Configure class patterns...");
-    configureAnnotations.addActionListener(new ActionListener() {
+    final JButton configureClassPatterns = new JButton("Configure class patterns...");
+    configureClassPatterns.setHorizontalAlignment(SwingConstants.LEFT);
+    configureClassPatterns.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final EntryPointsManagerBase entryPointsManagerBase = getInstance(ProjectUtil.guessCurrentProject(configureAnnotations));
+        final EntryPointsManagerBase entryPointsManagerBase = getInstance(ProjectUtil.guessCurrentProject(configureClassPatterns));
         final ArrayList<ClassPattern> list = new ArrayList<>();
         for (ClassPattern pattern : entryPointsManagerBase.getPatterns()) {
           list.add(new ClassPattern(pattern));
@@ -121,6 +123,6 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
         }.show();
       }
     });
-    return configureAnnotations;
+    return configureClassPatterns;
   }
 }

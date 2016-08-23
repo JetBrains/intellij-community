@@ -24,6 +24,7 @@ import com.intellij.codeInspection.reference.RefMethod;
 import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -188,16 +189,13 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
       gc.gridy++;
       add(myNonJavaCheckbox, gc);
 
-      final JButton configureClassPatternsButton = EntryPointsManagerImpl.createConfigureClassPatternsButton();
       gc.fill = GridBagConstraints.NONE;
       gc.gridy++;
-      add(configureClassPatternsButton, gc);
-
-      JButton configureAnnotations = EntryPointsManagerImpl.createConfigureAnnotationsButton();
-      gc.gridy++;
       gc.weighty = 1;
-
-      add(configureAnnotations, gc);
+      final JPanel btnPanel = new JPanel(new VerticalFlowLayout());
+      btnPanel.add(EntryPointsManagerImpl.createConfigureClassPatternsButton());
+      btnPanel.add(EntryPointsManagerImpl.createConfigureAnnotationsButton());
+      add(btnPanel, gc);
     }
 
   }
