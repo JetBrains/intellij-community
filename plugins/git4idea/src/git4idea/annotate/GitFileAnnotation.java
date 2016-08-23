@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.annotate.*;
-import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionDescription;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -30,7 +29,9 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.*;
+import git4idea.GitCommit;
+import git4idea.GitRevisionNumber;
+import git4idea.GitVcs;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
@@ -51,6 +52,7 @@ public class GitFileAnnotation extends FileAnnotation {
   @NotNull private final GitVcs myVcs;
   @Nullable private final VcsRevisionNumber myBaseRevision;
 
+  @NotNull private final String myAnnotatedContent;
   @NotNull private final List<LineInfo> myLines;
   @NotNull private final List<VcsRevisionDescription> myRevisions;
 
@@ -81,6 +83,7 @@ public class GitFileAnnotation extends FileAnnotation {
   public GitFileAnnotation(@NotNull final Project project,
                            @NotNull VirtualFile file,
                            @Nullable final VcsRevisionNumber revision,
+                           @NotNull String annotatedContent,
                            @NotNull List<LineInfo> lines) {
     super(project);
     myProject = project;
@@ -88,6 +91,7 @@ public class GitFileAnnotation extends FileAnnotation {
     myVcs = ObjectUtils.assertNotNull(GitVcs.getInstance(myProject));
     myBaseRevision = revision == null ? (myVcs.getDiffProvider().getCurrentRevision(file)) : revision;
 
+    myAnnotatedContent = annotatedContent;
     myLines = lines;
     THashSet<VcsRevisionDescription> descriptions = new THashSet<>(lines, new TObjectHashingStrategy<VcsRevisionDescription>() {
       @Override
@@ -148,13 +152,7 @@ public class GitFileAnnotation extends FileAnnotation {
   @NotNull
   @Override
   public String getAnnotatedContent() {
-    ContentRevision revision = GitContentRevision.createRevision(myFile, myBaseRevision, myProject);
-    try {
-      return revision.getContent();
-    }
-    catch (VcsException e) {
-      throw new RuntimeException(e);
-    }
+    return myAnnotatedContent;
   }
 
   @Override
