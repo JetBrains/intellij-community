@@ -42,6 +42,10 @@ public class JavaNullMethodArgumentUtil {
   }
 
   public static void searchNullArgument(@NotNull PsiMethod method, final int argumentIdx, @NotNull Processor<PsiExpression> nullArgumentProcessor) {
+    final PsiParameter parameter = method.getParameterList().getParameters()[argumentIdx];
+    if (parameter.getType() instanceof PsiEllipsisType) {
+      return;
+    }
     final GlobalSearchScope scope = findScopeWhereNullArgumentCanPass(method, argumentIdx);
     if (scope == null) return;
     MethodReferencesSearch.search(method, scope, true).forEach(ref -> {

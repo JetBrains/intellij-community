@@ -237,9 +237,9 @@ public final class LoadTextUtil {
    * Normally you should not use this method.
    *
    * @param requestor            any object to control who called this method. Note that
-   *                             it is considered to be an external change if <code>requestor</code> is <code>null</code>.
+   *                             it is considered to be an external change if {@code requestor} is {@code null}.
    *                             See {@link com.intellij.openapi.vfs.VirtualFileEvent#getRequestor}
-   * @param newModificationStamp new modification stamp or -1 if no special value should be set @return <code>Writer</code>
+   * @param newModificationStamp new modification stamp or -1 if no special value should be set @return {@code Writer}
    * @throws IOException if an I/O error occurs
    * @see VirtualFile#getModificationStamp()
    */
@@ -279,7 +279,7 @@ public final class LoadTextUtil {
     return chosen;
   }
 
-  public static void setDetectedFromBytesFlagBack(@NotNull VirtualFile virtualFile, @NotNull byte[] content) {
+  private static void setDetectedFromBytesFlagBack(@NotNull VirtualFile virtualFile, @NotNull byte[] content) {
     if (virtualFile.getBOM() == null) {
       guessFromContent(virtualFile, content, content.length);
     }
@@ -343,7 +343,7 @@ public final class LoadTextUtil {
     return CharsetUtil.extractCharsetFromFileContent(project, virtualFile, virtualFile.getFileType(), text);
   }
 
-  private static boolean ourDecompileProgressStarted = false;
+  private static boolean ourDecompileProgressStarted;
 
   @NotNull
   public static CharSequence loadText(@NotNull final VirtualFile file) {

@@ -171,6 +171,10 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
     doTest();
   }
 
+  public void testNullPassedAsPartNotNullAnnotatedOfVarArg() {
+    doTest();
+  }
+
   public void testHonorParameterDefaultInSetters() {
     DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
     DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);

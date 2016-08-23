@@ -630,7 +630,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
           ApplicationManager.getApplication().runReadAction(() -> {
             tool.runInspection(scope, inspectionManager, this, toolPresentation);
             //skip phase when we are sure that scope already contains everything, unused declaration though needs to proceed with its suspicious code
-            if ((canBeExternalUsages || tool.getAdditionalJobs() != null) &&
+            if ((canBeExternalUsages || tool.getAdditionalJobs(this) != null) &&
                 tool.queryExternalUsagesRequests(inspectionManager, this, toolPresentation)) {
               needRepeatSearchRequest.add(toolWrapper);
             }
