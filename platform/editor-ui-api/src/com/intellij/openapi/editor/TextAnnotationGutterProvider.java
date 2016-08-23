@@ -18,7 +18,6 @@ package com.intellij.openapi.editor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
-import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -74,8 +73,4 @@ public interface TextAnnotationGutterProvider {
    * @see EditorGutter#closeAllAnnotations()
    */
   void gutterClosed();
-
-
-  @Nullable
-  default Computable<String> getToolTipAsync(int line, Editor editor) { return null; }
 }
