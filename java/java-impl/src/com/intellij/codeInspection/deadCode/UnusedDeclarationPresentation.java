@@ -49,8 +49,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
@@ -465,11 +463,15 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     return PsiModifier.PUBLIC;
   }
 
-  protected static boolean compareVisibilities(RefJavaElement listOwner, UnusedSymbolLocalInspectionBase localInspectionTool) {
-    final String visibility = getAcceptedVisibility(localInspectionTool, listOwner);
-    if (visibility != null) {
+  protected static boolean compareVisibilities(RefJavaElement listOwner,
+                                               UnusedSymbolLocalInspectionBase localInspectionTool) {
+    return compareVisibilities(listOwner, getAcceptedVisibility(localInspectionTool, listOwner));
+  }
+
+  protected static boolean compareVisibilities(RefJavaElement listOwner, final String acceptedVisibility) {
+    if (acceptedVisibility != null) {
       while (listOwner != null) {
-        if (VisibilityUtil.compare(listOwner.getAccessModifier(), visibility) >= 0) {
+        if (VisibilityUtil.compare(listOwner.getAccessModifier(), acceptedVisibility) >= 0) {
           return true;
         }
         final RefEntity parent = listOwner.getOwner();

@@ -61,7 +61,7 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
         @Override public void visitElement(@NotNull RefEntity refEntity) {
           if (!(refEntity instanceof RefMethod) ||
               !globalContext.shouldCheck(refEntity, UnusedDeclarationInspection.this) ||
-              !UnusedDeclarationPresentation.compareVisibilities((RefMethod)refEntity, myLocalInspectionBase)) {
+              !UnusedDeclarationPresentation.compareVisibilities((RefMethod)refEntity, myLocalInspectionBase.getParameterVisibility())) {
             return;
           }
           CommonProblemDescriptor[] descriptors = myUnusedParameters.checkElement(refEntity, scope, manager, globalContext, problemDescriptionsProcessor);
