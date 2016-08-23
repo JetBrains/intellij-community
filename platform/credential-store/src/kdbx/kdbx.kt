@@ -17,7 +17,6 @@ package com.intellij.credentialStore.kdbx
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.SmartList
-import com.intellij.util.getOrCreate
 import com.intellij.util.inputStream
 import com.intellij.util.loadElement
 import org.bouncycastle.crypto.engines.Salsa20Engine
@@ -29,6 +28,8 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.nio.file.Path
 import java.security.MessageDigest
+import java.time.ZonedDateTime
+import java.time.format.DateTimeParseException
 import java.util.*
 import javax.xml.bind.DatatypeConverter
 
@@ -57,18 +58,9 @@ class KdbxStreamFormat {
       return load(it, encryption)
     }
   }
-
-  fun save(element: Element, credentials: KeePassCredentials, outputStream: OutputStream) {
-    val kdbxHeader = KdbxHeader()
-    KdbxSerializer.createEncryptedOutputStream(credentials, kdbxHeader, outputStream).use {
-      val rootElement = element.clone()
-      rootElement.getOrCreate("HeaderHash").text = Base64.getEncoder().encodeToString(kdbxHeader.headerHash)
-      save(rootElement, it, Salsa20Encryption(kdbxHeader.protectedStreamKey))
-    }
-  }
 }
 
-private fun save(rootElement: Element, outputStream: OutputStream, encryption: KdbxEncryption) {
+internal fun save(rootElement: Element, outputStream: OutputStream, encryption: KdbxEncryption) {
   val meta = rootElement.getChild("Meta")?.getChild("MemoryProtection")
   if (meta != null) {
     val propertiesToProtect = SmartList<String>()
@@ -125,67 +117,44 @@ private fun processEntries(groupElement: Element, processor: (container: Element
 internal fun createEmptyDatabase(): Element {
   val creationDate = formattedNow()
   return loadElement("""<KeePassFile>
-      <Meta>
-          <Generator>IJ</Generator>
-          <HeaderHash></HeaderHash>
-          <DatabaseName>New Database</DatabaseName>
-          <DatabaseNameChanged>${creationDate}</DatabaseNameChanged>
-          <DatabaseDescription>Empty Database</DatabaseDescription>
-          <DatabaseDescriptionChanged>${creationDate}</DatabaseDescriptionChanged>
-          <DefaultUserName/>
-          <DefaultUserNameChanged>${creationDate}</DefaultUserNameChanged>
-          <MaintenanceHistoryDays>365</MaintenanceHistoryDays>
-          <Color/>
-          <MasterKeyChanged>${creationDate}</MasterKeyChanged>
-          <MasterKeyChangeRec>-1</MasterKeyChangeRec>
-          <MasterKeyChangeForce>-1</MasterKeyChangeForce>
-          <MemoryProtection>
-              <ProtectTitle>False</ProtectTitle>
-              <ProtectUserName>False</ProtectUserName>
-              <ProtectPassword>True</ProtectPassword>
-              <ProtectURL>False</ProtectURL>
-              <ProtectNotes>False</ProtectNotes>
-          </MemoryProtection>
-          <CustomIcons/>
-          <RecycleBinEnabled>True</RecycleBinEnabled>
-          <RecycleBinUUID>AAAAAAAAAAAAAAAAAAAAAA==</RecycleBinUUID>
-          <RecycleBinChanged>${creationDate}</RecycleBinChanged>
-          <EntryTemplatesGroup>AAAAAAAAAAAAAAAAAAAAAA==</EntryTemplatesGroup>
-          <EntryTemplatesGroupChanged>${creationDate}</EntryTemplatesGroupChanged>
-          <LastSelectedGroup>AAAAAAAAAAAAAAAAAAAAAA==</LastSelectedGroup>
-          <LastTopVisibleGroup>AAAAAAAAAAAAAAAAAAAAAA==</LastTopVisibleGroup>
-          <HistoryMaxItems>10</HistoryMaxItems>
-          <HistoryMaxSize>6291456</HistoryMaxSize>
-          <Binaries/>
-          <CustomData/>
-      </Meta>
-      <Root>
-          <Group>
-              <UUID>${base64RandomUuid()}</UUID>
-              <Name>Root</Name>
-              <Notes/>
-              <IconID>48</IconID>
-              <Times>
-                  <LastModificationTime>${creationDate}</LastModificationTime>
-                  <CreationTime>${creationDate}</CreationTime>
-                  <LastAccessTime>${creationDate}</LastAccessTime>
-                  <ExpiryTime>${creationDate}</ExpiryTime>
-                  <Expires>False</Expires>
-                  <UsageCount>0</UsageCount>
-                  <LocationChanged>${creationDate}</LocationChanged>
-              </Times>
-              <IsExpanded>True</IsExpanded>
-              <DefaultAutoTypeSequence/>
-              <EnableAutoType>True</EnableAutoType>
-              <EnableSearching>True</EnableSearching>
-              <LastTopVisibleEntry>AAAAAAAAAAAAAAAAAAAAAA==</LastTopVisibleEntry>
-          </Group>
-          <DeletedObjects/>
-      </Root>
+    <Meta>
+      <Generator>IJ</Generator>
+      <HeaderHash></HeaderHash>
+      <DatabaseName>New Database</DatabaseName>
+      <DatabaseNameChanged>${creationDate}</DatabaseNameChanged>
+      <DatabaseDescription>Empty Database</DatabaseDescription>
+      <DatabaseDescriptionChanged>${creationDate}</DatabaseDescriptionChanged>
+      <DefaultUserName/>
+      <DefaultUserNameChanged>${creationDate}</DefaultUserNameChanged>
+      <MaintenanceHistoryDays>365</MaintenanceHistoryDays>
+      <Color/>
+      <MasterKeyChanged>${creationDate}</MasterKeyChanged>
+      <MasterKeyChangeRec>-1</MasterKeyChangeRec>
+      <MasterKeyChangeForce>-1</MasterKeyChangeForce>
+      <MemoryProtection>
+          <ProtectTitle>False</ProtectTitle>
+          <ProtectUserName>False</ProtectUserName>
+          <ProtectPassword>True</ProtectPassword>
+          <ProtectURL>False</ProtectURL>
+          <ProtectNotes>False</ProtectNotes>
+      </MemoryProtection>
+      <CustomIcons/>
+      <RecycleBinEnabled>True</RecycleBinEnabled>
+      <RecycleBinUUID>AAAAAAAAAAAAAAAAAAAAAA==</RecycleBinUUID>
+      <RecycleBinChanged>${creationDate}</RecycleBinChanged>
+      <EntryTemplatesGroup>AAAAAAAAAAAAAAAAAAAAAA==</EntryTemplatesGroup>
+      <EntryTemplatesGroupChanged>${creationDate}</EntryTemplatesGroupChanged>
+      <LastSelectedGroup>AAAAAAAAAAAAAAAAAAAAAA==</LastSelectedGroup>
+      <LastTopVisibleGroup>AAAAAAAAAAAAAAAAAAAAAA==</LastTopVisibleGroup>
+      <HistoryMaxItems>10</HistoryMaxItems>
+      <HistoryMaxSize>6291456</HistoryMaxSize>
+      <Binaries/>
+      <CustomData/>
+    </Meta>
   </KeePassFile>""")
 }
 
-private interface KdbxEncryption {
+internal interface KdbxEncryption {
   val key: ByteArray
 
   fun decrypt(encryptedText: ByteArray): ByteArray
@@ -205,7 +174,7 @@ private fun createSalsa20(key: ByteArray): Salsa20Engine {
 /**
  * Salsa20 doesn't quite fit the KeePass memory model - all encrypted items have to be en/decrypted in order of encryption, i.e. in document order and at the same time.
  */
-private class Salsa20Encryption(override val key: ByteArray) : KdbxEncryption {
+internal class Salsa20Encryption(override val key: ByteArray) : KdbxEncryption {
   private val salsa20 = createSalsa20(key)
 
   override fun decrypt(encryptedText: ByteArray): ByteArray {
@@ -218,5 +187,14 @@ private class Salsa20Encryption(override val key: ByteArray) : KdbxEncryption {
     val output = ByteArray(decryptedText.size)
     salsa20.processBytes(decryptedText, 0, decryptedText.size, output, 0)
     return output
+  }
+}
+
+internal fun parseTime(value: String): Long {
+  try {
+    return ZonedDateTime.parse(value).toEpochSecond()
+  }
+  catch (e: DateTimeParseException) {
+    return 0
   }
 }

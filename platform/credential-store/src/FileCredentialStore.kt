@@ -131,7 +131,7 @@ internal class FileCredentialStore(keyToValue: Map<CredentialAttributes, Credent
       db.rootGroup.getGroup(GROUP_NAME)?.removeEntry(attributes.serviceName, attributes.accountName)
     }
     else {
-      db.rootGroup.getOrCreateGroup(GROUP_NAME).getOrCreateEntry(attributes.serviceName, attributes.accountName).password = credentials.password
+      db.rootGroup.getOrCreateGroup(GROUP_NAME).getOrCreateEntry(attributes.serviceName, attributes.accountName ?: credentials.user).password = credentials.password
     }
 
     if (db.isDirty) {

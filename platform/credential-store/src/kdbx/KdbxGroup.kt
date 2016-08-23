@@ -1,55 +1,79 @@
 package com.intellij.credentialStore.kdbx
 
+import com.intellij.util.SmartList
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.Stack
+import com.intellij.util.get
 import com.intellij.util.getOrCreate
 import org.jdom.Element
-import java.util.*
+import org.jdom.filter.ElementFilter
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 
-class KdbxGroup(private val element: Element, private val database: KeePassDatabase) {
-  val isRootGroup: Boolean
-    get() = parent != null && element.parentElement?.name == "Root"
-
-  var name: String
-    get() = element.getChildText(NAME_ELEMENT_NAME)
+class KdbxGroup(private val element: Element, private val database: KeePassDatabase, private var parent: KdbxGroup?) {
+  @Volatile var name = element.getChildText(NAME_ELEMENT_NAME) ?: "Unnamed"
     set(value) {
-      element.getOrCreate(NAME_ELEMENT_NAME).text = value
-      database.isDirty = true
+      if (field != value) {
+        field = value
+        database.isDirty = true
+      }
     }
 
-  val uuid: UUID
-    get() = uuidFromBase64(element.getChildText(UUID_ELEMENT_NAME))
+  private val subGroups: MutableList<KdbxGroup>
 
-  @Suppress("ConvertLambdaToReference")
-  var icon: Icon?
-    get() = element.getChild(ICON_ELEMENT_NAME)?.let { DomIconWrapper(it) }
-    set(value) {
-      element.getOrCreate(ICON_ELEMENT_NAME).text = value!!.index.toString()
-      database.isDirty = true
+  private @Volatile var locationChanged = element.get("Times")?.get("LocationChanged")?.text?.let(::parseTime) ?: 0
+
+  init {
+    locationChanged = element.get("Times")?.get("LocationChanged")?.text?.let(::parseTime) ?: 0
+
+    val groups = SmartList<KdbxGroup>()
+    val groupIterator = element.getContent(ElementFilter(GROUP_ELEMENT_NAME)).iterator()
+    while (groupIterator.hasNext()) {
+      val child = groupIterator.next()
+      groups.add(KdbxGroup(child, database, this))
+      groupIterator.remove()
+    }
+    subGroups = ContainerUtil.createLockFreeCopyOnWriteList<KdbxGroup>(groups)
+  }
+
+  fun toXml(): Element {
+    val element = element.clone()
+    element.getOrCreate(NAME_ELEMENT_NAME).text = name
+
+    val locationChangedElement = element.getOrCreate("Times").getOrCreate("LocationChanged")
+    if (locationChanged == 0L) {
+      element.get("Times")?.get("CreationTime")?.text?.let {
+        locationChangedElement.text = it
+      }
+    }
+    else {
+      locationChangedElement.text = Instant.ofEpochMilli(locationChanged).atZone(ZoneOffset.UTC).format(dateFormatter)
     }
 
-  val parent: KdbxGroup?
-    get() {
-      val parent = element.parentElement ?: return null
-      return if (isRootGroup) null else KdbxGroup(parent, database)
+    for (group in subGroups) {
+      element.addContent(group.toXml())
     }
+    return element
+  }
 
   fun addGroup(group: KdbxGroup): KdbxGroup {
-    if (group.isRootGroup) {
+    if (group == database.rootGroup) {
       throw IllegalStateException("Cannot set root group as child of another group")
     }
 
-    // skip if this is a new group with no parent
     group.parent?.removeGroup(group)
-    element.addContent(group.element)
+    subGroups.add(group)
+    group.locationChanged = LocalDateTime.now(ZoneOffset.UTC).toEpochSecond(ZoneOffset.UTC)
 
-    group.element.getOrCreate("Times").getOrCreate("LocationChanged").text = formattedNow()
     database.isDirty = true
     return group
   }
 
   fun removeGroup(group: KdbxGroup): KdbxGroup {
-    element.removeContent(group.element)
-    database.isDirty = true
+    if (subGroups.remove(group)) {
+      database.isDirty = true
+    }
     return group
   }
 
@@ -57,24 +81,19 @@ class KdbxGroup(private val element: Element, private val database: KeePassDatab
     getGroup(name)?.let { removeGroup(it) }
   }
 
-  fun getGroup(name: String) = getGroup { it.name == name }
+  fun getGroup(name: String) = subGroups.firstOrNull { it.name == name }
 
   fun getOrCreateGroup(name: String) = getGroup(name) ?: createGroup(name)
 
-  fun createGroup(name: String) = addGroup(database.createGroup(name))
+  fun createGroup(name: String): KdbxGroup {
+    val result = createGroup(database, this)
+    result.name = name
+    addGroup(result)
+    return result
+  }
 
   val entries: List<KdbxEntry>
     get() = element.getChildren(ENTRY_ELEMENT_NAME).map { KdbxEntry(it, database) }
-
-  private inline fun getGroup(matcher: (KdbxGroup) -> Boolean): KdbxGroup? {
-    for (groupElement in element.getChildren(GROUP_ELEMENT_NAME)) {
-      val item = KdbxGroup(groupElement, database)
-      if (matcher(item)) {
-        return item
-      }
-    }
-    return null
-  }
 
   fun getEntry(matcher: (entry: KdbxEntry) -> Boolean): KdbxEntry? {
     for (entryElement in element.getChildren(ENTRY_ELEMENT_NAME)) {
@@ -148,3 +167,25 @@ class KdbxGroup(private val element: Element, private val database: KeePassDatab
     return result
   }
 }
+
+internal fun createGroup(db: KeePassDatabase, parent: KdbxGroup?): KdbxGroup {
+  val element = Element(GROUP_ELEMENT_NAME)
+  ensureElements(element, mandatoryGroupElements)
+  val result = KdbxGroup(element, db, parent)
+  return result
+}
+
+private const val NOTES_ELEMENT_NAME = "Notes"
+
+private val mandatoryGroupElements: Map<String, ValueCreator> = linkedMapOf (
+    UUID_ELEMENT_NAME to UuidValueCreator(),
+    NOTES_ELEMENT_NAME to ConstantValueCreator(""),
+    ICON_ELEMENT_NAME to ConstantValueCreator("0"),
+    CREATION_TIME_ELEMENT_NAME to DateValueCreator(),
+    LAST_MODIFICATION_TIME_ELEMENT_NAME to DateValueCreator(),
+    LAST_ACCESS_TIME_ELEMENT_NAME to DateValueCreator(),
+    EXPIRY_TIME_ELEMENT_NAME to DateValueCreator(),
+    EXPIRES_ELEMENT_NAME to ConstantValueCreator("False"),
+    USAGE_COUNT_ELEMENT_NAME to ConstantValueCreator("0"),
+    LOCATION_CHANGED to DateValueCreator()
+)
