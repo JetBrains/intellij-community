@@ -16,12 +16,16 @@
 package org.jetbrains.jps.incremental.messages;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author Eugene Zhuravlev
@@ -33,24 +37,28 @@ public class CompilerMessage extends BuildMessage {
   private final long myProblemBeginOffset;
   private final long myProblemEndOffset;
   private final long myProblemLocationOffset;
-  private final String mySourcePath;
+  private final Collection<String> mySourcePaths;
   private final long myLine;
   private final long myColumn;
 
   public CompilerMessage(@NotNull String compilerName, @NotNull Throwable internalError) {
-    this(compilerName, Kind.ERROR, getTextFromThrowable(internalError), null, -1L, -1L, -1L, -1L, -1L);
+    this(compilerName, Kind.ERROR, getTextFromThrowable(internalError));
   }
 
   public CompilerMessage(@NotNull String compilerName, Kind kind, String messageText) {
-    this(compilerName, kind, messageText, null, -1L, -1L, -1L, -1L, -1L);
+    this(compilerName, kind, messageText, (String)null, -1L, -1L, -1L, -1L, -1L);
+  }
+
+  public CompilerMessage(@NotNull String compilerName, String messageText, Collection<String> sourcePaths, Kind kind) {
+    this(compilerName, kind, messageText, sourcePaths, -1L, -1L, -1L, -1L, -1L);
   }
 
   public CompilerMessage(@NotNull String compilerName, Kind kind, String messageText, String sourcePath) {
-    this(compilerName, kind, messageText, sourcePath, -1L, -1L, -1L, -1L, -1L);
+    this(compilerName, messageText, Collections.singleton(sourcePath), kind);
   }
 
   public CompilerMessage(@NotNull String compilerName, Kind kind, String messageText,
-                         @Nullable String sourcePath,
+                         @NotNull Collection<String> sourcePaths,
                          long problemBeginOffset,
                          long problemEndOffset,
                          long problemLocationOffset,
@@ -61,9 +69,32 @@ public class CompilerMessage extends BuildMessage {
     myProblemBeginOffset = problemBeginOffset;
     myProblemEndOffset = problemEndOffset;
     myProblemLocationOffset = problemLocationOffset;
-    mySourcePath = sourcePath != null && !sourcePath.isEmpty()? sourcePath.replace(File.separatorChar, '/') : null;
+    mySourcePaths = ContainerUtil.map(sourcePaths, new Function<String, String>() {
+      @Override
+      public String fun(String s) {
+        return s.replace(File.separatorChar, '/');
+      }
+    });
     myLine = locationLine;
     myColumn = locationColumn;
+  }
+
+  public CompilerMessage(@NotNull String compilerName, Kind kind, String messageText,
+                         @Nullable String sourcePath,
+                         long problemBeginOffset,
+                         long problemEndOffset,
+                         long problemLocationOffset,
+                         long locationLine,
+                         long locationColumn) {
+    this(compilerName,
+         kind,
+         messageText,
+         sourcePath == null ? Collections.<String>emptyList() : Collections.singleton(sourcePath),
+         problemBeginOffset,
+         problemEndOffset,
+         problemLocationOffset,
+         locationLine,
+         locationColumn);
   }
 
   @NotNull
@@ -73,7 +104,14 @@ public class CompilerMessage extends BuildMessage {
 
   @Nullable
   public String getSourcePath() {
-    return mySourcePath;
+    if (mySourcePaths.isEmpty()) {
+      return null;
+    }
+    else if (mySourcePaths.size() == 1) {
+      return ContainerUtil.getFirstItem(mySourcePaths);
+    } else {
+      return mySourcePaths.toString();
+    }
   }
 
   public long getLine() {
@@ -99,7 +137,16 @@ public class CompilerMessage extends BuildMessage {
   public String toString() {
     final StringBuilder builder = new StringBuilder();
     builder.append(getCompilerName()).append(":").append(getKind().name()).append(":").append(super.toString());
-    final String path = getSourcePath();
+    String result;
+    if (mySourcePaths.isEmpty()) {
+      result = null;
+    }
+    else if (mySourcePaths.size() == 1) {
+      result = ContainerUtil.getFirstItem(mySourcePaths);
+    } else {
+      result = mySourcePaths.toString();
+    }
+    final String path = result;
     if (path != null) {
       builder.append("; file: ").append(path);
       final long line = getLine();

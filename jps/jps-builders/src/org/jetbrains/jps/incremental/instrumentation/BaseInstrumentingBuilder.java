@@ -72,7 +72,7 @@ public abstract class BaseInstrumentingBuilder extends ClassProcessingBuilder {
         LOG.info(e);
         final String message = e.getMessage();
         if (message != null) {
-          context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, message, compiledClass.getSourceFile().getPath()));
+          context.processMessage(new CompilerMessage(getPresentableName(), message, compiledClass.getSourceFilesPaths(), BuildMessage.Kind.ERROR));
         }
         else {
           context.processMessage(new CompilerMessage(getPresentableName(), e));
