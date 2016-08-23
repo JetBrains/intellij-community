@@ -151,7 +151,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       for (PsiParameter parameter : NullParameterConstraintChecker.checkMethodParameters(method, isOnTheFly)) {
         final String name = parameter.getName();
         holder.registerProblem(parameter.getNameIdentifier(),
-                               InspectionsBundle.message("dataflow.method.fails.with.null.argument", name),
+                               InspectionsBundle.message("dataflow.method.fails.with.null.argument"),
                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                NullableStuffInspectionBase.getWrappedUiDependentQuickFix(this::createNavigateToNullParameterUsagesFix, parameter, isOnTheFly));
       }
