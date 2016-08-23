@@ -17,6 +17,7 @@ package org.zmlx.hg4idea.log;
 
 import com.intellij.ui.JBColor;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
@@ -27,9 +28,7 @@ import java.awt.*;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
 
 public class HgRefManager implements VcsLogRefManager {
@@ -101,13 +100,38 @@ public class HgRefManager implements VcsLogRefManager {
 
   @NotNull
   @Override
-  public List<RefGroup> group(Collection<VcsRef> refs) {
+  public List<RefGroup> groupForBranchPopup(@NotNull Collection<VcsRef> refs) {
     return ContainerUtil.map(sort(refs), new Function<VcsRef, RefGroup>() {
       @Override
       public RefGroup fun(final VcsRef ref) {
         return new SingletonRefGroup(ref);
       }
     });
+  }
+
+  @NotNull
+  @Override
+  public List<RefGroup> groupForTable(@NotNull Collection<VcsRef> references) {
+    List<VcsRef> sortedReferences = sort(references);
+    Set<Map.Entry<VcsRefType, Collection<VcsRef>>> groupedRefs = ContainerUtil.groupBy(sortedReferences, VcsRef::getType).entrySet();
+    Map.Entry<VcsRefType, Collection<VcsRef>> firstGroup =
+      ContainerUtil.find(groupedRefs, entry -> !entry.getKey().equals(TIP) && !entry.getKey().equals(HEAD));
+    if (firstGroup == null) {
+      firstGroup = ContainerUtil.getFirstItem(groupedRefs);
+    }
+
+    List<RefGroup> groups = ContainerUtil.newArrayList();
+
+    if (firstGroup == null) return groups;
+
+    VcsRef firstRef = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(firstGroup.getValue()));
+    VcsRefType firstRefType = firstGroup.getKey();
+
+    groups.add(
+      new SimpleRefGroup(firstRefType.isBranch() && !firstRefType.equals(TIP) && !firstRefType.equals(HEAD) ? firstRef.getName() : "",
+                         sortedReferences));
+
+    return groups;
   }
 
   @Override
@@ -130,7 +154,7 @@ public class HgRefManager implements VcsLogRefManager {
   }
 
   @NotNull
-  private Collection<VcsRef> sort(@NotNull Collection<VcsRef> refs) {
+  private List<VcsRef> sort(@NotNull Collection<VcsRef> refs) {
     return ContainerUtil.sorted(refs, getLabelsOrderComparator());
   }
 
@@ -152,6 +176,39 @@ public class HgRefManager implements VcsLogRefManager {
     @Override
     public Color getBackgroundColor() {
       return myColor;
+    }
+  }
+
+  private static class SimpleRefGroup implements RefGroup {
+    @NotNull private final String myName;
+    @NotNull private final List<VcsRef> myRefs;
+
+    private SimpleRefGroup(@NotNull String name, @NotNull List<VcsRef> refs) {
+      myName = name;
+      myRefs = refs;
+    }
+
+    @Override
+    public boolean isExpanded() {
+      return false;
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return myName;
+    }
+
+    @NotNull
+    @Override
+    public List<VcsRef> getRefs() {
+      return myRefs;
+    }
+
+    @NotNull
+    @Override
+    public Color getBgColor() {
+      return myRefs.get(0).getType().getBackgroundColor();
     }
   }
 }

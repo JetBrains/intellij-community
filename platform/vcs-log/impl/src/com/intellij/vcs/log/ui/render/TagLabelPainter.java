@@ -35,18 +35,23 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.RefGroup;
+import com.intellij.vcs.log.VcsLogRefManager;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class TagLabelPainter {
   public static final int TOP_TEXT_PADDING = JBUI.scale(2);
@@ -66,6 +71,7 @@ public class TagLabelPainter {
 
   public void customizePainter(@NotNull JComponent component,
                                @NotNull Collection<VcsRef> references,
+                               @Nullable VcsLogRefManager manager,
                                @NotNull Color background,
                                @NotNull Color foreground) {
     myBackground = background;
@@ -76,18 +82,45 @@ public class TagLabelPainter {
     myWidth = GRADIENT_WIDTH + RIGHT_PADDING;
 
     myLabels = ContainerUtil.newArrayList();
-    for (Map.Entry<VcsRefType, Collection<VcsRef>> typeAndRefs : ContainerUtil.groupBy(references, VcsRef::getType).entrySet()) {
-      VcsRef firstRef = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(typeAndRefs.getValue()));
-      VcsRefType type = typeAndRefs.getKey();
-      boolean multiple = typeAndRefs.getValue().size() > 1;
-      Color color = type.getBackgroundColor();
-      TagIcon tagIcon = new TagIcon(myHeight, myBackground, multiple ? new Color[]{color, color} : new Color[]{color});
+    if (manager == null) return;
 
-      String text = firstRef.getName();
-      myLabels.add(Pair.create(text, tagIcon));
+    for (RefGroup group : manager.groupForTable(references)) {
+      if (group.isExpanded()) {
+        for (VcsRef ref : group.getRefs()) {
+          TagIcon tagIcon = new TagIcon(myHeight, myBackground, ref.getType().getBackgroundColor());
+          String text = ref.getName();
 
-      myWidth += tagIcon.getIconWidth() + metrics.stringWidth(text) + MIDDLE_PADDING;
+          myLabels.add(Pair.create(text, tagIcon));
+          myWidth += tagIcon.getIconWidth() + metrics.stringWidth(text) + MIDDLE_PADDING;
+        }
+      }
+      else {
+
+        TagIcon tagIcon = new TagIcon(myHeight, myBackground, getGroupColors(group));
+        String text = group.getName();
+
+        myLabels.add(Pair.create(text, tagIcon));
+        myWidth += tagIcon.getIconWidth() + metrics.stringWidth(text) + MIDDLE_PADDING;
+      }
     }
+  }
+
+  @NotNull
+  public Color[] getGroupColors(@NotNull RefGroup group) {
+    MultiMap<VcsRefType, VcsRef> referencesByType = ContainerUtil.groupBy(group.getRefs(), VcsRef::getType);
+    Color[] colors;
+    if (referencesByType.size() == 1) {
+      Map.Entry<VcsRefType, Collection<VcsRef>> firstItem =
+        ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(referencesByType.entrySet()));
+      boolean multiple = firstItem.getValue().size() > 1;
+      Color color = firstItem.getKey().getBackgroundColor();
+      colors = multiple ? new Color[]{color, color} : new Color[]{color};
+    }
+    else {
+      List<Color> colorsList = referencesByType.keySet().stream().map(VcsRefType::getBackgroundColor).collect(Collectors.toList());
+      colors = colorsList.toArray(new Color[colorsList.size()]);
+    }
+    return colors;
   }
 
   public void paint(@NotNull Graphics2D g2, int x, int y, int height) {
