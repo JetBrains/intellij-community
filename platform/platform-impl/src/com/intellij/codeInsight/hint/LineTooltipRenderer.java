@@ -92,10 +92,11 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     myPane = IdeTooltipManager.initPane(new Html(myText).setKeepFont(true), hintHint, layeredPane);
     hintHint.setContentActive(isActiveHtml(myText));
     if (!hintHint.isAwtTooltip()) {
-      correctLocation(editor, myPane, p, alignToRight, expanded, myCurrentWidth);
+      correctLocation(editor, IdeTooltipManager.initPane(new Html(myText).setKeepFont(true), hintHint, layeredPane), p, alignToRight, expanded, myCurrentWidth);
     }
 
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myPane);
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(
+      IdeTooltipManager.initPane(new Html(myText).setKeepFont(true), hintHint, layeredPane));
     scrollPane.setBorder(null);
 
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -110,16 +111,14 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     scrollPane.setViewportBorder(null);
 
     if (hintHint.isRequestFocus()) {
-      myPane.setFocusable(true);
+      IdeTooltipManager.initPane(new Html(myText).setKeepFont(true), hintHint, layeredPane).setFocusable(true);
     }
 
     final Ref<AnAction> actionRef = new Ref<>();
     final LightweightHint hint = new LightweightHint(scrollPane) {
       @Override
       public void hide() {
-        if (myPane != null) {
-          onHide(myPane);
-        }
+        onHide(IdeTooltipManager.initPane(new Html(myText).setKeepFont(true), hintHint, layeredPane));
         myPane = null;
         super.hide();
         final AnAction action = actionRef.get();
@@ -140,11 +139,11 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       public void actionPerformed(final AnActionEvent e) {
         // The tooltip gets the focus if using a screen reader and invocation through a keyboard shortcut.
         hintHint.setRequestFocus(ScreenReader.isActive() && (e.getInputEvent() instanceof KeyEvent));
-        expand(hint, editor, p, myPane, alignToRight, group, hintHint);
+        expand(hint, editor, p, IdeTooltipManager.initPane(new Html(myText).setKeepFont(true), hintHint, layeredPane), alignToRight, group, hintHint);
       }
     });
 
-    myPane.addHyperlinkListener(new HyperlinkListener() {
+    IdeTooltipManager.initPane(new Html(myText).setKeepFont(true), hintHint, layeredPane).addHyperlinkListener(new HyperlinkListener() {
       @Override
       public void hyperlinkUpdate(final HyperlinkEvent e) {
         myActiveLink = true;
@@ -168,7 +167,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
           }
 
           if (!expanded) {
-            expand(hint, editor, p, myPane, alignToRight, group, hintHint);
+            expand(hint, editor, p, IdeTooltipManager.initPane(new Html(myText).setKeepFont(true), hintHint, layeredPane), alignToRight, group, hintHint);
           }
           else {
             stripDescription();
@@ -181,7 +180,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
 
     // This listener makes hint transparent for mouse events. It means that hint is closed
     // by MousePressed and this MousePressed goes into the underlying editor component.
-    myPane.addMouseListener(new MouseAdapter() {
+    IdeTooltipManager.initPane(new Html(myText).setKeepFont(true), hintHint, layeredPane).addMouseListener(new MouseAdapter() {
       @Override
       public void mouseReleased(final MouseEvent e) {
         if (!myActiveLink) {
