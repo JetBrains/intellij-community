@@ -54,16 +54,15 @@ public class ColorAndFontGlobalState {
     myLanguage2RainbowEnabled.put(language, rainbowOn);
   }
 
-  ColorAndFontGlobalState() {
+  private ColorAndFontGlobalState(@SuppressWarnings("UnusedParameters") boolean unused) {
     myReferenceState = null;
   }
 
-  public ColorAndFontGlobalState(@NotNull ColorAndFontGlobalState state) {
-    myReferenceState = state;
-    copyFrom(state);
+  public ColorAndFontGlobalState() {
+    myReferenceState = new ColorAndFontGlobalState(true);
   }
 
-  public void copyFrom(@NotNull ColorAndFontGlobalState state) {
+  private void copyFrom(@NotNull ColorAndFontGlobalState state) {
     assert this != state;
     myLanguage2RainbowEnabled = new HashMap<>(state.myLanguage2RainbowEnabled);
   }
@@ -72,6 +71,8 @@ public class ColorAndFontGlobalState {
     for (Map.Entry<Language, Boolean> entry : myLanguage2RainbowEnabled.entrySet()) {
       RainbowHighlighter.setRainbowEnabled(entry.getKey(), entry.getValue());
     }
+    //noinspection ConstantConditions
+    myReferenceState.copyFrom(this);
   }
 
   @Override
@@ -94,5 +95,14 @@ public class ColorAndFontGlobalState {
 
   public void stateChanged() {
     myDispatcher.getMulticaster().settingsChanged();
+  }
+
+  public boolean isModified() {
+    return !equals(myReferenceState);
+  }
+
+  public void reset() {
+    //noinspection ConstantConditions
+    copyFrom(myReferenceState);
   }
 }

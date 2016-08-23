@@ -19,14 +19,11 @@ import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptorWithPath;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 
 class RainbowAttributeDescriptor implements EditorSchemeAttributeDescriptorWithPath {
@@ -34,21 +31,16 @@ class RainbowAttributeDescriptor implements EditorSchemeAttributeDescriptorWithP
   private final String myDisplayName;
   private final EditorColorsScheme myScheme;
   private final Language myLanguage;
-
-  // can be shared between instances
-  private final RainbowInSchemeState myCurState;
-  private final RainbowInSchemeState myInitState;
+  private final RainbowColorsInSchemeState myRainbowColorsInSchemaState;
 
   public RainbowAttributeDescriptor(@Nullable Language language,
                                     @NotNull String group,
                                     @NotNull String displayNameWithPath,
                                     @NotNull EditorColorsScheme scheme,
-                                    @NotNull RainbowInSchemeState initState,
-                                    @NotNull RainbowInSchemeState curState) {
+                                    @NotNull RainbowColorsInSchemeState rainbowState) {
     myLanguage = language;
     myDisplayName = displayNameWithPath;
-    myInitState = initState;
-    myCurState = curState;
+    myRainbowColorsInSchemaState = rainbowState;
     myScheme = scheme;
     myGroup = group;
   }
@@ -75,16 +67,16 @@ class RainbowAttributeDescriptor implements EditorSchemeAttributeDescriptorWithP
 
   @Override
   public void apply(@NotNull EditorColorsScheme scheme) {
-    myCurState.apply(scheme);
+    myRainbowColorsInSchemaState.apply(scheme);
   }
 
   @Override
   public boolean isModified() {
-    return !myInitState.equals(myCurState);
+    return myRainbowColorsInSchemaState.isModified();
   }
 
-  public List<Pair<Boolean, Color>> getRainbowCurState() {
-    return myCurState.myRainbowState;
+  public List<Pair<Boolean, Color>> getRainbowColorsInSchemaState() {
+    return myRainbowColorsInSchemaState.getInheritanceAndColors();
   }
 
   public Color getDefaultColor(int index) {
@@ -93,70 +85,5 @@ class RainbowAttributeDescriptor implements EditorSchemeAttributeDescriptorWithP
 
   public Language getLanguage() {
     return myLanguage;
-  }
-
-  public static class RainbowInSchemeState {
-    private final List<Pair<Boolean, Color>> myRainbowState = new ArrayList<>();
-
-    public RainbowInSchemeState(@NotNull EditorColorsScheme scheme) {
-      for (TextAttributesKey rainbowKey : RainbowHighlighter.RAINBOW_COLOR_KEYS) {
-        myRainbowState.add(getColorStateFromScheme(scheme, rainbowKey));
-      }
-    }
-
-    public RainbowInSchemeState(@NotNull RainbowInSchemeState state) {
-      copyFrom(state);
-    }
-
-    public void copyFrom(@NotNull RainbowInSchemeState state) {
-      assert this != state;
-
-      myRainbowState.clear();
-      myRainbowState.addAll(state.myRainbowState);
-    }
-
-    public void apply(@NotNull EditorColorsScheme scheme) {
-      int i = 0;
-      for (TextAttributesKey rainbowKey : RainbowHighlighter.RAINBOW_COLOR_KEYS) {
-        Pair<Boolean, Color> pair = myRainbowState.get(i);
-        scheme.setAttributes(rainbowKey, pair.first ? new TextAttributes(pair.second, null, null, null, Font.PLAIN)
-                                                    : rainbowKey.getDefaultAttributes());
-        ++i;
-      }
-    }
-
-    @NotNull
-    private static Pair<Boolean, Color> getColorStateFromScheme(@NotNull EditorColorsScheme scheme, TextAttributesKey rainbowKey) {
-      TextAttributes schemeAttributes = scheme.getAttributes(rainbowKey);
-      @NotNull Color defaultRainbow = rainbowKey.getDefaultAttributes().getForegroundColor();
-      Pair<Boolean, Color> pair;
-      if (schemeAttributes == null) {
-        pair = Pair.create(false, defaultRainbow);
-      }
-      else {
-        Color schemeColor = schemeAttributes.getForegroundColor();
-        if (schemeColor == null) {
-          pair = Pair.create(false, defaultRainbow);
-        }
-        else {
-          pair = Pair.create(!defaultRainbow.equals(schemeColor), schemeColor);
-        }
-      }
-      return pair;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      RainbowInSchemeState state = (RainbowInSchemeState)o;
-      return myRainbowState.equals(state.myRainbowState);
-    }
-
-    @Override
-    public int hashCode() {
-      return myRainbowState.hashCode();
-    }
   }
 }

@@ -75,8 +75,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   private Map<String, MyColorScheme> mySchemes;
   private MyColorScheme mySelectedScheme;
 
-  private final ColorAndFontGlobalState myInitGlobalOption = new ColorAndFontGlobalState();
-  private final ColorAndFontGlobalState myCurGlobalOption = new ColorAndFontGlobalState(myInitGlobalOption);
+  private final ColorAndFontGlobalState myColorAndFontGlobalState = new ColorAndFontGlobalState();
 
   public static final String FILE_STATUS_GROUP = ApplicationBundle.message("title.file.status");
   public static final String SCOPES_GROUP = ApplicationBundle.message("title.scope.based");
@@ -95,15 +94,15 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   private boolean myDisposeCompleted = false;
   private final Disposable myDisposable = Disposer.newDisposable();
 
-  public ColorAndFontGlobalState getGlobalOption() {
-    return myCurGlobalOption;
+  public ColorAndFontGlobalState getColorAndFontGlobalState() {
+    return myColorAndFontGlobalState;
   }
 
   @Override
   public boolean isModified() {
     boolean listModified = isSchemeListModified();
     boolean schemeModified = isSomeSchemeModified();
-    boolean globalModified = isGlobalOptionModified();
+    boolean globalModified = isColorAndFontGlobalStateModified();
 
     if (listModified || schemeModified || globalModified) {
       myApplyCompleted = false;
@@ -112,8 +111,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     return listModified || globalModified;
   }
 
-  private boolean isGlobalOptionModified() {
-    return !myInitGlobalOption.equals(myCurGlobalOption);
+  private boolean isColorAndFontGlobalStateModified() {
+    return myColorAndFontGlobalState.isModified();
   }
 
   private boolean isSchemeListModified() {
@@ -250,8 +249,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
 
     try {
-      myCurGlobalOption.apply();
-      myInitGlobalOption.copyFrom(myCurGlobalOption);
+      myColorAndFontGlobalState.apply();
 
       EditorColorsManager myColorsManager = EditorColorsManager.getInstance();
       SchemeManager<EditorColorsScheme> schemeManager = ((EditorColorsManagerImpl)myColorsManager).getSchemeManager();
@@ -501,7 +499,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
    }
 
   private void initAll() {
-    myCurGlobalOption.copyFrom(myInitGlobalOption);
+    myColorAndFontGlobalState.reset();
     mySchemes = new THashMap<>();
     for (EditorColorsScheme allScheme : EditorColorsManager.getInstance().getAllSchemes()) {
       MyColorScheme schemeDelegate = new MyColorScheme(allScheme);
@@ -543,8 +541,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
                                                       group,
                                                       ApplicationBundle.message("rainbow.option.panel.display.name"),
                                                       scheme,
-                                                      scheme.getInitRainbowState(),
-                                                      scheme.getCurrentRainbowState()));
+                                                      scheme.getRainbowState()));
     }
     for (AttributesDescriptor descriptor : attributeDescriptors) {
       addSchemedDescription(descriptions, descriptor.getDisplayName(), group, descriptor.getKey(), scheme, null, null);
@@ -660,7 +657,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   private void revertChanges(){
-    if (isSchemeListModified() || isSomeSchemeModified() || isGlobalOptionModified()) {
+    if (isSchemeListModified() || isSomeSchemeModified() || isColorAndFontGlobalStateModified()) {
       myRevertChangesCompleted = false;
     }
 
@@ -1018,8 +1015,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     private EditorSchemeAttributeDescriptor[] myDescriptors;
     private String                            myName;
     private boolean myIsNew = false;
-    private RainbowAttributeDescriptor.RainbowInSchemeState myInitRainbowState;
-    private RainbowAttributeDescriptor.RainbowInSchemeState myCurrentRainbowState;
+    private RainbowColorsInSchemeState myRainbowState;
 
     private MyColorScheme(@NotNull EditorColorsScheme parentScheme) {
       super(parentScheme);
@@ -1150,18 +1146,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       return false;
     }
 
-    public RainbowAttributeDescriptor.RainbowInSchemeState getInitRainbowState() {
-      if (myInitRainbowState == null) {
-        myInitRainbowState = new RainbowAttributeDescriptor.RainbowInSchemeState(this);
+    public RainbowColorsInSchemeState getRainbowState() {
+      if (myRainbowState == null) {
+        myRainbowState = new RainbowColorsInSchemeState(this);
       }
-      return myInitRainbowState;
-    }
-
-    public RainbowAttributeDescriptor.RainbowInSchemeState getCurrentRainbowState() {
-      if (myCurrentRainbowState == null) {
-        myCurrentRainbowState = new RainbowAttributeDescriptor.RainbowInSchemeState(getInitRainbowState());
-      }
-      return myCurrentRainbowState;
+      return myRainbowState;
     }
   }
 

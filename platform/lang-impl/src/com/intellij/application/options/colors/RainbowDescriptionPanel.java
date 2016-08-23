@@ -127,8 +127,8 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
     if (!(attributeDescriptor instanceof RainbowAttributeDescriptor)) return;
     RainbowAttributeDescriptor descriptor = (RainbowAttributeDescriptor)attributeDescriptor;
 
-    List<Pair<Boolean, Color>> rainbowCurState = descriptor.getRainbowCurState();
-    if (rainbowCurState.size() < myCbStops.length) return;
+    List<Pair<Boolean, Color>> rainbowState = descriptor.getRainbowColorsInSchemaState();
+    if (rainbowState.size() < myCbStops.length) return;
     Boolean rainbowOn = myGlobalState.isRainbowOn(descriptor.getLanguage());
     boolean isInherited = false;
     if (rainbowOn == null) {
@@ -143,7 +143,7 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
     boolean isEnable = !ColorAndFontOptions.isReadOnly(attributeDescriptor.getScheme()) && isDefaultLanguage;
     //myGradientLabel.setEnabled(isEnable);
     for (int i = 0; i < myCbStops.length; ++i) {
-      Pair<Boolean, Color> state = rainbowCurState.get(i);
+      Pair<Boolean, Color> state = rainbowState.get(i);
       myCbStops[i].setEnabled(isEnable);
 
       boolean isOverride = state.first;
@@ -165,7 +165,7 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
     if (!(attributeDescriptor instanceof RainbowAttributeDescriptor)) return;
     RainbowAttributeDescriptor descriptor = (RainbowAttributeDescriptor)attributeDescriptor;
 
-    List<Pair<Boolean, Color>> rainbowCurState = descriptor.getRainbowCurState();
+    List<Pair<Boolean, Color>> rainbowCurState = descriptor.getRainbowColorsInSchemaState();
     if (rainbowCurState.size() < myCbStops.length) return;
 
     boolean isDefaultLanguage = descriptor.getLanguage() == null;
