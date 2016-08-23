@@ -378,7 +378,7 @@ def change_attr_expression(thread_id, frame_id, attr, expression, dbg, value=Non
     try:
         expression = expression.replace('@LINE@', '\n')
 
-        if dbg.plugin:
+        if dbg.plugin and not value:
             result = dbg.plugin.change_variable(frame, attr, expression)
             if result:
                 return result
