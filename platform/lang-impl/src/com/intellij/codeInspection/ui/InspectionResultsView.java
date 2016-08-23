@@ -538,8 +538,11 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       JComponent previewPanel = null;
       final InspectionToolWrapper tool = myTree.getSelectedToolWrapper(true);
       if (tool != null && refEntity != null && refEntity.isValid()) {
-        final InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(tool);
-        previewPanel = presentation.getCustomPreviewPanel(refEntity);
+        final TreePath path = myTree.getSelectionPath();
+        if (path == null || !(path.getLastPathComponent() instanceof ProblemDescriptionNode)) {
+          final InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(tool);
+          previewPanel = presentation.getCustomPreviewPanel(refEntity);
+        }
       }
       EditorEx previewEditor = null;
       if (previewPanel == null) {
