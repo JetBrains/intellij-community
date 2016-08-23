@@ -94,7 +94,7 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
   }
 
   override fun setPassword(attributes: CredentialAttributes, value: String?, memoryOnly: Boolean) {
-    val credentials = value?.let { Credentials(attributes.accountName, it) }
+    val credentials = value?.let { Credentials(attributes.userName, it) }
     if (memoryOnly) {
       memoryHelperProvider.value.set(attributes, credentials)
       // remove to ensure that on getPassword we will not return some value from default provider

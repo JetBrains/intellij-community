@@ -35,7 +35,7 @@ internal class SecretCredentialStore(schemeName: String) : CredentialStore {
   override fun get(attributes: CredentialAttributes): Credentials? {
     checkError("secret_password_lookup_sync") { errorRef ->
       val serviceNamePointer = stringPointer(attributes.serviceName.toByteArray())
-      if (attributes.accountName == null) {
+      if (attributes.userName == null) {
         LIBRARY.secret_password_lookup_sync(scheme, null, errorRef, serviceAttributeNamePointer, serviceNamePointer, null)?.let {
           // Secret Service doesn't allow to get attributes, so, we store joined data
           return splitData(it)
@@ -44,7 +44,7 @@ internal class SecretCredentialStore(schemeName: String) : CredentialStore {
       else {
         LIBRARY.secret_password_lookup_sync(scheme, null, errorRef,
                                             serviceAttributeNamePointer, serviceNamePointer,
-                                            accountAttributeNamePointer, stringPointer(attributes.accountName!!.toByteArray()),
+                                            accountAttributeNamePointer, stringPointer(attributes.userName!!.toByteArray()),
                                             null)?.let {
           return splitData(it)
         }
@@ -56,7 +56,7 @@ internal class SecretCredentialStore(schemeName: String) : CredentialStore {
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
     val serviceNamePointer = stringPointer(attributes.serviceName.toByteArray())
-    val accountName = attributes.accountName ?: credentials?.userName
+    val accountName = attributes.userName ?: credentials?.userName
     if (credentials.isEmpty()) {
       checkError("secret_password_store_sync") { errorRef ->
         if (accountName == null) {

@@ -17,7 +17,7 @@ package com.intellij.credentialStore
 
 import com.intellij.util.nullize
 
-data class CredentialAttributes(val serviceName: String, val accountName: String? = null) {
+data class CredentialAttributes(val serviceName: String, val userName: String? = null) {
 }
 
 // user cannot be empty, but password can be
@@ -32,4 +32,4 @@ class Credentials(user: String?, val password: String?) {
   override fun hashCode() = (userName?.hashCode() ?: 0) * 37 + (password?.hashCode() ?: 0)
 }
 
-fun CredentialAttributes(requestor: Class<*>, accountName: String) = CredentialAttributes(requestor.name, accountName)
+fun CredentialAttributes(requestor: Class<*>, userName: String) = CredentialAttributes(requestor.name, userName)

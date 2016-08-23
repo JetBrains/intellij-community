@@ -31,6 +31,6 @@ public interface CredentialStore {
   void set(@NotNull CredentialAttributes attributes, @Nullable Credentials credentials);
 
   default void setPassword(@NotNull CredentialAttributes attributes, @Nullable String password) {
-    set(attributes, password == null ? null : new Credentials(attributes.getAccountName(), password));
+    set(attributes, password == null ? null : new Credentials(attributes.getUserName(), password));
   }
 }
