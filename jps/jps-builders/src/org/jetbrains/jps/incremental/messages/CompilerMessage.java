@@ -54,7 +54,7 @@ public class CompilerMessage extends BuildMessage {
   }
 
   public CompilerMessage(@NotNull String compilerName, Kind kind, String messageText, String sourcePath) {
-    this(compilerName, messageText, Collections.singleton(sourcePath), kind);
+    this(compilerName, messageText, sourcePath == null ? Collections.<String>emptyList() : Collections.singleton(sourcePath), kind);
   }
 
   public CompilerMessage(@NotNull String compilerName, Kind kind, String messageText,
