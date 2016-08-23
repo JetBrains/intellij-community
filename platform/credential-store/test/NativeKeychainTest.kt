@@ -34,6 +34,11 @@ class NativeKeychainTest {
   }
 
   @Test
+  fun keepass() {
+    doTest(FileCredentialStore())
+  }
+
+  @Test
   fun `mac - testEmptyAccountName`() {
     if (!SystemInfo.isMacIntel64 || UsefulTestCase.IS_UNDER_TEAMCITY) {
       return

@@ -56,7 +56,7 @@ internal class SecretCredentialStore(schemeName: String) : CredentialStore {
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
     val serviceNamePointer = stringPointer(attributes.serviceName.toByteArray())
-    val accountName = attributes.accountName ?: credentials?.user
+    val accountName = attributes.accountName ?: credentials?.userName
     if (credentials.isEmpty()) {
       checkError("secret_password_store_sync") { errorRef ->
         if (accountName == null) {

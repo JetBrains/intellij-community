@@ -77,9 +77,9 @@ private fun parseString(data: String, delimiter: Char): List<String> {
   return result
 }
 
-fun Credentials?.isFulfilled() = this != null && user != null && password != null
+fun Credentials?.isFulfilled() = this != null && userName != null && password != null
 
-fun Credentials?.isEmpty() = this == null || (user == null && password == null)
+fun Credentials?.isEmpty() = this == null || (userName == null && password == null)
 
 // check isEmpty before
-fun Credentials.serialize() = joinData(user, password)!!.toByteArray()
+fun Credentials.serialize() = joinData(userName, password)!!.toByteArray()

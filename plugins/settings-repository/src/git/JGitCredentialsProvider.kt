@@ -114,7 +114,7 @@ class JGitCredentialsProvider(private val credentialsStore: Lazy<IcsCredentialsS
       }
     }
 
-    userNameItem?.value = credentials?.user
+    userNameItem?.value = credentials?.userName
     if (passwordItem != null) {
       if (passwordItem is CredentialItem.Password) {
         passwordItem.value = credentials?.password?.toCharArray()
