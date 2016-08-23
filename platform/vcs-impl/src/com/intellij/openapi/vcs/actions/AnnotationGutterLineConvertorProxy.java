@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.TextAnnotationGutterProviderEx;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
@@ -30,7 +31,7 @@ import java.util.List;
  * @author Irina Chernushina
  * @author Konstantin Bulenkov
  */
-public class AnnotationGutterLineConvertorProxy implements ActiveAnnotationGutter {
+public class AnnotationGutterLineConvertorProxy extends TextAnnotationGutterProviderEx implements ActiveAnnotationGutter {
   private final UpToDateLineNumberProvider myGetUpToDateLineNumber;
   private final AnnotationFieldGutter myDelegate;
 

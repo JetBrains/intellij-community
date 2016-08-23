@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutterAction;
+import com.intellij.openapi.editor.TextAnnotationGutterProviderEx;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.util.Computable;
@@ -40,7 +41,7 @@ import java.util.Map;
  * @author Irina Chernushina
  * @author Konstantin Bulenkov
  */
-public class AnnotationFieldGutter implements ActiveAnnotationGutter {
+public class AnnotationFieldGutter extends TextAnnotationGutterProviderEx implements ActiveAnnotationGutter {
   @NotNull protected final FileAnnotation myAnnotation;
   protected final LineAnnotationAspect myAspect;
   @NotNull private final TextAnnotationPresentation myPresentation;
