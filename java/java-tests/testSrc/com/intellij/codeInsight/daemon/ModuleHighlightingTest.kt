@@ -31,27 +31,6 @@ import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
-  companion object {
-    private val DESCRIPTOR = object : DefaultLightProjectDescriptor() {
-      override fun getSdk() = IdeaTestUtil.getMockJdk18()
-
-      override fun setUpProject(project: Project, handler: SetupHandler) {
-        super.setUpProject(project, handler)
-        runWriteAction {
-          val m2 = createModule(project, FileUtil.join(FileUtil.getTempDirectory(), "light_idea_test_case_m2.iml"))
-          val src2 = createSourceRoot(m2, "src2")
-          createContentEntry(m2, src2)
-
-          VfsUtil.saveText(src2.createChildData(this, "module-info.java"), "module M2 { }")
-        }
-      }
-
-      override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
-        model.getModuleExtension(LanguageLevelModuleExtension::class.java).languageLevel = LanguageLevel.JDK_1_9
-      }
-    }
-  }
-
   override fun getProjectDescriptor(): LightProjectDescriptor = DESCRIPTOR
 
   fun testWrongFileName() {
@@ -78,6 +57,27 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
   }
 
   //<editor-fold desc="Helpers.">
+  companion object {
+    private val DESCRIPTOR = object : DefaultLightProjectDescriptor() {
+      override fun getSdk() = IdeaTestUtil.getMockJdk18()
+
+      override fun setUpProject(project: Project, handler: SetupHandler) {
+        super.setUpProject(project, handler)
+        runWriteAction {
+          val m2 = createModule(project, FileUtil.join(FileUtil.getTempDirectory(), "light_idea_test_case_m2.iml"))
+          val src2 = createSourceRoot(m2, "src2")
+          createContentEntry(m2, src2)
+
+          VfsUtil.saveText(src2.createChildData(this, "module-info.java"), "module M2 { }")
+        }
+      }
+
+      override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
+        model.getModuleExtension(LanguageLevelModuleExtension::class.java).languageLevel = LanguageLevel.JDK_1_9
+      }
+    }
+  }
+
   private fun additionalFile(text: String) = myFixture.configureFromExistingVirtualFile(runWriteAction {
     val file = LightPlatformTestCase.getSourceRoot().createChildDirectory(this, "pkg").createChildData(this, "module-info.java")
     VfsUtil.saveText(file, text)
