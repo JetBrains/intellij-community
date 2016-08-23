@@ -104,14 +104,7 @@ public class CompilerMessage extends BuildMessage {
 
   @Nullable
   public String getSourcePath() {
-    if (mySourcePaths.isEmpty()) {
-      return null;
-    }
-    else if (mySourcePaths.size() == 1) {
-      return ContainerUtil.getFirstItem(mySourcePaths);
-    } else {
-      return mySourcePaths.toString();
-    }
+    return mySourcePaths.size() == 1 ? ContainerUtil.getFirstItem(mySourcePaths) : null;
   }
 
   public long getLine() {
