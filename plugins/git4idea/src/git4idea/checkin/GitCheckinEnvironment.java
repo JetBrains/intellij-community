@@ -725,8 +725,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       myPanel = new JPanel(new GridBagLayout());
       myPanel.add(authorLabel, gb.nextLine().next());
       myPanel.add(myAuthorField, gb.next().fillCellHorizontally().weightx(1));
-      myPanel.add(mySignOffCheckbox, gb.nextLine().next().coverLine());
       myPanel.add(myAmendComponent.getComponent(), gb.nextLine().next().coverLine());
+      myPanel.add(mySignOffCheckbox, gb.nextLine().next().coverLine());
     }
 
     @NotNull
