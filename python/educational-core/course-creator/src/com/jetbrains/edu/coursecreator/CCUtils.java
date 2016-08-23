@@ -2,7 +2,6 @@ package com.jetbrains.edu.coursecreator;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
-import com.intellij.ide.projectView.actions.MarkRootActionBase;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -12,9 +11,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -128,15 +126,12 @@ public class CCUtils {
           public void run() {
             try {
               generatedRoot.set(baseDir.createChildDirectory(this, GENERATED_FILES_FOLDER));
-              final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-              ContentEntry entry = MarkRootActionBase.findContentEntry(model, generatedRoot.get());
-              if (entry == null) {
-                LOG.info("Failed to find contentEntry for archive folder");
+              VirtualFile contentRootForFile =
+                ProjectRootManager.getInstance(module.getProject()).getFileIndex().getContentRootForFile(generatedRoot.get());
+              if (contentRootForFile == null) {
                 return;
               }
-              entry.addExcludeFolder(generatedRoot.get());
-              model.commit();
-              module.getProject().save();
+              ModuleRootModificationUtil.updateExcludedFolders(module, contentRootForFile, Collections.emptyList(), Collections.singletonList(generatedRoot.get().getUrl()));
             }
             catch (IOException e) {
               LOG.info("Failed to create folder for generated files", e);
