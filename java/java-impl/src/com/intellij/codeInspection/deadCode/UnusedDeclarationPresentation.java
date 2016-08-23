@@ -439,8 +439,11 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   @PsiModifier.ModifierConstant
   private static String getAcceptedVisibility(UnusedSymbolLocalInspectionBase tool, RefJavaElement element) {
-    if (element instanceof RefClass || element instanceof RefImplicitConstructor) {
-      return tool.getClassVisibility();
+    if (element instanceof RefImplicitConstructor) {
+      element = ((RefImplicitConstructor)element).getOwnerClass();
+    }
+    if (element instanceof RefClass) {
+      return element.getOwner() instanceof RefClass ? tool.getInnerClassVisibility() : tool.getClassVisibility();
     }
     if (element instanceof RefField) {
       return tool.getFieldVisibility();

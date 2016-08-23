@@ -234,8 +234,12 @@ class PostHighlightingVisitor {
         return processMethod(myProject, (PsiMethod)parent, identifier, progress, helper);
       }
     }
-    if (parent instanceof PsiClass && compareVisibilities((PsiModifierListOwner)parent, myUnusedSymbolInspection.getClassVisibility())) {
-      return processClass(myProject, (PsiClass)parent, identifier, progress, helper);
+    if (parent instanceof PsiClass) {
+      final String acceptedVisibility = ((PsiClass)parent).getContainingClass() == null ? myUnusedSymbolInspection.getClassVisibility()
+                                                                                        : myUnusedSymbolInspection.getInnerClassVisibility();
+      if (compareVisibilities((PsiModifierListOwner)parent, acceptedVisibility)) {
+        return processClass(myProject, (PsiClass)parent, identifier, progress, helper);
+      }
     }
     return null;
   }
