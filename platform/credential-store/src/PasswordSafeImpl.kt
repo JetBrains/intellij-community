@@ -20,7 +20,6 @@ import com.intellij.credentialStore.PasswordSafeSettings.ProviderType
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.SettingsSavingComponent
 import com.intellij.openapi.diagnostic.catchAndLog
 
@@ -40,8 +39,7 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
       currentProvider = FileCredentialStore(memoryOnly = true)
     }
     else {
-      val appInfo = ApplicationInfoEx.getInstanceEx()
-      currentProvider = createPersistentCredentialStore(convertFileStore = appInfo.build.isSnapshot || appInfo.isEAP)
+      currentProvider = createPersistentCredentialStore()
     }
 
     ApplicationManager.getApplication().messageBus.connect().subscribe(PasswordSafeSettings.TOPIC, object: PasswordSafeSettingsListener {
@@ -140,7 +138,7 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
 
 private fun createPersistentCredentialStore(existing: FileCredentialStore? = null, convertFileStore: Boolean = false): PasswordStorage {
   LOG.catchAndLog {
-    for (factory in com.intellij.credentialStore.CredentialStoreFactory.CREDENTIAL_STORE_FACTORY.extensions) {
+    for (factory in CredentialStoreFactory.CREDENTIAL_STORE_FACTORY.extensions) {
       val store = factory.create() ?: continue
       if (convertFileStore) {
         LOG.catchAndLog {
