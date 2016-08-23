@@ -72,6 +72,7 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
@@ -1211,11 +1212,34 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         MarkupModel markupModel = getEditor().getMarkupModel();
 
         RangeHighlighter highlighter = LineStatusMarkerRenderer.createRangeHighlighter(range, new TextRange(first, second), markupModel);
-        highlighter.setLineMarkerRenderer(LineStatusMarkerRenderer.createRenderer(range, (editor) -> {
-          return new MyLineStatusMarkerPopup(range);
-        }));
+        highlighter.setLineMarkerRenderer(new MyLineStatusMarkerRenderer(range));
 
         range.setHighlighter(highlighter);
+      }
+    }
+
+    private class MyLineStatusMarkerRenderer extends LineStatusMarkerRenderer {
+      private final Range myRange;
+
+      public MyLineStatusMarkerRenderer(Range range) {
+        super(range);
+        myRange = range;
+      }
+
+      @Override
+      public boolean canDoAction(MouseEvent e) {
+        return isInsideMarkerArea(e);
+      }
+
+      @Override
+      public void doAction(Editor editor1, MouseEvent e) {
+        LineStatusMarkerPopup popup = new MyLineStatusMarkerPopup(myRange);
+        popup.showHint(e);
+      }
+
+      @Override
+      protected int getFramingBorderSize() {
+        return JBUI.scale(2);
       }
     }
 
