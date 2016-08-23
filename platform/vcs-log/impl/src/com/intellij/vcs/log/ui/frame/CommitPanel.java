@@ -181,7 +181,6 @@ class CommitPanel extends JBPanel {
       caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
 
       setBorder(JBUI.Borders.empty(BOTTOM_BORDER, ReferencesPanel.H_GAP, 0, 0));
-      customizeLinks();
     }
 
     @Override
@@ -214,7 +213,7 @@ class CommitPanel extends JBPanel {
       }
     }
 
-    private void customizeLinks() {
+    private void customizeLinksStyle() {
       Document document = getDocument();
       if (document instanceof HTMLDocument) {
         StyleSheet styleSheet = ((HTMLDocument)document).getStyleSheet();
@@ -257,6 +256,7 @@ class CommitPanel extends JBPanel {
                 getBranchesText() +
                 "</body></html>");
       }
+      customizeLinksStyle();
       revalidate();
       repaint();
     }
