@@ -114,17 +114,18 @@ public class GitLogBranchOperationsActionGroup extends ActionGroup implements Du
     boolean isLocal = ref.getType() == GitRefManager.LOCAL_BRANCH;
 
     List<AnAction> actions = new ArrayList<>(3);
-    ActionGroup singleRepoActions = createBranchActions(project, Collections.singletonList(repository), ref, repository, isLocal);
-    singleRepoActions.setPopup(false);
-    actions.add(singleRepoActions);
 
     if (isSyncBranch) {
-      actions.add(Separator.getInstance());
       ActionGroup allReposActions = createBranchActions(project, allRepositories, ref, repository, isLocal);
       allReposActions.getTemplatePresentation().setText("In All Repositories");
       allReposActions.setPopup(true);
       actions.add(allReposActions);
+      actions.add(Separator.getInstance());
     }
+
+    ActionGroup singleRepoActions = createBranchActions(project, Collections.singletonList(repository), ref, repository, isLocal);
+    singleRepoActions.setPopup(false);
+    actions.add(singleRepoActions);
 
     String text = showBranchesPopup ? ref.getName() : "Branch '" + ref.getName() + "'";
     ActionGroup group = new DefaultActionGroup(actions);
