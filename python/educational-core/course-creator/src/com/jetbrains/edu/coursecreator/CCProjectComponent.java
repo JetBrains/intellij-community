@@ -10,8 +10,8 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.jetbrains.edu.learning.StudyProjectComponent;
 import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
@@ -50,7 +50,7 @@ public class CCProjectComponent extends AbstractProjectComponent {
       File coursesDir = new File(PathManager.getConfigPath(), "courses");
       File courseDir = new File(coursesDir, oldCourse.getName() + "-" + myProject.getName());
       oldCourse.setCourseDirectory(courseDir.getPath());
-      StudyProjectComponent.getInstance(myProject).registerStudyToolWindow(oldCourse);
+      StudyUtils.registerStudyToolWindow(oldCourse, myProject);
       transformFiles(oldCourse, myProject);
     }
   }
@@ -60,17 +60,23 @@ public class CCProjectComponent extends AbstractProjectComponent {
     for (VirtualFile answerFile : files) {
       ApplicationManager.getApplication().runWriteAction(() -> {
         String answerName = answerFile.getName();
-        String name = FileUtil.getNameWithoutExtension(FileUtil.getNameWithoutExtension(answerName)) + "." + FileUtilRt.getExtension(answerName);
-          VirtualFile file = answerFile.getParent().findChild(name);
-            try {
-              if (file != null) {
-                file.delete(CCProjectComponent.class);
-              }
-              answerFile.rename(CCProjectComponent.class, name);
-            }
-            catch (IOException e) {
-              LOG.error(e);
-            }
+        String nameWithoutExtension = FileUtil.getNameWithoutExtension(answerName);
+        String name = FileUtil.getNameWithoutExtension(nameWithoutExtension) + "." + FileUtilRt.getExtension(answerName);
+        VirtualFile parent = answerFile.getParent();
+        VirtualFile file = parent.findChild(name);
+        try {
+          if (file != null) {
+            file.delete(CCProjectComponent.class);
+          }
+          VirtualFile windowsDescrFile = parent.findChild(FileUtil.getNameWithoutExtension(name) + EduNames.WINDOWS_POSTFIX);
+          if (windowsDescrFile != null) {
+            windowsDescrFile.delete(CCProjectComponent.class);
+          }
+          answerFile.rename(CCProjectComponent.class, name);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
       });
     }
   }
@@ -88,7 +94,7 @@ public class CCProjectComponent extends AbstractProjectComponent {
           if (taskFile == null) {
             taskFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.join(taskPath, EduNames.SRC, answerName));
           }
-          if (taskFile!= null) {
+          if (taskFile != null) {
             result.add(taskFile);
           }
         }

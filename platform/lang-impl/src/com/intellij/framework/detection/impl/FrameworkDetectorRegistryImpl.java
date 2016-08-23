@@ -49,17 +49,17 @@ public class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegistry {
   }
 
   private void loadDetectors() {
-    Map<String, FrameworkDetector> newDetectors = new HashMap<String, FrameworkDetector>();
+    Map<String, FrameworkDetector> newDetectors = new HashMap<>();
     for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensions()) {
       newDetectors.put(detector.getDetectorId(), detector);
     }
 
-    myDetectorIds = new TObjectIntHashMap<String>();
+    myDetectorIds = new TObjectIntHashMap<>();
     final File file = getDetectorsRegistryFile();
     int maxId = REGISTRY_VERSION;
     if (file.exists()) {
       LOG.debug("loading framework detectors registry from " + file.getAbsolutePath());
-      List<String> unknownIds = new ArrayList<String>();
+      List<String> unknownIds = new ArrayList<>();
       boolean versionChanged = false;
       try {
         DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
@@ -107,8 +107,8 @@ public class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegistry {
     for (String newDetector : newDetectors.keySet()) {
       myDetectorIds.put(newDetector, nextId++);
     }
-    myDetectorById = new TIntObjectHashMap<FrameworkDetector>();
-    myDetectorsByFileType = new MultiMap<FileType, Integer>();
+    myDetectorById = new TIntObjectHashMap<>();
+    myDetectorsByFileType = new MultiMap<>();
     for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensions()) {
       final int id = myDetectorIds.get(detector.getDetectorId());
       myDetectorsByFileType.putValue(detector.getFileType(), id);
@@ -163,7 +163,7 @@ public class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegistry {
   @NotNull
   @Override
   public List<? extends FrameworkType> getFrameworkTypes() {
-    final List<FrameworkType> types = new ArrayList<FrameworkType>();
+    final List<FrameworkType> types = new ArrayList<>();
     for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensions()) {
       types.add(detector.getFrameworkType());
     }
@@ -194,7 +194,7 @@ public class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegistry {
   @Override
   public Collection<Integer> getAllDetectorIds() {
     final int[] ids = myDetectorIds.getValues();
-    final List<Integer> result = new ArrayList<Integer>();
+    final List<Integer> result = new ArrayList<>();
     for (int id : ids) {
       result.add(id);
     }

@@ -160,7 +160,7 @@ public class HighlightUsagesHandlerTest extends LightCodeInsightFixtureTestCase 
       }'''.stripIndent()
     myFixture.enableInspections(new SillyAssignmentInspection())
     ctrlShiftF7()
-    assertRangeText 'i = i'
+    assertRangeText 'i'
   }
 
   public void "test statically imported overloads from usage"() {

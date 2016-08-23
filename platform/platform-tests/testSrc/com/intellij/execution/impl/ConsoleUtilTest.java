@@ -40,7 +40,7 @@ public class ConsoleUtilTest {
 
   @Before
   public void setUp() {
-    myTokens = new ArrayList<ConsoleViewImpl.TokenInfo>();
+    myTokens = new ArrayList<>();
   }
   
   @Test

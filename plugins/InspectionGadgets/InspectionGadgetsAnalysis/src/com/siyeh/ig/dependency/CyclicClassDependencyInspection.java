@@ -57,7 +57,7 @@ public class CyclicClassDependencyInspection extends BaseGlobalInspection {
     }
     final Set<RefClass> dependencies = DependencyUtils.calculateTransitiveDependenciesForClass(refClass);
     final Set<RefClass> dependents = DependencyUtils.calculateTransitiveDependentsForClass(refClass);
-    final Set<RefClass> mutualDependents = new HashSet<RefClass>(dependencies);
+    final Set<RefClass> mutualDependents = new HashSet<>(dependencies);
     mutualDependents.retainAll(dependents);
     final int numMutualDependents = mutualDependents.size();
     if (numMutualDependents == 0) {

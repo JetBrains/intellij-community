@@ -44,7 +44,7 @@ public class PyWithStatementImpl extends PyElementImpl implements PyWithStatemen
   @NotNull
   public List<PsiNamedElement> getNamedElements() {
     PyWithItem[] items = PsiTreeUtil.getChildrenOfType(this, PyWithItem.class);
-    List<PsiNamedElement> result = new ArrayList<PsiNamedElement>();
+    List<PsiNamedElement> result = new ArrayList<>();
     if (items != null) {
       for (PyWithItem item : items) {
         PyExpression targetExpression = item.getTarget();

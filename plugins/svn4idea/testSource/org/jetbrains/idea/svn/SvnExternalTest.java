@@ -75,7 +75,7 @@ public class SvnExternalTest extends Svn17TestCase {
     final SvnFileUrlMapping workingCopies = myVcs.getSvnFileUrlMapping();
     final List<RootUrlInfo> infos = workingCopies.getAllWcInfos();
     Assert.assertEquals(2, infos.size());
-    final Set<String> expectedUrls = new HashSet<String>();
+    final Set<String> expectedUrls = new HashSet<>();
     if (myAnotherRepoUrl != null) {
       expectedUrls.add(StringUtil.toLowerCase(myAnotherRepoUrl + "/root/target"));
     } else {
@@ -100,7 +100,7 @@ public class SvnExternalTest extends Svn17TestCase {
     final SvnFileUrlMapping workingCopies = myVcs.getSvnFileUrlMapping();
     final List<RootUrlInfo> infos = workingCopies.getAllWcInfos();
     Assert.assertEquals(2, infos.size());
-    final Set<String> expectedUrls = new HashSet<String>();
+    final Set<String> expectedUrls = new HashSet<>();
     expectedUrls.add(StringUtil.toLowerCase(myExternalURL));
     expectedUrls.add(StringUtil.toLowerCase(myMainUrl));
 

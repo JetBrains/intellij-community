@@ -52,7 +52,7 @@ public class NonProjectFileWritingAccessDialog extends DialogWrapper {
     myFileList.setPreferredSize(ReadOnlyStatusDialog.getDialogPreferredSize());
     
     myFileList.setCellRenderer(new FileListRenderer());
-    myFileList.setModel(new CollectionListModel<VirtualFile>(nonProjectFiles));
+    myFileList.setModel(new CollectionListModel<>(nonProjectFiles));
 
     String theseFilesMessage = ReadOnlyStatusDialog.getTheseFilesMessage(nonProjectFiles);
     myListTitle.setText(StringUtil.capitalize(theseFilesMessage)

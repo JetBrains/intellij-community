@@ -68,7 +68,7 @@ public class EditorSearchSession implements SearchSession,
   private final FindModel myFindModel;
   private final SearchReplaceComponent myComponent;
 
-  private final LinkLabel<Object> myClickToHighlightLabel = new LinkLabel<Object>("Click to highlight", null, new LinkListener<Object>() {
+  private final LinkLabel<Object> myClickToHighlightLabel = new LinkLabel<>("Click to highlight", null, new LinkListener<Object>() {
     @Override
     public void linkSelected(LinkLabel aSource, Object aLinkData) {
       setMatchesLimit(Integer.MAX_VALUE);

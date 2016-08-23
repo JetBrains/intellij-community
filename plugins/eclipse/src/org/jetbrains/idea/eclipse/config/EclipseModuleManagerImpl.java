@@ -45,9 +45,9 @@ public class EclipseModuleManagerImpl implements EclipseModuleManager, Persisten
   @NonNls private static final String EXPECTED_POSITION = "expected_position";
   @NonNls private static final String SRC_FOLDER = "src_folder";
   private CachedXmlDocumentSet myDocumentSet;
-  private final Map<String, String> myEclipseVariablePaths = new LinkedHashMap<String, String>();
-  private final Set<String> myEclipseUrls = new LinkedHashSet<String>();
-  private final Set<String> myUnknownCons = new LinkedHashSet<String>();
+  private final Map<String, String> myEclipseVariablePaths = new LinkedHashMap<>();
+  private final Set<String> myEclipseUrls = new LinkedHashSet<>();
+  private final Set<String> myUnknownCons = new LinkedHashSet<>();
   private boolean myForceConfigureJDK;
   @NonNls private static final String SRC_PREFIX = "src:";
   @NonNls private static final String SRC_LINK_PREFIX = "linksrc:";
@@ -56,10 +56,10 @@ public class EclipseModuleManagerImpl implements EclipseModuleManager, Persisten
   private final Module myModule;
   @NonNls private static final String LIBELEMENT = "libelement";
   private int myExpectedModuleSourcePlace;
-  private Map<String, Integer> mySrcPlace = new LinkedHashMap<String, Integer>();
+  private Map<String, Integer> mySrcPlace = new LinkedHashMap<>();
   private String myInvalidJdk;
 
-  private Set<String> myKnownCons = new LinkedHashSet<String>();
+  private Set<String> myKnownCons = new LinkedHashSet<>();
 
   public EclipseModuleManagerImpl(Module module) {
     myModule = module;

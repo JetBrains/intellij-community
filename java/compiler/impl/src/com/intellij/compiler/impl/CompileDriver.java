@@ -89,8 +89,8 @@ public class CompileDriver {
 
   private final Project myProject;
 
-  private final Map<Module, String> myModuleOutputPaths = new HashMap<Module, String>();
-  private final Map<Module, String> myModuleTestOutputPaths = new HashMap<Module, String>();
+  private final Map<Module, String> myModuleOutputPaths = new HashMap<>();
+  private final Map<Module, String> myModuleTestOutputPaths = new HashMap<>();
 
   private static final Key<Boolean> COMPILATION_STARTED_AUTOMATICALLY = Key.create("compilation_started_automatically");
 
@@ -127,7 +127,7 @@ public class CompileDriver {
     final CompilerTask task = new CompilerTask(myProject, "Classes up-to-date check", true, false, false, isCompilationStartedAutomatically(scope));
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, task, scope, true, false);
 
-    final Ref<ExitStatus> result = new Ref<ExitStatus>();
+    final Ref<ExitStatus> result = new Ref<>();
 
     task.start(() -> {
       final ProgressIndicator indicator = compileContext.getProgressIndicator();
@@ -194,7 +194,7 @@ public class CompileDriver {
     throws Exception {
     final CompileScope scope = compileContext.getCompileScope();
     final Collection<String> paths = CompileScopeUtil.fetchFiles(compileContext);
-    List<TargetTypeBuildScope> scopes = new ArrayList<TargetTypeBuildScope>();
+    List<TargetTypeBuildScope> scopes = new ArrayList<>();
     final boolean forceBuild = !compileContext.isMake();
     List<TargetTypeBuildScope> explicitScopes = CompileScopeUtil.getBaseScopeForExternalBuild(scope);
     if (explicitScopes != null) {
@@ -220,7 +220,7 @@ public class CompileDriver {
     else {
       final Map<Key, Object> exported = scope.exportUserData();
       if (!exported.isEmpty()) {
-        builderParams = new HashMap<String, String>();
+        builderParams = new HashMap<>();
         for (Map.Entry<Key, Object> entry : exported.entrySet()) {
           final String _key = entry.getKey().toString();
           final String _value = entry.getValue().toString();
@@ -295,7 +295,7 @@ public class CompileDriver {
           case FILES_GENERATED:
             final List<CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile> generated = event.getGeneratedFilesList();
             final CompilationStatusListener publisher = !myProject.isDisposed()? messageBus.syncPublisher(CompilerTopics.COMPILATION_STATUS) : null;
-            Set<String> writtenArtifactOutputPaths = outputToArtifact != null ? new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY) : null;
+            Set<String> writtenArtifactOutputPaths = outputToArtifact != null ? new THashSet<>(FileUtil.PATH_HASHING_STRATEGY) : null;
             for (CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile generatedFile : generated) {
               final String root = FileUtil.toSystemIndependentName(generatedFile.getOutputRoot());
               final String relativePath = FileUtil.toSystemIndependentName(generatedFile.getRelativePath());
@@ -621,8 +621,8 @@ public class CompileDriver {
   private boolean validateCompilerConfiguration(final CompileScope scope) {
     try {
       final Module[] scopeModules = scope.getAffectedModules();
-      final List<String> modulesWithoutOutputPathSpecified = new ArrayList<String>();
-      final List<String> modulesWithoutJdkAssigned = new ArrayList<String>();
+      final List<String> modulesWithoutOutputPathSpecified = new ArrayList<>();
+      final List<String> modulesWithoutJdkAssigned = new ArrayList<>();
       final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
       for (final Module module : scopeModules) {
         if (!compilerManager.isValidationEnabled(module)) {
@@ -791,7 +791,7 @@ public class CompileDriver {
     private final Object myContentId;
 
     public MessagesActivationListener(CompileContextImpl compileContext) {
-      myProjectRef = new WeakReference<Project>(compileContext.getProject());
+      myProjectRef = new WeakReference<>(compileContext.getProject());
       myContentId = compileContext.getBuildSession().getContentId();
     }
 

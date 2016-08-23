@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jetbrains.jsonSchema.impl;
 
 import com.google.gson.TypeAdapter;
@@ -9,14 +24,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.PairConvertor;
-import com.intellij.util.ThrowablePairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.Reader;
 import java.util.*;
+import java.util.function.BiFunction;
 
 /**
  * @author Irina.Chernushina on 8/27/2015.
@@ -24,6 +38,7 @@ import java.util.*;
 public class JsonSchemaReader {
   public static final Logger LOG = Logger.getInstance("#com.jetbrains.jsonSchema.impl.JsonSchemaReader");
   public static final NotificationGroup ERRORS_NOTIFICATION = NotificationGroup.logOnlyGroup("JSON Schema");
+
   @Nullable private final VirtualFile myKey;
 
   public JsonSchemaReader(@Nullable final VirtualFile key) {
@@ -44,7 +59,7 @@ public class JsonSchemaReader {
     }
 
     processReferences(object, adapter.getAllObjects(), definitions);
-    final ArrayList<JsonSchemaObject> withoutDefinitions = new ArrayList<JsonSchemaObject>(adapter.getAllObjects());
+    final ArrayList<JsonSchemaObject> withoutDefinitions = new ArrayList<>(adapter.getAllObjects());
     removeDefinitions(object, withoutDefinitions);
     return object;
   }
@@ -81,7 +96,7 @@ public class JsonSchemaReader {
     String id = object.getId();
     if (!StringUtil.isEmptyOrSpaces(id)) {
       id = id.endsWith("#") ? id.substring(0, id.length() - 1) : id;
-      final PairConvertor<String, Map<String, JsonSchemaObject>, Map<String, JsonSchemaObject>> convertor =
+      final BiFunction<String, Map<String, JsonSchemaObject>, Map<String, JsonSchemaObject>> convertor =
         (s, map) -> {
           final Map<String, JsonSchemaObject> converted = new HashMap<>();
           for (Map.Entry<String, JsonSchemaObject> entry : map.entrySet()) {
@@ -96,18 +111,18 @@ public class JsonSchemaReader {
       map.put("", object);
       final Map<String, JsonSchemaObject> definitions = object.getDefinitions();
       if (definitions != null && !definitions.isEmpty()) {
-        map.putAll(convertor.convert("#/definitions/", definitions));
+        map.putAll(convertor.apply("#/definitions/", definitions));
       }
       final Map<String, JsonSchemaObject> properties = object.getProperties();
       if (properties != null && !properties.isEmpty()) {
-        map.putAll(convertor.convert("#/properties/", properties));
+        map.putAll(convertor.apply("#/properties/", properties));
       }
       definitionsObject.register(key, id, map);
     }
   }
 
   private static void removeDefinitions(JsonSchemaObject root, ArrayList<JsonSchemaObject> objects) {
-    final List<JsonSchemaObject> queue = new ArrayList<JsonSchemaObject>(objects.size() + 1);
+    final List<JsonSchemaObject> queue = new ArrayList<>(objects.size() + 1);
     queue.addAll(objects);
     queue.add(root);
 
@@ -122,7 +137,7 @@ public class JsonSchemaReader {
   private void processReferences(JsonSchemaObject root,
                                  Set<JsonSchemaObject> objects,
                                  @Nullable JsonSchemaExportedDefinitions definitions) {
-    final ArrayDeque<JsonSchemaObject> queue = new ArrayDeque<JsonSchemaObject>();
+    final ArrayDeque<JsonSchemaObject> queue = new ArrayDeque<>();
     queue.addAll(objects);
     int control = 10000;
 
@@ -223,13 +238,13 @@ public class JsonSchemaReader {
   }
 
   private static class JsonSchemaGeneralObjectTypeAdapter extends TypeAdapter<JsonSchemaObject> {
-    private final Set<JsonSchemaObject> myAllObjects = new HashSet<JsonSchemaObject>();
-    private final Map<String, JsonSchemaObject> myIds = new HashMap<String, JsonSchemaObject>();
+    private final Set<JsonSchemaObject> myAllObjects = new HashSet<>();
+    private final Map<String, JsonSchemaObject> myIds = new HashMap<>();
 
     private final Map<String, ThrowablePairConsumer<JsonReader, JsonSchemaObject, IOException>> myMap;
 
     public JsonSchemaGeneralObjectTypeAdapter() {
-      myMap = new HashMap<String, ThrowablePairConsumer<JsonReader, JsonSchemaObject, IOException>>();
+      myMap = new HashMap<>();
       myMap.put("id", new StringReader() {
         @Override
         protected void assign(String s, JsonSchemaObject object) throws IOException {
@@ -346,7 +361,7 @@ public class JsonSchemaReader {
       public void consume(JsonReader in, JsonSchemaObject object) throws IOException {
         if (in.peek() == JsonToken.BEGIN_ARRAY) {
           in.beginArray();
-          final ArrayList<JsonSchemaObject> list = new ArrayList<JsonSchemaObject>();
+          final ArrayList<JsonSchemaObject> list = new ArrayList<>();
           while (in.peek() != JsonToken.END_ARRAY) {
             if (in.peek() == JsonToken.BEGIN_OBJECT) {
               list.add(readInnerObject(in));
@@ -367,7 +382,7 @@ public class JsonSchemaReader {
           if (in.peek() == JsonToken.STRING) {
             object.setType(parseType(in));
           } else if (in.peek() == JsonToken.BEGIN_ARRAY) {
-            final ArrayList<JsonSchemaType> variants = new ArrayList<JsonSchemaType>();
+            final ArrayList<JsonSchemaType> variants = new ArrayList<>();
             in.beginArray();
             while (in.peek() != JsonToken.END_ARRAY) {
               if (in.peek() == JsonToken.STRING) {
@@ -396,7 +411,7 @@ public class JsonSchemaReader {
           in.skipValue();
           return;
         }
-        final ArrayList<Object> objects = new ArrayList<Object>();
+        final ArrayList<Object> objects = new ArrayList<>();
         in.beginArray();
         while (in.peek() != JsonToken.END_ARRAY) {
           if (in.peek() == JsonToken.STRING) objects.add("\"" + in.nextString() + "\"");
@@ -415,8 +430,8 @@ public class JsonSchemaReader {
           in.skipValue();
           return;
         }
-        final HashMap<String, List<String>> propertyDependencies = new HashMap<String, List<String>>();
-        final HashMap<String, JsonSchemaObject> schemaDependencies = new HashMap<String, JsonSchemaObject>();
+        final HashMap<String, List<String>> propertyDependencies = new HashMap<>();
+        final HashMap<String, JsonSchemaObject> schemaDependencies = new HashMap<>();
         in.beginObject();
         while (in.peek() != JsonToken.END_OBJECT) {
           if (in.peek() != JsonToken.NAME) {
@@ -425,7 +440,7 @@ public class JsonSchemaReader {
           }
           final String name = in.nextName();
           if (in.peek() == JsonToken.BEGIN_ARRAY) {
-            final List<String> members = new ArrayList<String>();
+            final List<String> members = new ArrayList<>();
             in.beginArray();
             while (in.peek() != JsonToken.END_ARRAY) {
               if (in.peek() == JsonToken.STRING) {
@@ -455,7 +470,7 @@ public class JsonSchemaReader {
           return;
         }
         in.beginObject();
-        final HashMap<String, JsonSchemaObject> properties = new HashMap<String, JsonSchemaObject>();
+        final HashMap<String, JsonSchemaObject> properties = new HashMap<>();
         while (in.peek() != JsonToken.END_OBJECT) {
           if (in.peek() == JsonToken.NAME) {
             final String name = in.nextName();
@@ -484,7 +499,7 @@ public class JsonSchemaReader {
     private ThrowablePairConsumer<JsonReader, JsonSchemaObject, IOException> createRequired() {
       return (in, object) -> {
         if (in.peek() == JsonToken.BEGIN_ARRAY) {
-          final ArrayList<String> required = new ArrayList<String>();
+          final ArrayList<String> required = new ArrayList<>();
           in.beginArray();
           while (in.peek() != JsonToken.END_ARRAY) {
             if (in.peek() == JsonToken.STRING) {
@@ -552,7 +567,7 @@ public class JsonSchemaReader {
           object.setItemsSchema(readInnerObject(in));
         } else if (in.peek() == JsonToken.BEGIN_ARRAY) {
           in.beginArray();
-          final List<JsonSchemaObject> list = new ArrayList<JsonSchemaObject>();
+          final List<JsonSchemaObject> list = new ArrayList<>();
           while (in.peek() != JsonToken.END_ARRAY) {
             if (in.peek() == JsonToken.BEGIN_OBJECT) {
               list.add(readInnerObject(in));
@@ -705,7 +720,7 @@ public class JsonSchemaReader {
     @NotNull
     private ThrowablePairConsumer<JsonReader, JsonSchemaObject, IOException> createDefinitionsConsumer() {
       return (in, object) -> {
-        final Map<String, JsonSchemaObject> map = new HashMap<String, JsonSchemaObject>();
+        final Map<String, JsonSchemaObject> map = new HashMap<>();
         in.beginObject();
         while (in.peek() == JsonToken.NAME) {
           final String name = in.nextName();
@@ -763,7 +778,7 @@ public class JsonSchemaReader {
       if (defined == null) return;
       Map<String, JsonSchemaObject> definitions = object.getDefinitions();
       if (definitions == null) {
-        object.setDefinitions(definitions = new HashMap<String, JsonSchemaObject>());
+        object.setDefinitions(definitions = new HashMap<>());
       }
       definitions.put(name, defined);
     }
@@ -775,5 +790,9 @@ public class JsonSchemaReader {
     public Map<String, JsonSchemaObject> getIds() {
       return myIds;
     }
+  }
+
+  private interface ThrowablePairConsumer<P,S,T extends Throwable> {
+    void consume(P p, S s) throws T;
   }
 }

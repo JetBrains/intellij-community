@@ -99,7 +99,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
           hasSideEffects =
             RemoveUnusedVariableUtil
               .checkSideEffects(((PsiAssignmentExpression)referencedElement.getParent()).getRExpression(), ((PsiLocalVariable)element),
-                                new ArrayList<PsiElement>());
+                                new ArrayList<>());
         }
         usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(statement, element, isSafeToDelete && !hasSideEffects));
       }
@@ -122,16 +122,16 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         SuperMethodWarningUtil.checkSuperMethods((PsiMethod)element, RefactoringBundle.message("to.delete.with.usage.search"),
                                                  allElementsToDelete);
       if (methods.length == 0) return null;
-      final ArrayList<PsiMethod> psiMethods = new ArrayList<PsiMethod>(Arrays.asList(methods));
+      final ArrayList<PsiMethod> psiMethods = new ArrayList<>(Arrays.asList(methods));
       psiMethods.add((PsiMethod)element);
       return psiMethods;
     }
     else if (element instanceof PsiParameter && ((PsiParameter) element).getDeclarationScope() instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) ((PsiParameter) element).getDeclarationScope();
-      final Set<PsiParameter> parametersToDelete = new HashSet<PsiParameter>();
+      final Set<PsiParameter> parametersToDelete = new HashSet<>();
       parametersToDelete.add((PsiParameter) element);
       final int parameterIndex = method.getParameterList().getParameterIndex((PsiParameter) element);
-      final List<PsiMethod> superMethods = new ArrayList<PsiMethod>(Arrays.asList(method.findDeepestSuperMethods()));
+      final List<PsiMethod> superMethods = new ArrayList<>(Arrays.asList(method.findDeepestSuperMethods()));
       if (superMethods.isEmpty()) {
         superMethods.add(method);
       }
@@ -159,7 +159,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         if (typeParameterList != null) {
           final int index = typeParameterList.getTypeParameterIndex((PsiTypeParameter)element);
           if (index >= 0) {
-            final ArrayList<PsiTypeParameter> overriders = new ArrayList<PsiTypeParameter>();
+            final ArrayList<PsiTypeParameter> overriders = new ArrayList<>();
             overriders.add((PsiTypeParameter)element);
             OverridingMethodsSearch.search((PsiMethod)owner).forEach(overrider -> {
               final PsiTypeParameter[] typeParameters = overrider.getTypeParameters();
@@ -185,8 +185,8 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
 
   @Override
   public UsageView showUsages(UsageInfo[] usages, UsageViewPresentation presentation, UsageViewManager manager, PsiElement[] elements) {
-    final List<PsiElement> overridingMethods = new ArrayList<PsiElement>();
-    final List<UsageInfo> others = new ArrayList<UsageInfo>();
+    final List<PsiElement> overridingMethods = new ArrayList<>();
+    final List<UsageInfo> others = new ArrayList<>();
     for (UsageInfo usage : usages) {
       if (usage instanceof SafeDeleteOverridingMethodUsageInfo) {
         overridingMethods.add(((SafeDeleteOverridingMethodUsageInfo)usage).getOverridingMethod());
@@ -224,7 +224,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
         PsiMethod[] getters = GetterSetterPrototypeProvider.findGetters(aClass, propertyName, isStatic);
         if (getters != null) {
-          final List<PsiMethod> validGetters = new ArrayList<PsiMethod>(1);
+          final List<PsiMethod> validGetters = new ArrayList<>(1);
           for (PsiMethod getter : getters) {
             if (!allElementsToDelete.contains(getter) && (getter != null && getter.isPhysical())) {
               validGetters.add(getter);
@@ -243,7 +243,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
             setter = null;
           }
         }
-        List<PsiElement> elements = new ArrayList<PsiElement>();
+        List<PsiElement> elements = new ArrayList<>();
         if (setter != null) elements.add(setter);
         if (getters != null) Collections.addAll(elements, getters);
         return elements;
@@ -301,7 +301,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
           final int parameterIndex = method.getParameterList().getParameterIndex((PsiParameter)element);
           final PsiMethod methodCopy = (PsiMethod)method.copy();
           methodCopy.getParameterList().getParameters()[parameterIndex].delete();
-          final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+          final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
           ConflictsUtil.checkMethodConflicts(containingClass, method, methodCopy, conflicts);
           return (Collection<String>)conflicts.values();
         }
@@ -312,10 +312,10 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
 
   @Nullable
   public UsageInfo[] preprocessUsages(final Project project, final UsageInfo[] usages) {
-    final ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
-    final ArrayList<UsageInfo> overridingMethods = new ArrayList<UsageInfo>();
-    final ArrayList<SafeDeleteParameterCallHierarchyUsageInfo> delegatingParams = new ArrayList<SafeDeleteParameterCallHierarchyUsageInfo>();
-    final ArrayList<SafeDeleteMethodCalleeUsageInfo> calleesSafeToDelete = new ArrayList<SafeDeleteMethodCalleeUsageInfo>();
+    final ArrayList<UsageInfo> result = new ArrayList<>();
+    final ArrayList<UsageInfo> overridingMethods = new ArrayList<>();
+    final ArrayList<SafeDeleteParameterCallHierarchyUsageInfo> delegatingParams = new ArrayList<>();
+    final ArrayList<SafeDeleteMethodCalleeUsageInfo> calleesSafeToDelete = new ArrayList<>();
     for (UsageInfo usage : usages) {
       if (usage.isNonCodeUsage) {
         result.add(usage);
@@ -347,7 +347,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
           return null;
         }
         final ArrayList<UsageInfo> selected = dialog.getSelected();
-        final Set<UsageInfo> unselected = new HashSet<UsageInfo>(overridingMethods);
+        final Set<UsageInfo> unselected = new HashSet<>(overridingMethods);
         unselected.removeAll(selected);
 
         if (!unselected.isEmpty()) {
@@ -398,7 +398,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       }
       else {
         final PsiMethod method = calleesSafeToDelete.get(0).getCallerMethod();
-        final ArrayList<UsageInfo> list = new ArrayList<UsageInfo>();
+        final ArrayList<UsageInfo> list = new ArrayList<>();
         JavaCallerChooser chooser = new SafeDeleteJavaCalleeChooser(method, project, list) {
           @Override
           protected ArrayList<SafeDeleteMethodCalleeUsageInfo> getTopLevelItems() {
@@ -410,7 +410,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
           return null;
         }
         result.addAll(list);
-        final List<PsiElement> methodsToDelete = new ArrayList<PsiElement>();
+        final List<PsiElement> methodsToDelete = new ArrayList<>();
         for (UsageInfo info : list) {
           methodsToDelete.add(info.getElement());
         }
@@ -428,7 +428,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   }
 
   private static boolean allSuperMethodsSelectedToDelete(List<PsiMethod> unselectedMethods, PsiMethod method) {
-    final ArrayList<PsiMethod> superMethods = new ArrayList<PsiMethod>(Arrays.asList(method.findSuperMethods()));
+    final ArrayList<PsiMethod> superMethods = new ArrayList<>(Arrays.asList(method.findSuperMethods()));
     superMethods.retainAll(unselectedMethods);
     return superMethods.isEmpty();
   }
@@ -633,7 +633,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
 
     findFunctionalExpressions(usages, ArrayUtil.prepend(psiMethod, overridingMethods));
 
-    final HashMap<PsiMethod, Collection<PsiReference>> methodToReferences = new HashMap<PsiMethod, Collection<PsiReference>>();
+    final HashMap<PsiMethod, Collection<PsiReference>> methodToReferences = new HashMap<>();
     for (PsiMethod overridingMethod : overridingMethods) {
       final Collection<PsiReference> overridingReferences = ReferencesSearch.search(overridingMethod).findAll();
       methodToReferences.put(overridingMethod, overridingReferences);
@@ -672,7 +672,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   }
 
   private static PsiMethod[] removeDeletedMethods(PsiMethod[] methods, final PsiElement[] allElementsToDelete) {
-    ArrayList<PsiMethod> list = new ArrayList<PsiMethod>();
+    ArrayList<PsiMethod> list = new ArrayList<>();
     for (PsiMethod method : methods) {
       boolean isDeleted = false;
       for (PsiElement element : allElementsToDelete) {
@@ -691,13 +691,13 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   @Nullable
   private static Condition<PsiElement> findConstructorUsages(PsiMethod constructor, Collection<PsiReference> originalReferences, List<UsageInfo> usages,
                                                              final PsiElement[] allElementsToDelete) {
-    HashMap<PsiMethod, Collection<PsiReference>> constructorsToRefs = new HashMap<PsiMethod, Collection<PsiReference>>();
-    HashSet<PsiMethod> newConstructors = new HashSet<PsiMethod>();
+    HashMap<PsiMethod, Collection<PsiReference>> constructorsToRefs = new HashMap<>();
+    HashSet<PsiMethod> newConstructors = new HashSet<>();
     if (isTheOnlyEmptyDefaultConstructor(constructor)) return null;
 
     newConstructors.add(constructor);
     constructorsToRefs.put(constructor, originalReferences);
-    HashSet<PsiMethod> passConstructors = new HashSet<PsiMethod>();
+    HashSet<PsiMethod> passConstructors = new HashSet<>();
     do {
       passConstructors.clear();
       for (PsiMethod method : newConstructors) {
@@ -737,8 +737,8 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
                                                    Collection<PsiMethod> overridingMethods, HashMap<PsiMethod, Collection<PsiReference>> methodToReferences,
                                                    List<UsageInfo> usages,
                                                    final PsiElement[] allElementsToDelete) {
-    Set<PsiMethod> validOverriding = new LinkedHashSet<PsiMethod>(overridingMethods);
-    Set<PsiMethod> multipleInterfaceImplementations = new HashSet<PsiMethod>();
+    Set<PsiMethod> validOverriding = new LinkedHashSet<>(overridingMethods);
+    Set<PsiMethod> multipleInterfaceImplementations = new HashSet<>();
     boolean anyNewBadRefs;
     do {
       anyNewBadRefs = false;

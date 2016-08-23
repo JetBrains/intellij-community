@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,21 +29,22 @@ import javax.swing.*;
 import java.util.Set;
 
 public abstract class ProgressManager extends ProgressIndicatorProvider {
-  private static class ProgressManagerHolder {
-    private static final ProgressManager ourInstance;
-
-    static {
-      ourInstance = ServiceManager.getService(ProgressManager.class);
-      if (ourInstance == null) {
-        throw new AssertionError("ProgressManager is null; " + ApplicationManager.getApplication());
-      }
-    }
-  }
+  private static ProgressManager ourInstance;
 
   @NotNull
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static ProgressManager getInstance() {
-    return ProgressManagerHolder.ourInstance;
+    ProgressManager result = ourInstance;
+    if (result == null) {
+      result = ServiceManager.getService(ProgressManager.class);
+      if (result == null) {
+        throw new AssertionError("ProgressManager is null; " + ApplicationManager.getApplication());
+      }
+      else {
+        ourInstance = result;
+      }
+    }
+    return result;
   }
 
   public abstract boolean hasProgressIndicator();

@@ -39,7 +39,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class MockCodeStyleManager extends CodeStyleManager {
-  private Map<PsiFile, ChangedLines[]> myFormattedLinesForFile = new HashMap<PsiFile, ChangedLines[]>();
+  private Map<PsiFile, ChangedLines[]> myFormattedLinesForFile = new HashMap<>();
 
   @NotNull
   public ChangedLines[] getFormattedLinesFor(@NotNull PsiFile file) {

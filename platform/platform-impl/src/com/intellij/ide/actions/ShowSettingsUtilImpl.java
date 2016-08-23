@@ -142,7 +142,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
 
   @NotNull
   private static ConfigurableGroup[] filterEmptyGroups(@NotNull final ConfigurableGroup[] group) {
-    List<ConfigurableGroup> groups = new ArrayList<ConfigurableGroup>();
+    List<ConfigurableGroup> groups = new ArrayList<>();
     for (ConfigurableGroup g : group) {
       if (g.getConfigurables().length > 0) {
         groups.add(g);

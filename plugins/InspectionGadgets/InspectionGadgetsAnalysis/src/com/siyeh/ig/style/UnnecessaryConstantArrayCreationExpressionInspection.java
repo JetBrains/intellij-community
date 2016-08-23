@@ -46,22 +46,32 @@ public class UnnecessaryConstantArrayCreationExpressionInspection extends BaseIn
   @Override
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new UnnecessaryConstantArrayCreationExpressionFix();
+    if (infos.length != 0 && infos[0] instanceof String) {
+      return new UnnecessaryConstantArrayCreationExpressionFix((String)infos[0]);
+    }
+    return null;
   }
 
   private static class UnnecessaryConstantArrayCreationExpressionFix
     extends InspectionGadgetsFix {
+    private final String myType;
+
+    private UnnecessaryConstantArrayCreationExpressionFix(String type) {
+      myType = type;
+    }
+
     @Override
     @NotNull
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message(
+        "unnecessary.constant.array.creation.expression.family.quickfix");
     }
 
     @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
-        "unnecessary.constant.array.creation.expression.quickfix");
+        "unnecessary.constant.array.creation.expression.quickfix", myType);
     }
 
     @Override
@@ -101,13 +111,14 @@ public class UnnecessaryConstantArrayCreationExpressionInspection extends BaseIn
         return;
       }
       final PsiVariable variable = (PsiVariable)grandParent;
-      if (!variable.getType().equals(expression.getType())) {
+      final PsiType expressionType = expression.getType();
+      if (!variable.getType().equals(expressionType)) {
         return;
       }
       if (hasGenericTypeParameters(variable)) {
         return;
       }
-      registerError(parent);
+      registerError(parent, expressionType.getPresentableText());
     }
 
     private static boolean hasGenericTypeParameters(PsiVariable variable) {

@@ -171,7 +171,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
 
   private List<ChooseByNameContributor> filterDumb(ChooseByNameContributor[] contributors) {
     if (!DumbService.getInstance(myProject).isDumb()) return Arrays.asList(contributors);
-    List<ChooseByNameContributor> answer = new ArrayList<ChooseByNameContributor>(contributors.length);
+    List<ChooseByNameContributor> answer = new ArrayList<>(contributors.length);
     for (ChooseByNameContributor contributor : contributors) {
       if (DumbService.isDumbAware(contributor)) {
         answer.add(contributor);

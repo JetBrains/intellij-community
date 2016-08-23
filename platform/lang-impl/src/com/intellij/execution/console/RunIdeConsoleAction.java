@@ -42,8 +42,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ObjectUtils;
@@ -127,7 +128,8 @@ public class RunIdeConsoleAction extends DumbAwareAction {
                                    @NotNull VirtualFile file,
                                    @NotNull Editor editor,
                                    @NotNull IdeScriptEngine engine) {
-    String command = getCommandText(editor);
+    String command = getCommandText(project, editor);
+    if (StringUtil.isEmptyOrSpaces(command)) return;
     String profile = getProfileText(file);
     RunContentDescriptor descriptor = getConsoleView(project, file);
     ConsoleViewImpl consoleView = (ConsoleViewImpl)descriptor.getExecutionConsole();
@@ -171,12 +173,31 @@ public class RunIdeConsoleAction extends DumbAwareAction {
   }
 
   @NotNull
-  private static String getCommandText(@NotNull Editor editor) {
+  private static String getCommandText(@NotNull Project project, @NotNull Editor editor) {
     TextRange selectedRange = EditorUtil.getSelectionInAnyMode(editor);
     Document document = editor.getDocument();
-    if (selectedRange.getLength() == 0) {
+    if (selectedRange.isEmpty()) {
       int line = document.getLineNumber(selectedRange.getStartOffset());
       selectedRange = TextRange.create(document.getLineStartOffset(line), document.getLineEndOffset(line));
+
+      // try detect a non-trivial composite PSI element if there's a PSI file
+      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      if (file != null && file.getFirstChild() != null && file.getFirstChild() != file.getLastChild()) {
+        PsiElement e1 = file.findElementAt(selectedRange.getStartOffset());
+        PsiElement e2 = file.findElementAt(selectedRange.getEndOffset());
+        while (e1 != e2 && (e1 instanceof PsiWhiteSpace || e1 != null && StringUtil.isEmptyOrSpaces(e1.getText()))) {
+          e1 = ObjectUtils.chooseNotNull(e1.getNextSibling(), PsiTreeUtil.getDeepestFirst(e1.getParent()));
+        }
+        while (e1 != e2 && (e2 instanceof PsiWhiteSpace || e2 != null && StringUtil.isEmptyOrSpaces(e2.getText()))) {
+          e2 = ObjectUtils.chooseNotNull(e2.getPrevSibling(), PsiTreeUtil.getDeepestLast(e2.getParent()));
+        }
+        if (e1 instanceof LeafPsiElement) e1 = e1.getParent();
+        if (e2 instanceof LeafPsiElement) e2 = e2.getParent();
+        PsiElement parent = e1 == null ? e2 : e2 == null ? e1 : PsiTreeUtil.findCommonParent(e1, e2);
+        if (parent != null && parent != file) {
+          selectedRange = parent.getTextRange();
+        }
+      }
     }
     return document.getText(selectedRange);
   }
@@ -194,7 +215,7 @@ public class RunIdeConsoleAction extends DumbAwareAction {
     RunContentDescriptor descriptor = ref == null ? null : ref.get();
     if (descriptor == null || descriptor.getExecutionConsole() == null) {
       descriptor = createConsoleView(project, psiFile);
-      psiFile.putCopyableUserData(DESCRIPTOR_KEY, new WeakReference<RunContentDescriptor>(descriptor));
+      psiFile.putCopyableUserData(DESCRIPTOR_KEY, new WeakReference<>(descriptor));
     }
     return descriptor;
   }
@@ -242,6 +263,7 @@ public class RunIdeConsoleAction extends DumbAwareAction {
       Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
       VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
       if (project == null || editor == null || virtualFile == null) return;
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
 
       String extension = virtualFile.getExtension();
       if (extension != null && (engine == null || !engine.getFileExtensions().contains(extension))) {
@@ -264,7 +286,7 @@ public class RunIdeConsoleAction extends DumbAwareAction {
       return;
     }
 
-    WeakReference<RunContentDescriptor> ref = new WeakReference<RunContentDescriptor>(descriptor);
+    WeakReference<RunContentDescriptor> ref = new WeakReference<>(descriptor);
     engine.setStdOut(new ConsoleWriter(ref, ConsoleViewContentType.NORMAL_OUTPUT));
     engine.setStdErr(new ConsoleWriter(ref, ConsoleViewContentType.ERROR_OUTPUT));
   }

@@ -79,7 +79,7 @@ public class VcsFileUtil {
    */
   @NotNull
   public static List<List<String>> chunkArguments(@NotNull List<String> arguments) {
-    ArrayList<List<String>> rc = new ArrayList<List<String>>();
+    ArrayList<List<String>> rc = new ArrayList<>();
     int start = 0;
     int size = 0;
     int i = 0;
@@ -242,7 +242,7 @@ public class VcsFileUtil {
    * @throws IllegalArgumentException if some path is not under root.
    */
   public static List<String> toRelativePaths(@NotNull VirtualFile root, @NotNull final Collection<FilePath> filePaths) {
-    ArrayList<String> rc = new ArrayList<String>(filePaths.size());
+    ArrayList<String> rc = new ArrayList<>(filePaths.size());
     for (FilePath path : filePaths) {
       rc.add(relativePath(root, path));
     }
@@ -258,7 +258,7 @@ public class VcsFileUtil {
    * @throws IllegalArgumentException if some path is not under root.
    */
   public static List<String> toRelativeFiles(@NotNull VirtualFile root, @NotNull final Collection<VirtualFile> files) {
-    ArrayList<String> rc = new ArrayList<String>(files.size());
+    ArrayList<String> rc = new ArrayList<>(files.size());
     for (VirtualFile file : files) {
       rc.add(relativePath(root, file));
     }
@@ -301,7 +301,7 @@ public class VcsFileUtil {
     if (file == null || path.length == 0) return null;
 
     VirtualFile current = file;
-    final List<VirtualFile> backTrace = new ArrayList<VirtualFile>();
+    final List<VirtualFile> backTrace = new ArrayList<>();
     int idx = path.length - 1;
     while (current != null) {
       if (SystemInfo.isFileSystemCaseSensitive ? current.getName().equals(path[idx]) : current.getName().equalsIgnoreCase(path[idx])) {

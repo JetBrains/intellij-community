@@ -41,7 +41,7 @@ public abstract class BaseToolKeymapExtension implements KeymapExtension {
     Group group = new Group(getGroupName(), AllIcons.Nodes.KeymapTools);
 
 
-    HashMap<String, Group> toolGroupNameToGroup = new HashMap<String, Group>();
+    HashMap<String, Group> toolGroupNameToGroup = new HashMap<>();
 
     for (String id : ids) {
       if (filtered != null && !filtered.value(actionManager.getActionOrStub(id))) continue;

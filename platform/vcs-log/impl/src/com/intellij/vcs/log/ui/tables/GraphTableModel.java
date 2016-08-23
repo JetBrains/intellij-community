@@ -182,7 +182,7 @@ public class GraphTableModel extends AbstractTableModel {
   }
 
   @NotNull
-  private Collection<VcsRef> getRefsAtRow(int row) {
+  public Collection<VcsRef> getRefsAtRow(int row) {
     return ((RefsModel)myDataPack.getRefs()).refsToCommit(getIdAtRow(row));
   }
 

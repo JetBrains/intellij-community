@@ -61,7 +61,7 @@ public class ObjectsConvertor {
 
   public static <T,U, S extends U> List<S> convert(@NotNull final Collection<T> in, final Convertor<T,S> convertor,
                                                    @Nullable final NotNullFunction<U, Boolean> outFilter) {
-    final List<S> out = new ArrayList<S>();
+    final List<S> out = new ArrayList<>();
     for (T t : in) {
       final S converted = convertor.convert(t);
       if ((outFilter != null) && (! Boolean.TRUE.equals(outFilter.fun(converted)))) continue;

@@ -32,9 +32,9 @@ public class CreateFileObjects {
 
   private final File[] myFiles;
   private final String myRootPath;
-  private final Map<File, AbstractFileObject> myFileToDirectoryObjectMap = new com.intellij.util.containers.HashMap<File, AbstractFileObject>();
-  private final Collection<AbstractFileObject> myResult = new ArrayList<AbstractFileObject>();
-  private final Set<File> myCreatedFiles = new HashSet<File>();
+  private final Map<File, AbstractFileObject> myFileToDirectoryObjectMap = new com.intellij.util.containers.HashMap<>();
+  private final Collection<AbstractFileObject> myResult = new ArrayList<>();
+  private final Set<File> myCreatedFiles = new HashSet<>();
 
   public CreateFileObjects(File root, File[] files) {
     String myRootPath = root.getAbsolutePath();

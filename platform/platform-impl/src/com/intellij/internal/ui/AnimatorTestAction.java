@@ -65,7 +65,7 @@ public class AnimatorTestAction extends AnAction {
             AllIcons.Process.Big.Step_11,
             AllIcons.Process.Big.Step_12
           };
-          List<Icon> iconsList2 = new ArrayList<Icon>();
+          List<Icon> iconsList2 = new ArrayList<>();
           for (int i = 0; i < cycles; i++) {
             Collections.addAll(iconsList2, icons1);
           }

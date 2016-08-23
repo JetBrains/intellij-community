@@ -58,7 +58,7 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
   public Collection<AbstractTreeNode> getChildren() {
     Module module = getValue().getModule();
     final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-    final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
+    final List<AbstractTreeNode> children = new ArrayList<>();
     final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
     for (final OrderEntry orderEntry : orderEntries) {
       if (orderEntry instanceof LibraryOrderEntry) {
@@ -152,7 +152,7 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
         rootTypes = LibraryType.findByKind(libKind).getExternalRootTypes();
       }
     }
-    final ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
+    final ArrayList<VirtualFile> files = new ArrayList<>();
     for (OrderRootType rootType : rootTypes) {
       files.addAll(Arrays.asList(library.getFiles(rootType)));
     }

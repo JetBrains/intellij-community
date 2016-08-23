@@ -75,7 +75,7 @@ public class MethodOverridesPrivateMethodInspectionBase extends BaseInspection {
         return;
       }
       PsiClass ancestorClass = aClass.getSuperClass();
-      final Set<PsiClass> visitedClasses = new HashSet<PsiClass>();
+      final Set<PsiClass> visitedClasses = new HashSet<>();
       while (ancestorClass != null) {
         if (!visitedClasses.add(ancestorClass)) {
           return;

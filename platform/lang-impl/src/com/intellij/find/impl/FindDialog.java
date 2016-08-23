@@ -131,7 +131,7 @@ public class FindDialog extends DialogWrapper {
   private ComboBox myFileFilter;
   private JCheckBox myCbToSkipResultsWhenOneUsage;
   private final Project myProject;
-  private final Map<EditorTextField, DocumentAdapter> myComboBoxListeners = new HashMap<EditorTextField, DocumentAdapter>();
+  private final Map<EditorTextField, DocumentAdapter> myComboBoxListeners = new HashMap<>();
 
   private Action myFindAllAction;
   private JRadioButton myRbCustomScope;
@@ -442,7 +442,7 @@ public class FindDialog extends DialogWrapper {
       };
 
       // Use previously shown usage files as hint for faster search and better usage preview performance if pattern length increased
-      final LinkedHashSet<VirtualFile> filesToScanInitially = new LinkedHashSet<VirtualFile>();
+      final LinkedHashSet<VirtualFile> filesToScanInitially = new LinkedHashSet<>();
 
       if (myPreviousModel != null && myPreviousModel.getStringToFind().length() < findModel.getStringToFind().length()) {
         final DefaultTableModel previousModel = (DefaultTableModel)myResultsPreviewTable.getModel();
@@ -495,7 +495,7 @@ public class FindDialog extends DialogWrapper {
 
           final FindUsagesProcessPresentation processPresentation =
             FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
-          Ref<VirtualFile> lastUsageFileRef = new Ref<VirtualFile>();
+          Ref<VirtualFile> lastUsageFileRef = new Ref<>();
 
           FindInProjectUtil.findUsages(findModel, myProject, info -> {
             final Usage usage = UsageInfo2UsageAdapter.CONVERTER.fun(info);
@@ -1637,7 +1637,7 @@ public class FindDialog extends DialogWrapper {
     for(int row:rows) {
       Object valueAt = source.getModel().getValueAt(row, 0);
       if (valueAt instanceof Usage) {
-        if (navigations == null) navigations = new SmartList<Usage>();
+        if (navigations == null) navigations = new SmartList<>();
         Usage at = (Usage)valueAt;
         navigations.add(at);
       }

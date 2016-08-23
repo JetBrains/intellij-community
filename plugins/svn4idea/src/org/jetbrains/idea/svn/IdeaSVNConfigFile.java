@@ -44,7 +44,7 @@ public class IdeaSVNConfigFile {
     mySVNConfigFile = new SVNConfigFile(file);
     myFile = file;
     myLatestUpdate = -1;
-    myPatternsMap = new HashMap<String, String>();
+    myPatternsMap = new HashMap<>();
   }
 
   @NotNull
@@ -67,7 +67,7 @@ public class IdeaSVNConfigFile {
   }
 
   public Map<String, ProxyGroup> getAllGroups() {
-    final Map<String, ProxyGroup> result = new HashMap<String, ProxyGroup>(myPatternsMap.size());
+    final Map<String, ProxyGroup> result = new HashMap<>(myPatternsMap.size());
     for (Map.Entry<String, String> entry : myPatternsMap.entrySet()) {
       final String groupName = entry.getKey();
       result.put(groupName, new ProxyGroup(groupName, entry.getValue(), mySVNConfigFile.getProperties(groupName)));
@@ -113,7 +113,7 @@ public class IdeaSVNConfigFile {
     if (!isDefault) {
       mySVNConfigFile.setPropertyValue(GROUPS_GROUP_NAME, name, patterns, false);
     }
-    final Map<String, String> deletedPrepared = new HashMap<String, String>(delete.size());
+    final Map<String, String> deletedPrepared = new HashMap<>(delete.size());
     for (String property : delete) {
       deletedPrepared.put(property, null);
     }

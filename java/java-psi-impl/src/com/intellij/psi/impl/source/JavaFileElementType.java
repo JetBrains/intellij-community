@@ -38,7 +38,7 @@ import java.io.IOException;
  * @author max
  */
 public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileStub> {
-  public static final int STUB_VERSION = 31;
+  public static final int STUB_VERSION = 36;
 
   public JavaFileElementType() {
     super("java.FILE", JavaLanguage.INSTANCE);
@@ -56,6 +56,10 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
 
   @Override
   public boolean shouldBuildStubFor(final VirtualFile file) {
+    return isInSourceContent(file);
+  }
+
+  public static boolean isInSourceContent(@NotNull VirtualFile file) {
     final VirtualFile dir = file.getParent();
     return dir == null || dir.getUserData(LanguageLevel.KEY) != null;
   }

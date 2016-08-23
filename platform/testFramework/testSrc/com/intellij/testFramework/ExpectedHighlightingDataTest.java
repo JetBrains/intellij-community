@@ -36,7 +36,7 @@ public class ExpectedHighlightingDataTest {
 
   @BeforeClass
   public static void setUp() {
-    TYPES = new HashMap<String, ExpectedHighlightingData.ExpectedHighlightingSet>();
+    TYPES = new HashMap<>();
     TYPES.put("err", new ExpectedHighlightingData.ExpectedHighlightingSet(HighlightSeverity.ERROR, false, true));
     TYPES.put("warn", new ExpectedHighlightingData.ExpectedHighlightingSet(HighlightSeverity.WARNING, false, true));
     TYPES.put("eol_err", new ExpectedHighlightingData.ExpectedHighlightingSet(HighlightSeverity.ERROR, true, true));

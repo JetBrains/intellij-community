@@ -42,7 +42,7 @@ public class BalloonTest {
     final JTree tree = new Tree();
     content.add(tree);
 
-    final Ref<BalloonImpl> balloon = new Ref<BalloonImpl>();
+    final Ref<BalloonImpl> balloon = new Ref<>();
 
     tree.addMouseListener(new MouseAdapter() {
       @Override
@@ -60,7 +60,7 @@ public class BalloonTest {
           //pane.setBorder(new LineBorder(Color.blue));
 
           balloon.set(new BalloonImpl(
-            new JLabel("Content"), Color.black, null , MessageType.ERROR.getPopupBackground(), true, true, true, true, true, 0, true, false, null,
+            new JLabel("Content"), Color.black, null , MessageType.ERROR.getPopupBackground(), true, true, true, true, true, true, 0, true, false, null,
             false, 500, 25, 0, 0, false, "This is the title", JBUI.insets(2), true, false, false, Balloon.Layer.normal, false));
           balloon.get().setShowPointer(true);
 

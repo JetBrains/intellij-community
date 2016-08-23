@@ -18,7 +18,6 @@ import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.lang.reflect.Type;
@@ -34,7 +33,7 @@ public class StudySerializationUtils {
   public static final String LENGTH = "length";
   public static final String POSSIBLE_ANSWER = "possible_answer";
   public static final String HINT = "hint";
-  public static final String HINTS = "hints";
+  public static final String ADDITIONAL_HINTS = "additional_hints";
   public static final String OFFSET = "offset";
   public static final String TEXT = "text";
   public static final String LESSONS = "lessons";
@@ -48,7 +47,8 @@ public class StudySerializationUtils {
   private StudySerializationUtils() {
   }
 
-  public static class StudyUnrecognizedFormatException extends Exception {}
+  public static class StudyUnrecognizedFormatException extends Exception {
+  }
 
   public static class Xml {
     public final static String COURSE_ELEMENT = "courseElement";
@@ -139,7 +139,6 @@ public class StudySerializationUtils {
               addChildWithName(initialState, MY_LENGTH, getChildWithName(placeholder, MY_INITIAL_LENGTH).getAttributeValue(VALUE));
             }
           }
-
         }
       }
       element.removeContent();
@@ -190,7 +189,6 @@ public class StudySerializationUtils {
               taskStatus = addStatus(outputter, placeholderTextToStatus, taskStatus, placeholder);
               addOffset(document, placeholder);
               addInitialState(document, placeholder);
-              addHints(placeholder);
             }
           }
           if (taskStatus != null) {
@@ -230,15 +228,6 @@ public class StudySerializationUtils {
       int start = getAsInt(placeholder, START);
       int offset = document.getLineStartOffset(line) + start;
       addChildWithName(placeholder, OFFSET, offset);
-    }
-
-    public static void addHints(@NotNull Element placeholder) throws StudyUnrecognizedFormatException {
-      final String hint = getChildWithName(placeholder, HINT).getAttribute(VALUE).getValue();
-      Element listElement = new Element(LIST);
-      final Element hintElement = new Element(OPTION);
-      hintElement.setAttribute(VALUE, hint);
-      listElement.setContent(hintElement);
-      addChildWithName(placeholder, HINTS, listElement);
     }
 
     public static int getAsInt(Element element, String name) throws StudyUnrecognizedFormatException {
@@ -284,7 +273,11 @@ public class StudySerializationUtils {
     }
 
     public static List<Element> getChildList(Element parent, String name) throws StudyUnrecognizedFormatException {
-      Element listParent = getChildWithName(parent, name);
+      return getChildList(parent, name, false);
+    }
+
+    public static List<Element> getChildList(Element parent, String name, boolean optional) throws StudyUnrecognizedFormatException {
+      Element listParent = getChildWithName(parent, name, optional);
       if (listParent != null) {
         Element list = listParent.getChild(LIST);
         if (list != null) {
@@ -295,6 +288,10 @@ public class StudySerializationUtils {
     }
 
     public static Element getChildWithName(Element parent, String name) throws StudyUnrecognizedFormatException {
+      return getChildWithName(parent, name, false);
+    }
+
+    public static Element getChildWithName(Element parent, String name, boolean optional) throws StudyUnrecognizedFormatException {
       for (Element child : parent.getChildren()) {
         Attribute attribute = child.getAttribute(NAME);
         if (attribute == null) {
@@ -304,11 +301,18 @@ public class StudySerializationUtils {
           return child;
         }
       }
+      if (optional) {
+        return null;
+      }
       throw new StudyUnrecognizedFormatException();
     }
 
     public static <K, V> Map<K, V> getChildMap(Element element, String name) throws StudyUnrecognizedFormatException {
-      Element mapParent = getChildWithName(element, name);
+      return getChildMap(element, name, false);
+    }
+
+    public static <K, V> Map<K, V> getChildMap(Element element, String name, boolean optional) throws StudyUnrecognizedFormatException {
+      Element mapParent = getChildWithName(element, name, optional);
       if (mapParent != null) {
         Element map = mapParent.getChild(MAP);
         if (map != null) {
@@ -393,7 +397,8 @@ public class StudySerializationUtils {
           int start = placeholderObject.getAsJsonPrimitive(START).getAsInt();
           if (line == -1) {
             placeholderObject.addProperty(OFFSET, start);
-          } else {
+          }
+          else {
             Document document = EditorFactory.getInstance().createDocument(taskFileObject.getAsJsonPrimitive(TEXT).getAsString());
             placeholderObject.addProperty(OFFSET, document.getLineStartOffset(line) + start);
           }
@@ -403,14 +408,23 @@ public class StudySerializationUtils {
           try {
             final Type listType = new TypeToken<List<String>>() {}.getType();
             final List<String> hints = gson.fromJson(hintString, listType);
-            for (String hint : hints) {
-              hintsArray.add(hint);
+            if (hints != null && !hints.isEmpty()) {
+              for (int i = 0; i < hints.size(); i++) {
+                if (i == 0) {
+                  placeholderObject.addProperty(HINT, hints.get(0));
+                  continue;
+                }
+                hintsArray.add(hints.get(i));
+              }
+              placeholderObject.add(ADDITIONAL_HINTS, hintsArray);
+            }
+            else {
+              placeholderObject.addProperty(HINT, "");
             }
           }
           catch (JsonParseException e) {
             hintsArray.add(hintString);
           }
-          placeholderObject.add(HINTS, hintsArray);
         }
 
         return gson.fromJson(json, TaskFile.class);

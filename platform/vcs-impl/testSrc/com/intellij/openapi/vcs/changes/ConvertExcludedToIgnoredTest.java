@@ -103,7 +103,7 @@ public class ConvertExcludedToIgnoredTest extends PlatformTestCase {
   }
 
   public static void assertIgnoredDirectories(@NotNull Project project, @NotNull VirtualFile... expectedIgnoredDirs) {
-    List<String> expectedIgnoredPaths = new ArrayList<String>();
+    List<String> expectedIgnoredPaths = new ArrayList<>();
     for (VirtualFile dir : expectedIgnoredDirs) {
       expectedIgnoredPaths.add(dir.getPath()+"/");
     }

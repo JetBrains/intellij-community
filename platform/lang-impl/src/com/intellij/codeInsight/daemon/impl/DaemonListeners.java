@@ -235,8 +235,11 @@ public class DaemonListeners implements Disposable {
         Project editorProject = editor.getProject();
         // worthBothering() checks for getCachedPsiFile, so call getPsiFile here
         PsiFile file = editorProject == null ? null : PsiDocumentManager.getInstance(editorProject).getPsiFile(document);
-        if (!editor.getComponent().isShowing() || !worthBothering(document, editorProject)) {
-          LOG.debug("Not worth: " + file);
+        boolean showing = editor.getComponent().isShowing();
+        boolean worthBothering = worthBothering(document, editorProject);
+        if (!showing || !worthBothering) {
+          LOG.debug("Not worth bothering about editor created for : " + file + " because editor isShowing(): " +
+                    showing + "; project is open and file is mine: " + worthBothering);
           return;
         }
         repaintErrorStripeRenderer(editor, myProject);
@@ -420,7 +423,7 @@ public class DaemonListeners implements Disposable {
   }
 
   private class MyCommandListener extends CommandAdapter {
-    private final Object myCutActionName = myActionManager.getAction(IdeActions.ACTION_EDITOR_CUT).getTemplatePresentation().getText();
+    private final String myCutActionName = myActionManager.getAction(IdeActions.ACTION_EDITOR_CUT).getTemplatePresentation().getText();
 
     @Override
     public void commandStarted(CommandEvent event) {

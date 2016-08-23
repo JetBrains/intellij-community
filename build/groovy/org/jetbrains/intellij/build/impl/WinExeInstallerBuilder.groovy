@@ -16,17 +16,17 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
-import org.codehaus.gant.GantBuilder
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName
+
 /**
  * @author nik
  */
 class WinExeInstallerBuilder {
   private final BuildContext buildContext
-  private final GantBuilder ant
+  private final AntBuilder ant
   private final String jreDirectoryPath
   private final WindowsDistributionCustomizer customizer
 
@@ -85,6 +85,7 @@ class WinExeInstallerBuilder {
     prepareConfigurationFiles(box, winDistPath)
 
     ant.unzip(src: "$communityHome/build/tools/NSIS.zip", dest: box)
+    buildContext.messages.progress("Running NSIS tool to build .exe installer for Windows")
     if (SystemInfoRt.isWindows) {
       ant.exec(command: "\"${box}/NSIS/makensis.exe\"" +
                         " /DCOMMUNITY_DIR=\"$communityHome\"" +

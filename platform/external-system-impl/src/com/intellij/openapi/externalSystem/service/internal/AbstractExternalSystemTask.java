@@ -29,8 +29,8 @@ public abstract class AbstractExternalSystemTask implements ExternalSystemTask {
   private static final Logger LOG = Logger.getInstance("#" + AbstractExternalSystemTask.class.getName());
 
   private final AtomicReference<ExternalSystemTaskState> myState =
-    new AtomicReference<ExternalSystemTaskState>(ExternalSystemTaskState.NOT_STARTED);
-  private final AtomicReference<Throwable> myError = new AtomicReference<Throwable>();
+    new AtomicReference<>(ExternalSystemTaskState.NOT_STARTED);
+  private final AtomicReference<Throwable> myError = new AtomicReference<>();
 
   @NotNull private final transient Project myIdeProject;
 

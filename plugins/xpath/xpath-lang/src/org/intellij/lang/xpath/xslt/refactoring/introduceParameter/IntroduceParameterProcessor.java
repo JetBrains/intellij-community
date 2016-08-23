@@ -75,7 +75,7 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
             assert myTemplate != null;
 
             final Collection<PsiReference> references = ReferencesSearch.search(myTemplate, myTemplate.getUseScope(), false).findAll();
-            callsToUpdate = new ArrayList<PsiElement>(references.size());
+            callsToUpdate = new ArrayList<>(references.size());
             for (PsiReference reference : references) {
                 final PsiElement e = reference.getElement();
                 final XmlTag tag = PsiTreeUtil.getContextOfType(e, XmlTag.class, true);

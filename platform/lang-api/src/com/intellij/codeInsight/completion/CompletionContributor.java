@@ -124,11 +124,11 @@ import java.util.List;
 public abstract class CompletionContributor {
 
   private final MultiMap<CompletionType, Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>>> myMap =
-      new MultiMap<CompletionType, Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>>>();
+    new MultiMap<>();
 
   public final void extend(@Nullable CompletionType type,
                            @NotNull final ElementPattern<? extends PsiElement> place, CompletionProvider<CompletionParameters> provider) {
-    myMap.putValue(type, new Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>>(place, provider));
+    myMap.putValue(type, new Pair<>(place, provider));
   }
 
   /**

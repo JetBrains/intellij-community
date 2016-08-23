@@ -16,6 +16,7 @@
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
@@ -49,7 +50,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.JBColor;
-import com.intellij.util.Alarm;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -73,6 +73,7 @@ import java.io.FileWriter;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author: Roman Chernyatchik
@@ -111,11 +112,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   // custom progress
   private String myCurrentCustomProgressCategory;
-  private final Set<String> myMentionedCategories = new LinkedHashSet<String>();
+  private final Set<String> myMentionedCategories = new LinkedHashSet<>();
   private boolean myTestsRunning = true;
   private AbstractTestProxy myLastSelected;
-  private Alarm myUpdateQueue;
-  private Set<Update> myRequests = Collections.synchronizedSet(new HashSet<Update>());
+  private final Set<Update> myRequests = Collections.synchronizedSet(new HashSet<Update>());
   private boolean myDisposed = false;
   private SMTestProxy myLastFailed;
 
@@ -199,7 +199,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     //TODO always hide root node
     //myTreeView.setRootVisible(false);
-    myUpdateQueue = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
     return myTreeView;
   }
 
@@ -561,8 +560,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       update.run();
     }
-    else if (myRequests.add(update) && !myUpdateQueue.isDisposed()) {
-      myUpdateQueue.addRequest(update, 100);
+    else if (myRequests.add(update) && !myDisposed) {
+      JobScheduler.getScheduler().schedule(update, 100, TimeUnit.MILLISECONDS);
     }
     myTreeBuilder.repaintWithParents(newTestOrSuite);
 

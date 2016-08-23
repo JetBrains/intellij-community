@@ -53,7 +53,7 @@ public class MigrationRootNode extends AbstractTreeNode<TypeMigrationLabeler> im
   @NotNull
   public Collection<? extends AbstractTreeNode> getChildren() {
     if (myCachedChildren == null) {
-      myCachedChildren = new ArrayList<MigrationNode>();
+      myCachedChildren = new ArrayList<>();
       if (myPreviewUsages) {
         for (Pair<TypeMigrationUsageInfo, PsiType> root : myLabeler.getMigrationRoots()) {
           addRoot(root.getFirst(), root.getSecond());
@@ -69,10 +69,10 @@ public class MigrationRootNode extends AbstractTreeNode<TypeMigrationLabeler> im
   }
 
   private void addRoot(TypeMigrationUsageInfo info, PsiType migrationType) {
-    final HashSet<TypeMigrationUsageInfo> parents = new HashSet<TypeMigrationUsageInfo>();
+    final HashSet<TypeMigrationUsageInfo> parents = new HashSet<>();
     parents.add(info);
     final MigrationNode migrationNode =
-        new MigrationNode(getProject(), info, migrationType, myLabeler, parents, new HashMap<TypeMigrationUsageInfo, Set<MigrationNode>>());
+        new MigrationNode(getProject(), info, migrationType, myLabeler, parents, new HashMap<>());
 
     myCachedChildren.add(migrationNode);
   }

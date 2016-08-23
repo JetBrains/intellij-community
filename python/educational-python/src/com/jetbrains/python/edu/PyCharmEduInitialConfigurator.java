@@ -41,6 +41,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
@@ -63,6 +64,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.platform.DirectoryProjectConfigurator;
 import com.intellij.platform.PlatformProjectViewOpener;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -96,6 +98,7 @@ public class PyCharmEduInitialConfigurator {
 
   @NonNls private static final String CONFIGURED = "PyCharmEDU.InitialConfiguration";
   @NonNls private static final String CONFIGURED_V1 = "PyCharmEDU.InitialConfiguration.V1";
+  @NonNls private static final String CONFIGURED_V2 = "PyCharmEDU.InitialConfiguration.V2";
 
   private static final Set<String> UNRELATED_TIPS = Sets.newHashSet("LiveTemplatesDjango.html", "TerminalOpen.html",
                                                                     "Terminal.html", "ConfiguringTerminal.html");
@@ -142,6 +145,12 @@ public class PyCharmEduInitialConfigurator {
                                        FileTypeManager fileTypeManager,
                                        final ProjectManagerEx projectManager) {
     final UISettings uiSettings = UISettings.getInstance();
+    if (!propertiesComponent.getBoolean(CONFIGURED_V2)) {
+      EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
+      editorSettings.setEnsureNewLineAtEOF(true);
+
+      propertiesComponent.setValue(CONFIGURED_V2, true);
+    }
     if (!propertiesComponent.getBoolean(CONFIGURED_V1)) {
       patchMainMenu();
       uiSettings.SHOW_NAVIGATION_BAR = false;
@@ -268,7 +277,7 @@ public class PyCharmEduInitialConfigurator {
 
   private static void hideActionFromMainMenu(@NotNull final DefaultMutableTreeNode root,
                                              @NotNull final CustomActionsSchema schema, DefaultMutableTreeNode mainMenu){
-    final HashSet<String> menuItems = ContainerUtil.newHashSet("Tools", "VCS", "Refactor", "Code", "Window", "Run");
+    final HashSet<String> menuItems = ContainerUtil.newHashSet("Tools", "VCS", "Refactor", "Window", "Run");
     hideActions(schema, root, mainMenu, menuItems);
   }
 
@@ -323,6 +332,11 @@ public class PyCharmEduInitialConfigurator {
       if ("org.intellij.lang.regexp.intention.CheckRegExpIntentionAction".equals(ep.className)) {
         rootArea.getExtensionPoint(IntentionManager.EP_INTENTION_ACTIONS).unregisterExtension(ep);
       }
+    }
+
+    final ExtensionPoint<ProjectAttachProcessor> point = Extensions.getRootArea().getExtensionPoint(ProjectAttachProcessor.EP_NAME);
+    for (ProjectAttachProcessor attachProcessor : Extensions.getExtensions(ProjectAttachProcessor.EP_NAME)) {
+      point.unregisterExtension(attachProcessor);
     }
   }
 

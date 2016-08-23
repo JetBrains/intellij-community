@@ -69,7 +69,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleXmlPanel");
 
-  private final List<TextRange>       myPreviewRangesToHighlight = new ArrayList<TextRange>();
+  private final List<TextRange>       myPreviewRangesToHighlight = new ArrayList<>();
 
   private final Editor myEditor;
   private final CodeStyleSettings mySettings;

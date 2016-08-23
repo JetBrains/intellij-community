@@ -22,7 +22,6 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.ContentUtilEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,7 +33,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class TabbedContentImpl extends ContentImpl implements TabbedContent {
-  private final List<Pair<String, JComponent>> myTabs = new ArrayList<Pair<String, JComponent>>();
+  private final List<Pair<String, JComponent>> myTabs = new ArrayList<>();
   private String myPrefix;
 
   public TabbedContentImpl(JComponent component, String displayName, boolean isPinnable, String titlePrefix) {
@@ -159,19 +158,9 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
     myPrefix = titlePrefix;
   }
 
-  @Nullable
-  @Override
-  public String getTabNameWithoutPrefix(String fullTabName) {
-    int titlePrefixLength = getTitlePrefix().length() + 2;
-    if (fullTabName.startsWith(getTitlePrefix())) {
-      return fullTabName.substring(titlePrefixLength);
-    }
-    return null;
-  }
-
   @Override
   public void split() {
-    List<Pair<String, JComponent>> copy = new ArrayList<Pair<String, JComponent>>(myTabs);
+    List<Pair<String, JComponent>> copy = new ArrayList<>(myTabs);
     int selectedTab = ContentUtilEx.getSelectedTab(this);
     ContentManager manager = getManager();
     String prefix = getTitlePrefix();
@@ -183,6 +172,7 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
       final String tabName = copy.get(i).first;
       ContentUtilEx.addTabbedContent(manager, component, prefix, tabName, select);
     }
+    setShouldDisposeContent(false);
     Disposer.dispose(this);
   }
 

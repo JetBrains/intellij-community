@@ -35,7 +35,7 @@ public class PythonBuiltinReferenceResolveProvider implements PyReferenceResolve
   @NotNull
   @Override
   public List<RatedResolveResult> resolveName(@NotNull PyQualifiedExpression element) {
-    final List<RatedResolveResult> result = new ArrayList<RatedResolveResult>();
+    final List<RatedResolveResult> result = new ArrayList<>();
     final PsiElement realContext = PyPsiUtils.getRealContext(element);
     final String referencedName = element.getReferencedName();
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(realContext);

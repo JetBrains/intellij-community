@@ -195,7 +195,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
       private final PsiElement map;
       private final String parameterName;
 
-      private final List<PsiExpression> parameterAccesses = new ArrayList<PsiExpression>();
+      private final List<PsiExpression> parameterAccesses = new ArrayList<>();
 
       private ParameterAccessCollector(PsiParameter parameter, PsiElement map) {
         this.parameter = parameter;

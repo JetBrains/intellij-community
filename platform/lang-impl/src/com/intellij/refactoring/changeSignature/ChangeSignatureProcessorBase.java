@@ -81,7 +81,7 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
       final MultiMap<PsiElement, String> conflicts = usageProcessor.findConflicts(changeInfo, refUsages);
       for (PsiElement key : conflicts.keySet()) {
         Collection<String> collection = conflictDescriptions.get(key);
-        if (collection.isEmpty()) collection = new com.intellij.util.containers.HashSet<String>();
+        if (collection.isEmpty()) collection = new com.intellij.util.containers.HashSet<>();
         collection.addAll(conflicts.get(key));
         conflictDescriptions.put(key, collection);
       }
@@ -90,7 +90,7 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
 
   @NotNull
   public static UsageInfo[] findUsages(ChangeInfo changeInfo) {
-    List<UsageInfo> infos = new ArrayList<UsageInfo>();
+    List<UsageInfo> infos = new ArrayList<>();
     final ChangeSignatureUsageProcessor[] processors = ChangeSignatureUsageProcessor.EP_NAME.getExtensions();
     for (ChangeSignatureUsageProcessor processor : processors) {
       ContainerUtil.addAll(infos, processor.findUsages(changeInfo));
@@ -100,10 +100,10 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
   }
 
   protected static List<UsageInfo> filterUsages(List<UsageInfo> infos) {
-    Map<PsiElement, MoveRenameUsageInfo> moveRenameInfos = new HashMap<PsiElement, MoveRenameUsageInfo>();
-    Set<PsiElement> usedElements = new HashSet<PsiElement>();
+    Map<PsiElement, MoveRenameUsageInfo> moveRenameInfos = new HashMap<>();
+    Set<PsiElement> usedElements = new HashSet<>();
 
-    List<UsageInfo> result = new ArrayList<UsageInfo>(infos.size() / 2);
+    List<UsageInfo> result = new ArrayList<>(infos.size() / 2);
     for (UsageInfo info : infos) {
       LOG.assertTrue(info != null);
       PsiElement element = info.getElement();
@@ -193,7 +193,7 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
 
     final ResolveSnapshotProvider resolveSnapshotProvider = changeInfo.isParameterNamesChanged() ?
                                                             VariableInplaceRenamer.INSTANCE.forLanguage(changeInfo.getMethod().getLanguage()) : null;
-    final List<ResolveSnapshotProvider.ResolveSnapshot> snapshots = new ArrayList<ResolveSnapshotProvider.ResolveSnapshot>();
+    final List<ResolveSnapshotProvider.ResolveSnapshot> snapshots = new ArrayList<>();
     for (ChangeSignatureUsageProcessor processor : processors) {
       if (resolveSnapshotProvider != null) {
         processor.registerConflictResolvers(snapshots, resolveSnapshotProvider, usages, changeInfo);

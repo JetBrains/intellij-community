@@ -64,7 +64,7 @@ public abstract class MethodNodeBase<M extends PsiElement> extends CheckedTreeNo
       final List<M> callers = findCallers();
       children = new Vector(callers.size());
       for (M caller : callers) {
-        final HashSet<M> called = new HashSet<M>(myCalled);
+        final HashSet<M> called = new HashSet<>(myCalled);
         called.add(myMethod);
         final MethodNodeBase<M> child = createNode(caller, called);
         children.add(child);
@@ -101,7 +101,7 @@ public abstract class MethodNodeBase<M extends PsiElement> extends CheckedTreeNo
 
   private List<M> findCallers() {
     if (myMethod == null) return Collections.emptyList();
-    final Ref<List<M>> callers = new Ref<List<M>>();
+    final Ref<List<M>> callers = new Ref<>();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> callers.set(ContainerUtil.filter(computeCallers(), getFilter()))), RefactoringBundle.message("caller.chooser.looking.for.callers"), true, myProject)) {
       myCancelCallback.run();
       return Collections.emptyList();

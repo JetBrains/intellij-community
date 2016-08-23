@@ -34,7 +34,7 @@ public class CertificateTreeBuilder extends AbstractTreeBuilder {
   private static final SimpleTextAttributes STRIKEOUT_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, null);
   private static final RootDescriptor ROOT_DESCRIPTOR = new RootDescriptor();
 
-  private final MultiMap<String, CertificateWrapper> myCertificates = new MultiMap<String, CertificateWrapper>();
+  private final MultiMap<String, CertificateWrapper> myCertificates = new MultiMap<>();
 
   public CertificateTreeBuilder(@NotNull Tree tree) {
     init(tree, new DefaultTreeModel(new DefaultMutableTreeNode()), new MyTreeStructure(), (o1, o2) -> {
@@ -58,7 +58,7 @@ public class CertificateTreeBuilder extends AbstractTreeBuilder {
     }
     // expand organization nodes at the same time
     //initRootNode();
-    queueUpdateFrom(RootDescriptor.ROOT, true).doWhenDone(() -> CertificateTreeBuilder.this.expandAll(null));
+    queueUpdateFrom(RootDescriptor.ROOT, true).doWhenDone(() -> this.expandAll(null));
   }
 
   public void addCertificate(@NotNull X509Certificate certificate) {

@@ -79,7 +79,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
 
   private static class MyZipper extends VcsCommittedListsZipperAdapter {
     private long lastNumber = 1;
-    private final TObjectLongHashMap<CommittedChangeListKey> numberCache = new TObjectLongHashMap<CommittedChangeListKey>();
+    private final TObjectLongHashMap<CommittedChangeListKey> numberCache = new TObjectLongHashMap<>();
 
     private MyZipper() {
       super(new GroupCreator() {
@@ -162,7 +162,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     }
     final CvsChangeListsBuilder builder = new CvsChangeListsBuilder(module, connectionSettings, myProject, vcsRoot);
 
-    final Ref<CvsChangeList> result = new Ref<CvsChangeList>();
+    final Ref<CvsChangeList> result = new Ref<>();
     final LoadHistoryOperation operation = new LoadHistoryOperation(connectionSettings, wrapper -> {
       final List<Revision> revisions = wrapper.getRevisions();
       if (revisions.isEmpty()) return;
@@ -245,7 +245,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
         dateFrom = calendar.getTime();
       }
       final ChangeBrowserSettings.Filter filter = settings.createFilter();
-      final Set<CvsChangeList> controlSet = new HashSet<CvsChangeList>();
+      final Set<CvsChangeList> controlSet = new HashSet<>();
       final LoadHistoryOperation operation =
         new LoadHistoryOperation(connectionSettings, module, dateFrom, dateTo, wrapper -> {
           final List<RevisionWrapper> wrappers = builder.revisionWrappersFromLog(wrapper);

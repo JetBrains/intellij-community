@@ -39,7 +39,7 @@ public class SchemeImportUtil {
   public static VirtualFile selectImportSource(@NotNull final String[] sourceExtensions,
                                                @NotNull Component parent,
                                                @Nullable VirtualFile preselect) {
-    final Set<String> extensions = new HashSet<String>(Arrays.asList(sourceExtensions));
+    final Set<String> extensions = new HashSet<>(Arrays.asList(sourceExtensions));
     FileChooserDialog fileChooser = FileChooserFactory.getInstance()
       .createFileChooser(new FileChooserDescriptor(true, false, false, false, false, false) {
         @Override

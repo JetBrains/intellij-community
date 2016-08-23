@@ -41,7 +41,7 @@ public class Target extends Tag{
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static Pair[] getOptions(@NonNls String... names) {
-    final List<Pair> options = new ArrayList<Pair>();
+    final List<Pair> options = new ArrayList<>();
     options.add(Couple.of("name", names[0]));
     appendIfNonEmpty(options, "depends", names[1]);
     appendIfNonEmpty(options, "description", names[2]);

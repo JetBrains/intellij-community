@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,8 +53,7 @@ if (true) {
 """,
 """a=1;
 c = 3
-b=1;
-""")
+b=1;""")
   }
 
   public void testUnwrapFor1() {
@@ -62,7 +61,7 @@ b=1;
 for(int i = 0; i < 10; i++) {
     Sys<caret>tem.gc();
 }
-""", "Sys<caret>tem.gc();\n");
+""", "Sys<caret>tem.gc();");
   }
 
   public void testBraces() throws Exception {
@@ -85,9 +84,9 @@ for(int i = 0; i < 10; i++) {
                     "    int j;\n" +
                     "} catch(Exception e) {\n" +
                     "    int k;\n" +
-                    "}\n",
+                    "}",
 
-                    "int i;\n");
+                    "int i;");
   }
 
   public void testConditionalThat() throws Exception {

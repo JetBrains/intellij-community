@@ -15,6 +15,7 @@
  */
 package org.jetbrains.intellij.build.impl
 
+import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.LibraryLicense
 import org.jetbrains.jps.gant.JpsGantProjectBuilder
 import org.jetbrains.jps.model.JpsProject
@@ -27,6 +28,7 @@ import org.jetbrains.jps.model.module.JpsModule
 /**
  * @author nik
  */
+@CompileStatic
 class LibraryLicensesListGenerator {
   private final JpsGantProjectBuilder projectBuilder
   private final JpsProject project
@@ -54,7 +56,7 @@ class LibraryLicensesListGenerator {
   void generateLicensesTable(String filePath, Set<String> usedModulesNames) {
     projectBuilder.info("Generating licenses table")
     projectBuilder.info("Used modules: $usedModulesNames")
-    Set<JpsModule> usedModules = project.modules.findAll { usedModulesNames.contains(it.name) }
+    Set<JpsModule> usedModules = project.modules.findAll { usedModulesNames.contains(it.name) } as Set<JpsModule>
     Map<String, String> usedLibraries = [:]
     usedModules.each { JpsModule module ->
       JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).getLibraries().each { item ->
@@ -83,7 +85,7 @@ class LibraryLicensesListGenerator {
       LibraryLicense lib = it.key
       String moduleName = it.value
       def name = lib.url != null ? "[$lib.name|$lib.url]" : lib.name
-      def license = lib.licenseUrl != null ? "[$lib.license|$lib.licenseUrl]" : lib.license
+      def license = lib.libraryLicenseUrl != null ? "[$lib.license|$lib.licenseUrl]" : lib.license
       projectBuilder.info(" $lib.name (in module $moduleName)")
       lines << "|$name| ${lib.version ?: ""}|$license|".toString()
     }

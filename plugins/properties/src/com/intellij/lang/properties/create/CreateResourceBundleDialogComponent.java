@@ -33,14 +33,12 @@ import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -213,7 +211,7 @@ public class CreateResourceBundleDialogComponent {
     });
 
     ResourceBundle mainBundle = myResourceBundle;
-    final Set<ResourceBundle> allBundles = new HashSet<ResourceBundle>();
+    final Set<ResourceBundle> allBundles = new HashSet<>();
     if (mainBundle != null) {
       allBundles.add(mainBundle);
     }
@@ -230,7 +228,7 @@ public class CreateResourceBundleDialogComponent {
     }
 
     if (needCombining) {
-      final List<PropertiesFile> toCombine = new ArrayList<PropertiesFile>(createdFiles);
+      final List<PropertiesFile> toCombine = new ArrayList<>(createdFiles);
       final String baseName = getBaseName();
       if (myResourceBundle != null) {
         toCombine.addAll(myResourceBundle.getPropertiesFiles());
@@ -287,7 +285,7 @@ public class CreateResourceBundleDialogComponent {
       return Collections.emptyList();
     }
     final String[] splitRawLocales = rawLocales.split(",");
-    final List<Locale> locales = new ArrayList<Locale>(splitRawLocales.length);
+    final List<Locale> locales = new ArrayList<>(splitRawLocales.length);
 
     for (String rawLocale : splitRawLocales) {
       final Locale locale = PropertiesUtil.getLocale("_" + rawLocale + ".properties");
@@ -322,18 +320,14 @@ public class CreateResourceBundleDialogComponent {
       restrictedLocales = Collections.emptyList();
     } else {
       locales = Collections.emptyList();
-      restrictedLocales = ContainerUtil.map(myResourceBundle.getPropertiesFiles(), propertiesFile -> propertiesFile.getLocale());
+      restrictedLocales = ContainerUtil.map(myResourceBundle.getPropertiesFiles(), PropertiesFile::getLocale);
     }
     myLocalesModel = new CollectionListModel<Locale>(locales) {
       @Override
       public void add(@NotNull List<? extends Locale> elements) {
         final List<Locale> currentItems = getItems();
-        elements = ContainerUtil.filter(elements, new Condition<Locale>() {
-          @Override
-          public boolean value(Locale locale) {
-            return !restrictedLocales.contains(locale) && !currentItems.contains(locale);
-          }
-        });
+        elements = ContainerUtil.filter(elements,
+                                        locale -> !restrictedLocales.contains(locale) && !currentItems.contains(locale));
         super.add(elements);
       }
     };
@@ -444,7 +438,7 @@ public class CreateResourceBundleDialogComponent {
     private final List<Locale> myLocales;
 
     private MyExistLocalesListModel() {
-      myLocales = new ArrayList<Locale>();
+      myLocales = new ArrayList<>();
       myLocales.add(PropertiesUtil.DEFAULT_LOCALE);
       PropertiesReferenceManager.getInstance(myProject).processPropertiesFiles(GlobalSearchScope.projectScope(myProject), new PropertiesFileProcessor() {
         @Override

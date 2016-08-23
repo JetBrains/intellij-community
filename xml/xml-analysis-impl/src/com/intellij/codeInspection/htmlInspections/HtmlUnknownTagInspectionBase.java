@@ -126,7 +126,7 @@ public class HtmlUnknownTagInspectionBase extends HtmlUnknownElementInspection {
         assert startTagName != null;
         final PsiElement endTagName = XmlTagUtil.getEndTagNameElement(tag);
 
-        List<LocalQuickFix> quickfixes = new ArrayList<LocalQuickFix>();
+        List<LocalQuickFix> quickfixes = new ArrayList<>();
         quickfixes.add(action);
         if (isOnTheFly) {
           PsiFile file = startTagName.getContainingFile();

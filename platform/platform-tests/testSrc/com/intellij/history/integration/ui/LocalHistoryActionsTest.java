@@ -29,10 +29,14 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+
+import static com.intellij.util.containers.UtilKt.stream;
 
 public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
   VirtualFile f;
@@ -77,7 +81,7 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
   public void testLocalHistoryActionDisabledWithoutProject() throws IOException {
     LocalHistoryAction a = new LocalHistoryAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
       }
     };
     assertStatus(a, myRoot, myProject, true);
@@ -132,7 +136,7 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
       @Override
       @Nullable
       public Object getData(String id) {
-        if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(id)) return files;
+        if (VcsDataKeys.VIRTUAL_FILE_STREAM.is(id)) return stream(files);
         if (CommonDataKeys.EDITOR.is(id)) return editor;
         if (CommonDataKeys.PROJECT.is(id)) return p;
         return null;

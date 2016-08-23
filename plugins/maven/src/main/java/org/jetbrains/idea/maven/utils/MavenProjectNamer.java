@@ -18,13 +18,13 @@ public class MavenProjectNamer {
   //private static Logger LOG = Logger.getInstance(MavenProjectNamer.class);
 
   public static Map<MavenProject, String> generateNameMap(Collection<MavenProject> mavenProjects) {
-    MultiMap<String, MavenProject> artifactIdMap = new MultiMap<String, MavenProject>();
+    MultiMap<String, MavenProject> artifactIdMap = new MultiMap<>();
 
     for (MavenProject project : mavenProjects) {
       artifactIdMap.putValue(project.getMavenId().getArtifactId(), project);
     }
 
-    Map<MavenProject, String> res = new THashMap<MavenProject, String>();
+    Map<MavenProject, String> res = new THashMap<>();
 
     for (Map.Entry<String, Collection<MavenProject>> entry : artifactIdMap.entrySet()) {
       List<MavenProject> projectList = (List<MavenProject>)entry.getValue();
@@ -72,7 +72,7 @@ public class MavenProjectNamer {
   }
 
   private static boolean allGroupsAreDifferent(Collection<MavenProject> mavenProjects) {
-    Set<String> exitingGroups = new THashSet<String>();
+    Set<String> exitingGroups = new THashSet<>();
 
     for (MavenProject mavenProject : mavenProjects) {
       if (!exitingGroups.add(mavenProject.getMavenId().getGroupId())) {
@@ -97,7 +97,7 @@ public class MavenProjectNamer {
   }
 
   public static Map<MavenProject, Integer> buildProjectTree(MavenProjectsManager manager) {
-    Map<MavenProject, Integer> res = new LinkedHashMap<MavenProject, Integer>();
+    Map<MavenProject, Integer> res = new LinkedHashMap<>();
 
     doBuildProjectTree(manager, res, manager.getRootProjects(), 0);
 

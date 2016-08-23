@@ -26,7 +26,7 @@ import java.util.List;
 
 public class OpenOrCreateProfilesXmlAction extends MavenOpenOrCreateFilesAction {
   protected List<File> getFiles(AnActionEvent e) {
-    List<File> result = new ArrayList<File>();
+    List<File> result = new ArrayList<>();
     for (MavenProject each : MavenActionUtil.getMavenProjects(e.getDataContext())) {
       result.add(each.getProfilesXmlIoFile());
     }

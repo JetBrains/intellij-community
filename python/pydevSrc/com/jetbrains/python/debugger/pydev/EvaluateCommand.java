@@ -12,6 +12,7 @@ public class EvaluateCommand extends AbstractFrameCommand {
   private final IPyDebugProcess myDebugProcess;
   private final boolean myTrimResult;
   private PyDebugValue myValue = null;
+  private String myTempName;
 
 
   public EvaluateCommand(final RemoteDebugger debugger, final String threadId, final String frameId, final String expression,
@@ -21,12 +22,13 @@ public class EvaluateCommand extends AbstractFrameCommand {
     myExecute = execute;
     myDebugProcess = debugger.getDebugProcess();
     myTrimResult = trimResult;
+    myTempName = myDebugProcess.canSaveToTemp(expression)? debugger.generateSaveTempName(threadId, frameId): "";
   }
 
   @Override
   protected void buildPayload(Payload payload) {
     super.buildPayload(payload);
-    payload.add("FRAME").add(myExpression).add(myTrimResult);
+    payload.add("FRAME").add(myExpression).add(myTrimResult).add(myTempName);
   }
 
   @Override
@@ -39,6 +41,9 @@ public class EvaluateCommand extends AbstractFrameCommand {
     super.processResponse(response);
     final PyDebugValue value = ProtocolParser.parseValue(response.getPayload(), myDebugProcess);
     myValue = value.setName((myExecute ? "" : myExpression));
+    if (!myTempName.isEmpty()) {
+      myValue.setTempName(myTempName);
+    }
   }
 
   public PyDebugValue getValue() {

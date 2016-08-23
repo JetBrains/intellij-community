@@ -33,7 +33,7 @@ class AnnotationPresentation implements TextAnnotationPresentation {
   @NotNull private final FileAnnotation myFileAnnotation;
   @NotNull private final UpToDateLineNumberProvider myUpToDateLineNumberProvider;
   @Nullable private final AnnotationSourceSwitcher mySwitcher;
-  private final ArrayList<AnAction> myActions = new ArrayList<AnAction>();
+  private final ArrayList<AnAction> myActions = new ArrayList<>();
 
   AnnotationPresentation(@NotNull FileAnnotation fileAnnotation,
                          @NotNull UpToDateLineNumberProvider upToDateLineNumberProvider,

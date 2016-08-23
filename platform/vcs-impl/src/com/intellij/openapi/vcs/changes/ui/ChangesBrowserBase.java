@@ -34,7 +34,6 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffContext;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ObjectUtils;
@@ -52,10 +51,12 @@ import java.awt.*;
 import java.io.File;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Stream;
 
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterRevisionsFiles;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.*;
-import static java.util.stream.Collectors.toList;
 
 public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(ChangesBrowserBase.class);
@@ -66,7 +67,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   protected final ChangesTreeList<T> myViewer;
   protected final JScrollPane myViewerScrollPane;
   protected ChangeList mySelectedChangeList;
-  protected Collection<T> myChangesToDisplay;
+  protected List<T> myChangesToDisplay;
   protected final Project myProject;
   private final boolean myCapableOfExcludingChanges;
   protected final JPanel myHeaderPanel;
@@ -215,10 +216,10 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
       sink.put(VcsDataKeys.CHANGE_LEAD_SELECTION, (highestSelection == null) ? new Change[]{} : new Change[]{highestSelection});
     }
     else if (key == CommonDataKeys.VIRTUAL_FILE_ARRAY) {
-      sink.put(CommonDataKeys.VIRTUAL_FILE_ARRAY, getSelectedFiles());
+      sink.put(CommonDataKeys.VIRTUAL_FILE_ARRAY, getSelectedFiles().toArray(VirtualFile[]::new));
     }
     else if (key == CommonDataKeys.NAVIGATABLE_ARRAY) {
-      sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, ChangesUtil.getNavigatableArray(myProject, getSelectedFiles()));
+      sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, getNavigatableArray(myProject, getSelectedFiles()));
     }
     else if (VcsDataKeys.IO_FILE_ARRAY.equals(key)) {
       sink.put(VcsDataKeys.IO_FILE_ARRAY, getSelectedIoFiles());
@@ -231,7 +232,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
       sink.put(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS, selectedChanges.toArray(new Change[selectedChanges.size()]));
     }
     else if (UNVERSIONED_FILES_DATA_KEY.equals(key)) {
-      sink.put(UNVERSIONED_FILES_DATA_KEY, getVirtualFiles(myViewer.getSelectionPaths(), UNVERSIONED_FILES_TAG).collect(toList()));
+      sink.put(UNVERSIONED_FILES_DATA_KEY, getVirtualFiles(myViewer.getSelectionPaths(), UNVERSIONED_FILES_TAG));
     }
     else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.equals(key)) {
       sink.put(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myDeleteProvider);
@@ -335,7 +336,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   }
 
   protected List<AnAction> createDiffActions() {
-    List<AnAction> actions = new ArrayList<AnAction>();
+    List<AnAction> actions = new ArrayList<>();
     if (myCapableOfExcludingChanges) {
       actions.add(new ToggleChangeAction());
     }
@@ -394,7 +395,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
 
   @NotNull
   public List<Change> getCurrentDisplayedChanges() {
-    return mySelectedChangeList != null ? sortChanges(mySelectedChangeList.getChanges()) : Collections.<Change>emptyList();
+    return mySelectedChangeList != null ? ContainerUtil.newArrayList(mySelectedChangeList.getChanges()) : Collections.emptyList();
   }
 
   @NotNull
@@ -407,19 +408,6 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
 
   public int getUnversionedFilesCount() {
     return 0;
-  }
-
-  @NotNull
-  protected List<Change> sortChanges(@NotNull Collection<Change> changes) {
-    List<Change> result;
-    try {
-      result = ContainerUtil.sorted(changes, ChangesComparator.getInstance(myViewer.isShowFlatten()));
-    }
-    catch (IllegalArgumentException e) {
-      result = ContainerUtil.newArrayList(changes);
-      LOG.error("Couldn't sort these changes: " + changes, e);
-    }
-    return result;
   }
 
   public ChangeList getSelectedChangeList() {
@@ -439,7 +427,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
 
   private File[] getSelectedIoFiles() {
     final List<Change> changes = getSelectedChanges();
-    final List<File> files = new ArrayList<File>();
+    final List<File> files = new ArrayList<>();
     for (Change change : changes) {
       final ContentRevision afterRevision = change.getAfterRevision();
       if (afterRevision != null) {
@@ -458,13 +446,11 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   public abstract List<Change> getAllChanges();
 
   @NotNull
-  private VirtualFile[] getSelectedFiles() {
-    Set<VirtualFile> result = ContainerUtil.newHashSet();
-
-    result.addAll(ChangesUtil.getAfterRevisionsFiles(getSelectedChanges()));
-    result.addAll(getVirtualFiles(myViewer.getSelectionPaths(), null).collect(toList()));
-
-    return VfsUtilCore.toVirtualFileArray(result);
+  protected Stream<VirtualFile> getSelectedFiles() {
+    return Stream.concat(
+      getAfterRevisionsFiles(getSelectedChanges().stream()),
+      getVirtualFiles(myViewer.getSelectionPaths(), null)
+    ).distinct();
   }
 
   public AnAction getDiffAction() {

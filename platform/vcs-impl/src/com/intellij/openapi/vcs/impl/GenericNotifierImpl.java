@@ -60,7 +60,7 @@ public abstract class GenericNotifierImpl<T, Key> {
 
   protected Collection<Key> getAllCurrentKeys() {
     synchronized (myLock) {
-      return new ArrayList<Key>(myState.keySet());
+      return new ArrayList<>(myState.keySet());
     }
   }
 

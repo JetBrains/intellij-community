@@ -1612,7 +1612,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   private static void assertProblems(MavenProjectReaderResult readerResult, String... expectedProblems) {
-    List<String> actualProblems = new ArrayList<String>();
+    List<String> actualProblems = new ArrayList<>();
     for (MavenProjectProblem each : readerResult.readingProblems) {
       actualProblems.add(each.getDescription());
     }

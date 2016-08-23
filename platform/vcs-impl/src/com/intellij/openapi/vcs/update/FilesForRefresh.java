@@ -26,8 +26,8 @@ public class FilesForRefresh {
   private final List<File> myPoints;
 
   public FilesForRefresh() {
-    myRecursively = new ArrayList<File>();
-    myPoints = new ArrayList<File>();
+    myRecursively = new ArrayList<>();
+    myPoints = new ArrayList<>();
   }
 
   public void addPoint(final File vf) {
@@ -89,7 +89,7 @@ public class FilesForRefresh {
   }
 
   private void filterEqual(final List<File> files) {
-    final Set<String> set = new HashSet<String>();
+    final Set<String> set = new HashSet<>();
     for (File file : files) {
       set.add(file.getAbsolutePath());
     }

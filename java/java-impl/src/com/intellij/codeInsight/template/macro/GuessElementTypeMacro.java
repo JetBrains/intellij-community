@@ -60,7 +60,7 @@ public class GuessElementTypeMacro extends Macro {
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     PsiType[] types = guessTypes(params, context);
     if (types == null || types.length < 2) return null;
-    Set<LookupElement> set = new LinkedHashSet<LookupElement>();
+    Set<LookupElement> set = new LinkedHashSet<>();
     for (PsiType type : types) {
       JavaTemplateUtil.addTypeLookupItem(set, type);
     }

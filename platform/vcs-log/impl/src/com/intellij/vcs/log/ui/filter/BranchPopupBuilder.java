@@ -144,7 +144,7 @@ public abstract class BranchPopupBuilder {
   private static void addToGroup(final RefGroup refGroup, TreeMap<String, TreeSet<String>> groupToAdd) {
     TreeSet<String> existingGroup = groupToAdd.get(refGroup.getName());
 
-    TreeSet<String> actions = new TreeSet<String>();
+    TreeSet<String> actions = new TreeSet<>();
     for (VcsRef ref : refGroup.getRefs()) {
       actions.add(ref.getName());
     }

@@ -170,7 +170,7 @@ public class JavaDocCommentFixer implements DocCommentFixer {
                                         @NotNull final Document document,
                                         @NotNull Project project)
   {
-    List<PsiElement> toRemove = new ArrayList<PsiElement>();
+    List<PsiElement> toRemove = new ArrayList<>();
     for (ProblemDescriptor problem : problems) {
       PsiElement element = problem.getPsiElement();
       if (element == null) {
@@ -232,8 +232,8 @@ public class JavaDocCommentFixer implements DocCommentFixer {
 
   private static void ensureContentOrdered(@NotNull PsiDocComment comment, @NotNull Document document) {
     //region Parse existing doc comment parameters.
-    List<String> current = new ArrayList<String>();
-    Map<String, Pair<TextRange, String>> tagInfoByName = new HashMap<String, Pair<TextRange, String>>();
+    List<String> current = new ArrayList<>();
+    Map<String, Pair<TextRange, String>> tagInfoByName = new HashMap<>();
     for (PsiDocTag tag : comment.getTags()) {
       if (!PARAM_TAG_NAME.equals(tag.getName())) {
         continue;
@@ -252,7 +252,7 @@ public class JavaDocCommentFixer implements DocCommentFixer {
 
 
     //region Calculate desired parameters order
-    List<String> ordered = new ArrayList<String>();
+    List<String> ordered = new ArrayList<>();
     PsiDocCommentOwner owner = comment.getOwner();
     if ((owner instanceof PsiMethod)) {
       PsiParameter[] parameters = ((PsiMethod)owner).getParameterList().getParameters();

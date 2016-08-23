@@ -229,7 +229,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
   }
 
   public static Module runDirectoryProjectConfigurators(VirtualFile baseDir, Project project) {
-    final Ref<Module> moduleRef = new Ref<Module>();
+    final Ref<Module> moduleRef = new Ref<>();
     for (DirectoryProjectConfigurator configurator: Extensions.getExtensions(DirectoryProjectConfigurator.EP_NAME)) {
       try {
         configurator.configureProject(project, baseDir, moduleRef);

@@ -20,8 +20,11 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.RunResult;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,7 +33,6 @@ import com.intellij.ui.UIBundle;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -56,26 +58,47 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
     Arrays.sort(files, FileComparator.getInstance());
 
     final List<String> problems = ContainerUtil.newLinkedList();
-    new WriteCommandAction.Simple(project) {
-
+    new Task.Modal(project, "Deleting Files...", true) {
       @Override
-      protected void run() throws Throwable {
-        for (final VirtualFile file : files) {
-          try {
-            file.delete(this);
-          }
-          catch (Exception e) {
-            LOG.info(e);
+      public void run(@NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(false);
+        int i = 0;
+        for (VirtualFile file : files) {
+          indicator.checkCanceled();
+          indicator.setText2(file.getPresentableUrl());
+          indicator.setFraction((double)i / files.length);
+          i++;
+
+          RunResult result = new WriteCommandAction.Simple(project) {
+            @Override
+            protected void run() throws Throwable {
+              file.delete(this);
+            }
+          }.execute();
+
+          if (result.hasException()) {
+            LOG.info("Error when deleting " + file, result.getThrowable());
             problems.add(file.getName());
           }
         }
-
       }
-    }.execute();
 
-    if (!problems.isEmpty()) {
-      reportDeletionProblem(problems);
-    }
+      @Override
+      public void onSuccess() {
+        reportProblems();
+      }
+
+      @Override
+      public void onCancel() {
+        reportProblems();
+      }
+
+      private void reportProblems() {
+        if (!problems.isEmpty()) {
+          reportDeletionProblem(problems);
+        }
+      }
+    }.queue();
   }
 
   private static void reportDeletionProblem(List<String> problems) {
@@ -104,7 +127,7 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
   private static String createConfirmationMessage(VirtualFile[] filesToDelete) {
     if (filesToDelete.length == 1) {
       if (filesToDelete[0].isDirectory()) {
-        return UIBundle.message("are.you.sure.you.want.to.delete.selected.folder.confirmation.message");
+        return UIBundle.message("are.you.sure.you.want.to.delete.selected.folder.confirmation.message", filesToDelete[0].getName());
       }
       else {
         return UIBundle.message("are.you.sure.you.want.to.delete.selected.file.confirmation.message", filesToDelete[0].getName());
@@ -120,13 +143,13 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
       }
       LOG.assertTrue(hasFiles || hasFolders);
       if (hasFiles && hasFolders) {
-        return UIBundle.message("are.you.sure.you.want.to.delete.selected.files.and.directories.confirmation.message");
+        return UIBundle.message("are.you.sure.you.want.to.delete.selected.files.and.directories.confirmation.message", filesToDelete.length);
       }
       else if (hasFolders) {
-        return UIBundle.message("are.you.sure.you.want.to.delete.selected.folders.confirmation.message");
+        return UIBundle.message("are.you.sure.you.want.to.delete.selected.folders.confirmation.message", filesToDelete.length);
       }
       else {
-        return UIBundle.message("are.you.sure.you.want.to.delete.selected.files.and.files.confirmation.message");
+        return UIBundle.message("are.you.sure.you.want.to.delete.selected.files.and.files.confirmation.message", filesToDelete.length);
       }
     }
   }

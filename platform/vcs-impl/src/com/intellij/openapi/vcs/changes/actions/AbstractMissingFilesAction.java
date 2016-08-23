@@ -59,13 +59,11 @@ public abstract class AbstractMissingFilesAction extends AnAction implements Dum
     final ProgressManager progressManager = ProgressManager.getInstance();
     final Runnable action = new Runnable() {
       public void run() {
-        final List<VcsException> allExceptions = new ArrayList<VcsException>();
-        ChangesUtil.processFilePathsByVcs(project, files, new ChangesUtil.PerVcsProcessor<FilePath>() {
-          public void process(final AbstractVcs vcs, final List<FilePath> items) {
-            final List<VcsException> exceptions = processFiles(vcs, files);
-            if (exceptions != null) {
-              allExceptions.addAll(exceptions);
-            }
+        final List<VcsException> allExceptions = new ArrayList<>();
+        ChangesUtil.processFilePathsByVcs(project, files, (vcs, items) -> {
+          final List<VcsException> exceptions = processFiles(vcs, files);
+          if (exceptions != null) {
+            allExceptions.addAll(exceptions);
           }
         });
 

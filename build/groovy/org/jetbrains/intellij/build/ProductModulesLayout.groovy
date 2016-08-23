@@ -33,11 +33,14 @@
 
 package org.jetbrains.intellij.build
 
+import com.intellij.openapi.util.MultiValuesMap
+import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.PluginLayout
 
 /**
  * @author nik
  */
+@CompileStatic
 class ProductModulesLayout {
   /**
    * Name of the main product JAR file. Outputs of {@link #platformImplementationModules} will be packed into it.
@@ -69,14 +72,14 @@ class ProductModulesLayout {
   List<String> pluginModulesToPublish = []
 
   /**
-   * Paths to JAR files which contents should be extracted into {@link #mainJarName} JAR.
+   * Names of the project libraries which JARs' contents should be extracted into {@link #mainJarName} JAR.
    */
-  List<String> additionalJarsToUnpackIntoMainJar = []
+  List<String> projectLibrariesToUnpackIntoMainJar = []
 
   /**
-   * Maps names of the modules to names of JARs; these modules will be packed into these JARs and copied to the product's 'lib' directory.
+   * Maps names of JARs to names of the modules; these modules will be packed into these JARs and copied to the product's 'lib' directory.
    */
-  Map<String, String> additionalPlatformModules = [:]
+  MultiValuesMap<String, String> additionalPlatformJars = new MultiValuesMap<>(true)
 
 
   /**
@@ -97,12 +100,15 @@ class ProductModulesLayout {
 
   /**
    * @param allPlugins descriptions of layout of all plugins which may be included into the product
-   * @return list of all modules which output is included into the product platform's JARs or the plugin's JARs
+   * @return list of all modules which output is included into the plugin's JARs
    */
-  List<String> getIncludedModules(List<PluginLayout> allPlugins) {
+  List<String> getIncludedPluginModules(List<PluginLayout> allPlugins) {
     Set<String> enabledPluginModules = getEnabledPluginModules()
-    def allPluginModules = allPlugins.findAll { enabledPluginModules.contains(it.mainModule) }.collectMany { it.getActualModules(enabledPluginModules).values() }
-    ((allPluginModules + platformApiModules + platformImplementationModules + additionalPlatformModules.keySet()) as Set<String>) as List<String>
+    allPlugins.findAll { enabledPluginModules.contains(it.mainModule) }.collectMany { it.getActualModules(enabledPluginModules).values() }
+  }
+
+  List<String> getIncludedPlatformModules() {
+    platformApiModules + platformImplementationModules + additionalPlatformJars.values()
   }
 
   Set<String> getEnabledPluginModules() {

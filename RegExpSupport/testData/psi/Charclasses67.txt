@@ -13,7 +13,7 @@ REGEXP_FILE
           RegExpCharImpl: <\[>
             PsiElement(ESC_CHARACTER)('\[')
           RegExpCharImpl: <\]>
-            PsiElement(REDUNDANT_ESCAPE)('\]')
+            PsiElement(ESC_CHARACTER)('\]')
           RegExpCharImpl: <\\>
             PsiElement(ESC_CHARACTER)('\\')
           RegExpCharImpl: <\+>

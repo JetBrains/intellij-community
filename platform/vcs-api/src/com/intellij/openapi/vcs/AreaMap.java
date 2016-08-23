@@ -32,18 +32,18 @@ public class AreaMap<Key, Val> {
   private final Comparator<Key> myComparator;
 
   public static<Key extends Comparable<Key>, Val> AreaMap<Key, Val> create(final PairProcessor<Key, Key> keysResemblance) {
-    return new AreaMap<Key,Val>(keysResemblance, new ComparableComparator<Key>());
+    return new AreaMap<>(keysResemblance, new ComparableComparator<>());
   }
 
   public static<Key, Val> AreaMap<Key, Val> create(final PairProcessor<Key, Key> keysResemblance, final Comparator<Key> comparator) {
-    return new AreaMap<Key,Val>(keysResemblance, comparator);
+    return new AreaMap<>(keysResemblance, comparator);
   }
 
   protected AreaMap(final PairProcessor<Key, Key> keysResemblance, final Comparator<Key> comparator) {
     myKeysResemblance = keysResemblance;
     myComparator = comparator;
-    myKeys = new LinkedList<Key>();
-    myMap = new HashMap<Key, Val>();
+    myKeys = new LinkedList<>();
+    myMap = new HashMap<>();
   }
 
   public void putAll(final AreaMap<Key, Val> other) {

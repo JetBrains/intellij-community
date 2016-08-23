@@ -27,6 +27,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArchetype;
@@ -173,7 +174,7 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
   }
 
   private static TreeNode groupAndSortArchetypes(Set<MavenArchetype> archetypes) {
-    List<MavenArchetype> list = new ArrayList<MavenArchetype>(archetypes);
+    List<MavenArchetype> list = new ArrayList<>(archetypes);
 
     Collections.sort(list, (o1, o2) -> {
       String key1 = o1.groupId + ":" + o1.artifactId;
@@ -185,13 +186,13 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
       return o2.version.compareToIgnoreCase(o1.version);
     });
 
-    Map<String, List<MavenArchetype>> map = new TreeMap<String, List<MavenArchetype>>();
+    Map<String, List<MavenArchetype>> map = new TreeMap<>();
 
     for (MavenArchetype each : list) {
       String key = each.groupId + ":" + each.artifactId;
       List<MavenArchetype> versions = map.get(key);
       if (versions == null) {
-        versions = new ArrayList<MavenArchetype>();
+        versions = new ArrayList<>();
         map.put(key, versions);
       }
       versions.add(each);
@@ -306,7 +307,7 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
   }
 
   private static class MyRenderer extends ColoredTreeCellRenderer {
-    public void customizeCellRenderer(JTree tree,
+    public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,
                                       boolean selected,
                                       boolean expanded,

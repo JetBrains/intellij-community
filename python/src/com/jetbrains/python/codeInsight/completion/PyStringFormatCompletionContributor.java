@@ -157,7 +157,7 @@ public class PyStringFormatCompletionContributor extends CompletionContributor {
     private static List<LookupElement> getLookupBuilders(@NotNull final PyStringLiteralExpression literalExpression) {
       final Map<String, PyStringFormatParser.SubstitutionChunk> chunks = PyStringFormatParser.getKeywordSubstitutions(
         PyStringFormatParser.filterSubstitutions(PyStringFormatParser.parseNewStyleFormat(literalExpression.getStringValue())));
-      final List<LookupElement> keys = new ArrayList<LookupElement>();
+      final List<LookupElement> keys = new ArrayList<>();
       for (String chunk: chunks.keySet()) {
         keys.add(createLookUpElement(chunk));
       }

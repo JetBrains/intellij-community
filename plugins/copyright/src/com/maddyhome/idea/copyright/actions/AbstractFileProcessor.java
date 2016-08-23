@@ -214,7 +214,7 @@ public abstract class AbstractFileProcessor {
 
   private void process(final PsiFile[] files) {
     final Runnable[] resultRunnable = new Runnable[1];
-    execute(() -> resultRunnable[0] = prepareFiles(new ArrayList<PsiFile>(Arrays.asList(files))), () -> {
+    execute(() -> resultRunnable[0] = prepareFiles(new ArrayList<>(Arrays.asList(files))), () -> {
       if (resultRunnable[0] != null) {
         resultRunnable[0].run();
       }
@@ -222,19 +222,19 @@ public abstract class AbstractFileProcessor {
   }
 
   private void process(final PsiDirectory dir, final boolean subdirs) {
-    final List<PsiFile> pfiles = new ArrayList<PsiFile>();
+    final List<PsiFile> pfiles = new ArrayList<>();
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> findFiles(pfiles, dir, subdirs), title, true, myProject);
     handleFiles(pfiles);
   }
 
   private void process(final Project project) {
-    final List<PsiFile> pfiles = new ArrayList<PsiFile>();
+    final List<PsiFile> pfiles = new ArrayList<>();
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> findFiles(project, pfiles), title, true, project);
     handleFiles(pfiles);
   }
 
   private void process(final Module module) {
-    final List<PsiFile> pfiles = new ArrayList<PsiFile>();
+    final List<PsiFile> pfiles = new ArrayList<>();
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> findFiles(module, pfiles), title, true, myProject);
     handleFiles(pfiles);
   }
@@ -271,7 +271,7 @@ public abstract class AbstractFileProcessor {
   }
 
   private void handleFiles(final List<PsiFile> files) {
-    final List<VirtualFile> vFiles = new ArrayList<VirtualFile>();
+    final List<VirtualFile> vFiles = new ArrayList<>();
     for (PsiFile psiFile : files) {
       vFiles.add(psiFile.getVirtualFile());
     }

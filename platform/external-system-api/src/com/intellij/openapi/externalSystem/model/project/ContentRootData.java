@@ -61,7 +61,7 @@ public class ContentRootData extends AbstractExternalEntityData {
     if (FileUtil.isAncestor(new File(getRootPath()), new File(path), false)) {
       Collection<SourceRoot> paths = myData.get(type);
       if (paths == null) {
-        myData.put(type, paths = new TreeSet<SourceRoot>(SourceRootComparator.INSTANCE));
+        myData.put(type, paths = new TreeSet<>(SourceRootComparator.INSTANCE));
       }
       paths.add(new SourceRoot(
         ExternalSystemApiUtil.toCanonicalPath(path),

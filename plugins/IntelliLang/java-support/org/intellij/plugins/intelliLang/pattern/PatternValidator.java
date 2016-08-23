@@ -228,7 +228,7 @@ public class PatternValidator extends LocalInspectionTool {
     final Pattern pattern = p.getValue();
     if (pattern == null) return;
 
-    List<PsiExpression> nonConstantElements = new SmartList<PsiExpression>();
+    List<PsiExpression> nonConstantElements = new SmartList<>();
     final Object result = new SubstitutedExpressionEvaluationHelper(expression.getProject()).computeExpression(
       expression, myConfiguration.getAdvancedConfiguration().getDfaOption(), false, nonConstantElements);
     final String o = result == null ? null : String.valueOf(result);

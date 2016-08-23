@@ -45,7 +45,7 @@ class ResolvingVisitor extends XmlElementVisitor implements PsiElementProcessor 
     myPattern = pattern;
     myProcessingContext = context;
 
-    myProcessingContext.put(VISITED_KEY, new THashSet<XmlFile>());
+    myProcessingContext.put(VISITED_KEY, new THashSet<>());
   }
 
   @Override

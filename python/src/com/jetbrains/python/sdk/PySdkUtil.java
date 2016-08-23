@@ -121,6 +121,7 @@ public class PySdkUtil {
     final Map<String, String> systemEnv = System.getenv();
     final Map<String, String> expandedCmdEnv = mergeEnvVariables(systemEnv, cmd.getEnvironment());
     final Map<String, String> env = extraEnv != null ? mergeEnvVariables(expandedCmdEnv, extraEnv) : expandedCmdEnv;
+    PythonEnvUtil.resetHomePathChanges(homePath, env);
     try {
 
       final GeneralCommandLine commandLine = cmd.withWorkDirectory(homePath).withEnvironment(env);

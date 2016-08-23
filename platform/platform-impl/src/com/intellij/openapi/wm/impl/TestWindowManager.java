@@ -224,7 +224,7 @@ public final class TestWindowManager extends WindowManagerEx {
   }
 
   private static final class DummyStatusBar implements StatusBarEx {
-    private final Map<String, StatusBarWidget> myWidgetMap = new HashMap<String, StatusBarWidget>();
+    private final Map<String, StatusBarWidget> myWidgetMap = new HashMap<>();
 
     @Override
     public Dimension getSize() {

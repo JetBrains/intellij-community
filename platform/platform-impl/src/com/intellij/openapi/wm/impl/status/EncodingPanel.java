@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
   private final TextPanel myComponent;
   private boolean actionEnabled;
   private final Alarm update;
-  private volatile Reference<Editor> myEditor = new WeakReference<Editor>(null); // store editor here to avoid expensive and EDT-only getSelectedEditor() retrievals
+  private volatile Reference<Editor> myEditor = new WeakReference<>(null); // store editor here to avoid expensive and EDT-only getSelectedEditor() retrievals
 
   public EncodingPanel(@NotNull final Project project) {
     super(project);
@@ -118,7 +118,7 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
   private void fileChanged(VirtualFile newFile) {
     FileEditor fileEditor = newFile == null ? null : FileEditorManager.getInstance(getProject()).getSelectedEditor(newFile);
     Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
-    myEditor = new WeakReference<Editor>(editor);
+    myEditor = new WeakReference<>(editor);
     update();
   }
 
@@ -250,7 +250,7 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
       }
 
       if (charsetName == null) {
-        charsetName = "n/a";
+        charsetName = file != null ? "n/a" : "";
       }
 
       String toolTipText;

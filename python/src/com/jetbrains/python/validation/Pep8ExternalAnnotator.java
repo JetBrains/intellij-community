@@ -68,6 +68,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -88,11 +89,29 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     private final String myCode;
     private final String myDescription;
 
-    public Problem(int line, int column, String code, String description) {
+    public Problem(int line, int column, @NotNull String code, @NotNull String description) {
       myLine = line;
       myColumn = column;
       myCode = code;
       myDescription = description;
+    }
+
+    public int getLine() {
+      return myLine;
+    }
+
+    public int getColumn() {
+      return myColumn;
+    }
+
+    @NotNull
+    public String getCode() {
+      return myCode;
+    }
+
+    @NotNull
+    public String getDescription() {
+      return myDescription;
     }
   }
 
@@ -114,7 +133,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
   }
 
   public static class Results {
-    public final List<Problem> problems = new ArrayList<Problem>();
+    public final List<Problem> problems = new ArrayList<>();
     private final HighlightDisplayLevel level;
 
     public Results(HighlightDisplayLevel level) {
@@ -247,7 +266,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
         problemElement = file.findElementAt(Math.max(0, offset - 1));
       }
 
-      if (ignoreDueToSettings(project, problem, problemElement)) {
+      if (ignoreDueToSettings(project, problem, problemElement) || ignoredDueToProblemSuppressors(project, problem, file, problemElement)) {
         continue;
       }
 
@@ -295,6 +314,14 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
                                                                            () -> "Edit inspection profile setting"));
       }
     }
+  }
+
+  private static boolean ignoredDueToProblemSuppressors(@NotNull Project project,
+                                                        @NotNull Problem problem,
+                                                        @NotNull PsiFile file,
+                                                        @Nullable PsiElement element) {
+    final Pep8ProblemSuppressor[] suppressors = Pep8ProblemSuppressor.EP_NAME.getExtensions();
+    return Arrays.stream(suppressors).anyMatch(p -> p.isProblemSuppressed(problem, file, element));
   }
 
   private static boolean crossesLineBoundary(@Nullable Document document, String text, TextRange problemRange) {

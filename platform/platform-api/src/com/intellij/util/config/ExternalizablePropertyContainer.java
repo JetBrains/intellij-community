@@ -33,8 +33,8 @@ import java.util.Map;
 
 public class ExternalizablePropertyContainer extends AbstractProperty.AbstractPropertyContainer {
   private static final Logger LOG = Logger.getInstance(ExternalizablePropertyContainer.class);
-  private final Map<AbstractProperty, Object> myValues = new THashMap<AbstractProperty, Object>();
-  private final Map<AbstractProperty, Externalizer> myExternalizers = new THashMap<AbstractProperty, Externalizer>();
+  private final Map<AbstractProperty, Object> myValues = new THashMap<>();
+  private final Map<AbstractProperty, Externalizer> myExternalizers = new THashMap<>();
 
   public <T> void registerProperty(AbstractProperty<T> property, Externalizer<T> externalizer) {
     String name = property.getName();
@@ -79,7 +79,7 @@ public class ExternalizablePropertyContainer extends AbstractProperty.AbstractPr
   }
 
   public void readExternal(@NotNull Element element) {
-    Map<String, AbstractProperty> propertyByName = new THashMap<String, AbstractProperty>();
+    Map<String, AbstractProperty> propertyByName = new THashMap<>();
     for (AbstractProperty abstractProperty : myExternalizers.keySet()) {
       propertyByName.put(abstractProperty.getName(), abstractProperty);
     }
@@ -106,7 +106,7 @@ public class ExternalizablePropertyContainer extends AbstractProperty.AbstractPr
       return;
     }
 
-    List<AbstractProperty> properties = new ArrayList<AbstractProperty>(myExternalizers.keySet());
+    List<AbstractProperty> properties = new ArrayList<>(myExternalizers.keySet());
     Collections.sort(properties, AbstractProperty.NAME_COMPARATOR);
     for (AbstractProperty property : properties) {
       Externalizer externalizer = myExternalizers.get(property);
@@ -153,7 +153,7 @@ public class ExternalizablePropertyContainer extends AbstractProperty.AbstractPr
 
     @Override
     public List<T> readValue(Element dataElement) {
-      List<T> list = new SmartList<T>();
+      List<T> list = new SmartList<>();
       for (Element element : dataElement.getChildren()) {
         if (NULL_ELEMENT.equals(element.getName())) {
           list.add(null);

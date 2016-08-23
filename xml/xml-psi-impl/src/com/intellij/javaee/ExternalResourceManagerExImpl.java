@@ -69,11 +69,11 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   private static final String CATALOG_PROPERTIES_ELEMENT = "CATALOG_PROPERTIES";
   private static final String XSD_1_1 = new Resource("/standardSchemas/XMLSchema-1_1/XMLSchema.xsd", ExternalResourceManagerExImpl.class, null).getResourceUrl();
 
-  private final Map<String, Map<String, String>> myResources = new THashMap<String, Map<String, String>>();
-  private final Set<String> myResourceLocations = new THashSet<String>();
+  private final Map<String, Map<String, String>> myResources = new THashMap<>();
+  private final Set<String> myResourceLocations = new THashSet<>();
 
-  private final Set<String> myIgnoredResources = new TreeSet<String>();
-  private final Set<String> myStandardIgnoredResources = new TreeSet<String>();
+  private final Set<String> myIgnoredResources = new TreeSet<>();
+  private final Set<String> myStandardIgnoredResources = new TreeSet<>();
 
   private final NotNullLazyValue<Map<String, Map<String, Resource>>> myStandardResources = new AtomicNotNullLazyValue<Map<String, Map<String, Resource>>>() {
     @NotNull
@@ -84,7 +84,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   };
 
   private final CachedValueProvider<MultiMap<String, String>> myUrlByNamespaceProvider = () -> {
-    MultiMap<String, String> result = new MultiMap<String, String>();
+    MultiMap<String, String> result = new MultiMap<>();
 
     Collection<Map<String, Resource>> values = myStandardResources.getValue().values();
     for (Map<String, Resource> map : values) {
@@ -101,7 +101,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
         }
       }
     }
-    return CachedValueProvider.Result.create(result, ExternalResourceManagerExImpl.this);
+    return CachedValueProvider.Result.create(result, this);
   };
 
   private String myDefaultHtmlDoctype = HTML5_DOCTYPE_ELEMENT;
@@ -151,7 +151,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     Map<String, T> map = resources.get(version);
     if (map == null) {
       if (create) {
-        map = new THashMap<String, T>();
+        map = new THashMap<>();
         resources.put(version, map);
       }
       else if (!version.equals(DEFAULT_VERSION)) {
@@ -249,7 +249,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
 
   @Override
   public String[] getResourceUrls(@Nullable FileType fileType, @Nullable @NonNls String version, boolean includeStandard) {
-    List<String> result = new LinkedList<String>();
+    List<String> result = new LinkedList<>();
     addResourcesFromMap(result, version, myResources);
 
     if (includeStandard) {
@@ -328,7 +328,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
 
   @Override
   public String[] getAvailableUrls() {
-    Set<String> urls = new THashSet<String>();
+    Set<String> urls = new THashSet<>();
     for (Map<String, String> map : myResources.values()) {
       urls.addAll(map.keySet());
     }
@@ -415,7 +415,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
       return ArrayUtil.toStringArray(myStandardIgnoredResources);
     }
 
-    Set<String> set = new THashSet<String>(myIgnoredResources.size() + myStandardIgnoredResources.size());
+    Set<String> set = new THashSet<>(myIgnoredResources.size() + myStandardIgnoredResources.size());
     set.addAll(myIgnoredResources);
     set.addAll(myStandardIgnoredResources);
     return ArrayUtil.toStringArray(set);
@@ -431,7 +431,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   public Element getState() {
     Element element = new Element("state");
 
-    Set<String> urls = new TreeSet<String>();
+    Set<String> urls = new TreeSet<>();
     for (Map<String, String> map : myResources.values()) {
       urls.addAll(map.keySet());
     }

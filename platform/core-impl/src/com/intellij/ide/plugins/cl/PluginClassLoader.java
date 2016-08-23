@@ -119,10 +119,10 @@ public class PluginClassLoader extends UrlClassLoader {
       c = _findClass(name);
     }
     catch (IncompatibleClassChangeError e) {
-      throw new PluginException(e, myPluginId);
+      throw new PluginException("While loading class " + name + ": " + e.getMessage(), e, myPluginId);
     }
     catch (UnsupportedClassVersionError e) {
-      throw new PluginException(e, myPluginId);
+      throw new PluginException("While loading class " + name + ": " + e.getMessage(), e, myPluginId);
     }
     if (c != null) {
       PluginManagerCore.addPluginClass(myPluginId);

@@ -43,6 +43,13 @@ public interface BundleNameEvaluator {
     }
   };
 
+  BundleNameEvaluator BASE_NAME = new BundleNameEvaluator() {
+    @Nullable
+    public String evaluateBundleName(final PsiFile psiFile) {
+      return ResourceBundleManager.getInstance(psiFile.getProject()).getBaseName(psiFile);
+    }
+  };
+
   @Nullable
   String evaluateBundleName(PsiFile psiFile);
 }

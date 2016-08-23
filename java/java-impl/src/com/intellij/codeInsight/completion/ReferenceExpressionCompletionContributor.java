@@ -28,6 +28,7 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -111,7 +112,7 @@ public class ReferenceExpressionCompletionContributor {
 
       final Set<LookupElement> base =
         JavaSmartCompletionContributor.completeReference(element, reference, filter, false, true, parameters.getParameters(), PrefixMatcher.ALWAYS_TRUE);
-      for (final LookupElement item : new LinkedHashSet<LookupElement>(base)) {
+      for (final LookupElement item : new LinkedHashSet<>(base)) {
         ExpressionLookupItem access = ArrayMemberAccess.accessFirstElement(element, item);
         if (access != null) {
           base.add(access);
@@ -178,26 +179,29 @@ public class ReferenceExpressionCompletionContributor {
 
   @NotNull 
   public static Set<PsiField> findConstantsUsedInSwitch(@Nullable PsiElement position) {
-    if (IN_SWITCH_LABEL.accepts(position)) {
-      Set<PsiField> used = ContainerUtil.newLinkedHashSet();
-      PsiSwitchStatement sw = PsiTreeUtil.getParentOfType(position, PsiSwitchStatement.class);
-      assert sw != null;
-      final PsiCodeBlock body = sw.getBody();
-      assert body != null;
-      for (PsiStatement statement : body.getStatements()) {
-        if (statement instanceof PsiSwitchLabelStatement) {
-          final PsiExpression value = ((PsiSwitchLabelStatement)statement).getCaseValue();
-          if (value instanceof PsiReferenceExpression) {
-            final PsiElement target = ((PsiReferenceExpression)value).resolve();
-            if (target instanceof PsiField) {
-              used.add(CompletionUtil.getOriginalOrSelf((PsiField)target));
-            }
+    return IN_SWITCH_LABEL.accepts(position)
+           ? findConstantsUsedInSwitch(ObjectUtils.assertNotNull(PsiTreeUtil.getParentOfType(position, PsiSwitchStatement.class)))
+           : Collections.emptySet();
+  }
+
+  @NotNull
+  public static Set<PsiField> findConstantsUsedInSwitch(@NotNull PsiSwitchStatement sw) {
+    final PsiCodeBlock body = sw.getBody();
+    if (body == null) return Collections.emptySet();
+
+    Set<PsiField> used = ContainerUtil.newLinkedHashSet();
+    for (PsiStatement statement : body.getStatements()) {
+      if (statement instanceof PsiSwitchLabelStatement) {
+        final PsiExpression value = ((PsiSwitchLabelStatement)statement).getCaseValue();
+        if (value instanceof PsiReferenceExpression) {
+          final PsiElement target = ((PsiReferenceExpression)value).resolve();
+          if (target instanceof PsiField) {
+            used.add(CompletionUtil.getOriginalOrSelf((PsiField)target));
           }
         }
       }
-      return used;
     }
-    return Collections.emptySet();
+    return used;
   }
 
   static PsiExpression createExpression(String text, PsiElement element) {

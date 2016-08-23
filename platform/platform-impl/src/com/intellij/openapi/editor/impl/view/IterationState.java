@@ -102,7 +102,7 @@ public class IterationState {
   private Color myCurrentBackgroundColor;
   private Color myLastBackgroundColor;
 
-  private final List<RangeHighlighterEx> myCurrentHighlighters = new ArrayList<RangeHighlighterEx>();
+  private final List<RangeHighlighterEx> myCurrentHighlighters = new ArrayList<>();
 
   private final FoldingModelEx myFoldingModel;
   private final TextAttributes myFoldTextAttributes;
@@ -117,7 +117,7 @@ public class IterationState {
   private final int myCaretRowEnd;
   private final boolean myCaretRowStartsWithSoftWrap;
   private final boolean myCaretRowEndsWithSoftWrap;
-  private final List<TextAttributes> myCachedAttributesList = new ArrayList<TextAttributes>(5);
+  private final List<TextAttributes> myCachedAttributesList = new ArrayList<>(5);
   private final DocumentEx myDocument;
   private final EditorEx myEditor;
   private final Color myReadOnlyColor;
@@ -197,7 +197,7 @@ public class IterationState {
                              final boolean onlyFullLine, final boolean onlyFontOrForegroundAffecting) {
       // we have to get all highlighters in advance and sort them by affected offsets
       // since these can be different from the real offsets the highlighters are sorted by in the tree.  (See LINES_IN_RANGE perverts)
-      final List<RangeHighlighterEx> list = new ArrayList<RangeHighlighterEx>();
+      final List<RangeHighlighterEx> list = new ArrayList<>();
       markupModel.processRangeHighlightersOverlappingWith(myReverseIteration ? end : start, myReverseIteration ? start : end,
                                                           new CommonProcessors.CollectProcessor<RangeHighlighterEx>(list) {
                                                             @Override
@@ -368,11 +368,14 @@ public class IterationState {
     return getNearestValueAhead(myStartOffset, mySelectionStarts[myCurrentSelectionIndex], mySelectionEnds[myCurrentSelectionIndex]);
   }
 
-  private boolean isInSelection() {
+  private boolean isInSelection(boolean atBreak) {
     return myCurrentSelectionIndex < mySelectionStarts.length &&
-           (myReverseIteration ?
-            myStartOffset <= mySelectionEnds[myCurrentSelectionIndex] :
-            myStartOffset >= mySelectionStarts[myCurrentSelectionIndex]);
+           (myReverseIteration ? lessThan(myStartOffset, mySelectionEnds[myCurrentSelectionIndex], !atBreak)
+                               : lessThan(mySelectionStarts[myCurrentSelectionIndex], myStartOffset, !atBreak));
+  }
+
+  private static boolean lessThan(int x, int y, boolean orEquals) {
+    return x < y || orEquals && x == y;
   }
 
   private void advanceSegmentHighlighters() {
@@ -465,13 +468,33 @@ public class IterationState {
   }
 
   private void reinit() {
-    boolean isInSelection = isInSelection();
-    boolean isInCaretRow = isInCaretRow(!myReverseIteration, myReverseIteration);
-    boolean isInGuardedBlock = !myUseOnlyFullLineHighlighters &&
-                               myDocument.getOffsetGuard(myReverseIteration ? myStartOffset - 1 : myStartOffset) != null;
+    setAttributes(myMergedAttributes, false);
 
-    TextAttributes syntax = myHighlighterIterator == null || myHighlighterIterator.atEnd() ? 
-                            null : myHighlighterIterator.getTextAttributes();
+    myLastBackgroundColor = myCurrentBackgroundColor;
+    myCurrentBackgroundColor = myMergedAttributes.getBackgroundColor();
+  }
+
+  public TextAttributes getBreakAttributes() {
+    TextAttributes attributes = new TextAttributes();
+    setAttributes(attributes, true);
+    return attributes;
+  }
+
+  private void setAttributes(TextAttributes attributes, boolean atBreak) {
+    boolean isInSelection = isInSelection(atBreak);
+    boolean isInCaretRow = isInCaretRow(!myReverseIteration, myReverseIteration);
+    boolean isInGuardedBlock = false;
+    if (!myUseOnlyFullLineHighlighters) {
+      RangeMarker guard = myDocument.getOffsetGuard(myReverseIteration ? myStartOffset - 1 : myStartOffset);
+      isInGuardedBlock = guard != null && (!atBreak || myReverseIteration ? guard.getEndOffset() > myStartOffset
+                                                                          : guard.getStartOffset() < myStartOffset);
+    }
+
+    TextAttributes syntax = myHighlighterIterator == null || myHighlighterIterator.atEnd() ? null
+                            : (atBreak &&
+                               myStartOffset == (myReverseIteration ? myHighlighterIterator.getEnd() : myHighlighterIterator.getStart()))
+                              ? null
+                              : myHighlighterIterator.getTextAttributes();
 
     TextAttributes selection = isInSelection ? mySelectionAttributes : null;
     TextAttributes caret = isInCaretRow ? myCaretRowAttributes : null;
@@ -499,6 +522,8 @@ public class IterationState {
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < size; i++) {
       RangeHighlighterEx highlighter = myCurrentHighlighters.get(i);
+      if (atBreak && highlighter.getTargetArea() == HighlighterTargetArea.EXACT_RANGE &&
+          myStartOffset == (myReverseIteration ? highlighter.getEndOffset() : highlighter.getStartOffset())) continue;
       if (highlighter.getLayer() < HighlighterLayer.SELECTION) {
         if (selection != null) {
           cachedAttributes.add(selection);
@@ -571,10 +596,7 @@ public class IterationState {
     if (effectType == null) effectType = EffectType.BOXED;
     if (fontType == Font.PLAIN) fontType = myDefaultFontType;
 
-    myMergedAttributes.setAttributes(fore, back, effect, null, effectType, fontType);
-
-    myLastBackgroundColor = myCurrentBackgroundColor;
-    myCurrentBackgroundColor = back;
+    attributes.setAttributes(fore, back, effect, null, effectType, fontType);
   }
 
   private boolean isInCaretRow(boolean includeLineStart, boolean includeLineEnd) {

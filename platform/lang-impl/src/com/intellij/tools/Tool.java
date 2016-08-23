@@ -72,7 +72,7 @@ public class Tool implements SchemeElement {
   private String myProgram;
   private String myParameters;
 
-  private ArrayList<FilterInfo> myOutputFilters = new ArrayList<FilterInfo>();
+  private ArrayList<FilterInfo> myOutputFilters = new ArrayList<>();
 
   public Tool() {
   }
@@ -203,7 +203,7 @@ public class Tool implements SchemeElement {
   }
 
   public void setOutputFilters(FilterInfo[] filters) {
-    myOutputFilters = new ArrayList<FilterInfo>();
+    myOutputFilters = new ArrayList<>();
     if (filters != null) {
       Collections.addAll(myOutputFilters, filters);
     }
@@ -229,7 +229,7 @@ public class Tool implements SchemeElement {
     myWorkingDirectory = source.getWorkingDirectory();
     myProgram = source.getProgram();
     myParameters = source.getParameters();
-    myOutputFilters = new ArrayList<FilterInfo>(Arrays.asList(source.getOutputFilters()));
+    myOutputFilters = new ArrayList<>(Arrays.asList(source.getOutputFilters()));
   }
 
   public boolean equals(Object obj) {

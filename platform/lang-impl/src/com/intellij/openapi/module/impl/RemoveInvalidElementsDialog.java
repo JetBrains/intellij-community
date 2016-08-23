@@ -41,7 +41,7 @@ public class RemoveInvalidElementsDialog extends DialogWrapper {
   private JPanel myContentPanel;
   private JPanel myMainPanel;
   private JLabel myDescriptionLabel;
-  private final Map<JCheckBox, ConfigurationErrorDescription> myCheckboxes = new HashMap<JCheckBox, ConfigurationErrorDescription>();
+  private final Map<JCheckBox, ConfigurationErrorDescription> myCheckboxes = new HashMap<>();
 
   private RemoveInvalidElementsDialog(final String title,
                                       ConfigurationErrorType type,
@@ -101,7 +101,7 @@ public class RemoveInvalidElementsDialog extends DialogWrapper {
   }
 
   private List<ConfigurationErrorDescription> getSelectedItems() {
-    List<ConfigurationErrorDescription> items = new ArrayList<ConfigurationErrorDescription>();
+    List<ConfigurationErrorDescription> items = new ArrayList<>();
     for (Map.Entry<JCheckBox, ConfigurationErrorDescription> entry : myCheckboxes.entrySet()) {
       if (entry.getKey().isSelected()) {
         items.add(entry.getValue());

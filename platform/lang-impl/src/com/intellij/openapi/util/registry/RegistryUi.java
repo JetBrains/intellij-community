@@ -227,6 +227,11 @@ public class RegistryUi implements Disposable {
 
       Collections.sort(myAll, (o1, o2) -> {
         final String key1 = o1.getKey();
+        boolean changed1 = o1.isChangedFromDefault();
+        boolean changed2 = o2.isChangedFromDefault();
+        if (changed1 && !changed2) return -1;
+        if (!changed1 && changed2) return 1;
+
         final String key2 = o2.getKey();
         final int i1 = recent.indexOf(key1);
         final int i2 = recent.indexOf(key2);
@@ -280,7 +285,7 @@ public class RegistryUi implements Disposable {
 
   private static List<String> getRecent() {
     String value = PropertiesComponent.getInstance().getValue(RECENT_PROPERTIES_KEY);
-    return StringUtil.isEmpty(value) ? new ArrayList<String>(0) : StringUtil.split(value, "=");
+    return StringUtil.isEmpty(value) ? new ArrayList<>(0) : StringUtil.split(value, "=");
   }
 
   private static void keyChanged(String key) {
@@ -450,7 +455,7 @@ public class RegistryUi implements Disposable {
     }
   }
 
-  private static final Map<Color, Icon> icons_cache = new HashMap<Color, Icon>();
+  private static final Map<Color, Icon> icons_cache = new HashMap<>();
   private static Icon createColoredIcon(Color color) {
     Icon icon = icons_cache.get(color);
     if (icon != null) return icon;

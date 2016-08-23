@@ -455,11 +455,6 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     return text.charAt(0);
   }
 
-  @Override
-  public PsiElement getParent() {
-    return getParentByStub();
-  }
-
   public void replaceKeyValueDelimiterWithDefault() {
     PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), "yyy", "xxx", null);
     final ASTNode newDelimiter = property.getNode().findChildByType(PropertiesTokenTypes.KEY_VALUE_SEPARATOR);

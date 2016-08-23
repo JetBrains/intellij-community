@@ -49,7 +49,7 @@ public class GradleBuildClasspathManager {
 
   @NotNull
   private final AtomicReference<Map<String/*module path*/, List<VirtualFile> /*module build classpath*/>> myClasspathMap
-    = new AtomicReference<Map<String, List<VirtualFile>>>(new HashMap<String, List<VirtualFile>>());
+    = new AtomicReference<>(new HashMap<>());
 
   public GradleBuildClasspathManager(@NotNull Project project) {
     myProject = project;
@@ -95,7 +95,7 @@ public class GradleBuildClasspathManager {
 
     myClasspathMap.set(map);
 
-    Set<VirtualFile> set = new LinkedHashSet<VirtualFile>();
+    Set<VirtualFile> set = new LinkedHashSet<>();
     for (List<VirtualFile> virtualFiles : myClasspathMap.get().values()) {
       set.addAll(virtualFiles);
     }

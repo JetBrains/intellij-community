@@ -16,3 +16,13 @@ class CompletableFuture<T> {
         return null;
     }
 }
+class X {
+    void a() {
+        String[] array = {"one", "two"};
+        final String join = join(" ", array);
+    }
+
+    public static String join(CharSequence delimiter, CharSequence... elements) {
+        return "";
+    }
+}

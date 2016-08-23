@@ -19,7 +19,6 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 

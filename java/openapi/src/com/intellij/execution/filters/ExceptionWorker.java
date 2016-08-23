@@ -104,8 +104,8 @@ public class ExceptionWorker {
     final int highlightEndOffset = textStartOffset + rparenthIndex;
 
     ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
-    List<VirtualFile> virtualFilesInLibraries = new ArrayList<VirtualFile>();
-    List<VirtualFile> virtualFilesInContent = new ArrayList<VirtualFile>();
+    List<VirtualFile> virtualFilesInLibraries = new ArrayList<>();
+    List<VirtualFile> virtualFilesInContent = new ArrayList<>();
     for (PsiFile file : myFiles) {
       VirtualFile virtualFile = file.getVirtualFile();
       if (index.isInContent(virtualFile)) {

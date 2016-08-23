@@ -127,7 +127,7 @@ public class EditContextDialog extends DialogWrapper {
         @Override
         public void run(AnActionButton button) {
           final ExternalResourceManager erm = ExternalResourceManager.getInstance();
-          final List<String> allURIs = new ArrayList<String>(Arrays.asList(erm.getResourceUrls(null, true)));
+          final List<String> allURIs = new ArrayList<>(Arrays.asList(erm.getResourceUrls(null, true)));
           final Collection<Namespace> namespaces = myNamespaceTableModel.getNamespaces();
           for (Namespace namespace : namespaces) {
             allURIs.remove(namespace.getUri());
@@ -223,7 +223,7 @@ public class EditContextDialog extends DialogWrapper {
       this.myProject = project;
       this.myFileType = fileType;
 
-      myList = new ArrayList<Expression>(variables.size());
+      myList = new ArrayList<>(variables.size());
       for (Variable variable : variables) {
         final Expression expression = Expression.create(project, fileType, variable.getExpression());
         myContextProvider.attachTo(expression.getFile());
@@ -421,7 +421,7 @@ public class EditContextDialog extends DialogWrapper {
 
     @Nullable
     public String getPrefixForURI(String uri, XmlElement context) {
-      final BidirectionalMap<String, String> bidiMap = new BidirectionalMap<String, String>();
+      final BidirectionalMap<String, String> bidiMap = new BidirectionalMap<>();
       bidiMap.putAll(Namespace.makeMap(myNamespaceTableModel.getNamespaces()));
       final List<String> list = bidiMap.getKeysByValue(uri);
       return list != null && list.size() > 0 ? list.get(0) : null;

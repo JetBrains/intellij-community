@@ -210,4 +210,6 @@ public void testConvertToObjectStream() {
   public void testSuggestMapInheritors() { doTest(); }
 
   public void testUnboundTypeArgs() { doTest(); }
+
+  public void testCallBeforeLambda() { doTest(false); }
 }

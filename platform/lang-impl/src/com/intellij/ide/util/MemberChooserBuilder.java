@@ -39,7 +39,7 @@ public class MemberChooserBuilder<T extends ClassMember> {
 
   public MemberChooser<T> createBuilder(T[] elements) {
     final MemberChooser<T> chooser =
-        new MemberChooser<T>(elements, myAllowEmptySelection, myAllowMultiSelection, myProject, myIsInsertOverrideVisible, myHeaderPanel);
+      new MemberChooser<>(elements, myAllowEmptySelection, myAllowMultiSelection, myProject, myIsInsertOverrideVisible, myHeaderPanel);
 
     if (myTitle != null) {
       chooser.setTitle(myTitle);

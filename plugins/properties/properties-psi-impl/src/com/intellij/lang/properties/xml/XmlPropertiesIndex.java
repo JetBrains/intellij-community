@@ -218,7 +218,7 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
     boolean accepted;
     boolean insideEntry;
     String key;
-    private final HashMap<Key, String> myMap = new HashMap<Key, String>();
+    private final HashMap<Key, String> myMap = new HashMap<>();
     private final boolean myStopIfAccepted;
 
     public MyIXMLBuilderAdapter(boolean stopIfAccepted) {

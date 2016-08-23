@@ -19,16 +19,26 @@ package com.intellij.codeInsight;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 
-public class MultipleJdksHighlightingTest extends UsefulTestCase {
+import java.io.File;
+import java.util.AbstractList;
+import java.util.Collection;
 
-  private CodeInsightTestFixture myFixture;
+public class MultipleJdksHighlightingTest extends UsefulTestCase {
+  private JavaCodeInsightTestFixture myFixture;
   private Module myJava3Module;
   private Module myJava7Module;
   private Module myJava8Module;
@@ -203,6 +213,32 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     final String testName = getTestName(false);
     myFixture.configureByFiles("java8/p/" + testName + ".java", "java7/p/" + testName + ".java");
     myFixture.checkHighlighting();
+  }
+
+  public void testInheritorsOfJdkClassOnlyInModulesWithThatJdk() {
+    ModuleRootModificationUtil.addDependency(myJava8Module, myJava7Module);
+
+    PsiClass usage7 = ((PsiJavaFile) myFixture.addFileToProject("java7/a.java", "class A extends java.util.ArrayList {}")).getClasses()[0];
+    PsiClass usage8 = ((PsiJavaFile) myFixture.addFileToProject("java8/a.java", "class A extends java.util.ArrayList {}")).getClasses()[0];
+
+    PsiClass abstractList7 = myFixture.getJavaFacade().findClass(AbstractList.class.getName(), usage7.getResolveScope());
+    PsiClass abstractList8 = myFixture.getJavaFacade().findClass(AbstractList.class.getName(), usage8.getResolveScope());
+    assertNotSame(abstractList7, abstractList8);
+
+    checkScopes(ClassInheritorsSearch.search(abstractList7).findAll(), IdeaTestUtil.getMockJdk17Path(), usage7);
+    checkScopes(ClassInheritorsSearch.search(abstractList8).findAll(), IdeaTestUtil.getMockJdk18Path(), usage8);
+  }
+
+  private static void checkScopes(Collection<PsiClass> classes, File jdkHome, PsiClass usageInProject) {
+    assertTrue(classes.contains(usageInProject));
+
+    for (PsiClass cls : classes) {
+      if (cls == usageInProject) continue;
+
+      VirtualFile file = PsiUtilCore.getVirtualFile(cls);
+      assertNotNull(file);
+      assertTrue(file.getPath(), FileUtil.startsWith(file.getPath(), FileUtil.toSystemIndependentName(jdkHome.getPath()), true));
+    }
   }
 
   private void doTestWithoutLibrary() {

@@ -27,10 +27,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author peter
@@ -44,14 +41,14 @@ public class DomFileIndex extends ScalarIndexExtension<String>{
       @Override
       @NotNull
       public Map<String, Void> map(@NotNull final FileContent inputData) {
-        final Set<String> namespaces = new THashSet<String>();
+        final Set<String> namespaces = new THashSet<>();
         final XmlFileHeader header = NanoXmlUtil.parseHeader(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()));
-        ContainerUtil.addIfNotNull(header.getPublicId(), namespaces);
-        ContainerUtil.addIfNotNull(header.getSystemId(), namespaces);
-        ContainerUtil.addIfNotNull(header.getRootTagNamespace(), namespaces);
+        ContainerUtil.addIfNotNull(namespaces, header.getPublicId());
+        ContainerUtil.addIfNotNull(namespaces, header.getSystemId());
+        ContainerUtil.addIfNotNull(namespaces, header.getRootTagNamespace());
         final String tagName = header.getRootTagLocalName();
         if (StringUtil.isNotEmpty(tagName)) {
-          final THashMap<String, Void> result = new THashMap<String, Void>();
+          final THashMap<String, Void> result = new THashMap<>();
           final DomApplicationComponent component = DomApplicationComponent.getInstance();
           for (final DomFileDescription description : component.getFileDescriptions(tagName)) {
             final String[] strings = description.getAllPossibleRootTagNamespaces();

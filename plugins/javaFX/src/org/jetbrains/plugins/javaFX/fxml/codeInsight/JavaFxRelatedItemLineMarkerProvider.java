@@ -33,7 +33,6 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Function;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
@@ -72,7 +71,7 @@ public class JavaFxRelatedItemLineMarkerProvider extends RelatedItemLineMarkerPr
           if (targets.isEmpty()) return;
 
           result.add(new RelatedItemLineMarkerInfo<PsiField>(field, field.getNameIdentifier().getTextRange(),
-                                                             AllIcons.FileTypes.Xml, Pass.UPDATE_OVERRIDDEN_MARKERS, null,
+                                                             AllIcons.FileTypes.Xml, Pass.LINE_MARKERS, null,
                                                              new JavaFXIdIconNavigationHandler(), GutterIconRenderer.Alignment.LEFT,
                                                              targets));
         }

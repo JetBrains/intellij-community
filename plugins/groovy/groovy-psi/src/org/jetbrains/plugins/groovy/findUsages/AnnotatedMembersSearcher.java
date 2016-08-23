@@ -63,7 +63,7 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiModifierListOw
       return Collections.emptyList();
     }
 
-    final List<PsiModifierListOwner> result = new ArrayList<PsiModifierListOwner>();
+    final List<PsiModifierListOwner> result = new ArrayList<>();
     for (final PsiElement element : members) {
       ApplicationManager.getApplication().runReadAction(() -> {
         PsiElement e =
@@ -98,7 +98,7 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiModifierListOw
       candidates = getAnnotatedMemberCandidates(annClass, ((GlobalSearchScope)scope));
     }
     else {
-      candidates = new ArrayList<PsiModifierListOwner>();
+      candidates = new ArrayList<>();
       for (final PsiElement element : ((LocalSearchScope)scope).getScope()) {
         ApplicationManager.getApplication().runReadAction(() -> {
           if (element instanceof GroovyPsiElement) {

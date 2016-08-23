@@ -392,7 +392,7 @@ public class CompilerTask extends Task.Backgroundable {
     if (!text.contains("\n")) {
       return new String[]{text};
     }
-    ArrayList<String> lines = new ArrayList<String>();
+    ArrayList<String> lines = new ArrayList<>();
     StringTokenizer tokenizer = new StringTokenizer(text, "\n", false);
     while (tokenizer.hasMoreTokens()) {
       lines.add(tokenizer.nextToken());

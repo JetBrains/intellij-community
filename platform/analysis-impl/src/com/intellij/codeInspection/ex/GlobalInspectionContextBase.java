@@ -453,13 +453,13 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   }
 
   private float getTotalProgress() {
-    float totalDone = 0;
+    int totalDone = 0;
     int totalTotal = 0;
     for (JobDescriptor jobDescriptor : myJobDescriptors) {
       totalDone += jobDescriptor.getDoneAmount();
       totalTotal += jobDescriptor.getTotalAmount();
     }
-    return totalTotal == 0 ? 1 : totalDone / totalTotal;
+    return totalTotal == 0 ? 1 : 1.0f * totalDone / totalTotal;
   }
 
   public void setExternalProfile(InspectionProfile profile) {

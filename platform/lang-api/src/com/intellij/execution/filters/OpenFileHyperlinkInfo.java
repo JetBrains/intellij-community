@@ -31,6 +31,7 @@ public final class OpenFileHyperlinkInfo implements FileHyperlinkInfo {
 
   private final Project myProject;
   private final VirtualFile myFile;
+  private final boolean myIncludeInOccurenceNavigation;
   private final int myDocumentLine;
   private final int myDocumentColumn;
 
@@ -38,16 +39,21 @@ public final class OpenFileHyperlinkInfo implements FileHyperlinkInfo {
     this(descriptor.getProject(), descriptor.getFile(), descriptor.getLine(), descriptor.getColumn());
   }
 
-  public OpenFileHyperlinkInfo(@NotNull Project project, @NotNull VirtualFile file,
+  public OpenFileHyperlinkInfo(@NotNull Project project, @NotNull VirtualFile file, boolean includeInOccurenceNavigation,
                                int documentLine, int documentColumn) {
     myProject = project;
     myFile = file;
+    myIncludeInOccurenceNavigation = includeInOccurenceNavigation;
     myDocumentLine = documentLine;
     myDocumentColumn = documentColumn;
   }
 
   public OpenFileHyperlinkInfo(@NotNull Project project, @NotNull final VirtualFile file, final int line) {
     this(project, file, line, 0);
+  }
+
+  public OpenFileHyperlinkInfo(@NotNull Project project, @NotNull VirtualFile file, int line, int column) {
+    this(project, file, true, line, column);
   }
 
   @Override
@@ -82,6 +88,11 @@ public final class OpenFileHyperlinkInfo implements FileHyperlinkInfo {
         FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
       }
     });
+  }
+
+  @Override
+  public boolean includeInOccurenceNavigation() {
+    return myIncludeInOccurenceNavigation;
   }
 
   /**

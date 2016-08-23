@@ -22,7 +22,6 @@ import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.refactoring.PropertiesRefactoringSettings;
 import com.intellij.lang.properties.xml.XmlProperty;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
@@ -45,7 +44,7 @@ public class RenamePropertyProcessor extends RenamePsiElementProcessor {
                               final Map<PsiElement, String> allRenames) {
     ResourceBundle resourceBundle = PropertiesImplUtil.getProperty(element).getPropertiesFile().getResourceBundle();
 
-    final Map<PsiElement, String> allRenamesCopy = new LinkedHashMap<PsiElement, String>(allRenames);
+    final Map<PsiElement, String> allRenamesCopy = new LinkedHashMap<>(allRenames);
     allRenames.clear();
     for (final Map.Entry<PsiElement, String> e : allRenamesCopy.entrySet()) {
       final IProperty property = PropertiesImplUtil.getProperty(e.getKey());

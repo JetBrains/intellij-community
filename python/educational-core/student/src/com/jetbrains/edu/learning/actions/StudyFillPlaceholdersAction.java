@@ -11,7 +11,6 @@ import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyUtils;
@@ -28,15 +27,6 @@ public class StudyFillPlaceholdersAction extends AnAction {
         return;
       }
       TaskFile taskFile = studyState.getTaskFile();
-      Task task = taskFile.getTask();
-      int stepIndex = task.getActiveStepIndex();
-      if (stepIndex != -1) {
-        TaskFile stepTaskFile = task.getAdditionalSteps().get(stepIndex).getTaskFiles().get(taskFile.name);
-        if (stepTaskFile == null) {
-          return;
-        }
-        taskFile = stepTaskFile;
-      }
       final Document document = studyState.getEditor().getDocument();
       final TaskFile realTaskFile = taskFile;
       CommandProcessor.getInstance().runUndoTransparentAction(() -> ApplicationManager.getApplication().runWriteAction(() -> {

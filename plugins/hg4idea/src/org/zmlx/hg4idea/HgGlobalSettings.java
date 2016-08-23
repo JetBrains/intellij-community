@@ -52,7 +52,7 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
   public static class State {
     public String myHgExecutable = null;
     // visited URL -> login for this URL. Passwords are remembered in the PasswordSafe.
-    public Map<String, String> myRememberedUserNames = new HashMap<String, String>();
+    public Map<String, String> myRememberedUserNames = new HashMap<>();
   }
 
   @Override

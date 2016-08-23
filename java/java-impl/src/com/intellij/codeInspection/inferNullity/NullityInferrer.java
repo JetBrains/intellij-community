@@ -42,8 +42,8 @@ public class NullityInferrer {
   private static final int MAX_PASSES = 10;
   public static final String NOTHING_FOUND_TO_INFER = "Nothing found to infer";
   private int numAnnotationsAdded;
-  private final List<SmartPsiElementPointer<? extends PsiModifierListOwner>> myNotNullSet = new ArrayList<SmartPsiElementPointer<? extends PsiModifierListOwner>>();
-  private final List<SmartPsiElementPointer<? extends PsiModifierListOwner>> myNullableSet = new ArrayList<SmartPsiElementPointer<? extends PsiModifierListOwner>>();
+  private final List<SmartPsiElementPointer<? extends PsiModifierListOwner>> myNotNullSet = new ArrayList<>();
+  private final List<SmartPsiElementPointer<? extends PsiModifierListOwner>> myNullableSet = new ArrayList<>();
   private final boolean myAnnotateLocalVariables;
   private final SmartPointerManager myPointerManager;
 

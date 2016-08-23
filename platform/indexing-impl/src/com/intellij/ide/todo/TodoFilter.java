@@ -47,7 +47,7 @@ public class TodoFilter implements Cloneable{
    */
   public TodoFilter(){
     setName("");
-    myTodoPatterns=new HashSet<TodoPattern>(1);
+    myTodoPatterns= new HashSet<>(1);
   }
 
   /**
@@ -192,7 +192,7 @@ public class TodoFilter implements Cloneable{
   public TodoFilter clone(){
     try{
       TodoFilter filter = (TodoFilter)super.clone();
-      filter.myTodoPatterns=new HashSet<TodoPattern>(myTodoPatterns);
+      filter.myTodoPatterns= new HashSet<>(myTodoPatterns);
       return filter;
     }catch(CloneNotSupportedException e){
       LOG.error(e);

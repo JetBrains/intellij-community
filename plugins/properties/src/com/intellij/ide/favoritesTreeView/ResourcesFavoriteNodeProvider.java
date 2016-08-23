@@ -38,11 +38,6 @@ import java.util.Collection;
 import java.util.List;
 
 public class ResourcesFavoriteNodeProvider extends FavoriteNodeProvider {
-  private final Project myProject;
-
-  public ResourcesFavoriteNodeProvider(Project project) {
-    myProject = project;
-  }
 
   public Collection<AbstractTreeNode> getFavoriteNodes(final DataContext context, final ViewSettings viewSettings) {
     final Project project = CommonDataKeys.PROJECT.getData(context);
@@ -52,7 +47,7 @@ public class ResourcesFavoriteNodeProvider extends FavoriteNodeProvider {
     final ResourceBundle[] resourceBundles = ResourceBundle.ARRAY_DATA_KEY.getData(context);
     //on bundles nodes
     if (resourceBundles != null) {
-      final Collection<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+      final Collection<AbstractTreeNode> result = new ArrayList<>();
       for (ResourceBundle bundle : resourceBundles) {
         result.add(new ResourceBundleNode(project, bundle, viewSettings));
       }

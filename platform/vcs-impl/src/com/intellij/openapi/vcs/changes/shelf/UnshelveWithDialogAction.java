@@ -71,7 +71,6 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
         VcsBalloonProblemNotifier.showOverChangesView(project, "Can not find path file", MessageType.ERROR);
         return;
       }
-      virtualFile.refresh(false, false);
       List<ShelvedBinaryFilePatch> binaryShelvedPatches =
         ContainerUtil.map(changeList.getBinaryFiles(), ShelvedBinaryFilePatch::new);
       final ApplyPatchDifferentiatedDialog dialog =
@@ -85,11 +84,11 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
                                                         @NotNull final Project project,
                                                         @NotNull final ShelvedChangeList[] changeLists,
                                                         @Nullable List<ShelvedBinaryFile> binaryFiles) {
-    String defaultName = changeLists[0].DESCRIPTION;
+    String suggestedName = changeLists[0].DESCRIPTION;
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     final ChangeListChooser chooser =
       new ChangeListChooser(project, changeListManager.getChangeListsCopy(), changeListManager.getDefaultChangeList(),
-                            VcsBundle.message("unshelve.changelist.chooser.title"), defaultName) {
+                            VcsBundle.message("unshelve.changelist.chooser.title"), suggestedName) {
         @Nullable
         @Override
         protected JComponent createSouthPanel() {
@@ -133,7 +132,9 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
                             @Nullable Change[] preselectedChanges) {
       super(project, new UnshelvePatchDefaultExecutor(project, changeList),
             Collections.emptyList(), ApplyPatchMode.UNSHELVE,
-            patchFile, null, getPredefinedChangeList(changeList.DESCRIPTION, ChangeListManager.getInstance(project)), binaryShelvedPatches,
+            patchFile, null,
+            changeList.isMarkedToDelete() ? getPredefinedChangeList(changeList.DESCRIPTION, ChangeListManager.getInstance(project)) : null,
+            binaryShelvedPatches,
             hasNotAllSelectedChanges(project, changeList, preselectedChanges) ? newArrayList(preselectedChanges) : null,
             changeList.DESCRIPTION, true);
     }

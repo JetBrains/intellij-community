@@ -69,7 +69,7 @@ abstract public class AbstractDomElementNode extends SimpleNode {
 
     final Class aClass = ReflectionUtil.getRawType(type);
 
-    List<Class> allParents = new ArrayList<Class>();
+    List<Class> allParents = new ArrayList<>();
     for (Map.Entry<Class, Boolean> entry : hiders.entrySet()) {
       if (entry.getKey().isAssignableFrom(aClass)) {
         allParents.add(entry.getKey());

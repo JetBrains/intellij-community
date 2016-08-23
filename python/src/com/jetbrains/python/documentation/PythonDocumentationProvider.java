@@ -138,7 +138,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
                                                 FP.Lambda1<Iterable<String>, Iterable<String>> funcNameWrapper,
                                                 @NotNull FP.Lambda1<String, String> escaper
   ) {
-    final ChainIterable<String> cat = new ChainIterable<String>();
+    final ChainIterable<String> cat = new ChainIterable<>();
     final String name = fun.getName();
     cat.addItem("def ").addWith(funcNameWrapper, $(name));
     final TypeEvalContext context = TypeEvalContext.userInitiated(fun.getProject(), fun.getContainingFile());
@@ -219,7 +219,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
                                                   FP.Lambda1<Iterable<String>, Iterable<String>> decoNameWrapper,
                                                   @NotNull String decoSeparator,
                                                   FP.Lambda1<String, String> escaper) {
-    final ChainIterable<String> cat = new ChainIterable<String>();
+    final ChainIterable<String> cat = new ChainIterable<>();
     final PyDecoratorList decoList = what.getDecoratorList();
     if (decoList != null) {
       for (PyDecorator deco : decoList.getDecorators()) {
@@ -242,7 +242,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
                                              FP.Lambda1<Iterable<String>, Iterable<String>> nameWrapper,
                                              boolean allowHtml,
                                              boolean linkOwnName) {
-    final ChainIterable<String> cat = new ChainIterable<String>();
+    final ChainIterable<String> cat = new ChainIterable<>();
     final String name = cls.getName();
     cat.addItem("class ");
     if (allowHtml && linkOwnName) {
@@ -286,7 +286,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
                                                FP.Lambda1<String, String> argWrapper
                                                // add escaping, if need be
   ) {
-    final ChainIterable<String> cat = new ChainIterable<String>();
+    final ChainIterable<String> cat = new ChainIterable<>();
     cat.addItem("@").addWith(nameWrapper, $(PyUtil.getReadableRepr(deco.getCallee(), true)));
     if (deco.hasArgumentList()) {
       final PyArgumentList arglist = deco.getArgumentList();

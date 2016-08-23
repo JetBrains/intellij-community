@@ -123,10 +123,10 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
 
   @Property(surroundWithTag = false)
   @AbstractCollection(elementTag = "MESSAGE", elementValueAttribute = "value", surroundWithTag = false)
-  public List<String> myLastCommitMessages = new ArrayList<String>();
+  public List<String> myLastCommitMessages = new ArrayList<>();
   public String LAST_COMMIT_MESSAGE = null;
   public boolean MAKE_NEW_CHANGELIST_ACTIVE = false;
-  public boolean PRESELECT_EXISTING_CHANGELIST = true;
+  public boolean PRESELECT_EXISTING_CHANGELIST = false;
 
   public boolean OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT = false;
   public boolean CHECK_FILES_UP_TO_DATE_BEFORE_COMMIT = false;
@@ -136,13 +136,14 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
 
   public boolean REARRANGE_BEFORE_PROJECT_COMMIT = false;
 
-  public Map<String, ChangeBrowserSettings> CHANGE_BROWSER_SETTINGS = new HashMap<String, ChangeBrowserSettings>();
+  public Map<String, ChangeBrowserSettings> CHANGE_BROWSER_SETTINGS = new HashMap<>();
 
   public boolean UPDATE_GROUP_BY_PACKAGES = false;
   public boolean UPDATE_GROUP_BY_CHANGELIST = false;
   public boolean UPDATE_FILTER_BY_SCOPE = false;
   public boolean SHOW_FILE_HISTORY_AS_TREE = false;
-  public float FILE_HISTORY_SPLITTER_PROPORTION = 0.6f;
+  @Deprecated
+  public float FILE_HISTORY_SPLITTER_PROPORTION = 0.6f; // to remove after 2016.3
   private static final int MAX_STORED_MESSAGES = 25;
   @NonNls static final String MESSAGE_ELEMENT_NAME = "MESSAGE";
 
@@ -187,7 +188,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
 
   @NotNull
   public ArrayList<String> getRecentMessages() {
-    return new ArrayList<String>(myLastCommitMessages);
+    return new ArrayList<>(myLastCommitMessages);
   }
 
   public void removeMessage(final String content) {
@@ -293,7 +294,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   }
 
   public void addIgnoredUnregisteredRoots(@NotNull Collection<String> roots) {
-    List<String> unregisteredRoots = new ArrayList<String>(IGNORED_UNREGISTERED_ROOTS);
+    List<String> unregisteredRoots = new ArrayList<>(IGNORED_UNREGISTERED_ROOTS);
     for (String root : roots) {
       if (!unregisteredRoots.contains(root)) {
         unregisteredRoots.add(root);

@@ -51,7 +51,7 @@ public class GlobalInspectionUtil {
                                    @NotNull InspectionManager manager,
                                    @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor,
                                    @NotNull GlobalInspectionContext globalContext) {
-    List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
+    List<LocalQuickFix> fixes = new ArrayList<>();
     if (info.quickFixActionRanges != null) {
       for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> actionRange : info.quickFixActionRanges) {
         final IntentionAction action = actionRange.getFirst().getAction();

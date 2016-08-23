@@ -32,6 +32,8 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleFileIndex;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
@@ -163,12 +165,16 @@ public class HighlightClassUtil {
 
     PsiClass[] classes = JavaPsiFacade.getInstance(aClass.getProject()).findClasses(qualifiedName, GlobalSearchScope.moduleScope(module));
     if (classes.length < numOfClassesToFind) return null;
+    final ModuleFileIndex fileIndex = ModuleRootManager.getInstance(module).getFileIndex();
+    final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(aClass);
+    if (virtualFile == null) return null;
+    final boolean isTestSourceRoot = fileIndex.isInTestSourceContent(virtualFile);
     String dupFileName = null;
     for (PsiClass dupClass : classes) {
       // do not use equals
       if (dupClass != aClass) {
         VirtualFile file = dupClass.getContainingFile().getVirtualFile();
-        if (file != null && manager.isInProject(dupClass)) {
+        if (file != null && manager.isInProject(dupClass) && fileIndex.isInTestSourceContent(file) == isTestSourceRoot) {
           dupFileName = FileUtil.toSystemDependentName(file.getPath());
           break;
         }

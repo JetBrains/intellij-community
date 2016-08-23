@@ -34,9 +34,9 @@ import java.util.*;
   storages = @Storage(value = "abbreviations.xml", roamingType = RoamingType.PER_OS)
 )
 public class AbbreviationManagerImpl extends AbbreviationManager implements PersistentStateComponent<Element> {
-  private final Map<String, List<String>> myAbbreviation2ActionId = new THashMap<String, List<String>>();
-  private final Map<String, LinkedHashSet<String>> myActionId2Abbreviations = new THashMap<String, LinkedHashSet<String>>();
-  private final Map<String, LinkedHashSet<String>> myPluginsActionId2Abbreviations = new THashMap<String, LinkedHashSet<String>>();
+  private final Map<String, List<String>> myAbbreviation2ActionId = new THashMap<>();
+  private final Map<String, LinkedHashSet<String>> myActionId2Abbreviations = new THashMap<>();
+  private final Map<String, LinkedHashSet<String>> myPluginsActionId2Abbreviations = new THashMap<>();
 
   @Nullable
   @Override
@@ -84,7 +84,7 @@ public class AbbreviationManagerImpl extends AbbreviationManager implements Pers
           final String actionId = action.getAttributeValue("id");
           LinkedHashSet<String> values = myActionId2Abbreviations.get(actionId);
           if (values == null) {
-            values = new LinkedHashSet<String>(1);
+            values = new LinkedHashSet<>(1);
             myActionId2Abbreviations.put(actionId, values);
           }
 
@@ -96,7 +96,7 @@ public class AbbreviationManagerImpl extends AbbreviationManager implements Pers
                 values.add(abbrValue);
                 List<String> actionIds = myAbbreviation2ActionId.get(abbrValue);
                 if (actionIds == null) {
-                  actionIds = new ArrayList<String>();
+                  actionIds = new ArrayList<>();
                   myAbbreviation2ActionId.put(abbrValue, actionIds);
                 }
                 actionIds.add(actionId);
@@ -110,7 +110,7 @@ public class AbbreviationManagerImpl extends AbbreviationManager implements Pers
 
   @Override
   public Set<String> getAbbreviations() {
-    final Set<String> result = new HashSet<String>();
+    final Set<String> result = new HashSet<>();
     for (Set<String> abbrs : myActionId2Abbreviations.values()) {
       result.addAll(abbrs);
     }
@@ -136,7 +136,7 @@ public class AbbreviationManagerImpl extends AbbreviationManager implements Pers
   public void register(String abbreviation, String actionId, Map<String, LinkedHashSet<String>> storage) {
     LinkedHashSet<String> abbreviations = storage.get(actionId);
     if (abbreviations == null) {
-      abbreviations = new LinkedHashSet<String>(1);
+      abbreviations = new LinkedHashSet<>(1);
       storage.put(actionId, abbreviations);
     }
     abbreviations.add(abbreviation);
@@ -154,7 +154,7 @@ public class AbbreviationManagerImpl extends AbbreviationManager implements Pers
 
     List<String> ids = myAbbreviation2ActionId.get(abbreviation);
     if (ids == null) {
-      ids = new ArrayList<String>(0);
+      ids = new ArrayList<>(0);
       myAbbreviation2ActionId.put(abbreviation, ids);
     }
 
@@ -180,7 +180,7 @@ public class AbbreviationManagerImpl extends AbbreviationManager implements Pers
     } else {
       final LinkedHashSet<String> abbrs = myActionId2Abbreviations.get(actionId);
       if (abbrs != null) {
-        final LinkedHashSet<String> customValues = new LinkedHashSet<String>(abbrs);
+        final LinkedHashSet<String> customValues = new LinkedHashSet<>(abbrs);
         customValues.remove(abbreviation);
         myActionId2Abbreviations.put(actionId, customValues);
       }

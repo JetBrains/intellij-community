@@ -107,7 +107,7 @@ public class IdRefProvider extends PsiReferenceProvider {
     @NotNull
     public Object[] getVariants() {
       final ProcessingContext context = new ProcessingContext();
-      context.put(VARIANTS, new HashSet<XmlAttributeValue>());
+      context.put(VARIANTS, new HashSet<>());
 
       final ResolvingVisitor visitor = new ResolvingVisitor(PATTERN.with(AddValueCondition.create(VARIANTS)), context) {
         @Override

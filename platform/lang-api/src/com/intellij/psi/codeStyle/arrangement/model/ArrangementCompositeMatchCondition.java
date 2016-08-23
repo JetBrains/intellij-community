@@ -32,7 +32,7 @@ import java.util.Set;
  */
 public class ArrangementCompositeMatchCondition implements ArrangementMatchCondition {
 
-  @NotNull private final Set<ArrangementMatchCondition> myOperands = new HashSet<ArrangementMatchCondition>();
+  @NotNull private final Set<ArrangementMatchCondition> myOperands = new HashSet<>();
 
   public ArrangementCompositeMatchCondition() {
   }

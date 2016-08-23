@@ -1,4 +1,20 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.ide.fileTemplates
+
 import com.intellij.ide.fileTemplates.impl.CustomFileTemplate
 import com.intellij.ide.fileTemplates.impl.FileTemplateTestUtil
 import com.intellij.openapi.Disposable
@@ -16,164 +32,164 @@ import com.intellij.testFramework.IdeaTestCase
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.properties.EncodingAwareProperties
 
-public class FileTemplatesTest extends IdeaTestCase {
-  private File myTestConfigDir;
+class FileTemplatesTest extends IdeaTestCase {
+  private File myTestConfigDir
 
   @Override
-  protected void tearDown() throws Exception {
-    super.tearDown();
+  protected void tearDown() {
+    super.tearDown()
     if (myTestConfigDir !=null && myTestConfigDir.exists()) {
-      FileUtil.delete(myTestConfigDir);
+      FileUtil.delete(myTestConfigDir)
     }
   }
 
-  public void testAllTemplates() throws Exception {
-    final File testsDir = new File(PathManagerEx.getTestDataPath()+"/ide/fileTemplates");
+  void testAllTemplates() {
+    final File testsDir = new File(PathManagerEx.getTestDataPath()+"/ide/fileTemplates")
 
-    final String includeTemplateName = "include1.inc";
-    final String includeTemplateExtension = "txt";
-    final String customIncludeFileName = includeTemplateName + "." + includeTemplateExtension;
-    final File customInclude = new File(testsDir, customIncludeFileName);
-    final String includeText = FileUtil.loadFile(customInclude, FileTemplate.ourEncoding);
+    final String includeTemplateName = "include1.inc"
+    final String includeTemplateExtension = "txt"
+    final String customIncludeFileName = includeTemplateName + "." + includeTemplateExtension
+    final File customInclude = new File(testsDir, customIncludeFileName)
+    final String includeText = FileUtil.loadFile(customInclude, FileTemplate.ourEncoding)
 
-    final FileTemplateManager templateManager = FileTemplateManager.getInstance(getProject());
-    final ArrayList<FileTemplate> originalIncludes = new ArrayList<FileTemplate>(Arrays.asList(templateManager.getAllPatterns()));
+    final FileTemplateManager templateManager = FileTemplateManager.getInstance(getProject())
+    final ArrayList<FileTemplate> originalIncludes = new ArrayList<FileTemplate>(Arrays.asList(templateManager.getAllPatterns()))
     try {
       // configure custom include
-      final List<FileTemplate> allIncludes = new ArrayList<FileTemplate>(originalIncludes);
-      final CustomFileTemplate custom = new CustomFileTemplate(includeTemplateName, includeTemplateExtension);
-      custom.setText(includeText);
-      allIncludes.add(custom);
-      templateManager.setTemplates(FileTemplateManager.INCLUDES_TEMPLATES_CATEGORY, allIncludes);
+      final List<FileTemplate> allIncludes = new ArrayList<FileTemplate>(originalIncludes)
+      final CustomFileTemplate custom = new CustomFileTemplate(includeTemplateName, includeTemplateExtension)
+      custom.setText(includeText)
+      allIncludes.add(custom)
+      templateManager.setTemplates(FileTemplateManager.INCLUDES_TEMPLATES_CATEGORY, allIncludes)
 
-      final String txt = ".txt";
+      final String txt = ".txt"
       File[] children = testsDir.listFiles(new FilenameFilter() {
         @Override
-        public boolean accept(File dir, String name) {
-          return name.endsWith(".out"+txt);
+         boolean accept(File dir, String name) {
+          return name.endsWith(".out"+txt)
         }
-      });
+      })
 
-      assertTrue(children.length > 0);
+      assertTrue(children.length > 0)
       for (File resultFile : children) {
-        String name = resultFile.getName();
-        String base = name.substring(0, name.length() - txt.length() - ".out".length());
-        File propFile = new File(resultFile.getParent(), base + ".prop" + txt);
-        File inFile = new File(resultFile.getParent(), base + txt);
-  
-        String inputText = FileUtil.loadFile(inFile, FileTemplate.ourEncoding);
-        String outputText = FileUtil.loadFile(resultFile, FileTemplate.ourEncoding);
-  
-        EncodingAwareProperties properties = new EncodingAwareProperties();
-  
-        properties.load(propFile, FileTemplate.ourEncoding);
+        String name = resultFile.getName()
+        String base = name.substring(0, name.length() - txt.length() - ".out".length())
+        File propFile = new File(resultFile.getParent(), base + ".prop" + txt)
+        File inFile = new File(resultFile.getParent(), base + txt)
+
+        String inputText = FileUtil.loadFile(inFile, FileTemplate.ourEncoding)
+        String outputText = FileUtil.loadFile(resultFile, FileTemplate.ourEncoding)
+
+        EncodingAwareProperties properties = new EncodingAwareProperties()
+
+        properties.load(propFile, FileTemplate.ourEncoding)
         properties.put(FileTemplateManager.PROJECT_NAME_VARIABLE, getProject().getName())
   
-        System.out.println(resultFile.getName());
-        doTestTemplate(inputText, properties, outputText);
+        System.out.println(resultFile.getName())
+        doTestTemplate(inputText, properties, outputText)
       }
     }
     finally {
-      templateManager.setTemplates(FileTemplateManager.INCLUDES_TEMPLATES_CATEGORY, originalIncludes);
+      templateManager.setTemplates(FileTemplateManager.INCLUDES_TEMPLATES_CATEGORY, originalIncludes)
     }
   }
 
-  private void doTestTemplate(String inputString, Properties properties, String expected) throws Exception {
-    inputString = StringUtil.convertLineSeparators(inputString);
-    expected = StringUtil.convertLineSeparators(expected);
-    
-    final String result = FileTemplateUtil.mergeTemplate(properties, inputString, false);
-    assertEquals(expected, result);
+  private void doTestTemplate(String inputString, Properties properties, String expected) {
+    inputString = StringUtil.convertLineSeparators(inputString)
+    expected = StringUtil.convertLineSeparators(expected)
 
-    List attrs = Arrays.asList(FileTemplateUtil.calculateAttributes(inputString, new Properties(), false, getProject()));
-    assertTrue(properties.size() - 1 <= attrs.size());
-    Enumeration e = properties.propertyNames();
+    final String result = FileTemplateUtil.mergeTemplate(properties, inputString, false)
+    assertEquals(expected, result)
+
+    List attrs = Arrays.asList(FileTemplateUtil.calculateAttributes(inputString, new Properties(), false, getProject()))
+    assertTrue(properties.size() - 1 <= attrs.size())
+    Enumeration e = properties.propertyNames()
     while (e.hasMoreElements()) {
-      String s = (String)e.nextElement();
-      assertTrue("Attribute '" + s + "' not found in properties", attrs.contains(s) || FileTemplateManager.PROJECT_NAME_VARIABLE.equals(s));
+      String s = (String)e.nextElement()
+      assertTrue("Attribute '" + s + "' not found in properties", attrs.contains(s) || FileTemplateManager.PROJECT_NAME_VARIABLE == s)
     }
   }
 
-  public void testFindFileByUrl() throws Exception {
-    FileTemplate catchBodyTemplate = FileTemplateManager.getInstance(getProject()).getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
-    assertNotNull(catchBodyTemplate);
+  void testFindFileByUrl() {
+    FileTemplate catchBodyTemplate = FileTemplateManager.getInstance(getProject()).getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY)
+    assertNotNull(catchBodyTemplate)
   }
 
-  public void "test collect undefined attribute names"() {
-    FileTemplate template = addTestTemplate("myclass", '${ABC} ${DEF} ${NAME}')
+  void "test collect undefined attribute names"() {
+    FileTemplate template = addTestTemplate("my_class", '${ABC} ${DEF} ${NAME}')
     Properties properties = new Properties()
     properties.NAME = 'zzz'
     assert template.getUnsetAttributes(properties, project) as Set == ['ABC', 'DEF'] as Set
   }
 
-  public void "test collect undefined attribute names from included templates"() {
+  void "test collect undefined attribute names from included templates"() {
     def included = addTestTemplate("included", '${ABC} ${DEF}')
     assert included == FileTemplateManager.getInstance(getProject()).getTemplate("included.java")
 
-    FileTemplate template = addTestTemplate("myclass", '#parse("included.java") ${DEF} ${NAME}')
+    FileTemplate template = addTestTemplate("my_class", '#parse("included.java") ${DEF} ${NAME}')
     Properties properties = new Properties()
     properties.NAME = 'zzz'
     assert template.getUnsetAttributes(properties, project) as Set == ['ABC', 'DEF'] as Set
   }
 
-  public void testDefaultPackage() throws Exception {
-    String name = "myclass";
+  void testDefaultPackage() {
+    String name = "my_class"
     FileTemplate template = addTestTemplate(name, 'package ${PACKAGE_NAME}; public class ${NAME} {}')
 
-    File temp = FileUtil.createTempDirectory(getTestName(true), "");
+    File temp = FileUtil.createTempDirectory(getTestName(true), "")
 
-    myFilesToDelete.add(temp);
-    final VirtualFile tempDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
+    myFilesToDelete.add(temp)
+    VirtualFile tempDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp)
 
-    PsiTestUtil.addSourceRoot(getModule(), tempDir);
+    PsiTestUtil.addSourceRoot(getModule(), tempDir)
 
-    VirtualFile sourceRoot = ModuleRootManager.getInstance(getModule()).getSourceRoots()[0];
-    PsiDirectory psiDirectory = PsiManager.getInstance(getProject()).findDirectory(sourceRoot);
+    VirtualFile sourceRoot = ModuleRootManager.getInstance(getModule()).getSourceRoots()[0]
+    PsiDirectory psiDirectory = PsiManager.getInstance(getProject()).findDirectory(sourceRoot)
 
-    PsiClass psiClass = JavaDirectoryService.getInstance().createClass(psiDirectory, "XXX", name);
-    assertNotNull(psiClass);
-    assertEquals("public class XXX {\n}", psiClass.getContainingFile().getText());
-    FileTemplateManager.getInstance(getProject()).removeTemplate(template);
+    PsiClass psiClass = JavaDirectoryService.getInstance().createClass(psiDirectory, "XXX", name)
+    assertNotNull(psiClass)
+    assertEquals("public class XXX {\n}", psiClass.getContainingFile().getText())
+    FileTemplateManager.getInstance(getProject()).removeTemplate(template)
   }
 
   private FileTemplate addTestTemplate(String name, String text) {
-    FileTemplate template = FileTemplateManager.getInstance(getProject()).addTemplate(name, "java");
+    FileTemplate template = FileTemplateManager.getInstance(getProject()).addTemplate(name, "java")
     disposeOnTearDown({ FileTemplateManager.getInstance(getProject()).removeTemplate(template) } as Disposable)
-    template.setText(text);
+    template.setText(text)
     template
   }
 
-  public void doTestSaveLoadTemplate(String name, String ext) {
+  void doTestSaveLoadTemplate(String name, String ext) {
     FileTemplateTestUtil.TestFTManager templateManager = new FileTemplateTestUtil.TestFTManager("test", "testTemplates",
-                                                                                                getTestConfigRoot());
-    FileTemplate template = templateManager.addTemplate(name, ext);
-    String qName = template.getQualifiedName();
-    templateManager.saveTemplates();
-    templateManager.removeTemplate(qName);
-    FileTemplateTestUtil.loadCustomizedContent(templateManager);
-    FileTemplate loadedTemplate = templateManager.findTemplateByName(name);
-    assertNotNull("Template '" + qName + "' was not found", loadedTemplate);
-    assertEquals(name, loadedTemplate.getName());
-    assertEquals(ext, loadedTemplate.getExtension());
-    assertTrue(template != loadedTemplate);
+                                                                                                getTestConfigRoot())
+    FileTemplate template = templateManager.addTemplate(name, ext)
+    String qName = template.getQualifiedName()
+    templateManager.saveTemplates()
+    templateManager.removeTemplate(qName)
+    FileTemplateTestUtil.loadCustomizedContent(templateManager)
+    FileTemplate loadedTemplate = templateManager.findTemplateByName(name)
+    assertNotNull("Template '" + qName + "' was not found", loadedTemplate)
+    assertEquals(name, loadedTemplate.getName())
+    assertEquals(ext, loadedTemplate.getExtension())
+    assertTrue(template != loadedTemplate)
   }
 
-  private File getTestConfigRoot() throws Exception {
+  private File getTestConfigRoot() {
     if (myTestConfigDir == null) {
-      myTestConfigDir = FileUtil.createTempDirectory(getTestName(true), "config");
+      myTestConfigDir = FileUtil.createTempDirectory(getTestName(true), "config")
     }
-    return myTestConfigDir;
+    return myTestConfigDir
   }
 
-  public void testSaveLoadCustomTemplate() throws Exception {
-    doTestSaveLoadTemplate("name", "ext");
+  void testSaveLoadCustomTemplate() {
+    doTestSaveLoadTemplate("name", "ext")
   }
 
-  public void testSaveLoadCustomTemplateDottedName() throws Exception {
-    doTestSaveLoadTemplate("name.has.dots", "ext");
+  void testSaveLoadCustomTemplateDottedName() {
+    doTestSaveLoadTemplate("name.has.dots", "ext")
   }
 
-  public void testSaveLoadCustomTemplateDottedExt() throws Exception {
-    doTestSaveLoadTemplate("name", "ext.has.dots");
+  void testSaveLoadCustomTemplateDottedExt() {
+    doTestSaveLoadTemplate("name", "ext.has.dots")
   }
 }

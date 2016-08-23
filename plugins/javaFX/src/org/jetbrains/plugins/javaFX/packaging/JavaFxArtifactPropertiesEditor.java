@@ -108,7 +108,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
       }
     });
 
-    final List<String> bundleNames = new ArrayList<String>();
+    final List<String> bundleNames = new ArrayList<>();
     for (JavaFxPackagerConstants.NativeBundles bundle : JavaFxPackagerConstants.NativeBundles.values()) {
       bundleNames.add(bundle.name());
     }

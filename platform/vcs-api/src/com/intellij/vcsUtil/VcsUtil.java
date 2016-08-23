@@ -50,7 +50,6 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Stream;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class VcsUtil {
@@ -231,7 +230,7 @@ public class VcsUtil {
   }
 
   private static List<VirtualFile> collectFilesToRefresh(final File[] roots) {
-    final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
+    final ArrayList<VirtualFile> result = new ArrayList<>();
     for (File root : roots) {
       VirtualFile vFile = findFileFor(root);
       if (vFile != null) {
@@ -495,7 +494,7 @@ public class VcsUtil {
 
   public static boolean runVcsProcessWithProgress(final VcsRunnable runnable, String progressTitle, boolean canBeCanceled, Project project)
     throws VcsException {
-    final Ref<VcsException> ex = new Ref<VcsException>();
+    final Ref<VcsException> ex = new Ref<>();
     boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
@@ -651,7 +650,7 @@ public class VcsUtil {
   public static List<VcsDirectoryMapping> addMapping(@NotNull List<VcsDirectoryMapping> existingMappings,
                                                      @NotNull String path,
                                                      @NotNull String vcs) {
-    List<VcsDirectoryMapping> mappings = new ArrayList<VcsDirectoryMapping>(existingMappings);
+    List<VcsDirectoryMapping> mappings = new ArrayList<>(existingMappings);
     for (Iterator<VcsDirectoryMapping> iterator = mappings.iterator(); iterator.hasNext(); ) {
       VcsDirectoryMapping mapping = iterator.next();
       if (mapping.isDefaultMapping() && StringUtil.isEmptyOrSpaces(mapping.getVcs())) {
@@ -670,12 +669,5 @@ public class VcsUtil {
     }
     mappings.add(new VcsDirectoryMapping(path, vcs));
     return mappings;
-  }
-
-  @Nullable
-  public static <T> T getIfSingle(@NotNull Stream<T> items) {
-    return items.limit(2).map(Optional::ofNullable)
-      .reduce(Optional.empty(), (a, b) -> a.isPresent() ^ b.isPresent() ? b : Optional.empty())
-      .orElse(null);
   }
 }

@@ -106,7 +106,7 @@ public class Replacer {
       CollectingMatchResultSink sink = new CollectingMatchResultSink();
       matcher.testFindMatches(sink, matchOptions);
 
-      final List<ReplacementInfo> resultPtrList = new ArrayList<ReplacementInfo>();
+      final List<ReplacementInfo> resultPtrList = new ArrayList<>();
 
       for (final MatchResult result : sink.getMatches()) {
         resultPtrList.add(buildReplacement(result));
@@ -266,7 +266,7 @@ public class Replacer {
   public static void handleComments(final PsiElement el, final PsiElement replacement, ReplacementContext context) throws IncorrectOperationException {
     ReplacementInfoImpl replacementInfo = context.replacementInfo;
     if (replacementInfo.elementToVariableNameMap == null) {
-      replacementInfo.elementToVariableNameMap = new HashMap<PsiElement, String>(1);
+      replacementInfo.elementToVariableNameMap = new HashMap<>(1);
       Map<String, MatchResult> variableMap = replacementInfo.variableMap;
       if (variableMap != null) {
         for(String name:variableMap.keySet()) {
@@ -372,7 +372,7 @@ public class Replacer {
   }
 
   public ReplacementInfo buildReplacement(MatchResult result) {
-    List<SmartPsiElementPointer> l = new ArrayList<SmartPsiElementPointer>();
+    List<SmartPsiElementPointer> l = new ArrayList<>();
     SmartPointerManager manager = SmartPointerManager.getInstance(project);
 
     if (MatchResult.MULTI_LINE_MATCH.equals(result.getName())) {

@@ -43,7 +43,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.engine.BaseSpellChecker");
 
   private final Transformation transform = new Transformation();
-  private final Set<EditableDictionary> dictionaries = new HashSet<EditableDictionary>();
+  private final Set<EditableDictionary> dictionaries = new HashSet<>();
   private final List<Dictionary> bundledDictionaries = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private final AtomicBoolean myLoadingDictionaries = new AtomicBoolean(false);
@@ -199,12 +199,12 @@ public class BaseSpellChecker implements SpellCheckerEngine {
     String transformed = transform.transform(word);
     if (transformed == null) return Collections.emptyList();
 
-    List<String> rawSuggestions = new ArrayList<String>();
+    List<String> rawSuggestions = new ArrayList<>();
     restore(transformed.charAt(0), 0, Integer.MAX_VALUE, bundledDictionaries, rawSuggestions);
     restore(word.charAt(0), 0, Integer.MAX_VALUE, dictionaries, rawSuggestions);
     if (rawSuggestions.isEmpty()) return Collections.emptyList();
 
-    List<Suggestion> suggestions = new ArrayList<Suggestion>(rawSuggestions.size());
+    List<Suggestion> suggestions = new ArrayList<>(rawSuggestions.size());
     for (String rawSuggestion : rawSuggestions) {
       int distance = EditDistance.optimalAlignment(transformed, rawSuggestion, true);
       suggestions.add(new Suggestion(rawSuggestion, distance));
@@ -212,7 +212,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
 
     Collections.sort(suggestions);
     int limit = Math.min(maxSuggestions, suggestions.size());
-    List<String> result = new ArrayList<String>(limit);
+    List<String> result = new ArrayList<>(limit);
     int bestMetrics = suggestions.get(0).getMetrics();
     for (int i = 0; i < limit; i++) {
       Suggestion suggestion = suggestions.get(i);

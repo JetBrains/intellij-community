@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
@@ -27,9 +26,6 @@ import com.intellij.openapi.vcs.Details;
 import com.intellij.openapi.vcs.GenericDetailsLoader;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
-import com.intellij.util.Consumer;
-import com.intellij.util.PairConsumer;
-import com.intellij.util.Ticket;
 import com.intellij.util.continuation.ModalityIgnorantBackgroundableTask;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.CalledInBackground;
@@ -40,16 +36,16 @@ import javax.swing.*;
 
 /**
  * For presentation, which is itself in GenericDetails (not necessarily) - shown from time to time, but cached, and
- * which is a listener to some intensive changes (a group of invalidating changes should provoke a reload, but "outdated" (loaded but already not actual) results should be thrown away)
+ * which is a listener to some intensive changes (a group of invalidating changes should provoke a reload, but "outdated"
+ * (loaded but already not actual) results should be thrown away)
  *
- *
- * User: Irina.Chernushina
- * Date: 9/7/11
- * Time: 3:13 PM
+ * @author Irina.Chernushina
+ * @since 7.09.2011
  */
 public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel<Change> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.AbstractRefreshablePanel");
-  protected final Ticket myTicket;
+
+  private final Ticket myTicket;
   private final DetailsPanel myDetailsPanel;
   private final GenericDetailsLoader<Ticket, T> myDetailsLoader;
   private final BackgroundTaskQueue myQueue;
@@ -62,23 +58,10 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel<Ch
     myDetailsPanel.loading();
     myDetailsPanel.layout();
     
-    myDetailsLoader = new GenericDetailsLoader<Ticket, T>(new Consumer<Ticket>() {
-      @Override
-      public void consume(Ticket ticket) {
-        final Loader loader = new Loader(project, loadingTitle, myTicket.copy());
-        loader.runSteadily(new Consumer<Task.Backgroundable>() {
-          @Override
-          public void consume(Task.Backgroundable backgroundable) {
-            myQueue.run(backgroundable);
-          }
-        });
-      }
-    }, new PairConsumer<Ticket, T>() {
-      @Override
-      public void consume(Ticket ticket, T t) {
-        acceptData(t);
-      }
-    });
+    myDetailsLoader = new GenericDetailsLoader<>(ticket -> {
+      final Loader loader = new Loader(project, loadingTitle, myTicket.copy());
+      loader.runSteadily(backgroundable -> myQueue.run(backgroundable));
+    }, (ticket, t) -> acceptData(t));
   }
 
   @Override
@@ -145,7 +128,7 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel<Ch
     @Override
     protected void doInAwtIfFail(Exception e) {
       final Exception cause;
-      if (e instanceof MyRuntime && e.getCause() != null) {
+      if (e instanceof RuntimeException && e.getCause() != null) {
         cause = (Exception) e.getCause();
       } else {
         cause = e;
@@ -178,14 +161,8 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel<Ch
         myT = loadImpl();
       }
       catch (VcsException e) {
-        throw new MyRuntime(e);
+        throw new RuntimeException(e);
       }
-    }
-  }
-
-  private static class MyRuntime extends RuntimeException {
-    private MyRuntime(Throwable cause) {
-      super(cause);
     }
   }
 
@@ -193,5 +170,42 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel<Ch
   public void dispose() {
     myDisposed = true;
     disposeImpl();
+  }
+
+  private static class Ticket {
+    private int myId;
+
+    public Ticket() {
+      myId = 0;
+    }
+
+    public Ticket(int id) {
+      myId = id;
+    }
+
+    public Ticket copy() {
+      return new Ticket(myId);
+    }
+
+    public void increment() {
+      ++ myId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      Ticket ticket = (Ticket)o;
+
+      if (myId != ticket.myId) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return myId;
+    }
   }
 }

@@ -36,7 +36,7 @@ public class YAMLFileImpl extends PsiFileBase implements YAMLFile {
   }
 
   public List<YAMLDocument> getDocuments() {
-    final ArrayList<YAMLDocument> result = new ArrayList<YAMLDocument>();
+    final ArrayList<YAMLDocument> result = new ArrayList<>();
     for (ASTNode node : getNode().getChildren(TokenSet.create(YAMLElementTypes.DOCUMENT))) {
      result.add((YAMLDocument) node.getPsi());
     }
@@ -44,7 +44,7 @@ public class YAMLFileImpl extends PsiFileBase implements YAMLFile {
   }
 
   public List<YAMLPsiElement> getYAMLElements() {
-    final ArrayList<YAMLPsiElement> result = new ArrayList<YAMLPsiElement>();
+    final ArrayList<YAMLPsiElement> result = new ArrayList<>();
     for (ASTNode node : getNode().getChildren(null)) {
       final PsiElement psi = node.getPsi();
       if (psi instanceof YAMLPsiElement){

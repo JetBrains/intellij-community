@@ -42,7 +42,7 @@ public abstract class RadComponent extends PropertiesContainer {
   protected MetaModel myMetaModel;
   private RadComponent myParent;
   private RadLayout myLayout;
-  private final Map<Object, Object> myClientProperties = new HashMap<Object, Object>();
+  private final Map<Object, Object> myClientProperties = new HashMap<>();
 
   //////////////////////////////////////////////////////////////////////////////////////////
   //
@@ -371,7 +371,7 @@ public abstract class RadComponent extends PropertiesContainer {
   }
 
   public List<Property> getInplaceProperties() throws Exception {
-    List<Property> properties = new ArrayList<Property>();
+    List<Property> properties = new ArrayList<>();
 
     if (myMetaModel != null) {
       List<Property> allProperties = getProperties();
@@ -473,7 +473,7 @@ public abstract class RadComponent extends PropertiesContainer {
   public static void addError(RadComponent component, ErrorInfo errorInfo) {
     List<ErrorInfo> errorInfos = component.getClientProperty(ERROR_KEY);
     if (errorInfos == null) {
-      errorInfos = new ArrayList<ErrorInfo>();
+      errorInfos = new ArrayList<>();
       component.setClientProperty(ERROR_KEY, errorInfos);
     }
     errorInfos.add(errorInfo);
@@ -500,7 +500,7 @@ public abstract class RadComponent extends PropertiesContainer {
    */
   @NotNull
   public static Map<RadComponent, List<RadComponent>> groupSiblings(@NotNull List<? extends RadComponent> components) {
-    Map<RadComponent, List<RadComponent>> siblingLists = new HashMap<RadComponent, List<RadComponent>>();
+    Map<RadComponent, List<RadComponent>> siblingLists = new HashMap<>();
 
     if (components.isEmpty()) {
       return siblingLists;
@@ -515,7 +515,7 @@ public abstract class RadComponent extends PropertiesContainer {
       RadComponent parent = component.getParent();
       List<RadComponent> children = siblingLists.get(parent);
       if (children == null) {
-        children = new ArrayList<RadComponent>();
+        children = new ArrayList<>();
         siblingLists.put(parent, children);
       }
       children.add(component);
@@ -525,7 +525,7 @@ public abstract class RadComponent extends PropertiesContainer {
   }
 
   public static Set<RadComponent> getParents(List<RadComponent> components) {
-    Set<RadComponent> parents = new HashSet<RadComponent>();
+    Set<RadComponent> parents = new HashSet<>();
     for (RadComponent component : components) {
       RadComponent parent = component.getParent();
       if (parent != null) {
@@ -547,7 +547,7 @@ public abstract class RadComponent extends PropertiesContainer {
   }
 
   public static List<RadComponent> getPureSelection(List<RadComponent> selection) {
-    List<RadComponent> components = new ArrayList<RadComponent>();
+    List<RadComponent> components = new ArrayList<>();
 
     for (RadComponent component : selection) {
       if (!isParentsContainedIn(selection, component)) {

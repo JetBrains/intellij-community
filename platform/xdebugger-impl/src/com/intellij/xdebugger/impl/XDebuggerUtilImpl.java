@@ -67,6 +67,8 @@ import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupi
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import com.intellij.xdebugger.ui.DebuggerColors;
@@ -558,6 +560,13 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         session.rebuildViews();
       }
     }
+  }
+
+  public static void rebuildTreeAndViews(XDebuggerTree tree) {
+    if (tree.isDetached()) {
+      tree.rebuildAndRestore(XDebuggerTreeState.saveState(tree));
+    }
+    rebuildAllSessionsViews(tree.getProject());
   }
 
   @NotNull

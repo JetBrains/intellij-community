@@ -23,8 +23,8 @@ public class QuantitySelection<T> implements SelectionManipulation<T>, Selection
   private final Group<T> myUnselected;
 
   public QuantitySelection(final boolean startFromSelectAll) {
-    mySelected = new Group<T>();
-    myUnselected = new Group<T>();
+    mySelected = new Group<>();
+    myUnselected = new Group<>();
     if (startFromSelectAll) {
       mySelected.setAll();
     } else {
@@ -75,7 +75,7 @@ public class QuantitySelection<T> implements SelectionManipulation<T>, Selection
     private final Set<T> myMarked;
 
     private Group() {
-      myMarked = new HashSet<T>();
+      myMarked = new HashSet<>();
     }
 
     public void add(final T t) {

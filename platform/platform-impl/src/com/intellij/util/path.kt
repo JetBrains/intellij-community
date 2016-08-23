@@ -15,6 +15,7 @@
  */
 package com.intellij.util
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
@@ -26,6 +27,8 @@ import java.io.OutputStream
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
+import java.util.*
+
 
 fun Path.exists() = Files.exists(this)
 
@@ -51,27 +54,66 @@ fun Path.createSymbolicLink(target: Path): Path {
 }
 
 fun Path.delete() {
+  val attributes = basicAttributesIfExists() ?: return
   try {
-    Files.delete(this)
-  }
-  catch (ignored: NoSuchFileException) {
+    if (attributes.isDirectory) {
+      deleteRecursively()
+    }
+    else {
+      Files.delete(this)
+    }
   }
   catch (e: Exception) {
     FileUtil.delete(toFile())
   }
 }
 
-fun Path.deleteRecursively(): Path = if (exists()) Files.walkFileTree (this, object : SimpleFileVisitor<Path>() {
+fun Path.deleteWithParentsIfEmpty(root: Path, isFile: Boolean = true): Boolean {
+  var parent = if (isFile) this.parent else null
+  try {
+    delete()
+  }
+  catch (e: NoSuchFileException) {
+    return false
+  }
+
+  // remove empty directories
+  while (parent != null && parent != root) {
+    try {
+      // must be only Files.delete, but not our delete (Files.delete throws DirectoryNotEmptyException)
+      Files.delete(parent)
+    }
+    catch (e: IOException) {
+      break
+    }
+
+    parent = parent.parent
+  }
+
+  return true
+}
+
+private fun Path.deleteRecursively() = Files.walkFileTree(this, object : SimpleFileVisitor<Path>() {
   override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
-    file.delete()
+    try {
+      Files.delete(file)
+    }
+    catch (e: Exception) {
+      FileUtil.delete(file.toFile())
+    }
     return FileVisitResult.CONTINUE
   }
 
   override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
-    dir.delete()
+    try {
+      Files.delete(dir)
+    }
+    catch (e: Exception) {
+      FileUtil.delete(dir.toFile())
+    }
     return FileVisitResult.CONTINUE
   }
-}) else this
+})
 
 fun Path.lastModified(): FileTime = Files.getLastModifiedTime(this)
 
@@ -91,8 +133,34 @@ fun Path.writeChild(relativePath: String, data: ByteArray) = resolve(relativePat
 
 fun Path.writeChild(relativePath: String, data: String) = writeChild(relativePath, data.toByteArray())
 
-fun Path.write(data: ByteArray, offset: Int = 0, length: Int = data.size): Path {
-  outputStream().use { it.write(data, offset, length) }
+fun Path.write(data: ByteArray, offset: Int = 0, size: Int = data.size): Path {
+  outputStream().use { it.write(data, offset, size) }
+  return this
+}
+
+fun Path.writeSafe(data: ByteArray, offset: Int = 0, size: Int = data.size): Path {
+  val tempFile = parent.resolve("${fileName}.${UUID.randomUUID()}.tmp")
+  tempFile.write(data, offset, size)
+  try {
+    Files.move(tempFile, this, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+  }
+  catch (e: IOException) {
+    LOG.warn(e)
+    FileUtil.rename(tempFile.toFile(), this.toFile())
+  }
+  return this
+}
+
+fun Path.writeSafe(outConsumer: (OutputStream) -> Unit): Path {
+  val tempFile = parent.resolve("${fileName}.${UUID.randomUUID()}.tmp")
+  tempFile.outputStream().use(outConsumer)
+  try {
+    Files.move(tempFile, this, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+  }
+  catch (e: IOException) {
+    LOG.warn(e)
+    FileUtil.rename(tempFile.toFile(), this.toFile())
+  }
   return this
 }
 
@@ -159,3 +227,5 @@ inline fun <R> Path.directoryStreamIfExists(noinline filter: ((path: Path) -> Bo
   }
   return null
 }
+
+private val LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileUtil")

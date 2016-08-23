@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.psi.PsiElement
+import com.intellij.ui.popup.WizardPopup
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.PsiNavigateUtil
 import java.awt.event.ActionEvent
@@ -42,15 +43,29 @@ class RecentTestsListPopup(popupStep: ListPopupStep<RecentTestsPopupEntry>,
     setAdText("Debug with $shift, navigate with F4")
   }
 
-  private fun registerActions(popup: ListPopupImpl) {
+  override fun createPopup(parent: WizardPopup?, step: PopupStep<*>?, parentValue: Any?): WizardPopup {
+    val popup = super.createPopup(parent, step, parentValue)
+    registerActions(popup)
+    return popup
+  }
+
+  private fun registerActions(popup: WizardPopup) {
     popup.registerAction("alternate", KeyStroke.getKeyStroke("shift pressed SHIFT"), object : AbstractAction() {
-      override fun actionPerformed(e: ActionEvent) = shiftPressed()
+      override fun actionPerformed(e: ActionEvent) {
+        shiftPressed()
+      } 
     })
+
     popup.registerAction("restoreDefault", KeyStroke.getKeyStroke("released SHIFT"), object : AbstractAction() {
-      override fun actionPerformed(e: ActionEvent) = shiftReleased()
+      override fun actionPerformed(e: ActionEvent) {
+        shiftReleased()
+      } 
     })
+    
     popup.registerAction("invokeAction", KeyStroke.getKeyStroke("shift ENTER"), object : AbstractAction() {
-      override fun actionPerformed(e: ActionEvent) = handleSelect(true)
+      override fun actionPerformed(e: ActionEvent) {
+        handleSelect(true)
+      }
     })
     
     popup.registerAction("navigate", KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0), object : AbstractAction() {
@@ -130,45 +145,16 @@ class SelectTestStep(title: String?,
   }
 
   private fun getConfigurations(entry: RecentTestsPopupEntry): List<RecentTestsPopupEntry> {
-    val items = mutableListOf<RecentTestsPopupEntry>()
-    
-    entry.accept(object : TestEntryVisitor() {
-      override fun visitTest(test: SingleTestEntry) {
-        val suite = test.suite ?: return
-        val configuration = suite.runConfiguration
-        if (configuration == null) {
-          items.add(suite)
-          return
-        }
-
-        if (isSingleTestConfiguration(configuration)) {
-          items.add(suite)
-          return
-        }
-        
-        items.add(configuration)
-        if (configuration.suites.size > 1) {
-          items.add(0, suite)
-        }
-      }
-
-      private fun isSingleTestConfiguration(configuration: RunConfigurationEntry): Boolean {
-        val suites = configuration.suites
-        return suites.size == 1 && suites[0].tests.size == 1
-      }
-      
-    })
-    
-    return items
+    val collector = TestConfigurationCollector()
+    entry.accept(collector)
+    return collector.getEnclosingConfigurations()
   }
 
 }
 
 
-class SelectConfigurationStep(private val items: List<RecentTestsPopupEntry>, 
-                              private val runner: RecentTestRunner) 
-  : BaseListPopupStep<RecentTestsPopupEntry>(null, items)
-{
+class SelectConfigurationStep(items: List<RecentTestsPopupEntry>,
+                              private val runner: RecentTestRunner) : BaseListPopupStep<RecentTestsPopupEntry>(null, items) {
 
   override fun getTextFor(value: RecentTestsPopupEntry): String {
     var presentation = value.presentation

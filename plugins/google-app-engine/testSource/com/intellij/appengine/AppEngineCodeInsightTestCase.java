@@ -86,7 +86,7 @@ public abstract class AppEngineCodeInsightTestCase extends UsefulTestCase {
     codeInsightFixture.setUp();
     final VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByPath(testDataPath);
     Assert.assertNotNull("Test data directory not found: " + testDataPath, dir);
-    VfsUtil.processFilesRecursively(dir, new CommonProcessors.CollectProcessor<VirtualFile>());
+    VfsUtil.processFilesRecursively(dir, new CommonProcessors.CollectProcessor<>());
     dir.refresh(false, true);
     tempDir.copyAll(testDataPath, "", new VirtualFileFilter() {
       @Override

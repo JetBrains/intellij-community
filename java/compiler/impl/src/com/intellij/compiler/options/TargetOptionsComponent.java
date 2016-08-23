@@ -51,7 +51,7 @@ public class TargetOptionsComponent extends JPanel {
   private final Project myProject;
   
   static {
-    List<String> targets = new ArrayList<String>();
+    List<String> targets = new ArrayList<>();
     targets.add("1.1");
     targets.add("1.2");
     for (LanguageLevel level : LanguageLevel.values()) {
@@ -121,8 +121,8 @@ public class TargetOptionsComponent extends JPanel {
 
   private void addModules() {
     final TargetLevelTableModel model = (TargetLevelTableModel)myTable.getModel();
-    final List<Module> items = new ArrayList<Module>(Arrays.asList(ModuleManager.getInstance(myProject).getModules()));
-    Set<Module> alreadyAdded = new HashSet<Module>();
+    final List<Module> items = new ArrayList<>(Arrays.asList(ModuleManager.getInstance(myProject).getModules()));
+    Set<Module> alreadyAdded = new HashSet<>();
     for (TargetLevelTableModel.Item item : model.getItems()) {
       alreadyAdded.add(item.module);
     }
@@ -158,7 +158,7 @@ public class TargetOptionsComponent extends JPanel {
 
   public Map<String, String> getModulesBytecodeTargetMap() {
     TargetLevelTableModel model = (TargetLevelTableModel)myTable.getModel();
-    final Map<String, String> map = new HashMap<String, String>();
+    final Map<String, String> map = new HashMap<>();
     for (TargetLevelTableModel.Item item : model.getItems()) {
       map.put(item.module.getName(), item.targetLevel);
     }
@@ -166,7 +166,7 @@ public class TargetOptionsComponent extends JPanel {
   }
 
   public void setModuleTargetLevels(Map<String, String> moduleLevels) {
-    final Map<Module, String> map = new HashMap<Module, String>();
+    final Map<Module, String> map = new HashMap<>();
     for (Module module : ModuleManager.getInstance(myProject).getModules()) {
       final String target = moduleLevels.get(module.getName());
       if (target != null) {
@@ -181,7 +181,7 @@ public class TargetOptionsComponent extends JPanel {
   }
 
   private static final class TargetLevelTableModel extends AbstractTableModel implements ItemRemovable{
-    private final List<Item> myItems = new ArrayList<Item>();
+    private final List<Item> myItems = new ArrayList<>();
     @Override
     public int getRowCount() {
       return myItems.size();
@@ -273,7 +273,7 @@ public class TargetOptionsComponent extends JPanel {
 
   private static final class TargetLevelComboboxModel extends AbstractListModel implements ComboBoxModel{
 
-    private final List<String> myOptions = new ArrayList<String>();
+    private final List<String> myOptions = new ArrayList<>();
     private String mySelectedItem = "";
 
     TargetLevelComboboxModel() {

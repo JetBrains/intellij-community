@@ -24,6 +24,9 @@ import com.intellij.vcs.log.impl.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -45,6 +48,8 @@ public class HgRefManager implements VcsLogRefManager {
 
   // first has the highest priority
   private static final List<VcsRefType> REF_TYPE_PRIORITIES = Arrays.asList(TIP, HEAD, BRANCH, BOOKMARK, TAG);
+  private static final List<VcsRefType> REF_TYPE_INDEX =
+    Arrays.asList(TIP, HEAD, BRANCH, CLOSED_BRANCH, BOOKMARK, TAG, LOCAL_TAG, MQ_APPLIED_TAG);
 
   // -1 => higher priority
   public static final Comparator<VcsRefType> REF_TYPE_COMPARATOR = new Comparator<VcsRefType>() {
@@ -103,6 +108,19 @@ public class HgRefManager implements VcsLogRefManager {
         return new SingletonRefGroup(ref);
       }
     });
+  }
+
+  @Override
+  public void serialize(@NotNull DataOutput out, @NotNull VcsRefType type) throws IOException {
+    out.writeInt(REF_TYPE_INDEX.indexOf(type));
+  }
+
+  @NotNull
+  @Override
+  public VcsRefType deserialize(@NotNull DataInput in) throws IOException {
+    int id = in.readInt();
+    if (id < 0 || id > REF_TYPE_INDEX.size() - 1) throw new IOException("Reference type by id " + id + " does not exist");
+    return REF_TYPE_INDEX.get(id);
   }
 
   @NotNull

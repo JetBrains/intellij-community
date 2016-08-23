@@ -202,7 +202,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
   @NotNull
   public static List<GrExpression> collectExpressions(PsiElement elementAtCaret, boolean acceptVoidCalls) {
-    final List<GrExpression> expressions = new ArrayList<GrExpression>();
+    final List<GrExpression> expressions = new ArrayList<>();
 
     for (GrExpression expression = PsiTreeUtil.getParentOfType(elementAtCaret, GrExpression.class);
          expression != null;
@@ -625,7 +625,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   private Settings showDialog(@NotNull GrIntroduceContext context) {
 
     // Add occurrences highlighting
-    ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
+    ArrayList<RangeHighlighter> highlighters = new ArrayList<>();
     HighlightManager highlightManager = null;
     if (context.getEditor() != null) {
       highlightManager = HighlightManager.getInstance(context.getProject());

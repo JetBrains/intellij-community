@@ -78,7 +78,7 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
     }
 
     XmlTag _tag = tag;
-    final LinkedList<XmlTag> chain = new LinkedList<XmlTag>();
+    final LinkedList<XmlTag> chain = new LinkedList<>();
     while (_tag != null) {
       chain.addFirst(_tag);
       _tag = _tag.getParentTag();
@@ -182,19 +182,19 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
   XmlElementDescriptor[] convertElementDescriptors(List<DElementPattern> patterns) {
     patterns = ContainerUtil.findAll(patterns, NamedPatternFilter.INSTANCE);
 
-    final Map<QName, List<DElementPattern>> name2patterns = new HashMap<QName, List<DElementPattern>>();
+    final Map<QName, List<DElementPattern>> name2patterns = new HashMap<>();
     for (DElementPattern pattern : patterns) {
       for (QName qName : pattern.getName().listNames()) {
         List<DElementPattern> dPatterns = name2patterns.get(qName);
         if (dPatterns == null) {
-          dPatterns = new ArrayList<DElementPattern>();
+          dPatterns = new ArrayList<>();
           name2patterns.put(qName, dPatterns);
         }
         if (!dPatterns.contains(pattern)) dPatterns.add(pattern);
       }
     }
 
-    final List<XmlElementDescriptor> result = new ArrayList<XmlElementDescriptor>();
+    final List<XmlElementDescriptor> result = new ArrayList<>();
 
     for (QName qName : name2patterns.keySet()) {
       final List<DElementPattern> patternList = name2patterns.get(qName);
@@ -252,7 +252,7 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
         return new Object[] { ModificationTracker.EVER_CHANGED, ExternalResourceManager.getInstance()};
       }
       final Object[] a = { myElement, ExternalResourceManager.getInstance() };
-      final PsiElementProcessor.CollectElements<XmlFile> processor = new PsiElementProcessor.CollectElements<XmlFile>();
+      final PsiElementProcessor.CollectElements<XmlFile> processor = new PsiElementProcessor.CollectElements<>();
       RelaxIncludeIndex.processForwardDependencies(myFile, processor);
       if (processor.getCollection().size() > 0) {
         return ArrayUtil.mergeArrays(a, processor.toArray());
@@ -303,8 +303,8 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
         CachedValuesManager.getManager(myElement.getProject()).createCachedValue(() -> {
           final XmlElementDescriptor descriptor = findRootDescriptorInner(qName);
           return descriptor != null
-                 ? new CachedValueProvider.Result<XmlElementDescriptor>(descriptor, descriptor.getDependences())
-                 : new CachedValueProvider.Result<XmlElementDescriptor>(null, getDependences());
+                 ? new CachedValueProvider.Result<>(descriptor, descriptor.getDependences())
+                 : new CachedValueProvider.Result<>(null, getDependences());
         }, false);
       myDescriptorsMap.put(qName, cachedValue);
     }

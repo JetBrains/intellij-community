@@ -270,7 +270,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       updateSdkList(false);
       myProjectSdksModel.apply();
       setSelectedSdk(selectedSdk);
-      PySdkService.getInstance().solidifySdk(selectedSdk);
     }
 
     final Sdk prevSdk = getSdk();
@@ -328,7 +327,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     if (selection != null && !sdkList.contains(selection)) {
       sdkList.add(0, selection);
     }
-    List<Object> items = new ArrayList<Object>();
+    List<Object> items = new ArrayList<>();
     items.add(null);
 
     boolean remoteSeparator = true;
@@ -396,8 +395,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     @Override
     public void consume(Sdk sdk) {
       if (sdk == null) return;
-      final PySdkService sdkService = PySdkService.getInstance();
-      sdkService.restoreSdk(sdk);
 
       if (!(sdk instanceof PyDetectedSdk) && myProjectSdksModel.findSdk(sdk.getName()) == null) {
         myProjectSdksModel.addSdk(sdk);

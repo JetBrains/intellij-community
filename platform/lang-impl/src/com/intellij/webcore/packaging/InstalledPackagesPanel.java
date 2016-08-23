@@ -161,7 +161,7 @@ public class InstalledPackagesPanel extends JPanel {
   private void upgradeAction() {
     final int[] rows = myPackagesTable.getSelectedRows();
     if (myPackageManagementService != null) {
-      final Set<String> upgradedPackages = new HashSet<String>();
+      final Set<String> upgradedPackages = new HashSet<>();
       final Set<String> packagesShouldBePostponed = getPackagesToPostpone();
       for (int row : rows) {
         final Object packageObj = myPackagesTableModel.getValueAt(row, 0);
@@ -352,7 +352,7 @@ public class InstalledPackagesPanel extends JPanel {
 
   @NotNull
   private List<InstalledPackage> getSelectedPackages() {
-    final List<InstalledPackage> results = new ArrayList<InstalledPackage>();
+    final List<InstalledPackage> results = new ArrayList<>();
     final int[] rows = myPackagesTable.getSelectedRows();
     for (int row : rows) {
       final Object packageName = myPackagesTableModel.getValueAt(row, 0);
@@ -533,7 +533,7 @@ public class InstalledPackagesPanel extends JPanel {
   }
 
   private static Map<String, RepoPackage> doBuildNameToPackageMap(List<RepoPackage> packages) {
-    final Map<String, RepoPackage> packageMap = new HashMap<String, RepoPackage>();
+    final Map<String, RepoPackage> packageMap = new HashMap<>();
     for (RepoPackage aPackage : packages) {
       packageMap.put(aPackage.getName(), aPackage);
     }

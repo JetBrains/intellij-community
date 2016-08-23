@@ -53,7 +53,7 @@ public class GenerateAntApplication {
         application.load();
         logMessageLn(0, "done");
 
-        GenerateAntApplication.this.run();
+        this.run();
       }
       catch (Exception e) {
         GenerateAntApplication.LOG.error(e);

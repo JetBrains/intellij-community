@@ -75,7 +75,7 @@ public class GroovyGStringSelectioner extends ExtendWordSelectionHandlerBase {
     }
     else if (parent instanceof GrStringInjection) {
       if (e instanceof GrReferenceExpression) {
-        List<TextRange> r = new ArrayList<TextRange>(2);
+        List<TextRange> r = new ArrayList<>(2);
         SelectWordUtil.addWordSelection(editor.getSettings().isCamelWords(), editorText, cursorOffset, r);
         for (TextRange textRange : r) {
           if (editorText.charAt(textRange.getStartOffset()) == '$') {

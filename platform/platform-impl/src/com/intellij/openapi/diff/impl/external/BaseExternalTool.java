@@ -85,7 +85,7 @@ abstract class BaseExternalTool implements DiffTool {
   protected List<String> getParameters(@NotNull DiffRequest request) throws Exception {
     final String p1 = convertToPath(request, 0);
     final String p2 = convertToPath(request, 1);
-    final List<String> params = new ArrayList<String>();
+    final List<String> params = new ArrayList<>();
     if (p1 != null) params.add(p1);
     if (p2 != null) params.add(p2);
     return params;

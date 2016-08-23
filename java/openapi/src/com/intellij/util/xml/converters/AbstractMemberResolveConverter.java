@@ -95,7 +95,7 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
     final PsiClass psiClass = getTargetClass(context);
     if (psiClass == null) return Collections.emptyList();
 
-    final ArrayList<PsiMember> list = new ArrayList<PsiMember>();
+    final ArrayList<PsiMember> list = new ArrayList<>();
     for (PsiField psiField : isLookDeep()? psiClass.getAllFields() : psiClass.getFields()) {
       if (fieldSuits(psiField)) {
         list.add(psiField);

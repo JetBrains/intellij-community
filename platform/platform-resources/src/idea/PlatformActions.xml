@@ -49,6 +49,9 @@
     <action id="Switcher" class="com.intellij.ide.actions.Switcher" text="Switcher"/>
     <action id="QuickDocCopy" text="Copy Quick Doc" class="com.intellij.codeInsight.documentation.actions.CopyQuickDocAction" use-shortcut-of="$Copy"/>
     <action id="EditSourceInNewWindow" class="com.intellij.ide.actions.EditSourceInNewWindowAction" />
+    <action id="OpenElementInNewWindow" class="com.intellij.ide.actions.OpenElementInNewWindowAction" text="Open In New Editor Window">
+      <keyboard-shortcut first-keystroke="shift ENTER" keymap="$default"/>
+    </action>>
     <action id="SearchEverywhere" class="com.intellij.ide.actions.SearchEverywhereAction" />
 
     <group id="TemplateParametersNavigation">

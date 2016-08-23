@@ -47,7 +47,7 @@ public class GitResolveConflictsAction extends GitAction {
     Project project = ObjectUtils.assertNotNull(event.getProject());
     GitVcs vcs = ObjectUtils.assertNotNull(GitVcs.getInstance(project));
 
-    final Set<VirtualFile> conflictedFiles = new TreeSet<VirtualFile>(new Comparator<VirtualFile>() {
+    final Set<VirtualFile> conflictedFiles = new TreeSet<>(new Comparator<VirtualFile>() {
       @Override
       public int compare(@NotNull VirtualFile f1, @NotNull VirtualFile f2) {
         return f1.getPresentableUrl().compareTo(f2.getPresentableUrl());

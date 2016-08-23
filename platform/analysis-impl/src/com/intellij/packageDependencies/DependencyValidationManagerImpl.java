@@ -51,7 +51,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     }
   };
 
-  private final List<DependencyRule> myRules = new ArrayList<DependencyRule>();
+  private final List<DependencyRule> myRules = new ArrayList<>();
   private final NamedScopeManager myNamedScopeManager;
 
   private boolean mySkipImportStatements;
@@ -64,7 +64,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   @NonNls private static final String UNNAMED_SCOPE = "unnamed_scope";
   @NonNls private static final String VALUE = "value";
 
-  private final Map<String, PackageSet> myUnnamedScopes = new THashMap<String, PackageSet>();
+  private final Map<String, PackageSet> myUnnamedScopes = new THashMap<>();
 
   public DependencyValidationManagerImpl(final Project project, NamedScopeManager namedScopeManager) {
     super(project);
@@ -80,7 +80,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   @Override
   @NotNull
   public List<NamedScope> getPredefinedScopes() {
-    final List<NamedScope> predefinedScopes = new ArrayList<NamedScope>();
+    final List<NamedScope> predefinedScopes = new ArrayList<>();
     final CustomScopesProvider[] scopesProviders = CustomScopesProvider.CUSTOM_SCOPES_PROVIDER.getExtensions(myProject);
     for (CustomScopesProvider scopesProvider : scopesProviders) {
       predefinedScopes.addAll(scopesProvider.getFilteredScopes());
@@ -120,7 +120,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   @Override
   @NotNull
   public DependencyRule[] getViolatorDependencyRules(@NotNull PsiFile from, @NotNull PsiFile to) {
-    ArrayList<DependencyRule> result = new ArrayList<DependencyRule>();
+    ArrayList<DependencyRule> result = new ArrayList<>();
     for (DependencyRule dependencyRule : myRules) {
       if (dependencyRule.isForbiddenToUse(from, to)) {
         result.add(dependencyRule);
@@ -132,7 +132,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   @NotNull
   @Override
   public DependencyRule[] getApplicableRules(@NotNull PsiFile file) {
-    ArrayList<DependencyRule> result = new ArrayList<DependencyRule>();
+    ArrayList<DependencyRule> result = new ArrayList<>();
     for (DependencyRule dependencyRule : myRules) {
       if (dependencyRule.isApplicable(file)) {
         result.add(dependencyRule);
@@ -345,8 +345,8 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   private void reloadScopes() {
     UIUtil.invokeLaterIfNeeded(() -> {
       if (getProject().isDisposed()) return;
-      List<Pair<NamedScope, NamedScopesHolder>> scopeList = new ArrayList<Pair<NamedScope, NamedScopesHolder>>();
-      addScopesToList(scopeList, DependencyValidationManagerImpl.this);
+      List<Pair<NamedScope, NamedScopesHolder>> scopeList = new ArrayList<>();
+      addScopesToList(scopeList, this);
       addScopesToList(scopeList, myNamedScopeManager);
       myScopePairs.clear();
       myScopePairs.addAll(scopeList);

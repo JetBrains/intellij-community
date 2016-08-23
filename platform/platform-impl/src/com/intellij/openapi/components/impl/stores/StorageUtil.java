@@ -50,6 +50,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class StorageUtil {
+  public static final String NOTIFICATION_GROUP_ID = "Load Error";
+  
   @TestOnly
   public static String DEBUG_LOG = null;
 
@@ -65,7 +67,7 @@ public class StorageUtil {
                      "and allow project file sharing in version control systems.<br>" +
                      "Some of the files describing the current project settings contain unknown path variables " +
                      "and " + productName + " cannot restore those paths.";
-    new UnknownMacroNotification("Load Error", "Load error: undefined path variables", content, NotificationType.ERROR,
+    new UnknownMacroNotification(NOTIFICATION_GROUP_ID, "Load error: undefined path variables", content, NotificationType.ERROR,
                                  new NotificationListener() {
                                    @Override
                                    public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
@@ -76,7 +78,7 @@ public class StorageUtil {
 
   public static void checkUnknownMacros(@NotNull Project project, boolean notify) {
     // use linked set/map to get stable results
-    Set<String> unknownMacros = new LinkedHashSet<String>();
+    Set<String> unknownMacros = new LinkedHashSet<>();
     Map<TrackingPathMacroSubstitutor, IComponentStore> substitutorToStore = ContainerUtil.newLinkedHashMap();
     collect(project, unknownMacros, substitutorToStore);
     for (Module module : ModuleManager.getInstance(project).getModules()) {
@@ -99,7 +101,7 @@ public class StorageUtil {
                                          boolean showDialog,
                                          @NotNull Set<String> unknownMacros,
                                          @NotNull Map<TrackingPathMacroSubstitutor, IComponentStore> substitutorToStore) {
-    if (unknownMacros.isEmpty() || (showDialog && !ProjectMacrosUtil.checkMacros(project, new THashSet<String>(unknownMacros)))) {
+    if (unknownMacros.isEmpty() || (showDialog && !ProjectMacrosUtil.checkMacros(project, new THashSet<>(unknownMacros)))) {
       return;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -472,7 +472,7 @@ public class Javac2 extends Javac {
 
   private static int getClassFileVersion(ClassReader reader) {
     final int[] classfileVersion = new int[1];
-    reader.accept(new ClassVisitor(Opcodes.ASM5) {
+    reader.accept(new ClassVisitor(Opcodes.API_VERSION) {
       public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         classfileVersion[0] = version;
       }
@@ -487,7 +487,7 @@ public class Javac2 extends Javac {
     }
 
     final boolean[] result = new boolean[]{false};
-    reader.accept(new ClassVisitor(Opcodes.ASM5) {
+    reader.accept(new ClassVisitor(Opcodes.API_VERSION) {
       public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
         if (!result[0]) {
           String internalName = Type.getType(desc).getInternalName();

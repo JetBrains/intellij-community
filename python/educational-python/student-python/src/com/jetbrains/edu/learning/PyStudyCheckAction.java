@@ -98,8 +98,7 @@ public class PyStudyCheckAction extends StudyCheckAction {
         ApplicationManager.getApplication().invokeLater(() -> {
           if (myTaskDir == null) return;
           myTask.setStatus(StudyStatus.Failed);
-          Map<String, TaskFile> taskFiles = StudyUtils.getTaskFiles(myTask);
-          for (Map.Entry<String, TaskFile> entry : taskFiles.entrySet()) {
+          for (Map.Entry<String, TaskFile> entry : myTask.getTaskFiles().entrySet()) {
             final String name = entry.getKey();
             final TaskFile taskFile = entry.getValue();
             if (taskFile.getAnswerPlaceholders().size() < 2) {

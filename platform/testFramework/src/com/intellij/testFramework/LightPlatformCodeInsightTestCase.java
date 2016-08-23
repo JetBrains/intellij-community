@@ -98,7 +98,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   protected void doRunTest() throws Throwable {
-    LightPlatformCodeInsightTestCase.super.runTest();
+    super.runTest();
   }
 
   protected boolean isRunInWriteAction() {

@@ -275,7 +275,7 @@ public abstract class OrderPanel<T> extends JPanel {
   public List<T> getEntries() {
     final TableModel model = myEntryTable.getModel();
     final int size = model.getRowCount();
-    List<T> result = new ArrayList<T>(size);
+    List<T> result = new ArrayList<>(size);
     for (int idx = 0; idx < size; idx++) {
       result.add(getValueAt(idx));
     }

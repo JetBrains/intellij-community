@@ -54,7 +54,7 @@ internal class GitTest : GitTestCase() {
           mergeSession.conflictResolvedForFile(file, MergeSession.Resolution.AcceptedTheirs)
         }
         else if (Arrays.equals(mergeData.LAST, AM.MARKER_ACCEPT_MY)) {
-          file.setBinaryContent(mergeData.LAST!!)
+          file.setBinaryContent(mergeData.LAST)
           mergeProvider.conflictResolvedForFile(file)
         }
         else {
@@ -363,7 +363,7 @@ internal class GitTest : GitTestCase() {
     if (syncType != SyncType.OVERWRITE_LOCAL) {
       fs.file(path, data)
     }
-    restoreRemoteAfterPush();
+    restoreRemoteAfterPush()
     fs.compare()
   }
 }

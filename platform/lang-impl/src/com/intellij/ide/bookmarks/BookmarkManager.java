@@ -63,9 +63,9 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
   private static final int MAX_AUTO_DESCRIPTION_SIZE = 50;
   private static final Key<List<Bookmark>> BOOKMARKS_KEY = Key.create("bookmarks");
 
-  private final List<Bookmark> myBookmarks = new ArrayList<Bookmark>();
+  private final List<Bookmark> myBookmarks = new ArrayList<>();
   private final Map<Trinity<VirtualFile, Integer, String>, Bookmark> myDeletedDocumentBookmarks =
-    new HashMap<Trinity<VirtualFile, Integer, String>, Bookmark>();
+    new HashMap<>();
   private final Map<Document, List<Trinity<Bookmark, Integer, String>>> myBeforeChangeData = new HashMap<>();
 
   private final MessageBus myBus;
@@ -130,7 +130,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
     ApplicationManager.getApplication().assertIsDispatchThread();
     List<Bookmark> list = document.getUserData(BOOKMARKS_KEY);
     if (list == null) {
-      document.putUserData(BOOKMARKS_KEY, list = new ArrayList<Bookmark>());
+      document.putUserData(BOOKMARKS_KEY, list = new ArrayList<>());
     }
     list.add(bookmark);
   }
@@ -218,7 +218,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
 
   @NotNull
   public List<Bookmark> getValidBookmarks() {
-    List<Bookmark> answer = new ArrayList<Bookmark>();
+    List<Bookmark> answer = new ArrayList<>();
     for (Bookmark bookmark : myBookmarks) {
       if (bookmark.isValid()) answer.add(bookmark);
     }
@@ -337,7 +337,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
   }
 
   private void writeExternal(Element element) {
-    List<Bookmark> reversed = new ArrayList<Bookmark>(myBookmarks);
+    List<Bookmark> reversed = new ArrayList<>(myBookmarks);
     Collections.reverse(reversed);
 
     for (Bookmark bookmark : reversed) {
@@ -470,7 +470,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
         if (bookmark.getLine() == -1) continue;
         List<Trinity<Bookmark, Integer, String>> list = myBeforeChangeData.get(doc);
         if (list == null) {
-          myBeforeChangeData.put(doc, list = new ArrayList<Trinity<Bookmark, Integer, String>>());
+          myBeforeChangeData.put(doc, list = new ArrayList<>());
         }
         list.add(new Trinity<>(bookmark,
                                bookmark.getLine(),
@@ -512,7 +512,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
       for (Bookmark bookmark : myBookmarks) {
         if (!bookmark.isValid() || isDuplicate(bookmark, bookmarksToRemove)) {
           if (bookmarksToRemove == null) {
-            bookmarksToRemove = new ArrayList<Bookmark>();
+            bookmarksToRemove = new ArrayList<>();
           }
           bookmarksToRemove.add(bookmark);
         }

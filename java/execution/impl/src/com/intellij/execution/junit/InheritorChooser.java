@@ -81,7 +81,7 @@ public class InheritorChooser {
         return false;
       }
 
-      final List<PsiClass> classes = new ArrayList<PsiClass>();
+      final List<PsiClass> classes = new ArrayList<>();
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
         final boolean isJUnit5 = ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> JUnitUtil.isJUnit5(containingClass));
         ClassInheritorsSearch.search(containingClass).forEach(aClass -> {
@@ -104,7 +104,7 @@ public class InheritorChooser {
         final Document document = ((TextEditor)fileEditor).getEditor().getDocument();
         final PsiFile containingFile = PsiDocumentManager.getInstance(context.getProject()).getPsiFile(document);
         if (containingFile instanceof PsiClassOwner) {
-          final List<PsiClass> psiClasses = new ArrayList<PsiClass>(Arrays.asList(((PsiClassOwner)containingFile).getClasses()));
+          final List<PsiClass> psiClasses = new ArrayList<>(Arrays.asList(((PsiClassOwner)containingFile).getClasses()));
           psiClasses.retainAll(classes);
           if (psiClasses.size() == 1) {
             runForClass(psiClasses.get(0), psiMethod, context, performRunnable);
@@ -169,7 +169,7 @@ public class InheritorChooser {
       runForClasses(classes, psiMethod, context, performRunnable);
     }
     else {
-      final List<PsiClass> selectedClasses = new ArrayList<PsiClass>();
+      final List<PsiClass> selectedClasses = new ArrayList<>();
       for (Object value : values) {
         if (value instanceof PsiClass) {
           selectedClasses.add((PsiClass)value);

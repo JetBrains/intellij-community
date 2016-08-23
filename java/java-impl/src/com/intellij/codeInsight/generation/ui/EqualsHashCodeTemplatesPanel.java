@@ -99,7 +99,7 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
   private final EqualsHashCodeTemplatesManager myManager;
 
   public EqualsHashCodeTemplatesPanel(Project project, EqualsHashCodeTemplatesManager manager) {
-    super(NAMER, FACTORY, CLONER, COMPARER, new ArrayList<Couple<TemplateResource>>(manager.getTemplateCouples()));
+    super(NAMER, FACTORY, CLONER, COMPARER, new ArrayList<>(manager.getTemplateCouples()));
     myProject = project;
     myManager = manager;
   }
@@ -185,7 +185,7 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
   @Override
   public void apply() throws ConfigurationException {
     super.apply();
-    List<TemplateResource> resources = new ArrayList<TemplateResource>();
+    List<TemplateResource> resources = new ArrayList<>();
     for (Couple<TemplateResource> resource : getItems()) {
       resources.add(resource.first);
       resources.add(resource.second);

@@ -31,7 +31,7 @@ import java.util.Map;
  *         Date: Dec 11, 2004
  */
 public class UnknownSdkType extends SdkType{
-  private static final Map<String, UnknownSdkType> ourTypeNameToInstanceMap = new HashMap<String, UnknownSdkType>();
+  private static final Map<String, UnknownSdkType> ourTypeNameToInstanceMap = new HashMap<>();
 
   /**
    * @param typeName the name of the SDK type that this SDK serves as a plug for

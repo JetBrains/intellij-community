@@ -96,7 +96,7 @@ class FormatDecode {
   }
 
   public static Validator[] decode(String formatString, int argumentCount) {
-    final ArrayList<Validator> parameters = new ArrayList<Validator>();
+    final ArrayList<Validator> parameters = new ArrayList<>();
 
     final Matcher matcher = fsPattern.matcher(formatString);
     boolean previousAllowed = false;
@@ -389,7 +389,7 @@ class FormatDecode {
   }
 
   private static class MultiValidator extends Validator {
-    private final Set<Validator> validators = new HashSet<Validator>(3);
+    private final Set<Validator> validators = new HashSet<>(3);
 
     public MultiValidator(String specifier) {
       super(specifier);

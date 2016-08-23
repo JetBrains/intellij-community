@@ -325,11 +325,12 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     InspectionToolWrapper toolWrapper = model.getInspectionTool("unused", getProject());
     UnusedDeclarationInspectionBase tool = (UnusedDeclarationInspectionBase)toolWrapper.getTool();
     UnusedSymbolLocalInspectionBase inspectionTool = tool.getSharedLocalInspectionTool();
-    inspectionTool.setClassVisibility("none");
+    inspectionTool.setClassVisibility(PsiModifier.PUBLIC);
+    inspectionTool.CLASS = false;
     model.commit();
     String mergedText = "<profile version=\"1.0\">\n" +
                         "  <option name=\"myName\" value=\"ToConvert\" />\n" +
-                        "  <inspection_tool class=\"unused\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" inner_class=\"none\">\n" +
+                        "  <inspection_tool class=\"unused\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
                         "    <option name=\"LOCAL_VARIABLE\" value=\"true\" />\n" +
                         "    <option name=\"FIELD\" value=\"true\" />\n" +
                         "    <option name=\"METHOD\" value=\"true\" />\n" +
@@ -354,6 +355,35 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                          "    <option name=\"ADD_SERVLET_TO_ENTRIES\" value=\"true\" />\n" +
                          "    <option name=\"ADD_NONJAVA_TO_ENTRIES\" value=\"true\" />\n" +
                          "  </inspection_tool>\n" +
+                         "</profile>");
+  }
+
+  public void testMergedMalformedSetUpTearDownInspections() throws Exception {
+    checkMergedNoChanges("<profile version=\"1.0\">\n" +
+                         "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                         "  <inspection_tool class=\"SetupIsPublicVoidNoArg\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
+                         "  <inspection_tool class=\"TeardownIsPublicVoidNoArg\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
+                         "</profile>");
+    checkMergedNoChanges("<profile version=\"1.0\">\n" +
+                         "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                         "  <inspection_tool class=\"MalformedSetUpTearDown\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
+                         "</profile>");
+  }
+
+  public void testMergedMethodDoesntCallSuperMethodInspections() throws Exception {
+    checkMergedNoChanges("<profile version=\"1.0\">\n" +
+                         "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                         "  <inspection_tool class=\"CloneCallsSuperClone\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
+                         "  <inspection_tool class=\"FinalizeCallsSuperFinalize\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
+                         "    <option name=\"ignoreObjectSubclasses\" value=\"false\" />\n" +
+                         "    <option name=\"ignoreTrivialFinalizers\" value=\"true\" />\n" +
+                         "  </inspection_tool>\n" +
+                         "  <inspection_tool class=\"RefusedBequest\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
+                         "    <option name=\"ignoreEmptySuperMethods\" value=\"false\" />\n" +
+                         "    <option name=\"onlyReportWhenAnnotated\" value=\"true\" />\n" +
+                         "  </inspection_tool>\n" +
+                         "  <inspection_tool class=\"SetupCallsSuperSetup\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
+                         "  <inspection_tool class=\"TeardownCallsSuperTeardown\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
                          "</profile>");
   }
 

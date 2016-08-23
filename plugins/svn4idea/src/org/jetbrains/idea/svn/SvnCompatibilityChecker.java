@@ -57,7 +57,7 @@ public class SvnCompatibilityChecker {
         final Application application = ApplicationManager.getApplication();
         application.executeOnPooledThread(new Runnable() {
           public void run() {
-            final List<VirtualFile> suspicious = new ArrayList<VirtualFile>();
+            final List<VirtualFile> suspicious = new ArrayList<>();
             for (VirtualFile vf : result) {
               if (SvnUtil.seemsLikeVersionedDir(vf)) {
                 suspicious.add(vf);

@@ -39,7 +39,7 @@ public abstract class RunOrContinuation<T, E extends Exception> {
     myProject = project;
     myTaskTitle = taskTitle;
     myClazzE = clazzE;
-    myTransparentlyFailedValue = new ThreadSafeTransparentlyFailedValue<T, E>();
+    myTransparentlyFailedValue = new ThreadSafeTransparentlyFailedValue<>();
   }
 
   @Nullable

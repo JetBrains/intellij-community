@@ -76,8 +76,9 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class DocumentCommitThread implements Runnable, Disposable, DocumentCommitProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.DocumentCommitThread");
+  private static final String SYNC_COMMIT_REASON = "Sync commit";
 
-  private final ExecutorService executor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, 1, this);
+  private final ExecutorService executor = new BoundedTaskExecutor("Document committing pool", PooledThreadExecutor.INSTANCE, 1, this);
   private final Object lock = new Object();
   private final HashSetQueue<CommitTask> documentsToCommit = new HashSetQueue<CommitTask>();      // guarded by lock
   private final HashSetQueue<CommitTask> documentsToApplyInEDT = new HashSetQueue<CommitTask>();  // guarded by lock
@@ -385,7 +386,6 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
         documentsToApplyInEDT.add(task);
       }
 
-      Runnable finishRunnable = null;
       if (indicator.isCanceled()) {
         success = false;
       }
@@ -398,24 +398,23 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
             result.set(commitUnderProgress(commitTask, false));
           }
         }, indicator);
-        finishRunnable = result.get().first;
+        final Runnable finishRunnable = result.get().first;
         success = finishRunnable != null;
         failureReason = result.get().second;
-      }
 
-      if (success) {
-        assert !myApplication.isDispatchThread();
-        final Runnable finalFinishRunnable = finishRunnable;
-        final Project finalProject = project;
-        final TransactionGuardImpl guard = (TransactionGuardImpl)TransactionGuard.getInstance();
-        final TransactionId transaction = guard.getModalityTransaction(task.myCreationModalityState);
-        // invokeLater can be removed once transactions are enforced
-        myApplication.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            guard.submitTransaction(finalProject, transaction, finalFinishRunnable);
-          }
-        }, task.myCreationModalityState);
+        if (success) {
+          assert !myApplication.isDispatchThread();
+          final Project finalProject = project;
+          final TransactionGuardImpl guard = (TransactionGuardImpl)TransactionGuard.getInstance();
+          final TransactionId transaction = guard.getModalityTransaction(task.myCreationModalityState);
+          // invokeLater can be removed once transactions are enforced
+          myApplication.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              guard.submitTransaction(finalProject, transaction, finishRunnable);
+            }
+          }, task.myCreationModalityState);
+        }
       }
     }
     catch (ProcessCanceledException e) {
@@ -438,6 +437,9 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
           @Override
           public List<Pair<PsiFileImpl, FileASTNode>> compute() {
             PsiFile file = finalProject.isDisposed() ? null : documentManager.getPsiFile(finalDocument);
+            if (file != null && !file.isValid()) {
+              throw new PsiInvalidElementAccessException(file, "documentManager.getPsiFile(" + finalDocument + ") is invalid");
+            }
             return file == null ? null : getAllFileNodes(file);
           }
         });
@@ -467,6 +469,9 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       throw new RuntimeException(s);
     }
 
+    if (!psiFile.isValid()) {
+      throw new PsiInvalidElementAccessException(psiFile, "File " + psiFile + " is invalid, can't commit");
+    }
     List<Pair<PsiFileImpl, FileASTNode>> allFileNodes = getAllFileNodes(psiFile);
 
     Lock documentLock = getDocumentLock(document);
@@ -474,7 +479,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
     CommitTask task;
     synchronized (lock) {
       // synchronized to ensure no new similar tasks can start before we hold the document's lock
-      task = createNewTaskAndCancelSimilar(project, document, allFileNodes, "Sync commit", ModalityState.current());
+      task = createNewTaskAndCancelSimilar(project, document, allFileNodes, SYNC_COMMIT_REASON, ModalityState.current());
       documentLock.lock();
     }
 
@@ -564,6 +569,16 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
               Processor<Document> finishProcessor = doCommit(task, file, oldFileNode);
               if (finishProcessor != null) {
                 finishProcessors.add(finishProcessor);
+              }
+            }
+            else {
+              // file became invalid while sitting in the queue
+              if (task.reason.equals(SYNC_COMMIT_REASON)) {
+                throw new PsiInvalidElementAccessException(file, "File " + file + " invalidated during sync commit");
+              }
+              else {
+                commitAsynchronously(project, document, "File " + file + " invalidated during background commit; task: "+task,
+                                     task.myCreationModalityState);
               }
             }
           }

@@ -56,7 +56,7 @@ public abstract class DebuggerSessionTabBase extends RunTab {
       .initFocusContent(DebuggerContentInfo.CONSOLE_CONTENT, LayoutViewOptions.STARTUP, new LayoutAttractionPolicy.FocusOnce(false));
   }
 
-  protected static ActionGroup getCustomizedActionGroup(final String id) {
+  public static ActionGroup getCustomizedActionGroup(final String id) {
     return (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(id);
   }
 

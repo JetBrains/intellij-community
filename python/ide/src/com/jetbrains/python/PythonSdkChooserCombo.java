@@ -27,7 +27,6 @@ import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
-import com.jetbrains.python.sdk.PySdkService;
 import com.jetbrains.python.sdk.PythonSdkDetailsStep;
 
 import javax.swing.*;
@@ -77,9 +76,6 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
     final Sdk oldSelectedSdk = (Sdk)comboBox.getSelectedItem();
     PythonSdkDetailsStep.show(project, sdks, null, this, getButton().getLocationOnScreen(), sdk -> {
       if (sdk == null) return;
-      final PySdkService sdkService = PySdkService.getInstance();
-      sdkService.restoreSdk(sdk);
-
       final ProjectSdksModel projectSdksModel = interpreterList.getModel();
       if (projectSdksModel.findSdk(sdk) == null) {
         projectSdksModel.addSdk(sdk);

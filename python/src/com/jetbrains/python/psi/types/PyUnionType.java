@@ -36,7 +36,7 @@ public class PyUnionType implements PyType {
   private final Set<PyType> myMembers;
 
   PyUnionType(Collection<PyType> members) {
-    myMembers = new LinkedHashSet<PyType>(members);
+    myMembers = new LinkedHashSet<>(members);
   }
 
   @Nullable
@@ -44,7 +44,7 @@ public class PyUnionType implements PyType {
                                                           @Nullable PyExpression location,
                                                           @NotNull AccessDirection direction,
                                                           @NotNull PyResolveContext resolveContext) {
-    SmartList<RatedResolveResult> ret = new SmartList<RatedResolveResult>();
+    SmartList<RatedResolveResult> ret = new SmartList<>();
     boolean allNulls = true;
     for (PyType member : myMembers) {
       if (member != null) {
@@ -59,7 +59,7 @@ public class PyUnionType implements PyType {
   }
 
   public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
-    Set<Object> variants = new HashSet<Object>();
+    Set<Object> variants = new HashSet<>();
     for (PyType member : myMembers) {
       if (member != null) {
         Collections.addAll(variants, member.getCompletionVariants(completionPrefix, location, context));
@@ -94,7 +94,7 @@ public class PyUnionType implements PyType {
 
   @Nullable
   public static PyType union(@Nullable PyType type1, @Nullable PyType type2) {
-    Set<PyType> members = new LinkedHashSet<PyType>();
+    Set<PyType> members = new LinkedHashSet<>();
     if (type1 instanceof PyUnionType) {
       members.addAll(((PyUnionType)type1).myMembers);
     }
@@ -169,7 +169,7 @@ public class PyUnionType implements PyType {
    */
   @Nullable
   public PyType exclude(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    final List<PyType> members = new ArrayList<PyType>();
+    final List<PyType> members = new ArrayList<>();
     for (PyType m : getMembers()) {
       if (type == null) {
         if (m != null) {
@@ -192,7 +192,7 @@ public class PyUnionType implements PyType {
 
   private static PyType unit(@Nullable PyType type) {
     if (type instanceof PyUnionType) {
-      Set<PyType> members = new LinkedHashSet<PyType>();
+      Set<PyType> members = new LinkedHashSet<>();
       members.addAll(((PyUnionType)type).getMembers());
       return new PyUnionType(members);
     }

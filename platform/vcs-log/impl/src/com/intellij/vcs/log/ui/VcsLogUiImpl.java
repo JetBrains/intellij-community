@@ -69,7 +69,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     }
 
     myVisiblePackChangeListener = visiblePack -> UIUtil.invokeLaterIfNeeded(() -> {
-      if (!Disposer.isDisposed(VcsLogUiImpl.this)) {
+      if (!Disposer.isDisposed(this)) {
         setVisiblePack(visiblePack);
       }
     });
@@ -193,17 +193,18 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   }
 
   @NotNull
-  public Future<Boolean> jumpToCommit(@NotNull Hash commitHash, @NotNull final VirtualFile root) {
+  public Future<Boolean> jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root) {
     SettableFuture<Boolean> future = SettableFuture.create();
-    jumpTo(commitHash, (model, hash) -> model.getRowOfCommit(hash, root), future);
+    jumpToCommit(commitHash, root, future);
     return future;
   }
 
-  @NotNull
-  public Future<Boolean> jumpToCommitByPartOfHash(@NotNull String commitHash) {
-    SettableFuture<Boolean> future = SettableFuture.create();
-    jumpTo(commitHash, (model, hash) -> model.getRowOfCommitByPartOfHash(hash), future);
-    return future;
+  public void jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root, @NotNull SettableFuture<Boolean> future) {
+    jumpTo(commitHash, (model, hash) -> model.getRowOfCommit(hash, root), future);
+  }
+
+  public void jumpToCommitByPartOfHash(@NotNull String commitHash, @NotNull SettableFuture<Boolean> future) {
+    jumpTo(commitHash, GraphTableModel::getRowOfCommitByPartOfHash, future);
   }
 
   private <T> void jumpTo(@NotNull final T commitId,
@@ -265,6 +266,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     return myFilterer;
   }
 
+  @NotNull
   public VcsLogGraphTable getTable() {
     return myMainFrame.getGraphTable();
   }
@@ -322,7 +324,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
   private void fireFilterChangeEvent(@NotNull VisiblePack visiblePack, boolean refresh) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    Collection<VcsLogListener> logListeners = new ArrayList<VcsLogListener>(myLogListeners);
+    Collection<VcsLogListener> logListeners = new ArrayList<>(myLogListeners);
 
     for (VcsLogListener listener : logListeners) {
       listener.onChange(visiblePack, refresh);

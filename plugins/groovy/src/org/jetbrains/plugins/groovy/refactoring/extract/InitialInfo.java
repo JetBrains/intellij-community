@@ -104,7 +104,7 @@ public class InitialInfo implements ExtractInfoHelper {
     }
     else if (hasReturnValue) {
       assert !returnStatements.isEmpty();
-      List<PsiType> types = new ArrayList<PsiType>(returnStatements.size());
+      List<PsiType> types = new ArrayList<>(returnStatements.size());
       for (GrStatement statement : returnStatements) {
         if (statement instanceof GrReturnStatement) {
           GrExpression returnValue = ((GrReturnStatement)statement).getReturnValue();

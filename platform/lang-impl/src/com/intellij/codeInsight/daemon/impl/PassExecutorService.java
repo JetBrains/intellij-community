@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,6 +115,7 @@ class PassExecutorService implements Disposable {
     MultiMap<Document, FileEditor> documentToEditors = MultiMap.createSet();
     MultiMap<FileEditor, TextEditorHighlightingPass> documentBoundPasses = MultiMap.createSmart();
     MultiMap<FileEditor, EditorBoundHighlightingPass> editorBoundPasses = MultiMap.createSmart();
+    List<Pair<FileEditor, TextEditorHighlightingPass>> passesWithNoDocuments = new ArrayList<>();
     Set<VirtualFile> vFiles = new HashSet<>();
 
     for (Map.Entry<FileEditor, HighlightingPass[]> entry : passesMap.entrySet()) {
@@ -145,7 +146,10 @@ class PassExecutorService implements Disposable {
           TextEditorHighlightingPass textEditorHighlightingPass = convertToTextHighlightingPass(pass, document, nextPassId, prevId);
           document = textEditorHighlightingPass.getDocument();
           documentBoundPasses.putValue(fileEditor, textEditorHighlightingPass);
-          if (document != null) {
+          if (document == null) {
+            passesWithNoDocuments.add(Pair.create(fileEditor, textEditorHighlightingPass));
+          }
+          else {
             documentToEditors.putValue(document, fileEditor);
           }
           prevId = textEditorHighlightingPass.getId();
@@ -183,6 +187,12 @@ class PassExecutorService implements Disposable {
       for (EditorBoundHighlightingPass pass : createdEditorBoundPasses) {
         createScheduledPass(fileEditor, pass, toBeSubmitted, allCreatedPasses, freePasses, dependentPasses, updateProgress, threadsToStartCountdown);
       }
+    }
+
+    for (Pair<FileEditor, TextEditorHighlightingPass> pair : passesWithNoDocuments) {
+      FileEditor fileEditor = pair.first;
+      TextEditorHighlightingPass pass = pair.second;
+      createScheduledPass(fileEditor, pass, toBeSubmitted, ContainerUtil.emptyList(), freePasses, dependentPasses, updateProgress, threadsToStartCountdown);
     }
 
     if (CHECK_CONSISTENCY && !ApplicationInfoImpl.isInPerformanceTest()) {
@@ -482,10 +492,15 @@ class PassExecutorService implements Disposable {
         log(updateProgress, pass, " is canceled during apply, sorry");
         return;
       }
+      Document document = pass.getDocument();
       try {
         if (fileEditor.getComponent().isDisplayable() || ApplicationManager.getApplication().isUnitTestMode()) {
-          log(updateProgress, pass, " Applied");
           pass.applyInformationToEditor();
+          FileStatusMap fileStatusMap = DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap();
+          if (document != null) {
+            fileStatusMap.markFileUpToDate(document, pass.getId());
+          }
+          log(updateProgress, pass, " Applied");
         }
       }
       catch (ProcessCanceledException e) {
@@ -493,7 +508,6 @@ class PassExecutorService implements Disposable {
         throw e;
       }
       catch (RuntimeException e) {
-        Document document = pass.getDocument();
         VirtualFile file = document == null ? null : FileDocumentManager.getInstance().getFile(document);
         FileType fileType = file == null ? null : file.getFileType();
         String message = "Exception while applying information to " + fileEditor + "("+fileType+")";

@@ -89,7 +89,7 @@ public class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<CommitId> {
                                                   return permanentCommitsInfo.getCommitId(linearGraph.getNodeId(row));
                                                 }
                                               }));
-      graphCommits.add(new GraphCommitImpl<CommitId>(commit, parents, permanentCommitsInfo.getTimestamp(nodeId)));
+      graphCommits.add(new GraphCommitImpl<>(commit, parents, permanentCommitsInfo.getTimestamp(nodeId)));
       commitsIdMap.add(commit);
     }
     IntTimestampGetter timestampGetter = PermanentCommitsInfoImpl.createTimestampGetter(graphCommits);
@@ -123,8 +123,8 @@ public class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<CommitId> {
 
     GraphLayoutImpl newLayout = new GraphLayoutImpl(layoutIndexes, headNodeIndexes, starts);
 
-    return new SimpleGraphInfo<CommitId>(newLinearGraph, newLayout, function, timestampGetter,
-                                         LinearGraphUtils.convertIdsToNodeIndexes(linearGraph, branchNodeIds));
+    return new SimpleGraphInfo<>(newLinearGraph, newLayout, function, timestampGetter,
+                                 LinearGraphUtils.convertIdsToNodeIndexes(linearGraph, branchNodeIds));
   }
 
   @NotNull
@@ -138,14 +138,14 @@ public class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<CommitId> {
       function = (NotNullFunction<Integer, CommitId>)new IntegerCommitIdMapFunction(CompressedIntList.newInstance(ints));
     }
     else {
-      function = new CommitIdMapFunction<CommitId>(commitsIdMap);
+      function = new CommitIdMapFunction<>(commitsIdMap);
     }
     return function;
   }
 
   @NotNull
   private static <CommitId> TObjectIntHashMap<CommitId> reverseCommitIdMap(PermanentCommitsInfo<CommitId> permanentCommitsInfo, int size) {
-    TObjectIntHashMap<CommitId> result = new TObjectIntHashMap<CommitId>();
+    TObjectIntHashMap<CommitId> result = new TObjectIntHashMap<>();
     for (int i = 0; i < size; i++) {
       result.put(permanentCommitsInfo.getCommitId(i), i);
     }

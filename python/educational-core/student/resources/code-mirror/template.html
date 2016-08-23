@@ -22,7 +22,7 @@
   <!--suppress CssInvalidPropertyValue -->
   <style media="screen" type="text/css">
     body {
-      font-size: ${font_size}pt !important;
+      font-size: ${font_size} pt !important;
     }
 
   </style>
@@ -31,7 +31,14 @@
 ${code}
 <script>
   var nodeList = document.body.getElementsByTagName("code");
-  CodeMirror.colorize(nodeList, "${default_mode}")
+  nodes = Array.prototype.slice.call(nodeList, 0);
+  
+  nodes.forEach(function (node) {
+    var text = node.innerHTML
+    node.innerHTML = text.replace(/<br\s*>/g, '\n')
+  });
+
+  CodeMirror.colorize(nodeList, "python")
   CodeMirror.colorize();
 </script>
 </body>

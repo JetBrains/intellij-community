@@ -17,10 +17,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.defUse.DefUseInspection;
-import com.intellij.idea.Bombed;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-
-import java.util.Calendar;
 
 public class DefUseTest extends LightCodeInsightFixtureTestCase {
   @Override
@@ -38,8 +35,24 @@ public class DefUseTest extends LightCodeInsightFixtureTestCase {
   public void testUsedInArrayInitializer() { doTest(); }
   public void testHang() { doTest(); }
   public void testOperatorAssignment() { doTest(); }
-  @Bombed(user="roman.shevchenko@jetbrains.com", day=1, month=Calendar.AUGUST, year=2017) public void testTryWithFinally() { doTest(); }
+  public void testTryWithFinally() { doTest(); }
   public void testTryWithoutFinally() { doTest(); }
+
+  public void testSequence() { doTest(); }
+  public void testIfAfter() { doTest(); }
+  public void testIfBefore() { doTest(); }
+  public void testIfNested() { doTest(); }
+  public void testInLoop() { doTest(); }
+  public void testIfInLoop() { doTest(); }
+  public void testThrowInTry() { doTest(); }
+  public void testThrowInFinally() { doTest(); }
+  public void testTryThrowFinally() { doTest(); }
+  public void testNestedTryFinally() { doTest(); }
+  public void testNestedBigTryFinally() { doTest(); }
+  public void testTryWithFinallyRethrow() { doTest(); }
+  public void testComplexDoubleTryFinally() { doTest(); }
+  public void testComplexTripleTryFinally() { doTest(); }
+  public void testComplexQuintipleTryFinally() { doTest(); }
 
   private void doTest() {
     myFixture.enableInspections(new DefUseInspection());

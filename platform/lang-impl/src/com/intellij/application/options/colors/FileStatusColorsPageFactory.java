@@ -37,7 +37,7 @@ class FileStatusColorsPageFactory implements ColorAndFontPanelFactory {
   }
 
   private static Collection<String> collectFileTypes() {
-    ArrayList<String> result = new ArrayList<String>();
+    ArrayList<String> result = new ArrayList<>();
     FileStatus[] statuses = FileStatusFactory.getInstance().getAllFileStatuses();
 
     for (FileStatus status : statuses) {

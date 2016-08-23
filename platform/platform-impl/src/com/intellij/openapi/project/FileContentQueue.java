@@ -49,10 +49,10 @@ public class FileContentQueue {
 
   private static final int ourTasksNumber =
     SystemProperties.getBooleanProperty("idea.allow.parallel.file.reading", true) ? CacheUpdateRunner.indexingThreadCount() : 1;
-  private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(ourTasksNumber);
+  private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("FileContentQueue pool", ourTasksNumber);
 
   // Unbounded (!)
-  private final LinkedBlockingDeque<FileContent> myLoadedContents = new LinkedBlockingDeque<FileContent>();
+  private final LinkedBlockingDeque<FileContent> myLoadedContents = new LinkedBlockingDeque<>();
   private final AtomicInteger myContentsToLoad = new AtomicInteger();
 
   private final AtomicLong myLoadedBytesInQueue = new AtomicLong();
@@ -69,7 +69,7 @@ public class FileContentQueue {
     int numberOfFiles = files.size();
     myContentsToLoad.set(numberOfFiles);
     // ABQ is more memory efficient for significant number of files (e.g. 500K)
-    myFilesQueue = numberOfFiles > 0 ? new ArrayBlockingQueue<VirtualFile>(numberOfFiles, false, files) : null;
+    myFilesQueue = numberOfFiles > 0 ? new ArrayBlockingQueue<>(numberOfFiles, false, files) : null;
     myProgressIndicator = indicator;
   }
 

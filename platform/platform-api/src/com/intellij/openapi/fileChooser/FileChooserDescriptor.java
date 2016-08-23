@@ -49,13 +49,13 @@ public class FileChooserDescriptor implements Cloneable {
   private String myDescription;
 
   private boolean myHideIgnored = true;
-  private final List<VirtualFile> myRoots = new ArrayList<VirtualFile>();
+  private final List<VirtualFile> myRoots = new ArrayList<>();
   private boolean myShowFileSystemRoots = true;
   private boolean myTreeRootVisible = false;
   private boolean myShowHiddenFiles = false;
   private Condition<VirtualFile> myFileFilter = null;
 
-  private final Map<String, Object> myUserData = new HashMap<String, Object>();
+  private final Map<String, Object> myUserData = new HashMap<>();
 
   /**
    * Creates new instance. Use methods from {@link FileChooserDescriptorFactory} for most used descriptors.

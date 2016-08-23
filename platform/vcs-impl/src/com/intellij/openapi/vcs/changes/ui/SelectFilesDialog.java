@@ -142,7 +142,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog<VirtualFile> {
     }
 
     public void refresh() {
-      setChangesToDisplay(new ArrayList<VirtualFile>(Collections2.filter(getIncludedChanges(), new Predicate<VirtualFile>() {
+      setChangesToDisplay(new ArrayList<>(Collections2.filter(getIncludedChanges(), new Predicate<VirtualFile>() {
         @Override
         public boolean apply(@Nullable VirtualFile input) {
           return input != null && input.isValid();

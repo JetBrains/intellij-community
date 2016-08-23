@@ -32,7 +32,7 @@ import java.util.*;
  *         Date: Dec 10, 2007
  */
 public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
-  private final Map<Key, ChangeTrackingValueContainer<Value>> myMap = new HashMap<Key, ChangeTrackingValueContainer<Value>>();
+  private final Map<Key, ChangeTrackingValueContainer<Value>> myMap = new HashMap<>();
   @NotNull
   private final IndexStorage<Key, Value> myBackendStorage;
   private final List<BufferingStateListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -123,14 +123,14 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   @NotNull
   @Override
   public Collection<Key> getKeys() throws StorageException {
-    final Set<Key> keys = new HashSet<Key>();
+    final Set<Key> keys = new HashSet<>();
     processKeys(Processors.cancelableCollectProcessor(keys), null, null);
     return keys;
   }
 
   @Override
   public boolean processKeys(@NotNull final Processor<Key> processor, GlobalSearchScope scope, IdFilter idFilter) throws StorageException {
-    final Set<Key> stopList = new HashSet<Key>();
+    final Set<Key> stopList = new HashSet<>();
 
     Processor<Key> decoratingProcessor = key -> {
       if (stopList.contains(key)) return true;
@@ -182,7 +182,7 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   private UpdatableValueContainer<Value> getMemValueContainer(final Key key) {
     ChangeTrackingValueContainer<Value> valueContainer = myMap.get(key);
     if (valueContainer == null) {
-      valueContainer = new ChangeTrackingValueContainer<Value>(new ChangeTrackingValueContainer.Initializer<Value>() {
+      valueContainer = new ChangeTrackingValueContainer<>(new ChangeTrackingValueContainer.Initializer<Value>() {
         @Override
         public Object getLock() {
           return this;

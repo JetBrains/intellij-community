@@ -13,8 +13,8 @@ public class DiffCalculator {
     Map<String, Long> toCreate = withAllRemoved(newChecksums, oldChecksums);
 
     // Some creates become updates if found in different directories.
-    result.filesToCreate = new LinkedHashMap<String, Long>();
-    result.filesToUpdate = new LinkedHashMap<String, Update>();
+    result.filesToCreate = new LinkedHashMap<>();
+    result.filesToUpdate = new LinkedHashMap<>();
 
     for (Map.Entry<String, Long> update : toUpdate.entrySet()) {
       result.filesToUpdate.put(update.getKey(), new Update(update.getKey(), update.getValue(), false));
@@ -81,13 +81,13 @@ public class DiffCalculator {
   }
 
   private static Map<String, List<String>> groupFilesByName(Map<String, Long> toDelete) {
-    Map<String, List<String>> result = new HashMap<String, List<String>>();
+    Map<String, List<String>> result = new HashMap<>();
     for (String path : toDelete.keySet()) {
       if (!path.endsWith("/")) {
         String name = new File(path).getName();
         List<String> paths = result.get(name);
         if (paths == null) {
-          paths = new LinkedList<String>();
+          paths = new LinkedList<>();
           result.put(name, paths);
         }
         paths.add(path);
@@ -97,7 +97,7 @@ public class DiffCalculator {
   }
 
   public static Map<Long,String> inverse(Map<String, Long> map) {
-    Map<Long, String> inv = new LinkedHashMap<Long, String>();
+    Map<Long, String> inv = new LinkedHashMap<>();
     for (Map.Entry<String, Long> entry : map.entrySet()) {
       inv.put(entry.getValue(), entry.getKey());
     }
@@ -105,7 +105,7 @@ public class DiffCalculator {
   }
 
   private static Map<String, Long> withAllRemoved(Map<String, Long> from, Map<String, Long> toRemove) {
-    Map<String, Long> result = new LinkedHashMap<String, Long>(from);
+    Map<String, Long> result = new LinkedHashMap<>(from);
     for (String each : toRemove.keySet()) {
       result.remove(each);
     }
@@ -113,7 +113,7 @@ public class DiffCalculator {
   }
 
   private static Map<String, Long> collect(Map<String, Long> older, Map<String, Long> newer, List<String> critical, boolean equal) {
-    Map<String, Long> result = new LinkedHashMap<String, Long>();
+    Map<String, Long> result = new LinkedHashMap<>();
     for (Map.Entry<String, Long> each : newer.entrySet()) {
       String file = each.getKey();
       Long oldChecksum = older.get(file);

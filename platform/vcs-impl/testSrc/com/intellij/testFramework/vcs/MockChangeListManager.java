@@ -23,7 +23,6 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
-import com.intellij.util.continuation.ContinuationPause;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +38,7 @@ public class MockChangeListManager extends ChangeListManagerEx {
 
   public static final String DEFAULT_CHANGE_LIST_NAME = "Default";
 
-  private final Map<String, MockChangeList> myChangeLists = new HashMap<String, MockChangeList>();
+  private final Map<String, MockChangeList> myChangeLists = new HashMap<>();
   private LocalChangeList myActiveChangeList;
   private final MockChangeList myDefaultChangeList;
 
@@ -96,7 +95,7 @@ public class MockChangeListManager extends ChangeListManagerEx {
 
   @Override
   public List<LocalChangeList> getChangeListsCopy() {
-    return new ArrayList<LocalChangeList>(myChangeLists.values());
+    return new ArrayList<>(myChangeLists.values());
   }
 
   @NotNull
@@ -124,7 +123,7 @@ public class MockChangeListManager extends ChangeListManagerEx {
   @NotNull
   @Override
   public Collection<Change> getAllChanges() {
-    Collection<Change> changes = new ArrayList<Change>();
+    Collection<Change> changes = new ArrayList<>();
     for (MockChangeList list : myChangeLists.values()) {
       changes.addAll(list.getChanges());
     }
@@ -209,7 +208,7 @@ public class MockChangeListManager extends ChangeListManagerEx {
   @NotNull
   @Override
   public Collection<Change> getChangesIn(FilePath path) {
-    List<Change> changes = new ArrayList<Change>();
+    List<Change> changes = new ArrayList<>();
     for (Change change : getAllChanges()) {
       ContentRevision before = change.getBeforeRevision();
       ContentRevision after = change.getAfterRevision();
@@ -304,11 +303,6 @@ public class MockChangeListManager extends ChangeListManagerEx {
 
   @Override
   public String getDefaultListName() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void freeze(ContinuationPause context, String reason) {
     throw new UnsupportedOperationException();
   }
 

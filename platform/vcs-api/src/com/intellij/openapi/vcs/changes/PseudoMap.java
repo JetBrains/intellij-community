@@ -29,7 +29,7 @@ public class PseudoMap<Key, Value> implements PairConsumer<Key, Value>, Nullable
   }
 
   protected Map<Key, Value> createMap() {
-    return new HashMap<Key, Value>();
+    return new HashMap<>();
   }
 
   public Value fun(Key key) {

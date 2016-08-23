@@ -14,16 +14,22 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.VcsLogProvider;
+import com.intellij.vcs.log.VcsLogStorage;
+import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntIntHashMap;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The DataGetter realizes the following pattern of getting some data (parametrized by {@code T}) from the VCS:
@@ -41,7 +47,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
 
   private static final int MAX_LOADING_TASKS = 10;
 
-  @NotNull protected final VcsLogHashMap myHashMap;
+  @NotNull protected final VcsLogStorage myHashMap;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
   @NotNull private final VcsCommitCache<Integer, T> myCache;
   @NotNull private final SequentialLimitedLifoExecutor<TaskDescriptor> myLoader;
@@ -51,9 +57,9 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
    */
   private long myCurrentTaskIndex = 0;
 
-  @NotNull private final Collection<Runnable> myLoadingFinishedListeners = new ArrayList<Runnable>();
+  @NotNull private final Collection<Runnable> myLoadingFinishedListeners = new ArrayList<>();
 
-  AbstractDataGetter(@NotNull VcsLogHashMap hashMap,
+  AbstractDataGetter(@NotNull VcsLogStorage hashMap,
                      @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
                      @NotNull VcsCommitCache<Integer, T> cache,
                      @NotNull Disposable parentDisposable) {
@@ -62,7 +68,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     myCache = cache;
     Disposer.register(parentDisposable, this);
     myLoader =
-      new SequentialLimitedLifoExecutor<TaskDescriptor>(this, MAX_LOADING_TASKS, task -> {
+      new SequentialLimitedLifoExecutor<>(this, MAX_LOADING_TASKS, task -> {
         preLoadCommitData(task.myCommits);
         notifyLoaded();
       });
@@ -136,7 +142,11 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
           public void run(@NotNull final ProgressIndicator indicator) {
             indicator.checkCanceled();
             try {
-              result.addAll(preLoadCommitData(toLoad));
+              TIntObjectHashMap<T> map = preLoadCommitData(toLoad);
+              map.forEachValue(value -> {
+                result.add(value);
+                return true;
+              });
               sortCommitsByRow(result, commits);
               notifyLoaded();
             }
@@ -227,8 +237,8 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     return commits;
   }
 
-  private Set<T> preLoadCommitData(@NotNull TIntHashSet commits) throws VcsException {
-    Set<T> result = ContainerUtil.newHashSet();
+  private TIntObjectHashMap<T> preLoadCommitData(@NotNull TIntHashSet commits) throws VcsException {
+    TIntObjectHashMap<T> result = new TIntObjectHashMap<>();
     final MultiMap<VirtualFile, String> rootsAndHashes = MultiMap.create();
     commits.forEach(commit -> {
       CommitId commitId = myHashMap.getCommitId(commit);
@@ -242,8 +252,11 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
       VcsLogProvider logProvider = myLogProviders.get(entry.getKey());
       if (logProvider != null) {
         List<? extends T> details = readDetails(logProvider, entry.getKey(), ContainerUtil.newArrayList(entry.getValue()));
-        result.addAll(details);
-        saveInCache(details);
+        for (T data : details) {
+          int index = myHashMap.getCommitIndex(data.getId(), data.getRoot());
+          result.put(index, data);
+        }
+        saveInCache(result);
       }
       else {
         LOG.error("No log provider for root " + entry.getKey().getPath() + ". All known log providers " + myLogProviders);
@@ -253,13 +266,14 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     return result;
   }
 
-  public void saveInCache(final List<? extends T> details) {
+  public void saveInCache(@NotNull TIntObjectHashMap<T> details) {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        for (T data : details) {
-          myCache.put(myHashMap.getCommitIndex(data.getId(), data.getRoot()), data);
-        }
+        details.forEachEntry((key, value) -> {
+          myCache.put(key, value);
+          return true;
+        });
       }
     });
   }

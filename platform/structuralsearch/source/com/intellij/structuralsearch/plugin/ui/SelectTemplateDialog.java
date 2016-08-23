@@ -273,7 +273,7 @@ public class SelectTemplateDialog extends DialogWrapper {
       if (selectedValues == null) {
         return new Configuration[0];
       }
-      Collection<Configuration> configurations = new ArrayList<Configuration>();
+      Collection<Configuration> configurations = new ArrayList<>();
       for (Object selectedValue : selectedValues) {
         if (selectedValue instanceof Configuration) {
           configurations.add((Configuration)selectedValue);
@@ -286,7 +286,7 @@ public class SelectTemplateDialog extends DialogWrapper {
       if (paths == null) {
         return new Configuration[0];
       }
-      Collection<Configuration> configurations = new ArrayList<Configuration>();
+      Collection<Configuration> configurations = new ArrayList<>();
       for (TreePath path : paths) {
 
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();

@@ -51,7 +51,7 @@ import java.util.*;
  * @author yole
  */
 public abstract class GeneratePluginClassAction extends CreateElementActionBase implements DescriptorUtil.Patcher {
-  protected final Set<XmlFile> myFilesToPatch = new HashSet<XmlFile>();
+  protected final Set<XmlFile> myFilesToPatch = new HashSet<>();
 
   // length == 1 is important to make MyInputValidator close the dialog when
   // module selection is canceled. That's some weird interface actually...
@@ -116,7 +116,7 @@ public abstract class GeneratePluginClassAction extends CreateElementActionBase 
       if (orderEntries.isEmpty()) {
         return null;
       }
-      Set<Module> modules = new HashSet<Module>();
+      Set<Module> modules = new HashSet<>();
       for (OrderEntry orderEntry : orderEntries) {
         modules.add(orderEntry.getOwnerModule());
       }

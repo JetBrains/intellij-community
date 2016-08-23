@@ -53,14 +53,14 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
   }
 
   private static Set<Module> buildDependents(Module module) {
-    Set<Module> result = new THashSet<Module>();
+    Set<Module> result = new THashSet<>();
     result.add(module);
     
-    Set<Module> processedExporting = new THashSet<Module>();
+    Set<Module> processedExporting = new THashSet<>();
 
     ModuleIndex index = getModuleIndex(module.getProject());
 
-    Queue<Module> walkingQueue = new Queue<Module>(10);
+    Queue<Module> walkingQueue = new Queue<>(10);
     walkingQueue.addLast(module);
 
     while (!walkingQueue.isEmpty()) {

@@ -86,7 +86,7 @@ public final class PyTestTracebackParserTest {
     final String s =
       StreamUtil.readText(PyTestTracebackParserTest.class.getResource("linksDataTest.txt").openStream(), Charset.defaultCharset());
 
-    final Set<String> requiredStrings = new HashSet<String>();
+    final Set<String> requiredStrings = new HashSet<>();
     requiredStrings.add("file:///c:/windows/system32/file.txt - 42");
     requiredStrings.add("file:///c:/windows/system32/file_spam.txt - 42");
     requiredStrings.add("c:\\documents and settings\\foo.txt - 43");

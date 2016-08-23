@@ -83,7 +83,7 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
           }
         });
 
-        myIndex.registerIndexableSet(FileBasedIndexProjectHandler.this, project);
+        myIndex.registerIndexableSet(this, project);
         projectManager.addProjectManagerListener(project, new ProjectManagerAdapter() {
           private boolean removed;
           @Override

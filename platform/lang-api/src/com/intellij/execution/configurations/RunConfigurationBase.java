@@ -54,8 +54,8 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   private String myName = "";
   private final Icon myIcon;
 
-  private ArrayList<LogFileOptions> myLogFiles = new ArrayList<LogFileOptions>();
-  private ArrayList<PredefinedLogFile> myPredefinedLogFiles = new ArrayList<PredefinedLogFile>();
+  private ArrayList<LogFileOptions> myLogFiles = new ArrayList<>();
+  private ArrayList<PredefinedLogFile> myPredefinedLogFiles = new ArrayList<>();
   private boolean mySaveOutput = false;
   private boolean myShowConsoleOnStdOut = false;
   private boolean myShowConsoleOnStdErr = false;
@@ -130,8 +130,8 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   @Override
   public RunConfiguration clone() {
     final RunConfigurationBase runConfiguration = (RunConfigurationBase)super.clone();
-    runConfiguration.myLogFiles = new ArrayList<LogFileOptions>(myLogFiles);
-    runConfiguration.myPredefinedLogFiles = new ArrayList<PredefinedLogFile>(myPredefinedLogFiles);
+    runConfiguration.myLogFiles = new ArrayList<>(myLogFiles);
+    runConfiguration.myPredefinedLogFiles = new ArrayList<>(myPredefinedLogFiles);
     runConfiguration.myFileOutputPath = myFileOutputPath;
     runConfiguration.mySaveOutput = mySaveOutput;
     runConfiguration.myShowConsoleOnStdOut = myShowConsoleOnStdOut;
@@ -159,7 +159,7 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
 
   @NotNull
   public ArrayList<LogFileOptions> getAllLogFiles() {
-    ArrayList<LogFileOptions> list = new ArrayList<LogFileOptions>(myLogFiles);
+    ArrayList<LogFileOptions> list = new ArrayList<>(myLogFiles);
     for (PredefinedLogFile predefinedLogFile : myPredefinedLogFiles) {
       final LogFileOptions options = getOptionsForPredefinedLogFile(predefinedLogFile);
       if (options != null) {

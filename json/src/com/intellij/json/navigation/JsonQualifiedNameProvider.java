@@ -29,7 +29,7 @@ public class JsonQualifiedNameProvider implements QualifiedNameProvider {
     if (!(element instanceof JsonElement)) {
       return null;
     }
-    final LinkedList<String> qualifiers = new LinkedList<String>();
+    final LinkedList<String> qualifiers = new LinkedList<>();
     JsonProperty parentProperty = PsiTreeUtil.getNonStrictParentOfType(element, JsonProperty.class);
     while (parentProperty != null) {
       qualifiers.addFirst(parentProperty.getName());

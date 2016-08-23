@@ -53,7 +53,7 @@ public class HgOutgoingCommitsProvider extends OutgoingCommitsProvider<HgReposit
     String[] templates = HgBaseLogParser.constructFullTemplateArgument(true, version);
     HgOutgoingCommand hgOutgoingCommand = new HgOutgoingCommand(project);
     HgTarget hgTarget = pushSpec.getTarget();
-    List<VcsError> errors = new ArrayList<VcsError>();
+    List<VcsError> errors = new ArrayList<>();
     if (StringUtil.isEmptyOrSpaces(hgTarget.myTarget)) {
       errors.add(new VcsError("Hg push path could not be empty."));
       return new OutgoingResult(Collections.<VcsFullCommitDetails>emptyList(), errors);

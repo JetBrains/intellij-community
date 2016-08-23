@@ -44,7 +44,7 @@ import java.util.List;
  */
 final class Stripe extends JPanel implements UISettingsListener {
   private final int myAnchor;
-  private final ArrayList<StripeButton> myButtons = new ArrayList<StripeButton>();
+  private final ArrayList<StripeButton> myButtons = new ArrayList<>();
   private final MyKeymapManagerListener myWeakKeymapManagerListener;
 
   private Dimension myPrefSize;
@@ -361,10 +361,10 @@ final class Stripe extends JPanel implements UISettingsListener {
   }
 
   private List<StripeButton> getButtonsToLayOut() {
-    List<StripeButton> result = new ArrayList<StripeButton>();
+    List<StripeButton> result = new ArrayList<>();
 
-    List<StripeButton> tools = new ArrayList<StripeButton>();
-    List<StripeButton> sideTools = new ArrayList<StripeButton>();
+    List<StripeButton> tools = new ArrayList<>();
+    List<StripeButton> sideTools = new ArrayList<>();
 
     for (StripeButton b : myButtons) {
       if (!isConsideredInLayout(b)) continue;

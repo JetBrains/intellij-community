@@ -22,7 +22,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.webcore.packaging.PackageVersionComparator;
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation;
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionNormalizer;
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec;
@@ -293,20 +292,14 @@ public class PyRequirement {
 
   @Nullable
   public PyPackage match(@NotNull List<PyPackage> packages) {
-    for (PyPackage pkg : packages) {
-      if (normalizeName(myName).equalsIgnoreCase(pkg.getName())) {
-        for (PyRequirementVersionSpec spec : myVersionSpecs) {
-          final int cmp = PackageVersionComparator.VERSION_COMPARATOR.compare(pkg.getVersion(), spec.getVersion());
+    final String normalizedName = normalizeName(myName);
 
-          if (!spec.getRelation().isSuccessful(cmp)) {
-            return null;
-          }
-        }
-        return pkg;
-      }
-    }
-
-    return null;
+    return packages
+      .stream()
+      .filter(pkg -> normalizedName.equalsIgnoreCase(pkg.getName()))
+      .findAny()
+      .filter(pkg -> myVersionSpecs.stream().allMatch(spec -> spec.matches(pkg.getVersion())))
+      .orElse(null);
   }
 
   @Nullable
@@ -450,8 +443,8 @@ public class PyRequirement {
   @NotNull
   private static Pair<String, String> parseNameAndVersionFromVcsOrArchive(@NotNull String name) {
     boolean isName = true;
-    final List<String> nameParts = new ArrayList<String>();
-    final List<String> versionParts = new ArrayList<String>();
+    final List<String> nameParts = new ArrayList<>();
+    final List<String> versionParts = new ArrayList<>();
 
     for (String part : StringUtil.split(name, "-")) {
       final boolean partStartsWithDigit = !part.isEmpty() && Character.isDigit(part.charAt(0));

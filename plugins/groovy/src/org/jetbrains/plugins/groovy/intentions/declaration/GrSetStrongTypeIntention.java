@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@ public class GrSetStrongTypeIntention extends Intention {
       return;
     }
 
-    ArrayList<TypeConstraint> types = new ArrayList<TypeConstraint>();
+    ArrayList<TypeConstraint> types = new ArrayList<>();
 
     if (parent.getParent() instanceof GrForInClause) {
       types.add(SupertypeConstraint.create(PsiUtil.extractIteratedType((GrForInClause)parent.getParent())));
@@ -184,7 +184,7 @@ public class GrSetStrongTypeIntention extends Intention {
     GrModifierList modifierList = getModifierList(parent);
 
     if (modifierList != null && modifierList.hasModifierProperty(GrModifier.DEF) && modifierList.getModifiers().length == 1) {
-      PsiElement modifier = PsiUtil.findModifierInList(modifierList, GrModifier.DEF);
+      PsiElement modifier = modifierList.getModifier(GrModifier.DEF);
       LOG.assertTrue(modifier != null);
       int modifierOffset = modifier.getTextRange().getEndOffset() - elementToBuildTemplateOn.getTextRange().getStartOffset();
       return new TypeInfo(modifier, modifierOffset);

@@ -76,7 +76,7 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
 
   @Override
   public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
-    List<Object> result = new ArrayList<Object>();
+    List<Object> result = new ArrayList<>();
     Collections.addAll(result, super.getCompletionVariants(completionPrefix, location, context));
     for (String field : myFields) {
       result.add(LookupElementBuilder.create(field));

@@ -39,7 +39,7 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
   @Override
   public void copySelectionToClipboard(@NotNull Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    List<TextBlockTransferableData> extraData = new ArrayList<TextBlockTransferableData>();
+    List<TextBlockTransferableData> extraData = new ArrayList<>();
     String s = editor.getCaretModel().supportsMultipleCarets() ? getSelectedTextForClipboard(editor, extraData)
                                                                : editor.getSelectionModel().getSelectedText();
     if (s == null) return;

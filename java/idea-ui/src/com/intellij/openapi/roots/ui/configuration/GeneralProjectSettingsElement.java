@@ -72,11 +72,11 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
 
     List<Chunk<ModuleSourceSet>> sourceSetCycles = ModuleCompilerUtil.computeSourceSetCycles(myContext.getModulesConfigurator());
 
-    List<String> cycles = new ArrayList<String>();
+    List<String> cycles = new ArrayList<>();
 
     for (Chunk<ModuleSourceSet> chunk : sourceSetCycles) {
       final Set<ModuleSourceSet> sourceSets = chunk.getNodes();
-      List<String> names = new ArrayList<String>();
+      List<String> names = new ArrayList<>();
       for (ModuleSourceSet sourceSet : sourceSets) {
         String name = sourceSet.getDisplayName();
         names.add(names.isEmpty() ? name : StringUtil.decapitalize(name));

@@ -16,12 +16,12 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ObjectsConvertor;
@@ -73,11 +73,11 @@ public class MatchPatchPaths {
     final PatchBaseDirectoryDetector directoryDetector = PatchBaseDirectoryDetector.getInstance(myProject);
 
     myUseProjectRootAsPredefinedBase = useProjectRootAsPredefinedBase;
-    final List<PatchAndVariants> candidates = new ArrayList<PatchAndVariants>(list.size());
-    final List<FilePatch> newOrWithoutMatches = new ArrayList<FilePatch>();
+    final List<PatchAndVariants> candidates = new ArrayList<>(list.size());
+    final List<FilePatch> newOrWithoutMatches = new ArrayList<>();
     findCandidates(list, directoryDetector, candidates, newOrWithoutMatches);
 
-    final MultiMap<VirtualFile, AbstractFilePatchInProgress> result = new MultiMap<VirtualFile, AbstractFilePatchInProgress>();
+    final MultiMap<VirtualFile, AbstractFilePatchInProgress> result = new MultiMap<>();
     // process exact matches: if one, leave and extract. if several - leave only them
     filterExactMatches(candidates, result);
 
@@ -85,7 +85,7 @@ public class MatchPatchPaths {
     selectByContextOrByStrip(candidates, result); // for text only
     // created or no variants
     workWithNotExisting(directoryDetector, newOrWithoutMatches, result);
-    return new ArrayList<AbstractFilePatchInProgress>(result.values());
+    return new ArrayList<>(result.values());
   }
 
   private void workWithNotExisting(@NotNull PatchBaseDirectoryDetector directoryDetector,
@@ -146,7 +146,7 @@ public class MatchPatchPaths {
         iterator.remove();
       }
       else {
-        final List<AbstractFilePatchInProgress> exact = new ArrayList<AbstractFilePatchInProgress>(candidate.getVariants().size());
+        final List<AbstractFilePatchInProgress> exact = new ArrayList<>(candidate.getVariants().size());
         for (AbstractFilePatchInProgress patch : candidate.getVariants()) {
           if (patch.getCurrentStrip() == 0) {
             exact.add(patch);
@@ -173,7 +173,7 @@ public class MatchPatchPaths {
         newOrWithoutMatches.add(patch);
         continue;
       }
-      final Collection<VirtualFile> files = new ArrayList<VirtualFile>(findFilesFromIndex(directoryDetector, fileName));
+      final Collection<VirtualFile> files = new ArrayList<>(findFilesFromIndex(directoryDetector, fileName));
       // for directories outside the project scope but under version control
       if (patch.getBeforeName() != null && patch.getBeforeName().startsWith("..")) {
         final VirtualFile relativeFile = VfsUtil.findRelativeFile(myBaseDir, patch.getBeforeName().replace('\\', '/').split("/"));
@@ -211,12 +211,7 @@ public class MatchPatchPaths {
       }
     });
     final File shelfResourcesDirectory = ShelveChangesManager.getInstance(myProject).getShelfResourcesDirectory();
-    return ContainerUtil.filter(files, new Condition<VirtualFile>() {
-      @Override
-      public boolean value(VirtualFile file) {
-        return !FileUtil.isAncestor(shelfResourcesDirectory, VfsUtilCore.virtualToIoFile(file), false);
-      }
-    });
+    return ContainerUtil.filter(files, file -> !FileUtil.isAncestor(shelfResourcesDirectory, VfsUtilCore.virtualToIoFile(file), false));
   }
 
   private static void putSelected(@NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> result,
@@ -314,12 +309,12 @@ public class MatchPatchPaths {
   private static Pair<VirtualFile, Integer> compareNamesImpl(String[] parts, VirtualFile parent, int idx) {
     while ((parent != null) && (idx >= 0)) {
       if (!parent.getName().equals(parts[idx])) {
-        return new Pair<VirtualFile, Integer>(parent, idx + 1);
+        return new Pair<>(parent, idx + 1);
       }
       parent = parent.getParent();
       --idx;
     }
-    return new Pair<VirtualFile, Integer>(parent, idx + 1);
+    return new Pair<>(parent, idx + 1);
   }
 
   @Nullable
@@ -338,8 +333,9 @@ public class MatchPatchPaths {
 
   @Nullable
   private static AbstractFilePatchInProgress createPatchInProgress(@NotNull FilePatch patch, @NotNull VirtualFile dir) {
-    return patch instanceof TextFilePatch ? new TextFilePatchInProgress((TextFilePatch)patch, null, dir) :
-           patch instanceof ShelvedBinaryFilePatch ? new BinaryFilePatchInProgress((ShelvedBinaryFilePatch)patch, null, dir)
-                                                   : null;
+    if (patch instanceof TextFilePatch) return new TextFilePatchInProgress((TextFilePatch)patch, null, dir);
+    if (patch instanceof ShelvedBinaryFilePatch) return new ShelvedBinaryFilePatchInProgress((ShelvedBinaryFilePatch)patch, null, dir);
+    if (patch instanceof BinaryFilePatch) return new BinaryFilePatchInProgress((BinaryFilePatch)patch, null, dir);
+    return null;
   }
 }

@@ -69,7 +69,7 @@ public class SearchUtil {
                                            final HashMap<SearchableConfigurable, TreeSet<OptionDescription>> options) {
     for (Configurable configurable : configurables) {
       if (configurable instanceof SearchableConfigurable) {
-        TreeSet<OptionDescription> configurableOptions = new TreeSet<OptionDescription>();
+        TreeSet<OptionDescription> configurableOptions = new TreeSet<>();
 
         if (configurable instanceof Configurable.Composite) {
           final Configurable[] children = ((Configurable.Composite)configurable).getConfigurables();
@@ -342,7 +342,7 @@ public class SearchUtil {
     }
     final Pattern insideHtmlTagPattern = Pattern.compile("[<[^<>]*>]*<[^<>]*");
     final SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
-    final HashSet<String> quoted = new HashSet<String>();
+    final HashSet<String> quoted = new HashSet<>();
     filter = processFilter(quoteStrictOccurrences(textToMarkup, filter), quoted);
     final Set<String> options = registrar.getProcessedWords(filter);
     final Set<String> words = registrar.getProcessedWords(textToMarkup);
@@ -413,9 +413,9 @@ public class SearchUtil {
       textRenderer.append(text, new SimpleTextAttributes(background, foreground, JBColor.RED, style));
     }
     else { //markup
-      final HashSet<String> quoted = new HashSet<String>();
+      final HashSet<String> quoted = new HashSet<>();
       filter = processFilter(quoteStrictOccurrences(text, filter), quoted);
-      final TreeMap<Integer, String> indx = new TreeMap<Integer, String>();
+      final TreeMap<Integer, String> indx = new TreeMap<>();
       for (String stripped : quoted) {
         int beg = 0;
         int idx;
@@ -425,7 +425,7 @@ public class SearchUtil {
         }
       }
 
-      final List<String> selectedWords = new ArrayList<String>();
+      final List<String> selectedWords = new ArrayList<>();
       int pos = 0;
       for (Integer index : indx.keySet()) {
         final String stripped = indx.get(index);
@@ -574,12 +574,12 @@ public class SearchUtil {
 
   public static List<Set<String>> findKeys(String filter, Set<String> quoted) {
     filter = processFilter(filter.toLowerCase(), quoted);
-    final List<Set<String>> keySetList = new ArrayList<Set<String>>();
+    final List<Set<String>> keySetList = new ArrayList<>();
     final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
     final Set<String> words = optionsRegistrar.getProcessedWords(filter);
     for (String word : words) {
       final Set<OptionDescription> descriptions = ((SearchableOptionsRegistrarImpl)optionsRegistrar).getAcceptableDescriptions(word);
-      Set<String> keySet = new HashSet<String>();
+      Set<String> keySet = new HashSet<>();
       if (descriptions != null) {
         for (OptionDescription description : descriptions) {
           keySet.add(description.getPath());
@@ -621,7 +621,7 @@ public class SearchUtil {
   }
 
   public static List<Configurable> expand(ConfigurableGroup[] groups) {
-    final ArrayList<Configurable> result = new ArrayList<Configurable>();
+    final ArrayList<Configurable> result = new ArrayList<>();
     for (ConfigurableGroup eachGroup : groups) {
       result.addAll(expandGroup(eachGroup));
     }
@@ -630,7 +630,7 @@ public class SearchUtil {
 
   public static List<Configurable> expandGroup(final ConfigurableGroup group) {
     final Configurable[] configurables = group.getConfigurables();
-    List<Configurable> result = new ArrayList<Configurable>();
+    List<Configurable> result = new ArrayList<>();
     ContainerUtil.addAll(result, configurables);
     for (Configurable each : configurables) {
       addChildren(each, result);

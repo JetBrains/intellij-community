@@ -24,9 +24,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.util.Function;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.*;
@@ -87,10 +88,32 @@ public class PyTypeCheckerInspection extends PyInspection {
       }
     }
 
+    @Override
+    public void visitPyReturnStatement(PyReturnStatement node) {
+      final PyExpression returnExpr = node.getExpression();
+      if (returnExpr != null) {
+        ScopeOwner owner = ScopeUtil.getScopeOwner(returnExpr);
+        if (owner instanceof PyFunction) {
+          final PyFunction function = (PyFunction)owner;
+          final PyAnnotation annotation = function.getAnnotation();
+          final String typeCommentAnnotation = function.getTypeCommentAnnotation();
+          if (annotation != null || typeCommentAnnotation != null) {
+            final PyType actual = myTypeEvalContext.getType(returnExpr);
+            final PyType expected = myTypeEvalContext.getReturnType(function);
+            if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
+              final String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
+              final String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
+              registerProblem(returnExpr, String.format("Expected type '%s', got '%s' instead", expectedName, actualName));
+            }
+          }
+        }
+      }
+    }
+
     private void checkCallSite(@Nullable PyCallSiteExpression callSite) {
       final List<PyTypeChecker.AnalyzeCallResults> resultsSet = PyTypeChecker.analyzeCallSite(callSite, myTypeEvalContext);
       final List<Map<PyExpression, Pair<String, ProblemHighlightType>>> problemsSet =
-        new ArrayList<Map<PyExpression, Pair<String, ProblemHighlightType>>>();
+        new ArrayList<>();
       for (PyTypeChecker.AnalyzeCallResults results : resultsSet) {
         problemsSet.add(checkMapping(results.getReceiver(), results.getArguments()));
       }
@@ -109,8 +132,8 @@ public class PyTypeCheckerInspection extends PyInspection {
     private Map<PyExpression, Pair<String, ProblemHighlightType>> checkMapping(@Nullable PyExpression receiver,
                                                                                @NotNull Map<PyExpression, PyNamedParameter> mapping) {
       final Map<PyExpression, Pair<String, ProblemHighlightType>> problems =
-        new HashMap<PyExpression, Pair<String, ProblemHighlightType>>();
-      final Map<PyGenericType, PyType> substitutions = new LinkedHashMap<PyGenericType, PyType>();
+        new HashMap<>();
+      final Map<PyGenericType, PyType> substitutions = new LinkedHashMap<>();
       boolean genericsCollected = false;
       for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.entrySet()) {
         final PyNamedParameter param = entry.getValue();

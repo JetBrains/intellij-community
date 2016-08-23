@@ -75,7 +75,7 @@ public class ProcessRunner {
       assert project != null;
       final String tabName = "Unknown error";
 
-      final List<Exception> errorList = new LinkedList<Exception>();
+      final List<Exception> errorList = new LinkedList<>();
       //noinspection ThrowableInstanceNeverThrown
       errorList.add(new Exception(output.getStderr()));
 

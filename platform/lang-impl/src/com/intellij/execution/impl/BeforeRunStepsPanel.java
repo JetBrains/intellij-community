@@ -59,13 +59,13 @@ class BeforeRunStepsPanel extends JPanel {
   private final CollectionListModel<BeforeRunTask> myModel;
   private RunConfiguration myRunConfiguration;
 
-  private final List<BeforeRunTask> originalTasks = new ArrayList<BeforeRunTask>();
+  private final List<BeforeRunTask> originalTasks = new ArrayList<>();
   private final StepsBeforeRunListener myListener;
   private final JPanel myPanel;
 
   BeforeRunStepsPanel(StepsBeforeRunListener listener) {
     myListener = listener;
-    myModel = new CollectionListModel<BeforeRunTask>();
+    myModel = new CollectionListModel<>();
     myList = new JBList(myModel);
     myList.getEmptyText().setText(ExecutionBundle.message("before.launch.panel.empty"));
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -194,7 +194,7 @@ class BeforeRunStepsPanel extends JPanel {
 
     List<BeforeRunTask> tasks = myModel.getItems();
     if (!tasks.isEmpty()) {
-      LinkedHashMap<BeforeRunTaskProvider, Integer> counter = new LinkedHashMap<BeforeRunTaskProvider, Integer>();
+      LinkedHashMap<BeforeRunTaskProvider, Integer> counter = new LinkedHashMap<>();
       for (BeforeRunTask task : tasks) {
         BeforeRunTaskProvider<BeforeRunTask> provider =
           BeforeRunTaskProvider.getProvider(myRunConfiguration.getProject(), task.getProviderId());
@@ -301,7 +301,7 @@ class BeforeRunStepsPanel extends JPanel {
             }
             task.setEnabled(true);
 
-            Set<RunConfiguration> configurationSet = new HashSet<RunConfiguration>();
+            Set<RunConfiguration> configurationSet = new HashSet<>();
             getAllRunBeforeRuns(task, configurationSet);
             if (configurationSet.contains(myRunConfiguration)) {
               JOptionPane.showMessageDialog(BeforeRunStepsPanel.this,
@@ -329,7 +329,7 @@ class BeforeRunStepsPanel extends JPanel {
   }
 
   private Set<Key> getActiveProviderKeys() {
-    Set<Key> result = new HashSet<Key>();
+    Set<Key> result = new HashSet<>();
     for (BeforeRunTask task : myModel.getItems()) {
       result.add(task.getProviderId());
     }

@@ -17,12 +17,15 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import groovy.transform.CompileStatic
+import org.apache.tools.ant.Main
 import org.apache.tools.ant.Project
 import org.codehaus.gant.GantBinding
 
 /**
  * @author nik
  */
+@CompileStatic
 class BuildUtils {
   static void addToClassPath(String path, AntBuilder ant) {
     def classLoader = (GroovyClassLoader)BuildUtils.class.classLoader
@@ -56,5 +59,17 @@ class BuildUtils {
   static void copyAndPatchFile(String sourcePath, String targetPath, Map<String, String> replacements, String marker = "__") {
     FileUtil.createParentDirs(new File(targetPath))
     new File(targetPath).text = replaceAll(new File(sourcePath).text, replacements, marker)
+  }
+
+  static PrintStream getRealSystemOut() {
+    try {
+      //if the build script is running under Ant or AntBuilder it may replace the standard System.out
+      def field = Main.class.getDeclaredField("out")
+      field.accessible = true
+      return (PrintStream) field.get(null)
+    }
+    catch (Throwable ignored) {
+      return System.out
+    }
   }
 }

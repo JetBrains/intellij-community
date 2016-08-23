@@ -202,7 +202,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     if (isAssignedLocalVariable(element)) {
       PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
       Collection<PsiReference> references = ReferencesSearch.search(element, new LocalSearchScope(function)).findAll();
-      ArrayList<PsiElement> result = new ArrayList<PsiElement>();
+      ArrayList<PsiElement> result = new ArrayList<>();
       for (PsiReference reference : references) {
         PsiElement refElement = reference.getElement();
         if (refElement != element) {
@@ -308,7 +308,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
         PyTargetExpression target = (PyTargetExpression) ((PyAssignmentStatement)statement).getTargets() [0];
         putCaretOnFieldName(operation.getEditor(), occurrence != null ? occurrence : target);
         final InplaceVariableIntroducer<PsiElement> introducer = new PyInplaceFieldIntroducer(target, operation, occurrences);
-        introducer.performInplaceRefactoring(new LinkedHashSet<String>(operation.getSuggestedNames()));
+        introducer.performInplaceRefactoring(new LinkedHashSet<>(operation.getSuggestedNames()));
       }
     }
 

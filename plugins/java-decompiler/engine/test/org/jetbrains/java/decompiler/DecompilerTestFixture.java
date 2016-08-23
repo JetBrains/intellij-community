@@ -15,7 +15,6 @@
  */
 package org.jetbrains.java.decompiler;
 
-import org.hamcrest.Matchers;
 import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -26,8 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.Assert.assertTrue;
 
 public class DecompilerTestFixture {
@@ -37,7 +35,7 @@ public class DecompilerTestFixture {
   private ConsoleDecompiler decompiler;
 
   public void setUp(String... optionPairs) throws IOException {
-    assertEquals(0, optionPairs.length % 2);
+    assertThat(optionPairs.length % 2).isEqualTo(0);
 
     testDataDir = new File("testData");
     if (!isTestDataDir(testDataDir)) testDataDir = new File("community/plugins/java-decompiler/engine/testData");
@@ -49,12 +47,12 @@ public class DecompilerTestFixture {
 
     //noinspection SSBasedInspection
     tempDir = File.createTempFile("decompiler_test_", "_dir");
-    assertTrue(tempDir.delete());
+    assertThat(tempDir.delete()).isTrue();
 
     targetDir = new File(tempDir, "decompiled");
-    assertTrue(targetDir.mkdirs());
+    assertThat(targetDir.mkdirs()).isTrue();
 
-    Map<String, Object> options = new HashMap<String, Object>();
+    Map<String, Object> options = new HashMap<>();
     options.put(IFernflowerPreferences.LOG_LEVEL, "warn");
     options.put(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES, "1");
     options.put(IFernflowerPreferences.REMOVE_SYNTHETIC, "1");
@@ -106,13 +104,13 @@ public class DecompilerTestFixture {
   public static void assertFilesEqual(File expected, File actual) {
     if (expected.isDirectory()) {
       String[] children = Objects.requireNonNull(expected.list());
-      assertThat(actual.list(), Matchers.arrayContainingInAnyOrder(children));
+      assertThat(actual.list()).contains(children);
       for (String name : children) {
         assertFilesEqual(new File(expected, name), new File(actual, name));
       }
     }
     else {
-      assertEquals(getContent(expected), getContent(actual));
+      assertThat(getContent(actual)).isEqualTo(getContent(expected));
     }
   }
 

@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UnnamedConfigurableGroup implements UnnamedConfigurable {
-  private final List<UnnamedConfigurable> myConfigurables = new ArrayList<UnnamedConfigurable>();
+  private final List<UnnamedConfigurable> myConfigurables = new ArrayList<>();
 
   public JComponent createComponent() {
     JPanel panel = new JPanel(new VerticalFlowLayout());

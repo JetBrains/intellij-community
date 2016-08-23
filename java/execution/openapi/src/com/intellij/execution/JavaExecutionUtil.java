@@ -67,7 +67,7 @@ public class JavaExecutionUtil {
   }
 
   public static Module findModule(final Module contextModule, final Set<String> patterns, final Project project, Condition<PsiClass> isTestMethod) {
-    final Set<Module> modules = new HashSet<Module>();
+    final Set<Module> modules = new HashSet<>();
     for (String className : patterns) {
       final PsiClass psiClass = findMainClass(project,
                                               className.contains(",") ? className.substring(0, className.indexOf(',')) : className,
@@ -84,7 +84,7 @@ public class JavaExecutionUtil {
       }
     }
     if (contextModule != null && modules.size() > 1) {
-      final HashSet<Module> moduleDependencies = new HashSet<Module>();
+      final HashSet<Module> moduleDependencies = new HashSet<>();
       ModuleUtilCore.getDependencies(contextModule, moduleDependencies);
       if (moduleDependencies.containsAll(modules)) {
         return contextModule;

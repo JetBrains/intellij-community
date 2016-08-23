@@ -50,7 +50,7 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
                          @NotNull ParameterInfoImpl[] newParms,
                          ThrownExceptionInfo[] newExceptions,
                          String newName, String oldName) {
-    super(newVisibility, method, newName, newType, newParms, newExceptions, false, new HashSet<PsiMethod>(), new HashSet<PsiMethod>(), oldName);
+    super(newVisibility, method, newName, newType, newParms, newExceptions, false, new HashSet<>(), new HashSet<>(), oldName);
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     myModifiers = new String[parameters.length];
     for (int i = 0; i < parameters.length; i++) {
@@ -216,7 +216,7 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
     final JavaParameterInfo[] oldParameters = getNewParameters();
     final String[] oldParameterNames = getOldParameterNames();
     final String[] oldParameterTypes = getOldParameterTypes();
-    final Map<JavaParameterInfo, Integer> untouchedParams = new HashMap<JavaParameterInfo, Integer>();
+    final Map<JavaParameterInfo, Integer> untouchedParams = new HashMap<>();
     for (int i = 0; i < parameterInfos.length; i++) {
       ParameterInfoImpl parameterInfo = parameterInfos[i];
       JavaParameterInfo oldParameter = null;

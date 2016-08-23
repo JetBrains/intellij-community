@@ -63,10 +63,5 @@ public class IpnbConfigurable implements SearchableConfigurable {
   public String getId() {
     return "IpnbConfigurable";
   }
-
-  @Override
-  public Runnable enableSearch(String option) {
-    return null;
-  }
 }
 

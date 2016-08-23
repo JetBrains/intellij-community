@@ -21,6 +21,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.remote.ext.CredentialsCase;
 import com.intellij.remote.ext.CredentialsManager;
 import com.intellij.remote.ext.RemoteCredentialsHandler;
+import com.intellij.remote.ext.UnknownCredentialsHolder;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -82,6 +83,8 @@ public class RemoteConnectionCredentialsWrapper {
         return Pair.create(credentials, type);
       }
     }
+    final UnknownCredentialsHolder credentials = CredentialsType.UNKNOWN.getCredentials(myCredentialsTypeHolder);
+    if (credentials != null) return Pair.create(credentials, CredentialsType.UNKNOWN);
     throw unknownConnectionType();
   }
 

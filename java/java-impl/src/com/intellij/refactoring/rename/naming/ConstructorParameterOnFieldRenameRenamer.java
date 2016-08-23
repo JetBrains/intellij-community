@@ -48,7 +48,7 @@ public class ConstructorParameterOnFieldRenameRenamer extends AutomaticRenamer {
       final String paramName = styleManager.propertyNameToVariableName(propertyName, VariableKind.PARAMETER);
       final PsiClass aClass = aField.getContainingClass();
 
-      Set<PsiParameter> toRename = new HashSet<PsiParameter>();
+      Set<PsiParameter> toRename = new HashSet<>();
       for (PsiMethod constructor : aClass.getConstructors()) {
         if (constructor instanceof PsiMirrorElement) {
           final PsiElement prototype = ((PsiMirrorElement)constructor).getPrototype();

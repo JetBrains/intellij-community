@@ -76,7 +76,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   @Override
   @NotNull
   public PsiClass[] getClasses() {
-    final StubElement<?> stub = getStub();
+    final StubElement<?> stub = getGreenStub();
     if (stub != null) {
       return stub.getChildrenByType(JavaStubElementTypes.CLASS, PsiClass.ARRAY_FACTORY);
     }
@@ -93,7 +93,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   @Override
   @NotNull
   public String getPackageName() {
-    PsiJavaFileStub stub = (PsiJavaFileStub)getStub();
+    PsiJavaFileStub stub = (PsiJavaFileStub)getGreenStub();
     if (stub != null) {
       return stub.getPackageName();
     }
@@ -130,7 +130,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   @Override
   public PsiImportList getImportList() {
-    StubElement<?> stub = getStub();
+    StubElement<?> stub = getGreenStub();
     if (stub != null) {
       PsiImportList[] nodes = stub.getChildrenByType(JavaStubElementTypes.IMPORT_LIST, PsiImportList.ARRAY_FACTORY);
       if (nodes.length == 1) return nodes[0];

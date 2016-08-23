@@ -150,8 +150,8 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
       holder = new DomElementsProblemsHolderImpl(element);
       rootTag.putUserData(DOM_PROBLEM_HOLDER_KEY, holder);
       final CachedValue<Boolean> cachedValue = CachedValuesManager.getManager(myProject).createCachedValue(
-        () -> new CachedValueProvider.Result<Boolean>(Boolean.FALSE, element, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT,
-                                                      this, ProjectRootManager.getInstance(myProject)), false);
+        () -> new CachedValueProvider.Result<>(Boolean.FALSE, element, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT,
+                                               this, ProjectRootManager.getInstance(myProject)), false);
       cachedValue.getValue();
       element.getFile().putUserData(CACHED_VALUE_KEY, cachedValue);
     }
@@ -249,10 +249,10 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   public List<DomElementsInspection> getSuitableDomInspections(final DomFileElement fileElement, boolean enabledOnly) {
     Class rootType = fileElement.getRootElementClass();
     final InspectionProfile profile = getInspectionProfile(fileElement);
-    final List<DomElementsInspection> inspections = new SmartList<DomElementsInspection>();
+    final List<DomElementsInspection> inspections = new SmartList<>();
     for (final InspectionToolWrapper toolWrapper : profile.getInspectionTools(fileElement.getFile())) {
       if (!enabledOnly || profile.isToolEnabled(HighlightDisplayKey.find(toolWrapper.getShortName()), fileElement.getFile())) {
-        ContainerUtil.addIfNotNull(getSuitableInspection(toolWrapper.getTool(), rootType), inspections);
+        ContainerUtil.addIfNotNull(inspections, getSuitableInspection(toolWrapper.getTool(), rootType));
       }
     }
     return inspections;
@@ -274,10 +274,10 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
 
   @Nullable public <T extends DomElement>  DomElementsInspection<T> getMockInspection(DomFileElement<T> root) {
     if (root.getFileDescription().isAutomaticHighlightingEnabled()) {
-      return new MockAnnotatingDomInspection<T>(root.getRootElementClass());
+      return new MockAnnotatingDomInspection<>(root.getRootElementClass());
     }
     if (getSuitableDomInspections(root, false).isEmpty()) {
-      return new MockDomInspection<T>(root.getRootElementClass());
+      return new MockDomInspection<>(root.getRootElementClass());
     }
 
     return null;

@@ -290,6 +290,9 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     assertEquals(3, myItems.length);
   }
 
+  public void testSwitchCaseWithEnumConstant() { doTest() }
+  public void testSecondSwitchCaseWithEnumConstant() { doTest() }
+
   public void testMethodInAnnotation() throws Exception {
     configureByFile("Annotation.java");
     checkResultByFile("Annotation_after.java");
@@ -1585,5 +1588,25 @@ class Bar {
   public void testShowMostSpecificOverride() {
     configure()
     assert 'B' == LookupElementPresentation.renderElement(myFixture.lookup.items[0]).typeText
+  }
+
+  public void testShowVarInitializers() {
+    configure()
+    assert LookupElementPresentation.renderElement(myFixture.lookup.items[0]).tailText == '( "x")'
+    assert LookupElementPresentation.renderElement(myFixture.lookup.items[1]).tailText == '("y") {...}'
+    assert !LookupElementPresentation.renderElement(myFixture.lookup.items[2]).tailText
+    assert LookupElementPresentation.renderElement(myFixture.lookup.items[3]).tailText == ' = 42'
+  }
+
+  public void testSuggestInterfaceArrayWhenObjectIsExpected() {
+    configure()
+    assert LookupElementPresentation.renderElement(myFixture.lookup.items[0]).tailText.contains('{...}')
+    assert LookupElementPresentation.renderElement(myFixture.lookup.items[1]).tailText.contains('[]')
+  }
+
+  public void testSuggestInterfaceArrayWhenObjectArrayIsExpected() {
+    configure()
+    assert LookupElementPresentation.renderElement(myFixture.lookup.items[0]).tailText.contains('{...}')
+    assert LookupElementPresentation.renderElement(myFixture.lookup.items[1]).tailText.contains('[]')
   }
 }

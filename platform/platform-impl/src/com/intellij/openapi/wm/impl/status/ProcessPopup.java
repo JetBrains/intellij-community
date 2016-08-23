@@ -49,7 +49,7 @@ public class ProcessPopup  {
 
   private final Wrapper myRootContent = new Wrapper();
 
-  private final Set<InlineProgressIndicator> myIndicators = new HashSet<InlineProgressIndicator>();
+  private final Set<InlineProgressIndicator> myIndicators = new HashSet<>();
 
   public ProcessPopup(final InfoAndProgressPanel progressPanel) {
     myProgressPanel = progressPanel;

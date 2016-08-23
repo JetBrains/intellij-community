@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * @author Konstantin Bulenkov
@@ -38,6 +39,12 @@ public class Bootstrap {
                                          InvocationTargetException, IllegalAccessException, InterruptedException {
     if (args.length != 1) return;
     String path = args[0].endsWith("\\") || args[0].endsWith("/") ? args[0] : args[0] + File.separator;
+    if (isMac() && path.endsWith(".app/")) {
+      final File file = new File(path + "Contents");
+      if (file.exists() && file.isDirectory()) {
+        path += "Contents/";
+      }
+    }
 
     cleanUp();
 
@@ -106,5 +113,9 @@ public class Bootstrap {
   private static void log(Throwable ex) {
     //noinspection CallToPrintStackTrace
     ex.printStackTrace();
+  }
+
+  private static boolean isMac() {
+    return System.getProperty("os.name").toLowerCase(Locale.US).startsWith("mac");
   }
 }

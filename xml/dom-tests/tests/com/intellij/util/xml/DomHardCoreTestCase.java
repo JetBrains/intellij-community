@@ -38,7 +38,7 @@ public abstract class DomHardCoreTestCase extends CodeInsightTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myCallRegistry = new CallRegistry<DomEvent>();
+    myCallRegistry = new CallRegistry<>();
     getDomManager().addDomEventListener(new DomEventListener() {
       @Override
       public void eventOccured(DomEvent event) {

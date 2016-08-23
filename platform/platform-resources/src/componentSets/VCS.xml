@@ -17,7 +17,6 @@
     <component>
       <interface-class>com.intellij.openapi.vcs.ProjectLevelVcsManager</interface-class>
       <implementation-class>com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl</implementation-class>
-      <option name="workspace" value="true"/>
       <loadForDefaultProject/>
     </component>
     <!-- <component>

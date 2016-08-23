@@ -91,7 +91,7 @@ public class MigrateToNewDiffUtil {
 
     com.intellij.openapi.diff.DiffContent[] contents = oldRequest.getContents();
     String[] titles = oldRequest.getContentTitles();
-    List<DiffContent> newContents = new ArrayList<DiffContent>(contents.length);
+    List<DiffContent> newContents = new ArrayList<>(contents.length);
 
     for (int i = 0; i < contents.length; i++) {
       DiffContent convertedContent = convertContent(oldRequest.getProject(), contents[i]);

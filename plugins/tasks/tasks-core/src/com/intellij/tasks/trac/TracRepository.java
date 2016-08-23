@@ -81,7 +81,7 @@ public class TracRepository extends BaseRepositoryImpl {
 
     if (result == null) throw new Exception("Cannot connect to " + getUrl());
 
-    ArrayList<Task> tasks = new ArrayList<Task>(max);
+    ArrayList<Task> tasks = new ArrayList<>(max);
     int min = Math.min(max, result.size());
     for (int i = 0; i < min; i++) {
       Task task = getTask((Integer)result.get(i), client, transport);

@@ -19,7 +19,6 @@ import com.intellij.Patches;
 import com.intellij.debugger.*;
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.actions.DebuggerActions;
-import com.intellij.debugger.apiAdapters.ConnectionServiceWrapper;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
@@ -118,8 +117,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private RemoteConnection myConnection;
   private JavaDebugProcess myXDebugProcess;
 
-  private ConnectionServiceWrapper myConnectionService;
-  private Map<String, Connector.Argument> myArguments;
+  private volatile Map<String, Connector.Argument> myArguments;
 
   private final List<NodeRenderer> myRenderers = new ArrayList<>();
 
@@ -224,7 +222,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
 
     return myNodeRenderersMap.computeIfAbsent(type, t ->
-      myRenderers.stream().filter(r -> r.isApplicable(type)).findFirst().orElseGet(() -> getDefaultRenderer(type)));
+      myRenderers.stream().
+        filter(r -> DebuggerUtilsImpl.suppressExceptions(() -> r.isApplicable(type), false)).
+        findFirst().orElseGet(() -> getDefaultRenderer(type)));
   }
 
   @NotNull
@@ -301,8 +301,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private void stopConnecting() {
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-
     Map<String, Connector.Argument> arguments = myArguments;
     try {
       if (arguments == null) {
@@ -317,20 +315,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           connector.stopListening(arguments);
         }
       }
-      else {
-        if(myConnectionService != null) {
-          myConnectionService.close();
-        }
-      }
     }
     catch (IOException | IllegalConnectorArgumentsException e) {
       LOG.debug(e);
     }
     catch (ExecutionException e) {
       LOG.error(e);
-    }
-    finally {
-      closeProcess(true);
     }
   }
 
@@ -574,7 +564,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
     finally {
       myArguments = null;
-      myConnectionService = null;
     }
   }
 
@@ -1444,6 +1433,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   @Override
   public void stop(boolean forceTerminate) {
+    stopConnecting(); // does this first place in case debugger manager hanged accepting debugger connection (forever)
     getManagerThread().terminateAndInvoke(createStopCommand(forceTerminate), DebuggerManagerThreadImpl.COMMAND_TIMEOUT);
   }
 
@@ -1482,7 +1472,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         }
       }
       else {
-        stopConnecting();
+        try {
+          stopConnecting();
+        }
+        finally {
+          closeProcess(true);
+        }
       }
     }
   }
@@ -1971,12 +1966,16 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                 }
               }
               else {
+                ProcessHandler processHandler = getProcessHandler();
+                boolean terminated =
+                  processHandler != null && (processHandler.isProcessTerminating() || processHandler.isProcessTerminated());
+
                 fail();
                 DebuggerInvocationUtil.swingInvokeLater(myProject, () -> {
                   // propagate exception only in case we succeeded to obtain execution result,
                   // otherwise if the error is induced by the fact that there is nothing to debug, and there is no need to show
                   // this problem to the user
-                  if (myExecutionResult != null || !connectorIsReady.get()) {
+                  if ((myExecutionResult != null && !terminated) || !connectorIsReady.get()) {
                     ExecutionUtil.handleExecutionError(myProject, ToolWindowId.DEBUG, sessionName, e);
                   }
                 });

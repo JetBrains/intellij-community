@@ -135,10 +135,6 @@
       <skipForDefaultProject/>
     </component>
     <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.VisibleLineMarkersPassFactory</implementation-class>
-      <skipForDefaultProject/>
-    </component>
-    <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.ShowIntentionsPassFactory</implementation-class>
       <skipForDefaultProject/>
     </component>
@@ -182,11 +178,6 @@
       <implementation-class>com.intellij.codeInsight.daemon.impl.ShowAutoImportPassFactory</implementation-class>
       <skipForDefaultProject/>
     </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.SlowLineMarkersPassFactory</implementation-class>
-      <skipForDefaultProject/>
-    </component>
-
     <component>
       <implementation-class>com.intellij.util.indexing.FileBasedIndexProjectHandler</implementation-class>
     </component>

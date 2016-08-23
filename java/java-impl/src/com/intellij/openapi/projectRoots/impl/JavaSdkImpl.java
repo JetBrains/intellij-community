@@ -19,6 +19,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,16 +31,19 @@ import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.jrt.JrtFileSystem;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.java.impl.JavaSdkUtil;
 
 import javax.swing.*;
@@ -247,7 +251,7 @@ public class JavaSdkImpl extends JavaSdk {
     if (javaHome == null || !javaHome.isDirectory() || javaHome.getParentFile() == null) {
       return Collections.emptyList();
     }
-    ArrayList<String> result = new ArrayList<String>();
+    ArrayList<String> result = new ArrayList<>();
     File javasFolder = javaHome.getParentFile();
     scanFolder(javasFolder, result);
     File parentFile = javasFolder.getParentFile();
@@ -379,9 +383,9 @@ public class JavaSdkImpl extends JavaSdk {
     VirtualFile docs = findDocs(jdkHome, "docs/api");
     SdkModificator sdkModificator = sdk.getSdkModificator();
 
-    Set<VirtualFile> previousRoots = new LinkedHashSet<VirtualFile>(Arrays.asList(sdkModificator.getRoots(OrderRootType.CLASSES)));
+    Set<VirtualFile> previousRoots = new LinkedHashSet<>(Arrays.asList(sdkModificator.getRoots(OrderRootType.CLASSES)));
     sdkModificator.removeRoots(OrderRootType.CLASSES);
-    previousRoots.removeAll(new HashSet<VirtualFile>(classes));
+    previousRoots.removeAll(new HashSet<>(classes));
     for (VirtualFile aClass : classes) {
       sdkModificator.addRoot(aClass, OrderRootType.CLASSES);
     }
@@ -439,7 +443,7 @@ public class JavaSdkImpl extends JavaSdk {
 
   public static void attachJdkAnnotations(@NotNull SdkModificator modificator) {
     LocalFileSystem lfs = LocalFileSystem.getInstance();
-    List<String> pathsChecked = new ArrayList<String>();
+    List<String> pathsChecked = new ArrayList<>();
     // community idea under idea
     String path = FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/java/jdkAnnotations";
     VirtualFile root = lfs.findFileByPath(path);
@@ -527,12 +531,136 @@ public class JavaSdkImpl extends JavaSdk {
     return jdk;
   }
 
+  @NotNull
+  @TestOnly
+  public Sdk createMockJdk(@NotNull String jdkName, @NotNull String home, boolean isJre) {
+    String homePath = home.replace(File.separatorChar, '/');
+    File jdkHomeFile = new File(homePath);
+    List<VirtualFile> classes = findClasses(jdkHomeFile, isJre);
+    VirtualFile sources = findSources(jdkHomeFile);
+    VirtualFile docs = findDocs(jdkHomeFile, "docs/api");
+    ProjectRootContainerImpl rootContainer = new ProjectRootContainerImpl(true);
+    rootContainer.startChange();
+    for (VirtualFile aClass : classes) {
+      rootContainer.addRoot(aClass, OrderRootType.CLASSES);
+    }
+    if (sources != null) {
+      rootContainer.addRoot(sources, OrderRootType.SOURCES);
+    }
+    if (docs != null) {
+      rootContainer.addRoot(docs, OrderRootType.DOCUMENTATION);
+    }
+    rootContainer.finishChange();
+
+    ProjectJdkImpl jdk = new ProjectJdkImpl(jdkName, this, homePath, jdkName) {
+      @Override
+      public void setName(@NotNull String name) {
+        throwReadOnly();
+      }
+
+      @Override
+      public void readExternal(@NotNull Element element) {
+        throwReadOnly();
+      }
+
+      @Override
+      public void readExternal(@NotNull Element element, @Nullable ProjectJdkTable projectJdkTable) {
+        throwReadOnly();
+      }
+
+      @NotNull
+      @Override
+      public SdkModificator getSdkModificator() {
+        throwReadOnly();
+        return null;
+      }
+
+      @Override
+      public void setSdkAdditionalData(SdkAdditionalData data) {
+        throwReadOnly();
+      }
+
+      @Override
+      public void addRoot(VirtualFile root, OrderRootType rootType) {
+        throwReadOnly();
+      }
+
+      @Override
+      public void removeRoot(VirtualFile root, OrderRootType rootType) {
+        throwReadOnly();
+      }
+
+      @Override
+      public void removeRoots(OrderRootType rootType) {
+        throwReadOnly();
+      }
+
+      @Override
+      public void removeAllRoots() {
+        throwReadOnly();
+      }
+
+      @Override
+      public boolean isWritable() {
+        return false;
+      }
+
+      @Override
+      public void update() {
+        throwReadOnly();
+      }
+
+      @Override
+      public VirtualFile[] getRoots(OrderRootType rootType) {
+        return rootContainer.getRootFiles(rootType);
+      }
+
+      @NotNull
+      @Override
+      public RootProvider getRootProvider() {
+        return new RootProvider() {
+          @NotNull
+          @Override
+          public String[] getUrls(@NotNull OrderRootType rootType) {
+            return ContainerUtil.map2Array(getFiles(rootType), String.class, VirtualFile::getUrl);
+          }
+
+          @NotNull
+          @Override
+          public VirtualFile[] getFiles(@NotNull OrderRootType rootType) {
+            return getRoots(rootType);
+          }
+
+          @Override
+          public void addRootSetChangedListener(@NotNull RootSetChangedListener listener) {
+          }
+
+          @Override
+          public void addRootSetChangedListener(@NotNull RootSetChangedListener listener, @NotNull Disposable parentDisposable) {
+          }
+
+          @Override
+          public void removeRootSetChangedListener(@NotNull RootSetChangedListener listener) {
+          }
+        };
+      }
+    };
+
+    ProjectJdkImpl.copyRoots(rootContainer, jdk);
+    return jdk;
+  }
+
+  private static void throwReadOnly() {
+    throw new IncorrectOperationException("Can't modify, MockJDK is read-only, consider calling .clone() first");
+  }
+
   private static void addClasses(File file, SdkModificator sdkModificator, boolean isJre) {
     for (VirtualFile virtualFile : findClasses(file, isJre)) {
       sdkModificator.addRoot(virtualFile, OrderRootType.CLASSES);
     }
   }
 
+  @NotNull
   private static List<VirtualFile> findClasses(File file, boolean isJre) {
     List<VirtualFile> result = ContainerUtil.newArrayList();
     VirtualFileManager fileManager = VirtualFileManager.getInstance();
@@ -555,7 +683,7 @@ public class JavaSdkImpl extends JavaSdk {
     return result;
   }
 
-  private static void addSources(File file, SdkModificator sdkModificator) {
+  private static void addSources(@NotNull File file, @NotNull SdkModificator sdkModificator) {
     VirtualFile vFile = findSources(file);
     if (vFile != null) {
       sdkModificator.addRoot(vFile, OrderRootType.SOURCES);
@@ -571,7 +699,6 @@ public class JavaSdkImpl extends JavaSdk {
   @Nullable
   @SuppressWarnings("HardCodedStringLiteral")
   private static VirtualFile findSources(File file, final String srcName) {
-    File srcDir = new File(file, "src");
     File jarFile = new File(file, srcName + ".jar");
     if (!jarFile.exists()) {
       jarFile = new File(file, srcName + ".zip");
@@ -585,6 +712,7 @@ public class JavaSdkImpl extends JavaSdk {
       return vFile;
     }
     else {
+      File srcDir = new File(file, "src");
       if (!srcDir.exists() || !srcDir.isDirectory()) return null;
       String path = srcDir.getAbsolutePath().replace(File.separatorChar, '/');
       return LocalFileSystem.getInstance().findFileByPath(path);
@@ -608,7 +736,7 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   @Nullable
-  private static VirtualFile findDocs(File file, final String relativePath) {
+  private static VirtualFile findDocs(@NotNull File file, @NotNull String relativePath) {
     file = new File(file.getAbsolutePath() + File.separator + relativePath.replace('/', File.separatorChar));
     if (!file.exists() || !file.isDirectory()) return null;
     String path = file.getAbsolutePath().replace(File.separatorChar, '/');

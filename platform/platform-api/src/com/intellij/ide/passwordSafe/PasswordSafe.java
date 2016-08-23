@@ -15,12 +15,22 @@
  */
 package com.intellij.ide.passwordSafe;
 
+import com.intellij.credentialStore.CredentialAttributes;
 import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class PasswordSafe implements PasswordStorage {
   @NotNull
   public static PasswordSafe getInstance() {
     return ServiceManager.getService(PasswordSafe.class);
   }
+
+  public abstract void setPassword(@NotNull CredentialAttributes attributes, @Nullable String value, boolean memoryOnly);
+
+  public void setPassword(@NotNull Class<?> requestor, @NotNull String accountName, @Nullable String value, boolean memoryOnly) {
+    setPassword(new CredentialAttributes("IntelliJ Platform — " + requestor.getName(), accountName), value, memoryOnly);
+  }
+
+  public abstract boolean isMemoryOnly();
 }

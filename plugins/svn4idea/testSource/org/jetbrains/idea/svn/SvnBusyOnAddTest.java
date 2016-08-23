@@ -123,7 +123,7 @@ public class SvnBusyOnAddTest extends TestCase {
       final Semaphore semaphoreMain = new Semaphore();
       final Semaphore semaphoreWokeUp = new Semaphore();
 
-      final AtomicReference<Boolean> wasUp = new AtomicReference<Boolean>(false);
+      final AtomicReference<Boolean> wasUp = new AtomicReference<>(false);
       final ISVNStatusHandler handler = status -> {
         semaphore.waitFor();
         wasUp.set(true);

@@ -35,7 +35,7 @@ import javax.swing.JComponent;
  * @author Sergey.Malenkov
  */
 abstract class SpotlightPainter extends AbstractPainter {
-  private final IdentityHashMap<Configurable, String> myConfigurableOption = new IdentityHashMap<Configurable, String>();
+  private final IdentityHashMap<Configurable, String> myConfigurableOption = new IdentityHashMap<>();
   private final MergingUpdateQueue myQueue;
   private final GlassPanel myGlassPanel;
   private final JComponent myTarget;

@@ -29,6 +29,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.MacUIUtil;
@@ -50,7 +51,12 @@ public class DeleteAction extends EditorAction {
       CopyPasteManager.getInstance().stopKillRings();
       SelectionModel selectionModel = editor.getSelectionModel();
       if (!selectionModel.hasSelection()) {
-        deleteCharAtCaret(editor);
+        if (editor.getInlayModel().hasInlineElementAt(editor.getCaretModel().getVisualPosition())) {
+          editor.getCaretModel().moveCaretRelatively(1, 0, false, false, EditorUtil.isCurrentCaretPrimary(editor));
+        }
+        else {
+          deleteCharAtCaret(editor);
+        }
       }
       else {
         EditorModificationUtil.deleteSelectedText(editor);
@@ -98,7 +104,6 @@ public class DeleteAction extends EditorAction {
       }
       else {
         document.deleteString(offset, offset + 1);
-        editor.getCaretModel().moveToOffset(offset);
       }
       return;
     }

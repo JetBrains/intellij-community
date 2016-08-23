@@ -263,7 +263,7 @@ public final class NavigationUtil {
   public static JBPopup getRelatedItemsPopup(final List<? extends GotoRelatedItem> items, String title, boolean showContainingModules) {
     Object[] elements = new Object[items.size()];
     //todo[nik] move presentation logic to GotoRelatedItem class
-    final Map<PsiElement, GotoRelatedItem> itemsMap = new HashMap<PsiElement, GotoRelatedItem>();
+    final Map<PsiElement, GotoRelatedItem> itemsMap = new HashMap<>();
     for (int i = 0; i < items.size(); i++) {
       GotoRelatedItem item = items.get(i);
       elements[i] = item.getElement() != null ? item.getElement() : item;
@@ -389,7 +389,7 @@ public final class NavigationUtil {
     }) {
     };
     popup.getList().setCellRenderer(new PopupListElementRenderer(popup) {
-      Map<Object, String> separators = new HashMap<Object, String>();
+      Map<Object, String> separators = new HashMap<>();
       {
         final ListModel model = popup.getList().getModel();
         String current = null;

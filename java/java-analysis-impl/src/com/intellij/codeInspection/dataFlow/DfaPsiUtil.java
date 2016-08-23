@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
@@ -94,7 +95,7 @@ public class DfaPsiUtil {
     if (NullableNotNullManager.isNullable(owner)) {
       return Nullness.NULLABLE;
     }
-    if (NullableNotNullManager.isNotNull(owner)) {
+    if (isNotNullLocally(owner)) {
       return Nullness.NOT_NULL;
     }
 
@@ -108,6 +109,22 @@ public class DfaPsiUtil {
     }
 
     return Nullness.UNKNOWN;
+  }
+
+  private static boolean isNotNullLocally(@NotNull PsiModifierListOwner owner) {
+    NullableNotNullManager nnnm = NullableNotNullManager.getInstance(owner.getProject());
+    PsiAnnotation notNullAnno = nnnm.getNotNullAnnotation(owner, true);
+    if (notNullAnno == null) return false;
+
+    if (!(owner instanceof PsiParameter)) return true; // notnull on a super method requires all inheritors to return notnull as well
+
+    // @NotNull on a super parameter doesn't prohibit calling the inheritors with null args, if they're ready for that.
+    // so treat parameters as @NotNull only if they're annotated explicitly, or if they're in a scope of some nullity default annotation.
+    return isOwnAnnotation(owner, notNullAnno) || nnnm.isContainerAnnotation(notNullAnno);
+  }
+
+  private static boolean isOwnAnnotation(@NotNull PsiModifierListOwner owner, @NotNull PsiAnnotation anno) {
+    return AnnotationUtil.findAnnotation(owner, anno.getQualifiedName()) == anno;
   }
 
   private static boolean isEnumValueOf(PsiMethod method) {
@@ -150,7 +167,7 @@ public class DfaPsiUtil {
       public Result<Set<PsiField>> compute() {
         final PsiCodeBlock body = constructor.getBody();
         final Map<PsiField, Boolean> map = ContainerUtil.newHashMap();
-        final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(false, false) {
+        final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(false, false, false) {
 
           private boolean isCallExposingNonInitializedFields(Instruction instruction) {
             if (!(instruction instanceof MethodCallInstruction) ||

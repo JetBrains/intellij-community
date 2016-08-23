@@ -120,11 +120,11 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       Arrays.sort(targets, createComparator(gotoData.renderers, gotoData));
     }
 
-    List<Object> allElements = new ArrayList<Object>(targets.length + additionalActions.size());
+    List<Object> allElements = new ArrayList<>(targets.length + additionalActions.size());
     Collections.addAll(allElements, targets);
     allElements.addAll(additionalActions);
 
-    final JBListWithHintProvider list = new JBListWithHintProvider(new CollectionListModel<Object>(allElements)) {
+    final JBListWithHintProvider list = new JBListWithHintProvider(new CollectionListModel<>(allElements)) {
       @Override
       protected PsiElement getPsiElementForHint(final Object selectedValue) {
         return selectedValue instanceof PsiElement ? (PsiElement) selectedValue : null;
@@ -175,7 +175,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       return getRenderer(o, gotoData.renderers, gotoData).getElementText((PsiElement)o);
     });
 
-    final Ref<UsageView> usageView = new Ref<UsageView>();
+    final Ref<UsageView> usageView = new Ref<>();
     final JBPopup popup = builder.
       setTitle(title).
       setItemChoosenCallback(runnable).
@@ -301,14 +301,14 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     private boolean hasDifferentNames;
     public ListBackgroundUpdaterTask listUpdaterTask;
     protected final Set<String> myNames;
-    public Map<Object, PsiElementListCellRenderer> renderers = new HashMap<Object, PsiElementListCellRenderer>();
+    public Map<Object, PsiElementListCellRenderer> renderers = new HashMap<>();
 
     public GotoData(@NotNull PsiElement source, @NotNull PsiElement[] targets, @NotNull List<AdditionalAction> additionalActions) {
       this.source = source;
       this.targets = targets;
       this.additionalActions = additionalActions;
 
-      myNames = new HashSet<String>();
+      myNames = new HashSet<>();
       for (PsiElement target : targets) {
         if (target instanceof PsiNamedElement) {
           myNames.add(((PsiNamedElement)target).getName());

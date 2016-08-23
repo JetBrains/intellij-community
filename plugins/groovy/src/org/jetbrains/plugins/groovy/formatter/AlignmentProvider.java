@@ -31,10 +31,10 @@ import java.util.Set;
  * @author Max Medvedev
  */
 public class AlignmentProvider {
-  private final Map<PsiElement, Set<PsiElement>> myTree = new HashMap<PsiElement, Set<PsiElement>>();
-  private final Map<Set<PsiElement>, Alignment> myAlignments = new HashMap<Set<PsiElement>, Alignment>();
-  private final Map<Set<PsiElement>, Boolean> myAllowBackwardShift = new HashMap<Set<PsiElement>, Boolean>();
-  private final Map<Set<PsiElement>, Alignment.Anchor> myAnchor = new HashMap<Set<PsiElement>, Alignment.Anchor>();
+  private final Map<PsiElement, Set<PsiElement>> myTree = new HashMap<>();
+  private final Map<Set<PsiElement>, Alignment> myAlignments = new HashMap<>();
+  private final Map<Set<PsiElement>, Boolean> myAllowBackwardShift = new HashMap<>();
+  private final Map<Set<PsiElement>, Alignment.Anchor> myAnchor = new HashMap<>();
 
   public void addPair(@NotNull PsiElement e1, @NotNull PsiElement e2, @Nullable Boolean allowBackwardShift) {
     addPair(e1, e2, allowBackwardShift, null);

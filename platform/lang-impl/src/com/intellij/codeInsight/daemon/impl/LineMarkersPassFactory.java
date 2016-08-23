@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,11 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.MarkupModelImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
@@ -35,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 public class LineMarkersPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
   public LineMarkersPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
-    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.VISIBLE_LINE_MARKERS}, new int[]{Pass.UPDATE_ALL}, false, Pass.LINE_MARKERS);
+    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, null, new int[]{Pass.UPDATE_ALL}, false, Pass.LINE_MARKERS);
   }
 
   @Override
@@ -48,13 +51,15 @@ public class LineMarkersPassFactory extends AbstractProjectComponent implements 
   @Override
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
-    TextRange textRange = calculateRangeToProcessForSyntaxPass(editor);
-    if (textRange == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(myProject, editor.getDocument());
-    return new LineMarkersPass(myProject, file, editor, editor.getDocument(), textRange);
+    TextRange restrictRange = FileStatusMap.getDirtyTextRange(editor, Pass.LINE_MARKERS);
+    Document document = editor.getDocument();
+    if (restrictRange == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(myProject, document);
+    ProperTextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(editor);
+    return new LineMarkersPass(myProject, file, document, expandRangeToCoverWholeLines(document, visibleRange), expandRangeToCoverWholeLines(document, restrictRange));
   }
 
-  @Nullable
-  private static TextRange calculateRangeToProcessForSyntaxPass(Editor editor) {
-    return FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL);
+  private static TextRange expandRangeToCoverWholeLines(@NotNull Document document, TextRange textRange) {
+    if (textRange == null) return null;
+    return MarkupModelImpl.roundToLineBoundaries(document, textRange.getStartOffset(), textRange.getEndOffset());
   }
 }

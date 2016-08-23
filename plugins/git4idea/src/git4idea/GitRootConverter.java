@@ -34,8 +34,8 @@ public class GitRootConverter implements AbstractVcs.RootsConvertor {
   @NotNull
   public List<VirtualFile> convertRoots(@NotNull List<VirtualFile> result) {
     // TODO this should be faster, because it is called rather often. gitRootOrNull could be a bottle-neck.
-    ArrayList<VirtualFile> roots = new ArrayList<VirtualFile>();
-    HashSet<VirtualFile> listed = new HashSet<VirtualFile>();
+    ArrayList<VirtualFile> roots = new ArrayList<>();
+    HashSet<VirtualFile> listed = new HashSet<>();
     for (VirtualFile f : result) {
       VirtualFile r = GitUtil.gitRootOrNull(f);
       if (r != null && listed.add(r)) {

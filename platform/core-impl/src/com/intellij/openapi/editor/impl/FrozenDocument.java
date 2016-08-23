@@ -28,7 +28,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.Processor;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.text.ImmutableText;
+import com.intellij.util.text.ImmutableCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,12 +40,12 @@ import java.util.List;
  * @author peter
  */
 public class FrozenDocument implements DocumentEx {
-  private final ImmutableText myText;
+  private final ImmutableCharSequence myText;
   private final LineSet myLineSet;
   private final long myStamp;
   private volatile SoftReference<String> myTextString;
 
-  public FrozenDocument(@NotNull ImmutableText text, @NotNull LineSet lineSet, long stamp, @Nullable String textString) {
+  FrozenDocument(@NotNull ImmutableCharSequence text, @NotNull LineSet lineSet, long stamp, @Nullable String textString) {
     myText = text;
     myLineSet = lineSet;
     myStamp = stamp;
@@ -55,8 +55,8 @@ public class FrozenDocument implements DocumentEx {
   public FrozenDocument applyEvent(DocumentEvent event, int newStamp) {
     final int offset = event.getOffset();
     final int oldEnd = offset + event.getOldLength();
-    final ImmutableText newText = myText.delete(offset, oldEnd).insert(offset, event.getNewFragment());
-    final LineSet newLineSet = myLineSet.update(myText, offset, oldEnd, event.getNewFragment(), event.isWholeTextReplaced());
+    ImmutableCharSequence newText = myText.delete(offset, oldEnd).insert(offset, event.getNewFragment());
+    LineSet newLineSet = myLineSet.update(myText, offset, oldEnd, event.getNewFragment(), event.isWholeTextReplaced());
     return new FrozenDocument(newText, newLineSet, newStamp, null);
   }
 

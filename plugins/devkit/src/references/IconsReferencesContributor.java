@@ -168,7 +168,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
           protected Collection<PsiFileSystemItem> getExtraContexts() {
             final Module icons = ModuleManager.getInstance(element.getProject()).findModuleByName("icons");
             if (icons != null) {
-              final ArrayList<PsiFileSystemItem> result = new ArrayList<PsiFileSystemItem>();
+              final ArrayList<PsiFileSystemItem> result = new ArrayList<>();
               final VirtualFile[] roots = ModuleRootManager.getInstance(icons).getSourceRoots();
               final PsiManager psiManager = element.getManager();
               for (VirtualFile root : roots) {

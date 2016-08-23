@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,12 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 
 public final class ComboBoxModelEditor<T> extends ListModelEditorBase<T> {
-  private final ComboBox comboBox;
+  private final ComboBox<T> comboBox;
 
   public ComboBoxModelEditor(@NotNull ListItemEditor<T> itemEditor) {
     super(itemEditor);
 
-    comboBox = new ComboBox((ComboBoxModel)model);
+    comboBox = new ComboBox<>(model);
     comboBox.setEditor(new NameEditor());
     comboBox.setRenderer(new MyListCellRenderer());
   }

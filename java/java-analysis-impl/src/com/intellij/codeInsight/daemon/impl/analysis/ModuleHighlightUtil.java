@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.GoToSymbolFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.MoveFileFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
@@ -30,17 +31,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaModule;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
+import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
-import com.intellij.psi.search.ProjectScope;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import static com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE;
 
@@ -58,29 +57,11 @@ public class ModuleHighlightUtil {
   }
 
   @Nullable
-  static HighlightInfo checkModuleDuplicates(@NotNull PsiJavaModule element, @NotNull PsiFile file) {
-    String name = element.getModuleName();
-    Project project = file.getProject();
-    Collection<PsiJavaModule> others = JavaModuleNameIndex.getInstance().get(name, project, ProjectScope.getAllScope(project));
-    if (others.size() > 1) {
-      String message = JavaErrorMessages.message("module.name.duplicate", name);
-      HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element.getNameElement()).description(message).create();
-      others.stream().filter(m -> m != element).findFirst().ifPresent(
-        duplicate -> QuickFixAction.registerQuickFixAction(info, new GoToSymbolFix(duplicate, JavaErrorMessages.message("module.open.duplicate.text")))
-      );
-      return info;
-    }
-
-    return null;
-  }
-
-  @Nullable
   static HighlightInfo checkFileDuplicates(@NotNull PsiJavaModule element, @NotNull PsiFile file) {
     Module module = ModuleUtilCore.findModuleForPsiElement(element);
     if (module != null) {
       Project project = file.getProject();
-      Collection<VirtualFile> others =
-        FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, new ModulesScope(Collections.singleton(module), project));
+      Collection<VirtualFile> others = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, new ModulesScope(module));
       if (others.size() > 1) {
         String message = JavaErrorMessages.message("module.file.duplicate");
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(element)).description(message).create();
@@ -94,6 +75,32 @@ public class ModuleHighlightUtil {
     return null;
   }
 
+  @NotNull
+  static List<HighlightInfo> checkDuplicateRequires(@NotNull PsiJavaModule module) {
+    List<HighlightInfo> results = ContainerUtil.newSmartList();
+
+    Map<String, PsiElement> map = ContainerUtil.newHashMap();
+    for (PsiElement child = module.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (child instanceof PsiRequiresStatement) {
+        PsiJavaModuleReferenceElement ref = ((PsiRequiresStatement)child).getReferenceElement();
+        if (ref != null) {
+          String text = ref.getReferenceText();
+          if (!map.containsKey(text)) {
+            map.put(text, child);
+          }
+          else {
+            String message = JavaErrorMessages.message("module.duplicate.requires", text);
+            HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(child).description(message).create();
+            QuickFixAction.registerQuickFixAction(info, new DeleteElementFix(child));
+            results.add(info);
+          }
+        }
+      }
+    }
+
+    return results;
+  }
+
   @Nullable
   static HighlightInfo checkFileLocation(@NotNull PsiJavaModule element, @NotNull PsiFile file) {
     VirtualFile vFile = file.getVirtualFile();
@@ -104,6 +111,20 @@ public class ModuleHighlightUtil {
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(range(element)).description(message).create();
         QuickFixAction.registerQuickFixAction(info, new MoveFileFix(vFile, root, QuickFixBundle.message("move.file.to.source.root.text")));
         return info;
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  static HighlightInfo checkModuleReference(@Nullable PsiJavaModuleReferenceElement refElement) {
+    if (refElement != null) {
+      PsiPolyVariantReference ref = refElement.getReference();
+      assert ref != null : refElement.getParent();
+      if (ref.multiResolve(false).length == 0) {
+        String message = JavaErrorMessages.message("module.ref.unknown", refElement.getReferenceText());
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refElement).description(message).create();
       }
     }
 

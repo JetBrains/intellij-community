@@ -45,8 +45,8 @@ public abstract class AbstractAddToTestsPatternAction<T extends ModuleBasedConfi
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
-    final LinkedHashSet<PsiElement> classes = new LinkedHashSet<PsiElement>();
-    PsiElementProcessor.CollectElements<PsiElement> processor = new PsiElementProcessor.CollectElements<PsiElement>(classes);
+    final LinkedHashSet<PsiElement> classes = new LinkedHashSet<>();
+    PsiElementProcessor.CollectElements<PsiElement> processor = new PsiElementProcessor.CollectElements<>(classes);
     getPatternBasedProducer().collectTestMembers(psiElements, true, true, processor);
 
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -87,7 +87,7 @@ public abstract class AbstractAddToTestsPatternAction<T extends ModuleBasedConfi
     final DataContext dataContext = e.getDataContext();
     final PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     if (psiElements != null) {
-      PsiElementProcessor.CollectElementsWithLimit<PsiElement> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiElement>(2);
+      PsiElementProcessor.CollectElementsWithLimit<PsiElement> processor = new PsiElementProcessor.CollectElementsWithLimit<>(2);
       getPatternBasedProducer().collectTestMembers(psiElements, false, false, processor);
       Collection<PsiElement> collection = processor.getCollection();
       if (collection.isEmpty()) return;
@@ -106,7 +106,7 @@ public abstract class AbstractAddToTestsPatternAction<T extends ModuleBasedConfi
 
   private List<T> collectPatternConfigurations(Collection<PsiElement> foundClasses, Project project) {
     final List<RunConfiguration> configurations = RunManager.getInstance(project).getConfigurationsList(getConfigurationType());
-    final List<T> foundConfigurations = new ArrayList<T>();
+    final List<T> foundConfigurations = new ArrayList<>();
     for (RunConfiguration configuration : configurations) {
       if (isPatternBasedConfiguration((T)configuration)) {
         if (foundClasses.size() > 1 ||

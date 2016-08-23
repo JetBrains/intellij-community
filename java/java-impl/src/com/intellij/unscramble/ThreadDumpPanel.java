@@ -80,8 +80,8 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
   public ThreadDumpPanel(final Project project, final ConsoleView consoleView, final DefaultActionGroup toolbarActions, final List<ThreadState> threadDump) {
     super(new BorderLayout());
     myThreadDump = threadDump;
-    myMergedThreadDump = new ArrayList<ThreadState>();
-    List<ThreadState> copy = new ArrayList<ThreadState>(myThreadDump);
+    myMergedThreadDump = new ArrayList<>();
+    List<ThreadState> copy = new ArrayList<>(myThreadDump);
     for (int i = 0; i < copy.size(); i++) {
       ThreadState state = copy.get(i);
       ThreadState.CompoundThreadState compound = new ThreadState.CompoundThreadState(state);

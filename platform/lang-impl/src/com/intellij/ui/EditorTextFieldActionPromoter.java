@@ -53,7 +53,7 @@ public class EditorTextFieldActionPromoter implements ActionPromoter {
 
   @Override
   public List<AnAction> promote(List<AnAction> actions, DataContext context) {
-    ArrayList<AnAction> result = new ArrayList<AnAction>(actions);
+    ArrayList<AnAction> result = new ArrayList<>(actions);
     Collections.sort(result, ACTIONS_COMPARATOR);
     return result;
   }

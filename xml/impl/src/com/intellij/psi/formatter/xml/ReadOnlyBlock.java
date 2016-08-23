@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ReadOnlyBlock extends AbstractBlock {
-  private static final ArrayList<Block> EMPTY = new ArrayList<Block>();
+  private static final ArrayList<Block> EMPTY = new ArrayList<>();
 
   public ReadOnlyBlock(ASTNode node) {
     super(node, null, null);

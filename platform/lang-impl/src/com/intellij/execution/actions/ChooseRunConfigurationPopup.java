@@ -545,7 +545,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
                                                 final ChooseRunConfigurationPopup action,
                                                 @NotNull final RunnerAndConfigurationSettings settings,
                                                 final boolean dynamic) {
-      final List<ActionWrapper> result = new ArrayList<ActionWrapper>();
+      final List<ActionWrapper> result = new ArrayList<>();
 
       final ExecutionTarget active = ExecutionTargetManager.getActiveTarget(project);
       for (final ExecutionTarget eachTarget : ExecutionTargetManager.getTargetsToChooseFor(project, settings)) {
@@ -859,7 +859,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
 
     @Override
     public PopupStep getNextStep(Project project, ChooseRunConfigurationPopup action) {
-      List<ConfigurationActionsStep> steps = new ArrayList<ConfigurationActionsStep>();
+      List<ConfigurationActionsStep> steps = new ArrayList<>();
       for (RunnerAndConfigurationSettings settings : myConfigurations) {
         steps.add(new ConfigurationActionsStep(project, action, settings, false));
       }
@@ -874,7 +874,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
 
     private FolderStep(Project project, ExecutorProvider executorProvider, String folderName, List<ConfigurationActionsStep> children,
                        ChooseRunConfigurationPopup popup) {
-      super(folderName, children, new ArrayList<Icon>());
+      super(folderName, children, new ArrayList<>());
       myProject = project;
       myExecutorProvider = executorProvider;
       myPopup = popup;
@@ -916,7 +916,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
   }
 
   public static ItemWrapper[] createSettingsList(@NotNull Project project, @NotNull ExecutorProvider executorProvider, boolean createEditAction) {
-    List<ItemWrapper> result = new ArrayList<ItemWrapper>();
+    List<ItemWrapper> result = new ArrayList<>();
 
     if (createEditAction) {
       ItemWrapper<Void> edit = new ItemWrapper<Void>(null) {
@@ -995,7 +995,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
       }
     }
 
-    Map<RunnerAndConfigurationSettings, ItemWrapper> wrappedExisting = new LinkedHashMap<RunnerAndConfigurationSettings, ItemWrapper>();
+    Map<RunnerAndConfigurationSettings, ItemWrapper> wrappedExisting = new LinkedHashMap<>();
     for (ConfigurationType type : manager.getConfigurationFactories()) {
       if (!(type instanceof UnknownConfigurationType)) {
         Map<String, List<RunnerAndConfigurationSettings>> structure = manager.getStructure(type);
@@ -1043,7 +1043,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
                                                                                  final Project project, final RunManagerEx manager,
                                                                                  final RunnerAndConfigurationSettings selectedConfiguration) {
 
-    final ArrayList<RunnerAndConfigurationSettings> contextConfigurations = new ArrayList<RunnerAndConfigurationSettings>();
+    final ArrayList<RunnerAndConfigurationSettings> contextConfigurations = new ArrayList<>();
     if (!EventQueue.isDispatchThread()) {
       return Collections.emptyList();
     }

@@ -66,9 +66,9 @@ public class AbstractExtractMethodDialog extends DialogWrapper implements Extrac
     myValidator = validator;
     myDecorator = decorator;
     myFileType = type;
-    myArguments = new ArrayList<String>(fragment.getInputVariables());
+    myArguments = new ArrayList<>(fragment.getInputVariables());
     Collections.sort(myArguments);
-    myOutputVariables = new ArrayList<String>(fragment.getOutputVariables());
+    myOutputVariables = new ArrayList<>(fragment.getOutputVariables());
     Collections.sort(myOutputVariables);
     setModal(true);
     setTitle(RefactoringBundle.message("extract.method.title"));
@@ -119,13 +119,8 @@ public class AbstractExtractMethodDialog extends DialogWrapper implements Extrac
     return datas;
   }
 
-  @Deprecated
-  public static com.intellij.refactoring.extractMethod.AbstractVariableData[] createVariableData(final List<String> args) {
-    return com.intellij.refactoring.extractMethod.AbstractVariableData.copy(createVariableDataByNames(args));
-  }
-
   public static Map<String, AbstractVariableData> createVariableMap(final AbstractVariableData[] data) {
-    final HashMap<String, AbstractVariableData> map = new HashMap<String, AbstractVariableData>();
+    final HashMap<String, AbstractVariableData> map = new HashMap<>();
     for (AbstractVariableData variableData : data) {
       map.put(variableData.getOriginalName(), variableData);
     }

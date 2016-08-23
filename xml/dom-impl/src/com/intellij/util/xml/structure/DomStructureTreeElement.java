@@ -63,7 +63,7 @@ public class DomStructureTreeElement implements StructureViewTreeElement, ItemPr
   @NotNull
   public TreeElement[] getChildren() {
     if (!myElement.isValid()) return EMPTY_ARRAY;
-    final ArrayList<TreeElement> result = new ArrayList<TreeElement>();
+    final ArrayList<TreeElement> result = new ArrayList<>();
     final DomElementVisitor elementVisitor = new DomElementVisitor() {
       @Override
       public void visitDomElement(final DomElement element) {

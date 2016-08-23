@@ -38,7 +38,7 @@ public abstract class LibraryScopeBase extends GlobalSearchScope {
   public LibraryScopeBase(Project project, VirtualFile[] classes, VirtualFile[] sources) {
     super(project);
     myIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    myEntries = new LinkedHashSet<VirtualFile>(classes.length + sources.length);
+    myEntries = new LinkedHashSet<>(classes.length + sources.length);
     Collections.addAll(myEntries, classes);
     Collections.addAll(myEntries, sources);
   }

@@ -98,7 +98,7 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
    */
   private static Pair<StringBuilder, Boolean> convertFormat(PyStringLiteralExpression stringLiteralExpression, String prefix) {
     // python string may be made of several literals, all different
-    List<StringBuilder> constants = new ArrayList<StringBuilder>();
+    List<StringBuilder> constants = new ArrayList<>();
     boolean usesNamedFormat = false;
     final List<ASTNode> stringNodes = stringLiteralExpression.getStringNodes();
     sure(stringNodes);
@@ -210,7 +210,7 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
     // join everything
     StringBuilder result = new StringBuilder();
     for (StringBuilder one : constants) result.append(one);
-    return new Pair<StringBuilder, Boolean>(result, usesNamedFormat);
+    return new Pair<>(result, usesNamedFormat);
   }
 
   private static boolean has(String where, char what) {

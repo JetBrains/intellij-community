@@ -34,7 +34,7 @@ public class LoginPanel {
     mySignUpLabel.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
-        BrowserUtil.browse(EduStepicNames.STEPIC_SIGN_IN_LINK);
+        BrowserUtil.browse(EduStepicNames.STEPIC_REGISTRATION_LINK);
       }
 
       @Override

@@ -17,6 +17,7 @@ package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.progress.util.ProgressWindow;
@@ -33,7 +34,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.data.RefsModel;
+import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
@@ -41,10 +42,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Kirill Likhodedov
@@ -61,17 +60,14 @@ class DetailsPanel extends JPanel implements EditorColorsListener {
   @NotNull private final JBLoadingPanel myLoadingPanel;
   @NotNull private final VcsLogColorManager myColorManager;
 
-  @NotNull private VisiblePack myDataPack;
   @NotNull private List<Integer> mySelection = ContainerUtil.emptyList();
   @NotNull private Set<VcsFullCommitDetails> myCommitDetails = Collections.emptySet();
 
   DetailsPanel(@NotNull VcsLogData logData,
                @NotNull VcsLogColorManager colorManager,
-               @NotNull VisiblePack initialDataPack,
                @NotNull Disposable parent) {
     myLogData = logData;
     myColorManager = colorManager;
-    myDataPack = initialDataPack;
 
     myScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     myScrollPane.getVerticalScrollBar().setUnitIncrement(JBUI.scale(10));
@@ -154,15 +150,6 @@ class DetailsPanel extends JPanel implements EditorColorsListener {
     graphTable.getSelectionModel().addListSelectionListener(new CommitSelectionListenerForDetails(graphTable));
   }
 
-  void updateDataPack(@NotNull VisiblePack dataPack) {
-    myDataPack = dataPack;
-
-    for (int i = 0; i < mySelection.size(); i++) {
-      CommitPanel commitPanel = getCommitPanel(i);
-      commitPanel.setDataPack(dataPack);
-    }
-  }
-
   public void branchesChanged() {
     for (int i = 0; i < mySelection.size(); i++) {
       CommitPanel commitPanel = getCommitPanel(i);
@@ -182,7 +169,7 @@ class DetailsPanel extends JPanel implements EditorColorsListener {
       if (i > 0) {
         myMainContentPanel.add(new SeparatorComponent(0, OnePixelDivider.BACKGROUND, null));
       }
-      myMainContentPanel.add(new CommitPanel(myLogData, myColorManager, myDataPack));
+      myMainContentPanel.add(new CommitPanel(myLogData, myColorManager));
     }
 
     // clear superfluous items
@@ -222,8 +209,7 @@ class DetailsPanel extends JPanel implements EditorColorsListener {
       Set<VcsFullCommitDetails> newCommitDetails = ContainerUtil.newHashSet(detailsList);
       for (int i = 0; i < mySelection.size(); i++) {
         CommitPanel commitPanel = getCommitPanel(i);
-        Integer commit = myDataPack.getVisibleGraph().getRowInfo(mySelection.get(i)).getCommit();
-        commitPanel.setCommit(detailsList.get(i), ((RefsModel)myDataPack.getRefs()).refsToCommit(commit));
+        commitPanel.setCommit(detailsList.get(i));
       }
 
       if (!ContainerUtil.intersects(myCommitDetails, newCommitDetails)) {
@@ -235,6 +221,21 @@ class DetailsPanel extends JPanel implements EditorColorsListener {
     @Override
     protected void onSelection(@NotNull int[] selection) {
       rebuildCommitPanels(selection);
+      final List<Integer> currentSelection = mySelection;
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        List<Collection<VcsRef>> result = ContainerUtil.newArrayList();
+        for (Integer row : currentSelection) {
+          result.add(myGraphTable.getModel().getRefsAtRow(row));
+        }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (currentSelection == mySelection) {
+            for (int i = 0; i < currentSelection.size(); i++) {
+              CommitPanel commitPanel = getCommitPanel(i);
+              commitPanel.setRefs(result.get(i));
+            }
+          }
+        });
+      });
     }
 
     @Override

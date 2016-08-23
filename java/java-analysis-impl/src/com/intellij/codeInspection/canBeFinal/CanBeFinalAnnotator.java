@@ -129,9 +129,9 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
         PsiMethod[] psiMethods = psiClass.getMethods();
         PsiField[] psiFields = psiClass.getFields();
 
-        Set<PsiVariable> allFields = new HashSet<PsiVariable>();
+        Set<PsiVariable> allFields = new HashSet<>();
         ContainerUtil.addAll(allFields, psiFields);
-        List<PsiVariable> instanceInitializerInitializedFields = new ArrayList<PsiVariable>();
+        List<PsiVariable> instanceInitializerInitializedFields = new ArrayList<>();
         Set<PsiField> fieldsInitializedInInitializers = null;
 
         for (PsiClassInitializer initializer : psiClass.getInitializers()) {
@@ -144,7 +144,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
           catch (AnalysisCanceledException e) {
             flow = ControlFlow.EMPTY;
           }
-          Collection<PsiVariable> writtenVariables = new ArrayList<PsiVariable>();
+          Collection<PsiVariable> writtenVariables = new ArrayList<>();
           ControlFlowUtil.getWrittenVariables(flow, 0, flow.getSize(), false, writtenVariables);
           if (fieldsInitializedInInitializers == null) {
             fieldsInitializedInInitializers = new HashSet<>();
@@ -191,7 +191,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
               List<PsiMethod> redirectedConstructors = JavaHighlightUtil.getChainedConstructors(psiMethod);
               if (redirectedConstructors == null || redirectedConstructors.isEmpty()) {
                 List<PsiVariable> ssaVariables = ControlFlowUtil.getSSAVariables(flow);
-                ArrayList<PsiVariable> good = new ArrayList<PsiVariable>(ssaVariables);
+                ArrayList<PsiVariable> good = new ArrayList<>(ssaVariables);
                 good.addAll(instanceInitializerInitializedFields);
                 allFields.retainAll(good);
               }

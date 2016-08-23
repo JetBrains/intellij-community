@@ -220,11 +220,6 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     return getHelpTopic();
   }
 
-  @Nullable
-  public Runnable enableSearch(String option) {
-    return null;
-  }
-
   protected List<SearchableConfigurable> createConfigurables() {
     return ConfigurableWrapper.createConfigurables(EP_NAME);
   }

@@ -56,7 +56,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
 
   public void onStartTesting() {
     addToInvokeLater(() -> {
-      myTestsRootNode.setState(State.RUNNING, GeneralIdBasedToSMTRunnerEventsConvertor.this);
+      myTestsRootNode.setState(State.RUNNING, this);
       myTestsRootProxy.setStarted();
       fireOnTestingStarted(myTestsRootProxy);
     });

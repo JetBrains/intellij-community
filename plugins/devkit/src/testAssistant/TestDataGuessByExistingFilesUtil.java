@@ -147,7 +147,9 @@ public class TestDataGuessByExistingFilesUtil {
   @Nullable
   private static TestDataDescriptor buildDescriptorFromExistingTestData(@NotNull final PsiMethod method) {
     final TestDataDescriptor cachedValue = CachedValuesManager.getCachedValue(method,
-                                                                              () -> new CachedValueProvider.Result<TestDataDescriptor>(buildDescriptor(method), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+                                                                              () -> new CachedValueProvider.Result<>(
+                                                                                buildDescriptor(method),
+                                                                                PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
     return cachedValue == TestDataDescriptor.NOTHING_FOUND ? null : cachedValue;
   }
 
@@ -170,7 +172,7 @@ public class TestDataGuessByExistingFilesUtil {
   {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(psiClass.getProject()).getFileIndex();
     GotoFileModel gotoModel = new GotoFileModel(psiClass.getProject());
-    Set<TestLocationDescriptor> descriptors = new HashSet<TestLocationDescriptor>();
+    Set<TestLocationDescriptor> descriptors = new HashSet<>();
     // PhpStorm has tests that use '$' symbol as a file path separator, e.g. 'test$while_stmt$declaration' test 
     // stands for '/while_smt/declaration.php' file somewhere in a test data.
     final String possibleFileName = ContainerUtil.getLastItem(StringUtil.split(test, "$"), test);
@@ -366,7 +368,7 @@ public class TestDataGuessByExistingFilesUtil {
   private static class TestDataDescriptor {
     private static final TestDataDescriptor NOTHING_FOUND = new TestDataDescriptor(Collections.<TestLocationDescriptor>emptyList(), null);
 
-    private final List<TestLocationDescriptor> myDescriptors = new ArrayList<TestLocationDescriptor>();
+    private final List<TestLocationDescriptor> myDescriptors = new ArrayList<>();
     private final String myTestName;
 
     TestDataDescriptor(Collection<TestLocationDescriptor> descriptors, String testName) {
@@ -399,7 +401,7 @@ public class TestDataGuessByExistingFilesUtil {
 
     @NotNull
     public List<String> generate(@NotNull final String testName, String root) {
-      List<String> result = new ArrayList<String>();
+      List<String> result = new ArrayList<>();
       if (StringUtil.isEmpty(testName)) {
         return result;
       }

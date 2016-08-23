@@ -15,10 +15,7 @@
  */
 package com.intellij.compiler.notNullVerification;
 
-import org.jetbrains.org.objectweb.asm.ClassReader;
-import org.jetbrains.org.objectweb.asm.ClassVisitor;
-import org.jetbrains.org.objectweb.asm.Label;
-import org.jetbrains.org.objectweb.asm.MethodVisitor;
+import org.jetbrains.org.objectweb.asm.*;
 
 import java.util.*;
 
@@ -62,7 +59,7 @@ class AuxiliaryMethodGenerator {
 
   private Set<String> populateExistingMethods() {
     final Set<String> existingMethods = new HashSet<String>();
-    myOriginalClass.accept(new ClassVisitor(ASM5) {
+    myOriginalClass.accept(new ClassVisitor(API_VERSION) {
       @Override
       public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
         existingMethods.add(name);

@@ -140,7 +140,7 @@ public class CodeInsightUtil {
 */
 
     PsiElement[] children = parent.getChildren();
-    ArrayList<PsiElement> array = new ArrayList<PsiElement>();
+    ArrayList<PsiElement> array = new ArrayList<>();
     boolean flag = false;
     for (PsiElement child : children) {
       if (child.equals(element1)) {
@@ -201,7 +201,7 @@ public class CodeInsightUtil {
   }
 
   public static PsiExpression[] findExpressionOccurrences(PsiElement scope, PsiExpression expr) {
-    List<PsiExpression> array = new ArrayList<PsiExpression>();
+    List<PsiExpression> array = new ArrayList<>();
     addExpressionOccurrences(RefactoringUtil.unparenthesizeExpression(expr), array, scope);
     if (expr.isPhysical()) {
       boolean found = false;
@@ -230,7 +230,7 @@ public class CodeInsightUtil {
   }
 
   public static PsiExpression[] findReferenceExpressions(PsiElement scope, PsiElement referee) {
-    ArrayList<PsiElement> array = new ArrayList<PsiElement>();
+    ArrayList<PsiElement> array = new ArrayList<>();
     if (scope != null) {
       addReferenceExpressions(array, scope, referee);
     }

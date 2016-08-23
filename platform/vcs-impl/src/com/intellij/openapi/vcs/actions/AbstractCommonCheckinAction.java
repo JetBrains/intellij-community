@@ -15,59 +15,53 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-
+import java.util.stream.Stream;
 
 public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
   
   private static final Logger LOG = Logger.getInstance(AbstractCommonCheckinAction.class);
   
   @Override
-  public void actionPerformed(@NotNull final VcsContext context) {
+  public void actionPerformed(@NotNull VcsContext context) {
     LOG.debug("actionPerformed. ");
-    final Project project = context.getProject();
-    if (project == null) {
-      LOG.debug("project is null. returning.");
-      return;
-    }
+    Project project = ObjectUtils.notNull(context.getProject());
+
     if (ChangeListManager.getInstance(project).isFreezedWithNotification("Can not " + getMnemonicsFreeActionName(context) + " now")) {
       LOG.debug("ChangeListManager is freezed. returning.");
-      return;
     }
-
-    if (ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning()) {
+    else if (ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning()) {
       LOG.debug("Background operation is running. returning.");
-      return;
     }
-
-    final FilePath[] roots = prepareRootsForCommit(getRoots(context), project);
-    ChangeListManager.getInstance(project).invokeAfterUpdate(new Runnable() {
-      @Override
-      public void run() {
-        performCheckIn(context, project, roots);
-      }
-    }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message"),
-                                                             ModalityState.current());
+    else {
+      FilePath[] roots = prepareRootsForCommit(getRoots(context), project);
+      ChangeListManager.getInstance(project)
+        .invokeAfterUpdate(() -> performCheckIn(context, project, roots), InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE,
+                           VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message"), ModalityState.current());
+    }
   }
 
   protected void performCheckIn(@NotNull VcsContext context, @NotNull Project project, @NotNull FilePath[] roots) {
     LOG.debug("invoking commit dialog after update");
     LocalChangeList initialSelection = getInitiallySelectedChangeList(context, project);
     Change[] changes = context.getSelectedChanges();
+
     if (changes != null && changes.length > 0) {
       CommitChangeListDialog.commitChanges(project, Arrays.asList(changes), initialSelection, getExecutor(project), null);
     }
@@ -80,52 +74,34 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
   protected FilePath[] prepareRootsForCommit(@NotNull FilePath[] roots, @NotNull Project project) {
     ApplicationManager.getApplication().saveAll();
 
-    return filterDescindingFiles(roots, project);
+    return DescindingFilesFilter.filterDescindingFiles(roots, project);
   }
 
-  protected String getMnemonicsFreeActionName(VcsContext context) {
+  protected String getMnemonicsFreeActionName(@NotNull VcsContext context) {
     return getActionName(context);
   }
 
   @Nullable
-  protected CommitExecutor getExecutor(Project project) {
+  protected CommitExecutor getExecutor(@NotNull Project project) {
     return null;
   }
 
   @Nullable
-  protected LocalChangeList getInitiallySelectedChangeList(final VcsContext context, final Project project) {
-    LocalChangeList initialSelection;
-    ChangeList[] selectedChangeLists = context.getSelectedChangeLists();
-    if (selectedChangeLists != null && selectedChangeLists.length > 0) {
+  protected LocalChangeList getInitiallySelectedChangeList(@NotNull VcsContext context, @NotNull Project project) {
+    LocalChangeList result;
+    ChangeListManager manager = ChangeListManager.getInstance(project);
+    ChangeList[] changeLists = context.getSelectedChangeLists();
+
+    if (!ArrayUtil.isEmpty(changeLists)) {
       // convert copy to real
-      initialSelection = ChangeListManager.getInstance(project).findChangeList(selectedChangeLists [0].getName());
+      result = manager.findChangeList(changeLists[0].getName());
     }
     else {
-      Change[] selectedChanges = context.getSelectedChanges();
-      if (selectedChanges != null && selectedChanges.length > 0) {
-        initialSelection = ChangeListManager.getInstance(project).getChangeList(selectedChanges [0]);
-      }
-      else {
-        initialSelection = ChangeListManager.getInstance(project).getDefaultChangeList();
-      }
+      Change[] changes = context.getSelectedChanges();
+      result = !ArrayUtil.isEmpty(changes) ? manager.getChangeList(changes[0]) : manager.getDefaultChangeList();
     }
-    return initialSelection;
-  }
 
-  @Nullable
-  protected static AbstractVcs getCommonVcsFor(FilePath[] roots, Project project) {
-    if (roots.length == 0) return null;
-    AbstractVcs firstVcs = VcsUtil.getVcsFor(project, roots[0]);
-    if (firstVcs == null) return null;
-
-    for (FilePath file : roots) {
-      AbstractVcs vcs = VcsUtil.getVcsFor(project, file);
-      if (vcs == null) return null;
-      if (firstVcs != vcs) {
-        return null;
-      }
-    }
-    return firstVcs;
+    return result;
   }
 
   protected abstract String getActionName(@NotNull VcsContext dataContext);
@@ -133,65 +109,29 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
   @NotNull
   protected abstract FilePath[] getRoots(@NotNull VcsContext dataContext);
 
-  protected abstract boolean approximatelyHasRoots(final VcsContext dataContext);
+  protected abstract boolean approximatelyHasRoots(@NotNull VcsContext dataContext);
 
   @Override
-  protected void update(VcsContext vcsContext, Presentation presentation) {
+  protected void update(@NotNull VcsContext vcsContext, @NotNull Presentation presentation) {
     Project project = vcsContext.getProject();
-    if (project == null) {
-      presentation.setEnabled(false);
-      presentation.setVisible(false);
-      return;
+
+    if (project == null || !ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) {
+      presentation.setEnabledAndVisible(false);
     }
-    final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(project);
-    if (! plVcsManager.hasActiveVcss()) {
+    else if (!approximatelyHasRoots(vcsContext)) {
       presentation.setEnabled(false);
-      presentation.setVisible(false);
-      return;
     }
-
-    /*if (! checkEnvironments(plVcsManager)) {
-      presentation.setEnabled(false);
-      return;
-    }*/
-
-    if (! approximatelyHasRoots(vcsContext)) {
-      presentation.setEnabled(false);
-      return;
+    else {
+      presentation.setText(getActionName(vcsContext) + "...");
+      presentation.setEnabled(!ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning());
+      presentation.setVisible(true);
     }
-
-    String actionName = getActionName(vcsContext) + "...";
-    presentation.setText(actionName);
-
-    presentation.setEnabled(! plVcsManager.isBackgroundVcsOperationRunning());
-    presentation.setVisible(true);
   }
 
-  /*protected static boolean checkEnvironments(ProjectLevelVcsManager plVcsManager) {
-    final AbstractVcs[] allActiveVcss = plVcsManager.getAllActiveVcss();
-    for (AbstractVcs vcs : allActiveVcss) {
-      if (vcs.getCheckinEnvironment() != null) {
-        return true;
-      }
-    }
-    return false;
-  }*/
-
-  @Override
-  protected boolean forceSyncUpdate(final AnActionEvent e) {
-    return true;
-  }
-
-  protected abstract boolean filterRootsBeforeAction();
-
-  protected static FilePath[] getAllContentRoots(final VcsContext context) {
-    Project project = context.getProject();
-    ArrayList<FilePath> virtualFiles = new ArrayList<FilePath>();
-    ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
-    VirtualFile[] roots = manager.getAllVersionedRoots();
-    for (VirtualFile root : roots) {
-      virtualFiles.add(VcsUtil.getFilePath(root));
-    }
-    return virtualFiles.toArray(new FilePath[virtualFiles.size()]);
+  @NotNull
+  protected static FilePath[] getAllContentRoots(@NotNull VcsContext context) {
+    return Stream.of(ProjectLevelVcsManager.getInstance(context.getProject()).getAllVersionedRoots())
+      .map(VcsUtil::getFilePath)
+      .toArray(FilePath[]::new);
   }
 }

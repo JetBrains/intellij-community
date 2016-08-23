@@ -166,7 +166,7 @@ public class LibrariesContainerFactory {
     @NotNull
     @Override
     public List<LibraryLevel> getAvailableLevels() {
-      final List<LibraryLevel> levels = new ArrayList<LibraryLevel>();
+      final List<LibraryLevel> levels = new ArrayList<>();
       for (LibraryLevel level : LibraryLevel.values()) {
         if (canCreateLibrary(level)) {
           levels.add(level);

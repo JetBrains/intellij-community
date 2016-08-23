@@ -103,12 +103,12 @@ public class GroovyBlock implements Block, ASTBlock {
       catch (AssertionError e) {
         final PsiFile file = myNode.getPsi().getContainingFile();
         LogMessageEx.error(LOG, "Formatting failed for file " + file.getName(), e, file.getText(), myNode.getText());
-        mySubBlocks = new ArrayList<Block>();
+        mySubBlocks = new ArrayList<>();
       }
       catch (RuntimeException e) {
         final PsiFile file = myNode.getPsi().getContainingFile();
         LogMessageEx.error(LOG, "Formatting failed for file " + file.getName(), e, file.getText(), myNode.getText());
-        mySubBlocks = new ArrayList<Block>();
+        mySubBlocks = new ArrayList<>();
       }
     }
     return  mySubBlocks;

@@ -41,7 +41,7 @@ public final class IntFieldProperty extends Property<RadComponent, Integer> {
     myParent = parent;
     myFieldName = fieldName;
     myTemplateValue = templateValue;
-    myRenderer = new LabelPropertyRenderer<Integer>();
+    myRenderer = new LabelPropertyRenderer<>();
     myEditor = new IntEditor(lowBoundary);
   }
 

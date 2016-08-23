@@ -52,8 +52,6 @@ public abstract class EntryPointsManager implements Disposable {
 
   public abstract void configureAnnotations();
 
-  public abstract void configureEntryClassPatterns();
-
   /**
    * {@link com.intellij.codeInspection.ex.EntryPointsManagerImpl#createConfigureAnnotationsButton()} should be used instead
    */

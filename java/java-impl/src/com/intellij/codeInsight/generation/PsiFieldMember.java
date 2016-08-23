@@ -73,7 +73,7 @@ public class PsiFieldMember extends PsiElementClassMember<PsiField> implements P
   }
 
   private static GenerationInfo[] createGenerateInfos(PsiClass aClass, PsiMethod[] prototypes) {
-    final List<GenerationInfo> methods = new ArrayList<GenerationInfo>();
+    final List<GenerationInfo> methods = new ArrayList<>();
     for (PsiMethod prototype : prototypes) {
       final PsiMethod method = createMethodIfNotExists(aClass, prototype);
       if (method != null) {

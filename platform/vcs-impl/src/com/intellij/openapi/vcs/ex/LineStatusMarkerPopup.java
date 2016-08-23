@@ -170,7 +170,7 @@ public abstract class LineStatusMarkerPopup {
 
   private void installMasterEditorHighlighters(@Nullable List<DiffFragment> wordDiff, @NotNull Disposable parentDisposable) {
     if (wordDiff == null) return;
-    final List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
+    final List<RangeHighlighter> highlighters = new ArrayList<>();
 
     int currentStartShift = myTracker.getCurrentTextRange(myRange).getStartOffset();
     for (DiffFragment fragment : wordDiff) {

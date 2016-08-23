@@ -172,7 +172,7 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
   @NotNull
   private static List<ArrangementSectionRule> copy(@NotNull List<ArrangementSectionRule> rules) {
-    List<ArrangementSectionRule> result = new ArrayList<ArrangementSectionRule>();
+    List<ArrangementSectionRule> result = new ArrayList<>();
     for (ArrangementSectionRule rule : rules) {
       result.add(rule.clone());
     }

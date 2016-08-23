@@ -157,7 +157,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
         return panel.getData(dataId);
       }
     });
-    final List<Disposable> disposables = new ArrayList<Disposable>();
+    final List<Disposable> disposables = new ArrayList<>();
     list.putClientProperty(DISPOSED_OBJECTS, disposables);
     list.installCellRenderer(obj -> {
       final NavBarItem navBarItem = new NavBarItem(panel, obj, null);

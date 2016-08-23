@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.gradle.settings;
 
-import com.google.common.base.Objects;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -27,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 import javax.swing.*;
+import java.util.Objects;
 
 /**
  * @author Vladislav.Soroka
@@ -100,12 +100,6 @@ public class GradleRunnerConfigurable extends BaseConfigurable implements Search
     return "reference.settings.project.gradle.running";
   }
 
-  @Nullable
-  @Override
-  public Runnable enableSearch(String option) {
-    return null;
-  }
-
   private void createUIComponents() {
     myPreferredTestRunner = new ComboBox(getItems());
   }
@@ -138,7 +132,7 @@ public class GradleRunnerConfigurable extends BaseConfigurable implements Search
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(value);
+      return Objects.hash(value);
     }
 
     @Override

@@ -23,7 +23,8 @@ import git4idea.test.TestDialogHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubConnection;
-import org.jetbrains.plugins.github.api.GithubGist;
+import org.jetbrains.plugins.github.api.data.GithubGist;
+import org.jetbrains.plugins.github.api.requests.GithubGistRequest.FileContent;
 import org.jetbrains.plugins.github.test.GithubTest;
 import org.jetbrains.plugins.github.ui.GithubLoginDialog;
 import org.jetbrains.plugins.github.util.GithubAuthDataHolder;
@@ -31,8 +32,6 @@ import org.jetbrains.plugins.github.util.GithubAuthDataHolder;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.jetbrains.plugins.github.api.GithubGist.FileContent;
 
 /**
  * @author Aleksey Pivovarov
@@ -68,7 +67,7 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
 
   @NotNull
   protected static List<FileContent> createContent() {
-    List<FileContent> content = new ArrayList<FileContent>();
+    List<FileContent> content = new ArrayList<>();
 
     content.add(new FileContent("file1", "file1 content"));
     content.add(new FileContent("file2", "file2 content"));
@@ -131,7 +130,10 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
   protected void checkGistContent(@NotNull List<FileContent> expected) {
     GithubGist result = getGist();
 
-    List<FileContent> files = result.getContent();
+    List<FileContent> files = new ArrayList<>();
+    for (GithubGist.GistFile file : result.getFiles()) {
+      files.add(new FileContent(file.getFilename(), file.getContent()));
+    }
 
     assertTrue("Gist content differs from sample", Comparing.haveEqualElements(files, expected));
   }

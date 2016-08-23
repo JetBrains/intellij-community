@@ -28,7 +28,6 @@ import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.Task;
-import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import org.jetbrains.annotations.NotNull;
 
@@ -123,12 +122,12 @@ public class CCCreateCourseArchive extends DumbAwareAction {
             if (studentFileDir == null) {
               continue;
             }
-            for (TaskFile taskFile : task.getTaskFiles().values()) {
-              VirtualFile answerFile = taskDir.findChild(taskFile.name);
+            for (String taskFile : task.getTaskFiles().keySet()) {
+              VirtualFile answerFile = taskDir.findChild(taskFile);
               if (answerFile == null) {
                 continue;
               }
-              EduUtils.createStudentFile(this, project, answerFile, -1, studentFileDir, task);
+              EduUtils.createStudentFile(this, project, answerFile, studentFileDir, task);
             }
         }
       }

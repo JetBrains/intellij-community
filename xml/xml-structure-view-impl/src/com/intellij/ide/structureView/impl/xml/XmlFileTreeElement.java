@@ -33,7 +33,7 @@ public class XmlFileTreeElement extends AbstractXmlTagTreeElement<XmlFile> {
   @NotNull
   public Collection<StructureViewTreeElement> getChildrenBase() {
     final XmlDocument document = getElement().getDocument();
-    List<XmlTag> rootTags = new ArrayList<XmlTag>();
+    List<XmlTag> rootTags = new ArrayList<>();
     if (document != null) {
       for (PsiElement element : document.getChildren())
         if (element instanceof XmlTag) rootTags.add((XmlTag)element);
@@ -56,7 +56,7 @@ public class XmlFileTreeElement extends AbstractXmlTagTreeElement<XmlFile> {
     }
 
     if (dtdStructureViewTreeElements != null) {
-      final ArrayList<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>(
+      final ArrayList<StructureViewTreeElement> result = new ArrayList<>(
         dtdStructureViewTreeElements.size() + structureViewTreeElements.size()
       );
 

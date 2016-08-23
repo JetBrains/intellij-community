@@ -149,7 +149,7 @@ public class PluginHostsConfigurable extends BaseConfigurable implements Configu
 
 
     public List<String> getPluginsHosts() {
-      final List<String> result = new ArrayList<String>();
+      final List<String> result = new ArrayList<>();
       for (int i = 0; i < myUrlsList.getModel().getSize(); i++) {
         result.add((String)myUrlsList.getModel().getElementAt(i));
       }

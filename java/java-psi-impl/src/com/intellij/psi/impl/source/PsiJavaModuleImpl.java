@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiJavaModuleStub;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> implements PsiJavaModule {
@@ -53,6 +54,14 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
   @Override
   public String getName() {
     return getModuleName();
+  }
+
+  @Override
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
+    PsiElementFactory factory = PsiElementFactory.SERVICE.getInstance(getProject());
+    PsiJavaModuleReferenceElement newName = factory.createModuleFromText("module " + name + " {}").getNameElement();
+    getNameElement().replace(newName);
+    return this;
   }
 
   @Override

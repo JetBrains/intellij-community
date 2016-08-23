@@ -334,12 +334,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
   }
 
-  //protected void enableInspectionTools(@NotNull Class<? extends InspectionProfileEntry>[] classes) {
-  //  for (InspectionProfileEntry tool : InspectionTestUtil.instantiateTools(Arrays.asList(classes))) {
-  //    enableInspectionTool(tool);
-  //  }
-  //}
-
   protected void enableInspectionTools(@NotNull InspectionProfileEntry... tools) {
     InspectionsKt.enableInspectionTools(getProject(), getTestRootDisposable(), tools);
   }

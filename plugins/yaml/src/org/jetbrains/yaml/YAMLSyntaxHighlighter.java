@@ -32,7 +32,7 @@ import java.util.Map;
  */
 public class YAMLSyntaxHighlighter extends SyntaxHighlighterBase implements YAMLTokenTypes {
 
-  private static final Map<IElementType, TextAttributesKey> ATTRIBUTES = new HashMap<IElementType, TextAttributesKey>();
+  private static final Map<IElementType, TextAttributesKey> ATTRIBUTES = new HashMap<>();
 
   static {
     ATTRIBUTES.put(SCALAR_KEY, YAMLHighlighter.SCALAR_KEY);

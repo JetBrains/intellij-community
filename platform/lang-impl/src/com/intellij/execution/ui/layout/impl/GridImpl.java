@@ -40,12 +40,12 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
   private final ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter(false, true);
   private final Splitter mySplitter = new Splitter(true);
 
-  private final Map<PlaceInGrid, GridCellImpl> myPlaceInGrid2Cell = new EnumMap<PlaceInGrid, GridCellImpl>(PlaceInGrid.class);
+  private final Map<PlaceInGrid, GridCellImpl> myPlaceInGrid2Cell = new EnumMap<>(PlaceInGrid.class);
 
   private final String mySessionName;
 
-  private final List<Content> myContents = new ArrayList<Content>();
-  private final Map<Content, GridCellImpl> myContent2Cell = new HashMap<Content, GridCellImpl>();
+  private final List<Content> myContents = new ArrayList<>();
+  private final Map<Content, GridCellImpl> myContent2Cell = new HashMap<>();
 
   private final Comparator<Content> myContentComparator =
     (o1, o2) -> getCellFor(o1).getPlaceInGrid().compareTo(getCellFor(o2).getPlaceInGrid());
@@ -354,7 +354,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
   }
 
   public List<Content> getAttachedContents() {
-    ArrayList<Content> result = new ArrayList<Content>();
+    ArrayList<Content> result = new ArrayList<>();
 
     for (Content each : getContents()) {
       result.add(each);
@@ -409,7 +409,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
 
   public List<SwitchTarget> getTargets(boolean onlyVisible) {
     Collection<GridCellImpl> cells = myPlaceInGrid2Cell.values();
-    ArrayList<SwitchTarget> result = new ArrayList<SwitchTarget>();
+    ArrayList<SwitchTarget> result = new ArrayList<>();
     for (GridCellImpl each : cells) {
       result.addAll(each.getTargets(onlyVisible));
     }

@@ -89,7 +89,7 @@ public abstract class BaseSplitter implements Splitter {
 
   @NotNull
   static protected List<TextRange> excludeByPattern(String text, TextRange range, @NotNull Pattern toExclude, int groupToInclude) {
-    List<TextRange> toCheck = new SmartList<TextRange>();
+    List<TextRange> toCheck = new SmartList<>();
     int from = range.getStartOffset();
     int till;
     boolean addLast = true;

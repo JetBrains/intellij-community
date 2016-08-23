@@ -1,0 +1,40 @@
+Cleaning output files:
+out/production/AnnotationsTracker/D1.class
+out/production/AnnotationsTracker/D2.class
+out/production/AnnotationsTracker/D3.class
+out/production/AnnotationsTracker/D4.class
+End of files
+Compiling files:
+src/D1.java
+src/D2.java
+src/D3.java
+src/D4.java
+End of files
+Cleaning output files:
+out/production/AnnotationsTracker/C1.class
+out/production/AnnotationsTracker/C2.class
+out/production/AnnotationsTracker/C3.class
+out/production/AnnotationsTracker/C4.class
+out/production/AnnotationsTracker/D1Sub.class
+out/production/AnnotationsTracker/D1Sub2.class
+out/production/AnnotationsTracker/D2Sub.class
+out/production/AnnotationsTracker/D2Sub2.class
+out/production/AnnotationsTracker/D3Sub.class
+out/production/AnnotationsTracker/D3Sub2.class
+out/production/AnnotationsTracker/D4Sub.class
+out/production/AnnotationsTracker/D4Sub2.class
+End of files
+Compiling files:
+src/C1.java
+src/C2.java
+src/C3.java
+src/C4.java
+src/D1Sub.java
+src/D1Sub2.java
+src/D2Sub.java
+src/D2Sub2.java
+src/D3Sub.java
+src/D3Sub2.java
+src/D4Sub.java
+src/D4Sub2.java
+End of files

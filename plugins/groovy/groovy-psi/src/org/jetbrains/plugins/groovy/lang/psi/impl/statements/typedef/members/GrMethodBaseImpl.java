@@ -95,11 +95,6 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   }
 
   @Override
-  public PsiElement getParent() {
-    return getDefinitionParent();
-  }
-
-  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitMethod(this);
   }

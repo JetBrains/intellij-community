@@ -93,7 +93,7 @@ public class AntDomDocumentationProvider implements DocumentationProvider {
     }
     final AntDomElement antElement = AntSupport.getAntDomElement(xmlTag);
     if (antElement instanceof AntFilesProvider) {
-      final List<File> list = ((AntFilesProvider)antElement).getFiles(new HashSet<AntFilesProvider>());
+      final List<File> list = ((AntFilesProvider)antElement).getFiles(new HashSet<>());
       if (list.size() > 0) {
         final @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
         try {

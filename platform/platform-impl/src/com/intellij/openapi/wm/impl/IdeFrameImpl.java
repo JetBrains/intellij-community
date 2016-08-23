@@ -144,7 +144,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       };
       Toolkit.getDefaultToolkit().addPropertyChangeListener("win.xpstyle.themeActive", myWindowsBorderUpdater);
       if (!SystemInfo.isJavaVersionAtLeast("1.8")) {
-        final Ref<Dimension> myDimensionRef = new Ref<Dimension>(new Dimension());
+        final Ref<Dimension> myDimensionRef = new Ref<>(new Dimension());
         final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
         final Runnable runnable = new Runnable() {
           @Override

@@ -50,7 +50,7 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
   public DetectionExcludesConfigurationImpl(Project project, VirtualFilePointerManager pointerManager) {
     myProject = project;
     myPointerManager = pointerManager;
-    myExcludedFrameworks = new HashSet<String>();
+    myExcludedFrameworks = new HashSet<>();
     myExcludedFiles = new FactoryMap<String, VirtualFilePointerContainer>() {
       @Override
       protected VirtualFilePointerContainer create(String key) {

@@ -39,7 +39,7 @@ public class ColoredOutputTypeRegistry {
     return ServiceManager.getService(ColoredOutputTypeRegistry.class);
   }
 
-  private final Map<String, Key> myRegisteredKeys = new HashMap<String, Key>();
+  private final Map<String, Key> myRegisteredKeys = new HashMap<>();
 
   private static final TextAttributesKey[] myAnsiColorKeys = new TextAttributesKey[]{
     ConsoleHighlighter.BLACK,

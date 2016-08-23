@@ -22,9 +22,9 @@ import java.util.List;
  */
 public class ResponseProcessor<R extends AbstractResponse> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.socketConnection.impl.ResponseProcessor");
-  private final TIntObjectHashMap<AbstractResponseToRequestHandler<?>> myHandlers = new TIntObjectHashMap<AbstractResponseToRequestHandler<?>>();
-  private final MultiValuesMap<Class<? extends R>, AbstractResponseHandler<? extends R>> myClassHandlers = new MultiValuesMap<Class<? extends R>, AbstractResponseHandler<? extends R>>();
-  private final TIntObjectHashMap<TimeoutHandler> myTimeoutHandlers = new TIntObjectHashMap<TimeoutHandler>();
+  private final TIntObjectHashMap<AbstractResponseToRequestHandler<?>> myHandlers = new TIntObjectHashMap<>();
+  private final MultiValuesMap<Class<? extends R>, AbstractResponseHandler<? extends R>> myClassHandlers = new MultiValuesMap<>();
+  private final TIntObjectHashMap<TimeoutHandler> myTimeoutHandlers = new TIntObjectHashMap<>();
   private boolean myStopped;
   private final Object myLock = new Object();
   private Thread myThread;
@@ -91,7 +91,7 @@ public class ResponseProcessor<R extends AbstractResponse> {
     synchronized (myLock) {
       final Collection<AbstractResponseHandler<? extends R>> responseHandlers = myClassHandlers.get(responseClass);
       if (responseHandlers == null) return;
-      handlers = new SmartList<AbstractResponseHandler<?>>(responseHandlers);
+      handlers = new SmartList<>(responseHandlers);
     }
 
     for (AbstractResponseHandler handler : handlers) {
@@ -125,7 +125,7 @@ public class ResponseProcessor<R extends AbstractResponse> {
 
   public void checkTimeout() {
     LOG.debug("Checking timeout");
-    final List<TimeoutHandler> timedOut = new ArrayList<TimeoutHandler>();
+    final List<TimeoutHandler> timedOut = new ArrayList<>();
     synchronized (myLock) {
       final long time = System.currentTimeMillis();
       myTimeoutHandlers.retainEntries(new TIntObjectProcedure<TimeoutHandler>() {

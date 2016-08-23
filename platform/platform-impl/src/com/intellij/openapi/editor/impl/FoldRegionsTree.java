@@ -68,7 +68,7 @@ abstract class FoldRegionsTree {
       region.dispose();
     }
 
-    myRegions = new ArrayList<FoldRegion>();
+    myRegions = new ArrayList<>();
   }
 
   void clearCachedValues() {
@@ -78,11 +78,11 @@ abstract class FoldRegionsTree {
   protected abstract boolean isFoldingEnabled();
 
   void rebuild() {
-    List<FoldRegion> topLevels = new ArrayList<FoldRegion>(myRegions.size() / 2);
-    List<FoldRegion> visible = new ArrayList<FoldRegion>(myRegions.size());
-    List<FoldRegion> allValid = new ArrayList<FoldRegion>(myRegions.size());
+    List<FoldRegion> topLevels = new ArrayList<>(myRegions.size() / 2);
+    List<FoldRegion> visible = new ArrayList<>(myRegions.size());
+    List<FoldRegion> allValid = new ArrayList<>(myRegions.size());
     
-    THashMap<FoldRegion, FoldRegion> distinctRegions = new THashMap<FoldRegion, FoldRegion>(myRegions.size(), OFFSET_BASED_HASHING_STRATEGY);
+    THashMap<FoldRegion, FoldRegion> distinctRegions = new THashMap<>(myRegions.size(), OFFSET_BASED_HASHING_STRATEGY);
     for (FoldRegion region : myRegions) {
       if (!region.isValid()) {
         continue;
@@ -170,7 +170,7 @@ abstract class FoldRegionsTree {
       return;
     }
     
-    Set<FoldRegion> distinctRegions = new THashSet<FoldRegion>(visibleRegions.length, OFFSET_BASED_HASHING_STRATEGY);
+    Set<FoldRegion> distinctRegions = new THashSet<>(visibleRegions.length, OFFSET_BASED_HASHING_STRATEGY);
 
     for (FoldRegion foldRegion : visibleRegions) {
       if (!foldRegion.isValid() || !distinctRegions.add(foldRegion)) {
@@ -283,7 +283,7 @@ abstract class FoldRegionsTree {
 
   public FoldRegion[] fetchCollapsedAt(int offset) {
     if (myCachedData.isUnavailable()) return FoldRegion.EMPTY_ARRAY;
-    ArrayList<FoldRegion> allCollapsed = new ArrayList<FoldRegion>();
+    ArrayList<FoldRegion> allCollapsed = new ArrayList<>();
     for (FoldRegion region : myRegions) {
       if (!region.isExpanded() && contains(region, offset)) {
         allCollapsed.add(region);
@@ -320,6 +320,13 @@ abstract class FoldRegionsTree {
     int idx = getLastTopLevelIndexBefore(snapshot, offset);
     if (idx == -1) return 0;
     return snapshot.foldedLines[idx];
+  }
+
+  int getTotalNumberOfFoldedLines() {
+    CachedData snapshot = myCachedData;
+    int[] foldedLines = snapshot.foldedLines;
+    if (snapshot.isUnavailable() || foldedLines == null || foldedLines.length == 0) return 0;
+    return foldedLines[foldedLines.length - 1];
   }
 
   public int getLastTopLevelIndexBefore(int offset) {

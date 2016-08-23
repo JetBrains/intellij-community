@@ -23,9 +23,7 @@ import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.util.SmartList
@@ -47,93 +45,86 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
       UIUtil.invokeAndWaitIfNeeded(Runnable { ApplicationManager.getApplication()!!.saveSettings() })
       try {
         writeAndDeleteProhibited = true
-        ProgressManager.getInstance().run(object : Task.Modal(project, icsMessage("task.sync.title"), true) {
-          override fun run(indicator: ProgressIndicator) {
-            indicator.isIndeterminate = true
+        runModalTask(icsMessage("task.sync.title"), project) { indicator ->
+          indicator.isIndeterminate = true
 
-            autoSyncManager.waitAutoSync(indicator)
+          autoSyncManager.waitAutoSync(indicator)
 
-            val repositoryManager = icsManager.repositoryManager
-            if (localRepositoryInitializer == null) {
-              try {
-                // we commit before even if sync "OVERWRITE_LOCAL" — preserve history and ability to undo
-                repositoryManager.commit(indicator, syncType)
-                // well, we cannot commit? No problem, upcoming action must do something smart and solve the situation
-              }
-              catch (e: ProcessCanceledException) {
-                LOG.warn("Canceled")
-                return
-              }
-              catch (e: Throwable) {
-                LOG.error(e)
-
-                // "RESET_TO_*" will do "reset hard", so, probably, error will be gone, so, we can continue operation
-                if (syncType == SyncType.MERGE) {
-                  exception = e
-                  return
-                }
-              }
-            }
-
-            if (indicator.isCanceled) {
-              return
-            }
-
+          val repositoryManager = icsManager.repositoryManager
+          if (localRepositoryInitializer == null) {
             try {
-              when (syncType) {
-                SyncType.MERGE -> {
-                  updateResult = repositoryManager.pull(indicator)
-                  var doPush = true
-                  if (localRepositoryInitializer != null) {
-                    // must be performed only after initial pull, so, local changes will be relative to remote files
-                    localRepositoryInitializer()
-                    if (!repositoryManager.commit(indicator, syncType) || repositoryManager.getAheadCommitsCount() == 0) {
-                      // avoid error during findRemoteRefUpdatesFor on push - if localRepositoryInitializer specified and nothing to commit (failed or just no files to commit (empty local configuration - no files)),
-                      // so, nothing to push
-                      doPush = false
-                    }
-                  }
-                  if (doPush) {
-                    repositoryManager.push(indicator)
-                  }
-                }
-                SyncType.OVERWRITE_LOCAL -> {
-                  // we don't push - probably, repository will be modified/removed (user can do something, like undo) before any other next push activities (so, we don't want to disturb remote)
-                  updateResult = repositoryManager.resetToTheirs(indicator)
-                }
-                SyncType.OVERWRITE_REMOTE -> {
-                  updateResult = repositoryManager.resetToMy(indicator, localRepositoryInitializer)
-                  if (repositoryManager.getAheadCommitsCount() > 0) {
-                    repositoryManager.push(indicator)
-                  }
-                }
-              }
+              // we commit before even if sync "OVERWRITE_LOCAL" — preserve history and ability to undo
+              repositoryManager.commit(indicator, syncType)
+              // well, we cannot commit? No problem, upcoming action must do something smart and solve the situation
             }
             catch (e: ProcessCanceledException) {
-              LOG.debug("Canceled")
-              return
+              LOG.warn("Canceled")
+              return@runModalTask
             }
             catch (e: Throwable) {
-              if (e !is AuthenticationException && e !is NoRemoteRepositoryException && e !is CannotResolveConflictInTestMode) {
-                LOG.error(e)
-              }
-              exception = e
-              return
-            }
+              LOG.error(e)
 
-            icsManager.repositoryActive = true
-            val isSmartSchemeReload = syncType != SyncType.OVERWRITE_LOCAL
-            if (updateResult != null) {
-              val app = ApplicationManager.getApplication()
-              restartApplication = updateStoragesFromStreamProvider(app.stateStore as ComponentStoreImpl, updateResult!!, app.messageBus, syncType == SyncType.OVERWRITE_LOCAL)
-            }
-            if (!restartApplication && !isSmartSchemeReload) {
-              (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
-                it.reload()
+              // "RESET_TO_*" will do "reset hard", so, probably, error will be gone, so, we can continue operation
+              if (syncType == SyncType.MERGE) {
+                exception = e
+                return@runModalTask
               }
             }
           }
-        })
+
+          if (indicator.isCanceled) {
+            return@runModalTask
+          }
+
+          try {
+            when (syncType) {
+              SyncType.MERGE -> {
+                updateResult = repositoryManager.pull(indicator)
+                var doPush = true
+                if (localRepositoryInitializer != null) {
+                  // must be performed only after initial pull, so, local changes will be relative to remote files
+                  localRepositoryInitializer()
+                  if (!repositoryManager.commit(indicator, syncType) || repositoryManager.getAheadCommitsCount() == 0) {
+                    // avoid error during findRemoteRefUpdatesFor on push - if localRepositoryInitializer specified and nothing to commit (failed or just no files to commit (empty local configuration - no files)),
+                    // so, nothing to push
+                    doPush = false
+                  }
+                }
+                if (doPush) {
+                  repositoryManager.push(indicator)
+                }
+              }
+              SyncType.OVERWRITE_LOCAL -> {
+                // we don't push - probably, repository will be modified/removed (user can do something, like undo) before any other next push activities (so, we don't want to disturb remote)
+                updateResult = repositoryManager.resetToTheirs(indicator)
+              }
+              SyncType.OVERWRITE_REMOTE -> {
+                updateResult = repositoryManager.resetToMy(indicator, localRepositoryInitializer)
+                if (repositoryManager.getAheadCommitsCount() > 0) {
+                  repositoryManager.push(indicator)
+                }
+              }
+            }
+          }
+          catch (e: ProcessCanceledException) {
+            LOG.debug("Canceled")
+            return@runModalTask
+          }
+          catch (e: Throwable) {
+            if (e !is AuthenticationException && e !is NoRemoteRepositoryException && e !is CannotResolveConflictInTestMode) {
+              LOG.error(e)
+            }
+            exception = e
+            return@runModalTask
+          }
+
+          icsManager.repositoryActive = true
+          if (updateResult != null) {
+            val app = ApplicationManager.getApplication()
+            restartApplication = updateStoragesFromStreamProvider(app.stateStore as ComponentStoreImpl, updateResult!!, app.messageBus,
+                                                                  syncType == SyncType.OVERWRITE_LOCAL)
+          }
+        }
       }
       finally {
         writeAndDeleteProhibited = false
@@ -178,7 +169,7 @@ internal fun updateStoragesFromStreamProvider(store: ComponentStoreImpl, updateR
     return false
   }
 
-  return UIUtil.invokeAndWaitIfNeeded(Computable<kotlin.Boolean> {
+  return UIUtil.invokeAndWaitIfNeeded(Computable {
     val notReloadableComponents: Collection<String>
     updateStateStorage(changedComponentNames, changed, false)
     updateStateStorage(changedComponentNames, deleted, true)
@@ -200,7 +191,7 @@ internal fun updateStoragesFromStreamProvider(store: ComponentStoreImpl, updateR
     }
 
     !notReloadableComponents.isEmpty() && askToRestart(store, notReloadableComponents, null, true)
-  })!!
+  })
 }
 
 private fun updateStateStorage(changedComponentNames: MutableSet<String>, stateStorages: Collection<StateStorage>, deleted: Boolean) {

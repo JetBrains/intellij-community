@@ -46,7 +46,7 @@ public class RefactoringMessageDialog extends DialogWrapper {
   @NotNull
   @Override
   protected Action[] createActions() {
-    List<Action> actions = new ArrayList<Action>();
+    List<Action> actions = new ArrayList<>();
     actions.add(getOKAction());
     if (myIsCancelButtonVisible) {
       actions.add(getCancelAction());

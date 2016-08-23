@@ -75,7 +75,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
                                                                    final boolean fromUpdate,
                                                                    String relativePath,
                                                                    Map<PsiFile, String> relativeMap) {
-    final Map<PsiFile, PsiClass[]> result = new HashMap<PsiFile, PsiClass[]>();
+    final Map<PsiFile, PsiClass[]> result = new HashMap<>();
     for (PsiElement element : elements) {
       final PsiElement navigationElement = element.getNavigationElement();
       LOG.assertTrue(navigationElement != null, element);
@@ -154,7 +154,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
 
   public void doCopy(PsiElement[] elements, PsiDirectory defaultTargetDirectory) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.copyClass");
-    final HashMap<PsiFile, String> relativePathsMap = new HashMap<PsiFile, String>();
+    final HashMap<PsiFile, String> relativePathsMap = new HashMap<>();
     final Map<PsiFile, PsiClass[]> classes = convertToTopLevelClasses(elements, false, "", relativePathsMap);
     assert classes != null;
     if (defaultTargetDirectory == null) {
@@ -166,7 +166,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       VirtualFile sourceRootForFile = ProjectRootManager.getInstance(project).getFileIndex()
         .getSourceRootForFile(defaultTargetDirectory.getVirtualFile());
       if (sourceRootForFile == null) {
-        final List<PsiElement> files = new ArrayList<PsiElement>();
+        final List<PsiElement> files = new ArrayList<>();
         for (int i = 0, elementsLength = elements.length; i < elementsLength; i++) {
           PsiFile containingFile = elements[i].getContainingFile();
           if (containingFile != null) {
@@ -318,7 +318,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
                                                      final PsiDirectory targetDirectory,
                                                      final Project project) throws IncorrectOperationException {
     PsiElement newElement = null;
-    final Map<PsiClass, PsiElement> oldToNewMap = new HashMap<PsiClass, PsiElement>();
+    final Map<PsiClass, PsiElement> oldToNewMap = new HashMap<>();
     for (final PsiClass[] psiClasses : fileToClasses.values()) {
       if (psiClasses != null) {
         for (PsiClass aClass : psiClasses) {
@@ -329,9 +329,9 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
         }
       }
     }
-    final List<PsiFile> createdFiles = new ArrayList<PsiFile>(fileToClasses.size());
+    final List<PsiFile> createdFiles = new ArrayList<>(fileToClasses.size());
     int[] choice = fileToClasses.size() > 1 ? new int[]{-1} : null;
-    List<PsiFile> files = new ArrayList<PsiFile>();
+    List<PsiFile> files = new ArrayList<>();
     for (final Map.Entry<PsiFile, PsiClass[]> entry : fileToClasses.entrySet()) {
       final PsiFile psiFile = entry.getKey();
       final PsiClass[] sources = entry.getValue();
@@ -382,7 +382,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       }
     }
 
-    final Set<PsiElement> rebindExpressions = new HashSet<PsiElement>();
+    final Set<PsiElement> rebindExpressions = new HashSet<>();
     for (PsiElement element : oldToNewMap.values()) {
       if (element == null) {
         LOG.error(oldToNewMap.keySet());
@@ -485,7 +485,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
 
 
   private static void decodeRefs(@NotNull PsiElement element, final Map<PsiClass, PsiElement> oldToNewMap, final Set<PsiElement> rebindExpressions) {
-    final Map<PsiJavaCodeReferenceElement, PsiElement> rebindMap = new LinkedHashMap<PsiJavaCodeReferenceElement, PsiElement>();
+    final Map<PsiJavaCodeReferenceElement, PsiElement> rebindMap = new LinkedHashMap<>();
     element.accept(new JavaRecursiveElementVisitor(){
       @Override
       public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
@@ -521,7 +521,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     //if (element instanceof PsiCompiledElement) return null;
     if (element instanceof PsiClassOwner) {
       PsiClass[] classes = ((PsiClassOwner)element).getClasses();
-      ArrayList<PsiClass> buffer = new ArrayList<PsiClass>();
+      ArrayList<PsiClass> buffer = new ArrayList<>();
       for (final PsiClass aClass : classes) {
         if (isSynthetic(aClass)) {
           return null;

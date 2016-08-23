@@ -43,7 +43,7 @@ public class GroovyMethodReturnNamedArgumentProvider extends GroovyNamedArgument
     PsiType returnType = ((PsiMethod)resolve).getReturnType();
     if (!(returnType instanceof PsiClassType)) return;
 
-    Map<String, NamedArgumentDescriptor> map = new HashMap<String, NamedArgumentDescriptor>();
+    Map<String, NamedArgumentDescriptor> map = new HashMap<>();
 
     GroovyConstructorNamedArgumentProvider.processClass(call, (PsiClassType)returnType, argumentName, map);
 

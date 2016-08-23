@@ -29,7 +29,7 @@ public class JavaMethodNavigationOffsetProvider implements MethodNavigationOffse
   @Nullable
   public int[] getMethodNavigationOffsets(final PsiFile file, final int caretOffset) {
     if (file instanceof PsiJavaFile) {
-      ArrayList<PsiElement> array = new ArrayList<PsiElement>();
+      ArrayList<PsiElement> array = new ArrayList<>();
       addNavigationElements(array, file);
       return MethodUpDownUtil.offsetsFromElements(array);      
     }

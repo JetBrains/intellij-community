@@ -348,7 +348,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
       InspectionResultsView view = myView == null ? new InspectionResultsView(this, createContentProvider()) : null;
       if (!(myView == null ? view : myView).hasProblems()) {
-        NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message", scope.getFileCount(), scope.getDisplayName()), MessageType.INFO).notify(getProject());
+        NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message",
+                                                                        scope.getFileCount(),
+                                                                        scope.getShortenName()),
+                                              MessageType.INFO).notify(getProject());
         close(true);
         if (view != null) {
           Disposer.dispose(view);
@@ -627,7 +630,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
           ApplicationManager.getApplication().runReadAction(() -> {
             tool.runInspection(scope, inspectionManager, this, toolPresentation);
             //skip phase when we are sure that scope already contains everything, unused declaration though needs to proceed with its suspicious code
-            if ((canBeExternalUsages || tool.getAdditionalJobs() != null) &&
+            if ((canBeExternalUsages || tool.getAdditionalJobs(this) != null) &&
                 tool.queryExternalUsagesRequests(inspectionManager, this, toolPresentation)) {
               needRepeatSearchRequest.add(toolWrapper);
             }

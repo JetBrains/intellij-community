@@ -35,7 +35,7 @@ public class TypeExpression extends Expression {
 
   public TypeExpression(final Project project, PsiType[] types) {
     final SmartTypePointerManager manager = SmartTypePointerManager.getInstance(project);
-    myItems = new LinkedHashSet<SmartTypePointer>();
+    myItems = new LinkedHashSet<>();
     for (final PsiType type : types) {
       myItems.add(manager.createSmartTypePointer(type));
     }
@@ -75,7 +75,7 @@ public class TypeExpression extends Expression {
     if (myItems.size() <= 1) return null;
     PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
     
-    List<LookupElement> result = new ArrayList<LookupElement>(myItems.size());
+    List<LookupElement> result = new ArrayList<>(myItems.size());
     for (final SmartTypePointer item : myItems) {
       final PsiType type = item.getType();
       if (type != null) {

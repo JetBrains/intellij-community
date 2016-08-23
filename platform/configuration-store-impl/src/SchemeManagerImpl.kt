@@ -103,7 +103,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       updateExtension = false
     }
 
-    if (useVfs && (provider == null || !provider.enabled)) {
+    if (useVfs && (provider == null || !provider.isApplicable(fileSpec, roamingType))) {
       try {
         refreshVirtualDirectoryAndAddListener()
       }
@@ -278,13 +278,14 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     }
 
     try {
+      val filesToDelete = THashSet<String>()
       val oldSchemes = schemes
       val schemes = oldSchemes.toMutableList()
       val newSchemesOffset = schemes.size
-      if (provider != null && provider.enabled) {
+      if (provider != null && provider.isApplicable(fileSpec, roamingType)) {
         provider.processChildren(fileSpec, roamingType, { canRead(it) }) { name, input, readOnly ->
           catchAndLog(name) {
-            val scheme = loadScheme(name, input, schemes)
+            val scheme = loadScheme(name, input, schemes, filesToDelete)
             if (readOnly && scheme != null) {
               readOnlyExternalizableSchemes.put(scheme.name, scheme)
             }
@@ -300,12 +301,13 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
             }
 
             catchAndLog(file.fileName.toString()) { filename ->
-              file.inputStream().use { loadScheme(filename, it, schemes) }
+              file.inputStream().use { loadScheme(filename, it, schemes, filesToDelete) }
             }
           }
         }
       }
 
+      this.filesToDelete.addAll(filesToDelete)
       replaceSchemeList(oldSchemes, schemes)
 
       @Suppress("UNCHECKED_CAST")
@@ -380,18 +382,16 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     }
   }
 
-  private fun loadScheme(fileName: String, input: InputStream, schemes: MutableList<T>): MUTABLE_SCHEME? {
+  private fun loadScheme(fileName: String, input: InputStream, schemes: MutableList<T>, filesToDelete: MutableSet<String>? = null): MUTABLE_SCHEME? {
     val extension = getFileExtension(fileName, false)
-    // equals by identity
-    val duringLoad = schemes !== this.schemes
-    if (duringLoad && filesToDelete.contains(fileName)) {
+    if (filesToDelete != null && filesToDelete.contains(fileName)) {
       LOG.warn("Scheme file \"$fileName\" is not loaded because marked to delete")
       return null
     }
 
     val fileNameWithoutExtension = fileName.substring(0, fileName.length - extension.length)
     fun checkExisting(schemeName: String): Boolean {
-      if (!duringLoad) {
+      if (filesToDelete == null) {
         return true
       }
 
@@ -430,6 +430,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       return info
     }
 
+    val duringLoad = filesToDelete != null
     var scheme: MUTABLE_SCHEME? = null
     if (processor is LazySchemeProcessor) {
       val bytes = input.readBytes()
@@ -465,8 +466,9 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
               val externalInfo = createInfo(schemeName, null)
               val dataHolder = SchemeDataHolderImpl(bytes, externalInfo)
-              scheme = processor.createScheme(dataHolder, schemeName, attributeProvider, duringLoad)
+              scheme = processor.createScheme(dataHolder, schemeName, attributeProvider)
               schemeToInfo.put(scheme, externalInfo)
+              this.filesToDelete.remove(fileName)
               break@read
             }
           }
@@ -484,6 +486,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       }
 
       schemeToInfo.put(scheme, createInfo(schemeName, element))
+      this.filesToDelete.remove(fileName)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -491,7 +494,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       schemes.add(scheme as T)
     }
     else {
-      addScheme(scheme as T)
+      addNewScheme(scheme as T, true)
     }
     return scheme
   }
@@ -499,7 +502,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
   private val T.fileName: String?
     get() = schemeToInfo.get(this)?.fileNameWithoutExtension
 
-  private fun canRead(name: CharSequence) = (updateExtension && name.endsWith(DEFAULT_EXT, true) || name.endsWith(schemeExtension, true)) && (processor !is LazySchemeProcessor || processor.isSchemeFile(name))
+  fun canRead(name: CharSequence) = (updateExtension && name.endsWith(DEFAULT_EXT, true) || name.endsWith(schemeExtension, true)) && (processor !is LazySchemeProcessor || processor.isSchemeFile(name))
 
   private fun readSchemeFromFile(file: VirtualFile, schemes: MutableList<T> = this.schemes): MUTABLE_SCHEME? {
     val fileName = file.name
@@ -550,10 +553,12 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       }
     }
 
-    if (!filesToDelete.isEmpty()) {
-      deleteFiles(errors)
+    val filesToDelete = THashSet(filesToDelete)
+    if (!filesToDelete.isEmpty) {
+      this.filesToDelete.removeAll(filesToDelete)
+      deleteFiles(errors, filesToDelete)
       // remove empty directory only if some file was deleted - avoid check on each save
-      if (!hasSchemes && (provider == null || !provider.enabled)) {
+      if (!hasSchemes && (provider == null || !provider.isApplicable(fileSpec, roamingType))) {
         removeDirectoryIfEmpty(errors)
       }
     }
@@ -588,7 +593,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     }
 
     if (deleteUsingIo) {
-      errors.catch { ioDirectory.deleteRecursively() }
+      errors.catch { ioDirectory.delete() }
     }
   }
 
@@ -634,7 +639,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
     var providerPath: String?
     if (provider != null && provider.enabled) {
-      providerPath = fileSpec + '/' + fileName
+      providerPath = "$fileSpec/$fileName"
       if (!provider.isApplicable(providerPath, roamingType)) {
         providerPath = null
       }
@@ -707,29 +712,29 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     return info != null && scheme.name != info.schemeName
   }
 
-  private fun deleteFiles(errors: MutableList<Throwable>) {
-    val deleteUsingIo: Boolean
+  private fun deleteFiles(errors: MutableList<Throwable>, filesToDelete: MutableSet<String>) {
     if (provider != null && provider.enabled) {
-      deleteUsingIo = false
-      for (name in filesToDelete) {
+      val iterator = filesToDelete.iterator()
+      for (name in iterator) {
         errors.catch {
           val spec = "$fileSpec/$name"
           if (provider.isApplicable(spec, roamingType)) {
+            iterator.remove()
             provider.delete(spec, roamingType)
           }
         }
       }
     }
-    else if (!useVfs) {
-      deleteUsingIo = true
+
+    if (filesToDelete.isEmpty()) {
+      return
     }
-    else {
-      val dir = virtualDirectory
-      deleteUsingIo = dir == null
-      if (!deleteUsingIo) {
+
+    if (useVfs) {
+      virtualDirectory?.let {
         var token: AccessToken? = null
         try {
-          for (file in dir!!.children) {
+          for (file in it.children) {
             if (filesToDelete.contains(file.name)) {
               if (token == null) {
                 token = WriteAction.start()
@@ -744,16 +749,13 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
         finally {
           token?.finish()
         }
+        return
       }
     }
 
-    if (deleteUsingIo) {
-      for (name in filesToDelete) {
-        errors.catch { ioDirectory.resolve(name).delete() }
-      }
+    for (name in filesToDelete) {
+      errors.catch { ioDirectory.resolve(name).delete() }
     }
-
-    filesToDelete.clear()
   }
 
   private val virtualDirectory: VirtualFile?
@@ -819,7 +821,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
       for (s in schemes) {
         if (s === scheme) {
-          filesToDelete.remove("${info.fileName}")
+          filesToDelete.remove(info.fileName)
           continue@l
         }
       }
@@ -862,7 +864,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
     if (processor.isExternalizable(scheme) && filesToDelete.isNotEmpty()) {
       schemeToInfo.get(scheme)?.let {
-        filesToDelete.remove("${it.fileName}")
+        filesToDelete.remove(it.fileName)
       }
     }
 

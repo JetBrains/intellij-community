@@ -50,7 +50,7 @@ import static com.intellij.psi.codeStyle.EditorNotificationInfo.ActionLabelData;
  */
 public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
   
-  private static final ExecutorService BOUNDED_EXECUTOR = AppExecutorUtil.createBoundedApplicationPoolExecutor(1);
+  private static final ExecutorService BOUNDED_EXECUTOR = AppExecutorUtil.createBoundedApplicationPoolExecutor("DetectableIndentOptionsProvider pool",1);
   
   private boolean myIsEnabledInTest;
   private final List<VirtualFile> myAcceptedFiles = new WeakList<>();

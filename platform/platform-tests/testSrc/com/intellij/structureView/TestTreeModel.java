@@ -33,8 +33,8 @@ import java.util.List;
 
 public class TestTreeModel implements StructureViewModel{
   private final StringTreeElement myRoot;
-  private final List<Filter> myFilters = new ArrayList<Filter>();
-  private final List<Sorter> mySorters = new ArrayList<Sorter>();
+  private final List<Filter> myFilters = new ArrayList<>();
+  private final List<Sorter> mySorters = new ArrayList<>();
 
   public TestTreeModel(StringTreeElement root) {
     myRoot = root;
@@ -75,7 +75,7 @@ public class TestTreeModel implements StructureViewModel{
   }
 
   public static class StringTreeElement implements StructureViewTreeElement {
-    private final Collection<StructureViewTreeElement> myChildren = new ArrayList<StructureViewTreeElement>();
+    private final Collection<StructureViewTreeElement> myChildren = new ArrayList<>();
     private final String myValue;
 
     public StringTreeElement(@NonNls String value) {

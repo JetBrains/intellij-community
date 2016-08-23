@@ -27,7 +27,7 @@ import java.util.Map;
 public class SimpleProgramParameters {
   private final ParametersList myProgramParameters = new ParametersList();
   private String myWorkingDirectory;
-  private Map<String, String> myEnv = new THashMap<String, String>();
+  private Map<String, String> myEnv = new THashMap<>();
   private boolean myPassParentEnvs = true;
 
   public String getWorkingDirectory() {
@@ -73,7 +73,7 @@ public class SimpleProgramParameters {
   @Deprecated 
   public void setupEnvs(Map<String, String> envs, boolean passDefault) {
     if (!envs.isEmpty()) {
-      envs = new HashMap<String, String>(envs);
+      envs = new HashMap<>(envs);
       EnvironmentUtil.inlineParentOccurrences(envs);
     }
     setEnv(envs);

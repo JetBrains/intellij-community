@@ -53,7 +53,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
       return Collections.emptyList();
     }
 
-    final ArrayList<ReferenceData> array = new ArrayList<ReferenceData>();
+    final ArrayList<ReferenceData> array = new ArrayList<>();
     for (int j = 0; j < startOffsets.length; j++) {
       final int startOffset = startOffsets[j];
       for (final PsiElement element : CollectHighlightsUtil.getElementsInRange(file, startOffset, endOffsets[j])) {
@@ -155,7 +155,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
                                       ReferenceData[] referenceData) {
     PsiManager manager = PsiManager.getInstance(project);
 
-    ArrayList<Object> array = new ArrayList<Object>();
+    ArrayList<Object> array = new ArrayList<>();
     Object[] refObjects = new Object[refs.length];
     for (int i = 0; i < referenceData.length; i++) {
       PsiElement ref = refs[i];

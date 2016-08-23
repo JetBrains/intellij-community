@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -215,20 +215,6 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
           // must be 'self' or 'cls'
           final PyClass containingClass = func.getContainingClass();
           if (containingClass != null) {
-            PyType initType = null;
-            final PyFunction init = containingClass.findInitOrNew(true, context);
-            if (init != null && init != func) {
-              initType = context.getReturnType(init);
-              if (init.getContainingClass() != containingClass) {
-                if (initType instanceof PyCollectionType) {
-                  final List<PyType> elementTypes = ((PyCollectionType)initType).getElementTypes(context);
-                  return new PyCollectionTypeImpl(containingClass, false, elementTypes);
-                }
-              }
-            }
-            if (initType != null && !(initType instanceof PyNoneType)) {
-              return initType;
-            }
             final PyFunction.Modifier modifier = func.getModifier();
             return new PyClassTypeImpl(containingClass, modifier == PyFunction.Modifier.CLASSMETHOD);
           }
@@ -253,7 +239,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
         }
         // Guess the type from file-local calls
         if (context.allowCallContext(this)) {
-          final List<PyType> types = new ArrayList<PyType>();
+          final List<PyType> types = new ArrayList<>();
           processLocalCalls(func, call -> {
             final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
             final PyArgumentList argumentList = call.getArgumentList();
@@ -296,7 +282,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
 
   @NotNull
   private Set<String> collectUsedAttributes(@NotNull final TypeEvalContext context) {
-    final Set<String> result = new LinkedHashSet<String>();
+    final Set<String> result = new LinkedHashSet<>();
     final ScopeOwner owner = ScopeUtil.getScopeOwner(this);
     final String name = getName();
     if (owner != null && name != null) {

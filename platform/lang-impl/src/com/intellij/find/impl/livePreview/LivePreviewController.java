@@ -182,7 +182,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
                                           new FindResultImpl(occurrence.getStartOffset(), occurrence.getEndOffset()),
                                           replacement,
                                           true,
-                                          new ArrayList<Pair<TextRange, String>>());
+                                          new ArrayList<>());
     myLivePreview.inSmartUpdate();
     mySearchResults.updateThreadSafe(findModel, true, result, mySearchResults.getStamp());
     return result;

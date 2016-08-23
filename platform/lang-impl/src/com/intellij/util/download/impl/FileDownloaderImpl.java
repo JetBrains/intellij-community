@@ -31,7 +31,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -51,7 +50,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -88,7 +86,7 @@ public class FileDownloaderImpl implements FileDownloader {
     final List<Pair<VirtualFile, DownloadableFileDescription>> pairs = downloadWithProgress(targetDirectoryPath, project, parentComponent);
     if (pairs == null) return null;
 
-    List<VirtualFile> files = new ArrayList<VirtualFile>();
+    List<VirtualFile> files = new ArrayList<>();
     for (Pair<VirtualFile, DownloadableFileDescription> pair : pairs) {
       files.add(pair.getFirst());
     }
@@ -151,8 +149,8 @@ public class FileDownloaderImpl implements FileDownloader {
   @NotNull
   @Override
   public List<Pair<File, DownloadableFileDescription>> download(@NotNull final File targetDir) throws IOException {
-    final List<Pair<File, DownloadableFileDescription>> downloadedFiles = new ArrayList<Pair<File, DownloadableFileDescription>>();
-    final List<Pair<File, DownloadableFileDescription>> existingFiles = new ArrayList<Pair<File, DownloadableFileDescription>>();
+    final List<Pair<File, DownloadableFileDescription>> downloadedFiles = new ArrayList<>();
+    final List<Pair<File, DownloadableFileDescription>> existingFiles = new ArrayList<>();
     ProgressIndicator parentIndicator = ProgressManager.getInstance().getProgressIndicator();
     if (parentIndicator == null) {
       parentIndicator = new EmptyProgressIndicator();
@@ -164,8 +162,8 @@ public class FileDownloaderImpl implements FileDownloader {
       int maxParallelDownloads = Runtime.getRuntime().availableProcessors();
       LOG.debug("Downloading " + myFileDescriptions.size() + " files using " + maxParallelDownloads + " threads");
       long start = System.currentTimeMillis();
-      ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(maxParallelDownloads);
-      List<Future<Void>> results = new ArrayList<Future<Void>>();
+      ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("FileDownloaderImpl pool", maxParallelDownloads);
+      List<Future<Void>> results = new ArrayList<>();
       final AtomicLong totalSize = new AtomicLong();
       for (final DownloadableFileDescription description : myFileDescriptions) {
         results.add(executor.submit(() -> {
@@ -224,7 +222,7 @@ public class FileDownloaderImpl implements FileDownloader {
       long duration = System.currentTimeMillis() - start;
       LOG.debug("Downloaded " + StringUtil.formatFileSize(totalSize.get()) + " in " + StringUtil.formatDuration(duration) + "(" + duration + "ms)");
 
-      List<Pair<File, DownloadableFileDescription>> localFiles = new ArrayList<Pair<File, DownloadableFileDescription>>();
+      List<Pair<File, DownloadableFileDescription>> localFiles = new ArrayList<>();
       localFiles.addAll(moveToDir(downloadedFiles, targetDir));
       localFiles.addAll(existingFiles);
       return localFiles;
@@ -251,7 +249,7 @@ public class FileDownloaderImpl implements FileDownloader {
   private static List<Pair<File, DownloadableFileDescription>> moveToDir(List<Pair<File, DownloadableFileDescription>> downloadedFiles,
                                                                          final File targetDir) throws IOException {
     FileUtil.createDirectory(targetDir);
-    List<Pair<File, DownloadableFileDescription>> result = new ArrayList<Pair<File, DownloadableFileDescription>>();
+    List<Pair<File, DownloadableFileDescription>> result = new ArrayList<>();
     for (Pair<File, DownloadableFileDescription> pair : downloadedFiles) {
       final DownloadableFileDescription description = pair.getSecond();
       final String fileName = description.generateFileName(s -> !new File(targetDir, s).exists());
@@ -264,7 +262,7 @@ public class FileDownloaderImpl implements FileDownloader {
 
   @NotNull
   private static List<Pair<VirtualFile, DownloadableFileDescription>> findVirtualFiles(List<Pair<File, DownloadableFileDescription>> ioFiles) {
-    List<Pair<VirtualFile,DownloadableFileDescription>> result = new ArrayList<Pair<VirtualFile, DownloadableFileDescription>>();
+    List<Pair<VirtualFile,DownloadableFileDescription>> result = new ArrayList<>();
     for (final Pair<File, DownloadableFileDescription> pair : ioFiles) {
       final File ioFile = pair.getFirst();
       VirtualFile libraryRootFile = new WriteAction<VirtualFile>() {
@@ -336,7 +334,7 @@ public class FileDownloaderImpl implements FileDownloader {
     private final int myTasksCount;
     private final AtomicDouble myTotalFraction;
     private final Object myLock = new Object();
-    private final LinkedHashMap<SubTaskProgressIndicator, String> myText2Stack = new LinkedHashMap<SubTaskProgressIndicator, String>();
+    private final LinkedHashMap<SubTaskProgressIndicator, String> myText2Stack = new LinkedHashMap<>();
 
     private ConcurrentTasksProgressManager(ProgressIndicator parent, int tasksCount) {
       myParent = parent;

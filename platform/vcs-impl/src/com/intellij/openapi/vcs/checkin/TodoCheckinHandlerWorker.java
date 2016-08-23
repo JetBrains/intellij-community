@@ -87,9 +87,9 @@ public class TodoCheckinHandlerWorker {
     myIncludePattern = includePattern;
     myPsiManager = PsiManager.getInstance(project);
     mySearchHelper = PsiTodoSearchHelper.SERVICE.getInstance(project);
-    myAddedOrEditedTodos = new ArrayList<TodoItem>();
-    myInChangedTodos = new ArrayList<TodoItem>();
-    mySkipped = new SmartList<Pair<FilePath,String>>();
+    myAddedOrEditedTodos = new ArrayList<>();
+    myInChangedTodos = new ArrayList<>();
+    mySkipped = new SmartList<>();
     myEditedFileProcessor = new MyEditedFileProcessor(project, new Acceptor() {
       @Override
       public void skipped(Pair<FilePath, String> pair) {
@@ -129,7 +129,7 @@ public class TodoCheckinHandlerWorker {
         continue;
       }
 
-      myNewTodoItems = new ArrayList<TodoItem>(Arrays.asList(
+      myNewTodoItems = new ArrayList<>(Arrays.asList(
         ApplicationManager.getApplication().runReadAction(new Computable<TodoItem[]>() {
           @Override
           public TodoItem[] compute() {
@@ -221,13 +221,13 @@ public class TodoCheckinHandlerWorker {
           }
         }
         final StepIntersection<TodoItem, LineFragment> intersection =
-          new StepIntersection<TodoItem, LineFragment>(TodoItemConvertor.getInstance(), LineFragmentConvertor.getInstance(), lineFragments,
-                                                       new Getter<String>() {
-                                                         @Override
-                                                         public String get() {
-                                                           return myAfterContent;
-                                                         }
-                                                       });
+          new StepIntersection<>(TodoItemConvertor.getInstance(), LineFragmentConvertor.getInstance(), lineFragments,
+                                 new Getter<String>() {
+                                   @Override
+                                   public String get() {
+                                     return myAfterContent;
+                                   }
+                                 });
 
         intersection.process(newTodoItems, new PairConsumer<TodoItem, LineFragment>() {
 
@@ -269,7 +269,7 @@ public class TodoCheckinHandlerWorker {
             .getInstance())).findAll();
 
         final TodoItemsCreator todoItemsCreator = new TodoItemsCreator();
-        myOldItems = new ArrayList<TodoItem>();
+        myOldItems = new ArrayList<>();
         if (all.isEmpty()) {
           myAcceptor.addedOrEdited(newTodoItem);
           return;
@@ -280,14 +280,14 @@ public class TodoCheckinHandlerWorker {
         applyFilterAndRemoveDuplicates(myOldItems, myTodoFilter);
       }
       if (myOldTodoTexts == null) {
-        final StepIntersection<LineFragment, TodoItem> intersection = new StepIntersection<LineFragment, TodoItem>(
+        final StepIntersection<LineFragment, TodoItem> intersection = new StepIntersection<>(
           LineFragmentConvertor.getInstance(), TodoItemConvertor.getInstance(), myOldItems, new Getter<String>() {
           @Override
           public String get() {
             return myBeforeContent;
           }
         });
-        myOldTodoTexts = new HashSet<String>();
+        myOldTodoTexts = new HashSet<>();
         intersection.process(Collections.singletonList(myCurrentLineFragment), new PairConsumer<LineFragment, TodoItem>() {
           @Override
           public void consume(LineFragment lineFragment, TodoItem todoItem) {
@@ -372,7 +372,7 @@ public class TodoCheckinHandlerWorker {
   }
 
   public List<TodoItem> inOneList() {
-    final List<TodoItem> list = new ArrayList<TodoItem>();
+    final List<TodoItem> list = new ArrayList<>();
     list.addAll(getAddedOrEditedTodos());
     list.addAll(getInChangedTodos());
     return list;

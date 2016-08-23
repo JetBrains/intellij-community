@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Implementations of this interface are expected to provide correct {@link #equals(Object)} & {@link #hashCode()} implementations.
  */
+@FunctionalInterface
 public interface CodeFoldingState {
   void setToEditor(@NotNull Editor editor);
 }

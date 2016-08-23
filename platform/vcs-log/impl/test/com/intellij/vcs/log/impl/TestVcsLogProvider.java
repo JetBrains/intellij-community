@@ -29,6 +29,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.Semaphore;
@@ -248,6 +251,16 @@ public class TestVcsLogProvider implements VcsLogProvider {
           return new SingletonRefGroup(ref);
         }
       });
+    }
+
+    @Override
+    public void serialize(@NotNull DataOutput out, @NotNull VcsRefType type) throws IOException {
+    }
+
+    @NotNull
+    @Override
+    public VcsRefType deserialize(@NotNull DataInput in) throws IOException {
+      return null;
     }
 
     @NotNull

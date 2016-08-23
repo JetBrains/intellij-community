@@ -77,14 +77,14 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
   private final ActionManagerEx myActionManager;
   private ActionMacro myLastMacro;
   private ActionMacro myRecordingMacro;
-  private ArrayList<ActionMacro> myMacros = new ArrayList<ActionMacro>();
+  private ArrayList<ActionMacro> myMacros = new ArrayList<>();
   private String myLastMacroName = null;
   private boolean myIsPlaying = false;
   @NonNls
   private static final String ELEMENT_MACRO = "macro";
   private final IdeEventQueue.EventDispatcher myKeyProcessor;
 
-  private Set<InputEvent> myLastActionInputEvent = new HashSet<InputEvent>();
+  private Set<InputEvent> myLastActionInputEvent = new HashSet<>();
   private ActionMacroManager.Widget myWidget;
 
   private String myLastTyping = "";
@@ -126,7 +126,7 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
 
   @Override
   public void loadState(Element state) {
-    myMacros = new ArrayList<ActionMacro>();
+    myMacros = new ArrayList<>();
     for (Element macroElement : state.getChildren(ELEMENT_MACRO)) {
       ActionMacro macro = new ActionMacro();
       macro.readExternal(macroElement);
@@ -420,7 +420,7 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
       myLastMacroName = myLastMacro.getName();
       myLastMacro = null;
     }
-    myMacros = new ArrayList<ActionMacro>();
+    myMacros = new ArrayList<>();
   }
 
   public void addMacro(ActionMacro macro) {
@@ -442,7 +442,7 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
 
   public void registerActions() {
     unregisterActions();
-    HashSet<String> registeredIds = new HashSet<String>(); // to prevent exception if 2 or more targets have the same name
+    HashSet<String> registeredIds = new HashSet<>(); // to prevent exception if 2 or more targets have the same name
 
     ActionMacro[] macros = getAllMacros();
     for (final ActionMacro macro : macros) {

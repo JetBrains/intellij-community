@@ -91,7 +91,7 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
   public static <S extends ConsoleView, T extends ConsoleView> DuplexConsoleView<S, T> create(@NotNull S primary,
                                                                                               @NotNull T secondary,
                                                                                               @Nullable String stateStorageKey) {
-    return new DuplexConsoleView<S, T>(primary, secondary, stateStorageKey);
+    return new DuplexConsoleView<>(primary, secondary, stateStorageKey);
   }
 
   private void setStoredState(boolean primary) {

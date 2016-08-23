@@ -16,8 +16,10 @@
 package git4idea.config;
 
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,13 +48,21 @@ public class GitSharedSettings implements PersistentStateComponent<GitSharedSett
     myState = state;
   }
 
+  public static GitSharedSettings getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, GitSharedSettings.class);
+  }
+
   @NotNull
   public List<String> getForcePushProhibitedPatterns() {
     return Collections.unmodifiableList(myState.FORCE_PUSH_PROHIBITED_PATTERNS);
   }
 
   public void setForcePushProhibitedPatters(@NotNull List<String> patterns) {
-    myState.FORCE_PUSH_PROHIBITED_PATTERNS = new ArrayList<String>(patterns);
+    myState.FORCE_PUSH_PROHIBITED_PATTERNS = new ArrayList<>(patterns);
   }
 
+  public boolean isBranchProtected(@NotNull String branch) {
+    // let "master" match only "master" and not "any-master-here" by default
+    return getForcePushProhibitedPatterns().stream().anyMatch(pattern -> branch.matches("^" + pattern + "$"));
+  }
 }

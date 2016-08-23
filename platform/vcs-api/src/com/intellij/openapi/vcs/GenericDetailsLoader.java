@@ -43,8 +43,8 @@ public class GenericDetailsLoader<Id, Data> implements Details<Id,Data>, Disposa
    */
   public GenericDetailsLoader(final Consumer<Id> loader, final PairConsumer<Id, Data> valueConsumer) {
     myLoader = loader;
-    myValueConsumer = new ValueConsumer<Id, Data>(valueConsumer);
-    myCurrentlySelected = new AtomicReference<Id>(null);
+    myValueConsumer = new ValueConsumer<>(valueConsumer);
+    myCurrentlySelected = new AtomicReference<>(null);
   }
 
   @CalledInAwt

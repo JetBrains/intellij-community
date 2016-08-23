@@ -88,14 +88,14 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
           if (!myImplementingOption.isEnabled()) return null;
           icon = AllIcons.Gutter.ImplementingMethod;
         }
-        return createSuperMethodLineMarkerInfo(element, icon, Pass.UPDATE_ALL);
+        return createSuperMethodLineMarkerInfo(element, icon, Pass.LINE_MARKERS);
       }
     }
 
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(element);
     final PsiElement firstChild = element.getFirstChild();
     if (interfaceMethod != null && firstChild != null && myLambdaOption.isEnabled()) {
-      return createSuperMethodLineMarkerInfo(firstChild, AllIcons.Gutter.ImplementingFunctionalInterface, Pass.UPDATE_ALL);
+      return createSuperMethodLineMarkerInfo(firstChild, AllIcons.Gutter.ImplementingFunctionalInterface, Pass.LINE_MARKERS);
     }
 
     if (myDaemonSettings.SHOW_METHOD_SEPARATORS && firstChild == null) {
@@ -125,7 +125,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
         }
 
         if (drawSeparator) {
-          LineMarkerInfo info = new LineMarkerInfo<>(element, element.getTextRange(), null, Pass.UPDATE_ALL,
+          LineMarkerInfo info = new LineMarkerInfo<>(element, element.getTextRange(), null, Pass.LINE_MARKERS,
                                                      FunctionUtil.<Object, String>nullConstant(), null,
                                                      GutterIconRenderer.Alignment.RIGHT);
           EditorColorsScheme scheme = myColorsManager.getGlobalScheme();
@@ -207,7 +207,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
     return ContainerUtil.map(map.keySet(), method -> {
       PsiElement range = getMethodRange(method);
       ArrowUpLineMarkerInfo upInfo = new ArrowUpLineMarkerInfo(range, AllIcons.Gutter.ImplementingMethod, MarkerType.SIBLING_OVERRIDING_METHOD,
-                                                               Pass.UPDATE_OVERRIDDEN_MARKERS);
+                                                               Pass.LINE_MARKERS);
       return NavigateAction.setNavigateAction(upInfo, "Go to super method", IdeActions.ACTION_GOTO_SUPER);
     });
   }
@@ -255,7 +255,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
       }
       MarkerType type = MarkerType.SUBCLASSED_CLASS;
       LineMarkerInfo info = new LineMarkerInfo<>(range, range.getTextRange(),
-                                                 icon, Pass.UPDATE_OVERRIDDEN_MARKERS, type.getTooltip(),
+                                                 icon, Pass.LINE_MARKERS, type.getTooltip(),
                                                  type.getNavigationHandler(),
                                                  GutterIconRenderer.Alignment.RIGHT);
       NavigateAction.setNavigateAction(info, aClass.isInterface() ? "Go to implementation(s)" : "Go to subclass(es)", IdeActions.ACTION_GOTO_IMPLEMENTATION);
@@ -301,7 +301,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
       final MarkerType type = MarkerType.OVERRIDDEN_METHOD;
       final Icon icon = overrides ? AllIcons.Gutter.OverridenMethod : AllIcons.Gutter.ImplementedMethod;
       LineMarkerInfo<PsiElement> info = new LineMarkerInfo<>(range, range.getTextRange(),
-                                                             icon, Pass.UPDATE_OVERRIDDEN_MARKERS, type.getTooltip(),
+                                                             icon, Pass.LINE_MARKERS, type.getTooltip(),
                                                              type.getNavigationHandler(),
                                                              GutterIconRenderer.Alignment.RIGHT);
       NavigateAction.setNavigateAction(info, overrides ? "Go to overriding methods" : "Go to implementation(s)", IdeActions.ACTION_GOTO_IMPLEMENTATION);

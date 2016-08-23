@@ -30,7 +30,7 @@ import java.util.List;
  */
 public class ListCreationQuickFix implements LocalQuickFix {
   private final PyAssignmentStatement myStatement;
-  private final List<PyExpressionStatement> myStatements = new ArrayList<PyExpressionStatement>();
+  private final List<PyExpressionStatement> myStatements = new ArrayList<>();
 
   public ListCreationQuickFix(PyAssignmentStatement statement) {
     myStatement = statement;

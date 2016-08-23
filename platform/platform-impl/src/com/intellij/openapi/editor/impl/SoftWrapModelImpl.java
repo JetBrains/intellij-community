@@ -56,8 +56,9 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since Jun 8, 2010 12:47:32 PM
  */
-public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedInternalDocumentListener, FoldingListener,
-                                          PropertyChangeListener, Dumpable, Disposable
+public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
+  implements SoftWrapModelEx, PrioritizedInternalDocumentListener, FoldingListener,
+             PropertyChangeListener, Dumpable, Disposable
 {
 
   /**
@@ -73,7 +74,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedInternalDo
   private final LogicalToVisualTask   myLogicalToVisualTask   = new LogicalToVisualTask();
   private final FoldProcessingEndTask myFoldProcessingEndTask = new FoldProcessingEndTask();
 
-  private final List<SoftWrapChangeListener>  mySoftWrapListeners = new ArrayList<SoftWrapChangeListener>();
+  private final List<SoftWrapChangeListener>  mySoftWrapListeners = new ArrayList<>();
   
   /**
    * There is a possible case that particular activity performs batch fold regions operations (addition, removal etc).
@@ -83,7 +84,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedInternalDo
    * <p/>
    * So, our strategy is to collect information about changed fold regions and process it only when batch folding processing ends.
    */
-  private final List<TextRange> myDeferredFoldRegions = new ArrayList<TextRange>();
+  private final List<TextRange> myDeferredFoldRegions = new ArrayList<>();
 
   private final CachingSoftWrapDataMapper          myDataMapper;
   private final SoftWrapsStorage                   myStorage;
@@ -99,7 +100,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedInternalDo
    * We don't want to use soft wraps-aware processing from non-EDT and profiling shows that 'is EDT' check that is called too
    * often is rather expensive. Hence, we use caching here for performance improvement.
    */
-  private SoftReference<Thread> myLastEdt = new SoftReference<Thread>(null);
+  private SoftReference<Thread> myLastEdt = new SoftReference<>(null);
   /** Holds number of 'active' calls, i.e. number of methods calls of the current object within the current call stack. */
   private int myActive;
   private boolean myUseSoftWraps;
@@ -156,6 +157,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedInternalDo
     editor.addPropertyChangeListener(this, this);
 
     myApplianceManager.addListener(myDataMapper);
+    myEditor.getInlayModel().addListener(this, this);
   }
 
   private boolean areSoftWrapsEnabledInEditor() {
@@ -215,10 +217,10 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedInternalDo
     Thread currentThread = Thread.currentThread();
     if (lastEdt != currentThread) {
       if (application.isDispatchThread()) {
-        myLastEdt = new SoftReference<Thread>(currentThread);
+        myLastEdt = new SoftReference<>(currentThread);
       }
       else {
-        myLastEdt = new SoftReference<Thread>(null);
+        myLastEdt = new SoftReference<>(null);
         return false;
       }
     }
@@ -650,6 +652,19 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedInternalDo
     }
     else {
       executeSafely(myFoldProcessingEndTask);
+    }
+  }
+
+  @Override
+  public void onUpdated(@NotNull Inlay inlay) {
+    if (myEditor.getDocument().isInEventsHandling() || myEditor.getDocument().isInBulkUpdate()) return;
+    if (!isSoftWrappingEnabled()) {
+      myDirty = true;
+      return;
+    }
+    if (!myDirty) {
+      int offset = inlay.getOffset();
+      myApplianceManager.recalculate(Collections.singletonList(new TextRange(offset, offset)));
     }
   }
 

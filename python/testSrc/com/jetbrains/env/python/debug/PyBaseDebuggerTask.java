@@ -297,7 +297,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   @Override
   public void setUp(final String testName) throws Exception {
     if (myFixture == null) {
-      PyBaseDebuggerTask.super.setUp(testName);
+      super.setUp(testName);
     }
   }
 

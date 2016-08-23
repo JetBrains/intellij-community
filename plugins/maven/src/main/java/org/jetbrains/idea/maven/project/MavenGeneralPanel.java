@@ -64,41 +64,25 @@ public class MavenGeneralPanel implements  PanelWithAnchor {
   private void fillOutputLevelCombobox() {
     ComboBoxUtil.setModel(outputLevelCombo, outputLevelComboModel,
                           Arrays.asList(MavenExecutionOptions.LoggingLevel.values()),
-                          new Function<MavenExecutionOptions.LoggingLevel, Pair<String, ?>>() {
-                            public Pair<String, MavenExecutionOptions.LoggingLevel> fun(MavenExecutionOptions.LoggingLevel each) {
-                              return Pair.create(each.getDisplayString(), each);
-                            }
-                          });
+                          each -> Pair.create(each.getDisplayString(), each));
   }
 
   private void fillFailureBehaviorCombobox() {
     ComboBoxUtil.setModel(failPolicyCombo, failPolicyComboModel,
                           Arrays.asList(MavenExecutionOptions.FailureMode.values()),
-                          new Function<MavenExecutionOptions.FailureMode, Pair<String, ?>>() {
-                            public Pair<String, MavenExecutionOptions.FailureMode> fun(MavenExecutionOptions.FailureMode each) {
-                              return Pair.create(each.getDisplayString(), each);
-                            }
-                          });
+                          each -> Pair.create(each.getDisplayString(), each));
   }
 
   private void fillChecksumPolicyCombobox() {
     ComboBoxUtil.setModel(checksumPolicyCombo, checksumPolicyComboModel,
                           Arrays.asList(MavenExecutionOptions.ChecksumPolicy.values()),
-                          new Function<MavenExecutionOptions.ChecksumPolicy, Pair<String, ?>>() {
-                            public Pair<String, MavenExecutionOptions.ChecksumPolicy> fun(MavenExecutionOptions.ChecksumPolicy each) {
-                              return Pair.create(each.getDisplayString(), each);
-                            }
-                          });
+                          each -> Pair.create(each.getDisplayString(), each));
   }
 
   private void fillPluginUpdatePolicyCombobox() {
     ComboBoxUtil.setModel(pluginUpdatePolicyCombo, pluginUpdatePolicyComboModel,
                           Arrays.asList(MavenExecutionOptions.PluginUpdatePolicy.values()),
-                          new Function<MavenExecutionOptions.PluginUpdatePolicy, Pair<String, ?>>() {
-                            public Pair<String, MavenExecutionOptions.PluginUpdatePolicy> fun(MavenExecutionOptions.PluginUpdatePolicy each) {
-                              return Pair.create(each.getDisplayString(), each);
-                            }
-                          });
+                          each -> Pair.create(each.getDisplayString(), each));
   }
 
   public JComponent createComponent() {

@@ -30,8 +30,8 @@ import static com.intellij.openapi.util.text.StringUtil.pluralize;
 public final class GitFetchResult {
 
   private final Type myType;
-  private Collection<Exception> myErrors = new ArrayList<Exception>();
-  private Collection<String> myPrunedRefs = new ArrayList<String>();
+  private Collection<Exception> myErrors = new ArrayList<>();
+  private Collection<String> myPrunedRefs = new ArrayList<>();
 
   public enum Type {
     SUCCESS,

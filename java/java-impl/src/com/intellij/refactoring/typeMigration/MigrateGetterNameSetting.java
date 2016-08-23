@@ -32,7 +32,7 @@ class MigrateGetterNameSetting {
   private static final String CODE_ALWAYS_NO = "Never Migrate Method Names";
   private static final String[] CODES = new String[]{CODE_ALWAYS_YES, Messages.YES_BUTTON, CODE_ALWAYS_NO, Messages.NO_BUTTON};
 
-  private final AtomicReference<Boolean> myGlobalValue = new AtomicReference<Boolean>();
+  private final AtomicReference<Boolean> myGlobalValue = new AtomicReference<>();
 
   void askUserIfNeed(final OverridenUsageInfo info, final String newMethodName, final PsiType migrationReturnType) {
     final Boolean globalValue = myGlobalValue.get();

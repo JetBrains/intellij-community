@@ -25,7 +25,6 @@ import com.intellij.openapi.options.NonLazySchemeProcessor;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ThrowableConvertor;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -94,7 +93,7 @@ public class QuickListsManager implements ExportableApplicationComponent {
   public void initComponent() {
     for (BundledQuickListsProvider provider : BundledQuickListsProvider.EP_NAME.getExtensions()) {
       for (final String path : provider.getBundledListsRelativePaths()) {
-        mySchemeManager.loadBundledScheme(path, provider, element -> createItem(element));
+        mySchemeManager.loadBundledScheme(path, provider, QuickListsManager::createItem);
       }
     }
     mySchemeManager.loadSchemes();
@@ -118,7 +117,7 @@ public class QuickListsManager implements ExportableApplicationComponent {
 
   private void registerActions() {
     // to prevent exception if 2 or more targets have the same name
-    Set<String> registeredIds = new THashSet<String>();
+    Set<String> registeredIds = new THashSet<>();
     for (QuickList list : mySchemeManager.getAllSchemes()) {
       String actionId = list.getActionId();
       if (registeredIds.add(actionId)) {

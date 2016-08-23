@@ -272,7 +272,7 @@ public class GitConflictResolver {
    * @see #getUnmergedFiles(com.intellij.openapi.vfs.VirtualFile)
    */
   private Collection<VirtualFile> getUnmergedFiles(@NotNull Collection<VirtualFile> roots) throws VcsException {
-    final Collection<VirtualFile> unmergedFiles = new HashSet<VirtualFile>();
+    final Collection<VirtualFile> unmergedFiles = new HashSet<>();
     for (VirtualFile root : roots) {
       unmergedFiles.addAll(getUnmergedFiles(root));
     }

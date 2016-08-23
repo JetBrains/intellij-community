@@ -42,9 +42,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.compiled.ClassFileDecompilers;
+import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.impl.PsiFileEx;
+import com.intellij.psi.impl.file.PsiFileImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
@@ -110,6 +112,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     super(null);
     myViewProvider = viewProvider;
     myIsForDecompiling = forDecompiling;
+    //noinspection ResultOfMethodCallIgnored
     JavaElementType.CLASS.getIndex();  // initialize Java stubs
   }
 
@@ -152,6 +155,15 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     return !myInvalidated && (myIsForDecompiling || getVirtualFile().isValid());
   }
 
+  @Override
+  public void checkDelete() throws IncorrectOperationException {}
+
+  @Override
+  public void delete() throws IncorrectOperationException {
+    checkDelete();
+    PsiFileImplUtil.doDelete(this);
+  }
+
   boolean isForDecompiling() {
     return myIsForDecompiling;
   }
@@ -166,13 +178,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   @NotNull
   public PsiElement[] getChildren() {
     PsiJavaModule module = getModuleDeclaration();
-    if (module != null) {
-      return new PsiElement[]{module};
-    }
-    else {
-      PsiPackageStatement pkg = getPackageStatement();
-      return pkg != null ? ArrayUtil.prepend(pkg, getClasses(), PsiElement.class) : getClasses();
-    }
+    return module != null ? new PsiElement[]{module} : getClasses();
   }
 
   @Override

@@ -9,6 +9,7 @@ def fun1(n):
 
 
 def fun2(m):
+    sleep(2)
     for i in range(1000):
         sleep(0.01) #breakpoint
     print("finished fun2()", m)

@@ -529,6 +529,8 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
 
                 if stop:
                     self.set_suspend(thread, CMD_SET_BREAK)
+                    if breakpoint and breakpoint.suspend_policy == "ALL":
+                        main_debugger.suspend_all_other_threads(thread)
                 elif flag and plugin_manager is not None:
                     result = plugin_manager.suspend(main_debugger, thread, frame, bp_type)
                     if result:

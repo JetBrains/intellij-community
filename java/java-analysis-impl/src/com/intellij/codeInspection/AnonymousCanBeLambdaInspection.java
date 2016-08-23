@@ -383,7 +383,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
                                         PsiElement body,
                                         Set<String> usedLocalNames, PsiVariable[] parameters) {
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-      final Map<PsiVariable, String> names = new HashMap<PsiVariable, String>();
+      final Map<PsiVariable, String> names = new HashMap<>();
       for (PsiVariable parameter : parameters) {
         String parameterName = parameter.getName();
         String uniqueVariableName = UniqueNameGenerator.generateUniqueName(codeStyleManager.suggestUniqueVariableName(parameterName, parameter.getParent(), false), usedLocalNames);
@@ -394,7 +394,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
 
       if (names.isEmpty()) return;
 
-      final LinkedHashMap<PsiElement, PsiElement> replacements = new LinkedHashMap<PsiElement, PsiElement>();
+      final LinkedHashMap<PsiElement, PsiElement> replacements = new LinkedHashMap<>();
       body.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
         public void visitVariable(PsiVariable variable) {

@@ -110,7 +110,7 @@ public class ProblemDescriptorUtil {
   }
 
   private static String unescapeXmlCode(final String message) {
-    List<String> strings = new ArrayList<String>();
+    List<String> strings = new ArrayList<>();
     for (String string : StringUtil.split(message, XML_CODE_MARKER.first)) {
       if (string.contains(XML_CODE_MARKER.second)) {
         strings.addAll(StringUtil.split(string, XML_CODE_MARKER.second, false));

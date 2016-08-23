@@ -19,4 +19,8 @@ import com.intellij.openapi.project.Project;
 
 public interface HyperlinkInfo {
   void navigate(Project project);
+
+  default boolean includeInOccurenceNavigation() {
+    return true;
+  }
 }

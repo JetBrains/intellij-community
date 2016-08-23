@@ -58,6 +58,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
   @NonNls private static final String TYPE_ID                         = "text-editor";
   @NonNls private static final String LINE_ATTR                       = "line";
   @NonNls private static final String COLUMN_ATTR                     = "column";
+  @NonNls private static final String LEAN_FORWARD_ATTR               = "lean-forward";
   @NonNls private static final String SELECTION_START_LINE_ATTR       = "selection-start-line";
   @NonNls private static final String SELECTION_START_COLUMN_ATTR     = "selection-start-column";
   @NonNls private static final String SELECTION_END_LINE_ATTR         = "selection-end-line";
@@ -111,6 +112,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     TextEditorState.CaretState caretState = new TextEditorState.CaretState();
     caretState.LINE = parseWithDefault(element, LINE_ATTR);
     caretState.COLUMN = parseWithDefault(element, COLUMN_ATTR);
+    caretState.LEAN_FORWARD = parseBooleanWithDefault(element, LEAN_FORWARD_ATTR);
     caretState.SELECTION_START_LINE = parseWithDefault(element, SELECTION_START_LINE_ATTR);
     caretState.SELECTION_START_COLUMN = parseWithDefault(element, SELECTION_START_COLUMN_ATTR);
     caretState.SELECTION_END_LINE = parseWithDefault(element, SELECTION_END_LINE_ATTR);
@@ -123,6 +125,11 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     return value == null ? 0 : Integer.parseInt(value);
   }
 
+  private static boolean parseBooleanWithDefault(Element element, String attributeName) {
+    String value = element.getAttributeValue(attributeName);
+    return value != null && Boolean.parseBoolean(value);
+  }
+
   @Override
   public void writeState(@NotNull FileEditorState _state, @NotNull Project project, @NotNull Element element) {
     TextEditorState state = (TextEditorState)_state;
@@ -133,6 +140,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
         Element e = new Element(CARET_ELEMENT);
         e.setAttribute(LINE_ATTR, Integer.toString(caretState.LINE));
         e.setAttribute(COLUMN_ATTR, Integer.toString(caretState.COLUMN));
+        e.setAttribute(LEAN_FORWARD_ATTR, Boolean.toString(caretState.LEAN_FORWARD));
         e.setAttribute(SELECTION_START_LINE_ATTR, Integer.toString(caretState.SELECTION_START_LINE));
         e.setAttribute(SELECTION_START_COLUMN_ATTR, Integer.toString(caretState.SELECTION_START_COLUMN));
         e.setAttribute(SELECTION_END_LINE_ATTR, Integer.toString(caretState.SELECTION_END_LINE));
@@ -244,6 +252,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     TextEditorState.CaretState caretState = new TextEditorState.CaretState();
     caretState.LINE = getLine(caretPosition);
     caretState.COLUMN = getColumn(caretPosition);
+    caretState.LEAN_FORWARD = caretPosition != null && caretPosition.leansForward;
     caretState.SELECTION_START_LINE = getLine(selectionStartPosition);
     caretState.SELECTION_START_COLUMN = getColumn(selectionStartPosition);
     caretState.SELECTION_END_LINE = getLine(selectionEndPosition);
@@ -263,9 +272,9 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     if (state.CARETS != null && state.CARETS.length > 0) {
       if (editor.getCaretModel().supportsMultipleCarets()) {
         CaretModel caretModel = editor.getCaretModel();
-        List<CaretState> states = new ArrayList<CaretState>(state.CARETS.length);
+        List<CaretState> states = new ArrayList<>(state.CARETS.length);
         for (TextEditorState.CaretState caretState : state.CARETS) {
-          states.add(new CaretState(new LogicalPosition(caretState.LINE, caretState.COLUMN),
+          states.add(new CaretState(new LogicalPosition(caretState.LINE, caretState.COLUMN, caretState.LEAN_FORWARD),
                                     new LogicalPosition(caretState.SELECTION_START_LINE, caretState.SELECTION_START_COLUMN),
                                     new LogicalPosition(caretState.SELECTION_END_LINE, caretState.SELECTION_END_COLUMN)));
         }

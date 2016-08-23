@@ -91,7 +91,7 @@ public class GitRebaseEditorMain {
     String file = args[1];
     try {
       XmlRpcClientLite client = new XmlRpcClientLite("127.0.0.1", port);
-      Vector<Object> params = new Vector<Object>();
+      Vector<Object> params = new Vector<>();
       params.add(handler);
       if (System.getProperty("os.name").toLowerCase().startsWith("windows") && file.startsWith(CYGDRIVE_PREFIX)) {
         int p = CYGDRIVE_PREFIX.length();

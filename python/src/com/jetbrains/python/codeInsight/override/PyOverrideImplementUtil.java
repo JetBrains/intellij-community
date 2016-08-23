@@ -95,7 +95,7 @@ public class PyOverrideImplementUtil {
     PyPsiUtils.assertValid(pyClass);
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    final Set<PyFunction> result = new HashSet<PyFunction>();
+    final Set<PyFunction> result = new HashSet<>();
     TypeEvalContext context = TypeEvalContext.codeCompletion(project, null);
     final Collection<PyFunction> superFunctions = getAllSuperFunctions(pyClass, context);
 
@@ -109,7 +109,7 @@ public class PyOverrideImplementUtil {
                                                          @NotNull final PyClass pyClass,
                                                          @NotNull final Collection<PyFunction> superFunctions,
                                                          @NotNull final String title, final boolean implement) {
-    List<PyMethodMember> elements = new ArrayList<PyMethodMember>();
+    List<PyMethodMember> elements = new ArrayList<>();
     for (PyFunction function : superFunctions) {
       final String name = function.getName();
       if (name == null || PyUtil.isClassPrivateName(name)) {
@@ -227,7 +227,7 @@ public class PyOverrideImplementUtil {
     StringBuilder statementBody = new StringBuilder();
 
     boolean hadStar = false;
-    List<String> parameters = new ArrayList<String>();
+    List<String> parameters = new ArrayList<>();
     for (PyParameter parameter : baseParams) {
       final PyNamedParameter pyNamedParameter = parameter.getAsNamed();
       if (pyNamedParameter != null) {

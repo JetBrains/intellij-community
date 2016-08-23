@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,7 +117,7 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
   protected Configurable[] buildConfigurables() {
     myGeneralPanel = new VcsGeneralConfigurationConfigurable(myProject, this);
 
-    List<Configurable> result = new ArrayList<Configurable>();
+    List<Configurable> result = new ArrayList<>();
 
     result.add(myGeneralPanel);
     result.add(new VcsBackgroundOperationsConfigurable(myProject));
@@ -202,11 +202,6 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
       @NotNull
       public String getId() {
         return "vcs." + getDisplayName();
-      }
-
-      @Override
-      public Runnable enableSearch(String option) {
-        return null;
       }
 
       @Override

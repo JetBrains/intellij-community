@@ -33,16 +33,16 @@ import org.jetbrains.annotations.Nullable
  */
 class CustomFileTypeLexerTest extends TestCase {
 
-  private void doTest(SyntaxTable table, @NonNls String text, @Nullable String expected) {
+  private static void doTest(SyntaxTable table, @NonNls String text, @Nullable String expected) {
     def lexer = new CustomFileTypeLexer(table)
     doTest(lexer, text, expected);
   }
 
-  private void doTest(Lexer lexer, String text, String expected) {
+  private static void doTest(Lexer lexer, String text, String expected) {
     assertEquals(expected, LexerTestCase.printTokens(text, 0, lexer))
   }
 
-  private SyntaxTable createGenericTable() {
+  private static SyntaxTable createGenericTable() {
     SyntaxTable table = new SyntaxTable();
 
     table.lineComment = ';'
@@ -97,7 +97,68 @@ WHITESPACE ('\\n')
 '''
   }
 
-  private SyntaxTable createJavaSyntaxTable() {
+  public void "test punctuation keywords"() {
+    def table = createGenericTable()
+    table.addKeyword4("+")
+    table.addKeyword4("-")
+    table.addKeyword4("=")
+    doTest table, 'i++; i--; i-100; i -100; i- 100; a=-1; a= -1; a+=1; a= +1;', '''\
+IDENTIFIER ('i')
+KEYWORD_4 ('+')
+KEYWORD_4 ('+')
+PUNCTUATION (';')
+WHITESPACE (' ')
+IDENTIFIER ('i')
+KEYWORD_4 ('-')
+KEYWORD_4 ('-')
+PUNCTUATION (';')
+WHITESPACE (' ')
+IDENTIFIER ('i')
+KEYWORD_4 ('-')
+NUMBER ('100')
+PUNCTUATION (';')
+WHITESPACE (' ')
+IDENTIFIER ('i')
+WHITESPACE (' ')
+KEYWORD_4 ('-')
+NUMBER ('100')
+PUNCTUATION (';')
+WHITESPACE (' ')
+IDENTIFIER ('i')
+KEYWORD_4 ('-')
+WHITESPACE (' ')
+NUMBER ('100')
+PUNCTUATION (';')
+WHITESPACE (' ')
+IDENTIFIER ('a')
+KEYWORD_4 ('=')
+KEYWORD_4 ('-')
+NUMBER ('1')
+PUNCTUATION (';')
+WHITESPACE (' ')
+IDENTIFIER ('a')
+KEYWORD_4 ('=')
+WHITESPACE (' ')
+KEYWORD_4 ('-')
+NUMBER ('1')
+PUNCTUATION (';')
+WHITESPACE (' ')
+IDENTIFIER ('a')
+KEYWORD_4 ('+')
+KEYWORD_4 ('=')
+NUMBER ('1')
+PUNCTUATION (';')
+WHITESPACE (' ')
+IDENTIFIER ('a')
+KEYWORD_4 ('=')
+WHITESPACE (' ')
+KEYWORD_4 ('+')
+NUMBER ('1')
+PUNCTUATION (';')
+'''
+  }
+
+  private static SyntaxTable createJavaSyntaxTable() {
     SyntaxTable table = new SyntaxTable();
 
     table.setLineComment("//");
@@ -229,7 +290,7 @@ MULTI_LINE_COMMENT ('/* a\\n *bc */')
     assertEquals(6, lexer.getBufferEnd());
   }
 
-  private SyntaxTable createPropTable() {
+  private static SyntaxTable createPropTable() {
     SyntaxTable table = new SyntaxTable();
 
     table.setLineComment("#");
@@ -341,7 +402,8 @@ KEYWORD_1 ('b-c')
 WHITESPACE (' ')
 KEYWORD_2 ('d#')
 WHITESPACE (' ')
-IDENTIFIER ('e-')
+KEYWORD_2 ('e')
+CHARACTER ('-')
 WHITESPACE (' ')
 KEYWORD_2 ('e')
 WHITESPACE (' ')
@@ -388,12 +450,21 @@ R_PARENTH (')')
 '''
   }
 
+  public void "test hex literals"() {
+    SyntaxTable table = new SyntaxTable()
+    table.hexPrefix = '0y'
+    doTest table, '1 0yabc0', '''\
+NUMBER ('1')
+WHITESPACE (' ')
+NUMBER ('0yabc0')
+'''
+  }
+
   public void testKeywordLexerPerformance() {
     int count = 3000
     List<String> keywords = []
     for (i in 0..<count) {
       char start = ('a' as char) + (i % 7)
-      char then = start
       keywords.add((start as String) * i)
     }
     SyntaxTable table = new SyntaxTable()

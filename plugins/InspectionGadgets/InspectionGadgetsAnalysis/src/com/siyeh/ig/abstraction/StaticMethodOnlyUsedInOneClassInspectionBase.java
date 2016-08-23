@@ -85,7 +85,7 @@ public class StaticMethodOnlyUsedInOneClassInspectionBase extends BaseInspection
 
   private static class UsageProcessor implements Processor<PsiReference> {
 
-    private final AtomicReference<PsiClass> foundClass = new AtomicReference<PsiClass>();
+    private final AtomicReference<PsiClass> foundClass = new AtomicReference<>();
 
     @Override
     public boolean process(PsiReference reference) {

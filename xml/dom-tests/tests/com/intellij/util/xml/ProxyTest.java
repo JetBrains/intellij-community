@@ -32,7 +32,7 @@ import java.util.List;
 public class ProxyTest extends TestCase {
 
   public void testExtendClass() throws Throwable {
-    final List<String> invocations = new ArrayList<String>();
+    final List<String> invocations = new ArrayList<>();
     Implementation implementation = AdvancedProxy.createProxy(Implementation.class, new Class[]{Interface3.class}, new InvocationHandler(){
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {

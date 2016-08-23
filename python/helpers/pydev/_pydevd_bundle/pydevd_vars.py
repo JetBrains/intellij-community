@@ -369,7 +369,7 @@ def evaluate_expression(thread_id, frame_id, expression, doExec):
         del frame
 
 
-def change_attr_expression(thread_id, frame_id, attr, expression, dbg):
+def change_attr_expression(thread_id, frame_id, attr, expression, dbg, value=None):
     '''Changes some attribute in a given frame.
     '''
     frame = find_frame(thread_id, frame_id)
@@ -379,7 +379,7 @@ def change_attr_expression(thread_id, frame_id, attr, expression, dbg):
     try:
         expression = expression.replace('@LINE@', '\n')
 
-        if dbg.plugin:
+        if dbg.plugin and not value:
             result = dbg.plugin.change_variable(frame, attr, expression)
             if result:
                 return result
@@ -387,16 +387,22 @@ def change_attr_expression(thread_id, frame_id, attr, expression, dbg):
         if attr[:7] == "Globals":
             attr = attr[8:]
             if attr in frame.f_globals:
-                frame.f_globals[attr] = eval(expression, frame.f_globals, frame.f_locals)
+                if value is None:
+                    value = eval(expression, frame.f_globals, frame.f_locals)
+                frame.f_globals[attr] = value
                 return frame.f_globals[attr]
         else:
             if pydevd_save_locals.is_save_locals_available():
-                frame.f_locals[attr] = eval(expression, frame.f_globals, frame.f_locals)
+                if value is None:
+                    value = eval(expression, frame.f_globals, frame.f_locals)
+                frame.f_locals[attr] = value
                 pydevd_save_locals.save_locals(frame)
                 return frame.f_locals[attr]
 
             # default way (only works for changing it in the topmost frame)
-            result = eval(expression, frame.f_globals, frame.f_locals)
+            if value is None:
+                value = eval(expression, frame.f_globals, frame.f_locals)
+            result = value
             Exec('%s=%s' % (attr, expression), frame.f_globals, frame.f_locals)
             return result
 

@@ -75,7 +75,7 @@ public class LiteAnalyzerExt<V extends Value, Data, MyInterpreter extends Interp
       for (int j = begin; j < end; ++j) {
         List<TryCatchBlockNode> insnHandlers = handlers[j];
         if (insnHandlers == null) {
-          insnHandlers = new ArrayList<TryCatchBlockNode>();
+          insnHandlers = new ArrayList<>();
           handlers[j] = insnHandlers;
         }
         insnHandlers.add(tcb);
@@ -182,11 +182,11 @@ public class LiteAnalyzerExt<V extends Value, Data, MyInterpreter extends Interp
   }
 
   protected Frame<V> newFrame(final int nLocals, final int nStack) {
-    return new Frame<V>(nLocals, nStack);
+    return new Frame<>(nLocals, nStack);
   }
 
   protected Frame<V> newFrame(final Frame<? extends V> src) {
-    return new Frame<V>(src);
+    return new Frame<>(src);
   }
 
   // -------------------------------------------------------------------------

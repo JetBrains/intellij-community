@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,10 +54,6 @@ public class AnnotationProcessorsConfigurable implements SearchableConfigurable,
     return getHelpTopic();
   }
 
-  public Runnable enableSearch(String option) {
-    return null;
-  }
-
   public JComponent createComponent() {
     myMainPanel = new AnnotationProcessorsPanel(myProject);
     return myMainPanel;
@@ -70,7 +66,7 @@ public class AnnotationProcessorsConfigurable implements SearchableConfigurable,
       return true;
     }
 
-    final Map<String, ProcessorConfigProfile> configProfiles = new java.util.HashMap<String, ProcessorConfigProfile>();
+    final Map<String, ProcessorConfigProfile> configProfiles = new java.util.HashMap<>();
     for (ProcessorConfigProfile profile : config.getModuleProcessorProfiles()) {
       configProfiles.put(profile.getName(), profile);
     }

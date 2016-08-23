@@ -27,9 +27,9 @@ import java.util.regex.Pattern;
 */
 public class PropertyExpander {
   private static final Pattern $$_PATTERN = Pattern.compile("\\$\\$");
-  final List<PropertiesProvider> myProviders = new ArrayList<PropertiesProvider>();
+  final List<PropertiesProvider> myProviders = new ArrayList<>();
   final Resolver myResolver;
-  final Set<String> myNamesToSkip = new HashSet<String>();
+  final Set<String> myNamesToSkip = new HashSet<>();
   private PropertyExpansionListener myPropertyExpansionListener;
 
   public interface PropertyExpansionListener {
@@ -129,9 +129,9 @@ public class PropertyExpander {
         final String prop = str.substring(startProp + 2, endProp);
         if (!namesToSkip.contains(prop)) {
           if (myPropertyNames == null) {
-            myPropertyNames = new ArrayList<Pair<String, Integer>>();
+            myPropertyNames = new ArrayList<>();
           }
-          myPropertyNames.add(new Pair<String, Integer>(prop, startProp));
+          myPropertyNames.add(new Pair<>(prop, startProp));
         }
         startProp += 2;
       }
@@ -168,7 +168,7 @@ public class PropertyExpander {
 
     private void setPropertyOffset(int index, int value) {
       final Pair<String, Integer> pair = myPropertyNames.get(index);
-      myPropertyNames.set(index, new Pair<String, Integer>(pair.getFirst(), value));
+      myPropertyNames.set(index, new Pair<>(pair.getFirst(), value));
     }
 
     String getResult() {

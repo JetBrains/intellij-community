@@ -38,7 +38,7 @@ import java.util.Map;
 @Order(ExternalSystemNode.BUILTIN_TASKS_DATA_NODE_ORDER)
 public class TasksNode extends ExternalSystemNode {
 
-  private final MultiMap<String, TaskNode> myTasksMap = new MultiMap<String, TaskNode>();
+  private final MultiMap<String, TaskNode> myTasksMap = new MultiMap<>();
 
   @SuppressWarnings("unchecked")
   public TasksNode(ExternalProjectsView externalProjectsView, final Collection<DataNode<?>> dataNodes) {

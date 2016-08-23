@@ -367,7 +367,7 @@ public class EditorModificationUtil {
     int endLine = Math.max(Math.min(blockEnd.line, editor.getDocument().getLineCount() - 1), 0);
     int step = endLine < startLine ? -1 : 1;
     int count = 1 + Math.abs(endLine - startLine);
-    List<CaretState> caretStates = new LinkedList<CaretState>();
+    List<CaretState> caretStates = new LinkedList<>();
     boolean hasSelection = false;
     for (int line = startLine, i = 0; i < count; i++, line += step) {
       int startColumn = blockStart.column;

@@ -94,7 +94,7 @@ public class PyBroadExceptionInspection extends PyInspection {
     }
 
     private static boolean isExceptionUsed(PyExceptPart node, String text) {
-      Stack<PsiElement> stack = new Stack<PsiElement>();
+      Stack<PsiElement> stack = new Stack<>();
       PyStatementList statementList = node.getStatementList();
       if (statementList != null) {
         for (PyStatement st : statementList.getStatements()) {

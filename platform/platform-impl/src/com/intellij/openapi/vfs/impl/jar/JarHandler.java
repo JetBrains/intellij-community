@@ -276,7 +276,7 @@ public class JarHandler extends ZipHandler {
       PersistentHashMap<String, CacheLibraryInfo> info = null;
       for (int i = 0; i < 2; ++i) {
         try {
-          info = new PersistentHashMap<String, CacheLibraryInfo>(
+          info = new PersistentHashMap<>(
             snapshotInfoFile, EnumeratorStringDescriptor.INSTANCE, new DataExternalizer<CacheLibraryInfo>() {
 
             @Override
@@ -326,7 +326,7 @@ public class JarHandler extends ZipHandler {
       // - Collect librarySnapshot -> projectLibraryPaths and existing projectLibraryPath -> librarySnapshot
       // - Remove all projectLibraryPaths that doesn't exist from persistent mapping
       // - Remove jar library snapshots that have no projectLibraryPath
-      Set<String> availableLibrarySnapshots = new THashSet<String>(Arrays.asList(snapshotInfoFile.getParentFile().list(new FilenameFilter() {
+      Set<String> availableLibrarySnapshots = new THashSet<>(Arrays.asList(snapshotInfoFile.getParentFile().list(new FilenameFilter() {
         @Override
         public boolean accept(File dir, String name) {
           int lastDotPosition = name.lastIndexOf('.');
@@ -346,10 +346,10 @@ public class JarHandler extends ZipHandler {
 
       final List<String> invalidLibraryFilePaths = ContainerUtil.newArrayList();
       final List<String> allLibraryFilePaths = ContainerUtil.newArrayList();
-      MultiMap<String, String> jarSnapshotFileToLibraryFilePaths = new MultiMap<String, String>();
+      MultiMap<String, String> jarSnapshotFileToLibraryFilePaths = new MultiMap<>();
       Set<String> validLibraryFilePathToJarSnapshotFilePaths = ContainerUtil.newTroveSet();
 
-      info.processKeys(new CommonProcessors.CollectProcessor<String>(allLibraryFilePaths));
+      info.processKeys(new CommonProcessors.CollectProcessor<>(allLibraryFilePaths));
       for(String filePath:allLibraryFilePaths) {
         CacheLibraryInfo libraryInfo = info.get(filePath);
         if (libraryInfo == null) continue;

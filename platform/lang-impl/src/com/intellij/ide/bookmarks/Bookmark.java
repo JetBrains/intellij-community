@@ -134,7 +134,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     else {
       highlighter = null;
     }
-    myHighlighterRef = highlighter == null ? null : new WeakReference<RangeHighlighterEx>(highlighter);
+    myHighlighterRef = highlighter == null ? null : new WeakReference<>(highlighter);
     return highlighter;
   }
 
@@ -172,17 +172,17 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     final int startOffset = 0;
     final int endOffset = markupDocument.getTextLength();
 
-    final Ref<RangeHighlighterEx> found = new Ref<RangeHighlighterEx>();
+    final Ref<RangeHighlighterEx> found = new Ref<>();
     markup.processRangeHighlightersOverlappingWith(startOffset, endOffset, highlighter -> {
       GutterMark renderer = highlighter.getGutterIconRenderer();
-      if (renderer instanceof MyGutterIconRenderer && ((MyGutterIconRenderer)renderer).myBookmark == Bookmark.this) {
+      if (renderer instanceof MyGutterIconRenderer && ((MyGutterIconRenderer)renderer).myBookmark == this) {
         found.set(highlighter);
         return false;
       }
       return true;
     });
     result = found.get();
-    myHighlighterRef = result == null ? null : new WeakReference<RangeHighlighterEx>(result);
+    myHighlighterRef = result == null ? null : new WeakReference<>(result);
     return result;
   }
 

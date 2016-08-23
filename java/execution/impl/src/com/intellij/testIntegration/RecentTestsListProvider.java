@@ -103,10 +103,12 @@ public class RecentTestsListProvider {
     }
     
     if (TestLocator.isSuite(url)) {
-      data.addSuite(url, record.date, runConfiguration);
+      SuiteEntry entry = new SuiteEntry(url, record.date, runConfiguration);
+      data.addSuite(entry);
     }
     else {
-      data.addTest(url, magnitude, record.date, runConfiguration);
+      SingleTestEntry entry = new SingleTestEntry(url, record.date, runConfiguration, magnitude);
+      data.addTest(entry);
     }
   }
 

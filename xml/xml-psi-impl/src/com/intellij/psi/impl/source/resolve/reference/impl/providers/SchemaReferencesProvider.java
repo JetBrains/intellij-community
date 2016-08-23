@@ -137,7 +137,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
     } else if (NAME_ATTR_NAME.equals(attrName)) {
       return new PsiReference[] { new NameReference(element) };
     } else if (MEMBER_TYPES_ATTR_NAME.equals(attrName)) {
-      final List<PsiReference> result = new ArrayList<PsiReference>(1);
+      final List<PsiReference> result = new ArrayList<>(1);
       final String text = element.getText();
       int lastIndex = 1;
       final int testLength = text.length();

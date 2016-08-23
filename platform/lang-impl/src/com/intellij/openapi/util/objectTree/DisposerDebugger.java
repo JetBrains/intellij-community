@@ -352,7 +352,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
       final ObjectNode value = getValue();
       if (value != null) {
         final Collection subnodes = value.getChildren();
-        final ArrayList<DisposerNode> children = new ArrayList<DisposerNode>(subnodes.size());
+        final ArrayList<DisposerNode> children = new ArrayList<>(subnodes.size());
         for (Object subnode : subnodes) {
           children.add(new DisposerNode(myTree, (ObjectNode)subnode));
         }
@@ -361,7 +361,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
       else {
         final ObjectTree<Disposable> tree = Disposer.getTree();
         final Set<Disposable> root = tree.getRootObjects();
-        ArrayList<DisposerNode> children = new ArrayList<DisposerNode>(root.size());
+        ArrayList<DisposerNode> children = new ArrayList<>(root.size());
         for (Disposable each : root) {
           children.add(new DisposerNode(myTree, tree.getNode(each)));
         }

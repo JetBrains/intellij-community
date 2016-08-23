@@ -43,7 +43,7 @@ public class GradleLibraryNamesMixer {
    * <code>'module-test-resources'</code> respectively because <code>'test'</code> entry at the current collection is
    * stored with <code>'true'</code> flag.
    */
-  private static final Map<String, Boolean> NON_UNIQUE_PATH_ENTRIES = new HashMap<String, Boolean>();
+  private static final Map<String, Boolean> NON_UNIQUE_PATH_ENTRIES = new HashMap<>();
   static {
     NON_UNIQUE_PATH_ENTRIES.put("src", false);
     NON_UNIQUE_PATH_ENTRIES.put("main", false);
@@ -192,7 +192,7 @@ public class GradleLibraryNamesMixer {
    */
   private static class Wrapped {
     /** Holds list of files that may be used for name generation. */
-    public final Set<File> files = new HashSet<File>();
+    public final Set<File> files = new HashSet<>();
     /** File that was used for the current name generation. */
     public File        currentFile;
     /** Target library. */

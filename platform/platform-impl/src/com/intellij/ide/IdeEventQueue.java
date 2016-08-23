@@ -376,11 +376,13 @@ public class IdeEventQueue extends EventQueue {
     myIsInInputEvent = e instanceof InputEvent || e instanceof InputMethodEvent || e instanceof WindowEvent || e instanceof ActionEvent;
     if (myIsInInputEvent) {
       HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
+    } else {
+      HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
     }
     AWTEvent oldEvent = myCurrentEvent;
     myCurrentEvent = e;
 
-    boolean userActivity = myIsInInputEvent || e instanceof ItemEvent || e instanceof FocusEvent && !((FocusEvent)e).isTemporary();
+    boolean userActivity = myIsInInputEvent || e instanceof ItemEvent || e instanceof FocusEvent;
     try (AccessToken ignored = startActivity(userActivity)) {
       _dispatchEvent(e, false);
     }

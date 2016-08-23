@@ -51,7 +51,7 @@ public class MoveChangesDialog extends DialogWrapper {
       @Override
       protected DefaultTreeModel buildTreeModel(List<Change> changes, ChangeNodeDecorator changeNodeDecorator) {
         TreeModelBuilder builder = new TreeModelBuilder(project, isShowFlatten());
-        return builder.buildModel(new ArrayList<ChangeList>(changeLists));
+        return builder.buildModel(new ArrayList<>(changeLists));
       }
 
       @Override
@@ -67,13 +67,8 @@ public class MoveChangesDialog extends DialogWrapper {
         }
         return null;
       }
-
-      @Override
-      public Dimension getPreferredSize() {
-        return new Dimension(400, 200);
-      }
     };
-    ArrayList<Change> changes = new ArrayList<Change>();
+    ArrayList<Change> changes = new ArrayList<>();
     for (ChangeList list : changeLists) {
       changes.addAll(list.getChanges());
     }
@@ -90,6 +85,7 @@ public class MoveChangesDialog extends DialogWrapper {
     DefaultActionGroup actionGroup = new DefaultActionGroup(myTreeList.getTreeActions());
     panel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, true).getComponent(), BorderLayout.NORTH);
     myTreeList.expandAll();
+    myTreeList.repaint();
     return panel;
   }
 

@@ -101,7 +101,7 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
     ClassReader reader = new ClassReader(content);
     final Ref<Boolean> ref = Ref.create(Boolean.FALSE);
     final String className = reader.getClassName();
-    reader.accept(new ClassVisitor(Opcodes.ASM5) {
+    reader.accept(new ClassVisitor(Opcodes.API_VERSION) {
       @Override
       public void visitOuterClass(String owner, String name, String desc) {
         ref.set(Boolean.TRUE);

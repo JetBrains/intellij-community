@@ -48,9 +48,9 @@ public class ChangeMethodSignatureFromUsageReverseOrderFix extends ChangeMethodS
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (myTargetMethod.isValid() && myExpressions.length > myTargetMethod.getParameterList().getParametersCount()) {
       if (super.isAvailable(project, editor, file)) {
-        final ArrayList<ParameterInfoImpl> result = new ArrayList<ParameterInfoImpl>();
-        if (super.findNewParamsPlace(myExpressions, myTargetMethod, mySubstitutor, 
-                                     new StringBuilder(), new HashSet<ParameterInfoImpl>(), myTargetMethod.getParameterList().getParameters(), result)) {
+        final ArrayList<ParameterInfoImpl> result = new ArrayList<>();
+        if (super.findNewParamsPlace(myExpressions, myTargetMethod, mySubstitutor,
+                                     new StringBuilder(), new HashSet<>(), myTargetMethod.getParameterList().getParameters(), result)) {
 
           if (myNewParametersInfo.length != result.size()) return true;
           for (int i = 0, size = result.size(); i < size; i++) {
@@ -73,14 +73,14 @@ public class ChangeMethodSignatureFromUsageReverseOrderFix extends ChangeMethodS
                                        PsiParameter[] parameters,
                                        List<ParameterInfoImpl> result) {
     // find which parameters to introduce and where
-    Set<String> existingNames = new HashSet<String>();
+    Set<String> existingNames = new HashSet<>();
     for (PsiParameter parameter : parameters) {
       existingNames.add(parameter.getName());
     }
     int ei = expressions.length - 1;
     int pi = parameters.length - 1;
     final PsiParameter varargParam = targetMethod.isVarArgs() ? parameters[parameters.length - 1] : null;
-    final List<String> params = new ArrayList<String>();
+    final List<String> params = new ArrayList<>();
     while (ei >= 0 || pi >= 0) {
       PsiExpression expression = ei >=0 ? expressions[ei] : null;
       PsiParameter parameter = pi >= 0 ? parameters[pi] : null;

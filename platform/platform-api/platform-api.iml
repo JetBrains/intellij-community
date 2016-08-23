@@ -16,17 +16,9 @@
     <orderEntry type="module" module-name="forms_rt" exported="" />
     <orderEntry type="library" name="commons-codec" level="project" />
     <orderEntry type="module" module-name="platform-resources-en" exported="" />
+    <orderEntry type="library" name="automaton" level="project" />
     <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="module" module-name="icons" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../lib/automaton.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="module" module-name="projectModel-api" exported="" />
     <orderEntry type="library" name="Netty" level="project" />
     <orderEntry type="library" name="proxy-vole" level="project" />

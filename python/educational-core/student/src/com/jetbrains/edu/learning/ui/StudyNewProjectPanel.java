@@ -19,11 +19,13 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AncestorListenerAdapter;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.PanelWithAnchor;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
@@ -48,7 +50,7 @@ import java.util.List;
  * data: 7/31/14.
  */
 public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
-  private List<CourseInfo> myAvailableCourses = new ArrayList<CourseInfo>();
+  private List<CourseInfo> myAvailableCourses = new ArrayList<>();
   private JButton myBrowseButton;
   private ComboBox<CourseInfo> myCoursesComboBox;
   private JButton myRefreshButton;
@@ -61,8 +63,8 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
   private static final String INVALID_COURSE = "Selected course is invalid";
   private FacetValidatorsManager myValidationManager;
   private boolean isComboboxInitialized;
-  private static final String LOGIN_TO_STEPIC_MESSAGE = "<html><u>Login to Stepic</u> to open the adaptive course </html>";
-  private static final String LOGIN_TO_STEPIC = "Login to Stepic";
+  private static final String LOGIN_TO_STEPIC_MESSAGE = "<html><u>Login to Stepik</u> to open the adaptive course </html>";
+  private static final String LOGIN_TO_STEPIC = "Login to Stepik";
 
   public StudyNewProjectPanel(@NotNull final StudyProjectGenerator generator) {
     super(new VerticalFlowLayout(true, true));
@@ -73,20 +75,21 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
   }
 
   private void layoutPanel() {
-    myCoursesComboBox = new ComboBox<CourseInfo>();
+    myCoursesComboBox = new ComboBox<>();
 
-    final JPanel coursesPanel = new JPanel(new BorderLayout());
     final LabeledComponent<ComboBox> coursesCombo = LabeledComponent.create(myCoursesComboBox, "Courses:", BorderLayout.WEST);
 
     myRefreshButton = new FixedSizeButton(coursesCombo);
+    if (SystemInfo.isMac && !UIUtil.isUnderDarcula())
+      myRefreshButton.putClientProperty("JButton.buttonType", null);
     myRefreshButton.setIcon(AllIcons.Actions.Refresh);
     myBrowseButton = new FixedSizeButton(coursesCombo);
 
     final JPanel comboPanel = new JPanel(new BorderLayout());
-
     comboPanel.add(coursesCombo, BorderLayout.CENTER);
     comboPanel.add(myRefreshButton, BorderLayout.EAST);
 
+    final JPanel coursesPanel = new JPanel(new BorderLayout());
     coursesPanel.add(comboPanel, BorderLayout.CENTER);
     coursesPanel.add(myBrowseButton, BorderLayout.EAST);
 
@@ -104,11 +107,10 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
     myDescriptionPane.setEditable(true);
     myDescriptionPane.setEnabled(true);
     myAuthorLabel.setEnabled(true);
-    myDescriptionPane.setPreferredSize(new Dimension(150, 150));
+    myDescriptionPane.setPreferredSize(new Dimension(150, 200));
     myDescriptionPane.setFont(coursesCombo.getFont());
     myInfoPanel.add(myAuthorLabel);
-    myInfoPanel.add(myDescriptionPane);
-    myInfoPanel.setBorder(BorderFactory.createLineBorder(new JBColor(10067616, 10067616)));
+    myInfoPanel.add(new JBScrollPane(myDescriptionPane));
 
     panel.add(myInfoPanel, BorderLayout.CENTER);
     add(panel);
@@ -129,7 +131,9 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
       myDescriptionPane.setEditable(false);
       //setting the first course in list as selected
       myGenerator.setSelectedCourse(selectedCourse);
-
+      if (myGenerator.getSelectedCourseInfo() != null) {
+        myCoursesComboBox.setSelectedItem(myGenerator.getSelectedCourseInfo());
+      }
       if (selectedCourse.isAdaptive() && !myGenerator.isLoggedIn()) {
         setError(LOGIN_TO_STEPIC_MESSAGE);
       }
@@ -140,6 +144,8 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
   }
 
   private void setupBrowseButton() {
+    if (SystemInfo.isMac && !UIUtil.isUnderDarcula())
+      myBrowseButton.putClientProperty("JButton.buttonType", null);
     myBrowseButton.setIcon(InteractiveLearningIcons.InterpreterGear);
     final FileChooserDescriptor fileChooser = new FileChooserDescriptor(true, false, false, true, false, false) {
       @Override
@@ -185,7 +191,7 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
                                        });
               }
               else if (LOGIN_TO_STEPIC.equals(selectedValue)) {
-                showLoginDialog(true, "Signing In And Getting Stepic Course List");
+                showLoginDialog(true, "Signing In And Getting Stepik Course List");
               }
             });
           }
@@ -271,7 +277,7 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
 
     myGenerator.setCourses(courses);
     myAvailableCourses = courses;
-    StudyProjectGenerator.flushCache(myAvailableCourses);
+    StudyProjectGenerator.flushCache(myAvailableCourses, false);
   }
 
   private void addCoursesToCombobox(@NotNull List<CourseInfo> courses) {
@@ -334,7 +340,6 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
     @Override
     protected void doOKAction() {
       if (!validateLoginAndPasswordFields()) return;
-      super.doJustOkAction();
 
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
         ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
@@ -351,10 +356,11 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
           if (courses != null && myRefreshCourseList) {
             ApplicationManager.getApplication().invokeLater(() -> refreshCoursesList(courses));
           }
+          ApplicationManager.getApplication().invokeLater(() -> super.doJustOkAction());
           setOK();
         }
         else {
-          setError("Failed to login");
+          this.setErrorText("Failed to login");
         }
       }, myProgressTitle, true, new DefaultProjectFactoryImpl().getDefaultProject());
     }

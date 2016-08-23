@@ -107,7 +107,7 @@ public class XsltXmlAnnotator extends XmlElementVisitor implements Annotator {
     int i = -1;
     while ((i = getAVTEndOffset(s, i)) != -1) {
       if (singleBraces == null) {
-        singleBraces = new SmartList<Integer>();
+        singleBraces = new SmartList<>();
       }
       if (i == 0 || s.charAt(i - 1) != '{') {
         singleBraces.add(i);

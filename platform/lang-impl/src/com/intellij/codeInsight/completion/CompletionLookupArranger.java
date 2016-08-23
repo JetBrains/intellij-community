@@ -64,7 +64,7 @@ public class CompletionLookupArranger extends LookupArranger {
   public static final Key<Boolean> PURE_RELEVANCE = Key.create("PURE_RELEVANCE");
   public static final Key<Integer> PREFIX_CHANGES = Key.create("PREFIX_CHANGES");
   private static final UISettings ourUISettings = UISettings.getInstance();
-  private final List<LookupElement> myFrozenItems = new ArrayList<LookupElement>();
+  private final List<LookupElement> myFrozenItems = new ArrayList<>();
   static {
     Disposer.register(ApplicationManager.getApplication(), new Disposable() {
       @Override
@@ -80,7 +80,7 @@ public class CompletionLookupArranger extends LookupArranger {
   private final CompletionParameters myParameters;
   private final CompletionProgressIndicator myProcess;
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
-  private final Map<CompletionSorterImpl, Classifier<LookupElement>> myClassifiers = new LinkedHashMap<CompletionSorterImpl, Classifier<LookupElement>>();
+  private final Map<CompletionSorterImpl, Classifier<LookupElement>> myClassifiers = new LinkedHashMap<>();
   private int myPrefixChanges;
 
   public CompletionLookupArranger(final CompletionParameters parameters, CompletionProgressIndicator process) {
@@ -113,8 +113,8 @@ public class CompletionLookupArranger extends LookupArranger {
       sorterNumber++;
       Collection<LookupElement> thisSorterItems = inputBySorter.get(sorter);
       for (LookupElement element : thisSorterItems) {
-        map.put(element, ContainerUtil.newArrayList(new Pair<String, Object>("frozen", myFrozenItems.contains(element)),
-                                                    new Pair<String, Object>("sorter", sorterNumber)));
+        map.put(element, ContainerUtil.newArrayList(new Pair<>("frozen", myFrozenItems.contains(element)),
+                                                    new Pair<>("sorter", sorterNumber)));
       }
       ProcessingContext context = createContext(false);
       Classifier<LookupElement> classifier = myClassifiers.get(sorter);
@@ -247,7 +247,7 @@ public class CompletionLookupArranger extends LookupArranger {
 
     addDummyItems(items.size() - listModel.size(), listModel);
 
-    return new Pair<List<LookupElement>, Integer>(listModel, toSelect);
+    return new Pair<>(listModel, toSelect);
   }
 
   private static void addDummyItems(int count, List<LookupElement> listModel) {
@@ -263,7 +263,7 @@ public class CompletionLookupArranger extends LookupArranger {
                                                    @Nullable LookupElement relevantSelection) {
     Iterator<LookupElement> byRelevance = sortByRelevance(inputBySorter).iterator();
 
-    final LinkedHashSet<LookupElement> model = new LinkedHashSet<LookupElement>();
+    final LinkedHashSet<LookupElement> model = new LinkedHashSet<>();
 
     addPrefixItems(model);
     addFrozenItems(items, model);
@@ -276,7 +276,7 @@ public class CompletionLookupArranger extends LookupArranger {
     ensureItemAdded(items, model, byRelevance, relevantSelection);
     ensureEverythingVisibleAdded(lookup, model, byRelevance);
 
-    return new ArrayList<LookupElement>(model);
+    return new ArrayList<>(model);
   }
 
   private static void ensureEverythingVisibleAdded(LookupImpl lookup, final LinkedHashSet<LookupElement> model, Iterator<LookupElement> byRelevance) {

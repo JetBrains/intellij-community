@@ -30,17 +30,17 @@ public class GraphGeneratorTest extends TestCase {
 
   public void testEmptyGraph() {
     final TestNode node = new TestNode("A");
-    final GraphGenerator<TestNode> graphGenerator = new GraphGenerator<TestNode>(new GraphGenerator.SemiGraph<TestNode>() {
-        @Override
-        public Collection<TestNode> getNodes() {
-          return Arrays.asList(new TestNode[]{node});
-        }
+    final GraphGenerator<TestNode> graphGenerator = new GraphGenerator<>(new GraphGenerator.SemiGraph<TestNode>() {
+      @Override
+      public Collection<TestNode> getNodes() {
+        return Arrays.asList(new TestNode[]{node});
+      }
 
-        @Override
-        public Iterator<TestNode> getIn(TestNode n) {
-          return EmptyIterator.getInstance();
-        }
-      });
+      @Override
+      public Iterator<TestNode> getIn(TestNode n) {
+        return EmptyIterator.getInstance();
+      }
+    });
 
     assertFalse(graphGenerator.getOut(node).hasNext());
   }
@@ -54,7 +54,7 @@ public class GraphGeneratorTest extends TestCase {
     final TestNode[] outA = inA;
     final TestNode[] outB = inB;
 
-    final GraphGenerator<TestNode> graph = new GraphGenerator<TestNode>(new GraphGenerator.SemiGraph<TestNode>() {
+    final GraphGenerator<TestNode> graph = new GraphGenerator<>(new GraphGenerator.SemiGraph<TestNode>() {
       @Override
       public Collection<TestNode> getNodes() {
         return Arrays.asList(nodes);

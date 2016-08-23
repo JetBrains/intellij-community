@@ -48,7 +48,7 @@ public class MultipleDiffRequestPresentable implements DiffRequestPresentable {
   @Override
   public MyResult step(DiffChainContext context) {
     final ChangeForDiffConvertor convertor = new ChangeForDiffConvertor(myProject, false);
-    final List<Pair<String,DiffRequestPresentable>> list = new ArrayList<Pair<String,DiffRequestPresentable>>();
+    final List<Pair<String,DiffRequestPresentable>> list = new ArrayList<>();
     final DiffRequestPresentable requestPresentable = convertor.convert(myChange, false);
     if (requestPresentable != null) {
       list.add(Pair.create("", requestPresentable));

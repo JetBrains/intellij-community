@@ -79,7 +79,7 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
     myHighlightedText.getEnding().addText(myTarget.getDisplayName(), nameAttributes);
 
     AntConfigurationBase antConfiguration = AntConfigurationBase.getInstance(myProject);
-    final ArrayList<String> addedNames = new ArrayList<String>(4);
+    final ArrayList<String> addedNames = new ArrayList<>(4);
     for (final ExecutionEvent event : antConfiguration.getEventsForTarget(myTarget)) {
       final String presentableName;
       if ((event instanceof ExecuteCompositeTargetEvent)) {

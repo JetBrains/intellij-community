@@ -71,7 +71,7 @@ public class SpockUnrollReferenceProvider extends PsiReferenceProvider {
 
     String text = rangeInElement.substring(element.getText());
 
-    final List<SpockVariableReference> references = new ArrayList<SpockVariableReference>();
+    final List<SpockVariableReference> references = new ArrayList<>();
 
     Matcher matcher = PATTERN.matcher(text);
     while (matcher.find()) {

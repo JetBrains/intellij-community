@@ -15,38 +15,43 @@
  */
 package com.intellij.codeInspection.unused;
 
-import com.intellij.codeInspection.LocalInspectionToolSession;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInspection.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.*;
+import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorInspection;
+import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorProblemDescriptor;
 import com.intellij.lang.properties.findUsages.PropertySearcher;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * @author cdr
  */
-public class UnusedPropertyInspection extends PropertySuppressableInspectionBase {
+public class UnusedPropertyInspection extends PropertySuppressableInspectionBase implements ResourceBundleEditorInspection {
+  private final static Logger LOG = Logger.getInstance(UnusedPropertyInspection.class);
+
   @Override
   @NotNull
   public String getDisplayName() {
@@ -92,56 +97,145 @@ public class UnusedPropertyInspection extends PropertySuppressableInspectionBase
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     if (module == null) return super.buildVisitor(holder, isOnTheFly, session);
 
-    final GlobalSearchScope ownUseScope = GlobalSearchScope.moduleWithDependentsScope(module);
-
-    Object[] extensions = Extensions.getExtensions("com.intellij.referencesSearch");
-    final PropertySearcher searcher =
-      (PropertySearcher)ContainerUtil.find(extensions, new FilteringIterator.InstanceOf<PropertySearcher>(PropertySearcher.class));
-    final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(file.getProject());
+    final UnusedPropertiesSearchHelper helper = new UnusedPropertiesSearchHelper(module);
     return new PsiElementVisitor() {
       @Override
       public void visitElement(PsiElement element) {
         if (!(element instanceof Property)) return;
         Property property = (Property)element;
 
-        final ProgressIndicator original = ProgressManager.getInstance().getProgressIndicator();
-        if (original != null) {
-          if (original.isCanceled()) return;
-          original.setText(PropertiesBundle.message("searching.for.property.key.progress.text", property.getUnescapedKey()));
-        }
-
-        if (ImplicitPropertyUsageProvider.isImplicitlyUsed(property)) return;
-
-        String name = property.getName();
-        if (name == null) return;
-        if (searcher != null) {
-          name = searcher.getKeyToSearch(name, element.getProject());
-          if (name == null) return;
-        }
-
-        if (mayHaveUsages(property, original, name, ownUseScope, isOnTheFly)) return;
-
-        final GlobalSearchScope widerScope = getWidestUseScope(property.getKey(), element.getProject(), module);
-        if (widerScope != null && mayHaveUsages(property, original, name, widerScope, isOnTheFly)) return;
+        if (isPropertyUsed(property, helper, isOnTheFly)) return;
 
         final ASTNode propertyNode = property.getNode();
         assert propertyNode != null;
 
         ASTNode[] nodes = propertyNode.getChildren(null);
         PsiElement key = nodes.length == 0 ? property : nodes[0].getPsi();
-        String description = PropertiesBundle.message("unused.property.problem.descriptor.name");
-
         LocalQuickFix fix = PropertiesQuickFixFactory.getInstance().createRemovePropertyLocalFix();
-        holder.registerProblem(key, description, ProblemHighlightType.LIKE_UNUSED_SYMBOL, fix);
-      }
-
-      private boolean mayHaveUsages(Property property, ProgressIndicator original, String name, GlobalSearchScope searchScope, boolean onTheFly) {
-        PsiSearchHelper.SearchCostResult cheapEnough = searchHelper.isCheapEnoughToSearch(name, searchScope, file, original);
-        if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) return false;
-        if (onTheFly && cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return true;
-
-        return ReferencesSearch.search(property, searchScope, false).findFirst() != null;
+        holder.registerProblem(key, PropertiesBundle.message("unused.property.problem.descriptor.name"),
+                               ProblemHighlightType.LIKE_UNUSED_SYMBOL, fix);
       }
     };
+  }
+
+  @NotNull
+  @Override
+  public Function<IProperty[], ResourceBundleEditorProblemDescriptor[]> buildPropertyGroupVisitor(@NotNull ResourceBundle resourceBundle) {
+    final Module module = ModuleUtilCore.findModuleForPsiElement(resourceBundle.getDefaultPropertiesFile().getContainingFile());
+    if (module == null) return x -> null;
+    final UnusedPropertiesSearchHelper helper = new UnusedPropertiesSearchHelper(module);
+
+    return properties -> !isPropertyUsed((Property)properties[0], helper, true) ? new ResourceBundleEditorProblemDescriptor[]{
+      new ResourceBundleEditorProblemDescriptor(ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                                                PropertiesBundle.message("unused.property.problem.descriptor.name"),
+                                                new RemovePropertiesFromAllLocalesFix((Property)properties[0]))} : null;
+  }
+
+  private static boolean isPropertyUsed(@NotNull Property property, @NotNull UnusedPropertiesSearchHelper helper, boolean isOnTheFly) {
+    final ProgressIndicator original = ProgressManager.getInstance().getProgressIndicator();
+    if (original != null) {
+      if (original.isCanceled()) return true;
+      original.setText(PropertiesBundle.message("searching.for.property.key.progress.text", property.getUnescapedKey()));
+    }
+
+    if (ImplicitPropertyUsageProvider.isImplicitlyUsed(property)) return true;
+
+    String name = property.getName();
+    if (name == null) return true;
+    if (helper.getSearcher() != null) {
+      name = helper.getSearcher().getKeyToSearch(name, property.getProject());
+      if (name == null) return true;
+    }
+
+    if (mayHaveUsages(property, original, name, helper.getOwnUseScope(), helper, isOnTheFly)) return true;
+
+    final GlobalSearchScope widerScope = getWidestUseScope(property.getKey(), property.getProject(), helper.getModule());
+    if (widerScope != null && mayHaveUsages(property, original, name, widerScope, helper, isOnTheFly)) return true;
+    return false;
+  }
+
+  private static boolean mayHaveUsages(Property property,
+                                       ProgressIndicator original,
+                                       String name,
+                                       GlobalSearchScope searchScope,
+                                       @NotNull UnusedPropertiesSearchHelper helper,
+                                       boolean onTheFly) {
+    PsiSearchHelper.SearchCostResult cheapEnough = helper.getSearchHelper().isCheapEnoughToSearch(name, searchScope, null, original);
+    if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) return false;
+    if (onTheFly && cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return true;
+
+    return ReferencesSearch.search(property, searchScope, false).findFirst() != null;
+  }
+
+  private static class UnusedPropertiesSearchHelper {
+
+    private final GlobalSearchScope myOwnUseScope;
+    private final Module myModule;
+    private final PropertySearcher mySearcher;
+    private final PsiSearchHelper mySearchHelper;
+
+    public UnusedPropertiesSearchHelper(Module module) {
+      myOwnUseScope = GlobalSearchScope.moduleWithDependentsScope(module);
+      myModule = module;
+      mySearcher = (PropertySearcher)ContainerUtil.find(Extensions.getExtensions("com.intellij.referencesSearch"),
+                                                        new FilteringIterator.InstanceOf<PropertySearcher>(PropertySearcher.class));
+      mySearchHelper = PsiSearchHelper.SERVICE.getInstance(module.getProject());
+    }
+
+    public Module getModule() {
+      return myModule;
+    }
+
+    public GlobalSearchScope getOwnUseScope() {
+      return myOwnUseScope;
+    }
+
+    public PropertySearcher getSearcher() {
+      return mySearcher;
+    }
+
+    public PsiSearchHelper getSearchHelper() {
+      return mySearchHelper;
+    }
+  }
+
+  private static class RemovePropertiesFromAllLocalesFix implements QuickFix<ResourceBundleEditorProblemDescriptor> {
+    private final SmartPsiElementPointer<Property> myRepresentativePointer;
+
+    private RemovePropertiesFromAllLocalesFix(Property property) {
+      myRepresentativePointer = SmartPointerManager.getInstance(property.getProject()).createSmartPsiElementPointer(property);
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getName() {
+      return getFamilyName();
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return PropertiesBundle.message("remove.property.intention.text");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ResourceBundleEditorProblemDescriptor descriptor) {
+      final Property element = myRepresentativePointer.getElement();
+      if (element == null) return;
+      final String key = element.getKey();
+      if (key == null) return;
+      final PropertiesFile file = PropertiesImplUtil.getPropertiesFile(myRepresentativePointer.getContainingFile());
+      LOG.assertTrue(file != null);
+      file.getResourceBundle()
+        .getPropertiesFiles()
+        .stream()
+        .flatMap(f -> f.findPropertiesByKey(key).stream())
+        .filter(Objects::nonNull)
+        .map(IProperty::getPsiElement)
+        .filter(FileModificationService.getInstance()::preparePsiElementForWrite)
+        .forEach(PsiElement::delete);
+    }
   }
 }

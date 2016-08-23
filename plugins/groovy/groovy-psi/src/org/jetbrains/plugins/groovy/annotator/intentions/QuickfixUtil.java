@@ -88,7 +88,7 @@ public class QuickfixUtil {
   }
 
   public static List<ParamInfo> swapArgumentsAndTypes(String[] names, PsiType[] types) {
-    List<ParamInfo> result = new ArrayList<ParamInfo>();
+    List<ParamInfo> result = new ArrayList<>();
 
     if (names.length != types.length) return Collections.emptyList();
 
@@ -103,7 +103,7 @@ public class QuickfixUtil {
   }
 
   public static String[] getArgumentsTypes(List<ParamInfo> listOfPairs) {
-    final List<String> result = new ArrayList<String>();
+    final List<String> result = new ArrayList<>();
 
     if (listOfPairs == null) return ArrayUtil.EMPTY_STRING_ARRAY;
     for (ParamInfo listOfPair : listOfPairs) {
@@ -115,7 +115,7 @@ public class QuickfixUtil {
   }
 
   public static String[] getArgumentsNames(List<ParamInfo> listOfPairs) {
-    final ArrayList<String> result = new ArrayList<String>();
+    final ArrayList<String> result = new ArrayList<>();
     for (ParamInfo listOfPair : listOfPairs) {
       String name = listOfPair.name;
       result.add(name);
@@ -149,7 +149,7 @@ public class QuickfixUtil {
     settings.setName(referenceExpression.getReferenceName());
 
     if (PsiUtil.isCall(referenceExpression)) {
-      List<PsiType> unboxedTypes = new ArrayList<PsiType>();
+      List<PsiType> unboxedTypes = new ArrayList<>();
       for (PsiType type : PsiUtil.getArgumentTypes(referenceExpression, false)) {
         unboxedTypes.add(TypesUtil.unboxPrimitiveTypeWrapperAndEraseGenerics(type));
       }

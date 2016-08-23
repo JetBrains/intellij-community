@@ -120,8 +120,8 @@ public class LibraryDownloadSettings {
 
   @Nullable
   public NewLibraryEditor download(JComponent parent, @Nullable String rootPath) {
-    final List<DownloadableFileDescription> toDownload = new ArrayList<DownloadableFileDescription>(mySelectedDownloads);
-    Map<DownloadableFileDescription, OrderRootType> rootTypes = new HashMap<DownloadableFileDescription, OrderRootType>();
+    final List<DownloadableFileDescription> toDownload = new ArrayList<>(mySelectedDownloads);
+    Map<DownloadableFileDescription, OrderRootType> rootTypes = new HashMap<>();
     for (DownloadableLibraryFileDescription description : mySelectedDownloads) {
       final DownloadableFileDescription sources = description.getSourcesDescription();
       if (myDownloadSources && sources != null) {

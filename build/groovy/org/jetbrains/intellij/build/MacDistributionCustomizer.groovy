@@ -15,9 +15,12 @@
  */
 package org.jetbrains.intellij.build
 
+import groovy.transform.CompileStatic
+
 /**
  * @author nik
  */
+@CompileStatic
 abstract class MacDistributionCustomizer {
   /**
    * Path to icns file containing product icon bundle for Mac OS distribution
@@ -81,6 +84,11 @@ abstract class MacDistributionCustomizer {
    * Relative paths to files in Mac OS distribution which should take 'executable' permissions
    */
   List<String> extraExecutables = []
+
+  /**
+   * Relative paths to files in Mac OS distribution which should be signed
+   */
+  List<String> binariesToSign = []
 
   /**
    * An unique identifier string that specifies the app type of the bundle. The string should be in reverse DNS format using only the Roman alphabet in upper and lower case (A–Z, a–z), the dot (“.”), and the hyphen (“-”)

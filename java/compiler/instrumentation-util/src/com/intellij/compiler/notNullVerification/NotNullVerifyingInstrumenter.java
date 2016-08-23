@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
   private final AuxiliaryMethodGenerator myAuxGenerator;
 
   private NotNullVerifyingInstrumenter(final ClassVisitor classVisitor, ClassReader reader) {
-    super(Opcodes.ASM5, classVisitor);
+    super(Opcodes.API_VERSION, classVisitor);
     myMethodParamNames = getAllParameterNames(reader);
     myAuxGenerator = new AuxiliaryMethodGenerator(reader);
   }
@@ -64,7 +64,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
   private static Map<String, Map<Integer, String>> getAllParameterNames(ClassReader reader) {
     final Map<String, Map<Integer, String>> methodParamNames = new LinkedHashMap<String, Map<Integer, String>>();
 
-    reader.accept(new ClassVisitor(Opcodes.ASM5) {
+    reader.accept(new ClassVisitor(Opcodes.API_VERSION) {
       private String myClassName = null;
 
       public void visit(final int version, final int access, final String name, final String signature, final String superName, final String[] interfaces) {
@@ -124,21 +124,21 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
   @Override
   public MethodVisitor visitMethod(final int access, final String name, String desc, String signature, String[] exceptions) {
     if ((access & Opcodes.ACC_BRIDGE) != 0) {
-      return new FailSafeMethodVisitor(Opcodes.ASM5, super.visitMethod(access, name, desc, signature, exceptions));
+      return new FailSafeMethodVisitor(Opcodes.API_VERSION, super.visitMethod(access, name, desc, signature, exceptions));
     }
 
     final Type[] args = Type.getArgumentTypes(desc);
     final Type returnType = Type.getReturnType(desc);
     final MethodVisitor v = cv.visitMethod(access, name, desc, signature, exceptions);
     final Map<Integer, String> paramNames = myMethodParamNames.get(myClassName + '.' + name + desc);
-    return new FailSafeMethodVisitor(Opcodes.ASM5, v) {
+    return new FailSafeMethodVisitor(Opcodes.API_VERSION, v) {
       private final Map<Integer, NotNullState> myNotNullParams = new LinkedHashMap<Integer, NotNullState>();
       private int mySyntheticCount = 0;
       private NotNullState myMethodNotNull;
       private Label myStartGeneratedCodeLabel;
 
       private AnnotationVisitor collectNotNullArgs(AnnotationVisitor base, final NotNullState state) {
-        return new AnnotationVisitor(Opcodes.ASM5, base) {
+        return new AnnotationVisitor(Opcodes.API_VERSION, base) {
           @Override
           public void visit(String methodName, Object o) {
             if (ANNOTATION_DEFAULT_METHOD.equals(methodName) && !((String) o).isEmpty()) {

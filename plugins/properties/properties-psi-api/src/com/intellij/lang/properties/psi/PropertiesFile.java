@@ -71,7 +71,7 @@ public interface PropertiesFile {
    *
    * @param property to add. Typically you create the property via {@link PropertiesElementFactory}.
    * @return newly added property.
-   * It is this value you use to do actual PSI work, e.g. call {@link com.intellij.psi.PsiElement#delete()} to remove this property from the file.
+   * It is this value you use to do actual PSI work, e.g. call {@link PsiElement#delete()} to remove this property from the file.
    * @throws IncorrectOperationException
    * @deprecated
    * @see #addProperty(String, String)
@@ -81,10 +81,10 @@ public interface PropertiesFile {
   /**
    * Adds property to the the file after the specified property.
    * If anchor is null, property added to the beginning of the file.
-   * @param property to add. Typically you create the property via {@link com.intellij.lang.properties.psi.PropertiesElementFactory}.
+   * @param property to add. Typically you create the property via {@link PropertiesElementFactory}.
    * @param anchor property after which to add the new property
    * @return newly added property.
-   * It is this value you use to do actual PSI work, e.g. call {@link com.intellij.psi.PsiElement#delete()} to remove this property from the file.
+   * It is this value you use to do actual PSI work, e.g. call {@link PsiElement#delete()} to remove this property from the file.
    * @throws IncorrectOperationException
    */
   @NotNull PsiElement addPropertyAfter(@NotNull IProperty property, @Nullable IProperty anchor) throws IncorrectOperationException;

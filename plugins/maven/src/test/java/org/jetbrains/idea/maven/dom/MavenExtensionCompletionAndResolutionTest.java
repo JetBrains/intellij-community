@@ -78,7 +78,7 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
     }
     catch (Throwable t) {
       MavenProjectIndicesManager instance = MavenProjectIndicesManager.getInstance(myProject);
-      System.out.println("GetArtifacts: " + new HashSet<String>(instance.getArtifactIds("org.apache.maven.plugins")));
+      System.out.println("GetArtifacts: " + new HashSet<>(instance.getArtifactIds("org.apache.maven.plugins")));
       System.out.println("Indexes: " + instance.getIndices());
 
       for (MavenIndex index : instance.getIndices()) {

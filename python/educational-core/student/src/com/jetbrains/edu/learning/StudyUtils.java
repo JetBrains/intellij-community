@@ -21,6 +21,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -30,12 +31,13 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -66,7 +68,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -192,6 +196,8 @@ public class StudyUtils {
 
   @Nullable
   public static StudyToolWindow getStudyToolWindow(@NotNull final Project project) {
+    if (project.isDisposed()) return null;
+    
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
     if (toolWindow != null) {
       Content[] contents = toolWindow.getContentManager().getContents();
@@ -342,13 +348,7 @@ public class StudyUtils {
   }
 
   public static void drawAllWindows(Editor editor, TaskFile taskFile) {
-    drawAllWindows(editor, taskFile, true);
-  }
-
-  public static void drawAllWindows(Editor editor, TaskFile taskFile, boolean removePrevHighlighters) {
-    if (removePrevHighlighters) {
-      editor.getMarkupModel().removeAllHighlighters();
-    }
+    editor.getMarkupModel().removeAllHighlighters();
     final Project project = editor.getProject();
     if (project == null) return;
     final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
@@ -480,38 +480,35 @@ public class StudyUtils {
     if (task == null) {
       return null;
     }
+    String text = task.getText();
+    final Lesson lesson = task.getLesson();
+    if (lesson == null) return null;
+    final Course course = lesson.getCourse();
+    if (course != null && course.isAdaptive()) {
+      text += "\n\n<b>Note</b>: Use standard input to obtain input for the task.";
+    }
 
-    String text = getFromTask(task);
     if (text != null && !text.isEmpty()) {
-      return text;
+      return wrapTextToDisplayLatex(text);
     }
     if (taskDirectory != null) {
-      String fileNameWithoutExtension  = FileUtil.getNameWithoutExtension(EduNames.TASK_HTML);
-      int activeStepIndex = task.getActiveStepIndex();
-      if (activeStepIndex != -1) {
-        fileNameWithoutExtension += EduNames.STEP_MARKER + activeStepIndex;
-      }
-      final String prefix = String.format(ourPrefix, EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize());
-      final String taskTextFileHtml = getTaskTextFromTaskName(taskDirectory, fileNameWithoutExtension + "." + FileUtilRt.getExtension(EduNames.TASK_HTML));
-      if (taskTextFileHtml != null) return prefix + taskTextFileHtml + ourPostfix;
+      final String taskTextFileHtml = getTaskTextFromTaskName(taskDirectory, EduNames.TASK_HTML);
+      if (taskTextFileHtml != null) return wrapTextToDisplayLatex(taskTextFileHtml);
       
-      final String taskTextFileMd = getTaskTextFromTaskName(taskDirectory, fileNameWithoutExtension + "." + FileUtilRt.getExtension(EduNames.TASK_MD));
-      if (taskTextFileMd != null) return prefix + convertToHtml(taskTextFileMd) + ourPostfix;      
+      final String taskTextFileMd = getTaskTextFromTaskName(taskDirectory, EduNames.TASK_MD);
+      if (taskTextFileMd != null) return wrapTextToDisplayLatex(convertToHtml(taskTextFileMd));      
     }
     return null;
   }
 
-  @Nullable
-  private static String getFromTask(Task task) {
-    int index = task.getActiveStepIndex();
-    if (index == -1) {
-      return task.getText();
-    }
-    return task.getAdditionalSteps().get(index).getText();
+  public static String wrapTextToDisplayLatex(String taskTextFileHtml) {
+    final String prefix = String.format(ourPrefix, EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize());
+    return prefix + taskTextFileHtml + ourPostfix;
   }
 
   @Nullable
   private static String getTaskTextFromTaskName(@NotNull VirtualFile taskDirectory, @NotNull String taskTextFilename) {
+    taskDirectory.refresh(false, true);
     VirtualFile taskTextFile = taskDirectory.findChild(taskTextFilename);
     if (taskTextFile == null) {
       VirtualFile srcDir = taskDirectory.findChild(EduNames.SRC);
@@ -520,12 +517,7 @@ public class StudyUtils {
       }
     }
     if (taskTextFile != null) {
-      try {
-        return FileUtil.loadTextAndClose(taskTextFile.getInputStream());
-      }
-      catch (IOException e) {
-        LOG.info(e);
-      }
+      return String.valueOf(LoadTextUtil.loadText(taskTextFile));
     }
     return null;
   }
@@ -704,40 +696,17 @@ public class StudyUtils {
   }
   
   public static boolean isTaskDescriptionFile(@NotNull final String fileName) {
-    if (EduNames.TASK_HTML.equals(fileName) || EduNames.TASK_MD.equals(fileName)) {
-      return true;
-    }
-    return fileName.contains(EduNames.TASK) && fileName.contains(EduNames.STEP_MARKER);
+    return EduNames.TASK_HTML.equals(fileName) || EduNames.TASK_MD.equals(fileName);
   }
   
   @Nullable
-  public static VirtualFile findTaskDescriptionVirtualFile(@NotNull Project project, @NotNull VirtualFile taskDir) {
-    Task task = getTask(project, taskDir.getName().contains(EduNames.TASK) ? taskDir: taskDir.getParent());
-    if (task == null) {
-      return null;
-    }
-    String fileNameWithoutExtension  = FileUtil.getNameWithoutExtension(EduNames.TASK_HTML);
-    int activeStepIndex = task.getActiveStepIndex();
-    if (activeStepIndex != -1) {
-      fileNameWithoutExtension += EduNames.STEP_MARKER + activeStepIndex;
-    }
-    return ObjectUtils.chooseNotNull(taskDir.findChild(fileNameWithoutExtension + "." + FileUtilRt.getExtension(EduNames.TASK_HTML)),
-                                     taskDir.findChild(fileNameWithoutExtension + "." + FileUtilRt.getExtension(EduNames.TASK_MD)));
+  public static VirtualFile findTaskDescriptionVirtualFile(@NotNull VirtualFile taskDir) {
+    return ObjectUtils.chooseNotNull(taskDir.findChild(EduNames.TASK_HTML), taskDir.findChild(EduNames.TASK_MD));
   }
   
   @NotNull
   public static String getTaskDescriptionFileName(final boolean useHtml) {
     return useHtml ? EduNames.TASK_HTML : EduNames.TASK_MD;    
-  }
-  
-  @Nullable
-  public static File createTaskDescriptionFile(@NotNull final File parent) {
-    if(new File(parent, EduNames.TASK_HTML).exists()) {
-      return new File(parent, EduNames.TASK_HTML);
-    }
-    else {
-      return new File(parent, EduNames.TASK_MD);
-    }
   }
 
   @Nullable
@@ -759,33 +728,33 @@ public class StudyUtils {
     showCheckPopUp(project, balloon);
   }
 
-  public static void drawPlaceholdersFromOtherSteps(Editor editor, TaskFile taskFile, Task task) {
-    for (int i = -1; i < task.getAdditionalSteps().size(); i++) {
-      if (i == task.getActiveStepIndex()) {
-        continue;
-      }
-      List<AnswerPlaceholder> placeholders = getPlaceholders(i, task, taskFile);
-      for (AnswerPlaceholder placeholder : placeholders) {
-        EduAnswerPlaceholderPainter.drawAnswerPlaceholderFromPrevStep(editor, placeholder);
+  public static void selectFirstAnswerPlaceholder(@Nullable final StudyEditor studyEditor, @NotNull final Project project) {
+    if (studyEditor == null) return;
+    final Editor editor = studyEditor.getEditor();
+    IdeFocusManager.getInstance(project).requestFocus(editor.getContentComponent(), true);
+    final List<AnswerPlaceholder> placeholders = studyEditor.getTaskFile().getAnswerPlaceholders();
+    if (placeholders.isEmpty()) return;
+    final AnswerPlaceholder placeholder = placeholders.get(0);
+    int startOffset = placeholder.getOffset();
+    editor.getSelectionModel().setSelection(startOffset, startOffset + placeholder.getRealLength());
+  }
+
+  public static void registerStudyToolWindow(@Nullable final Course course, Project project) {
+    if (course != null && "PyCharm".equals(course.getCourseType())) {
+      final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+      registerToolWindows(toolWindowManager, project);
+      final ToolWindow studyToolWindow = toolWindowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
+      if (studyToolWindow != null) {
+        studyToolWindow.show(null);
+        initToolWindows(project);
       }
     }
   }
 
-  private static List<AnswerPlaceholder> getPlaceholders(int index, Task task, TaskFile taskFile) {
-    TaskFile prevTaskFile = index == -1 ? taskFile.getTask().getTaskFile(taskFile.name)
-                                        : task.getAdditionalSteps().get(index).getTaskFiles().get(taskFile.name);
-    if (prevTaskFile == null) {
-      return Collections.emptyList();
+  private static void registerToolWindows(@NotNull final ToolWindowManager toolWindowManager, Project project) {
+    final ToolWindow toolWindow = toolWindowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
+    if (toolWindow == null) {
+      toolWindowManager.registerToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW, true, ToolWindowAnchor.RIGHT, project, true);
     }
-    return prevTaskFile.getAnswerPlaceholders();
-  }
-
-
-  public static Map<String, TaskFile> getTaskFiles(@NotNull Task task) {
-    int activeStepIndex = task.getActiveStepIndex();
-    if (activeStepIndex == -1) {
-      return task.getTaskFiles();
-    }
-    return task.getAdditionalSteps().get(activeStepIndex).getTaskFiles();
   }
 }

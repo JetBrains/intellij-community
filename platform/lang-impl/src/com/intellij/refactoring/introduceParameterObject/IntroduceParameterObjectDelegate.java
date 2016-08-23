@@ -40,7 +40,8 @@ import java.util.List;
 public abstract class IntroduceParameterObjectDelegate<M extends PsiNamedElement, P extends ParameterInfo, C extends IntroduceParameterObjectClassDescriptor<M, P>> {
 
 
-  public static final LanguageExtension<IntroduceParameterObjectDelegate> EP_NAME = new LanguageExtension<IntroduceParameterObjectDelegate>("com.intellij.refactoring.introduceParameterObject");
+  public static final LanguageExtension<IntroduceParameterObjectDelegate> EP_NAME =
+    new LanguageExtension<>("com.intellij.refactoring.introduceParameterObject");
 
   /**
    * Find delegate by element language. Delegate must be registered as language extension.

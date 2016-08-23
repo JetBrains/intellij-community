@@ -73,7 +73,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @NotNull
   private static List<GroovyResolveResult> filterMembersFromSuperClasses(GroovyResolveResult[] results) {
-    List<GroovyResolveResult> filtered = new ArrayList<GroovyResolveResult>();
+    List<GroovyResolveResult> filtered = new ArrayList<>();
     for (GroovyResolveResult result : results) {
       final PsiElement element = result.getElement();
       if (element instanceof PsiMember) {

@@ -53,7 +53,7 @@ public class JavaFxCommonNames {
 
   @NonNls public static final String PROPERTY_METHOD_SUFFIX = "Property";
 
-  public static final Map<String, PsiType> ourWritableMap = new HashMap<String, PsiType>();
+  public static final Map<String, PsiType> ourWritableMap = new HashMap<>();
   static {
     ourWritableMap.put("javafx.beans.value.WritableBooleanValue", PsiType.BOOLEAN);
     ourWritableMap.put("javafx.beans.value.WritableIntegerValue", PsiType.INT);
@@ -62,7 +62,7 @@ public class JavaFxCommonNames {
     ourWritableMap.put("javafx.beans.value.WritableDoubleValue", PsiType.DOUBLE);
   }
 
-  public static final Map<String, PsiType> ourReadOnlyMap = new HashMap<String, PsiType>();
+  public static final Map<String, PsiType> ourReadOnlyMap = new HashMap<>();
   static {
     ourReadOnlyMap.put("javafx.beans.property.ReadOnlyBooleanProperty", PsiType.BOOLEAN);
     ourReadOnlyMap.put("javafx.beans.property.ReadOnlyIntegerProperty", PsiType.INT);

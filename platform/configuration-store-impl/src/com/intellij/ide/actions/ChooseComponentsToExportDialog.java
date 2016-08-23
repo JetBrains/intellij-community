@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.FieldPanel;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -96,7 +95,7 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
 
     String exportPath = PropertiesComponent.getInstance().getValue("export.settings.path", DEFAULT_PATH);
     myPathPanel.setText(exportPath);
-    myPathPanel.setChangeListener(() -> updateControls());
+    myPathPanel.setChangeListener(this::updateControls);
     updateControls();
 
     setTitle(title);

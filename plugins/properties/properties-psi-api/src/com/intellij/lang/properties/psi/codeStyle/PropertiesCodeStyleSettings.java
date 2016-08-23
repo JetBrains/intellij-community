@@ -37,8 +37,9 @@ public class PropertiesCodeStyleSettings extends CustomCodeStyleSettings {
     return CodeStyleSettingsManager.getSettings(project).getCustomSettings(PropertiesCodeStyleSettings.class);
   }
 
-  public boolean SPACES_AROUND_KEY_VALUE_DELIMITER = false;
-  public int KEY_VALUE_DELIMITER_CODE = 0;
+  public boolean SPACES_AROUND_KEY_VALUE_DELIMITER;
+  public boolean KEEP_BLANK_LINES;
+  public int KEY_VALUE_DELIMITER_CODE;
 
   public char getDelimiter() {
     return DELIMITERS[KEY_VALUE_DELIMITER_CODE];

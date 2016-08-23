@@ -79,7 +79,7 @@ public class CompilerPathsEx extends CompilerPaths {
   }
 
   public static String[] getOutputPaths(Module[] modules) {
-    final Set<String> outputPaths = new OrderedSet<String>();
+    final Set<String> outputPaths = new OrderedSet<>();
     for (Module module : modules) {
       final CompilerModuleExtension compilerModuleExtension = !module.isDisposed()? CompilerModuleExtension.getInstance(module) : null;
       if (compilerModuleExtension == null) {

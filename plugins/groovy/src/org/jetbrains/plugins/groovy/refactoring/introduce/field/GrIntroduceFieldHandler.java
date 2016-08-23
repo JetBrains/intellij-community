@@ -115,7 +115,7 @@ public class GrIntroduceFieldHandler extends GrIntroduceFieldHandlerBase<GrIntro
     final PsiElement[] occurrences = super.findOccurrences(expression, scope);
     if (shouldBeStatic(expression, scope)) return occurrences;
 
-    List<PsiElement> filtered = new ArrayList<PsiElement>();
+    List<PsiElement> filtered = new ArrayList<>();
     for (PsiElement occurrence : occurrences) {
       if (!shouldBeStatic(occurrence, scope)) {
         filtered.add(occurrence);

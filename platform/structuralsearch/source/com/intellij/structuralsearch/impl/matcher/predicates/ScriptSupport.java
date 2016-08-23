@@ -64,7 +64,7 @@ public class ScriptSupport {
         list.add(match);
       }
       else if (value instanceof PsiElement){
-        final List<PsiElement> list = new ArrayList<PsiElement>();
+        final List<PsiElement> list = new ArrayList<>();
         list.add((PsiElement)value);
         list.add(match);
         out.put(name, list);
@@ -83,7 +83,7 @@ public class ScriptSupport {
 
   public String evaluate(MatchResult result, PsiElement context) {
     try {
-      final HashMap<String, Object> variableMap = new HashMap<String, Object>();
+      final HashMap<String, Object> variableMap = new HashMap<>();
       variableMap.put(ScriptLog.SCRIPT_LOG_VAR_NAME, myScriptLog);
       if (result != null) {
         buildVariableMap(result, variableMap);

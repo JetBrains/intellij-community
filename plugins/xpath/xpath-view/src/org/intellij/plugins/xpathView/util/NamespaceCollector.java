@@ -49,9 +49,9 @@ public class NamespaceCollector extends XmlRecursiveElementVisitor {
         }
     }
 
-    private final Set<Namespace> namespaces = new LinkedHashSet<Namespace>();
-    private final Set<QName> elements = new HashSet<QName>(64);
-    private final Set<QName> attributes = new HashSet<QName>(64);
+    private final Set<Namespace> namespaces = new LinkedHashSet<>();
+    private final Set<QName> elements = new HashSet<>(64);
+    private final Set<QName> attributes = new HashSet<>(64);
 
     private NamespaceCollector() {
 
@@ -149,7 +149,7 @@ public class NamespaceCollector extends XmlRecursiveElementVisitor {
     }
 
     public static Map<String, String> convert(final Collection<Namespace> namespaces) {
-        final Map<String, String> map = new HashMap<String, String>();
+        final Map<String, String> map = new HashMap<>();
         for (Namespace namespace : namespaces) {
             if (!map.containsKey(namespace.getPrefix())) {
                 map.put(namespace.getPrefix(), namespace.getUri());

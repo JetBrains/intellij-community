@@ -57,7 +57,7 @@ import java.util.*;
  */
 public class ConversionContextImpl implements ConversionContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.conversion.impl.ConversionContextImpl");
-  private final Map<File, SettingsXmlFile> mySettingsFiles = new HashMap<File, SettingsXmlFile>();
+  private final Map<File, SettingsXmlFile> mySettingsFiles = new HashMap<>();
   private final StorageScheme myStorageScheme;
   private final File myProjectBaseDir;
   private final File myProjectFile;
@@ -65,9 +65,9 @@ public class ConversionContextImpl implements ConversionContext {
   private final File[] myModuleFiles;
   private ProjectSettingsImpl myProjectSettings;
   private WorkspaceSettingsImpl myWorkspaceSettings;
-  private final List<File> myNonExistingModuleFiles = new ArrayList<File>();
-  private final Map<File, ModuleSettingsImpl> myFile2ModuleSettings = new HashMap<File, ModuleSettingsImpl>();
-  private final Map<String, ModuleSettingsImpl> myName2ModuleSettings = new HashMap<String, ModuleSettingsImpl>();
+  private final List<File> myNonExistingModuleFiles = new ArrayList<>();
+  private final Map<File, ModuleSettingsImpl> myFile2ModuleSettings = new HashMap<>();
+  private final Map<String, ModuleSettingsImpl> myName2ModuleSettings = new HashMap<>();
   private RunManagerSettingsImpl myRunManagerSettings;
   private File mySettingsBaseDir;
   private ComponentManagerSettings myCompilerManagerSettings;
@@ -101,7 +101,7 @@ public class ConversionContextImpl implements ConversionContext {
   }
 
   public Set<File> getAllProjectFiles() {
-    final HashSet<File> files = new HashSet<File>(Arrays.asList(myModuleFiles));
+    final HashSet<File> files = new HashSet<>(Arrays.asList(myModuleFiles));
     if (myStorageScheme == StorageScheme.DEFAULT) {
       files.add(myProjectFile);
       files.add(myWorkspaceFile);
@@ -150,7 +150,7 @@ public class ConversionContextImpl implements ConversionContext {
 
     final ExpandMacroToPathMap macros = createExpandMacroMap();
 
-    List<File> files = new ArrayList<File>();
+    List<File> files = new ArrayList<>();
     for (Element module : JDOMUtil.getChildren(modules, ModuleManagerImpl.ELEMENT_MODULE)) {
       String filePath = module.getAttributeValue(ModuleManagerImpl.ATTRIBUTE_FILEPATH);
       filePath = macros.substitute(filePath, true);
@@ -223,7 +223,7 @@ public class ConversionContextImpl implements ConversionContext {
 
   @NotNull
   public List<File> getClassRoots(Element libraryElement, @Nullable ModuleSettingsImpl moduleSettings) {
-    List<File> files = new ArrayList<File>();
+    List<File> files = new ArrayList<>();
     //todo[nik] support jar directories
     final Element classesChild = libraryElement.getChild("CLASSES");
     if (classesChild != null) {
@@ -407,7 +407,7 @@ public class ConversionContextImpl implements ConversionContext {
   }
 
   public void saveFiles(Collection<File> files, List<ConversionRunner> usedRunners) throws IOException {
-    Set<String> performedConversions = new HashSet<String>();
+    Set<String> performedConversions = new HashSet<>();
     for (ConversionRunner runner : usedRunners) {
       final ConverterProvider provider = runner.getProvider();
       if (!provider.canDetermineIfConversionAlreadyPerformedByProjectFiles()) {
@@ -417,7 +417,7 @@ public class ConversionContextImpl implements ConversionContext {
     if (!performedConversions.isEmpty()) {
       performedConversions.addAll(myPerformedConversionIds);
       final ProjectFileVersionState state = new ProjectFileVersionState();
-      final List<String> performedConversionsList = new ArrayList<String>(performedConversions);
+      final List<String> performedConversionsList = new ArrayList<>(performedConversions);
       Collections.sort(performedConversionsList, String.CASE_INSENSITIVE_ORDER);
       state.setPerformedConversionIds(performedConversionsList);
       final ComponentManagerSettings settings = getProjectFileVersionSettings();
@@ -441,7 +441,7 @@ public class ConversionContextImpl implements ConversionContext {
     if (component != null) {
       final Element componentElement = component.getComponentElement(ProjectFileVersionImpl.COMPONENT_NAME);
       if (componentElement != null) {
-        Set<String> performedConversionIds = new HashSet<String>();
+        Set<String> performedConversionIds = new HashSet<>();
         final ProjectFileVersionState state = XmlSerializer.deserialize(componentElement, ProjectFileVersionState.class);
         if (state != null) {
           performedConversionIds.addAll(state.getPerformedConversionIds());

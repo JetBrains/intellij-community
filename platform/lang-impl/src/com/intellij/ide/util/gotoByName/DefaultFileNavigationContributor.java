@@ -41,7 +41,7 @@ public class DefaultFileNavigationContributor implements ChooseByNameContributor
   @NotNull
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     if (FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping) {
-      final THashSet<String> names = new THashSet<String>(1000);
+      final THashSet<String> names = new THashSet<>(1000);
       IdFilter filter = IdFilter.getProjectIdFilter(project, includeNonProjectItems);
       processNames(s -> {
         names.add(s);

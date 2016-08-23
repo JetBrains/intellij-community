@@ -37,7 +37,7 @@ public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
   @NonNls private static final String ELEMENT_NAME = "deploymentDescriptor";
   @NonNls private static final String ID_ATTRIBUTE = "name";
   @NonNls private static final String URL_ATTRIBUTE = "url";
-  private final MultiValuesMap<ConfigFileMetaData, ConfigFileInfo> myConfigFiles = new MultiValuesMap<ConfigFileMetaData, ConfigFileInfo>();
+  private final MultiValuesMap<ConfigFileMetaData, ConfigFileInfo> myConfigFiles = new MultiValuesMap<>();
   private @Nullable ConfigFileContainerImpl myContainer;
   private final ConfigFileMetaDataProvider myMetaDataProvider;
 
@@ -130,9 +130,9 @@ public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(final Element element) throws WriteExternalException {
-    final TreeSet<ConfigFileInfo> sortedConfigFiles = new TreeSet<ConfigFileInfo>((o1, o2) -> {
+    final TreeSet<ConfigFileInfo> sortedConfigFiles = new TreeSet<>((o1, o2) -> {
       final int id = Comparing.compare(o1.getMetaData().getId(), o2.getMetaData().getId());
-      return id != 0? id : Comparing.compare(o1.getUrl(), o2.getUrl());
+      return id != 0 ? id : Comparing.compare(o1.getUrl(), o2.getUrl());
     });
     sortedConfigFiles.addAll(myConfigFiles.values());
     for (ConfigFileInfo configuration : sortedConfigFiles) {

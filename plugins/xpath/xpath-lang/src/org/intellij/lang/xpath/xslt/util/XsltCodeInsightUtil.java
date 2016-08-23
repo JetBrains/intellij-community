@@ -109,9 +109,9 @@ public class XsltCodeInsightUtil {
 
     @Nullable
     public static XmlTag findLastParam(XmlTag templateTag) {
-        final ArrayList<XmlTag> list = new ArrayList<XmlTag>();
+        final ArrayList<XmlTag> list = new ArrayList<>();
         final PsiElementProcessor.CollectFilteredElements<XmlTag> processor =
-                new PsiElementProcessor.CollectFilteredElements<XmlTag>(XSLT_PARAM_FILTER, list);
+          new PsiElementProcessor.CollectFilteredElements<>(XSLT_PARAM_FILTER, list);
         templateTag.processElements(processor, templateTag);
 
         return list.size() > 0 ? list.get(list.size() - 1) : null;
@@ -166,7 +166,7 @@ public class XsltCodeInsightUtil {
 
     public static XmlTag findVariableInsertionPoint(final XmlTag currentUsageTag, PsiElement usageBlock, final String referenceName, XmlTag... moreUsages) {
       // sort tags by document order
-      final Set<XmlTag> usages = new TreeSet<XmlTag>(POSITION_COMPARATOR);
+      final Set<XmlTag> usages = new TreeSet<>(POSITION_COMPARATOR);
       usages.add(currentUsageTag);
       ContainerUtil.addAll(usages, moreUsages);
 

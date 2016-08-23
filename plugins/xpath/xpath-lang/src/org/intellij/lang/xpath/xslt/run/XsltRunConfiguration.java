@@ -76,7 +76,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         FROM_MODULE, JDK
     }
 
-    private List<Pair<String, String>> myParameters = new ArrayList<Pair<String, String>>();
+    private List<Pair<String, String>> myParameters = new ArrayList<>();
     @Nullable private VirtualFilePointer myXsltFile = null;
     @Nullable private VirtualFilePointer myXmlInputFile = null;
     @NotNull private OutputType myOutputType = OutputType.CONSOLE;
@@ -169,7 +169,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
     @Override
     public final RunConfiguration clone() {
         final XsltRunConfiguration configuration = (XsltRunConfiguration)super.clone();
-        configuration.myParameters = new ArrayList<Pair<String, String>>(myParameters);
+        configuration.myParameters = new ArrayList<>(myParameters);
         if (myXsltFile != null) configuration.myXsltFile = VirtualFilePointerManager.getInstance().duplicate(myXsltFile, getProject(), null);
         if (myXmlInputFile != null) configuration.myXmlInputFile = VirtualFilePointerManager.getInstance().duplicate(myXmlInputFile, getProject(), null);
         return configuration;

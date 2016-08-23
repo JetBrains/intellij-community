@@ -37,7 +37,7 @@ public class CustomFileHighlighter extends SyntaxHighlighterBase {
   }
 
   static {
-    ourKeys = new HashMap<IElementType, TextAttributesKey>();
+    ourKeys = new HashMap<>();
 
     ourKeys.put(CustomHighlighterTokenType.KEYWORD_1, CustomHighlighterColors.CUSTOM_KEYWORD1_ATTRIBUTES);
     ourKeys.put(CustomHighlighterTokenType.KEYWORD_2, CustomHighlighterColors.CUSTOM_KEYWORD2_ATTRIBUTES);

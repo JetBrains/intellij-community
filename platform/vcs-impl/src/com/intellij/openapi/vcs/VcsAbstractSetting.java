@@ -23,7 +23,7 @@ import java.util.List;
 
 public class VcsAbstractSetting {
   protected final String myDisplayName;
-  private final Collection<AbstractVcs> myApplicable = new HashSet<AbstractVcs>();
+  private final Collection<AbstractVcs> myApplicable = new HashSet<>();
 
   protected VcsAbstractSetting(final String displayName) {
     myDisplayName = displayName;
@@ -47,6 +47,6 @@ public class VcsAbstractSetting {
   }
 
   public List<AbstractVcs> getApplicableVcses() {
-    return new ArrayList<AbstractVcs>(myApplicable);
+    return new ArrayList<>(myApplicable);
   }
 }

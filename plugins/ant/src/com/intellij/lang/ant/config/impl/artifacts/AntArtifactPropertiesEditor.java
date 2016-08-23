@@ -125,7 +125,7 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
               return;
             }
             BuildFileProperty item = new BuildFileProperty();
-            ArrayList<BuildFileProperty> items = new ArrayList<BuildFileProperty>(model.getItems());
+            ArrayList<BuildFileProperty> items = new ArrayList<>(model.getItems());
             items.add(item);
             model.setItems(items);
             int newIndex = model.indexOf(item);
@@ -218,7 +218,7 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   }
 
   private List<BuildFileProperty> getUserProperties() {
-    final SinglePropertyContainer<ListProperty> container = new SinglePropertyContainer<ListProperty>(ANT_PROPERTIES, null);
+    final SinglePropertyContainer<ListProperty> container = new SinglePropertyContainer<>(ANT_PROPERTIES, null);
     myBinding.apply(container);
     final List<BuildFileProperty> allProperties = (List<BuildFileProperty>)container.getValueOf(ANT_PROPERTIES);
     return ContainerUtil.filter(allProperties, USER_PROPERTY_CONDITION);
@@ -244,11 +244,11 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   public void reset() {
     myRunTargetCheckBox.setSelected(myProperties.isEnabled());
     myTarget = myProperties.findTarget(AntConfiguration.getInstance(myContext.getProject()));
-    final List<BuildFileProperty> properties = new ArrayList<BuildFileProperty>();
+    final List<BuildFileProperty> properties = new ArrayList<>();
     for (BuildFileProperty property : myProperties.getAllProperties(myContext.getArtifact())) {
       properties.add(new BuildFileProperty(property.getPropertyName(), property.getPropertyValue()));
     }
-    myContainer = new SinglePropertyContainer<ListProperty>(ANT_PROPERTIES, properties);
+    myContainer = new SinglePropertyContainer<>(ANT_PROPERTIES, properties);
     myBinding.loadValues(myContainer);
     updatePanel();
   }

@@ -34,6 +34,7 @@ public class CollapseBlockHandler implements CodeInsightActionHandler {
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
+    int[] targetCaretOffset = {-1};
     editor.getFoldingModel().runBatchFoldingOperation(() -> {
       final EditorFoldingInfo info = EditorFoldingInfo.get(editor);
       FoldingModelEx model = (FoldingModelEx) editor.getFoldingModel();
@@ -52,7 +53,7 @@ public class CollapseBlockHandler implements CodeInsightActionHandler {
         if (existing != null) {
           if (existing.isExpanded()) {
             existing.setExpanded(false);
-            editor.getCaretModel().moveToOffset(existing.getEndOffset());
+            targetCaretOffset[0] = existing.getEndOffset();
             return;
           }
           previous = existing;
@@ -68,9 +69,7 @@ public class CollapseBlockHandler implements CodeInsightActionHandler {
             info.removeRegion(myPrevious);
             model.removeFoldRegion(myPrevious);
           }
-          int offset = block.getTextRange().getEndOffset() < editor.getCaretModel().getOffset() ?
-              start : end;
-          editor.getCaretModel().moveToOffset(offset);
+          targetCaretOffset[0] = block.getTextRange().getEndOffset() < editor.getCaretModel().getOffset() ? start : end;
           return;
         } else break;
       }
@@ -80,9 +79,10 @@ public class CollapseBlockHandler implements CodeInsightActionHandler {
           info.removeRegion(myPrevious);
           model.removeFoldRegion(myPrevious);
         }
-        editor.getCaretModel().moveToOffset(previous.getEndOffset());
+        targetCaretOffset[0] = previous.getEndOffset();
       }
     });
+    if (targetCaretOffset[0] >= 0) editor.getCaretModel().moveToOffset(targetCaretOffset[0]);
   }
 
   @Override

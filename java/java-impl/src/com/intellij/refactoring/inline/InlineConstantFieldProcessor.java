@@ -95,7 +95,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
   protected UsageInfo[] findUsages() {
     if (myInlineThisOnly) return new UsageInfo[]{new UsageInfo(myRefExpr)};
 
-    List<UsageInfo> usages = new ArrayList<UsageInfo>();
+    List<UsageInfo> usages = new ArrayList<>();
     for (PsiReference ref : ReferencesSearch.search(myField, GlobalSearchScope.projectScope(myProject), false)) {
       PsiElement element = ref.getElement();
       UsageInfo info = new UsageInfo(element);
@@ -255,7 +255,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
 
     ReferencedElementsCollector collector = new ReferencedElementsCollector();
     PsiExpression initializer = InlineConstantFieldHandler.getInitializer(myField);

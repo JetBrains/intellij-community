@@ -47,7 +47,7 @@ public class StructMember {
   }
 
   protected VBStyleCollection<StructGeneralAttribute, String> readAttributes(DataInputFullStream in, ConstantPool pool) throws IOException {
-    VBStyleCollection<StructGeneralAttribute, String> attributes = new VBStyleCollection<StructGeneralAttribute, String>();
+    VBStyleCollection<StructGeneralAttribute, String> attributes = new VBStyleCollection<>();
 
     int length = in.readUnsignedShort();
     for (int i = 0; i < length; i++) {

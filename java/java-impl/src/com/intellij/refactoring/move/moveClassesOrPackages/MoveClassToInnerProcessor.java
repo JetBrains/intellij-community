@@ -100,7 +100,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
 
   @NotNull
   public UsageInfo[] findUsages() {
-    final List<UsageInfo> usages = new ArrayList<UsageInfo>();
+    final List<UsageInfo> usages = new ArrayList<>();
     for (PsiClass classToMove : myClassesToMove) {
       final String newName = myTargetClass.getQualifiedName() + "." + classToMove.getName();
       Collections.addAll(usages, MoveClassesOrPackagesUtil.findUsages(classToMove, mySearchInComments, mySearchInNonJavaFiles, newName));
@@ -128,8 +128,8 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
 
     MoveClassToInnerHandler[] handlers = MoveClassToInnerHandler.EP_NAME.getExtensions();
 
-    ArrayList<UsageInfo> usageList = new ArrayList<UsageInfo>(Arrays.asList(usages));
-    List<PsiElement> importStatements = new ArrayList<PsiElement>();
+    ArrayList<UsageInfo> usageList = new ArrayList<>(Arrays.asList(usages));
+    List<PsiElement> importStatements = new ArrayList<>();
     for (MoveClassToInnerHandler handler : handlers) {
       importStatements.addAll(handler.filterImports(usageList, myProject));
     }
@@ -137,7 +137,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     usages = usageList.toArray(new UsageInfo[usageList.size()]);
 
     saveNonCodeUsages(usages);
-    final Map<PsiElement, PsiElement> oldToNewElementsMapping = new HashMap<PsiElement, PsiElement>();
+    final Map<PsiElement, PsiElement> oldToNewElementsMapping = new HashMap<>();
     try {
       for (PsiClass classToMove : myClassesToMove) {
         PsiClass newClass = null;
@@ -185,7 +185,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
   }
 
   private boolean prepareWritable(final UsageInfo[] usages) {
-    Set<PsiElement> elementsToMakeWritable = new HashSet<PsiElement>();
+    Set<PsiElement> elementsToMakeWritable = new HashSet<>();
     Collections.addAll(elementsToMakeWritable, myClassesToMove);
     elementsToMakeWritable.add(myTargetClass);
     for(UsageInfo usage: usages) {
@@ -209,7 +209,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
           if (element != null && PsiTreeUtil.isAncestor(classToMove, element, false)) {
             List<NonCodeUsageInfo> list = element.getCopyableUserData(ourNonCodeUsageKey);
             if (list == null) {
-              list = new ArrayList<NonCodeUsageInfo>();
+              list = new ArrayList<>();
               element.putCopyableUserData(ourNonCodeUsageKey, list);
             }
             list.add(nonCodeUsage);
@@ -239,14 +239,14 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
 
   @NotNull
   protected Collection<? extends PsiElement> getElementsToWrite(@NotNull final UsageViewDescriptor descriptor) {
-    List<PsiElement> result = new ArrayList<PsiElement>();
+    List<PsiElement> result = new ArrayList<>();
     result.addAll(super.getElementsToWrite(descriptor));
     result.add(myTargetClass);
     return result;
   }
 
   public MultiMap<PsiElement, String> getConflicts(final UsageInfo[] usages) {
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
 
     for (PsiClass classToMove : myClassesToMove) {
       final PsiClass innerClass = myTargetClass.findInnerClassByName(classToMove.getName(), false);
@@ -336,7 +336,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
   private static class ConflictsCollector {
     private final PsiClass myClassToMove;
     private final MultiMap<PsiElement, String> myConflicts;
-    private final Set<PsiElement> myReportedContainers = new HashSet<PsiElement>();
+    private final Set<PsiElement> myReportedContainers = new HashSet<>();
 
     public ConflictsCollector(PsiClass classToMove, final MultiMap<PsiElement, String> conflicts) {
       myClassToMove = classToMove;

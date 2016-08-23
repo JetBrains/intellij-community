@@ -22,7 +22,6 @@ import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.Function;
 import com.intellij.util.PsiNavigateUtil;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
@@ -54,7 +53,7 @@ public class PyUserSkeletonsLineMarkerProvider implements LineMarkerProvider {
       final PyElement skeleton = getUserSkeleton(element);
       if (skeleton != null) {
         result.add(new LineMarkerInfo<PsiElement>(
-          element, element.getTextRange(), ICON, Pass.UPDATE_OVERRIDDEN_MARKERS,
+          element, element.getTextRange(), ICON, Pass.LINE_MARKERS,
           e -> "Has user skeleton",
           new GutterIconNavigationHandler<PsiElement>() {
             @Override

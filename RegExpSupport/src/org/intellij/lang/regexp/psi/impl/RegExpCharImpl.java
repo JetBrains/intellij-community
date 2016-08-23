@@ -57,40 +57,17 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
     @Nullable
     public Character getValue() {
       final String s = getUnescapedText();
-      if (s.equals("\\") && getType() == Type.CHAR) {
-        return '\\';
-      }
-      // special case for valid octal escaped sequences (see RUBY-12161)
-      if (s.startsWith("\\") && s.length() > 1) {
-        final ASTNode child = getNode().getFirstChildNode();
-        assert child != null;
-        final IElementType t = child.getElementType();
-        if (t == RegExpTT.OCT_CHAR) {
-          try {
-            return (char) Integer.parseInt(s.substring(1), 8);
-          }
-          catch (NumberFormatException e) {
-            // do nothing
-          }
-        } else {
-          char nextChar = s.charAt(1);
-          if (Character.isDigit(nextChar) && nextChar != '0') {
-            Character character = parseNumber(0, s, 10, s.length() - 1, true);
-            if (character != null) {
-              return character;
-            }
-          }
-        }
-      }
+      if (s.equals("\\") && getType() == Type.CHAR) return '\\';
       return unescapeChar(s);
     }
 
     @Nullable
     static Character unescapeChar(String s) {
-        assert s.length() > 0;
+        final int length = s.length();
+        assert length > 0;
 
         boolean escaped = false;
-        for (int idx = 0; idx < s.length(); idx++) {
+        for (int idx = 0; idx < length; idx++) {
             char ch = s.charAt(idx);
             if (!escaped) {
                 if (ch == '\\') {
@@ -100,33 +77,40 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
                 }
             } else {
                 switch (ch) {
-                    case'n':
+                    case 'n':
                         return '\n';
-                    case'r':
+                    case 'r':
                         return '\r';
-                    case't':
+                    case 't':
                         return '\t';
-                    case'a':
+                    case 'a':
                         return '\u0007';
-                    case'e':
+                    case 'e':
                         return '\u001b';
-                    case'f':
+                    case 'f':
                         return '\f';
                     case 'b':
                         return '\b';
-                    case'c':
+                    case 'c':
                         return (char)(ch ^ 64);
-                    case'x':
-                      if (s.length() <= idx + 1) return null;
+                    case 'x':
+                      if (length <= idx + 1) return null;
                       if (s.charAt(idx + 1) == '{') {
-                        final char c = s.charAt(s.length() - 1);
-                        return (c != '}') ? null : parseNumber(idx + 1, s, 16, s.length() - 4, true);
+                        final char c = s.charAt(length - 1);
+                        return (c != '}') ? null : parseNumber(idx + 1, s, 16, length - 4, true);
                       }
-                      return s.length() == 4 ? parseNumber(idx, s, 16, 2, true) : null;
-                    case'u':
+                      return length == 4 ? parseNumber(idx, s, 16, 2, true) : null;
+                    case 'u':
                         return parseNumber(idx, s, 16, 4, true);
-                    case'0':
-                        return parseNumber(idx, s, 8, 3, false);
+                    case '0':
+                    case '1':
+                    case '2':
+                    case '3':
+                    case '4':
+                    case '5':
+                    case '6':
+                    case '7':
+                        return parseNumber(idx - 1, s, 8, length - idx, false);
                     default:
                         if (Character.isLetter(ch)) {
                             return null;

@@ -412,6 +412,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     startElement(statement);
     PsiStatement exitedStatement = statement.findExitedStatement();
     if (exitedStatement != null) {
+      callFinallyBlocksOnExit(exitedStatement);
+
       final Instruction instruction;
       final PsiElement finallyBlock = findEnclosingFinallyBlockElement(statement, exitedStatement);
       final int finallyStartOffset = finallyBlock == null ? -1 : myCurrentFlow.getStartOffset(finallyBlock);
@@ -428,6 +430,18 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       addElementOffsetLater(exitedStatement, false);
     }
     finishElement(statement);
+  }
+
+  private void callFinallyBlocksOnExit(PsiStatement exitedStatement) {
+    for (final ListIterator<PsiElement> it = myFinallyBlocks.listIterator(myFinallyBlocks.size()); it.hasPrevious(); ) {
+      final PsiElement finallyBlock = it.previous();
+      final PsiElement enclosingTryStatement = finallyBlock.getParent();
+      if (enclosingTryStatement == null || !PsiTreeUtil.isAncestor(exitedStatement, enclosingTryStatement, false)) {
+        break;
+      }
+      myCurrentFlow.addInstruction(new CallInstruction(0, 0, myStack));
+      addElementOffsetLater(finallyBlock, true);
+    }
   }
 
   private PsiElement findEnclosingFinallyBlockElement(@NotNull PsiElement sourceElement, @Nullable PsiElement jumpElement) {
@@ -451,21 +465,14 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiStatement continuedStatement = statement.findContinuedStatement();
     if (continuedStatement != null) {
       PsiElement body = null;
-      if (continuedStatement instanceof PsiForStatement) {
-        body = ((PsiForStatement)continuedStatement).getBody();
-      }
-      else if (continuedStatement instanceof PsiWhileStatement) {
-        body = ((PsiWhileStatement)continuedStatement).getBody();
-      }
-      else if (continuedStatement instanceof PsiDoWhileStatement) {
-        body = ((PsiDoWhileStatement)continuedStatement).getBody();
-      }
-      else if (continuedStatement instanceof PsiForeachStatement) {
-        body = ((PsiForeachStatement)continuedStatement).getBody();
+      if (continuedStatement instanceof PsiLoopStatement) {
+        body = ((PsiLoopStatement)continuedStatement).getBody();
       }
       if (body == null) {
         body = myCodeFragment;
       }
+      callFinallyBlocksOnExit(continuedStatement);
+
       final Instruction instruction;
       final PsiElement finallyBlock = findEnclosingFinallyBlockElement(statement, continuedStatement);
       final int finallyStartOffset = finallyBlock == null ? -1 : myCurrentFlow.getStartOffset(finallyBlock);
@@ -1114,8 +1121,12 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         generateWriteInstruction(catchBlockParameters[i]);
       }
       PsiCodeBlock catchBlock = catchBlocks[i];
-      assert catchBlock != null : i + statement.getText();
-      catchBlock.accept(this);
+      if (catchBlock != null) {
+        catchBlock.accept(this);
+      }
+      else {
+        LOG.error("Catch body is null (" + i + ") " + statement.getText());
+      }
 
       myCurrentFlow.addInstruction(new GoToInstruction(finallyBlock == null ? 0 : -6));
       if (finallyBlock == null) {

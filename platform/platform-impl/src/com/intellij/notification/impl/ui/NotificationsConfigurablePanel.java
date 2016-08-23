@@ -352,7 +352,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
 
             List<DefaultMutableTreeNode> children = parentChildrenTable.get(parentGroup);
             if (children == null) {
-              parentChildrenTable.put(parentGroup, children = new ArrayList<DefaultMutableTreeNode>());
+              parentChildrenTable.put(parentGroup, children = new ArrayList<>());
             }
             children.add(treeNode);
           }

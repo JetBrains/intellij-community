@@ -43,8 +43,8 @@ public class CompositeDataProviderTest {
   @Test
   public void unequalNumberOfDataEntries() {
     myProvider = new CompositeDataProvider(
-      new TestDataProvider<DataType>(DataType.ONE, 1, 3, 5, 7),
-      new TestDataProvider<DataType>(DataType.TWO, 2, 4)
+      new TestDataProvider<>(DataType.ONE, 1, 3, 5, 7),
+      new TestDataProvider<>(DataType.TWO, 2, 4)
     );
 
     assertTrue(myProvider.hasData());
@@ -89,8 +89,8 @@ public class CompositeDataProviderTest {
   @Test
   public void emptyProviders() {
     myProvider = new CompositeDataProvider(
-      new TestDataProvider<DataType>(DataType.ONE),
-      new TestDataProvider<DataType>(DataType.TWO)
+      new TestDataProvider<>(DataType.ONE),
+      new TestDataProvider<>(DataType.TWO)
     );
 
     assertFalse(myProvider.hasData());
@@ -100,8 +100,8 @@ public class CompositeDataProviderTest {
   @Test
   public void emptyProvidersAfterAdvance() {
     myProvider = new CompositeDataProvider(
-      new TestDataProvider<DataType>(DataType.ONE, 1, 3, 5),
-      new TestDataProvider<DataType>(DataType.TWO, 2, 4)
+      new TestDataProvider<>(DataType.ONE, 1, 3, 5),
+      new TestDataProvider<>(DataType.TWO, 2, 4)
     );
 
     myProvider.advance(4);
@@ -123,8 +123,8 @@ public class CompositeDataProviderTest {
   @Test
   public void multipleAdvances() {
     myProvider = new CompositeDataProvider(
-      new TestDataProvider<DataType>(DataType.ONE, 1, 3, 5),
-      new TestDataProvider<DataType>(DataType.TWO, 2, 4)
+      new TestDataProvider<>(DataType.ONE, 1, 3, 5),
+      new TestDataProvider<>(DataType.TWO, 2, 4)
     );
 
     myProvider.advance(2);
@@ -148,8 +148,8 @@ public class CompositeDataProviderTest {
   @Test
   public void nonEmptyProvidersAfterAdvance() {
     myProvider = new CompositeDataProvider(
-      new TestDataProvider<DataType>(DataType.ONE, 1, 3, 5),
-      new TestDataProvider<DataType>(DataType.TWO, 2, 4)
+      new TestDataProvider<>(DataType.ONE, 1, 3, 5),
+      new TestDataProvider<>(DataType.TWO, 2, 4)
     );
 
     myProvider.advance(6);
@@ -172,7 +172,7 @@ public class CompositeDataProviderTest {
     @Override
     public Pair<K, Object> getData() {
       if (myIndex < mySortingKeys.length) {
-        return new Pair<K, Object>(myKey, new Object());
+        return new Pair<>(myKey, new Object());
       }
       return null;
     }

@@ -154,7 +154,7 @@ public class GitUntrackedFilesHelper {
   private static class UntrackedFilesDialog extends SelectFilesDialog {
 
     public UntrackedFilesDialog(Project project, Collection<VirtualFile> untrackedFiles, String dialogDesc) {
-      super(project, new ArrayList<VirtualFile>(untrackedFiles), StringUtil.stripHtml(dialogDesc, true), null, false, false, true);
+      super(project, new ArrayList<>(untrackedFiles), StringUtil.stripHtml(dialogDesc, true), null, false, false, true);
       init();
     }
 

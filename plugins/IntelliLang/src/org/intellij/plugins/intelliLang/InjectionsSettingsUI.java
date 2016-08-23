@@ -363,7 +363,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
 
   @Override
   protected Configurable[] buildConfigurables() {
-      final ArrayList<Configurable> configurables = new ArrayList<Configurable>();
+      final ArrayList<Configurable> configurables = new ArrayList<>();
       for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
         ContainerUtil.addAll(configurables, support.createSettings(myProject, myConfiguration));
       }
@@ -450,7 +450,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
   }
 
   private List<InjInfo> getSelectedInjections() {
-    final ArrayList<InjInfo> toRemove = new ArrayList<InjInfo>();
+    final ArrayList<InjInfo> toRemove = new ArrayList<>();
     for (int row : myInjectionsTable.getSelectedRows()) {
       toRemove.add(myInjectionsTable.getItems().get(myInjectionsTable.convertRowIndexToModel(row)));
     }
@@ -481,7 +481,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
 
   private class InjectionsTable extends TableView<InjInfo> {
     private InjectionsTable(final List<InjInfo> injections) {
-      super(new ListTableModel<InjInfo>(createInjectionColumnInfos(), injections, 1));
+      super(new ListTableModel<>(createInjectionColumnInfos(), injections, 1));
       setAutoResizeMode(AUTO_RESIZE_LAST_COLUMN);
       getColumnModel().getColumn(2).setCellRenderer(createLanguageCellRenderer());
       getColumnModel().getColumn(1).setCellRenderer(createDisplayNameCellRenderer());
@@ -748,8 +748,8 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
             return o.injection.getSupportId();
           }
         });
-      final List<BaseInjection> originalInjections = new ArrayList<BaseInjection>();
-      final List<BaseInjection> newInjections = new ArrayList<BaseInjection>();
+      final List<BaseInjection> originalInjections = new ArrayList<>();
+      final List<BaseInjection> newInjections = new ArrayList<>();
       //// remove duplicates
       //for (String supportId : InjectorUtils.getActiveInjectionSupportIds()) {
       //  final Set<BaseInjection> currentInjections = currentMap.get(supportId);
@@ -762,7 +762,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
       //myInjections.addAll(newInjections);
 
       for (String supportId : InjectorUtils.getActiveInjectionSupportIds()) {
-        ArrayList<InjInfo> list = new ArrayList<InjInfo>(ObjectUtils.notNull(currentMap.get(supportId), Collections.<InjInfo>emptyList()));
+        ArrayList<InjInfo> list = new ArrayList<>(ObjectUtils.notNull(currentMap.get(supportId), Collections.<InjInfo>emptyList()));
         final List<BaseInjection> currentInjections = getInjectionList(list);
         final List<BaseInjection> importingInjections = cfg.getInjections(supportId);
         if (currentInjections == null) {
@@ -796,24 +796,26 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
   private static class CfgInfo {
     final Configuration cfg;
     final List<BaseInjection> originalInjections;
-    final List<InjInfo> injectionInfos = new ArrayList<InjInfo>();
-    final THashSet<BaseInjection> bundledInjections = new THashSet<BaseInjection>(new SameParamsAndPlacesStrategy());
+    final List<InjInfo> injectionInfos = new ArrayList<>();
+    final THashSet<BaseInjection> bundledInjections = new THashSet<>(new SameParamsAndPlacesStrategy());
     final String title;
 
     public CfgInfo(Configuration cfg, final String title) {
       this.cfg = cfg;
       this.title = title;
       bundledInjections.addAll(cfg.getDefaultInjections());
-      originalInjections = new ArrayList<BaseInjection>(ContainerUtil
-        .concat(InjectorUtils.getActiveInjectionSupportIds(), s -> {
-          List<BaseInjection> injections =
-            CfgInfo.this.cfg instanceof Configuration.Prj ? ((Configuration.Prj)CfgInfo.this.cfg).getOwnInjections(s) : CfgInfo.this.cfg
-              .getInjections(s);
-          return ContainerUtil.findAll(injections, injection -> {
-            String id = injection.getInjectedLanguageId();
-            return InjectedLanguage.findLanguageById(id) != null || ReferenceInjector.findById(id) != null;
-          });
-        }));
+      originalInjections = new ArrayList<>(ContainerUtil
+                                             .concat(InjectorUtils.getActiveInjectionSupportIds(), s -> {
+                                               List<BaseInjection> injections =
+                                                 this.cfg instanceof Configuration.Prj ? ((Configuration.Prj)this.cfg)
+                                                   .getOwnInjections(s) : this.cfg
+                                                   .getInjections(s);
+                                               return ContainerUtil.findAll(injections, injection -> {
+                                                 String id = injection.getInjectedLanguageId();
+                                                 return InjectedLanguage.findLanguageById(id) != null ||
+                                                        ReferenceInjector.findById(id) != null;
+                                               });
+                                             }));
       sortInjections(originalInjections);
       reset();
     }
@@ -841,7 +843,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
     }
 
     public boolean isModified() {
-      final List<BaseInjection> copy = new ArrayList<BaseInjection>(getInjectionList(injectionInfos));
+      final List<BaseInjection> copy = new ArrayList<>(getInjectionList(injectionInfos));
       sortInjections(copy);
       return !originalInjections.equals(copy);
     }

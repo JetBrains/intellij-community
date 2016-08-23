@@ -64,17 +64,17 @@ public class JavaFxImportsOptimizer implements ImportOptimizer {
     if (vFile == null || !ProjectRootManager.getInstance(project).getFileIndex().isInSourceContent(vFile)) {
       return EmptyRunnable.INSTANCE;
     }
-    final List<Pair<String, Boolean>> names = new ArrayList<Pair<String, Boolean>>();
+    final List<Pair<String, Boolean>> names = new ArrayList<>();
     final Set<String> demandedForNested = new HashSet<>();
     collectNamesToImport(names, demandedForNested, (XmlFile)file);
     Collections.sort(names, (o1, o2) -> StringUtil.compare(o1.first, o2.first, true));
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
     final List<Pair<String, Boolean>> sortedNames = ImportHelper.sortItemsAccordingToSettings(names, settings);
-    final HashSet<String> onDemand = new HashSet<String>();
+    final HashSet<String> onDemand = new HashSet<>();
     ImportHelper.collectOnDemandImports(sortedNames, onDemand, settings);
     onDemand.addAll(demandedForNested);
-    final Set<String> imported = new HashSet<String>();
-    final List<String> imports = new ArrayList<String>();
+    final Set<String> imported = new HashSet<>();
+    final List<String> imports = new ArrayList<>();
     for (Pair<String, Boolean> pair : sortedNames) {
       final String qName = pair.first;
       final String packageName = StringUtil.getPackageName(qName);

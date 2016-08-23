@@ -39,7 +39,6 @@ public abstract class ForkedSplitter extends ForkedByModuleSplitter {
     if (myRootDescription == null) {
       return  -1;
     }
-    sendTree(myRootDescription);
     if (myWorkingDirsPath == null || new File(myWorkingDirsPath).length() == 0) {
       final String classpath = System.getProperty("java.class.path");
       if (repeatCount != null && RepeatCount.getCount(repeatCount) != 0 && myForkMode.equals("repeat")) {

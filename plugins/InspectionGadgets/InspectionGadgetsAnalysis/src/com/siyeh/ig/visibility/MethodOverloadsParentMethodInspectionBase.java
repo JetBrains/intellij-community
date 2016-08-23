@@ -86,7 +86,7 @@ public class MethodOverloadsParentMethodInspectionBase extends BaseInspection {
       if (MethodUtils.hasSuper(method)) {
         return;
       }
-      final Set<PsiClass> visitedClasses = new HashSet<PsiClass>();
+      final Set<PsiClass> visitedClasses = new HashSet<>();
       processSupers(method, aClass, aClass, visitedClasses);
     }
 

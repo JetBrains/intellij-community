@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -543,6 +543,18 @@ public class PyTypingTest extends PyTestCase {
           "expr = f"); 
   }
 
+  // PY-20421
+  public void testFunctionTypeCommentSingleElementTuple() {
+    doTest("Tuple[int]",
+           "from typing import Tuple\n" +
+           "\n" +
+           "def f():\n" +
+           "    # type: () -> Tuple[int]\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = f()");
+  }
+
   // PY-18762
   public void testHomogeneousTuple() {
     doTest("Tuple[int, ...]", 
@@ -642,9 +654,64 @@ public class PyTypingTest extends PyTestCase {
            "Type2 = Union[int, Type1]\n" +
            "\n" +
            "expr = None # type: Type1");
-
   }
 
+  // PY-19858
+  public void testGetListItemByIntegral() {
+    doTest("list",
+           "from typing import List\n" +
+           "\n" +
+           "def foo(x: List[List]):\n" +
+           "    expr = x[0]\n");
+  }
+
+  // PY-19858
+  public void testGetListItemByIndirectIntegral() {
+    doTest("list",
+           "from typing import List\n" +
+           "\n" +
+           "def foo(x: List[List]):\n" +
+           "    y = 0\n" +
+           "    expr = x[y]\n");
+  }
+
+  // PY-19858
+  public void testGetSublistBySlice() {
+    doTest("List[list]",
+           "from typing import List\n" +
+           "\n" +
+           "def foo(x: List[List]):\n" +
+           "    expr = x[1:3]\n");
+  }
+
+  // PY-19858
+  public void testGetSublistByIndirectSlice() {
+    doTest("List[list]",
+           "from typing import List\n" +
+           "\n" +
+           "def foo(x: List[List]):\n" +
+           "    y = slice(1, 3)\n" +
+           "    expr = x[y]\n");
+  }
+
+  // PY-19858
+  public void testGetListItemByUnknown() {
+    doTest("Union[list, List[list]]",
+           "from typing import List\n" +
+           "\n" +
+           "def foo(x: List[List]):\n" +
+           "    expr = x[y]\n");
+  }
+
+  public void testGetListOfListsItemByIntegral() {
+    doTest("Any",
+           "from typing import List\n" +
+           "\n" +
+           "def foo(x: List[List]):\n" +
+           "    sublist = x[0]\n" +
+           "    expr = sublist[0]\n");
+  }
+  
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

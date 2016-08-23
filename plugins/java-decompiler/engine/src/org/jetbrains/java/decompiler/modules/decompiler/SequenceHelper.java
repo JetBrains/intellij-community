@@ -39,7 +39,7 @@ public class SequenceHelper {
 
     if (stat.type == Statement.TYPE_SEQUENCE) {
 
-      List<Statement> lst = new ArrayList<Statement>();
+      List<Statement> lst = new ArrayList<>();
       lst.addAll(stat.getStats());
 
       boolean unfolded = false;
@@ -84,7 +84,7 @@ public class SequenceHelper {
               st.removeSuccessor(edge);
             }
 
-            for (StatEdge edge : new HashSet<StatEdge>(st.getLabelEdges())) {
+            for (StatEdge edge : new HashSet<>(st.getLabelEdges())) {
               if (edge.getSource() != last) {
                 last.addLabeledEdge(edge);
               }
@@ -302,7 +302,7 @@ public class SequenceHelper {
     BasicBlockStatement bstat = new BasicBlockStatement(new BasicBlock(
       DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
     if (stat.getExprents() == null) {
-      bstat.setExprents(new ArrayList<Exprent>());
+      bstat.setExprents(new ArrayList<>());
     }
     else {
       bstat.setExprents(DecHelper.copyExprentList(stat.getExprents()));

@@ -158,7 +158,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
       }
 
       Set<IntentionActionWithTextCaching> wrappedNew =
-        new THashSet<IntentionActionWithTextCaching>(newDescriptors.size(), ACTION_TEXT_AND_CLASS_EQUALS);
+        new THashSet<>(newDescriptors.size(), ACTION_TEXT_AND_CLASS_EQUALS);
       for (HighlightInfo.IntentionActionDescriptor descriptor : newDescriptors) {
         final IntentionAction action = descriptor.getAction();
         if (element != null &&
@@ -320,7 +320,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   @Override
   @NotNull
   public List<IntentionActionWithTextCaching> getValues() {
-    List<IntentionActionWithTextCaching> result = new ArrayList<IntentionActionWithTextCaching>(myCachedErrorFixes);
+    List<IntentionActionWithTextCaching> result = new ArrayList<>(myCachedErrorFixes);
     result.addAll(myCachedInspectionFixes);
     result.addAll(myCachedIntentions);
     result.addAll(myCachedGutters);

@@ -24,10 +24,9 @@ import com.intellij.openapi.fileChooser.ex.FileSaverDialogImpl;
 import com.intellij.openapi.fileChooser.ex.FileTextFieldImpl;
 import com.intellij.openapi.fileChooser.ex.LocalFsFinder;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.mac.MacFileChooserDialogImpl;
+import com.intellij.ui.mac.MacPathChooserDialog;
 import com.intellij.util.SystemProperties;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +43,9 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
   public FileChooserDialog createFileChooser(@NotNull FileChooserDescriptor descriptor,
                                              @Nullable Project project,
                                              @Nullable Component parent) {
+    if (useNativeMacChooser(descriptor)) {
+      return new MacPathChooserDialog(descriptor, parent, project);
+    }
     if (parent != null) {
       return new FileChooserDialogImpl(descriptor, parent, project);
     }
@@ -58,7 +60,7 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
                                              @Nullable Project project,
                                              @Nullable Component parent) {
     if (useNativeMacChooser(descriptor)) {
-      return new MacFileChooserDialogImpl(descriptor, project);
+      return new MacPathChooserDialog(descriptor, parent, project);
     }
     else if (parent != null) {
       return new FileChooserDialogImpl(descriptor, parent, project);
@@ -70,10 +72,9 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
 
   private static boolean useNativeMacChooser(final FileChooserDescriptor descriptor) {
     return SystemInfo.isMac &&
-           !descriptor.isChooseJarContents() &&
            SystemProperties.getBooleanProperty("native.mac.file.chooser.enabled", true) &&
            Registry.is("ide.mac.file.chooser.native") &&
-           !DialogWrapper.isMultipleModalDialogs();
+           SystemInfo.isJetbrainsJvm;
   }
 
   @NotNull

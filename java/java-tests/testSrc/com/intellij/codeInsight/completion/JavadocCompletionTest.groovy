@@ -646,4 +646,12 @@ class Foo {
     myFixture.completeBasic()
     myFixture.checkResult "/** {@code null}<caret> */"
   }
+
+  public void "test completing inside qualified name"() {
+    myFixture.configureByText 'a.java', "/** @see java.io.<caret> */"
+    myFixture.completeBasic()
+    myFixture.lookup.currentItem = myFixture.lookupElements.find { it.lookupString == 'IOException' }
+    myFixture.type('\n')
+    myFixture.checkResult "/** @see java.io.IOException<caret> */"
+  }
 }

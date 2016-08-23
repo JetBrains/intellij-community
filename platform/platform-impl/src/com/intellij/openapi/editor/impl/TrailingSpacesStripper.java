@@ -49,11 +49,11 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
 
   private static final Key<Boolean> DISABLE_FOR_FILE_KEY = Key.create("DISABLE_TRAILING_SPACE_STRIPPER_FOR_FILE_KEY");
 
-  private final Set<Document> myDocumentsToStripLater = new THashSet<Document>();
+  private final Set<Document> myDocumentsToStripLater = new THashSet<>();
 
   @Override
   public void beforeAllDocumentsSaving() {
-    Set<Document> documentsToStrip = new THashSet<Document>(myDocumentsToStripLater);
+    Set<Document> documentsToStrip = new THashSet<>(myDocumentsToStripLater);
     myDocumentsToStripLater.clear();
     for (Document document : documentsToStrip) {
       strip(document);
@@ -174,7 +174,7 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
     boolean isVirtualSpaceEnabled = activeEditor == null || activeEditor.getSettings().isVirtualSpace();
 
     final List<Caret> carets = activeEditor == null ? Collections.<Caret>emptyList() : activeEditor.getCaretModel().getAllCarets();
-    final List<VisualPosition> visualCarets = new ArrayList<VisualPosition>(carets.size());
+    final List<VisualPosition> visualCarets = new ArrayList<>(carets.size());
     int[] caretOffsets = new int[carets.size()];
     for (int i = 0; i < carets.size(); i++) {
       Caret caret = carets.get(i);

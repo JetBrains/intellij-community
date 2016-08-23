@@ -186,7 +186,7 @@ public class JavaTestGenerator implements TestGenerator {
                                     Collection<MemberInfo> methods,
                                     boolean generateBefore,
                                     boolean generateAfter) throws IncorrectOperationException {
-    final Set<String> existingNames = new HashSet<String>();
+    final Set<String> existingNames = new HashSet<>();
     PsiMethod anchor = null;
     if (generateBefore && descriptor.findSetUpMethod(targetClass) == null) {
       anchor = generateMethod(TestIntegrationUtils.MethodKind.SET_UP, descriptor, targetClass, sourceClass, editor, null, existingNames, null);

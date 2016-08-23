@@ -170,7 +170,8 @@ public class FSRecords implements Forceable {
     private static RefCountingStorage myContents;
     private static ResizeableMappedFile myRecords;
     private static PersistentBTreeEnumerator<byte[]> myContentHashesEnumerator;
-    private static final VfsDependentEnum<String> myAttributesList = new VfsDependentEnum<String>("attrib", EnumeratorStringDescriptor.INSTANCE, 1);
+    private static final VfsDependentEnum<String> myAttributesList =
+      new VfsDependentEnum<>("attrib", EnumeratorStringDescriptor.INSTANCE, 1);
     private static final TIntArrayList myFreeRecords = new TIntArrayList();
 
     private static boolean myDirty = false;
@@ -281,7 +282,7 @@ public class FSRecords implements Forceable {
           @NotNull
           @Override
           protected ExecutorService createExecutor() {
-            return AppExecutorUtil.createBoundedApplicationPoolExecutor(1);
+            return AppExecutorUtil.createBoundedApplicationPoolExecutor("FSRecords pool",1);
           }
         }; // sources usually zipped with 4x ratio
         myContentHashesEnumerator = weHaveContentHashes ? new ContentHashesUtil.HashEnumerator(contentsHashesFile, storageLockContext): null;

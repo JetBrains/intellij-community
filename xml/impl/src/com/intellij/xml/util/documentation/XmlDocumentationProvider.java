@@ -180,7 +180,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
   }
 
   private static XmlTag findEnumerationValue(final String text, XmlTag tag) {
-    final Ref<XmlTag> enumerationTag = new Ref<XmlTag>();
+    final Ref<XmlTag> enumerationTag = new Ref<>();
 
     Processor<XmlTag> processor = xmlTag -> {
       if (text.equals(xmlTag.getAttributeValue(XmlUtil.VALUE_ATTR_NAME))) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Function;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -67,8 +66,8 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     myIgnoreTupleUnpacking = ignoreTupleUnpacking;
     myIgnoreLambdaParameters = ignoreLambdaParameters;
     myIgnoreRangeIterationVariables = ignoreRangeIterationVariables;
-    myUnusedElements = new HashSet<PsiElement>();
-    myUsedElements = new HashSet<PsiElement>();
+    myUnusedElements = new HashSet<>();
+    myUsedElements = new HashSet<>();
   }
 
   @Override
@@ -131,11 +130,27 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         if (PyAugAssignmentStatementNavigator.getStatementByTarget(element) != null) {
           continue;
         }
+        if (parameterInMethodWithFixedSignature(owner, element)) {
+          continue;
+        }
         if (!myUsedElements.contains(element)) {
           myUnusedElements.add(element);
         }
       }
     }
+  }
+
+  private static boolean parameterInMethodWithFixedSignature(@NotNull ScopeOwner owner, @NotNull PsiElement element) {
+    if (owner instanceof PyFunction && element instanceof PyParameter) {
+      final PyFunction function = (PyFunction)owner;
+      final String functionName = function.getName();
+
+      return !PyNames.INIT.equals(functionName) &&
+             function.getContainingClass() != null &&
+             PyNames.getBuiltinMethods(LanguageLevel.forElement(function)).containsKey(functionName);
+    }
+
+    return false;
   }
 
   private void collectUsedReads(final ScopeOwner owner) {
@@ -235,8 +250,8 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     final PyInspectionExtension[] filters = Extensions.getExtensions(PyInspectionExtension.EP_NAME);
     // Register problems
 
-    final Set<PyFunction> functionsWithInheritors = new HashSet<PyFunction>();
-    final Map<PyFunction, Boolean> emptyFunctions = new HashMap<PyFunction, Boolean>();
+    final Set<PyFunction> functionsWithInheritors = new HashSet<>();
+    final Map<PyFunction, Boolean> emptyFunctions = new HashMap<>();
 
     for (PsiElement element : myUnusedElements) {
       boolean ignoreUnused = false;
@@ -304,7 +319,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           boolean canRemove = !(PsiTreeUtil.getPrevSiblingOfType(element, PyParameter.class) instanceof PySingleStarParameter) ||
             PsiTreeUtil.getNextSiblingOfType(element, PyParameter.class) != null;
 
-          final List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
+          final List<LocalQuickFix> fixes = new ArrayList<>();
           if (mayBeField) {
             fixes.add(new AddFieldQuickFix(name, name, containingClass.getName(), false));
           }

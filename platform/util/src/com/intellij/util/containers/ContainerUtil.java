@@ -766,11 +766,17 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   public static <K, V> Map<K, V> newMapFromValues(@NotNull Iterator<V> values, @NotNull Convertor<V, K> keyConvertor) {
     Map<K, V> map = newHashMap();
+    fillMapWithValues(map, values, keyConvertor);
+    return map;
+  }
+
+  public static <K, V> void fillMapWithValues(@NotNull Map<K, V> map,
+                                              @NotNull Iterator<V> values,
+                                              @NotNull Convertor<V, K> keyConvertor) {
     while (values.hasNext()) {
       V value = values.next();
       map.put(keyConvertor.convert(value), value);
     }
-    return map;
   }
 
   @NotNull
@@ -981,12 +987,6 @@ public class ContainerUtil extends ContainerUtilRt {
       }
     }
     return result.isEmpty() ? ArrayUtil.EMPTY_INT_ARRAY : result.toNativeArray();
-  }
-
-  @NotNull
-  @Contract(pure=true)
-  public static <T> List<T> filter(@NotNull Condition<? super T> condition, @NotNull T... collection) {
-    return findAll(collection, condition);
   }
 
   @NotNull
@@ -1476,8 +1476,13 @@ public class ContainerUtil extends ContainerUtilRt {
         if (index >= 0 && index < finalSize) {
           int from = 0;
           for (List<? extends T> each : lists) {
-            if (from <= index && index < from + each.size()) return each.get(index - from);
+            if (from <= index && index < from + each.size()) {
+              return each.get(index - from);
+            }
             from += each.size();
+          }
+          if (from != finalSize) {
+            throw new ConcurrentModificationException("The list has changed. Its size was " + finalSize + "; now it's " + from);
           }
         }
         throw new IndexOutOfBoundsException("index: " + index + "size: " + size());
@@ -1565,13 +1570,13 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   /**
-   * The main difference from <code>subList</code> is that <code>getFirstItems</code> does not
+   * The main difference from {@code subList} is that {@code getFirstItems} does not
    * throw any exceptions, even if maxItems is greater than size of the list
    *
    * @param items list
-   * @param maxItems size of the result will be equal or less than <code>maxItems</code>
+   * @param maxItems size of the result will be equal or less than {@code maxItems}
    * @param <T> type of list
-   * @return new list with no more than <code>maxItems</code> first elements
+   * @return new list with no more than {@code maxItems} first elements
    */
   @NotNull
   @Contract(pure=true)
@@ -1902,7 +1907,7 @@ public class ContainerUtil extends ContainerUtilRt {
   public static <T> List<T> packNullables(@NotNull T... elements) {
     List<T> list = new ArrayList<T>();
     for (T element : elements) {
-      addIfNotNull(element, list);
+      addIfNotNull(list, element);
     }
     return list.isEmpty() ? ContainerUtil.<T>emptyList() : list;
   }
@@ -2456,7 +2461,7 @@ public class ContainerUtil extends ContainerUtilRt {
    * - less memory
    * - slower modification in highly contented case (which is the kind of situation you shouldn't use COWAL anyway)
    *
-   * N.B. Avoid using <code>list.toArray(new T[list.size()])</code> on this list because it is inherently racey and
+   * N.B. Avoid using {@code list.toArray(new T[list.size()])} on this list because it is inherently racey and
    * therefore can return array with null elements at the end.
    */
   @NotNull
@@ -2617,6 +2622,10 @@ public class ContainerUtil extends ContainerUtilRt {
     return new LockFreeCopyOnWriteArrayList<T>(collection);
   }
 
+  /**
+   * @see #addIfNotNull(Collection, Object)
+   */
+  @Deprecated
   public static <T> void addIfNotNull(@Nullable T element, @NotNull Collection<T> result) {
     ContainerUtilRt.addIfNotNull(element, result);
   }

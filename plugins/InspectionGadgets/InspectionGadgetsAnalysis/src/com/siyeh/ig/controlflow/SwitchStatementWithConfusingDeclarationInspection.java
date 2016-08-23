@@ -57,8 +57,8 @@ public class SwitchStatementWithConfusingDeclarationInspection extends BaseInspe
       if (body == null) {
         return;
       }
-      final Set<PsiLocalVariable> variablesInPreviousBranches = new HashSet<PsiLocalVariable>(5);
-      final Set<PsiLocalVariable> variablesInCurrentBranch = new HashSet<PsiLocalVariable>(5);
+      final Set<PsiLocalVariable> variablesInPreviousBranches = new HashSet<>(5);
+      final Set<PsiLocalVariable> variablesInCurrentBranch = new HashSet<>(5);
       final PsiStatement[] statements = body.getStatements();
       final LocalVariableAccessVisitor visitor = new LocalVariableAccessVisitor(variablesInPreviousBranches);
       for (final PsiStatement child : statements) {

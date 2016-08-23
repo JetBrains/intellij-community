@@ -25,8 +25,9 @@ import com.intellij.openapi.project.ProjectManager;
 public class WebEditorAppearanceConfigurable extends BeanConfigurable<WebEditorOptions> implements UnnamedConfigurable {
   public WebEditorAppearanceConfigurable() {
     super(WebEditorOptions.getInstance());
-    checkBox("showCssColorPreviewInGutter", "Show CSS color preview icon in gutter");
-    checkBox("showCssInlineColorPreview", "Show CSS color preview as background");
+    WebEditorOptions options = getInstance();
+    checkBox("Show CSS color preview icon in gutter", options::isShowCssColorPreviewInGutter, options::setShowCssColorPreviewInGutter);
+    checkBox("Show CSS color preview as background", options::isShowCssInlineColorPreview, options::setShowCssInlineColorPreview);
   }
 
   @Override

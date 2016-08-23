@@ -39,7 +39,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.BitUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
@@ -201,7 +200,7 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
       }
     });
 
-    final AsyncPromise<Url> result = new AsyncPromise<Url>();
+    final AsyncPromise<Url> result = new AsyncPromise<>();
     JBPopupFactory.getInstance()
       .createListPopupBuilder(list)
       .setTitle("Choose Url")

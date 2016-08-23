@@ -13,26 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+
+
+
 
 
 
 package org.jetbrains.intellij.build
 
+import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.PluginLayout
 
 import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
@@ -40,6 +29,7 @@ import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
 /**
  * @author nik
  */
+@CompileStatic
 class CommunityRepositoryModules {
   static List<String> PLATFORM_API_MODULES = [
     "analysis-api",
@@ -73,6 +63,7 @@ class CommunityRepositoryModules {
     "analysis-impl",
     "built-in-server",
     "core-impl",
+    "credential-store",
     "diff-impl",
     "dvcs-impl",
     "editor-ui-ex",
@@ -134,9 +125,6 @@ class CommunityRepositoryModules {
     },
     plugin("svn4idea") {
       withResource("lib/licenses", "lib/licenses")
-      withResource("lib/sqljetsrc.zip", "lib")
-      withResource("lib/svnkit-javahl16.zip", "lib")
-      withResource("lib/trileadsrc.zip", "lib")
     },
     plugin("cvs-plugin") {
       directoryName = "cvsIntegration"
@@ -148,12 +136,18 @@ class CommunityRepositoryModules {
     plugin("xpath") {
       withModule("xslt-rt", "rt/xslt-rt.jar")
     },
+    plugin("IntelliLang") {
+      withOptionalModule("IntelliLang-java", "IntelliLang.jar")
+      withOptionalModule("IntelliLang-xml", "IntelliLang.jar")
+      withOptionalModule("intellilang-jps-plugin", "intellilang-jps-plugin.jar")
+      doNotCreateSeparateJarForLocalizableResources()
+    },
     plugin("tasks-core") {
       directoryName = "tasks"
       withModule("tasks-api")
       withModule("jira")
       withOptionalModule("tasks-java")
-      doNotCreateSeperateJarForLocalizableResources()
+      doNotCreateSeparateJarForLocalizableResources()
     },
     plugin("terminal") {
       withResource("lib/jediterm.in", "lib")
@@ -174,6 +168,7 @@ class CommunityRepositoryModules {
       excludeFromModule("xslt-debugger-engine-impl", "serializer.jar")
       excludeFromModule("xslt-debugger-engine-impl", "xalan.jar")
     },
-    plugin("settings-repository")
+    plugin("settings-repository"),
+    plugin("rest")
   ]
 }

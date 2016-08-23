@@ -40,7 +40,7 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
   private static final ThreadLocal<HashMap<IRootContainer, MnemonicMap>> myContainerMnemonicMap = new ThreadLocal<HashMap<IRootContainer, MnemonicMap>>() {
     @Override
     protected HashMap<IRootContainer, MnemonicMap> initialValue() {
-      return new HashMap<IRootContainer, MnemonicMap>();
+      return new HashMap<>();
     }
   };
 
@@ -121,7 +121,7 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
   }
 
   private static MnemonicKey buildMnemonicKey(final SupportCode.TextWithMnemonic twm, final IComponent component) {
-    List<Integer> exclusiveContainerStack = new ArrayList<Integer>();
+    List<Integer> exclusiveContainerStack = new ArrayList<>();
     IContainer parent = component.getParentContainer();
     IComponent child = component;
     while(parent != null) {

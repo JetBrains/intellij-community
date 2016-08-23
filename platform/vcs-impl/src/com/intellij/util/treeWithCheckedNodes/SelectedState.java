@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.util.treeWithCheckedNodes;
 
 import com.intellij.util.Processor;
-import com.intellij.util.TreeNodeState;
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -44,8 +43,8 @@ public class SelectedState<T> {
   public SelectedState(final int selectedSize, final int queueSize) {
     mySelectedSize = selectedSize;
     assert queueSize > 0;
-    mySelected = new HashSet<T>();
-    myCache = new SLRUMap<T, TreeNodeState>(queueSize,queueSize);
+    mySelected = new HashSet<>();
+    myCache = new SLRUMap<>(queueSize, queueSize);
   }
 
   @Nullable

@@ -863,7 +863,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @Override
   public GrMethod createMethodFromText(String modifier, String name, @Nullable String type, String[] paramTypes, PsiElement context) {
     PsiType psiType;
-    List<PsiType> res = new ArrayList<PsiType>();
+    List<PsiType> res = new ArrayList<>();
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myProject);
 
     for (String paramType : paramTypes) {
@@ -1039,14 +1039,16 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       }
       builder.append("(){}");
       GrMethod method = createMethodFromText(builder.toString(), context);
-      if (returnType != null) {
-        method.getModifierList().setModifierProperty(GrModifier.DEF, false);
-      }
       PsiTypeParameterList typeParameterList = method.getTypeParameterList();
       assert typeParameterList != null;
       typeParameterList.getFirstChild().delete();
       typeParameterList.getFirstChild().delete();
       typeParameterList.getFirstChild().delete();
+
+      if (returnType != null) {
+        method.getModifierList().setModifierProperty(GrModifier.DEF, false);
+      }
+
       return method;
     }
     finally {

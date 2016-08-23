@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ import java.util.*;
 * @author nik
 */
 public class QuickAccessConfigurable extends JPanel implements SearchableConfigurable {
-  private Set<String> myModifiers = new HashSet<String>();
+  private Set<String> myModifiers = new HashSet<>();
   private boolean myQaEnabled;
   private int myDelay;
   private JCheckBox myEnabled;
@@ -133,7 +133,7 @@ public class QuickAccessConfigurable extends JPanel implements SearchableConfigu
   }
 
   private Set<String> getModifierTexts() {
-    HashSet<String> result = new HashSet<String>();
+    HashSet<String> result = new HashSet<>();
 
     for (Integer each : myQuickAccessSettings.getModiferCodes()) {
       if (each == KeyEvent.VK_SHIFT) {
@@ -253,10 +253,6 @@ public class QuickAccessConfigurable extends JPanel implements SearchableConfigu
   @NotNull
   public String getId() {
     return "QuickAccess";
-  }
-
-  public Runnable enableSearch(String option) {
-    return null;
   }
 
   public boolean isModified() {

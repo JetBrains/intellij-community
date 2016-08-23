@@ -22,7 +22,6 @@ import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
@@ -43,7 +42,7 @@ public class CommitToIcsDialog extends DialogWrapper {
     this.project = project;
     this.projectId = projectId;
 
-    browser = new ChangesBrowser(project, Collections.<ChangeList>emptyList(), projectFileChanges, null, true, false, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES, null);
+    browser = new ChangesBrowser(project, Collections.emptyList(), projectFileChanges, null, true, false, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES, null);
     browser.setChangesToDisplay(projectFileChanges);
 
     setTitle(IcsBundleKt.icsMessage("action.CommitToIcs.text"));
@@ -67,7 +66,7 @@ public class CommitToIcsDialog extends DialogWrapper {
     assert macroSubstitutor != null;
     IcsManager icsManager = IcsManagerKt.getIcsManager();
 
-    SmartList<String> addToIcs = new SmartList<String>();
+    SmartList<String> addToIcs = new SmartList<>();
     for (Change change : changes) {
       VirtualFile file = change.getVirtualFile();
       assert file != null;

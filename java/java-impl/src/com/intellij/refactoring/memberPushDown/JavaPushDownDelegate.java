@@ -144,7 +144,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
 
   @Override
   public void prepareToPush(PushDownData<MemberInfo, PsiMember> pushDownData) {
-    final Set<PsiMember> movedMembers = new HashSet<PsiMember>();
+    final Set<PsiMember> movedMembers = new HashSet<>();
     for (MemberInfoBase<? extends PsiElement> memberInfo : pushDownData.getMembersToMove()) {
       movedMembers.add((PsiMember)memberInfo.getMember());
     }
@@ -189,7 +189,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
     final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(sourceClass, targetClass, PsiSubstitutor.EMPTY);
     for (MemberInfoBase<? extends PsiElement> memberInfo : pushDownData.getMembersToMove()) {
       PsiMember member = (PsiMember)memberInfo.getMember();
-      final List<PsiReference> refsToRebind = new ArrayList<PsiReference>();
+      final List<PsiReference> refsToRebind = new ArrayList<>();
       final PsiModifierList list = member.getModifierList();
       LOG.assertTrue(list != null);
       if (list.hasModifierProperty(PsiModifier.STATIC)) {
@@ -264,6 +264,9 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
         }
       }
       else if (member instanceof PsiClass) {
+        if (sourceClass.isInterface() && !targetClass.isInterface()) {
+          PsiUtil.setModifierProperty(member, PsiModifier.PUBLIC, true);
+        }
         if (Boolean.FALSE.equals(memberInfo.getOverrides())) {
           final PsiClass psiClass = (PsiClass)memberInfo.getMember();
           PsiClassType classType = null;

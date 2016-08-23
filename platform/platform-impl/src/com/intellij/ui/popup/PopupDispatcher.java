@@ -19,12 +19,15 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.ui.popup.IdePopupEventDispatcher;
+import com.intellij.openapi.ui.popup.JBPopup;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.stream.Stream;
 
 public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, IdePopupEventDispatcher {
 
@@ -139,6 +142,12 @@ public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, Id
 
   public Component getComponent() {
     return ourShowingStep != null ? ourShowingStep.getContent() : null;
+  }
+
+  @Nullable
+  @Override
+  public Stream<JBPopup> getPopupStream() {
+    return Stream.of(ourActiveWizardRoot);
   }
 
   public boolean dispatch(AWTEvent event) {

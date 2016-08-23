@@ -339,7 +339,7 @@ public class CommanderPanel extends JPanel {
   private List<AbstractTreeNode> getSelectedNodes() {
     if (myBuilder == null) return Collections.emptyList();
     final int[] indices = myList.getSelectedIndices();
-    ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+    ArrayList<AbstractTreeNode> result = new ArrayList<>();
     for (int index : indices) {
       if (index >= myModel.getSize()) continue;
       Object elementAtIndex = myModel.getElementAt(index);
@@ -360,7 +360,7 @@ public class CommanderPanel extends JPanel {
     if (myBuilder == null) return PsiElement.EMPTY_ARRAY;
     final int[] indices = myList.getSelectedIndices();
 
-    final ArrayList<PsiElement> elements = new ArrayList<PsiElement>();
+    final ArrayList<PsiElement> elements = new ArrayList<>();
     for (int index : indices) {
       final PsiElement element = getSelectedElement(index);
       if (element != null) {
@@ -497,7 +497,7 @@ public class CommanderPanel extends JPanel {
     final int[] indices = myList.getSelectedIndices();
     if (indices == null || indices.length == 0) return null;
 
-    final ArrayList<Navigatable> elements = new ArrayList<Navigatable>();
+    final ArrayList<Navigatable> elements = new ArrayList<>();
     for (int index : indices) {
       final Object element = myModel.getElementAt(index);
       if (element instanceof AbstractTreeNode) {
@@ -513,7 +513,7 @@ public class CommanderPanel extends JPanel {
     if (elements == null || elements.length == 0) {
       return null;
     }
-    final List<PsiElement> validElements = new ArrayList<PsiElement>(elements.length);
+    final List<PsiElement> validElements = new ArrayList<>(elements.length);
     for (final PsiElement element : elements) {
       if (element.isValid()) {
         validElements.add(element);

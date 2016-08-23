@@ -83,7 +83,7 @@ public class ModifierChooser {
   }
 
   private static String[] addKeywords(PsiModifierList list, String[][] keywordSets) {
-    final List<String> ret = new ArrayList<String>();
+    final List<String> ret = new ArrayList<>();
     for (int i = 0; i < keywordSets.length; i++) {
       final String[] keywords = keywordSets[keywordSets.length - i - 1];
       boolean containModifierFlag = false;

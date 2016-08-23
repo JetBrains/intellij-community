@@ -43,7 +43,7 @@ public class StructLocalVariableTableAttribute extends StructGeneralAttribute {
 
     int len = data.readUnsignedShort();
     if (len > 0) {
-      mapVarNames = new HashMap<Integer, String>(len);
+      mapVarNames = new HashMap<>(len);
       for (int i = 0; i < len; i++) {
         data.discard(4);
         int nameIndex = data.readUnsignedShort();

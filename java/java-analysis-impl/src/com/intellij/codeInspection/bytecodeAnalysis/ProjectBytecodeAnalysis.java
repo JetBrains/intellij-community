@@ -270,9 +270,9 @@ public class ProjectBytecodeAnalysis {
   private ParameterAnnotations loadParameterAnnotations(@NotNull HKey notNullKey)
     throws EquationsLimitException {
 
-    Map<Bytes, List<HEquations>> equationsCache = new HashMap<Bytes, List<HEquations>>();
+    Map<Bytes, List<HEquations>> equationsCache = new HashMap<>();
 
-    final Solver notNullSolver = new Solver(new ELattice<Value>(Value.NotNull, Value.Top), Value.Top);
+    final Solver notNullSolver = new Solver(new ELattice<>(Value.NotNull, Value.Top), Value.Top);
     collectEquations(Collections.singletonList(notNullKey), notNullSolver, equationsCache);
 
     Map<HKey, Value> notNullSolutions = notNullSolver.solve();
@@ -280,7 +280,7 @@ public class ProjectBytecodeAnalysis {
     boolean notNull =
       (Value.NotNull == notNullSolutions.get(notNullKey)) || (Value.NotNull == notNullSolutions.get(notNullKey.mkUnstable()));
 
-    final Solver nullableSolver = new Solver(new ELattice<Value>(Value.Null, Value.Top), Value.Top);
+    final Solver nullableSolver = new Solver(new ELattice<>(Value.Null, Value.Top), Value.Top);
     final HKey nullableKey = new HKey(notNullKey.key, notNullKey.dirKey + 1, true, false);
     collectEquations(Collections.singletonList(nullableKey), nullableSolver, equationsCache);
     Map<HKey, Value> nullableSolutions = nullableSolver.solve();
@@ -293,9 +293,9 @@ public class ProjectBytecodeAnalysis {
   private MethodAnnotations loadMethodAnnotations(@NotNull PsiMethod owner, @NotNull HKey key, ArrayList<HKey> allKeys)
     throws EquationsLimitException {
     MethodAnnotations result = new MethodAnnotations();
-    Map<Bytes, List<HEquations>> equationsCache = new HashMap<Bytes, List<HEquations>>();
+    Map<Bytes, List<HEquations>> equationsCache = new HashMap<>();
 
-    final Solver outSolver = new Solver(new ELattice<Value>(Value.Bot, Value.Top), Value.Top);
+    final Solver outSolver = new Solver(new ELattice<>(Value.Bot, Value.Top), Value.Top);
     final PuritySolver puritySolver = new PuritySolver();
     collectEquations(allKeys, outSolver, equationsCache);
     collectPurityEquations(key.updateDirection(BytecodeAnalysisConverter.mkDirectionKey(Pure)), puritySolver, equationsCache);
@@ -309,7 +309,7 @@ public class ProjectBytecodeAnalysis {
 
 
     if (nullableMethod) {
-      final Solver nullableMethodSolver = new Solver(new ELattice<Value>(Value.Bot, Value.Null), Value.Bot);
+      final Solver nullableMethodSolver = new Solver(new ELattice<>(Value.Bot, Value.Null), Value.Bot);
       HKey nullableKey = key.updateDirection(BytecodeAnalysisConverter.mkDirectionKey(NullableOut));
       if (nullableMethodTransitivity) {
         collectEquations(Collections.singletonList(nullableKey), nullableMethodSolver, equationsCache);
@@ -328,8 +328,8 @@ public class ProjectBytecodeAnalysis {
   private void collectPurityEquations(HKey key, PuritySolver puritySolver, Map<Bytes, List<HEquations>> cache)
     throws EquationsLimitException {
     GlobalSearchScope librariesScope = ProjectScope.getLibrariesScope(myProject);
-    HashSet<HKey> queued = new HashSet<HKey>();
-    Stack<HKey> queue = new Stack<HKey>();
+    HashSet<HKey> queued = new HashSet<>();
+    Stack<HKey> queue = new Stack<>();
 
     queue.push(key);
     queued.add(key);
@@ -375,8 +375,8 @@ public class ProjectBytecodeAnalysis {
   private void collectEquations(List<HKey> keys, Solver solver, @NotNull Map<Bytes, List<HEquations>> cache) throws EquationsLimitException {
 
     GlobalSearchScope librariesScope = ProjectScope.getLibrariesScope(myProject);
-    HashSet<HKey> queued = new HashSet<HKey>();
-    Stack<HKey> queue = new Stack<HKey>();
+    HashSet<HKey> queued = new HashSet<>();
+    Stack<HKey> queue = new Stack<>();
 
     for (HKey key : keys) {
       queue.push(key);
@@ -461,13 +461,13 @@ public class ProjectBytecodeAnalysis {
 
 class MethodAnnotations {
   // @NotNull keys
-  final Set<HKey> notNulls = new HashSet<HKey>(1);
+  final Set<HKey> notNulls = new HashSet<>(1);
   // @Nullable keys
-  final Set<HKey> nullables = new HashSet<HKey>(1);
+  final Set<HKey> nullables = new HashSet<>(1);
   // @Contract(pure=true) part of contract
-  final Set<HKey> pures = new HashSet<HKey>(1);
+  final Set<HKey> pures = new HashSet<>(1);
   // @Contracts
-  final Map<HKey, String> contractsValues = new HashMap<HKey, String>();
+  final Map<HKey, String> contractsValues = new HashMap<>();
 }
 
 class ParameterAnnotations {

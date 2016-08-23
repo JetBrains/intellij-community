@@ -5,7 +5,7 @@ import java.util.*;
 import java.util.zip.ZipFile;
 
 public class Patch {
-  private List<PatchAction> myActions = new ArrayList<PatchAction>();
+  private List<PatchAction> myActions = new ArrayList<>();
   private boolean myIsBinary;
   private boolean myIsStrict;
   private boolean myIsNormalized;
@@ -50,7 +50,7 @@ public class Patch {
                                     digestFiles(newerDir, spec.getIgnoredFiles(), false, ui),
                                     spec.getCriticalFiles(), true);
 
-    List<PatchAction> tempActions = new ArrayList<PatchAction>();
+    List<PatchAction> tempActions = new ArrayList<>();
 
     // 'delete' actions before 'create' actions to prevent newly created files to be deleted if the names differ only on case.
     for (Map.Entry<String, Long> each : diff.filesToDelete.entrySet()) {
@@ -177,7 +177,7 @@ public class Patch {
 
   private static List<String> readList(DataInputStream in) throws IOException {
     int size = in.readInt();
-    List<String> list = new ArrayList<String>(size);
+    List<String> list = new ArrayList<>(size);
     for (int i = 0; i < size; i++) {
       list.add(in.readUTF());
     }
@@ -186,7 +186,7 @@ public class Patch {
 
   private static Map<String, String> readMap(DataInputStream in) throws IOException {
     int size = in.readInt();
-    Map<String, String> map = new HashMap<String, String>();
+    Map<String, String> map = new HashMap<>();
     for (int i = 0; i < size; i++) {
       String key = in.readUTF();
       map.put(key, in.readUTF());
@@ -195,7 +195,7 @@ public class Patch {
   }
 
   private List<PatchAction> readActions(DataInputStream in) throws IOException {
-    List<PatchAction> actions = new ArrayList<PatchAction>();
+    List<PatchAction> actions = new ArrayList<>();
     int size = in.readInt();
     while (size-- > 0) {
       int key = in.readInt();
@@ -238,7 +238,8 @@ public class Patch {
     final File toDir = toBaseDir(rootDir);
     boolean checkWarnings = true;
     while (checkWarnings) {
-      files = Utils.collectRelativePaths(toDir, myIsStrict);
+      //always collect files and folders to avoid cases such as IDEA-152249
+      files = Utils.collectRelativePaths(toDir, true);
       checkWarnings = false;
       for (String file : files) {
         String warning = myWarnings.get(file);
@@ -252,7 +253,7 @@ public class Patch {
       }
     }
 
-    final List<ValidationResult> result = new ArrayList<ValidationResult>();
+    final List<ValidationResult> result = new ArrayList<>();
 
     if (myIsStrict) {
       // In strict mode add delete actions for unknown files.
@@ -283,7 +284,7 @@ public class Patch {
                                  UpdaterUI ui) throws IOException, OperationCancelledException {
 
     final File toDir = toBaseDir(rootDir);
-    List<PatchAction> actionsToProcess = new ArrayList<PatchAction>();
+    List<PatchAction> actionsToProcess = new ArrayList<>();
     for (PatchAction each : myActions) {
       if (each.shouldApply(toDir, options)) actionsToProcess.add(each);
     }
@@ -296,7 +297,7 @@ public class Patch {
               }
             });
 
-    final List<PatchAction> appliedActions = new ArrayList<PatchAction>();
+    final List<PatchAction> appliedActions = new ArrayList<>();
     boolean shouldRevert = false;
     boolean cancelled = false;
     try {
@@ -374,9 +375,10 @@ public class Patch {
 
   public Map<String, Long> digestFiles(File dir, List<String> ignoredFiles, boolean normalize, UpdaterUI ui)
     throws IOException, OperationCancelledException {
-    Map<String, Long> result = new LinkedHashMap<String, Long>();
+    Map<String, Long> result = new LinkedHashMap<>();
 
-    LinkedHashSet<String> paths = Utils.collectRelativePaths(dir, myIsStrict);
+    //always collect files and folders to avoid cases such as IDEA-152249
+    LinkedHashSet<String> paths = Utils.collectRelativePaths(dir, true);
     for (String each : paths) {
       if (ignoredFiles.contains(each)) continue;
       ui.setStatus(each);

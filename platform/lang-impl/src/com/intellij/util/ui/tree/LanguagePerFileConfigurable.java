@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,11 +130,6 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
   @NotNull
   public String getId() {
     return getDisplayName();
-  }
-
-  @Override
-  public Runnable enableSearch(final String option) {
-    return null;
   }
 
   private class MyTreeTable extends AbstractFileTreeTable<T> {
@@ -295,7 +290,7 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
       if (showClear) {
         group.add(createChooseAction(myVirtualFile, null));
       }
-      final List<T> values = new ArrayList<T>(myMappings.getAvailableValues(myVirtualFile));
+      final List<T> values = new ArrayList<>(myMappings.getAvailableValues(myVirtualFile));
       Collections.sort(values, (o1, o2) -> visualize(o1).compareTo(visualize(o2)));
       for (T t : values) {
         if (myMappings.isSelectable(t)) {

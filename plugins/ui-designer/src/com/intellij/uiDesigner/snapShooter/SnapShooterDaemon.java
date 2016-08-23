@@ -42,10 +42,10 @@ import java.util.concurrent.BlockingQueue;
  * @author yole
  */
 public class SnapShooterDaemon implements Runnable {
-  private final Map<Integer, Component> myIdMap = new HashMap<Integer, Component>();
+  private final Map<Integer, Component> myIdMap = new HashMap<>();
   private int myNextId = 1;
-  private final BlockingQueue<String> myCommandQueue = new ArrayBlockingQueue<String>(20);
-  private final BlockingQueue<String> myResponseQueue = new ArrayBlockingQueue<String>(20);
+  private final BlockingQueue<String> myCommandQueue = new ArrayBlockingQueue<>(20);
+  private final BlockingQueue<String> myResponseQueue = new ArrayBlockingQueue<>(20);
   private final int myPort;
 
   public SnapShooterDaemon(final int port) {
@@ -120,7 +120,7 @@ public class SnapShooterDaemon implements Runnable {
   }
 
   private String[] getChildren(final int id) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     List<Component> children = getChildList(id);
     for(Component child: children) {
       SnapShotRemoteComponent rc = new SnapShotRemoteComponent(assignId(child),
@@ -147,7 +147,7 @@ public class SnapShooterDaemon implements Runnable {
   }
 
   private List<Component> getChildList(final int id) {
-    List<Component> children = new ArrayList<Component>();
+    List<Component> children = new ArrayList<>();
     if (id == 0) {
       children = getRootWindows();
     }
@@ -202,7 +202,7 @@ public class SnapShooterDaemon implements Runnable {
   }
 
   private static List<Component> getRootWindows() {
-    List<Component> result = new ArrayList<Component>();
+    List<Component> result = new ArrayList<>();
     for(Frame frame: Frame.getFrames()) {
       //noinspection HardCodedStringLiteral
       if (!frame.getClass().getName().endsWith("SwingUtilities$SharedOwnerFrame")) {

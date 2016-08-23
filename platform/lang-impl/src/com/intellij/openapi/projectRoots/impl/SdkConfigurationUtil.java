@@ -131,25 +131,10 @@ public class SdkConfigurationUtil {
                              final boolean silent,
                              @Nullable final SdkAdditionalData additionalData,
                              @Nullable final String customSdkSuggestedName) {
-    final List<Sdk> sdksList = Arrays.asList(allSdks);
-
     final ProjectJdkImpl sdk;
     try {
-      String sdkPath = sdkType.sdkPath(homeDir);
+      sdk = createSdk(allSdks, homeDir, sdkType, additionalData, customSdkSuggestedName);
 
-      final String sdkName = customSdkSuggestedName == null
-                             ? createUniqueSdkName(sdkType, sdkPath, sdksList)
-                             : createUniqueSdkName(customSdkSuggestedName, sdksList);
-      sdk = new ProjectJdkImpl(sdkName, sdkType);
-
-      if (additionalData != null) {
-        // additional initialization.
-        // E.g. some ruby sdks must be initialized before
-        // setupSdkPaths() method invocation
-        sdk.setSdkAdditionalData(additionalData);
-      }
-
-      sdk.setHomePath(sdkPath);
       sdkType.setupSdkPaths(sdk);
     }
     catch (Exception e) {
@@ -162,6 +147,32 @@ public class SdkConfigurationUtil {
       }
       return null;
     }
+    return sdk;
+  }
+
+  @NotNull
+  public static ProjectJdkImpl createSdk(@NotNull Sdk[] allSdks,
+                                          @NotNull VirtualFile homeDir,
+                                          SdkType sdkType,
+                                          @Nullable SdkAdditionalData additionalData, @Nullable String customSdkSuggestedName) {
+    final List<Sdk> sdksList = Arrays.asList(allSdks);
+
+    String sdkPath = sdkType.sdkPath(homeDir);
+
+    final String sdkName = customSdkSuggestedName == null
+                           ? createUniqueSdkName(sdkType, sdkPath, sdksList)
+                           : createUniqueSdkName(customSdkSuggestedName, sdksList);
+
+    ProjectJdkImpl sdk = new ProjectJdkImpl(sdkName, sdkType);
+
+    if (additionalData != null) {
+      // additional initialization.
+      // E.g. some ruby sdks must be initialized before
+      // setupSdkPaths() method invocation
+      sdk.setSdkAdditionalData(additionalData);
+    }
+
+    sdk.setHomePath(sdkPath);
     return sdk;
   }
 
@@ -251,7 +262,7 @@ public class SdkConfigurationUtil {
 
   @NotNull
   public static String createUniqueSdkName(@NotNull String suggestedName, @NotNull Collection<Sdk> sdks) {
-    final Set<String> names = new HashSet<String>();
+    final Set<String> names = new HashSet<>();
     for (Sdk jdk : sdks) {
       names.add(jdk.getName());
     }
@@ -293,7 +304,7 @@ public class SdkConfigurationUtil {
 
   @NotNull
   public static List<String> filterExistingPaths(@NotNull SdkType sdkType, Collection<String> sdkHomes, final Sdk[] sdks) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     for (String sdkHome : sdkHomes) {
       if (findByPath(sdkType, sdks, sdkHome) == null) {
         result.add(sdkHome);

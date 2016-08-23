@@ -54,7 +54,7 @@ public class SvnDiffEditor implements ISVNEditor {
     mySource = source;
     myTarget = target;
     myTargetRevision = targetRevision;
-    myChanges = new HashMap<String, Change>();
+    myChanges = new HashMap<>();
     myReverse = reverse;
   }
 
@@ -63,7 +63,7 @@ public class SvnDiffEditor implements ISVNEditor {
     mySourceRoot = sourceRoot;
     myTarget = target;
     myTargetRevision = targetRevision;
-    myChanges = new HashMap<String, Change>();
+    myChanges = new HashMap<>();
     myReverse = reverse;
   }
 

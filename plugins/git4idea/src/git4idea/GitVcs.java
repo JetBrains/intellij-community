@@ -300,7 +300,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     if (myRepositoryForAnnotationsListener == null) {
       myRepositoryForAnnotationsListener = new GitRepositoryForAnnotationsListener(myProject);
     }
-    ServiceManager.getService(myProject, GitUserRegistry.class).activate();
+    GitUserRegistry.getInstance(myProject).activate();
   }
 
   private void checkExecutableAndVersion() {
@@ -464,7 +464,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public <S> List<S> filterUniqueRoots(final List<S> in, final Convertor<S, VirtualFile> convertor) {
-    Collections.sort(in, new ComparatorDelegate<S, VirtualFile>(convertor, FilePathComparator.getInstance()));
+    Collections.sort(in, new ComparatorDelegate<>(convertor, FilePathComparator.getInstance()));
 
     for (int i = 1; i < in.size(); i++) {
       final S sChild = in.get(i);

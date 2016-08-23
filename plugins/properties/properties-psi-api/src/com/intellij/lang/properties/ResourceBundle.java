@@ -52,5 +52,5 @@ public abstract class ResourceBundle {
   @NotNull
   public Project getProject() {
     return getDefaultPropertiesFile().getProject();
-  };
+  }
 }

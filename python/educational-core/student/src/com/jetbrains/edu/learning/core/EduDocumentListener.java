@@ -6,8 +6,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.util.TextRange;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.learning.courseFormat.Step;
-import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 
 import java.util.ArrayList;
@@ -20,7 +18,7 @@ import java.util.List;
 public class EduDocumentListener extends DocumentAdapter {
   private final TaskFile myTaskFile;
   private final boolean myTrackLength;
-  private final List<AnswerPlaceholderWrapper> myAnswerPlaceholders = new ArrayList<AnswerPlaceholderWrapper>();
+  private final List<AnswerPlaceholderWrapper> myAnswerPlaceholders = new ArrayList<>();
 
 
   public EduDocumentListener(TaskFile taskFile) {
@@ -40,34 +38,12 @@ public class EduDocumentListener extends DocumentAdapter {
     }
     myTaskFile.setHighlightErrors(true);
     myAnswerPlaceholders.clear();
-    for (AnswerPlaceholder answerPlaceholder : getAllPlaceholders()) {
+    for (AnswerPlaceholder answerPlaceholder : myTaskFile.getAnswerPlaceholders()) {
       int twStart = answerPlaceholder.getOffset();
       int length = answerPlaceholder.getRealLength();
       int twEnd = twStart + length;
       myAnswerPlaceholders.add(new AnswerPlaceholderWrapper(answerPlaceholder, twStart, twEnd));
     }
-  }
-
-  private List<AnswerPlaceholder> getAllPlaceholders() {
-    Task task = myTaskFile.getTask();
-    if (task == null || task.getAdditionalSteps().isEmpty()) {
-      return myTaskFile.getAnswerPlaceholders();
-    }
-    List<AnswerPlaceholder> placeholders = new ArrayList<>();
-    String name = myTaskFile.name;
-    TaskFile initialStepTaskFile = task.getTaskFile(name);
-    if (initialStepTaskFile == null) {
-      return placeholders;
-    }
-    placeholders.addAll(initialStepTaskFile.getAnswerPlaceholders());
-    for (Step step : task.getAdditionalSteps()) {
-      TaskFile stepTaskFile = step.getTaskFiles().get(name);
-      if (stepTaskFile == null) {
-        continue;
-      }
-      placeholders.addAll(stepTaskFile.getAnswerPlaceholders());
-    }
-    return placeholders;
   }
 
   @Override
@@ -97,7 +73,7 @@ public class EduDocumentListener extends DocumentAdapter {
           if (answerPlaceholder.getUseLength()) {
             answerPlaceholder.setLength(length);
           } else {
-            answerPlaceholder.setPossibleAnswer(document.getText(TextRange.create(twStart, twStart + answerPlaceholder.getRealLength())));
+            answerPlaceholder.setPossibleAnswer(document.getText(TextRange.create(twStart, twStart + length)));
           }
         }
       }

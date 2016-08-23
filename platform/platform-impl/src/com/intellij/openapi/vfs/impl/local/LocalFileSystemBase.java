@@ -55,7 +55,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   private static final FileAttributes FAKE_ROOT_ATTRIBUTES =
     new FileAttributes(true, false, false, false, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, false);
 
-  private final List<LocalFileOperationsHandler> myHandlers = new ArrayList<LocalFileOperationsHandler>();
+  private final List<LocalFileOperationsHandler> myHandlers = new ArrayList<>();
 
   @Override
   @Nullable
@@ -243,7 +243,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (fireCommonRefreshSession) manager.fireBeforeRefreshStart(false);
 
     try {
-      List<VirtualFile> filesToRefresh = new ArrayList<VirtualFile>();
+      List<VirtualFile> filesToRefresh = new ArrayList<>();
 
       for (File file : files) {
         final VirtualFile virtualFile = refreshAndFindFileByIoFile(file);

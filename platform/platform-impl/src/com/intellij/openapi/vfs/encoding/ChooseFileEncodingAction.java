@@ -117,7 +117,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
                                                       Charset alreadySelected,
                                                       @NotNull Function<Charset, String> charsetFilter) {
     DefaultActionGroup group = new DefaultActionGroup();
-    List<Charset> favorites = new ArrayList<Charset>(EncodingManager.getInstance().getFavorites());
+    List<Charset> favorites = new ArrayList<>(EncodingManager.getInstance().getFavorites());
     Collections.sort(favorites);
     Charset current = myVirtualFile == null ? null : myVirtualFile.getCharset();
     favorites.remove(current);

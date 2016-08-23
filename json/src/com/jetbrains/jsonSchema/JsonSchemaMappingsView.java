@@ -67,7 +67,7 @@ public class JsonSchemaMappingsView implements Disposable {
 
   private void createUI(final Project project) {
     myProject = project;
-    myTableView = new TableView<JsonSchemaMappingsConfigurationBase.Item>();
+    myTableView = new TableView<>();
     myTableView.getTableHeader().setVisible(false);
     myDecorator = ToolbarDecorator.createDecorator(myTableView);
     myDecorator
@@ -96,7 +96,7 @@ public class JsonSchemaMappingsView implements Disposable {
     myError = SwingHelper.createHtmlLabel("Warning: conflicting mappings. <a href=\"#\">Show details</a>", null, s -> {
       final BalloonBuilder builder = JBPopupFactory.getInstance().
         createHtmlTextBalloonBuilder(myErrorText, UIUtil.getBalloonWarningIcon(), MessageType.WARNING.getPopupBackground(), null);
-      builder.setDisposable(JsonSchemaMappingsView.this);
+      builder.setDisposable(this);
       builder.setHideOnClickOutside(true);
       builder.setCloseButtonEnabled(true);
       builder.createBalloon().showInCenterOf(myError);
@@ -155,7 +155,7 @@ public class JsonSchemaMappingsView implements Disposable {
     myInitialized = true;
     mySchemaField.setText(schemaFilePath);
     myTableView.setModelAndUpdateColumns(
-      new ListTableModel<JsonSchemaMappingsConfigurationBase.Item>(createColumns(), new ArrayList<JsonSchemaMappingsConfigurationBase.Item>(data)));
+      new ListTableModel<>(createColumns(), new ArrayList<>(data)));
   }
 
   public boolean isInitialized() {

@@ -147,8 +147,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(true);
   private int myLinePaintersWidth;
 
+  private static final Cursor EMPTY_CURSOR;
+
   static {
     ComplementaryFontsRegistry.getFontAbleToDisplay(' ', 0, Font.PLAIN, UIManager.getFont("Label.font").getFamily()); // load costly font info
+
+    Cursor emptyCursor = null;
+    try {
+      emptyCursor = Toolkit.getDefaultToolkit().createCustomCursor(UIUtil.createImage(1, 1, BufferedImage.TYPE_INT_ARGB),
+                                                                    new Point(),
+                                                                    "Empty cursor");
+    }
+    catch (Exception e){
+      LOG.warn("Couldn't create an empty cursor", e);
+    }
+    EMPTY_CURSOR = emptyCursor;
   }
 
   private final CommandProcessor myCommandProcessor;
@@ -202,6 +215,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull private final ScrollingModelImpl myScrollingModel;
   @NotNull private final CaretModelImpl myCaretModel;
   @NotNull private final SoftWrapModelImpl mySoftWrapModel;
+  @NotNull private final InlayModelImpl myInlayModel;
 
   @NotNull private static final RepaintCursorCommand ourCaretBlinkingCommand = new RepaintCursorCommand();
   private DocumentBulkUpdateListener myBulkUpdateListener;
@@ -230,7 +244,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private static final int CACHED_CHARS_BUFFER_SIZE = 300;
 
-  private final     ArrayList<CachedFontContent> myFontCache       = new ArrayList<CachedFontContent>();
+  private final     ArrayList<CachedFontContent> myFontCache       = new ArrayList<>();
   @Nullable private FontInfo                     myCurrentFontType;
 
   private final EditorSizeContainer mySizeContainer = new EditorSizeContainer();
@@ -360,6 +374,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myFoldingModel = new FoldingModelImpl(this);
     myCaretModel = new CaretModelImpl(this);
     myScrollingModel = new ScrollingModelImpl(this);
+    myInlayModel = new InlayModelImpl(this);
+    Disposer.register(myCaretModel, myInlayModel);
     mySoftWrapModel = new SoftWrapModelImpl(this);
     if (!myUseNewRendering) mySizeContainer.reset();
 
@@ -446,12 +462,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myDocument.addDocumentListener(myFoldingModel, myCaretModel);
     myDocument.addDocumentListener(myCaretModel, myCaretModel);
-    myDocument.addDocumentListener(mySelectionModel, myCaretModel);
 
     myDocument.addDocumentListener(new EditorDocumentAdapter(), myCaretModel);
     myDocument.addDocumentListener(mySoftWrapModel, myCaretModel);
 
     myFoldingModel.addListener(mySoftWrapModel, myCaretModel);
+
+    myInlayModel.addListener(myCaretModel, myCaretModel);
 
     myIndentsModel = new IndentsModelImpl(this);
     myCaretModel.addCaretListener(new CaretListener() {
@@ -574,6 +591,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     else {
       myView = null;
     }
+    myInlayModel.addListener(new InlayModel.SimpleAdapter() {
+      @Override
+      public void onUpdated(@NotNull Inlay inlay) {
+        if (myDocument.isInEventsHandling() || myDocument.isInBulkUpdate()) return;
+        validateSize();
+        repaint(inlay.getOffset(), inlay.getOffset(), false);
+      }
+    }, myCaretModel);
 
     if (UISettings.getInstance().PRESENTATION_MODE) {
       setFontSize(UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE);
@@ -769,6 +794,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return mySoftWrapModel;
   }
 
+  @NotNull
+  @Override
+  public InlayModelImpl getInlayModel() {
+    return myInlayModel;
+  }
+
   @Override
   @NotNull
   public EditorSettings getSettings() {
@@ -812,6 +843,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       mySizeContainer.reset();
     }
     myFoldingModel.rebuild();
+    myInlayModel.reinitSettings();
 
     if (softWrapsUsedBefore ^ mySoftWrapModel.isSoftWrappingEnabled()) {
       if (!myUseNewRendering) {
@@ -855,7 +887,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private void initTabPainter() {
     myTabPainter = new ArrowPainter(
       ColorProvider.byColorsScheme(myScheme, EditorColors.WHITESPACES_COLOR),
-      new Computable.PredefinedValueComputable<Integer>(EditorUtil.getSpaceWidth(Font.PLAIN, this)),
+      new Computable.PredefinedValueComputable<>(EditorUtil.getSpaceWidth(Font.PLAIN, this)),
       () -> getCharHeight()
     );
   }
@@ -1981,6 +2013,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         (getCaretModel().getOffset() < e.getOffset() || getCaretModel().getOffset() > e.getOffset() + e.getNewLength())) {
       restoreCaretRelativePosition();
     }
+
+    if (EMPTY_CURSOR != null) {
+      myEditorComponent.setCursor(EMPTY_CURSOR);
+    }
   }
 
   private void saveCaretRelativePosition() {
@@ -2215,7 +2251,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myMarkupModel.processRangeHighlightersOverlappingWith(clipStartOffset, clipEndOffset, highlighter -> {
       final CustomHighlighterRenderer customRenderer = highlighter.getCustomRenderer();
       if (customRenderer != null && clipStartOffset < highlighter.getEndOffset() && highlighter.getStartOffset() < clipEndOffset) {
-        customRenderer.paint(EditorImpl.this, highlighter, g);
+        customRenderer.paint(this, highlighter, g);
       }
       return true;
     });
@@ -3932,7 +3968,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    * @return number of visible logical lines. Generally, that is a total logical lines number minus number of folded lines
    */
   private int getVisibleLogicalLinesCount() {
-    return getDocument().getLineCount() - myFoldingModel.getFoldedLinesCountBefore(getDocument().getTextLength() + 1);
+    return getDocument().getLineCount() - myFoldingModel.getTotalNumberOfFoldedLines();
   }
 
   @Override
@@ -4575,7 +4611,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void createSelectionTill(@NotNull LogicalPosition targetPosition) {
-    List<CaretState> caretStates = new ArrayList<CaretState>(myCaretStateBeforeLastPress);
+    List<CaretState> caretStates = new ArrayList<>(myCaretStateBeforeLastPress);
     if (myRectangularSelectionInProgress) {
       caretStates.addAll(EditorModificationUtil.calcBlockSelectionState(this, myLastMousePressedLocation, targetPosition));
     }
@@ -4704,13 +4740,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void setCursorPosition() {
-    final List<CaretRectangle> caretPoints = new ArrayList<CaretRectangle>();
+    final List<CaretRectangle> caretPoints = new ArrayList<>();
     for (Caret caret : getCaretModel().getAllCarets()) {
       boolean isRtl = caret.isAtRtlLocation();
       VisualPosition caretPosition = caret.getVisualPosition();
-      Point pos1 = visualPositionToXY(caretPosition);
-      Point pos2 = visualPositionToXY(new VisualPosition(caretPosition.line, Math.max(0, caretPosition.column + (isRtl ? -1 : 1))));
-      caretPoints.add(new CaretRectangle(pos1, Math.abs(pos2.x - pos1.x), caret, isRtl));
+      Point pos1 = visualPositionToXY(caretPosition.leanRight(!isRtl));
+      Point pos2 = visualPositionToXY(new VisualPosition(caretPosition.line, Math.max(0, caretPosition.column + (isRtl ? -1 : 1)), isRtl));
+      int width = Math.abs(pos2.x - pos1.x);
+      if (!isRtl && myInlayModel.hasInlineElementAt(caretPosition)) {
+        width = Math.min(width, myView.getPlainSpaceWidth());
+      }
+      caretPoints.add(new CaretRectangle(pos1, width, caret, isRtl));
     }
     myCaretCursor.setPositions(caretPoints.toArray(new CaretRectangle[caretPoints.size()]));
   }
@@ -6038,7 +6078,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             mySelectionModel.setSelection(caretOffset, caretOffset);
           }
           else {
-            if (!e.isPopupTrigger()
+            if (e.getButton() == MouseEvent.BUTTON1
                 && (eventArea == EditorMouseEventArea.EDITING_AREA || eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA)
                 && (!toggleCaret || lastPressCreatedCaret)) {
               switch (e.getClickCount()) {
@@ -6284,7 +6324,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       updatePreferences(myConsoleFontPreferences, consoleFontName, consoleFontSize,
                         delegate == null ? null : delegate.getConsoleFontPreferences());
 
-      myFontsMap = new EnumMap<EditorFontType, Font>(EditorFontType.class);
+      myFontsMap = new EnumMap<>(EditorFontType.class);
       myFontsMap.put(EditorFontType.PLAIN, new Font(editorFontName, Font.PLAIN, editorFontSize));
       myFontsMap.put(EditorFontType.BOLD, new Font(editorFontName, Font.BOLD, editorFontSize));
       myFontsMap.put(EditorFontType.ITALIC, new Font(editorFontName, Font.ITALIC, editorFontSize));

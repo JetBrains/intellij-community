@@ -1458,6 +1458,26 @@ public final class JavacRemoteProto {
        * <code>repeated .org.jetbrains.javac.Message.Request.OutputGroup output = 7;</code>
        */
       int getOutputCount();
+
+      // repeated string module_path = 8;
+      /**
+       * <code>repeated string module_path = 8;</code>
+       */
+      java.util.List<java.lang.String>
+      getModulePathList();
+      /**
+       * <code>repeated string module_path = 8;</code>
+       */
+      int getModulePathCount();
+      /**
+       * <code>repeated string module_path = 8;</code>
+       */
+      java.lang.String getModulePath(int index);
+      /**
+       * <code>repeated string module_path = 8;</code>
+       */
+      com.google.protobuf.ByteString
+          getModulePathBytes(int index);
     }
     /**
      * Protobuf type {@code org.jetbrains.javac.Message.Request}
@@ -1559,6 +1579,14 @@ public final class JavacRemoteProto {
                 output_.add(input.readMessage(org.jetbrains.jps.javac.JavacRemoteProto.Message.Request.OutputGroup.PARSER, extensionRegistry));
                 break;
               }
+              case 66: {
+                if (!((mutable_bitField0_ & 0x00000080) == 0x00000080)) {
+                  modulePath_ = new com.google.protobuf.LazyStringArrayList();
+                  mutable_bitField0_ |= 0x00000080;
+                }
+                modulePath_.add(input.readBytes());
+                break;
+              }
             }
           }
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -1584,6 +1612,9 @@ public final class JavacRemoteProto {
           }
           if (((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
             output_ = java.util.Collections.unmodifiableList(output_);
+          }
+          if (((mutable_bitField0_ & 0x00000080) == 0x00000080)) {
+            modulePath_ = new com.google.protobuf.UnmodifiableLazyStringList(modulePath_);
           }
           makeExtensionsImmutable();
         }
@@ -2472,6 +2503,36 @@ public final class JavacRemoteProto {
         return output_.get(index);
       }
 
+      // repeated string module_path = 8;
+      public static final int MODULE_PATH_FIELD_NUMBER = 8;
+      private com.google.protobuf.LazyStringList modulePath_;
+      /**
+       * <code>repeated string module_path = 8;</code>
+       */
+      public java.util.List<java.lang.String>
+          getModulePathList() {
+        return modulePath_;
+      }
+      /**
+       * <code>repeated string module_path = 8;</code>
+       */
+      public int getModulePathCount() {
+        return modulePath_.size();
+      }
+      /**
+       * <code>repeated string module_path = 8;</code>
+       */
+      public java.lang.String getModulePath(int index) {
+        return modulePath_.get(index);
+      }
+      /**
+       * <code>repeated string module_path = 8;</code>
+       */
+      public com.google.protobuf.ByteString
+          getModulePathBytes(int index) {
+        return modulePath_.getByteString(index);
+      }
+
       private void initFields() {
         requestType_ = org.jetbrains.jps.javac.JavacRemoteProto.Message.Request.Type.COMPILE;
         option_ = com.google.protobuf.LazyStringArrayList.EMPTY;
@@ -2480,6 +2541,7 @@ public final class JavacRemoteProto {
         classpath_ = com.google.protobuf.LazyStringArrayList.EMPTY;
         sourcepath_ = com.google.protobuf.LazyStringArrayList.EMPTY;
         output_ = java.util.Collections.emptyList();
+        modulePath_ = com.google.protobuf.LazyStringArrayList.EMPTY;
       }
       private byte memoizedIsInitialized = -1;
       public final boolean isInitialized() {
@@ -2523,6 +2585,9 @@ public final class JavacRemoteProto {
         }
         for (int i = 0; i < output_.size(); i++) {
           output.writeMessage(7, output_.get(i));
+        }
+        for (int i = 0; i < modulePath_.size(); i++) {
+          output.writeBytes(8, modulePath_.getByteString(i));
         }
       }
 
@@ -2584,6 +2649,15 @@ public final class JavacRemoteProto {
         for (int i = 0; i < output_.size(); i++) {
           size += com.google.protobuf.CodedOutputStream
             .computeMessageSize(7, output_.get(i));
+        }
+        {
+          int dataSize = 0;
+          for (int i = 0; i < modulePath_.size(); i++) {
+            dataSize += com.google.protobuf.CodedOutputStream
+              .computeBytesSizeNoTag(modulePath_.getByteString(i));
+          }
+          size += dataSize;
+          size += 1 * getModulePathList().size();
         }
         memoizedSerializedSize = size;
         return size;
@@ -2690,6 +2764,8 @@ public final class JavacRemoteProto {
           bitField0_ = (bitField0_ & ~0x00000020);
           output_ = java.util.Collections.emptyList();
           bitField0_ = (bitField0_ & ~0x00000040);
+          modulePath_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+          bitField0_ = (bitField0_ & ~0x00000080);
           return this;
         }
 
@@ -2752,6 +2828,12 @@ public final class JavacRemoteProto {
             bitField0_ = (bitField0_ & ~0x00000040);
           }
           result.output_ = output_;
+          if (((bitField0_ & 0x00000080) == 0x00000080)) {
+            modulePath_ = new com.google.protobuf.UnmodifiableLazyStringList(
+                modulePath_);
+            bitField0_ = (bitField0_ & ~0x00000080);
+          }
+          result.modulePath_ = modulePath_;
           result.bitField0_ = to_bitField0_;
           return result;
         }
@@ -2818,6 +2900,16 @@ public final class JavacRemoteProto {
             } else {
               ensureOutputIsMutable();
               output_.addAll(other.output_);
+            }
+            
+          }
+          if (!other.modulePath_.isEmpty()) {
+            if (modulePath_.isEmpty()) {
+              modulePath_ = other.modulePath_;
+              bitField0_ = (bitField0_ & ~0x00000080);
+            } else {
+              ensureModulePathIsMutable();
+              modulePath_.addAll(other.modulePath_);
             }
             
           }
@@ -3480,6 +3572,99 @@ public final class JavacRemoteProto {
           ensureOutputIsMutable();
           output_.remove(index);
 
+          return this;
+        }
+
+        // repeated string module_path = 8;
+        private com.google.protobuf.LazyStringList modulePath_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        private void ensureModulePathIsMutable() {
+          if (!((bitField0_ & 0x00000080) == 0x00000080)) {
+            modulePath_ = new com.google.protobuf.LazyStringArrayList(modulePath_);
+            bitField0_ |= 0x00000080;
+           }
+        }
+        /**
+         * <code>repeated string module_path = 8;</code>
+         */
+        public java.util.List<java.lang.String>
+            getModulePathList() {
+          return java.util.Collections.unmodifiableList(modulePath_);
+        }
+        /**
+         * <code>repeated string module_path = 8;</code>
+         */
+        public int getModulePathCount() {
+          return modulePath_.size();
+        }
+        /**
+         * <code>repeated string module_path = 8;</code>
+         */
+        public java.lang.String getModulePath(int index) {
+          return modulePath_.get(index);
+        }
+        /**
+         * <code>repeated string module_path = 8;</code>
+         */
+        public com.google.protobuf.ByteString
+            getModulePathBytes(int index) {
+          return modulePath_.getByteString(index);
+        }
+        /**
+         * <code>repeated string module_path = 8;</code>
+         */
+        public Builder setModulePath(
+            int index, java.lang.String value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureModulePathIsMutable();
+          modulePath_.set(index, value);
+          
+          return this;
+        }
+        /**
+         * <code>repeated string module_path = 8;</code>
+         */
+        public Builder addModulePath(
+            java.lang.String value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureModulePathIsMutable();
+          modulePath_.add(value);
+          
+          return this;
+        }
+        /**
+         * <code>repeated string module_path = 8;</code>
+         */
+        public Builder addAllModulePath(
+            java.lang.Iterable<java.lang.String> values) {
+          ensureModulePathIsMutable();
+          super.addAll(values, modulePath_);
+          
+          return this;
+        }
+        /**
+         * <code>repeated string module_path = 8;</code>
+         */
+        public Builder clearModulePath() {
+          modulePath_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+          bitField0_ = (bitField0_ & ~0x00000080);
+          
+          return this;
+        }
+        /**
+         * <code>repeated string module_path = 8;</code>
+         */
+        public Builder addModulePathBytes(
+            com.google.protobuf.ByteString value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureModulePathIsMutable();
+          modulePath_.add(value);
+          
           return this;
         }
 

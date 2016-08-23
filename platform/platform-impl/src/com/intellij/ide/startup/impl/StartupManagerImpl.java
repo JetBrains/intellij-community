@@ -210,7 +210,7 @@ public class StartupManagerImpl extends StartupManagerEx {
       if (!app.isHeadlessEnvironment()) {
         final long sessionId = VirtualFileManager.getInstance().asyncRefresh(null);
         final MessageBusConnection connection = app.getMessageBus().connect();
-        connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener.Adapter() {
+        connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
           @Override
           public void afterProjectClosed(@NotNull Project project) {
             if (project != myProject) return;
@@ -281,7 +281,7 @@ public class StartupManagerImpl extends StartupManagerEx {
 
       Collection<String> manualWatchRoots = watcher.getManualWatchRoots();
       if (!manualWatchRoots.isEmpty()) {
-        List<String> nonWatched = new SmartList<String>();
+        List<String> nonWatched = new SmartList<>();
         for (VirtualFile root : roots) {
           if (!(root.getFileSystem() instanceof LocalFileSystem)) continue;
           String rootPath = root.getPath();

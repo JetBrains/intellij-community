@@ -191,7 +191,7 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
     
     @NotNull
     public ResolveResult[] resolve(@NotNull AntDomPropertyReference antDomPropertyReference, boolean incompleteCode) {
-      final List<ResolveResult> result = new ArrayList<ResolveResult>();
+      final List<ResolveResult> result = new ArrayList<>();
       final AntDomProject project = antDomPropertyReference.myInvocationContextElement.getParentOfType(AntDomProject.class, true);
       if (project != null) {
         final AntDomProject contextAntProject = project.getContextAntProject();

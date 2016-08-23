@@ -62,7 +62,7 @@ public class ProjectRunConfigurationManager implements PersistentStateComponent<
       myUnloadedElements.clear();
     }
 
-    Set<String> existing = new THashSet<String>();
+    Set<String> existing = new THashSet<>();
     for (Iterator<Element> iterator = state.getChildren().iterator(); iterator.hasNext(); ) {
       Element child = iterator.next();
       RunnerAndConfigurationSettings configuration = myManager.loadConfiguration(child, true);
@@ -71,7 +71,7 @@ public class ProjectRunConfigurationManager implements PersistentStateComponent<
       }
       else if (child.getName().equals(RunManagerImpl.CONFIGURATION)) {
         if (myUnloadedElements == null) {
-          myUnloadedElements = new SmartList<Element>();
+          myUnloadedElements = new SmartList<>();
         }
         iterator.remove();
         myUnloadedElements.add(child);

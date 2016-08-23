@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
                                 Type returnType,
                                 int access,
                                 String name) {
-    super(Opcodes.ASM5, methodvisitor);
+    super(Opcodes.API_VERSION, methodvisitor);
     myInstrumenter = instrumenter;
     myArgTypes = argTypes;
     myReturnType = returnType;
@@ -216,7 +216,7 @@ class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
     private final PatternValue myPatternValue;
 
     public MyAnnotationVisitor(AnnotationVisitor annotationvisitor, PatternValue v) {
-      super(Opcodes.ASM5);
+      super(Opcodes.API_VERSION);
       av = annotationvisitor;
       myPatternValue = v;
     }

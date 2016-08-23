@@ -242,7 +242,7 @@ public abstract class AbstractListBuilder {
       return nodes.get(0);
     }
     else {
-      return performDeepSearch(nodes.toArray(), element, new THashSet<AbstractTreeNode>());
+      return performDeepSearch(nodes.toArray(), element, new THashSet<>());
     }
   }
 
@@ -333,12 +333,12 @@ public abstract class AbstractListBuilder {
     }
 
     final Object[] children = getChildren(parentDescriptor);
-    final HashMap<Object,Integer> elementToIndexMap = new HashMap<Object, Integer>();
+    final HashMap<Object,Integer> elementToIndexMap = new HashMap<>();
     for (int i = 0; i < children.length; i++) {
       elementToIndexMap.put(children[i], Integer.valueOf(i));
     }
 
-    final List<NodeDescriptor> resultDescriptors = new ArrayList<NodeDescriptor>();
+    final List<NodeDescriptor> resultDescriptors = new ArrayList<>();
     final Object[] listChildren = myModel.toArray();
     for (final Object child : listChildren) {
       if (!(child instanceof NodeDescriptor)) {
@@ -401,7 +401,7 @@ public abstract class AbstractListBuilder {
 
   private SelectionInfo storeSelection() {
     final ListSelectionModel selectionModel = myList.getSelectionModel();
-    final ArrayList<Object> selectedObjects = new ArrayList<Object>();
+    final ArrayList<Object> selectedObjects = new ArrayList<>();
     final int[] selectedIndices = myList.getSelectedIndices();
     final int leadSelectionIndex = selectionModel.getLeadSelectionIndex();
     Object leadSelection = null;

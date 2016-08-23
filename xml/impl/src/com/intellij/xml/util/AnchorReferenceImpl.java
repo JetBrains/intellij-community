@@ -242,7 +242,7 @@ public class AnchorReferenceImpl implements AnchorReference, PsiReference, Empty
 
     @Override
     public Result<Map<String, XmlTag>> compute() {
-      final Map<String,XmlTag> resultMap = new HashMap<String, XmlTag>();
+      final Map<String,XmlTag> resultMap = new HashMap<>();
       XmlDocument document = HtmlUtil.getRealXmlDocument(myFile.getDocument());
       final XmlTag rootTag = document != null ? document.getRootTag():null;
 
@@ -261,7 +261,7 @@ public class AnchorReferenceImpl implements AnchorReference, PsiReference, Empty
           }
         );
       }
-      return new Result<Map<String, XmlTag>>(resultMap, myFile);
+      return new Result<>(resultMap, myFile);
     }
   }
 }

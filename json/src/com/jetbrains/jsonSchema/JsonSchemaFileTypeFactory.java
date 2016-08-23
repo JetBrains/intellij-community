@@ -25,6 +25,6 @@ import org.jetbrains.annotations.NotNull;
 public class JsonSchemaFileTypeFactory extends FileTypeFactory {
   @Override
   public void createFileTypes(@NotNull FileTypeConsumer consumer) {
-    consumer.consume(JsonSchemaFileType.INSTANCE);
+    consumer.consume(JsonSchemaFileType.INSTANCE, (String) null);
   }
 }

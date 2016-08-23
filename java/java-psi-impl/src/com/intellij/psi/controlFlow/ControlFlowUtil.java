@@ -20,9 +20,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.IntArrayList;
+import com.intellij.util.containers.IntStack;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -1056,12 +1058,13 @@ public class ControlFlowUtil {
     internalDepthFirstSearch(flow.getInstructions(), visitor, startOffset, endOffset);
   }
 
-  private static void internalDepthFirstSearch(final List<Instruction> instructions, final InstructionClientVisitor clientVisitor, int offset, int endOffset) {
-    final IntArrayList oldOffsets = new IntArrayList(instructions.size() / 2);
-    final IntArrayList newOffsets = new IntArrayList(instructions.size() / 2);
+  private static void internalDepthFirstSearch(final List<Instruction> instructions,
+                                               final InstructionClientVisitor clientVisitor,
+                                               int startOffset,
+                                               int endOffset) {
 
-    oldOffsets.add(offset);
-    newOffsets.add(-1);
+    final WalkThroughStack walkThroughStack = new WalkThroughStack(instructions.size() / 2);
+    walkThroughStack.push(startOffset);
 
     // we can change instruction internal state here (e.g. CallInstruction.stack)
     synchronized (instructions) {
@@ -1078,11 +1081,8 @@ public class ControlFlowUtil {
             clientVisitor.processedInstructions[i] = false;
           }
           clientVisitor.procedureEntered(instruction.procBegin, i);
-          oldOffsets.add(offset);
-          newOffsets.add(newOffset);
-
-          oldOffsets.add(newOffset);
-          newOffsets.add(-1);
+          walkThroughStack.push(offset, newOffset);
+          walkThroughStack.push(newOffset);
 
           currentProcedureReturnOffsets.add(offset + 1);
         }
@@ -1091,54 +1091,38 @@ public class ControlFlowUtil {
         public void visitReturnInstruction(ReturnInstruction instruction, int offset, int nextOffset) {
           int newOffset = instruction.execute(false);
           if (newOffset != -1) {
-            oldOffsets.add(offset);
-            newOffsets.add(newOffset);
-
-            oldOffsets.add(newOffset);
-            newOffsets.add(-1);
+            walkThroughStack.push(offset, newOffset);
+            walkThroughStack.push(newOffset);
           }
         }
 
         @Override
         public void visitBranchingInstruction(BranchingInstruction instruction, int offset, int nextOffset) {
           int newOffset = instruction.offset;
-          oldOffsets.add(offset);
-          newOffsets.add(newOffset);
-
-          oldOffsets.add(newOffset);
-          newOffsets.add(-1);
+          walkThroughStack.push(offset, newOffset);
+          walkThroughStack.push(newOffset);
         }
 
         @Override
         public void visitConditionalBranchingInstruction(ConditionalBranchingInstruction instruction, int offset, int nextOffset) {
           int newOffset = instruction.offset;
 
-          oldOffsets.add(offset);
-          newOffsets.add(newOffset);
-
-          oldOffsets.add(offset);
-          newOffsets.add(offset + 1);
-
-          oldOffsets.add(newOffset);
-          newOffsets.add(-1);
-
-          oldOffsets.add(offset + 1);
-          newOffsets.add(-1);
+          walkThroughStack.push(offset, newOffset);
+          walkThroughStack.push(offset, offset + 1);
+          walkThroughStack.push(newOffset);
+          walkThroughStack.push(offset + 1);
         }
 
         @Override
         public void visitInstruction(Instruction instruction, int offset, int nextOffset) {
           int newOffset = offset + 1;
-          oldOffsets.add(offset);
-          newOffsets.add(newOffset);
-
-          oldOffsets.add(newOffset);
-          newOffsets.add(-1);
+          walkThroughStack.push(offset, newOffset);
+          walkThroughStack.push(newOffset);
         }
       };
-      while (!oldOffsets.isEmpty()) {
-        offset = oldOffsets.remove(oldOffsets.size() - 1);
-        int newOffset = newOffsets.remove(newOffsets.size() - 1);
+      while (!walkThroughStack.isEmpty()) {
+        final int offset = walkThroughStack.peekOldOffset();
+        final int newOffset = walkThroughStack.popNewOffset();
 
         if (offset >= endOffset) {
           continue;
@@ -1171,6 +1155,71 @@ public class ControlFlowUtil {
         clientVisitor.processedInstructions[offset] = true;
         instruction.accept(getNextOffsetVisitor, offset, newOffset);
       }
+    }
+  }
+
+  private static class WalkThroughStack {
+    private int[] oldOffsets;
+    private int[] newOffsets;
+    private int size;
+
+    WalkThroughStack(int initialSize) {
+      if (initialSize < 2) initialSize = 2;
+      oldOffsets = new int[initialSize];
+      newOffsets = new int[initialSize];
+    }
+
+    /**
+     * Push an arc of the graph (oldOffset -> newOffset)
+     */
+    void push(int oldOffset, int newOffset) {
+      if (size >= newOffsets.length) {
+        oldOffsets = ArrayUtil.realloc(oldOffsets, size * 3 / 2);
+        newOffsets = ArrayUtil.realloc(newOffsets, size * 3 / 2);
+      }
+      oldOffsets[size] = oldOffset;
+      newOffsets[size] = newOffset;
+      size++;
+    }
+
+    /**
+     * Push a node of the graph. The node is represented as an arc with newOffset==-1
+     */
+    void push(int offset) {
+      push(offset, -1);
+    }
+
+    /**
+     * Should be used in pair with {@link #popNewOffset()}
+     */
+    int peekOldOffset() {
+      return oldOffsets[size - 1];
+    }
+
+    /**
+     * Should be used in pair with {@link #peekOldOffset()}
+     */
+    int popNewOffset() {
+      return newOffsets[--size];
+    }
+
+    boolean isEmpty() {
+      return size == 0;
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder s = new StringBuilder();
+      for (int i = 0; i < size; i++) {
+        if (s.length() != 0) s.append(' ');
+        if (newOffsets[i] != -1) {
+          s.append('(').append(oldOffsets[i]).append("->").append(newOffsets[i]).append(')');
+        }
+        else {
+          s.append('[').append(oldOffsets[i]).append(']');
+        }
+      }
+      return s.toString();
     }
   }
 
@@ -1506,10 +1555,120 @@ public class ControlFlowUtil {
       }
     }
 
+    if (startOffset != 0 && hasCalls(flow)) {
+      // Additional computations are required to take into account CALL and RETURN instructions in the case where
+      // the start offset isn't the beginning of the control flow, because we couldn't know the correct state
+      // of the call stack if we started traversal of the control flow from an offset in the middle.
+      return isInstructionReachableConsideringCalls(flow, instructionOffset, startOffset);
+    }
     MyVisitor visitor = new MyVisitor();
     depthFirstSearch(flow, visitor, startOffset, flow.getSize());
 
     return visitor.getResult().booleanValue();
+  }
+
+  private static boolean hasCalls(ControlFlow flow) {
+    for (Instruction instruction : flow.getInstructions()) {
+      if (instruction instanceof CallInstruction) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public static boolean isInstructionReachableConsideringCalls(final ControlFlow flow, final int instructionOffset, final int startOffset) {
+    class ControlFlowGraph {
+      // The graph is sparse: simple instructions have 1 next offset, branching - 2 next offsets, RETURN may have many (one per call)
+      final int[][] nextOffsets;
+
+      ControlFlowGraph(int size) {
+        nextOffsets = new int[size][];
+      }
+
+      void addArc(int offset, int nextOffset) {
+        if (nextOffsets[offset] == null) {
+          nextOffsets[offset] = new int[]{nextOffset, -1};
+        }
+        else {
+          int[] targets = nextOffsets[offset];
+          if (ArrayUtil.indexOf(targets, nextOffset) < 0) {
+            int freeIndex = ArrayUtil.indexOf(targets, -1);
+            if (freeIndex >= 0) {
+              targets[freeIndex] = nextOffset;
+            }
+            else {
+              int oldLength = targets.length;
+              nextOffsets[offset] = targets = ArrayUtil.realloc(targets, oldLength * 3 / 2);
+              Arrays.fill(targets, oldLength, targets.length, -1);
+              targets[oldLength] = nextOffset;
+            }
+          }
+        }
+      }
+
+      int[] getNextOffsets(int offset) {
+        return nextOffsets[offset] != null ? nextOffsets[offset] : ArrayUtil.EMPTY_INT_ARRAY;
+      }
+
+      int size() {
+        return nextOffsets.length;
+      }
+
+      @Override
+      public String toString() {
+        StringBuilder s = new StringBuilder();
+        for (int i = 0; i < nextOffsets.length; i++) {
+          int[] targets = nextOffsets[i];
+          if (targets != null && targets.length != 0 && targets[0] != -1) {
+            if (s.length() != 0) s.append(' ');
+            s.append('(').append(i).append("->");
+            for (int j = 0; j < targets.length && targets[j] != -1; j++) {
+              if (j != 0) s.append(",");
+              s.append(targets[j]);
+            }
+            s.append(')');
+          }
+        }
+        return s.toString();
+      }
+    }
+
+    class MyVisitor extends InstructionClientVisitor<Boolean> {
+      final ControlFlowGraph graph = new ControlFlowGraph(flow.getInstructions().size());
+
+      @Override
+      public void visitInstruction(Instruction instruction, int offset, int nextOffset) {
+        if (nextOffset > graph.size()) nextOffset = graph.size();
+        graph.addArc(offset, nextOffset);
+      }
+
+      @Override
+      public Boolean getResult() {
+        // The same logic as in depthFirstSearch(), just more lightweight implementation
+        Arrays.fill(processedInstructions, false);
+        IntStack walkThroughStack = new IntStack(Math.max(graph.size() / 2, 2));
+        walkThroughStack.push(startOffset);
+        while (!walkThroughStack.empty()) {
+          int currentOffset = walkThroughStack.pop();
+          if (currentOffset < graph.size() && !processedInstructions[currentOffset]) {
+            processedInstructions[currentOffset] = true;
+            int[] nextOffsets = graph.getNextOffsets(currentOffset);
+            for (int nextOffset : nextOffsets) {
+              if (nextOffset == -1) break;
+              if (nextOffset == instructionOffset) {
+                return true;
+              }
+              walkThroughStack.push(nextOffset);
+            }
+          }
+        }
+        return false;
+      }
+    }
+
+    MyVisitor visitor = new MyVisitor();
+    depthFirstSearch(flow, visitor, 0, flow.getSize()); // traverse the graph, store the graph edges in visitor.graph
+    return visitor.getResult().booleanValue(); // traverse the visitor.graph starting with the startOffset
   }
 
   public static boolean isVariableAssignedInLoop(@NotNull PsiReferenceExpression expression, PsiElement resolved) {

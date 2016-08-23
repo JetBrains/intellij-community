@@ -70,12 +70,12 @@ public abstract class VcsVFSListener implements Disposable {
   protected final ChangeListManager myChangeListManager;
   protected final VcsShowConfirmationOption myAddOption;
   protected final VcsShowConfirmationOption myRemoveOption;
-  protected final List<VirtualFile> myAddedFiles = new ArrayList<VirtualFile>();
-  protected final Map<VirtualFile, VirtualFile> myCopyFromMap = new HashMap<VirtualFile, VirtualFile>();
-  protected final List<VcsException> myExceptions = new SmartList<VcsException>();
-  protected final List<FilePath> myDeletedFiles = new ArrayList<FilePath>();
-  protected final List<FilePath> myDeletedWithoutConfirmFiles = new ArrayList<FilePath>();
-  protected final List<MovedFileInfo> myMovedFiles = new ArrayList<MovedFileInfo>();
+  protected final List<VirtualFile> myAddedFiles = new ArrayList<>();
+  protected final Map<VirtualFile, VirtualFile> myCopyFromMap = new HashMap<>();
+  protected final List<VcsException> myExceptions = new SmartList<>();
+  protected final List<FilePath> myDeletedFiles = new ArrayList<>();
+  protected final List<FilePath> myDeletedWithoutConfirmFiles = new ArrayList<>();
+  protected final List<MovedFileInfo> myMovedFiles = new ArrayList<>();
   protected final LinkedHashSet<VirtualFile> myDirtyFiles = ContainerUtil.newLinkedHashSet();
 
   protected enum VcsDeleteType {SILENT, CONFIRM, IGNORE}
@@ -136,7 +136,7 @@ public abstract class VcsVFSListener implements Disposable {
    * @return get map of copied files and clear the map
    */
   protected Map<VirtualFile, VirtualFile> acquireCopiedFiles() {
-    final Map<VirtualFile, VirtualFile> copyFromMap = new HashMap<VirtualFile, VirtualFile>(myCopyFromMap);
+    final Map<VirtualFile, VirtualFile> copyFromMap = new HashMap<>(myCopyFromMap);
     myCopyFromMap.clear();
     return copyFromMap;
   }
@@ -145,7 +145,7 @@ public abstract class VcsVFSListener implements Disposable {
    * @return get list of added files and clear previous list
    */
   protected List<VirtualFile> acquireAddedFiles() {
-    final List<VirtualFile> addedFiles = new ArrayList<VirtualFile>(myAddedFiles);
+    final List<VirtualFile> addedFiles = new ArrayList<>(myAddedFiles);
     myAddedFiles.clear();
     return addedFiles;
   }
@@ -169,7 +169,7 @@ public abstract class VcsVFSListener implements Disposable {
                                                                            getSingleFileAddTitle(), getSingleFileAddPromptTemplate(),
                                                                            myAddOption);
       if (filesToProcess != null) {
-        performAdding(new ArrayList<VirtualFile>(filesToProcess), copyFromMap);
+        performAdding(new ArrayList<>(filesToProcess), copyFromMap);
       }
     }
   }
@@ -194,8 +194,8 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   protected void executeDelete() {
-    final List<FilePath> filesToDelete = new ArrayList<FilePath>(myDeletedWithoutConfirmFiles);
-    final List<FilePath> deletedFiles = new ArrayList<FilePath>(myDeletedFiles);
+    final List<FilePath> filesToDelete = new ArrayList<>(myDeletedWithoutConfirmFiles);
+    final List<FilePath> deletedFiles = new ArrayList<>(myDeletedFiles);
     myDeletedWithoutConfirmFiles.clear();
     myDeletedFiles.clear();
 
@@ -293,7 +293,7 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   private void executeMoveRename() {
-    final List<MovedFileInfo> movedFiles = new ArrayList<MovedFileInfo>(myMovedFiles);
+    final List<MovedFileInfo> movedFiles = new ArrayList<>(myMovedFiles);
     LOG.debug("executeMoveRename " + movedFiles);
     myMovedFiles.clear();
     performMoveRename(ContainerUtil.filter(movedFiles, info -> {
@@ -365,7 +365,7 @@ public abstract class VcsVFSListener implements Disposable {
       }
       // files are ignored, directories are handled recursively
       if (event.getFile().isDirectory()) {
-        final List<VirtualFile> list = new LinkedList<VirtualFile>();
+        final List<VirtualFile> list = new LinkedList<>();
         VcsUtil.collectFiles(file, list, true, isDirectoryVersioningSupported());
         for (VirtualFile child : list) {
           if (!myChangeListManager.isIgnoredFile(child)) {
@@ -438,7 +438,7 @@ public abstract class VcsVFSListener implements Disposable {
     private void checkMovedAddedSourceBack() {
       if (myAddedFiles.isEmpty() || myMovedFiles.isEmpty()) return;
 
-      final Map<String, VirtualFile> addedPaths = new HashMap<String, VirtualFile>(myAddedFiles.size());
+      final Map<String, VirtualFile> addedPaths = new HashMap<>(myAddedFiles.size());
       for (VirtualFile file : myAddedFiles) {
         addedPaths.put(file.getPath(), file);
       }
@@ -458,7 +458,7 @@ public abstract class VcsVFSListener implements Disposable {
     // If a file is scheduled for deletion, and at the same time for copying or addition, don't delete it.
     // It happens during Overwrite command or undo of overwrite.
     private void doNotDeleteAddedCopiedOrMovedFiles() {
-      Collection<String> copiedAddedMoved = new ArrayList<String>();
+      Collection<String> copiedAddedMoved = new ArrayList<>();
       for (VirtualFile file : myCopyFromMap.keySet()) {
         copiedAddedMoved.add(file.getPath());
       }
@@ -504,8 +504,8 @@ public abstract class VcsVFSListener implements Disposable {
             myMovedFiles.clear();
           }
           if (! myDirtyFiles.isEmpty()) {
-            final List<VirtualFile> files = new ArrayList<VirtualFile>();
-            final List<VirtualFile> dirs = new ArrayList<VirtualFile>();
+            final List<VirtualFile> files = new ArrayList<>();
+            final List<VirtualFile> dirs = new ArrayList<>();
             for (VirtualFile dirtyFile : myDirtyFiles) {
               if (dirtyFile != null) {
                 if (dirtyFile.isDirectory()) {

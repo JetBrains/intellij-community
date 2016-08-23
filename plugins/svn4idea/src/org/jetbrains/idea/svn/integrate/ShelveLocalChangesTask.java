@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -33,6 +32,9 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterRevisionsFiles;
+import static java.util.stream.Collectors.toList;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -72,10 +74,11 @@ public class ShelveLocalChangesTask extends BaseMergeTask {
         // TODO: Could this be done once before for loop?
         saveAllDocuments();
 
-        shelveManager.shelveChanges(entry.getValue(), myIntersection.getComment(entry.getKey()) + " (auto shelve before merge)", true);
+        shelveManager
+          .shelveChanges(entry.getValue(), myIntersection.getComment(entry.getKey()) + " (auto shelve before merge)", true, true);
         // TODO: ChangesUtil.getFilesFromChanges() performs refresh of several files.
         // TODO: Check if logic of collecting files to refresh could be revised here.
-        ContainerUtil.addAll(changedFiles, ChangesUtil.getFilesFromChanges(entry.getValue()));
+        changedFiles.addAll(getAfterRevisionsFiles(entry.getValue().stream(), true).collect(toList()));
       }
       catch (IOException e) {
         finishWithError(context, e.getMessage(), true);

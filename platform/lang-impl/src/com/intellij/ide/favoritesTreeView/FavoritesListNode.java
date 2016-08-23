@@ -78,7 +78,7 @@ public class FavoritesListNode extends AbstractTreeNode<String> {
   private static Collection<AbstractTreeNode> createFavoriteRoots(Project project,
                                                                   @NotNull Collection<TreeItem<Pair<AbstractUrl, String>>> urls,
                                                                   final AbstractTreeNode me) {
-    Collection<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+    Collection<AbstractTreeNode> result = new ArrayList<>();
     processUrls(project, urls, result, me);
     return result;
   }
@@ -107,7 +107,7 @@ public class FavoritesListNode extends AbstractTreeNode<String> {
         if (node instanceof ProjectViewNodeWithChildrenList) {
           final List<TreeItem<Pair<AbstractUrl, String>>> children = pair.getChildren();
           if (children != null && !children.isEmpty()) {
-            Collection<AbstractTreeNode> childList = new ArrayList<AbstractTreeNode>();
+            Collection<AbstractTreeNode> childList = new ArrayList<>();
             processUrls(project, children, childList, node);
             for (AbstractTreeNode treeNode : childList) {
               ((ProjectViewNodeWithChildrenList)node).addChild(treeNode);

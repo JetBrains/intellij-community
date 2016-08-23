@@ -48,7 +48,7 @@ public class DfaVariableValue extends DfaValue {
     or(psiMember(), psiParameter().withSuperParent(2, psiMember()));
 
   public static class Factory {
-    private final MultiMap<Trinity<Boolean,String,DfaVariableValue>,DfaVariableValue> myExistingVars = new MultiMap<Trinity<Boolean, String, DfaVariableValue>, DfaVariableValue>();
+    private final MultiMap<Trinity<Boolean,String,DfaVariableValue>,DfaVariableValue> myExistingVars = new MultiMap<>();
     private final DfaValueFactory myFactory;
 
     Factory(DfaValueFactory factory) {
@@ -94,7 +94,7 @@ public class DfaVariableValue extends DfaValue {
   private final boolean myIsNegated;
   private Nullness myInherentNullability;
   private final DfaTypeValue myTypeValue;
-  private final List<DfaVariableValue> myDependents = new SmartList<DfaVariableValue>();
+  private final List<DfaVariableValue> myDependents = new SmartList<>();
 
   private DfaVariableValue(@NotNull PsiModifierListOwner variable, @Nullable PsiType varType, boolean isNegated, DfaValueFactory factory, @Nullable DfaVariableValue qualifier) {
     super(factory);

@@ -33,6 +33,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,7 +72,7 @@ public class InputVariables {
                         LocalSearchScope scope) {
     myProject = project;
     myScope = scope;
-    myInputVariables = new ArrayList<VariableData>(inputVariables);
+    myInputVariables = new ArrayList<>(inputVariables);
   }
 
   public boolean isFoldable() {
@@ -94,14 +95,15 @@ public class InputVariables {
 
   public ArrayList<VariableData> wrapInputVariables(final List<? extends PsiVariable> inputVariables) {
     UniqueNameGenerator nameGenerator = new UniqueNameGenerator();
-    final ArrayList<VariableData> inputData = new ArrayList<VariableData>(inputVariables.size());
+    final ArrayList<VariableData> inputData = new ArrayList<>(inputVariables.size());
     for (PsiVariable var : inputVariables) {
-      String name = nameGenerator.generateUniqueName(getParameterName(var));
+      final String defaultName = getParameterName(var);
+      String name = nameGenerator.generateUniqueName(defaultName);
       PsiType type = var.getType();
       if (type instanceof PsiEllipsisType) {
         type = ((PsiEllipsisType)type).toArrayType();
       }
-      final Map<PsiCodeBlock, PsiType> casts = new HashMap<PsiCodeBlock, PsiType>();
+      final Map<PsiCodeBlock, PsiType> casts = new HashMap<>();
       for (PsiReference reference : ReferencesSearch.search(var, myScope)) {
         final PsiElement element = reference.getElement();
         final PsiElement parent = element.getParent();
@@ -135,12 +137,12 @@ public class InputVariables {
       data.passAsParameter = true;
       inputData.add(data);
 
-      if (myFoldingAvailable) myFolding.isParameterFoldable(data, myScope, inputVariables);
+      if (myFoldingAvailable) myFolding.isParameterFoldable(data, myScope, inputVariables, nameGenerator, defaultName);
     }
 
 
     if (myFoldingAvailable) {
-      final Set<VariableData> toDelete = new HashSet<VariableData>();
+      final Set<VariableData> toDelete = new HashSet<>();
       for (int i = inputData.size() - 1; i >=0; i--) {
         final VariableData data = inputData.get(i);
         if (myFolding.isParameterSafeToDelete(data, myScope)) {
@@ -234,7 +236,7 @@ public class InputVariables {
   }
 
   public boolean toDeclareInsideBody(PsiVariable variable) {
-    final ArrayList<VariableData> knownVars = new ArrayList<VariableData>(myInputVariables);
+    final ArrayList<VariableData> knownVars = new ArrayList<>(myInputVariables);
     for (VariableData data : knownVars) {
       if (data.variable.equals(variable)) {
         return false;

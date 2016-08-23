@@ -115,8 +115,8 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
     }
 
     EncodingRegistry.doActionAndRestoreEncoding(this, () -> {
-      getFileSystem().moveFile(requestor, NewVirtualFile.this, newParent);
-      return NewVirtualFile.this;
+      getFileSystem().moveFile(requestor, this, newParent);
+      return this;
     });
   }
 

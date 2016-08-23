@@ -749,6 +749,10 @@ class Foo {
     assertTrue(resolved.modifierList.hasModifierProperty(PsiModifier.STATIC))
   }
 
+  void testCategoryMethodWithinCategory() {
+    assertNotNull resolve('a.groovy')
+  }
+
   void testMixinAndCategory() {
     def ref = configureByText("""
 @Category(B)

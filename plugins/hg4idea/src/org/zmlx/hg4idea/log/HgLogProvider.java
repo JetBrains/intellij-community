@@ -76,7 +76,7 @@ public class HgLogProvider implements VcsLogProvider {
   @NotNull
   public LogData readAllHashes(@NotNull VirtualFile root, @NotNull final Consumer<TimedVcsCommit> commitConsumer) throws VcsException {
     Set<VcsUser> userRegistry = ContainerUtil.newHashSet();
-    List<TimedVcsCommit> commits = HgHistoryUtil.readAllHashes(myProject, root, new CollectConsumer<VcsUser>(userRegistry),
+    List<TimedVcsCommit> commits = HgHistoryUtil.readAllHashes(myProject, root, new CollectConsumer<>(userRegistry),
                                                                Collections.<String>emptyList());
     for (TimedVcsCommit commit : commits) {
       commitConsumer.consume(commit);
@@ -116,7 +116,7 @@ public class HgLogProvider implements VcsLogProvider {
     Collection<HgNameWithHashInfo> localTags = repository.getLocalTags();
     Collection<HgNameWithHashInfo> mqAppliedPatches = repository.getMQAppliedPatches();
 
-    Set<VcsRef> refs = new HashSet<VcsRef>(branches.size() + bookmarks.size());
+    Set<VcsRef> refs = new HashSet<>(branches.size() + bookmarks.size());
 
     for (Map.Entry<String, LinkedHashSet<Hash>> entry : branches.entrySet()) {
       String branchName = entry.getKey();

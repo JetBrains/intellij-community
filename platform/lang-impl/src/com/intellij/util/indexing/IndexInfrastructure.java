@@ -54,7 +54,7 @@ public class IndexInfrastructure {
   private static final boolean ourDoParallelIndicesInitialization = SystemProperties
     .getBooleanProperty("idea.parallel.indices.initialization", false);
   public static final boolean ourDoAsyncIndicesInitialization = SystemProperties.getBooleanProperty("idea.async.indices.initialization", true);
-  private static final ExecutorService ourGenesisExecutor = new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE);
+  private static final ExecutorService ourGenesisExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("IndexInfrastructure pool");
 
   private IndexInfrastructure() {
   }
@@ -155,7 +155,7 @@ public class IndexInfrastructure {
   }
 
   public static abstract class DataInitialization<T> implements Callable<T> {
-    private final List<ThrowableRunnable> myNestedInitializationTasks = new ArrayList<ThrowableRunnable>();
+    private final List<ThrowableRunnable> myNestedInitializationTasks = new ArrayList<>();
 
     @Override
     public final T call() throws Exception {
@@ -187,7 +187,7 @@ public class IndexInfrastructure {
       CountDownLatch proceedLatch = new CountDownLatch(numberOfTasksToExecute);
 
       if (ourDoParallelIndicesInitialization) {
-        BoundedTaskExecutor taskExecutor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE,
+        BoundedTaskExecutor taskExecutor = new BoundedTaskExecutor("IndexInfrastructure.DataInitialization.runParallelNestedInitializationTasks", PooledThreadExecutor.INSTANCE,
                                                                    CacheUpdateRunner.indexingThreadCount());
 
         for (ThrowableRunnable callable : myNestedInitializationTasks) {

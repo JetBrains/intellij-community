@@ -72,7 +72,7 @@ public class GroovyNamesUtil {
   }
 
   public static ArrayList<String> camelizeString(String str) {
-    ArrayList<String> res = new ArrayList<String>();
+    ArrayList<String> res = new ArrayList<>();
     StringBuilder sb = new StringBuilder();
     Matcher matcher = PATTERN.matcher(str);
     
@@ -111,8 +111,8 @@ public class GroovyNamesUtil {
   }
 
   public static String[] getMethodArgumentsNames(Project project, PsiType[] types) {
-    Set<String> uniqNames = new LinkedHashSet<String>();
-    Set<String> nonUniqNames = new THashSet<String>();
+    Set<String> uniqNames = new LinkedHashSet<>();
+    Set<String> nonUniqNames = new THashSet<>();
     for (PsiType type : types) {
       final SuggestedNameInfo nameInfo =
         JavaCodeStyleManager.getInstance(project).suggestVariableName(VariableKind.PARAMETER, null, null, type);

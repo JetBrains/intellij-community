@@ -212,7 +212,7 @@ public class DeleteHandler {
         if (elementToDelete instanceof PsiDirectory) {
           VirtualFile virtualFile = ((PsiDirectory)elementToDelete).getVirtualFile();
           if (virtualFile.isInLocalFileSystem() && !virtualFile.is(VFileProperty.SYMLINK)) {
-            ArrayList<VirtualFile> readOnlyFiles = new ArrayList<VirtualFile>();
+            ArrayList<VirtualFile> readOnlyFiles = new ArrayList<>();
             CommonRefactoringUtil.collectReadOnlyFiles(virtualFile, readOnlyFiles);
 
             if (!readOnlyFiles.isEmpty()) {
@@ -237,7 +237,7 @@ public class DeleteHandler {
             if (virtualFile.isInLocalFileSystem()) {
               int _result = MessagesEx.fileIsReadOnly(project, virtualFile)
                 .setTitle(IdeBundle.message("title.delete"))
-                .appendMessage(IdeBundle.message("prompt.delete.it.anyway"))
+                .appendMessage(" " + IdeBundle.message("prompt.delete.it.anyway"))
                 .askYesNo();
               if (_result != Messages.YES) continue;
 

@@ -119,7 +119,7 @@ public class AppEngineFacetEditor extends FacetEditorTab {
   }
 
   private List<String> getConfiguredFiles() {
-    final List<String> files = new ArrayList<String>();
+    final List<String> files = new ArrayList<>();
     for (int i = 0; i < myFilesListModel.getSize(); i++) {
       files.add((String)myFilesListModel.getElementAt(i));
     }

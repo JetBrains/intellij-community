@@ -53,7 +53,7 @@ public class MavenUIUtil {
   public static <E> void setElements(ElementsChooser<E> chooser, Collection<E> all, Collection<E> selected, Comparator<E> comparator) {
     List<E> selection = chooser.getSelectedElements();
     chooser.clear();
-    Collection<E> sorted = new TreeSet<E>(comparator);
+    Collection<E> sorted = new TreeSet<>(comparator);
     sorted.addAll(all);
     for (E element : sorted) {
       chooser.addElement(element, selected.contains(element));

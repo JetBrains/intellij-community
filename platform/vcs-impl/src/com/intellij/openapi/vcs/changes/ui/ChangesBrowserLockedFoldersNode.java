@@ -19,80 +19,58 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.ChangeListOwner;
-import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 
+import static com.intellij.ui.SimpleTextAttributes.*;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
+import static java.util.stream.Collectors.groupingBy;
 
 public class ChangesBrowserLockedFoldersNode extends ChangesBrowserNode implements TreeLinkMouseListener.HaveTooltip {
-  private final Project myProject;
 
-  public ChangesBrowserLockedFoldersNode(final Project project, final Object userObject) {
+  @NotNull private static final SimpleTextAttributes CLEANUP_LINK_ATTRIBUTES = new SimpleTextAttributes(STYLE_UNDERLINE, JBColor.RED);
+
+  @NotNull private final Project myProject;
+
+  public ChangesBrowserLockedFoldersNode(@NotNull Project project, @NotNull Object userObject) {
     super(userObject);
     myProject = project;
   }
 
-  public boolean canAcceptDrop(final ChangeListDragBean dragBean) {
-    return false;
-  }
-
-  public void acceptDrop(final ChangeListOwner dragOwner, final ChangeListDragBean dragBean) {
-  }
-
+  @NotNull
   public String getTooltip() {
     return VcsBundle.message("changes.nodetitle.locked.folders.tooltip");
   }
 
-  public void render(final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
-    renderer.append(userObject.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    renderer.append(getCountText(), SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
-    renderer.append(spaceAndThinSpace(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    final CleanupStarter starter = new CleanupStarter(myProject, this);
-    renderer.append("do cleanup...", new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, JBColor.RED), starter);
+  public void render(@NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
+    renderer.append(userObject.toString(), REGULAR_ATTRIBUTES);
+    renderer.append(getCountText(), GRAY_ITALIC_ATTRIBUTES);
+    renderer.append(spaceAndThinSpace(), REGULAR_ATTRIBUTES);
+    renderer.append("do cleanup...", CLEANUP_LINK_ATTRIBUTES, new CleanupWorker(myProject, this));
   }
 
-  private static class CleanupStarter implements Runnable {
-    private final Project myProject;
-    private final ChangesBrowserLockedFoldersNode myParentNode;
+  private static class CleanupWorker implements Runnable {
+    @NotNull private final Project myProject;
+    @NotNull private final ChangesBrowserNode<?> myNode;
 
-    private CleanupStarter(final Project project, final ChangesBrowserLockedFoldersNode parentNode) {
+    private CleanupWorker(@NotNull Project project, @NotNull ChangesBrowserNode<?> node) {
       myProject = project;
-      myParentNode = parentNode;
+      myNode = node;
     }
 
     public void run() {
-      final List<VirtualFile> files = myParentNode.getAllFilesUnder();
-      final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(myProject);
-      final Map<String, List<VirtualFile>> byVcs = new HashMap<String, List<VirtualFile>>();
-      for (VirtualFile file : files) {
-        final AbstractVcs vcs = plVcsManager.getVcsFor(file);
-        if (vcs != null) {
-          List<VirtualFile> list = byVcs.get(vcs.getName());
-          if (list == null) {
-            list = new ArrayList<VirtualFile>();
-            byVcs.put(vcs.getName(), list);
-          }
-          list.add(file);
-        }
-      }
-      for (Map.Entry<String, List<VirtualFile>> entry : byVcs.entrySet()) {
-        final AbstractVcs vcs = plVcsManager.findVcsByName(entry.getKey());
-        if (vcs != null) {
-          final ChangeProvider changeProvider = vcs.getChangeProvider();
-          if (changeProvider != null) {
-            changeProvider.doCleanup(entry.getValue());
-          }
-        }
-      }
+      ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(myProject);
+
+      myNode.getFilesUnderStream()
+        .collect(groupingBy(manager::getVcsFor))
+        .forEach((vcs, files) -> Optional.ofNullable(vcs)
+          .map(AbstractVcs::getChangeProvider)
+          .ifPresent(provider -> provider.doCleanup(files))
+        );
     }
   }
 }

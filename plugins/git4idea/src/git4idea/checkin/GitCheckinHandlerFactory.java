@@ -120,7 +120,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       final Git git = ServiceManager.getService(Git.class);
 
       final Collection<VirtualFile> files = myPanel.getVirtualFiles(); // deleted files aren't included, but for them we don't care about CRLFs.
-      final AtomicReference<GitCrlfProblemsDetector> crlfHelper = new AtomicReference<GitCrlfProblemsDetector>();
+      final AtomicReference<GitCrlfProblemsDetector> crlfHelper = new AtomicReference<>();
       ProgressManager.getInstance().run(
         new Task.Modal(myProject, "Checking for line separator issues...", true) {
           @Override
@@ -183,8 +183,8 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       Collection<VirtualFile> affectedRoots = getSelectedRoots();
       Map<VirtualFile, Couple<String>> defined = getDefinedUserNames(project, affectedRoots, false);
 
-      Collection<VirtualFile> allRoots = new ArrayList<VirtualFile>(Arrays.asList(ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs)));
-      Collection<VirtualFile> notDefined = new ArrayList<VirtualFile>(affectedRoots);
+      Collection<VirtualFile> allRoots = new ArrayList<>(Arrays.asList(ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs)));
+      Collection<VirtualFile> notDefined = new ArrayList<>(affectedRoots);
       notDefined.removeAll(defined.keySet());
 
       if (notDefined.isEmpty()) {
@@ -379,7 +379,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     @NotNull
     private Collection<VirtualFile> getSelectedRoots() {
       ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-      Collection<VirtualFile> result = new HashSet<VirtualFile>();
+      Collection<VirtualFile> result = new HashSet<>();
       for (FilePath path : ChangesUtil.getPaths(myPanel.getSelectedChanges())) {
         VirtualFile root = vcsManager.getVcsRootFor(path);
         if (root != null) {

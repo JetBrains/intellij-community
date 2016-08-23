@@ -113,7 +113,7 @@ public class OpenFileAction extends AnAction implements DumbAware {
   }
 
   public static void openFile(String filePath, @NotNull Project project) {
-    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(filePath);
+    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
     if (file != null && file.isValid()) {
       openFile(file, project);
     }

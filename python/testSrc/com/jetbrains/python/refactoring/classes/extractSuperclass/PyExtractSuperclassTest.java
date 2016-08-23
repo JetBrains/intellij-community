@@ -160,7 +160,7 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
       String baseName = "/refactoring/extractsuperclass/" + getTestName(true);
       myFixture.configureByFile(baseName + ".before.py");
       final PyClass clazz = findClass(className);
-      final List<PyMemberInfo<PyElement>> members = new ArrayList<PyMemberInfo<PyElement>>();
+      final List<PyMemberInfo<PyElement>> members = new ArrayList<>();
       for (String memberName : membersName) {
         final PyElement member = findMember(className, memberName);
         final PyMemberInfo<PyElement> memberInfo = MembersManager.findMember(clazz, member);
@@ -192,7 +192,7 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
     final String className = "Foo";
     final String superclassName = "Suppa";
     final PyClass clazz = findClass(className);
-    final List<PyMemberInfo<PyElement>> members = new ArrayList<PyMemberInfo<PyElement>>();
+    final List<PyMemberInfo<PyElement>> members = new ArrayList<>();
     final PyElement member = findMember(className, ".foo");
     members.add(MembersManager.findMember(clazz, member));
     final VirtualFile base_dir = myFixture.getFile().getVirtualFile().getParent();
@@ -235,7 +235,7 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
     final String className = "Foo";
     final String superclassName = "Suppa";
     final PyClass clazz = findClass(className);
-    final List<PyMemberInfo<PyElement>> members = new ArrayList<PyMemberInfo<PyElement>>();
+    final List<PyMemberInfo<PyElement>> members = new ArrayList<>();
     final PyElement member = findMember(className, ".foo");
     members.add(MembersManager.findMember(clazz, member));
     final VirtualFile base_dir = myFixture.getFile().getVirtualFile().getParent();

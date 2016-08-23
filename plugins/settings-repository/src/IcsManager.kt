@@ -24,21 +24,13 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
-import com.intellij.openapi.util.AtomicNotNullLazyValue
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SingleAlarm
-import com.intellij.util.SystemProperties
 import com.intellij.util.exists
 import com.intellij.util.move
-import org.jetbrains.keychain.CredentialsStore
-import org.jetbrains.keychain.FileCredentialsStore
-import org.jetbrains.keychain.OsXCredentialsStore
-import org.jetbrains.keychain.isOSXCredentialsStoreSupported
 import org.jetbrains.settingsRepository.git.GitRepositoryManager
 import org.jetbrains.settingsRepository.git.GitRepositoryService
 import org.jetbrains.settingsRepository.git.processChildren
@@ -47,7 +39,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.properties.Delegates
 
-internal const val PLUGIN_NAME: String = "Settings Repository"
+internal const val PLUGIN_NAME = "Settings Repository"
 
 internal val LOG: Logger = Logger.getInstance(IcsManager::class.java)
 
@@ -56,19 +48,7 @@ val icsManager by lazy(LazyThreadSafetyMode.NONE) {
 }
 
 class IcsManager(dir: Path) {
-  val credentialsStore = object : AtomicNotNullLazyValue<CredentialsStore>() {
-    override fun compute(): CredentialsStore {
-      if (isOSXCredentialsStoreSupported && SystemProperties.getBooleanProperty("ics.use.osx.keychain", true)) {
-        try {
-          return OsXCredentialsStore("IntelliJ Platform Settings Repository")
-        }
-        catch (e: Throwable) {
-          LOG.error(e)
-        }
-      }
-      return FileCredentialsStore(dir.resolve(".git_auth"))
-    }
-  }
+  val credentialsStore = lazy { IcsCredentialsStore() }
 
   val settingsFile: Path = dir.resolve("config.json")
 
@@ -90,16 +70,14 @@ class IcsManager(dir: Path) {
   val repositoryService: RepositoryService = GitRepositoryService()
 
   private val commitAlarm = SingleAlarm(Runnable {
-    ProgressManager.getInstance().run(object : Task.Backgroundable(null, icsMessage("task.commit.title")) {
-      override fun run(indicator: ProgressIndicator) {
-        try {
-          repositoryManager.commit(indicator, fixStateIfCannotCommit = false)
-        }
-        catch (e: Throwable) {
-          LOG.error(e)
-        }
+    runBackgroundableTask(icsMessage("task.commit.title")) { indicator ->
+      try {
+        repositoryManager.commit(indicator, fixStateIfCannotCommit = false)
       }
-    })
+      catch (e: Throwable) {
+        LOG.error(e)
+      }
+    }
   }, settings.commitDelay)
 
   private @Volatile var autoCommitEnabled = true
@@ -121,8 +99,9 @@ class IcsManager(dir: Path) {
         throw IllegalStateException("Delete is prohibited now")
       }
 
-      repositoryManager.delete(toRepositoryPath(fileSpec, roamingType))
-      scheduleCommit()
+      if (repositoryManager.delete(toRepositoryPath(fileSpec, roamingType))) {
+        scheduleCommit()
+      }
     }
   }
 
@@ -158,14 +137,22 @@ class IcsManager(dir: Path) {
     }
   }
 
+  fun newStreamProvider() {
+    val application = ApplicationManager.getApplication()
+    (application.stateStore.stateStorageManager as StateStorageManagerImpl).streamProvider = ApplicationLevelProvider()
+  }
+
   fun beforeApplicationLoaded(application: Application) {
     repositoryActive = repositoryManager.isRepositoryExists()
 
-    (application.stateStore.stateStorageManager as StateStorageManagerImpl).streamProvider = ApplicationLevelProvider()
+    val storage = application.stateStore.stateStorageManager as StateStorageManagerImpl
+    if (storage.streamProvider == null || !storage.streamProvider!!.enabled) {
+      storage.streamProvider = ApplicationLevelProvider()
+    }
 
     autoSyncManager.registerListeners(application)
 
-    application.messageBus.connect().subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener.Adapter() {
+    application.messageBus.connect().subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
       override fun beforeProjectLoaded(project: Project) {
         if (project.isDefault) {
           return
@@ -184,6 +171,8 @@ class IcsManager(dir: Path) {
   open inner class IcsStreamProvider(protected val projectId: String?) : StreamProvider {
     override val enabled: Boolean
       get() = repositoryActive
+
+    override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean = enabled
 
     override fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean) {
       val fullPath = toRepositoryPath(path, roamingType, null)
@@ -208,11 +197,9 @@ class IcsManager(dir: Path) {
 
     fun doSave(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) = repositoryManager.write(toRepositoryPath(fileSpec, roamingType, projectId), content, size)
 
-    protected open fun isAutoCommit(fileSpec: String, roamingType: RoamingType): Boolean = true
+    protected open fun isAutoCommit(fileSpec: String, roamingType: RoamingType) = true
 
-    override fun read(fileSpec: String, roamingType: RoamingType): InputStream? {
-      return repositoryManager.read(toRepositoryPath(fileSpec, roamingType, projectId))
-    }
+    override fun read(fileSpec: String, roamingType: RoamingType) = repositoryManager.read(toRepositoryPath(fileSpec, roamingType, projectId))
 
     override fun delete(fileSpec: String, roamingType: RoamingType) {
     }

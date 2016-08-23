@@ -2891,7 +2891,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "}";
     String s2 = "try  { '_st*; } catch('_Type 't+) { '_st2*; }";
 
-    final List<PsiVariable> vars = new ArrayList<PsiVariable>();
+    final List<PsiVariable> vars = new ArrayList<>();
     final PsiFile file = PsiFileFactory.getInstance(getProject()).createFileFromText("_.java", s1);
 
     file.acceptChildren(new JavaRecursiveElementWalkingVisitor() {
@@ -2902,7 +2902,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     });
 
     assertEquals(7, vars.size());
-    List<MatchResult> results = new ArrayList<MatchResult>();
+    List<MatchResult> results = new ArrayList<>();
 
     Matcher testMatcher = new Matcher(getProject());
     MatchOptions options = new MatchOptions();

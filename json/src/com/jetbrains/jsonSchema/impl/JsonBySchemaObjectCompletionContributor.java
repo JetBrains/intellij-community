@@ -60,7 +60,7 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
   }
 
   public static List<LookupElement> getCompletionVariants(@NotNull final JsonSchemaObject schema, @NotNull final PsiElement position) {
-    final List<LookupElement> result = new ArrayList<LookupElement>();
+    final List<LookupElement> result = new ArrayList<>();
     new Worker(schema, position, element -> result.add(element)).work();
     return result;
   }
@@ -88,7 +88,7 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
       myPosition = position;
       myResultConsumer = resultConsumer;
       myInsideStringLiteral = position.getParent() instanceof JsonStringLiteral;
-      myVariants = new ArrayList<LookupElement>();
+      myVariants = new ArrayList<>();
     }
 
     public void work() {

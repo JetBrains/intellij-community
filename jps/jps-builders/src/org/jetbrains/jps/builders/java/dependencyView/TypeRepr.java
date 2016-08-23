@@ -277,8 +277,10 @@ class TypeRepr {
       @Override
       public ClassType read(@NotNull DataInput in) throws IOException {
         final AbstractType read = delegate.read(in);
-        assert read instanceof ClassType;
-        return (ClassType)read;
+        if (read instanceof ClassType) {
+          return (ClassType)read;
+        }
+        throw new IOException("Expected: "+ ClassType.class.getName() + "; Actual: " + (read == null? "null" : read.getClass().getName()));
       }
     };
   }

@@ -67,7 +67,7 @@ public class JsonSchemaWalker {
 
   public static void extractSchemaVariants(@NotNull CompletionSchemesConsumer consumer,
                                             @NotNull JsonSchemaObject rootSchema, boolean isName, List<Step> position) {
-    final ArrayDeque<Pair<JsonSchemaObject, Integer>> queue = new ArrayDeque<Pair<JsonSchemaObject, Integer>>();
+    final ArrayDeque<Pair<JsonSchemaObject, Integer>> queue = new ArrayDeque<>();
     queue.add(Pair.create(rootSchema, 0));
     while (!queue.isEmpty()) {
       final Pair<JsonSchemaObject, Integer> pair = queue.removeFirst();
@@ -98,7 +98,7 @@ public class JsonSchemaWalker {
           queue.add(Pair.create(selectedSchema, pair.getSecond() + 1));
         }
       } else {
-        List<JsonSchemaObject> list = new ArrayList<JsonSchemaObject>();
+        List<JsonSchemaObject> list = new ArrayList<>();
         list.add(schema);
         if (schema.getAnyOf() != null) list.addAll(schema.getAnyOf());
         if (schema.getOneOf() != null) list.addAll(schema.getOneOf());
@@ -154,7 +154,7 @@ public class JsonSchemaWalker {
   }
 
   public static List<Step> findPosition(@NotNull final PsiElement element, boolean isName) {
-    final List<Step> steps = new ArrayList<Step>();
+    final List<Step> steps = new ArrayList<>();
     if (!(element.getParent() instanceof JsonObject) && !isName) {
       steps.add(new Step(StateType._value, null));
     }

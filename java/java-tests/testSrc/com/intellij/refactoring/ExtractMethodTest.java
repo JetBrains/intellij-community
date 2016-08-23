@@ -374,6 +374,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testFoldedWithConflictedNames() throws Exception {
+    doTest();
+  }
+
   public void testFoldingWithFieldInvolved() throws Exception {
     doTest();
   }

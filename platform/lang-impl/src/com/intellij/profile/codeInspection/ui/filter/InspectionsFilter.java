@@ -31,8 +31,8 @@ import java.util.Set;
  */
 public abstract class InspectionsFilter {
 
-  private final Set<HighlightSeverity> mySuitableSeverities = new HashSet<HighlightSeverity>();
-  private final Set<String> mySuitableLanguageIds = new HashSet<String>();
+  private final Set<HighlightSeverity> mySuitableSeverities = new HashSet<>();
+  private final Set<String> mySuitableLanguageIds = new HashSet<>();
   private Boolean mySuitableInspectionsStates;
   private boolean myAvailableOnlyForAnalyze;
   private boolean myShowOnlyCleanupInspections;

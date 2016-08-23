@@ -28,6 +28,7 @@ import com.intellij.debugger.impl.SynchronizationBasedSemaphore;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
+import com.intellij.debugger.ui.breakpoints.ExceptionBreakpoint;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionTestCase;
 import com.intellij.execution.configurations.RemoteConnection;
@@ -36,6 +37,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -51,16 +53,15 @@ import com.sun.jdi.ThreadReference;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringTokenizer;
 import java.util.concurrent.TimeUnit;
 
 public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCase {
   private DebugProcessListener myPauseScriptListener;
-  private final List<SuspendContextRunnable> myScriptRunnables = new ArrayList<SuspendContextRunnable>();
+  private final List<SuspendContextRunnable> myScriptRunnables = new ArrayList<>();
   private final SynchronizationBasedSemaphore myScriptRunnablesSema = new SynchronizationBasedSemaphore();
   protected static final int RATHER_LATER_INVOKES_N = 10;
   public DebugProcessImpl myDebugProcess;
-  private final List<Throwable> myException = new SmartList<Throwable>();
+  private final List<Throwable> myException = new SmartList<>();
 
   private static class InvokeRatherLaterRequest {
     private final DebuggerCommandImpl myDebuggerCommand;
@@ -73,7 +74,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     }
   }
 
-  public final List<InvokeRatherLaterRequest> myRatherLaterRequests = new ArrayList<InvokeRatherLaterRequest>();
+  public final List<InvokeRatherLaterRequest> myRatherLaterRequests = new ArrayList<>();
 
   protected DebugProcessImpl getDebugProcess() {
     return myDebugProcess;
@@ -335,6 +336,23 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     fail(StringUtil.getThrowableText(th));
   }
 
+  private static Pair<ClassFilter[], ClassFilter[]> readClassFilters(String filtersString) {
+    ArrayList<ClassFilter> include = new ArrayList<>();
+    ArrayList<ClassFilter> exclude = new ArrayList<>();
+    for (String s : filtersString.split(",")) {
+      ClassFilter filter = new ClassFilter();
+      filter.setEnabled(true);
+      if (s.startsWith("-")) {
+        exclude.add(filter);
+        s = s.substring(1);
+      } else {
+        include.add(filter);
+      }
+      filter.setPattern(s);
+    }
+    return Pair.create(include.toArray(ClassFilter.EMPTY_ARRAY), exclude.toArray(ClassFilter.EMPTY_ARRAY));
+  }
+
   public void createBreakpoints(final PsiFile file) {
     Runnable runnable = () -> {
       BreakpointManager breakpointManager = DebuggerManagerImpl.getInstanceEx(myProject).getBreakpointManager();
@@ -399,18 +417,20 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
         String classFilters = readValue(comment, "Class filters");
         if (classFilters != null) {
           breakpoint.setClassFiltersEnabled(true);
-          StringTokenizer tokenizer = new StringTokenizer(classFilters, " ,");
-          ArrayList<ClassFilter> lst = new ArrayList<ClassFilter>();
-
-          while (tokenizer.hasMoreTokens()) {
-            ClassFilter filter = new ClassFilter();
-            filter.setEnabled(true);
-            filter.setPattern(tokenizer.nextToken());
-            lst.add(filter);
-          }
-
-          breakpoint.setClassFilters(lst.toArray(new ClassFilter[lst.size()]));
+          Pair<ClassFilter[], ClassFilter[]> filters = readClassFilters(classFilters);
+          breakpoint.setClassFilters(filters.first);
+          breakpoint.setClassExclusionFilters(filters.second);
           println("Class filters = " + classFilters, ProcessOutputTypes.SYSTEM);
+        }
+
+        String catchClassFilters = readValue(comment, "Catch class filters");
+        if (catchClassFilters != null && breakpoint instanceof ExceptionBreakpoint) {
+          ExceptionBreakpoint exceptionBreakpoint = (ExceptionBreakpoint)breakpoint;
+          exceptionBreakpoint.setCatchFiltersEnabled(true);
+          Pair<ClassFilter[], ClassFilter[]> filters = readClassFilters(catchClassFilters);
+          exceptionBreakpoint.setCatchClassFilters(filters.first);
+          exceptionBreakpoint.setCatchClassExclusionFilters(filters.second);
+          println("Catch class filters = " + catchClassFilters, ProcessOutputTypes.SYSTEM);
         }
       }
     };

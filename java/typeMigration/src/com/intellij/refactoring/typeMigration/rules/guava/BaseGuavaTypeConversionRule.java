@@ -40,7 +40,7 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
     @NotNull
     @Override
     protected Map<String, TypeConversionDescriptorBase> compute() {
-      Map<String, TypeConversionDescriptorBase> map = new HashMap<String, TypeConversionDescriptorBase>();
+      Map<String, TypeConversionDescriptorBase> map = new HashMap<>();
       fillSimpleDescriptors(map);
       return map;
     }

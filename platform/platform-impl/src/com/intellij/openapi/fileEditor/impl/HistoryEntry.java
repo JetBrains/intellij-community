@@ -64,7 +64,7 @@ final class HistoryEntry {
     myFilePointer = filePointer;
     mySelectedProvider = selectedProvider;
     myDisposable = disposable;
-    myProvider2State = new HashMap<FileEditorProvider, FileEditorState>();
+    myProvider2State = new HashMap<>();
   }
 
   @NotNull
@@ -196,7 +196,7 @@ final class HistoryEntry {
     }
 
     String url = e.getAttributeValue(FILE_ATTR);
-    List<Pair<FileEditorProvider, FileEditorState>> providerStates = new ArrayList<Pair<FileEditorProvider, FileEditorState>>();
+    List<Pair<FileEditorProvider, FileEditorState>> providerStates = new ArrayList<>();
     FileEditorProvider selectedProvider = null;
 
     VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);

@@ -61,11 +61,7 @@ public abstract class TextEditorHighlightingPassRegistrar {
    * Registers the factory for the new highlighting pass.
    * Factory will be asked to create the highlighting pass every time IDEA tries to highlight the file.
    *
-   * @param factory
-   * @param anchor
-   * @param anchorPassId                 id of the anchor pass. Predefined pass Ids are declared in {@link com.intellij.codeHighlighting.Pass}
-   * @param needAdditionalIntentionsPass
-   * @param inPostHighlightingPass
+   * @param anchorPassId                 id of the anchor pass. Predefined pass Ids are declared in {@link Pass}
    * @return the id of the new pass which e.g. can be used as an anchor for the other pass.
    */
   public int registerTextEditorHighlightingPass(final TextEditorHighlightingPassFactory factory,
@@ -88,7 +84,7 @@ public abstract class TextEditorHighlightingPassRegistrar {
       case LAST:
         //todo
         ids = new int[]{Pass.UPDATE_ALL,
-          Pass.UPDATE_FOLDING, Pass.UPDATE_OVERRIDDEN_MARKERS,
+          Pass.UPDATE_FOLDING, Pass.LINE_MARKERS,
           Pass.EXTERNAL_TOOLS,
           Pass.LOCAL_INSPECTIONS, Pass.POPUP_HINTS};
         break;

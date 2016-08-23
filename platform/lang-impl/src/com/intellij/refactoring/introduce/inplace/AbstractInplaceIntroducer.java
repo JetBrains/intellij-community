@@ -210,7 +210,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
    */
   public boolean startInplaceIntroduceTemplate() {
     final boolean replaceAllOccurrences = isReplaceAllOccurrences();
-    final Ref<Boolean> result = new Ref<Boolean>();
+    final Ref<Boolean> result = new Ref<>();
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       final String[] names = suggestNames(replaceAllOccurrences, getLocalVariable());
       final V variable = createFieldToStartTemplateOn(replaceAllOccurrences, names);
@@ -220,13 +220,13 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
         myEditor.getCaretModel().moveToOffset(caretOffset);
         myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
 
-        final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<String>();
+        final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<>();
         nameSuggestions.add(variable.getName());
         nameSuggestions.addAll(Arrays.asList(names));
         initOccurrencesMarkers();
         setElementToRename(variable);
         updateTitle(getVariable());
-        started = AbstractInplaceIntroducer.super.performInplaceRefactoring(nameSuggestions);
+        started = super.performInplaceRefactoring(nameSuggestions);
         if (started) {
           onRenameTemplateStarted();
           myDocumentAdapter = new DocumentAdapter() {
@@ -245,7 +245,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
           myEditor.getDocument().addDocumentListener(myDocumentAdapter);
           updateTitle(getVariable());
           if (TemplateManagerImpl.getTemplateState(myEditor) != null) {
-            myEditor.putUserData(ACTIVE_INTRODUCE, AbstractInplaceIntroducer.this);
+            myEditor.putUserData(ACTIVE_INTRODUCE, this);
           }
         }
       }
@@ -298,7 +298,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   protected void revalidate() {
     myWholePanel.revalidate();
     if (myTarget != null) {
-      myBalloon.revalidate(new PositionTracker.Static<Balloon>(myTarget));
+      myBalloon.revalidate(new PositionTracker.Static<>(myTarget));
     }
   }
 

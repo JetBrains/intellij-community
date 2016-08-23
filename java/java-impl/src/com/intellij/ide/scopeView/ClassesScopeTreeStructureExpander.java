@@ -72,7 +72,7 @@ public class ClassesScopeTreeStructureExpander implements ScopeTreeStructureExpa
             final PsiClass[] psiClasses = ((PsiJavaFile)file).getClasses();
             if (psiClasses.length > 0) {
               if (classNodes == null) {
-                classNodes = new HashSet<ClassNode>();
+                classNodes = new HashSet<>();
               }
               commitDocument((PsiFile)file);
               for (final PsiClass psiClass : psiClasses) {
@@ -80,7 +80,7 @@ public class ClassesScopeTreeStructureExpander implements ScopeTreeStructureExpa
                   final ClassNode classNode = new ClassNode(psiClass);
                   classNodes.add(classNode);
                   if (projectView.isShowMembers(ScopeViewPane.ID)) {
-                    final List<PsiElement> result = new ArrayList<PsiElement>();
+                    final List<PsiElement> result = new ArrayList<>();
                     PsiClassChildrenSource.DEFAULT_CHILDREN.addChildren(psiClass, result);
                     for (PsiElement psiElement : result) {
                       psiElement.accept(new JavaElementVisitor() {
@@ -131,7 +131,7 @@ public class ClassesScopeTreeStructureExpander implements ScopeTreeStructureExpa
           final PsiFile containingFile = classNode.getContainingFile();
           if (containingFile != null && containingFile.isValid()) {
             if (fileNodes == null) {
-              fileNodes = new HashSet<FileNode>();
+              fileNodes = new HashSet<>();
             }
             fileNodes.add(new FileNode(containingFile.getVirtualFile(), myProject, true));
           }

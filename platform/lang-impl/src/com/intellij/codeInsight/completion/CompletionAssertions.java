@@ -95,9 +95,13 @@ class CompletionAssertions {
   }
 
   static void checkEditorValid(Editor editor) {
-    if (editor instanceof EditorWindow && !((EditorWindow)editor).isValid()) {
+    if (!isEditorValid(editor)) {
       throw new AssertionError();
     }
+  }
+
+  static boolean isEditorValid(Editor editor) {
+    return !(editor instanceof EditorWindow) || ((EditorWindow)editor).isValid();
   }
 
   private static Attachment createAstAttachment(PsiFile fileCopy, final PsiFile originalFile) {

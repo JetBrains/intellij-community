@@ -103,9 +103,8 @@ public class RendererConfiguration implements Cloneable, JDOMExternalizable {
     setRenderers(renderers);
   }
 
-  @TestOnly
   public void addRenderer(NodeRenderer renderer) {
-    myRepresentationNodes.add(renderer);
+    myRepresentationNodes.add(0, renderer);
   }
 
   @TestOnly

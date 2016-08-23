@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -477,7 +477,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
   private static String readClassName(byte[] classBytes) throws IOException{
     final Ref<String> nameRef = Ref.create(null);
-    new ClassReader(classBytes).accept(new ClassVisitor(Opcodes.ASM5) {
+    new ClassReader(classBytes).accept(new ClassVisitor(Opcodes.API_VERSION) {
       public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         nameRef.set(name.replace('/', '.'));
       }

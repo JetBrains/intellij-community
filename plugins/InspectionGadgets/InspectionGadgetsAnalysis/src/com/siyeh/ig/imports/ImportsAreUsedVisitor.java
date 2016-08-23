@@ -30,7 +30,7 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
 
   private final PsiJavaFile myFile;
   private final List<PsiImportStatementBase> importStatements;
-  private final List<PsiImportStatementBase> usedImportStatements = new ArrayList<PsiImportStatementBase>();
+  private final List<PsiImportStatementBase> usedImportStatements = new ArrayList<>();
 
   ImportsAreUsedVisitor(PsiJavaFile file) {
     myFile = file;
@@ -39,7 +39,7 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
       importStatements = Collections.emptyList();
     } else {
       final PsiImportStatementBase[] importStatements = importList.getAllImportStatements();
-      this.importStatements = new ArrayList<PsiImportStatementBase>(Arrays.asList(importStatements));
+      this.importStatements = new ArrayList<>(Arrays.asList(importStatements));
       Collections.sort(this.importStatements, ImportStatementComparator.getInstance());
     }
   }

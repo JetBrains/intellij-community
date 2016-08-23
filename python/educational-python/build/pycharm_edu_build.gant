@@ -18,7 +18,7 @@ import org.jetbrains.jps.LayoutInfo
 
 setProperty("home", getHome())
 includeTargets << new File("$home/community/build/scripts/utils.gant")
-includeTargets << new File("$home/community/build/scripts/libLicenses.gant")
+includeTargets << new File("$home/build/scripts/libLicenses.gant")
 includeTargets << new File("$home/build/scripts/ultimate_utils.gant")
 
 requireProperty("buildNumber", requireProperty("build.number", snapshot))

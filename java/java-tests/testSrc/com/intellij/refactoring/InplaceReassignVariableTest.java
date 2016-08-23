@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,12 @@
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
-import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.refactoring.introduceVariable.ReassignVariableUtil;
 
 public class InplaceReassignVariableTest extends AbstractJavaInplaceIntroduceTest {
-
   @Override
   protected void runTest() throws Throwable {
     doRunTest();
@@ -55,10 +53,8 @@ public class InplaceReassignVariableTest extends AbstractJavaInplaceIntroduceTes
 
       invokeRefactoring();
       ReassignVariableUtil.reassign(getEditor());
+      assertNull(TemplateManagerImpl.getTemplateState(getEditor()));
 
-      TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
-      assert state != null;
-      state.gotoEnd(false);
       checkResultByFile(getBasePath() + name + "_after" + getExtension());
     }
     finally {
@@ -77,9 +73,7 @@ public class InplaceReassignVariableTest extends AbstractJavaInplaceIntroduceTes
       invokeRefactoring();
       ReassignVariableUtil.reassign(getEditor());
 
-      TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
-      assert state != null;
-      state.gotoEnd(false);
+      assertNull(TemplateManagerImpl.getTemplateState(getEditor()));
 
       TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(getEditor());
       assertNotNull(textEditor);

@@ -141,7 +141,7 @@ public class JavaParameters extends SimpleJavaParameters {
       return null;
     }
 
-    final Set<Sdk> sdksFromDependencies = new LinkedHashSet<Sdk>();
+    final Set<Sdk> sdksFromDependencies = new LinkedHashSet<>();
     OrderEnumerator enumerator = OrderEnumerator.orderEntries(module).runtimeOnly().recursively();
     if (productionOnly) {
       enumerator = enumerator.productionOnly();

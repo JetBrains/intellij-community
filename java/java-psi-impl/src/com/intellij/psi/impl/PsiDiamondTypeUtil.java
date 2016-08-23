@@ -17,10 +17,12 @@ package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -163,8 +165,11 @@ public class PsiDiamondTypeUtil {
       final PsiType typeByParent = PsiTypesUtil.getExpectedTypeByParent(expression);
       if (typeByParent != null) {
         final String arrayInitializer = "new " + typeByParent.getCanonicalText() + "[]{0}";
-        final PsiNewExpression newExpr =
-          (PsiNewExpression)JavaPsiFacade.getInstance(expression.getProject()).getElementFactory().createExpressionFromText(arrayInitializer, expression);
+        final Project project = expression.getProject();
+        final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+        PsiNewExpression newExpr = (PsiNewExpression)elementFactory.createExpressionFromText(arrayInitializer, expression);
+        //ensure refs to inner classes are collapsed to avoid raw types (container type would be raw in qualified text)
+        newExpr = (PsiNewExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(newExpr);
         final PsiArrayInitializerExpression initializer = newExpr.getArrayInitializer();
         LOG.assertTrue(initializer != null);
         copy = initializer.getInitializers()[0].replace(expression);

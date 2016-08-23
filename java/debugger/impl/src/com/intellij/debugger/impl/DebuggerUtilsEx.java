@@ -363,25 +363,23 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   @NotNull
-  public static List<Pair<Breakpoint, Event>> getEventDescriptors(SuspendContextImpl suspendContext) {
+  public static List<Pair<Breakpoint, Event>> getEventDescriptors(@Nullable SuspendContextImpl suspendContext) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if(suspendContext == null) {
-      return Collections.emptyList();
-    }
-    final EventSet events = suspendContext.getEventSet();
-    if(events == null) {
-      return Collections.emptyList();
-    }
-    final List<Pair<Breakpoint, Event>> eventDescriptors = new SmartList<>();
-
-    final RequestManagerImpl requestManager = suspendContext.getDebugProcess().getRequestsManager();
-    for (final Event event : events) {
-      final Requestor requestor = requestManager.findRequestor(event.request());
-      if (requestor instanceof Breakpoint) {
-        eventDescriptors.add(Pair.create((Breakpoint)requestor, event));
+    if (suspendContext != null) {
+      EventSet events = suspendContext.getEventSet();
+      if (!ContainerUtil.isEmpty(events)) {
+        List<Pair<Breakpoint, Event>> eventDescriptors = ContainerUtil.newSmartList();
+        RequestManagerImpl requestManager = suspendContext.getDebugProcess().getRequestsManager();
+        for (Event event : events) {
+          Requestor requestor = requestManager.findRequestor(event.request());
+          if (requestor instanceof Breakpoint) {
+            eventDescriptors.add(Pair.create((Breakpoint)requestor, event));
+          }
+        }
+        return eventDescriptors;
       }
     }
-    return eventDescriptors;
+    return Collections.emptyList();
   }
 
   public static TextWithImports getEditorText(final Editor editor) {
@@ -925,7 +923,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
                                       DebugProcessImpl process) {
     PsiClass containingClass = psiMethod.getContainingClass();
     try {
-      return containingClass != null && Objects.equals(containingClass.getQualifiedName(), className) &&
+      return containingClass != null && Objects.equals(JVMNameUtil.getClassVMName(containingClass), className) &&
              JVMNameUtil.getJVMMethodName(psiMethod).equals(name) &&
              JVMNameUtil.getJVMSignature(psiMethod).getName(process).equals(signature);
     }

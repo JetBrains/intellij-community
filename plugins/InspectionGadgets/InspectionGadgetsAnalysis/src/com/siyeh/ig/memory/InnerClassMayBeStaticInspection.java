@@ -86,7 +86,7 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
       final SearchScope useScope = innerClass.getUseScope();
       final Query<PsiReference> query = ReferencesSearch.search(innerClass, useScope);
       final Collection<PsiReference> references = query.findAll();
-      final List<PsiElement> elements = new ArrayList<PsiElement>(references.size() + 1);
+      final List<PsiElement> elements = new ArrayList<>(references.size() + 1);
       for (PsiReference reference : references) {
         elements.add(reference.getElement());
       }

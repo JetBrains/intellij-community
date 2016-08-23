@@ -31,7 +31,7 @@ public class RadButtonGroup implements IButtonGroup {
   public static final RadButtonGroup NEW_GROUP = new RadButtonGroup(null);
 
   private String myName;
-  private final List<String> myComponentIds = new ArrayList<String>();
+  private final List<String> myComponentIds = new ArrayList<>();
   private boolean myBound;
 
   public RadButtonGroup(final String name) {

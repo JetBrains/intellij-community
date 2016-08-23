@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.roots.libraries;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
@@ -27,8 +27,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.jar.Attributes;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 
 public class JarVersionDetectionUtil {
   private JarVersionDetectionUtil() { }
@@ -39,7 +43,7 @@ public class JarVersionDetectionUtil {
       if (library instanceof LibraryOrderEntry) {
         VirtualFile jar = LibrariesHelper.getInstance().findJarByClass(((LibraryOrderEntry)library).getLibrary(), detectionClass);
         if (jar != null && jar.getFileSystem() instanceof JarFileSystem) {
-          return JdkUtil.getJarMainAttribute(jar, Attributes.Name.IMPLEMENTATION_VERSION);
+          return getMainAttribute(jar, Attributes.Name.IMPLEMENTATION_VERSION);
         }
       }
     }
@@ -51,7 +55,21 @@ public class JarVersionDetectionUtil {
   public static String detectJarVersion(@NotNull String detectionClass, @NotNull List<VirtualFile> files) {
     VirtualFile jarRoot = LibrariesHelper.getInstance().findRootByClass(files, detectionClass);
     return jarRoot != null && jarRoot.getFileSystem() instanceof JarFileSystem ?
-           JdkUtil.getJarMainAttribute(jarRoot, Attributes.Name.IMPLEMENTATION_VERSION) : null;
+           getMainAttribute(jarRoot, Attributes.Name.IMPLEMENTATION_VERSION) : null;
+  }
+
+  private static String getMainAttribute(VirtualFile jarRoot, Attributes.Name attribute) {
+    VirtualFile manifestFile = jarRoot.findFileByRelativePath(JarFile.MANIFEST_NAME);
+    if (manifestFile != null) {
+      try (InputStream stream = manifestFile.getInputStream()) {
+        return new Manifest(stream).getMainAttributes().getValue(attribute);
+      }
+      catch (IOException e) {
+        Logger.getInstance(JarVersionDetectionUtil.class).debug(e);
+      }
+    }
+
+    return null;
   }
 
   @Nullable

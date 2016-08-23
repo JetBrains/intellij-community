@@ -119,9 +119,9 @@ public class SequenceIteratorTest extends TestCase {
   }
 
   public void testRemoveSimple() throws Exception {
-    final ArrayList<Integer> list1 = new ArrayList<Integer>(Arrays.asList(arr1));
-    final ArrayList<Integer> list2 = new ArrayList<Integer>(Arrays.asList(arr2));
-    final ArrayList<Integer> list3 = new ArrayList<Integer>(Arrays.asList(arr3));
+    final ArrayList<Integer> list1 = new ArrayList<>(Arrays.asList(arr1));
+    final ArrayList<Integer> list2 = new ArrayList<>(Arrays.asList(arr2));
+    final ArrayList<Integer> list3 = new ArrayList<>(Arrays.asList(arr3));
 
     final Iterator<Integer> iterator =
       compose(Arrays.<Iterator<Integer>>asList(list1.iterator(), list2.iterator(), list3.iterator()));
@@ -139,7 +139,7 @@ public class SequenceIteratorTest extends TestCase {
   }
 
   public void testRemoveAfterLast() throws Exception {
-    final ArrayList<Integer> list1 = new ArrayList<Integer>(Arrays.asList(arr1));
+    final ArrayList<Integer> list1 = new ArrayList<>(Arrays.asList(arr1));
     final Iterator<Integer> it1 = list1.iterator();
     while (it1.hasNext()) {
       Integer next = it1.next();
@@ -148,8 +148,8 @@ public class SequenceIteratorTest extends TestCase {
     Assert.assertTrue(! list1.contains(5));
     list1.add(5);
 
-    final ArrayList<Integer> list2 = new ArrayList<Integer>(Arrays.asList(arr2));
-    final ArrayList<Integer> list3 = new ArrayList<Integer>(Arrays.asList(arr3));
+    final ArrayList<Integer> list2 = new ArrayList<>(Arrays.asList(arr2));
+    final ArrayList<Integer> list3 = new ArrayList<>(Arrays.asList(arr3));
 
     final Iterator<Integer> iterator =
       compose(Arrays.<Iterator<Integer>>asList(list1.iterator(), list2.iterator(), list3.iterator()));
@@ -161,7 +161,7 @@ public class SequenceIteratorTest extends TestCase {
   }
 
   public void testRemoveOnlyOne() throws Exception {
-    final ArrayList<Integer> list1 = new ArrayList<Integer>(Arrays.asList(new Integer[]{1}));
+    final ArrayList<Integer> list1 = new ArrayList<>(Arrays.asList(new Integer[]{1}));
     final Iterator<Integer> iterator = compose(Arrays.<Iterator<Integer>>asList(list1.iterator()));
     iterator.next();
     iterator.remove();
@@ -182,7 +182,7 @@ public class SequenceIteratorTest extends TestCase {
   }
 
   public void testRemoveIfNextNotCalled() throws Exception {
-    final ArrayList<Integer> list1 = new ArrayList<Integer>(Arrays.asList(new Integer[]{1}));
+    final ArrayList<Integer> list1 = new ArrayList<>(Arrays.asList(new Integer[]{1}));
     final Iterator<Integer> iterator = compose(Arrays.<Iterator<Integer>>asList(list1.iterator()));
     try {
       iterator.remove();
@@ -193,7 +193,7 @@ public class SequenceIteratorTest extends TestCase {
   }
 
   public void testRemoveTwice() throws Exception {
-    final ArrayList<Integer> list1 = new ArrayList<Integer>(Arrays.asList(new Integer[]{1,2,3,4,5}));
+    final ArrayList<Integer> list1 = new ArrayList<>(Arrays.asList(new Integer[]{1, 2, 3, 4, 5}));
     final Iterator<Integer> iterator = compose(Arrays.<Iterator<Integer>>asList(list1.iterator()));
     try {
       iterator.next();
@@ -206,9 +206,9 @@ public class SequenceIteratorTest extends TestCase {
   }
 
   public void testRemoveAll() throws Exception {
-    final ArrayList<Integer> list1 = new ArrayList<Integer>(Arrays.asList(1,2));
-    final ArrayList<Integer> list2 = new ArrayList<Integer>(Arrays.asList(3,4));
-    final ArrayList<Integer> list3 = new ArrayList<Integer>(Arrays.asList(5,6));
+    final ArrayList<Integer> list1 = new ArrayList<>(Arrays.asList(1, 2));
+    final ArrayList<Integer> list2 = new ArrayList<>(Arrays.asList(3, 4));
+    final ArrayList<Integer> list3 = new ArrayList<>(Arrays.asList(5, 6));
 
     final Iterator<Integer> iterator =
       compose(Arrays.<Iterator<Integer>>asList(list1.iterator(), list2.iterator(), list3.iterator()));
@@ -222,9 +222,9 @@ public class SequenceIteratorTest extends TestCase {
   }
 
   public void testRemoveAllWithEmptyInside() throws Exception {
-    final ArrayList<Integer> list1 = new ArrayList<Integer>(Arrays.asList(1,2));
-    final ArrayList<Integer> list2 = new ArrayList<Integer>();
-    final ArrayList<Integer> list3 = new ArrayList<Integer>(Arrays.asList(5,6));
+    final ArrayList<Integer> list1 = new ArrayList<>(Arrays.asList(1, 2));
+    final ArrayList<Integer> list2 = new ArrayList<>();
+    final ArrayList<Integer> list3 = new ArrayList<>(Arrays.asList(5, 6));
 
     final Iterator<Integer> iterator =
       compose(Arrays.<Iterator<Integer>>asList(list1.iterator(), list2.iterator(), list3.iterator()));
@@ -238,9 +238,9 @@ public class SequenceIteratorTest extends TestCase {
   }
 
   public void testRemoveLastAndFirstINNext() throws Exception {
-    final ArrayList<Integer> list1 = new ArrayList<Integer>(Arrays.asList(1,2));
-    final ArrayList<Integer> list2 = new ArrayList<Integer>(Arrays.asList(3,4));
-    final ArrayList<Integer> list3 = new ArrayList<Integer>(Arrays.asList(5,6));
+    final ArrayList<Integer> list1 = new ArrayList<>(Arrays.asList(1, 2));
+    final ArrayList<Integer> list2 = new ArrayList<>(Arrays.asList(3, 4));
+    final ArrayList<Integer> list3 = new ArrayList<>(Arrays.asList(5, 6));
 
     final Iterator<Integer> iterator =
       compose(Arrays.<Iterator<Integer>>asList(list1.iterator(), list2.iterator(), list3.iterator()));

@@ -26,7 +26,7 @@ public class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
   private final NodeFilter myNodeFilter;
   private final int myDiscardCost;
   private final TreeHasherBase myTreeHasher;
-  private final Map<PsiElement, TreeHashResult> myPsiElement2HashAndCost = new HashMap<PsiElement, TreeHashResult>();
+  private final Map<PsiElement, TreeHashResult> myPsiElement2HashAndCost = new HashMap<>();
 
   public DuplicatesMatchingVisitor(NodeSpecificHasherBase nodeSpecificHasher,
                                    @NotNull NodeFilter nodeFilter,
@@ -151,8 +151,8 @@ public class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
 
   @Override
   protected boolean doMatchInAnyOrder(NodeIterator it1, NodeIterator it2) {
-    final List<PsiElement> elements1 = new ArrayList<PsiElement>();
-    final List<PsiElement> elements2 = new ArrayList<PsiElement>();
+    final List<PsiElement> elements1 = new ArrayList<>();
+    final List<PsiElement> elements2 = new ArrayList<>();
 
     while (it1.hasNext()) {
       final PsiElement element = it1.current();
@@ -174,7 +174,7 @@ public class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
       return false;
     }
 
-    final TIntObjectHashMap<List<PsiElement>> hash2element = new TIntObjectHashMap<List<PsiElement>>(elements1.size());
+    final TIntObjectHashMap<List<PsiElement>> hash2element = new TIntObjectHashMap<>(elements1.size());
 
     for (PsiElement element : elements1) {
       final TreeHashResult result = myTreeHasher.hash(element, null, myNodeSpecificHasher);
@@ -183,7 +183,7 @@ public class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
 
         List<PsiElement> list = hash2element.get(hash);
         if (list == null) {
-          list = new ArrayList<PsiElement>();
+          list = new ArrayList<>();
           hash2element.put(hash, list);
         }
         list.add(element);

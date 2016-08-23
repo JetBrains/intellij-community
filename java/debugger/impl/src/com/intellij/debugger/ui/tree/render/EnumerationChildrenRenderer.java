@@ -32,6 +32,7 @@ import com.intellij.psi.PsiElement;
 import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +42,7 @@ import java.util.List;
  * Date: Dec 19, 2003
  * Time: 1:25:15 PM
  */
-public final class EnumerationChildrenRenderer extends ReferenceRenderer implements ChildrenRenderer{
+public final class EnumerationChildrenRenderer extends TypeRenderer implements ChildrenRenderer{
   public static final @NonNls String UNIQUE_ID = "EnumerationChildrenRenderer";
 
   private boolean myAppendDefaultChildren;
@@ -113,11 +114,13 @@ public final class EnumerationChildrenRenderer extends ReferenceRenderer impleme
     NodeDescriptorFactory descriptorFactory = builder.getDescriptorManager();
 
     List<DebuggerTreeNode> children = new ArrayList<>();
+    int idx = 0;
     for (Pair<String, TextWithImports> pair : myChildren) {
-      children.add(nodeManager.createNode(descriptorFactory.getUserExpressionDescriptor(
-        builder.getParentDescriptor(),
-        new UserExpressionData((ValueDescriptorImpl)builder.getParentDescriptor(), getClassName(), pair.getFirst(), pair.getSecond())), evaluationContext)
-      );
+      UserExpressionData data =
+        new UserExpressionData((ValueDescriptorImpl)builder.getParentDescriptor(), getClassName(), pair.getFirst(), pair.getSecond());
+      data.setEnumerationIndex(idx++);
+      children.add(nodeManager.createNode(
+        descriptorFactory.getUserExpressionDescriptor(builder.getParentDescriptor(), data), evaluationContext));
     }
     builder.setChildren(children);
 
@@ -141,5 +144,17 @@ public final class EnumerationChildrenRenderer extends ReferenceRenderer impleme
 
   public void setChildren(List<Pair<String, TextWithImports>> children) {
     myChildren = children;
+  }
+
+  @Nullable
+  public static EnumerationChildrenRenderer getCurrent(ValueDescriptorImpl valueDescriptor) {
+    Renderer renderer = valueDescriptor.getLastRenderer();
+    if (renderer instanceof CompoundNodeRenderer) {
+      ChildrenRenderer childrenRenderer = ((CompoundNodeRenderer)renderer).getChildrenRenderer();
+      if (childrenRenderer instanceof EnumerationChildrenRenderer) {
+        return (EnumerationChildrenRenderer)childrenRenderer;
+      }
+    }
+    return null;
   }
 }

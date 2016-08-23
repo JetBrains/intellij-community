@@ -64,7 +64,7 @@ public class PackagePrefixElementFinder extends PsiElementFinder implements Dumb
   @NotNull
   @Override
   public PsiPackage[] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
-    final Map<String, PsiPackage> packagesMap = new HashMap<String, PsiPackage>();
+    final Map<String, PsiPackage> packagesMap = new HashMap<>();
     final String qualifiedName = psiPackage.getQualifiedName();
 
     for (final String prefix : myPackagePrefixIndex.getAllPackagePrefixes(scope)) {

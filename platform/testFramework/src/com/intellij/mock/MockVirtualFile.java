@@ -37,7 +37,7 @@ public class MockVirtualFile extends VirtualFile {
   private VirtualFile myParent;
   private final String myName;
   private final boolean myDirectory;
-  private final List<VirtualFile> myChildren = new SmartList<VirtualFile>();
+  private final List<VirtualFile> myChildren = new SmartList<>();
   private String myText;
   private boolean myIsWritable = true;
   private long myModStamp = LocalTimeCounter.currentTime();

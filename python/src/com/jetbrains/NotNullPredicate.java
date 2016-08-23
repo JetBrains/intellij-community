@@ -28,7 +28,7 @@ public class NotNullPredicate<T> implements Predicate<T> {
   /**
    * Simply filters nulls
    */
-  public static final Predicate<Object> INSTANCE = new NotNullPredicate<Object>();
+  public static final Predicate<Object> INSTANCE = new NotNullPredicate<>();
 
   @Override
   public final boolean apply(@Nullable final T input) {

@@ -33,7 +33,7 @@ import java.util.Set;
  */
 public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool {
 
-  private SoftReference<Graph<Module>> myGraph = new SoftReference<Graph<Module>>(null);
+  private SoftReference<Graph<Module>> myGraph = new SoftReference<>(null);
 
   @Override
   public RefGraphAnnotator getAnnotator(@NotNull final RefManager refManager) {
@@ -50,12 +50,12 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
       final OrderEntry[] declaredDependencies = moduleRootManager.getOrderEntries();
       final Module[] declaredModuleDependencies = moduleRootManager.getDependencies();
 
-      List<CommonProblemDescriptor> descriptors = new ArrayList<CommonProblemDescriptor>();
+      List<CommonProblemDescriptor> descriptors = new ArrayList<>();
       final Set<Module> modules = refModule.getUserData(UnnecessaryModuleDependencyAnnotator.DEPENDENCIES);
       Graph<Module> graph = myGraph.get();
       if (graph == null) {
         graph = ModuleManager.getInstance(globalContext.getProject()).moduleGraph();
-        myGraph = new SoftReference<Graph<Module>>(graph);
+        myGraph = new SoftReference<>(graph);
       }
 
       final RefManager refManager = globalContext.getRefManager();
@@ -74,7 +74,7 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
                     final Set<Module> neededModules = depRefModule.getUserData(UnnecessaryModuleDependencyAnnotator.DEPENDENCIES);
                     if (neededModules != null && neededModules.contains(dependency)) {
                       if (dependenciesThroughExported == null) {
-                        dependenciesThroughExported = new ArrayList<String>();
+                        dependenciesThroughExported = new ArrayList<>();
                       }
                       dependenciesThroughExported.add(dep.getName());
                     }
@@ -82,7 +82,7 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
                 }
               }
               if (modules != null) {
-                List<String> transitiveDependencies = new ArrayList<String>();
+                List<String> transitiveDependencies = new ArrayList<>();
                 final OrderEntry[] dependenciesOfDependencies = ModuleRootManager.getInstance(dependency).getOrderEntries();
                 for (OrderEntry secondDependency : dependenciesOfDependencies) {
                   if (secondDependency instanceof ModuleOrderEntry && ((ModuleOrderEntry)secondDependency).isExported()) {

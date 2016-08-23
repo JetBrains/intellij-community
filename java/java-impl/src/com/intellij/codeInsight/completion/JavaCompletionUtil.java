@@ -91,7 +91,7 @@ public class JavaCompletionUtil {
   public static Set<PsiType> getExpectedTypes(final CompletionParameters parameters) {
     final PsiExpression expr = PsiTreeUtil.getContextOfType(parameters.getPosition(), PsiExpression.class, true);
     if (expr != null) {
-      final Set<PsiType> set = new THashSet<PsiType>();
+      final Set<PsiType> set = new THashSet<>();
       for (final ExpectedTypeInfo expectedInfo : JavaSmartCompletionContributor.getExpectedTypes(parameters)) {
         set.add(expectedInfo.getType());
       }
@@ -258,7 +258,7 @@ public class JavaCompletionUtil {
             final PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)declarationScope;
             if (PsiTypesUtil.getExpectedTypeByParent(lambdaExpression) == null) {
               final int parameterIndex = lambdaExpression.getParameterList().getParameterIndex((PsiParameter)resolve);
-              final Set<LookupElement> set = new LinkedHashSet<LookupElement>();
+              final Set<LookupElement> set = new LinkedHashSet<>();
               final boolean overloadsFound = LambdaUtil.processParentOverloads(lambdaExpression, functionalInterfaceType -> {
                 PsiType qualifierType = LambdaUtil.getLambdaParameterFromType(functionalInterfaceType, parameterIndex);
                 if (qualifierType instanceof PsiWildcardType) {
@@ -749,12 +749,26 @@ public class JavaCompletionUtil {
     final CommonCodeStyleSettings styleSettings = context.getCodeStyleSettings();
     final PsiElement elementAt = file.findElementAt(context.getStartOffset());
     if (elementAt == null || !(elementAt.getParent() instanceof PsiMethodReferenceExpression)) {
-      ParenthesesInsertHandler.getInstance(hasParams,
-                                           styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES,
-                                           styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES && hasParams,
-                                           needRightParenth,
-                                           styleSettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE
-      ).handleInsert(context, item);
+      final boolean hasParameters = hasParams;
+      final boolean spaceBetweenParentheses = styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES && hasParams;
+      new ParenthesesInsertHandler<LookupElement>(styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES, spaceBetweenParentheses,
+                                                  needRightParenth, styleSettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE) {
+        @Override
+        protected boolean placeCaretInsideParentheses(InsertionContext context1, LookupElement item1) {
+          return hasParameters;
+        }
+
+        @Override
+        protected PsiElement findExistingLeftParenthesis(@NotNull InsertionContext context) {
+          PsiElement token = super.findExistingLeftParenthesis(context);
+          return isPartOfLambda(token) ? null : token;
+        }
+
+        private boolean isPartOfLambda(PsiElement token) {
+          return token != null && token.getParent() instanceof PsiExpressionList &&
+                 PsiUtilCore.getElementType(PsiTreeUtil.nextVisibleLeaf(token.getParent())) == JavaTokenType.ARROW;
+        }
+      }.handleInsert(context, item);
     }
 
     if (hasParams) {

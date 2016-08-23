@@ -42,11 +42,11 @@ import java.util.Map;
 public class DocumentReferenceManagerImpl extends DocumentReferenceManager implements ApplicationComponent {
   private static final Key<List<VirtualFile>> DELETED_FILES = Key.create(DocumentReferenceManagerImpl.class.getName() + ".DELETED_FILES");
 
-  private final Map<Document, DocumentReference> myDocToRef = new WeakKeyWeakValueHashMap<Document, DocumentReference>();
+  private final Map<Document, DocumentReference> myDocToRef = new WeakKeyWeakValueHashMap<>();
 
   private static final Key<Reference<DocumentReference>> FILE_TO_REF_KEY = Key.create("FILE_TO_REF_KEY");
   private static final Key<DocumentReference> FILE_TO_STRONG_REF_KEY = Key.create("FILE_TO_STRONG_REF_KEY");
-  private final Map<FilePath, DocumentReference> myDeletedFilePathToRef = new WeakValueHashMap<FilePath, DocumentReference>();
+  private final Map<FilePath, DocumentReference> myDeletedFilePathToRef = new WeakValueHashMap<>();
 
   @Override
   @NotNull
@@ -62,7 +62,7 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
         VirtualFile f = event.getFile();
         DocumentReference ref = myDeletedFilePathToRef.remove(new FilePath(f.getUrl()));
         if (ref != null) {
-          f.putUserData(FILE_TO_REF_KEY, new WeakReference<DocumentReference>(ref));
+          f.putUserData(FILE_TO_REF_KEY, new WeakReference<>(ref));
           ((DocumentReferenceByVirtualFile)ref).update(f);
         }
       }
@@ -70,7 +70,7 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
       @Override
       public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
         VirtualFile f = event.getFile();
-        f.putUserData(DELETED_FILES, collectDeletedFiles(f, new ArrayList<VirtualFile>()));
+        f.putUserData(DELETED_FILES, collectDeletedFiles(f, new ArrayList<>()));
       }
 
       @Override
@@ -146,7 +146,7 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
     DocumentReference result = SoftReference.dereference(file.getUserData(FILE_TO_REF_KEY));
     if (result == null) {
       result = new DocumentReferenceByVirtualFile(file);
-      file.putUserData(FILE_TO_REF_KEY, new WeakReference<DocumentReference>(result));
+      file.putUserData(FILE_TO_REF_KEY, new WeakReference<>(result));
     }
     return result;
   }

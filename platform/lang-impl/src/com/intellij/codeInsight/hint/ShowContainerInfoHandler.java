@@ -104,7 +104,7 @@ public class ShowContainerInfoHandler implements CodeInsightActionHandler {
       LightweightHint hint1 = EditorFragmentComponent.showEditorFragmentHint(editor, range, true, true);
       if (hint1 != null) {
         hint1.putUserData(CONTAINER_KEY, _container);
-        editor.putUserData(MY_LAST_HINT_KEY, new WeakReference<LightweightHint>(hint1));
+        editor.putUserData(MY_LAST_HINT_KEY, new WeakReference<>(hint1));
       }
     });
   }

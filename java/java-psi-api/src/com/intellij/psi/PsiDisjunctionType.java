@@ -83,11 +83,11 @@ public class PsiDisjunctionType extends PsiType.Stub {
 
   @NotNull
   @Override
-  public String getPresentableText() {
+  public String getPresentableText(final boolean annotated) {
     return StringUtil.join(myTypes, new Function<PsiType, String>() {
       @Override
       public String fun(PsiType psiType) {
-        return psiType.getPresentableText();
+        return psiType.getPresentableText(annotated);
       }
     }, " | ");
   }

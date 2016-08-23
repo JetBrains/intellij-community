@@ -32,7 +32,7 @@ public class FindDependencyUtil {
   private FindDependencyUtil() {}
 
   public static UsageInfo[] findDependencies(@Nullable final List<DependenciesBuilder> builders, Set<PsiFile> searchIn, Set<PsiFile> searchFor) {
-    final List<UsageInfo> usages = new ArrayList<UsageInfo>();
+    final List<UsageInfo> usages = new ArrayList<>();
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     int totalCount = searchIn.size();
     int count = 0;
@@ -44,14 +44,14 @@ public class FindDependencyUtil {
 
       final Set<PsiFile> precomputedDeps;
       if (builders != null) {
-        final Set<PsiFile> depsByFile = new HashSet<PsiFile>();
+        final Set<PsiFile> depsByFile = new HashSet<>();
         for (DependenciesBuilder builder : builders) {
           final Set<PsiFile> deps = builder.getDependencies().get(psiFile);
           if (deps != null) {
             depsByFile.addAll(deps);
           }
         }
-        precomputedDeps = new HashSet<PsiFile>(depsByFile);
+        precomputedDeps = new HashSet<>(depsByFile);
         precomputedDeps.retainAll(searchFor);
         if (precomputedDeps.isEmpty()) continue nextFile;
       }
@@ -66,11 +66,11 @@ public class FindDependencyUtil {
   }
 
   public static UsageInfo[] findBackwardDependencies(final List<DependenciesBuilder> builders, final Set<PsiFile> searchIn, final Set<PsiFile> searchFor) {
-    final List<UsageInfo> usages = new ArrayList<UsageInfo>();
+    final List<UsageInfo> usages = new ArrayList<>();
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
 
-    final Set<PsiFile> deps = new HashSet<PsiFile>();
+    final Set<PsiFile> deps = new HashSet<>();
     for (PsiFile psiFile : searchFor) {
       for (DependenciesBuilder builder : builders) {
         final Set<PsiFile> depsByBuilder = builder.getDependencies().get(psiFile);

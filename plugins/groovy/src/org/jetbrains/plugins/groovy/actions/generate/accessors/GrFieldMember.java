@@ -45,7 +45,7 @@ public class GrFieldMember extends PsiElementClassMember<PsiField> implements En
   public GroovyGenerationInfo<GrMethod> generateGetter() {
     PsiField field = getElement();
     final GrMethod method = createMethodIfNotExists(field, GroovyPropertyUtils.generateGetterPrototype(field));
-    return method != null ? new GroovyGenerationInfo<GrMethod>(method) : null;
+    return method != null ? new GroovyGenerationInfo<>(method) : null;
   }
 
   @Nullable
@@ -62,6 +62,6 @@ public class GrFieldMember extends PsiElementClassMember<PsiField> implements En
       return null;
     }
     final GrMethod method = createMethodIfNotExists(field, GroovyPropertyUtils.generateSetterPrototype(field));
-    return method == null ? null : new GroovyGenerationInfo<GrMethod>(method);
+    return method == null ? null : new GroovyGenerationInfo<>(method);
   }
 }

@@ -102,7 +102,7 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
    * Listener that will be notified when console state (mode?) changed.
    */
   @NotNull
-  private final Collection<Runnable> myStateChangeListeners = new ArrayList<Runnable>();
+  private final Collection<Runnable> myStateChangeListeners = new ArrayList<>();
   /**
    * Process handler currently running on console (if any)
    *
@@ -201,7 +201,7 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
         return;
       }
       file.setCommands(myCommandsAndDefaultExecutor.first);
-      final CommandConsole console = CommandConsole.this;
+      final CommandConsole console = this;
       resetConsumer(new CommandModeConsumer(myCommandsAndDefaultExecutor.first, myModule, console, myCommandsAndDefaultExecutor.second));
     }, ModalityState.NON_MODAL);
   }

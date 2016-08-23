@@ -108,7 +108,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
   private void createUIComponents() {
     mavenHomeField = new TextFieldWithHistory();
     mavenHomeField.setHistorySize(-1);
-    final ArrayList<String> foundMavenHomes = new ArrayList<String>();
+    final ArrayList<String> foundMavenHomes = new ArrayList<>();
     foundMavenHomes.add(MavenServerManager.BUNDLED_MAVEN_2);
     foundMavenHomes.add(MavenServerManager.BUNDLED_MAVEN_3);
     final File mavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(null);
@@ -117,7 +117,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
     }
     mavenHomeField.setHistory(foundMavenHomes);
     mavenHomeComponent = LabeledComponent.create(
-      new ComponentWithBrowseButton<TextFieldWithHistory>(mavenHomeField, null), "Maven &amp;home directory");
+      new ComponentWithBrowseButton<>(mavenHomeField, null), "Maven &amp;home directory");
 
     final JBLabel versionLabel = new JBLabel();
     versionLabel.setOpaque(true);

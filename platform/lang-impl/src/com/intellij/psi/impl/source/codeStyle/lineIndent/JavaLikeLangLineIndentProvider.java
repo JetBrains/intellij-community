@@ -56,7 +56,8 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
     DocBlockStart,
     DocBlockEnd,
     LineComment,
-    Comma
+    Comma,
+    LanguageStartDelimiter
   }
   
   
@@ -103,6 +104,14 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
           .beforeOptional(Whitespace)
           .isAt(BlockClosingBrace))) {
         return myFactory.createIndentCalculator(getBlockIndentType(project, language), IndentCalculator.LINE_BEFORE);
+      }
+      else if (getPosition(editor, offset).matchesRule(position -> position.before().isAt(Semicolon))) {
+        SemanticEditorPosition beforeSemicolon = getPosition(editor, offset).before().beforeOptional(Semicolon);
+        int statementStart = getStatementStartOffset(beforeSemicolon);
+        SemanticEditorPosition atStatementStart = getPosition(editor, statementStart);
+        if (!atStatementStart.isAfterOnSameLine(ForKeyword)) {
+          return myFactory.createIndentCalculator(NONE, position -> statementStart);
+        }
       }
       else if (getPosition(editor, offset).matchesRule(
         position -> position.before().isAt(ArrayOpeningBracket)
@@ -161,19 +170,36 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
 
 
   private int getBlockStatementStartOffset(@NotNull SemanticEditorPosition position) {
-    Language currLanguage = position.getLanguage();
     position.before().beforeOptional(BlockOpeningBrace);
     if (position.isAt(Whitespace)) {
       if (position.isAtMultiline()) return position.after().getStartOffset();
       position.before();
     }
-    if (position.isAt(RightParenthesis)) {
-      position.beforeParentheses(LeftParenthesis, RightParenthesis);
-    }
+    return getStatementStartOffset(position);
+  }
+  
+  private int getStatementStartOffset(@NotNull SemanticEditorPosition position) {
+    Language currLanguage = position.getLanguage();
     while (!position.isAtEnd()) {
       if (currLanguage == Language.ANY || currLanguage == null) currLanguage = position.getLanguage();
-      if (position.isAtAnyOf(Semicolon, BlockOpeningBrace, BlockClosingBrace, BlockComment, DocBlockEnd, LineComment, LeftParenthesis) ||
-          (position.getLanguage() != Language.ANY) && !position.isAtLanguage(currLanguage)) {
+      if (position.isAt(Colon)) {
+        SemanticEditorPosition afterColon = getPosition(position.getEditor(), position.getStartOffset()).after().afterOptional(Whitespace);
+        if (position.isAfterOnSameLine(SwitchCase, SwitchDefault)) {
+          return afterColon.getStartOffset();
+        }
+      }
+      else if (position.isAt(RightParenthesis)) {
+        position.beforeParentheses(LeftParenthesis, RightParenthesis);
+      }
+      else if (position.isAtAnyOf(Semicolon,
+                                  BlockOpeningBrace, 
+                                  BlockClosingBrace, 
+                                  BlockComment, 
+                                  DocBlockEnd, 
+                                  LineComment, 
+                                  LeftParenthesis,
+                                  LanguageStartDelimiter) ||
+               (position.getLanguage() != Language.ANY) && !position.isAtLanguage(currLanguage)) {
         SemanticEditorPosition statementStart = getPosition(position.getEditor(), position.getStartOffset());
         if (!statementStart.after().afterOptional(Whitespace).isAtEnd()) {
           return statementStart.getStartOffset();
@@ -181,7 +207,7 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
       }
       position.before();
     }
-    return -1;
+    return 0;
   }
   
 

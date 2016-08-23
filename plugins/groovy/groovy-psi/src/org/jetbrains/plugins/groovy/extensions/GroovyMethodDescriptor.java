@@ -138,7 +138,7 @@ public class GroovyMethodDescriptor {
     }
 
     Map<String, NamedArgumentDescriptor> res =
-      new HashMap<String, NamedArgumentDescriptor>();
+      new HashMap<>();
 
     if (myArguments != null) {
       for (NamedArgument arguments : myArguments) {

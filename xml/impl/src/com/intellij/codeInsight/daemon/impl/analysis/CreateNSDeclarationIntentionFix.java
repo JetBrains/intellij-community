@@ -155,7 +155,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
       return Collections.singletonList(match);
     }
 
-    List<String> namespaces = new ArrayList<String>(set);
+    List<String> namespaces = new ArrayList<>(set);
     Collections.sort(namespaces);
     return namespaces;
   }

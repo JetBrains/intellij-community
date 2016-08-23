@@ -83,7 +83,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myGraphTable = new VcsLogGraphTable(ui, logData, initialDataPack);
     myBranchesPanel = new BranchesPanel(logData, ui, initialDataPack.getRefs());
     setBranchesPanelVisible(uiProperties.isShowBranchesPanel());
-    myDetailsPanel = new DetailsPanel(logData, ui.getColorManager(), initialDataPack, this);
+    myDetailsPanel = new DetailsPanel(logData, ui.getColorManager(), this);
 
     myChangesBrowser = new RepositoryChangesBrowser(project, null, Collections.<Change>emptyList(), null);
     myChangesBrowser.getViewerScrollPane().setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
@@ -154,7 +154,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
    */
   public void updateDataPack(@NotNull VisiblePack dataPack, boolean permGraphChanged) {
     myFilterUi.updateDataPack(dataPack);
-    myDetailsPanel.updateDataPack(dataPack);
     myGraphTable.updateDataPack(dataPack, permGraphChanged);
     myBranchesPanel.updateDataPack(dataPack, permGraphChanged);
   }
@@ -283,7 +282,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       if (roots.size() == 1) {
         return myLogData.getLogProvider(assertNotNull(getFirstItem(roots))).getSupportedVcs();
       }
-    } else if (VcsLogDataKeys.VCS_LOG_BRANCHES.is(dataId)) {
+    }
+    else if (VcsLogDataKeys.VCS_LOG_BRANCHES.is(dataId)) {
       int[] selectedRows = myGraphTable.getSelectedRows();
       if (selectedRows.length != 1) return null;
       return myGraphTable.getModel().getBranchesAtRow(selectedRows[0]);
@@ -329,7 +329,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   private class CommitSelectionListenerForDiff extends CommitSelectionListener {
     protected CommitSelectionListenerForDiff() {
-      super(myLogData, myGraphTable, myChangesLoadingPane);
+      super(myLogData, MainFrame.this.myGraphTable, myChangesLoadingPane);
     }
 
     @Override

@@ -55,11 +55,9 @@ import org.jetbrains.annotations.Nullable;
  * <p><h1>FAQ</h1></p>
  *
  * Q: When should transactions be used?
- * A: Whenever the code inside isn't prepared to model being modified from the outside world. Which is, almost always. AnAction-s
- * are wrapped into transactions by default. It only makes sense to opt out (by overriding AnAction#startInTransaction), if your actions
+ * A: Whenever the code inside isn't prepared to model being modified from the outside world. Which is, almost always. Well known base AnAction
+ * classes that work with PSI are wrapped into transactions by default. It only makes sense to opt out (by overriding AnAction#startInTransaction), if your actions
  * don't modify the PSI/document/VFS model in any way, and can be invoked in a dialog that's shown from invokeLater.
- * Example: editor actions in dialogs like "Enter Password", which doesn't care about model and can be requested to be shown from background threads
- * in any modality state.
  * <p/>
  *
  * Q: I've got <b>"Write access is allowed from model transactions only"</b>

@@ -19,10 +19,10 @@ abstract class OptimizingSearchHelperBase implements OptimizingSearchHelper {
     context = _context;
 
     scanRequest = 0;
-    scanned = new THashSet<String>();
-    scannedText = new THashSet<String>();
-    scannedComments = new THashSet<String>();
-    scannedLiterals = new THashSet<String>();
+    scanned = new THashSet<>();
+    scannedText = new THashSet<>();
+    scannedComments = new THashSet<>();
+    scannedLiterals = new THashSet<>();
   }
 
   public void clear() {

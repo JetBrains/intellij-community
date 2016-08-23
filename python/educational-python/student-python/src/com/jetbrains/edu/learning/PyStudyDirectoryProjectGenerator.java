@@ -227,13 +227,19 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator imp
     }
   }
 
-  private String getBaseSdk(@NotNull final Project project) {
-    final Course course = myGenerator.getCourse(project);
+  private static String getBaseSdk(@NotNull final Project project) {
+    final Course course = StudyTaskManager.getInstance(project).getCourse();
     LanguageLevel baseLevel = LanguageLevel.PYTHON30;
     if (course != null) {
       final String version = course.getLanguageVersion();
       if (PyStudyLanguageManager.PYTHON_2.equals(version)) {
         baseLevel = LanguageLevel.PYTHON27;
+      }
+      else if (PyStudyLanguageManager.PYTHON_3.equals(version)) {
+        baseLevel = LanguageLevel.PYTHON31;
+      }
+      else if (version != null) {
+        baseLevel = LanguageLevel.fromPythonVersion(version);
       }
     }
     final PythonSdkFlavor flavor = PythonSdkFlavor.getApplicableFlavors(false).get(0);

@@ -312,7 +312,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
 
   @NotNull
   private static Promise<VirtualFile> createDownloadedCallback(@NotNull final RemoteFileInfo remoteFileInfo) {
-    final AsyncPromise<VirtualFile> promise = new AsyncPromise<VirtualFile>();
+    final AsyncPromise<VirtualFile> promise = new AsyncPromise<>();
     remoteFileInfo.addDownloadingListener(new FileDownloadingAdapter() {
       @Override
       public void fileDownloaded(VirtualFile localFile) {

@@ -235,7 +235,7 @@ public class Notification {
   @NotNull
   public Notification addAction(@NotNull AnAction action) {
     if (myActions == null) {
-      myActions = new ArrayList<AnAction>();
+      myActions = new ArrayList<>();
     }
     myActions.add(action);
     return this;
@@ -276,7 +276,7 @@ public class Notification {
 
   public void setBalloon(@NotNull final Balloon balloon) {
     hideBalloon();
-    myBalloonRef = new WeakReference<Balloon>(balloon);
+    myBalloonRef = new WeakReference<>(balloon);
     balloon.addListener(new JBPopupAdapter() {
       @Override
       public void onClosed(LightweightWindowEvent event) {

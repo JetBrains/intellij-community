@@ -80,7 +80,7 @@ public class DescriptorComposer extends HTMLComposerImpl {
     if (quickFixes == null) {
       return null;
     }
-    List<String> texts = new ArrayList<String>();
+    List<String> texts = new ArrayList<>();
     for (QuickFixAction quickFix : quickFixes) {
       String text = quickFix.getText();
       if (text == null) continue;

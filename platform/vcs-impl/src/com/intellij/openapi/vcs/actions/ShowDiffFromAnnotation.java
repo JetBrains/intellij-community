@@ -92,7 +92,7 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
     final VcsRevisionNumber revisionNumber = myFileAnnotation.getLineRevisionNumber(actualNumber);
     if (revisionNumber != null) {
       final VcsException[] exc = new VcsException[1];
-      final List<Change> changes = new LinkedList<Change>();
+      final List<Change> changes = new LinkedList<>();
       final FilePath[] targetPath = new FilePath[1];
       ProgressManager.getInstance().run(new Task.Backgroundable(myVcs.getProject(),
                                                                 "Loading revision " + revisionNumber.asString() + " contents", true) {
@@ -174,7 +174,7 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
     return new DiffNavigationContext(new Iterable<String>() {
       @Override
       public Iterator<String> iterator() {
-        return new CacheOneStepIterator<String>(new ContextLineIterator(contentsLines, myFileAnnotation, correctedLine));
+        return new CacheOneStepIterator<>(new ContextLineIterator(contentsLines, myFileAnnotation, correctedLine));
       }
     }, contentsLines[correctedLine]);
   }

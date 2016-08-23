@@ -169,7 +169,7 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
     }
 
     private static PsiFile[] getFiles(@NotNull PsiFile file, @NotNull MavenDomProjectModel model, @NotNull Set<MavenDomDependency> usages) {
-      Set<PsiFile> files = new HashSet<PsiFile>();
+      Set<PsiFile> files = new HashSet<>();
 
       files.add(file);
       XmlElement xmlElement = model.getXmlElement();

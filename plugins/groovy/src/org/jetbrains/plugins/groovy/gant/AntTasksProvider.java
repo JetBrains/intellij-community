@@ -62,7 +62,7 @@ public class AntTasksProvider {
       @Nullable
       @Override
       public CachedValueProvider.Result<Map<List<URL>, AntClassLoader>> compute(Project project) {
-        final Map<List<URL>, AntClassLoader> map = new SoftValueHashMap<List<URL>, AntClassLoader>();
+        final Map<List<URL>, AntClassLoader> map = new SoftValueHashMap<>();
         return CachedValueProvider.Result.create(map, ProjectRootManager.getInstance(project));
       }
     };
@@ -92,7 +92,7 @@ public class AntTasksProvider {
     return CachedValuesManager.getManager(file.getProject()).getCachedValue(file, GANT_METHODS, () -> {
       Map<String, Class> antObjects = getAntObjects((GroovyFile)file);
 
-      final Set<LightMethodBuilder> methods = new HashSet<LightMethodBuilder>();
+      final Set<LightMethodBuilder> methods = new HashSet<>();
 
       final Project project = file.getProject();
       final PsiType closureType = TypesUtil.createType(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, file);
@@ -110,7 +110,7 @@ public class AntTasksProvider {
     final Project project = groovyFile.getProject();
 
     final Module module = ModuleUtil.findModuleForPsiElement(groovyFile);
-    Set<VirtualFile> jars = new HashSet<VirtualFile>();
+    Set<VirtualFile> jars = new HashSet<>();
     if (module != null) {
       ContainerUtil.addAll(jars, OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots());
     }
@@ -119,7 +119,7 @@ public class AntTasksProvider {
       jars.addAll(GantScriptType.additionalScopeFiles(groovyFile));
     }
 
-    final ArrayList<URL> urls = new ArrayList<URL>();
+    final ArrayList<URL> urls = new ArrayList<>();
     for (VirtualFile jar : jars) {
       VirtualFile localFile = PathUtil.getLocalFile(jar);
       if (localFile.getFileSystem() instanceof LocalFileSystem) {
@@ -148,8 +148,8 @@ public class AntTasksProvider {
       super(build().urls(urls).allowUnescaped().noPreload());
       myFuture = ApplicationManager.getApplication().executeOnPooledThread(() -> {
         try {
-          final ReflectedProject antProject = ReflectedProject.getProject(AntClassLoader.this);
-          final Map<String, Class> result = new HashMap<String, Class>();
+          final ReflectedProject antProject = ReflectedProject.getProject(this);
+          final Map<String, Class> result = new HashMap<>();
           if (antProject != null) {
             final Map<String, Class> taskDefinitions = antProject.getTaskDefinitions();
             if (taskDefinitions != null) {

@@ -46,7 +46,7 @@ public class LinkLabel<T> extends JLabel {
   private LinkListener<T> myLinkListener;
   private T myLinkData;
 
-  private static final Set<String> ourVisitedLinks = new HashSet<String>();
+  private static final Set<String> ourVisitedLinks = new HashSet<>();
 
   private boolean myIsLinkActive;
 

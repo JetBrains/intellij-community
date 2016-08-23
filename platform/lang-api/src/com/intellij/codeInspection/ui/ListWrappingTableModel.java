@@ -26,7 +26,7 @@ import java.util.List;
 public class ListWrappingTableModel extends AbstractTableModel {
 
   private final List<List<String>> list;
-  private final List<String> columnNames = new ArrayList<String>();
+  private final List<String> columnNames = new ArrayList<>();
 
   public ListWrappingTableModel(@NotNull List<List<String>> list,
                                 @NotNull String... columnNames) {
@@ -41,7 +41,7 @@ public class ListWrappingTableModel extends AbstractTableModel {
    * @param columnName the name in the column header
    */
   public ListWrappingTableModel(@NotNull List<String> list, @NotNull String columnName) {
-    this.list = new ArrayList<List<String>>();
+    this.list = new ArrayList<>();
     this.list.add(list);
     columnNames.add(columnName);
   }

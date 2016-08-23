@@ -32,7 +32,7 @@ import java.util.Map;
  */
 public final class GitCompoundResult {
   
-  private final Map<GitRepository, GitCommandResult> resultsByRepos = new HashMap<GitRepository, GitCommandResult>(1);
+  private final Map<GitRepository, GitCommandResult> resultsByRepos = new HashMap<>(1);
   private final Project myProject;
 
   public GitCompoundResult(Project project) {

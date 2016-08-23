@@ -123,7 +123,7 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
         if (psiMethod == null) return true;
         final int parameterIndex = method.getParameterList().getParameterIndex((PsiParameter)myVariable);
         if (!FileModificationService.getInstance().prepareFileForWrite(psiMethod.getContainingFile())) return true;
-        final ArrayList<ParameterInfoImpl> infos = new ArrayList<ParameterInfoImpl>();
+        final ArrayList<ParameterInfoImpl> infos = new ArrayList<>();
         int i = 0;
         for (PsiParameter parameter : psiMethod.getParameterList().getParameters()) {
           final boolean changeType = i == parameterIndex;

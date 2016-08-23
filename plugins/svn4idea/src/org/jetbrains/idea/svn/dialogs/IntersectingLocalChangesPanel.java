@@ -69,7 +69,7 @@ public class IntersectingLocalChangesPanel {
     public void calcData(DataKey key, DataSink sink) {
       if (CommonDataKeys.NAVIGATABLE_ARRAY.equals(key)) {
         final TreePath[] treePaths = myJTree.getSelectionModel().getSelectionPaths();
-        final List<Navigatable> navigatables = new ArrayList<Navigatable>(treePaths.length);
+        final List<Navigatable> navigatables = new ArrayList<>(treePaths.length);
         for (TreePath treePath : treePaths) {
           final List<FilePath> filePaths = ((ChangesBrowserNode)treePath.getLastPathComponent()).getAllFilePathsUnder();
           for (FilePath filePath : filePaths) {

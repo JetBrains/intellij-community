@@ -70,7 +70,7 @@ public class SimpleEditorPreview implements PreviewPanel{
     String text = page.getDemoText();
 
     HighlightsExtractor extractant2 = new HighlightsExtractor(page.getAdditionalHighlightingTagToDescriptorMap());
-    List<HighlightData> highlights = new ArrayList<HighlightData>();
+    List<HighlightData> highlights = new ArrayList<>();
     String stripped = extractant2.extractHighlights(text, highlights);
     myHighlightData = highlights.toArray(new HighlightData[highlights.size()]);
     int selectedLine = -1;
@@ -242,8 +242,8 @@ public class SimpleEditorPreview implements PreviewPanel{
     if (show && count <= 0) return Collections.emptyList();
     editor.getMarkupModel().removeAllHighlighters();
     boolean found = false;
-    List<HighlightData> highlights = new ArrayList<HighlightData>();
-    List<HighlightData> matchingHighlights = new ArrayList<HighlightData>();
+    List<HighlightData> highlights = new ArrayList<>();
+    List<HighlightData> matchingHighlights = new ArrayList<>();
     for (int i = 0; highlightDatum != null && i < highlightDatum.length; i++) {
       HighlightData highlightData = highlightDatum[i];
       String type = highlightData.getHighlightType();

@@ -53,6 +53,7 @@ private fun String.toClassName(allowedDots: Int): String {
 
 class SingleTestEntry(val url: String,
                       override val runDate: Date,
+                      val runConfiguration: RunnerAndConfigurationSettings,
                       magnitude: TestStateInfo.Magnitude) : RecentTestsPopupEntry 
 {
 
@@ -70,12 +71,14 @@ class SingleTestEntry(val url: String,
 }
 
 
-class SuiteEntry(val suiteUrl: String, override val runDate: Date) : RecentTestsPopupEntry {
+class SuiteEntry(val suiteUrl: String, 
+                 override val runDate: Date,
+                 var runConfiguration: RunnerAndConfigurationSettings) : RecentTestsPopupEntry {
 
   val tests = hashSetOf<SingleTestEntry>()
   val suiteName = VirtualFileManager.extractPath(suiteUrl)
   
-  var runConfiguration: RunConfigurationEntry? = null
+  var runConfigurationEntry: RunConfigurationEntry? = null
 
   override val presentation = suiteUrl.toClassName(0)
   override val icon: Icon? = AllIcons.RunConfigurations.Junit
@@ -97,14 +100,10 @@ class SuiteEntry(val suiteUrl: String, override val runDate: Date) : RecentTests
 }
 
 
-class RunConfigurationEntry(val runSettings: RunnerAndConfigurationSettings, initial: SuiteEntry) : RecentTestsPopupEntry {
+class RunConfigurationEntry(val runSettings: RunnerAndConfigurationSettings) : RecentTestsPopupEntry {
 
   val suites = arrayListOf<SuiteEntry>()
-
-  init {
-    addSuite(initial)
-  }
-
+  
   override val runDate: Date
     get() {
       return suites.minBy { it.runDate }!!.runDate
@@ -118,7 +117,7 @@ class RunConfigurationEntry(val runSettings: RunnerAndConfigurationSettings, ini
 
   fun addSuite(suite: SuiteEntry) {
     suites.add(suite)
-    suite.runConfiguration = this
+    suite.runConfigurationEntry = this
   }
 
   override val presentation: String = runSettings.name

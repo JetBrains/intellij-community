@@ -30,6 +30,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
@@ -132,7 +133,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   public final SettingsEditor<T> getConfigurationEditor() {
     final SettingsEditor<T> runConfigurationEditor = PythonExtendedConfigurationEditor.create(createConfigurationEditor());
 
-    final SettingsEditorGroup<T> group = new SettingsEditorGroup<T>();
+    final SettingsEditorGroup<T> group = new SettingsEditorGroup<>();
 
     // run configuration settings tab:
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), runConfigurationEditor);
@@ -140,7 +141,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     // tabs provided by extensions:
     //noinspection unchecked
     PythonRunConfigurationExtensionsManager.getInstance().appendEditors(this, (SettingsEditorGroup)group);
-    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<T>());
+    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
 
     return group;
   }
@@ -302,6 +303,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     mySdkHome = sdkHome;
   }
 
+  @Nullable
   public Module getModule() {
     return getConfigurationModule().getModule();
   }
@@ -335,7 +337,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   }
 
   public static void copyParams(AbstractPythonRunConfigurationParams source, AbstractPythonRunConfigurationParams target) {
-    target.setEnvs(new HashMap<String, String>(source.getEnvs()));
+    target.setEnvs(new HashMap<>(source.getEnvs()));
     target.setInterpreterOptions(source.getInterpreterOptions());
     target.setPassParentEnvs(source.isPassParentEnvs());
     target.setSdkHome(source.getSdkHome());
@@ -451,16 +453,34 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   }
 
   /**
-   * @return working directory to run, never null, does its best to return project dir if empty.
+   * Note to inheritors: Always check {@link #getWorkingDirectory()} first. You should return it, if it is not empty since
+   * user should be able to set dir explicitly. Then, do your guess and return super as last resort.
+   *
+   * @return working directory to run, never null, does its best to guess which dir to use.
    * Unlike {@link #getWorkingDirectory()} it does not simply take directory from config.
    */
   @NotNull
   public String getWorkingDirectorySafe() {
     final String result = StringUtil.isEmpty(myWorkingDirectory) ? getProject().getBasePath() : myWorkingDirectory;
-    if (result == null) {
-      return new File(".").getAbsolutePath();
+    if (result != null) {
+      return result;
     }
-    return result;
+
+    final String firstModuleRoot = getFirstModuleRoot();
+    if (firstModuleRoot != null) {
+      return firstModuleRoot;
+    }
+    return new File(".").getAbsolutePath();
+  }
+
+  @Nullable
+  private String getFirstModuleRoot() {
+    final Module module = getModule();
+    if (module == null) {
+      return null;
+    }
+    final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
+    return roots.length > 0 ? roots[0].getPath() : null;
   }
 
   @Override

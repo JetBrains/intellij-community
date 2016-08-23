@@ -90,7 +90,7 @@ public class GitChangeUtils {
   }
 
   public static Collection<String> parseDiffForPaths(final String rootPath, final StringScanner s) throws VcsException {
-    final Collection<String> result = new ArrayList<String>();
+    final Collection<String> result = new ArrayList<>();
 
     while (s.hasMoreData()) {
       if (s.isEol()) {
@@ -309,7 +309,7 @@ public class GitChangeUtils {
                                                        boolean skipDiffsForMerge,
                                                        GitHandler handler,
                                                        boolean local, boolean revertable) throws VcsException {
-    ArrayList<Change> changes = new ArrayList<Change>();
+    ArrayList<Change> changes = new ArrayList<>();
     // parse commit information
     final Date commitDate = GitUtil.parseTimestampWithNFEReport(s.line(), handler, s.getAllText());
     final String revisionNumber = s.line();
@@ -392,7 +392,7 @@ public class GitChangeUtils {
     }
     String output = getDiffOutput(project, root, range, dirtyPaths);
 
-    Collection<Change> changes = new ArrayList<Change>();
+    Collection<Change> changes = new ArrayList<>();
     parseChanges(project, root, newRev, oldRev, output, changes, Collections.<String>emptySet());
     return changes;
   }
@@ -414,7 +414,7 @@ public class GitChangeUtils {
                                                          @NotNull String oldRevision,
                                                          @Nullable Collection<FilePath> dirtyPaths, boolean reverse) throws VcsException {
     String output = getDiffOutput(project, root, oldRevision, dirtyPaths, reverse);
-    Collection<Change> changes = new ArrayList<Change>();
+    Collection<Change> changes = new ArrayList<>();
     final GitRevisionNumber revisionNumber = resolveReference(project, root, oldRevision);
     parseChanges(project, root, reverse ? revisionNumber : null, reverse ? null : revisionNumber, output, changes,
                  Collections.<String>emptySet());

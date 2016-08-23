@@ -1,7 +1,7 @@
 class BrokenAlignment {
 
   boolean smth() {
-    if (<warning descr="Condition '2 == 2' is always 'true'"><warning descr="Condition '2 == 2' is always 'true'">2 == 2</warning></warning>) {
+    if (<warning descr="Condition '2 == 2' is always 'true'">2 == 2</warning>) {
       return true;
     }
 

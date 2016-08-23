@@ -55,7 +55,7 @@ public class SpecialAnnotationsUtil {
   public static JPanel createSpecialAnnotationsListControl(final List<String> list,
                                                            final String borderTitle,
                                                            final boolean acceptPatterns) {
-    final SortedListModel<String> listModel = new SortedListModel<String>((o1, o2) -> o1.compareTo(o2));
+    final SortedListModel<String> listModel = new SortedListModel<>((o1, o2) -> o1.compareTo(o2));
     final JList injectionList = new JBList(listModel);
     for (String s : list) {
       listModel.add(s);

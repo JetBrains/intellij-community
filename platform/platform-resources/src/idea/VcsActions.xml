@@ -241,9 +241,6 @@
     </group>
 
     <group id="Vcs.MessageActionGroup">
-      <action id="Vcs.CheckCommitMessageSpelling"
-              class="com.intellij.openapi.vcs.actions.CheckCommitMessageSpellingAction"
-              icon="AllIcons.Vcs.CheckSpelling"/>
       <action id="Vcs.ShowMessageHistory"
               class="com.intellij.openapi.vcs.actions.ShowMessageHistoryAction"
               icon="AllIcons.General.MessageHistory"/>
@@ -360,7 +357,6 @@
       <reference ref="CommittedChanges.Clear"/>
       <reference ref="IncomingChanges.Refresh"/>
       <separator/>
-      <reference ref="Vcs.CheckCommitMessageSpelling"/>
       <reference ref="Vcs.ShowMessageHistory"/>
       <reference ref="CloseAllUnmodifiedEditors"/>
       <reference ref="Vcs.RollbackChangedLines"/>

@@ -75,7 +75,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
    * The cached analyzed classpaths for this module
    */
   private final HashMap<Pair<ClasspathType, Boolean>, ModuleDependenciesAnalyzer> myClasspaths =
-    new HashMap<Pair<ClasspathType, Boolean>, ModuleDependenciesAnalyzer>();
+    new HashMap<>();
 
   /**
    * The message bus connection to use
@@ -148,7 +148,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
   @Override
   protected ArrayList<AnAction> createActions(boolean fromPopup) {
     if (!fromPopup) {
-      ArrayList<AnAction> rc = new ArrayList<AnAction>();
+      ArrayList<AnAction> rc = new ArrayList<>();
       rc.add(new ClasspathTypeAction());
       rc.add(new SdkFilterAction());
       rc.add(new UrlModeAction());

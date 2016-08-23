@@ -67,7 +67,7 @@ public class PsiQuery {
    */
   @NotNull
   public PsiQuery childrenNamed(@NotNull final Class<? extends PsiNamedElement> clazz, @NotNull final String name) {
-    final List<PsiElement> result = new ArrayList<PsiElement>();
+    final List<PsiElement> result = new ArrayList<>();
     for (final PsiElement element : myPsiElements) {
       for (final PsiNamedElement child : PsiTreeUtil.findChildrenOfType(element, clazz)) {
         if (name.equals(child.getName())) {
@@ -88,7 +88,7 @@ public class PsiQuery {
   @NotNull
   public final PsiQuery childrenStringLiterals(@NotNull final Class<? extends PyStringLiteralExpression> clazz,
                                                @NotNull final String expectedText) {
-    final List<PsiElement> result = new ArrayList<PsiElement>();
+    final List<PsiElement> result = new ArrayList<>();
     for (final PyStringLiteralExpression element : getChildrenElements(clazz)) {
       if (element.getStringValue().equals(expectedText)) {
         result.add(element);
@@ -106,7 +106,7 @@ public class PsiQuery {
    */
   @NotNull
   public PsiQuery childrenCall(@NotNull final FQNamesProvider name) {
-    final List<PsiElement> result = new ArrayList<PsiElement>();
+    final List<PsiElement> result = new ArrayList<>();
     for (final PsiElement element : myPsiElements) {
       for (final PyCallExpression call : PsiTreeUtil.findChildrenOfType(element, PyCallExpression.class)) {
         if (call.isCallee(name)) {
@@ -122,7 +122,7 @@ public class PsiQuery {
    */
   @NotNull
   public PsiQuery children(@NotNull final Class<? extends PsiElement> clazz) {
-    final List<PsiElement> result = new ArrayList<PsiElement>();
+    final List<PsiElement> result = new ArrayList<>();
     for (final PsiElement element : myPsiElements) {
       result.addAll(PsiTreeUtil.findChildrenOfType(element, clazz));
     }
@@ -145,7 +145,7 @@ public class PsiQuery {
    */
   @NotNull
   public PsiQuery parents(@NotNull final Class<? extends PsiElement> clazz) {
-    final List<PsiElement> result = new ArrayList<PsiElement>();
+    final List<PsiElement> result = new ArrayList<>();
     for (final PsiElement element : myPsiElements) {
       final PsiElement parent = PsiTreeUtil.getParentOfType(element, clazz);
       if (parent != null) {
@@ -211,7 +211,7 @@ public class PsiQuery {
   @NotNull
   public <T extends PsiElement> PsiTypedQuery<T> siblings(@NotNull final Class<T> clazz) {
     // TODO: Rewrite function, get rid of inner class
-    final List<T> result = new ArrayList<T>();
+    final List<T> result = new ArrayList<>();
     for (final PsiElement element : myPsiElements) {
       final PsiElement parent = element.getParent();
       for (final T sibling : PsiTreeUtil.findChildrenOfType(parent, clazz)) {
@@ -220,7 +220,7 @@ public class PsiQuery {
         }
       }
     }
-    return new PsiTypedQuery<T>(clazz, result);
+    return new PsiTypedQuery<>(clazz, result);
   }
 
 
@@ -229,7 +229,7 @@ public class PsiQuery {
    */
   @NotNull
   public PsiQuery siblings(@NotNull final Class<? extends PsiNamedElement> clazz, @NotNull final String name) {
-    final List<PsiElement> result = new ArrayList<PsiElement>();
+    final List<PsiElement> result = new ArrayList<>();
     for (final PsiElement element : myPsiElements) {
       final PsiElement parent = element.getParent();
       for (final PsiNamedElement namedSibling : PsiTreeUtil.findChildrenOfType(parent, clazz)) {
@@ -247,7 +247,7 @@ public class PsiQuery {
    */
   @NotNull
   public PsiQuery siblings(@NotNull final FQNamesProvider name) {
-    final List<PsiElement> result = new ArrayList<PsiElement>();
+    final List<PsiElement> result = new ArrayList<>();
     for (final PsiElement element : myPsiElements) {
       final PsiElement parent = element.getParent();
       for (final PyCallExpression callSibling : PsiTreeUtil.findChildrenOfType(parent, PyCallExpression.class)) {
@@ -309,7 +309,7 @@ public class PsiQuery {
    */
   @NotNull
   public <T extends PsiElement> List<T> getChildrenElements(@NotNull final Class<T> expectedClass) {
-    final List<T> result = new ArrayList<T>();
+    final List<T> result = new ArrayList<>();
     for (final PsiElement element : myPsiElements) {
       final T typedElement = PyUtil.as(element, expectedClass);
       if (typedElement != null) {
@@ -331,7 +331,7 @@ public class PsiQuery {
    */
   @NotNull
   public PsiQuery filter(@NotNull final FQNamesProvider name) {
-    final Set<PsiElement> result = new HashSet<PsiElement>(Arrays.asList(myPsiElements));
+    final Set<PsiElement> result = new HashSet<>(Arrays.asList(myPsiElements));
     for (final PsiElement element : myPsiElements) {
       final PyCallExpression callExpression = PyUtil.as(element, PyCallExpression.class);
       if ((callExpression == null) || (!callExpression.isCallee(name))) {
@@ -356,7 +356,7 @@ public class PsiQuery {
    */
   @NotNull
   public <T extends PsiElement> PsiTypedQuery<T> filter(@NotNull final Class<T> clazz) {
-    final Set<PsiElement> result = new HashSet<PsiElement>(Arrays.asList(myPsiElements));
+    final Set<PsiElement> result = new HashSet<>(Arrays.asList(myPsiElements));
     for (final PsiElement element : myPsiElements) {
       if (!(clazz.isInstance(element))) {
         result.remove(element);
@@ -364,8 +364,8 @@ public class PsiQuery {
     }
     // We checked it in runtime
     @SuppressWarnings("unchecked")
-    final List<T> toAdd = (List<T>)new ArrayList<PsiElement>(result);
-    return new PsiTypedQuery<T>(clazz, toAdd);
+    final List<T> toAdd = (List<T>)new ArrayList<>(result);
+    return new PsiTypedQuery<>(clazz, toAdd);
   }
 
 
@@ -374,7 +374,7 @@ public class PsiQuery {
    */
   @NotNull
   public PsiQuery filter(@NotNull final Class<? extends PsiNamedElement> clazz, @NotNull final String name) {
-    final Set<PsiElement> result = new HashSet<PsiElement>(Arrays.asList(myPsiElements));
+    final Set<PsiElement> result = new HashSet<>(Arrays.asList(myPsiElements));
     for (final PsiElement element : myPsiElements) {
       final PsiNamedElement namedElement = PyUtil.as(element, clazz);
       if ((namedElement == null) || (!name.equals(namedElement.getName()))) {

@@ -195,6 +195,23 @@ internal class SchemeManagerTest {
     assertThat(dir).doesNotExist()
   }
 
+  @Test fun `reload schemes`() {
+    val dir = tempDirManager.newPath()
+    val schemeManager = createSchemeManager(dir)
+    schemeManager.loadSchemes()
+    assertThat(schemeManager.allSchemes).isEmpty()
+
+    val scheme = TestScheme("s1", "oldData")
+    schemeManager.setSchemes(listOf(scheme))
+    assertThat(schemeManager.allSchemes).containsOnly(scheme)
+    schemeManager.save()
+
+    dir.resolve("s1.xml").write("""<scheme name="s1" data="newData" />""")
+    schemeManager.reload()
+
+    assertThat(schemeManager.allSchemes).containsOnly(TestScheme("s1", "newData"))
+  }
+
   @Test fun `save only if scheme differs from bundled`() {
     val dir = tempDirManager.newPath()
     var schemeManager = createSchemeManager(dir)
@@ -363,7 +380,12 @@ private fun checkSchemes(baseDir: Path, expected: String, ignoreDeleted: Boolean
 }
 
 @Tag("scheme")
-data class TestScheme(override @field:com.intellij.util.xmlb.annotations.Attribute var name: String = "", @field:com.intellij.util.xmlb.annotations.Attribute var data: String? = null) : ExternalizableScheme {
+data class TestScheme(@field:com.intellij.util.xmlb.annotations.Attribute @field:kotlin.jvm.JvmField var name: String = "", @field:com.intellij.util.xmlb.annotations.Attribute var data: String? = null) : ExternalizableScheme {
+  override fun getName() = name
+
+  override fun setName(value: String) {
+    name = value
+  }
 }
 
 open class TestSchemesProcessor : BaseSchemeProcessor<TestScheme, TestScheme>() {

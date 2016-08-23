@@ -12,18 +12,21 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.edu.learning.*;
+import com.jetbrains.edu.learning.StudyPluginConfigurator;
+import com.jetbrains.edu.learning.StudyState;
+import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.actions.StudyAfterCheckAction;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.StudyStatus;
+import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.stepic.StepicUser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroundable {
 
@@ -58,19 +61,6 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
     StudyCheckUtils.drawAllPlaceholders(myProject, myTask, myTaskDir);
     ProjectView.getInstance(myProject).refresh();
     clearState();
-
-    List<Step> additionalSteps = myTask.getAdditionalSteps();
-    if (additionalSteps.isEmpty() || myTask.getActiveStepIndex() == additionalSteps.size() - 1) {
-      return;
-    }
-    for (TaskFile taskFile : myTask.getTaskFiles().values()) {
-      for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
-        if (placeholder.getStatus() != StudyStatus.Solved) {
-          return;
-        }
-      }
-    }
-    ApplicationManager.getApplication().invokeLater(() -> StudyStepManager.switchStep(myProject, myTask, myTask.getActiveStepIndex() + 1));
   }
 
   protected void clearState() {
@@ -128,9 +118,10 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
     if (course != null) {
       final StudyTestsOutputParser.TestsOutput testsOutput = StudyTestsOutputParser.getTestsOutput(output, course.isAdaptive());
       String stderr = output.getStderr();
-      if (!stderr.isEmpty()) {
+      if (!stderr.isEmpty() && output.getStdout().isEmpty()) {
         //log error output of tests
         LOG.info("#educational " + stderr);
+        return new StudyTestsOutputParser.TestsOutput(false, stderr);
       }
       return testsOutput;
     }
@@ -140,13 +131,18 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   private void checkForAdaptiveCourse(ProgressIndicator indicator) {
     final StudyTestsOutputParser.TestsOutput testOutput = getTestOutput(indicator);
     if (testOutput != null) {
-      if (testOutput.isSuccess()) {
+      // As tests in adaptive courses are created from
+      // samples and stored in task, to disable it we should ignore local testing results
+      if (StudyTaskManager.getInstance(myProject).isEnableTestingFromSamples() && !testOutput.isSuccess()) {
+        onTaskFailed(testOutput.getMessage());
+      }
+      else {
         final Pair<Boolean, String> pair = EduAdaptiveStepicConnector.checkTask(myProject, myTask);
         if (pair != null && !(!pair.getFirst() && pair.getSecond().isEmpty())) {
           if (pair.getFirst()) {
             onTaskSolved("Congratulations! Remote tests passed.");
             if (myStatusBeforeCheck != StudyStatus.Solved) {
-              EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, 2);
+              EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, 2, indicator);
             }
           }
           else {
@@ -161,9 +157,6 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
                                                                                                       .getPopupBackground(),
                                                                                                     myProject));
         }
-      }
-      else {
-        onTaskFailed(testOutput.getMessage());
       }
     }
   }
@@ -188,18 +181,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
 
   protected void onTaskSolved(String message) {
     final Course course = StudyTaskManager.getInstance(myProject).getCourse();
-    List<Step> additionalSteps = myTask.getAdditionalSteps();
-    boolean noMoreSteps = additionalSteps.isEmpty() || myTask.getActiveStepIndex() == additionalSteps.size() - 1;
-    if (noMoreSteps) {
-      myTask.setStatus(StudyStatus.Solved);
-    }
-    else {
-      for (TaskFile taskFile : myTask.getTaskFiles().values()) {
-        for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
-          placeholder.setStatus(StudyStatus.Solved);
-        }
-      }
-    }
+    myTask.setStatus(StudyStatus.Solved);
     if (course != null) {
       if (course.isAdaptive()) {
         ApplicationManager.getApplication().invokeLater(
@@ -209,15 +191,8 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
           });
       }
       else {
-        String successMessage = message;
-        if (!noMoreSteps) {
-          int stepNum = additionalSteps.size() + 1;
-          int currentStep = myTask.getActiveStepIndex() + 2;
-          successMessage = "Step " + currentStep + " from " +  stepNum + " solved";
-        }
-        String finalSuccessMessage = successMessage;
         ApplicationManager.getApplication()
-          .invokeLater(() -> StudyCheckUtils.showTestResultPopUp(finalSuccessMessage, MessageType.INFO.getPopupBackground(), myProject));
+          .invokeLater(() -> StudyCheckUtils.showTestResultPopUp(message, MessageType.INFO.getPopupBackground(), myProject));
       }
     }
   }

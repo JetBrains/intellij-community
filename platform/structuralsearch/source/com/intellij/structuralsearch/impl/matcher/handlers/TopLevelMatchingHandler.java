@@ -26,7 +26,7 @@ public final class TopLevelMatchingHandler extends MatchingHandler implements De
     if (matched) {
       List<PsiElement> matchedNodes = matchContext.getMatchedNodes();
       if (matchedNodes == null) {
-        matchedNodes = new ArrayList<PsiElement>();
+        matchedNodes = new ArrayList<>();
         matchContext.setMatchedNodes(matchedNodes);
       }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import git4idea.GitBranch;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBrancher;
@@ -62,7 +63,7 @@ class GitBranchPopupActions {
     }
 
     popupGroup.addSeparator("Local Branches");
-    List<GitBranch> localBranches = new ArrayList<GitBranch>(myRepository.getBranches().getLocalBranches());
+    List<GitBranch> localBranches = new ArrayList<>(myRepository.getBranches().getLocalBranches());
     Collections.sort(localBranches);
     for (GitBranch localBranch : localBranches) {
       if (!localBranch.equals(myRepository.getCurrentBranch())) { // don't show current branch in the list
@@ -71,7 +72,7 @@ class GitBranchPopupActions {
     }
 
     popupGroup.addSeparator("Remote Branches");
-    List<GitBranch> remoteBranches = new ArrayList<GitBranch>(myRepository.getBranches().getRemoteBranches());
+    List<GitBranch> remoteBranches = new ArrayList<>(myRepository.getBranches().getRemoteBranches());
     Collections.sort(remoteBranches);
     for (GitBranch remoteBranch : remoteBranches) {
       popupGroup.add(new RemoteBranchActions(myProject, repositoryList, remoteBranch.getName(), myRepository));
@@ -161,7 +162,7 @@ class GitBranchPopupActions {
     private String calcBranchText() {
       String trackedBranch = new GitMultiRootBranchConfig(myRepositories).getTrackedBranch(myBranchName);
       if (trackedBranch != null) {
-        return myBranchName + " -> " + trackedBranch;
+        return myBranchName + " " + UIUtil.rightArrow() + " " + trackedBranch;
       }
       else {
         return myBranchName;

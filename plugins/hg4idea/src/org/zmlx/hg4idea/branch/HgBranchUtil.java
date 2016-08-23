@@ -44,7 +44,7 @@ public class HgBranchUtil {
       }
     }
     if (commonBranches != null) {
-      ArrayList<String> common = new ArrayList<String>(commonBranches);
+      ArrayList<String> common = new ArrayList<>(commonBranches);
       Collections.sort(common);
       return common;
     }
@@ -67,7 +67,7 @@ public class HgBranchUtil {
       }
     }
     if (commonBookmarkNames != null) {
-      ArrayList<String> common = new ArrayList<String>(commonBookmarkNames);
+      ArrayList<String> common = new ArrayList<>(commonBookmarkNames);
       Collections.sort(common);
       return common;
     }

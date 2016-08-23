@@ -177,7 +177,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
   }
 
   public void setChildren(@NotNull List<DirectoryEntry> children, @NotNull NodeLoadState state) {
-    final List<TreeNode> nodes = new ArrayList<TreeNode>();
+    final List<TreeNode> nodes = new ArrayList<>();
     for (final DirectoryEntry entry : children) {
       if (!myModel.isShowFiles() && !entry.isDirectory()) {
         continue;

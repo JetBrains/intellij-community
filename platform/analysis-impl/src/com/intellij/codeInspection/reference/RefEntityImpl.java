@@ -76,7 +76,7 @@ abstract class RefEntityImpl implements RefEntity {
 
   public synchronized void add(@NotNull final RefEntity child) {
     if (myChildren == null) {
-      myChildren = new ArrayList<RefEntity>(1);
+      myChildren = new ArrayList<>(1);
     }
 
     myChildren.add(child);
@@ -106,7 +106,7 @@ abstract class RefEntityImpl implements RefEntity {
 
   @Override
   public void accept(@NotNull final RefVisitor refVisitor) {
-    ApplicationManager.getApplication().runReadAction(() -> refVisitor.visitElement(RefEntityImpl.this));
+    ApplicationManager.getApplication().runReadAction(() -> refVisitor.visitElement(this));
   }
 
   @Override
@@ -114,7 +114,7 @@ abstract class RefEntityImpl implements RefEntity {
     synchronized(this){
       if (myUserMap == null){
         if (value == null) return;
-        myUserMap = new THashMap<Key, Object>();
+        myUserMap = new THashMap<>();
       }
       if (value != null){
         //noinspection unchecked

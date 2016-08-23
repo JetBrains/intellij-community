@@ -15,9 +15,12 @@
  */
 package org.jetbrains.intellij.build
 
+import groovy.transform.CompileStatic
+
 /**
  * @author nik
  */
+@CompileStatic
 public abstract class ProductProperties {
   /**
    * Base name for script files (*.bat, *.sh, *.exe), usually a shortened product name in lower case (e.g. 'idea' for IntelliJ IDEA, 'datagrip' for DataGrip)
@@ -39,12 +42,18 @@ public abstract class ProductProperties {
    */
   String applicationInfoModule
 
-  String brandingModule
+  /**
+   * Paths to directories containing images specified by 'logo/@url' and 'icon/@ico' attributes in ApplicationInfo.xml file
+   * <br>
+   * todo[nik] get rid of this and make sure that these resources are located in {@link #applicationInfoModule} instead
+   */
+  List<String> brandingResourcePaths = []
 
   /**
-   * Name of the sh/bat script (without extension) which will contain the commands to run IDE in 'offline inspections' mode
+   * Name of the command which runs IDE in 'offline inspections' mode (returned by 'getCommandName' in com.intellij.openapi.application.ApplicationStarter).
+   * This property will be also used to name sh/bat scripts which execute this command.
    */
-  String inspectScriptName = "inspect"
+  String inspectCommandName = "inspect"
 
   /**
    * {@code true} if tools.jar from JDK must be added to IDE's classpath
@@ -80,7 +89,7 @@ public abstract class ProductProperties {
   List<LibraryLicense> allLibraryLicenses = CommunityLibraryLicenses.LICENSES_LIST
 
   /**
-   * If {@code true} the main product JAR file will be scrambled using {@link BuildContext#scrambleTool}
+   * If {@code true} the main product JAR file will be scrambled using {@link ProprietaryBuildTools#scrambleTool}
    */
   boolean scrambleMainJar = false
 

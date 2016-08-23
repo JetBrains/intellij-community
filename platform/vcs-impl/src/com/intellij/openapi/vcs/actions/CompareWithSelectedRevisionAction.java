@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -108,15 +107,10 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
   };
 
   @Override
-  public void update(VcsContext e, Presentation presentation) {
+  public void update(@NotNull VcsContext e, @NotNull Presentation presentation) {
     AbstractShowDiffAction.updateDiffAction(presentation, e, VcsBackgroundableActions.COMPARE_WITH);
   }
 
-
-  @Override
-  protected boolean forceSyncUpdate(final AnActionEvent e) {
-    return true;
-  }
 
   @Override
   protected void actionPerformed(@NotNull VcsContext vcsContext) {
@@ -239,7 +233,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
         break;
       }
     }
-    final TableView<VcsFileRevision> table = new TableView<VcsFileRevision>(new ListTableModel<VcsFileRevision>(columns, revisions, 0));
+    final TableView<VcsFileRevision> table = new TableView<>(new ListTableModel<>(columns, revisions, 0));
     table.setShowHorizontalLines(false);
     table.setTableHeader(null);
     Runnable runnable = new Runnable() {

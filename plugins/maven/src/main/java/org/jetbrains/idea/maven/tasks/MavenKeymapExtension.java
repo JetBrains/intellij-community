@@ -63,7 +63,7 @@ public class MavenKeymapExtension implements ExternalSystemKeymapExtension.Actio
 
     Comparator<MavenProject> projectComparator = (o1, o2) -> o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
     Map<MavenProject, Set<Pair<String, String>>> projectToActionsMapping
-      = new TreeMap<MavenProject, Set<Pair<String, String>>>(projectComparator);
+      = new TreeMap<>(projectComparator);
 
     ActionManager actionManager = ActionManager.getInstance();
     //noinspection TestOnlyProblems
@@ -78,7 +78,7 @@ public class MavenKeymapExtension implements ExternalSystemKeymapExtension.Actio
       Set<Pair<String, String>> actions = projectToActionsMapping.get(mavenProject);
       if (actions == null) {
         final List<String> projectGoals = collectGoals(mavenProject);
-        actions = new TreeSet<Pair<String, String>>((o1, o2) -> {
+        actions = new TreeSet<>((o1, o2) -> {
           String goal1 = o1.getFirst();
           String goal2 = o2.getFirst();
           int index1 = projectGoals.indexOf(goal1);
@@ -158,7 +158,7 @@ public class MavenKeymapExtension implements ExternalSystemKeymapExtension.Actio
   }
 
   private static List<MavenGoalAction> collectActions(MavenProject mavenProject) {
-    List<MavenGoalAction> result = new ArrayList<MavenGoalAction>();
+    List<MavenGoalAction> result = new ArrayList<>();
     for (String eachGoal : collectGoals(mavenProject)) {
       result.add(new MavenGoalAction(mavenProject, eachGoal));
     }
@@ -184,14 +184,14 @@ public class MavenKeymapExtension implements ExternalSystemKeymapExtension.Actio
   }
 
   private static List<String> collectGoals(MavenProject project) {
-    LinkedHashSet<String> result = new LinkedHashSet<String>(); // may contains similar plugins or somethig
+    LinkedHashSet<String> result = new LinkedHashSet<>(); // may contains similar plugins or somethig
     result.addAll(MavenConstants.PHASES);
 
     for (MavenPlugin each : project.getDeclaredPlugins()) {
       collectGoals(project.getLocalRepository(), each, result);
     }
 
-    return new ArrayList<String>(result);
+    return new ArrayList<>(result);
   }
 
   private static void collectGoals(File repository, MavenPlugin plugin, LinkedHashSet<String> list) {

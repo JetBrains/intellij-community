@@ -59,7 +59,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   protected FontSize myQuickDocFontSize = DEFAULT_FONT_SIZE;
   protected float myLineSpacing;
 
-  @NotNull private final Map<EditorFontType, Font> myFonts                  = new EnumMap<EditorFontType, Font>(EditorFontType.class);
+  @NotNull private final Map<EditorFontType, Font> myFonts                  = new EnumMap<>(EditorFontType.class);
   @NotNull private final FontPreferences           myFontPreferences        = new FontPreferences();
   @NotNull private final FontPreferences           myConsoleFontPreferences = new FontPreferences();
 
@@ -181,8 +181,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
       newScheme.setFont(type, font);
     }
 
-    newScheme.myAttributesMap = new HashMap<TextAttributesKey, TextAttributes>(myAttributesMap);
-    newScheme.myColorsMap = new HashMap<ColorKey, Color>(myColorsMap);
+    newScheme.myAttributesMap = new HashMap<>(myAttributesMap);
+    newScheme.myColorsMap = new HashMap<>(myColorsMap);
     newScheme.myVersion = myVersion;
   }
 
@@ -429,7 +429,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
   @Deprecated
   @SuppressWarnings("unused")
-  public static final Map<String, Color> DEFAULT_ERROR_STRIPE_COLOR = new THashMap<String, Color>();
+  public static final Map<String, Color> DEFAULT_ERROR_STRIPE_COLOR = new THashMap<>();
 
   @SuppressWarnings("UseJBColor")
   private static final Map<String, Couple<Color>> DEFAULT_STRIPE_COLORS = new THashMap<String, Couple<Color>>() {
@@ -642,7 +642,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   }
 
   private void writeAttributes(Element attrElements) throws WriteExternalException {
-    List<TextAttributesKey> list = new ArrayList<TextAttributesKey>(myAttributesMap.keySet());
+    List<TextAttributesKey> list = new ArrayList<>(myAttributesMap.keySet());
     Collections.sort(list);
 
     for (TextAttributesKey key: list) {
@@ -702,7 +702,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   }
 
   private void writeColors(Element colorElements) {
-    List<ColorKey> list = new ArrayList<ColorKey>(myColorsMap.keySet());
+    List<ColorKey> list = new ArrayList<>(myColorsMap.keySet());
     Collections.sort(list);
 
     for (ColorKey key : list) {

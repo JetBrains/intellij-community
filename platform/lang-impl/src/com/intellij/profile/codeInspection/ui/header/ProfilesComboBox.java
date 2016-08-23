@@ -45,7 +45,7 @@ public abstract class ProfilesComboBox extends ComboBox<InspectionProfileImpl> {
   private InspectionProfileImpl myFirstGlobalProfile;
 
   public ProfilesComboBox() {
-    myComboModel = new SortedComboBoxModel<InspectionProfileImpl>(this::compare);
+    myComboModel = new SortedComboBoxModel<>(this::compare);
     setModel(myComboModel);
     //noinspection GtkPreferredJComboBoxRenderer
     setRenderer(new ListCellRenderer<Object>() {

@@ -95,10 +95,10 @@ public class AntSetPanel {
   private static class Form implements AntUIUtil.PropertiesEditor<AntInstallation> {
     private final Splitter mySplitter = new JBSplitter("antConfigurations.splitter", 0.3f);
     private final RightPanel myRightPanel;
-    private final AnActionListEditor<AntInstallation> myAnts = new AnActionListEditor<AntInstallation>();
+    private final AnActionListEditor<AntInstallation> myAnts = new AnActionListEditor<>();
     private final UIPropertyBinding.Composite myBinding = new UIPropertyBinding.Composite();
     private final EditPropertyContainer myGlobalWorkingProperties;
-    private final Map<AntInstallation, EditPropertyContainer> myWorkingProperties = new HashMap<AntInstallation, EditPropertyContainer>();
+    private final Map<AntInstallation, EditPropertyContainer> myWorkingProperties = new HashMap<>();
 
     private AntInstallation myCurrent;
     private final PropertyChangeListener myImmediateUpdater = new PropertyChangeListener() {
@@ -158,7 +158,7 @@ public class AntSetPanel {
 
     public void applyModifications() {
       if (myCurrent != null) myBinding.apply(getProperties(myCurrent));
-      ArrayList<AbstractProperty> properties = new ArrayList<AbstractProperty>();
+      ArrayList<AbstractProperty> properties = new ArrayList<>();
       myBinding.addAllPropertiesTo(properties);
       for (AntInstallation ant : myWorkingProperties.keySet()) {
         EditPropertyContainer container = myWorkingProperties.get(ant);
@@ -268,7 +268,7 @@ public class AntSetPanel {
     }
 
     protected void doOKAction() {
-      final Set<String> names = new HashSet<String>();
+      final Set<String> names = new HashSet<>();
       final ListModel model = myForm.getAntsList().getModel();
       for (int idx = 0; idx  < model.getSize(); idx++) {
         final AntInstallation inst = (AntInstallation)model.getElementAt(idx);

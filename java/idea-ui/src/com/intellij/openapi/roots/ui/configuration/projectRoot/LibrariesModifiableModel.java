@@ -76,6 +76,10 @@ public class LibrariesModifiableModel implements LibraryTableBase.ModifiableMode
     removeLibraryEditor(library);
     final Library existingLibrary = myTable.getLibraryByName(library.getName());
     getLibrariesModifiableModel().removeLibrary(library);
+
+    final BaseLibrariesConfigurable configurable = ProjectStructureConfigurable.getInstance(myProject).getConfigurableFor(library);
+    configurable.removeLibraryNode(library);
+
     if (existingLibrary == library) {
       myRemovedLibraries.add(library);
     } else {
@@ -115,7 +119,7 @@ public class LibrariesModifiableModel implements LibraryTableBase.ModifiableMode
   }
 
   public void deferredCommit(){
-    final List<ExistingLibraryEditor> libraryEditors = new ArrayList<ExistingLibraryEditor>(myLibrary2EditorMap.values());
+    final List<ExistingLibraryEditor> libraryEditors = new ArrayList<>(myLibrary2EditorMap.values());
     myLibrary2EditorMap.clear();
     for (ExistingLibraryEditor libraryEditor : libraryEditors) {
       libraryEditor.commit(); // TODO: is seems like commit will recreate the editor, but it should not
@@ -183,7 +187,7 @@ public class LibrariesModifiableModel implements LibraryTableBase.ModifiableMode
   }
 
   private void disposeUncommittedLibraries() {
-    for (final Library library : new ArrayList<Library>(myLibrary2EditorMap.keySet())) {
+    for (final Library library : new ArrayList<>(myLibrary2EditorMap.keySet())) {
       final Library existingLibrary = myTable.getLibraryByName(library.getName());
       if (existingLibrary != library) {
         Disposer.dispose(library);

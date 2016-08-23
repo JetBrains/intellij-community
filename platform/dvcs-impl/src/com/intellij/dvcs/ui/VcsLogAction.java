@@ -22,41 +22,31 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.impl.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
+
+import static com.intellij.vcs.log.impl.VcsLogUtil.MAX_SELECTED_COMMITS;
+import static com.intellij.vcs.log.impl.VcsLogUtil.collectFirstPack;
 
 public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     VcsLog log = e.getRequiredData(VcsLogDataKeys.VCS_LOG);
 
-    log.requestSelectedDetails(new Consumer<List<VcsFullCommitDetails>>() {
-      @Override
-      public void consume(List<VcsFullCommitDetails> details) {
-        MultiMap<Repo, VcsFullCommitDetails> grouped = groupCommits(project, details, new Function<VcsFullCommitDetails, VirtualFile>() {
-          @Override
-          public VirtualFile fun(VcsFullCommitDetails vcsFullCommitDetails) {
-            return vcsFullCommitDetails.getRoot();
-          }
-        });
-
-        if (grouped == null) return;
-        actionPerformed(project, grouped);
-      }
+    log.requestSelectedDetails(details -> {
+      MultiMap<Repo, VcsFullCommitDetails> grouped = groupCommits(project, details, VcsShortCommitDetails::getRoot);
+      if (grouped == null) return;
+      actionPerformed(project, grouped);
     }, null);
   }
 
@@ -83,14 +73,9 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
 
   protected abstract boolean isEnabled(@NotNull MultiMap<Repo, Hash> grouped);
 
-  protected boolean isVisible(@NotNull final Project project, @NotNull MultiMap<Repo, Hash> grouped) {
-    return ContainerUtil.and(grouped.keySet(), new Condition<Repo>() {
-      @Override
-      public boolean value(Repo repo) {
-        RepositoryManager<Repo> manager = getRepositoryManager(project);
-        return !manager.isExternal(repo);
-      }
-    });
+  protected boolean isVisible(@NotNull Project project, @NotNull MultiMap<Repo, Hash> grouped) {
+    RepositoryManager<Repo> manager = getRepositoryManager(project);
+    return grouped.keySet().stream().allMatch(repo -> !manager.isExternal(repo));
   }
 
   @NotNull
@@ -105,26 +90,14 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
    */
   @Nullable
   private MultiMap<Repo, Hash> groupFirstPackOfCommits(@NotNull Project project, @NotNull VcsLog log) {
-    MultiMap<Repo, CommitId> commitIds =
-      groupCommits(project, VcsLogUtil.collectFirstPack(log.getSelectedCommits(), VcsLogUtil.MAX_SELECTED_COMMITS),
-                   new Function<CommitId, VirtualFile>() {
-                     @Override
-                     public VirtualFile fun(CommitId hash) {
-                       return hash.getRoot();
-                     }
-                   });
+    MultiMap<Repo, CommitId> commitIds = groupCommits(project, collectFirstPack(log.getSelectedCommits(), MAX_SELECTED_COMMITS),
+                                                      CommitId::getRoot);
     if (commitIds == null) return null;
 
     MultiMap<Repo, Hash> hashes = MultiMap.create();
     for (Map.Entry<Repo, Collection<CommitId>> entry: commitIds.entrySet()) {
-      hashes.putValues(entry.getKey(), ContainerUtil.map(entry.getValue(), new Function<CommitId, Hash>() {
-        @Override
-        public Hash fun(CommitId commitId) {
-          return commitId.getHash();
-        }
-      }));
+      hashes.putValues(entry.getKey(), ContainerUtil.map(entry.getValue(), CommitId::getHash));
     }
-
     return hashes;
   }
 
@@ -142,5 +115,4 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
     }
     return map;
   }
-
 }

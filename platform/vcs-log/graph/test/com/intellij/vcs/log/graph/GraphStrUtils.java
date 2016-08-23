@@ -75,7 +75,7 @@ public class GraphStrUtils {
     for (int nodeIndex = 0; nodeIndex < nodesCount; nodeIndex++) {
       if (nodeIndex != 0) s.append("\n");
 
-      List<Integer> branchNodeIndexes = new ArrayList<Integer>(reachableNodes.getContainingBranches(nodeIndex, branches));
+      List<Integer> branchNodeIndexes = new ArrayList<>(reachableNodes.getContainingBranches(nodeIndex, branches));
       if (branchNodeIndexes.isEmpty()) {
         s.append("none");
         continue;
@@ -110,7 +110,7 @@ public class GraphStrUtils {
   public static String edgesToStr(@NotNull Set<GraphEdge> edges) {
     if (edges.isEmpty()) return "none";
 
-    List<GraphEdge> sortedEdges = new ArrayList<GraphEdge>(edges);
+    List<GraphEdge> sortedEdges = new ArrayList<>(edges);
     Collections.sort(sortedEdges, GRAPH_ELEMENT_COMPARATOR);
 
     return StringUtil.join(sortedEdges, new Function<GraphEdge, String>() {

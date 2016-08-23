@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class AbstractIntProperty<T extends RadComponent> extends Property<T, Integer> {
   private final int myDefaultValue;
-  private final LabelPropertyRenderer<Integer> myRenderer = new LabelPropertyRenderer<Integer>();
+  private final LabelPropertyRenderer<Integer> myRenderer = new LabelPropertyRenderer<>();
   private final IntEditor myEditor;
 
   protected AbstractIntProperty(Property parent, @NotNull @NonNls String name, int defaultValue) {

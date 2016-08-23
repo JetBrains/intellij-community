@@ -36,7 +36,7 @@ public class MoveFilesOrDirectoriesHandler extends MoveHandlerDelegate {
 
   @Override
   public boolean canMove(final PsiElement[] elements, final PsiElement targetContainer) {
-    HashSet<String> names = new HashSet<String>();
+    HashSet<String> names = new HashSet<>();
     for (PsiElement element : elements) {
       if (element instanceof PsiFile) {
         PsiFile file = (PsiFile)element;

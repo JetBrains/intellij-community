@@ -59,7 +59,7 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
   public ResolveResult[] multiResolve(boolean incompleteCode) {
     final String name = getName();
     if (name == null) return ResolveResult.EMPTY_ARRAY;
-    ArrayList<GroovyResolveResult> candidates = new ArrayList<GroovyResolveResult>();
+    ArrayList<GroovyResolveResult> candidates = new ArrayList<>();
 
     final PsiElement owner = GrDocCommentUtil.findDocOwner(this);
     if (owner instanceof GrMethod) {

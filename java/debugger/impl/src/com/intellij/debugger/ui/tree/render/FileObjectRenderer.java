@@ -21,7 +21,7 @@ import com.intellij.openapi.util.registry.Registry;
 /**
  * @author egor
  */
-public class FileObjectRenderer extends ToStringBasedRenderer {
+public class FileObjectRenderer extends CompoundReferenceRenderer {
   public FileObjectRenderer(final NodeRendererSettings rendererSettings) {
     super(rendererSettings, "File", null, NodeRendererSettings.createExpressionChildrenRenderer("listFiles()", null));
     setClassName("java.io.File");

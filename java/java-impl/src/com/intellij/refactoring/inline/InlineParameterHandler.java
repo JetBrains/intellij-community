@@ -81,9 +81,9 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
       return;
     }
 
-    final Ref<PsiExpression> refInitializer = new Ref<PsiExpression>();
-    final Ref<PsiExpression> refConstantInitializer = new Ref<PsiExpression>();
-    final Ref<PsiCallExpression> refMethodCall = new Ref<PsiCallExpression>();
+    final Ref<PsiExpression> refInitializer = new Ref<>();
+    final Ref<PsiExpression> refConstantInitializer = new Ref<>();
+    final Ref<PsiCallExpression> refMethodCall = new Ref<>();
     final List<PsiReference> occurrences = Collections.synchronizedList(new ArrayList<PsiReference>());
     final Collection<PsiFile> containingFiles = Collections.synchronizedSet(new HashSet<PsiFile>());
     containingFiles.add(psiParameter.getContainingFile());
@@ -177,7 +177,7 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
       return;
     }
 
-    final Ref<Boolean> isNotConstantAccessible = new Ref<Boolean>();
+    final Ref<Boolean> isNotConstantAccessible = new Ref<>();
     final PsiExpression constantExpression = refConstantInitializer.get();
     constantExpression.accept(new JavaRecursiveElementVisitor(){
       @Override

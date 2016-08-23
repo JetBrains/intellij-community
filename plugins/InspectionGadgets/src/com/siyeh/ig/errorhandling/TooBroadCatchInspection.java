@@ -44,7 +44,7 @@ public class TooBroadCatchInspection extends TooBroadCatchInspectionBase {
     final PsiElement context = (PsiElement)infos[1];
     final SmartTypePointerManager pointerManager = SmartTypePointerManager.getInstance(context.getProject());
     final List<PsiType> maskedTypes = (List<PsiType>)infos[0];
-    final List<InspectionGadgetsFix> fixes = new ArrayList<InspectionGadgetsFix>();
+    final List<InspectionGadgetsFix> fixes = new ArrayList<>();
     for (PsiType thrown : maskedTypes) {
       final String typeText = thrown.getCanonicalText();
       if (CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION.equals(typeText)) {

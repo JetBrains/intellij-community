@@ -17,6 +17,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.SystemProperties
+import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.java.JdkVersionDetector
@@ -26,6 +27,7 @@ import org.jetbrains.jps.model.library.JpsOrderRootType
 /**
  * @author nik
  */
+@CompileStatic
 class JdkUtils {
   public static void defineJdk(JpsGlobal global, String jdkName, String jdkHomePath) {
     def sdk = JpsJavaExtensionService.instance.addJavaSdk(global, jdkName, jdkHomePath)
@@ -36,7 +38,7 @@ class JdkUtils {
   }
 
   public static String computeJdkHome(BuildMessages messages, String propertyName, String defaultDir, String envVarName) {
-    def jdkDir = System.getProperty(propertyName)
+    String jdkDir = System.getProperty(propertyName)
     if (jdkDir != null) {
       return jdkDir
     }

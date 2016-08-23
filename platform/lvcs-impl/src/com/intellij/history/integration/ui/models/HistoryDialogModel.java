@@ -98,7 +98,7 @@ public abstract class HistoryDialogModel {
   }
 
   private List<RevisionItem> groupRevisions(List<Revision> revs) {
-    LinkedList<RevisionItem> result = new LinkedList<RevisionItem>();
+    LinkedList<RevisionItem> result = new LinkedList<>();
 
     for (Revision each : ContainerUtil.iterateBackward(revs)) {
       if (each.isLabel() && !result.isEmpty()) {
@@ -177,7 +177,7 @@ public abstract class HistoryDialogModel {
   public List<Change> getChanges() {
     List<Difference> dd = getDifferences();
 
-    List<Change> result = new ArrayList<Change>();
+    List<Change> result = new ArrayList<>();
     for (Difference d : dd) {
       result.add(createChange(d));
     }

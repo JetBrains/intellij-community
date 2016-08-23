@@ -45,7 +45,7 @@ public abstract class GrReferenceListElementType<T extends GrReferenceList> exte
   @NotNull
   @Override
   public GrReferenceListStub createStub(@NotNull T psi, StubElement parentStub) {
-    List<String> refNames = new ArrayList<String>();
+    List<String> refNames = new ArrayList<>();
     for (GrCodeReferenceElement element : psi.getReferenceElementsGroovy()) {
       final String name = GrStubUtils.getReferenceName(element);
       if (StringUtil.isNotEmpty(name)) {

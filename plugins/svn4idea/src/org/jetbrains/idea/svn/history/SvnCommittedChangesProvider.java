@@ -162,7 +162,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
                                                  @NotNull RepositoryLocation location,
                                                  int maxCount) throws VcsException {
     final SvnRepositoryLocation svnLocation = (SvnRepositoryLocation) location;
-    final ArrayList<SvnChangeList> result = new ArrayList<SvnChangeList>();
+    final ArrayList<SvnChangeList> result = new ArrayList<>();
     final String repositoryRoot = getRepositoryRoot(svnLocation);
 
     getCommittedChangesImpl(settings, svnLocation, maxCount, new Consumer<LogEntry>() {

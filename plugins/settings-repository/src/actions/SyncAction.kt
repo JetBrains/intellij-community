@@ -15,9 +15,12 @@
  */
 package org.jetbrains.settingsRepository.actions
 
+import com.intellij.configurationStore.StateStorageManagerImpl
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import org.jetbrains.settingsRepository.*
@@ -60,6 +63,14 @@ internal class ConfigureIcsAction : DumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
+    if (icsManager.repositoryActive) {
+      e.presentation.isEnabledAndVisible = true
+    }
+    else {
+      val application = ApplicationManager.getApplication()
+      val provider = (application.stateStore.stateStorageManager as StateStorageManagerImpl).streamProvider
+      e.presentation.isEnabledAndVisible = provider == null || !provider.enabled
+    }
     e.presentation.icon = null
   }
 }

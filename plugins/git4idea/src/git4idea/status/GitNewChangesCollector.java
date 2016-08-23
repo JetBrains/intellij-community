@@ -58,8 +58,8 @@ class GitNewChangesCollector extends GitChangesCollector {
 
   private static final Logger LOG = Logger.getInstance(GitNewChangesCollector.class);
   private final GitRepository myRepository;
-  private final Collection<Change> myChanges = new HashSet<Change>();
-  private final Set<VirtualFile> myUnversionedFiles = new HashSet<VirtualFile>();
+  private final Collection<Change> myChanges = new HashSet<>();
+  private final Set<VirtualFile> myUnversionedFiles = new HashSet<>();
   @NotNull private final Git myGit;
 
   /**
@@ -129,6 +129,7 @@ class GitNewChangesCollector extends GitChangesCollector {
       handler.addParameters(params);
       handler.endOptions();
     }
+    handler.setSilent(true);
     return handler;
   }
 

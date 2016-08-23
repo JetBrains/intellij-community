@@ -60,8 +60,8 @@ public class MisspelledMethodNameInspectionBase extends BaseInspection {
     public void visitClass(PsiClass aClass) {
       super.visitClass(aClass);
       PsiMethod[] methods = aClass.getAllMethods();
-      Map<String, PsiMethod> methodNames = new THashMap<String, PsiMethod>(CaseInsensitiveStringHashingStrategy.INSTANCE);
-      Map<PsiIdentifier, String> errorNames = new THashMap<PsiIdentifier, String>();
+      Map<String, PsiMethod> methodNames = new THashMap<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+      Map<PsiIdentifier, String> errorNames = new THashMap<>();
       for (PsiMethod method : methods) {
         ProgressManager.checkCanceled();
         if (method.isConstructor()) continue;

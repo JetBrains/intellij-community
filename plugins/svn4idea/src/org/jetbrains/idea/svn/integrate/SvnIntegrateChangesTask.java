@@ -80,7 +80,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     myInfo = info;
 
     myAccumulatedFiles = new UpdatedFilesReverseSide(UpdatedFiles.create());
-    myExceptions = new ArrayList<VcsException>();
+    myExceptions = new ArrayList<>();
     myHandler = new IntegrateEventHandler(myVcs, ProgressManager.getInstance().getProgressIndicator());
     myMerger = mergerFactory.createMerger(myVcs, new File(myInfo.getLocalPath()), myHandler, currentBranchUrl, branchName);
   }
@@ -276,7 +276,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     changeListManager.invokeAfterUpdate(new Runnable() {
       public void run() {
-        Collection<Change> changes = new ArrayList<Change>();
+        Collection<Change> changes = new ArrayList<>();
         for (FilePath file : files) {
           ContainerUtil.addIfNotNull(changes, changeListManager.getChange(file));
         }
@@ -294,7 +294,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
 
   @NotNull
   private Collection<FilePath> gatherChangedPaths() {
-    final Collection<FilePath> result = new ArrayList<FilePath>();
+    final Collection<FilePath> result = new ArrayList<>();
 
     UpdateFilesHelper.iterateFileGroupFiles(myAccumulatedFiles.getUpdatedFiles(), new UpdateFilesHelper.Callback() {
       public void onFile(final String filePath, final String groupId) {
@@ -327,7 +327,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
                             SvnBundle.message("action.Subversion.integrate.changes.collecting.changes.to.commit.task.title")) {
 
       private final GatheringChangelistBuilder changesBuilder = new GatheringChangelistBuilder(myVcs, myAccumulatedFiles);
-      private final Ref<String> caughtError = new Ref<String>();
+      private final Ref<String> caughtError = new Ref<>();
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {

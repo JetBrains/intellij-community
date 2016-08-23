@@ -82,11 +82,11 @@ public class LaterInvocator {
 
   private static final List<Object> ourModalEntities = ContainerUtil.createLockFreeCopyOnWriteList();
   private static final Stack<ModalityState> ourModalityStack = new Stack<>(ModalityState.NON_MODAL);
-  private static final List<RunnableInfo> ourQueue = new ArrayList<RunnableInfo>(); //protected by LOCK
+  private static final List<RunnableInfo> ourQueue = new ArrayList<>(); //protected by LOCK
   private static volatile int ourQueueSkipCount; // optimization
   private static final FlushQueue ourFlushQueueRunnable = new FlushQueue();
 
-  private static final Stack<AWTEvent> ourEventStack = new Stack<AWTEvent>(); // guarded by RUN_LOCK
+  private static final Stack<AWTEvent> ourEventStack = new Stack<>(); // guarded by RUN_LOCK
 
   private static final EventDispatcher<ModalityStateListener> ourModalityStateMulticaster = EventDispatcher.create(ModalityStateListener.class);
 
@@ -111,7 +111,7 @@ public class LaterInvocator {
       return ownerState;
     }
 
-    List<Object> result = new ArrayList<Object>();
+    List<Object> result = new ArrayList<>();
     for (Object entity : ourModalEntities) {
       if (entity instanceof Window ||
           entity instanceof ProgressIndicator && ((ProgressIndicator)entity).isModal()) {

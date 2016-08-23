@@ -63,9 +63,11 @@ public class JavaHighlightingColors {
 
   public static final TextAttributesKey LOCAL_VARIABLE_ATTRIBUTES 
     = TextAttributesKey.createTextAttributesKey("LOCAL_VARIABLE_ATTRIBUTES", DefaultLanguageHighlighterColors.LOCAL_VARIABLE);
-  public static final TextAttributesKey PARAMETER_ATTRIBUTES 
+  public static final TextAttributesKey PARAMETER_ATTRIBUTES
     = TextAttributesKey.createTextAttributesKey("PARAMETER_ATTRIBUTES", DefaultLanguageHighlighterColors.PARAMETER);
-  public static final TextAttributesKey REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES 
+  public static final TextAttributesKey LAMBDA_PARAMETER_ATTRIBUTES
+    = TextAttributesKey.createTextAttributesKey("LAMBDA_PARAMETER_ATTRIBUTES", PARAMETER_ATTRIBUTES);
+  public static final TextAttributesKey REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES
     = TextAttributesKey.createTextAttributesKey("REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES", LOCAL_VARIABLE_ATTRIBUTES);
   public static final TextAttributesKey REASSIGNED_PARAMETER_ATTRIBUTES 
     = TextAttributesKey.createTextAttributesKey("REASSIGNED_PARAMETER_ATTRIBUTES", PARAMETER_ATTRIBUTES);
@@ -83,7 +85,9 @@ public class JavaHighlightingColors {
     = TextAttributesKey.createTextAttributesKey("ANONYMOUS_CLASS_NAME_ATTRIBUTES", CLASS_NAME_ATTRIBUTES);
   public static final TextAttributesKey IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES 
     = TextAttributesKey.createTextAttributesKey("IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES", CLASS_NAME_ATTRIBUTES);
-  public static final TextAttributesKey TYPE_PARAMETER_NAME_ATTRIBUTES 
+  public static final TextAttributesKey INLINE_PARAMETER_HINT
+    = TextAttributesKey.createTextAttributesKey("INLINE_PARAMETER_HINT");
+  public static final TextAttributesKey TYPE_PARAMETER_NAME_ATTRIBUTES
     = TextAttributesKey.createTextAttributesKey("TYPE_PARAMETER_NAME_ATTRIBUTES", DefaultLanguageHighlighterColors.PARAMETER);
   public static final TextAttributesKey INTERFACE_NAME_ATTRIBUTES 
     = TextAttributesKey.createTextAttributesKey("INTERFACE_NAME_ATTRIBUTES", DefaultLanguageHighlighterColors.INTERFACE_NAME);

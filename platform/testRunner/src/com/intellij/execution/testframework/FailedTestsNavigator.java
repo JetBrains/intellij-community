@@ -89,7 +89,7 @@ public class FailedTestsNavigator implements OccurenceNavigator {
     }
 
     public FailedTestInfo execute() {
-      myAllTests = new ArrayList<AbstractTestProxy>(myModel.getRoot().getAllTests());
+      myAllTests = new ArrayList<>(myModel.getRoot().getAllTests());
       myDefects = Filter.DEFECTIVE_LEAF.select(myAllTests);
       final AbstractTestProxy selectedTest = myModel.getTreeView().getSelectedTest();
       final int selectionIndex = myAllTests.indexOf(selectedTest);

@@ -163,7 +163,7 @@ public class BinaryDiffTool implements DiffTool {
   public DiffViewer createComponent(String title, DiffRequest request, Window window, @NotNull Disposable parentDisposable) {
     final PanelCreator creator = new PanelCreator(request);
     if (! creator.isCanCreatePanel()) return null;
-    return creator.create(window, parentDisposable, BinaryDiffTool.this);
+    return creator.create(window, parentDisposable, this);
   }
 
   public static boolean canShow(@NotNull Project project, VirtualFile file) {

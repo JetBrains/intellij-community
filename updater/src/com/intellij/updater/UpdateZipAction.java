@@ -23,28 +23,28 @@ public class UpdateZipAction extends BaseUpdateAction {
                          Collection<String> filesToDelete,
                          long checksum) {
     super(patch, path, path, checksum, false);
-    myFilesToCreate = new HashSet<String>(filesToCreate);
-    myFilesToUpdate = new HashSet<String>(filesToUpdate);
-    myFilesToDelete = new HashSet<String>(filesToDelete);
+    myFilesToCreate = new HashSet<>(filesToCreate);
+    myFilesToUpdate = new HashSet<>(filesToUpdate);
+    myFilesToDelete = new HashSet<>(filesToDelete);
   }
 
   public UpdateZipAction(Patch patch, DataInputStream in) throws IOException {
     super(patch, in);
 
     int count = in.readInt();
-    myFilesToCreate = new HashSet<String>(count);
+    myFilesToCreate = new HashSet<>(count);
     while (count-- > 0) {
       myFilesToCreate.add(in.readUTF());
     }
 
     count = in.readInt();
-    myFilesToUpdate = new HashSet<String>(count);
+    myFilesToUpdate = new HashSet<>(count);
     while (count-- > 0) {
       myFilesToUpdate.add(in.readUTF());
     }
 
     count = in.readInt();
-    myFilesToDelete = new HashSet<String>(count);
+    myFilesToDelete = new HashSet<>(count);
     while (count-- > 0) {
       myFilesToDelete.add(in.readUTF());
     }
@@ -72,8 +72,8 @@ public class UpdateZipAction extends BaseUpdateAction {
 
   @Override
   protected boolean doCalculate(File olderFile, File newerFile) throws IOException {
-    final Map<String, Long> oldCheckSums = new HashMap<String, Long>();
-    final Map<String, Long> newCheckSums = new HashMap<String, Long>();
+    final Map<String, Long> oldCheckSums = new HashMap<>();
+    final Map<String, Long> newCheckSums = new HashMap<>();
 
     processZipFile(olderFile, new Processor() {
       public void process(ZipEntry entry, InputStream in) throws IOException {
@@ -87,7 +87,7 @@ public class UpdateZipAction extends BaseUpdateAction {
       }
     });
 
-    DiffCalculator.Result diff = DiffCalculator.calculate(oldCheckSums, newCheckSums, new LinkedList<String>(), false);
+    DiffCalculator.Result diff = DiffCalculator.calculate(oldCheckSums, newCheckSums, new LinkedList<>(), false);
 
     myFilesToCreate = diff.filesToCreate.keySet();
     myFilesToUpdate = diff.filesToUpdate.keySet();
@@ -108,7 +108,7 @@ public class UpdateZipAction extends BaseUpdateAction {
       throw new IOException("Corrupted target file: " + newerFile, e);
     }
 
-    final Set<String> filesToProcess = new HashSet<String>(myFilesToCreate);
+    final Set<String> filesToProcess = new HashSet<>(myFilesToCreate);
     filesToProcess.addAll(myFilesToUpdate);
     if (filesToProcess.isEmpty()) return;
 
@@ -205,7 +205,7 @@ public class UpdateZipAction extends BaseUpdateAction {
     ZipInputStream in = new ZipInputStream(new FileInputStream(file));
     try {
       ZipEntry inEntry;
-      Set<String> processed = new HashSet<String>();
+      Set<String> processed = new HashSet<>();
       while ((inEntry = in.getNextEntry()) != null) {
         if (inEntry.isDirectory()) continue;
         if (processed.contains(inEntry.getName())) {

@@ -147,8 +147,8 @@ public class LocalChangeListImpl extends LocalChangeList {
 
   Collection<Change> startProcessingChanges(final Project project, @Nullable final VcsDirtyScope scope) {
     createReadChangesCache();
-    final Collection<Change> result = new ArrayList<Change>();
-    myChangesBeforeUpdate = new OpenTHashSet<Change>(myChanges);
+    final Collection<Change> result = new ArrayList<>();
+    myChangesBeforeUpdate = new OpenTHashSet<>(myChanges);
     for (Change oldBoy : myChangesBeforeUpdate) {
       final ContentRevision before = oldBoy.getBeforeRevision();
       final ContentRevision after = oldBoy.getAfterRevision();
@@ -210,7 +210,7 @@ public class LocalChangeListImpl extends LocalChangeList {
       }
     }
     changesDetected |= (! addedChanges.isEmpty());
-    final List<Change> removed = new ArrayList<Change>(myChangesBeforeUpdate);
+    final List<Change> removed = new ArrayList<>(myChangesBeforeUpdate);
     // since there are SAME objects...
     removed.removeAll(myChanges);
     removedChanges.addAll(removed);
@@ -271,7 +271,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     }
 
     if (myChangesBeforeUpdate != null) {
-      copy.myChangesBeforeUpdate = new OpenTHashSet<Change>((Collection<Change>)myChangesBeforeUpdate);
+      copy.myChangesBeforeUpdate = new OpenTHashSet<>((Collection<Change>)myChangesBeforeUpdate);
     }
 
     if (myReadChangesCache != null) {

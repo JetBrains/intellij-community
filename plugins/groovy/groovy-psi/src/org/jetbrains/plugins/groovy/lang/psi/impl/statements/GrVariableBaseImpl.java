@@ -70,11 +70,6 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GrStubEl
   }
 
   @Override
-  public PsiElement getParent() {
-    return getParentByTree();
-  }
-
-  @Override
   @Nullable
   public PsiTypeElement getTypeElement() {
     return PsiImplUtil.getOrCreateTypeElement(getTypeElementGroovy());

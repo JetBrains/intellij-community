@@ -44,7 +44,7 @@ public class TestDiscoverySearchHelper {
                                    final Pair<String, String> position,
                                    final String changeList,
                                    final String frameworkPrefix) {
-    final Set<String> patterns = new LinkedHashSet<String>();
+    final Set<String> patterns = new LinkedHashSet<>();
     if (position != null) {
       try {
         collectPatterns(project, patterns, position.first, position.second, frameworkPrefix);
@@ -69,7 +69,7 @@ public class TestDiscoverySearchHelper {
               final PsiElement start = psiFile.findElementAt(textRange.getStartOffset());
               final PsiElement end = psiFile.findElementAt(textRange.getEndOffset());
               final PsiElement parent = PsiTreeUtil.findCommonParent(new PsiElement[]{start, end});
-              final Collection<PsiMethod> methods = new ArrayList<PsiMethod>(PsiTreeUtil.findChildrenOfType(parent, PsiMethod.class));
+              final Collection<PsiMethod> methods = new ArrayList<>(PsiTreeUtil.findChildrenOfType(parent, PsiMethod.class));
               final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
               if (containingMethod != null) {
                 methods.add(containingMethod);
@@ -128,7 +128,7 @@ public class TestDiscoverySearchHelper {
     }
     final LocalChangeList changeList = changeListManager.findChangeList(changeListName);
     if (changeList != null) {
-      List<VirtualFile> files = new ArrayList<VirtualFile>();
+      List<VirtualFile> files = new ArrayList<>();
       for (Change change : changeList.getChanges()) {
         final ContentRevision afterRevision = change.getAfterRevision();
         if (afterRevision != null) {
@@ -146,7 +146,7 @@ public class TestDiscoverySearchHelper {
 
   @Nullable
   private static LinkedHashSet<String> collectPatterns(PsiMethod psiMethod, String frameworkId) {
-    LinkedHashSet<String> patterns = new LinkedHashSet<String>();
+    LinkedHashSet<String> patterns = new LinkedHashSet<>();
     final PsiClass containingClass = psiMethod.getContainingClass();
     if (containingClass != null) {
       final String qualifiedName = containingClass.getQualifiedName();

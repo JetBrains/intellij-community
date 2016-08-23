@@ -59,13 +59,10 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
       @Override
       public void projectOpened(final Project project) {
         // validate all editors are disposed after fireProjectClosed() was called, because it's the place where editor should be released
-        Disposer.register(project, new Disposable() {
-          @Override
-          public void dispose() {
-            final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-            final boolean isLastProjectClosed = openProjects.length == 0;
-            validateEditorsAreReleased(project, isLastProjectClosed);
-          }
+        Disposer.register(project, () -> {
+          final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+          final boolean isLastProjectClosed = openProjects.length == 0;
+          validateEditorsAreReleased(project, isLastProjectClosed);
         });
       }
     });
@@ -79,12 +76,9 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
 
   @Override
   public void initComponent() {
-    ModalityStateListener myModalityStateListener = new ModalityStateListener() {
-      @Override
-      public void beforeModalityStateChanged(boolean entering) {
-        for (Editor editor : myEditors) {
-          ((EditorImpl)editor).beforeModalityStateChanged();
-        }
+    ModalityStateListener myModalityStateListener = entering -> {
+      for (Editor editor : myEditors) {
+        ((EditorImpl)editor).beforeModalityStateChanged();
       }
     };
     LaterInvocator.addModalityStateListener(myModalityStateListener, ApplicationManager.getApplication());
@@ -196,7 +190,7 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
     myEditorFactoryEventDispatcher.getMulticaster().editorCreated(new EditorFactoryEvent(this, editor));
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("number of Editor's:" + myEditors.size());
+      LOG.debug("number of Editors after create: " + myEditors.size());
     }
 
     return editor;
@@ -214,7 +208,7 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
       finally {
         myEditors.remove(editor);
         if (LOG.isDebugEnabled()) {
-          LOG.debug("number of Editor's:" + myEditors.size());
+          LOG.debug("number of Editors after release: " + myEditors.size());
         }
       }
     }
@@ -227,7 +221,7 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
     for (Editor editor : myEditors) {
       Project project1 = editor.getProject();
       if (editor.getDocument().equals(document) && (project == null || project1 == null || project1.equals(project))) {
-        if (list == null) list = new SmartList<Editor>();
+        if (list == null) list = new SmartList<>();
         list.add(editor);
       }
     }

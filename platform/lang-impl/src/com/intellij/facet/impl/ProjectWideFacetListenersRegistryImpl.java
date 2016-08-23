@@ -36,9 +36,9 @@ import java.util.Map;
  * @author nik
  */
 public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListenersRegistry {
-  private final Map<FacetTypeId, EventDispatcher<ProjectWideFacetListener>> myDispatchers = new HashMap<FacetTypeId, EventDispatcher<ProjectWideFacetListener>>();
-  private final Map<FacetTypeId, WeakHashMap<Facet, Boolean>> myFacetsByType = new HashMap<FacetTypeId, WeakHashMap<Facet, Boolean>>();
-  private final Map<Module, MessageBusConnection> myModule2Connection = new HashMap<Module, MessageBusConnection>();
+  private final Map<FacetTypeId, EventDispatcher<ProjectWideFacetListener>> myDispatchers = new HashMap<>();
+  private final Map<FacetTypeId, WeakHashMap<Facet, Boolean>> myFacetsByType = new HashMap<>();
+  private final Map<Module, MessageBusConnection> myModule2Connection = new HashMap<>();
   private final FacetManagerAdapter myFacetListener;
   private final EventDispatcher<ProjectWideFacetListener> myAllFacetsListener = EventDispatcher.create(ProjectWideFacetListener.class);
 
@@ -139,7 +139,7 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
     final FacetTypeId typeId = facet.getTypeId();
     WeakHashMap<Facet, Boolean> facets = myFacetsByType.get(typeId);
     if (facets == null) {
-      facets = new WeakHashMap<Facet, Boolean>();
+      facets = new WeakHashMap<>();
       myFacetsByType.put(typeId, facets);
     }
     boolean firstFacetOfType = facets.isEmpty();

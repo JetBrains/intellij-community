@@ -268,5 +268,7 @@
     <extensionPoint name="notification.group" beanClass="com.intellij.notification.impl.NotificationGroupBean"/>
 
     <extensionPoint name="settingsSummaryFactory" interface="com.intellij.settingsSummary.ProblemType"/>
+
+    <extensionPoint name="credentialStore" interface="com.intellij.credentialStore.CredentialStoreFactory"/>
   </extensionPoints>
 </idea-plugin>

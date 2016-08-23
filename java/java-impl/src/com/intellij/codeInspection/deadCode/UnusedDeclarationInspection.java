@@ -15,13 +15,19 @@
  */
 package com.intellij.codeInspection.deadCode;
 
-import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
 import com.intellij.codeInspection.reference.EntryPoint;
+import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefMethod;
+import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -30,11 +36,65 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase {
+  private final UnusedParametersInspection myUnusedParameters = new UnusedParametersInspection();
+
   public UnusedDeclarationInspection() { }
 
   @TestOnly
   public UnusedDeclarationInspection(boolean enabledInEditor) {
     super(enabledInEditor);
+  }
+
+  @Nullable
+  @Override
+  public String getAlternativeID() {
+    return UnusedSymbolLocalInspectionBase.UNUSED_PARAMETERS_SHORT_NAME;
+  }
+
+  @Override
+  public void runInspection(@NotNull AnalysisScope scope,
+                            @NotNull InspectionManager manager,
+                            @NotNull GlobalInspectionContext globalContext,
+                            @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+    if (myLocalInspectionBase.PARAMETER) {
+      globalContext.getRefManager().iterate(new RefVisitor() {
+        @Override public void visitElement(@NotNull RefEntity refEntity) {
+          if (!(refEntity instanceof RefMethod) ||
+              !globalContext.shouldCheck(refEntity, UnusedDeclarationInspection.this) ||
+              !UnusedDeclarationPresentation.compareVisibilities((RefMethod)refEntity, myLocalInspectionBase.getParameterVisibility())) {
+            return;
+          }
+          CommonProblemDescriptor[] descriptors = myUnusedParameters.checkElement(refEntity, scope, manager, globalContext, problemDescriptionsProcessor);
+          if (descriptors != null) {
+            problemDescriptionsProcessor.addProblemElement(refEntity, descriptors);
+          }
+        }
+      });
+    }
+    super.runInspection(scope, manager, globalContext, problemDescriptionsProcessor);
+  }
+
+  @Override
+  public boolean queryExternalUsagesRequests(@NotNull InspectionManager manager,
+                                             @NotNull GlobalInspectionContext globalContext,
+                                             @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+    final boolean requests = super.queryExternalUsagesRequests(manager, globalContext, problemDescriptionsProcessor);
+    if (!requests) {
+      myUnusedParameters.queryExternalUsagesRequests(manager, globalContext, problemDescriptionsProcessor);
+    }
+    return requests;
+  }
+
+  @Nullable
+  @Override
+  public String getHint(@NotNull QuickFix fix) {
+    return myUnusedParameters.getHint(fix);
+  }
+
+  @Nullable
+  @Override
+  public QuickFix getQuickFix(String hint) {
+    return myUnusedParameters.getQuickFix(hint);
   }
 
   @SuppressWarnings("deprecation")
@@ -47,7 +107,7 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
   public JComponent createOptionsPanel() {
     JTabbedPane tabs = new JBTabbedPane(SwingConstants.TOP);
     tabs.add("Entry points", new OptionsPanel());
-    tabs.add("On the fly editor settings", myLocalInspectionBase.createOptionsPanel());
+    tabs.add("Members to report", myLocalInspectionBase.createOptionsPanel());
     return tabs;
   }
 

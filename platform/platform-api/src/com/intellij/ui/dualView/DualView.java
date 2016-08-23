@@ -141,7 +141,7 @@ public class DualView extends JPanel {
   }
 
   private static ColumnInfo[] createTreeColumns(DualViewColumnInfo[] columns) {
-    Collection<ColumnInfo> result = new ArrayList<ColumnInfo>();
+    Collection<ColumnInfo> result = new ArrayList<>();
 
     final ColumnInfo firstColumn = columns[0];
     ColumnInfo firstTreeColumn = new ColumnInfo(firstColumn.getName()) {
@@ -224,7 +224,7 @@ public class DualView extends JPanel {
 
   private Component createFlatComponent(DualViewColumnInfo[] columns) {
 
-    ArrayList<ColumnInfo> shownColumns = new ArrayList<ColumnInfo>();
+    ArrayList<ColumnInfo> shownColumns = new ArrayList<>();
 
     for (DualViewColumnInfo column : columns) {
       if (column.shouldBeShownIsTheTable()) {

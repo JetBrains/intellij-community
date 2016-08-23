@@ -69,7 +69,7 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
     if (candidates.isEmpty() && secondary.isEmpty()) return null;
 
     final PsiMethodMember[] onlyPrimary = convertToMethodMembers(candidates);
-    final LinkedHashSet<CandidateInfo> allCandidates = new LinkedHashSet<CandidateInfo>(candidates);
+    final LinkedHashSet<CandidateInfo> allCandidates = new LinkedHashSet<>(candidates);
     allCandidates.addAll(secondary);
     final PsiMethodMember[] all = convertToMethodMembers(allCandidates);
     final NotNullLazyValue<PsiMethodWithOverridingPercentMember[]> lazyElementsWithPercent =

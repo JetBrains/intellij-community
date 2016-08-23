@@ -28,7 +28,7 @@ public class ModuleStubBuildingVisitor extends ClassVisitor {
   private PsiJavaModuleStub myResult;
 
   public ModuleStubBuildingVisitor(PsiJavaFileStub parent, String moduleName) {
-    super(Opcodes.ASM6);
+    super(Opcodes.API_VERSION);
     myParent = parent;
     myModuleName = moduleName;
   }

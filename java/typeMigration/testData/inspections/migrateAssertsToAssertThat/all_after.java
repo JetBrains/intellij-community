@@ -29,13 +29,13 @@ public class TestCase {
 
   void m3(Collection c, Object o) {
     Assert.assertThat(o, anyOf(c));
-    Assert.assertThat(c, is(o));
-    Assert.assertThat("msg", c, is(o));
+    Assert.assertThat(o, is(c));
+    Assert.assertThat("msg", o, is(c));
     Assert.assertThat(c, notNullValue());
     Assert.assertThat(c, nullValue());
   }
 
   void m(int[] a, int[] b) {
-    Assert.assertThat(a, is(b));
+    Assert.assertThat(b, is(a));
   }
 }

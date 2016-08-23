@@ -33,7 +33,7 @@ import java.util.Set;
 public class UndoHelper {
   private final Project myProject;
   private boolean myShowing;
-  private final Set<Document> myCurrentDocuments = new HashSet<Document>();
+  private final Set<Document> myCurrentDocuments = new HashSet<>();
   private boolean myDirty;
   private final DocumentAdapter myDocumentAdapter = new DocumentAdapter() {
     @Override

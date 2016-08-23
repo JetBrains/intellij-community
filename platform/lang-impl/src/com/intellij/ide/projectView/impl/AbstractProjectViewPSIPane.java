@@ -221,8 +221,8 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   @NotNull
   @Override
   public final ActionCallback updateFromRoot(boolean restoreExpandedPaths) {
-    final ArrayList<Object> pathsToExpand = new ArrayList<Object>();
-    final ArrayList<Object> selectionPaths = new ArrayList<Object>();
+    final ArrayList<Object> pathsToExpand = new ArrayList<>();
+    final ArrayList<Object> selectionPaths = new ArrayList<>();
     Runnable afterUpdate;
     final ActionCallback cb = new ActionCallback();
     if (restoreExpandedPaths) {

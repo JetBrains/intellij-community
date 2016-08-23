@@ -76,7 +76,7 @@ public class ChangelistConflictTracker {
     myDocumentManager = FileDocumentManager.getInstance();
     myFileStatusManager = fileStatusManager;
     myCheckSetLock = new Object();
-    myCheckSet = new HashSet<VirtualFile>();
+    myCheckSet = new HashSet<>();
 
     final Application application = ApplicationManager.getApplication();
     final ZipperUpdater zipperUpdater = new ZipperUpdater(300, Alarm.ThreadToUse.SWING_THREAD, myProject);
@@ -86,7 +86,7 @@ public class ChangelistConflictTracker {
       }
       final Set<VirtualFile> localSet;
       synchronized (myCheckSetLock) {
-        localSet = new HashSet<VirtualFile>();
+        localSet = new HashSet<>();
         localSet.addAll(myCheckSet);
         myCheckSet.clear();
       }

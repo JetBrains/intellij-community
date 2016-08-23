@@ -41,6 +41,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,13 +89,15 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
       return null;
     }
 
-    final Set<File> fileToCopy = new LinkedHashSet<File>();
-    final Map<String, String> copiedFiles = new HashMap<String, String>();
+    final Set<File> fileToCopy = new LinkedHashSet<>();
+    final Map<String, String> copiedFiles = new HashMap<>();
     final String targetDirectoryPath = dialog.getDirectoryForFilesPath();
     if (targetDirectoryPath != null) {
       for (OrderRootType type : OrderRootType.getAllTypes()) {
         for (VirtualFile root : library.getFiles(type)) {
-          fileToCopy.add(VfsUtil.virtualToIoFile(PathUtil.getLocalFile(root)));
+          if (root.isInLocalFileSystem() || root.getFileSystem() instanceof ArchiveFileSystem) {
+            fileToCopy.add(VfsUtil.virtualToIoFile(PathUtil.getLocalFile(root)));
+          }
         }
       }
       if (!copyOrMoveFiles(fileToCopy, targetDirectoryPath, copiedFiles)) {

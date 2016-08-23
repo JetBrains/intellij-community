@@ -251,7 +251,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
    * @return true if the branch should be restored.
    */
   private boolean showNotFullyMergedDialog(@NotNull Map<GitRepository, UnmergedBranchInfo> unmergedBranches) {
-    Map<GitRepository, List<GitCommit>> history = new HashMap<GitRepository, List<GitCommit>>();
+    Map<GitRepository, List<GitCommit>> history = new HashMap<>();
     // we don't confuse user with the absence of repositories which branch was deleted w/o force,
     // we display no commits for them
     for (GitRepository repository : getRepositories()) {

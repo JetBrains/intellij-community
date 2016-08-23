@@ -63,7 +63,7 @@ public class PropertiesReferenceContributor extends PsiReferenceContributor{
         if (field.getInitializer() != element || !field.hasModifierProperty(PsiModifier.FINAL)) {
           return PsiReference.EMPTY_ARRAY;
         }
-        Set<PsiReference> references = new THashSet<PsiReference>(TObjectHashingStrategy.IDENTITY);
+        Set<PsiReference> references = new THashSet<>(TObjectHashingStrategy.IDENTITY);
         for (PsiMethod method : PsiTreeUtil.findChildrenOfType(element.getContainingFile(), PsiMethod.class)) {
           for (PsiParameter parameter : method.getParameterList().getParameters()) {
             final PsiModifierList modifierList = parameter.getModifierList();

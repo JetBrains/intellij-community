@@ -112,7 +112,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
   @NotNull
   protected List<PsiClass> getTargetClasses(PsiElement element) {
     List<PsiClass> targets = super.getTargetClasses(element);
-    ArrayList<PsiClass> result = new ArrayList<PsiClass>();
+    ArrayList<PsiClass> result = new ArrayList<>();
     PsiMethodCallExpression call = getMethodCall();
     if (call == null) return Collections.emptyList();
     for (PsiClass target : targets) {

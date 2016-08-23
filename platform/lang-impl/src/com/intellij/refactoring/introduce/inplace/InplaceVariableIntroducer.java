@@ -134,7 +134,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
 
   protected void initOccurrencesMarkers() {
     if (myOccurrenceMarkers != null) return;
-    myOccurrenceMarkers = new ArrayList<RangeMarker>();
+    myOccurrenceMarkers = new ArrayList<>();
     for (E occurrence : myOccurrences) {
       myOccurrenceMarkers.add(createMarker(occurrence));
     }
@@ -214,7 +214,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
         if (insertedValue != null) {
           final String text = insertedValue.getText();
           if (!text.isEmpty() && !Comparing.strEqual(text, name)) {
-            final LinkedHashSet<String> names = new LinkedHashSet<String>();
+            final LinkedHashSet<String> names = new LinkedHashSet<>();
             names.add(text);
             for (NameSuggestionProvider provider : Extensions.getExtensions(NameSuggestionProvider.EP_NAME)) {
               final SuggestedNameInfo suggestedNameInfo = provider.getSuggestedNames(psiVariable, psiVariable, names);

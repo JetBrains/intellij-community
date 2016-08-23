@@ -199,7 +199,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
                          @NotNull final Project project,
                          @NotNull final IdeModifiableModelsProvider modelsProvider) {
     final Collection<Module> toRemove = toRemoveComputable.compute();
-    final List<Module> modules = new SmartList<Module>(toRemove);
+    final List<Module> modules = new SmartList<>(toRemove);
     for (DataNode<E> moduleDataNode : toIgnore) {
       final Module module = modelsProvider.findIdeModule(moduleDataNode.getData());
       ContainerUtil.addIfNotNull(modules, module);
@@ -256,7 +256,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
         content.add(new JLabel(ExternalSystemBundle.message("orphan.modules.text", externalSystemId.getReadableName())),
                     ExternalSystemUiUtil.getFillLineConstraints(0));
 
-        final CheckBoxList<Module> orphanModulesList = new CheckBoxList<Module>();
+        final CheckBoxList<Module> orphanModulesList = new CheckBoxList<>();
         orphanModulesList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         orphanModulesList.setItems(orphanModules, module -> module.getName());
         for (Module module : orphanModules) {
@@ -365,12 +365,12 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     final OrderEntry[] orderEntries = modifiableRootModel.getOrderEntries();
     final int length = orderEntries.length;
     final OrderEntry[] newOrder = new OrderEntry[length];
-    final PriorityQueue<Pair<OrderEntry, OrderAware>> priorityQueue = new PriorityQueue<Pair<OrderEntry, OrderAware>>(
+    final PriorityQueue<Pair<OrderEntry, OrderAware>> priorityQueue = new PriorityQueue<>(
       11, (o1, o2) -> {
-        int order1 = o1.second.getOrder();
-        int order2 = o2.second.getOrder();
-        return order1 != order2 ? order1 < order2 ? -1 : 1 : 0;
-      });
+      int order1 = o1.second.getOrder();
+      int order2 = o2.second.getOrder();
+      return order1 != order2 ? order1 < order2 ? -1 : 1 : 0;
+    });
 
     int shift = 0;
     for (int i = 0; i < length; i++) {

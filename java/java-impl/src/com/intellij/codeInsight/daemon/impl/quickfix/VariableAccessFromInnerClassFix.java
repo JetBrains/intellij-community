@@ -190,7 +190,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
 
     PsiElement outerCodeBlock = PsiUtil.getVariableCodeBlock(variable, null);
     if (outerCodeBlock == null) return;
-    List<PsiReferenceExpression> outerReferences = new ArrayList<PsiReferenceExpression>();
+    List<PsiReferenceExpression> outerReferences = new ArrayList<>();
     collectReferences(outerCodeBlock, variable, outerReferences);
     replaceReferences(outerReferences, newExpression);
     variable.replace(newVariable);
@@ -290,7 +290,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   private static int getQuickFixType(@NotNull PsiVariable variable) {
     PsiElement outerCodeBlock = PsiUtil.getVariableCodeBlock(variable, null);
     if (outerCodeBlock == null) return -1;
-    List<PsiReferenceExpression> outerReferences = new ArrayList<PsiReferenceExpression>();
+    List<PsiReferenceExpression> outerReferences = new ArrayList<>();
     collectReferences(outerCodeBlock, variable, outerReferences);
 
     int type = MAKE_FINAL;
@@ -317,8 +317,8 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
 
   private static boolean canBeFinal(@NotNull PsiVariable variable, @NotNull List<PsiReferenceExpression> references) {
     // if there is at least one assignment to this variable, it cannot be final
-    Map<PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems = new THashMap<PsiElement, Collection<PsiReferenceExpression>>();
-    Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems = new THashMap<PsiElement, Collection<ControlFlowUtil.VariableInfo>>();
+    Map<PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems = new THashMap<>();
+    Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems = new THashMap<>();
     for (PsiReferenceExpression expression : references) {
       if (ControlFlowUtil.isVariableAssignedInLoop(expression, variable)) return false;
       HighlightInfo highlightInfo = HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(expression, variable, uninitializedVarProblems,

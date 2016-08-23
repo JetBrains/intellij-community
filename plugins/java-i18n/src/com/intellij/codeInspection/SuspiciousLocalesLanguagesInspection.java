@@ -56,7 +56,7 @@ public class SuspiciousLocalesLanguagesInspection extends BaseLocalInspectionToo
     @NotNull
     @Override
     protected Set<String> compute() {
-      final Set<String> result = new HashSet<String>();
+      final Set<String> result = new HashSet<>();
       for (Locale locale : Locale.getAvailableLocales()) {
         result.add(locale.getLanguage());
       }
@@ -64,7 +64,7 @@ public class SuspiciousLocalesLanguagesInspection extends BaseLocalInspectionToo
     }
   };
 
-  private final List<String> myAdditionalLanguages = new ArrayList<String>();
+  private final List<String> myAdditionalLanguages = new ArrayList<>();
 
   @Nls
   @NotNull

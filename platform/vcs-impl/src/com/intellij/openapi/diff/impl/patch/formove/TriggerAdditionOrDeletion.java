@@ -52,11 +52,11 @@ public class TriggerAdditionOrDeletion {
   public TriggerAdditionOrDeletion(final Project project) {
     myProject = project;
     mySilentAddDelete = Registry.is("vcs.add.remove.silent");
-    myExisting = new HashSet<FilePath>();
-    myDeleted = new HashSet<FilePath>();
+    myExisting = new HashSet<>();
+    myDeleted = new HashSet<>();
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
     myVcsHelper = AbstractVcsHelper.getInstance(myProject);
-    myAffected = new HashSet<FilePath>();
+    myAffected = new HashSet<>();
     myVcsFileListenerContextHelper = VcsFileListenerContextHelper.getInstance(myProject);
   }
 
@@ -71,7 +71,7 @@ public class TriggerAdditionOrDeletion {
   public void prepare() {
     if (myExisting.isEmpty() && myDeleted.isEmpty()) return;
 
-    final SortByVcsRoots<FilePath> sortByVcsRoots = new SortByVcsRoots<FilePath>(myProject, new Convertor.IntoSelf<FilePath>());
+    final SortByVcsRoots<FilePath> sortByVcsRoots = new SortByVcsRoots<>(myProject, new Convertor.IntoSelf<>());
 
     if (! myExisting.isEmpty()) {
       processAddition(sortByVcsRoots);
@@ -99,7 +99,7 @@ public class TriggerAdditionOrDeletion {
       }
     }
     if (myPreparedAddition != null) {
-      final List<FilePath> incorrectFilePath = new ArrayList<FilePath>();
+      final List<FilePath> incorrectFilePath = new ArrayList<>();
       for (Map.Entry<VcsRoot, Collection<FilePath>> entry : myPreparedAddition.entrySet()) {
         final VcsRoot vcsRoot = entry.getKey();
         final AbstractVcs vcs = ObjectUtils.assertNotNull(vcsRoot.getVcs());
@@ -112,7 +112,7 @@ public class TriggerAdditionOrDeletion {
         }
         askUserIfNeeded(vcsRoot.getVcs(), (List<FilePath>)filePaths, VcsConfiguration.StandardConfirmation.ADD);
         myAffected.addAll(filePaths);
-        final List<VirtualFile> virtualFiles = new ArrayList<VirtualFile>();
+        final List<VirtualFile> virtualFiles = new ArrayList<>();
         ContainerUtil.process(filePaths, new Processor<FilePath>() {
           @Override
           public boolean process(FilePath path) {
@@ -149,7 +149,7 @@ public class TriggerAdditionOrDeletion {
 
   private void processDeletion(SortByVcsRoots<FilePath> sortByVcsRoots) {
     final MultiMap<VcsRoot, FilePath> map = sortByVcsRoots.sort(myDeleted);
-    myPreparedDeletion = new MultiMap<VcsRoot, FilePath>();
+    myPreparedDeletion = new MultiMap<>();
     for (VcsRoot vcsRoot : map.keySet()) {
       if (vcsRoot != null && vcsRoot.getVcs() != null) {
         final CheckinEnvironment localChangesProvider = vcsRoot.getVcs().getCheckinEnvironment();
@@ -157,7 +157,7 @@ public class TriggerAdditionOrDeletion {
         final boolean takeDirs = vcsRoot.getVcs().areDirectoriesVersionedItems();
 
         final Collection<FilePath> files = map.get(vcsRoot);
-        final List<FilePath> toBeDeleted = new LinkedList<FilePath>();
+        final List<FilePath> toBeDeleted = new LinkedList<>();
         for (FilePath file : files) {
           final FilePath parent = file.getParentPath();
           if ((takeDirs || (! file.isDirectory())) && parent != null && parent.getIOFile().exists()) {
@@ -177,7 +177,7 @@ public class TriggerAdditionOrDeletion {
 
   private void processAddition(SortByVcsRoots<FilePath> sortByVcsRoots) {
     final MultiMap<VcsRoot, FilePath> map = sortByVcsRoots.sort(myExisting);
-    myPreparedAddition = new MultiMap<VcsRoot, FilePath>();
+    myPreparedAddition = new MultiMap<>();
     for (VcsRoot vcsRoot : map.keySet()) {
       if (vcsRoot != null && vcsRoot.getVcs() != null) {
         final CheckinEnvironment localChangesProvider = vcsRoot.getVcs().getCheckinEnvironment();
@@ -193,7 +193,7 @@ public class TriggerAdditionOrDeletion {
           }
           toBeAdded = adder.getToBeAdded();
         } else {
-          toBeAdded = new LinkedList<FilePath>();
+          toBeAdded = new LinkedList<>();
           for (FilePath file : files) {
             if (! file.isDirectory()) {
               toBeAdded.add(file);
@@ -248,7 +248,7 @@ public class TriggerAdditionOrDeletion {
 
     private RecursiveCheckAdder(final VirtualFile root) {
       myRoot = root;
-      myToBeAdded = new HashSet<FilePath>();
+      myToBeAdded = new HashSet<>();
     }
 
     public void process(final FilePath path) {
@@ -269,7 +269,7 @@ public class TriggerAdditionOrDeletion {
     }
 
     public List<FilePath> getToBeAdded() {
-      return new ArrayList<FilePath>(myToBeAdded);
+      return new ArrayList<>(myToBeAdded);
     }
   }
 }

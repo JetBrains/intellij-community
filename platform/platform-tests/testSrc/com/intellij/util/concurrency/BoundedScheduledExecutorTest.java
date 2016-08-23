@@ -62,8 +62,8 @@ public class BoundedScheduledExecutorTest extends TestCase {
   }
 
   @NotNull
-  private static BoundedScheduledExecutorService createBoundedScheduledExecutor(@NotNull ExecutorService backendExecutor, int maxTasks) {
-    return new BoundedScheduledExecutorService(backendExecutor, maxTasks);
+  private BoundedScheduledExecutorService createBoundedScheduledExecutor(@NotNull ExecutorService backendExecutor, int maxTasks) {
+    return new BoundedScheduledExecutorService(getName(), backendExecutor, maxTasks);
   }
 
   public void testSubmitsAreReallyBound() throws InterruptedException, ExecutionException {

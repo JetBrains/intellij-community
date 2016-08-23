@@ -61,6 +61,7 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   private int myPositionChangeXShift;
   private int myPositionChangeYShift;
   private boolean myHideOnAction = true;
+  private boolean myHideOnCloseClick = true;
   private boolean myDialogMode;
   private String  myTitle;
   private Insets  myContentInsets = JBUI.insets(2);
@@ -150,6 +151,12 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   @Override
   public BalloonBuilder setRequestFocus(boolean requestFocus) {
     myRequestFocus = requestFocus;
+    return this;
+  }
+
+  @Override
+  public BalloonBuilder setHideOnCloseClick(boolean hideOnCloseClick) {
+    myHideOnCloseClick = hideOnCloseClick;
     return this;
   }
 
@@ -256,15 +263,15 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   @Override
   public Balloon createBalloon() {
     final BalloonImpl result = new BalloonImpl(
-      myContent, myBorder, myBorderInsets, myFill, myHideOnMouseOutside, myHideOnKeyOutside, myHideOnAction, myShowCallout, myCloseButtonEnabled,
-      myFadeoutTime, myHideOnFrameResize, myHideOnLinkClick, myClickHandler, myCloseOnClick, myAnimationCycle, myCalloutShift,
-      myPositionChangeXShift, myPositionChangeYShift, myDialogMode, myTitle, myContentInsets, myShadow, mySmallVariant, myBlockClicks,
-      myLayer, myRequestFocus);
+      myContent, myBorder, myBorderInsets, myFill, myHideOnMouseOutside, myHideOnKeyOutside, myHideOnAction, myHideOnCloseClick,
+      myShowCallout, myCloseButtonEnabled, myFadeoutTime, myHideOnFrameResize, myHideOnLinkClick, myClickHandler, myCloseOnClick,
+      myAnimationCycle, myCalloutShift, myPositionChangeXShift, myPositionChangeYShift, myDialogMode, myTitle, myContentInsets, myShadow,
+      mySmallVariant, myBlockClicks, myLayer, myRequestFocus);
 
     if (myStorage != null && myAnchor != null) {
       List<Balloon> balloons = myStorage.get(myAnchor);
       if (balloons == null) {
-        myStorage.put(myAnchor, balloons = new ArrayList<Balloon>());
+        myStorage.put(myAnchor, balloons = new ArrayList<>());
         Disposer.register(myAnchor, new Disposable() {
           @Override
           public void dispose() {

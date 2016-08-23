@@ -46,6 +46,11 @@ public abstract class SubstrateRef {
     return null;
   }
 
+  @Nullable
+  public Stub getGreenStub(int index) {
+    return getStub();
+  }
+
   public abstract boolean isValid();
 
   @NotNull

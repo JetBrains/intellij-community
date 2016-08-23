@@ -160,4 +160,29 @@ class TryIdenticalCatches {
 
   void foo() throws IOException {}
   private static final IOException INSTANCE = new IOException();
+
+  public boolean returning() {
+    try {
+      // work
+    }
+    catch(NumberFormatException e) {
+      return true;
+    }
+    catch(RuntimeException e) {
+      return true;
+    }
+    return false;
+  }
+
+  public void suppress() {
+    try {
+      // ...
+    }
+    catch (NumberFormatException e) {
+      System.out.println(e);
+    }
+    catch (@SuppressWarnings("TryWithIdenticalCatches") RuntimeException e) {
+      System.out.println(e);
+    }
+  }
 }

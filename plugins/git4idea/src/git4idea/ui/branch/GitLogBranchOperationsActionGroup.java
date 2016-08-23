@@ -91,7 +91,7 @@ public class GitLogBranchOperationsActionGroup extends ActionGroup implements Du
     GitVcsSettings settings = GitVcsSettings.getInstance(project);
     boolean showBranchesPopup = vcsRefs.size() > MAX_BRANCH_GROUPS;
 
-    List<AnAction> branchActionGroups = new ArrayList<AnAction>();
+    List<AnAction> branchActionGroups = new ArrayList<>();
     for (VcsRef ref : vcsRefs) {
       branchActionGroups.add(createBranchGroup(project, ref, root, repositoryManager, settings, showBranchesPopup));
     }
@@ -113,18 +113,19 @@ public class GitLogBranchOperationsActionGroup extends ActionGroup implements Du
                            allRepositories.size() > 1 && branchInAllRepositories(allRepositories, ref);
     boolean isLocal = ref.getType() == GitRefManager.LOCAL_BRANCH;
 
-    List<AnAction> actions = new ArrayList<AnAction>(3);
-    ActionGroup singleRepoActions = createBranchActions(project, Collections.singletonList(repository), ref, repository, isLocal);
-    singleRepoActions.setPopup(false);
-    actions.add(singleRepoActions);
+    List<AnAction> actions = new ArrayList<>(3);
 
     if (isSyncBranch) {
-      actions.add(Separator.getInstance());
       ActionGroup allReposActions = createBranchActions(project, allRepositories, ref, repository, isLocal);
       allReposActions.getTemplatePresentation().setText("In All Repositories");
       allReposActions.setPopup(true);
       actions.add(allReposActions);
+      actions.add(Separator.getInstance());
     }
+
+    ActionGroup singleRepoActions = createBranchActions(project, Collections.singletonList(repository), ref, repository, isLocal);
+    singleRepoActions.setPopup(false);
+    actions.add(singleRepoActions);
 
     String text = showBranchesPopup ? ref.getName() : "Branch '" + ref.getName() + "'";
     ActionGroup group = new DefaultActionGroup(actions);

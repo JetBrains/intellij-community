@@ -64,7 +64,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.
 public class TypesUtil {
 
   @NonNls
-  public static final Map<String, PsiType> ourQNameToUnboxed = new HashMap<String, PsiType>();
+  public static final Map<String, PsiType> ourQNameToUnboxed = new HashMap<>();
   public static final PsiPrimitiveType[] PRIMITIVES = {
     PsiType.BYTE,
     PsiType.CHAR,
@@ -105,7 +105,7 @@ public class TypesUtil {
     return ResolveUtil.getMethodCandidates(thisType, ourUnaryOperationsToOperatorNames.get(tokenType), place, argumentTypes);
   }
 
-  private static final Map<IElementType, String> ourPrimitiveTypesToClassNames = new HashMap<IElementType, String>();
+  private static final Map<IElementType, String> ourPrimitiveTypesToClassNames = new HashMap<>();
   private static final String NULL = "null";
 
   static {
@@ -132,8 +132,8 @@ public class TypesUtil {
     ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.kBYTE, CommonClassNames.JAVA_LANG_BYTE);
   }
 
-  private static final Map<IElementType, String> ourOperationsToOperatorNames = new HashMap<IElementType, String>();
-  private static final Map<IElementType, String> ourUnaryOperationsToOperatorNames = new HashMap<IElementType, String>();
+  private static final Map<IElementType, String> ourOperationsToOperatorNames = new HashMap<>();
+  private static final Map<IElementType, String> ourUnaryOperationsToOperatorNames = new HashMap<>();
 
   static {
     ourOperationsToOperatorNames.put(GroovyTokenTypes.mPLUS, PLUS);
@@ -165,7 +165,7 @@ public class TypesUtil {
     ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mBNOT, BITWISE_NEGATE);
   }
 
-  private static final TObjectIntHashMap<String> TYPE_TO_RANK = new TObjectIntHashMap<String>();
+  private static final TObjectIntHashMap<String> TYPE_TO_RANK = new TObjectIntHashMap<>();
 
   static {
     TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_BYTE, 1);
@@ -192,7 +192,7 @@ public class TypesUtil {
   }
 
 
-  private static final TIntObjectHashMap<String> RANK_TO_TYPE = new TIntObjectHashMap<String>();
+  private static final TIntObjectHashMap<String> RANK_TO_TYPE = new TIntObjectHashMap<>();
 
   static {
     RANK_TO_TYPE.put(1, CommonClassNames.JAVA_LANG_INTEGER);
@@ -641,7 +641,7 @@ public class TypesUtil {
 
   public static PsiSubstitutor composeSubstitutors(PsiSubstitutor s1, PsiSubstitutor s2) {
     final Map<PsiTypeParameter, PsiType> map = s1.getSubstitutionMap();
-    Map<PsiTypeParameter, PsiType> result = new THashMap<PsiTypeParameter, PsiType>(map.size());
+    Map<PsiTypeParameter, PsiType> result = new THashMap<>(map.size());
     for (PsiTypeParameter parameter : map.keySet()) {
       result.put(parameter, s2.substitute(map.get(parameter)));
     }
@@ -820,7 +820,7 @@ public class TypesUtil {
       PsiType parameter = parameters[i];
       if (parameter == null) continue;
 
-      final Ref<PsiType> newParam = new Ref<PsiType>();
+      final Ref<PsiType> newParam = new Ref<>();
       parameter.accept(new PsiTypeVisitorEx<Object>() {
         @Nullable
         @Override

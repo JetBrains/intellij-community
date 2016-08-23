@@ -118,7 +118,7 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
   }
 
   public List<SourceItemNode> getSelectedSourceItemNodes() {
-    final List<SourceItemNode> nodes = new ArrayList<SourceItemNode>();
+    final List<SourceItemNode> nodes = new ArrayList<>();
     for (DefaultMutableTreeNode treeNode : getSelectedTreeNodes()) {
       final Object userObject = treeNode.getUserObject();
       if (userObject instanceof SourceItemNode) {
@@ -129,7 +129,7 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
   }
 
   public List<PackagingSourceItem> getSelectedItems() {
-    List<PackagingSourceItem> items = new ArrayList<PackagingSourceItem>();
+    List<PackagingSourceItem> items = new ArrayList<>();
     for (SourceItemNode node : getSelectedSourceItemNodes()) {
       final PackagingSourceItem sourceItem = node.getSourceItem();
       if (sourceItem != null && sourceItem.isProvideElements()) {

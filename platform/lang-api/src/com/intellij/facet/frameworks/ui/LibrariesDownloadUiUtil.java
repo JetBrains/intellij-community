@@ -49,7 +49,7 @@ public class LibrariesDownloadUiUtil {
   public static void initAsyncComboBoxModel(@NotNull final JComboBox jComboBox,
                                             @NotNull final String groupId,
                                             final URL... localUrls) {
-    final List<Object> items = new ArrayList<Object>();
+    final List<Object> items = new ArrayList<>();
 
     new UiNotifyConnector.Once(jComboBox, new Activatable() {
       @Override
@@ -73,7 +73,7 @@ public class LibrariesDownloadUiUtil {
                                 final URL... localUrls) {
     final ModalityState state = ModalityState.current();
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      final List<Object> newItems = new ArrayList<Object>();
+      final List<Object> newItems = new ArrayList<>();
       newItems.addAll(Arrays.asList(LibrariesDownloadAssistant.getVersions(groupId, localUrls)));
 
       ApplicationManager.getApplication().invokeLater(() -> {

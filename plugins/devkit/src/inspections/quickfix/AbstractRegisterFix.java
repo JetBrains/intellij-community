@@ -84,7 +84,7 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
         if (PluginModuleType.isOfType(module)) {
           XmlFile pluginXml = PluginModuleType.getPluginXml(module);
           if (pluginXml != null) {
-            DescriptorUtil.patchPluginXml(AbstractRegisterFix.this, element, pluginXml);
+            DescriptorUtil.patchPluginXml(this, element, pluginXml);
           }
         }
         else {
@@ -101,7 +101,7 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
             pluginXmls[i] = PluginModuleType.getPluginXml(modules.get(i));
           }
 
-          DescriptorUtil.patchPluginXml(AbstractRegisterFix.this, element, pluginXmls);
+          DescriptorUtil.patchPluginXml(this, element, pluginXmls);
         }
         CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
       }

@@ -126,6 +126,7 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.CheckDtdReferencesInspection;
 import gnu.trove.THashSet;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -607,13 +608,13 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   
-  public void testOverriddenMethodMarkersDoNotClearedByCHangingWhitespaceNearby() throws Exception {
+  public void testOverriddenMethodMarkersDoNotClearedByChangingWhitespaceNearby() throws Exception {
     configureByFile(BASE_PATH + "OverriddenMethodMarkers.java");
     highlightErrors();
 
     Document document = getEditor().getDocument();
     List<LineMarkerInfo> markers = DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject());
-    assertEquals(3, markers.size());
+    assertEquals(markers.toString(), 3, markers.size());
 
     PsiElement element = ((PsiJavaFile)myFile).getClasses()[0].findMethodsByName("f", false)[0].getReturnTypeElement().getNextSibling();
     assertEquals("   ", element.getText());
@@ -622,7 +623,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     highlightErrors();
     markers = DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject());
-    assertEquals(3, markers.size());
+    assertEquals(markers.toString(), 3, markers.size());
   }
 
   private static void commentLine() {
@@ -873,7 +874,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         String msg = "provider.getLineMarkerInfo(" + element + ") called\n";
         LineMarkerInfo<PsiComment> info = null;
         if (element instanceof PsiComment) {
-          info = new LineMarkerInfo<>((PsiComment)element, element.getTextRange(), null, Pass.UPDATE_ALL, null, null, GutterIconRenderer.Alignment.LEFT);
+          info = new LineMarkerInfo<>((PsiComment)element, element.getTextRange(), null, Pass.LINE_MARKERS, null, null, GutterIconRenderer.Alignment.LEFT);
           msg += " provider info: "+info + "\n";
         }
         log.append(msg);
@@ -1423,10 +1424,11 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   
   public void testLIPGetAllParentsAfterCodeBlockModification() throws Throwable {
+    @Language("JAVA")
     String text = "class LQF {\n" +
                   "    int f;\n" +
                   "    public void me() {\n" +
-                  "        <caret>\n" +
+                  "        //<caret>\n" +
                   "    }\n" +
                   "}";
     configureByText(StdFileTypes.JAVA, text);
@@ -1438,7 +1440,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         visitedElements.add(element);
       }
     }
-    final MyVisitor visitor = new MyVisitor();
     final LocalInspectionTool tool = new LocalInspectionTool() {
       @Nls
       @NotNull
@@ -1463,7 +1464,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       @NotNull
       @Override
       public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-        return visitor;
+        return new MyVisitor();
       }
     };
     disposeOnTearDown(() -> disableInspectionTool(tool.getShortName()));
@@ -1477,11 +1478,11 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     // inside code block modification
     visitedElements.clear();
-    type("//");
+    backspace();
+    backspace();
 
     infos = highlightErrors();
     assertEmpty(infos);
-
 
     PsiMethod method = ((PsiJavaFile)myFile).getClasses()[0].getMethods()[0];
     List<PsiElement> methodAndParents =

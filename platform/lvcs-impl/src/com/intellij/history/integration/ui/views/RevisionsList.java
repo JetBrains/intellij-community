@@ -94,7 +94,7 @@ public class RevisionsList {
   }
 
   public void updateData(HistoryDialogModel model) {
-    Set<Long> sel = new THashSet<Long>();
+    Set<Long> sel = new THashSet<>();
     MyModel m = (MyModel)table.getModel();
     for (int i : table.getSelectedRows()) {
       if (i >= m.getRowCount()) continue;
@@ -105,7 +105,7 @@ public class RevisionsList {
 
     Date today = new Date();
 
-    Map<RevisionItem, Period> periods = new THashMap<RevisionItem, Period>();
+    Map<RevisionItem, Period> periods = new THashMap<>();
     for (int i = 0; i < newRevs.size(); i++) {
       RevisionItem each = newRevs.get(i);
       boolean recent = today.getTime() - each.revision.getTimestamp() < 1000 * 60 * 60 * RECENT_PERIOD;

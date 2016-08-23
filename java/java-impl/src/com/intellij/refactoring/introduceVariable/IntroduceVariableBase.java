@@ -228,7 +228,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       }
     }
     final PsiElement elementAtCaret = file.findElementAt(correctedOffset);
-    final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
+    final List<PsiExpression> expressions = new ArrayList<>();
     /*for (PsiElement element : statementsInRange) {
       if (element instanceof PsiExpressionStatement) {
         final PsiExpression expression = ((PsiExpressionStatement)element).getExpression();
@@ -594,7 +594,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       !isInJspHolderMethod(expr);
 
     if (isInplaceAvailableOnDataContext) {
-      final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+      final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
       checkInLoopCondition(expr, conflicts);
       if (!conflicts.isEmpty()) {
         showErrorMessage(project, editor, StringUtil.join(conflicts.values(), "<br>"));
@@ -607,7 +607,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     final PsiElement anchorStatementIfAll = occurrenceManager.getAnchorStatementForAll();
 
 
-    final List<PsiExpression> nonWrite = new ArrayList<PsiExpression>();
+    final List<PsiExpression> nonWrite = new ArrayList<>();
     boolean cantReplaceAll = false;
     boolean cantReplaceAllButWrite = false;
     for (PsiExpression occurrence : occurrences) {
@@ -652,7 +652,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
           final boolean cantChangeFinalModifier = (hasWriteAccess || inFinalContext) && choice == OccurrencesChooser.ReplaceChoice.ALL;
 
           final boolean noWrite = choice == OccurrencesChooser.ReplaceChoice.NO_WRITE;
-          final List<PsiExpression> allOccurrences = new ArrayList<PsiExpression>();
+          final List<PsiExpression> allOccurrences = new ArrayList<>();
           for (PsiExpression occurrence : occurrences) {
             if (expr.equals(occurrence) && expr.getParent() instanceof PsiExpressionStatement) continue;
             if (choice == OccurrencesChooser.ReplaceChoice.ALL || (noWrite && !PsiUtil.isAccessedForWriting(occurrence)) ||  expr.equals(occurrence)) {
@@ -770,7 +770,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     while (true) {
       if (containerParent instanceof PsiFile) break;
       if (containerParent instanceof PsiMethod) break;
-      if (containerParent instanceof PsiLambdaExpression) break;
+      // allow to find occurrences outside lambda as we allow this for loops, ifs, etc
+      // if (containerParent instanceof PsiLambdaExpression) break;
       if (!skipForStatement && containerParent instanceof PsiForStatement) break;
       containerParent = containerParent.getParent();
       if (containerParent instanceof PsiCodeBlock) {
@@ -877,7 +878,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
           PsiExpression ref = JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(settings.getEnteredName(), null);
           if (settings.isReplaceAllOccurrences()) {
-            ArrayList<PsiElement> array = new ArrayList<PsiElement>();
+            ArrayList<PsiElement> array = new ArrayList<>();
             for (PsiExpression occurrence : occurrences) {
               if (deleteSelf && occurrence.equals(expr)) continue;
               if (occurrence.equals(expr)) {
@@ -1162,7 +1163,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     final PsiElement loopForLoopCondition = RefactoringUtil.getLoopForLoopCondition(occurence);
     if (loopForLoopCondition == null) return;
     final List<PsiVariable> referencedVariables = RefactoringUtil.collectReferencedVariables(occurence);
-    final List<PsiVariable> modifiedInBody = new ArrayList<PsiVariable>();
+    final List<PsiVariable> modifiedInBody = new ArrayList<>();
     for (PsiVariable psiVariable : referencedVariables) {
       if (RefactoringUtil.isModifiedInScope(psiVariable, loopForLoopCondition)) {
         modifiedInBody.add(psiVariable);

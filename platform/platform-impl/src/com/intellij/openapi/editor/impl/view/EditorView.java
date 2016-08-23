@@ -275,7 +275,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
   int getMaxWidthInLineRange(int startVisualLine, int endVisualLine) {
     myEditor.getSoftWrapModel().prepareToMapping();
     int maxWidth = 0;
-    VisualLinesIterator iterator = new VisualLinesIterator(this, startVisualLine);
+    VisualLinesIterator iterator = new VisualLinesIterator(myEditor, startVisualLine);
     while (!iterator.atEnd() && iterator.getVisualLine() <= endVisualLine) {
       int width = mySizeManager.getVisualLineWidth(iterator, null);
       maxWidth = Math.max(maxWidth, width);
@@ -376,7 +376,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
     return relativeOffset < 0 ? -1 : lineStartOffset + relativeOffset;
   }
 
-  int getPlainSpaceWidth() {
+  public int getPlainSpaceWidth() {
     synchronized (myLock) {
       initMetricsIfNeeded();
       return myPlainSpaceWidth;

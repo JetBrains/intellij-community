@@ -56,7 +56,7 @@ public class AddAllOpenFilesToFavorites extends AnAction implements DumbAware {
   }
 
   static ArrayList<PsiFile> getFilesToAdd(Project project) {
-    ArrayList<PsiFile> result = new ArrayList<PsiFile>();
+    ArrayList<PsiFile> result = new ArrayList<>();
     final FileEditorManager editorManager = FileEditorManager.getInstance(project);
     final PsiManager psiManager = PsiManager.getInstance(project);
     final VirtualFile[] openFiles = editorManager.getOpenFiles();

@@ -36,7 +36,7 @@ import java.util.Map;
 public class ValidationConfiguration implements PersistentStateComponent<ValidationConfiguration> {
 
   public boolean VALIDATE_ON_BUILD = false;
-  public Map<String, Boolean> VALIDATORS = new HashMap<String, Boolean>();
+  public Map<String, Boolean> VALIDATORS = new HashMap<>();
 
   public static boolean shouldValidate(Compiler validator, CompileContext context) {
     ValidationConfiguration configuration = getInstance(context.getProject());

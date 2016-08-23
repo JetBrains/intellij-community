@@ -107,9 +107,9 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   public static final String VCS_DISPLAY_NAME = "Subversion";
 
   private static final VcsKey ourKey = createKey(VCS_NAME);
-  public static final Topic<Runnable> WC_CONVERTED = new Topic<Runnable>("WC_CONVERTED", Runnable.class);
+  public static final Topic<Runnable> WC_CONVERTED = new Topic<>("WC_CONVERTED", Runnable.class);
   private final Map<String, Map<String, Pair<PropertyValue, Trinity<Long, Long, Long>>>> myPropertyCache =
-    new SoftHashMap<String, Map<String, Pair<PropertyValue, Trinity<Long, Long, Long>>>>();
+    new SoftHashMap<>();
 
   private final SvnConfiguration myConfiguration;
   private final SvnEntriesFileListener myEntriesFileListener;
@@ -136,7 +136,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private final MyFrameStateListener myFrameStateListener;
 
   //Consumer<Boolean>
-  public static final Topic<Consumer> ROOTS_RELOADED = new Topic<Consumer>("ROOTS_RELOADED", Consumer.class);
+  public static final Topic<Consumer> ROOTS_RELOADED = new Topic<>("ROOTS_RELOADED", Consumer.class);
   private VcsListener myVcsListener;
 
   private SvnBranchPointsCalculator mySvnBranchPointsCalculator;
@@ -228,7 +228,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
           protected void chanceToFillRoots() {
             final List<WCInfo> infos = getAllWcInfos();
             final LocalFileSystem lfs = LocalFileSystem.getInstance();
-            final List<VirtualFile> roots = new ArrayList<VirtualFile>(infos.size());
+            final List<VirtualFile> roots = new ArrayList<>(infos.size());
             for (WCInfo info : infos) {
               if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(info.getFormat())) {
                 final VirtualFile file = lfs.refreshAndFindFileByIoFile(new File(info.getPath()));
@@ -545,8 +545,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     final String relPath = SVNAdminUtil.getPropPath(ioFile.getName(), isDir ? SVNNodeKind.DIR : SVNNodeKind.FILE, false);
     final String relPathBase = SVNAdminUtil.getPropBasePath(ioFile.getName(), isDir ? SVNNodeKind.DIR : SVNNodeKind.FILE, false);
     final String relPathRevert = SVNAdminUtil.getPropRevertPath(ioFile.getName(), isDir ? SVNNodeKind.DIR : SVNNodeKind.FILE, false);
-    return new Trinity<Long, Long, Long>(new File(dir, relPath).lastModified(), new File(dir, relPathBase).lastModified(),
-                                         new File(dir, relPathRevert).lastModified());
+    return new Trinity<>(new File(dir, relPath).lastModified(), new File(dir, relPathBase).lastModified(),
+                         new File(dir, relPathRevert).lastModified());
   }
 
   private static boolean trinitiesEqual(final Trinity<Long, Long, Long> t1, final Trinity<Long, Long, Long> t2) {
@@ -573,7 +573,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     final PropertyValue value = client.getProperty(SvnTarget.fromFile(ioFile, SVNRevision.WORKING), propName, false, SVNRevision.WORKING);
 
     if (cachedMap == null) {
-      cachedMap = new HashMap<String, Pair<PropertyValue, Trinity<Long, Long, Long>>>();
+      cachedMap = new HashMap<>();
       myPropertyCache.put(keyForVf(file), cachedMap);
     }
 
@@ -771,7 +771,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     final SvnFileUrlMapping urlMapping = getSvnFileUrlMapping();
 
     final List<RootUrlInfo> infoList = urlMapping.getAllWcInfos();
-    final List<WCInfo> infos = new ArrayList<WCInfo>();
+    final List<WCInfo> infos = new ArrayList<>();
     for (RootUrlInfo info : infoList) {
       final File file = info.getIoFile();
 
@@ -781,7 +781,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   public List<WCInfo> getWcInfosWithErrors() {
-    List<WCInfo> result = new ArrayList<WCInfo>(getAllWcInfos());
+    List<WCInfo> result = new ArrayList<>(getAllWcInfos());
 
     for (RootUrlInfo info : getSvnFileUrlMapping().getErrorRoots()) {
       result.add(new WCInfo(info, SvnUtil.isWorkingCopyRoot(info.getIoFile()), Depth.UNKNOWN));
@@ -817,9 +817,9 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   public <S> List<S> filterUniqueRoots(final List<S> in, final Convertor<S, VirtualFile> convertor) {
     if (in.size() <= 1) return in;
 
-    final List<MyPair<S>> infos = new ArrayList<MyPair<S>>(in.size());
+    final List<MyPair<S>> infos = new ArrayList<>(in.size());
     final SvnFileUrlMappingImpl mapping = (SvnFileUrlMappingImpl)getSvnFileUrlMapping();
-    final List<S> notMatched = new LinkedList<S>();
+    final List<S> notMatched = new LinkedList<>();
     for (S s : in) {
       final VirtualFile vf = convertor.convert(s);
       if (vf == null) continue;
@@ -833,7 +833,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
           continue;
         }
       }
-      infos.add(new MyPair<S>(vf, url.toString(), s));
+      infos.add(new MyPair<>(vf, url.toString(), s));
     }
     final List<MyPair<S>> filtered = new UniqueRootsFilter().filter(infos);
     final List<S> converted = ObjectsConvertor.convert(filtered, new Convertor<MyPair<S>, S>() {

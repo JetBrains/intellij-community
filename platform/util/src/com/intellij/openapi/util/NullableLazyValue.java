@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -40,5 +41,17 @@ public abstract class NullableLazyValue<T> {
       }
     }
     return value;
+  }
+
+  @NotNull
+  public static <T> NullableLazyValue<T> createValue(@NotNull final Factory<T> value) {
+    return new NullableLazyValue<T>() {
+
+      @Nullable
+      @Override
+      protected T compute() {
+        return value.create();
+      }
+    };
   }
 }

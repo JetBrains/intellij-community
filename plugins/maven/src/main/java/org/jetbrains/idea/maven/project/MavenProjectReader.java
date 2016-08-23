@@ -44,7 +44,7 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 public class MavenProjectReader {
   private static final String UNKNOWN = MavenId.UNKNOWN_VALUE;
 
-  private final Map<VirtualFile, RawModelReadResult> myRawModelsCache = new THashMap<VirtualFile, RawModelReadResult>();
+  private final Map<VirtualFile, RawModelReadResult> myRawModelsCache = new THashMap<>();
   private SettingsProfilesCache mySettingsProfilesCache;
 
   public MavenProjectReaderResult readProject(MavenGeneralSettings generalSettings,
@@ -52,12 +52,12 @@ public class MavenProjectReader {
                                               MavenExplicitProfiles explicitProfiles,
                                               MavenProjectReaderProjectLocator locator) {
     Pair<RawModelReadResult, MavenExplicitProfiles> readResult =
-      doReadProjectModel(generalSettings, file, explicitProfiles, new THashSet<VirtualFile>(), locator);
+      doReadProjectModel(generalSettings, file, explicitProfiles, new THashSet<>(), locator);
 
     File basedir = getBaseDir(file);
     MavenModel model = MavenServerManager.getInstance().interpolateAndAlignModel(readResult.first.model, basedir);
 
-    Map<String, String> modelMap = new HashMap<String, String>();
+    Map<String, String> modelMap = new HashMap<>();
     modelMap.put("groupId", model.getMavenId().getGroupId());
     modelMap.put("artifactId", model.getMavenId().getArtifactId());
     modelMap.put("version", model.getMavenId().getVersion());
@@ -71,7 +71,7 @@ public class MavenProjectReader {
                                         readResult.second,
                                         null,
                                         readResult.first.problems,
-                                        new THashSet<MavenId>());
+                                        new THashSet<>());
   }
 
   private static File getBaseDir(VirtualFile file) {
@@ -109,7 +109,7 @@ public class MavenProjectReader {
   private RawModelReadResult doReadProjectModel(VirtualFile file, boolean headerOnly) {
     MavenModel result = new MavenModel();
     Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
-    Set<String> alwaysOnProfiles = new THashSet<String>();
+    Set<String> alwaysOnProfiles = new THashSet<>();
 
     Element xmlProject = readXml(file, problems, MavenProjectProblem.ProblemType.SYNTAX);
     if (xmlProject == null || !"project".equals(xmlProject.getName())) {
@@ -173,7 +173,7 @@ public class MavenProjectReader {
   }
 
   private static List<MavenResource> collectResources(List<Element> xmlResources) {
-    List<MavenResource> result = new ArrayList<MavenResource>();
+    List<MavenResource> result = new ArrayList<>();
     for (Element each : xmlResources) {
       result.add(new MavenResource(MavenJDOMUtil.findChildValueByPath(each, "directory"),
                                    "true".equals(MavenJDOMUtil.findChildValueByPath(each, "filtering")),
@@ -205,7 +205,7 @@ public class MavenProjectReader {
   }
 
   private List<MavenResource> repairResources(List<MavenResource> resources, String defaultDir) {
-    List<MavenResource> result = new ArrayList<MavenResource>();
+    List<MavenResource> result = new ArrayList<>();
     if (resources.isEmpty()) {
       result.add(createResource(defaultDir));
       return result;
@@ -226,7 +226,7 @@ public class MavenProjectReader {
                                              Element xmlProject,
                                              Collection<MavenProjectProblem> problems,
                                              Set<String> alwaysOnProfiles) {
-    List<MavenProfile> result = new ArrayList<MavenProfile>();
+    List<MavenProfile> result = new ArrayList<>();
     collectProfiles(MavenJDOMUtil.findChildrenByPath(xmlProject, "profiles", "profile"), result, MavenConstants.PROFILE_FROM_POM);
 
     VirtualFile profilesFile = MavenUtil.findProfilesXmlFile(projectFile);
@@ -249,9 +249,9 @@ public class MavenProjectReader {
                                    Collection<MavenProjectProblem> problems) {
     if (mySettingsProfilesCache == null) {
 
-      List<MavenProfile> settingsProfiles = new ArrayList<MavenProfile>();
+      List<MavenProfile> settingsProfiles = new ArrayList<>();
       Collection<MavenProjectProblem> settingsProblems = MavenProjectProblem.createProblemsList();
-      Set<String> settingsAlwaysOnProfiles = new THashSet<String>();
+      Set<String> settingsAlwaysOnProfiles = new THashSet<>();
 
       for (VirtualFile each : generalSettings.getEffectiveSettingsFiles()) {
         collectProfilesFromSettingsXmlOrProfilesXml(each,
@@ -265,7 +265,7 @@ public class MavenProjectReader {
       mySettingsProfilesCache = new SettingsProfilesCache(settingsProfiles, settingsAlwaysOnProfiles, settingsProblems);
     }
 
-    List<MavenProfile> modelProfiles = new ArrayList<MavenProfile>(model.getProfiles());
+    List<MavenProfile> modelProfiles = new ArrayList<>(model.getProfiles());
     for (MavenProfile each : mySettingsProfilesCache.profiles) {
       addProfileIfDoesNotExist(each, modelProfiles);
     }

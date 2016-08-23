@@ -28,6 +28,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
@@ -38,11 +39,14 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.util.containers.UtilKt.getIfSingle;
 
 /**
  * Compares selected file/folder with itself in another branch.
@@ -92,33 +96,16 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    super.update(e);
     Presentation presentation = e.getPresentation();
     Project project = e.getProject();
-    if (project == null) {
-      presentation.setEnabled(false);
-      presentation.setVisible(false);
-      return;
-    }
+    VirtualFile file = getIfSingle(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM));
 
-    VirtualFile[] vFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-    if (vFiles == null || vFiles.length != 1 || vFiles[0] == null) { // only 1 file for now
-      presentation.setEnabled(false);
-      presentation.setVisible(true);
-      return;
-    }
+    presentation.setVisible(project != null);
+    presentation.setEnabled(project != null && file != null && isEnabled(getRepositoryManager(project).getRepositoryForFile(file)));
+  }
 
-    AbstractRepositoryManager<T> manager = getRepositoryManager(project);
-
-    T repository = manager.getRepositoryForFile(vFiles[0]);
-    if (repository == null || repository.isFresh() || noBranchesToCompare(repository)) {
-      presentation.setEnabled(false);
-      presentation.setVisible(true);
-      return;
-    }
-
-    presentation.setEnabled(true);
-    presentation.setVisible(true);
+  private boolean isEnabled(@Nullable T repository) {
+    return repository != null && !repository.isFresh() && !noBranchesToCompare(repository);
   }
 
   @NotNull

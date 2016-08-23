@@ -112,7 +112,7 @@ public class EditorWindow {
     }
   };
   private AtomicBoolean myTabsHidingInProgress = new AtomicBoolean(false);
-  private final Stack<Pair<String, Integer>> myHiddenTabs = new Stack<Pair<String, Integer>>();
+  private final Stack<Pair<String, Integer>> myHiddenTabs = new Stack<>();
 
   protected EditorWindow(final EditorsSplitters owner) {
     myOwner = owner;
@@ -827,7 +827,7 @@ public class EditorWindow {
 
   public EditorWindow[] findSiblings() {
     checkConsistency();
-    final ArrayList<EditorWindow> res = new ArrayList<EditorWindow>();
+    final ArrayList<EditorWindow> res = new ArrayList<>();
     if (myPanel.getParent() instanceof Splitter) {
       final Splitter splitter = (Splitter)myPanel.getParent();
       for (final EditorWindow win : myOwner.getWindows()) {

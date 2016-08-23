@@ -96,8 +96,8 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
   protected UsageInfo[] findUsages() {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myProject);
 
-    ArrayList<UsageInfo> usages = new ArrayList<UsageInfo>();
-    myNonNewConstructorUsages = new ArrayList<PsiElement>();
+    ArrayList<UsageInfo> usages = new ArrayList<>();
+    myNonNewConstructorUsages = new ArrayList<>();
 
     for (PsiReference reference : ReferencesSearch.search(myConstructor == null ? myOriginalClass : myConstructor, projectScope, false)) {
       PsiElement element = reference.getElement();
@@ -134,7 +134,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usages = refUsages.get();
 
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     final PsiResolveHelper helper = JavaPsiFacade.getInstance(myProject).getResolveHelper();
     final PsiClass constructorContainingClass = getConstructorContainingClass();
     if (!helper.isAccessible(constructorContainingClass, myTargetClass, null)) {
@@ -144,7 +144,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
       conflicts.putValue(constructorContainingClass, message);
     }
 
-    HashSet<PsiElement> reportedContainers = new HashSet<PsiElement>();
+    HashSet<PsiElement> reportedContainers = new HashSet<>();
     final String targetClassDescription = RefactoringUIUtil.getDescription(myTargetClass, true);
     for (UsageInfo usage : usages) {
       final PsiElement container = ConflictsUtil.getContainer(usage.getElement());
@@ -264,7 +264,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
       factoryMethod.getThrowsList().replace(myConstructor.getThrowsList());
     }
 
-    Collection<String> names = new HashSet<String>();
+    Collection<String> names = new HashSet<>();
     for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(myConstructor != null ? myConstructor : containingClass)) {
       if (!names.contains(typeParameter.getName())) { //Otherwise type parameter is hidden in the constructor
         names.add(typeParameter.getName());

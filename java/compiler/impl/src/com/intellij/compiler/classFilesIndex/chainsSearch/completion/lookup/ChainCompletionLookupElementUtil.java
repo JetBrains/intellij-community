@@ -46,7 +46,7 @@ public final class ChainCompletionLookupElementUtil {
 
   public static String fillMethodParameters(final PsiMethod method, @Nullable final TIntObjectHashMap<SubLookupElement> replaceElements) {
     final TIntObjectHashMap<SubLookupElement> notNullReplaceElements = replaceElements == null ?
-        new TIntObjectHashMap<SubLookupElement>(0) :
+                                                                       new TIntObjectHashMap<>(0) :
         replaceElements;
 
     final PsiParameter[] parameters = method.getParameterList().getParameters();

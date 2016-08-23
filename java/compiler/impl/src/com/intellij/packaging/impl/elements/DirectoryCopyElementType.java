@@ -55,7 +55,7 @@ public class DirectoryCopyElementType extends PackagingElementType<DirectoryCopy
                                                                    @NotNull CompositePackagingElement<?> parent) {
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createMultipleFoldersDescriptor();
     final VirtualFile[] files = FileChooser.chooseFiles(descriptor, context.getProject(), null);
-    final List<DirectoryCopyPackagingElement> list = new ArrayList<DirectoryCopyPackagingElement>();
+    final List<DirectoryCopyPackagingElement> list = new ArrayList<>();
     for (VirtualFile file : files) {
       list.add(new DirectoryCopyPackagingElement(file.getPath()));
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -276,11 +276,11 @@ public class Utils{
     final ActionCallback menuBuilt = new ActionCallback();
     final boolean checked = group instanceof CheckedActionGroup;
 
-    final ArrayList<AnAction> list = new ArrayList<AnAction>();
+    final ArrayList<AnAction> list = new ArrayList<>();
     expandActionGroup(group, list, presentationFactory, context, place, ActionManager.getInstance());
 
     final boolean fixMacScreenMenu = SystemInfo.isMacSystemMenu && isWindowMenu && Registry.is("actionSystem.mac.screenMenuNotUpdatedFix");
-    final ArrayList<Component> children = new ArrayList<Component>();
+    final ArrayList<Component> children = new ArrayList<>();
 
     for (int i = 0, size = list.size(); i < size; i++) {
       final AnAction action = list.get(i);
@@ -308,7 +308,8 @@ public class Utils{
 
             @Override
             protected void paintComponent(Graphics g) {
-              if (UIUtil.isUnderWindowsClassicLookAndFeel() || UIUtil.isUnderDarcula() || UIUtil.isUnderWindowsLookAndFeel()) {
+              if (UIUtil.isUnderWindowsClassicLookAndFeel() || UIUtil.isUnderDarcula() || UIUtil.isUnderWindowsLookAndFeel()
+                  || (SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui"))) {
                 g.setColor(component.getBackground());
                 g.fillRect(0, 0, getWidth(), getHeight());
               }
@@ -372,7 +373,7 @@ public class Utils{
           if (!component.isShowing()) return;
 
           DataContext context1 = DataManager.getInstance().getDataContext();
-          expandActionGroup(group, new ArrayList<AnAction>(), presentationFactory, context1, place, ActionManager.getInstance());
+          expandActionGroup(group, new ArrayList<>(), presentationFactory, context1, place, ActionManager.getInstance());
 
           for (Component each : children) {
             if (each instanceof ActionMenuItem) {

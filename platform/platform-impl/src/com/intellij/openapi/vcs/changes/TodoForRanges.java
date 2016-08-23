@@ -69,7 +69,7 @@ public abstract class TodoForRanges {
     final TodoItemData[] todoItems = getTodoItems();
     
     final StepIntersection<TodoItemData, TextRange> stepIntersection =
-      new StepIntersection<TodoItemData, TextRange>(new Convertor<TodoItemData, TextRange>() {
+      new StepIntersection<>(new Convertor<TodoItemData, TextRange>() {
         @Override
         public TextRange convert(TodoItemData o) {
           return o.getTextRange();
@@ -77,7 +77,7 @@ public abstract class TodoForRanges {
       }, Convertor.SELF, myRanges, () -> ""
       );
     final List<TodoItemData> filtered = stepIntersection.process(Arrays.asList(todoItems));
-    final List<Pair<TextRange, TextAttributes>> result = new ArrayList<Pair<TextRange, TextAttributes>>(filtered.size());
+    final List<Pair<TextRange, TextAttributes>> result = new ArrayList<>(filtered.size());
     int offset = 0;
     for (TextRange range : myRanges) {
       Iterator<TodoItemData> iterator = filtered.iterator();

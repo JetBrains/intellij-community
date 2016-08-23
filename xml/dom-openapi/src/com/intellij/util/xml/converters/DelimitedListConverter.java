@@ -90,7 +90,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
     if (str == null) {
       return null;
     }
-    List<T> values = new ArrayList<T>();
+    List<T> values = new ArrayList<>();
 
     for (String s : StringUtil.tokenize(str, myDelimiters)) {
       final T t = convertString(s.trim(), context);
@@ -128,7 +128,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
       return PsiReference.EMPTY_ARRAY;
     }
 
-    final ArrayList<PsiReference> references = new ArrayList<PsiReference>();
+    final ArrayList<PsiReference> references = new ArrayList<>();
     new DelimitedListProcessor(myDelimiters) {
       @Override
       protected void processToken(final int start, final int end, final boolean delimitersOnly) {
@@ -205,7 +205,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
 
     @Override
     public PsiElement handleElementRename(final String newElementName) throws IncorrectOperationException {
-      final Ref<IncorrectOperationException> ref = new Ref<IncorrectOperationException>();
+      final Ref<IncorrectOperationException> ref = new Ref<>();
       PsiElement element = referenceHandleElementRename(this, newElementName, getSuperElementRenameFunction(ref));
       if (!ref.isNull()) {
         throw ref.get();
@@ -216,7 +216,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
 
     @Override
     public PsiElement bindToElement(@NotNull final PsiElement element) throws IncorrectOperationException {
-      final Ref<IncorrectOperationException> ref = new Ref<IncorrectOperationException>();
+      final Ref<IncorrectOperationException> ref = new Ref<>();
       PsiElement bindElement =
         referenceBindToElement(this, element, getSuperBindToElementFunction(ref), getSuperElementRenameFunction(ref));
       if (!ref.isNull()) {
@@ -234,7 +234,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
     private Function<PsiElement, PsiElement> getSuperBindToElementFunction(final Ref<IncorrectOperationException> ref) {
       return s -> {
         try {
-          return MyPsiReference.super.bindToElement(s);
+          return super.bindToElement(s);
         }
         catch (IncorrectOperationException e) {
           ref.set(e);
@@ -246,7 +246,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
     private Function<String, PsiElement> getSuperElementRenameFunction(final Ref<IncorrectOperationException> ref) {
       return s -> {
         try {
-          return MyPsiReference.super.handleElementRename(s);
+          return super.handleElementRename(s);
         }
         catch (IncorrectOperationException e) {
           ref.set(e);

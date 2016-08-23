@@ -30,6 +30,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -74,6 +75,26 @@ public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration i
 
   public String getTestToRun() {
     return myTestToRun;
+  }
+
+  @NotNull
+  @Override
+  public String getWorkingDirectorySafe() {
+    final String workingDirectoryFromConfig = getWorkingDirectory();
+    if (StringUtil.isNotEmpty(workingDirectoryFromConfig)) {
+      return workingDirectoryFromConfig;
+    }
+    final String testToRun = myTestToRun;
+    if (testToRun != null) {
+      final VirtualFile path = LocalFileSystem.getInstance().findFileByPath(testToRun);
+      if (path != null) {
+        if (path.isDirectory()) {
+          return path.getPath();
+        }
+        return path.getParent().getPath();
+      }
+    }
+    return super.getWorkingDirectorySafe();
   }
 
   public void setTestToRun(String testToRun) {
@@ -178,7 +199,7 @@ public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration i
     if (indexOfBrace == -1) {
       return super.getTestSpec(location, failedTest);
     }
-    final List<String> testNameParts = new ArrayList<String>();
+    final List<String> testNameParts = new ArrayList<>();
     final VirtualFile file = location.getVirtualFile();
     if (file == null) {
       return null;

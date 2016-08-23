@@ -204,7 +204,7 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
     List<String> names = null;
     if (hasNames) {
       int size = dataStream.readVarInt();
-      names = new ArrayList<String>(size);
+      names = new ArrayList<>(size);
       for (int i = 0; i < size; i++) {
         names.add(dataStream.readName().getString());
       }

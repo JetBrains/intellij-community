@@ -99,7 +99,7 @@ public class LighthouseRepository extends BaseRepositoryImpl {
     if (!StringUtil.isEmpty(query)) {
       url += encodeUrl(query);
     }
-    final List<Task> tasks = new ArrayList<Task>();
+    final List<Task> tasks = new ArrayList<>();
     int page = 1;
     final HttpClient client = login();
     while (tasks.size() < max) {
@@ -134,8 +134,8 @@ public class LighthouseRepository extends BaseRepositoryImpl {
     }
     final String description = element.getChildText("original-body");
     final boolean isClosed = "true".equals(element.getChildText("closed"));
-    final Ref<Date> updated = new Ref<Date>();
-    final Ref<Date> created = new Ref<Date>();
+    final Ref<Date> updated = new Ref<>();
+    final Ref<Date> created = new Ref<>();
     try {
       updated.set(parseDate(element, "updated-at"));
       created.set(parseDate(element, "created-at"));

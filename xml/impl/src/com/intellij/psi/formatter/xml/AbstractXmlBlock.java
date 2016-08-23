@@ -238,7 +238,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   private static XmlTag[] collectSubTags(final XmlElement node) {
-    final List<XmlTag> result = new ArrayList<XmlTag>();
+    final List<XmlTag> result = new ArrayList<>();
     node.processElements(new PsiElementProcessor() {
       @Override
       public boolean execute(@NotNull final PsiElement element) {

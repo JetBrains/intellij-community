@@ -131,6 +131,13 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   }
 
   @Override
+  public void visitRegExpBoundary(RegExpBoundary boundary) {
+    if (!myLanguageHosts.supportsBoundary(boundary)) {
+      myHolder.createErrorAnnotation(boundary, "Unsupported boundary");
+    }
+  }
+
+  @Override
   public void visitSimpleClass(RegExpSimpleClass simpleClass) {
     if (!myLanguageHosts.supportsSimpleClass(simpleClass)) {
       myHolder.createErrorAnnotation(simpleClass, "Illegal/unsupported escape sequence");
@@ -140,7 +147,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   @Override
   public void visitRegExpClass(RegExpClass regExpClass) {
     if (!(regExpClass.getParent() instanceof RegExpClass)) {
-      checkForDuplicates(regExpClass, new HashSet<Character>());
+      checkForDuplicates(regExpClass, new HashSet<>());
     }
   }
 
@@ -283,7 +290,8 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
     final RegExpGroup group = groupRef.resolve();
     if (group == null) {
-      final Annotation a = myHolder.createErrorAnnotation(groupRef, "Unresolved named group reference");
+      final ASTNode node = groupRef.getNode().findChildByType(RegExpTT.NAME);
+      final Annotation a = myHolder.createErrorAnnotation(node, "Unresolved named group reference");
       if (a != null) {
         // IDEA-9381
         a.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);

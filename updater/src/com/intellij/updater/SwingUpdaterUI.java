@@ -42,7 +42,7 @@ public class SwingUpdaterUI implements UpdaterUI {
 
   private final JButton myCancelButton;
 
-  private final ConcurrentLinkedQueue<UpdateRequest> myQueue = new ConcurrentLinkedQueue<UpdateRequest>();
+  private final ConcurrentLinkedQueue<UpdateRequest> myQueue = new ConcurrentLinkedQueue<>();
   private final AtomicBoolean isCancelled = new AtomicBoolean(false);
   private final AtomicBoolean isRunning = new AtomicBoolean(false);
   private final AtomicBoolean hasError = new AtomicBoolean(false);
@@ -148,7 +148,7 @@ public class SwingUpdaterUI implements UpdaterUI {
           return;
         }
 
-        final List<UpdateRequest> pendingRequests = new ArrayList<UpdateRequest>();
+        final List<UpdateRequest> pendingRequests = new ArrayList<>();
         UpdateRequest request;
         while ((request = myQueue.poll()) != null) {
           pendingRequests.add(request);
@@ -183,7 +183,7 @@ public class SwingUpdaterUI implements UpdaterUI {
 
     new Thread(() -> {
       try {
-        myApplied = myOperation.execute(SwingUpdaterUI.this);
+        myApplied = myOperation.execute(this);
       }
       catch (OperationCancelledException ignore) {
         Runner.printStackTrace(ignore);
@@ -214,7 +214,7 @@ public class SwingUpdaterUI implements UpdaterUI {
   public Map<String, ValidationResult.Option> askUser(final List<ValidationResult> validationResults) throws OperationCancelledException {
     if (validationResults.isEmpty()) return Collections.emptyMap();
 
-    final Map<String, ValidationResult.Option> result = new HashMap<String, ValidationResult.Option>();
+    final Map<String, ValidationResult.Option> result = new HashMap<>();
     try {
       SwingUtilities.invokeAndWait(() -> {
         boolean proceed = true;
@@ -406,7 +406,7 @@ public class SwingUpdaterUI implements UpdaterUI {
             }
             ui.setProgress((i + 1) * 100 / 200);
             if (i == 100) {
-              List<ValidationResult> vr = new ArrayList<ValidationResult>();
+              List<ValidationResult> vr = new ArrayList<>();
               vr.add(new ValidationResult(ValidationResult.Kind.ERROR,
                                           "foo/bar",
                                           ValidationResult.Action.CREATE,
@@ -449,7 +449,7 @@ public class SwingUpdaterUI implements UpdaterUI {
   private static class MyTableModel extends AbstractTableModel {
     public static final String[] COLUMNS = new String[]{"File", "Action", "Problem", "Solution"};
     public static final int OPTIONS_COLUMN_INDEX = 3;
-    private final List<Item> myItems = new ArrayList<Item>();
+    private final List<Item> myItems = new ArrayList<>();
 
     public MyTableModel(List<ValidationResult> validationResults) {
       for (ValidationResult each : validationResults) {
@@ -524,7 +524,7 @@ public class SwingUpdaterUI implements UpdaterUI {
     }
 
     public Map<String, ValidationResult.Option> getResult() {
-      Map<String, ValidationResult.Option> result = new HashMap<String, ValidationResult.Option>();
+      Map<String, ValidationResult.Option> result = new HashMap<>();
       for (Item each : myItems) {
         result.put(each.validationResult.path, each.option);
       }

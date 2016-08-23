@@ -800,7 +800,7 @@ public class CommonCodeStyleSettings {
 
   public int CALL_PARAMETERS_WRAP = DO_NOT_WRAP;
   public boolean PREFER_PARAMETERS_WRAP = false;
-  public boolean CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = false;
+  public boolean CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = false; // misnamed, actually means: wrap AFTER lparen
   public boolean CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = false;
 
   public int METHOD_PARAMETERS_WRAP = DO_NOT_WRAP;

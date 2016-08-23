@@ -64,11 +64,11 @@ public class SdkEditor implements Configurable, Place.Navigator {
   @NonNls private static final String SDK_TAB = "sdkTab";
 
   private Sdk mySdk;
-  private final Map<OrderRootType, SdkPathEditor> myPathEditors = new HashMap<OrderRootType, SdkPathEditor>();
+  private final Map<OrderRootType, SdkPathEditor> myPathEditors = new HashMap<>();
 
   private TextFieldWithBrowseButton myHomeComponent;
-  private final Map<SdkType, AdditionalDataConfigurable> myAdditionalDataConfigurables = new HashMap<SdkType, AdditionalDataConfigurable>();
-  private final Map<AdditionalDataConfigurable, JComponent> myAdditionalDataComponents = new HashMap<AdditionalDataConfigurable, JComponent>();
+  private final Map<SdkType, AdditionalDataConfigurable> myAdditionalDataConfigurables = new HashMap<>();
+  private final Map<AdditionalDataConfigurable, JComponent> myAdditionalDataComponents = new HashMap<>();
   private JPanel myAdditionalDataPanel;
   private final SdkModificator myEditedSdkModificator = new EditedSdkModificator();
 
@@ -341,7 +341,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
     final String suggestedName = ((SdkType) mySdk.getSdkType()).suggestSdkName(currentName , homePath);
     if (Comparing.equal(currentName, suggestedName)) return currentName;
     String newSdkName = suggestedName;
-    final Set<String> allNames = new HashSet<String>();
+    final Set<String> allNames = new HashSet<>();
     Sdk[] sdks = mySdkModel.getSdks();
     for (Sdk sdk : sdks) {
       allNames.add(sdk.getName());

@@ -25,8 +25,8 @@ import java.util.*;
  * author: lesya
  */
 public class GroupByPackages {
-  private final Map<File, Collection<File>> myParentToChildrenMap = new HashMap<File, Collection<File>>();
-  private final Collection<File> myRoots = new HashSet<File>();
+  private final Map<File, Collection<File>> myParentToChildrenMap = new HashMap<>();
+  private final Collection<File> myRoots = new HashSet<>();
 
   public GroupByPackages(@NotNull Collection<File> files) {
     for (File file : files) {
@@ -36,7 +36,7 @@ public class GroupByPackages {
   }
 
   private void splitRoots() {
-    for (File oldRoot : new ArrayList<File>(myRoots)) {
+    for (File oldRoot : new ArrayList<>(myRoots)) {
       File newRoot = splitRoot(oldRoot);
       if (!oldRoot.equals(newRoot)) replaceRoot(oldRoot, newRoot);
     }
@@ -61,7 +61,7 @@ public class GroupByPackages {
     for (f = file; parent != null; f = parent, parent = parent.getParentFile()) {
       Collection<File> files = myParentToChildrenMap.get(parent);
       if (files == null) {
-        myParentToChildrenMap.put(parent, files = new HashSet<File>());
+        myParentToChildrenMap.put(parent, files = new HashSet<>());
       }
       files.add(f);
     }
@@ -70,7 +70,7 @@ public class GroupByPackages {
 
   @NotNull
   public List<File> getRoots() {
-    return new ArrayList<File>(myRoots);
+    return new ArrayList<>(myRoots);
   }
 
   @NotNull
@@ -79,6 +79,6 @@ public class GroupByPackages {
     if (collection == null) {
       return ContainerUtil.emptyList();
     }
-    return new ArrayList<File>(collection);
+    return new ArrayList<>(collection);
   }
 }

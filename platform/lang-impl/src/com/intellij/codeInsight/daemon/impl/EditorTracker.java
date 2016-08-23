@@ -51,9 +51,9 @@ public class EditorTracker extends AbstractProjectComponent {
   private final WindowManager myWindowManager;
   private final EditorFactory myEditorFactory;
 
-  private final Map<Window, List<Editor>> myWindowToEditorsMap = new HashMap<Window, List<Editor>>();
-  private final Map<Window, WindowAdapter> myWindowToWindowFocusListenerMap = new HashMap<Window, WindowAdapter>();
-  private final Map<Editor, Window> myEditorToWindowMap = new HashMap<Editor, Window>();
+  private final Map<Window, List<Editor>> myWindowToEditorsMap = new HashMap<>();
+  private final Map<Window, WindowAdapter> myWindowToWindowFocusListenerMap = new HashMap<>();
+  private final Map<Editor, Window> myEditorToWindowMap = new HashMap<>();
   private List<Editor> myActiveEditors = Collections.emptyList(); // accessed in EDT only
 
   private final EventDispatcher<EditorTrackerListener> myDispatcher = EventDispatcher.create(EditorTrackerListener.class);
@@ -124,7 +124,7 @@ public class EditorTracker extends AbstractProjectComponent {
     myEditorToWindowMap.put(editor, window);
     List<Editor> list = myWindowToEditorsMap.get(window);
     if (list == null) {
-      list = new ArrayList<Editor>();
+      list = new ArrayList<>();
       myWindowToEditorsMap.put(window, list);
 
       if (!(window instanceof IdeFrameImpl)) {
@@ -214,7 +214,7 @@ public class EditorTracker extends AbstractProjectComponent {
   private List<Editor> editorsByWindow(Window window) {
     List<Editor> list = myWindowToEditorsMap.get(window);
     if (list == null) return Collections.emptyList();
-    List<Editor> filtered = new SmartList<Editor>();
+    List<Editor> filtered = new SmartList<>();
     for (Editor editor : list) {
       if (editor.getContentComponent().isShowing()) {
         filtered.add(editor);
@@ -243,7 +243,7 @@ public class EditorTracker extends AbstractProjectComponent {
   }
 
   private class MyEditorFactoryListener implements EditorFactoryListener {
-    private final Map<Editor, Runnable> myExecuteOnEditorRelease = new HashMap<Editor, Runnable>();
+    private final Map<Editor, Runnable> myExecuteOnEditorRelease = new HashMap<>();
 
     @Override
     public void editorCreated(@NotNull EditorFactoryEvent event) {

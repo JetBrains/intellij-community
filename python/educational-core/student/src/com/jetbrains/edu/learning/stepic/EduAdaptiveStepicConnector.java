@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.MessageType;
@@ -28,10 +29,10 @@ import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.courseGeneration.StudyGenerator;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.editor.StudyEditor;
+import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
-import org.apache.http.StatusLine;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -57,8 +58,9 @@ import java.util.concurrent.TimeUnit;
 import static com.jetbrains.edu.learning.stepic.EduStepicConnector.*;
 
 public class EduAdaptiveStepicConnector {
-  public static final String PYTHON27 = "python27";
+  public static final String PYTHON2 = "python2";
   public static final String PYTHON3 = "python3";
+  public static final String PYCHARM_COMMENT = "# Posted from PyCharm Edu\n";
   private static final Logger LOG = Logger.getInstance(EduAdaptiveStepicConnector.class);
   private static final int CONNECTION_TIMEOUT = 60 * 1000;
 
@@ -74,11 +76,12 @@ public class EduAdaptiveStepicConnector {
       setTimeout(request);
 
       final CloseableHttpResponse response = client.execute(request);
-      final StatusLine statusLine = response.getStatusLine();
       final HttpEntity responseEntity = response.getEntity();
       final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
 
-      if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
+      final int statusCode = response.getStatusLine().getStatusCode();
+      EntityUtils.consume(responseEntity);
+      if (statusCode == HttpStatus.SC_OK) {
         final Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
         final StepicWrappers.RecommendationWrapper recomWrapper = gson.fromJson(responseString, StepicWrappers.RecommendationWrapper.class);
 
@@ -91,16 +94,17 @@ public class EduAdaptiveStepicConnector {
             final Lesson realLesson = lessonContainer.lessons.get(0);
             course.getLessons().get(0).setId(Integer.parseInt(lessonId));
 
-            viewAllSteps(client, realLesson.getId());
-
             for (int stepId : realLesson.steps) {
-              final StepicWrappers.Step step = getStep(stepId);
-              if (step.name.equals("code")) {
-                return getTaskFromStep(project, stepId, step, realLesson.getName());
+              final StepicWrappers.StepSource step = getStep(stepId);
+              if (step.block.name.equals("code")) {
+                return getTaskFromStep(project, stepId, step.block, realLesson.getName());
               }
             }
 
-            LOG.warn("Got a lesson without code part as a recommendation");
+            final StepicUser user = StudyTaskManager.getInstance(project).getUser();
+            postRecommendationReaction(project, lessonId,
+                                       String.valueOf(user.getId()), -1);
+            return getNextRecommendation(project, course);
           }
           else {
             LOG.warn("Got unexpected number of lessons: " + lessonContainer.lessons.size());
@@ -108,6 +112,9 @@ public class EduAdaptiveStepicConnector {
         }
       }
       else {
+        if ((statusCode == HttpStatus.SC_BAD_REQUEST || statusCode == HttpStatus.SC_UNAUTHORIZED) && login(project)) {
+          return getNextRecommendation(project, course);
+        }
         throw new IOException("Stepic returned non 200 status code: " + responseString);
       }
     }
@@ -148,37 +155,6 @@ public class EduAdaptiveStepicConnector {
     request.setConfig(requestConfig);
   }
 
-  private static void viewAllSteps(CloseableHttpClient client, int lessonId) throws URISyntaxException, IOException {
-    final URI unitsUrl = new URIBuilder(EduStepicNames.UNITS).addParameter(EduNames.LESSON, String.valueOf(lessonId)).build();
-    final StepicWrappers.UnitContainer unitContainer = getFromStepic(unitsUrl.toString(), StepicWrappers.UnitContainer.class);
-    if (unitContainer.units.size() != 1) {
-      LOG.warn("Got unexpected numbers of units: " + unitContainer.units.size());
-      return;
-    }
-
-    final URIBuilder builder = new URIBuilder(EduStepicNames.ASSIGNMENT);
-    for (Integer step : unitContainer.units.get(0).assignments) {
-      builder.addParameter("ids[]", String.valueOf(step));
-    }
-    final URI assignmentUrl = builder.build();
-    final StepicWrappers.AssignmentsWrapper assignments = getFromStepic(assignmentUrl.toString(), StepicWrappers.AssignmentsWrapper.class);
-    if (assignments.assignments.size() > 0) {
-      for (StepicWrappers.Assignment assignment : assignments.assignments) {
-        final HttpPost post = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.VIEWS_URL);
-        final StepicWrappers.ViewsWrapper viewsWrapper = new StepicWrappers.ViewsWrapper(assignment.id, assignment.step);
-        post.setEntity(new StringEntity(new Gson().toJson(viewsWrapper)));
-        setHeaders(post, EduStepicNames.CONTENT_TYPE_APPL_JSON);
-        final CloseableHttpResponse viewPostResult = client.execute(post);
-        if (viewPostResult.getStatusLine().getStatusCode() != HttpStatus.SC_CREATED) {
-          LOG.warn("Error while Views post, code: " + viewPostResult.getStatusLine().getStatusCode());
-        }
-      }
-    }
-    else {
-      LOG.warn("Got assignments of incorrect length: " + assignments.assignments.size());
-    }
-  }
-
   public static boolean postRecommendationReaction(@NotNull final Project project, @NotNull final String lessonId,
                                                    @NotNull final String user, int reaction) {
     final HttpPost post = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.RECOMMENDATION_REACTIONS_URL);
@@ -190,12 +166,19 @@ public class EduAdaptiveStepicConnector {
     setTimeout(post);
     try {
       final CloseableHttpResponse execute = client.execute(post);
-      if (execute.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED) {
+      final int statusCode = execute.getStatusLine().getStatusCode();
+      final HttpEntity entity = execute.getEntity();
+      final String entityString = EntityUtils.toString(entity);
+      EntityUtils.consume(entity);
+      if (statusCode == HttpStatus.SC_CREATED) {
         return true;
       }
       else {
-        LOG.warn("Stepic returned non-201 status code: " + execute.getStatusLine().getStatusCode() + " " +
-                 EntityUtils.toString(execute.getEntity()));
+        if ((statusCode == HttpStatus.SC_BAD_REQUEST || statusCode == HttpStatus.SC_UNAUTHORIZED || statusCode == HttpStatus.SC_FORBIDDEN)
+            && login(project)) {
+          return postRecommendationReaction(project, lessonId, user, reaction);
+        }
+        LOG.warn("Stepic returned non-201 status code: " + statusCode + " " + entityString);
         return false;
       }
     }
@@ -205,21 +188,24 @@ public class EduAdaptiveStepicConnector {
     return false;
   }
 
-  public static void addNextRecommendedTask(@NotNull final Project project, int reaction) {
+  public static void addNextRecommendedTask(@NotNull final Project project, int reaction, ProgressIndicator indicator) {
     final StudyEditor editor = StudyUtils.getSelectedStudyEditor(project);
     final Course course = StudyTaskManager.getInstance(project).getCourse();
     if (course != null && editor != null && editor.getTaskFile() != null) {
+      indicator.checkCanceled();
       final StepicUser user = StudyTaskManager.getInstance(project).getUser();
 
       final boolean recommendationReaction =
         postRecommendationReaction(project, String.valueOf(editor.getTaskFile().getTask().getLesson().getId()),
                                    String.valueOf(user.getId()), reaction);
       if (recommendationReaction) {
+        indicator.checkCanceled();
         final Task task = getNextRecommendation(project, course);
 
         if (task != null) {
           final Lesson adaptive = course.getLessons().get(0);
           final Task unsolvedTask = adaptive.getTaskList().get(adaptive.getTaskList().size() - 1);
+          final String lessonName = EduNames.LESSON + String.valueOf(adaptive.getIndex());
           if (reaction == 0 || reaction == -1) {
             unsolvedTask.setName(task.getName());
             unsolvedTask.setStepicId(task.getStepicId());
@@ -245,40 +231,44 @@ public class EduAdaptiveStepicConnector {
               LOG.warn("Got task without unexpected number of task files: " + taskFiles.size());
             }
 
-            final File lessonDirectory = new File(course.getCourseDirectory(), EduNames.LESSON + String.valueOf(adaptive.getIndex()));
-            final File taskDirectory = new File(lessonDirectory, EduNames.TASK + String.valueOf(adaptive.getTaskList().size()));
+            final File lessonDirectory = new File(course.getCourseDirectory(), lessonName);
+            final String taskName = EduNames.TASK + String.valueOf(adaptive.getTaskList().size());
+            final File taskDirectory = new File(lessonDirectory, taskName);
             StudyProjectGenerator.flushTask(task, taskDirectory);
             StudyProjectGenerator.flushCourseJson(course, new File(course.getCourseDirectory()));
-            final VirtualFile lessonDir = project.getBaseDir().findChild(EduNames.LESSON + String.valueOf(adaptive.getIndex()));
+            final VirtualFile lessonDir = project.getBaseDir().findChild(lessonName);
 
             if (lessonDir != null) {
               createTestFiles(course, task, unsolvedTask, lessonDir);
             }
             final StudyToolWindow window = StudyUtils.getStudyToolWindow(project);
             if (window != null) {
-              window.setTaskText(unsolvedTask.getText(), unsolvedTask.getTaskDir(project), project);
+              window.setTaskText(StudyUtils.wrapTextToDisplayLatex(unsolvedTask.getText()), unsolvedTask.getTaskDir(project), project);
             }
+            StudyNavigator.navigateToTask(project, lessonName, taskName);
           }
           else {
             adaptive.addTask(task);
             task.setIndex(adaptive.getTaskList().size());
-            final VirtualFile lessonDir = project.getBaseDir().findChild(EduNames.LESSON + String.valueOf(adaptive.getIndex()));
+            final VirtualFile lessonDir = project.getBaseDir().findChild(lessonName);
 
             if (lessonDir != null) {
               ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
                 try {
+                  final File lessonDirectory = new File(course.getCourseDirectory(), lessonName);
+                  final String taskName = EduNames.TASK + String.valueOf(task.getIndex());
+                  final File taskDir = new File(lessonDirectory, taskName);
+                  StudyProjectGenerator.flushTask(task, taskDir);
+                  StudyProjectGenerator.flushCourseJson(course, new File(course.getCourseDirectory()));
                   StudyGenerator.createTask(task, lessonDir, new File(course.getCourseDirectory(), lessonDir.getName()), project);
+                  adaptive.initLesson(course, true);
+                  StudyNavigator.navigateToTask(project, lessonName, taskName);
                 }
                 catch (IOException e) {
                   LOG.warn(e.getMessage());
                 }
               }));
             }
-
-            final File lessonDirectory = new File(course.getCourseDirectory(), EduNames.LESSON + String.valueOf(adaptive.getIndex()));
-            StudyProjectGenerator.flushLesson(lessonDirectory, adaptive);
-            StudyProjectGenerator.flushCourseJson(course, new File(course.getCourseDirectory()));
-            adaptive.initLesson(course, true);
           }
         }
         ApplicationManager.getApplication().invokeLater(() -> {
@@ -325,9 +315,7 @@ public class EduAdaptiveStepicConnector {
   }
 
   @NotNull
-  private static Task getTaskFromStep(Project project,
-                                      int lessonID,
-                                      @NotNull final StepicWrappers.Step step, @NotNull String name) {
+  private static Task getTaskFromStep(Project project, int lessonID, @NotNull final StepicWrappers.Step step, @NotNull String name) {
     final Task task = new Task();
     task.setName(name);
     task.setStepicId(lessonID);
@@ -369,7 +357,7 @@ public class EduAdaptiveStepicConnector {
       }
     }
 
-    task.taskFiles = new HashMap<String, TaskFile>();      // TODO: it looks like we don't need taskFiles as map anymore
+    task.taskFiles = new HashMap<>();      // TODO: it looks like we don't need taskFiles as map anymore
     if (step.options.files != null) {
       for (TaskFile taskFile : step.options.files) {
         task.taskFiles.put(taskFile.name, taskFile);
@@ -439,7 +427,7 @@ public class EduAdaptiveStepicConnector {
     final CloseableHttpResponse response;
     try {
       final StepicWrappers.SubmissionToPostWrapper submissionToPostWrapper =
-        new StepicWrappers.SubmissionToPostWrapper(String.valueOf(attemptId), language, text);
+        new StepicWrappers.SubmissionToPostWrapper(String.valueOf(attemptId), language, PYCHARM_COMMENT + text);
       final HttpPost httpPost = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.SUBMISSIONS);
       setHeaders(httpPost, EduStepicNames.CONTENT_TYPE_APPL_JSON);
       setTimeout(httpPost);
@@ -450,7 +438,10 @@ public class EduAdaptiveStepicConnector {
         LOG.warn(e.getMessage());
       }
       response = client.execute(httpPost);
-      return new Gson().fromJson(EntityUtils.toString(response.getEntity()), StepicWrappers.ResultSubmissionWrapper.class);
+      final HttpEntity entity = response.getEntity();
+      final String entityString = EntityUtils.toString(entity);
+      EntityUtils.consume(entity);
+      return new Gson().fromJson(entityString, StepicWrappers.ResultSubmissionWrapper.class);
     }
     catch (IOException e) {
       LOG.warn(e.getMessage());
@@ -475,8 +466,10 @@ public class EduAdaptiveStepicConnector {
         setHeaders(httpGet, EduStepicNames.CONTENT_TYPE_APPL_JSON);
         setTimeout(httpGet);
         final CloseableHttpResponse httpResponse = client.execute(httpGet);
-        final String entity = EntityUtils.toString(httpResponse.getEntity());
-        wrapper = new Gson().fromJson(entity, StepicWrappers.ResultSubmissionWrapper.class);
+        final HttpEntity entity = httpResponse.getEntity();
+        final String entityString = EntityUtils.toString(entity);
+        EntityUtils.consume(entity);
+        wrapper = new Gson().fromJson(entityString, StepicWrappers.ResultSubmissionWrapper.class);
       }
     }
     catch (InterruptedException e) {
@@ -501,7 +494,7 @@ public class EduAdaptiveStepicConnector {
         if (versionString != null) {
           final List<String> versionStringParts = StringUtil.split(versionString, " ");
           if (versionStringParts.size() == 2) {
-            return versionStringParts.get(1).startsWith("2") ? PYTHON27 : PYTHON3;
+            return versionStringParts.get(1).startsWith("2") ? PYTHON2 : PYTHON3;
           }
         }
       }
@@ -522,10 +515,21 @@ public class EduAdaptiveStepicConnector {
     setHeaders(post, EduStepicNames.CONTENT_TYPE_APPL_JSON);
     setTimeout(post);
     final CloseableHttpResponse httpResponse = client.execute(post);
-    final String entity = EntityUtils.toString(httpResponse.getEntity());
-    final StepicWrappers.AttemptContainer container =
-      new Gson().fromJson(entity, StepicWrappers.AttemptContainer.class);
-    return (container.attempts != null && !container.attempts.isEmpty()) ? container.attempts.get(0).id : -1;
+    final int statusCode = httpResponse.getStatusLine().getStatusCode();
+    final HttpEntity entity = httpResponse.getEntity();
+    final String entityString = EntityUtils.toString(entity);
+    EntityUtils.consume(entity);
+    if (statusCode == HttpStatus.SC_CREATED) {
+      final StepicWrappers.AttemptContainer container =
+        new Gson().fromJson(entityString, StepicWrappers.AttemptContainer.class);
+      return (container.attempts != null && !container.attempts.isEmpty()) ? container.attempts.get(0).id : -1;
+    }
+    else {
+      if ((statusCode == HttpStatus.SC_BAD_REQUEST || statusCode == HttpStatus.SC_UNAUTHORIZED) && login(project)) {
+        return getAttemptId(project, task);
+      }
+    }
+    return -1;
   }
 
   private static void createTestFileFromSamples(@NotNull final Task task,

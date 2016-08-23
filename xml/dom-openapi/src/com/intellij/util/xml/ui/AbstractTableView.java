@@ -250,7 +250,7 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
 
     if (dataChanged) {
       final int selectedRow = myTable.getSelectedRow();
-      myTableModel.setItems(new ArrayList<T>(data));
+      myTableModel.setItems(new ArrayList<>(data));
       if (selectedRow >= 0 && selectedRow < myTableModel.getRowCount()) {
         myTable.getSelectionModel().setSelectionInterval(selectedRow, selectedRow);
       }
@@ -322,7 +322,7 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
       final Object oldValue = getValueAt(rowIndex, columnIndex);
       if (!Comparing.equal(oldValue, aValue)) {
         wrapValueSetting(getItems().get(rowIndex),
-                         () -> MyListTableModel.super.setValueAt("".equals(aValue) ? null : aValue, rowIndex, columnIndex));
+                         () -> super.setValueAt("".equals(aValue) ? null : aValue, rowIndex, columnIndex));
       }
     }
 

@@ -91,7 +91,7 @@ public class GitImpl implements Git {
   @NotNull
   public Set<VirtualFile> untrackedFiles(@NotNull Project project, @NotNull VirtualFile root,
                                          @Nullable Collection<VirtualFile> files) throws VcsException {
-    final Set<VirtualFile> untrackedFiles = new HashSet<VirtualFile>();
+    final Set<VirtualFile> untrackedFiles = new HashSet<>();
 
     if (files == null) {
       untrackedFiles.addAll(untrackedFilesNoChunk(project, root, null));
@@ -112,7 +112,7 @@ public class GitImpl implements Git {
                                                        @NotNull VirtualFile root,
                                                        @Nullable List<String> relativePaths)
     throws VcsException {
-    final Set<VirtualFile> untrackedFiles = new HashSet<VirtualFile>();
+    final Set<VirtualFile> untrackedFiles = new HashSet<>();
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LS_FILES);
     h.setSilent(true);
     h.addParameters("--exclude-standard", "--others", "-z");
@@ -193,7 +193,7 @@ public class GitImpl implements Git {
           @Override
           public GitCommandResult compute() {
             final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECK_ATTR);
-            h.addParameters(new ArrayList<String>(attributes));
+            h.addParameters(new ArrayList<>(attributes));
             h.endOptions();
             h.addParameters(relativePaths);
             return run(h);
@@ -674,11 +674,11 @@ public class GitImpl implements Git {
 
   @NotNull
   private static GitCommandResult run(@NotNull Computable<GitLineHandler> handlerConstructor) {
-    final List<String> errorOutput = new ArrayList<String>();
-    final List<String> output = new ArrayList<String>();
+    final List<String> errorOutput = new ArrayList<>();
+    final List<String> output = new ArrayList<>();
     final AtomicInteger exitCode = new AtomicInteger();
     final AtomicBoolean startFailed = new AtomicBoolean();
-    final AtomicReference<Throwable> exception = new AtomicReference<Throwable>();
+    final AtomicReference<Throwable> exception = new AtomicReference<>();
 
     int authAttempt = 0;
     boolean authFailed;
@@ -724,7 +724,7 @@ public class GitImpl implements Git {
    */
   @NotNull
   private static GitCommandResult run(@NotNull GitLineHandler handler) {
-    return run(new Computable.PredefinedValueComputable<GitLineHandler>(handler));
+    return run(new Computable.PredefinedValueComputable<>(handler));
   }
 
   @Override

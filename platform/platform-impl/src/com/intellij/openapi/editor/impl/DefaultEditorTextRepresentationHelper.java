@@ -38,7 +38,7 @@ public class DefaultEditorTextRepresentationHelper implements EditorTextRepresen
   private static final int MAX_SYMBOLS_WIDTHS_CACHE_SIZE = 1000;
 
   /** We cache symbol widths here because it's detected to be a bottleneck. */
-  private final TObjectIntHashMap<Key> mySymbolWidthCache = new TObjectIntHashMap<Key>();
+  private final TObjectIntHashMap<Key> mySymbolWidthCache = new TObjectIntHashMap<>();
 
   private final Key mySharedKey = new Key();
 

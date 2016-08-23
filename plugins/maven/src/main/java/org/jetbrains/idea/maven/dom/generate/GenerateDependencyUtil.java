@@ -46,7 +46,7 @@ public class GenerateDependencyUtil {
 
   @NotNull
   public static List<MavenDomDependency> chooseDependencies(Collection<MavenDomDependency> candidates, final Project project) {
-    List<MavenDomDependency> dependencies = new ArrayList<MavenDomDependency>();
+    List<MavenDomDependency> dependencies = new ArrayList<>();
 
     MavenDomProjectModelMember[] memberCandidates =
       ContainerUtil.map2Array(candidates, MavenDomProjectModelMember.class, dependency -> new MavenDomProjectModelMember(dependency));

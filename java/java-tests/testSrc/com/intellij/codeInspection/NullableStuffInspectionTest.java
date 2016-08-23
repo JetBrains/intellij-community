@@ -163,6 +163,18 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
     myFixture.checkHighlighting(true, false, true);
   }
 
+  public void testNullPassedToNotNullParameter() {
+    doTest();
+  }
+
+  public void testNullPassedToNotNullConstructorParameter() {
+    doTest();
+  }
+
+  public void testNullPassedAsPartNotNullAnnotatedOfVarArg() {
+    doTest();
+  }
+
   public void testHonorParameterDefaultInSetters() {
     DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
     DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);

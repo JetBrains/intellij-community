@@ -53,7 +53,7 @@
 1.6 => plugins/maven/lib/maven2-server-impl.jar
 1.6 => plugins/maven/lib/maven3-server-common.jar
 1.6 => plugins/maven/lib/maven30-server-impl.jar
-1.6 => plugins/maven/lib/maven32-server-impl.jar
+1.6 => plugins/maven/lib/maven3-server-impl.jar
 1.6 => plugins/maven/lib/artifact-resolver-m2.jar
 1.6 => plugins/maven/lib/artifact-resolver-m3.jar
 1.6 => plugins/maven/lib/artifact-resolver-m31.jar

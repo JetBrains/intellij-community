@@ -39,7 +39,7 @@ public class GlobalCompilingVisitor {
   @NonNls private static final String WORD_SEARCH_PATTERN_STR = ".*?\\b(.+?)\\b.*?";
   private static final Pattern ourWordSearchPattern = Pattern.compile(WORD_SEARCH_PATTERN_STR);
   private CompileContext context;
-  private final ArrayList<PsiElement> myLexicalNodes = new ArrayList<PsiElement>();
+  private final ArrayList<PsiElement> myLexicalNodes = new ArrayList<>();
 
   private int myCodeBlockLevel;
 
@@ -159,7 +159,7 @@ public class GlobalCompilingVisitor {
 
     SubstitutionHandler handler = null;
     while (matcher.find()) {
-      if (handlers == null) handlers = new ArrayList<SubstitutionHandler>();
+      if (handlers == null) handlers = new ArrayList<>();
       handler = (SubstitutionHandler)getContext().getPattern().getHandler(matcher.group(1));
       if (handler != null) handlers.add(handler);
 
@@ -271,7 +271,7 @@ public class GlobalCompilingVisitor {
   }
 
   private static class WordTokenizer {
-    private final List<String> myWords = new ArrayList<String>();
+    private final List<String> myWords = new ArrayList<>();
 
     WordTokenizer(String text) {
       final StringTokenizer tokenizer = new StringTokenizer(text);

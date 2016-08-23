@@ -62,7 +62,7 @@ public final class TreeUtil {
 
   @NotNull
   public static List<TreePath> collectExpandedPaths(@NotNull final JTree tree){
-    final ArrayList<TreePath> result = new ArrayList<TreePath>();
+    final ArrayList<TreePath> result = new ArrayList<>();
     final Object root = tree.getModel().getRoot();
     final TreePath rootPath = new TreePath(root);
     result.addAll(collectExpandedPaths(tree, rootPath));
@@ -73,7 +73,7 @@ public final class TreeUtil {
   public static <T> List<T> collectSelectedObjectsOfType(@NotNull JTree tree, @NotNull Class<T> clazz) {
     final TreePath[] selections = tree.getSelectionPaths();
     if (selections != null) {
-      final ArrayList<T> result = new ArrayList<T>();
+      final ArrayList<T> result = new ArrayList<>();
       for (TreePath selection : selections) {
         final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection.getLastPathComponent();
         final Object userObject = node.getUserObject();
@@ -90,7 +90,7 @@ public final class TreeUtil {
 
   @NotNull
   public static List<TreePath> collectExpandedPaths(@NotNull final JTree tree, @NotNull TreePath path){
-    final ArrayList<TreePath> result = new ArrayList<TreePath>();
+    final ArrayList<TreePath> result = new ArrayList<>();
     if (!tree.isExpanded(path)) return result;
     final Object lastPathComponent = path.getLastPathComponent();
     final TreeModel model = tree.getModel();
@@ -307,7 +307,7 @@ public final class TreeUtil {
 
   @NotNull
   private static TreePath[] removeDuplicates(@NotNull final TreePath[] paths) {
-    final ArrayList<TreePath> result = new ArrayList<TreePath>();
+    final ArrayList<TreePath> result = new ArrayList<>();
     for (final TreePath path : paths) {
       if (!result.contains(path)) result.add(path);
     }
@@ -318,9 +318,9 @@ public final class TreeUtil {
   public static TreePath[] selectMaximals(@Nullable final TreePath[] paths) {
     if (paths == null) return new TreePath[0];
     final TreePath[] noDuplicates = removeDuplicates(paths);
-    final ArrayList<TreePath> result = new ArrayList<TreePath>();
+    final ArrayList<TreePath> result = new ArrayList<>();
     for (final TreePath path : noDuplicates) {
-      final ArrayList<TreePath> otherPaths = new ArrayList<TreePath>(Arrays.asList(noDuplicates));
+      final ArrayList<TreePath> otherPaths = new ArrayList<>(Arrays.asList(noDuplicates));
       otherPaths.remove(path);
       if (!isDescendants(path, otherPaths.toArray(new TreePath[otherPaths.size()]))) result.add(path);
     }
@@ -749,7 +749,7 @@ public final class TreeUtil {
   public static ArrayList<TreeNode> childrenToArray(@NotNull final TreeNode node) {
     //ApplicationManager.getApplication().assertIsDispatchThread();
     final int size = node.getChildCount();
-    final ArrayList<TreeNode> result = new ArrayList<TreeNode>(size);
+    final ArrayList<TreeNode> result = new ArrayList<>(size);
     for(int i = 0; i < size; i++){
       TreeNode child = node.getChildAt(i);
       LOG.assertTrue(child != null);
@@ -838,7 +838,7 @@ public final class TreeUtil {
 
   @NotNull
   public static List<TreePath> collectSelectedPaths(@NotNull final JTree tree, @NotNull final TreePath treePath) {
-    final ArrayList<TreePath> result = new ArrayList<TreePath>();
+    final ArrayList<TreePath> result = new ArrayList<>();
     final TreePath[] selections = tree.getSelectionPaths();
     if (selections != null) {
       for (TreePath selection : selections) {
@@ -894,7 +894,7 @@ public final class TreeUtil {
       }
       int boxRightX = boxLeftX + boxWidth;
 
-      box = new Range<Integer>(boxLeftX, boxRightX);
+      box = new Range<>(boxLeftX, boxRightX);
     }
     return box;
   }

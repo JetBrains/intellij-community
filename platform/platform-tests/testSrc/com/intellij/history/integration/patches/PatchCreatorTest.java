@@ -142,7 +142,7 @@ public class PatchCreatorTest extends PatchingTestCase {
     Revision r = rr.get(right);
 
     List<Difference> dd = l.getDifferencesWith(r);
-    List<Change> cc = new ArrayList<Change>();
+    List<Change> cc = new ArrayList<>();
     for (Difference d : dd) {
       Change c = new Change(d.getLeftContentRevision(myGateway), d.getRightContentRevision(myGateway));
       cc.add(c);

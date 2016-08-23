@@ -96,7 +96,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
                                              @Nullable Editor editor) {
     if (constructors.isEmpty()) return;
 
-    final List<PsiExpression> rExpressions = new ArrayList<PsiExpression>(constructors.size());
+    final List<PsiExpression> rExpressions = new ArrayList<>(constructors.size());
     final LookupElement[] suggestedInitializers = AddVariableInitializerFix.suggestInitializer(field);
 
     for (PsiMethod constructor : constructors) {
@@ -148,7 +148,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
     }
 
     if (ctors.length > 1) {
-      final MemberChooser<PsiMethodMember> chooser = new MemberChooser<PsiMethodMember>(toPsiMethodMemberArray(ctors), false, true, project);
+      final MemberChooser<PsiMethodMember> chooser = new MemberChooser<>(toPsiMethodMemberArray(ctors), false, true, project);
       chooser.setTitle(QuickFixBundle.message("initialize.final.field.in.constructor.choose.dialog.title"));
       chooser.show();
 
@@ -184,7 +184,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
   }
 
   private static PsiMethod[] filterIfFieldAlreadyAssigned(@NotNull PsiField field, @NotNull PsiMethod[] ctors) {
-    final List<PsiMethod> result = new ArrayList<PsiMethod>(Arrays.asList(ctors));
+    final List<PsiMethod> result = new ArrayList<>(Arrays.asList(ctors));
     for (PsiReference reference : ReferencesSearch.search(field, new LocalSearchScope(ctors))) {
       final PsiElement element = reference.getElement();
       if (element instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand((PsiExpression)element)) {

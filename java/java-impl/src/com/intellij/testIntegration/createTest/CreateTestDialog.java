@@ -170,7 +170,7 @@ public class CreateTestDialog extends DialogWrapper {
     List<MemberInfo> methods = TestIntegrationUtils.extractClassMethods(
       myTargetClass, myShowInheritedMethodsBox.isSelected());
 
-    Set<PsiMember> selectedMethods = new HashSet<PsiMember>();
+    Set<PsiMember> selectedMethods = new HashSet<>();
     for (MemberInfo each : myMethodsTable.getSelectedMemberInfos()) {
       selectedMethods.add(each.getMember());
     }
@@ -349,7 +349,7 @@ public class CreateTestDialog extends DialogWrapper {
       }
     });
     final boolean hasTestRoots = !ModuleRootManager.getInstance(myTargetModule).getSourceRoots(JavaModuleSourceRootTypes.TESTS).isEmpty();
-    final List<TestFramework> attachedLibraries = new ArrayList<TestFramework>();
+    final List<TestFramework> attachedLibraries = new ArrayList<>();
     final String defaultLibrary = getDefaultLibraryName();
     TestFramework defaultDescriptor = null;
     final DefaultComboBoxModel model = (DefaultComboBoxModel)myLibrariesCombo.getModel();
@@ -544,7 +544,7 @@ public class CreateTestDialog extends DialogWrapper {
 
   @Nullable
   private PsiDirectory chooseDefaultDirectory(PsiDirectory[] directories, List<VirtualFile> roots) {
-    List<PsiDirectory> dirs = new ArrayList<PsiDirectory>();
+    List<PsiDirectory> dirs = new ArrayList<>();
     for (VirtualFile file : ModuleRootManager.getInstance(myTargetModule).getSourceRoots(JavaSourceRootType.TEST_SOURCE)) {
       final PsiDirectory dir = PsiManager.getInstance(myProject).findDirectory(file);
       if (dir != null) {

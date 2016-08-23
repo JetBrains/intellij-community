@@ -136,7 +136,7 @@ public class IdeaGateway {
   public List<VirtualFile> getAllFilesFrom(@NotNull String path) {
     VirtualFile f = findVirtualFile(path);
     if (f == null) return Collections.emptyList();
-    return collectFiles(f, new ArrayList<VirtualFile>());
+    return collectFiles(f, new ArrayList<>());
   }
 
   @NotNull

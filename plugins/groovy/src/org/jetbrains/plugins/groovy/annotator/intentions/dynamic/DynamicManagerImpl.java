@@ -210,7 +210,7 @@ public class DynamicManagerImpl extends DynamicManager {
     if (classElement != null) {
       return classElement.getProperties();
     }
-    return new ArrayList<DPropertyElement>();
+    return new ArrayList<>();
   }
 
   @Override

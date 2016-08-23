@@ -30,7 +30,7 @@ import java.util.Set;
 */
 public class MockInspectionProfile extends InspectionProfileImpl {
   private InspectionToolWrapper[] myInspectionTools = new InspectionToolWrapper[0];
-  private final Set<InspectionToolWrapper> myDisabledTools = new THashSet<InspectionToolWrapper>();
+  private final Set<InspectionToolWrapper> myDisabledTools = new THashSet<>();
 
   public MockInspectionProfile() {
     super("a");

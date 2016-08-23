@@ -41,6 +41,7 @@ import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
@@ -83,7 +84,10 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     return null;
   }
 
-  private void doCommit(@NotNull List<FilePath> committables, String comment, List<VcsException> exception, final Set<String> feedback) {
+  private void doCommit(@NotNull Collection<FilePath> committables,
+                        String comment,
+                        List<VcsException> exception,
+                        final Set<String> feedback) {
     //noinspection unchecked
     MultiMap<Pair<SVNURL, WorkingCopyFormat>, FilePath> map = SvnUtil.splitIntoRepositoriesMap(mySvnVcs, committables, Convertor.SELF);
 
@@ -147,21 +151,30 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   @NotNull
-  private List<FilePath> getCommitables(@NotNull List<Change> changes) {
-    ChangesUtil.CaseSensitiveFilePathList list = ChangesUtil.getPathsList(changes);
+  private Collection<FilePath> getCommitables(@NotNull List<Change> changes) {
+    THashSet<FilePath> result = ContainerUtil.newTroveSet(ChangesUtil.FILE_PATH_BY_PATH_ONLY_HASHING_STRATEGY);
 
-    for (FilePath path : ContainerUtil.newArrayList(list.getResult())) {
-      list.addParents(path, new Condition<FilePath>() {
-        @Override
-        public boolean value(@NotNull FilePath file) {
-          Status status = getStatus(file);
+    ChangesUtil.getAllPaths(changes.stream()).forEach(path -> {
+      if (result.add(path)) {
+        addParents(result, path);
+      }
+    });
 
-          return status != null && status.is(StatusType.STATUS_ADDED, StatusType.STATUS_REPLACED);
-        }
-      });
+    return result;
+  }
+
+  private void addParents(@NotNull Collection<FilePath> paths, @NotNull FilePath path) {
+    FilePath parent = path;
+
+    while ((parent = parent.getParentPath()) != null && isAddedOrReplaced(parent)) {
+      paths.add(parent);
     }
+  }
 
-    return list.getResult();
+  private boolean isAddedOrReplaced(@NotNull FilePath file) {
+    Status status = getStatus(file);
+
+    return status != null && status.is(StatusType.STATUS_ADDED, StatusType.STATUS_REPLACED);
   }
 
   @Nullable
@@ -186,8 +199,8 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
                                    final String preparedComment,
                                    @NotNull NullableFunction<Object, Object> parametersHolder,
                                    final Set<String> feedback) {
-    final List<VcsException> exception = new ArrayList<VcsException>();
-    final List<FilePath> committables = getCommitables(changes);
+    final List<VcsException> exception = new ArrayList<>();
+    final Collection<FilePath> committables = getCommitables(changes);
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
 
     if (progress != null) {
@@ -212,7 +225,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> filePaths) {
-    List<VcsException> exceptions = new ArrayList<VcsException>();
+    List<VcsException> exceptions = new ArrayList<>();
     List<File> files = ChangesUtil.filePathsToFiles(filePaths);
 
     for (File file : files) {
@@ -251,7 +264,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       }
     };
 
-    List<VcsException> exceptions = new ArrayList<VcsException>();
+    List<VcsException> exceptions = new ArrayList<>();
     Depth depth = Depth.allOrEmpty(recursive);
 
     for (VirtualFile file : files) {

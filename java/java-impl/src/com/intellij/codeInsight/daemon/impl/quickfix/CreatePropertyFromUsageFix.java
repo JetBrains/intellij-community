@@ -144,7 +144,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
 
     @Override
     public LookupElement[] calculateLookupItems(ExpressionContext context) {
-      Set<LookupElement> set = new LinkedHashSet<LookupElement>();
+      Set<LookupElement> set = new LinkedHashSet<>();
       set.add(JavaLookupElementBuilder.forField(myField).withTypeText(myField.getType().getPresentableText()));
       for (PsiField otherField : myClass.getFields()) {
         if (!myDefaultFieldName.equals(otherField.getName())) {
@@ -168,7 +168,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     List<PsiClass> all = super.getTargetClasses(element);
     if (all.isEmpty()) return all;
 
-    List<PsiClass> nonInterfaces = new ArrayList<PsiClass>();
+    List<PsiClass> nonInterfaces = new ArrayList<>();
     for (PsiClass aClass : all) {
       if (!aClass.isInterface()) nonInterfaces.add(aClass);
     }

@@ -11,7 +11,7 @@ import java.util.Set;
  */
 public class RemoteAgentClassLoaderCache {
 
-  private final Map<Set<URL>, URLClassLoader> myUrls2ClassLoader = new HashMap<Set<URL>, URLClassLoader>();
+  private final Map<Set<URL>, URLClassLoader> myUrls2ClassLoader = new HashMap<>();
 
   public URLClassLoader getOrCreateClassLoader(Set<URL> libraryUrls) {
     URLClassLoader result = myUrls2ClassLoader.get(libraryUrls);

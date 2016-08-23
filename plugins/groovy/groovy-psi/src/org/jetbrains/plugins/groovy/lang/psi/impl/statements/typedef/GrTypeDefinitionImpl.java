@@ -75,7 +75,7 @@ import java.util.List;
 public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefinitionStub>
   implements GrTypeDefinition, StubBasedPsiElement<GrTypeDefinitionStub> {
 
-  private final GrTypeDefinitionMembersCache<GrTypeDefinition> myCache = new GrTypeDefinitionMembersCache<GrTypeDefinition>(this);
+  private final GrTypeDefinitionMembersCache<GrTypeDefinition> myCache = new GrTypeDefinitionMembersCache<>(this);
 
   public GrTypeDefinitionImpl(@NotNull ASTNode node) {
     super(node);
@@ -83,11 +83,6 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   protected GrTypeDefinitionImpl(GrTypeDefinitionStub stub, IStubElementType nodeType) {
     super(stub, nodeType);
-  }
-
-  @Override
-  public PsiElement getParent() {
-    return getDefinitionParent();
   }
 
   @Override

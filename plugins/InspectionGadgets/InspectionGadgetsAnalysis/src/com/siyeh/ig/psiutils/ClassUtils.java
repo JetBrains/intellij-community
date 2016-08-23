@@ -32,17 +32,17 @@ public class ClassUtils {
   /**
    * @noinspection StaticCollection
    */
-  private static final Set<String> immutableTypes = new HashSet<String>(19);
+  private static final Set<String> immutableTypes = new HashSet<>(19);
 
   /**
    * @noinspection StaticCollection
    */
-  private static final Set<PsiType> primitiveNumericTypes = new HashSet<PsiType>(7);
+  private static final Set<PsiType> primitiveNumericTypes = new HashSet<>(7);
 
   /**
    * @noinspection StaticCollection
    */
-  private static final Set<PsiType> integralTypes = new HashSet<PsiType>(5);
+  private static final Set<PsiType> integralTypes = new HashSet<>(5);
 
   static {
     integralTypes.add(PsiType.LONG);

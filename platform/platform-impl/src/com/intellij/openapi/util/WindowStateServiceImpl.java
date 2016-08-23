@@ -43,7 +43,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   @NonNls private static final String FULL_SCREEN = "full-screen";
 
   private static final Logger LOG = Logger.getInstance(WindowStateService.class);
-  private final Map<String, WindowState> myStateMap = new TreeMap<String, WindowState>();
+  private final Map<String, WindowState> myStateMap = new TreeMap<>();
 
   abstract Point getDefaultLocationFor(Object object, @NotNull String key);
 

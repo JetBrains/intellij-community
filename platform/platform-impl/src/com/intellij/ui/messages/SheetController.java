@@ -44,6 +44,9 @@ import java.net.URL;
  * Created by Denis Fokin
  */
 public class SheetController {
+
+  private static final KeyStroke VK_ESC_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
+
   private static final Logger LOG = Logger.getInstance(SheetController.class);
   private static final int SHEET_MINIMUM_HEIGHT = 143;
   private static final String fontName = "Lucida Grande";
@@ -208,7 +211,7 @@ public class SheetController {
     };
 
     mySheetPanel.registerKeyboardAction(actionListener,
-                                        KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
+                                        VK_ESC_KEYSTROKE,
                                         JComponent.WHEN_IN_FOCUSED_WINDOW);
 
     for (JButton button: buttons) {
@@ -476,6 +479,8 @@ public class SheetController {
 
     g.dispose();
 
+    myOffScreenFrame.remove(mySheetPanel);
+
     myOffScreenFrame.dispose();
     return image;
   }
@@ -489,7 +494,7 @@ public class SheetController {
   }
 
   public void dispose() {
-    mySheetPanel.unregisterKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
+    mySheetPanel.unregisterKeyboardAction(VK_ESC_KEYSTROKE);
     mySheetMessage = null;
   }
 }

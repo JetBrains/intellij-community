@@ -43,7 +43,7 @@ public final class AntBuildGroup extends ActionGroup implements DumbAware {
     Project project = e.getProject();
     if (project == null) return AnAction.EMPTY_ARRAY;
 
-    final List<AnAction> children = new ArrayList<AnAction>();
+    final List<AnAction> children = new ArrayList<>();
     final AntConfigurationBase antConfiguration = AntConfigurationBase.getInstance(project);
     for (final AntBuildFile buildFile : antConfiguration.getBuildFileList()) {
       final String name = buildFile.getPresentableName();

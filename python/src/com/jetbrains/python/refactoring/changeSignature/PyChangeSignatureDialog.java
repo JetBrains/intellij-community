@@ -126,7 +126,7 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
       }
     }
     final List<PyParameterTableModelItem> parameters = myParametersTableModel.getItems();
-    Set<String> parameterNames = new HashSet<String>();
+    Set<String> parameterNames = new HashSet<>();
     boolean hadPositionalContainer = false;
     boolean hadKeywordContainer = false;
     boolean hadDefaultValue = false;
@@ -256,7 +256,7 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
 
   @Override
   protected VisibilityPanelBase<String> createVisibilityControl() {
-    return new ComboBoxVisibilityPanel<String>(new String[0]);
+    return new ComboBoxVisibilityPanel<>(new String[0]);
   }
 
   @Override
@@ -376,8 +376,8 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
           public Object getValueAt(int column) {
             switch (column) {
               case 0: return myNameEditor.getText().trim();
-              case 1: return new Pair<PsiCodeFragment, Boolean>(item.defaultValueCodeFragment,
-                                                                ((PyParameterTableModelItem)item).isDefaultInSignature());
+              case 1: return new Pair<>(item.defaultValueCodeFragment,
+                                        ((PyParameterTableModelItem)item).isDefaultInSignature());
             }
             return null;
           }
@@ -391,7 +391,7 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
 
       @Override
       public JComponent[] getFocusableComponents() {
-        final List<JComponent> focusable = new ArrayList<JComponent>();
+        final List<JComponent> focusable = new ArrayList<>();
         focusable.add(myNameEditor.getFocusTarget());
         if (myDefaultValueEditor != null) {
           focusable.add(myDefaultValueEditor.getFocusTarget());

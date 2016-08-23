@@ -32,7 +32,7 @@ public class ConfigureCvsRootsAction extends CvsGlobalAction {
     final CvsApplicationLevelConfiguration configuration = CvsApplicationLevelConfiguration.getInstance();
     final List<CvsRootConfiguration> configurations = configuration.CONFIGURATIONS;
     final CvsConfigurationsListEditor cvsConfigurationsListEditor =
-      new CvsConfigurationsListEditor(new ArrayList<CvsRootConfiguration>(configurations), e.getProject());
+      new CvsConfigurationsListEditor(new ArrayList<>(configurations), e.getProject());
     if (cvsConfigurationsListEditor.showAndGet()) {
       configuration.CONFIGURATIONS = cvsConfigurationsListEditor.getConfigurations();
     }

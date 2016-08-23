@@ -113,7 +113,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
     final GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST,
                                                          GridBagConstraints.HORIZONTAL, JBUI.insets(5, 5, 0, 0), 0, 0);
     appendMigrationTypeEditor(panel, gc);
-    LabeledComponent<ScopeChooserCombo> scopeChooserComponent = new LabeledComponent<ScopeChooserCombo>();
+    LabeledComponent<ScopeChooserCombo> scopeChooserComponent = new LabeledComponent<>();
     scopeChooserComponent.setComponent(myScopeChooserCombo);
     scopeChooserComponent.setText("Choose scope where change signature may occur");
     panel.add(scopeChooserComponent, gc);
@@ -170,6 +170,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
           flags |= JavaCodeFragmentFactory.ALLOW_DISJUNCTION;
         }
       }
+      flags |= JavaCodeFragmentFactory.ALLOW_VOID;
       myTypeCodeFragment = JavaCodeFragmentFactory.getInstance(project).createTypeCodeFragment(text, root, true, flags);
 
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
@@ -214,7 +215,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
         if (VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(modifierList), PsiModifier.PRIVATE) < 0) return null;
       }
 
-      final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
+      final List<PsiExpression> expressions = new ArrayList<>();
       for (PsiReference reference : ReferencesSearch.search(root, GlobalSearchScope.fileScope(root.getContainingFile()))) {
         final PsiElement element = reference.getElement();
         final PsiExpression expr = PsiTreeUtil.getParentOfType(element, PsiExpression.class, false);

@@ -24,7 +24,7 @@ import java.util.Set;
 
 public class PathMacro {
   
-  private Map<String, File> myMap = new HashMap<String, File>();
+  private Map<String, File> myMap = new HashMap<>();
 
   public PathMacro setScriptDir(File dir) {
     myMap.put("\\{script\\.dir\\}", dir);

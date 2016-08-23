@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.util.ArrayUtil;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -40,25 +41,34 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
         return Character.toUpperCase(testName.charAt(0)) + testName.substring(1) + "Expected" + ".regexp";
     }
 
-    public void testBackSlashVariants() throws Throwable {
-        doBackSlashVariantsTest();
-    }
-  
-    public void testBackSlashVariants2() throws Throwable {
-        doBackSlashVariantsTest();
+    public void testPosixBracketExpression() {
+      RegExpParserDefinition.setTestCapability(RegExpCapability.POSIX_BRACKET_EXPRESSIONS, getTestRootDisposable());
+
+      myFixture.configureByText(RegExpFileType.INSTANCE, "[[:alp<caret>");
+      myFixture.completeBasic();
+      myFixture.checkResult("[[:alpha:]<caret>");
     }
 
-    private void doBackSlashVariantsTest() throws Throwable {
-        java.util.List<String> nameList = new ArrayList<String>(Arrays.asList("d", "D", "s", "S", "w", "W", "b", "B", "A", "G", "Z", "z", "Q", "E",
-                "t", "n", "r", "f", "a", "e", "h", "H", "v", "V", "R"));
+    public void testNegatePosixBracketExpression() {
+      RegExpParserDefinition.setTestCapability(RegExpCapability.POSIX_BRACKET_EXPRESSIONS, getTestRootDisposable());
+
+      myFixture.configureByText(RegExpFileType.INSTANCE, "[[:^alp<caret>");
+      myFixture.completeBasic();
+      myFixture.checkResult("[[:^alpha:]<caret>");
+    }
+
+    public void testBackSlashVariants() throws Throwable {
+        List<String> nameList =
+          new ArrayList<>(Arrays.asList("d", "D", "s", "S", "w", "W", "b", "B", "A", "G", "Z", "z", "Q", "E",
+                                        "t", "n", "r", "f", "a", "e", "h", "H", "v", "V", "R", "X", "b{g}"));
         for (String[] stringArray : DefaultRegExpPropertiesProvider.getInstance().getAllKnownProperties()) {
             nameList.add("p{" + stringArray[0] + "}");
         }
         myFixture.testCompletionVariants(getInputDataFileName(getTestName(true)), ArrayUtil.toStringArray(nameList));
     }
 
-  public void testPropertyVariants() throws Throwable {
-        java.util.List<String> nameList = new ArrayList<String>();
+    public void testPropertyVariants() throws Throwable {
+        List<String> nameList = new ArrayList<>();
         for (String[] stringArray : DefaultRegExpPropertiesProvider.getInstance().getAllKnownProperties()) {
             nameList.add("{" + stringArray[0] + "}");
         }

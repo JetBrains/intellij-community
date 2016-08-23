@@ -42,7 +42,7 @@ public class FindUsagesProcessPresentation {
   private Factory<ProgressIndicator> myProgressIndicatorFactory;
   private Collection<VirtualFile> myLargeFiles;
   private boolean myShowFindOptionsPrompt = true;
-  private Runnable mySearchWithProjectFiles;
+  private volatile Runnable mySearchWithProjectFiles;
   private boolean myCanceled;
 
   public FindUsagesProcessPresentation(@NotNull UsageViewPresentation presentation) {
@@ -50,7 +50,7 @@ public class FindUsagesProcessPresentation {
   }
 
   public void addNotFoundAction(@NotNull Action action) {
-    if (myNotFoundActions == null) myNotFoundActions = new ArrayList<Action>();
+    if (myNotFoundActions == null) myNotFoundActions = new ArrayList<>();
     myNotFoundActions.add(action);
   }
 

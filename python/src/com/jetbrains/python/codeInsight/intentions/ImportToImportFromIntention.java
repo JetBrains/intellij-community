@@ -101,7 +101,7 @@ public class ImportToImportFromIntention implements IntentionAction {
         myReferee = importReference.getReference().resolve();
         myHasModuleReference = false;
         if (myReferee != null && myModuleName != null && myQualifierName != null) {
-          final Collection<PsiReference> references = new ArrayList<PsiReference>();
+          final Collection<PsiReference> references = new ArrayList<>();
           PsiTreeUtil.processElements(file, new PsiElementProcessor() {
             public boolean execute(@NotNull PsiElement element) {
               if (element instanceof PyReferenceExpression && PsiTreeUtil.getParentOfType(element, PyImportElement.class) == null) {
@@ -136,7 +136,7 @@ public class ImportToImportFromIntention implements IntentionAction {
       // usages of imported name are qualifiers; what they refer to?
       try {
         // remember names and make them drop qualifiers
-        final Set<String> usedNames = new HashSet<String>();
+        final Set<String> usedNames = new HashSet<>();
         for (PsiReference ref : myReferences) {
           final PsiElement elt = ref.getElement();
           final PsiElement parentElt = elt.getParent();

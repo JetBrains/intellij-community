@@ -88,7 +88,7 @@ public class PyPackageManagerUI {
         ApplicationManager.getApplication().invokeAndWait(() -> {
           if (dependentPackages.size() == 1) {
             String message = "You are attempting to uninstall ";
-            List<String> dep = new ArrayList<String>();
+            List<String> dep = new ArrayList<>();
             int size = 1;
             for (Map.Entry<String, Set<PyPackage>> entry : dependentPackages.entrySet()) {
               final Set<PyPackage> value = entry.getValue();
@@ -103,7 +103,7 @@ public class PyPackageManagerUI {
           }
           else {
             String message = "You are attempting to uninstall packages which are required for another packages.\n\n";
-            List<String> dep = new ArrayList<String>();
+            List<String> dep = new ArrayList<>();
             for (Map.Entry<String, Set<PyPackage>> entry : dependentPackages.entrySet()) {
               dep.add(entry.getKey() + " -> " + StringUtil.join(entry.getValue(), ", "));
             }
@@ -124,7 +124,7 @@ public class PyPackageManagerUI {
 
   private static Map<String, Set<PyPackage>> collectDependents(@NotNull final List<PyPackage> packages,
                                                                Sdk sdk) throws ExecutionException {
-    Map<String, Set<PyPackage>> dependentPackages = new HashMap<String, Set<PyPackage>>();
+    Map<String, Set<PyPackage>> dependentPackages = new HashMap<>();
     for (PyPackage pkg : packages) {
       final Set<PyPackage> dependents = PyPackageManager.getInstance(sdk).getDependents(pkg);
       if (dependents != null && !dependents.isEmpty()) {
@@ -181,7 +181,7 @@ public class PyPackageManagerUI {
     }
 
     protected void taskFinished(@NotNull final List<ExecutionException> exceptions) {
-      final Ref<Notification> notificationRef = new Ref<Notification>(null);
+      final Ref<Notification> notificationRef = new Ref<>(null);
       if (exceptions.isEmpty()) {
         notificationRef.set(new PackagingNotification(PACKAGING_GROUP_ID, getSuccessTitle(), getSuccessDescription(),
                                                              NotificationType.INFORMATION, null));
@@ -242,7 +242,7 @@ public class PyPackageManagerUI {
     @NotNull
     @Override
     protected List<ExecutionException> runTask(@NotNull ProgressIndicator indicator) {
-      final List<ExecutionException> exceptions = new ArrayList<ExecutionException>();
+      final List<ExecutionException> exceptions = new ArrayList<>();
       final int size = myRequirements.size();
       final PyPackageManager manager = PyPackageManagers.getInstance().forSdk(mySdk);
       for (int i = 0; i < size; i++) {
@@ -300,7 +300,7 @@ public class PyPackageManagerUI {
     @NotNull
     @Override
     protected List<ExecutionException> runTask(@NotNull ProgressIndicator indicator) {
-      final List<ExecutionException> exceptions = new ArrayList<ExecutionException>();
+      final List<ExecutionException> exceptions = new ArrayList<>();
       final PyPackageManager manager = PyPackageManagers.getInstance().forSdk(mySdk);
       indicator.setText("Installing packaging tools...");
       indicator.setIndeterminate(true);

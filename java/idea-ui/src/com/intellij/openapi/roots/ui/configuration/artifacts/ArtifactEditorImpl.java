@@ -331,7 +331,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   private DefaultActionGroup createToolbarActionGroup() {
     final DefaultActionGroup toolbarActionGroup = new DefaultActionGroup();
 
-    final List<AnAction> createActions = new ArrayList<AnAction>(createNewElementActions());
+    final List<AnAction> createActions = new ArrayList<>(createNewElementActions());
     for (AnAction createAction : createActions) {
       toolbarActionGroup.add(createAction);
     }
@@ -345,7 +345,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   }
 
   public List<AnAction> createNewElementActions() {
-    final List<AnAction> createActions = new ArrayList<AnAction>();
+    final List<AnAction> createActions = new ArrayList<>();
     AddCompositeElementAction.addCompositeCreateActions(createActions, this);
     createActions.add(createAddNonCompositeElementGroup());
     return createActions;
@@ -355,7 +355,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     final LayoutTree tree = myLayoutTreeComponent.getLayoutTree();
 
     DefaultActionGroup popupActionGroup = new DefaultActionGroup();
-    final List<AnAction> createActions = new ArrayList<AnAction>();
+    final List<AnAction> createActions = new ArrayList<>();
     AddCompositeElementAction.addCompositeCreateActions(createActions, this);
     for (AnAction createAction : createActions) {
       popupActionGroup.add(createAction);

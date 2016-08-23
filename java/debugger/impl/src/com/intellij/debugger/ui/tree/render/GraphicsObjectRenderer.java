@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import javax.swing.*;
 /**
  * @author egor
  */
-public class GraphicsObjectRenderer extends ToStringBasedRenderer implements FullValueEvaluatorProvider {
+public class GraphicsObjectRenderer extends CompoundReferenceRenderer implements FullValueEvaluatorProvider {
   public GraphicsObjectRenderer(final NodeRendererSettings rendererSettings) {
     super(rendererSettings, "Graphics", null, null);
     setClassName("sun.java2d.SunGraphics2D");

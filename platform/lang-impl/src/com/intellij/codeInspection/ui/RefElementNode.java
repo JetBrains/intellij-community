@@ -134,6 +134,11 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
     super.visitProblemSeverities(counter);
   }
 
+  @Override
+  public boolean isQuickFixAppliedFromView() {
+    return false;
+  }
+
   @Nullable
   @Override
   public String getCustomizedTailText() {

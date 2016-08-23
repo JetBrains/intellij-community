@@ -624,15 +624,15 @@ public abstract class PluginManagerMain implements Disposable {
     Set<String> words = SearchableOptionsRegistrar.getInstance().getProcessedWords(description);
     if (words.contains(filter)) return true;
     if (search.isEmpty()) return false;
-    Set<String> descriptionSet = new HashSet<String>(search);
+    Set<String> descriptionSet = new HashSet<>(search);
     descriptionSet.removeAll(words);
     return descriptionSet.isEmpty();
   }
 
   public static boolean suggestToEnableInstalledDependantPlugins(PluginEnabler pluginEnabler,
                                                                  List<PluginNode> list) {
-    final Set<IdeaPluginDescriptor> disabled = new HashSet<IdeaPluginDescriptor>();
-    final Set<IdeaPluginDescriptor> disabledDependants = new HashSet<IdeaPluginDescriptor>();
+    final Set<IdeaPluginDescriptor> disabled = new HashSet<>();
+    final Set<IdeaPluginDescriptor> disabledDependants = new HashSet<>();
     for (PluginNode node : list) {
       final PluginId pluginId = node.getPluginId();
       if (pluginEnabler.isDisabled(pluginId)) {
@@ -640,7 +640,7 @@ public abstract class PluginManagerMain implements Disposable {
       }
       final List<PluginId> depends = node.getDepends();
       if (depends != null) {
-        final Set<PluginId> optionalDeps = new HashSet<PluginId>(Arrays.asList(node.getOptionalDependentPluginIds()));
+        final Set<PluginId> optionalDeps = new HashSet<>(Arrays.asList(node.getOptionalDependentPluginIds()));
         for (PluginId dependantId : depends) {
           if (optionalDeps.contains(dependantId)) continue;
           final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(dependantId);

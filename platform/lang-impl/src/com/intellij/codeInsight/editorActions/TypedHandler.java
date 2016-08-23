@@ -65,9 +65,9 @@ public class TypedHandler extends TypedActionHandlerBase {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.TypedHandler");
 
-  private static final Map<FileType,QuoteHandler> quoteHandlers = new HashMap<FileType, QuoteHandler>();
+  private static final Map<FileType,QuoteHandler> quoteHandlers = new HashMap<>();
 
-  private static final Map<Class<? extends Language>, QuoteHandler> ourBaseLanguageQuoteHandlers = new HashMap<Class<? extends Language>, QuoteHandler>();
+  private static final Map<Class<? extends Language>, QuoteHandler> ourBaseLanguageQuoteHandlers = new HashMap<>();
 
   public TypedHandler(TypedActionHandler originalHandler){
     super(originalHandler);

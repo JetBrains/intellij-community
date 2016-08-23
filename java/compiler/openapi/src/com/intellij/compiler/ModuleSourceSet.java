@@ -71,7 +71,7 @@ public class ModuleSourceSet {
 
   @NotNull
   public static Set<Module> getModules(@NotNull Collection<ModuleSourceSet> sourceSets) {
-    Set<Module> modules = new HashSet<Module>();
+    Set<Module> modules = new HashSet<>();
     for (ModuleSourceSet set : sourceSets) {
       modules.add(set.getModule());
     }

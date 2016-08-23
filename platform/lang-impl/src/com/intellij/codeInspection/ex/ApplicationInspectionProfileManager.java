@@ -96,8 +96,7 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
       @NotNull
       public InspectionProfileImpl createScheme(@NotNull SchemeDataHolder<? super InspectionProfileImpl> dataHolder,
                                                 @NotNull String name,
-                                                @NotNull Function<String, String> attributeProvider,
-                                                boolean duringLoad) {
+                                                @NotNull Function<String, String> attributeProvider) {
         return new InspectionProfileImpl(name, myRegistrar, ApplicationInspectionProfileManager.this, getDefaultProfile(), dataHolder);
       }
 

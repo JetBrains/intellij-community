@@ -55,11 +55,11 @@ public class LibrariesUtil {
 
   public static Library[] getLibrariesByCondition(final Module module, final Condition<Library> condition) {
     if (module == null) return Library.EMPTY_ARRAY;
-    final ArrayList<Library> libraries = new ArrayList<Library>();
+    final ArrayList<Library> libraries = new ArrayList<>();
 
     AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
     try {
-      populateOrderEntries(module, condition, libraries, false, new THashSet<Module>());
+      populateOrderEntries(module, condition, libraries, false, new THashSet<>());
     }
     finally {
       accessToken.finish();

@@ -102,7 +102,7 @@ public class ChangeSignaturePassFactory extends AbstractProjectComponent impleme
         builder.textAttributes(attributes);
         builder.descriptionAndTooltip(SIGNATURE_SHOULD_BE_POSSIBLY_CHANGED);
         info = builder.createUnconditionally();
-        final ArrayList<IntentionAction> options = new ArrayList<IntentionAction>();
+        final ArrayList<IntentionAction> options = new ArrayList<>();
         options.add(new DismissNewSignatureIntentionAction());
         QuickFixAction.registerQuickFixAction(info, new ChangeSignatureDetectorAction(), options, null);
       }

@@ -47,8 +47,8 @@ public class GitTreeDiffProvider implements TreeDiffProvider {
     try {
       final GitBranchesSearcher searcher = new GitBranchesSearcher(myProject, vcsRoot, true);
       if (searcher.getLocal() == null || searcher.getRemote() == null) return Collections.emptyList();
-      ArrayList<String> rc = new ArrayList<String>();
-      final Collection<FilePath> files = new ArrayList<FilePath>(paths.size());
+      ArrayList<String> rc = new ArrayList<>();
+      final Collection<FilePath> files = new ArrayList<>(paths.size());
       for (String path : paths) {
         files.add(VcsUtil.getFilePath(path));
       }

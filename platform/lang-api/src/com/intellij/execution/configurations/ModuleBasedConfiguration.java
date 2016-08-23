@@ -126,7 +126,7 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
   public void restoreOriginalModule(final Module originalModule) {
     if (originalModule == null) return;
     final Module[] classModules = getModules();
-    final Set<Module> modules = new HashSet<Module>();
+    final Set<Module> modules = new HashSet<>();
     for (Module classModule : classModules) {
       ModuleUtilCore.collectModulesDependsOn(classModule, modules);
     }

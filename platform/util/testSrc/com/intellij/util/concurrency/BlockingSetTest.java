@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class BlockingSetTest {
   @Test
   public void testSingleThreadLock() throws Exception {
-    BlockingSet<String> lock = new BlockingSet<String>();
+    BlockingSet<String> lock = new BlockingSet<>();
     lock.put("eins");
     lock.put("zwei");
     lock.remove("zwei");
@@ -25,7 +25,7 @@ public class BlockingSetTest {
 
   @Test(expected = IllegalStateException.class)
   public void testReleaseNotAcquired() throws Exception {
-    BlockingSet<String> lock = new BlockingSet<String>();
+    BlockingSet<String> lock = new BlockingSet<>();
     lock.put("eins");
     lock.put("zwei");
     lock.remove("eins");
@@ -34,11 +34,11 @@ public class BlockingSetTest {
 
   @Test
   public void testMultipleThreads() throws Exception {
-    final BlockingSet<String> lock = new BlockingSet<String>();
+    final BlockingSet<String> lock = new BlockingSet<>();
     int threads = 10;
     int tasks = 10000;
     ExecutorService service = Executors.newFixedThreadPool(threads);
-    List<Callable<Void>> taskList = new ArrayList<Callable<Void>>(tasks);
+    List<Callable<Void>> taskList = new ArrayList<>(tasks);
     final AtomicBoolean check = new AtomicBoolean(false);
     for (int i = 0; i < tasks; i++) {
       taskList.add(() -> {

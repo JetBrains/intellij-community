@@ -170,7 +170,7 @@ public class DomExtensionsTest extends DomTestCase {
   }
 
   public static List<DomElement> getCustomChildren(final DomElement element) {
-    final List<DomElement> children = new ArrayList<DomElement>();
+    final List<DomElement> children = new ArrayList<>();
     element.acceptChildren(new DomElementVisitor() {
       @Override
       public void visitDomElement(final DomElement element) {

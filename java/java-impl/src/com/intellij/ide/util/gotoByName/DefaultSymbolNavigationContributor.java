@@ -49,7 +49,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
   @NotNull
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
-    HashSet<String> set = new HashSet<String>();
+    HashSet<String> set = new HashSet<>();
     cache.getAllMethodNames(set);
     cache.getAllFieldNames(set);
     cache.getAllClassNames(set);
@@ -64,7 +64,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
 
     Condition<PsiMember> qualifiedMatcher = getQualifiedNameMatcher(pattern);
 
-    List<PsiMember> result = new ArrayList<PsiMember>();
+    List<PsiMember> result = new ArrayList<>();
     for (PsiMethod method : cache.getMethodsByName(name, scope)) {
       if (!method.isConstructor() && isOpenable(method) && !hasSuperMethod(method, scope, qualifiedMatcher)) {
         result.add(method);
@@ -148,7 +148,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     final Condition<PsiMember> qualifiedMatcher = getQualifiedNameMatcher(completePattern);
 
     //noinspection UnusedDeclaration
-    final Set<PsiMethod> collectedMethods = new THashSet<PsiMethod>();
+    final Set<PsiMethod> collectedMethods = new THashSet<>();
     boolean success = cache.processFieldsWithName(name, field -> {
       if (isOpenable(field) && qualifiedMatcher.value(field)) return processor.process(field);
       return true;

@@ -45,7 +45,7 @@ import java.util.Set;
  */
 public class PyShadowingBuiltinsInspection extends PyInspection {
   // Persistent settings
-  public List<String> ignoredNames = new ArrayList<String>();
+  public List<String> ignoredNames = new ArrayList<>();
 
   @NotNull
   @Override

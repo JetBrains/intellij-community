@@ -22,12 +22,12 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 
 public class SequentialTaskExecutor extends BoundedTaskExecutor {
-  public SequentialTaskExecutor(@NotNull Executor executor) {
-    super(executor, 1);
+  public SequentialTaskExecutor(@NotNull String name, @NotNull Executor executor) {
+    super(name, executor, 1);
   }
 
   @NotNull
-  public static ExecutorService createSequentialApplicationPoolExecutor() {
-    return AppExecutorUtil.createBoundedApplicationPoolExecutor(1);
+  public static ExecutorService createSequentialApplicationPoolExecutor(@NotNull String name) {
+    return AppExecutorUtil.createBoundedApplicationPoolExecutor(name, 1);
   }
 }

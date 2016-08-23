@@ -11,41 +11,36 @@ import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
  * Implementation of task which contains task files, tests, input file for tests
  */
 public class Task implements StudyItem {
-  @Expose
-  private String name;
+  @Expose private String name;
 
   // index is visible to user number of task from 1 to task number
   private int myIndex;
   private StudyStatus myStatus = StudyStatus.Unchecked;
 
+  @SerializedName("stepic_id")
   @Expose private int myStepicId;
-
-  @Expose
+  
   @SerializedName("task_files")
-  public Map<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
+  @Expose public Map<String, TaskFile> taskFiles = new HashMap<>();
 
   private String text;
-  private Map<String, String> testsText = new HashMap<String, String>();
+  private Map<String, String> testsText = new HashMap<>();
 
   @Transient private Lesson myLesson;
-
-  @Expose
-  @SerializedName("additionalSteps")
-  private List<Step> myAdditionalSteps = new ArrayList<>();
-  private int myActiveStepIndex = -1;
+  @Expose @SerializedName("update_date") private Date myUpdateDate;
 
   public Task() {}
 
@@ -63,9 +58,6 @@ public class Task implements StudyItem {
     if (!isRestarted) myStatus = StudyStatus.Unchecked;
     for (TaskFile taskFile : getTaskFiles().values()) {
       taskFile.initTaskFile(this, isRestarted);
-    }
-    for (Step step : myAdditionalSteps) {
-      step.init(this, isRestarted);
     }
   }
 
@@ -128,11 +120,7 @@ public class Task implements StudyItem {
 
   @Nullable
   public TaskFile getFile(@NotNull final String fileName) {
-    if (myActiveStepIndex == -1) {
-      return taskFiles.get(fileName);
-    }
-    Step step = myAdditionalSteps.get(myActiveStepIndex);
-    return step.getTaskFiles().get(fileName);
+    return taskFiles.get(fileName);
   }
 
   @Transient
@@ -164,7 +152,7 @@ public class Task implements StudyItem {
     if (!StringUtil.isEmptyOrSpaces(text)) return text;
     final VirtualFile taskDir = getTaskDir(project);
     if (taskDir != null) {
-      final VirtualFile file = StudyUtils.findTaskDescriptionVirtualFile(project, taskDir);
+      final VirtualFile file = StudyUtils.findTaskDescriptionVirtualFile(taskDir);
       if (file == null) return "";
       final Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document != null) {
@@ -230,27 +218,11 @@ public class Task implements StudyItem {
   
   public void setStatus(StudyStatus status) {
     myStatus = status;
-    for (TaskFile taskFile : StudyUtils.getTaskFiles(this).values()) {
+    for (TaskFile taskFile : taskFiles.values()) {
       for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
         placeholder.setStatus(status);
       }
     }
-  }
-
-  public List<Step> getAdditionalSteps() {
-    return myAdditionalSteps;
-  }
-
-  public void setAdditionalSteps(List<Step> additionalSteps) {
-    myAdditionalSteps = additionalSteps;
-  }
-
-  public int getActiveStepIndex() {
-    return myActiveStepIndex;
-  }
-
-  public void setActiveStepIndex(int activeStepIndex) {
-    myActiveStepIndex = activeStepIndex;
   }
 
   public Task copy() {
@@ -261,5 +233,21 @@ public class Task implements StudyItem {
     }
     copy.initTask(null, true);
     return copy;
+  }
+
+  public void setUpdateDate(Date date) {
+    myUpdateDate = date;
+  }
+
+  public Date getUpdateDate() {
+    return myUpdateDate;
+  }
+
+  public boolean isUpToDate() {
+    if (getStepicId() == 0) return true;
+    final Date date = EduStepicConnector.getTaskUpdateDate(getStepicId());
+    if (date == null) return true;
+    if (myUpdateDate == null) return false;
+    return !date.after(myUpdateDate);
   }
 }

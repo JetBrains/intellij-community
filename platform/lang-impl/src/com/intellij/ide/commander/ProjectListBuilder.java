@@ -88,7 +88,7 @@ public class ProjectListBuilder extends AbstractListBuilder {
 
   @Override
   protected List<AbstractTreeNode> getAllAcceptableNodes(final Object[] childElements, VirtualFile file) {
-    ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+    ArrayList<AbstractTreeNode> result = new ArrayList<>();
 
     for (int i = 0; i < childElements.length; i++) {
       ProjectViewNode childElement = (ProjectViewNode)childElements[i];

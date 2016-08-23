@@ -40,7 +40,7 @@ import java.util.HashSet;
 public class MakeStaticUtil {
   public static InternalUsageInfo[] findClassRefsInMember(PsiTypeParameterListOwner member, boolean includeSelf) {
     PsiClass containingClass = member.getContainingClass();
-    ArrayList<InternalUsageInfo> classRefs = new ArrayList<InternalUsageInfo>();
+    ArrayList<InternalUsageInfo> classRefs = new ArrayList<>();
     addClassRefs(member, classRefs, containingClass, member, includeSelf);
     return classRefs.toArray(new InternalUsageInfo[classRefs.size()]);
   }
@@ -139,8 +139,8 @@ public class MakeStaticUtil {
 
   public static boolean collectVariableData(PsiMember member, InternalUsageInfo[] internalUsages,
                                              ArrayList<VariableData> variableDatum) {
-    HashSet<PsiField> reported = new HashSet<PsiField>();
-    HashSet<PsiField> accessedForWriting = new HashSet<PsiField>();
+    HashSet<PsiField> reported = new HashSet<>();
+    HashSet<PsiField> accessedForWriting = new HashSet<>();
     boolean needClassParameter = false;
     for (InternalUsageInfo usage : internalUsages) {
       final PsiElement referencedElement = usage.getReferencedElement();
@@ -157,7 +157,7 @@ public class MakeStaticUtil {
       }
     }
 
-    final ArrayList<PsiField> psiFields = new ArrayList<PsiField>(reported);
+    final ArrayList<PsiField> psiFields = new ArrayList<>(reported);
     Collections.sort(psiFields, (psiField, psiField1) -> psiField.getName().compareTo(psiField1.getName()));
     for (final PsiField field : psiFields) {
       if (accessedForWriting.contains(field)) continue;

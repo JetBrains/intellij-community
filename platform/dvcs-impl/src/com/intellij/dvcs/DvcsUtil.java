@@ -425,7 +425,7 @@ public class DvcsUtil {
 
     // for other libs which don't have jars inside the project dir (such as JDK) take the owner module of the lib
     List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(file);
-    Set<VirtualFile> libraryRoots = new HashSet<VirtualFile>();
+    Set<VirtualFile> libraryRoots = new HashSet<>();
     for (OrderEntry entry : entries) {
       if (entry instanceof LibraryOrderEntry || entry instanceof JdkOrderEntry) {
         VirtualFile moduleRoot = vcsManager.getVcsRootFor(entry.getOwnerModule().getModuleFile());

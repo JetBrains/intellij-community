@@ -15,10 +15,9 @@
  */
 package com.intellij.xdebugger.impl.settings;
 
+import com.intellij.layout.MigLayoutKt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.border.IdeaTitledBorder;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -34,6 +33,7 @@ public class DataViewsConfigurableUi {
   private JFormattedTextField valueTooltipDelayTextField;
   private JPanel panel;
   private JCheckBox sortAlphabeticallyCheckBox;
+  @SuppressWarnings("unused")
   private JPanel myEditorSettingsPanel;
   private JCheckBox myShowValuesInlineCheckBox;
   private JCheckBox myShowValueTooltipCheckBox;
@@ -84,9 +84,6 @@ public class DataViewsConfigurableUi {
   }
 
   private void createUIComponents() {
-    myEditorSettingsPanel = new JPanel();
-    IdeaTitledBorder titledBorder = IdeBorderFactory.createTitledBorder("Editor", false);
-    myEditorSettingsPanel.setBorder(titledBorder);
-    titledBorder.acceptMinimumSize(myEditorSettingsPanel);
+    myEditorSettingsPanel = MigLayoutKt.titledPanel("Editor");
   }
 }

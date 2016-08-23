@@ -295,8 +295,6 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
     TIntArrayList toIgnore = new TIntArrayList();
     if (!doTestLineMarkers()) {
-      toIgnore.add(Pass.UPDATE_OVERRIDDEN_MARKERS);
-      toIgnore.add(Pass.VISIBLE_LINE_MARKERS);
       toIgnore.add(Pass.LINE_MARKERS);
     }
 
@@ -309,8 +307,6 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       toIgnore.add(Pass.WHOLE_FILE_LOCAL_INSPECTIONS);
       toIgnore.add(Pass.POPUP_HINTS);
       toIgnore.add(Pass.UPDATE_ALL);
-      toIgnore.add(Pass.UPDATE_OVERRIDDEN_MARKERS);
-      toIgnore.add(Pass.VISIBLE_LINE_MARKERS);
     }
 
     boolean canChange = canChangeDocumentDuringHighlighting();

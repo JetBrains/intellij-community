@@ -107,7 +107,7 @@ public class CollectionContainsUrlInspection extends BaseInspection {
     }
 
     private static ClassType getClassType(@Nullable PsiClass aClass) {
-      return isMapOrSet(aClass, new HashSet<PsiClass>());
+      return isMapOrSet(aClass, new HashSet<>());
     }
 
     private static ClassType isMapOrSet(

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 /**
  * SearchableConfigurable instances would be instantiated on buildSearchableOptions step during Installer's build to index of all available options. 
@@ -39,10 +39,14 @@ public interface SearchableConfigurable extends Configurable {
    * @return an action to perform when this configurable is opened when a search filter query is entered by the user in setting dialog.
    * This action, for example, can select something in a tree or a list embedded in this setting page that matches the query. 
    */
-  @Nullable Runnable enableSearch(String option);
+  default @Nullable Runnable enableSearch(String option) {
+    return null;
+  }
 
   interface Parent extends SearchableConfigurable, Composite {
-    boolean hasOwnContent();
+    default boolean hasOwnContent() {
+      return false;
+    }
 
     /**
      * @deprecated use {@link ConfigurableProvider#canCreateConfigurable()} instead
@@ -50,7 +54,9 @@ public interface SearchableConfigurable extends Configurable {
      *             (a provider usually does not instantiate a configurable and related classes)
      */
     @Deprecated
-    boolean isVisible();
+    default boolean isVisible() {
+      return true;
+    }
 
     abstract class Abstract implements Parent {
       private Configurable[] myKids;
@@ -60,12 +66,6 @@ public interface SearchableConfigurable extends Configurable {
         return null;
       }
 
-      @Override
-      public boolean hasOwnContent() {
-        return false;
-      }
-
-      
       @Override
       public boolean isModified() {
         return false;
@@ -82,16 +82,6 @@ public interface SearchableConfigurable extends Configurable {
       @Override
       public void disposeUIResources() {
         myKids = null;
-      }
-
-      @Override
-      public Runnable enableSearch(final String option) {
-        return null;
-      }
-
-      @Override
-      public boolean isVisible() {
-        return true;
       }
 
       @Override

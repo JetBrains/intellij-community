@@ -46,7 +46,7 @@ public abstract class ComputableActionGroup extends ActionGroup implements DumbA
     }
 
     if (myChildren == null) {
-      myChildren = new CachedValueImpl<AnAction[]>(createChildrenProvider(e.getActionManager()));
+      myChildren = new CachedValueImpl<>(createChildrenProvider(e.getActionManager()));
     }
     return myChildren.getValue();
   }

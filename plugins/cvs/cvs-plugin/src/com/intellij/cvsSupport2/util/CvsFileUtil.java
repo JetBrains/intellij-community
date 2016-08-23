@@ -35,7 +35,7 @@ public class CvsFileUtil {
 
   public static List<String> readLinesFrom(File file) throws IOException {
     FileUtil.createIfDoesntExist(file);
-    ArrayList<String> result = new ArrayList<String>();
+    ArrayList<String> result = new ArrayList<>();
     BufferedReader reader =
       new BufferedReader(new InputStreamReader(new FileInputStream(file), CvsApplicationLevelConfiguration.getCharset()));
     try {
@@ -50,7 +50,7 @@ public class CvsFileUtil {
 
   public static List<String> readLinesFrom(File file, String cvsRootToSkip) throws IOException {
     FileUtil.createIfDoesntExist(file);
-    ArrayList<String> result = new ArrayList<String>();
+    ArrayList<String> result = new ArrayList<>();
     BufferedReader reader =
       new BufferedReader(new InputStreamReader(new FileInputStream(file), CvsApplicationLevelConfiguration.getCharset()));
     try {

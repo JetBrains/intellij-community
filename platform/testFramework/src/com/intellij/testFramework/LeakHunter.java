@@ -48,7 +48,7 @@ public class LeakHunter {
 
   private static void walkObjects(@NotNull final Class<?> lookFor, @NotNull Collection<Object> startRoots, @NotNull final Processor<BackLink> leakProcessor) {
     TIntHashSet visited = new TIntHashSet();
-    final Queue<BackLink> toVisit = new Queue<BackLink>(1000000);
+    final Queue<BackLink> toVisit = new Queue<>(1000000);
     for (Object startRoot : startRoots) {
       toVisit.addLast(new BackLink(startRoot, null, null));
     }
@@ -82,7 +82,7 @@ public class LeakHunter {
   @TestOnly
   public static void checkProjectLeak() throws Exception {
     Processor<Project> isReallyLeak = project -> !project.isDefault() && !((ProjectImpl)project).isLight();
-    Collection<Object> roots = new ArrayList<Object>(allRoots());
+    Collection<Object> roots = new ArrayList<>(allRoots());
     ClassLoader classLoader = LeakHunter.class.getClassLoader();
     Vector<Class> allLoadedClasses = ReflectionUtil.getField(classLoader.getClass(), classLoader, Vector.class, "classes");
     roots.addAll(allLoadedClasses); // inspect static fields of all loaded classes

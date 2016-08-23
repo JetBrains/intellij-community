@@ -24,6 +24,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * An empty implementation of {@link ICustomParsingType} and {@link IElementType}.
+ */
 public abstract class CustomParsingType extends IElementType implements ICustomParsingType {
   public CustomParsingType(@NotNull @NonNls String debugName, @Nullable Language language) {
     super(debugName, language);

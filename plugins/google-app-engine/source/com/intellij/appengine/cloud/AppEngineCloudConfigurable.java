@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -160,7 +160,7 @@ public class AppEngineCloudConfigurable extends RemoteServerConfigurable impleme
     myConfiguration.setOAuth2(isOAuth2());
     String password = getPassword();
     if (myRememberPasswordCheckBox.isSelected() && !StringUtil.isEmpty(email) && !password.isEmpty()) {
-      AppEngineAccountDialog.storePassword(email, password, myProject);
+      AppEngineAccountDialog.storePassword(email, password);
       myConfiguration.setPasswordStored(true);
     }
     else {

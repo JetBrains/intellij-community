@@ -53,8 +53,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.HtmlUtil;
@@ -69,9 +69,9 @@ import java.util.Set;
  */
 public class XmlTagNameSynchronizer extends CommandAdapter implements NamedComponent {
   private static final Logger LOG = Logger.getInstance(XmlTagNameSynchronizer.class);
-  private static final Set<String> SUPPORTED_LANGUAGES = ContainerUtil.set(HTMLLanguage.INSTANCE.getID(),
-                                                                           XMLLanguage.INSTANCE.getID(),
-                                                                           XHTMLLanguage.INSTANCE.getID());
+  private static final Set<Language> SUPPORTED_LANGUAGES = ContainerUtil.set(HTMLLanguage.INSTANCE,
+                                                                             XMLLanguage.INSTANCE,
+                                                                             XHTMLLanguage.INSTANCE);
 
   private static final Key<TagNameSynchronizer> SYNCHRONIZER_KEY = Key.create("tag_name_synchronizer");
   private final FileDocumentManager myFileDocumentManager;
@@ -101,8 +101,10 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements NamedCompo
     final PsiFile psiFile = file != null && file.isValid() ? PsiManager.getInstance(project).findFile(file) : null;
     if (psiFile != null) {
       for (Language language : psiFile.getViewProvider().getLanguages()) {
-        if ( SUPPORTED_LANGUAGES.contains(language.getID()) ||
-             HtmlUtil.supportsXmlTypedHandlers(psiFile)) return language;
+        if ((ContainerUtil.find(SUPPORTED_LANGUAGES, language::isKindOf) != null || HtmlUtil.supportsXmlTypedHandlers(psiFile)) &&
+            !(language instanceof TemplateLanguage)) {
+          return language;
+        }
       }
     }
     return null;
@@ -139,7 +141,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements NamedCompo
 
     private final Editor myEditor;
     private State myState = State.INITIAL;
-    private final List<Couple<RangeMarker>> myMarkers = new SmartList<Couple<RangeMarker>>();
+    private final List<Couple<RangeMarker>> myMarkers = new SmartList<>();
 
     public TagNameSynchronizer(Editor editor, Project project, Language language) {
       myEditor = editor;
@@ -183,7 +185,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements NamedCompo
         final PsiFile file = myDocumentManager.getPsiFile(document);
         if (file == null || myDocumentManager.getSynchronizer().isInSynchronization(document)) return;
 
-        final SmartList<RangeMarker> leaders = new SmartList<RangeMarker>();
+        final SmartList<RangeMarker> leaders = new SmartList<>();
         for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
           final RangeMarker leader = createTagNameMarker(caret);
           if (leader == null) {

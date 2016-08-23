@@ -51,10 +51,10 @@ public class GithubCreatePullRequestPanel {
   public GithubCreatePullRequestPanel() {
     myDescriptionTextArea.setBorder(BorderFactory.createEtchedBorder());
 
-    myBranchModel = new SortedComboBoxModel<BranchInfo>((o1, o2) -> StringUtil.naturalCompare(o1.getRemoteName(), o2.getRemoteName()));
+    myBranchModel = new SortedComboBoxModel<>((o1, o2) -> StringUtil.naturalCompare(o1.getRemoteName(), o2.getRemoteName()));
     myBranchComboBox.setModel(myBranchModel);
 
-    myForkModel = new SortedComboBoxModel<ForkInfo>((o1, o2) -> StringUtil.naturalCompare(o1.getPath().getUser(), o2.getPath().getUser()));
+    myForkModel = new SortedComboBoxModel<>((o1, o2) -> StringUtil.naturalCompare(o1.getPath().getUser(), o2.getPath().getUser()));
     myForkComboBox.setModel(myForkModel);
 
     DocumentListener userModifiedDocumentListener = new DocumentAdapter() {

@@ -27,7 +27,7 @@ import java.util.Set;
 
 public class TroveTest extends TestCase {
   public void testObjectInt() {
-    TObjectIntHashMap<String> map = new TObjectIntHashMap<String>();
+    TObjectIntHashMap<String> map = new TObjectIntHashMap<>();
     map.trimToSize();
     for (int i = 0; i < 100; i++) {
       String key = String.valueOf(i);
@@ -43,7 +43,7 @@ public class TroveTest extends TestCase {
   }
 
   public void testTHashMap_Entry() {
-    Map<Object, Object> map = new THashMap<Object, Object>();
+    Map<Object, Object> map = new THashMap<>();
     map.put("1", "2");
 
     Map.Entry<Object, Object> entry = map.entrySet().iterator().next();
@@ -61,7 +61,7 @@ public class TroveTest extends TestCase {
   }
 
   public void testKObjectMapCloneDoesNotDependOnTheSource() {
-    TIntObjectHashMap<int[]> map = new TIntObjectHashMap<int[]>();
+    TIntObjectHashMap<int[]> map = new TIntObjectHashMap<>();
     map.put(0, new int[2]);
     map.put(1, new int[2]);
 
@@ -80,7 +80,7 @@ public class TroveTest extends TestCase {
   }
 
   public void testHashMapCloneDoesNotDependOnTheSource() {
-    THashMap<Integer, int[]> map = new THashMap<Integer, int[]>();
+    THashMap<Integer, int[]> map = new THashMap<>();
     map.put(0, new int[2]);
     map.put(1, new int[2]);
 

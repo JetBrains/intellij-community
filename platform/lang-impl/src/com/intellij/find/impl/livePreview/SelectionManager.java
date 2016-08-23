@@ -26,7 +26,7 @@ import java.util.List;
 
 public class SelectionManager {
   @NotNull private final SearchResults mySearchResults;
-  private final List<FoldRegion> myRegionsToRestore = new ArrayList<FoldRegion>();
+  private final List<FoldRegion> myRegionsToRestore = new ArrayList<>();
 
   public SelectionManager(@NotNull SearchResults results) {
     mySearchResults = results;

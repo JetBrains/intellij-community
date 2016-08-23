@@ -72,8 +72,8 @@ public class RepositoryHelper {
    */
   @NotNull
   public static List<IdeaPluginDescriptor> loadPluginsFromAllRepositories(@Nullable ProgressIndicator indicator) throws IOException {
-    List<IdeaPluginDescriptor> result = new ArrayList<IdeaPluginDescriptor>();
-    Set<String> addedPluginIds = new HashSet<String>();
+    List<IdeaPluginDescriptor> result = new ArrayList<>();
+    Set<String> addedPluginIds = new HashSet<>();
     for (String host : getPluginHosts()) {
       List<IdeaPluginDescriptor> plugins = loadPlugins(host, indicator);
       for (IdeaPluginDescriptor plugin : plugins) {

@@ -52,7 +52,7 @@ public class RepositoryLibraryDescription {
   @NotNull
   public static synchronized RepositoryLibraryDescription findDescription(@NotNull final String groupId, @NotNull final String artifactId) {
     if (registeredLibraries == null) {
-      registeredLibraries = new HashMap<String, RepositoryLibraryDescription>();
+      registeredLibraries = new HashMap<>();
       for (RepositoryLibraryBean bean : RepositoryLibraryBean.EP_NAME.getExtensions()) {
         String id = bean.groupId + ":" + bean.artifactId;
         registeredLibraries.put(id, new RepositoryLibraryDescription(

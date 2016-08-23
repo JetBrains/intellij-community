@@ -231,28 +231,37 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
 
     private void setHighlightingEnabled(boolean enable) {
-      Component target = enable ? myComponent : myHighlightComponent;
-      JRootPane rootPane = target == null ? null : SwingUtilities.getRootPane(target);
-      JComponent glassPane = rootPane == null ? null : (JComponent)rootPane.getGlassPane();
-      if (glassPane == null) {
-        myHighlightComponent = null;
-        return;
-      }
-      if (enable) {
-        myHighlightComponent = new HighlightComponent(new JBColor(JBColor.GREEN, JBColor.RED));
+      if (myHighlightComponent != null) {
+        JComponent glassPane = getGlassPane(myHighlightComponent);
+        if (glassPane != null) {
+          glassPane.remove(myHighlightComponent);
 
-        Point pt = SwingUtilities.convertPoint(myComponent, new Point(0, 0), rootPane);
-        myHighlightComponent.setBounds(pt.x, pt.y, myComponent.getWidth(), myComponent.getHeight());
-        glassPane.add(myHighlightComponent);
-      }
-      else {
-        glassPane.remove(myHighlightComponent);
+          glassPane.revalidate();
+          glassPane.repaint();
+        }
         myHighlightComponent = null;
       }
-      glassPane.revalidate();
-      glassPane.repaint();
+
+      if (enable && myComponent != null) {
+        JComponent glassPane = getGlassPane(myComponent);
+        if (glassPane != null) {
+          myHighlightComponent = new HighlightComponent(new JBColor(JBColor.GREEN, JBColor.RED));
+
+          Point pt = SwingUtilities.convertPoint(myComponent, new Point(0, 0), glassPane);
+          myHighlightComponent.setBounds(pt.x, pt.y, myComponent.getWidth(), myComponent.getHeight());
+          glassPane.add(myHighlightComponent);
+
+          glassPane.revalidate();
+          glassPane.repaint();
+        }
+      }
     }
 
+    @Nullable
+    private static JComponent getGlassPane(@NotNull Component component) {
+      JRootPane rootPane = SwingUtilities.getRootPane(component);
+      return rootPane == null ? null : (JComponent)rootPane.getGlassPane();
+    }
   }
 
   private static class ComponentTreeCellRenderer extends ColoredTreeCellRenderer {
@@ -402,7 +411,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
       @SuppressWarnings("UseOfObsoleteCollectionType")
       private static Vector prepareChildren(Component parent) {
-        Vector<ComponentNode> result = new Vector<ComponentNode>();
+        Vector<ComponentNode> result = new Vector<>();
         if (parent instanceof Container) {
           for (Component component : ((Container)parent).getComponents()) {
             result.add(new ComponentNode(component));
@@ -980,7 +989,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   }
 
   private static class UiInspector implements AWTEventListener, Disposable {
-    Map<Component, InspectorWindow> myComponentToInspector = new WeakKeyWeakValueHashMap<Component, InspectorWindow>();
+    Map<Component, InspectorWindow> myComponentToInspector = new WeakKeyWeakValueHashMap<>();
 
     public UiInspector() {
       Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.CONTAINER_EVENT_MASK);

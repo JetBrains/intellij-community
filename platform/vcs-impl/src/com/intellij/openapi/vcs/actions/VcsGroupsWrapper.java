@@ -19,104 +19,103 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.text.MessageFormat;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
+import static java.util.stream.Collectors.toSet;
 
 public class VcsGroupsWrapper extends DefaultActionGroup implements DumbAware {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.actions.DefaultActionGroup");
+  private static final Logger LOG = Logger.getInstance(VcsGroupsWrapper.class);
 
-  private final PresentationFactory myPresentationFactory = new PresentationFactory();
-  private AnAction[] myChildren;
+  @NotNull private final PresentationFactory myPresentationFactory = new PresentationFactory();
 
-  public void update(AnActionEvent e) {
-    VcsContext dataContext = VcsContextWrapper.createInstanceOn(e);
-    if (myChildren == null) {
-      DefaultActionGroup vcsGroupsGroup = (DefaultActionGroup)ActionManager.getInstance().getAction("VcsGroup");
-      ArrayList<AnAction> validChildren = new ArrayList<AnAction>();
-      AnAction[] children = vcsGroupsGroup.getChildren(new AnActionEvent(null, e.getDataContext(), e.getPlace(), myPresentationFactory.getPresentation(
-        vcsGroupsGroup),
-                                                                         ActionManager.getInstance(),
-                                                                         0));
-      for (AnAction child : children) {
-        if (!(child instanceof StandardVcsGroup)) {
-          LOG.error("Any version control group should extends com.intellij.openapi.vcs.actions.StandardVcsGroup class. GroupId class: " +
-                    child.getClass().getName() + ", group ID: " + ActionManager.getInstance().getId(child));
-        }
-        else {
-          validChildren.add(child);
-        }
-      }
-
-      myChildren = validChildren.toArray(new AnAction[validChildren.size()]);
-
-    }
-
-    Project project = dataContext.getProject();
-    Presentation presentation = e.getPresentation();
-    if (project == null) {
-      presentation.setVisible(false);
-      return;
-    }
-
-    Collection<String> currentVcses = new HashSet<String>();
-
-    VirtualFile[] selectedFiles = dataContext.getSelectedFiles();
-
-    ProjectLevelVcsManager projectLevelVcsManager = ProjectLevelVcsManager.getInstance(project);
-
-    Map<String, AnAction> vcsToActionMap = new HashMap<String, AnAction>();
-
-    for (AnAction aMyChildren : myChildren) {
-      StandardVcsGroup child = (StandardVcsGroup)aMyChildren;
-      String vcsName = child.getVcsName(project);
-      vcsToActionMap.put(vcsName, child);
-    }
-
-    for (VirtualFile selectedFile : selectedFiles) {
-      AbstractVcs vcs = projectLevelVcsManager.getVcsFor(selectedFile);
-      if (vcs != null) {
-        currentVcses.add(vcs.getName());
-      }
-    }
-
-    if (currentVcses.size() == 1 && vcsToActionMap.containsKey(currentVcses.iterator().next())) {
-      updateFromAction(vcsToActionMap.get(currentVcses.iterator().next()), presentation);
+  public void update(@NotNull AnActionEvent e) {
+    if (e.getProject() == null) {
+      e.getPresentation().setVisible(false);
     }
     else {
-      DefaultActionGroup composite = new DefaultActionGroup(VcsBundle.message("group.name.version.control"), true);
-      for (AnAction aMyChildren : myChildren) {
-        StandardVcsGroup child = (StandardVcsGroup)aMyChildren;
-        String vcsName = child.getVcsName(project);
-        if (currentVcses.contains(vcsName)) {
-          composite.add(child);
-        }
+      updateVcsGroups(e);
+    }
+  }
+
+  private void updateVcsGroups(@NotNull AnActionEvent e) {
+    Set<String> currentVcses = collectVcses(VcsContextWrapper.createInstanceOn(e));
+
+    if (currentVcses.isEmpty()) {
+      e.getPresentation().setVisible(false);
+    }
+    else {
+      Map<String, StandardVcsGroup> vcsGroupMap = collectVcsGroups(e);
+      StandardVcsGroup firstVcsGroup = vcsGroupMap.get(getFirstItem(currentVcses));
+      DefaultActionGroup allVcsesGroup =
+        currentVcses.size() == 1 && firstVcsGroup != null ? firstVcsGroup : createAllVcsesGroup(vcsGroupMap, currentVcses);
+
+      copyPresentation(allVcsesGroup, e.getPresentation());
+      removeAll();
+      addAll(allVcsesGroup);
+    }
+  }
+
+  private void copyPresentation(@NotNull AnAction sourceAction, @NotNull Presentation target) {
+    Presentation source = myPresentationFactory.getPresentation(sourceAction);
+
+    target.setDescription(source.getDescription());
+    target.restoreTextWithMnemonic(source);
+    target.setVisible(source.isVisible());
+    target.setEnabled(source.isEnabled());
+  }
+
+  @NotNull
+  private static Set<String> collectVcses(@NotNull VcsContext context) {
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(context.getProject());
+
+    return context.getSelectedFilesStream()
+      .map(vcsManager::getVcsFor)
+      .filter(Objects::nonNull)
+      .map(AbstractVcs::getName)
+      .distinct()
+      .limit(vcsManager.getAllActiveVcss().length)
+      .collect(toSet());
+  }
+
+  @NotNull
+  private static Map<String, StandardVcsGroup> collectVcsGroups(@NotNull AnActionEvent e) {
+    Map<String, StandardVcsGroup> result = ContainerUtil.newHashMap();
+    DefaultActionGroup vcsGroup = (DefaultActionGroup)ActionManager.getInstance().getAction("VcsGroup");
+
+    for (AnAction child : vcsGroup.getChildren(e)) {
+      if (!(child instanceof StandardVcsGroup)) {
+        LOG.error(MessageFormat.format("Any version control group should extend {0}. Violated by {1}, {2}.", StandardVcsGroup.class,
+                                       ActionManager.getInstance().getId(child), child.getClass()));
       }
-      updateFromAction(composite, presentation);
-
-      if (currentVcses.size() == 0) e.getPresentation().setVisible(false);
+      else {
+        StandardVcsGroup group = (StandardVcsGroup)child;
+        result.put(group.getVcsName(e.getProject()), group);
+      }
     }
 
-    super.update(e);
+    return result;
   }
 
-  private void updateFromAction(AnAction action, Presentation presentation) {
-    Presentation wrappedActionPresentation = myPresentationFactory.getPresentation(action);
-    presentation.setDescription(wrappedActionPresentation.getDescription());
-    presentation.restoreTextWithMnemonic(wrappedActionPresentation);
-    presentation.setVisible(wrappedActionPresentation.isVisible());
-    presentation.setEnabled(wrappedActionPresentation.isEnabled());
-    removeAll();
-    DefaultActionGroup wrappedGroup = (DefaultActionGroup)action;
-    for (AnAction aChildren : wrappedGroup.getChildren(null)) {
-      add(aChildren);
-    }
+  @NotNull
+  private static DefaultActionGroup createAllVcsesGroup(@NotNull Map<String, StandardVcsGroup> vcsGroupsMap, @NotNull Set<String> vcses) {
+    DefaultActionGroup result = new DefaultActionGroup(VcsBundle.message("group.name.version.control"), true);
 
+    vcsGroupsMap.entrySet().stream()
+      .filter(e -> vcses.contains(e.getKey()))
+      .map(Map.Entry::getValue)
+      .forEach(result::add);
+
+    return result;
   }
-
 }

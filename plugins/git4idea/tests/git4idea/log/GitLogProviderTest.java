@@ -107,7 +107,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     List<VcsCommitMetadata> expectedLog = log();
     List<TimedVcsCommit> collector = ContainerUtil.newArrayList();
     //noinspection unchecked
-    myLogProvider.readAllHashes(myProjectRoot, new CollectConsumer<TimedVcsCommit>(collector));
+    myLogProvider.readAllHashes(myProjectRoot, new CollectConsumer<>(collector));
     assertOrderedEquals(expectedLog, collector);
   }
 

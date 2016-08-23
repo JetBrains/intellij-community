@@ -83,7 +83,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
   public MultiMap<PsiElement, String> getConflicts(@NotNull PsiReference reference, @NotNull PsiElement referenced) {
     PsiElement element = reference.getElement();
     if (!(element instanceof GrExpression && element.getParent() instanceof GrCallExpression)) {
-      final MultiMap<PsiElement, String> map = new MultiMap<PsiElement, String>();
+      final MultiMap<PsiElement, String> map = new MultiMap<>();
       map.putValue(element, GroovyRefactoringBundle.message("cannot.inline.reference.0", element.getText()));
       return map;
     }
@@ -94,7 +94,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
 
   @NotNull
   private static MultiMap<PsiElement, String> collectConflicts(@NotNull GrCallExpression call, @NotNull Collection<GroovyInlineMethodUtil.ReferenceExpressionInfo> infos) {
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
 
     for (GroovyInlineMethodUtil.ReferenceExpressionInfo info : infos) {
       if (!PsiUtil.isAccessible(call, info.declaration)) {
@@ -368,7 +368,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       GroovyInlineMethodUtil.addQualifiersToInnerReferences(newMethod, infos, qualifier);
     }
 
-    ArrayList<PsiNamedElement> innerDefinitions = new ArrayList<PsiNamedElement>();
+    ArrayList<PsiNamedElement> innerDefinitions = new ArrayList<>();
     collectInnerDefinitions(newMethod.getBlock(), innerDefinitions);
 
     // there are only local variables and parameters (possible of inner closures)

@@ -58,8 +58,8 @@ public class AppExecutorUtil {
    * and execute them in parallel in the application pool (see {@link #getAppExecutorService()} not more than at {@code maxSimultaneousTasks} at a time.
    */
   @NotNull
-  public static ScheduledExecutorService createBoundedScheduledExecutorService(int maxSimultaneousTasks) {
-    return new BoundedScheduledExecutorService(getAppExecutorService(), maxSimultaneousTasks);
+  public static ScheduledExecutorService createBoundedScheduledExecutorService(@NotNull String name, int maxSimultaneousTasks) {
+    return new BoundedScheduledExecutorService(name, getAppExecutorService(), maxSimultaneousTasks);
   }
 
   /**
@@ -68,7 +68,7 @@ public class AppExecutorUtil {
    * @see #getAppExecutorService()
    */
   @NotNull
-  public static ExecutorService createBoundedApplicationPoolExecutor(int maxThreads) {
-    return new BoundedTaskExecutor(getAppExecutorService(), maxThreads);
+  public static ExecutorService createBoundedApplicationPoolExecutor(@NotNull String name, int maxThreads) {
+    return new BoundedTaskExecutor(name, getAppExecutorService(), maxThreads);
   }
 }

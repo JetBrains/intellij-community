@@ -31,6 +31,7 @@ import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.*;
 import com.intellij.debugger.ui.tree.render.*;
+import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -294,17 +295,20 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
           }
         }
 
-        String value = myValue;
         if (myValueDescriptor.isString()) {
           renderer.renderStringValue(myValue, "\"", XValueNode.MAX_VALUE_LENGTH);
           return;
         }
-        else if (myValueDescriptor.getLastRenderer() instanceof ToStringRenderer ||
-                 myValueDescriptor.getLastRenderer() instanceof ToStringBasedRenderer) {
-          value = StringUtil.wrapWithDoubleQuote(truncateToMaxLength(myValue));
+
+        String value = truncateToMaxLength(myValue);
+        Renderer lastRenderer = myValueDescriptor.getLastRenderer();
+        if (lastRenderer instanceof CompoundTypeRenderer) {
+          lastRenderer = ((CompoundTypeRenderer)lastRenderer).getLabelRenderer();
         }
-        else if (myValueDescriptor.getLastRenderer() instanceof CompoundReferenceRenderer) {
-          value = truncateToMaxLength(myValue);
+        if (lastRenderer instanceof ToStringRenderer) {
+          if (!StringUtil.isEmpty(value)) {
+            value = StringUtil.wrapWithDoubleQuote(value);
+          }
         }
         renderer.renderValue(value);
       }

@@ -125,7 +125,7 @@ public class IndentSelectionAction extends EditorAction {
     if (bulkMode) ((DocumentEx)document).setInBulkUpdate(true);
 
     try {
-      List<Integer> nonModifiableLines = new ArrayList<Integer>();
+      List<Integer> nonModifiableLines = new ArrayList<>();
       if (project != null) {
         PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
         IndentStrategy indentStrategy = LanguageIndentStrategy.getIndentStrategy(file);

@@ -53,7 +53,10 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor {
   @NotNull
@@ -819,9 +822,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   private void highlightReferencedMethodOrClassName(@NotNull PsiJavaCodeReferenceElement element, PsiElement resolved) {
     PsiElement parent = element.getParent();
-    if (parent instanceof PsiReferenceExpression || parent instanceof PsiJavaCodeReferenceElement) {
-      return;
-    }
     final TextAttributesScheme colorsScheme = myHolder.getColorsScheme();
     if (parent instanceof PsiMethodCallExpression) {
       PsiMethod method = ((PsiMethodCallExpression)parent).resolveMethod();
@@ -839,16 +839,16 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           final PsiElement referenceNameElement = element.getReferenceNameElement();
           if(referenceNameElement != null) {
             // exclude type parameters from the highlighted text range
-            TextRange range = new TextRange(element.getTextRange().getStartOffset(), referenceNameElement.getTextRange().getEndOffset());
+            TextRange range = referenceNameElement.getTextRange();
             myHolder.add(HighlightNamesUtil.highlightMethodName(methodOrClass, referenceNameElement, range, colorsScheme, false));
           }
         }
       }
       catch (IndexNotReadyException ignored) { }
     }
-    else if (parent instanceof PsiImportStatement && ((PsiImportStatement)parent).isOnDemand()) {
-      // highlight on demand import as class
-      myHolder.add(HighlightNamesUtil.highlightClassName(null, element, colorsScheme));
+    else if (resolved instanceof PsiPackage) {
+      // highlight package (and following dot) as a class
+      myHolder.add(HighlightNamesUtil.highlightPackage(resolved, element, colorsScheme));
     }
     else if (resolved instanceof PsiClass) {
       myHolder.add(HighlightNamesUtil.highlightClassName((PsiClass)resolved, element, colorsScheme));
@@ -1285,6 +1285,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
       myHolder.add(HighlightNamesUtil.highlightClassNameInQualifier(expression, colorsScheme));
     }
+
+    if (!LambdaUtil.isValidLambdaContext(expression.getParent())) {
+      myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
+        .descriptionAndTooltip("Method reference expression is not expected here").create());
+    }
+
     if (!myHolder.hasErrorResults()) {
       final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
       if (functionalInterfaceType != null) {
@@ -1613,9 +1619,18 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitModule(module);
     if (!myHolder.hasErrorResults()) myHolder.add(checkFeature(module, Feature.MODULES));
     if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkFileName(module, myFile));
-    if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkModuleDuplicates(module, myFile));
     if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkFileDuplicates(module, myFile));
+    if (!myHolder.hasErrorResults()) myHolder.addAll(ModuleHighlightUtil.checkDuplicateRequires(module));
     if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkFileLocation(module, myFile));
+  }
+
+  @Override
+  public void visitRequiresStatement(PsiRequiresStatement statement) {
+    super.visitRequiresStatement(statement);
+    if (PsiUtil.isLanguageLevel9OrHigher(myFile)) {
+      PsiJavaModuleReferenceElement ref = statement.getReferenceElement();
+      if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkModuleReference(ref));
+    }
   }
 
   @Nullable

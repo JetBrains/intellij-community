@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
   private final Project myProject;
   private final String myDisplayName;
   private final String myHelpTopic;
-  private final Map<Module, T> myModuleConfigurables = new HashMap<Module, T>();
+  private final Map<Module, T> myModuleConfigurables = new HashMap<>();
 
   public ModuleAwareProjectConfigurable(@NotNull Project project, String displayName, String helpTopic) {
     myProject = project;
@@ -92,7 +92,7 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
       return configurable.createComponent();
     }
     final Splitter splitter = new Splitter(false, 0.25f);
-    final JBList moduleList = new JBList(new CollectionListModel<Module>(modules));
+    final JBList moduleList = new JBList(new CollectionListModel<>(modules));
     new ListSpeedSearch(moduleList, new Function<Object, String>() {
       @Override
       public String fun(Object o) {
@@ -170,11 +170,6 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
   @Override
   public String getId() {
     return getClass().getName();
-  }
-
-  @Override
-  public Runnable enableSearch(String option) {
-    return null;
   }
 
   @NotNull

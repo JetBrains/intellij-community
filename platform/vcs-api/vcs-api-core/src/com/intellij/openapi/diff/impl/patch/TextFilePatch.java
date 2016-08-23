@@ -31,7 +31,7 @@ public class TextFilePatch extends FilePatch {
 
   public TextFilePatch(@Nullable Charset charset) {
     myCharset = charset;
-    myHunks = new ArrayList<PatchHunk>();
+    myHunks = new ArrayList<>();
   }
 
   public TextFilePatch pathsOnlyCopy() {

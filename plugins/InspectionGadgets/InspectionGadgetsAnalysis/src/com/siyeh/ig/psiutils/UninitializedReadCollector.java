@@ -30,7 +30,7 @@ public class UninitializedReadCollector {
   private int counter = 0;
 
   public UninitializedReadCollector() {
-    uninitializedReads = new HashSet<PsiExpression>();
+    uninitializedReads = new HashSet<>();
   }
 
   public PsiExpression[] getUninitializedReads() {
@@ -38,7 +38,7 @@ public class UninitializedReadCollector {
   }
 
   public boolean blockAssignsVariable(@Nullable PsiCodeBlock block, @NotNull PsiVariable variable) {
-    return blockAssignsVariable(block, variable, counter, new HashSet<MethodSignature>());
+    return blockAssignsVariable(block, variable, counter, new HashSet<>());
   }
 
   private boolean blockAssignsVariable(@Nullable PsiCodeBlock block, @NotNull PsiVariable variable,

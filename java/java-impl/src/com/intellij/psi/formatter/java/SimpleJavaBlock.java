@@ -58,7 +58,7 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
       myCurrentOffset = myCurrentChild != null ? myCurrentChild.getTextRange().getStartOffset() : 0;
     }
 
-    final List<Block> result = new ArrayList<Block>();
+    final List<Block> result = new ArrayList<>();
 
     myCurrentIndent = null;
     processHeadCommentsAndWhiteSpaces(result);

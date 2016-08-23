@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -34,19 +35,23 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public class Restarter {
-  private Restarter() {
-  }
+  private Restarter() { }
 
   private static int getRestartCode() {
     return SystemProperties.getIntProperty("jb.restart.code", 0);
   }
 
   public static boolean isSupported() {
-    if (getRestartCode() != 0) return true;
-    if (SystemInfo.isWindows) return new File(PathManager.getBinPath(), "restarter.exe").exists();
-    if (SystemInfo.isMac) return PathManager.getHomePath().contains(".app");
+    if (getRestartCode() != 0) {
+      return true;
+    }
+    if (SystemInfo.isWindows) {
+      return JnaLoader.isLoaded() && new File(PathManager.getBinPath(), "restarter.exe").exists();
+    }
+    if (SystemInfo.isMac) {
+      return PathManager.getHomePath().contains(".app");
+    }
     return false;
   }
 

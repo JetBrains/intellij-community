@@ -71,7 +71,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
             ContainerUtil.filter(testsByMethodName, s -> s.startsWith(configuration.getFrameworkPrefix())).isEmpty()) {
           return false;
         }
-        setPosition(configuration, new PsiLocation<PsiMethod>(sourceMethod));
+        setPosition(configuration, new PsiLocation<>(sourceMethod));
         configuration.setName("Tests for " + StringUtil.getShortName(position.first) + "." + position.second);
 
         final RunnerAndConfigurationSettings template =

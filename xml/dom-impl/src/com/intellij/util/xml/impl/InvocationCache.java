@@ -33,7 +33,7 @@ import java.util.Map;
  * @author peter
  */
 public class InvocationCache {
-  private static final Map<JavaMethodSignature, Invocation> ourCoreInvocations = new HashMap<JavaMethodSignature, Invocation>();
+  private static final Map<JavaMethodSignature, Invocation> ourCoreInvocations = new HashMap<>();
   private final Map<Method, Invocation> myInvocations = new ConcurrentFactoryMap<Method, Invocation>() {
     @Override
     protected Invocation create(Method key) {

@@ -41,7 +41,7 @@ public class IntroPrimitiveTypeProperty<T> extends IntrospectedProperty<T> {
   @NotNull
   public PropertyRenderer<T> getRenderer(){
     if (myRenderer == null) {
-      myRenderer = new LabelPropertyRenderer<T>();
+      myRenderer = new LabelPropertyRenderer<>();
     }
     return myRenderer;
   }
@@ -54,6 +54,6 @@ public class IntroPrimitiveTypeProperty<T> extends IntrospectedProperty<T> {
   }
 
   protected PropertyEditor<T> createEditor() {
-    return new PrimitiveTypeEditor<T>(myClass);
+    return new PrimitiveTypeEditor<>(myClass);
   }
 }

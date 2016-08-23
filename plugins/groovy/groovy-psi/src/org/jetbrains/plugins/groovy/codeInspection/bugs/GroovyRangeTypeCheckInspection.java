@@ -62,7 +62,7 @@ public class GroovyRangeTypeCheckInspection extends BaseInspection {
   protected GroovyFix buildFix(@NotNull PsiElement location) {
     final GrRangeExpression range = (GrRangeExpression)location;
     final PsiType type = range.getType();
-    final List<GroovyFix> fixes = new ArrayList<GroovyFix>(3);
+    final List<GroovyFix> fixes = new ArrayList<>(3);
     if (type instanceof GrRangeType) {
       PsiType iterationType = ((GrRangeType)type).getIterationType();
       if (!(iterationType instanceof PsiClassType)) return null;

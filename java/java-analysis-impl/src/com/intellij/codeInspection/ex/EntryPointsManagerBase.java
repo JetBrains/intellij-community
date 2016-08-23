@@ -59,7 +59,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   public Collection<String> getAdditionalAnnotations() {
     List<String> annos = ADDITIONAL_ANNOS;
     if (annos == null) {
-      annos = new ArrayList<String>();
+      annos = new ArrayList<>();
       Collections.addAll(annos, STANDARD_ANNOS);
       final EntryPoint[] extensions = Extensions.getExtensions(ToolExtensionPoints.DEAD_CODE_TOOL, null);
       for (EntryPoint extension : extensions) {
@@ -74,7 +74,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   }
   public JDOMExternalizableStringList ADDITIONAL_ANNOTATIONS = new JDOMExternalizableStringList();
   private final Map<String, SmartRefElementPointer> myPersistentEntryPoints;
-  private final List<ClassPattern> myPatterns = new ArrayList<>();
+  private final LinkedHashSet<ClassPattern> myPatterns = new LinkedHashSet<>();
   private final Set<RefElement> myTemporaryEntryPoints;
   private static final String VERSION = "2.0";
   @NonNls private static final String VERSION_ATTR = "version";
@@ -86,8 +86,8 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
 
   public EntryPointsManagerBase(@NotNull Project project) {
     myProject = project;
-    myTemporaryEntryPoints = new HashSet<RefElement>();
-    myPersistentEntryPoints = new LinkedHashMap<String, SmartRefElementPointer>(); // To keep the order between readExternal to writeExternal
+    myTemporaryEntryPoints = new HashSet<>();
+    myPersistentEntryPoints = new LinkedHashMap<>(); // To keep the order between readExternal to writeExternal
     final ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL);
     ((ExtensionPointImpl)point).addExtensionPointListener(new ExtensionPointListener<EntryPoint>() {
       @Override
@@ -220,7 +220,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   public void addEntryPoint(@NotNull RefElement newEntryPoint, boolean isPersistent) {
     if (!newEntryPoint.isValid()) return;
     if (isPersistent) {
-      if (newEntryPoint instanceof RefMethod && ((RefMethod)newEntryPoint).isConstructor() || newEntryPoint instanceof RefClass) {
+      if (newEntryPoint instanceof RefImplicitConstructor || newEntryPoint instanceof RefClass) {
         final ClassPattern classPattern = new ClassPattern();
         classPattern.pattern = new SmartRefElementPointerImpl(newEntryPoint, true).getFQName();
         getPatterns().add(classPattern);
@@ -317,7 +317,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   @Override
   public RefElement[] getEntryPoints() {
     validateEntryPoints();
-    List<RefElement> entries = new ArrayList<RefElement>();
+    List<RefElement> entries = new ArrayList<>();
     Collection<SmartRefElementPointer> collection = myPersistentEntryPoints.values();
     for (SmartRefElementPointer refElementPointer : collection) {
       final RefEntity elt = refElementPointer.getRefElement();
@@ -473,16 +473,23 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     return false;
   }
 
-  public List<ClassPattern> getPatterns() {
+  public LinkedHashSet<ClassPattern> getPatterns() {
     return myPatterns;
   }
 
   @Tag("pattern")
   public static class ClassPattern {
     @Attribute("value")
-    public String pattern;
+    public String pattern = "";
     @Attribute("hierarchically")
     public boolean hierarchically = false;
+
+    public ClassPattern(ClassPattern classPattern) {
+      hierarchically = classPattern.hierarchically;
+      pattern = classPattern.pattern;
+    }
+
+    public ClassPattern() {}
 
     @Override
     public boolean equals(Object o) {

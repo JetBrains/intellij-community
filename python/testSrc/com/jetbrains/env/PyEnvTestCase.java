@@ -145,7 +145,7 @@ public abstract class PyEnvTestCase {
    */
   @NotNull
   private static Collection<String> getAvailableTags() {
-    final Collection<String> allAvailableTags = new HashSet<String>();
+    final Collection<String> allAvailableTags = new HashSet<>();
     for (final String pythonRoot : getPythonRoots()) {
       allAvailableTags.addAll(loadEnvTags(pythonRoot));
     }

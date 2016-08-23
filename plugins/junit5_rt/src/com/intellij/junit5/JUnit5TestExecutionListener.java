@@ -32,6 +32,7 @@ import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 public class JUnit5TestExecutionListener implements TestExecutionListener {
   private final PrintStream myPrintStream;
@@ -39,6 +40,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   private long myCurrentTestStart;
   private int myFinishCount = 0;
   private String myRootName;
+  private Set<TestIdentifier> myRoots;
 
   public JUnit5TestExecutionListener() {
     this(System.out);
@@ -84,7 +86,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       testStarted(testIdentifier);
       myCurrentTestStart = System.currentTimeMillis();
     }
-    else {
+    else if (!myRoots.contains(testIdentifier)){
       myFinishCount = 0;
       myPrintStream.println("##teamcity[testSuiteStarted" + idAndName(testIdentifier) + "\']");
     }
@@ -121,7 +123,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       testFinished(testIdentifier, duration);
       myFinishCount++;
     }
-    else {
+    else if (!myRoots.contains(testIdentifier)){
       String messageName = null;
       if (status == TestExecutionResult.Status.FAILED) {
         messageName = MapSerializerUtil.TEST_FAILED;
@@ -192,8 +194,12 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   public void sendTree(TestPlan testPlan, String rootName) {
     myTestPlan = testPlan;
     myRootName = rootName;
-    for (TestIdentifier root : testPlan.getRoots()) {
-      sendTreeUnderRoot(testPlan, root);
+    myRoots = testPlan.getRoots();
+    for (TestIdentifier root : myRoots) {
+      assert root.isContainer();
+      for (TestIdentifier testIdentifier : testPlan.getChildren(root)) {
+        sendTreeUnderRoot(testPlan, testIdentifier);
+      }
     }
     myPrintStream.println("##teamcity[treeEnded]");
   }

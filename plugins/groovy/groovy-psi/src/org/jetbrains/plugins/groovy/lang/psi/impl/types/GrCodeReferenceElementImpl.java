@@ -271,7 +271,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
       final GroovyResolveResult[] results = _resolve(reference, reference.getManager(), reference.getKind(false));
       if (results.length == 0) return results;
 
-      List<GroovyResolveResult> imported = new ArrayList<GroovyResolveResult>();
+      List<GroovyResolveResult> imported = new ArrayList<>();
       final PsiType[] args = reference.getTypeArguments();
       for (int i = 0; i < results.length; i++) {
         GroovyResolveResult result = results[i];
@@ -365,7 +365,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
             if (resolved instanceof PsiClass) {
               final PsiClass clazz = (PsiClass)resolved;
               PsiResolveHelper helper = JavaPsiFacade.getInstance(clazz.getProject()).getResolveHelper();
-              List<GroovyResolveResult> result = new ArrayList<GroovyResolveResult>();
+              List<GroovyResolveResult> result = new ArrayList<>();
 
               processFields(ref, refName, clazz, helper, result);
               processMethods(ref, refName, clazz, helper, result);

@@ -125,11 +125,11 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
     splitter.setShowDividerControls(true);
 
     ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
-    ArrayList<FeatureDescriptor> features = new ArrayList<FeatureDescriptor>();
+    ArrayList<FeatureDescriptor> features = new ArrayList<>();
     for (String id : registry.getFeatureIds()) {
       features.add(registry.getFeatureDescriptor(id));
     }
-    final TableView table = new TableView<FeatureDescriptor>(new ListTableModel<FeatureDescriptor>(COLUMNS, features, 0));
+    final TableView table = new TableView<>(new ListTableModel<>(COLUMNS, features, 0));
     new TableViewSpeedSearch<FeatureDescriptor>(table) {
       @Override
       protected String getItemText(@NotNull FeatureDescriptor element) {

@@ -41,7 +41,7 @@ import java.util.List;
 
 public class LocalPathIndifferentLogOperation extends LocalPathIndifferentOperation implements BranchesProvider {
 
-  private final List<LogInformation> myLogInformationList = new ArrayList<LogInformation>();
+  private final List<LogInformation> myLogInformationList = new ArrayList<>();
 
 
   private final LocalPathIndifferentOperationHelper myHelper;

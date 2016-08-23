@@ -37,14 +37,11 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
-import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -100,7 +97,6 @@ import java.util.concurrent.TimeoutException;
 public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl");
 
-  private static final Key<List<LineMarkerInfo>> MARKERS_IN_EDITOR_DOCUMENT_KEY = Key.create("MARKERS_IN_EDITOR_DOCUMENT");
   private static final Key<List<HighlightInfo>> FILE_LEVEL_HIGHLIGHTS = Key.create("FILE_LEVEL_HIGHLIGHTS");
   private final Project myProject;
   private final DaemonCodeAnalyzerSettings mySettings;
@@ -129,9 +125,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   @NonNls private static final String FILE_TAG = "file";
   @NonNls private static final String URL_ATT = "url";
   private final PassExecutorService myPassExecutorService;
-
-  private volatile boolean allowToInterrupt = true;
-  private final FrequentEventDetector myFrequentEventDetector = new FrequentEventDetector(5, 1000);
 
   public DaemonCodeAnalyzerImpl(@NotNull Project project,
                                 @NotNull DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings,
@@ -620,8 +613,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   }
 
   synchronized void stopProcess(boolean toRestartAlarm, @NotNull @NonNls String reason) {
-    if (!allowToInterrupt) throw new RuntimeException("Cannot interrupt daemon");
-
     cancelUpdateProgress(toRestartAlarm, reason);
     myUpdateRunnableFuture.cancel(false);
     boolean restart = toRestartAlarm && !myDisposed && myInitialized;
@@ -631,9 +622,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   }
 
   private synchronized void cancelUpdateProgress(final boolean start, @NonNls String reason) {
-    PassExecutorService.log(myUpdateProgress, null, "Cancel", reason, start);
-
     if (myUpdateProgress != null) {
+      PassExecutorService.log(myUpdateProgress, null, "Cancel", reason, start);
       myUpdateProgress.cancel();
       myPassExecutorService.cancelAll(false);
       myUpdateProgress = null;
@@ -667,23 +657,23 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
                                       @NotNull HighlightSeverity minSeverity) {
     final List<HighlightInfo> foundInfoList = new SmartList<>();
     processHighlightsNearOffset(document, myProject, minSeverity, offset, includeFixRange,
-                                info -> {
-                                  if (info.getSeverity() == HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY) {
-                                    return true;
-                                  }
-                                  if (!foundInfoList.isEmpty()) {
-                                    HighlightInfo foundInfo = foundInfoList.get(0);
-                                    int compare = foundInfo.getSeverity().compareTo(info.getSeverity());
-                                    if (compare < 0) {
-                                      foundInfoList.clear();
-                                    }
-                                    else if (compare > 0) {
-                                      return true;
-                                    }
-                                  }
-                                  foundInfoList.add(info);
-                                  return true;
-                                });
+        info -> {
+          if (info.getSeverity() == HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY) {
+            return true;
+          }
+          if (!foundInfoList.isEmpty()) {
+            HighlightInfo foundInfo = foundInfoList.get(0);
+            int compare = foundInfo.getSeverity().compareTo(info.getSeverity());
+            if (compare < 0) {
+              foundInfoList.clear();
+            }
+            else if (compare > 0) {
+              return true;
+            }
+          }
+          foundInfoList.add(info);
+          return true;
+        });
 
     if (foundInfoList.isEmpty()) return null;
     if (foundInfoList.size() == 1) return foundInfoList.get(0);
@@ -712,14 +702,10 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   @NotNull
   public static List<LineMarkerInfo> getLineMarkers(@NotNull Document document, @NotNull Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
-    return ObjectUtils.notNull(markup.getUserData(MARKERS_IN_EDITOR_DOCUMENT_KEY), Collections.emptyList());
-  }
-
-  static void setLineMarkers(@NotNull Document document, @NotNull List<LineMarkerInfo> lineMarkers, @NotNull Project project) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
-    markup.putUserData(MARKERS_IN_EDITOR_DOCUMENT_KEY, lineMarkers);
+    List<LineMarkerInfo> result = new ArrayList<>();
+    LineMarkersUtil.processLineMarkers(project, document, new TextRange(0, document.getTextLength()), -1,
+                                       new CommonProcessors.CollectProcessor<>(result));
+    return result;
   }
 
   void setLastIntentionHint(@NotNull Project project,
@@ -910,11 +896,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   @TestOnly
   synchronized DaemonProgressIndicator getUpdateProgress() {
     return myUpdateProgress;
-  }
-
-  @TestOnly
-  void allowToInterrupt(boolean can) {
-    allowToInterrupt = can;
   }
 
   @NotNull

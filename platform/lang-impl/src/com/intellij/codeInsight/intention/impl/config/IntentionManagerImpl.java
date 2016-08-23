@@ -173,7 +173,7 @@ public class IntentionManagerImpl extends IntentionManager {
   @NotNull
   public List<IntentionAction> getStandardIntentionOptions(@NotNull final HighlightDisplayKey displayKey,
                                                            @NotNull final PsiElement context) {
-    List<IntentionAction> options = new ArrayList<IntentionAction>(9);
+    List<IntentionAction> options = new ArrayList<>(9);
     options.add(new EditInspectionToolsSettingsAction(displayKey));
     options.add(new RunInspectionIntention(displayKey));
     options.add(new DisableInspectionToolAction(displayKey));
@@ -252,7 +252,7 @@ public class IntentionManagerImpl extends IntentionManager {
   @NotNull
   @Override
   public IntentionAction[] getAvailableIntentionActions() {
-    List<IntentionAction> list = new ArrayList<IntentionAction>(myActions.size());
+    List<IntentionAction> list = new ArrayList<>(myActions.size());
     for (IntentionAction action : myActions) {
       if (mySettings.isEnabled(action)) {
         list.add(action);

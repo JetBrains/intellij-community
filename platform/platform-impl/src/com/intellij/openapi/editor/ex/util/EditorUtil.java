@@ -892,6 +892,10 @@ public final class EditorUtil {
     return attributes == TextAttributes.ERASE_MARKER ||
            (attributes != null && (attributes.getFontType() != Font.PLAIN || attributes.getForegroundColor() != null));
   }
+
+  public static boolean isCurrentCaretPrimary(@NotNull Editor editor) {
+    return editor.getCaretModel().getCurrentCaret() == editor.getCaretModel().getPrimaryCaret();
+  }
 }
 
 

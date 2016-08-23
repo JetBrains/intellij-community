@@ -105,11 +105,11 @@ public class PyPackageRequirementsInspection extends PyInspection {
                                        plural ? "s" : "",
                                        PyPackageUtil.requirementsToString(unsatisfied),
                                        plural ? "are" : "is");
-            final Set<String> unsatisfiedNames = new HashSet<String>();
+            final Set<String> unsatisfiedNames = new HashSet<>();
             for (PyRequirement req : unsatisfied) {
               unsatisfiedNames.add(req.getFullName());
             }
-            final List<LocalQuickFix> quickFixes = new ArrayList<LocalQuickFix>();
+            final List<LocalQuickFix> quickFixes = new ArrayList<>();
             quickFixes.add(new PyInstallRequirementsFix(null, module, sdk, unsatisfied));
             quickFixes.add(new IgnoreRequirementFix(unsatisfiedNames));
             registerProblem(node, msg,
@@ -167,7 +167,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
               final PyPackageManager manager = PyPackageManager.getInstance(sdk);
               Collection<PyRequirement> requirements = manager.getRequirements(module);
               if (requirements != null) {
-                requirements = getTransitiveRequirements(sdk, requirements, new HashSet<PyPackage>());
+                requirements = getTransitiveRequirements(sdk, requirements, new HashSet<>());
               }
               if (requirements == null) return;
               for (PyRequirement req : requirements) {
@@ -190,7 +190,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
                   }
                 }
               }
-              final List<LocalQuickFix> quickFixes = new ArrayList<LocalQuickFix>();
+              final List<LocalQuickFix> quickFixes = new ArrayList<>();
               quickFixes.add(new AddToRequirementsFix(module, packageName, LanguageLevel.forElement(importedExpression)));
               quickFixes.add(new IgnoreRequirementFix(Collections.singleton(packageName)));
               registerProblem(packageReferenceExpression, String.format("Package '%s' is not listed in project requirements", packageName),
@@ -209,7 +209,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     if (requirements.isEmpty()) {
       return Collections.emptySet();
     }
-    final Set<PyRequirement> results = new HashSet<PyRequirement>(requirements);
+    final Set<PyRequirement> results = new HashSet<>(requirements);
     final List<PyPackage> packages = PyPackageManager.getInstance(sdk).getPackages();
     if (packages == null) return null;
     for (PyRequirement req : requirements) {
@@ -234,7 +234,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
       if (packages == null) {
         return null;
       }
-      final List<PyRequirement> unsatisfied = new ArrayList<PyRequirement>();
+      final List<PyRequirement> unsatisfied = new ArrayList<>();
       for (PyRequirement req : requirements) {
         if (!ignoredPackages.contains(req.getName()) && req.match(packages) == null) {
           unsatisfied.add(req);

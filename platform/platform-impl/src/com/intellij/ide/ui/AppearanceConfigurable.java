@@ -36,7 +36,6 @@ import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -78,12 +77,6 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     return getHelpTopic();
   }
 
-  @Override
-  @Nullable
-  public Runnable enableSearch(String option) {
-    return null;
-  }
-
   @SuppressWarnings("unchecked")
   @Override
   public JComponent createComponent() {
@@ -107,7 +100,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myAntialiasingInIDE.setRenderer(new AAListCellRenderer(false));
     myComponent.myAntialiasingInEditor.setRenderer(new AAListCellRenderer(true));
 
-    @SuppressWarnings("UseOfObsoleteCollectionType") Dictionary<Integer, JComponent> delayDictionary = new Hashtable<Integer, JComponent>();
+    @SuppressWarnings("UseOfObsoleteCollectionType") Dictionary<Integer, JComponent> delayDictionary = new Hashtable<>();
     delayDictionary.put(new Integer(0), new JLabel("0"));
     delayDictionary.put(new Integer(1200), new JLabel("1200"));
     //delayDictionary.put(new Integer(2400), new JLabel("2400"));
@@ -132,7 +125,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     myComponent.myAlphaModeRatioSlider.setSize(100, 50);
     @SuppressWarnings({"UseOfObsoleteCollectionType"})
-    Dictionary<Integer, JComponent> dictionary = new Hashtable<Integer, JComponent>();
+    Dictionary<Integer, JComponent> dictionary = new Hashtable<>();
     dictionary.put(new Integer(0), new JLabel("0%"));
     dictionary.put(new Integer(50), new JLabel("50%"));
     dictionary.put(new Integer(100), new JLabel("100%"));
@@ -161,6 +154,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     UISettings settings = UISettings.getInstance();
     int _fontSize = getIntValue(myComponent.myFontSizeCombo, settings.FONT_SIZE);
     int _presentationFontSize = getIntValue(myComponent.myPresentationModeFontSize, settings.PRESENTATION_MODE_FONT_SIZE);
+    boolean update = false;
     boolean shouldUpdateUI = false;
     String _fontFace = myComponent.myFontCombo.getFontName();
     LafManager lafManager = LafManager.getInstance();
@@ -168,6 +162,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       settings.FONT_SIZE = _fontSize;
       settings.FONT_FACE = _fontFace;
       shouldUpdateUI = true;
+      update = true;
     }
 
     if (_presentationFontSize != settings.PRESENTATION_MODE_FONT_SIZE) {
@@ -191,7 +186,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     }
 
     settings.ANIMATE_WINDOWS = myComponent.myAnimateWindowsCheckBox.isSelected();
-    boolean update = settings.SHOW_TOOL_WINDOW_NUMBERS != myComponent.myWindowShortcutsCheckBox.isSelected();
+    update |= settings.SHOW_TOOL_WINDOW_NUMBERS != myComponent.myWindowShortcutsCheckBox.isSelected();
     settings.SHOW_TOOL_WINDOW_NUMBERS = myComponent.myWindowShortcutsCheckBox.isSelected();
     update |= settings.HIDE_TOOL_STRIPES != !myComponent.myShowToolStripesCheckBox.isSelected();
     settings.HIDE_TOOL_STRIPES = !myComponent.myShowToolStripesCheckBox.isSelected();
@@ -205,6 +200,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     settings.CYCLE_SCROLLING = myComponent.myCycleScrollingCheckBox.isSelected();
     if (settings.OVERRIDE_NONIDEA_LAF_FONTS != myComponent.myOverrideLAFFonts.isSelected()) {
       shouldUpdateUI = true;
+      update = true;
     }
     settings.OVERRIDE_NONIDEA_LAF_FONTS = myComponent.myOverrideLAFFonts.isSelected();
     settings.MOVE_MOUSE_ON_DEFAULT_BUTTON = myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected();

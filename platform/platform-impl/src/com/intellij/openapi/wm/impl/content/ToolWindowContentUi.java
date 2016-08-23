@@ -406,7 +406,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       @Override
       public void actionPerformed(AnActionEvent e) {
         final Content selectedContent = manager.getSelectedContent();
-        final List<Pair<String, JComponent>> tabs = new ArrayList<Pair<String, JComponent>>();
+        final List<Pair<String, JComponent>> tabs = new ArrayList<>();
         int selectedTab = -1;
         List<Content> mergedContent = ContainerUtil.newArrayList();
         for (Content content : manager.getContents()) {
@@ -419,6 +419,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
             tabs.add(Pair.create(label, component));
             manager.removeContent(content, false);
             content.setComponent(null);
+            content.setShouldDisposeContent(false);
             mergedContent.add(content);
           }
         }
@@ -585,7 +586,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   }
 
   public List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider) {
-    List<SwitchTarget> result = new ArrayList<SwitchTarget>();
+    List<SwitchTarget> result = new ArrayList<>();
 
     if (myType == ToolWindowContentUiType.TABBED) {
       for (int i = 0; i < myManager.getContentCount(); i++) {

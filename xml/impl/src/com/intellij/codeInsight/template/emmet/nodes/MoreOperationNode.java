@@ -63,7 +63,7 @@ public class MoreOperationNode extends ZenCodingNode {
                                      CustomTemplateCallback callback,
                                      boolean insertSurroundedTextAtTheEnd, GenerationNode parent) {
     if (myLeftOperand instanceof MulOperationNode || (myLeftOperand instanceof UnaryMulOperationNode && surroundedText != null)) {
-      List<GenerationNode> result = new ArrayList<GenerationNode>();
+      List<GenerationNode> result = new ArrayList<>();
       if (myLeftOperand instanceof MulOperationNode) {
         MulOperationNode mul = (MulOperationNode)myLeftOperand;
         for (int i = 0; i < mul.getRightOperand(); i++) {

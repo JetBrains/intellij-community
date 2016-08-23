@@ -37,7 +37,7 @@ import java.util.Set;
  * Date: 10-Feb-2006
  */
 public class GlassPanel extends JComponent {
-  private final Set<JComponent> myLightComponents = new HashSet<JComponent>();
+  private final Set<JComponent> myLightComponents = new HashSet<>();
   private final JComponent myPanel;
   private static final Insets EMPTY_INSETS = new Insets(0, 0, 0, 0);
 

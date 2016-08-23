@@ -35,7 +35,7 @@ public class SmartListTest {
 
   @Test
   public void testOneElement() {
-    List<Integer> l = new SmartList<Integer>();
+    List<Integer> l = new SmartList<>();
     l.add(1);
     assertEquals(1, l.size());
     assertEquals(1, l.get(0).intValue());
@@ -43,7 +43,7 @@ public class SmartListTest {
 
   @Test
   public void testTwoElement() {
-    List<Integer> l = new SmartList<Integer>();
+    List<Integer> l = new SmartList<>();
     l.add(1);
     l.add(2);
     assertEquals(2, l.size());
@@ -53,7 +53,7 @@ public class SmartListTest {
 
   @Test
   public void testThreeElement() {
-    List<Integer> l = new SmartList<Integer>();
+    List<Integer> l = new SmartList<>();
     l.add(1);
     l.add(2);
     l.add(3);
@@ -65,7 +65,7 @@ public class SmartListTest {
 
   @Test
   public void testFourElement() {
-    SmartList<Integer> l = new SmartList<Integer>();
+    SmartList<Integer> l = new SmartList<>();
     int modCount = 0;
     assertEquals(modCount, l.getModificationCount());
     l.add(1);
@@ -147,7 +147,7 @@ public class SmartListTest {
 
   @Test
   public void testAddIndexedNegativeIndex() {
-    SmartList<Integer> l = new SmartList<Integer>();
+    SmartList<Integer> l = new SmartList<>();
     try {
       l.add(-1, 1);
     }
@@ -159,7 +159,7 @@ public class SmartListTest {
 
   @Test
   public void testAddIndexedWrongIndex() {
-    SmartList<Integer> l = new SmartList<Integer>(1);
+    SmartList<Integer> l = new SmartList<>(1);
     try {
       l.add(3, 1);
     }
@@ -171,7 +171,7 @@ public class SmartListTest {
 
   @Test
   public void testAddIndexedEmptyWrongIndex() {
-    SmartList<Integer> l = new SmartList<Integer>();
+    SmartList<Integer> l = new SmartList<>();
     try {
       l.add(1, 1);
     }
@@ -183,7 +183,7 @@ public class SmartListTest {
 
   @Test
   public void testAddIndexedEmpty() {
-    SmartList<Integer> l = new SmartList<Integer>();
+    SmartList<Integer> l = new SmartList<>();
     int modCount = 0;
     l.add(0, 1);
     assertEquals(++modCount, l.getModificationCount());
@@ -193,7 +193,7 @@ public class SmartListTest {
 
   @Test
   public void testAddIndexedOneElement() {
-    SmartList<Integer> l = new SmartList<Integer>(0);
+    SmartList<Integer> l = new SmartList<>(0);
     assertEquals(1, l.size());
 
     int modCount = l.getModificationCount();
@@ -206,7 +206,7 @@ public class SmartListTest {
 
   @Test
   public void testAddIndexedOverOneElement() {
-    SmartList<Integer> l = new SmartList<Integer>(0);
+    SmartList<Integer> l = new SmartList<>(0);
     assertEquals(1, l.size());
 
     int modCount = l.getModificationCount();
@@ -219,7 +219,7 @@ public class SmartListTest {
 
   @Test
   public void testAddIndexedOverTwoElements() {
-    SmartList<Integer> l = new SmartList<Integer>(0, 1);
+    SmartList<Integer> l = new SmartList<>(0, 1);
     assertEquals(2, l.size());
 
     int modCount = l.getModificationCount();
@@ -233,20 +233,20 @@ public class SmartListTest {
 
   @Test
   public void testEmptyToArray() {
-    SmartList<Integer> l = new SmartList<Integer>();
+    SmartList<Integer> l = new SmartList<>();
     assertArrayEquals(l.toArray(), new Integer[]{});
     assertArrayEquals(l.toArray(new Integer[]{}), new Integer[]{});
   }
 
   @Test
   public void testSingleToArray() {
-    SmartList<String> l = new SmartList<String>("foo");
+    SmartList<String> l = new SmartList<>("foo");
     assertArrayEquals(l.toArray(ArrayUtilRt.EMPTY_STRING_ARRAY), new String[]{"foo"});
   }
 
   @Test
   public void testToArray() {
-    SmartList<Integer> l = new SmartList<Integer>(0, 1);
+    SmartList<Integer> l = new SmartList<>(0, 1);
     assertArrayEquals(l.toArray(), new Object[]{0, 1});
     assertArrayEquals(l.toArray(), new Integer[]{0, 1});
     assertArrayEquals(l.toArray(new Integer[0]), new Integer[]{0, 1});

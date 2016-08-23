@@ -23,7 +23,7 @@ public class LogHierarchyNode {
   private final List<LogHierarchyNode> myChildren;
 
   public LogHierarchyNode(final LogEntry me) {
-    myChildren = new LinkedList<LogHierarchyNode>();
+    myChildren = new LinkedList<>();
     myMe = me;
   }
 
