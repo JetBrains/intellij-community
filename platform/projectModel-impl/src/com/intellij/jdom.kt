@@ -72,6 +72,8 @@ fun Element.getOrCreate(name: String): Element {
   return element
 }
 
+fun Element.get(name: String): Element? = getChild(name)
+
 fun Element.element(name: String): Element {
   val element = Element(name)
   addContent(element)

@@ -18,7 +18,6 @@ package com.intellij.credentialStore.kdbx
 import com.intellij.util.element
 import com.intellij.util.getOrCreate
 import org.jdom.Element
-import java.time.format.DateTimeParseException
 import java.util.*
 import kotlin.reflect.KProperty
 
@@ -48,21 +47,13 @@ class KdbxEntry(val element: Element, internal val database: KeePassDatabase) {
     }
   }
 
-  val parent: KdbxGroup?
-    get() = element.parentElement?.let { KdbxGroup(it, database) }
-
   val uuid: UUID
     get() = uuidFromBase64(element.getChildText(UUID_ELEMENT_NAME)!!)
 
   var userName: String? by PropertyDelegate("UserName")
-
   var password: String? by PropertyDelegate("Password")
-
   var url: String? by PropertyDelegate("URL")
-
   var title: String? by PropertyDelegate("Title")
-
-  var notes: String? by PropertyDelegate("Notes")
 
   var icon: Icon?
     get() = DomIconWrapper(element.getChild(ICON_ELEMENT_NAME)!!)
@@ -71,30 +62,6 @@ class KdbxEntry(val element: Element, internal val database: KeePassDatabase) {
       touch()
       database.isDirty = true
     }
-
-  val lastAccessTime: Date
-    get() = getTime(LAST_ACCESS_TIME_ELEMENT_NAME)
-
-  val creationTime: Date
-    get() = getTime(CREATION_TIME_ELEMENT_NAME)
-
-  val expiryTime: Date
-    get() = getTime(EXPIRY_TIME_ELEMENT_NAME)
-
-  val lastModificationTime: Date
-    get() = getTime(LAST_MODIFICATION_TIME_ELEMENT_NAME)
-
-  private fun getTime(name: String): Date {
-    element.getChildText(name)?.let {
-      try {
-        dateFormatter.parse(it)
-      }
-      catch (e: DateTimeParseException) {
-        return Date(0)
-      }
-    }
-    return Date(0)
-  }
 
   private fun getPropertyContainer(name: String): Element? {
     for (element in element.getChildren("String")) {
@@ -122,18 +89,6 @@ class KdbxEntry(val element: Element, internal val database: KeePassDatabase) {
     result = 31 * result + database.hashCode()
     return result
   }
-
-  val path: String
-    get() {
-      val parent = this.parent
-      var result = ""
-      if (parent != null) {
-        result = parent.path
-      }
-      return result + title
-    }
-
-  override fun toString() = this.path
 }
 
 private class PropertyDelegate(private val name: String) {

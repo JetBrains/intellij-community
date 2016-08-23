@@ -1,28 +1,31 @@
 package com.intellij.credentialStore.kdbx
 
+import com.intellij.util.get
 import com.intellij.util.getOrCreate
 import org.jdom.Element
 import org.jdom.xpath.XPath
+import org.linguafranca.pwdb.kdbx.KdbxSerializer
 import java.io.OutputStream
 import java.nio.ByteBuffer
 import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.*
 
-private const val LOCATION_CHANGED = "Times/LocationChanged"
-private const val USAGE_COUNT_ELEMENT_NAME = "Times/UsageCount"
-private const val EXPIRES_ELEMENT_NAME = "Times/Expires"
-private const val TIMES_ELEMENT_NAME = "Times"
+internal const val LOCATION_CHANGED = "Times/LocationChanged"
+internal const val USAGE_COUNT_ELEMENT_NAME = "Times/UsageCount"
+internal const val EXPIRES_ELEMENT_NAME = "Times/Expires"
 internal const val GROUP_ELEMENT_NAME = "Group"
 internal const val ENTRY_ELEMENT_NAME = "Entry"
 internal const val ICON_ELEMENT_NAME = "IconID"
 internal const val UUID_ELEMENT_NAME = "UUID"
 internal const val NAME_ELEMENT_NAME = "Name"
-private const val NOTES_ELEMENT_NAME = "Notes"
 internal const val LAST_MODIFICATION_TIME_ELEMENT_NAME = "Times/LastModificationTime"
 internal const val CREATION_TIME_ELEMENT_NAME = "Times/CreationTime"
 internal const val LAST_ACCESS_TIME_ELEMENT_NAME = "Times/LastAccessTime"
 internal const val EXPIRY_TIME_ELEMENT_NAME = "Times/ExpiryTime"
+
+private const val ROOT_ELEMENT_NAME = "Root"
 
 internal var dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
 
@@ -33,38 +36,30 @@ class KeePassDatabase(private val rootElement: Element = createEmptyDatabase()) 
   @Volatile var isDirty: Boolean = false
     internal set
 
-  var name: String?
-    get() = dbMeta.getChildText("DatabaseName")
-    set(name) {
-      dbMeta.getOrCreate("DatabaseName").text = name
-      dbMeta.getOrCreate("DatabaseNameChanged").text = formattedNow()
-      isDirty = true
+  val rootGroup: KdbxGroup
+
+  init {
+    val rootElement = rootElement.get(ROOT_ELEMENT_NAME)
+    val groupElement = rootElement?.get("Group")
+    if (groupElement == null) {
+      rootGroup = createGroup(this, null)
+      rootGroup.name = ROOT_ELEMENT_NAME
     }
+    else {
+      rootElement!!.removeChild("Group")
+      rootGroup = KdbxGroup(groupElement, this, null)
+    }
+  }
 
   fun save(credentials: KeePassCredentials, outputStream: OutputStream) {
-    KdbxStreamFormat().save(rootElement, credentials, outputStream)
+    val element = rootElement.clone()
+    element.getOrCreate(ROOT_ELEMENT_NAME).addContent(rootGroup.toXml())
+    val kdbxHeader = KdbxHeader()
+    KdbxSerializer.createEncryptedOutputStream(credentials, kdbxHeader, outputStream).use {
+      element.getOrCreate("HeaderHash").text = Base64.getEncoder().encodeToString(kdbxHeader.headerHash)
+      save(element, it, Salsa20Encryption(kdbxHeader.protectedStreamKey))
+    }
     isDirty = false
-  }
-
-  fun save(streamFormat: KdbxStreamFormat, credentials: KeePassCredentials, outputStream: OutputStream) {
-    streamFormat.save(rootElement, credentials, outputStream)
-    isDirty = false
-  }
-
-//  fun shouldProtect(name: String): Boolean {
-//    val protectionElement = DomHelper.getElement("MemoryProtection/Protect$name", dbMeta, false) ?: return false
-//    return protectionElement.textContent.toBoolean()
-//  }
-
-  val rootGroup: KdbxGroup
-    get() = KdbxGroup(rootElement.getChild("Root").getChild("Group"), this)
-
-  fun createGroup(name: String): KdbxGroup {
-    val element = Element(GROUP_ELEMENT_NAME)
-    ensureElements(element, mandatoryGroupElements)
-    val result = KdbxGroup(element, this)
-    result.name = name
-    return result
   }
 
   fun createEntry(title: String): KdbxEntry {
@@ -110,12 +105,11 @@ class DomIconWrapper(private val element: Element) : Icon {
   override fun hashCode() = index
 }
 
-private val mandatoryEntryElements: Map<String, ValueCreator> = mapOf (
+private val mandatoryEntryElements: Map<String, ValueCreator> = linkedMapOf (
     UUID_ELEMENT_NAME to UuidValueCreator(),
     ICON_ELEMENT_NAME to ConstantValueCreator("0"),
-    TIMES_ELEMENT_NAME to ConstantValueCreator(""),
-    LAST_MODIFICATION_TIME_ELEMENT_NAME to DateValueCreator(),
     CREATION_TIME_ELEMENT_NAME to DateValueCreator(),
+    LAST_MODIFICATION_TIME_ELEMENT_NAME to DateValueCreator(),
     LAST_ACCESS_TIME_ELEMENT_NAME to DateValueCreator(),
     EXPIRY_TIME_ELEMENT_NAME to DateValueCreator(),
     EXPIRES_ELEMENT_NAME to  ConstantValueCreator("False"),
@@ -123,22 +117,7 @@ private val mandatoryEntryElements: Map<String, ValueCreator> = mapOf (
     LOCATION_CHANGED to DateValueCreator()
 )
 
-private val mandatoryGroupElements: Map<String, ValueCreator> = mapOf (
-    UUID_ELEMENT_NAME to UuidValueCreator(),
-    NAME_ELEMENT_NAME to ConstantValueCreator(""),
-    NOTES_ELEMENT_NAME to ConstantValueCreator(""),
-    ICON_ELEMENT_NAME to ConstantValueCreator("0"),
-    TIMES_ELEMENT_NAME to ConstantValueCreator(""),
-    LAST_MODIFICATION_TIME_ELEMENT_NAME to DateValueCreator(),
-    CREATION_TIME_ELEMENT_NAME to DateValueCreator(),
-    LAST_ACCESS_TIME_ELEMENT_NAME to DateValueCreator(),
-    EXPIRY_TIME_ELEMENT_NAME to DateValueCreator(),
-    EXPIRES_ELEMENT_NAME to ConstantValueCreator("False"),
-    USAGE_COUNT_ELEMENT_NAME to ConstantValueCreator("0"),
-    LOCATION_CHANGED to DateValueCreator()
-)
-
-private fun ensureElements(element: Element, childElements: Map<String, ValueCreator>) {
+internal fun ensureElements(element: Element, childElements: Map<String, ValueCreator>) {
   for ((elementPath, value) in childElements) {
     var result = XPath.newInstance(elementPath).selectSingleNode(element)
     if (result == null) {
@@ -156,7 +135,7 @@ private fun createHierarchically(elementPath: String, startElement: Element): El
   return currentElement
 }
 
-internal fun formattedNow() = LocalDateTime.now().format(dateFormatter)
+internal fun formattedNow() = LocalDateTime.now(ZoneOffset.UTC).format(dateFormatter)
 
 interface ValueCreator {
   val value: String

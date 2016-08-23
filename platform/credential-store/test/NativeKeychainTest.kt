@@ -3,6 +3,7 @@ package com.intellij.credentialStore.linux
 import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.CredentialStore
 import com.intellij.credentialStore.Credentials
+import com.intellij.credentialStore.FileCredentialStore
 import com.intellij.credentialStore.macOs.KeyChainCredentialStore
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.UsefulTestCase
@@ -48,6 +49,11 @@ class NativeKeychainTest {
     }
 
     testEmptyAccountName(SecretCredentialStore("com.intellij.test"))
+  }
+
+  @Test
+  fun `keepass - testEmptyAccountName`() {
+    testEmptyAccountName(FileCredentialStore())
   }
 
   private fun doTest(store: CredentialStore) {
