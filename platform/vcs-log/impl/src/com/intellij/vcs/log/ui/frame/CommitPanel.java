@@ -26,6 +26,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.UI;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.HtmlPanel;
@@ -499,6 +500,7 @@ class CommitPanel extends JBPanel {
       removeAll();
       int height =
         getFontMetrics(getCommitDetailsFont()).getHeight() + PADDING;
+      JBLabel firstLabel = null;
       for (Map.Entry<VcsRefType, Collection<VcsRef>> typeAndRefs : ContainerUtil.groupBy(myReferences, VcsRef::getType).entrySet()) {
         VcsRefType type = typeAndRefs.getKey();
         int index = 0;
@@ -515,7 +517,15 @@ class CommitPanel extends JBPanel {
           label.setFont(getCommitDetailsFont());
           label.setIconTextGap(0);
           label.setHorizontalAlignment(SwingConstants.LEFT);
-          add(label);
+          if (firstLabel == null) {
+            firstLabel = label;
+            add(label);
+          }
+          else {
+            Wrapper wrapper = new Wrapper(label);
+            wrapper.setVerticalSizeReferent(firstLabel);
+            add(wrapper);
+          }
           index++;
         }
       }
