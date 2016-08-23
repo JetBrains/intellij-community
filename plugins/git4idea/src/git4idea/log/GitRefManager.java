@@ -163,8 +163,27 @@ public class GitRefManager implements VcsLogRefManager {
 
     VcsRef firstRef = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(firstGroup.getValue()));
     VcsRefType firstRefType = firstGroup.getKey();
+    String name = firstRefType.isBranch() && !firstRefType.equals(HEAD) ? firstRef.getName() : "";
 
-    groups.add(new TableRefGroup(firstRefType.isBranch() && !firstRefType.equals(HEAD) ? firstRef.getName() : "", sortedReferences));
+    if (firstRefType.equals(LOCAL_BRANCH)) {
+      GitRepository repository = myRepositoryManager.getRepositoryForRoot(firstRef.getRoot());
+      if (repository == null) {
+        LOG.warn("No repository for root: " + firstRef.getRoot());
+      }
+      else {
+        GitBranchTrackInfo trackInfo =
+          ContainerUtil.find(repository.getBranchTrackInfos(), info -> info.getLocalBranch().getName().equals(firstRef.getName()));
+        if (trackInfo != null) {
+          VcsRef trackedRef = ContainerUtil
+            .find(references, ref -> ref.getType().equals(REMOTE_BRANCH) && ref.getName().equals(trackInfo.getRemoteBranch().getName()));
+          if (trackedRef != null) {
+            name = trackInfo.getRemote().getName() + "&" + firstRef.getName();
+          }
+        }
+      }
+    }
+
+    groups.add(new TableRefGroup(name, sortedReferences));
 
     return groups;
   }
