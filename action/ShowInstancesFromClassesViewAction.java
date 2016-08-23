@@ -8,7 +8,7 @@ import org.jetbrains.debugger.memory.view.InstancesWindow;
 public class ShowInstancesFromClassesViewAction extends ClassesActionBase {
   @Override
   protected boolean isEnabled(AnActionEvent e) {
-    return super.isEnabled(e);
+    return super.isEnabled(e) && getSelectedClass(e) != null ;
   }
 
   @Override
