@@ -17,7 +17,7 @@ class Test {
   }
 
   @NotNull
-  private static <T> T notNull(@Nullable T <warning descr="Method fails when parameter 'value' is 'null'">value</warning>) {
+  private static <T> T notNull(@Nullable T value) {
 
     if (value == null) {
       throw new RuntimeException("null");
