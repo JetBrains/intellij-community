@@ -106,13 +106,16 @@ public abstract class CCTestCase extends CodeInsightFixtureTestCase {
     });
   }
 
+  protected VirtualFile copyFileToTask(String name) {
+    return myFixture.copyFileToProject(name, FileUtil.join(getProject().getBasePath(), "lesson1", "task1", name));
+  }
+
   protected VirtualFile configureByTaskFile(String name) {
     Task task = StudyTaskManager.getInstance(getProject()).getCourse().getLessons().get(0).getTaskList().get(0);
     TaskFile taskFile = new TaskFile();
     taskFile.setTask(task);
     task.getTaskFiles().put(name, taskFile);
-    VirtualFile file =
-      myFixture.copyFileToProject(name, FileUtil.join(getProject().getBasePath(), "lesson1", "task1", name));
+    VirtualFile file = copyFileToTask(name);
     myFixture.configureFromExistingVirtualFile(file);
     Document document = FileDocumentManager.getInstance().getDocument(file);
     for (AnswerPlaceholder placeholder : getPlaceholders(document, false)) {
