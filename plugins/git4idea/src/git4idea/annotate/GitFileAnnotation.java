@@ -15,38 +15,25 @@
  */
 package git4idea.annotate;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.history.VcsRevisionDescription;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitCommit;
+import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitVcs;
-import git4idea.config.GitVersionSpecialty;
-import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 public class GitFileAnnotation extends FileAnnotation {
-
-  private static final Logger LOG = Logger.getInstance(GitFileAnnotation.class);
   private final Project myProject;
   @NotNull private final VirtualFile myFile;
   @NotNull private final GitVcs myVcs;
@@ -54,12 +41,12 @@ public class GitFileAnnotation extends FileAnnotation {
 
   @NotNull private final String myAnnotatedContent;
   @NotNull private final List<LineInfo> myLines;
-  @NotNull private final List<VcsRevisionDescription> myRevisions;
+  @NotNull private final List<VcsFileRevision> myRevisions;
 
   private final LineAnnotationAspect DATE_ASPECT = new GitAnnotationAspect(LineAnnotationAspect.DATE, true) {
     @Override
     public String doGetValue(LineInfo info) {
-      final Date date = info.getRevisionDate();
+      final Date date = info.getDate();
       return date == null ? "" : DateFormatUtil.formatPrettyDate(date);
     }
   };
@@ -67,7 +54,7 @@ public class GitFileAnnotation extends FileAnnotation {
   private final LineAnnotationAspect REVISION_ASPECT = new GitAnnotationAspect(LineAnnotationAspect.REVISION, false) {
     @Override
     protected String doGetValue(LineInfo lineInfo) {
-      final GitRevisionNumber revision = lineInfo.getRevisionNumber();
+      final GitRevisionNumber revision = lineInfo.getRevision();
       return revision == null ? "" : String.valueOf(revision.getShortRev());
     }
   };
@@ -84,7 +71,8 @@ public class GitFileAnnotation extends FileAnnotation {
                            @NotNull VirtualFile file,
                            @Nullable final VcsRevisionNumber revision,
                            @NotNull String annotatedContent,
-                           @NotNull List<LineInfo> lines) {
+                           @NotNull List<LineInfo> lines,
+                           @NotNull List<VcsFileRevision> revisions) {
     super(project);
     myProject = project;
     myFile = file;
@@ -93,19 +81,7 @@ public class GitFileAnnotation extends FileAnnotation {
 
     myAnnotatedContent = annotatedContent;
     myLines = lines;
-    THashSet<VcsRevisionDescription> descriptions = new THashSet<>(lines, new TObjectHashingStrategy<VcsRevisionDescription>() {
-      @Override
-      public int computeHashCode(VcsRevisionDescription object) {
-        return object.getRevisionNumber().asString().hashCode();
-      }
-
-      @Override
-      public boolean equals(VcsRevisionDescription o1, VcsRevisionDescription o2) {
-        return o1.getRevisionNumber().compareTo(o2.getRevisionNumber()) == 0;
-      }
-    });
-    myRevisions = new ArrayList<>(descriptions);
-    myRevisions.sort((o1, o2) -> o2.getRevisionDate().compareTo(o1.getRevisionDate()));
+    myRevisions = revisions;
   }
 
   @Override
@@ -123,33 +99,16 @@ public class GitFileAnnotation extends FileAnnotation {
       return "";
     }
     final LineInfo info = myLines.get(lineNumber);
-    return GitBundle.message("annotation.tool.tip", info.getRevisionNumber().asString(), info.getAuthor(),
-                             DateFormatUtil.formatDateTime(info.getRevisionDate()));
+    VcsFileRevision fileRevision = info.myFileRevision;
+    if (fileRevision != null) {
+      return GitBundle.message("annotation.tool.tip", info.getRevision().asString(), info.getAuthor(),
+                               DateFormatUtil.formatDateTime(info.getDate()), fileRevision.getCommitMessage());
+    }
+    else {
+      return "";
+    }
   }
 
-  @Nullable
-  @Override
-  public Computable<String> getToolTipAsync(int lineNumber) {
-    VcsRevisionNumber number = getLineRevisionNumber(lineNumber);
-    if (number == null) return null;
-    VirtualFile rootFor = VcsUtil.getVcsRootFor(myProject, myFile);
-    if (rootFor == null) return null;
-    String noWalk = GitVersionSpecialty.NO_WALK_UNSORTED.existsIn(myVcs.getVersion()) ? "--no-walk=unsorted" : "--no-walk";
-
-    return () -> {
-      try {
-        List<GitCommit> commits = GitHistoryUtils.history(myProject, rootFor, noWalk, number.asString());
-        GitCommit item = ContainerUtil.getLastItem(commits);
-        return item == null ? "" : getToolTip(lineNumber) + "\n\n" + item.getFullMessage();
-      }
-      catch (VcsException e) {
-        LOG.error(e);
-        return null;
-      }
-    };
-  }
-
-  @NotNull
   @Override
   public String getAnnotatedContent() {
     return myAnnotatedContent;
@@ -157,11 +116,6 @@ public class GitFileAnnotation extends FileAnnotation {
 
   @Override
   public List<VcsFileRevision> getRevisions() {
-    return null;
-  }
-
-  @Override
-  public List<? extends VcsRevisionDescription> getRevisionDescriptions() {
     return myRevisions;
   }
 
@@ -185,7 +139,7 @@ public class GitFileAnnotation extends FileAnnotation {
     if (lineNumberCheck(lineNumber)) {
       return null;
     }
-    return myLines.get(lineNumber).getRevisionNumber();
+    return myLines.get(lineNumber).getRevision();
   }
 
   private boolean lineNumberCheck(int lineNumber) {
@@ -197,7 +151,7 @@ public class GitFileAnnotation extends FileAnnotation {
     if (lineNumberCheck(lineNumber)) {
       return null;
     }
-    return myLines.get(lineNumber).getRevisionDate();
+    return myLines.get(lineNumber).getDate();
   }
 
   /**
@@ -236,7 +190,7 @@ public class GitFileAnnotation extends FileAnnotation {
     protected void showAffectedPaths(int lineNum) {
       if (lineNum >= 0 && lineNum < myLines.size()) {
         LineInfo info = myLines.get(lineNum);
-        ShowAllAffectedGenericAction.showSubmittedFiles(myProject, info.getRevisionNumber(), myFile, GitVcs.getKey());
+        ShowAllAffectedGenericAction.showSubmittedFiles(myProject, info.getRevision(), myFile, GitVcs.getKey());
       }
     }
   }
@@ -244,33 +198,29 @@ public class GitFileAnnotation extends FileAnnotation {
   /**
    * Line information
    */
-  static class LineInfo implements VcsRevisionDescription {
+  static class LineInfo {
     private final Date myDate;
     private final GitRevisionNumber myRevision;
+    private final GitFileRevision myFileRevision;
     private final String myAuthor;
 
-    public LineInfo(Date date, GitRevisionNumber revision, String author) {
+    public LineInfo(Date date, GitRevisionNumber revision, GitFileRevision fileRevision, String author) {
       myDate = date;
       myRevision = revision;
+      myFileRevision = fileRevision;
       myAuthor = author;
     }
 
-    public Date getRevisionDate() {
+    public Date getDate() {
       return myDate;
     }
 
-    public GitRevisionNumber getRevisionNumber() {
+    public GitRevisionNumber getRevision() {
       return myRevision;
     }
 
     public String getAuthor() {
       return myAuthor;
-    }
-
-    @Nullable
-    @Override
-    public String getCommitMessage() {
-      return null;
     }
   }
 

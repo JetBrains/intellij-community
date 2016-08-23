@@ -16,11 +16,9 @@
 package com.intellij.openapi.vcs.annotate;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.history.VcsRevisionDescription;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
@@ -66,11 +64,6 @@ public abstract class FileAnnotation {
   @Nullable
   public abstract String getToolTip(int lineNumber);
 
-  @Nullable
-  public Computable<String> getToolTipAsync(int lineNumber) {
-    return null;
-  }
-
   /**
    * @return the text of the annotated file
    */
@@ -113,10 +106,6 @@ public abstract class FileAnnotation {
    */
   @Nullable
   public abstract List<VcsFileRevision> getRevisions();
-
-  public List<? extends VcsRevisionDescription> getRevisionDescriptions() {
-    return getRevisions();
-  }
 
   public abstract boolean revisionsNotEmpty();
 

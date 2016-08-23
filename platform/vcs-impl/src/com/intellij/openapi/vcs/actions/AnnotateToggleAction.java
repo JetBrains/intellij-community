@@ -32,7 +32,7 @@ import com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider;
 import com.intellij.openapi.vcs.annotate.AnnotationSourceSwitcher;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
-import com.intellij.openapi.vcs.history.VcsRevisionDescription;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -186,11 +186,11 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
   @Nullable
   private static Map<VcsRevisionNumber, Integer> computeLineNumbers(@NotNull FileAnnotation fileAnnotation) {
     final Map<VcsRevisionNumber, Integer> numbers = new HashMap<>();
-    final List<? extends VcsRevisionDescription> fileRevisionList = fileAnnotation.getRevisionDescriptions();
+    final List<VcsFileRevision> fileRevisionList = fileAnnotation.getRevisions();
     if (fileRevisionList != null) {
       int size = fileRevisionList.size();
       for (int i = 0; i < size; i++) {
-        VcsRevisionDescription revision = fileRevisionList.get(i);
+        VcsFileRevision revision = fileRevisionList.get(i);
         final VcsRevisionNumber number = revision.getRevisionNumber();
 
         numbers.put(number, size - i);
@@ -201,7 +201,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
 
   @Nullable
   private static Couple<Map<VcsRevisionNumber, Color>> computeBgColors(@NotNull FileAnnotation fileAnnotation, @NotNull Editor editor) {
-    final List<? extends VcsRevisionDescription> fileRevisionList = fileAnnotation.getRevisionDescriptions();
+    final List<VcsFileRevision> fileRevisionList = fileAnnotation.getRevisions();
     if (ContainerUtil.isEmpty(fileRevisionList)) return null;
 
     final Map<VcsRevisionNumber, Color> commitOrderColors = new HashMap<>();
@@ -215,7 +215,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     final int revisionsCount = fileRevisionList.size();
 
     for (int i = 0; i < fileRevisionList.size(); i++) {
-      VcsRevisionDescription revision = fileRevisionList.get(i);
+      VcsFileRevision revision = fileRevisionList.get(i);
       final VcsRevisionNumber number = revision.getRevisionNumber();
       final String author = revision.getAuthor();
       if (number == null) continue;
