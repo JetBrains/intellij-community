@@ -112,7 +112,7 @@ internal class FileCredentialStore(keyToValue: Map<CredentialAttributes, Credent
     if (password == null) {
       // try old key - as hash
       val oldAttributes = toOldKey(requestor, accountName)
-      val credentials = db.rootGroup.getGroup(GROUP_NAME)?.removeEntry(oldAttributes.serviceName, oldAttributes.accountName!!)
+      val credentials = db.rootGroup.getGroup(GROUP_NAME)?.removeEntry(oldAttributes.serviceName, oldAttributes.userName!!)
       if (credentials != null) {
         set(CredentialAttributes(requestor, accountName), Credentials(accountName, credentials.password))
         return credentials.password
@@ -122,16 +122,16 @@ internal class FileCredentialStore(keyToValue: Map<CredentialAttributes, Credent
   }
 
   override fun get(attributes: CredentialAttributes): Credentials? {
-    val entry = db.rootGroup.getGroup(GROUP_NAME)?.getEntry(attributes.serviceName, attributes.accountName) ?: return null
+    val entry = db.rootGroup.getGroup(GROUP_NAME)?.getEntry(attributes.serviceName, attributes.userName) ?: return null
     return Credentials(entry.userName, entry.password)
   }
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
     if (credentials == null) {
-      db.rootGroup.getGroup(GROUP_NAME)?.removeEntry(attributes.serviceName, attributes.accountName)
+      db.rootGroup.getGroup(GROUP_NAME)?.removeEntry(attributes.serviceName, attributes.userName)
     }
     else {
-      db.rootGroup.getOrCreateGroup(GROUP_NAME).getOrCreateEntry(attributes.serviceName, attributes.accountName ?: credentials.userName).password = credentials.password
+      db.rootGroup.getOrCreateGroup(GROUP_NAME).getOrCreateEntry(attributes.serviceName, attributes.userName ?: credentials.userName).password = credentials.password
     }
 
     if (db.isDirty) {

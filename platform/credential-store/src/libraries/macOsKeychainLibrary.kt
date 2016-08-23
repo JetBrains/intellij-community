@@ -37,17 +37,17 @@ private const val kSecAccountItemAttr = (('a'.toInt() shl 8 or 'c'.toInt()) shl 
 
 internal class KeyChainCredentialStore() : CredentialStore {
   override fun get(attributes: CredentialAttributes): Credentials? {
-    return findGenericPassword(attributes.serviceName.toByteArray(), attributes.accountName)
+    return findGenericPassword(attributes.serviceName.toByteArray(), attributes.userName)
   }
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
     if (credentials.isEmpty()) {
-      deleteGenericPassword(attributes.serviceName.toByteArray(), attributes.accountName!!)
+      deleteGenericPassword(attributes.serviceName.toByteArray(), attributes.userName!!)
       return
     }
 
     val password = credentials!!.password!!.toByteArray()
-    saveGenericPassword(attributes.serviceName.toByteArray(), attributes.accountName ?: credentials.userName, password, password.size)
+    saveGenericPassword(attributes.serviceName.toByteArray(), attributes.userName ?: credentials.userName, password, password.size)
     password.fill(0)
   }
 }

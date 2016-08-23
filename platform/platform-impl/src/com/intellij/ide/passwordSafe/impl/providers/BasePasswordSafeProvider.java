@@ -33,7 +33,7 @@ public abstract class BasePasswordSafeProvider implements PasswordStorage {
     byte[] masterKey = key();
     byte[] encryptedPassword = getEncryptedPassword(EncryptionUtil.encryptKey(masterKey, EncryptionUtil.rawKey(attributes)));
     String password = encryptedPassword == null ? null : EncryptionUtil.decryptText(masterKey, encryptedPassword);
-    return password == null ? null : new Credentials(attributes.getAccountName(), password);
+    return password == null ? null : new Credentials(attributes.getUserName(), password);
   }
 
   protected abstract byte[] getEncryptedPassword(@NotNull byte[] key);

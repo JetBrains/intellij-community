@@ -101,7 +101,7 @@ internal fun convertOldDb(oldKey: String, @Suppress("DEPRECATION") db: PasswordD
 
     // in old db we cannot get key value - it is hashed, so, we store it as a base64 encoded in the new DB
     val attributes = toOldKeyAsIdentity(EncryptionUtil.decryptKey(oldKeyB, key.unwrap()))
-    newDb.put(attributes, Credentials(attributes.accountName, EncryptionUtil.decryptText(oldKeyB, value)))
+    newDb.put(attributes, Credentials(attributes.userName, EncryptionUtil.decryptText(oldKeyB, value)))
   }
   return newDb
 }

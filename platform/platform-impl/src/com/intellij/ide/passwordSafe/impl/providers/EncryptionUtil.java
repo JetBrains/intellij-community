@@ -76,7 +76,7 @@ public class EncryptionUtil {
   }
 
   static byte[] rawKey(@NotNull CredentialAttributes attributes) {
-    return hash(getUTF8Bytes(attributes.getServiceName() + "/" + attributes.getAccountName()));
+    return hash(getUTF8Bytes(attributes.getServiceName() + "/" + attributes.getUserName()));
   }
 
   /**
