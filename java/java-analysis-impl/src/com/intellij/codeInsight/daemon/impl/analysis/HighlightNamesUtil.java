@@ -111,21 +111,12 @@ public class HighlightNamesUtil {
 
   @NotNull
   static HighlightInfo highlightClassName(@Nullable PsiClass aClass, @NotNull PsiElement elementToHighlight, @NotNull TextAttributesScheme colorsScheme) {
-    HighlightInfoType type = getClassNameHighlightType(aClass, elementToHighlight);
-    TextAttributes attributes = mergeWithScopeAttributes(aClass, type, colorsScheme);
     TextRange range = elementToHighlight.getTextRange();
     if (elementToHighlight instanceof PsiJavaCodeReferenceElement) {
       final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)elementToHighlight;
-      PsiReferenceParameterList parameterList = referenceElement.getParameterList();
-      if (parameterList != null) {
-        TextRange paramListRange = parameterList.getTextRange();
-        PsiElement identifier = PsiTreeUtil.skipSiblingsBackward(parameterList, PsiWhiteSpace.class, PsiComment.class); // e.g. " List    <String>";
-        if (identifier != null) {
-          paramListRange = new TextRange(identifier.getTextRange().getEndOffset(), paramListRange.getEndOffset());
-        }
-        if (!paramListRange.isEmpty()) {
-          range = new TextRange(range.getStartOffset(), paramListRange.getStartOffset());
-        }
+      PsiElement identifier = referenceElement.getReferenceNameElement();
+      if (identifier != null) {
+        range = identifier.getTextRange();
       }
     }
 
@@ -136,12 +127,13 @@ public class HighlightNamesUtil {
       range = new TextRange(psiAnnotation.getTextRange().getStartOffset(), range.getEndOffset());
     }
 
+    HighlightInfoType type = getClassNameHighlightType(aClass, elementToHighlight);
+    TextAttributes attributes = mergeWithScopeAttributes(aClass, type, colorsScheme);
     HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(type).range(range);
     if (attributes != null) {
       builder.textAttributes(attributes);
     }
-    HighlightInfo info = builder.createUnconditionally();
-    return info;
+    return builder.createUnconditionally();
   }
 
   @Nullable
@@ -315,5 +307,33 @@ public class HighlightNamesUtil {
     }
     if (node != null) return node.getTextRange().getStartOffset();
     return textRange.getStartOffset();
+  }
+
+  static HighlightInfo highlightPackage(@NotNull PsiElement resolved, @NotNull PsiJavaCodeReferenceElement elementToHighlight, @NotNull TextAttributesScheme scheme) {
+    PsiElement referenceNameElement = elementToHighlight.getReferenceNameElement();
+    TextRange range;
+    if (referenceNameElement == null) {
+      range = elementToHighlight.getTextRange();
+    }
+    else {
+      PsiElement nextSibling = PsiTreeUtil.nextLeaf(referenceNameElement);
+      if (nextSibling != null && nextSibling.getTextRange().isEmpty()) {
+        // empty PsiReferenceParameterList
+        nextSibling = PsiTreeUtil.nextLeaf(nextSibling);
+      }
+      if (nextSibling instanceof PsiJavaToken && ((PsiJavaToken)nextSibling).getTokenType() == JavaTokenType.DOT) {
+        range = new TextRange(referenceNameElement.getTextRange().getStartOffset(), nextSibling.getTextRange().getEndOffset());
+      }
+      else {
+        range = referenceNameElement.getTextRange();
+      }
+    }
+    HighlightInfoType type = JavaHighlightInfoTypes.CLASS_NAME;
+    TextAttributes attributes = mergeWithScopeAttributes(resolved, type, scheme);
+    HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(type).range(range);
+    if (attributes != null) {
+      builder.textAttributes(attributes);
+    }
+    return builder.createUnconditionally();
   }
 }
