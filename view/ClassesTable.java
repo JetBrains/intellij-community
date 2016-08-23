@@ -143,11 +143,16 @@ public class ClassesTable extends JBTable implements DataProvider {
     }
   }
 
-  void setClasses(@NotNull List<ReferenceType> classes) {
+  void setClassesAndUpdateCounts(@NotNull List<ReferenceType> classes, @NotNull long[] counts) {
+    assert classes.size() == counts.length;
     ReferenceType selectedClass = myModel.getSelectedClassBeforeHided();
-    final int newSelectedIndex = classes.indexOf(selectedClass);
+    int newSelectedIndex = classes.indexOf(selectedClass);
     myElems = Collections.unmodifiableList(new ArrayList<>(classes));
-    myCounts.values().forEach(DiffValue::makeObsolete);
+
+    for (int i = 0, size = classes.size(); i < size; i++) {
+      ReferenceType ref = classes.get(i);
+      myCounts.put(ref, myCounts.getOrDefault(ref, myUnknownValue).update(counts[i]));
+    }
 
     showContent();
 
@@ -156,15 +161,6 @@ public class ClassesTable extends JBTable implements DataProvider {
       changeSelection(ix,
           DiffViewTableModel.CLASSNAME_COLUMN_INDEX, false, false);
     }
-  }
-
-  void updateInstanceCounts(@NotNull List<ReferenceType> refs, @NotNull long[] counts) {
-    for (int i = 0, size = refs.size(); i < size; i++) {
-      ReferenceType ref = refs.get(i);
-      myCounts.put(ref, myCounts.getOrDefault(ref, myUnknownValue).update(counts[i]));
-    }
-
-    getRowSorter().allRowsChanged();
   }
 
   void hideContent() {
@@ -254,13 +250,10 @@ public class ClassesTable extends JBTable implements DataProvider {
    * State transmissions for DiffValue and UnknownDiffValue
    * unknown -> diff
    * diff -> diff
-   * diff -> obsolete
-   * obsolete -> diff
-   *
+   * <p>
    * State descriptions:
    * Unknown - instances count never executed
    * Diff - actual value
-   * Obsolete - query for updating value is executing right now
    */
   private static class UnknownDiffValue extends DiffValue {
     UnknownDiffValue() {
@@ -273,15 +266,6 @@ public class ClassesTable extends JBTable implements DataProvider {
     }
 
     @Override
-    boolean isObsolete() {
-      return true;
-    }
-
-    @Override
-    void makeObsolete() {
-    }
-
-    @Override
     DiffValue update(long count) {
       return new DiffValue(count);
     }
@@ -290,7 +274,6 @@ public class ClassesTable extends JBTable implements DataProvider {
   private static class DiffValue {
     private long myOldCount;
     private long myCurrentCount;
-    private boolean myIsObsolete = false;
 
     DiffValue(long count) {
       this(count, count);
@@ -303,17 +286,8 @@ public class ClassesTable extends JBTable implements DataProvider {
 
     DiffValue update(long count) {
       myOldCount = myCurrentCount;
-      myIsObsolete = false;
       myCurrentCount = count;
       return this;
-    }
-
-    void makeObsolete() {
-      myIsObsolete = true;
-    }
-
-    boolean isObsolete() {
-      return myIsObsolete;
     }
 
     boolean hasInstance() {
@@ -329,12 +303,12 @@ public class ClassesTable extends JBTable implements DataProvider {
     @Override
     protected void customizeCellRenderer(JTable table, @Nullable Object value,
                                          boolean selected, boolean hasFocus, int row, int column) {
-      int ix = convertRowIndexToModel(row);
-      if(myCounts.getOrDefault(myElems.get(ix), myUnknownValue).isObsolete() || value == null) {
+      if (value == null) {
         return;
       }
 
       long val = (long) value;
+      setTextAlign(SwingConstants.RIGHT);
       if (column == DiffViewTableModel.COUNT_COLUMN_INDEX) {
         renderCount(val);
       } else {
@@ -344,11 +318,11 @@ public class ClassesTable extends JBTable implements DataProvider {
 
     private void renderDiff(long diff) {
       append(String.format("%s%d", diff > 0 ? "+" : "", diff));
-      setTextAlign(SwingConstants.RIGHT);
     }
 
     private void renderCount(long count) {
       append(String.valueOf(count));
+
     }
   }
 

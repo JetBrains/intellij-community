@@ -196,15 +196,13 @@ public class ClassesFilteredView extends BorderLayoutPanel {
 
     @Override
     public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
-      myDebugProcess.getVirtualMachineProxy();
-      List<ReferenceType> classes = myDebugProcess.getVirtualMachineProxy().allClasses();
+      final List<ReferenceType> classes = myDebugProcess.getVirtualMachineProxy().allClasses();
 
       if (classes.isEmpty()) {
         return;
       }
 
       VirtualMachine vm = classes.get(0).virtualMachine();
-      SwingUtilities.invokeAndWait(() -> myTable.setClasses(classes));
       int batchSize = AndroidUtil.isAndroidVM(vm)
           ? AndroidUtil.ANDROID_INSTANCES_COUNT_BATCH_SIZE
           : DEFAULT_BATCH_SIZE;
@@ -214,10 +212,10 @@ public class ClassesFilteredView extends BorderLayoutPanel {
       for (int begin = 0, end = Math.min(batchSize, size);
            begin != size && contextIsValid();
            begin = end, end = Math.min(end + batchSize, size)) {
-        final List<ReferenceType> batch = classes.subList(begin, end);
+        List<ReferenceType> batch = classes.subList(begin, end);
 
         long start = System.nanoTime();
-        final long[] counts = vm.instanceCounts(batch);
+        long[] counts = vm.instanceCounts(batch);
         long delay = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
 
         chunks.add(counts);
@@ -226,12 +224,12 @@ public class ClassesFilteredView extends BorderLayoutPanel {
         LOG.info(String.format("Instances query time = %d ms. Count = %d", delay, batch.size()));
       }
 
-      long[] counts = chunks.size() == 1 ? chunks.get(0) : IntStream.range(0, chunks.size()).boxed()
+      final long[] counts = chunks.size() == 1 ? chunks.get(0) : IntStream.range(0, chunks.size()).boxed()
           .flatMapToLong(integer -> Arrays.stream(chunks.get(integer)))
           .toArray();
 
       SwingUtilities.invokeLater(() -> {
-        myTable.updateInstanceCounts(classes, counts);
+        myTable.setClassesAndUpdateCounts(classes, counts);
         myTable.setBusy(false);
       });
     }
