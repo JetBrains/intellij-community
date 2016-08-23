@@ -19,6 +19,9 @@ import com.intellij.credentialStore.linux.SecretCredentialStore
 import com.intellij.credentialStore.macOs.KeyChainCredentialStore
 import com.intellij.credentialStore.macOs.isMacOsCredentialStoreSupported
 import com.intellij.ide.passwordSafe.PasswordStorage
+import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationType
+import com.intellij.notification.SingletonNotificationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.util.SystemInfo
@@ -27,6 +30,11 @@ import com.intellij.util.concurrency.QueueProcessor
 import com.intellij.util.containers.ContainerUtil
 
 private val nullPassword = Credentials("\u0000", "\u0000")
+
+private val NOTIFICATION_MANAGER by lazy {
+  // we use name "Password Safe" instead of "Credentials Store" because it was named so previously (and no much sense to rename it)
+  SingletonNotificationManager(NotificationGroup.balloonGroup("Password Safe"), NotificationType.WARNING, null)
+}
 
 private class CredentialStoreWrapper(private val store: CredentialStore) : PasswordStorage {
   private val fallbackStore = lazy { FileCredentialStore(memoryOnly = true) }
@@ -78,6 +86,7 @@ private class CredentialStoreWrapper(private val store: CredentialStore) : Passw
     catch (e: UnsatisfiedLinkError) {
       store = fallbackStore.value
       LOG.error(e)
+      NOTIFICATION_MANAGER.notify("Native Keychain is not used", "Failed to use native keychain — credentials will be stored in memory (until application is closed).")
       return store.get(attributes)
     }
     catch (e: Throwable) {
