@@ -23,6 +23,7 @@ import com.intellij.util.ArrayFactory;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,6 +49,9 @@ public interface PyFunction extends PsiNamedElement, StubBasedPsiElement<PyFunct
    */
   @Nullable
   ASTNode getNameNode();
+
+  @Nullable
+  PyType getReturnStatementType(TypeEvalContext typeEvalContext);
 
   @Nullable
   PyType getReturnTypeFromDocString();

@@ -517,7 +517,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
     @Override
     public void visitPyReturnStatement(PyReturnStatement node) {
-      if (PsiTreeUtil.getParentOfType(node, ScopeOwner.class, true) == myFunction) {
+      if (ScopeUtil.getScopeOwner(node) == myFunction) {
         final PyExpression expr = node.getExpression();
         PyType returnType;
         returnType = expr == null ? PyNoneType.INSTANCE : myContext.getType(expr);

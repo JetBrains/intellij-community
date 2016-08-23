@@ -24,12 +24,12 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
+import com.jetbrains.python.inspections.quickfix.PyMakeFunctionReturnTypeQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.Nls;
@@ -103,8 +103,11 @@ public class PyTypeCheckerInspection extends PyInspection {
           if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
             final String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
             final String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
+            PyMakeFunctionReturnTypeQuickFix localQuickFix = new PyMakeFunctionReturnTypeQuickFix(function, actualName, myTypeEvalContext);
+            PyMakeFunctionReturnTypeQuickFix globalQuickFix = new PyMakeFunctionReturnTypeQuickFix(function, null, myTypeEvalContext);
             registerProblem(returnExpr != null ? returnExpr : node,
-                            String.format("Expected type '%s', got '%s' instead", expectedName, actualName));
+                            String.format("Expected type '%s', got '%s' instead", expectedName, actualName),
+                            localQuickFix, globalQuickFix);
           }
         }
       }
@@ -141,7 +144,7 @@ public class PyTypeCheckerInspection extends PyInspection {
 
       @Override
       public void visitPyReturnStatement(PyReturnStatement node) {
-        if (PsiTreeUtil.getParentOfType(node, ScopeOwner.class, true) == myFunction) {
+        if (ScopeUtil.getScopeOwner(node) == myFunction) {
           myHasReturns = true;
         }
       }
