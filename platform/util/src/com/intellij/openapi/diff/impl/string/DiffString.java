@@ -93,6 +93,22 @@ public class DiffString extends CharArrayCharSequence {
     System.arraycopy(myChars, myStart, dst, start, length());
   }
 
+  @Override
+  public boolean equals(@Nullable Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    DiffString that = (DiffString)o;
+
+    if (length() != that.length()) return false;
+    if (hashCode() != that.hashCode()) return false;
+    for (int i = 0; i < length(); i++) {
+      if (data(i) != that.data(i)) return false;
+    }
+
+    return true;
+  }
+
   @Nullable
   public static DiffString concatenateNullable(@Nullable DiffString s1, @Nullable DiffString s2) {
     if (s1 == null || s2 == null) {
