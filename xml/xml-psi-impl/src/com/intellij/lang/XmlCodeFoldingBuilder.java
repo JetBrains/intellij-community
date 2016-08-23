@@ -235,11 +235,21 @@ public abstract class XmlCodeFoldingBuilder implements FoldingBuilder, DumbAware
         psi instanceof XmlConditionalSection
       ) return "...";
     if (isEntity(psi)) {
-      final XmlEntityDecl resolve = XmlEntityRefImpl.resolveEntity((XmlElement)psi, psi.getText(), psi.getContainingFile());
-      final XmlAttributeValue value = resolve != null ? resolve.getValueElement() : null;
-      if (value != null) {
-        return getEntityValue(value);
-      }
+      final String value = getEntityPlaceholder(psi);
+      if (value != null) return value;
+    }
+    return null;
+  }
+
+  @Nullable
+  protected String getEntityPlaceholder(PsiElement psi) {
+    String text = psi.getText();
+    String fastPath = StringUtil.unescapeXml(text);
+    if (!StringUtil.equals(fastPath, text)) return fastPath;
+    final XmlEntityDecl resolve = XmlEntityRefImpl.resolveEntity((XmlElement)psi, text, psi.getContainingFile());
+    final XmlAttributeValue value = resolve != null ? resolve.getValueElement() : null;
+    if (value != null) {
+      return getEntityValue(value);
     }
     return null;
   }
@@ -260,7 +270,7 @@ public abstract class XmlCodeFoldingBuilder implements FoldingBuilder, DumbAware
     final XmlCodeFoldingSettings foldingSettings = getFoldingSettings();
     return (psi instanceof XmlTag && foldingSettings.isCollapseXmlTags())
            || (psi instanceof XmlAttribute && (foldStyle((XmlAttribute)psi, foldingSettings) || foldSrc((XmlAttribute)psi, foldingSettings)))
-           || isEntity(psi) && foldingSettings.isCollapseEntities();
+           || isEntity(psi) && foldingSettings.isCollapseEntities() && getEntityPlaceholder(psi) != null;
   }
 
   private static boolean foldSrc(XmlAttribute psi, XmlCodeFoldingSettings settings) {
