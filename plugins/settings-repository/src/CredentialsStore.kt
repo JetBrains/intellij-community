@@ -47,7 +47,7 @@ fun showAuthenticationForm(credentials: Credentials?, uri: String, host: String?
 
   val isGitHub = host == "github.com"
     val note = if (sshKeyFile == null) icsMessage(if (isGitHub) "login.github.note" else "login.other.git.provider.note") else null
-    var username = credentials?.user
+    var username = credentials?.userName
     if (username == null && isGitHub && path != null && sshKeyFile == null) {
       val firstSlashIndex = path.indexOf('/', 1)
       username = path.substring(1, if (firstSlashIndex == -1) path.length else firstSlashIndex)

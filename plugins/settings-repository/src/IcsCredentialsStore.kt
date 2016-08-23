@@ -27,7 +27,7 @@ class IcsCredentialsStore() {
   fun get(host: String?, sshKeyFile: String?, accountName: String?) = CredentialAttributes(host, sshKeyFile, accountName)?.let { PasswordSafe.getInstance().get(it) }
 
   fun set(host: String?, sshKeyFile: String?, credentials: Credentials?) {
-    CredentialAttributes(host, sshKeyFile, credentials?.user)?.let { PasswordSafe.getInstance().set(it, credentials) }
+    CredentialAttributes(host, sshKeyFile, credentials?.userName)?.let { PasswordSafe.getInstance().set(it, credentials) }
   }
 }
 

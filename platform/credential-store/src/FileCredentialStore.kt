@@ -58,7 +58,7 @@ internal class FileCredentialStore(keyToValue: Map<CredentialAttributes, Credent
       val group = db.rootGroup.getOrCreateGroup(GROUP_NAME)
       for ((attributes, credentials) in keyToValue) {
         val entry = db.createEntry(attributes.serviceName)
-        entry.userName = credentials.user
+        entry.userName = credentials.userName
         entry.password = credentials.password
         group.addEntry(entry)
       }
@@ -131,7 +131,7 @@ internal class FileCredentialStore(keyToValue: Map<CredentialAttributes, Credent
       db.rootGroup.getGroup(GROUP_NAME)?.removeEntry(attributes.serviceName, attributes.accountName)
     }
     else {
-      db.rootGroup.getOrCreateGroup(GROUP_NAME).getOrCreateEntry(attributes.serviceName, attributes.accountName ?: credentials.user).password = credentials.password
+      db.rootGroup.getOrCreateGroup(GROUP_NAME).getOrCreateEntry(attributes.serviceName, attributes.accountName ?: credentials.userName).password = credentials.password
     }
 
     if (db.isDirty) {
