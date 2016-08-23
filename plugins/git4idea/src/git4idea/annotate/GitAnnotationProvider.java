@@ -114,6 +114,9 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
   @NotNull
   @Override
   public FileAnnotation annotate(@NotNull final FilePath path, @NotNull final VcsRevisionNumber revision) throws VcsException {
+    setProgressIndicatorText(GitBundle.message("getting.history", path.getName()));
+    List<VcsFileRevision> revisions = GitHistoryUtils.history(myProject, path, null, revision);
+
     GitFileRevision fileRevision = new GitFileRevision(myProject, path, (GitRevisionNumber)revision);
     VcsVirtualFile file = new VcsVirtualFile(path.getPath(), fileRevision, VcsFileSystem.getInstance());
 
