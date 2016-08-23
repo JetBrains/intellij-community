@@ -191,7 +191,11 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       }
     }
 
-    return showFixes ? myQuickFixActions : QuickFixAction.EMPTY;
+    if (showFixes) {
+      final QuickFixAction[] fixes = super.getQuickFixes(refElements, allowedDescriptors);
+      return fixes != null ? ArrayUtil.mergeArrays(fixes, myQuickFixActions) : myQuickFixActions;
+    }
+    return QuickFixAction.EMPTY;
   }
 
   final QuickFixAction[] myQuickFixActions;
