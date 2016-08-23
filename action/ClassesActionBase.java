@@ -8,7 +8,7 @@ import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.memory.view.ClassesTable;
 
-abstract class ClassesActionBase extends AnAction {
+public abstract class ClassesActionBase extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     e.getPresentation().setEnabled(isEnabled(e));
