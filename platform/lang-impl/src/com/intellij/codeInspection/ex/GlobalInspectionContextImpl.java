@@ -387,10 +387,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     final List<Tools> globalTools = new ArrayList<>();
     final List<Tools> localTools = new ArrayList<>();
     final List<Tools> globalSimpleTools = new ArrayList<>();
+    ((RefManagerImpl)getRefManager()).initializeAnnotators();
     initializeTools(globalTools, localTools, globalSimpleTools);
     appendPairedInspectionsForUnfairTools(globalTools, globalSimpleTools, localTools);
 
-    ((RefManagerImpl)getRefManager()).initializeAnnotators();
     runGlobalTools(scope, inspectionManager, globalTools, isOfflineInspections);
 
     if (runGlobalToolsOnly || localTools.isEmpty() && globalSimpleTools.isEmpty()) return;
