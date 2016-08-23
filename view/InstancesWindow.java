@@ -87,7 +87,7 @@ public class InstancesWindow extends DialogWrapper {
     myProject = session.getProject();
     myDebugSession = session;
     myReferenceType = referenceType;
-    setTitle("Instances of " + referenceType.name());
+    addWarningMessage(null);
     myDebugSession.addSessionListener(new XDebugSessionListener() {
       @Override
       public void sessionStopped() {
@@ -102,6 +102,11 @@ public class InstancesWindow extends DialogWrapper {
 
   enum FilteringCompletionReason {
     ALL_CHECKED, INTERRUPTED, LIMIT_REACHED
+  }
+
+  private void addWarningMessage(@Nullable String message) {
+    String warning = message == null ? "" : String.format(". Warning: %s", message);
+    setTitle(String.format("Instances of %s%s", myReferenceType.name(), warning));
   }
 
   @NotNull
@@ -250,10 +255,9 @@ public class InstancesWindow extends DialogWrapper {
           EvaluationContextImpl evaluationContext = debugProcess
               .getDebuggerContext().createEvaluationContext();
 
-          //noinspection StatementWithEmptyBody
           if (AndroidUtil.isAndroidVM(myReferenceType.virtualMachine())
               && instances.size() == AndroidUtil.ANDROID_INSTANCES_LIMIT) {
-            // TODO: show warning
+            addWarningMessage("Not all instances will be shown (android restriction)");
           }
 
           if (evaluationContext != null) {
@@ -263,7 +267,6 @@ public class InstancesWindow extends DialogWrapper {
                 myProgress.start(instances.size());
                 myFilteringTask.execute();
               });
-              myFilteringTask.execute();
             }
           }
         }
