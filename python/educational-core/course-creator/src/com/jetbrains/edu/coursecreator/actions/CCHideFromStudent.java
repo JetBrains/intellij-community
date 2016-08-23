@@ -2,14 +2,13 @@ package com.jetbrains.edu.coursecreator.actions;
 
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.undo.DocumentReference;
-import com.intellij.openapi.command.undo.UndoableAction;
+import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.coursecreator.CCUtils;
@@ -18,7 +17,6 @@ import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Map;
@@ -41,7 +39,7 @@ public class CCHideFromStudent extends CCTaskFileActionBase {
     EduUtils.runUndoableAction(project, ACTION_NAME, new HideTaskFile(project, course, file, task, taskFile));
   }
 
-  private static class HideTaskFile implements UndoableAction {
+  private static class HideTaskFile extends BasicUndoableAction {
 
     private final Project myProject;
     private final Course myCourse;
@@ -50,6 +48,7 @@ public class CCHideFromStudent extends CCTaskFileActionBase {
     private final TaskFile myTaskFile;
 
     public HideTaskFile(Project project, Course course, VirtualFile file, Task task, TaskFile taskFile) {
+      super(file);
       myProject = project;
       myCourse = course;
       myFile = file;
@@ -63,8 +62,8 @@ public class CCHideFromStudent extends CCTaskFileActionBase {
       CCUtils.createResourceFile(myFile, myCourse, StudyUtils.getTaskDir(myFile));
       if (!myTaskFile.getAnswerPlaceholders().isEmpty() && FileEditorManager.getInstance(myProject).isFileOpen(myFile)) {
         for (FileEditor fileEditor : FileEditorManager.getInstance(myProject).getEditors(myFile)) {
-          if (fileEditor instanceof PsiAwareTextEditorImpl) {
-            Editor editor = ((PsiAwareTextEditorImpl)fileEditor).getEditor();
+          if (fileEditor instanceof TextEditor) {
+            Editor editor = ((TextEditor)fileEditor).getEditor();
             StudyUtils.drawAllWindows(editor, myTaskFile);
           }
         }
@@ -78,12 +77,6 @@ public class CCHideFromStudent extends CCTaskFileActionBase {
       ProjectView.getInstance(myProject).refresh();
     }
 
-    @Nullable
-    @Override
-    public DocumentReference[] getAffectedDocuments() {
-      return new DocumentReference[0];
-    }
-
     @Override
     public boolean isGlobal() {
       return true;
@@ -93,8 +86,8 @@ public class CCHideFromStudent extends CCTaskFileActionBase {
   public static void hideFromStudent(VirtualFile file, Project project, Map<String, TaskFile> taskFiles, TaskFile taskFile) {
     if (!taskFile.getAnswerPlaceholders().isEmpty() && FileEditorManager.getInstance(project).isFileOpen(file)) {
       for (FileEditor fileEditor : FileEditorManager.getInstance(project).getEditors(file)) {
-        if (fileEditor instanceof PsiAwareTextEditorImpl) {
-          Editor editor = ((PsiAwareTextEditorImpl)fileEditor).getEditor();
+        if (fileEditor instanceof TextEditor) {
+          Editor editor = ((TextEditor)fileEditor).getEditor();
           editor.getMarkupModel().removeAllHighlighters();
         }
       }
