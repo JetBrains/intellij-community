@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-class ParameterNameFoldingManager {
+public class ParameterNameFoldingManager {
   private static final List<Couple<String>> COMMONLY_USED_PARAMETER_PAIR = ContainerUtil.newArrayList(
     Couple.of("begin", "end"),
     Couple.of("start", "end"),
@@ -46,7 +46,7 @@ class ParameterNameFoldingManager {
   @NotNull
   private final List<FoldingDescriptor> myDescriptors;
 
-  ParameterNameFoldingManager(@NotNull PsiCallExpression callExpression) {
+  public ParameterNameFoldingManager(@NotNull PsiCallExpression callExpression) {
     PsiExpression[] callArguments = getArguments(callExpression);
     JavaResolveResult resolveResult = callExpression.resolveMethodGenerics();
 
@@ -84,7 +84,7 @@ class ParameterNameFoldingManager {
   }
 
   @NotNull
-  List<FoldingDescriptor> getDescriptors() {
+  public List<FoldingDescriptor> getDescriptors() {
     return myDescriptors;
   }
 

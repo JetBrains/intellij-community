@@ -30,10 +30,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
-import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
@@ -45,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 
-public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentListener {
+public class SelectionModelImpl implements SelectionModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.SelectionModelImpl");
 
   private final List<SelectionListener> mySelectionListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -55,29 +53,6 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
 
   public SelectionModelImpl(EditorImpl editor) {
     myEditor = editor;
-  }
-
-  @Override
-  public void beforeDocumentChange(DocumentEvent event) {
-    if (myEditor.getDocument().isInBulkUpdate()) return;
-    for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
-      ((CaretImpl)caret).beforeDocumentChange();
-    }
-  }
-
-  @Override
-  public void documentChanged(DocumentEvent event) {
-    if (myEditor.getDocument().isInBulkUpdate()) return;
-    myEditor.getCaretModel().doWithCaretMerging(() -> {
-      for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
-        ((CaretImpl)caret).documentChanged();
-      }
-    });
-  }
-
-  @Override
-  public int getPriority() {
-    return EditorDocumentPriorities.SELECTION_MODEL;
   }
 
   /**

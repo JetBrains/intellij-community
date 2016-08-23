@@ -29,6 +29,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.util.ui.MacUIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,6 +62,13 @@ public class BackspaceAction extends TextComponentEditorAction {
       return;
     }
 
+    VisualPosition caretPosition = editor.getCaretModel().getVisualPosition();
+    if (caretPosition.column > 0 &&
+        editor.getInlayModel().hasInlineElementAt(new VisualPosition(caretPosition.line, caretPosition.column - 1))) {
+      editor.getCaretModel().moveCaretRelatively(-1, 0, false, false, EditorUtil.isCurrentCaretPrimary(editor));
+      return;
+    }
+
     int lineNumber = editor.getCaretModel().getLogicalPosition().line;
     int colNumber = editor.getCaretModel().getLogicalPosition().column;
     Document document = editor.getDocument();
@@ -81,7 +89,6 @@ public class BackspaceAction extends TextComponentEditorAction {
         }
         else {
           document.deleteString(offset - 1, offset);
-          editor.getCaretModel().moveToOffset(offset - 1, true);
         }
       }
     }

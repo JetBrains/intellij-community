@@ -70,6 +70,10 @@
     <component>
       <implementation-class>com.intellij.execution.scratch.JavaScratchCompilationSupport</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.ParameterHintsPassFactory</implementation-class>
+      <skipForDefaultProject/>
+    </component>
   </project-components>
 
   <extensionPoints>
@@ -443,6 +447,8 @@
 
     <applicationService serviceInterface="com.intellij.codeInsight.TestFrameworks"
                         serviceImplementation="com.intellij.codeInsight.TestFrameworksImpl"/>
+
+    <applicationService serviceImplementation="com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager"/>
 
     <projectService serviceInterface="com.intellij.execution.testDiscovery.JavaAutoRunManager"
                     serviceImplementation="com.intellij.execution.testDiscovery.JavaAutoRunManager"/>
