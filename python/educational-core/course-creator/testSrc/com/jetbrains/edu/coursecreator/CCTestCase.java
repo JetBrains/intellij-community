@@ -1,7 +1,6 @@
 package com.jetbrains.edu.coursecreator;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,21 +15,21 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.ComparisonFailure;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public abstract class CCTestCase extends LightPlatformCodeInsightFixtureTestCase {
+public abstract class CCTestCase extends CodeInsightFixtureTestCase {
   private static final Logger LOG = Logger.getInstance(CCTestCase.class);
 
   @Nullable
@@ -71,9 +70,8 @@ public abstract class CCTestCase extends LightPlatformCodeInsightFixtureTestCase
   }
 
   @Override
-  protected String getTestDataPath() {
-    //TODO: rewrite to work for plugin
-    return new File(PathManager.getHomePath(), "community/python/educational-core/course-creator/testData").getPath();
+  protected String getBasePath() {
+    return "/community/python/educational-core/course-creator/testData";
   }
 
   @Override
@@ -81,6 +79,7 @@ public abstract class CCTestCase extends LightPlatformCodeInsightFixtureTestCase
     super.setUp();
     Course course = new Course();
     course.setName("test course");
+    course.setCourseDirectory(getProject().getBasePath());
     StudyTaskManager.getInstance(getProject()).setCourse(course);
 
     Lesson lesson = new Lesson();
@@ -108,19 +107,20 @@ public abstract class CCTestCase extends LightPlatformCodeInsightFixtureTestCase
   }
 
   protected VirtualFile configureByTaskFile(String name) {
-    VirtualFile file =
-      myFixture.copyFileToProject(name, FileUtil.join(getProject().getBasePath(), "lesson1", "task1", name));
-    myFixture.configureFromExistingVirtualFile(file);
-
-    Document document = FileDocumentManager.getInstance().getDocument(file);
     Task task = StudyTaskManager.getInstance(getProject()).getCourse().getLessons().get(0).getTaskList().get(0);
     TaskFile taskFile = new TaskFile();
     taskFile.setTask(task);
     task.getTaskFiles().put(name, taskFile);
+    VirtualFile file =
+      myFixture.copyFileToProject(name, FileUtil.join(getProject().getBasePath(), "lesson1", "task1", name));
+    myFixture.configureFromExistingVirtualFile(file);
+    Document document = FileDocumentManager.getInstance().getDocument(file);
     for (AnswerPlaceholder placeholder : getPlaceholders(document, false)) {
       taskFile.addAnswerPlaceholder(placeholder);
     }
     taskFile.sortAnswerPlaceholders();
+    StudyUtils.drawAllWindows(myFixture.getEditor(), taskFile);
+    CCUtils.createResourceFile(file, StudyTaskManager.getInstance(getProject()).getCourse(), file.getParent());
     return file;
   }
 
@@ -185,11 +185,6 @@ public abstract class CCTestCase extends LightPlatformCodeInsightFixtureTestCase
     }
     List<AnswerPlaceholder> placeholders = getPlaceholders(tempDocument, useLength);
     return Pair.create(tempDocument, placeholders);
-  }
-
-  @Override
-  protected boolean shouldContainTempFiles() {
-    return false;
   }
 }
 

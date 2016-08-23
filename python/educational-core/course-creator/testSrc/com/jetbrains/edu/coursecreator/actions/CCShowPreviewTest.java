@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.TestActionEvent;
 import com.jetbrains.edu.coursecreator.CCTestCase;
@@ -22,7 +23,7 @@ public class CCShowPreviewTest extends CCTestCase {
   public void testPreviewUnavailable() {
     VirtualFile file = configureByTaskFile("noplaceholders.txt");
     CCShowPreview action = new CCShowPreview();
-    TestActionEvent e = getActionEvent(action, getPsiManager().findFile(file));
+    TestActionEvent e = getActionEvent(action, PsiManager.getInstance(getProject()).findFile(file));
     action.beforeActionPerformedUpdate(e);
     assertTrue(e.getPresentation().isEnabled() && e.getPresentation().isVisible());
     try {
@@ -44,7 +45,7 @@ public class CCShowPreviewTest extends CCTestCase {
   private void doTest(String name) {
     VirtualFile file = configureByTaskFile(name + CCTestsUtil.BEFORE_POSTFIX);
     CCShowPreview action = new CCShowPreview();
-    TestActionEvent e = getActionEvent(action, getPsiManager().findFile(file));
+    TestActionEvent e = getActionEvent(action,PsiManager.getInstance(getProject()).findFile(file));
     action.beforeActionPerformedUpdate(e);
     assertTrue(e.getPresentation().isEnabled() && e.getPresentation().isVisible());
     action.actionPerformed(e);
@@ -54,12 +55,11 @@ public class CCShowPreviewTest extends CCTestCase {
     for (AnswerPlaceholder placeholder : pair.getSecond()) {
       assertNotNull("No highlighter for placeholder:" + CCTestsUtil.getPlaceholderPresentation(placeholder), getHighlighter(editor.getMarkupModel(), placeholder));
     }
-    EditorFactory.getInstance().releaseEditor(editor);
   }
 
   @Override
-  protected String getTestDataPath() {
-    return super.getTestDataPath() + "/actions/preview";
+  protected String getBasePath() {
+    return super.getBasePath() + "/actions/preview";
   }
 
   TestActionEvent getActionEvent(AnAction action, PsiFile psiFile) {

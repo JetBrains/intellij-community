@@ -67,7 +67,7 @@ public class CCAnswerPlaceholderActionTest extends CCTestCase {
   }
 
   @Override
-  protected String getTestDataPath() {
-    return super.getTestDataPath() + "/actions/addPlaceholder";
+  protected String getBasePath() {
+    return super.getBasePath()  + "/actions/addPlaceholder";
   }
 }
