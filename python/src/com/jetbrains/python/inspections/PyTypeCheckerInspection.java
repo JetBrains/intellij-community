@@ -30,6 +30,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
+import com.jetbrains.python.inspections.quickfix.MakeFunctionReturnTypeQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.Nls;
@@ -103,8 +104,11 @@ public class PyTypeCheckerInspection extends PyInspection {
           if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
             final String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
             final String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
+            MakeFunctionReturnTypeQuickFix localQuickFix = new MakeFunctionReturnTypeQuickFix(function, actual, myTypeEvalContext);
+            MakeFunctionReturnTypeQuickFix globalQuickFix = new MakeFunctionReturnTypeQuickFix(function, null, myTypeEvalContext);
             registerProblem(returnExpr != null ? returnExpr : node,
-                            String.format("Expected type '%s', got '%s' instead", expectedName, actualName));
+                            String.format("Expected type '%s', got '%s' instead", expectedName, actualName),
+                            localQuickFix, globalQuickFix);
           }
         }
       }
