@@ -102,17 +102,18 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
   private static byte[] toBytesIfPossible(CharSequence seq) {
     byte[] bytes = new byte[seq.length()];
     char[] chars = CharArrayUtil.fromSequenceWithoutCopying(seq);
-    if (chars != null) {
+    if (chars == null) {
       for (int i = 0; i < bytes.length; i++) {
-        char c = chars[i];
+        char c = seq.charAt(i);
         if ((c & 0xff00) != 0) {
           return null;
         }
         bytes[i] = (byte)c;
       }
-    } else {
+    }
+    else {
       for (int i = 0; i < bytes.length; i++) {
-        char c = seq.charAt(i);
+        char c = chars[i];
         if ((c & 0xff00) != 0) {
           return null;
         }
@@ -239,20 +240,10 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
     if (!(obj instanceof ImmutableText)) {
       return false;
     }
-    final ImmutableText that = (ImmutableText)obj;
-    int len = this.length();
-    if (len != that.length()) {
-      return false;
-    }
-    for (int i = 0; i < len; ) {
-      if (this.charAt(i) != that.charAt(i++)) {
-        return false;
-      }
-    }
-    return true;
+    return CharArrayUtil.regionMatches(this, 0, (ImmutableText)obj);
   }
 
-  private int hash;
+  private transient int hash;
   /**
    * Returns the hash code for this text.
    *
