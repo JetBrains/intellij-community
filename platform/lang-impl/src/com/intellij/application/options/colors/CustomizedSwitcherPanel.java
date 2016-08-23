@@ -170,7 +170,8 @@ class CustomizedSwitcherPanel extends JPanel implements OptionsPanelImpl.ColorDe
                         : myPage.getDemoText();
       List<HighlightData> showLineData = null;
 
-      if (myPage instanceof RainbowColorSettingsPage && myRainbowPanel.myGlobalState.isRainbowOn()) {
+      if (myPage instanceof RainbowColorSettingsPage
+          && myRainbowPanel.myGlobalState.isRainbowOnWithInheritance(((RainbowColorSettingsPage)myPage).getLanguage())) {
         RainbowHighlighter highlighter = new RainbowHighlighter(descriptor.getScheme());
         TextAttributesKey[] tempKeys = highlighter.getRainbowTempKeys();
         EditorEx editor = simpleEditorPreview.getEditor();

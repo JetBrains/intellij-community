@@ -18,6 +18,8 @@ package com.intellij.openapi.options.colors.pages;
 import com.intellij.application.options.colors.InspectionColorSettingsPage;
 import com.intellij.ide.highlighter.JavaFileHighlighter;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
+import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -31,6 +33,7 @@ import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.HashMap;
@@ -247,5 +250,11 @@ public class JavaColorSettingsPage implements RainbowColorSettingsPage, Inspecti
       "    this.<field>field</field> = <localVar>localVar3</localVar> + <param>param1</param> + <param>param5</param>;\n" +
       "  }\n" +
       "}\n";
+  }
+
+  @Nullable
+  @Override
+  public Language getLanguage() {
+    return JavaLanguage.INSTANCE;
   }
 }

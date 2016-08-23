@@ -15,8 +15,11 @@
  */
 package com.intellij.application.options.colors;
 
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
+import com.intellij.openapi.options.OptionsBundle;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ColorPanel;
 import com.intellij.ui.components.JBCheckBox;
@@ -25,7 +28,7 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -37,6 +40,7 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
 
   protected JPanel myPanel;
 
+  private JTextPane myGradientLabel;
   private JBCheckBox myCbStop1;
   private JBCheckBox myCbStop2;
   private JBCheckBox myCbStop3;
@@ -51,11 +55,14 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
   protected ColorPanel myStop5;
   private ColorPanel[] myStops = new ColorPanel[]{myStop1, myStop2, myStop3, myStop4, myStop5};
 
-  //private JTextPane myInheritanceLabel;
-  //private JBCheckBox myInheritAttributesBox;
   private JBCheckBox myRainbow;
+  private JTextPane myInheritanceLabel;
+  private JBCheckBox myInheritAttributesBox;
 
   ColorAndFontGlobalState myGlobalState;
+  private final String myInheritedMessage;
+  private final String myOverrideMessage;
+  private final String myInheritedMessageTooltip;
 
   public RainbowDescriptionPanel(ColorAndFontGlobalState globalState) {
     super(new BorderLayout());
@@ -69,32 +76,42 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
         onSettingsChanged(e);
       }
     };
-    for (JBCheckBox c : new JBCheckBox[]{myRainbow, myCbStop1, myCbStop2, myCbStop3, myCbStop4, myCbStop5/*, myInheritAttributesBox*/}) {
+    for (JBCheckBox c : new JBCheckBox[]{myRainbow, myCbStop1, myCbStop2, myCbStop3, myCbStop4, myCbStop5, myInheritAttributesBox}) {
       c.addActionListener(actionListener);
     }
     for (ColorPanel c : new ColorPanel[]{myStop1, myStop2, myStop3, myStop4, myStop5}) {
       c.addActionListener(actionListener);
     }
 
-    // FIXME: inherited per-language on/off
-    //Messages.configureMessagePaneUi(myInheritanceLabel, "<html>", null);
-    //myInheritanceLabel.addHyperlinkListener(new HyperlinkAdapter() {
-    //  @Override
-    //  protected void hyperlinkActivated(HyperlinkEvent e) {
-    //    onHyperLinkClicked(e);
-    //  }
-    //});
-    //myInheritanceLabel.setBorder(BorderFactory.createEmptyBorder());
+    String languageDefaultPageID = OptionsBundle.message("options.language.defaults.display.name");
+    String rainbowOptionsID = ApplicationBundle.message("rainbow.option.panel.display.name");
+    myInheritedMessage = ApplicationBundle.message("label.inherited.gradient",
+                                                   rainbowOptionsID,
+                                                   languageDefaultPageID);
+    myInheritedMessageTooltip =ApplicationBundle.message("label.inherited.gradient.tooltip",
+                                                         rainbowOptionsID,
+                                                         languageDefaultPageID);
+    myOverrideMessage = ApplicationBundle.message("label.override.gradient");
+    HyperlinkListener listener = e -> myDispatcher.getMulticaster().onHyperLinkClicked(e);
+
+    Messages.configureMessagePaneUi(myGradientLabel, myOverrideMessage, null);
+    myGradientLabel.addHyperlinkListener(listener);
+
+    Messages.configureMessagePaneUi(myInheritanceLabel, ApplicationBundle.message("label.rainbow.inheritance",
+                                                                                  rainbowOptionsID,
+                                                                                  rainbowOptionsID,
+                                                                                  languageDefaultPageID), null);
+    myInheritanceLabel.setToolTipText(ApplicationBundle.message("label.rainbow.inheritance.tooltip",
+                                                                rainbowOptionsID,
+                                                                languageDefaultPageID));
+    myInheritanceLabel.addHyperlinkListener(listener);
+    myInheritanceLabel.setBorder(JBUI.Borders.empty(4, 0, 4, 4));
   }
 
   @NotNull
   @Override
   public JComponent getPanel() {
     return this;
-  }
-
-  private void onHyperLinkClicked(HyperlinkEvent e) {
-    myDispatcher.getMulticaster().onHyperLinkClicked(e);
   }
 
   private void onSettingsChanged(ActionEvent e) {
@@ -112,10 +129,19 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
 
     List<Pair<Boolean, Color>> rainbowCurState = descriptor.getRainbowCurState();
     if (rainbowCurState.size() < myCbStops.length) return;
+    Boolean rainbowOn = myGlobalState.isRainbowOn(descriptor.getLanguage());
+    boolean isInherited = false;
+    if (rainbowOn == null) {
+      isInherited = true;
+      rainbowOn = myGlobalState.isRainbowOn(null);
+    }
+    myRainbow.setEnabled(!isInherited);
+    myRainbow.setSelected(rainbowOn);
 
-    myRainbow.setSelected(myGlobalState.isRainbowOn());
-
-    boolean isEnable = !ColorAndFontOptions.isReadOnly(attributeDescriptor.getScheme()) && myGlobalState.isRainbowOn();
+    // the colors are editable only for default language
+    boolean isDefaultLanguage = descriptor.getLanguage() == null;
+    boolean isEnable = !ColorAndFontOptions.isReadOnly(attributeDescriptor.getScheme()) && isDefaultLanguage;
+    //myGradientLabel.setEnabled(isEnable);
     for (int i = 0; i < myCbStops.length; ++i) {
       Pair<Boolean, Color> state = rainbowCurState.get(i);
       myCbStops[i].setEnabled(isEnable);
@@ -126,6 +152,12 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
       myStops[i].setEditable(isEnable && isOverride);
       myStops[i].setSelectedColor(state.second);
     }
+
+    myInheritanceLabel.setVisible(!isDefaultLanguage);
+    myInheritAttributesBox.setSelected(isInherited);
+    myInheritAttributesBox.setVisible(!isDefaultLanguage);
+    myGradientLabel.setText(isDefaultLanguage ? myOverrideMessage : myInheritedMessage);
+    myGradientLabel.setToolTipText(isDefaultLanguage ? null : myInheritedMessageTooltip);
   }
 
   @Override
@@ -136,7 +168,11 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
     List<Pair<Boolean, Color>> rainbowCurState = descriptor.getRainbowCurState();
     if (rainbowCurState.size() < myCbStops.length) return;
 
-    myGlobalState.setRainbowOn(myRainbow.isSelected());
+    boolean isDefaultLanguage = descriptor.getLanguage() == null;
+    myGlobalState.setRainbowOn(descriptor.getLanguage(),
+                               isDefaultLanguage ? Boolean.valueOf(myRainbow.isSelected())
+                                                 : myInheritAttributesBox.isSelected() ? null
+                                                                                       : Boolean.valueOf(myRainbow.isSelected()));
     for (int i = 0; i < myCbStops.length; ++i) {
       boolean isOverride = myCbStops[i].isSelected();
       rainbowCurState.set(i, Pair.create(isOverride,

@@ -17,6 +17,8 @@ package com.intellij.codeHighlighting;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
@@ -49,6 +51,10 @@ public class RainbowHighlighter {
   public static final TextAttributesKey[] RAINBOW_COLOR_KEYS = new TextAttributesKey[RAINBOW_JB_COLORS_DEFAULT.length];
   private static final int RAINBOW_COLORS_BETWEEN = 4;
   private static final String UNIT_TEST_COLORS = "#000001,#000002,#000003,#000004"; // Do not modify!
+  private static String FALSE = "false";
+  private static String TRUE = "true";
+  private static String INHERITED = "inherited";
+
   static {
     for (int i = 0; i < RAINBOW_JB_COLORS_DEFAULT.length; ++i) {
       JBColor jbColor = RAINBOW_JB_COLORS_DEFAULT[i];
@@ -58,6 +64,7 @@ public class RainbowHighlighter {
   }
   public final static String RAINBOW_TYPE = "rainbow";
   private final static String RAINBOW_TEMP_PREF = "RAINBOW_TEMP_";
+  public final static Boolean DEFAULT_RAINBOW_ON = Boolean.FALSE;
 
   @NotNull private final TextAttributesScheme myColorsScheme;
   @NotNull private final Color[] myRainbowColors;
@@ -69,12 +76,29 @@ public class RainbowHighlighter {
 
   public static final HighlightInfoType RAINBOW_ELEMENT = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, DefaultLanguageHighlighterColors.CONSTANT);
 
-  public static boolean isRainbowEnabled() {
-    return Registry.is("editor.rainbow.identifiers", false);
+  @Nullable
+  @Contract("null -> !null")
+  public static Boolean isRainbowEnabled(@Nullable Language language) {
+    String value = PropertiesComponent.getInstance().getValue(getKey(language), INHERITED);
+    if (TRUE.equals(value)) return Boolean.TRUE;
+    if (FALSE.equals(value)) return Boolean.FALSE;
+    return language == null ? DEFAULT_RAINBOW_ON : null;
   }
 
-  public static void setRainbowEnabled(boolean enabled) {
-    Registry.get("editor.rainbow.identifiers").setValue(enabled);
+  public static boolean isRainbowEnabledWithInheritance(@Nullable Language language) {
+    Boolean rainbowEnabled = isRainbowEnabled(language);
+    return rainbowEnabled != null ? rainbowEnabled : isRainbowEnabled(null);
+  }
+
+  public static void setRainbowEnabled(@Nullable Language language, @Nullable Boolean enabled) {
+    PropertiesComponent.getInstance().setValue(
+      getKey(language),
+      enabled == null ? INHERITED : enabled.toString());
+  }
+
+  @NotNull
+  private static String getKey(@Nullable Language language) {
+    return RAINBOW_TYPE + (language == null ? "Default language" : language.getID());
   }
 
   public static int hashColor(@NotNull String name, int colorsCount) {

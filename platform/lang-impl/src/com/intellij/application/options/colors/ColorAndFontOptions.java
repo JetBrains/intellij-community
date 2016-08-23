@@ -539,7 +539,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     List<AttributesDescriptor> attributeDescriptors = ColorSettingsUtil.getAllAttributeDescriptors(provider);
     //todo: single point configuration?
     if (provider instanceof RainbowColorSettingsPage) {
-      descriptions.add(new RainbowAttributeDescriptor(group,
+      descriptions.add(new RainbowAttributeDescriptor(((RainbowColorSettingsPage)provider).getLanguage(),
+                                                      group,
                                                       ApplicationBundle.message("rainbow.option.panel.display.name"),
                                                       scheme,
                                                       scheme.getInitRainbowState(),

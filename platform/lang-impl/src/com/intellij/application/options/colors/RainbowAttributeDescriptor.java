@@ -16,12 +16,14 @@
 package com.intellij.application.options.colors;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptorWithPath;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -31,16 +33,19 @@ class RainbowAttributeDescriptor implements EditorSchemeAttributeDescriptorWithP
   private final String myGroup;
   private final String myDisplayName;
   private final EditorColorsScheme myScheme;
+  private final Language myLanguage;
 
   // can be shared between instances
   private final RainbowInSchemeState myCurState;
   private final RainbowInSchemeState myInitState;
 
-  public RainbowAttributeDescriptor(@NotNull String group,
+  public RainbowAttributeDescriptor(@Nullable Language language,
+                                    @NotNull String group,
                                     @NotNull String displayNameWithPath,
                                     @NotNull EditorColorsScheme scheme,
-                                    RainbowInSchemeState initState,
-                                    RainbowInSchemeState curState) {
+                                    @NotNull RainbowInSchemeState initState,
+                                    @NotNull RainbowInSchemeState curState) {
+    myLanguage = language;
     myDisplayName = displayNameWithPath;
     myInitState = initState;
     myCurState = curState;
@@ -84,6 +89,10 @@ class RainbowAttributeDescriptor implements EditorSchemeAttributeDescriptorWithP
 
   public Color getDefaultColor(int index) {
     return RainbowHighlighter.RAINBOW_COLOR_KEYS[index].getDefaultAttributes().getForegroundColor();
+  }
+
+  public Language getLanguage() {
+    return myLanguage;
   }
 
   public static class RainbowInSchemeState {

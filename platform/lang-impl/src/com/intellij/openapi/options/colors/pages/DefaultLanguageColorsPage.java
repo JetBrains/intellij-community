@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.options.colors.pages;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -291,5 +292,11 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
       "    Local <local_var>variable4</local_var>\n" +
       "    Local <local_var>variable5</local_var>\n" +
       "Function <func_call>call</func_call>()";
+  }
+
+  @Nullable
+  @Override
+  public Language getLanguage() {
+    return null;
   }
 }

@@ -37,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -113,14 +112,10 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
       c.addActionListener(actionListener);
     }
     myEffectsCombo.addActionListener(actionListener);
+
     Messages.configureMessagePaneUi(myInheritanceLabel, "<html>", null);
-    myInheritanceLabel.addHyperlinkListener(new HyperlinkAdapter() {
-      @Override
-      protected void hyperlinkActivated(HyperlinkEvent e) {
-        onHyperLinkClicked(e);
-      }
-    });
-    myInheritanceLabel.setBorder(BorderFactory.createEmptyBorder());
+    myInheritanceLabel.addHyperlinkListener(e -> myDispatcher.getMulticaster().onHyperLinkClicked(e));
+    myInheritanceLabel.setBorder(JBUI.Borders.empty(4, 0, 4, 4));
     myLabelFont.setVisible(false); // hide for now as it doesn't look that good
   }
 
@@ -128,10 +123,6 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
   @Override
   public JComponent getPanel() {
     return this;
-  }
-
-  private void onHyperLinkClicked(HyperlinkEvent e) {
-    myDispatcher.getMulticaster().onHyperLinkClicked(e);
   }
 
   private void onSettingsChanged(ActionEvent e) {
