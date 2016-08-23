@@ -12,7 +12,7 @@ import java.util.List;
 public class GetReferrersCommand extends RunCustomOperationCommand<List<PyDebugValue>> {
 
   public GetReferrersCommand(RemoteDebugger target, String threadId, String frameId, PyReferringObjectsValue value) {
-    super(target, createVariableLocator(threadId, frameId, value), "from pydevd_referrers import get_referrer_info",
+    super(target, createVariableLocator(threadId, frameId, value), "from _pydevd_bundle.pydevd_referrers import get_referrer_info",
           "get_referrer_info");
   }
 
