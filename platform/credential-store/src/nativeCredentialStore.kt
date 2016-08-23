@@ -19,6 +19,7 @@ import com.intellij.credentialStore.linux.SecretCredentialStore
 import com.intellij.credentialStore.macOs.KeyChainCredentialStore
 import com.intellij.credentialStore.macOs.isMacOsCredentialStoreSupported
 import com.intellij.ide.passwordSafe.PasswordStorage
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.SystemProperties
@@ -43,11 +44,21 @@ private class CredentialStoreWrapper(private val store: CredentialStore) : Passw
     if (value == null) {
       LOG.catchAndLog {
         // try old key - as hash
-        val oldKey = toOldKey(requestor, accountName)
+        var oldKey = toOldKey(requestor, accountName)
         store.get(oldKey)?.let {
-          LOG.catchAndLog { store.set(oldKey, null) }
+          set(oldKey, null)
           set(CredentialAttributes(requestor, accountName), it)
           return it.password
+        }
+
+        val appInfo = ApplicationInfoEx.getInstanceEx()
+        if (appInfo.isEAP || appInfo.build.isSnapshot) {
+          oldKey = CredentialAttributes("IntelliJ Platform", "${requestor.name}/$accountName")
+          store.get(oldKey)?.let {
+            set(oldKey, null)
+            set(CredentialAttributes(requestor, accountName), it)
+            return it.password
+          }
         }
       }
     }

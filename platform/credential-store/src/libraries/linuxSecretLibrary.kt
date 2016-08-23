@@ -5,6 +5,7 @@ import com.intellij.jna.DisposableMemory
 import com.sun.jna.Library
 import com.sun.jna.Native
 import com.sun.jna.Pointer
+import com.sun.jna.Structure
 
 private val LIBRARY by lazy { Native.loadLibrary("secret-1", SecretLibrary::class.java) as SecretLibrary }
 
@@ -117,7 +118,7 @@ private interface SecretLibrary : Library {
 }
 
 @Suppress("unused")
-class GErrorStruct : com.sun.jna.Structure() {
+class GErrorStruct : Structure() {
   @JvmField
   var domain = 0
   @JvmField
