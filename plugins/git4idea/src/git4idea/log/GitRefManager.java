@@ -141,13 +141,24 @@ public class GitRefManager implements VcsLogRefManager {
   public List<RefGroup> groupForTable(@NotNull Collection<VcsRef> references) {
     List<VcsRef> sortedReferences = ContainerUtil.sorted(references, myLabelsComparator);
     Set<Map.Entry<VcsRefType, Collection<VcsRef>>> groupedRefs = ContainerUtil.groupBy(sortedReferences, VcsRef::getType).entrySet();
-    Map.Entry<VcsRefType, Collection<VcsRef>> firstGroup = ContainerUtil.find(groupedRefs, entry -> !entry.getKey().equals(HEAD));
-    if (firstGroup == null) {
-      firstGroup = ContainerUtil.getFirstItem(groupedRefs);
-    }
-
+    Map.Entry<VcsRefType, Collection<VcsRef>> firstGroup = ContainerUtil.getFirstItem(groupedRefs);
     List<RefGroup> groups = ContainerUtil.newArrayList();
+    if (firstGroup == null) return groups;
 
+    if (firstGroup.getKey().equals(HEAD)) {
+      VcsRef head = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(firstGroup.getValue()));
+      GitRepository repository = myRepositoryManager.getRepositoryForRoot(head.getRoot());
+      if (repository == null) {
+        LOG.warn("No repository for root: " + head.getRoot());
+      }
+      else {
+        if (!repository.isOnBranch()) {
+          groups.add(new TableRefGroup("!", Collections.singletonList(head)));
+          sortedReferences = sortedReferences.subList(1, sortedReferences.size());
+        }
+      }
+      firstGroup = ContainerUtil.find(groupedRefs, entry -> !entry.getKey().equals(HEAD));
+    }
     if (firstGroup == null) return groups;
 
     VcsRef firstRef = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(firstGroup.getValue()));
