@@ -40,7 +40,7 @@ public class DummyEntryPointsTool extends UnusedDeclarationInspectionBase {
 
   @Nullable
   @Override
-  public JobDescriptor[] getAdditionalJobs() {
+  public JobDescriptor[] getAdditionalJobs(GlobalInspectionContext context) {
     return JobDescriptor.EMPTY_ARRAY;
   }
 
