@@ -164,18 +164,16 @@ internal interface KdbxEncryption {
 
 private val SALSA20_IV = DatatypeConverter.parseHexBinary("E830094B97205D2A")
 
-private fun createSalsa20(key: ByteArray): Salsa20Engine {
-  val keyParameter = KeyParameter(sha256MessageDigest().digest(key))
-  val engine = Salsa20Engine()
-  engine.init(true, ParametersWithIV(keyParameter, SALSA20_IV))
-  return engine
-}
-
 /**
  * Salsa20 doesn't quite fit the KeePass memory model - all encrypted items have to be en/decrypted in order of encryption, i.e. in document order and at the same time.
  */
 internal class Salsa20Encryption(override val key: ByteArray) : KdbxEncryption {
-  private val salsa20 = createSalsa20(key)
+  private val salsa20 = Salsa20Engine()
+
+  init {
+    val keyParameter = KeyParameter(sha256MessageDigest().digest(key))
+    salsa20.init(true, ParametersWithIV(keyParameter, SALSA20_IV))
+  }
 
   override fun decrypt(encryptedText: ByteArray): ByteArray {
     val output = ByteArray(encryptedText.size)
