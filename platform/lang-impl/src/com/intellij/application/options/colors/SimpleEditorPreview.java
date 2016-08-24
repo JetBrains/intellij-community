@@ -63,7 +63,11 @@ public class SimpleEditorPreview implements PreviewPanel {
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
   private final HighlightsExtractor myHighlightsExtractor;
-  private boolean myTextIsChanging = false;
+
+  public void setNavigationBlocked(boolean isNavigationBlocked) {
+    myIsNavigationBlocked = isNavigationBlocked;
+  }
+  private boolean myIsNavigationBlocked = false;
 
   public SimpleEditorPreview(final ColorAndFontOptions options, final ColorSettingsPage page) {
     this(options, page, true);
@@ -97,7 +101,7 @@ public class SimpleEditorPreview implements PreviewPanel {
       myEditor.getCaretModel().addCaretListener(new CaretAdapter() {
         @Override
         public void caretPositionChanged(CaretEvent e) {
-          if (!myTextIsChanging) {
+          if (!myIsNavigationBlocked) {
             navigate(myEditor, true, e.getNewPosition(), page.getHighlighter(), false);
           }
         }
@@ -110,15 +114,9 @@ public class SimpleEditorPreview implements PreviewPanel {
   }
 
   public void setDemoText(final String text) {
-    try {
-      myTextIsChanging = true;
-      myEditor.getSelectionModel().removeSelection();
-      myHighlightData.clear();
-      myEditor.getDocument().setText(myHighlightsExtractor.extractHighlights(text, myHighlightData));
-    }
-    finally {
-      myTextIsChanging = false;
-    }
+    myEditor.getSelectionModel().removeSelection();
+    myHighlightData.clear();
+    myEditor.getDocument().setText(myHighlightsExtractor.extractHighlights(text, myHighlightData));
   }
 
   private void navigate(final Editor editor, boolean select,

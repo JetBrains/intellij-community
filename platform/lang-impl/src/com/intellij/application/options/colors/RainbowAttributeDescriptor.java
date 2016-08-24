@@ -28,17 +28,24 @@ import java.util.List;
 
 class RainbowAttributeDescriptor implements EditorSchemeAttributeDescriptorWithPath {
   private final String myGroup;
+  private final ColorAndFontGlobalState myColorAndFontGlobalState;
   private final String myDisplayName;
   private final EditorColorsScheme myScheme;
   private final Language myLanguage;
   private final RainbowColorsInSchemeState myRainbowColorsInSchemaState;
 
+  public ColorAndFontGlobalState getColorAndFontGlobalState() {
+    return myColorAndFontGlobalState;
+  }
+
   public RainbowAttributeDescriptor(@Nullable Language language,
+                                    @NotNull ColorAndFontGlobalState colorAndFontGlobalState,
                                     @NotNull String group,
                                     @NotNull String displayNameWithPath,
                                     @NotNull EditorColorsScheme scheme,
                                     @NotNull RainbowColorsInSchemeState rainbowState) {
     myLanguage = language;
+    myColorAndFontGlobalState = colorAndFontGlobalState;
     myDisplayName = displayNameWithPath;
     myRainbowColorsInSchemaState = rainbowState;
     myScheme = scheme;
@@ -67,12 +74,16 @@ class RainbowAttributeDescriptor implements EditorSchemeAttributeDescriptorWithP
 
   @Override
   public void apply(@NotNull EditorColorsScheme scheme) {
-    myRainbowColorsInSchemaState.apply(scheme);
+    if (myLanguage == null) {
+      myRainbowColorsInSchemaState.apply(scheme);
+    }
+    // see myColorAndFontGlobalState apply
   }
 
   @Override
   public boolean isModified() {
-    return myRainbowColorsInSchemaState.isModified();
+    return (myLanguage == null && myRainbowColorsInSchemaState.isModified())
+           || myColorAndFontGlobalState.isModified(myLanguage);
   }
 
   public List<Pair<Boolean, Color>> getRainbowColorsInSchemaState() {

@@ -84,21 +84,7 @@ public class RainbowColorsInSchemeState {
     return pair;
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    RainbowColorsInSchemeState state = (RainbowColorsInSchemeState)o;
-    return myInheritanceAndColors.equals(state.myInheritanceAndColors);
-  }
-
-  @Override
-  public int hashCode() {
-    return myInheritanceAndColors.hashCode();
-  }
-
   public boolean isModified() {
-    return !equals(myReferenceState);
+    return !myInheritanceAndColors.equals(myReferenceState.myInheritanceAndColors);
   }
 }

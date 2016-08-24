@@ -59,23 +59,17 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
   private JTextPane myInheritanceLabel;
   private JBCheckBox myInheritAttributesBox;
 
-  ColorAndFontGlobalState myGlobalState;
   private final String myInheritedMessage;
   private final String myOverrideMessage;
   private final String myInheritedMessageTooltip;
 
-  public RainbowDescriptionPanel(ColorAndFontGlobalState globalState) {
+  public RainbowDescriptionPanel() {
     super(new BorderLayout());
-    myGlobalState = globalState;
     add(myPanel, BorderLayout.CENTER);
 
     setBorder(JBUI.Borders.empty(4, 0, 4, 4));
-    ActionListener actionListener = new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        onSettingsChanged(e);
-      }
-    };
+
+    ActionListener actionListener = e -> myDispatcher.getMulticaster().onSettingsChanged(e);
     for (JBCheckBox c : new JBCheckBox[]{myRainbow, myCbStop1, myCbStop2, myCbStop3, myCbStop4, myCbStop5, myInheritAttributesBox}) {
       c.addActionListener(actionListener);
     }
@@ -88,9 +82,9 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
     myInheritedMessage = ApplicationBundle.message("label.inherited.gradient",
                                                    rainbowOptionsID,
                                                    languageDefaultPageID);
-    myInheritedMessageTooltip =ApplicationBundle.message("label.inherited.gradient.tooltip",
-                                                         rainbowOptionsID,
-                                                         languageDefaultPageID);
+    myInheritedMessageTooltip = ApplicationBundle.message("label.inherited.gradient.tooltip",
+                                                          rainbowOptionsID,
+                                                          languageDefaultPageID);
     myOverrideMessage = ApplicationBundle.message("label.override.gradient");
     HyperlinkListener listener = e -> myDispatcher.getMulticaster().onHyperLinkClicked(e);
 
@@ -114,10 +108,6 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
     return this;
   }
 
-  private void onSettingsChanged(ActionEvent e) {
-    myDispatcher.getMulticaster().onSettingsChanged(e);
-  }
-
   @Override
   public void resetDefault() {
   }
@@ -129,11 +119,11 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
 
     List<Pair<Boolean, Color>> rainbowState = descriptor.getRainbowColorsInSchemaState();
     if (rainbowState.size() < myCbStops.length) return;
-    Boolean rainbowOn = myGlobalState.isRainbowOn(descriptor.getLanguage());
+    Boolean rainbowOn = descriptor.getColorAndFontGlobalState().isRainbowOn(descriptor.getLanguage());
     boolean isInherited = false;
     if (rainbowOn == null) {
       isInherited = true;
-      rainbowOn = myGlobalState.isRainbowOn(null);
+      rainbowOn = descriptor.getColorAndFontGlobalState().isRainbowOn(null);
     }
     myRainbow.setEnabled(!isInherited);
     myRainbow.setSelected(rainbowOn);
@@ -169,10 +159,12 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
     if (rainbowCurState.size() < myCbStops.length) return;
 
     boolean isDefaultLanguage = descriptor.getLanguage() == null;
-    myGlobalState.setRainbowOn(descriptor.getLanguage(),
-                               isDefaultLanguage ? Boolean.valueOf(myRainbow.isSelected())
-                                                 : myInheritAttributesBox.isSelected() ? null
-                                                                                       : Boolean.valueOf(myRainbow.isSelected()));
+    descriptor
+      .getColorAndFontGlobalState()
+      .setRainbowOn(descriptor.getLanguage(),
+                    isDefaultLanguage ? Boolean.valueOf(myRainbow.isSelected())
+                                      : myInheritAttributesBox.isSelected() ? null
+                                                                            : Boolean.valueOf(myRainbow.isSelected()));
     for (int i = 0; i < myCbStops.length; ++i) {
       boolean isOverride = myCbStops[i].isSelected();
       rainbowCurState.set(i, Pair.create(isOverride,

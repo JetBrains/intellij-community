@@ -16,7 +16,13 @@
 package com.intellij.application.options.colors;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.lang.Language;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -26,9 +32,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ColorAndFontGlobalState {
-  @NotNull private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher =
-    EventDispatcher.create(ColorAndFontSettingsListener.class);
-  @NotNull private HashMap<Language, Boolean> myLanguage2RainbowEnabled = new HashMap<>();
+  private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
+  private HashMap<Language, Boolean> myLanguage2RainbowEnabled = new HashMap<>();
   private final ColorAndFontGlobalState myReferenceState;
 
   @Nullable
@@ -60,6 +65,7 @@ public class ColorAndFontGlobalState {
 
   public ColorAndFontGlobalState() {
     myReferenceState = new ColorAndFontGlobalState(true);
+    copyFrom(myReferenceState); //be ready to global data extension
   }
 
   private void copyFrom(@NotNull ColorAndFontGlobalState state) {
@@ -71,22 +77,17 @@ public class ColorAndFontGlobalState {
     for (Map.Entry<Language, Boolean> entry : myLanguage2RainbowEnabled.entrySet()) {
       RainbowHighlighter.setRainbowEnabled(entry.getKey(), entry.getValue());
     }
-    //noinspection ConstantConditions
+    Editor[] allEditors = EditorFactory.getInstance().getAllEditors();
+    for (Editor editor : allEditors) {
+      final Project project = editor.getProject();
+      if (project != null) {
+        PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+        if (file != null) {
+          DaemonCodeAnalyzer.getInstance(project).restart(file);
+        }
+      }
+    }
     myReferenceState.copyFrom(this);
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    ColorAndFontGlobalState state = (ColorAndFontGlobalState)o;
-    return myLanguage2RainbowEnabled.equals(state.myLanguage2RainbowEnabled);
-  }
-
-  @Override
-  public int hashCode() {
-    return myLanguage2RainbowEnabled.hashCode();
   }
 
   public void addListener(@NotNull ColorAndFontSettingsListener listener) {
@@ -98,11 +99,14 @@ public class ColorAndFontGlobalState {
   }
 
   public boolean isModified() {
-    return !equals(myReferenceState);
+    return !myLanguage2RainbowEnabled.equals(myReferenceState.myLanguage2RainbowEnabled);
+  }
+
+  public boolean isModified(@Nullable Language language) {
+    return myLanguage2RainbowEnabled.get(language) != myReferenceState.myLanguage2RainbowEnabled.get(language);
   }
 
   public void reset() {
-    //noinspection ConstantConditions
     copyFrom(myReferenceState);
   }
 }

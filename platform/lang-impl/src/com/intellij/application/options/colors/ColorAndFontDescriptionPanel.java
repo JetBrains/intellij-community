@@ -99,12 +99,16 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
       }
     });
 
-    ActionListener actionListener = new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        onSettingsChanged(e);
-      }
+    ActionListener actionListener = e -> {
+      myErrorStripeColorChooser.setEnabled(myCbErrorStripe.isSelected());
+      myForegroundChooser.setEnabled(myCbForeground.isSelected());
+      myBackgroundChooser.setEnabled(myCbBackground.isSelected());
+      myEffectsColorChooser.setEnabled(myCbEffects.isSelected());
+      myEffectsCombo.setEnabled(myCbEffects.isSelected());
+
+      myDispatcher.getMulticaster().onSettingsChanged(e);
     };
+
     for (JBCheckBox c : new JBCheckBox[]{myCbBackground, myCbForeground, myCbEffects, myCbErrorStripe, myCbItalic, myCbBold, myInheritAttributesBox}) {
       c.addActionListener(actionListener);
     }
@@ -123,16 +127,6 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
   @Override
   public JComponent getPanel() {
     return this;
-  }
-
-  private void onSettingsChanged(ActionEvent e) {
-    myErrorStripeColorChooser.setEnabled(myCbErrorStripe.isSelected());
-    myForegroundChooser.setEnabled(myCbForeground.isSelected());
-    myBackgroundChooser.setEnabled(myCbBackground.isSelected());
-    myEffectsColorChooser.setEnabled(myCbEffects.isSelected());
-    myEffectsCombo.setEnabled(myCbEffects.isSelected());
-
-    myDispatcher.getMulticaster().onSettingsChanged(e);
   }
 
   public void resetDefault() {

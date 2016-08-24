@@ -102,17 +102,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   public boolean isModified() {
     boolean listModified = isSchemeListModified();
     boolean schemeModified = isSomeSchemeModified();
-    boolean globalModified = isColorAndFontGlobalStateModified();
 
-    if (listModified || schemeModified || globalModified) {
+    if (listModified || schemeModified) {
       myApplyCompleted = false;
     }
 
-    return listModified || globalModified;
-  }
-
-  private boolean isColorAndFontGlobalStateModified() {
-    return myColorAndFontGlobalState.isModified();
+    return listModified;
   }
 
   private boolean isSchemeListModified() {
@@ -205,7 +200,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     clone.setName(name);
     MyColorScheme newScheme = new MyColorScheme(clone);
-    initScheme(newScheme);
+    initScheme(myColorAndFontGlobalState, newScheme);
 
     newScheme.setIsNew();
 
@@ -216,7 +211,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
   public void addImportedScheme(@NotNull EditorColorsScheme imported) {
     MyColorScheme newScheme = new MyColorScheme(imported);
-    initScheme(newScheme);
+    initScheme(myColorAndFontGlobalState, newScheme);
 
     mySchemes.put(imported.getName(), newScheme);
     selectScheme(newScheme.getName());
@@ -503,7 +498,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     mySchemes = new THashMap<>();
     for (EditorColorsScheme allScheme : EditorColorsManager.getInstance().getAllSchemes()) {
       MyColorScheme schemeDelegate = new MyColorScheme(allScheme);
-      initScheme(schemeDelegate);
+      initScheme(myColorAndFontGlobalState, schemeDelegate);
       mySchemes.put(schemeDelegate.getName(), schemeDelegate);
     }
 
@@ -511,26 +506,29 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     assert mySelectedScheme != null : EditorColorsManager.getInstance().getGlobalScheme().getName() + "; myschemes=" + mySchemes;
   }
 
-  private static void initScheme(@NotNull MyColorScheme scheme) {
+  private static void initScheme(@NotNull ColorAndFontGlobalState colorAndFontGlobalState, @NotNull MyColorScheme scheme) {
     List<EditorSchemeAttributeDescriptor> descriptions = new ArrayList<>();
-    initPluggedDescriptions(descriptions, scheme);
+    initPluggedDescriptions(colorAndFontGlobalState, descriptions, scheme);
     initFileStatusDescriptors(descriptions, scheme);
     initScopesDescriptors(descriptions, scheme);
 
     scheme.setDescriptors(descriptions.toArray(new EditorSchemeAttributeDescriptor[descriptions.size()]));
   }
 
-  private static void initPluggedDescriptions(@NotNull List<EditorSchemeAttributeDescriptor> descriptions, @NotNull MyColorScheme scheme) {
+  private static void initPluggedDescriptions(@NotNull ColorAndFontGlobalState colorAndFontGlobalState,
+                                              @NotNull List<EditorSchemeAttributeDescriptor> descriptions,
+                                              @NotNull MyColorScheme scheme) {
     ColorSettingsPage[] pages = ColorSettingsPages.getInstance().getRegisteredPages();
     for (ColorSettingsPage page : pages) {
-      initDescriptions(page, descriptions, scheme);
+      initDescriptions(colorAndFontGlobalState, page, descriptions, scheme);
     }
     for (ColorAndFontDescriptorsProvider provider : Extensions.getExtensions(ColorAndFontDescriptorsProvider.EP_NAME)) {
-      initDescriptions(provider, descriptions, scheme);
+      initDescriptions(colorAndFontGlobalState, provider, descriptions, scheme);
     }
   }
 
-  private static void initDescriptions(@NotNull ColorAndFontDescriptorsProvider provider,
+  private static void initDescriptions(@NotNull ColorAndFontGlobalState colorAndFontGlobalState,
+                                       @NotNull ColorAndFontDescriptorsProvider provider,
                                        @NotNull List<EditorSchemeAttributeDescriptor> descriptions,
                                        @NotNull MyColorScheme scheme) {
     String group = provider.getDisplayName();
@@ -538,6 +536,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     //todo: single point configuration?
     if (provider instanceof RainbowColorSettingsPage) {
       descriptions.add(new RainbowAttributeDescriptor(((RainbowColorSettingsPage)provider).getLanguage(),
+                                                      colorAndFontGlobalState,
                                                       group,
                                                       ApplicationBundle.message("rainbow.option.panel.display.name"),
                                                       scheme,
@@ -657,7 +656,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   private void revertChanges(){
-    if (isSchemeListModified() || isSomeSchemeModified() || isColorAndFontGlobalStateModified()) {
+    if (isSchemeListModified() || isSomeSchemeModified()) {
       myRevertChangesCompleted = false;
     }
 
