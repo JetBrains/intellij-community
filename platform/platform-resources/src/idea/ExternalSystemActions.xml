@@ -66,12 +66,12 @@
             description="Execute selected task after the project import">
     </action>
     <action id="ExternalSystem.BeforeCompile"
-            class="com.intellij.openapi.externalSystem.action.task.ToggleBeforeCompileTasksAction" text="Execute Before Make"
-            description="Execute selected task before Make">
+            class="com.intellij.openapi.externalSystem.action.task.ToggleBeforeCompileTasksAction" text="Execute Before Build"
+            description="Execute selected task before Build">
     </action>
     <action id="ExternalSystem.AfterCompile"
-            class="com.intellij.openapi.externalSystem.action.task.ToggleAfterCompileTasksAction" text="Execute After Make"
-            description="Execute selected task after Make">
+            class="com.intellij.openapi.externalSystem.action.task.ToggleAfterCompileTasksAction" text="Execute After Build"
+            description="Execute selected task after Build">
     </action>
     <action id="ExternalSystem.BeforeRebuild"
             class="com.intellij.openapi.externalSystem.action.task.ToggleBeforeRebuildTasksAction" text="Execute Before Rebuild"

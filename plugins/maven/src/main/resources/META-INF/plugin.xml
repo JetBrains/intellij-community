@@ -506,12 +506,12 @@
 
     <group id="Maven.TasksGroup">
       <action id="Maven.BeforeCompile"
-              class="org.jetbrains.idea.maven.tasks.actions.ToggleBeforeCompileTasksAction" text="Execute Before Make"
-              description="Execute selected phase/goal before Make">
+              class="org.jetbrains.idea.maven.tasks.actions.ToggleBeforeCompileTasksAction" text="Execute Before Build"
+              description="Execute selected phase/goal before Build">
       </action>
       <action id="Maven.AfterCompile"
-              class="org.jetbrains.idea.maven.tasks.actions.ToggleAfterCompileTasksAction" text="Execute After Make"
-              description="Execute selected phase/goal after Make">
+              class="org.jetbrains.idea.maven.tasks.actions.ToggleAfterCompileTasksAction" text="Execute After Build"
+              description="Execute selected phase/goal after Build">
       </action>
       <action id="Maven.BeforeRebuild"
               class="org.jetbrains.idea.maven.tasks.actions.ToggleBeforeRebuildTasksAction" text="Execute Before Rebuild"
