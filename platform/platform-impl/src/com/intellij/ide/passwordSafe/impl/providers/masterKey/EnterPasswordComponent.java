@@ -17,6 +17,7 @@ package com.intellij.ide.passwordSafe.impl.providers.masterKey;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -31,7 +32,22 @@ public class EnterPasswordComponent extends PasswordComponentBase {
   public EnterPasswordComponent(@NotNull Function<String, Boolean> passwordConsumer) {
     myPasswordConsumer = passwordConsumer;
 
-    myPromptLabel.setText("Master password is required to convert saved password.");
+    String note;
+    if (SystemInfo.isMacIntel64 && SystemInfo.isMacOSLeopard) {
+      note = "The passwords will be stored in the system MacOS keychain.";
+    }
+    else if (SystemInfo.isLinux) {
+      note = "The passwords will be stored in the system keychain using Secret Service API.";
+    }
+    else if (SystemInfo.isWindows) {
+      note = "The passwords will be stored in the KeePass database protected by your Windows account.";
+    }
+    else {
+      String subNote = SystemInfo.isMacIntel64 ? "at least OS X 10.5 is required" : "your OS is not supported, please file issue";
+      note = "The passwords will be stored in IDE configuration files with weak protection (" + subNote + ").";
+    }
+
+    myPromptLabel.setText("<html>Master password is required to convert saved passwords.<br><br>" + note + "</html>");
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       myPasswordField.setText("pass");
