@@ -17,18 +17,15 @@ package com.intellij.layout
 
 import com.intellij.BundleBase
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.JBColor
-import com.intellij.ui.SimpleColoredComponent
-import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
+import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.UIUtil.getCssFontDeclaration
+import com.intellij.util.ui.UIUtil.getLabelForeground
 import net.miginfocom.layout.*
 import net.miginfocom.swing.MigLayout
-import java.awt.BorderLayout
-import java.awt.Component
-import java.awt.Font
-import java.awt.LayoutManager
+import java.awt.*
 import java.awt.event.ActionEvent
 import java.util.regex.Pattern
 import javax.swing.*
@@ -247,4 +244,16 @@ fun noteComponent(note: String): SimpleColoredComponent {
   }
 
   return noteComponent
+}
+
+@JvmOverloads
+fun htmlComponent(text: String = "", font: Font = UIUtil.getLabelFont(), background: Color? = null, foreground: Color? = null, lineWrap: Boolean = false): JEditorPane {
+  val pane = SwingHelper.createHtmlViewer(lineWrap, font, background, foreground)
+  if (!text.isNullOrEmpty()) {
+    pane.text = "<html><head>${getCssFontDeclaration(font, getLabelForeground(), null, null)}</head><body>$text</body></html>"
+  }
+  pane.border = null
+  pane.disabledTextColor = UIUtil.getLabelDisabledForeground()
+  pane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
+  return pane
 }
