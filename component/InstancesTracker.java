@@ -34,6 +34,10 @@ public class InstancesTracker extends AbstractProjectComponent
     IDENTITY, HASH, RETAIN
   }
 
+  public boolean isTracked(@NotNull String className) {
+    return myState.classes.containsKey(className);
+  }
+
   public Map<String, TrackingType> getTrackingClasses() {
     Map<String, TrackingType> copy = new HashMap<>(myState.classes);
     return Collections.unmodifiableMap(copy);
@@ -49,7 +53,6 @@ public class InstancesTracker extends AbstractProjectComponent
     myDispatcher.getMulticaster().classAdded(name, type);
   }
 
-  @SuppressWarnings("unused")
   public boolean remove(@NotNull ReferenceType ref) {
     String name = ref.name();
     TrackingType removed = myState.classes.remove(name);
