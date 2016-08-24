@@ -80,9 +80,7 @@ public class DebugReflectionUtil {
   }
 
   private static boolean isTrivial(@NotNull Class<?> type) {
-    // Android Studio: keep checking for Object type until all project leaks are fixed (this traversal bug was fixed in IDEA 16.1).
-    return type.isPrimitive() || type == String.class || type == Class.class || type == Object.class ||
-           type.isArray() && isTrivial(type.getComponentType());
+    return type.isPrimitive() || type == String.class || type == Class.class || type.isArray() && isTrivial(type.getComponentType());
   }
 
   public static boolean processStronglyReferencedValues(@NotNull Object root, PairProcessor<Object, Field> processor) {
