@@ -16,14 +16,17 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
+import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.memory.component.InstancesTracker;
 import org.jetbrains.debugger.memory.event.InstancesTrackerListener;
+import org.jetbrains.debugger.memory.tracking.InstanceTrackingStrategy;
 import org.jetbrains.debugger.memory.utils.AbstractTableColumnDescriptor;
 import org.jetbrains.debugger.memory.utils.AbstractTableModelWithColumns;
+import org.jetbrains.debugger.memory.utils.InstancesProvider;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
@@ -34,6 +37,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ClassesTable extends JBTable implements DataProvider, Disposable {
   public static final DataKey<ReferenceType> SELECTED_CLASS_KEY = DataKey.create("ClassesTable.SelectedClass");
   public static final DataKey<XDebugSession> DEBUG_SESSION_KEY = DataKey.create("ClassesTable.DebugSession");
+  public static final DataKey<InstancesProvider> NEW_INSTANCES_PROVIDER_KEY =
+      DataKey.create("ClassesTable.NewInstances");
   private static final int CLASSES_COLUMN_PREFERRED_WIDTH = 250;
   private static final int COUNT_COLUMN_MIN_WIDTH = 80;
   private static final int COUNT_COLUMN_MAX_WIDTH = 100;
@@ -47,6 +52,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   private final XDebugSession myDebugSession;
   private final Map<ReferenceType, DiffValue> myCounts = new ConcurrentHashMap<>();
   private final InstancesTracker myInstancesTracker;
+  private final ClassesFilteredView myParent;
 
   private boolean myOnlyWithDiff;
 
@@ -56,13 +62,16 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
   private volatile List<ReferenceType> myElems = Collections.unmodifiableList(new ArrayList<>());
 
-  ClassesTable(@NotNull XDebugSession session, boolean onlyWithDiff, boolean onlyWithInstances) {
+  // TODO: parent must be unknown in this context
+  ClassesTable(@NotNull XDebugSession session, boolean onlyWithDiff, boolean onlyWithInstances,
+               @NotNull ClassesFilteredView parent) {
     setModel(myModel);
 
     myDebugSession = session;
     myOnlyWithDiff = onlyWithDiff;
     myOnlyWithInstances = onlyWithInstances;
     myInstancesTracker = InstancesTracker.getInstance(myDebugSession.getProject());
+    myParent = parent;
 
     getEmptyText().setText(EMPTY_TABLE_CONTENT);
 
@@ -197,6 +206,17 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     }
     if (DEBUG_SESSION_KEY.is(dataId)) {
       return myDebugSession;
+    }
+    if(NEW_INSTANCES_PROVIDER_KEY.is(dataId)) {
+      ReferenceType selectedClass = getSelectedClass();
+      if(selectedClass != null) {
+        InstanceTrackingStrategy strategy = myParent.getStrategy(selectedClass);
+        if(strategy != null) {
+          List<ObjectReference> newInstances = strategy.getNewInstances();
+          return (InstancesProvider) limit -> newInstances;
+        }
+
+      }
     }
 
     return null;

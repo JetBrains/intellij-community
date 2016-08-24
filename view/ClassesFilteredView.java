@@ -18,13 +18,16 @@ import com.intellij.util.SmartList;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
+import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.VirtualMachine;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.debugger.memory.component.InstancesTracker;
 import org.jetbrains.debugger.memory.component.MemoryViewManager;
 import org.jetbrains.debugger.memory.component.MemoryViewManagerState;
 import org.jetbrains.debugger.memory.event.MemoryViewManagerListener;
+import org.jetbrains.debugger.memory.tracking.InstanceTrackingStrategy;
 import org.jetbrains.debugger.memory.utils.AndroidUtil;
 import org.jetbrains.debugger.memory.utils.KeyboardUtils;
 import org.jetbrains.debugger.memory.utils.SingleAlarmWithMutableDelay;
@@ -37,6 +40,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
@@ -52,9 +57,13 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
 
   private final SearchTextField myFilterTextField = new SearchTextField(false);
   private final ClassesTable myTable;
+  private final InstancesTracker myInstancesTracker;
+  private final Map<ReferenceType, InstanceTrackingStrategy> myTrackedClasses = new ConcurrentHashMap<>();
+
 
   private volatile SuspendContextImpl myLastSuspendContext;
   private volatile boolean myNeedReloadClasses = false;
+
 
   public ClassesFilteredView(@NotNull XDebugSession debugSession) {
     super();
@@ -63,11 +72,12 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     myDebugSession = debugSession;
     myDebugProcess = DebuggerManager.getInstance(myProject)
         .getDebugProcess(myDebugSession.getDebugProcess().getProcessHandler());
+    myInstancesTracker = InstancesTracker.getInstance(myProject);
 
     MemoryViewManagerState memoryViewManagerState = MemoryViewManager.getInstance().getState();
 
     myTable = new ClassesTable(myDebugSession, memoryViewManagerState.isShowWithDiffOnly,
-        memoryViewManagerState.isShowWithInstancesOnly);
+        memoryViewManagerState.isShowWithInstancesOnly, this);
     Disposer.register(this, myTable);
 
     myTable.addKeyListener(new KeyAdapter() {
@@ -152,6 +162,11 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     addToCenter(scroll);
   }
 
+  @Nullable
+  InstanceTrackingStrategy getStrategy(@NotNull ReferenceType ref) {
+    return myTrackedClasses.getOrDefault(ref, null);
+  }
+
   public void setNeedReloadClasses(boolean value) {
     if (myNeedReloadClasses != value) {
       myNeedReloadClasses = value;
@@ -203,6 +218,17 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     @Override
     public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
       final List<ReferenceType> classes = myDebugProcess.getVirtualMachineProxy().allClasses();
+      for(ReferenceType ref : classes) {
+        InstancesTracker.TrackingType type = myInstancesTracker.getTrackingType(ref.name());
+        if(type != null && !myTrackedClasses.containsKey(ref)) {
+          List<ObjectReference> instances = ref.instances(0);
+          myTrackedClasses.put(ref, InstanceTrackingStrategy.create(type, instances));
+        }
+      }
+
+      for(Map.Entry<ReferenceType, InstanceTrackingStrategy> entry : myTrackedClasses.entrySet()) {
+        entry.getValue().update(entry.getKey().instances(0));
+      }
 
       if (classes.isEmpty()) {
         return;

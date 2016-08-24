@@ -9,7 +9,7 @@ import java.util.List;
 
 import static org.jetbrains.debugger.memory.component.InstancesTracker.*;
 
-abstract class InstanceTrackingStrategy {
+public abstract class InstanceTrackingStrategy {
   @NotNull
   private List<ObjectReference> myNewInstances = new ArrayList<>();
 
@@ -27,11 +27,11 @@ abstract class InstanceTrackingStrategy {
   }
 
   @NotNull
-  final List<ObjectReference> getNewInstances() {
+  public final List<ObjectReference> getNewInstances() {
     return Collections.unmodifiableList(myNewInstances);
   }
 
-  final void update(@NotNull List<ObjectReference> references) {
+  public final void update(@NotNull List<ObjectReference> references) {
     myNewInstances = updateImpl(references);
   }
 
