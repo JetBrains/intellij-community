@@ -110,7 +110,7 @@ class ConstructorReferencesSearchHelper {
     if (!DumbService.getInstance(project).runReadActionInSmartMode(
       () -> processSuperOrThis(containingClass, constructor, constructorCanBeCalledImplicitly[0], searchScope, project,
                                isStrictSignatureSearch,
-                               PsiKeyword.THIS, processor))) {
+                               PsiKeyword.THIS, PsiKeyword.SUPER, processor))) {
       return false;
     }
 
@@ -119,7 +119,7 @@ class ConstructorReferencesSearchHelper {
       final PsiElement navigationElement = inheritor.getNavigationElement();
       if (navigationElement instanceof PsiClass) {
         return processSuperOrThis((PsiClass)navigationElement, constructor, constructorCanBeCalledImplicitly[0], searchScope, project,
-                                  isStrictSignatureSearch, PsiKeyword.SUPER, processor);
+                                  isStrictSignatureSearch, PsiKeyword.SUPER, PsiKeyword.THIS, processor);
       }
       return true;
     };
@@ -186,6 +186,7 @@ class ConstructorReferencesSearchHelper {
                                      @NotNull Project project,
                                      final boolean isStrictSignatureSearch,
                                      @NotNull String superOrThisKeyword,
+                                     @NotNull String thisOrSuperKeyword,
                                      @NotNull Processor<PsiReference> processor) {
     PsiMethod[] constructors = inheritor.getConstructors();
     if (constructors.length == 0 && constructorCanBeCalledImplicitly) {
@@ -214,6 +215,9 @@ class ConstructorReferencesSearchHelper {
                   if (match && !processor.process(refExpr)) return false;
                 }
                 //as long as we've encountered super/this keyword, no implicit ctr calls are possible here
+                continue;
+              }
+              else if (refExpr.textMatches(thisOrSuperKeyword)) {
                 continue;
               }
             }

@@ -28,4 +28,17 @@ class FindFixtureBasedTest : LightCodeInsightFixtureTestCase() {
     val references = MethodReferencesSearch.search(constructors[0]).findAll()
     assertSize(1, references)
   }
+
+  fun testDefaultConstructorNotInvoked() {
+    val aClass = myFixture.addClass("public class A {\n" +
+                                    "  public A() {}\n" +
+                                    "  public A(String s){}\n" +
+                                    "  public A(int i) {this(null);}\n" +
+                                    "}")
+    myFixture.addClass("class B extends A {public B(){this(\"\");} public B(String s) {super(s);} }")
+
+    val constructors = aClass.constructors
+    assertSize(3, constructors)
+    assertNull(MethodReferencesSearch.search(constructors[0]).findFirst())
+  }
 }
