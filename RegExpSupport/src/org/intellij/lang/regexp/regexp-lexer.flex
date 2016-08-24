@@ -99,7 +99,7 @@ LBRACKET="["
 RBRACKET="]"
 
 ESCAPE="\\"
-NAME=[:letter:]([:letter:]|_|[:digit:])*
+NAME=[:letter:]([:letter:]|_|-|" "|"("|")"|[:digit:])*
 ANY=[^]
 
 META1 = {ESCAPE} | {LBRACKET} | "^"
