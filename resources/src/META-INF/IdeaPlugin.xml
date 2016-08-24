@@ -1783,6 +1783,9 @@
     <action id="ShowRecentTests" class="com.intellij.testIntegration.ShowRecentTests">
       <keyboard-shortcut first-keystroke="control shift SEMICOLON" keymap="$default"/>
     </action>
+    <action id="ReportMissingOrExcessiveInlineHint" class="com.intellij.reporting.ReportMissingOrExcessiveInlineHint">
+      <add-to-group group-id="EditorPopupMenu"/>
+    </action>
     <action class="com.intellij.execution.testDiscovery.ConfigureTestDiscoveryAction" internal="true" id="TestDiscoveryIndexChooser" text="Choose external test discovery indices">
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
