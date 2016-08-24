@@ -14,7 +14,7 @@ import java.util.*
 
 private const val TEST_SERVICE_NAME = "IntelliJ Platform Test"
 
-class NativeKeychainTest {
+internal class NativeKeychainTest {
   @Test
   fun linux() {
     if (!SystemInfo.isLinux || UsefulTestCase.IS_UNDER_TEAMCITY) {
