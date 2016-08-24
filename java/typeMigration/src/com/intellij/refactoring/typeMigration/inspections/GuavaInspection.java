@@ -59,7 +59,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
     @NotNull
     @Override
     protected Set<String> compute() {
-      return ContainerUtil.newHashSet("append", "cycle", "uniqueIndex", "index");
+      return ContainerUtil.newHashSet("append", "cycle", "uniqueIndex", "index", "toMultiset");
     }
   };
 
