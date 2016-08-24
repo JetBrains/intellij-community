@@ -18,81 +18,82 @@ package com.intellij.credentialStore.kdbx
 import com.intellij.util.element
 import com.intellij.util.getOrCreate
 import org.jdom.Element
-import java.util.*
-import kotlin.reflect.KProperty
 
 private const val VALUE_ELEMENT_NAME = "Value"
 
-class KdbxEntry(val element: Element, internal val database: KeePassDatabase, internal @Volatile var group: KdbxGroup?) {
-  fun getProperty(name: String) = getPropertyContainer(name)?.getChildText(VALUE_ELEMENT_NAME)
-
-  fun setProperty(name: String, value: String?) {
-    var item = getPropertyContainer(name)
-    if (item == null) {
-      item = element.element("String")
-      item.element("Key").addContent(name)
-    }
-
-    item.getOrCreate(VALUE_ELEMENT_NAME).text = value
-    touch()
-    database.isDirty = true
-  }
-
-  internal fun ensureProperty(name: String) {
-    val property = getPropertyContainer(name)
-    if (property == null) {
-      val container = element.element("String")
-      container.element("Key").addContent(name)
-      container.element("Value")
-    }
-  }
-
-  val uuid: UUID
-    get() = uuidFromBase64(element.getChildText(UUID_ELEMENT_NAME)!!)
-
-  var userName: String? by PropertyDelegate("UserName")
-  var password: String? by PropertyDelegate("Password")
-  var url: String? by PropertyDelegate("URL")
-  var title: String? by PropertyDelegate("Title")
-
-  var icon: Icon?
-    get() = DomIconWrapper(element.getChild(ICON_ELEMENT_NAME)!!)
+class KdbxEntry(private val element: Element, private val database: KeePassDatabase, internal @Volatile var group: KdbxGroup?) {
+  @Volatile var title: String? = element.removeProperty("Title")
     set(value) {
-      element.getOrCreate(ICON_ELEMENT_NAME).text = value!!.index.toString()
-      touch()
-      database.isDirty = true
-    }
-
-  private fun getPropertyContainer(name: String): Element? {
-    for (element in element.getChildren("String")) {
-      if (element.getChildText("Key") == name) {
-        return element
+      if (field != value) {
+        field = value
+        touch()
+        database.isDirty = true
       }
     }
-    return null
+
+  @Volatile var userName: String? = element.removeProperty("UserName")
+    set(value) {
+      if (field != value) {
+        field = value
+        touch()
+        database.isDirty = true
+      }
+    }
+
+  @Volatile var password: String? = element.removeProperty("Password")
+    set(value) {
+      if (field != value) {
+        field = value
+        touch()
+        database.isDirty = true
+      }
+    }
+
+  fun toXml(): Element {
+    val element = element.clone()
+    element.setProperty("Title", title)
+    element.ensureProperty("URL")
+    element.setProperty("UserName", userName)
+    element.setProperty("Password", password)
+    element.ensureProperty("Notes")
+    return element
   }
 
   private fun touch() {
     element.getOrCreate("Times").getOrCreate("LastModificationTime").text = formattedNow()
   }
+}
 
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other == null || javaClass != other.javaClass) return false
-
-    val that = other as KdbxEntry?
-    return element == that!!.element && database == that.database
-  }
-
-  override fun hashCode(): Int {
-    var result = element.hashCode()
-    result = 31 * result + database.hashCode()
-    return result
+private fun Element.ensureProperty(name: String) {
+  val property = getPropertyContainer(name, false)
+  if (property == null) {
+    val container = element("String")
+    container.element("Key").addContent(name)
+    container.element("Value")
   }
 }
 
-private class PropertyDelegate(private val name: String) {
-  operator fun getValue(thisRef: KdbxEntry, property: KProperty<*>) = thisRef.getProperty(name)
+private fun Element.getPropertyContainer(name: String, remove: Boolean): Element? {
+  val iterator = getChildren("String").iterator()
+  for (element in iterator) {
+    if (element.getChildText("Key") == name) {
+      if (remove) {
+        iterator.remove()
+      }
+      return element
+    }
+  }
+  return null
+}
 
-  operator fun setValue(thisRef: KdbxEntry, property: KProperty<*>, value: String?) = thisRef.setProperty(name, value)
+private fun Element.removeProperty(name: String) = getPropertyContainer(name, true)?.getChildText(VALUE_ELEMENT_NAME)
+
+private fun Element.setProperty(name: String, value: String?) {
+  var item = getPropertyContainer(name, false)
+  if (item == null) {
+    item = element("String")
+    item.element("Key").addContent(name)
+  }
+
+  item.getOrCreate(VALUE_ELEMENT_NAME).text = value
 }
