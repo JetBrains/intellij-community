@@ -24,11 +24,13 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.psi.PsiJavaModule
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 
 class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor = DESCRIPTOR
@@ -49,11 +51,19 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
   }
 
   fun testDuplicateRequires() {
-    doTest("""module M { requires M2; <error descr="Duplicate requires: M2">requires M2;</error> }""")
+    doTest("""module M { requires M2; <error descr="Duplicate requires: M2">requires M2;</error> }""", true)
   }
 
   fun testUnresolvedModule() {
-    doTest("""module M { requires <error descr="Cannot resolve module 'M.missing'">M.missing</error>; }""")
+    doTest("""module M { requires <error descr="Module not found: M.missing">M.missing</error>; }""")
+  }
+
+  fun testSelfDependence() {
+    doTest("""module M { requires <error descr="Cyclic dependence: M">M</error>; }""")
+  }
+
+  fun testCyclicDependence() {
+    doTest("""module M1 { requires <error descr="Cyclic dependence: M1, M2">M2</error>; }""", true)
   }
 
   //<editor-fold desc="Helpers.">
@@ -68,7 +78,7 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
           val src2 = createSourceRoot(m2, "src2")
           createContentEntry(m2, src2)
 
-          VfsUtil.saveText(src2.createChildData(this, "module-info.java"), "module M2 { }")
+          VfsUtil.saveText(src2.createChildData(this, "module-info.java"), "module M2 { requires M1; }")
         }
       }
 
@@ -84,8 +94,11 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
     file
   })
 
-  private fun doTest(text: String) {
+  private fun doTest(text: String, filter: Boolean = false) {
     myFixture.configureByText("module-info.java", text)
+    if (filter) {
+      (myFixture as CodeInsightTestFixtureImpl).setVirtualFileFilter { it.name != PsiJavaModule.MODULE_INFO_FILE }
+    }
     myFixture.checkHighlighting()
   }
   //</editor-fold>

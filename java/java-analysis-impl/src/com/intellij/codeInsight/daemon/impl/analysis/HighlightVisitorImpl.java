@@ -1628,8 +1628,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitRequiresStatement(PsiRequiresStatement statement) {
     super.visitRequiresStatement(statement);
     if (PsiUtil.isLanguageLevel9OrHigher(myFile)) {
+      PsiJavaModule container = (PsiJavaModule)statement.getParent();
       PsiJavaModuleReferenceElement ref = statement.getReferenceElement();
-      if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkModuleReference(ref));
+      if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkModuleReference(ref, container));
     }
   }
 
