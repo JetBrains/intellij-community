@@ -19,7 +19,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -64,24 +64,9 @@ public class IterableComponentTypeMacro extends Macro {
       PsiClass aClass = resolveResult.getElement();
 
       if (aClass != null) {
-        PsiClass iterableClass = JavaPsiFacade.getInstance(project).findClass("java.lang.Iterable", aClass.getResolveScope());
-        if (iterableClass != null) {
-          PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(iterableClass, aClass, resolveResult.getSubstitutor());
-          if (substitutor != null) {
-            PsiType parameterType = substitutor.substitute(iterableClass.getTypeParameters()[0]);
-            if (parameterType instanceof PsiCapturedWildcardType) {
-              return new PsiTypeResult(((PsiCapturedWildcardType)parameterType).getUpperBound(), project);
-            }
-            if (parameterType != null) {
-              if (parameterType instanceof PsiWildcardType) {
-                if (((PsiWildcardType)parameterType).isExtends()) {
-                  return new PsiTypeResult(((PsiWildcardType)parameterType).getBound(), project);
-                }
-                else return null;
-              }
-              return new PsiTypeResult(parameterType, project);
-            }
-          }
+        PsiType component = PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_LANG_ITERABLE, 0, false);
+        if (component != null) {
+          return new PsiTypeResult(GenericsUtil.eliminateWildcards(component, false, true), project);
         }
       }
     }
