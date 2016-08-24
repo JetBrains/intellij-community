@@ -2,19 +2,23 @@ package org.jetbrains.debugger.memory.component;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.EventDispatcher;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
-import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.Tag;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.debugger.memory.event.InstancesTrackerListener;
 
-import java.util.List;
-import java.util.Vector;
+import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @State(name = "InstancesTracker", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class InstancesTracker extends AbstractProjectComponent
     implements PersistentStateComponent<InstancesTracker.MyState> {
+  private final EventDispatcher<InstancesTrackerListener> myDispatcher =
+      EventDispatcher.create(InstancesTrackerListener.class);
   private MyState myState = new MyState();
 
   public InstancesTracker(Project project) {
@@ -29,13 +33,30 @@ public class InstancesTracker extends AbstractProjectComponent
     IDENTITY, HASH, RETAIN
   }
 
-  public void add(@NotNull ReferenceType ref, @NotNull TrackingType type) {
-    myState.classes.add(new TrackingClassState(ref.name(), type));
+  public Map<String, TrackingType> getTrackingClasses() {
+    Map<String, TrackingType> copy = new HashMap<>(myState.classes);
+    return Collections.unmodifiableMap(copy);
   }
 
-  @SuppressWarnings("unused")
-  public boolean remove(@NotNull ReferenceType ref, @NotNull TrackingType type) {
-    return myState.classes.removeIf(state -> state.className.equals(ref.name()) && type.equals(state.trackingType));
+  public void add(@NotNull ReferenceType ref, @NotNull TrackingType type) {
+    String name = ref.name();
+    if(type.equals(myState.classes.getOrDefault(name, null))) {
+      return;
+    }
+
+    myState.classes.put(ref.name(), type);
+    myDispatcher.getMulticaster().classAdded(name, type);
+  }
+
+  public boolean remove(@NotNull ReferenceType ref) {
+    String name = ref.name();
+    TrackingType removed = myState.classes.remove(name);
+    if(removed != null) {
+      myDispatcher.getMulticaster().classRemoved(name);
+      return true;
+    }
+
+    return false;
   }
 
   @Nullable
@@ -51,39 +72,16 @@ public class InstancesTracker extends AbstractProjectComponent
 
   static class MyState {
     @NotNull
-    @AbstractCollection(surroundWithTag = false, elementTypes = {TrackingClassState.class})
-    final List<TrackingClassState> classes = new Vector<>();
+    @AbstractCollection(surroundWithTag = false, elementTypes = {Map.Entry.class})
+    final Map<String, TrackingType> classes = new ConcurrentHashMap<>();
 
     MyState() {
     }
 
     MyState(@NotNull MyState state) {
-      for (TrackingClassState classState : state.classes) {
-        TrackingClassState newState = new TrackingClassState();
-        newState.className = classState.className;
-        newState.trackingType = classState.trackingType;
-        classes.add(newState);
+      for (Map.Entry<String, TrackingType> classState : state.classes.entrySet()) {
+        classes.put(classState.getKey(), classState.getValue());
       }
-    }
-  }
-
-  @Tag("class-state")
-  private static class TrackingClassState {
-    @NotNull
-    @Attribute("name")
-    String className ="";
-
-    @Nullable
-    @Attribute("type")
-    TrackingType trackingType;
-
-    @SuppressWarnings("WeakerAccess")
-    public TrackingClassState() {
-    }
-
-    TrackingClassState(@NotNull String name, @NotNull TrackingType type) {
-      className = name;
-      trackingType = type;
     }
   }
 }
