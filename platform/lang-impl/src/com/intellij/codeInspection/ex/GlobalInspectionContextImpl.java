@@ -71,6 +71,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.GuiUtils;
@@ -705,7 +706,14 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         if (batchInspection != null && !myTools.containsKey(batchShortName)) {
           // add to existing inspections to run
           InspectionProfileEntry batchTool = batchInspection.getTool();
-          Tools newTool = new ToolsImpl(batchInspection, batchInspection.getDefaultLevel(), true, true);
+          final ScopeToolState defaultState = tool.getDefaultState();
+          ToolsImpl newTool = new ToolsImpl(batchInspection, defaultState.getLevel(), true, defaultState.isEnabled());
+          for (ScopeToolState state : tool.getTools()) {
+            final NamedScope scope = state.getScope(getProject());
+            if (scope != null) {
+              newTool.addTool(scope, batchInspection, state.isEnabled(), state.getLevel());
+            }
+          }
           if (batchTool instanceof LocalInspectionTool) localTools.add(newTool);
           else if (batchTool instanceof GlobalSimpleInspectionTool) globalSimpleTools.add(newTool);
           else if (batchTool instanceof GlobalInspectionTool) globalTools.add(newTool);

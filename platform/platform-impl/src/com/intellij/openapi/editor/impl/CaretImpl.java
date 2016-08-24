@@ -258,8 +258,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       int columnShift = _columnShift;
       if (withSelection && lineShift == 0) {
         if (columnShift == -1) {
-          if (myEditor.getInlayModel().hasInlineElementAt(
-            new VisualPosition(myVisibleCaret.line, myVisibleCaret.column - (hasSelection() && myOffset == getSelectionEnd() ? 2 : 1)))) {
+          int column = myVisibleCaret.column - (hasSelection() && myOffset == getSelectionEnd() ? 2 : 1);
+          if (column >= 0 && myEditor.getInlayModel().hasInlineElementAt(new VisualPosition(myVisibleCaret.line, column))) {
             columnShift = -2;
           }
         }

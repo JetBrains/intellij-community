@@ -38,6 +38,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+/**
+ * Use this class to postpone tasks execution and optionally merge identical tasks. This is needed e.g. to reflect in UI status of some
+ * background activity: it doesn't make sense and would be inefficient to update UI 1000 times per second, so it's better to postpone 'update UI'
+ * task execution for e.g. 500ms and if new updates are added during this period they can be simply ignored.
+ *
+ * <p/>
+ * Create instance of this class and use {@link #queue(Update)} method to add new tasks.
+ */
 public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   public static final JComponent ANY_COMPONENT = new JComponent() {
   };
@@ -96,6 +104,16 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
          executeInDispatchThread ? Alarm.ThreadToUse.SWING_THREAD : Alarm.ThreadToUse.POOLED_THREAD);
   }
 
+  /**
+   * @param name                   name of this queue, used only for debugging purposes
+   * @param mergingTimeSpan        time (in milliseconds) for which execution of tasks will be postponed
+   * @param isActive               if {@code true} the queue will execute tasks otherwise it'll just collect the
+   * @param modalityStateComponent makes sense only if {@code thread} is {@linkplain Alarm.ThreadToUse#SWING_THREAD SWING_THREAD}, in that
+   *                               case the tasks will be processed in {@link ModalityState} corresponding the given component
+   * @param parent                 if not {@code null} the queue will be disposed when the given parent is disposed
+   * @param activationComponent    if not {@code null} the tasks will be processing only when the given component is showing
+   * @param thread                 specifies on which thread the tasks are executed
+   */
   public MergingUpdateQueue(@NonNls @NotNull String name,
                             int mergingTimeSpan,
                             boolean isActive,
@@ -159,11 +177,12 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     return myPassThrough;
   }
 
+  /**
+   * @param passThrough if {@code true} the tasks won't be postponed but executed immediately instead (this is default mode for tests)
+   */
   public final void setPassThrough(boolean passThrough) {
     myPassThrough = passThrough;
   }
-
-
 
   public void activate() {
     showNotify();
@@ -321,6 +340,9 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     }
   }
 
+  /**
+   * Adds a task to be executed.
+   */
   public void queue(@NotNull final Update update) {
     if (myDisposed) return;
 
