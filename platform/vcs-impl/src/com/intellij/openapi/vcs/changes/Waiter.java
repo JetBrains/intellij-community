@@ -32,8 +32,8 @@ public class Waiter extends Task.Modal {
   @NotNull private final AtomicBoolean myStarted = new AtomicBoolean();
   @NotNull private final Semaphore mySemaphore = new Semaphore();
 
-  public Waiter(@NotNull Project project, @NotNull Runnable runnable, @NotNull String title, boolean cancellable) {
-    super(project, title, cancellable);
+  public Waiter(@NotNull Project project, @NotNull Runnable runnable, String title, boolean cancellable) {
+    super(project, VcsBundle.message("change.list.manager.wait.lists.synchronization", title), cancellable);
     myRunnable = runnable;
     mySemaphore.down();
     setCancelText("Skip");

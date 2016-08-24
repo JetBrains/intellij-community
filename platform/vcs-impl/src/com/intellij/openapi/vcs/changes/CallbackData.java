@@ -22,9 +22,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Consumer;
 
 class CallbackData {
   private final static Logger LOG = Logger.getInstance(CallbackData.class);
@@ -58,19 +59,14 @@ class CallbackData {
 
   @NotNull
   private static CallbackData createSilent(@NotNull Project project, @NotNull InvokeAfterUpdateMode mode, @NotNull Runnable afterUpdate) {
-    Runnable callback;
-    if (mode.isCallbackOnAwt()) {
-      callback = () -> ApplicationManager.getApplication().invokeLater(() -> {
-        LOG.debug("invokeAfterUpdate: silent wrapper called for project: " + project.getName());
-        if (!project.isDisposed()) afterUpdate.run();
-      });
-    }
-    else {
-      callback = () -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        if (!project.isDisposed()) afterUpdate.run();
-      });
-    }
-    return new CallbackData(callback, EmptyRunnable.INSTANCE);
+    Consumer<Runnable> callbackCaller = mode.isCallbackOnAwt()
+                                        ? ApplicationManager.getApplication()::invokeLater
+                                        : ApplicationManager.getApplication()::executeOnPooledThread;
+    Runnable callback = () -> {
+      logUpdateFinished(project, mode);
+      if (!project.isDisposed()) afterUpdate.run();
+    };
+    return new CallbackData(() -> callbackCaller.accept(callback), EmptyRunnable.INSTANCE);
   }
 
   @NotNull
@@ -79,23 +75,29 @@ class CallbackData {
                                                 @NotNull Runnable afterUpdate,
                                                 String title,
                                                 @Nullable ModalityState state) {
-    Runnable callback;
-    Task task;
-    if (mode.isSynchronous()) {
-      task =
-        new Waiter(project, afterUpdate, VcsBundle.message("change.list.manager.wait.lists.synchronization", title), mode.isCancellable());
-      callback = () -> {
-        LOG.debug("invokeAfterUpdate: NOT silent SYNCHRONOUS wrapper called for project: " + project.getName());
-        ((Waiter)task).done();
-      };
+    Task task = mode.isSynchronous()
+                ? new Waiter(project, afterUpdate, title, mode.isCancellable())
+                : new FictiveBackgroundable(project, afterUpdate, title, mode.isCancellable(), state);
+    Runnable callback = () -> {
+      logUpdateFinished(project, mode);
+      setDone(task);
+    };
+    return new CallbackData(callback, () -> ProgressManager.getInstance().run(task));
+  }
+
+  private static void setDone(@NotNull Task task) {
+    if (task instanceof Waiter) {
+      ((Waiter)task).done();
+    }
+    else if (task instanceof FictiveBackgroundable) {
+      ((FictiveBackgroundable)task).done();
     }
     else {
-      task = new FictiveBackgroundable(project, afterUpdate, mode.isCancellable(), title, state);
-      callback = () -> {
-        LOG.debug("invokeAfterUpdate: NOT silent wrapper called for project: " + project.getName());
-        ((FictiveBackgroundable)task).done();
-      };
+      throw new IllegalArgumentException("Unknown task type " + task.getClass());
     }
-    return new CallbackData(callback, () -> ProgressManager.getInstance().run(task));
+  }
+
+  private static void logUpdateFinished(@NotNull Project project, @NotNull InvokeAfterUpdateMode mode) {
+    LOG.debug(mode + " changes update finished for project " + project.getName());
   }
 }
