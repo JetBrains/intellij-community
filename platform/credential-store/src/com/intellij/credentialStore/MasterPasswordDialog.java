@@ -27,10 +27,10 @@ public class MasterPasswordDialog extends DialogWrapper {
   private final static int NUMBER_OF_RETRIES = 5;
 
   private final JPanel myRootPanel;
-  private final PasswordComponentBase myComponent;
+  private final EnterPasswordComponent myComponent;
   private int myRetriesCount;
 
-  public MasterPasswordDialog(@NotNull PasswordComponentBase component) {
+  public MasterPasswordDialog(@NotNull EnterPasswordComponent component) {
     super(false);
     myComponent = component;
 
