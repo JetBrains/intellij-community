@@ -475,26 +475,6 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
                   return false;
                 }
               });
-
-              if (entryPointsManager.isAddNonJavaEntries()) {
-                final RefClass ownerClass = refMethod.getOwnerClass();
-                if (refMethod.isConstructor() && ownerClass.getDefaultConstructor() != null) {
-                  final PsiClass psiClass = ownerClass.getElement();
-                  String qualifiedName = psiClass != null ? psiClass.getQualifiedName() : null;
-                  if (qualifiedName != null) {
-                    final Project project = manager.getProject();
-                    PsiSearchHelper.SERVICE.getInstance(project)
-                      .processUsagesInNonJavaFiles(qualifiedName, new PsiNonJavaFileReferenceProcessor() {
-                        @Override
-                        public boolean process(PsiFile file, int startOffset, int endOffset) {
-                          entryPointsManager.addEntryPoint(refMethod, false);
-                          ignoreElement(processor, refMethod);
-                          return false;
-                        }
-                      }, GlobalSearchScope.projectScope(project));
-                  }
-                }
-              }
             }
           }
 
@@ -515,6 +495,24 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
                   return false;
                 }
               });
+
+              final RefMethod defaultConstructor = refClass.getDefaultConstructor();
+              if (entryPointsManager.isAddNonJavaEntries() && defaultConstructor != null) {
+                final PsiClass psiClass = refClass.getElement();
+                String qualifiedName = psiClass != null ? psiClass.getQualifiedName() : null;
+                if (qualifiedName != null) {
+                  final Project project = manager.getProject();
+                  PsiSearchHelper.SERVICE.getInstance(project)
+                    .processUsagesInNonJavaFiles(qualifiedName, new PsiNonJavaFileReferenceProcessor() {
+                      @Override
+                      public boolean process(PsiFile file, int startOffset, int endOffset) {
+                        entryPointsManager.addEntryPoint(defaultConstructor, false);
+                        ignoreElement(processor, defaultConstructor);
+                        return false;
+                      }
+                    }, GlobalSearchScope.projectScope(project));
+                }
+              }
             }
           }
         });
