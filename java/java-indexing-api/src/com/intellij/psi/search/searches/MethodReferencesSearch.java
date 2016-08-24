@@ -38,6 +38,7 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
     private final PsiMethod myMethod;
     private final Project myProject;
     private final SearchScope myScope;
+    private volatile SearchScope myEffectiveScope;
     private final boolean myStrictSignatureSearch;
     private final SearchRequestCollector myOptimizer;
     private final boolean isSharedOptimizer;
@@ -93,8 +94,11 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
 
     @NotNull
     public SearchScope getEffectiveSearchScope () {
-      SearchScope accessScope = PsiSearchHelper.SERVICE.getInstance(myMethod.getProject()).getUseScope(myMethod);
-      return myScope.intersectWith(accessScope);
+      SearchScope scope = myEffectiveScope;
+      if (scope == null) {
+        myEffectiveScope = scope = myScope.intersectWith(PsiSearchHelper.SERVICE.getInstance(myMethod.getProject()).getUseScope(myMethod));
+      }
+      return scope;
     }
   }
 
