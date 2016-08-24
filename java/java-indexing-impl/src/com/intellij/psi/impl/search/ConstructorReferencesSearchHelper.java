@@ -64,6 +64,9 @@ class ConstructorReferencesSearchHelper {
       @Override
       public Void compute() {
         constructorCanBeCalledImplicitly[0] = constructor.getParameterList().getParametersCount() == 0;
+        if (!constructorCanBeCalledImplicitly[0]) {
+          constructorCanBeCalledImplicitly[0] = hasDefaultConstructorWithVarargParameter(containingClass);
+        }
         isEnum[0] = containingClass.isEnum();
         isUnder18[0] = PsiUtil.getLanguageLevel(containingClass).isAtLeast(LanguageLevel.JDK_1_8);
         return null;
@@ -122,6 +125,17 @@ class ConstructorReferencesSearchHelper {
     };
 
     return ClassInheritorsSearch.search(containingClass, searchScope, false).forEach(processor2);
+  }
+
+  private static boolean hasDefaultConstructorWithVarargParameter(@NotNull PsiClass containingClass) {
+    final PsiMethod[] constructors = containingClass.getConstructors();
+    for (PsiMethod ctr : constructors) {
+      final PsiParameter[] parameters = ctr.getParameterList().getParameters();
+      if (parameters.length == 1 && parameters[0].isVarArgs()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean processEnumReferences(@NotNull final Processor<PsiReference> processor,
