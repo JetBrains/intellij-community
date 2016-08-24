@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,13 @@ package org.jetbrains.plugins.groovy
 
 import com.intellij.codeInsight.navigation.CtrlMouseHandler
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
+import org.jetbrains.plugins.groovy.lang.documentation.GroovyDocumentationProvider
 
 /**
  * @author peter
  */
+@CompileStatic
 class GroovyDocumentationTest extends LightCodeInsightFixtureTestCase {
 
   public void testGenericMethod() {
@@ -45,4 +48,26 @@ Bar
 <a href="psi_element://java.lang.Integer"><code>Integer</code></a> getField ()"""
   }
 
+  public void testLink() {
+    doTest '''\
+class Gr {
+  /**
+   * Use {@link #bar()} from class {@link Gr} instead
+   */
+  void foo() {}
+  void bar() {}
+}
+new Gr().fo<caret>o()
+''', '''\
+<html><head>    <style type="text/css">        #error {            background-color: #eeeeee;            margin-bottom: 10px;        }        p {            margin: 5px 0;        }    </style></head><body><small><b><a href="psi_element://Gr"><code>Gr</code></a></b></small><PRE>void&nbsp;<b>foo</b>()</PRE>
+     Use <a href="psi_element://Gr#bar()"><code>bar()</code></a> from class <a href="psi_element://Gr"><code>Gr</code></a> instead</body></html>'''
+  }
+
+  private void doTest(String text, String doc) {
+    myFixture.configureByText '_.groovy', text
+    def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
+    def provider = new GroovyDocumentationProvider()
+    def info = provider.generateDoc(ref.resolve(), ref.element)
+    assert info == doc
+  }
 }
