@@ -21,6 +21,7 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider;
 import org.intellij.lang.regexp.RegExpLanguageHost;
@@ -307,14 +308,21 @@ public class JavaRegExpHost implements RegExpLanguageHost {
   @NotNull
   @Override
   public String[][] getAllKnownProperties() {
-    return myPropertiesProvider.getAllKnownProperties();
+    return myPropertyNames;
   }
 
   @Nullable
   @Override
   public String getPropertyDescription(@Nullable String name) {
-    return myPropertiesProvider.getPropertyDescription(name);
-  }
+    if (StringUtil.isEmptyOrSpaces(name)) {
+      return null;
+    }
+    for (String[] stringArray : myPropertyNames) {
+      if (stringArray[0].equals(name)) {
+        return stringArray.length > 1 ? stringArray[1] : stringArray[0];
+      }
+    }
+    return null;  }
 
   @NotNull
   @Override
