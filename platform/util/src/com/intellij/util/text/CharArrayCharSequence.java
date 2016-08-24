@@ -78,7 +78,7 @@ public class CharArrayCharSequence implements CharSequenceBackedByArray, CharSeq
     if (this == anObject) {
       return true;
     }
-    if (anObject == null || getClass() != anObject.getClass()) {
+    if (anObject == null || getClass() != anObject.getClass() || length() != ((CharSequence)anObject).length()) {
       return false;
     }
     return CharArrayUtil.regionMatches(myChars, myStart, myEnd, (CharSequence)anObject);
