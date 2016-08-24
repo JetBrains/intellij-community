@@ -41,11 +41,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE;
+import static com.intellij.psi.SyntaxTraverser.psiTraverser;
 
 public class ModuleHighlightUtil {
   @Nullable
@@ -83,21 +84,16 @@ public class ModuleHighlightUtil {
   static List<HighlightInfo> checkDuplicateRequires(@NotNull PsiJavaModule module) {
     List<HighlightInfo> results = ContainerUtil.newSmartList();
 
-    Map<String, PsiElement> map = ContainerUtil.newHashMap();
-    for (PsiElement child = module.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (child instanceof PsiRequiresStatement) {
-        PsiJavaModuleReferenceElement ref = ((PsiRequiresStatement)child).getReferenceElement();
-        if (ref != null) {
-          String text = ref.getReferenceText();
-          if (!map.containsKey(text)) {
-            map.put(text, child);
-          }
-          else {
-            String message = JavaErrorMessages.message("module.duplicate.requires", text);
-            HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(child).description(message).create();
-            QuickFixAction.registerQuickFixAction(info, new DeleteElementFix(child));
-            results.add(info);
-          }
+    Set<String> names = ContainerUtil.newHashSet();
+    for (PsiRequiresStatement statement : psiTraverser().children(module).filter(PsiRequiresStatement.class)) {
+      PsiJavaModuleReferenceElement ref = statement.getReferenceElement();
+      if (ref != null) {
+        String text = ref.getReferenceText();
+        if (!names.add(text)) {
+          String message = JavaErrorMessages.message("module.duplicate.requires", text);
+          HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).description(message).create();
+          QuickFixAction.registerQuickFixAction(info, new DeleteElementFix(statement));
+          results.add(info);
         }
       }
     }

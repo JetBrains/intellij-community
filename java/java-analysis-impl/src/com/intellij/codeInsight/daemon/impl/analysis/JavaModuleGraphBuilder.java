@@ -39,6 +39,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE;
+import static com.intellij.psi.SyntaxTraverser.psiTraverser;
 import static com.intellij.psi.util.PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT;
 
 public class JavaModuleGraphBuilder {
@@ -78,12 +79,10 @@ public class JavaModuleGraphBuilder {
 
     MultiMap<PsiJavaModule, PsiJavaModule> relations = MultiMap.create();
     for (PsiJavaModule moduleDeclaration : projectModules) {
-      for (PsiElement child = moduleDeclaration.getFirstChild(); child != null; child = child.getNextSibling()) {
-        if (child instanceof PsiRequiresStatement) {
-          PsiJavaModule dependency = resolveDependency((PsiRequiresStatement)child);
-          if (dependency != null && projectModules.contains(dependency)) {
-            relations.putValue(moduleDeclaration, dependency);
-          }
+      for (PsiRequiresStatement statement : psiTraverser().children(moduleDeclaration).filter(PsiRequiresStatement.class)) {
+        PsiJavaModule dependency = resolveDependency(statement);
+        if (dependency != null && projectModules.contains(dependency)) {
+          relations.putValue(moduleDeclaration, dependency);
         }
       }
     }
