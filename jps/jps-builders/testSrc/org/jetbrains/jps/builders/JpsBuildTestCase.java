@@ -412,7 +412,16 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     if (myJdk == null) {
       myJdk = addJdk("1.6");
     }
-    return addModule(moduleName, srcPaths, getAbsolutePath("out/production/" + moduleName), null, myJdk);
+    return addModule(moduleName, srcPaths, getAbsolutePath(getModuleOutputRelativePath(moduleName)), null, myJdk);
+  }
+
+  @NotNull
+  protected String getModuleOutputRelativePath(JpsModule module) {
+    return getModuleOutputRelativePath(module.getName());
+  }
+  @NotNull
+  protected String getModuleOutputRelativePath(String moduleName) {
+    return "out/production/" + moduleName;
   }
 
   protected void checkMappingsAreSameAfterRebuild(BuildResult makeResult) {

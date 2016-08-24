@@ -501,7 +501,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   public void disableToolByDefault(@NotNull Collection<String> toolIds, @Nullable Project project) {
     for (String toolId : toolIds) {
-      getToolDefaultState(toolId, project).setEnabled(false);
+      getTools(toolId, project).setDefaultEnabled(false);
     }
   }
 
@@ -512,7 +512,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   public void enableToolsByDefault(@NotNull List<String> toolIds, Project project) {
     for (final String toolId : toolIds) {
-      getToolDefaultState(toolId, project).setEnabled(true);
+      getTools(toolId, project).setDefaultEnabled(true);
     }
   }
 

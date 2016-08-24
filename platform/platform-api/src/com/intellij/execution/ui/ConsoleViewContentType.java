@@ -16,9 +16,9 @@
 package com.intellij.execution.ui;
 
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.HashMap;
@@ -77,6 +77,12 @@ public class ConsoleViewContentType {
     return myName;
   }
 
+  /**
+   * Returns {@code TextAttributes} instance defining the visual representation of text.
+   * <p> A subclass might override this method.
+   *
+   * @return not-null TextAttributes instance
+   */
   public TextAttributes getAttributes() {
     if (myTextAttributesKey != null) {
       return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(myTextAttributesKey);

@@ -203,23 +203,12 @@ public class GroovycOutputParser {
   }
 
   public boolean shouldRetry() {
-    if (myExitCode != 0) {
-      LOG.debug("Non-zero exit code");
-      return true;
-    }
     for (CompilerMessage message : compilerMessages) {
-      if (message.getKind() == BuildMessage.Kind.ERROR) {
-        LOG.debug("Error message: " + message);
+      String text = message.getMessageText();
+      if (text.contains("java.lang.NoClassDefFoundError") || text.contains("unable to resolve class")) {
+        LOG.debug("Resolve issue: " + message);
         return true;
       }
-      if (message.getMessageText().contains(GroovyRtConstants.GROOVYC_STUB_GENERATION_FAILED)) {
-        LOG.debug("Stub failed message: " + message);
-        return true;
-      }
-    }
-    if (getStdErr().length() > 0) {
-      LOG.debug("Non-empty stderr: '" + getStdErr() + "'");
-      return true;
     }
     return false;
   }

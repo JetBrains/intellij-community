@@ -17,9 +17,11 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.ide.util.PsiClassOrFunctionalExpressionListCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFunctionalExpression;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,6 +36,9 @@ public class JavaGotoTargetRendererProvider implements GotoTargetRendererProvide
     }
     else if (element instanceof PsiClass) {
       return PsiClassListCellRenderer.INSTANCE;
+    }
+    else if (element instanceof PsiFunctionalExpression) {
+      return new PsiClassOrFunctionalExpressionListCellRenderer();
     }
     return null;
   }

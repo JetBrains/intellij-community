@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @author Alexey
- */
 package com.intellij.lang.properties.editor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;

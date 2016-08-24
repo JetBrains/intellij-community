@@ -28,7 +28,6 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 
 class ClassPatternsPanel extends JPanel {
@@ -106,7 +105,7 @@ class ClassPatternsPanel extends JPanel {
 
     @Nullable
     public Object getValueAt(int row, int col) {
-      if (row < 0) return null;
+      if (row < 0 || row > myModifiedPatterns.size() - 1) return null;
       final EntryPointsManagerBase.ClassPattern classPattern = myModifiedPatterns.get(row);
       if (classPattern == null) return null;
       if (col == 0) {
@@ -148,6 +147,7 @@ class ClassPatternsPanel extends JPanel {
     @Override
     public void removeRow(int idx) {
       myModifiedPatterns.remove(idx);
+      fireTableRowsDeleted(idx, idx);
     }
   }
 }

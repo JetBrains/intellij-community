@@ -1,6 +1,9 @@
 package com.intellij.updater;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
@@ -46,8 +49,21 @@ public abstract class PatchAction {
     out.write(file.canExecute() ? 1 : 0);
   }
 
-  protected static boolean readExecutableFlag(InputStream in) throws IOException {
-    return in.read() == 1;
+  protected static void writeLinkInfo(File file, OutputStream out) throws IOException {
+    Path path = Paths.get(file.getAbsolutePath());
+    String link = Files.readSymbolicLink(path).toString();
+    out.write(link.length());
+    byte[] byteArray = link.getBytes();
+    out.write(byteArray);
+  }
+
+  protected static String readLinkInfo(InputStream in, int length) throws IOException {
+    byte[] byteArray = new byte[length];
+    String link = "";
+    if (in.read(byteArray) > -1){
+      link = new String(byteArray, "UTF-8");
+    }
+    return link;
   }
 
   public boolean calculate(File olderDir, File newerDir) throws IOException {

@@ -332,7 +332,7 @@ public class SvnUtil {
 
   @NotNull
   public static <T> MultiMap<Pair<SVNURL, WorkingCopyFormat>, T> splitIntoRepositoriesMap(@NotNull final SvnVcs vcs,
-                                                                                          @NotNull List<T> items,
+                                                                                          @NotNull Collection<T> items,
                                                                                           @NotNull final Convertor<T, FilePath> converter) {
     return ContainerUtil.groupBy(items, new NotNullFunction<T, Pair<SVNURL, WorkingCopyFormat>>() {
       @NotNull

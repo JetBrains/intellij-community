@@ -96,6 +96,10 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     
     for (LocalTerminalCustomizer customizer: LocalTerminalCustomizer.EP_NAME.getExtensions()) {
       customizer.setupEnvironment(myProject, envs);
+
+      if (directory == null) {
+        directory = customizer.getDefaultFolder();
+      }
     }
     
     try {

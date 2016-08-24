@@ -237,7 +237,7 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
 
       VirtualFile file = PsiUtilCore.getVirtualFile(cls);
       assertNotNull(file);
-      assertTrue(file.getPath(), FileUtil.startsWith(file.getPath(), jdkHome.getPath(), true));
+      assertTrue(file.getPath(), FileUtil.startsWith(file.getPath(), FileUtil.toSystemIndependentName(jdkHome.getPath()), true));
     }
   }
 

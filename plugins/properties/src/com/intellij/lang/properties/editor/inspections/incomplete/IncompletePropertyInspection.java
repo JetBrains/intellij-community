@@ -139,7 +139,7 @@ public class IncompletePropertyInspection extends LocalInspectionTool implements
 
 
       final TreeSet<String> suffixesToIgnore = new TreeSet<>(ContainerUtil.map(allFilesWithoutTranslation,
-                                                                               file -> PropertiesUtil.getSuffix(file)));
+                                                                               PropertiesUtil::getSuffix));
       if (new IncompletePropertyInspectionOptionsPanel(suffixesToIgnore).showDialogAndGet(project)) {
         DisableInspectionToolAction.modifyAndCommitProjectProfile(
           modifiableModel -> ((IncompletePropertyInspection)modifiableModel.getInspectionTool(TOOL_KEY, element).getTool()).addSuffixes(suffixesToIgnore), project);

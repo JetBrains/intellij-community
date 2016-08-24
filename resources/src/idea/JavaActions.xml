@@ -50,8 +50,8 @@
     <group id="AnalyzeJavaMenu">
       <action id="ShowPackageCycles" class="com.intellij.cyclicDependencies.actions.CyclicDependenciesAction"/>
       <separator/>
-      <action id="SliceBackward" class="com.intellij.slicer.SliceBackwardAction"/>
-      <action id="SliceForward" class="com.intellij.slicer.SliceForwardAction"/>
+      <reference id="SliceBackward"/>
+      <reference id="SliceForward"/>
       <separator/>
       <action id="Unscramble" class="com.intellij.unscramble.UnscrambleAction"/>
       <add-to-group group-id="AnalyzeMenu" anchor="last"/>

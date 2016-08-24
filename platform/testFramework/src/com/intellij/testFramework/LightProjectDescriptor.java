@@ -119,7 +119,7 @@ public class LightProjectDescriptor {
     return srcRoot;
   }
 
-  private void createContentEntry(@NotNull Module module, @NotNull VirtualFile srcRoot) {
+  protected void createContentEntry(@NotNull Module module, @NotNull VirtualFile srcRoot) {
     ModuleRootModificationUtil.updateModel(module, model -> {
       Sdk sdk = getSdk();
       if (sdk != null) {

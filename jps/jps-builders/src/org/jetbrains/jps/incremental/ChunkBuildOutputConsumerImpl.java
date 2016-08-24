@@ -78,7 +78,7 @@ class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputConsumer 
       }
     }
     if (target != null) {
-      registerOutputFile(target, compiled.getOutputFile(), Collections.<String>singleton(compiled.getSourceFile().getPath()));
+      registerOutputFile(target, compiled.getOutputFile(), compiled.getSourceFilesPaths());
     }
   }
 

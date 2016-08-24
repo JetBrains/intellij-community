@@ -299,6 +299,12 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
     return myDelegate.getSettings();
   }
 
+  @NotNull
+  @Override
+  public InlayModel getInlayModel() {
+    throw new UnsupportedOperationException();
+  }
+
   @Override
   public void reinitSettings() {
     myDelegate.reinitSettings();

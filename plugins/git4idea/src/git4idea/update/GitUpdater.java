@@ -39,6 +39,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Map;
 
+import static git4idea.GitUtil.HEAD;
+
 /**
  * Updates a single repository via merge or rebase.
  * @see GitRebaseUpdater
@@ -134,13 +136,11 @@ public abstract class GitUpdater {
    * @return true if update is needed, false otherwise.
    */
   public boolean isUpdateNeeded() throws VcsException {
-    GitBranchPair gitBranchPair = myTrackedBranches.get(myRoot);
-    String currentBranch = gitBranchPair.getBranch().getName();
-    GitBranch dest = gitBranchPair.getDest();
+    GitBranch dest = myTrackedBranches.get(myRoot).getDest();
     assert dest != null;
     String remoteBranch = dest.getName();
-    if (! hasRemoteChanges(currentBranch, remoteBranch)) {
-      LOG.info("isSaveNeeded No remote changes, save is not needed");
+    if (!hasRemoteChanges(remoteBranch)) {
+      LOG.info("isUpdateNeeded: No remote changes, update is not needed");
       return false;
     }
     return true;
@@ -172,11 +172,11 @@ public abstract class GitUpdater {
     }
   }
 
-  protected boolean hasRemoteChanges(@NotNull String currentBranch, @NotNull String remoteBranch) throws VcsException {
+  protected boolean hasRemoteChanges(@NotNull String remoteBranch) throws VcsException {
     GitSimpleHandler handler = new GitSimpleHandler(myProject, myRoot, GitCommand.REV_LIST);
     handler.setSilent(true);
     handler.addParameters("-1");
-    handler.addParameters(currentBranch + ".." + remoteBranch);
+    handler.addParameters(HEAD + ".." + remoteBranch);
     String output = handler.run();
     return output != null && !output.isEmpty();
   }

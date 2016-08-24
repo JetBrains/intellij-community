@@ -16,12 +16,12 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ObjectsConvertor;
@@ -211,12 +211,7 @@ public class MatchPatchPaths {
       }
     });
     final File shelfResourcesDirectory = ShelveChangesManager.getInstance(myProject).getShelfResourcesDirectory();
-    return ContainerUtil.filter(files, new Condition<VirtualFile>() {
-      @Override
-      public boolean value(VirtualFile file) {
-        return !FileUtil.isAncestor(shelfResourcesDirectory, VfsUtilCore.virtualToIoFile(file), false);
-      }
-    });
+    return ContainerUtil.filter(files, file -> !FileUtil.isAncestor(shelfResourcesDirectory, VfsUtilCore.virtualToIoFile(file), false));
   }
 
   private static void putSelected(@NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> result,
@@ -338,8 +333,9 @@ public class MatchPatchPaths {
 
   @Nullable
   private static AbstractFilePatchInProgress createPatchInProgress(@NotNull FilePatch patch, @NotNull VirtualFile dir) {
-    return patch instanceof TextFilePatch ? new TextFilePatchInProgress((TextFilePatch)patch, null, dir) :
-           patch instanceof ShelvedBinaryFilePatch ? new BinaryFilePatchInProgress((ShelvedBinaryFilePatch)patch, null, dir)
-                                                   : null;
+    if (patch instanceof TextFilePatch) return new TextFilePatchInProgress((TextFilePatch)patch, null, dir);
+    if (patch instanceof ShelvedBinaryFilePatch) return new ShelvedBinaryFilePatchInProgress((ShelvedBinaryFilePatch)patch, null, dir);
+    if (patch instanceof BinaryFilePatch) return new BinaryFilePatchInProgress((BinaryFilePatch)patch, null, dir);
+    return null;
   }
 }

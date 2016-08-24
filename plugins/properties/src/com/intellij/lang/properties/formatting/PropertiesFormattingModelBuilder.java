@@ -51,7 +51,7 @@ public class PropertiesFormattingModelBuilder implements FormattingModelBuilder 
     private PropertiesRootBlock myRoot;
 
     public PropertiesFormattingModel(ASTNode root, FormattingDocumentModelImpl documentModel, CodeStyleSettings settings) {
-      myRoot = new PropertiesRootBlock(root, null, settings);
+      myRoot = new PropertiesRootBlock(root, settings);
       myDocumentModel = documentModel;
     }
 

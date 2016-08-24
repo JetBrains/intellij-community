@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.zmlx.hg4idea.repo;
 
-import com.google.common.base.Objects;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.vcs.log.Hash;
 import org.jetbrains.annotations.NotNull;
@@ -141,8 +140,8 @@ public class HgRepoInfo {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(myCurrentBranch, myCurrentRevision, myTipRevision, myCurrentBookmark, myState, myBranches, myBookmarks, myTags,
-                            myLocalTags, mySubrepos, myMQApplied, myMqNames);
+    return Objects.hash(myCurrentBranch, myCurrentRevision, myTipRevision, myCurrentBookmark, myState, myBranches, myBookmarks, myTags,
+                        myLocalTags, mySubrepos, myMQApplied, myMqNames);
   }
 
   @Override

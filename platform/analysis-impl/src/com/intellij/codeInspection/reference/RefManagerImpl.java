@@ -192,6 +192,9 @@ public class RefManagerImpl extends RefManager {
 
   public void registerGraphAnnotator(@NotNull RefGraphAnnotator annotator) {
     myGraphAnnotators.add(annotator);
+    if (annotator instanceof RefGraphAnnotatorEx) {
+      ((RefGraphAnnotatorEx)annotator).initialize(this);
+    }
   }
 
   @Override
@@ -424,11 +427,6 @@ public class RefManagerImpl extends RefManager {
     final RefGraphAnnotator[] graphAnnotators = point.getExtensions();
     for (RefGraphAnnotator annotator : graphAnnotators) {
       registerGraphAnnotator(annotator);
-    }
-    for (RefGraphAnnotator graphAnnotator : myGraphAnnotators) {
-      if (graphAnnotator instanceof RefGraphAnnotatorEx) {
-        ((RefGraphAnnotatorEx)graphAnnotator).initialize(this);
-      }
     }
   }
 

@@ -15,9 +15,9 @@
  */
 package com.intellij.ide.passwordSafe.impl.providers;
 
+import com.intellij.credentialStore.CredentialAttributes;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
@@ -75,15 +75,8 @@ public class EncryptionUtil {
     // do nothing
   }
 
-  /**
-   * Calculate raw key
-   *
-   * @param requester the requester
-   * @param key       the key
-   * @return the raw key bytes
-   */
-  static byte[] rawKey(@Nullable Class requester, String key) {
-    return hash(getUTF8Bytes((requester == null ? "" : (requester.getName() + "/")) + key));
+  static byte[] rawKey(@NotNull CredentialAttributes attributes) {
+    return hash(getUTF8Bytes(attributes.getServiceName() + "/" + attributes.getUserName()));
   }
 
   /**
@@ -128,19 +121,6 @@ public class EncryptionUtil {
     catch (GeneralSecurityException e) {
       throw new IllegalStateException(e);
     }
-  }
-
-  /**
-   * Create encrypted db key
-   *
-   * @param password  the password to protect the key
-   * @param requestor the requestor for the key
-   * @param key       the key within requestor
-   * @return the key to use in the database
-   */
-  @NotNull
-  public static byte[] dbKey(@NotNull byte[] password, @Nullable Class requestor, String key) {
-    return encryptKey(password, rawKey(requestor, key));
   }
 
   /**

@@ -68,7 +68,7 @@ public class ConflictCreator {
     }
 
     final PatchReader reader = new PatchReader(myData.getTheirsPatch());
-    final List<TextFilePatch> patches = reader.readAllPatches();
+    final List<TextFilePatch> patches = reader.readTextPatches();
     final List<FilePatch> filePatchList = new ArrayList<>(patches);
     for (Iterator<FilePatch> iterator = filePatchList.iterator(); iterator.hasNext(); ) {
       final FilePatch patch = iterator.next();

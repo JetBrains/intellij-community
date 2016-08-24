@@ -266,10 +266,10 @@ idea.fatal.error.notification=disabled
     def productLayout = buildContext.productProperties.productLayout
     checkProductLayout(productLayout, allPlugins)
     cleanOutput()
-    def includedModules = productLayout.getIncludedModules(allPlugins)
-    compileModules(includedModules)
+    def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, allPlugins)
+    compileModules(productLayout.getIncludedPluginModules(allPlugins) + distributionJARsBuilder.getPlatformModules())
     buildContext.messages.block("Build platform and plugin JARs") {
-      new DistributionJARsBuilder(buildContext, includedModules, allPlugins).buildJARs()
+      distributionJARsBuilder.buildJARs()
     }
     if (buildContext.productProperties.scrambleMainJar) {
       if (buildContext.proprietaryBuildTools.scrambleTool != null) {
@@ -287,15 +287,28 @@ idea.fatal.error.notification=disabled
     checkPluginModules(layout.bundledPluginModules, "bundledPluginModules", allPluginModules)
     checkPluginModules(layout.pluginModulesToPublish, "pluginModulesToPublish", allPluginModules)
 
-    checkModules(layout.platformApiModules, "platformApiModules")
-    checkModules(layout.platformImplementationModules, "platformImplementationModules")
-    checkModules(layout.additionalPlatformModules.keySet(), "additionalPlatformModules")
+    checkModules(layout.platformApiModules, "productProperties.productLayout.platformApiModules")
+    checkModules(layout.platformImplementationModules, "productProperties.productLayout.platformImplementationModules")
+    checkModules(layout.additionalPlatformJars.values(), "productProperties.productLayout.additionalPlatformJars")
+    checkProjectLibraries(layout.projectLibrariesToUnpackIntoMainJar, "productProperties.productLayout.projectLibrariesToUnpackIntoMainJar")
+    allPlugins.findAll {layout.enabledPluginModules.contains(it.mainModule)}.each { plugin ->
+      checkModules(plugin.moduleJars.values(), "'$plugin.mainModule' plugin")
+      checkModules(plugin.moduleExcludes.keySet(), "'$plugin.mainModule' plugin")
+      checkProjectLibraries(plugin.includedProjectLibraries, "'$plugin.mainModule' plugin")
+    }
   }
 
   private void checkModules(Collection<String> modules, String fieldName) {
     def unknownModules = modules.findAll {buildContext.findModule(it) == null}
     if (!unknownModules.empty) {
-      buildContext.messages.error("The following modules from productProperties.$fieldName aren't found in the project.")
+      buildContext.messages.error("The following modules from $fieldName aren't found in the project.")
+    }
+  }
+
+  private void checkProjectLibraries(Collection<String> names, String fieldName) {
+    def unknownLibraries = names.findAll {buildContext.project.libraryCollection.findLibrary(it) == null}
+    if (!unknownLibraries.empty) {
+      buildContext.messages.error("The following libraries from $fieldName aren't found in the project.")
     }
   }
 
@@ -346,8 +359,8 @@ idea.fatal.error.notification=disabled
       buildContext.projectBuilder.buildProduction()
     }
     else {
-      List<String> modulesToBuild = ((moduleNames as Set<String>) + DistributionJARsBuilder.ADDITIONAL_MODULES_TO_COMPILE
-        + buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: []) as List<String>
+      List<String> modulesToBuild = ((moduleNames as Set<String>) +
+        buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: []) as List<String>
       List<String> invalidModules = modulesToBuild.findAll {buildContext.findModule(it) == null}
       if (!invalidModules.empty) {
         buildContext.messages.warning("The following modules won't be compiled: $invalidModules")

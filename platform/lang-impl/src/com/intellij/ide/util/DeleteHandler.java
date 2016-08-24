@@ -237,7 +237,7 @@ public class DeleteHandler {
             if (virtualFile.isInLocalFileSystem()) {
               int _result = MessagesEx.fileIsReadOnly(project, virtualFile)
                 .setTitle(IdeBundle.message("title.delete"))
-                .appendMessage(IdeBundle.message("prompt.delete.it.anyway"))
+                .appendMessage(" " + IdeBundle.message("prompt.delete.it.anyway"))
                 .askYesNo();
               if (_result != Messages.YES) continue;
 

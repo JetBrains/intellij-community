@@ -19,7 +19,6 @@ import com.intellij.Patches;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -232,7 +231,7 @@ public class FontInfo {
     return FontLayoutService.getInstance().charWidth(metrics, c);
   }
 
-  private FontMetrics fontMetrics() {
+  public FontMetrics fontMetrics() {
     if (myFontMetrics == null) {
       // We need to use antialising-aware font metrics because we've alrady encountered a situation when non-antialiased symbol
       // width is not equal to the antialiased one (IDEA-81539).

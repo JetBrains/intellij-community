@@ -59,44 +59,44 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
   public GrTypeDefinition[] getCodeInnerClasses() {
     return CachedValuesManager.getCachedValue(myDefinition, () -> CachedValueProvider.Result.create(
       myCodeMembersProvider.getCodeInnerClasses(myDefinition), myDependencies
-    ));
+    )).clone();
   }
 
   public GrMethod[] getCodeMethods() {
     return CachedValuesManager.getCachedValue(myDefinition, () -> CachedValueProvider.Result.create(
       myCodeMembersProvider.getCodeMethods(myDefinition), myDependencies
-    ));
+    )).clone();
   }
 
   public GrMethod[] getCodeConstructors() {
     return CachedValuesManager.getCachedValue(myDefinition, () -> CachedValueProvider.Result.create(
       GrClassImplUtil.getCodeConstructors(myDefinition), myDependencies
-    ));
+    )).clone();
   }
 
   public GrField[] getCodeFields() {
     return CachedValuesManager.getCachedValue(myDefinition, () -> CachedValueProvider.Result.create(
       myCodeMembersProvider.getCodeFields(myDefinition), myDependencies
-    ));
+    )).clone();
   }
 
   public PsiClass[] getInnerClasses() {
-    return getTransformationResult().getInnerClasses();
+    return getTransformationResult().getInnerClasses().clone();
   }
 
   public PsiMethod[] getMethods() {
-    return getTransformationResult().getMethods();
+    return getTransformationResult().getMethods().clone();
   }
 
   public PsiMethod[] getConstructors() {
     assert !TransformationUtilKt.isUnderTransformation(myDefinition);
     return CachedValuesManager.getCachedValue(myDefinition, () -> CachedValueProvider.Result.create(
       GrClassImplUtil.getConstructors(myDefinition), myDependencies
-    ));
+    )).clone();
   }
 
   public GrField[] getFields() {
-    return getTransformationResult().getFields();
+    return getTransformationResult().getFields().clone();
   }
 
   @NotNull
@@ -110,7 +110,7 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
       PsiClassType[] extendsTypes = GrClassImplUtil.getReferenceListTypes(myDefinition.getExtendsClause());
       PsiClassType[] result = GrClassImplUtil.getExtendsListTypes(myDefinition, extendsTypes);
       return CachedValueProvider.Result.create(result, myDependencies);
-    });
+    }).clone();
   }
 
   @NotNull
@@ -124,7 +124,7 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
       PsiClassType[] implementsTypes = GrClassImplUtil.getReferenceListTypes(myDefinition.getImplementsClause());
       PsiClassType[] result = GrClassImplUtil.getImplementsListTypes(myDefinition, implementsTypes);
       return CachedValueProvider.Result.create(result, myDependencies);
-    });
+    }).clone();
   }
 
   @NotNull

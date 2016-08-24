@@ -76,7 +76,7 @@ public class GetCommittedChangelistAction extends AbstractCommonUpdateAction {
   }
 
   @Override
-  protected void update(final VcsContext vcsContext, final Presentation presentation) {
+  protected void update(@NotNull final VcsContext vcsContext, @NotNull final Presentation presentation) {
     super.update(vcsContext, presentation);
     final ChangeList[] changeLists = vcsContext.getSelectedChangeLists();
     presentation.setEnabled(presentation.isEnabled() &&

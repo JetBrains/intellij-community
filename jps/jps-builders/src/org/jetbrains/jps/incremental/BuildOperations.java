@@ -56,7 +56,10 @@ public class BuildOperations {
     }
     else if (context.getScope().isBuildForced(target) || configuration.isTargetDirty(context) || configuration.outputRootWasDeleted(context)) {
       initTargetFSState(context, target, true);
-      IncProjectBuilder.clearOutputFiles(context, target);
+      if (!context.getScope().isBuildForced(target)) {
+        // case when target build is forced, is handled separately
+        IncProjectBuilder.clearOutputFiles(context, target);
+      }
       pd.dataManager.cleanTargetStorages(target);
       configuration.save(context);
     }

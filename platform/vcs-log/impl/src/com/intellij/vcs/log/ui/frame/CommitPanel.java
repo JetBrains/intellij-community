@@ -15,13 +15,14 @@
  */
 package com.intellij.vcs.log.ui.frame;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.ui.FontUtil;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.UI;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -33,7 +34,6 @@ import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.render.VcsRefPainter;
 import com.intellij.vcs.log.util.VcsUserUtil;
@@ -45,6 +45,9 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.MatteBorder;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.DefaultCaret;
+import javax.swing.text.Document;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.util.Collection;
 import java.util.Collections;
@@ -53,8 +56,6 @@ import java.util.List;
 import static com.intellij.openapi.vcs.history.VcsHistoryUtil.getCommitDetailsFont;
 
 class CommitPanel extends JBPanel {
-  private static final Logger LOG = Logger.getInstance("Vcs.Log");
-
   public static final int BOTTOM_BORDER = 2;
 
   @NotNull private final VcsLogData myLogData;
@@ -63,13 +64,11 @@ class CommitPanel extends JBPanel {
   @NotNull private final ReferencesPanel myReferencesPanel;
   @NotNull private final DataPanel myDataPanel;
 
-  @NotNull private VisiblePack myDataPack;
   @Nullable private VcsFullCommitDetails myCommit;
 
-  public CommitPanel(@NotNull VcsLogData logData, @NotNull VcsLogColorManager colorManager, @NotNull VisiblePack dataPack) {
+  public CommitPanel(@NotNull VcsLogData logData, @NotNull VcsLogColorManager colorManager) {
     myLogData = logData;
     myColorManager = colorManager;
-    myDataPack = dataPack;
 
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     setOpaque(false);
@@ -79,10 +78,6 @@ class CommitPanel extends JBPanel {
 
     add(myReferencesPanel);
     add(myDataPanel);
-  }
-
-  public void setDataPack(@NotNull VisiblePack visiblePack) {
-    myDataPack = visiblePack;
   }
 
   public void setCommit(@NotNull VcsFullCommitDetails commitData) {
@@ -210,10 +205,20 @@ class CommitPanel extends JBPanel {
         myMainText = null;
       }
       else {
-        String header = getHtmlWithFonts(commit.getId().toShortString() + " " + getAuthorText(commit) +
+        String hash = commit.getId().toShortString();
+        String header = getHtmlWithFonts(hash + " " + getAuthorText(commit, hash.length() + 1) +
                                          (myMultiRoot ? " [" + commit.getRoot().getName() + "]" : ""));
         String body = getMessageText(commit);
         myMainText = header + "<br/>" + body;
+      }
+    }
+
+    private void customizeLinksStyle() {
+      Document document = getDocument();
+      if (document instanceof HTMLDocument) {
+        StyleSheet styleSheet = ((HTMLDocument)document).getStyleSheet();
+        String linkColor = "#" + ColorUtil.toHex(UI.getColor("link.foreground"));
+        styleSheet.addRule("a { color: " + linkColor + "; text-decoration: none;}");
       }
     }
 
@@ -251,6 +256,7 @@ class CommitPanel extends JBPanel {
                 getBranchesText() +
                 "</body></html>");
       }
+      customizeLinksStyle();
       revalidate();
       repaint();
     }
@@ -366,11 +372,11 @@ class CommitPanel extends JBPanel {
     }
 
     @NotNull
-    private static String getAuthorText(@NotNull VcsFullCommitDetails commit) {
+    private static String getAuthorText(@NotNull VcsFullCommitDetails commit, int offset) {
       long authorTime = commit.getAuthorTime();
       long commitTime = commit.getCommitTime();
 
-      String authorText = getUserNameText(commit.getAuthor()) + formatDateTime(authorTime);
+      String authorText = getAuthorName(commit.getAuthor()) + formatDateTime(authorTime);
       if (!VcsUserUtil.isSamePerson(commit.getAuthor(), commit.getCommitter())) {
         String commitTimeText;
         if (authorTime != commitTime) {
@@ -379,19 +385,41 @@ class CommitPanel extends JBPanel {
         else {
           commitTimeText = "";
         }
-        authorText += " (committed by " + getUserNameText(commit.getCommitter()) + commitTimeText + ")";
+        authorText += getCommitterText(commit.getCommitter(), commitTimeText, offset);
       }
       else if (authorTime != commitTime) {
-        authorText += " (committed " + formatDateTime(commitTime) + ")";
+        authorText += getCommitterText(null, formatDateTime(commitTime), offset);
       }
       return authorText;
     }
 
     @NotNull
-    private static String getUserNameText(@NotNull VcsUser user) {
+    private static String getCommitterText(@Nullable VcsUser committer, @NotNull String commitTimeText, int offset) {
+      String alignment = "<br/>" + StringUtil.repeat("&nbsp;", offset);
+      String gray = ColorUtil.toHex(UIManager.getColor("Button.disabledText"));
+
+      String graySpan = "<span style='color:#" + gray + "'>";
+
+      String text = alignment + graySpan + "committed";
+      if (committer != null) {
+        text += " by " + VcsUserUtil.getShortPresentation(committer);
+        if (!committer.getEmail().isEmpty()) {
+          text += "</span>" + getEmailText(committer) + graySpan;
+        }
+      }
+      text += commitTimeText + "</span>";
+      return text;
+    }
+
+    @NotNull
+    private static String getAuthorName(@NotNull VcsUser user) {
       String username = VcsUserUtil.getShortPresentation(user);
-      if (user.getEmail().isEmpty()) return username;
-      return "<a href='mailto:" + user.getEmail() + "'>" + username + "</a>";
+      return user.getEmail().isEmpty() ? username : username + getEmailText(user);
+    }
+
+    @NotNull
+    private static String getEmailText(@NotNull VcsUser user) {
+      return " <a href='mailto:" + user.getEmail() + "'>&lt;" + user.getEmail() + "&gt;</a>";
     }
 
     @Override

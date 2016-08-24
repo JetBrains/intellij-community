@@ -241,6 +241,8 @@ public class SoftWrapApplianceManager implements Dumpable {
     final int start = event.getStartOffset(); 
     final LogicalPosition logical = event.getStartLogicalPosition();
 
+    int endOffsetUpperEstimate = getEndOffsetUpperEstimate(event);
+
     Document document = myEditor.getDocument();
     myContext.text = document.getCharsSequence();
     myContext.tokenStartOffset = start;
@@ -274,11 +276,14 @@ public class SoftWrapApplianceManager implements Dumpable {
       notifyListenersOnVisualLineStart(myContext.lineStartPosition);
     }
 
+    myContext.inlays = myEditor.getInlayModel().getInlineElementsInRange(start, endOffsetUpperEstimate);
+
     // Perform soft wraps calculation.
     while (!iterationState.atEnd()) {
       FoldRegion currentFold = iterationState.getCurrentFold();
       if (currentFold == null) {
         myContext.tokenEndOffset = iterationState.getEndOffset();
+        myContext.nextIsFoldRegion = iterationState.nextIsFoldRegion();
         if (processNonFoldToken()) {
           break;
         }
@@ -305,23 +310,23 @@ public class SoftWrapApplianceManager implements Dumpable {
     }
     notifyListenersOnVisualLineEnd();
     event.setActualEndOffset(myContext.currentPosition.offset);
-    validateFinalPosition(event);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Soft wrap recalculation done: " + event.toString() + ". " + (event.getActualEndOffset() - event.getStartOffset()) + " characters processed");
+    }
+    if (event.getActualEndOffset() > endOffsetUpperEstimate) {
+      LOG.error("Unexpected error at soft wrap recalculation", new Attachment("softWrapModel.txt", myEditor.getSoftWrapModel().toString()));
+    }
     notifyListenersOnCacheUpdateEnd(event);
     myEventBeingProcessed = null;
   }
 
-  private void validateFinalPosition(IncrementalCacheUpdateEvent event) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Soft wrap recalculation done: " + event.toString() + ". " + (event.getActualEndOffset() - event.getStartOffset()) + " characters processed");
-    }
+  private int getEndOffsetUpperEstimate(IncrementalCacheUpdateEvent event) {
     int endOffsetUpperEstimate = EditorUtil.getNotFoldedLineEndOffset(myEditor, event.getMandatoryEndOffset());
     int line = myEditor.getDocument().getLineNumber(endOffsetUpperEstimate);
     if (line < myEditor.getDocument().getLineCount() - 1) {
       endOffsetUpperEstimate = myEditor.getDocument().getLineStartOffset(line + 1);
     }
-    if (event.getActualEndOffset() > endOffsetUpperEstimate) {
-      LOG.error("Unexpected error at soft wrap recalculation", new Attachment("softWrapModel.txt", myEditor.getSoftWrapModel().toString()));
-    }
+    return endOffsetUpperEstimate;
   }
 
   /**
@@ -346,7 +351,8 @@ public class SoftWrapApplianceManager implements Dumpable {
     for (int i = 0; i < placeholder.length(); i++) {
       char c = placeholder.charAt(i);
       if (myEditor.myUseNewRendering && c == '\n') c = ' '; // we display \n as space (see com.intellij.openapi.editor.impl.view.EditorView.getFoldRegionLayout)
-      placeholderWidthInPixels += SoftWrapModelImpl.getEditorTextRepresentationHelper(myEditor).charWidth(c, myContext.fontType);
+      placeholderWidthInPixels += SoftWrapModelImpl.getEditorTextRepresentationHelper(myEditor)
+        .charWidth(c, myContext.fontType);
     }
 
     if (myContext.delayedSoftWrap == null) {
@@ -413,8 +419,7 @@ public class SoftWrapApplianceManager implements Dumpable {
 
     for (int j = softWrap.getStart(); j < myContext.tokenStartOffset; j++) {
       char c = myContext.text.charAt(j);
-      int newX = calculateNewX(c);
-      myContext.onNonLineFeedSymbol(c, newX);
+      myContext.onNonLineFeedSymbol(c, calculateNewX(c));
     }
     myOffset2fontType.clear();
     myContext.advance(foldRegion, placeholderWidthInPixels);
@@ -481,14 +486,14 @@ public class SoftWrapApplianceManager implements Dumpable {
         continue;
       }
 
-      int newX = offsetToX(offset, c);
-      if (myContext.exceedsVisualEdge(newX) && myContext.delayedSoftWrap == null) {
+      int[] metrics = offsetToX(offset, c);
+      if (myContext.exceedsVisualEdge(metrics[0]) && myContext.delayedSoftWrap == null) {
         if (createSoftWrapIfPossible()) {
           return true;
         }
       }
       else {
-        myContext.onNonLineFeedSymbol(c, newX);
+        myContext.onNonLineFeedSymbol(c, metrics);
       }
     }
     return false;
@@ -516,12 +521,13 @@ public class SoftWrapApplianceManager implements Dumpable {
    * @param c         target symbol referenced by the given offset
    * @return          'x' coordinate of the right edge of document symbol referenced by the given offset
    */
-  private int offsetToX(int offset, char c) {
+  private int[] offsetToX(int offset, char c) {
     if (myOffset2widthInPixels.end > offset
         && (myOffset2widthInPixels.anchor + myOffset2widthInPixels.end > offset)
         && myContext.currentPosition.symbol != '\t'/*we need to recalculate tabulation width after soft wrap*/)
     {
-      return myContext.currentPosition.x + myOffset2widthInPixels.data[offset - myOffset2widthInPixels.anchor];
+      int width = myOffset2widthInPixels.data[offset - myOffset2widthInPixels.anchor];
+      return new int[] {myContext.currentPosition.x + width + myContext.getInlaysWidth(), width};
     }
     else {
       return calculateNewX(c);
@@ -620,12 +626,16 @@ public class SoftWrapApplianceManager implements Dumpable {
     return false;
   }
 
-  private int calculateNewX(char c) {
+  // {newX, actualWidth}
+  private int[] calculateNewX(char c) {
     if (c == '\t') {
-      return EditorUtil.nextTabStop(myContext.currentPosition.x, myEditor);
+      int xStart = myContext.currentPosition.x + myContext.getInlaysPrefixWidth();
+      int xEnd = EditorUtil.nextTabStop(xStart, myEditor);
+      return new int[] {xEnd + myContext.getInlaysSuffixWidth(), xEnd - xStart};
     }
     else {
-      return myContext.currentPosition.x + SoftWrapModelImpl.getEditorTextRepresentationHelper(myEditor).charWidth(c, myContext.fontType);
+      int width = SoftWrapModelImpl.getEditorTextRepresentationHelper(myEditor).charWidth(c, myContext.fontType);
+      return new int[] {myContext.currentPosition.x + width + myContext.getInlaysWidth(), width};
     }
   }
 
@@ -1233,9 +1243,13 @@ public class SoftWrapApplianceManager implements Dumpable {
     public int            rangeEndOffset;
     public int            tokenStartOffset;
     public int            tokenEndOffset;
+    public boolean        nextIsFoldRegion;
     @JdkConstants.FontStyle
     public int            fontType;
     public boolean        skipToLineEnd;
+
+    public List<Inlay>    inlays;
+    public int            inlayIndex;
 
     @Override
     public String toString() {
@@ -1256,10 +1270,13 @@ public class SoftWrapApplianceManager implements Dumpable {
       rangeEndOffset = 0;
       tokenStartOffset = 0;
       tokenEndOffset = 0;
+      nextIsFoldRegion = false;
       fontType = Font.PLAIN;
       skipToLineEnd = false;
       fontType2spaceWidth.reset();
       logicalLineData.reset();
+      inlays = null;
+      inlayIndex = 0;
     }
 
     public int getSpaceWidth() {
@@ -1305,23 +1322,23 @@ public class SoftWrapApplianceManager implements Dumpable {
     }
 
     public void onNonLineFeedSymbol(char c) {
-      int newX;
+      int[] metrics;
       if (myOffset2widthInPixels.end > myContext.currentPosition.offset
           && (myOffset2widthInPixels.anchor + myOffset2widthInPixels.end > myContext.currentPosition.offset)
           && myContext.currentPosition.symbol != '\t'/*we need to recalculate tabulation width after soft wrap*/)
       {
-        newX = myContext.currentPosition.x + myOffset2widthInPixels.data[myContext.currentPosition.offset - myOffset2widthInPixels.anchor];
+
+        int width = myOffset2widthInPixels.data[myContext.currentPosition.offset - myOffset2widthInPixels.anchor];
+        metrics = new int[] {myContext.currentPosition.x + width + getInlaysWidth(), width};
       }
       else {
-        newX = calculateNewX(c);
+        metrics = calculateNewX(c);
       }
-      onNonLineFeedSymbol(c, newX);
+      onNonLineFeedSymbol(c, metrics);
     }
     
     @SuppressWarnings("MagicConstant")
-    public void onNonLineFeedSymbol(char c, int newX) {
-      int widthInPixels = newX - myContext.currentPosition.x;
-      
+    public void onNonLineFeedSymbol(char c, int[] metrics) { // {newX, actualWidth}
       if (myOffset2widthInPixels.anchor <= 0) {
         myOffset2widthInPixels.anchor = currentPosition.offset;
       }
@@ -1331,10 +1348,10 @@ public class SoftWrapApplianceManager implements Dumpable {
         System.arraycopy(myOffset2widthInPixels.data, 0, newData, 0, myOffset2widthInPixels.data.length);
         myOffset2widthInPixels.data = newData;
       }
-      myOffset2widthInPixels.data[currentPosition.offset - myOffset2widthInPixels.anchor] = widthInPixels;
+      myOffset2widthInPixels.data[currentPosition.offset - myOffset2widthInPixels.anchor] = metrics[1];
       myOffset2widthInPixels.end++;
       
-      int widthInColumns = calculateWidthInColumns(c, widthInPixels, myContext.getPlainSpaceWidth());
+      int widthInColumns = calculateWidthInColumns(c, metrics[1], myContext.getPlainSpaceWidth());
       if (c == '\t') {
         notifyListenersOnVisualLineStart(myContext.lineStartPosition);
         notifyListenersOnTabulation(widthInColumns);
@@ -1342,9 +1359,35 @@ public class SoftWrapApplianceManager implements Dumpable {
       
       currentPosition.logicalColumn += widthInColumns;
       currentPosition.visualColumn += widthInColumns;
-      currentPosition.x = newX;
+      currentPosition.x = metrics[0];
       currentPosition.offset++;
       fontType = myOffset2fontType.get(currentPosition.offset);
+    }
+
+    private int getInlaysWidth() {
+      return getInlaysPrefixWidth() + getInlaysSuffixWidth();
+    }
+
+    private int getInlaysPrefixWidth() {
+      return getInlaysPrefixWidthForOffset(currentPosition.offset);
+    }
+
+    private int getInlaysPrefixWidthForOffset(int offset) {
+      while (inlayIndex < inlays.size() && inlays.get(inlayIndex).getOffset() < offset) inlayIndex++;
+      while (inlayIndex > 0 && inlays.get(inlayIndex - 1).getOffset() >= offset) inlayIndex--;
+      int width = 0;
+      while (inlayIndex < inlays.size() && inlays.get(inlayIndex).getOffset() == offset) {
+        width += inlays.get(inlayIndex++).getWidthInPixels();
+      }
+      return width;
+    }
+
+    private int getInlaysSuffixWidth() {
+      int offset = currentPosition.offset;
+      return offset < text.length() && text.charAt(offset) != '\n' ||
+             offset > tokenEndOffset ||
+             offset == tokenEndOffset && nextIsFoldRegion
+             ? 0 : getInlaysPrefixWidthForOffset(offset + 1);
     }
 
     /**

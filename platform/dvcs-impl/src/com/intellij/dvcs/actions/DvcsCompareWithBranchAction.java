@@ -46,6 +46,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import static com.intellij.util.containers.UtilKt.getIfSingle;
+
 /**
  * Compares selected file/folder with itself in another branch.
  */
@@ -96,7 +98,7 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     Project project = e.getProject();
-    VirtualFile file = VcsUtil.getIfSingle(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM));
+    VirtualFile file = getIfSingle(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM));
 
     presentation.setVisible(project != null);
     presentation.setEnabled(project != null && file != null && isEnabled(getRepositoryManager(project).getRepositoryForFile(file)));

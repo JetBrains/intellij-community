@@ -50,9 +50,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -186,21 +188,44 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     final DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
     final HighlightVisitor[] filteredVisitors = getHighlightVisitors(getFile());
     try {
-      List<ProperTextRange> insideRanges = new ArrayList<>();
-      List<ProperTextRange> outsideRanges = new ArrayList<>();
-      final List<PsiElement> insideElements = new ArrayList<>();
-      final List<PsiElement> outsideElements = new ArrayList<>();
-      Divider.divideInsideAndOutside(getFile(), myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(), myPriorityRange, insideElements, insideRanges, outsideElements,
-                                     outsideRanges, false, SHOULD_HIGHLIGHT_FILTER);
-      // put file element always in outsideElements (except file fragments where they have crazy element ranges: an expression might be an immediate child of a file there)
-      if (!insideElements.isEmpty() && insideElements.get(insideElements.size()-1) instanceof PsiFile && !(insideElements.get(insideElements.size()-1) instanceof PsiCodeFragment)) {
-        PsiElement file = insideElements.remove(insideElements.size() - 1);
-        outsideElements.add(file);
-        ProperTextRange range = insideRanges.remove(insideRanges.size() - 1);
-        outsideRanges.add(range);
-      }
+      List<Divider.DividedElements> dividedElements = new ArrayList<>();
+      Divider.divideInsideAndOutsideAllRoots(getFile(), myRestrictRange, myPriorityRange, SHOULD_HIGHLIGHT_FILTER,
+                                             new CommonProcessors.CollectProcessor<>(dividedElements));
+      List<PsiElement> allInsideElements = ContainerUtil.concat((List<List<PsiElement>>)ContainerUtil.map(dividedElements,
+                                            dividedForRoot -> {
+                                              List<PsiElement> inside = dividedForRoot.inside;
+                                              PsiElement lastInside = ContainerUtil.getLastItem(inside);
+                                              return lastInside instanceof PsiFile && !(lastInside instanceof PsiCodeFragment) ? inside
+                                                .subList(0, inside.size() - 1) : inside;
+                                            }));
 
-      setProgressLimit((long)(insideElements.size()+outsideElements.size()));
+
+      List<ProperTextRange> allInsideRanges = ContainerUtil.concat((List<List<ProperTextRange>>)ContainerUtil.map(dividedElements,
+                                                  dividedForRoot -> {
+                                                    List<ProperTextRange> insideRanges = dividedForRoot.insideRanges;
+                                                    PsiElement lastInside = ContainerUtil.getLastItem(dividedForRoot.inside);
+                                                    return lastInside instanceof PsiFile && !(lastInside instanceof PsiCodeFragment) ? insideRanges
+                                                      .subList(0, insideRanges.size() - 1) : insideRanges;
+                                                  }));
+
+      List<PsiElement> allOutsideElements = ContainerUtil.concat((List<List<PsiElement>>)ContainerUtil.map(dividedElements,
+                                                  dividedForRoot -> {
+                                                    List<PsiElement> outside = dividedForRoot.outside;
+                                                    PsiElement lastInside = ContainerUtil.getLastItem(dividedForRoot.inside);
+                                                    return lastInside instanceof PsiFile && !(lastInside instanceof PsiCodeFragment) ? ContainerUtil.append(outside,
+                                                      lastInside) : outside;
+                                                  }));
+      List<ProperTextRange> allOutsideRanges = ContainerUtil.concat((List<List<ProperTextRange>>)ContainerUtil.map(dividedElements,
+                                                        dividedForRoot -> {
+                                                          List<ProperTextRange> outsideRanges = dividedForRoot.outsideRanges;
+                                                          PsiElement lastInside = ContainerUtil.getLastItem(dividedForRoot.inside);
+                                                          ProperTextRange lastInsideRange = ContainerUtil.getLastItem(dividedForRoot.insideRanges);
+                                                          return lastInside instanceof PsiFile && !(lastInside instanceof PsiCodeFragment) ? ContainerUtil.append(outsideRanges,
+                                                                                                                lastInsideRange) : outsideRanges;
+                                                        }));
+
+
+      setProgressLimit((long)(allInsideElements.size()+allOutsideElements.size()));
 
       final boolean forceHighlightParents = forceHighlightParents();
 
@@ -209,12 +234,11 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                        outsideResult);
       }
 
-      boolean success = collectHighlights(insideElements, insideRanges, outsideElements, outsideRanges, progress, filteredVisitors, insideResult, outsideResult, forceHighlightParents);
+      boolean success = collectHighlights(allInsideElements, allInsideRanges, allOutsideElements, allOutsideRanges, progress, filteredVisitors, insideResult, outsideResult, forceHighlightParents);
 
       if (success) {
         myHighlightInfoProcessor.highlightsOutsideVisiblePartAreProduced(myHighlightingSession, outsideResult, myPriorityRange,
-                                                                         myRestrictRange,
-                                                                         getId());
+                                                                         myRestrictRange, getId());
 
         if (myUpdateAll) {
           daemonCodeAnalyzer.getFileStatusMap().setErrorFoundFlag(myProject, getDocument(), myErrorFound);

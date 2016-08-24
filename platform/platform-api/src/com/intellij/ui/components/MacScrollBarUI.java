@@ -251,7 +251,9 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
         ID defaults = invoke("NSUserDefaults", "standardUserDefaults");
         invoke(defaults, "synchronize");
         ID behavior = invoke(defaults, "boolForKey:", nsString("AppleScrollerPagingBehavior"));
-        return 1 == behavior.intValue() ? JumpToSpot : NextPage;
+        Behavior value = 1 == behavior.intValue() ? JumpToSpot : NextPage;
+        Logger.getInstance(MacScrollBarUI.class).debug("scroll bar behavior ", value, " from ", behavior);
+        return value;
       }
     };
     private static final Producer<ID> INIT = () -> invoke(invoke("NSDistributedNotificationCenter", "defaultCenter"),
@@ -286,7 +288,9 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
       @Override
       public Style produce() {
         ID style = invoke(getObjcClass("NSScroller"), "preferredScrollerStyle");
-        return 1 == style.intValue() ? Overlay : Legacy;
+        Style value = 1 == style.intValue() ? Overlay : Legacy;
+        Logger.getInstance(MacScrollBarUI.class).debug("scroll bar style ", value, " from ", style);
+        return value;
       }
     };
     private static final Producer<ID> INIT = () -> invoke(invoke("NSNotificationCenter", "defaultCenter"),
@@ -302,6 +306,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
     private T myValue;
 
     public Native() {
+      Logger.getInstance(MacScrollBarUI.class).debug("initialize scroll bar");
       UIUtil.invokeLaterIfNeeded(this);
     }
 
@@ -311,6 +316,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
 
     @SuppressWarnings("UnusedDeclaration")
     public void callback(ID self, Pointer selector, ID event) {
+      Logger.getInstance(MacScrollBarUI.class).debug("update scroll bar");
       UIUtil.invokeLaterIfNeeded(this);
     }
 

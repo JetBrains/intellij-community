@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,24 @@ public class ContainerUtilTest extends TestCase {
       fail();
     }
     catch (IndexOutOfBoundsException ignore) {
+    }
+  }
+
+  public void testConcatCME() {
+    List<Integer> a1 = new ArrayList<>(Arrays.asList(0, 1));
+    List<Integer> l = ContainerUtil.concat(a1, Arrays.asList(2, 3), ContainerUtil.emptyList());
+    assertEquals(4, l.size());
+    for (int i = 0; i < l.size(); i++) {
+      int at = l.get(i);
+      assertEquals(i, at);
+    }
+
+    try {
+      a1.clear();
+      l.get(3);
+      fail();
+    }
+    catch (ConcurrentModificationException ignore) {
     }
   }
 

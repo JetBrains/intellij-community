@@ -19,10 +19,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
-import com.intellij.ide.projectView.impl.nodes.ProjectViewModuleGroupNode;
-import com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode;
-import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode;
-import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
+import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
@@ -204,7 +201,7 @@ public class GradleTreeStructureProvider implements TreeStructureProvider {
     final Module module = fileIndex.getModuleForFile(virtualFile);
     String sourceSetName = getSourceSetName(module);
     if (sourceSetName == null) return null;
-    return new GradleSourceSetDirectoryNode(project, psiDirectory, settings, module, sourceSetName);
+    return new GradleSourceSetDirectoryNode(project, psiDirectory, settings, module, sourceSetName, directoryNode.getFilter());
   }
 
   @Nullable
@@ -228,8 +225,9 @@ public class GradleTreeStructureProvider implements TreeStructureProvider {
                                         PsiDirectory psiDirectory,
                                         ViewSettings settings,
                                         Module module,
-                                        String sourceSetName) {
-      super(project, psiDirectory, settings);
+                                        String sourceSetName,
+                                        PsiFileSystemItemFilter filter) {
+      super(project, psiDirectory, settings, filter);
       mySourceSetName = sourceSetName;
       myModule = module;
     }

@@ -96,6 +96,10 @@ public class LayeredIcon extends AbstractSizeAdjustingIcon {
     adjustSize();
   }
 
+  /**
+   *
+   * @param constraint is expected to be one of compass-directions or CENTER
+   */
   public void setIcon(Icon icon, int layer, @MagicConstant(valuesFromClass = SwingConstants.class) int constraint) {
     int width = getIconWidth();
     int height = getIconHeight();
@@ -108,6 +112,10 @@ public class LayeredIcon extends AbstractSizeAdjustingIcon {
     int x;
     int y;
     switch (constraint) {
+      case SwingConstants.CENTER:
+        x = (width - w) / 2;
+        y = (height - h) /2;
+        break;
       case SwingConstants.NORTH:
         x = (width - w) / 2;
         y = 0;
@@ -142,7 +150,7 @@ public class LayeredIcon extends AbstractSizeAdjustingIcon {
         break;
       default:
         throw new IllegalArgumentException(
-          "The constraint should be one of SwingConstants [NORTH...NORTH_WEST], actual value is " + constraint);
+          "The constraint should be one of SwingConstants' compass-directions [1..8] or CENTER [0], actual value is " + constraint);
     }
     setIcon(icon, layer, x, y);
   }

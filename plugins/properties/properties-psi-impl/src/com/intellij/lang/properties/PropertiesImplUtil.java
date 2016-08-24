@@ -121,10 +121,6 @@ public class PropertiesImplUtil extends PropertiesUtil {
     return new ResourceBundleWithCachedFiles(new ResourceBundleImpl(defaultPropertiesFile), bundleFiles);
   }
 
-  public static boolean isPropertiesFile(@NotNull VirtualFile file, @NotNull Project project) {
-    return getPropertiesFile(file, project) != null;
-  }
-
   public static boolean isPropertiesFile(@Nullable PsiFile file) {
     return getPropertiesFile(file) != null;
   }
@@ -220,7 +216,7 @@ public class PropertiesImplUtil extends PropertiesUtil {
 
   public static class ResourceBundleWithCachedFiles {
     private static final ResourceBundleWithCachedFiles EMPTY =
-      new ResourceBundleWithCachedFiles(EmptyResourceBundle.getInstance(), Collections.<PropertiesFile>emptyList());
+      new ResourceBundleWithCachedFiles(EmptyResourceBundle.getInstance(), Collections.emptyList());
 
     private final ResourceBundle myBundle;
     private final List<PropertiesFile> myFiles;

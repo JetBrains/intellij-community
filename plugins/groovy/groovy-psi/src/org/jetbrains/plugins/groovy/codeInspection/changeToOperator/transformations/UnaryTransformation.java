@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.MethodCallData;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.OptionsData;
 
-import static com.google.common.base.Objects.firstNonNull;
+import static com.google.common.base.MoreObjects.firstNonNull;
 
 /**
  * e.g.

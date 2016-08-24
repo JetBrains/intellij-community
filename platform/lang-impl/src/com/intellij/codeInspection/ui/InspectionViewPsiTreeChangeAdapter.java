@@ -58,7 +58,7 @@ class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
 
   public InspectionViewPsiTreeChangeAdapter(@NotNull InspectionResultsView view) {
     myView = view;
-    myExecutor = new BoundedTaskExecutor(AppExecutorUtil.getAppExecutorService(), JobSchedulerImpl.CORES_COUNT, myView);
+    myExecutor = new BoundedTaskExecutor("Updating Inspection View pool", AppExecutorUtil.getAppExecutorService(), JobSchedulerImpl.CORES_COUNT, myView);
     myUpdater = new MergingUpdateQueue("inspection.view.psi.update.listener",
                                        300,
                                        true,

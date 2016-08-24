@@ -18,6 +18,7 @@ package com.intellij.debugger;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.RemoteConnection;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +36,11 @@ public interface DebugEnvironment {
 
   @NotNull
   GlobalSearchScope getSearchScope();
+
+  @Nullable
+  default Sdk getAlternativeJre() {
+    return null;
+  }
 
   boolean isRemote();
 

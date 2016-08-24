@@ -197,7 +197,10 @@ public class FormsInstrumenter extends FormsBuilder {
       }
 
       class2form.put(classToBind, formFile);
-      addBinding(compiled.getSourceFile(), formFile, instrumented);
+      for (File file : compiled.getSourceFiles()) {
+        addBinding(file, formFile, instrumented);
+      }
+
 
       try {
         context.processMessage(new ProgressMessage("Instrumenting forms... [" + chunk.getPresentableShortName() + "]"));

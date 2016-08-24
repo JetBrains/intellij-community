@@ -12,7 +12,6 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.google.common.base.Objects;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
@@ -24,6 +23,7 @@ import org.zmlx.hg4idea.util.HgUtil;
 import java.io.IOException;
 import java.util.Date;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public class HgFileRevision implements VcsFileRevision {
@@ -138,6 +138,6 @@ public class HgFileRevision implements VcsFileRevision {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(myFile, myRevisionNumber);
+    return Objects.hash(myFile, myRevisionNumber);
   }
 }

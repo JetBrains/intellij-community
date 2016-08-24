@@ -17,6 +17,8 @@ package com.intellij.util.containers
 
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
+import java.util.*
+import java.util.stream.Stream
 
 fun <K, V> MutableMap<K, MutableList<V>>.remove(key: K, value: V) {
   val list = get(key)
@@ -100,3 +102,23 @@ inline fun <T> Collection<T>.forEachGuaranteed(operation: (T) -> Unit): Unit {
   }
   CompoundRuntimeException.throwIfNotEmpty(errors)
 }
+
+fun <T> Array<T>?.stream(): Stream<T> = if (this != null) Stream.of(*this) else Stream.empty()
+
+fun <T> Stream<T>?.isEmpty(): Boolean = this == null || !this.findAny().isPresent
+
+fun <T> Stream<T>?.notNullize(): Stream<T> = this ?: Stream.empty()
+
+fun <T> Stream<T>?.getIfSingle(): T? =
+    this?.limit(2)
+        ?.map { Optional.ofNullable(it) }
+        ?.reduce(Optional.empty()) { a, b -> if (a.isPresent xor b.isPresent) b else Optional.empty() }
+        ?.orElse(null)
+
+/**
+ * There probably could be some performance issues if there is lots of streams to concat. See
+ * http://mail.openjdk.java.net/pipermail/lambda-dev/2013-July/010659.html for some details.
+ *
+ * Also see [Stream.concat] documentation for other possible issues of concatenating large number of streams.
+ */
+fun <T> concat(vararg streams: Stream<T>): Stream<T> = Stream.of(*streams).reduce(Stream.empty()) { a, b -> Stream.concat(a, b) }

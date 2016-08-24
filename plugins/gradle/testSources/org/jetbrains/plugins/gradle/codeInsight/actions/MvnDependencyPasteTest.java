@@ -56,6 +56,20 @@ public class MvnDependencyPasteTest extends LightCodeInsightTestCase {
                       "</dependency>\n" +
                       "}");
   }
+
+  public void test_AddCompile() {
+    String noArtifact = getDependency("group", "artifact", "1.0", null, null);
+    configureFromFileText("pom.xml", noArtifact);
+    selectWholeFile();
+    performCut();
+
+    configureGradleFile();
+    performPaste();
+    checkResultByText("dependencies {\n" +
+                      "    compile 'group:artifact:1.0'\n" +
+                      "}");
+  }
+  
   
 
   @NotNull

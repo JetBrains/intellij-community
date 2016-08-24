@@ -42,6 +42,10 @@ public class JavaNullMethodArgumentUtil {
   }
 
   public static void searchNullArgument(@NotNull PsiMethod method, final int argumentIdx, @NotNull Processor<PsiExpression> nullArgumentProcessor) {
+    final PsiParameter parameter = method.getParameterList().getParameters()[argumentIdx];
+    if (parameter.getType() instanceof PsiEllipsisType) {
+      return;
+    }
     final GlobalSearchScope scope = findScopeWhereNullArgumentCanPass(method, argumentIdx);
     if (scope == null) return;
     MethodReferencesSearch.search(method, scope, true).forEach(ref -> {
@@ -57,9 +61,11 @@ public class JavaNullMethodArgumentUtil {
         }
         if (argumentList != null) {
           final PsiExpression[] arguments = argumentList.getExpressions();
-          final PsiExpression argument = arguments[argumentIdx];
-          if (argument instanceof PsiLiteralExpression && PsiKeyword.NULL.equals(argument.getText())) {
-            return nullArgumentProcessor.process(argument);
+          if (argumentIdx < arguments.length) {
+            final PsiExpression argument = arguments[argumentIdx];
+            if (argument instanceof PsiLiteralExpression && PsiKeyword.NULL.equals(argument.getText())) {
+              return nullArgumentProcessor.process(argument);
+            }
           }
         }
       }

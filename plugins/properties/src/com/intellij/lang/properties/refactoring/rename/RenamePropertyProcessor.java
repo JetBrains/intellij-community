@@ -22,7 +22,6 @@ import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.refactoring.PropertiesRefactoringSettings;
 import com.intellij.lang.properties.xml.XmlProperty;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;

@@ -15,13 +15,14 @@
  */
 package org.jetbrains.plugins.gradle.settings;
 
-import com.google.common.base.Objects;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * @author Vladislav.Soroka
@@ -69,7 +70,7 @@ public class GradleSystemRunningSettings implements PersistentStateComponent<Gra
     if (this == o) return true;
     if (!(o instanceof GradleSystemRunningSettings)) return false;
     GradleSystemRunningSettings settings = (GradleSystemRunningSettings)o;
-    return Objects.equal(myPreferredTestRunner, settings.myPreferredTestRunner);
+    return Objects.equals(myPreferredTestRunner, settings.myPreferredTestRunner);
   }
 
   @Override

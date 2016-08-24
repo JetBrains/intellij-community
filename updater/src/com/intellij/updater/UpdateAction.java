@@ -22,8 +22,12 @@ public class UpdateAction extends BaseUpdateAction {
   protected void doBuildPatchFile(File olderFile, File newerFile, ZipOutputStream patchOutput) throws IOException {
     if (!myIsMove) {
       patchOutput.putNextEntry(new ZipEntry(myPath));
-      writeExecutableFlag(patchOutput, newerFile);
-      writeDiff(olderFile, newerFile, patchOutput);
+      if (Utils.isLink(newerFile)) {
+        writeLinkInfo(newerFile, patchOutput);
+      } else {
+        writeExecutableFlag(patchOutput, newerFile);
+        writeDiff(olderFile, newerFile, patchOutput);
+      }
       patchOutput.closeEntry();
     }
   }
@@ -35,22 +39,27 @@ public class UpdateAction extends BaseUpdateAction {
     if (!myIsMove) {
       updated = Utils.createTempFile();
       InputStream in = Utils.findEntryInputStream(patchFile, myPath);
-      boolean executable = readExecutableFlag(in);
-
-      OutputStream out = new BufferedOutputStream(new FileOutputStream(updated));
-      try {
-        InputStream oldFileIn = Utils.newFileInputStream(source, myPatch.isNormalized());
+      int filePermissions = in.read();
+      if (filePermissions > 1 ) {
+        Utils.createLink(readLinkInfo(in, filePermissions), toFile);
+        in.close();
+        return;
+      } else {
+        OutputStream out = new BufferedOutputStream(new FileOutputStream(updated));
         try {
-          applyDiff(in, oldFileIn, out);
+          InputStream oldFileIn = Utils.newFileInputStream(source, myPatch.isNormalized());
+          try {
+            applyDiff(in, oldFileIn, out);
+          }
+          finally {
+            oldFileIn.close();
+          }
         }
         finally {
-          oldFileIn.close();
+          out.close();
         }
       }
-      finally {
-        out.close();
-      }
-      Utils.setExecutable(updated, executable);
+      Utils.setExecutable(updated, filePermissions == 1);
     } else {
       updated = source;
     }

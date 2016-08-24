@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.changes.Change;
@@ -37,7 +36,7 @@ public class SvnConcurrentChangeListManagerTest extends Svn17TestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myDefaulListName = VcsBundle.message("changes.default.changelist.name");
+    myDefaulListName = LocalChangeList.DEFAULT_NAME;
 
     myScheme = new DuringChangeListManagerUpdateTestScheme(myProject, myTempDirFixture.getTempDirPath());
   }

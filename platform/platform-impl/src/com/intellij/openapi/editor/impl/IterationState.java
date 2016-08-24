@@ -115,6 +115,8 @@ public final class IterationState {
   private final Color myReadOnlyColor;
   private final boolean myUseOnlyFullLineHighlighters;
 
+  private boolean myNextIsFoldRegion;
+
   public IterationState(@NotNull EditorEx editor, int start, int end, boolean useCaretAndSelection) {
     this(editor, start, end, useCaretAndSelection, false);
   }
@@ -252,6 +254,7 @@ public final class IterationState {
   }
 
   public void advance() {
+    myNextIsFoldRegion = false;
     myStartOffset = myEndOffset;
     advanceSegmentHighlighters();
     advanceCurrentSelectionIndex();
@@ -266,9 +269,12 @@ public final class IterationState {
     else {
       myEndOffset = Math.min(getHighlighterEnd(myStartOffset), getSelectionEnd());
       myEndOffset = Math.min(myEndOffset, getMinSegmentHighlightersEnd());
-      myEndOffset = Math.min(myEndOffset, getFoldRangesEnd(myStartOffset));
+      int foldRangesEnd = getFoldRangesEnd(myStartOffset);
+      myEndOffset = Math.min(myEndOffset, foldRangesEnd);
       myEndOffset = Math.min(myEndOffset, getCaretEnd(myStartOffset));
       myEndOffset = Math.min(myEndOffset, getGuardedBlockEnd(myStartOffset));
+
+      myNextIsFoldRegion = myEndOffset == foldRangesEnd && myEndOffset < myEnd;
     }
 
     reinit();
@@ -558,6 +564,10 @@ public final class IterationState {
 
   public FoldRegion getCurrentFold() {
     return myCurrentFold;
+  }
+
+  public boolean nextIsFoldRegion() {
+    return myNextIsFoldRegion;
   }
 
   public boolean hasPastLineEndBackgroundSegment() {

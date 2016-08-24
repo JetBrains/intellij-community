@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.GoToSymbolFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.MoveFileFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
@@ -32,10 +33,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 import static com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE;
 
@@ -69,6 +73,32 @@ public class ModuleHighlightUtil {
     }
 
     return null;
+  }
+
+  @NotNull
+  static List<HighlightInfo> checkDuplicateRequires(@NotNull PsiJavaModule module) {
+    List<HighlightInfo> results = ContainerUtil.newSmartList();
+
+    Map<String, PsiElement> map = ContainerUtil.newHashMap();
+    for (PsiElement child = module.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (child instanceof PsiRequiresStatement) {
+        PsiJavaModuleReferenceElement ref = ((PsiRequiresStatement)child).getReferenceElement();
+        if (ref != null) {
+          String text = ref.getReferenceText();
+          if (!map.containsKey(text)) {
+            map.put(text, child);
+          }
+          else {
+            String message = JavaErrorMessages.message("module.duplicate.requires", text);
+            HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(child).description(message).create();
+            QuickFixAction.registerQuickFixAction(info, new DeleteElementFix(child));
+            results.add(info);
+          }
+        }
+      }
+    }
+
+    return results;
   }
 
   @Nullable

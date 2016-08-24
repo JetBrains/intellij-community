@@ -419,6 +419,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
             tabs.add(Pair.create(label, component));
             manager.removeContent(content, false);
             content.setComponent(null);
+            content.setShouldDisposeContent(false);
             mergedContent.add(content);
           }
         }

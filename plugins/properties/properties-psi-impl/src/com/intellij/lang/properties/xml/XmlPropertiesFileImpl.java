@@ -74,8 +74,7 @@ public class XmlPropertiesFileImpl extends XmlPropertiesFile {
           }
         }
       }
-      final boolean isAlphaSorted = PropertiesImplUtil.isAlphaSorted(propertiesOrder);
-      myAlphaSorted = isAlphaSorted;
+      myAlphaSorted = PropertiesImplUtil.isAlphaSorted(propertiesOrder);
       myProperties = propertiesOrder;
       myPropertiesMap = propertiesMap;
     }

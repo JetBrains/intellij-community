@@ -67,6 +67,7 @@ public class InlineSuperClassTest extends MultiFileTestCase {
   public void testMultipleSubclasses() { doTestMultipleSubclasses(); }
   public void testMultipleSubstitutions() { doTestMultipleSubclasses(); }
   public void testMultipleSubclassesInheritsOneBaseBase() { doTestMultipleSubclasses(); }
+  public void testInlineClassUsedInJavadocLink() { doTest(); }
   public void testInlineSuperclassExtendsList() { doTest(); }
   public void testInterfaceHierarchyWithSubstitution() { doTest(); }
   public void testTypeParameterBound() { doTest();}

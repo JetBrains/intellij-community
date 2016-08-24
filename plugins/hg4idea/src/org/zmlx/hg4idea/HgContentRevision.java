@@ -12,7 +12,6 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.google.common.base.Objects;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -22,6 +21,8 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.util.HgUtil;
+
+import java.util.Objects;
 
 public class HgContentRevision implements ByteBackedContentRevision {
 
@@ -94,6 +95,6 @@ public class HgContentRevision implements ByteBackedContentRevision {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(myHgFile, myRevisionNumber);
+    return Objects.hash(myHgFile, myRevisionNumber);
   }
 }

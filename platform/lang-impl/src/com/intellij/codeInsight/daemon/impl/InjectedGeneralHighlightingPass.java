@@ -42,8 +42,10 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,31 +78,28 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
 
     final Set<HighlightInfo> gotHighlights = new THashSet<>(100);
 
-    final List<PsiElement> inside = new ArrayList<>();
-    final List<PsiElement> outside = new ArrayList<>();
-    List<ProperTextRange> insideRanges = new ArrayList<>();
-    List<ProperTextRange> outsideRanges = new ArrayList<>();
-    //TODO: this thing is just called TWICE with same arguments eating CPU on huge files :(
-    Divider.divideInsideAndOutside(myFile, myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(), myPriorityRange, inside, insideRanges, outside,
-                                   outsideRanges, false, SHOULD_HIGHLIGHT_FILTER);
+    List<Divider.DividedElements> allDivided = new ArrayList<>();
+    Divider.divideInsideAndOutsideAllRoots(myFile, myRestrictRange, myPriorityRange, SHOULD_HIGHLIGHT_FILTER, new CommonProcessors.CollectProcessor<>(allDivided));
 
+    List<PsiElement> allInsideElements = ContainerUtil.concat((List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> d.inside));
+    List<PsiElement> allOutsideElements = ContainerUtil.concat((List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> d.outside));
 
     // all infos for the "injected fragment for the host which is inside" are indeed inside
     // but some of the infos for the "injected fragment for the host which is outside" can be still inside
-    Set<HighlightInfo> injectedResult = new THashSet<>();
-    Set<PsiFile> injected = getInjectedPsiFiles(inside, outside, progress);
+    Set<PsiFile> injected = getInjectedPsiFiles(allInsideElements, allOutsideElements, progress);
     setProgressLimit(injected.size());
 
+    Set<HighlightInfo> injectedResult = new THashSet<>();
     if (!addInjectedPsiHighlights(injected, progress, Collections.synchronizedSet(injectedResult))) {
       throw new ProcessCanceledException();
     }
-    final List<HighlightInfo> injectionsOutside = new ArrayList<>(gotHighlights.size());
 
     Set<HighlightInfo> result;
     synchronized (injectedResult) {
       // sync here because all writes happened in another thread
       result = injectedResult;
     }
+    final List<HighlightInfo> injectionsOutside = new ArrayList<>(gotHighlights.size());
     for (HighlightInfo info : result) {
       if (myRestrictRange.contains(info)) {
         gotHighlights.add(info);
@@ -113,7 +112,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
 
     if (!injectionsOutside.isEmpty()) {
       final ProperTextRange priorityIntersection = myPriorityRange.intersection(myRestrictRange);
-      if ((!inside.isEmpty() || !gotHighlights.isEmpty()) &&
+      if ((!allInsideElements.isEmpty() || !gotHighlights.isEmpty()) &&
           priorityIntersection != null) { // do not apply when there were no elements to highlight
         // clear infos found in visible area to avoid applying them twice
         final List<HighlightInfo> toApplyInside = new ArrayList<>(gotHighlights);
@@ -149,7 +148,6 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
                                            @NotNull final List<PsiElement> elements2,
                                            @NotNull final ProgressIndicator progress) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    final Set<PsiFile> outInjected = new THashSet<>();
 
     List<DocumentWindow> injected = InjectedLanguageUtil.getCachedInjectedDocuments(myFile);
     final Collection<PsiElement> hosts = new THashSet<>(elements1.size() + elements2.size() + injected.size());
@@ -174,6 +172,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
     injectedLanguageManager.processInjectableElements(elements1, collectInjectableProcessor);
     injectedLanguageManager.processInjectableElements(elements2, collectInjectableProcessor);
 
+    final Set<PsiFile> outInjected = new THashSet<>();
     final PsiLanguageInjectionHost.InjectedPsiVisitor visitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       @Override
       public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {

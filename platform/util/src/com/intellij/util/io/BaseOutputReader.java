@@ -206,10 +206,6 @@ public abstract class BaseOutputReader extends BaseDataReader {
     myReader.close();
   }
 
-  /** @deprecated use {@link #BaseOutputReader(Reader, Options)} (to be removed in IDEA 2018.1) */
-  protected void onBufferExhaustion() {
-  }
-
   protected abstract void onTextAvailable(@NotNull String text);
 
   //<editor-fold desc="Deprecated stuff.">
@@ -224,5 +220,9 @@ public abstract class BaseOutputReader extends BaseDataReader {
   public BaseOutputReader(@NotNull Reader reader, @Nullable SleepingPolicy policy) {
     this(reader, Options.withPolicy(policy));
   }
+
+  /** @deprecated use {@link #BaseOutputReader(Reader, Options)} (to be removed in IDEA 2018.1) */
+  @SuppressWarnings("unused")
+  protected void onBufferExhaustion() { }
   //</editor-fold>
 }

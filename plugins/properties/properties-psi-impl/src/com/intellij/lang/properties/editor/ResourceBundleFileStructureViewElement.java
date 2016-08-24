@@ -26,7 +26,6 @@ import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TObjectIntHashMap;
@@ -71,7 +70,7 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
     for (Map.Entry<String, Collection<IProperty>> entry : propertyNames.entrySet()) {
       final Collection<IProperty> properties = entry.getValue();
       final PropertiesAnchorizer.PropertyAnchor anchor = myAnchorizer.createOrUpdate(properties);
-      result.add(new ResourceBundlePropertyStructureViewElement(myResourceBundle, anchor));
+      result.add(new ResourceBundlePropertyStructureViewElement(anchor));
     }
     return result.toArray(new StructureViewTreeElement[result.size()]);
   }

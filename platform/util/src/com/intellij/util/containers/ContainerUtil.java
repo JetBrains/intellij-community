@@ -1476,8 +1476,13 @@ public class ContainerUtil extends ContainerUtilRt {
         if (index >= 0 && index < finalSize) {
           int from = 0;
           for (List<? extends T> each : lists) {
-            if (from <= index && index < from + each.size()) return each.get(index - from);
+            if (from <= index && index < from + each.size()) {
+              return each.get(index - from);
+            }
             from += each.size();
+          }
+          if (from != finalSize) {
+            throw new ConcurrentModificationException("The list has changed. Its size was " + finalSize + "; now it's " + from);
           }
         }
         throw new IndexOutOfBoundsException("index: " + index + "size: " + size());
@@ -1537,7 +1542,7 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @NotNull
   @Contract(pure=true)
-  public static <T> List<T> intersection(@NotNull Collection<? extends T> collection1, @NotNull Collection<? extends T> collection2) {
+  public static <T> Collection<T> intersection(@NotNull Collection<? extends T> collection1, @NotNull Collection<? extends T> collection2) {
     List<T> result = new ArrayList<T>();
     for (T t : collection1) {
       if (collection2.contains(t)) {
@@ -1565,13 +1570,13 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   /**
-   * The main difference from <code>subList</code> is that <code>getFirstItems</code> does not
+   * The main difference from {@code subList} is that {@code getFirstItems} does not
    * throw any exceptions, even if maxItems is greater than size of the list
    *
    * @param items list
-   * @param maxItems size of the result will be equal or less than <code>maxItems</code>
+   * @param maxItems size of the result will be equal or less than {@code maxItems}
    * @param <T> type of list
-   * @return new list with no more than <code>maxItems</code> first elements
+   * @return new list with no more than {@code maxItems} first elements
    */
   @NotNull
   @Contract(pure=true)
@@ -2456,7 +2461,7 @@ public class ContainerUtil extends ContainerUtilRt {
    * - less memory
    * - slower modification in highly contented case (which is the kind of situation you shouldn't use COWAL anyway)
    *
-   * N.B. Avoid using <code>list.toArray(new T[list.size()])</code> on this list because it is inherently racey and
+   * N.B. Avoid using {@code list.toArray(new T[list.size()])} on this list because it is inherently racey and
    * therefore can return array with null elements at the end.
    */
   @NotNull

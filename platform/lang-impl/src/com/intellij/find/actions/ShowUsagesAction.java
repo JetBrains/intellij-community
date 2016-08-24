@@ -107,13 +107,23 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     new UsageNode(USAGES_OUTSIDE_SCOPE_SEPARATOR, new UsageViewTreeModelBuilder(new UsageViewPresentation(), UsageTarget.EMPTY_ARRAY));
 
   private static final Comparator<UsageNode> USAGE_NODE_COMPARATOR = (c1, c2) -> {
-    if (c1 instanceof StringNode) return 1;
-    if (c2 instanceof StringNode) return -1;
+    if (c1 instanceof StringNode || c2 instanceof StringNode) {
+      if (c1 instanceof StringNode && c2 instanceof StringNode) {
+        return Comparing.compare(c1.toString(), c2.toString());
+      }
+      return c1 instanceof StringNode ? 1 : -1;
+    }
+
     Usage o1 = c1.getUsage();
     Usage o2 = c2.getUsage();
     int weight1 = o1 == USAGES_OUTSIDE_SCOPE_SEPARATOR ? 2 : o1 == MORE_USAGES_SEPARATOR ? 1 : 0;
     int weight2 = o2 == USAGES_OUTSIDE_SCOPE_SEPARATOR ? 2 : o2 == MORE_USAGES_SEPARATOR ? 1 : 0;
     if (weight1 != weight2) return weight1 - weight2;
+
+    if (o1 instanceof Comparable && o2 instanceof Comparable) {
+      //noinspection unchecked
+      return ((Comparable)o1).compareTo(o2);
+    }
 
     VirtualFile v1 = UsageListCellRenderer.getVirtualFile(o1);
     VirtualFile v2 = UsageListCellRenderer.getVirtualFile(o2);
@@ -121,15 +131,16 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     String name2 = v2 == null ? null : v2.getName();
     int i = Comparing.compare(name1, name2);
     if (i != 0) return i;
-
-    if (o1 instanceof Comparable && o2 instanceof Comparable) {
-      //noinspection unchecked
-      return ((Comparable)o1).compareTo(o2);
+    if (Comparing.equal(v1, v2)) {
+      FileEditorLocation loc1 = o1.getLocation();
+      FileEditorLocation loc2 = o2.getLocation();
+      return Comparing.compare(loc1, loc2);
     }
-
-    FileEditorLocation loc1 = o1.getLocation();
-    FileEditorLocation loc2 = o2.getLocation();
-    return Comparing.compare(loc1, loc2);
+    else {
+      String path1 = v1 == null ? null : v1.getPath();
+      String path2 = v2 == null ? null : v2.getPath();
+      return Comparing.compare(path1, path2);
+    }
   };
 
   private final boolean myShowSettingsDialogBefore;
@@ -395,12 +406,12 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   }
 
   private static class MyModel extends ListTableModel<UsageNode> implements ModelDiff.Model<Object> {
-    private MyModel(@NotNull List<UsageNode> data, int cols, @NotNull UsageViewImpl usageView) {
-      super(cols(cols, usageView), data, 0);
+    private MyModel(@NotNull List<UsageNode> data, int cols) {
+      super(cols(cols), data, 0);
     }
 
     @NotNull
-    private static ColumnInfo[] cols(int cols, @NotNull UsageViewImpl usageView) {
+    private static ColumnInfo[] cols(int cols) {
       ColumnInfo<UsageNode, UsageNode> o = new ColumnInfo<UsageNode, UsageNode>("") {
         @Nullable
         @Override
@@ -843,7 +854,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     final int columnCount = calcColumnCount(data);
     MyModel model = table.getModel() instanceof MyModel ? (MyModel)table.getModel() : null;
     if (model == null || model.getColumnCount() != columnCount) {
-      model = new MyModel(data, columnCount, usageView);
+      model = new MyModel(data, columnCount);
       table.setModel(model);
 
       ShowUsagesTableCellRenderer renderer = new ShowUsagesTableCellRenderer(usageView, outOfScopeUsages, searchScope);

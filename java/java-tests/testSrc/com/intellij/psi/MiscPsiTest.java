@@ -334,4 +334,20 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
 
     assertEquals(file.getText(), LoadTextUtil.loadText(file.getVirtualFile()).toString());
   }
+
+  public void testPsiClassMethodsCantBeModified() {
+    PsiClass psiClass = myFixture.addClass("class Foo { " +
+                                           "Foo() {} " +
+                                           "void bar() {} " +
+                                           "void goo() {} " +
+                                           "void goo42() {} " +
+                                           "}");
+    PsiMethod[] golden = psiClass.getMethods().clone();
+
+    PsiMethod[] mutated = psiClass.getMethods();
+    mutated[0] = mutated[1];
+    mutated[2] = null;
+
+    assertOrderedEquals(psiClass.getMethods(), golden);
+  }
 }

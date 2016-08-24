@@ -25,9 +25,9 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
-public class RecentChangesAction extends LocalHistoryActionWithDialog {
+public class RecentChangesAction extends LocalHistoryAction {
   @Override
-  protected void showDialog(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull AnActionEvent e) {
+  protected void actionPerformed(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull AnActionEvent e) {
     new RecentChangesPopup(p, gw, notNull(getVcs())).show();
   }
 

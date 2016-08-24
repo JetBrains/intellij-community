@@ -18,9 +18,6 @@ package com.intellij.credentialStore
 import com.intellij.ide.ApplicationLoadListener
 import com.intellij.ide.passwordSafe.impl.providers.ByteArrayWrapper
 import com.intellij.ide.passwordSafe.impl.providers.EncryptionUtil
-import com.intellij.ide.passwordSafe.impl.providers.masterKey.EnterPasswordComponent
-import com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterPasswordDialog
-import com.intellij.ide.passwordSafe.impl.providers.masterKey.PasswordDatabase
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.windows.WindowsCryptUtils
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
@@ -44,16 +41,11 @@ internal fun isMasterPasswordValid(password: String, @Suppress("DEPRECATION") db
   return false
 }
 
-internal fun checkPassAndConvertOldDb(password: String, @Suppress("DEPRECATION") db: PasswordDatabase): Map<String, String>? {
-  if (isMasterPasswordValid(password, db)) {
-    return convertOldDb(password, db)
-  }
-  else {
-    return null
-  }
+internal fun checkPassAndConvertOldDb(password: String, @Suppress("DEPRECATION") db: PasswordDatabase): Map<CredentialAttributes, Credentials>? {
+  return if (isMasterPasswordValid(password, db)) convertOldDb(password, db) else null
 }
 
-fun convertOldDb(@Suppress("DEPRECATION") db: PasswordDatabase): Map<String, String>? {
+internal fun convertOldDb(@Suppress("DEPRECATION") db: PasswordDatabase): Map<CredentialAttributes, Credentials>? {
   if (db.myDatabase.size <= 1) {
     return null
   }
@@ -75,12 +67,11 @@ fun convertOldDb(@Suppress("DEPRECATION") db: PasswordDatabase): Map<String, Str
     }
   }
 
-  // if db contains only one entry (+ test entry) - do not ask master pass, just skip
-  if (db.myDatabase.size <= 2) {
+  if (db.myDatabase.size <= 1) {
     return null
   }
 
-  var result: Map<String, String>? = null
+  var result: Map<CredentialAttributes, Credentials>? = null
   val dialog = MasterPasswordDialog(EnterPasswordComponent(Function {
     result = checkPassAndConvertOldDb(it, db)
     result != null
@@ -96,17 +87,18 @@ fun convertOldDb(@Suppress("DEPRECATION") db: PasswordDatabase): Map<String, Str
   return result
 }
 
-internal fun convertOldDb(oldKey: String, @Suppress("DEPRECATION") db: PasswordDatabase): Map<String, String> {
+internal fun convertOldDb(oldKey: String, @Suppress("DEPRECATION") db: PasswordDatabase): Map<CredentialAttributes, Credentials> {
   val oldKeyB = EncryptionUtil.genPasswordKey(oldKey)
   val testKey = ByteArrayWrapper(EncryptionUtil.encryptKey(oldKeyB, rawTestKey(oldKey)))
-  val newDb = THashMap<String, String>(db.myDatabase.size)
+  val newDb = THashMap<CredentialAttributes, Credentials>(db.myDatabase.size)
   for ((key, value) in db.myDatabase) {
     if (testKey == key) {
       continue
     }
 
     // in old db we cannot get key value - it is hashed, so, we store it as a base64 encoded in the new DB
-    newDb.put(toOldKey(EncryptionUtil.decryptKey(oldKeyB, key.unwrap())), EncryptionUtil.decryptText(oldKeyB, value))
+    val attributes = toOldKeyAsIdentity(EncryptionUtil.decryptKey(oldKeyB, key.unwrap()))
+    newDb.put(attributes, Credentials(attributes.userName, EncryptionUtil.decryptText(oldKeyB, value)))
   }
   return newDb
 }
@@ -133,9 +125,7 @@ internal class PasswordDatabaseConvertor : ApplicationLoadListener {
             LOG.catchAndLog {
               for (factory in CredentialStoreFactory.CREDENTIAL_STORE_FACTORY.extensions) {
                 val store = factory.create() ?: continue
-                for ((k, v) in newDb) {
-                  store.setPassword(k, v)
-                }
+                copyTo(newDb, store)
                 return
               }
             }

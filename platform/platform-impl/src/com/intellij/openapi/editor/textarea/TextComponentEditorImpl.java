@@ -133,6 +133,12 @@ public class TextComponentEditorImpl extends UserDataHolderBase implements TextC
     return mySoftWrapModel;
   }
 
+  @NotNull
+  @Override
+  public InlayModel getInlayModel() {
+    return new TextComponentInlayModel();
+  }
+
   @Override
   @NotNull
   public EditorSettings getSettings() {

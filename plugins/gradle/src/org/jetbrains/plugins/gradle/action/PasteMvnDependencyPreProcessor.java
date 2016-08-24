@@ -95,7 +95,7 @@ public class PasteMvnDependencyPreProcessor implements CopyPastePreProcessor {
         scope += " ";
         break;
       default:
-        scope = "";
+        scope = "compile ";
     }
     return scope;
   }

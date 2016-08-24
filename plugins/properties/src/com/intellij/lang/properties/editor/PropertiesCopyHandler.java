@@ -138,7 +138,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
     if (!propertiesFileMapping.isEmpty()) {
       WriteCommandAction.runWriteCommandAction(project, () -> {
         if (!FileModificationService.getInstance().preparePsiElementsForWrite(ContainerUtil.map(propertiesFileMapping.values(),
-                                                                                                (Function<PropertiesFile, PsiElement>)file -> file.getContainingFile()))) return;
+                                                                                                (Function<PropertiesFile, PsiElement>)PropertiesFile::getContainingFile))) return;
         for (Map.Entry<IProperty, PropertiesFile> entry : propertiesFileMapping.entrySet()) {
           final String value = entry.getKey().getValue();
           final PropertiesFile target = entry.getValue();

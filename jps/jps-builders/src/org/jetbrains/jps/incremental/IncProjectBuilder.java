@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.Predicate;
 import com.intellij.util.io.MappingFailedException;
 import com.intellij.util.io.PersistentEnumerator;
 import gnu.trove.THashMap;
@@ -375,9 +376,8 @@ public class IncProjectBuilder {
     }
 
     try {
-      if (context.isProjectRebuild() || forceCleanCaches) {
-        cleanOutputRoots(context);
-      }
+      // clean roots for targets for which rebuild is forced
+      cleanOutputRoots(context, context.isProjectRebuild() || forceCleanCaches);
 
       context.processMessage(new ProgressMessage("Running 'before' tasks"));
       runTasks(context, myBuilderRegistry.getBeforeTasks());
@@ -451,8 +451,7 @@ public class IncProjectBuilder {
     return context;
   }
 
-  private void cleanOutputRoots(CompileContext context) throws ProjectBuildException {
-    // whole project is affected
+  private void cleanOutputRoots(CompileContext context, boolean cleanCaches) throws ProjectBuildException {
     final ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
     ProjectBuildException ex = null;
     try {
@@ -464,7 +463,7 @@ public class IncProjectBuilder {
       else {
         for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets()) {
           context.checkCanceled();
-          if (context.getScope().isAffected(target)) {
+          if (context.getScope().isBuildForced(target)) {
             clearOutputFilesUninterruptibly(context, target);
           }
         }
@@ -474,33 +473,35 @@ public class IncProjectBuilder {
       ex = e;
     }
     finally {
-      try {
-        projectDescriptor.timestamps.getStorage().clean();
-      }
-      catch (IOException e) {
-        if (ex == null) {
-          ex = new ProjectBuildException("Error cleaning timestamps storage", e);
-        }
-        else {
-          LOG.info("Error cleaning timestamps storage", e);
-        }
-      }
-      finally {
+      if (cleanCaches) {
         try {
-          projectDescriptor.dataManager.clean();
+          projectDescriptor.timestamps.getStorage().clean();
         }
         catch (IOException e) {
           if (ex == null) {
-            ex = new ProjectBuildException("Error cleaning compiler storages", e);
+            ex = new ProjectBuildException("Error cleaning timestamps storage", e);
           }
           else {
-            LOG.info("Error cleaning compiler storages", e);
+            LOG.info("Error cleaning timestamps storage", e);
           }
         }
         finally {
-          projectDescriptor.fsState.clearAll();
-          if (ex != null) {
-            throw ex;
+          try {
+            projectDescriptor.dataManager.clean();
+          }
+          catch (IOException e) {
+            if (ex == null) {
+              ex = new ProjectBuildException("Error cleaning compiler storages", e);
+            }
+            else {
+              LOG.info("Error cleaning compiler storages", e);
+            }
+          }
+          finally {
+            projectDescriptor.fsState.clearAll();
+            if (ex != null) {
+              throw ex;
+            }
           }
         }
       }
@@ -546,22 +547,44 @@ public class IncProjectBuilder {
     }
   }
 
+  private enum Applicability {
+    NONE, PARTIAL, ALL;
+
+    static <T> Applicability calculate(Predicate<T> p, Collection<T> collection) {
+      int count = 0;
+      int item = 0;
+      for (T elem : collection) {
+        item++;
+        if (p.apply(elem)) {
+          count++;
+          if (item > count) {
+            return PARTIAL;
+          }
+        }
+        else {
+          if (count > 0) {
+            return PARTIAL;
+          }
+        }
+      }
+      return count == 0? NONE : ALL;
+    }
+  }
+
   private void clearOutputs(CompileContext context) throws ProjectBuildException {
+    final long cleanStart = System.currentTimeMillis();
     final MultiMap<File, BuildTarget<?>> rootsToDelete = MultiMap.createSet();
     final Set<File> allSourceRoots = new HashSet<File>();
 
-    ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
-    List<? extends BuildTarget<?>> allTargets = projectDescriptor.getBuildTargetIndex().getAllTargets();
+    final ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
+    final List<? extends BuildTarget<?>> allTargets = projectDescriptor.getBuildTargetIndex().getAllTargets();
     for (BuildTarget<?> target : allTargets) {
-      if (context.getScope().isAffected(target)) {
-        final Collection<File> outputs = target.getOutputRoots(context);
-        for (File file : outputs) {
-          rootsToDelete.putValue(file, target);
-        }
+      for (File file : target.getOutputRoots(context)) {
+        rootsToDelete.putValue(file, target);
       }
     }
 
-    ModuleExcludeIndex moduleIndex = projectDescriptor.getModuleExcludeIndex();
+    final ModuleExcludeIndex moduleIndex = projectDescriptor.getModuleExcludeIndex();
     for (BuildTarget<?> target : allTargets) {
       for (BuildRootDescriptor descriptor : projectDescriptor.getBuildRootIndex().getTargetRoots(target, context)) {
         // excluding from checks roots with generated sources; because it is safe to delete generated stuff
@@ -577,12 +600,23 @@ public class IncProjectBuilder {
     }
 
     // check that output and source roots are not overlapping
+    final CompileScope compileScope = context.getScope();
     final List<File> filesToDelete = new ArrayList<File>();
+    final Predicate<BuildTarget<?>> forcedBuild = new Predicate<BuildTarget<?>>() {
+      public boolean apply(BuildTarget<?> input) {
+        return compileScope.isBuildForced(input);
+      }
+    };
     for (Map.Entry<File, Collection<BuildTarget<?>>> entry : rootsToDelete.entrySet()) {
       context.checkCanceled();
-      boolean okToDelete = true;
       final File outputRoot = entry.getKey();
-      if (!moduleIndex.isExcluded(outputRoot)) {
+      final Collection<BuildTarget<?>> rootTargets = entry.getValue();
+      final Applicability applicability = Applicability.calculate(forcedBuild, rootTargets);
+      if (applicability == Applicability.NONE) {
+        continue;
+      }
+      boolean okToDelete = applicability == Applicability.ALL;
+      if (okToDelete && !moduleIndex.isExcluded(outputRoot)) {
         // if output root itself is directly or indirectly excluded, 
         // there cannot be any manageable sources under it, even if the output root is located under some source root
         // so in this case it is safe to delete such root
@@ -614,34 +648,38 @@ public class IncProjectBuilder {
             filesToDelete.add(outputRoot);
           }
         }
-        registerTargetsWithClearedOutput(context, entry.getValue());
+        registerTargetsWithClearedOutput(context, rootTargets);
       }
       else {
-        context.processMessage(new CompilerMessage(
-          "", BuildMessage.Kind.WARNING, "Output path " + outputRoot.getPath() + " intersects with a source root. Only files that were created by build will be cleaned.")
-        );
+        if (applicability == Applicability.ALL) {
+          // only warn if unable to delete because of roots intersection
+          context.processMessage(new CompilerMessage(
+            "", BuildMessage.Kind.WARNING, "Output path " + outputRoot.getPath() + " intersects with a source root. Only files that were created by build will be cleaned.")
+          );
+        }
+        context.processMessage(new ProgressMessage("Cleaning output directories..."));
         // clean only those files we are aware of
-        for (BuildTarget<?> target : entry.getValue()) {
-          clearOutputFilesUninterruptibly(context, target);
+        for (BuildTarget<?> target : rootTargets) {
+          if (compileScope.isBuildForced(target)) {
+            clearOutputFilesUninterruptibly(context, target);
+          }
         }
       }
     }
 
-    context.processMessage(new ProgressMessage("Cleaning output directories..."));
-
-    final long cleanStart = System.currentTimeMillis();
-
-    if (SYNC_DELETE) {
-      for (File file : filesToDelete) {
-        context.checkCanceled();
-        FileUtil.delete(file);
+    if (!filesToDelete.isEmpty()) {
+      context.processMessage(new ProgressMessage("Cleaning output directories..."));
+      if (SYNC_DELETE) {
+        for (File file : filesToDelete) {
+          context.checkCanceled();
+          FileUtil.delete(file);
+        }
+      }
+      else {
+        myAsyncTasks.add(FileUtil.asyncDelete(filesToDelete));
       }
     }
-    else {
-      myAsyncTasks.add(FileUtil.asyncDelete(filesToDelete));
-    }
-
-    LOG.info("Cleaned output directories in " + (System.currentTimeMillis() - cleanStart));
+    LOG.info("Cleaned output directories in " + (System.currentTimeMillis() - cleanStart) + " ms");
   }
 
   private static void clearOutputFilesUninterruptibly(CompileContext context, BuildTarget<?> target) {
@@ -745,7 +783,7 @@ public class IncProjectBuilder {
   }
 
   private class BuildParallelizer {
-    private final BoundedTaskExecutor myParallelBuildExecutor = new BoundedTaskExecutor(SharedThreadPool.getInstance(), MAX_BUILDER_THREADS);
+    private final BoundedTaskExecutor myParallelBuildExecutor = new BoundedTaskExecutor("IncProjectBuilder executor pool", SharedThreadPool.getInstance(), MAX_BUILDER_THREADS);
     private final CompileContext myContext;
     private final AtomicReference<Throwable> myException = new AtomicReference<Throwable>();
     private final Object myQueueLock = new Object();

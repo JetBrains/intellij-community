@@ -47,7 +47,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardStep {
   private static final int COLS = 3;
-  private static final ExecutorService ourService = AppExecutorUtil.createBoundedApplicationPoolExecutor(4);
+  private static final ExecutorService ourService = AppExecutorUtil.createBoundedApplicationPoolExecutor("CustomizeFeaturedPluginsStepPanel pool",4);
 
   public final AtomicBoolean myCanceled = new AtomicBoolean(false);
   private final PluginGroups myPluginGroups;

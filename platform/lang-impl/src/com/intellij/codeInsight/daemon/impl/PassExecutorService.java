@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -492,10 +492,15 @@ class PassExecutorService implements Disposable {
         log(updateProgress, pass, " is canceled during apply, sorry");
         return;
       }
+      Document document = pass.getDocument();
       try {
         if (fileEditor.getComponent().isDisplayable() || ApplicationManager.getApplication().isUnitTestMode()) {
-          log(updateProgress, pass, " Applied");
           pass.applyInformationToEditor();
+          FileStatusMap fileStatusMap = DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap();
+          if (document != null) {
+            fileStatusMap.markFileUpToDate(document, pass.getId());
+          }
+          log(updateProgress, pass, " Applied");
         }
       }
       catch (ProcessCanceledException e) {
@@ -503,7 +508,6 @@ class PassExecutorService implements Disposable {
         throw e;
       }
       catch (RuntimeException e) {
-        Document document = pass.getDocument();
         VirtualFile file = document == null ? null : FileDocumentManager.getInstance().getFile(document);
         FileType fileType = file == null ? null : file.getFileType();
         String message = "Exception while applying information to " + fileEditor + "("+fileType+")";

@@ -133,11 +133,14 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
       if (commentAboveProperty != null) {
         rawText.append(commentAboveProperty).append("\n");
       }
-      final String propertyText =
-        PropertiesElementFactory.getPropertyText(property.getKey(), value != null ? value : "", delimiter, null, false);
-      rawText.append(propertyText);
-      if (i != properties.size() - 1) {
-        rawText.append("\n");
+      final String key = property.getKey();
+      final String propertyText;
+      if (key != null) {
+        propertyText = PropertiesElementFactory.getPropertyText(key, value != null ? value : "", delimiter, null, false);
+        rawText.append(propertyText);
+        if (i != properties.size() - 1) {
+          rawText.append("\n");
+        }
       }
     }
 
