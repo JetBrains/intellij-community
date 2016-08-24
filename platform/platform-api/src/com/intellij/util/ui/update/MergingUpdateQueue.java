@@ -39,7 +39,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * Use this class to postpone tasks execution and optionally merge identical tasks. This is needed e.g. to reflect in UI status of some
+ * Use this class to postpone task execution and optionally merge identical tasks. This is needed e.g. to reflect in UI status of some
  * background activity: it doesn't make sense and would be inefficient to update UI 1000 times per second, so it's better to postpone 'update UI'
  * task execution for e.g. 500ms and if new updates are added during this period they can be simply ignored.
  *
@@ -107,7 +107,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   /**
    * @param name                   name of this queue, used only for debugging purposes
    * @param mergingTimeSpan        time (in milliseconds) for which execution of tasks will be postponed
-   * @param isActive               if {@code true} the queue will execute tasks otherwise it'll just collect the
+   * @param isActive               if {@code true} the queue will execute tasks otherwise it'll just collect them and execute only after {@link #activate()} is called
    * @param modalityStateComponent makes sense only if {@code thread} is {@linkplain Alarm.ThreadToUse#SWING_THREAD SWING_THREAD}, in that
    *                               case the tasks will be processed in {@link ModalityState} corresponding the given component
    * @param parent                 if not {@code null} the queue will be disposed when the given parent is disposed
