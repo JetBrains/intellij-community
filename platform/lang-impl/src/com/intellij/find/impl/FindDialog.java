@@ -369,14 +369,16 @@ public class FindDialog extends DialogWrapper {
         }
       );
 
-      new AnAction() {
+      AnAction action = new AnAction() {
         @Override
         public void actionPerformed(AnActionEvent e) {
           if (isResultsPreviewTabActive()) {
             navigateToSelectedUsage(myResultsPreviewTable);
           }
         }
-      }.registerCustomShortcutSet(CommonShortcuts.getEditSource(), comboBox, myDisposable);
+      };
+      action.registerCustomShortcutSet(CommonShortcuts.getEditSource(), comboBox, myDisposable);
+      action.registerCustomShortcutSet(CommonShortcuts.ENTER, comboBox, myDisposable);
     }
   }
 
@@ -663,9 +665,12 @@ public class FindDialog extends DialogWrapper {
             if (index != -1) {
               UsageInfo usageInfo = ((UsageInfo2UsageAdapter)myResultsPreviewTable.getModel().getValueAt(index, 0)).getUsageInfo();
               myUsagePreviewPanel.updateLayout(Collections.singletonList(usageInfo));
+              VirtualFile file = usageInfo.getVirtualFile();
+              myUsagePreviewPanel.setBorder(IdeBorderFactory.createTitledBorder(file != null ? file.getPath() : "", false));
             }
             else {
               myUsagePreviewPanel.updateLayout(null);
+              myUsagePreviewPanel.setBorder(IdeBorderFactory.createBorder());
             }
           }
         });
