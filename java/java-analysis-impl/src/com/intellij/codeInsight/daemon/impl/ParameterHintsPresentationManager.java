@@ -174,13 +174,13 @@ public class ParameterHintsPresentationManager implements Disposable {
           g.setColor(ColorUtil.darker(backgroundColor, 1));
           g.fillRoundRect(r.x + 2, r.y + r.height - shadeRectHeight - 1, r.width - 4, shadeRectHeight, 4, 4);
           g.setColor(backgroundColor);
-          g.fillRoundRect(r.x + 2, r.y + 2, r.width - 4, r.height - 4, 4, 4);
+          g.fillRoundRect(r.x + 2, r.y + 1, r.width - 4, r.height - 3, 4, 4);
           g.setColor(attributes.getForegroundColor());
           g.setFont(getFont(editor));
           FontMetrics metrics = g.getFontMetrics();
           Shape savedClip = g.getClip();
-          g.clipRect(r.x + 3, r.y + 2, r.width - 6, r.height - 4);
-          g.drawString(myText, r.x + 7, r.y + (r.height + metrics.getAscent() - metrics.getDescent()) / 2);
+          g.clipRect(r.x + 3, r.y + 1, r.width - 6, r.height - 3);
+          g.drawString(myText, r.x + 7, r.y + (r.height + metrics.getAscent() - metrics.getDescent()) / 2 - 1);
           g.setClip(savedClip);
           config.restore();
         }
