@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 /**
- *  @author dsl, ven
+ * @author dsl, ven
  */
 public class DFSTBuilder<Node> {
   private final Graph<Node> myGraph;
@@ -42,6 +42,7 @@ public class DFSTBuilder<Node> {
   private final Node[] myInvT; // number in (enumerate all nodes scc by scc) order -> node
   private final Node[] myAllNodes;
 
+  @SuppressWarnings("unchecked")
   public DFSTBuilder(@NotNull Graph<Node> graph) {
     myAllNodes = (Node[])graph.getNodes().toArray();
     myGraph = graph;
@@ -52,17 +53,13 @@ public class DFSTBuilder<Node> {
     new Tarjan().build();
   }
 
-  @Deprecated
-  public void buildDFST() {
-  }
-
   /**
-   * Tarjan strong-connect-components search algorithm.
-   * See e.g. <a href="https://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm">https://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm</a><br>
-   * This implementation differs from the canonical one above by<br>
+   * Tarjan's strongly connected components search algorithm
+   * (<a href="https://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm">Wikipedia article</a>).<br>
+   * This implementation differs from the canonical one above by:<br>
    * <ul>
-   *   <li>- being not recursive</li>
-   *   <li>- computing also topological order during the same single pass</li>
+   *   <li>being non-recursive</li>
+   *   <li>also computing a topological order during the same single pass</li>
    * </ul>
    */
   private class Tarjan {
@@ -91,11 +88,10 @@ public class DFSTBuilder<Node> {
 
       @Override
       public String toString() {
-        final StringBuilder o = new StringBuilder();
-        for (int id : out) {
-          o.append(myAllNodes[id] + ", ");
-        }
-        return myAllNodes[nodeI] + " -> [" + o + "]";
+        StringBuilder o = new StringBuilder();
+        o.append(myAllNodes[nodeI]).append(" -> [");
+        for (int id : out) o.append(myAllNodes[id]).append(", ");
+        return o.append(']').toString();
       }
     }
 
@@ -149,7 +145,7 @@ public class DFSTBuilder<Node> {
         myNodeToNNumber.put(node, index.length - 1 - i);
         myInvN[index.length - 1 - i] = node;
       }
-      mySCCs.reverse(); // have to place sccs in topological order too
+      mySCCs.reverse(); // have to place SCCs in topological order too
     }
 
     private void strongConnect(@NotNull List<List<Node>> sccs) {
@@ -174,7 +170,7 @@ public class DFSTBuilder<Node> {
         successor = i;
 
         // if unexplored children left, dfs there
-        while (pair.nextUnexploredIndex<pair.out.length) {
+        while (pair.nextUnexploredIndex < pair.out.length) {
           int nextI = pair.out[pair.nextUnexploredIndex++];
           if (index[nextI] == -1) {
             frames.push(new Frame(nextI));
@@ -247,6 +243,79 @@ public class DFSTBuilder<Node> {
   @NotNull
   public TIntArrayList getSCCs() {
     return mySCCs;
+  }
+
+  @NotNull
+  public Collection<Collection<Node>> getComponents() {
+    final TIntArrayList componentSizes = getSCCs();
+    if (componentSizes.isEmpty()) return Collections.emptyList();
+
+    return new MyCollection<Collection<Node>>(componentSizes.size()) {
+      @Override
+      public Iterator<Collection<Node>> iterator() {
+        return new MyIterator<Collection<Node>>(componentSizes.size()) {
+          private int offset = 0;
+
+          @Override
+          protected Collection<Node> get(int i) {
+            final int cSize = componentSizes.get(i), cOffset = offset;
+            if (cSize == 0) return Collections.emptyList();
+            offset += cSize;
+            return new MyCollection<Node>(cSize) {
+              @Override
+              public Iterator<Node> iterator() {
+                return new MyIterator<Node>(cSize) {
+                  @Override
+                  public Node get(int i) {
+                    return getNodeByTNumber(cOffset + i);
+                  }
+                };
+              }
+            };
+          }
+        };
+      }
+    };
+  }
+
+  private static abstract class MyCollection<T> extends AbstractCollection<T> {
+    private final int size;
+
+    protected MyCollection(int size) {
+      this.size = size;
+    }
+
+    @Override
+    public int size() {
+      return size;
+    }
+  }
+
+  private static abstract class MyIterator<T> implements Iterator<T> {
+    private final int size;
+    private int i = 0;
+
+    protected MyIterator(int size) {
+      this.size = size;
+    }
+
+    @Override
+    public boolean hasNext() {
+      return i < size;
+    }
+
+    @Override
+    public T next() {
+      if (i == size) throw new NoSuchElementException();
+      return get(i++);
+    }
+
+    protected abstract T get(int i);
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException();
+    }
   }
 
   @NotNull

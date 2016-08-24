@@ -45,7 +45,6 @@ import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.util.xmlb.XmlSerializationException;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import gnu.trove.TIntProcedure;
 import gnu.trove.TObjectIntHashMap;
 import org.jdom.Document;
 import org.jetbrains.annotations.NotNull;
@@ -529,28 +528,17 @@ public class PluginManagerCore {
     final Graph<PluginId> graph = createPluginIdGraph(idToDescriptorMap);
     final DFSTBuilder<PluginId> builder = new DFSTBuilder<PluginId>(graph);
     if (!builder.isAcyclic()) {
-      final List<String> cycles = new ArrayList<String>();
-      builder.getSCCs().forEach(new TIntProcedure() {
-        private int myTNumber;
-        @Override
-        public boolean execute(int size) {
-          if (size > 1) {
-            String cycle = "";
-            for (int j = 0; j < size; j++) {
-              PluginId id = builder.getNodeByTNumber(myTNumber + j);
-              idToDescriptorMap.get(id).setEnabled(false);
-              cycle += id.getIdString() + " ";
-            }
-            cycles.add(cycle);
-          }
-          myTNumber += size;
-          return true;
-        }
-      });
-
       final String cyclePresentation;
       if (ApplicationManager.getApplication().isInternal()) {
-        cyclePresentation = StringUtil.join(cycles, ";");
+        final StringBuilder cycles = new StringBuilder();
+        for (Collection<PluginId> component : builder.getComponents()) {
+          if (cycles.length() > 0) cycles.append(';');
+          for (PluginId id : component) {
+            idToDescriptorMap.get(id).setEnabled(false);
+            cycles.append(id.getIdString()).append(' ');
+          }
+        }
+        cyclePresentation = cycles.toString();
       }
       else {
         final Couple<PluginId> circularDependency = builder.getCircularDependency();

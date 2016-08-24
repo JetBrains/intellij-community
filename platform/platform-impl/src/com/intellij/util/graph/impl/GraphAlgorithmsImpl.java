@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,6 @@ package com.intellij.util.graph.impl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.Chunk;
 import com.intellij.util.graph.*;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -69,32 +67,27 @@ public class GraphAlgorithmsImpl extends GraphAlgorithms {
   @Override
   public <Node> Graph<Chunk<Node>> computeSCCGraph(@NotNull final Graph<Node> graph) {
     final DFSTBuilder<Node> builder = new DFSTBuilder<>(graph);
-    final TIntArrayList sccs = builder.getSCCs();
 
-    final List<Chunk<Node>> chunks = new ArrayList<>(sccs.size());
+    final Collection<Collection<Node>> components = builder.getComponents();
+    final List<Chunk<Node>> chunks = new ArrayList<>(components.size());
     final Map<Node, Chunk<Node>> nodeToChunkMap = new LinkedHashMap<>();
-    sccs.forEach(new TIntProcedure() {
-      int myTNumber = 0;
-      public boolean execute(int size) {
-        final Set<Node> chunkNodes = new LinkedHashSet<>();
-        final Chunk<Node> chunk = new Chunk<>(chunkNodes);
-        chunks.add(chunk);
-        for (int j = 0; j < size; j++) {
-          final Node node = builder.getNodeByTNumber(myTNumber + j);
-          chunkNodes.add(node);
-          nodeToChunkMap.put(node, chunk);
-        }
-
-        myTNumber += size;
-        return true;
+    for (Collection<Node> component : components) {
+      final Set<Node> chunkNodes = new LinkedHashSet<>();
+      final Chunk<Node> chunk = new Chunk<>(chunkNodes);
+      chunks.add(chunk);
+      for (Node node : component) {
+        chunkNodes.add(node);
+        nodeToChunkMap.put(node, chunk);
       }
-    });
+    }
 
     return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<Chunk<Node>>() {
+      @Override
       public Collection<Chunk<Node>> getNodes() {
         return chunks;
       }
 
+      @Override
       public Iterator<Chunk<Node>> getIn(Chunk<Node> chunk) {
         final Set<Node> chunkNodes = chunk.getNodes();
         final Set<Chunk<Node>> ins = new LinkedHashSet<>();
