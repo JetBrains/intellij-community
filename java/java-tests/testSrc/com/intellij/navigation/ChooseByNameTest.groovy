@@ -34,7 +34,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import javax.swing.*
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
-
 /**
  * @author peter
  */
@@ -317,6 +316,17 @@ class Intf {
 
     def variants = getPopupElements(new GotoSymbolModel2(project), 'foo', false)
     runInEdtAndWait { assert variants == [file1.scriptClass, file2.scriptClass] }
+  }
+
+  public void "test prefer case-insensitive exact prefix match"() {
+    def wanted = myFixture.addClass('class XFile {}')
+    def smth1 = myFixture.addClass('class xfilterExprOwner {}')
+    def smth2 = myFixture.addClass('class xfile_baton_t {}')
+    def popup = createPopup(new GotoClassModel2(project))
+    def popupElements = calcPopupElements(popup, 'xfile', false)
+
+    assert popupElements == [wanted, smth2, smth1]
+    assert popup.calcSelectedIndex(popupElements.toArray(), 'xfile') == 0
   }
 
   private List<Object> getPopupElements(ChooseByNameModel model, String text, boolean checkboxState = false) {
