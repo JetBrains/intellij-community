@@ -18,9 +18,6 @@ package com.intellij.credentialStore
 import com.intellij.ide.ApplicationLoadListener
 import com.intellij.ide.passwordSafe.impl.providers.ByteArrayWrapper
 import com.intellij.ide.passwordSafe.impl.providers.EncryptionUtil
-import com.intellij.ide.passwordSafe.impl.providers.masterKey.EnterPasswordComponent
-import com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterPasswordDialog
-import com.intellij.ide.passwordSafe.impl.providers.masterKey.PasswordDatabase
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.windows.WindowsCryptUtils
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
@@ -53,7 +50,7 @@ internal fun checkPassAndConvertOldDb(password: String, @Suppress("DEPRECATION")
   }
 }
 
-fun convertOldDb(@Suppress("DEPRECATION") db: PasswordDatabase): Map<String, String>? {
+internal fun convertOldDb(@Suppress("DEPRECATION") db: PasswordDatabase): Map<String, String>? {
   if (db.myDatabase.size <= 1) {
     return null
   }

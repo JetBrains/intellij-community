@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.passwordSafe.impl.providers.masterKey;
+package com.intellij.credentialStore;
 
+import com.intellij.credentialStore.macOs.MacOsKeychainLibraryKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.SystemInfo;
@@ -25,7 +26,7 @@ import java.util.function.Function;
 /**
  * @author gregsh
  */
-public class EnterPasswordComponent extends PasswordComponentBase {
+class EnterPasswordComponent extends PasswordComponentBase {
   @NotNull
   private final Function<String, Boolean> myPasswordConsumer;
 
@@ -33,7 +34,7 @@ public class EnterPasswordComponent extends PasswordComponentBase {
     myPasswordConsumer = passwordConsumer;
 
     String note;
-    if (SystemInfo.isMacIntel64 && SystemInfo.isMacOSLeopard) {
+    if (MacOsKeychainLibraryKt.isMacOsCredentialStoreSupported()) {
       note = "The passwords will be stored in the system MacOS keychain.";
     }
     else if (SystemInfo.isLinux) {
@@ -43,7 +44,7 @@ public class EnterPasswordComponent extends PasswordComponentBase {
       note = "The passwords will be stored in the KeePass database protected by your Windows account.";
     }
     else {
-      String subNote = SystemInfo.isMacIntel64 ? "at least OS X 10.5 is required" : "your OS is not supported, please file issue";
+      String subNote = SystemInfo.isMacIntel64 ? "at least OS X 10.5 is required<br>to store in the system MacOS keychain" : "your OS is not supported, please file issue";
       note = "The passwords will be stored in IDE configuration files with weak protection (" + subNote + ").";
     }
 
