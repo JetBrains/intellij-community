@@ -217,10 +217,11 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       if (!super.applyFix(refElements)) return false;
       final PsiElement[] psiElements = Arrays
         .stream(refElements)
-        .filter(RefElement.class::isInstance)
+        .filter((obj) -> obj instanceof RefJavaElement && getFilter().accepts((RefJavaElement)obj))
         .map(e -> ((RefElement) e).getElement())
         .filter(e -> e != null)
         .toArray(PsiElement[]::new);
+      if (psiElements.length == 0) return false;
       ApplicationManager.getApplication().invokeLater(() -> {
         final Project project = getContext().getProject();
         if (isDisposed() || project.isDisposed()) return;
