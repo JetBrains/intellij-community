@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-public class JavaCoreProjectEnvironment  extends  CoreProjectEnvironment {
+/**
+ * Used in Kotlin.
+ */
+@SuppressWarnings("unused")
+public class JavaCoreProjectEnvironment extends CoreProjectEnvironment {
   private final JavaFileManager myFileManager;
   private final PackageIndex myPackageIndex;
 
@@ -72,8 +76,7 @@ public class JavaCoreProjectEnvironment  extends  CoreProjectEnvironment {
     return new CorePackageIndex();
   }
 
-  @SuppressWarnings("UnusedDeclaration")
-  public void addJarToClassPath (File path) {
+  public void addJarToClassPath(File path) {
     assert path.isFile();
 
     final VirtualFile root = getEnvironment().getJarFileSystem().findFileByPath(path + "!/");
