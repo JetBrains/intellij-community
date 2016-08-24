@@ -165,6 +165,17 @@ public class JavaRegExpHost implements RegExpLanguageHost {
   }
 
   @Override
+  public boolean isValidGroupName(String name, @NotNull PsiElement context) {
+    for (int i = 0, length = name.length(); i < length; i++) {
+      int c = name.codePointAt(i);
+      if (!(c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9')) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
   public boolean supportsExtendedHexCharacter(RegExpChar regExpChar) {
     return hasAtLeastJdkVersion(regExpChar, JavaSdkVersion.JDK_1_7);
   }

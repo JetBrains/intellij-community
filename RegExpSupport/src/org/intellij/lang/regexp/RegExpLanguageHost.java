@@ -32,6 +32,16 @@ public interface RegExpLanguageHost {
   boolean supportsNamedGroupRefSyntax(RegExpNamedGroupRef ref);
   boolean supportsExtendedHexCharacter(RegExpChar regExpChar);
 
+  default boolean isValidGroupName(String name, @NotNull PsiElement context) {
+    for (int i = 0, length = name.length(); i < length; i++) {
+      int c = name.codePointAt(i);
+      if (!(c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9' || c == '_')) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   default boolean supportsSimpleClass(RegExpSimpleClass simpleClass) {
     return true;
   }

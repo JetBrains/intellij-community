@@ -22,6 +22,7 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import org.intellij.lang.regexp.psi.*;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -48,6 +49,7 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     myHost = host;
   }
 
+  @Contract("null -> null")
   @Nullable
   private static RegExpLanguageHost findRegExpHost(@Nullable final PsiElement element) {
     if (ApplicationManager.getApplication().isUnitTestMode() && myHost != null) {
@@ -113,6 +115,11 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
       // supportsNamedGroupRefSyntax() not present
       return false;
     }
+  }
+
+  public boolean isValidGroupName(String name, @Nullable final PsiElement context) {
+    final RegExpLanguageHost host = findRegExpHost(context);
+    return host != null && host.isValidGroupName(name, context);
   }
 
   public boolean supportsPerl5EmbeddedComments(@Nullable final PsiComment comment) {
