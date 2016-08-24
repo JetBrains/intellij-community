@@ -9,12 +9,20 @@ import java.util.stream.Collectors;
 public class IdBasedTracking extends InstanceTrackingStrategy {
   private long myLastId = -1;
   public IdBasedTracking(@NotNull List<ObjectReference> initialInstances) {
-    myLastId = initialInstances.stream().map(ObjectReference::uniqueID).max(Long::compare).orElse(-1L);
+    myLastId = getMaxId(initialInstances);
   }
 
   @NotNull
   @Override
   protected List<ObjectReference> updateImpl(@NotNull List<ObjectReference> references) {
-    return references.stream().filter(reference -> reference.uniqueID() > myLastId).collect(Collectors.toList());
+    List<ObjectReference> result = references.stream()
+        .filter(reference -> reference.uniqueID() > myLastId)
+        .collect(Collectors.toList());
+    myLastId = Math.max(myLastId, getMaxId(result));
+    return result;
+  }
+
+  private long getMaxId(@NotNull List<ObjectReference> references) {
+    return references.stream().map(ObjectReference::uniqueID).max(Long::compare).orElse(-1L);
   }
 }
