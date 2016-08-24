@@ -38,7 +38,6 @@ public abstract class PasswordComponentBase {
     myIconLabel.setText("");
     myIconLabel.setIcon(AllIcons.General.PasswordLock);
     myIconLabel.setDisabledIcon(AllIcons.General.PasswordLock);
-    //myPromptLabel.setUI(new MultiLineLabelUI());
     myPromptLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
   }
 
