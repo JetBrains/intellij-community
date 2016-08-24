@@ -46,6 +46,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Functions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
@@ -552,18 +553,15 @@ class PassExecutorService implements Disposable {
 
   static void log(ProgressIndicator progressIndicator, TextEditorHighlightingPass pass, @NonNls @NotNull Object... info) {
     if (LOG.isDebugEnabled()) {
-      CharSequence docText = pass == null ? "" : StringUtil.first(pass.getDocument().getCharsSequence(), 10, true);
+      CharSequence docText = pass == null ? "" : ": '" + StringUtil.first(pass.getDocument().getCharsSequence(), 10, true)+ "'";
       synchronized (PassExecutorService.class) {
-        StringBuilder s = new StringBuilder();
-        for (Object o : info) {
-          s.append(o).append(" ");
-        }
+        String infos = StringUtil.join(info, Functions.TO_STRING(), " ");
         String message = StringUtil.repeatSymbol(' ', getThreadNum() * 4)
                          + " " + pass + " "
-                         + s
+                         + infos
                          + "; progress=" + (progressIndicator == null ? null : progressIndicator.hashCode())
                          + " " + (progressIndicator == null ? "?" : progressIndicator.isCanceled() ? "X" : "V")
-                         + " : '" + docText + "'";
+                         + docText;
         LOG.debug(message);
         //System.out.println(message);
       }
