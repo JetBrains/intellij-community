@@ -1627,6 +1627,7 @@
     <debugger.syntheticProvider implementation="com.intellij.debugger.engine.DefaultSyntheticProvider"/>
     <debugger.sourcePositionProvider implementation="com.intellij.debugger.engine.DefaultSourcePositionProvider" order="last"/>
     <debugger.sourcePositionHighlighter implementation="com.intellij.debugger.engine.JavaSourcePositionHighlighter"/>
+    <indexedRootsProvider implementation="com.intellij.debugger.impl.AlternativeJreIndexHelper"/>
 
     <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.ColorObjectRenderer"/>
     <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.ImageObjectRenderer"/>

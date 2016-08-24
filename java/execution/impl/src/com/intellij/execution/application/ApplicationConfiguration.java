@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule>
-  implements CommonJavaRunConfigurationParameters, SingleClassConfiguration, RefactoringListenerProvider {
+  implements CommonJavaRunConfigurationParameters, SingleClassConfiguration, RefactoringListenerProvider, ConfigurationWithAlternativeJre {
 
   public String MAIN_CLASS_NAME;
   public String VM_PARAMETERS;
