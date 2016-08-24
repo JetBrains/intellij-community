@@ -869,6 +869,7 @@ binding.setVariable("signExecutableFiles", { String binDir ->
   getChildren(fileBinDir).each {
     fileName = it.getName()
     if (fileName.endsWith(".exe")) {
+      projectBuilder.stage("Signing: $fileName")
       executeExternalAnt(["dirName": binDir, "fileName": fileName], "$home/build/signBuild.xml")
     }
   }
