@@ -119,13 +119,14 @@ public class CCCreateCourseArchive extends DumbAwareAction {
           for (Task task : lesson.getTaskList()) {
             final VirtualFile taskDir = lessonDir.findChild(EduNames.TASK + String.valueOf(task.getIndex()));
             if (taskDir == null) continue;
+            taskDir.refresh(false, true);
             VirtualFile studentFileDir = VfsUtil.findRelativeFile(archiveFolder, lessonDir.getName(), taskDir.getName());
             if (studentFileDir == null) {
               continue;
             }
             for (TaskFile taskFile : task.getTaskFiles().values()) {
-              VirtualFile answerFile = taskDir.findChild(taskFile.name);
-              if (answerFile == null) {
+              VirtualFile answerFile = taskDir.findFileByRelativePath(taskFile.name);
+              if (answerFile == null || answerFile.isDirectory()) {
                 continue;
               }
               EduUtils.createStudentFile(this, project, answerFile, -1, studentFileDir, task);

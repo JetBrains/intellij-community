@@ -23,8 +23,13 @@ public class CCHideFromStudent extends CCTaskFileActionBase {
     if (taskFile == null) {
       return;
     }
-    String name = file.getName();
-    VirtualFile patternFile = StudyUtils.getPatternFile(taskFile, name);
+    final VirtualFile taskDir = StudyUtils.getTaskDir(file);
+    if (taskDir == null) {
+      return;
+    }
+
+    final String relativePath = StudyUtils.getRelativePath(taskDir, file);
+    VirtualFile patternFile = StudyUtils.getPatternFile(taskFile, relativePath);
     ApplicationManager.getApplication().runWriteAction(() -> {
       if (patternFile != null) {
         try {
@@ -35,7 +40,7 @@ public class CCHideFromStudent extends CCTaskFileActionBase {
         }
       }
     });
-    taskFiles.remove(name);
+    taskFiles.remove(relativePath);
   }
 
   @Override

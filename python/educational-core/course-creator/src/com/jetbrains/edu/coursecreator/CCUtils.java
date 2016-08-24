@@ -205,7 +205,25 @@ public class CCUtils {
       }
     }
     try {
-      File toFile = new File(taskResourceFile, createdFile.getName());
+      final VirtualFile taskDir = StudyUtils.getTaskDir(createdFile);
+      if (taskDir == null) {
+        return;
+      }
+
+      String relativePath = StudyUtils.getRelativePath(taskDir, createdFile);
+      File toFile = taskResourceFile;
+      while (relativePath.contains("/")) {
+        final int ind = relativePath.indexOf("/");
+        final String dirName = relativePath.substring(0, ind);
+        toFile = new File(toFile, dirName);
+        relativePath = relativePath.substring(ind + 1);
+      }
+
+      if (!toFile.mkdirs()) {
+        LOG.warn("Dirs weren't created");
+      }
+
+      toFile = new File(toFile, createdFile.getName());
       FileUtil.copy(new File(createdFile.getPath()), toFile);
     }
     catch (IOException e) {

@@ -54,7 +54,6 @@ public class CCProjectComponent extends AbstractProjectComponent {
       transformFiles(oldCourse, myProject);
     }
   }
-
   private static void transformFiles(Course course, Project project) {
     List<VirtualFile> files = getAllAnswerTaskFiles(course, project);
     for (VirtualFile answerFile : files) {

@@ -135,8 +135,35 @@ public class EduUtils {
                                                               int stepIndex,
                                                               VirtualFile parentDir,
                                                               @Nullable Task task) {
+    final VirtualFile taskDir = StudyUtils.getTaskDir(answerFile);
+    if (taskDir == null) {
+      return null;
+    }
+    final String relativePath = StudyUtils.getRelativePath(taskDir, answerFile);
+    final VirtualFile[] realParentDir = {parentDir};
 
-    VirtualFile studentFile = copyFile(requestor, parentDir, answerFile);
+    String path = relativePath;
+    while (path.contains("/")) {
+      final int ind = path.indexOf("/");
+      final String createdDirName = path.substring(0, ind);
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        try {
+          final VirtualFile file = realParentDir[0].findChild(createdDirName);
+          if (file == null) {
+            realParentDir[0] = realParentDir[0].createChildDirectory(requestor, createdDirName);
+          } else {
+            realParentDir[0] = file;
+          }
+        }
+        catch (IOException e) {
+          LOG.warn(e.getMessage());
+        }
+      });
+
+      path = path.substring(ind + 1);
+    }
+
+    VirtualFile studentFile = copyFile(requestor, realParentDir[0], answerFile);
     if (studentFile == null) {
       return null;
     }
@@ -151,7 +178,7 @@ public class EduUtils {
       }
       task = task.copy();
     }
-    Map<Integer, TaskFile> taskFileSteps = getTaskFileSteps(task, answerFile.getName());
+    Map<Integer, TaskFile> taskFileSteps = getTaskFileSteps(task, relativePath);
     TaskFile initialTaskFile = taskFileSteps.get(-1);
     if (initialTaskFile == null) {
       return null;

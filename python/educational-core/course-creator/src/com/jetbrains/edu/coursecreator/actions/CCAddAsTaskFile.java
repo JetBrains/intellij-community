@@ -10,8 +10,13 @@ import com.jetbrains.edu.learning.courseFormat.Task;
 public class CCAddAsTaskFile extends CCTaskFileActionBase {
 
   protected void performAction(VirtualFile file, Task task, Course course, Project project) {
-    task.addTaskFile(file.getName(), task.getTaskFiles().size());
-    CCUtils.createResourceFile(file, course, StudyUtils.getTaskDir(file));
+    final VirtualFile taskDir = StudyUtils.getTaskDir(file);
+
+    if (taskDir != null) {
+      task.addTaskFile(StudyUtils.getRelativePath(taskDir, file), task.getTaskFiles().size());
+    }
+
+    CCUtils.createResourceFile(file, course, taskDir);
   }
 
   protected boolean isAvailable(Project project, VirtualFile file) {

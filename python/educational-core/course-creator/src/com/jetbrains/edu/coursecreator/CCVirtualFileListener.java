@@ -45,11 +45,13 @@ public class CCVirtualFileListener extends VirtualFileAdapter {
         || StudyUtils.isTaskDescriptionFile(name)
         || name.contains(EduNames.WINDOW_POSTFIX)
         || name.contains(EduNames.WINDOWS_POSTFIX)
-        || name.contains(EduNames.ANSWERS_POSTFIX)) {
+        || name.contains(EduNames.ANSWERS_POSTFIX)
+        || createdFile.isDirectory()
+      ) {
       return;
     }
 
-    VirtualFile taskVF = createdFile.getParent();
+    final VirtualFile taskVF = StudyUtils.getTaskDir(createdFile);
     if (taskVF == null) {
       return;
     }
@@ -60,7 +62,7 @@ public class CCVirtualFileListener extends VirtualFileAdapter {
 
     CCUtils.createResourceFile(createdFile, course, taskVF);
 
-    task.addTaskFile(name, 1);
+    task.addTaskFile(StudyUtils.getRelativePath(taskVF, createdFile), 1);
   }
 
   @Override
@@ -124,7 +126,12 @@ public class CCVirtualFileListener extends VirtualFileAdapter {
     if (task == null) {
       return;
     }
+    final VirtualFile taskDir = StudyUtils.getTaskDir(removedTaskFile);
+    if (taskDir == null) {
+      return;
+    }
+
     //TODO: remove from steps as well
-    task.getTaskFiles().remove(removedTaskFile.getName());
+    task.getTaskFiles().remove(StudyUtils.getRelativePath(taskDir, removedTaskFile));
   }
 }
