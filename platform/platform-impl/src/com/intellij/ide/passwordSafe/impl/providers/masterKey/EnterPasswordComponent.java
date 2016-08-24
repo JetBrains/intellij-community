@@ -47,7 +47,7 @@ public class EnterPasswordComponent extends PasswordComponentBase {
       note = "The passwords will be stored in IDE configuration files with weak protection (" + subNote + ").";
     }
 
-    myPromptLabel.setText("<html>Master password is required to convert saved passwords.<br><br>" + note + "</html>");
+    myPromptLabel.setText("<html>Master password is required to convert saved passwords.<br>" + note + "</html>");
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       myPasswordField.setText("pass");
