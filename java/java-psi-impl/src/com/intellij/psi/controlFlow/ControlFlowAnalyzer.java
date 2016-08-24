@@ -21,12 +21,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
@@ -980,7 +978,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       ProgressManager.checkCanceled();
       PsiParameter parameter = myCatchParameters.get(i);
       PsiType catchType = parameter.getType();
-      if (catchType.isAssignableFrom(throwType) || mightBeAssignableFromSubclass(throwType, catchType)) {
+      if (ControlFlowUtil.isCaughtExceptionType(throwType, catchType)) {
         blocks.add(myCatchBlocks.get(i));
       }
     }
@@ -989,18 +987,6 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       blocks.add(null);
     }
     return blocks;
-  }
-
-  private static boolean mightBeAssignableFromSubclass(@NotNull final PsiClassType throwType, @NotNull PsiType catchType) {
-    if (catchType instanceof PsiDisjunctionType) {
-      return ContainerUtil.exists(((PsiDisjunctionType)catchType).getDisjunctions(), new Condition<PsiType>() {
-        @Override
-        public boolean value(PsiType catchDisjunction) {
-          return throwType.isAssignableFrom(catchDisjunction);
-        }
-      });
-    }
-    return throwType.isAssignableFrom(catchType);
   }
 
   @Override

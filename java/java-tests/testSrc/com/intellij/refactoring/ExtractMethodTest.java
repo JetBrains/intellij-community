@@ -125,6 +125,50 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testUseParamInCatch() throws Exception {
+    doExitPointsTest(false);
+  }
+
+  public void testUseParamInFinally() throws Exception {
+    doExitPointsTest(false);
+  }
+
+  public void testUseVarAfterCatch() throws Exception {
+    doExitPointsTest(false);
+  }
+
+  public void testUseVarInCatch1() throws Exception {
+    doTest();
+  }
+
+  public void testUseVarInCatch2() throws Exception {
+    doExitPointsTest(false);
+  }
+
+  public void testUseVarInCatchInvisible() throws Exception {
+    doTest();
+  }
+
+  public void testUseVarInCatchNested1() throws Exception {
+    doTest();
+  }
+
+  public void testUseVarInCatchNested2() throws Exception {
+    doExitPointsTest(false);
+  }
+
+  public void testUseVarInOtherCatch() throws Exception {
+    doTest();
+  }
+
+  public void testUseVarInFinally1() throws Exception {
+    doTest();
+  }
+
+  public void testUseVarInFinally2() throws Exception {
+    doExitPointsTest(false);
+  }
+
   public void testOneBranchAssignment() throws Exception {
     doTest();
   }
@@ -185,7 +229,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
-  public void _testExtractFromTryFinally2() throws Exception {  // IDEADEV-11844
+  public void testExtractFromTryFinally2() throws Exception {
     doTest();
   }
 
@@ -322,7 +366,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testIDEADEV33368() throws Exception {
-    doTest();
+    doExitPointsTest(false);
   }
 
   public void testInlineCreated2ReturnLocalVariablesOnly() throws Exception {
