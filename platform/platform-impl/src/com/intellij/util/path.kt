@@ -44,6 +44,15 @@ fun Path.outputStream(): OutputStream {
 
 fun Path.inputStream(): InputStream = Files.newInputStream(this)
 
+fun Path.inputStreamIfExists(): InputStream? {
+  try {
+    return inputStream()
+  }
+  catch (e: NoSuchFileException) {
+    return null
+  }
+}
+
 /**
  * Opposite to Java, parent directories will be created
  */
