@@ -15,43 +15,52 @@
  */
 package com.intellij.debugger.impl;
 
-import com.intellij.execution.RunManager;
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.execution.configurations.ConfigurationWithAlternativeJre;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.NonClasspathClassFinder;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.NonClasspathDirectoriesScope;
-import com.intellij.util.containers.SmartHashSet;
-import com.intellij.util.indexing.IndexableSetContributor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
+import java.util.List;
 
 /**
  * @author egor
  */
-public class AlternativeJreIndexHelper extends IndexableSetContributor {
-  @NotNull
-  @Override
-  public Set<VirtualFile> getAdditionalRootsToIndex() {
-    return Collections.emptySet();
+public class AlternativeJreClassFinder extends NonClasspathClassFinder {
+  public AlternativeJreClassFinder(Project project, DebuggerManagerEx manager) {
+    super(project);
+    manager.addDebuggerManagerListener(new DebuggerManagerAdapter() {
+      public void sessionCreated(DebuggerSession session) {
+        clearCache();
+      }
+
+      public void sessionRemoved(DebuggerSession session) {
+        clearCache();
+      }
+    });
   }
 
-  @NotNull
   @Override
-  public Set<VirtualFile> getAdditionalProjectRootsToIndex(@NotNull Project project) {
-    SmartHashSet<VirtualFile> res = new SmartHashSet<>();
-    for (RunConfiguration configuration : RunManager.getInstance(project).getAllConfigurationsList()) {
-      Sdk jre = getAlternativeJre(configuration);
+  protected List<VirtualFile> calcClassRoots() {
+    Collection<DebuggerSession> sessions = DebuggerManagerEx.getInstanceEx(myProject).getSessions();
+    if (sessions.isEmpty()) {
+      return Collections.emptyList();
+    }
+    List<VirtualFile> res = ContainerUtil.newSmartList();
+    for (DebuggerSession session : sessions) {
+      Sdk jre = session.getAlternativeJre();
       if (jre != null) {
         res.addAll(getClassRoots(jre));
       }
