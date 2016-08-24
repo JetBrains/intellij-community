@@ -42,7 +42,6 @@ import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +50,6 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Stream;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class VcsUtil {
@@ -671,37 +669,5 @@ public class VcsUtil {
     }
     mappings.add(new VcsDirectoryMapping(path, vcs));
     return mappings;
-  }
-
-  @Nullable
-  public static <T> T getIfSingle(@Nullable Stream<T> items) {
-    return items == null ? null : items.limit(2).map(Optional::ofNullable)
-      .reduce(Optional.empty(), (a, b) -> a.isPresent() ^ b.isPresent() ? b : Optional.empty())
-      .orElse(null);
-  }
-
-  public static <T> boolean isEmpty(@Nullable Stream<T> items) {
-    return items == null || !items.findAny().isPresent();
-  }
-
-  @NotNull
-  public static <T> Stream<T> notNullize(@Nullable Stream<T> items) {
-    return ObjectUtils.notNull(items, Stream.empty());
-  }
-
-  @NotNull
-  public static <T> Stream<T> toStream(@Nullable T... items) {
-    return items == null ? Stream.empty() : Stream.of(items);
-  }
-
-  /**
-   * There probably could be some performance issues if there is lots of streams to concat. See
-   * http://mail.openjdk.java.net/pipermail/lambda-dev/2013-July/010659.html for some details.
-   * <p>
-   * Also see {@link Stream#concat(Stream, Stream)} documentation for other possible issues of concatenating large number of streams.
-   */
-  @NotNull
-  public static <T> Stream<T> concat(@NotNull Stream<T>... streams) {
-    return toStream(streams).reduce(Stream.empty(), Stream::concat);
   }
 }

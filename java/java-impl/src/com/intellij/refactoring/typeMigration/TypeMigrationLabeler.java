@@ -1138,7 +1138,7 @@ public class TypeMigrationLabeler {
       }
     }
 
-    Arrays.sort(conversions, (x, y) -> x.compareTo(y));
+    Arrays.sort(conversions);
 
     for (String conversion : conversions) {
       buffer.append(conversion);
@@ -1154,7 +1154,7 @@ public class TypeMigrationLabeler {
       newChanges[k++] = (element != null ? element.getText() : entry.getKey()) + " -> " + entry.getValue().getCanonicalText() + "\n";
     }
 
-    Arrays.sort(newChanges, (x, y) -> x.compareTo(y));
+    Arrays.sort(newChanges);
 
     for (String change : newChanges) {
       buffer.append(change);

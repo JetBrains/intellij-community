@@ -33,7 +33,7 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 public class ShowSelectionHistoryAction extends ShowHistoryAction {
   @Override
-  protected void showDialog(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull VirtualFile f, @NotNull AnActionEvent e) {
+  protected void actionPerformed(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull VirtualFile f, @NotNull AnActionEvent e) {
     VcsSelection sel = notNull(getSelection(e));
 
     int from = sel.getSelectionStartLineNumber();

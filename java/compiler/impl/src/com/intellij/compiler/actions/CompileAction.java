@@ -55,7 +55,7 @@ public class CompileAction extends CompileActionBase {
       return;
     }
 
-    presentation.setText(ActionsBundle.actionText(IdeActions.ACTION_COMPILE));
+    presentation.setText(ActionsBundle.actionText(RECOMPILE_FILES_ID_MOD));
     presentation.setVisible(true);
 
     Project project = e.getProject();
@@ -66,6 +66,7 @@ public class CompileAction extends CompileActionBase {
 
     CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(project);
     final Module module = e.getData(LangDataKeys.MODULE_CONTEXT);
+    boolean forFiles = false;
 
     final VirtualFile[] files = getCompilableFiles(project, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
     if (module == null && files.length == 0) {
@@ -102,10 +103,11 @@ public class CompileAction extends CompileActionBase {
         elementDescription = "'" + name + "'";
       }
       else if (files.length == 1) {
+        forFiles = true;
         final VirtualFile file = files[0];
         FileType fileType = file.getFileType();
-        if (CompilerManager.getInstance(project).isCompilableFileType(fileType) || compilerConfiguration
-          .isCompilableResourceFile(project, file)) {
+        if (CompilerManager.getInstance(project).isCompilableFileType(fileType) ||
+            compilerConfiguration.isCompilableResourceFile(project, file)) {
           elementDescription = "'" + file.getName() + "'";
         }
         else {
@@ -118,6 +120,7 @@ public class CompileAction extends CompileActionBase {
         }
       }
       else {
+        forFiles = true;
         elementDescription = CompilerBundle.message("action.compile.description.selected.files");
       }
     }
@@ -127,13 +130,15 @@ public class CompileAction extends CompileActionBase {
       return;
     }
 
-    presentation.setText(createPresentationText(elementDescription), true);
+    presentation.setText(createPresentationText(elementDescription, forFiles), true);
     presentation.setEnabled(true);
   }
 
-  private static String createPresentationText(String elementDescription) {
+  private final static String RECOMPILE_FILES_ID_MOD = IdeActions.ACTION_COMPILE + "File";
+
+  private static String createPresentationText(String elementDescription, boolean forFiles) {
     StringBuilder buffer = new StringBuilder(40);
-    buffer.append(ActionsBundle.actionText(IdeActions.ACTION_COMPILE)).append(" ");
+    buffer.append(ActionsBundle.actionText(forFiles? RECOMPILE_FILES_ID_MOD : IdeActions.ACTION_COMPILE)).append(" ");
     int length = elementDescription.length();
     if (length > 23) {
       if (StringUtil.startsWithChar(elementDescription, '\'')) {

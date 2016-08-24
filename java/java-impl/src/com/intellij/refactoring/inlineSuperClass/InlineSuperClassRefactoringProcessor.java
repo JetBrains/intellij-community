@@ -401,6 +401,14 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
             }
           }
         }
+
+        @Override
+        public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+          super.visitReferenceElement(reference);
+          if (reference.resolve() == mySuperClass && PsiTreeUtil.getParentOfType(reference, PsiComment.class) != null) {
+            replacementMap.put(new UsageInfo(reference), elementFactory.createClassReferenceElement(targetClass));
+          }
+        }
       });
     }
     try {

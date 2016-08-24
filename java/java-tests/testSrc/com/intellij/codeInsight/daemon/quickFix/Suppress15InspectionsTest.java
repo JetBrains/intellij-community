@@ -24,7 +24,6 @@ import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclaration;
-import com.intellij.codeInspection.unusedParameters.UnusedParametersInspection;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -32,7 +31,7 @@ public class Suppress15InspectionsTest extends LightQuickFixParameterizedTestCas
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    enableInspectionTools(new UnusedParametersInspection(), new UnusedDeclarationInspection());
+    enableInspectionTools(new UnusedDeclarationInspection());
   }
 
   @NotNull

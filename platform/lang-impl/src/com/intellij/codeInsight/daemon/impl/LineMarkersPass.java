@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,8 +42,8 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -62,7 +62,7 @@ import java.util.*;
 public class LineMarkersPass extends TextEditorHighlightingPass implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.LineMarkersPass");
 
-  private volatile Collection<LineMarkerInfo> myMarkers = Collections.emptyList();
+  private volatile List<LineMarkerInfo> myMarkers = Collections.emptyList();
 
   @NotNull private final PsiFile myFile;
   @NotNull private final TextRange myPriorityBounds;
@@ -98,27 +98,24 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements DumbA
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
     final List<LineMarkerInfo> lineMarkers = new ArrayList<>();
-    for (PsiFile root : myFile.getViewProvider().getAllFiles()) {
-      List<PsiElement> inside = new ArrayList<>();
-      List<ProperTextRange> insideRanges = new ArrayList<>();
-      List<PsiElement> outside = new ArrayList<>();
-      List<ProperTextRange> outsideRanges = new ArrayList<>();
+    FileViewProvider viewProvider = myFile.getViewProvider();
+    for (Language language : viewProvider.getLanguages()) {
+      final PsiFile root = viewProvider.getPsi(language);
       HighlightingLevelManager highlightingLevelManager = HighlightingLevelManager.getInstance(myProject);
+      if (!highlightingLevelManager.shouldHighlight(root)) continue;
+      Divider.divideInsideAndOutsideInOneRoot(root, myRestrictRange, myPriorityBounds,
+           elements -> {
+             Collection<LineMarkerProvider> providers = getMarkerProviders(language, myProject);
+             List<LineMarkerProvider> providersList = new ArrayList<>(providers);
 
-      Divider.divideInsideAndOutside(root, myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(), myPriorityBounds,
-                                     inside, insideRanges, outside, outsideRanges, false,
-                                     psiFile -> psiFile == root && highlightingLevelManager.shouldHighlight(psiFile));
-      Collection<LineMarkerProvider> providers = getMarkerProviders(root.getLanguage(), myProject);
-
-      List<LineMarkerProvider> providersList = new ArrayList<>(providers);
-
-      queryProviders(inside, root, providersList, (element, info) -> {
-        lineMarkers.add(info);
-        ApplicationManager.getApplication()
-          .invokeLater(() -> LineMarkersUtil.addLineMarkerToEditorIncrementally(myProject, getDocument(), info),
-                       myProject.getDisposed());
-      });
-      queryProviders(outside, root, providersList, (element, info) -> lineMarkers.add(info));
+             queryProviders(elements.inside, root, providersList, (element, info) -> {
+               lineMarkers.add(info);
+               ApplicationManager.getApplication()
+                 .invokeLater(() -> LineMarkersUtil.addLineMarkerToEditorIncrementally(myProject, getDocument(), info), myProject.getDisposed());
+             });
+             queryProviders(elements.outside, root, providersList, (element, info) -> lineMarkers.add(info));
+             return true;
+           });
     }
 
     myMarkers = mergeLineMarkers(lineMarkers, getDocument());

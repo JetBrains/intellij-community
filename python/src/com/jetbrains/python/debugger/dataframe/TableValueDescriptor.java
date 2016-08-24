@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.debugger.dataframe;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.jetbrains.python.debugger.ArrayChunk;
 import com.jetbrains.python.debugger.containerview.PyNumericViewUtil;
 
@@ -45,9 +45,8 @@ public class TableValueDescriptor {
     {
       return Double.NaN;
     }
-    String minValue = Objects.firstNonNull(myHeader.getMin(), "0");
-    String maxValue = Objects.firstNonNull(myHeader.getMax(), "0");
-
+    String minValue = MoreObjects.firstNonNull(myHeader.getMin(), "0");
+    String maxValue = MoreObjects.firstNonNull(myHeader.getMax(), "0");
 
     double min;
     double max;

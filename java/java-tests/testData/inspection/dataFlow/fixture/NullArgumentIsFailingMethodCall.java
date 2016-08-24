@@ -1,7 +1,7 @@
 import java.util.Objects;
 
 class Test {
-  private static void testMethod(Object <warning descr="Method fails when parameter 'o' is 'null'">o</warning>, Object o2, Object <warning descr="Method fails when parameter 'o3' is 'null'">o3</warning>, Object o4, int i) {
+  private static void testMethod(Object <warning descr="Method will throw an exception when parameter is null">o</warning>, Object o2, Object <warning descr="Method will throw an exception when parameter is null">o3</warning>, Object o4, int i) {
     Objects.requireNonNull(o, "o is not null");
     if (o3 != null) {
       System.out.println(o3.hashCode());

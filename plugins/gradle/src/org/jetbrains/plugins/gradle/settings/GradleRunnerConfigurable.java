@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.gradle.settings;
 
-import com.google.common.base.Objects;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -27,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 import javax.swing.*;
+import java.util.Objects;
 
 /**
  * @author Vladislav.Soroka
@@ -132,7 +132,7 @@ public class GradleRunnerConfigurable extends BaseConfigurable implements Search
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(value);
+      return Objects.hash(value);
     }
 
     @Override

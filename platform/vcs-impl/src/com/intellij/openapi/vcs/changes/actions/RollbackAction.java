@@ -49,7 +49,6 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.RollbackUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,6 +56,7 @@ import java.util.*;
 
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
 import static com.intellij.openapi.ui.Messages.showYesNoDialog;
+import static com.intellij.util.containers.UtilKt.notNullize;
 
 public class RollbackAction extends AnAction implements DumbAware {
   public void update(AnActionEvent e) {
@@ -84,7 +84,7 @@ public class RollbackAction extends AnAction implements DumbAware {
     ChangeListManager manager = ChangeListManager.getInstance(e.getRequiredData(CommonDataKeys.PROJECT));
     Set<VirtualFile> modifiedWithoutEditing = ContainerUtil.newHashSet(manager.getModifiedWithoutEditing());
 
-    return VcsUtil.notNullize(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM)).anyMatch(
+    return notNullize(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM)).anyMatch(
       file -> manager.haveChangesUnder(file) != ThreeState.NO || manager.isFileAffected(file) || modifiedWithoutEditing.contains(file));
   }
 
@@ -195,20 +195,18 @@ public class RollbackAction extends AnAction implements DumbAware {
       public void run() {
         final ProgressIndicator indicator = progressManager.getProgressIndicator();
         try {
-          ChangesUtil.processVirtualFilesByVcs(project, modifiedWithoutEditing, new ChangesUtil.PerVcsProcessor<VirtualFile>() {
-            public void process(final AbstractVcs vcs, final List<VirtualFile> items) {
-              final RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
-              if (rollbackEnvironment != null) {
-                if (indicator != null) {
-                  indicator.setText(vcs.getDisplayName() +
-                                    ": performing " + UIUtil.removeMnemonic(rollbackEnvironment.getRollbackOperationName()).toLowerCase() + "...");
-                  indicator.setIndeterminate(false);
-                }
-                rollbackEnvironment
-                  .rollbackModifiedWithoutCheckout(items, exceptions, new RollbackProgressModifier(items.size(), indicator));
-                if (indicator != null) {
-                  indicator.setText2("");
-                }
+          ChangesUtil.processVirtualFilesByVcs(project, modifiedWithoutEditing, (vcs, items) -> {
+            final RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
+            if (rollbackEnvironment != null) {
+              if (indicator != null) {
+                indicator.setText(vcs.getDisplayName() +
+                                  ": performing " + UIUtil.removeMnemonic(rollbackEnvironment.getRollbackOperationName()).toLowerCase() + "...");
+                indicator.setIndeterminate(false);
+              }
+              rollbackEnvironment
+                .rollbackModifiedWithoutCheckout(items, exceptions, new RollbackProgressModifier(items.size(), indicator));
+              if (indicator != null) {
+                indicator.setText2("");
               }
             }
           });

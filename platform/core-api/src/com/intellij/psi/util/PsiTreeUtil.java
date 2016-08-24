@@ -327,6 +327,21 @@ public class PsiTreeUtil {
     return null;
   }
 
+  @Nullable
+  public static PsiElement findFirstContext(@Nullable PsiElement element, boolean strict, Condition<PsiElement> condition) {
+    if (strict && element != null) {
+      element = element.getContext();
+    }
+
+    while (element != null) {
+      if (condition.value(element)) {
+        return element;
+      }
+      element = element.getContext();
+    }
+    return null;
+  }
+
   @NotNull
   public static <T extends PsiElement> T getRequiredChildOfType(@NotNull PsiElement element, @NotNull Class<T> aClass) {
     final T child = getChildOfType(element, aClass);

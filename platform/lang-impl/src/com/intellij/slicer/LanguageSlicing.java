@@ -18,6 +18,7 @@ package com.intellij.slicer;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class LanguageSlicing extends LanguageExtension<SliceLanguageSupportProvider> {
   public static final LanguageSlicing INSTANCE = new LanguageSlicing();
@@ -26,7 +27,12 @@ public class LanguageSlicing extends LanguageExtension<SliceLanguageSupportProvi
     super("com.intellij.lang.sliceProvider");
   }
 
-  public static SliceLanguageSupportProvider getProvider(@NotNull PsiElement element){
+  public static boolean hasAnyProviders() {
+    return INSTANCE.hasAnyExtensions();
+  }
+
+  @Nullable
+  public static SliceLanguageSupportProvider getProvider(@NotNull PsiElement element) {
     return INSTANCE.forLanguage(element.getLanguage());
   }
 }

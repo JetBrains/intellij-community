@@ -20,13 +20,16 @@ import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.impl.AlternativeJreIndexHelper;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Ref;
@@ -35,8 +38,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.compiled.ClsClassImpl;
+import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -351,13 +357,39 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     //}
 
     final String originalQName = refType.name();
-    final GlobalSearchScope searchScope = myDebugProcess.getSearchScope();
-    PsiClass psiClass = DebuggerUtils.findClass(originalQName, project, searchScope); // try to lookup original name first
+
+    PsiClass psiClass = null;
+
+    // first check alternative jre if any
+    Sdk alternativeJre = myDebugProcess.getSession().getAlternativeJre();
+    if (alternativeJre != null) {
+      try {
+        psiClass = ContainerUtil.getFirstItem(StubIndex.getElements(JavaStubIndexKeys.CLASS_FQN,
+                                                                    originalQName.hashCode(),
+                                                                    project,
+                                                                    AlternativeJreIndexHelper.getSearchScope(alternativeJre),
+                                                                    PsiClass.class));
+
+        if (psiClass instanceof ClsClassImpl) { //try to find sources
+          PsiFile psiSource = findSourceFile((ClsClassImpl)psiClass, alternativeJre);
+          if (psiSource != null) {
+            return psiSource;
+          }
+        }
+      }
+      catch (IndexNotReadyException ignored) {
+      }
+    }
+
     if (psiClass == null) {
-      int dollar = originalQName.indexOf('$');
-      if (dollar > 0) {
-        final String qName = originalQName.substring(0, dollar);
-        psiClass = DebuggerUtils.findClass(qName, project, searchScope);
+      GlobalSearchScope searchScope = myDebugProcess.getSearchScope();
+      psiClass = DebuggerUtils.findClass(originalQName, project, searchScope); // try to lookup original name first
+      if (psiClass == null) {
+        int dollar = originalQName.indexOf('$');
+        if (dollar > 0) {
+          final String qName = originalQName.substring(0, dollar);
+          psiClass = DebuggerUtils.findClass(qName, project, searchScope);
+        }
       }
     }
 
@@ -390,6 +422,24 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       }
     }
 
+    return null;
+  }
+
+  @Nullable
+  private static PsiFile findSourceFile(ClsClassImpl psiClass, Sdk alternativeJre) {
+    String sourceFileName = psiClass.getSourceFileName();
+    String packageName = ((PsiClassOwner)psiClass.getContainingFile()).getPackageName();
+    String relativePath = packageName.isEmpty() ? sourceFileName : packageName.replace('.', '/') + '/' + sourceFileName;
+
+    for (VirtualFile file : AlternativeJreIndexHelper.getSourceRoots(alternativeJre)) {
+      VirtualFile source = file.findFileByRelativePath(relativePath);
+      if (source != null && source.isValid()) {
+        PsiFile psiSource = psiClass.getManager().findFile(source);
+        if (psiSource instanceof PsiClassOwner) {
+          return psiSource;
+        }
+      }
+    }
     return null;
   }
 

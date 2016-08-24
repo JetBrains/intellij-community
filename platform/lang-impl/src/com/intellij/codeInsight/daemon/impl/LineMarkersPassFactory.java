@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,19 +51,14 @@ public class LineMarkersPassFactory extends AbstractProjectComponent implements 
   @Override
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
-    TextRange restrictRange = calculateRangeToProcessForSyntaxPass(editor);
+    TextRange restrictRange = FileStatusMap.getDirtyTextRange(editor, Pass.LINE_MARKERS);
     Document document = editor.getDocument();
     if (restrictRange == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(myProject, document);
     ProperTextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(editor);
     return new LineMarkersPass(myProject, file, document, expandRangeToCoverWholeLines(document, visibleRange), expandRangeToCoverWholeLines(document, restrictRange));
   }
 
-  @Nullable
-  private static TextRange calculateRangeToProcessForSyntaxPass(Editor editor) {
-    return FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL);
-  }
-
-  static TextRange expandRangeToCoverWholeLines(@NotNull Document document, TextRange textRange) {
+  private static TextRange expandRangeToCoverWholeLines(@NotNull Document document, TextRange textRange) {
     if (textRange == null) return null;
     return MarkupModelImpl.roundToLineBoundaries(document, textRange.getStartOffset(), textRange.getEndOffset());
   }

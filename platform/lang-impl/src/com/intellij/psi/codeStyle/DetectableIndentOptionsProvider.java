@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCompiledFile;
@@ -43,6 +42,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
+import static com.intellij.psi.codeStyle.DetectAndAdjustIndentOptionsTask.getDefaultIndentOptions;
 import static com.intellij.psi.codeStyle.EditorNotificationInfo.ActionLabelData;
 
 /**
@@ -50,7 +50,7 @@ import static com.intellij.psi.codeStyle.EditorNotificationInfo.ActionLabelData;
  */
 public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
   
-  private static final ExecutorService BOUNDED_EXECUTOR = AppExecutorUtil.createBoundedApplicationPoolExecutor(1);
+  private static final ExecutorService BOUNDED_EXECUTOR = AppExecutorUtil.createBoundedApplicationPoolExecutor("DetectableIndentOptionsProvider pool",1);
   
   private boolean myIsEnabledInTest;
   private final List<VirtualFile> myAcceptedFiles = new WeakList<>();
@@ -75,7 +75,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
       return options;
     }
 
-    TimeStampedIndentOptions indentOptions = getDefault(file.getFileType(), project, document.getModificationStamp());
+    TimeStampedIndentOptions indentOptions = getDefaultIndentOptions(file, document);
     indentOptions.associateWithDocument(document);
 
     DetectAndAdjustIndentOptionsTask task = new DetectAndAdjustIndentOptionsTask(project, document, indentOptions, BOUNDED_EXECUTOR);
@@ -84,12 +84,6 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     return indentOptions;
   }
   
-  @NotNull
-  private static TimeStampedIndentOptions getDefault(@NotNull FileType fileType, Project project, long timeStamp) {
-    CodeStyleSettings manager = CodeStyleSettingsManager.getSettings(project);
-    return new TimeStampedIndentOptions(manager.getIndentOptions(fileType), timeStamp);
-  }
-
   @Override
   public boolean useOnFullReformat() {
     return false;
@@ -203,11 +197,11 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
 
   public IndentOptions getValidCachedIndentOptions(PsiFile file, Document document) {
     IndentOptions options = IndentOptions.retrieveFromAssociatedDocument(file);
-    long documentStamp = document.getModificationStamp();
     if (options instanceof TimeStampedIndentOptions) {
-      long optionsStamp = ((TimeStampedIndentOptions)options).getTimeStamp();
-      if (optionsStamp == documentStamp) {
-        return options;
+      final IndentOptions defaultIndentOptions = getDefaultIndentOptions(file, document);
+      final TimeStampedIndentOptions cachedInDocument = (TimeStampedIndentOptions)options;
+      if (!cachedInDocument.isOutdated(document, defaultIndentOptions)) {
+        return cachedInDocument;
       }
     }
     return null;

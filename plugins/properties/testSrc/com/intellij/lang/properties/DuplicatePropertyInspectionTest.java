@@ -19,25 +19,25 @@ public class DuplicatePropertyInspectionTest extends InspectionTestCase {
     myTool = new DuplicatePropertyInspection();
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest("duplicateProperty/" + getTestName(true), myTool);
   }
 
-  public void testDuplicateValues() throws Exception{
+  public void testDuplicateValues() {
     doTest();
   }
 
-  public void testDuplicateValuesCurrentFileAnalysis() throws Exception{
+  public void testDuplicateValuesCurrentFileAnalysis() {
     doTest();
   }
 
-  public void testDuplicateValuesInDifferentFiles() throws Exception{
+  public void testDuplicateValuesInDifferentFiles() {
     myTool.CURRENT_FILE = false;
     myTool.MODULE_WITH_DEPENDENCIES = true;
     doTest();
   }
 
-  public void testDuplicateKeysWithDifferentValues() throws Exception{
+  public void testDuplicateKeysWithDifferentValues() {
     myTool.CURRENT_FILE = false;
     myTool.MODULE_WITH_DEPENDENCIES = true;
     myTool.CHECK_DUPLICATE_KEYS = false;
@@ -46,7 +46,7 @@ public class DuplicatePropertyInspectionTest extends InspectionTestCase {
     doTest();
   }
 
-  public void testDuplicateKeys() throws Exception{
+  public void testDuplicateKeys() {
     myTool.CURRENT_FILE = false;
     myTool.MODULE_WITH_DEPENDENCIES = true;
     myTool.CHECK_DUPLICATE_KEYS = true;
@@ -55,7 +55,7 @@ public class DuplicatePropertyInspectionTest extends InspectionTestCase {
     doTest();
   }
 
-  public void testDuplicateKeysWithAndWithoutDifferent() throws Exception{
+  public void testDuplicateKeysWithAndWithoutDifferent() {
     myTool.CURRENT_FILE = false;
     myTool.MODULE_WITH_DEPENDENCIES = true;
     myTool.CHECK_DUPLICATE_KEYS = true;

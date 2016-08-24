@@ -18,6 +18,7 @@ package com.intellij.util.concurrency;
 import com.intellij.Patches;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
@@ -37,6 +38,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class BoundedTaskExecutor extends AbstractExecutorService {
   private volatile boolean myShutdown;
+  @NotNull private final String myName;
   private final Executor myBackendExecutor;
   private final int myMaxTasks;
   // low  32 bits: number of tasks running (or trying to run)
@@ -44,7 +46,8 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
   private final AtomicLong myStatus = new AtomicLong();
   private final BlockingQueue<Runnable> myTaskQueue = new LinkedBlockingQueue<Runnable>();
 
-  public BoundedTaskExecutor(@NotNull Executor backendExecutor, int maxSimultaneousTasks) {
+  public BoundedTaskExecutor(@NotNull String name, @NotNull Executor backendExecutor, int maxSimultaneousTasks) {
+    myName = name;
     myBackendExecutor = backendExecutor;
     if (maxSimultaneousTasks < 1) {
       throw new IllegalArgumentException("maxSimultaneousTasks must be >=1 but got: "+maxSimultaneousTasks);
@@ -56,10 +59,17 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
   }
 
   /**
+   * @deprecated use {@link #BoundedTaskExecutor(String, Executor, int)} instead
+   */
+  public BoundedTaskExecutor(@NotNull Executor backendExecutor, int maxSimultaneousTasks) {
+    this(ExceptionUtil.getThrowableText(new Throwable("Creation point:")), backendExecutor, maxSimultaneousTasks);
+  }
+
+  /**
    * Constructor which automatically shuts down this executor when {@code parent} is disposed.
    */
-  public BoundedTaskExecutor(@NotNull Executor backendExecutor, int maxSimultaneousTasks, @NotNull Disposable parent) {
-    this(backendExecutor, maxSimultaneousTasks);
+  public BoundedTaskExecutor(@NotNull String name, @NotNull Executor backendExecutor, int maxSimultaneousTasks, @NotNull Disposable parent) {
+    this(name, backendExecutor, maxSimultaneousTasks);
     Disposer.register(parent, new Disposable() {
       @Override
       public void dispose() {
@@ -84,7 +94,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
 
   @Override
   public void shutdown() {
-    if (myShutdown) throw new IllegalStateException("Already shutdown");
+    if (myShutdown) throw new IllegalStateException("Already shutdown: "+this);
     myShutdown = true;
   }
 
@@ -282,11 +292,13 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
   public String toString() {
     return "BoundedExecutor(" + myMaxTasks + ") " + (isShutdown() ? "SHUTDOWN " : "") +
            "inProgress: " + (int)myStatus.get() +
-           "; " + myTaskQueue.size() + " tasks in queue: [" + ContainerUtil.map(myTaskQueue, new Function<Runnable, Object>() {
-      @Override
-      public Object fun(Runnable runnable) {
-        return info(runnable);
-      }
-    }) + "]";
+           "; " +
+           (myTaskQueue.isEmpty() ? "" : "Queue size: "+myTaskQueue.size() +"; tasks in queue: [" + ContainerUtil.map(myTaskQueue, new Function<Runnable, Object>() {
+             @Override
+             public Object fun(Runnable runnable) {
+               return info(runnable);
+             }
+           }) + "]") +
+      "name: "+myName;
   }
 }

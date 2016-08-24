@@ -299,14 +299,10 @@ public class CommitHelper {
     }
 
     public void callSelf() {
-      ChangesUtil.processItemsByVcs(myIncludedChanges, new ChangesUtil.VcsSeparator<Change>() {
-        public AbstractVcs getVcsFor(final Change item) {
-          return myVcs;
-        }
-      }, this);
+      ChangesUtil.processItemsByVcs(myIncludedChanges, change -> myVcs, this);
     }
 
-    public void process(final AbstractVcs vcs, final List<Change> items) {
+    public void process(@NotNull AbstractVcs vcs, @NotNull List<Change> items) {
       if (myVcs.getName().equals(vcs.getName())) {
         final CheckinEnvironment environment = vcs.getCheckinEnvironment();
         if (environment != null) {
@@ -414,7 +410,7 @@ public class CommitHelper {
       ChangesUtil.processChangesByVcs(myProject, myIncludedChanges, this);
     }
 
-    public void process(final AbstractVcs vcs, final List<Change> items) {
+    public void process(@NotNull AbstractVcs vcs, @NotNull List<Change> items) {
       final CheckinEnvironment environment = vcs.getCheckinEnvironment();
       if (environment != null) {
         Collection<FilePath> paths = ChangesUtil.getPaths(items);
@@ -457,13 +453,10 @@ public class CommitHelper {
 
     public void customRefresh() {
       final List<Change> toRefresh = new ArrayList<>();
-      ChangesUtil.processChangesByVcs(myProject, myIncludedChanges, new ChangesUtil.PerVcsProcessor<Change>() {
-        @Override
-        public void process(AbstractVcs vcs, List<Change> items) {
-          CheckinEnvironment ce = vcs.getCheckinEnvironment();
-          if (ce != null && ce.isRefreshAfterCommitNeeded()) {
-            toRefresh.addAll(items);
-          }
+      ChangesUtil.processChangesByVcs(myProject, myIncludedChanges, (vcs, items) -> {
+        CheckinEnvironment ce = vcs.getCheckinEnvironment();
+        if (ce != null && ce.isRefreshAfterCommitNeeded()) {
+          toRefresh.addAll(items);
         }
       });
 

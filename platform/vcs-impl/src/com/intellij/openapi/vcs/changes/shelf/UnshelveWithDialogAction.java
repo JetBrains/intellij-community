@@ -132,7 +132,9 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
                             @Nullable Change[] preselectedChanges) {
       super(project, new UnshelvePatchDefaultExecutor(project, changeList),
             Collections.emptyList(), ApplyPatchMode.UNSHELVE,
-            patchFile, null, getPredefinedChangeList(changeList.DESCRIPTION, ChangeListManager.getInstance(project)), binaryShelvedPatches,
+            patchFile, null,
+            changeList.isMarkedToDelete() ? getPredefinedChangeList(changeList.DESCRIPTION, ChangeListManager.getInstance(project)) : null,
+            binaryShelvedPatches,
             hasNotAllSelectedChanges(project, changeList, preselectedChanges) ? newArrayList(preselectedChanges) : null,
             changeList.DESCRIPTION, true);
     }

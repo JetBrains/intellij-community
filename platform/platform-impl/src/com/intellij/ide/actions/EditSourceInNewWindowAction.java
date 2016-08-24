@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
@@ -29,7 +29,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 public class EditSourceInNewWindowAction extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final FileEditorManager manager = FileEditorManager.getInstance(getEventProject(e));
+    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    final FileEditorManager manager = FileEditorManager.getInstance(project);
     ((FileEditorManagerImpl)manager).openFileInNewWindow(getVirtualFiles(e)[0]);
   }
 

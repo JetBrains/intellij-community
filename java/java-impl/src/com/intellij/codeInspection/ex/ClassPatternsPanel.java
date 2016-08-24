@@ -15,9 +15,20 @@
  */
 package com.intellij.codeInspection.ex;
 
+import com.intellij.ide.DataManager;
+import com.intellij.ide.util.ClassFilter;
+import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.JBDimension;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +39,6 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 
 class ClassPatternsPanel extends JPanel {
@@ -39,18 +49,35 @@ class ClassPatternsPanel extends JPanel {
     super(new BorderLayout());
     myModifiedPatterns = patterns;
     final JBTable table = createTableForPatterns();
+    final String addPatternMessage = "Add Class Name Pattern";
+    final String addClassMessage = "Add Class";
     final ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(table)
       .setAddAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          myModifiedPatterns.add(new EntryPointsManagerBase.ClassPattern());
-          AbstractTableModel model = (AbstractTableModel)table.getModel();
-          final int row = myModifiedPatterns.size() - 1;
-          model.fireTableRowsInserted(row, row);
-          table.setRowSelectionInterval(row, row);
-          table.editCellAt(row, 1);
+          Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(table));
+          if (project == null) project = ProjectManager.getInstance().getDefaultProject();
+          TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
+            .createWithInnerClassesScopeChooser(addClassMessage, GlobalSearchScope.projectScope(project), ClassFilter.ALL, null);
+          chooser.showDialog();
+          final PsiClass selected = chooser.getSelected();
+          if (selected != null) {
+            insertRow(selected.getQualifiedName(), table);
+          }
         }
-      }).setRemoveAction(new AnActionButtonRunnable() {
+      })
+      .setAddActionName(addClassMessage)
+      .setAddIcon(IconUtil.getAddClassIcon())
+      .addExtraAction(new AnActionButton(addPatternMessage, IconUtil.getAddPatternIcon()) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          String selectedPattern = Messages.showInputDialog("Pattern:", "Class Name Pattern", Messages.getQuestionIcon());
+          if (selectedPattern != null) {
+            insertRow(selectedPattern, table);
+          }
+        }
+      })
+      .setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           TableUtil.removeSelectedItems(table);
@@ -63,10 +90,20 @@ class ClassPatternsPanel extends JPanel {
           return table.getSelectedRow() >= 0;
         }
       })
-      .setButtonComparator("Add", "Remove");
-    add(SeparatorFactory.createSeparator("Mark class as entry point if name matches", null), BorderLayout.NORTH);
+      .setButtonComparator(addClassMessage, addPatternMessage, "Remove");
+    add(SeparatorFactory.createSeparator("Mark class as entry point if qualified name matches", null), BorderLayout.NORTH);
     add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
     setPreferredSize(new JBDimension(-1, 250));
+  }
+
+  private void insertRow(String pattern, JBTable table) {
+    EntryPointsManagerBase.ClassPattern classPattern = new EntryPointsManagerBase.ClassPattern();
+    classPattern.pattern = pattern;
+    myModifiedPatterns.add(classPattern);
+    AbstractTableModel model = (AbstractTableModel)table.getModel();
+    final int row = myModifiedPatterns.size() - 1;
+    model.fireTableRowsInserted(row, row);
+    table.setRowSelectionInterval(row, row);
   }
 
   private JBTable createTableForPatterns() {
@@ -106,7 +143,7 @@ class ClassPatternsPanel extends JPanel {
 
     @Nullable
     public Object getValueAt(int row, int col) {
-      if (row < 0) return null;
+      if (row < 0 || row > myModifiedPatterns.size() - 1) return null;
       final EntryPointsManagerBase.ClassPattern classPattern = myModifiedPatterns.get(row);
       if (classPattern == null) return null;
       if (col == 0) {
@@ -130,7 +167,7 @@ class ClassPatternsPanel extends JPanel {
     }
 
     public boolean isCellEditable(int row, int col) {
-      return true;
+      return col == 0;
     }
 
     public void setValueAt(Object aValue, int row, int col) {
@@ -148,6 +185,7 @@ class ClassPatternsPanel extends JPanel {
     @Override
     public void removeRow(int idx) {
       myModifiedPatterns.remove(idx);
+      fireTableRowsDeleted(idx, idx);
     }
   }
 }

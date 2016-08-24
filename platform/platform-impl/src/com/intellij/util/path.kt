@@ -151,6 +151,19 @@ fun Path.writeSafe(data: ByteArray, offset: Int = 0, size: Int = data.size): Pat
   return this
 }
 
+fun Path.writeSafe(outConsumer: (OutputStream) -> Unit): Path {
+  val tempFile = parent.resolve("${fileName}.${UUID.randomUUID()}.tmp")
+  tempFile.outputStream().use(outConsumer)
+  try {
+    Files.move(tempFile, this, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+  }
+  catch (e: IOException) {
+    LOG.warn(e)
+    FileUtil.rename(tempFile.toFile(), this.toFile())
+  }
+  return this
+}
+
 fun Path.write(data: String): Path {
   parent?.createDirectories()
 

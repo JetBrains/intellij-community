@@ -76,6 +76,10 @@ public class LibrariesModifiableModel implements LibraryTableBase.ModifiableMode
     removeLibraryEditor(library);
     final Library existingLibrary = myTable.getLibraryByName(library.getName());
     getLibrariesModifiableModel().removeLibrary(library);
+
+    final BaseLibrariesConfigurable configurable = ProjectStructureConfigurable.getInstance(myProject).getConfigurableFor(library);
+    configurable.removeLibraryNode(library);
+
     if (existingLibrary == library) {
       myRemovedLibraries.add(library);
     } else {

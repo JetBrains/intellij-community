@@ -155,10 +155,10 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
 
   @Nullable
   public static PsiField findPsiField(PsiManager manager, String externalName) {
-    int classNameDelimeter = externalName.lastIndexOf(' ');
-    if (classNameDelimeter > 0 && classNameDelimeter < externalName.length() - 1) {
-      final String className = externalName.substring(0, classNameDelimeter);
-      final String fieldName = externalName.substring(classNameDelimeter + 1);
+    int classNameDelimiter = externalName.lastIndexOf(' ');
+    if (classNameDelimiter > 0 && classNameDelimiter < externalName.length() - 1) {
+      final String className = externalName.substring(0, classNameDelimiter);
+      final String fieldName = externalName.substring(classNameDelimiter + 1);
       final PsiClass psiClass = ClassUtil.findPsiClass(manager, className);
       if (psiClass != null) {
         return psiClass.findFieldByName(fieldName, false);

@@ -48,6 +48,11 @@
       <action id="PopupHector" class="com.intellij.codeInsight.daemon.impl.PopupHectorAction"/>
       <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction"/>
 
+      <separator/>
+      <reference id="SliceBackward"/>
+      <reference id="SliceForward"/>
+      <separator/>
+
       <add-to-group group-id="CodeMenu" anchor="last"/>
     </group>
 

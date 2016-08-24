@@ -65,7 +65,7 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
   @NotNull
   public JobDescriptor[] getJobDescriptors(@NotNull GlobalInspectionContext context) {
     GlobalInspectionTool tool = getTool();
-    JobDescriptor[] additionalJobs = ObjectUtils.notNull(tool.getAdditionalJobs(), JobDescriptor.EMPTY_ARRAY);
+    JobDescriptor[] additionalJobs = ObjectUtils.notNull(tool.getAdditionalJobs(context), JobDescriptor.EMPTY_ARRAY);
     StdJobDescriptors stdJobDescriptors = context.getStdJobDescriptors();
     if (tool.isGraphNeeded()) {
       additionalJobs = additionalJobs.length == 0 ? stdJobDescriptors.BUILD_GRAPH_ONLY :

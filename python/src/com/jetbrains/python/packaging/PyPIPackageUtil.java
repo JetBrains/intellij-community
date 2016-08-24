@@ -20,9 +20,9 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -60,9 +60,7 @@ import java.util.stream.Collectors;
  */
 public class PyPIPackageUtil {
   private static final Logger LOG = Logger.getInstance(PyPIPackageUtil.class);
-  private static final Gson GSON = new GsonBuilder()
-    .setFieldNamingStrategy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
-    .create();
+  private static final Gson GSON = new GsonBuilder().create();
   
   private static final String PYPI_HOST = "https://pypi.python.org";
   public static final String PYPI_URL = PYPI_HOST + "/pypi";
@@ -470,11 +468,20 @@ public class PyPIPackageUtil {
   @SuppressWarnings("FieldMayBeFinal")
   public static final class PackageDetails {
     public static final class Info {
+      // We have to explicitly name each of the fields instead of just using 
+      // GsonBuilder#setFieldNamingStrategy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES),
+      // since otherwise GSON wouldn't be able to deserialize server responses
+      // in the professional edition of PyCharm where the names of private fields 
+      // are obfuscated.  
+      @SerializedName("version")
       private String version = "";
+      @SerializedName("author")
       private String author = "";
-
+      @SerializedName("author_email")
       private String authorEmail = "";
+      @SerializedName("home_page")
       private String homePage = "";
+      @SerializedName("summary")
       private String summary = "";
 
       
@@ -504,7 +511,9 @@ public class PyPIPackageUtil {
       }
     }
 
+    @SerializedName("info")
     private Info info = new Info();
+    @SerializedName("releases")
     private Map<String, Object> releases = Collections.emptyMap();
 
     @NotNull

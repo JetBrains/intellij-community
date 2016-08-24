@@ -18,5 +18,6 @@
     <orderEntry type="module" module-name="resources-en" />
     <orderEntry type="module" module-name="xml-psi-impl" />
     <orderEntry type="library" exported="" name="ASM" level="project" />
+    <orderEntry type="module" module-name="platform-impl" />
   </component>
 </module>

@@ -108,7 +108,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
     }
 
     myTypes = types;
-    return types;
+    return types.clone();
   }
 
   @NotNull

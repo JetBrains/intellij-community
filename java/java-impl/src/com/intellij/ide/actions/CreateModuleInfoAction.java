@@ -17,6 +17,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeView;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
@@ -33,6 +34,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 import java.util.Properties;
@@ -56,6 +58,13 @@ public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
       .map(module -> FilenameIndex.getVirtualFilesByName(module.getProject(), MODULE_INFO_FILE, new ModulesScope(module)).isEmpty())
       .orElse(false);
     e.getPresentation().setEnabledAndVisible(available);
+  }
+
+  @Nullable
+  @Override
+  protected PsiDirectory getTargetDirectory(DataContext dataContext, IdeView view) {
+    PsiDirectory[] directories = view.getDirectories();
+    return directories.length == 1 ? directories[0] : null;
   }
 
   @Override

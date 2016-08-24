@@ -218,9 +218,13 @@ class PostHighlightingVisitor {
     if (parent instanceof PsiField && compareVisibilities((PsiModifierListOwner)parent, myUnusedSymbolInspection.getFieldVisibility())) {
       return processField(myProject, (PsiField)parent, identifier, progress, helper);
     }
-    if (parent instanceof PsiParameter && compareVisibilities((PsiModifierListOwner)parent, myUnusedSymbolInspection.getParameterVisibility())) {
-      if (SuppressionUtil.isSuppressed(identifier, UnusedSymbolLocalInspectionBase.UNUSED_PARAMETERS_SHORT_NAME)) return null;
-      return processParameter(myProject, (PsiParameter)parent, identifier, progress);
+    if (parent instanceof PsiParameter) {
+      final PsiElement declarationScope = ((PsiParameter)parent).getDeclarationScope();
+      if (declarationScope instanceof PsiMethod ? compareVisibilities((PsiModifierListOwner)declarationScope, myUnusedSymbolInspection.getParameterVisibility())
+                                                : myUnusedSymbolInspection.LOCAL_VARIABLE) {
+        if (SuppressionUtil.isSuppressed(identifier, UnusedSymbolLocalInspectionBase.UNUSED_PARAMETERS_SHORT_NAME)) return null;
+        return processParameter(myProject, (PsiParameter)parent, identifier, progress);
+      }
     }
     if (parent instanceof PsiMethod) {
       if (myUnusedSymbolInspection.isIgnoreAccessors() && PropertyUtil.isSimplePropertyAccessor((PsiMethod)parent)) {
@@ -230,8 +234,12 @@ class PostHighlightingVisitor {
         return processMethod(myProject, (PsiMethod)parent, identifier, progress, helper);
       }
     }
-    if (parent instanceof PsiClass && compareVisibilities((PsiModifierListOwner)parent, myUnusedSymbolInspection.getClassVisibility())) {
-      return processClass(myProject, (PsiClass)parent, identifier, progress, helper);
+    if (parent instanceof PsiClass) {
+      final String acceptedVisibility = ((PsiClass)parent).getContainingClass() == null ? myUnusedSymbolInspection.getClassVisibility()
+                                                                                        : myUnusedSymbolInspection.getInnerClassVisibility();
+      if (compareVisibilities((PsiModifierListOwner)parent, acceptedVisibility)) {
+        return processClass(myProject, (PsiClass)parent, identifier, progress, helper);
+      }
     }
     return null;
   }

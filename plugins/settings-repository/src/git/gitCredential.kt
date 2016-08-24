@@ -18,7 +18,6 @@ package org.jetbrains.settingsRepository.git
 import com.intellij.credentialStore.Credentials
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.ProcessNotCreatedException
-import com.intellij.openapi.util.text.StringUtil
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.transport.URIish
 import org.jetbrains.settingsRepository.LOG
@@ -26,7 +25,7 @@ import org.jetbrains.settingsRepository.LOG
 private var canUseGitExe = true
 
 // https://www.kernel.org/pub/software/scm/git/docs/git-credential.html
-fun getCredentialsUsingGit(uri: URIish, repository: Repository): Credentials? {
+internal fun getCredentialsUsingGit(uri: URIish, repository: Repository): Credentials? {
   if (!canUseGitExe || repository.config.getSubsections("credential").isEmpty()) {
     return null
   }
@@ -45,9 +44,9 @@ fun getCredentialsUsingGit(uri: URIish, repository: Repository): Credentials? {
   writer.write("url=")
   writer.write(uri.toPrivateString())
   writer.write("\n\n")
-  writer.close();
+  writer.close()
 
-  val reader = process.inputStream.reader().buffered()
+  val reader = process.inputStream.bufferedReader()
   var username: String? = null
   var password: String? = null
   while (true) {
@@ -68,7 +67,7 @@ fun getCredentialsUsingGit(uri: URIish, repository: Repository): Credentials? {
   reader.close()
 
   val errorText = process.errorStream.reader().readText()
-  if (!StringUtil.isEmpty(errorText)) {
+  if (errorText.isNotEmpty()) {
     LOG.warn(errorText)
   }
   return if (username == null && password == null) null else Credentials(username, password)

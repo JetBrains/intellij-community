@@ -45,13 +45,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 @State(name = "EntryPointsManager")
 public abstract class EntryPointsManagerBase extends EntryPointsManager implements PersistentStateComponent<Element> {
   @NonNls private static final String[] STANDARD_ANNOS = {
     "javax.ws.rs.*",
   };
-  private static final String PATTERN_SUFFIX = ".*";
 
   // null means uninitialized
   private volatile List<String> ADDITIONAL_ANNOS;
@@ -74,7 +74,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   }
   public JDOMExternalizableStringList ADDITIONAL_ANNOTATIONS = new JDOMExternalizableStringList();
   private final Map<String, SmartRefElementPointer> myPersistentEntryPoints;
-  private final List<ClassPattern> myPatterns = new ArrayList<>();
+  private final LinkedHashSet<ClassPattern> myPatterns = new LinkedHashSet<>();
   private final Set<RefElement> myTemporaryEntryPoints;
   private static final String VERSION = "2.0";
   @NonNls private static final String VERSION_ATTR = "version";
@@ -220,7 +220,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   public void addEntryPoint(@NotNull RefElement newEntryPoint, boolean isPersistent) {
     if (!newEntryPoint.isValid()) return;
     if (isPersistent) {
-      if (newEntryPoint instanceof RefMethod && ((RefMethod)newEntryPoint).isConstructor() || newEntryPoint instanceof RefClass) {
+      if (newEntryPoint instanceof RefImplicitConstructor || newEntryPoint instanceof RefClass) {
         final ClassPattern classPattern = new ClassPattern();
         classPattern.pattern = new SmartRefElementPointerImpl(newEntryPoint, true).getFQName();
         getPatterns().add(classPattern);
@@ -458,7 +458,8 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
       return true;
     }
 
-    if (pattern.pattern.endsWith(PATTERN_SUFFIX) && qualifiedName.startsWith(StringUtil.trimEnd(pattern.pattern, PATTERN_SUFFIX))) {
+    final Pattern regexp = pattern.getRegexp();
+    if (regexp != null && regexp.matcher(qualifiedName).matches()) {
       return true;
     }
 
@@ -473,16 +474,33 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     return false;
   }
 
-  public List<ClassPattern> getPatterns() {
+  public LinkedHashSet<ClassPattern> getPatterns() {
     return myPatterns;
   }
 
   @Tag("pattern")
   public static class ClassPattern {
     @Attribute("value")
-    public String pattern;
+    public String pattern = "";
     @Attribute("hierarchically")
     public boolean hierarchically = false;
+
+    private Pattern regexp;
+
+    public ClassPattern(ClassPattern classPattern) {
+      hierarchically = classPattern.hierarchically;
+      pattern = classPattern.pattern;
+    }
+
+    public ClassPattern() {}
+
+    @Nullable
+    public Pattern getRegexp() {
+      if (regexp == null && pattern.contains("*")) {
+        regexp = Pattern.compile(pattern);
+      }
+      return regexp;
+    }
 
     @Override
     public boolean equals(Object o) {

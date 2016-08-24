@@ -17,6 +17,7 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ProjectTopics;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
@@ -44,6 +45,8 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.preview.PreviewManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.*;
@@ -666,7 +669,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     }
     assertDispatchThread();
 
-    if (isOpenInNewWindow(EventQueue.getCurrentEvent())) {
+    if (isOpenInNewWindow()) {
       return openFileInNewWindow(file);
     }
 
@@ -715,7 +718,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     return ((DockManagerImpl)DockManager.getInstance(getProject())).createNewDockContainerFor(file, this);
   }
 
-  private static boolean isOpenInNewWindow(AWTEvent event) {
+  private static boolean isOpenInNewWindow() {
+    AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
+
     // Shift was used while clicking
     if (event instanceof MouseEvent &&
         ((MouseEvent)event).isShiftDown() &&
@@ -725,10 +730,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       return true;
     }
 
-    // Shift + Enter
-    return event instanceof KeyEvent
-           && ((KeyEvent)event).getKeyCode() == KeyEvent.VK_ENTER
-           && ((KeyEvent)event).isShiftDown();
+    if (event instanceof KeyEvent) {
+      KeyEvent ke = (KeyEvent)event;
+      Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
+      String[] ids = keymap.getActionIds(KeyStroke.getKeyStroke(ke.getKeyCode(), ke.getModifiers()));
+      return Arrays.asList(ids).contains("OpenElementInNewWindow");
+    }
+
+    return false;
   }
 
   private void openAssociatedFile(VirtualFile file, EditorWindow wndToOpenIn, @NotNull EditorsSplitters splitters) {

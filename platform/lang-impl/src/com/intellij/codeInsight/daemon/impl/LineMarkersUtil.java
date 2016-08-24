@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,18 +44,16 @@ class LineMarkersUtil {
   private static final Logger LOG = Logger.getInstance(LineMarkersUtil.class);
 
   static boolean processLineMarkers(@NotNull Project project,
-                             @NotNull Document document,
-                             @NotNull Segment bounds,
-                             int group, // -1 for all
-                             @NotNull Processor<LineMarkerInfo> processor) {
+                                    @NotNull Document document,
+                                    @NotNull Segment bounds,
+                                    int group, // -1 for all
+                                    @NotNull Processor<LineMarkerInfo> processor) {
     MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     return markupModel.processRangeHighlightersOverlappingWith(bounds.getStartOffset(), bounds.getEndOffset(),
-                                                        highlighter -> {
-                                                          LineMarkerInfo info = getLineMarkerInfo(highlighter);
-                                                          if (info == null) return true;
-                                                          if (group != -1 && info.updatePass != group) return true;
-                                                          return processor.process(info);
-                                                        }
+         highlighter -> {
+           LineMarkerInfo info = getLineMarkerInfo(highlighter);
+           return info == null || group != -1 && info.updatePass != group || processor.process(info);
+         }
     );
   }
 
@@ -100,6 +98,7 @@ class LineMarkersUtil {
   }
 
   private static final Key<LineMarkerInfo> LINE_MARKER_INFO = Key.create("LINE_MARKER_INFO");
+  @NotNull
   private static RangeHighlighter createOrReuseLineMarker(@NotNull LineMarkerInfo info,
                                                           @NotNull MarkupModel markupModel,
                                                           @Nullable HighlightersRecycler toReuse) {
@@ -137,10 +136,14 @@ class LineMarkersUtil {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
+    LineMarkerInfo[] markerInTheWay = {null};
     boolean allIsClear = markupModel.processRangeHighlightersOverlappingWith(marker.startOffset, marker.endOffset,
-                                                                             highlighter -> getLineMarkerInfo(highlighter) == null);
+            highlighter -> (markerInTheWay[0] = getLineMarkerInfo(highlighter)) == null);
     if (allIsClear) {
       createOrReuseLineMarker(marker, markupModel, null);
+    }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("LineMarkersUtil.addLineMarkerToEditorIncrementally: "+marker+" "+(allIsClear ? "created" : " (was not added because "+markerInTheWay[0] +" was in the way)"));
     }
   }
 

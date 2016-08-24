@@ -108,7 +108,7 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
       myInnerClassesCheckBox.addActionListener(listener);
       myAccessors.addActionListener(listener);
 
-      ((MyLabel)myClassVisibilityCb).setupVisibilityLabel(() -> myClassVisibility, modifier -> setClassVisibility(modifier), new String[]{PsiModifier.PUBLIC, PsiModifier.PACKAGE_LOCAL});
+      ((MyLabel)myClassVisibilityCb).setupVisibilityLabel(() -> myClassVisibility, modifier -> setClassVisibility(modifier), new String[]{PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC});
       ((MyLabel)myInnerClassVisibilityCb).setupVisibilityLabel(() -> myInnerClassVisibility, modifier -> setInnerClassVisibility(modifier));
       ((MyLabel)myFieldVisibilityCb).setupVisibilityLabel(() -> myFieldVisibility, modifier -> setFieldVisibility(modifier));
       ((MyLabel)myMethodVisibilityCb).setupVisibilityLabel(() -> myMethodVisibility, modifier -> setMethodVisibility(modifier));
@@ -146,7 +146,7 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
   private static class MyLabel extends JLabel implements UserActivityProviderComponent {
 
     @PsiModifier.ModifierConstant private static final String[] MODIFIERS =
-      new String[]{PsiModifier.PUBLIC, PsiModifier.PROTECTED, PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE};
+      new String[]{PsiModifier.PRIVATE, PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED, PsiModifier.PUBLIC};
     private final Supplier<Boolean> myCanBeEnabled;
 
     private Set<ChangeListener> myListeners = new HashSet<>();
@@ -178,6 +178,7 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
       new ClickListener() {
         @Override
         public boolean onClick(@NotNull MouseEvent e, int clickCount) {
+          if (!isEnabled()) return true;
           @SuppressWarnings("UseOfObsoleteCollectionType")
           Hashtable<Integer, JComponent> sliderLabels = new Hashtable<>();
           for (int i = 0; i < modifiers.length; i++) {
@@ -185,6 +186,12 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
           }
 
           JSlider slider = new JSlider(SwingConstants.VERTICAL, 1, modifiers.length, 1);
+          slider.addChangeListener(val -> {
+            final String modifier = modifiers[slider.getValue() - 1];
+            setter.consume(modifier);
+            setText(getPresentableText(modifier));
+            fireStateChanged();
+          });
           slider.setLabelTable(sliderLabels);
           slider.putClientProperty(UIUtil.JSLIDER_ISFILLED, Boolean.TRUE);
           slider.setPreferredSize(JBUI.size(150, modifiers.length * 25));
@@ -193,17 +200,10 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
           slider.setValue(ArrayUtil.find(modifiers, visibilityProducer.produce()) + 1);
           final JBPopup popup = JBPopupFactory.getInstance()
             .createComponentPopupBuilder(slider, null)
+            .setTitle("Effective Visibility")
             .setCancelOnClickOutside(true)
+            .setMovable(true)
             .createPopup();
-          popup.addListener(new JBPopupAdapter() {
-            @Override
-            public void onClosed(LightweightWindowEvent event) {
-              final String modifier = modifiers[slider.getValue() - 1];
-              setter.consume(modifier);
-              setText(getPresentableText(modifier));
-              fireStateChanged();
-            }
-          });
           popup.show(new RelativePoint(MyLabel.this, new Point(getWidth(), 0)));
           return true;
         }

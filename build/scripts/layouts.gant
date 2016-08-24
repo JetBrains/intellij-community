@@ -898,6 +898,11 @@ def layoutJps(String home, String targetDir, String buildNumber, Closure additio
 
 
       jar("maven-jps-plugin.jar") { module("maven-jps-plugin") }
+      jar("aether-dependency-resolver.jar") { module("aether-dependency-resolver") }
+      fileset(dir: "$home/plugins/maven/lib") {
+        include(name: "aether-*.jar")
+        include(name: "maven-aether-provider-*.jar")
+      }
       jar("gradle-jps-plugin.jar") { module("gradle-jps-plugin") }
       fileset(dir: "$home/plugins/maven/maven30-server-impl/lib/maven3/lib") {include(name: "plexus-utils-*.jar")}
 

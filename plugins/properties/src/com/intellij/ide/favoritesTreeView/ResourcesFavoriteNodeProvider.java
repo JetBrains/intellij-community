@@ -38,11 +38,6 @@ import java.util.Collection;
 import java.util.List;
 
 public class ResourcesFavoriteNodeProvider extends FavoriteNodeProvider {
-  private final Project myProject;
-
-  public ResourcesFavoriteNodeProvider(Project project) {
-    myProject = project;
-  }
 
   public Collection<AbstractTreeNode> getFavoriteNodes(final DataContext context, final ViewSettings viewSettings) {
     final Project project = CommonDataKeys.PROJECT.getData(context);

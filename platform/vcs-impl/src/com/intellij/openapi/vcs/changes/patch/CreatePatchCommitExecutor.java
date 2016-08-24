@@ -165,43 +165,23 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
       final File file = new File(fileName).getAbsoluteFile();
       if (file.exists()) {
         final int[] result = new int[1];
-        WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(new Runnable() {
-          @Override
-          public void run() {
-            result[0] = Messages.showYesNoDialog(myProject, "File " + file.getName() + " (" + file.getParent() + ")" +
-                                                            " already exists.\nDo you want to overwrite it?",
-                                                 CommonBundle.getWarningTitle(), Messages.getWarningIcon());
-          }
-        });
+        WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(
+          () -> result[0] = Messages.showYesNoDialog(myProject, "File " + file.getName() + " (" + file.getParent() + ")" +
+                                                                " already exists.\nDo you want to overwrite it?",
+                                                     CommonBundle.getWarningTitle(), Messages.getWarningIcon()));
         if (Messages.NO == result[0]) return;
       }
       if (file.getParentFile() == null) {
-        WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-          @Override
-          public void run() {
-            Messages.showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", "Can not write patch to specified file: " +
-                                                                                              file.getPath()), CommonBundle.getErrorTitle());
-          }
-        }, ModalityState.NON_MODAL, myProject);
-        return;
-      }
-
-      int binaryCount = 0;
-      for(Change change: changes) {
-        if (ChangesUtil.isBinaryChange(change)) {
-          binaryCount++;
-        }
-      }
-      if (binaryCount == changes.size()) {
-        WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-          public void run() {
-            Messages.showInfoMessage(myProject, VcsBundle.message("create.patch.all.binary"),
-                                     VcsBundle.message("create.patch.commit.action.title"));
-          }
-        }, null, myProject);
+        WaitForProgressToShow.runOrInvokeLaterAboveProgress(() ->
+                                                              Messages.showErrorDialog(myProject, VcsBundle
+                                                                .message("create.patch.error.title",
+                                                                         "Can not write patch to specified file: " +
+                                                                         file.getPath()), CommonBundle.getErrorTitle()),
+                                                            ModalityState.NON_MODAL, myProject);
         return;
       }
       try {
+        //noinspection ResultOfMethodCallIgnored
         file.getParentFile().mkdirs();
         VcsConfiguration.getInstance(myProject).acceptLastCreatedPatchName(file.getName());
         PATCH_PATH = file.getParent();
@@ -210,38 +190,25 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
 
         String baseDirName = myPanel.getBaseDirName();
         List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, changes, baseDirName, reversePatch);
-        PatchWriter.writePatches(myProject, fileName, baseDirName, patches, myCommitContext, myPanel.getEncoding());
-        final String message;
-        if (binaryCount == 0) {
-          message = VcsBundle.message("create.patch.success.confirmation", file.getPath());
-        }
-        else {
-          message = VcsBundle.message("create.patch.partial.success.confirmation", file.getPath(),
-                                      binaryCount);
-        }
-        WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-          public void run() {
-            final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
-            if (Boolean.TRUE.equals(configuration.SHOW_PATCH_IN_EXPLORER)) {
-              ShowFilePathAction.openFile(file);
-            } else if (Boolean.FALSE.equals(configuration.SHOW_PATCH_IN_EXPLORER)) {
-              return;
-            } else {
-              configuration.SHOW_PATCH_IN_EXPLORER =
-                ShowFilePathAction.showDialog(myProject, message, VcsBundle.message("create.patch.commit.action.title"), file);
-            }
+        PatchWriter.writePatches(myProject, fileName, baseDirName, patches, myCommitContext, myPanel.getEncoding(), true);
+        WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> {
+          final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
+          if (Boolean.TRUE.equals(configuration.SHOW_PATCH_IN_EXPLORER)) {
+            ShowFilePathAction.openFile(file);
+          }
+          else if (configuration.SHOW_PATCH_IN_EXPLORER == null) {
+            configuration.SHOW_PATCH_IN_EXPLORER =
+              ShowFilePathAction.showDialog(myProject, VcsBundle.message("create.patch.success.confirmation", file.getPath()),
+                                            VcsBundle.message("create.patch.commit.action.title"), file);
           }
         }, null, myProject);
       } catch (ProcessCanceledException e) {
         //
       } catch (final Exception ex) {
         LOG.info(ex);
-        WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-          public void run() {
-            Messages.showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", ex.getMessage()),
-                                     CommonBundle.getErrorTitle());
-          }
-        }, null, myProject);
+        WaitForProgressToShow.runOrInvokeLaterAboveProgress(
+          () -> Messages.showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", ex.getMessage()),
+                                         CommonBundle.getErrorTitle()), null, myProject);
       }
     }
 

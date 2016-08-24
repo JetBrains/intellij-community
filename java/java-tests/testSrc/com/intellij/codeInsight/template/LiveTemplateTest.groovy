@@ -1461,4 +1461,19 @@ class Foo {
 }
 """
   }
+
+  public void "test iterate over list with wildcard component type"() {
+    myFixture.configureByText 'a.java', '''class C {{
+java.util.List<? extends Integer> list;
+<caret>
+}}'''
+    myFixture.type('itli\t')
+    myFixture.checkResult '''class C {{
+java.util.List<? extends Integer> list;
+    for (int i = 0; i < list.size(); i++) {
+        Integer integer =  list.get(i);
+        
+    }
+}}'''
+  }
 }

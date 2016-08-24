@@ -324,7 +324,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     if (myForStubs) {
       File stubRoot = getStubRoot(context);
       if (stubRoot.exists() && !FileUtil.deleteWithRenaming(stubRoot)) {
-        context.processMessage(new CompilerMessage(myBuilderName, BuildMessage.Kind.ERROR, "External make cannot clean " + stubRoot.getPath()));
+        context.processMessage(new CompilerMessage(myBuilderName, BuildMessage.Kind.ERROR, "External build cannot clean " + stubRoot.getPath()));
       }
     }
   }
@@ -342,10 +342,10 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     for (ModuleBuildTarget target : chunk.getTargets()) {
       File targetRoot = new File(commonRoot, target.getModule().getName() + File.separator + target.getTargetType().getTypeId());
       if (targetRoot.exists() && !FileUtil.deleteWithRenaming(targetRoot)) {
-        throw new IOException("External make cannot clean " + targetRoot.getPath());
+        throw new IOException("External build cannot clean " + targetRoot.getPath());
       }
       if (!targetRoot.mkdirs()) {
-        throw new IOException("External make cannot create " + targetRoot.getPath());
+        throw new IOException("External build cannot create " + targetRoot.getPath());
       }
       generationOutputs.put(target, targetRoot.getPath());
     }

@@ -247,17 +247,20 @@ public class JrtFileSystem extends ArchiveFileSystem {
   }
 
   static FileSystem getFileSystem(String path) throws IOException {
-    FileSystem fs;
-    if (SystemInfo.isJavaVersionAtLeast("9")) {
-      fs = FileSystems.newFileSystem(ROOT_URI, Collections.singletonMap("java.home", path));
+    try {
+      if (SystemInfo.isJavaVersionAtLeast("9")) {
+        return FileSystems.newFileSystem(ROOT_URI, Collections.singletonMap("java.home", path));
+      }
+      else {
+        File file = new File(path, "jrt-fs.jar");
+        if (!file.exists()) throw new IOException("Missing provider: " + file);
+        URL url = file.toURI().toURL();
+        ClassLoader loader = new URLClassLoader(new URL[]{url}, null);
+        return FileSystems.newFileSystem(ROOT_URI, Collections.emptyMap(), loader);
+      }
     }
-    else {
-      File file = new File(path, "jrt-fs.jar");
-      if (!file.exists()) throw new IOException("Missing provider: " + file);
-      URL url = file.toURI().toURL();
-      ClassLoader loader = new URLClassLoader(new URL[]{url}, null);
-      fs = FileSystems.newFileSystem(ROOT_URI, Collections.emptyMap(), loader);
+    catch (Error e) {
+      throw new IOException("Error mounting JRT filesystem at " + path, e);
     }
-    return fs;
   }
 }

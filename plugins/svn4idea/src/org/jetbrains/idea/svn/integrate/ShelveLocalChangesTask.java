@@ -74,7 +74,8 @@ public class ShelveLocalChangesTask extends BaseMergeTask {
         // TODO: Could this be done once before for loop?
         saveAllDocuments();
 
-        shelveManager.shelveChanges(entry.getValue(), myIntersection.getComment(entry.getKey()) + " (auto shelve before merge)", true);
+        shelveManager
+          .shelveChanges(entry.getValue(), myIntersection.getComment(entry.getKey()) + " (auto shelve before merge)", true, true);
         // TODO: ChangesUtil.getFilesFromChanges() performs refresh of several files.
         // TODO: Check if logic of collecting files to refresh could be revised here.
         changedFiles.addAll(getAfterRevisionsFiles(entry.getValue().stream(), true).collect(toList()));

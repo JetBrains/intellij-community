@@ -23,12 +23,16 @@ import org.junit.Test
 import java.math.BigInteger
 import java.util.*
 
+private const val TEST_SERVICE_NAME = "IntelliJ Platform Test"
+
+// part of specific tests in the IcsCredentialTest
 class FileCredentialStoreTest {
+  // we don't use in memory fs to check real file io
   private val tempDirManager = TemporaryDirectory()
 
-    @Rule
-    @JvmField
-    val ruleChain = RuleChain(tempDirManager)
+  @Rule
+  @JvmField
+  val ruleChain = RuleChain(tempDirManager)
 
   @Test
   fun many() {
@@ -38,7 +42,8 @@ class FileCredentialStoreTest {
     assertThat(baseDir).doesNotExist()
     val random = Random()
     for (i in 0..9) {
-      provider.setPassword(BigInteger(8 * 16, random).toString(), BigInteger(8 * 16, random).toString())
+      val accountName = BigInteger(8 * 16, random).toString()
+      provider.set(CredentialAttributes(TEST_SERVICE_NAME, accountName), Credentials(accountName, BigInteger(8 * 16, random).toString()))
     }
 
     provider.save()
@@ -46,13 +51,11 @@ class FileCredentialStoreTest {
 
     provider.deleteFileStorage()
 
-    val pdbFile = baseDir.resolve("pdb")
+    val pdbFile = baseDir.resolve("c.kdbx")
     val pdbPwdFile = baseDir.resolve("pdb.pwd")
-    val pdbPwdTmpFile = baseDir.resolve("pdb.pwd.tmp")
 
     assertThat(pdbFile).doesNotExist()
     assertThat(pdbPwdFile).doesNotExist()
-    assertThat(pdbPwdTmpFile).doesNotExist()
   }
 
   @Test
@@ -61,54 +64,48 @@ class FileCredentialStoreTest {
     var provider = FileCredentialStore(baseDirectory = baseDir)
 
     assertThat(baseDir).doesNotExist()
-    assertThat(provider.getPassword("foo")).isNull()
+    val fooAttributes = CredentialAttributes(TEST_SERVICE_NAME, "foo")
+    assertThat(provider.get(fooAttributes)).isNull()
 
-    provider.setPassword("foo", "pass")
+    provider.setPassword(fooAttributes, "pass")
 
     assertThat(baseDir).doesNotExist()
 
-    val pdbFile = baseDir.resolve("pdb")
+    val pdbFile = baseDir.resolve("c.kdbx")
     val pdbPwdFile = baseDir.resolve("pdb.pwd")
-    val pdbPwdTmpFile = baseDir.resolve("pdb.pwd.tmp")
 
     provider.save()
 
     assertThat(pdbFile).isRegularFile()
     assertThat(pdbPwdFile).isRegularFile()
-    assertThat(pdbPwdTmpFile).doesNotExist()
 
-    provider.setPassword("am", "pass2")
+    val amAttributes = CredentialAttributes(TEST_SERVICE_NAME, "am")
+    provider.setPassword(amAttributes, "pass2")
 
-    assertThat(provider.getPassword("foo")).isEqualTo("pass")
-    assertThat(provider.getPassword("am")).isEqualTo("pass2")
+    assertThat(provider.getPassword(fooAttributes)).isEqualTo("pass")
+    assertThat(provider.getPassword(amAttributes)).isEqualTo("pass2")
 
-    provider.setPassword("foo", null)
-    assertThat(provider.getPassword("foo")).isNull()
+    provider.setPassword(fooAttributes, null)
+    assertThat(provider.get(fooAttributes)).isNull()
 
     provider.save()
 
     assertThat(pdbFile).isRegularFile()
     assertThat(pdbPwdFile).isRegularFile()
-    assertThat(pdbPwdTmpFile).doesNotExist()
 
     provider = FileCredentialStore(baseDirectory = baseDir)
 
-    assertThat(provider.getPassword("foo")).isNull()
-    assertThat(provider.getPassword("am")).isEqualTo("pass2")
+    assertThat(provider.get(fooAttributes)).isNull()
+    assertThat(provider.getPassword(amAttributes)).isEqualTo("pass2")
 
-    provider.setPassword("am", null)
-    assertThat(provider.getPassword("am")).isNull()
+    provider.setPassword(amAttributes, null)
+    assertThat(provider.get(amAttributes)).isNull()
 
     provider.save()
-
-    assertThat(pdbFile).doesNotExist()
-    assertThat(pdbPwdFile).doesNotExist()
-    assertThat(pdbPwdTmpFile).doesNotExist()
 
     provider.deleteFileStorage()
 
     assertThat(pdbFile).doesNotExist()
     assertThat(pdbPwdFile).doesNotExist()
-    assertThat(pdbPwdTmpFile).doesNotExist()
   }
 }

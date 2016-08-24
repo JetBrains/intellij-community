@@ -67,6 +67,9 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   private static final Object BLACK_LIST_LOCK = new Object();
   private Boolean myUseNewSerializer;
 
+  /**
+   * For global tools read-only, for local tools would be used instead getID for modules with alternative classpath storage
+   */
   @NonNls
   @Nullable
   public String getAlternativeID() {

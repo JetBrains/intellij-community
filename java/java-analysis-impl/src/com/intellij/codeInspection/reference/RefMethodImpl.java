@@ -402,8 +402,6 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
     // Class isn't instantiated. Most probably we have problem with class, not method.
     if (!isStatic() && !isConstructor()) {
-      if (((RefClassImpl)getOwnerClass()).isSuspicious()) return true;
-
       // Is an override. Probably called via reference to base class.
       for (RefMethod refSuper : getSuperMethods()) {
         if (((RefMethodImpl)refSuper).isSuspicious()) return true;

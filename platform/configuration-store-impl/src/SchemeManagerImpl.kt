@@ -468,6 +468,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
               val dataHolder = SchemeDataHolderImpl(bytes, externalInfo)
               scheme = processor.createScheme(dataHolder, schemeName, attributeProvider)
               schemeToInfo.put(scheme, externalInfo)
+              this.filesToDelete.remove(fileName)
               break@read
             }
           }
@@ -485,6 +486,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       }
 
       schemeToInfo.put(scheme, createInfo(schemeName, element))
+      this.filesToDelete.remove(fileName)
     }
 
     @Suppress("UNCHECKED_CAST")

@@ -61,7 +61,7 @@ import java.util.concurrent.ExecutorService;
  * @author peter
  */
 public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
-  private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(1);
+  private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("MvcModuleStructureSynchronizer pool",1);
   private final Set<Pair<Object, SyncAction>> myOrders = new LinkedHashSet<>();
 
   private Set<VirtualFile> myPluginRoots = Collections.emptySet();

@@ -18,8 +18,8 @@ package com.intellij.psi.controlFlow;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ObjectIntHashMap;
 import com.intellij.util.containers.Stack;
-import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -29,8 +29,8 @@ class ControlFlowImpl implements ControlFlow {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.controlFlow.ControlFlowImpl");
 
   private final List<Instruction> myInstructions = new ArrayList<Instruction>();
-  private final TObjectIntHashMap<PsiElement> myElementToStartOffsetMap = new TObjectIntHashMap<PsiElement>();
-  private final TObjectIntHashMap<PsiElement> myElementToEndOffsetMap = new TObjectIntHashMap<PsiElement>();
+  private final ObjectIntHashMap<PsiElement> myElementToStartOffsetMap = new ObjectIntHashMap<PsiElement>();
+  private final ObjectIntHashMap<PsiElement> myElementToEndOffsetMap = new ObjectIntHashMap<PsiElement>();
   private final List<PsiElement> myElementsForInstructions = new ArrayList<PsiElement>();
   private boolean myConstantConditionOccurred;
 
@@ -64,20 +64,12 @@ class ControlFlowImpl implements ControlFlow {
 
   @Override
   public int getStartOffset(@NotNull PsiElement element) {
-    int value = myElementToStartOffsetMap.get(element);
-    if (value == 0){
-      if (!myElementToStartOffsetMap.containsKey(element)) return -1;
-    }
-    return value;
+    return myElementToStartOffsetMap.get(element, -1);
   }
 
   @Override
   public int getEndOffset(@NotNull PsiElement element) {
-    int value = myElementToEndOffsetMap.get(element);
-    if (value == 0){
-      if (!myElementToEndOffsetMap.containsKey(element)) return -1;
-    }
-    return value;
+    return myElementToEndOffsetMap.get(element, -1);
   }
 
   @Override

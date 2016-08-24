@@ -144,26 +144,24 @@ public class RollbackWorker {
 
       final List<Change> changesToRefresh = new ArrayList<>();
       try {
-        ChangesUtil.processChangesByVcs(myProject, myChanges, new ChangesUtil.PerVcsProcessor<Change>() {
-          public void process(AbstractVcs vcs, List<Change> changes) {
-            final RollbackEnvironment environment = vcs.getRollbackEnvironment();
-            if (environment != null) {
-              changesToRefresh.addAll(changes);
+        ChangesUtil.processChangesByVcs(myProject, myChanges, (vcs, changes) -> {
+          final RollbackEnvironment environment = vcs.getRollbackEnvironment();
+          if (environment != null) {
+            changesToRefresh.addAll(changes);
 
-              if (myIndicator != null) {
-                myIndicator.setText(vcs.getDisplayName() + ": performing " + StringUtil.toLowerCase(myOperationName) + "...");
-                myIndicator.setIndeterminate(false);
-                myIndicator.checkCanceled();
-              }
-              environment.rollbackChanges(changes, myExceptions, new RollbackProgressModifier(changes.size(), myIndicator));
-              if (myIndicator != null) {
-                myIndicator.setText2("");
-                myIndicator.checkCanceled();
-              }
+            if (myIndicator != null) {
+              myIndicator.setText(vcs.getDisplayName() + ": performing " + StringUtil.toLowerCase(myOperationName) + "...");
+              myIndicator.setIndeterminate(false);
+              myIndicator.checkCanceled();
+            }
+            environment.rollbackChanges(changes, myExceptions, new RollbackProgressModifier(changes.size(), myIndicator));
+            if (myIndicator != null) {
+              myIndicator.setText2("");
+              myIndicator.checkCanceled();
+            }
 
-              if (myExceptions.isEmpty() && myDeleteLocallyAddedFiles) {
-                deleteAddedFilesLocally(changes);
-              }
+            if (myExceptions.isEmpty() && myDeleteLocallyAddedFiles) {
+              deleteAddedFilesLocally(changes);
             }
           }
         });

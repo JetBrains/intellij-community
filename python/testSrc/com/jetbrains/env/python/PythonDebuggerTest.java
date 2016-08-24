@@ -1011,6 +1011,23 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
+  @Test
+  @Staging
+  public void testShowReferringObjects() throws Exception {
+    runPythonTest(new PyDebuggerTask("/debug", "test_ref.py") {
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getFilePath(getScriptName()), 3);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        int numberOfReferringObjects = getNumberOfReferringObjects("l");
+        assertEquals(3, numberOfReferringObjects);
+      }
+    });
+  }
 
   //TODO: fix me as I don't work properly sometimes (something connected with process termination on agent)
   @Staging

@@ -49,8 +49,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
@@ -77,7 +75,6 @@ import java.util.*;
 import java.util.function.Predicate;
 
 public class UnusedDeclarationPresentation extends DefaultInspectionToolPresentation {
-  private final Map<String, Set<RefEntity>> myPackageContents = Collections.synchronizedMap(new HashMap<String, Set<RefEntity>>());
 
   private final Set<RefEntity> myIgnoreElements = ContainerUtil.newConcurrentSet(TObjectHashingStrategy.IDENTITY);
   private final Map<RefEntity, UnusedDeclarationHint> myFixedElements = ContainerUtil.newConcurrentMap(TObjectHashingStrategy.IDENTITY);
@@ -194,7 +191,11 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       }
     }
 
-    return showFixes ? myQuickFixActions : QuickFixAction.EMPTY;
+    if (showFixes) {
+      final QuickFixAction[] fixes = super.getQuickFixes(refElements, allowedDescriptors);
+      return fixes != null ? ArrayUtil.mergeArrays(fixes, myQuickFixActions) : myQuickFixActions;
+    }
+    return QuickFixAction.EMPTY;
   }
 
   final QuickFixAction[] myQuickFixActions;
@@ -216,10 +217,11 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       if (!super.applyFix(refElements)) return false;
       final PsiElement[] psiElements = Arrays
         .stream(refElements)
-        .filter(RefElement.class::isInstance)
+        .filter((obj) -> obj instanceof RefJavaElement && getFilter().accepts((RefJavaElement)obj))
         .map(e -> ((RefElement) e).getElement())
         .filter(e -> e != null)
         .toArray(PsiElement[]::new);
+      if (psiElements.length == 0) return false;
       ApplicationManager.getApplication().invokeLater(() -> {
         final Project project = getContext().getProject();
         if (isDisposed() || project.isDisposed()) return;
@@ -425,7 +427,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   @Override
   public void updateContent() {
     getTool().checkForReachableRefs(getContext());
-    myPackageContents.clear();
+    myContents.clear();
     final UnusedSymbolLocalInspectionBase localInspectionTool = getTool().getSharedLocalInspectionTool();
     getContext().getRefManager().iterate(new RefJavaVisitor() {
       @Override public void visitElement(@NotNull RefEntity refEntity) {
@@ -433,22 +435,20 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
         RefJavaElement refElement = (RefJavaElement)refEntity;
         if (!compareVisibilities(refElement, localInspectionTool)) return;
         if (!(getContext().getUIOptions().FILTER_RESOLVED_ITEMS && getIgnoredRefElements().contains(refElement)) && refElement.isValid() && getFilter().accepts(refElement)) {
-          String packageName = RefJavaUtil.getInstance().getPackageName(refEntity);
-          Set<RefEntity> content = myPackageContents.get(packageName);
-          if (content == null) {
-            content = new HashSet<>();
-            myPackageContents.put(packageName, content);
-          }
-          content.add(refEntity);
+          registerContentEntry(refEntity, RefJavaUtil.getInstance().getPackageName(refEntity));
         }
       }
     });
+    updateProblemElements();
   }
 
   @PsiModifier.ModifierConstant
   private static String getAcceptedVisibility(UnusedSymbolLocalInspectionBase tool, RefJavaElement element) {
+    if (element instanceof RefImplicitConstructor) {
+      element = ((RefImplicitConstructor)element).getOwnerClass();
+    }
     if (element instanceof RefClass) {
-      return tool.getClassVisibility();
+      return element.getOwner() instanceof RefClass ? tool.getInnerClassVisibility() : tool.getClassVisibility();
     }
     if (element instanceof RefField) {
       return tool.getFieldVisibility();
@@ -471,11 +471,15 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     return PsiModifier.PUBLIC;
   }
 
-  private static boolean compareVisibilities(RefJavaElement listOwner, UnusedSymbolLocalInspectionBase localInspectionTool) {
-    final String visibility = getAcceptedVisibility(localInspectionTool, listOwner);
-    if (visibility != null) {
+  protected static boolean compareVisibilities(RefJavaElement listOwner,
+                                               UnusedSymbolLocalInspectionBase localInspectionTool) {
+    return compareVisibilities(listOwner, getAcceptedVisibility(localInspectionTool, listOwner));
+  }
+
+  protected static boolean compareVisibilities(RefJavaElement listOwner, final String acceptedVisibility) {
+    if (acceptedVisibility != null) {
       while (listOwner != null) {
-        if (VisibilityUtil.compare(listOwner.getAccessModifier(), visibility) >= 0) {
+        if (VisibilityUtil.compare(listOwner.getAccessModifier(), acceptedVisibility) >= 0) {
           return true;
         }
         final RefEntity parent = listOwner.getOwner();
@@ -492,13 +496,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   @Override
   public boolean hasReportedProblems() {
-    return !myPackageContents.isEmpty();
-  }
-
-  @NotNull
-  @Override
-  public Map<String, Set<RefEntity>> getContent() {
-    return myPackageContents;
+    return !myContents.isEmpty() || super.hasReportedProblems();
   }
 
   @Override
@@ -515,7 +513,6 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   @Override
   public void cleanup() {
     super.cleanup();
-    myPackageContents.clear();
     myIgnoreElements.clear();
   }
 
@@ -558,6 +555,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       if (COMMENT.equals(hint)) {
         return new CommentOutFix(((ProblemDescriptor)descriptor).getPsiElement());
       }
+      return super.findQuickFixes(descriptor, hint);
     }
     return null;
   }

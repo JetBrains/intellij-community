@@ -75,7 +75,7 @@ import java.util.concurrent.ExecutorService;
 public class ExternalSystemNotificationManager implements Disposable {
   @NotNull private static final Key<Pair<NotificationSource, ProjectSystemId>> CONTENT_ID_KEY = Key.create("CONTENT_ID");
 
-  @NotNull private final ExecutorService myUpdater = SequentialTaskExecutor.createSequentialApplicationPoolExecutor();
+  @NotNull private final ExecutorService myUpdater = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("ExternalSystemNotificationManager pool");
 
   @NotNull private final Project myProject;
   @NotNull private final Set<Notification> myNotifications;

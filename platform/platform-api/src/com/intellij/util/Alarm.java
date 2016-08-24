@@ -135,7 +135,7 @@ public class Alarm implements Disposable {
                         // or pass to app pooled thread.
                         // have to restrict the number of running tasks because otherwise the (implicit) contract of
                         // "addRequests with the same delay are executed in order" will be broken
-                        AppExecutorUtil.createBoundedScheduledExecutorService(1);
+                        AppExecutorUtil.createBoundedScheduledExecutorService("Alarm pool",1);
 
     if (parentDisposable != null) {
       Disposer.register(parentDisposable, this);

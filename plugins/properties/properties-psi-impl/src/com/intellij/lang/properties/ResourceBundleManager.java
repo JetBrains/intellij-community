@@ -147,7 +147,7 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
             }
           }
           return;
-        };
+        }
         PsiFile psiFile = (PsiFile)child;
         if (!PropertiesImplUtil.canBePropertyFile(psiFile)) return;
 

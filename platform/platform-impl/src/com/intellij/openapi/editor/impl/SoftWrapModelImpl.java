@@ -56,8 +56,9 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since Jun 8, 2010 12:47:32 PM
  */
-public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedInternalDocumentListener, FoldingListener,
-                                          PropertyChangeListener, Dumpable, Disposable
+public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
+  implements SoftWrapModelEx, PrioritizedInternalDocumentListener, FoldingListener,
+             PropertyChangeListener, Dumpable, Disposable
 {
 
   /**
@@ -156,6 +157,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedInternalDo
     editor.addPropertyChangeListener(this, this);
 
     myApplianceManager.addListener(myDataMapper);
+    myEditor.getInlayModel().addListener(this, this);
   }
 
   private boolean areSoftWrapsEnabledInEditor() {
@@ -650,6 +652,19 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedInternalDo
     }
     else {
       executeSafely(myFoldProcessingEndTask);
+    }
+  }
+
+  @Override
+  public void onUpdated(@NotNull Inlay inlay) {
+    if (myEditor.getDocument().isInEventsHandling() || myEditor.getDocument().isInBulkUpdate()) return;
+    if (!isSoftWrappingEnabled()) {
+      myDirty = true;
+      return;
+    }
+    if (!myDirty) {
+      int offset = inlay.getOffset();
+      myApplianceManager.recalculate(Collections.singletonList(new TextRange(offset, offset)));
     }
   }
 

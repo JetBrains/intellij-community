@@ -142,7 +142,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     myProject = project;
     myEditor = editor;
     if (elements.length != 1 || !(elements[0] instanceof PsiBlockStatement)) {
-      myElements = elements.length == 1 && elements[0] instanceof PsiParenthesizedExpression 
+      myElements = elements.length == 1 && elements[0] instanceof PsiParenthesizedExpression
                    ? new PsiElement[] {PsiUtil.skipParenthesizedExprDown((PsiExpression)elements[0])} : elements;
       myEnclosingBlockStatement = null;
     }
@@ -229,7 +229,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     myControlFlowWrapper = new ControlFlowWrapper(myProject, codeFragment, myElements);
 
     try {
-      myExitStatements = myControlFlowWrapper.prepareExitStatements(myElements);
+      myExitStatements = myControlFlowWrapper.prepareExitStatements(myElements, codeFragment);
       if (myControlFlowWrapper.isGenerateConditionalExit()) {
         myGenerateConditionalExit = true;
       } else {

@@ -78,7 +78,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private final UpdateRequestsQueue myUpdater;
 
   private static final AtomicReference<Future> ourUpdateAlarm = new AtomicReference<>();
-  private final ScheduledExecutorService myScheduledExecutorService = AppExecutorUtil.createBoundedScheduledExecutorService(1);
+  private final ScheduledExecutorService myScheduledExecutorService = AppExecutorUtil.createBoundedScheduledExecutorService("ChangeListManagerImpl pool",1);
 
   private final Modifier myModifier;
 
@@ -290,7 +290,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       public void run() {
         synchronized (myDataLock) {
           if (myWorker.isEmpty()) {
-            final LocalChangeList list = myWorker.addChangeList(VcsBundle.message("changes.default.changelist.name"), null, null);
+            final LocalChangeList list = myWorker.addChangeList(LocalChangeList.DEFAULT_NAME, null, null);
             setDefaultChangeList(list);
 
             if (myIgnoredIdeaLevel.isEmpty()) {
@@ -1212,33 +1212,30 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                                                 @Nullable Consumer<List<Change>> changesConsumer) {
     final List<VcsException> exceptions = new ArrayList<>();
     final Set<VirtualFile> allProcessedFiles = new HashSet<>();
-    ChangesUtil.processVirtualFilesByVcs(myProject, files, new ChangesUtil.PerVcsProcessor<VirtualFile>() {
-      @Override
-      public void process(final AbstractVcs vcs, final List<VirtualFile> items) {
-        final CheckinEnvironment environment = vcs.getCheckinEnvironment();
-        if (environment != null) {
-          final Set<VirtualFile> descendants = getUnversionedDescendantsRecursively(items, statusChecker);
-          Set<VirtualFile> parents =
-            vcs.areDirectoriesVersionedItems() ? getUnversionedParents(items, statusChecker) : Collections.<VirtualFile>emptySet();
+    ChangesUtil.processVirtualFilesByVcs(myProject, files, (vcs, items) -> {
+      final CheckinEnvironment environment = vcs.getCheckinEnvironment();
+      if (environment != null) {
+        final Set<VirtualFile> descendants = getUnversionedDescendantsRecursively(items, statusChecker);
+        Set<VirtualFile> parents =
+          vcs.areDirectoriesVersionedItems() ? getUnversionedParents(items, statusChecker) : Collections.<VirtualFile>emptySet();
 
-          // it is assumed that not-added parents of files passed to scheduleUnversionedFilesForAddition() will also be added to vcs
-          // (inside the method) - so common add logic just needs to refresh statuses of parents
-          final List<VcsException> result = ContainerUtil.newArrayList();
-          ProgressManager.getInstance().run(new Task.Modal(myProject, "Adding files to VCS...", true) {
-            @Override
-            public void run(@NotNull ProgressIndicator indicator) {
-              indicator.setIndeterminate(true);
-              List<VcsException> exs = environment.scheduleUnversionedFilesForAddition(ContainerUtil.newArrayList(descendants));
-              if (exs != null) {
-                ContainerUtil.addAll(result, exs);
-              }
+        // it is assumed that not-added parents of files passed to scheduleUnversionedFilesForAddition() will also be added to vcs
+        // (inside the method) - so common add logic just needs to refresh statuses of parents
+        final List<VcsException> result = ContainerUtil.newArrayList();
+        ProgressManager.getInstance().run(new Task.Modal(myProject, "Adding files to VCS...", true) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            indicator.setIndeterminate(true);
+            List<VcsException> exs = environment.scheduleUnversionedFilesForAddition(ContainerUtil.newArrayList(descendants));
+            if (exs != null) {
+              ContainerUtil.addAll(result, exs);
             }
-          });
+          }
+        });
 
-          allProcessedFiles.addAll(descendants);
-          allProcessedFiles.addAll(parents);
-          exceptions.addAll(result);
-        }
+        allProcessedFiles.addAll(descendants);
+        allProcessedFiles.addAll(parents);
+        exceptions.addAll(result);
       }
     });
 

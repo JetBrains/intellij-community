@@ -910,7 +910,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
                                                  boolean loadContent) throws IOException, PatchSyntaxException {
     char[] text = FileUtil.loadFileText(new File(patchPath), CharsetToolkit.UTF8);
     PatchReader reader = new PatchReader(new CharArrayCharSequence(text), loadContent);
-    final List<TextFilePatch> textFilePatches = reader.readAllPatches();
+    final List<TextFilePatch> textFilePatches = reader.readTextPatches();
     final TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo = reader.getAdditionalInfo(
       null);
     ApplyPatchDefaultExecutor.applyAdditionalInfoBefore(project, additionalInfo, commitContext);

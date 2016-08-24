@@ -37,7 +37,10 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.CachedValueImpl;
+import com.intellij.util.FileContentUtil;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.*;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -154,8 +157,8 @@ public class Configuration extends SimpleModificationTracker implements Persiste
                                      List<? extends BaseInjection> originalInjections,
                                      boolean forceLevel) {
       if (!forceLevel && !originalInjections.isEmpty()) {
-        if (myParentConfiguration.replaceInjections(Collections.<BaseInjection>emptyList(), originalInjections, false)) {
-          myParentConfiguration.replaceInjections(newInjections, Collections.<BaseInjection>emptyList(), false);
+        if (myParentConfiguration.replaceInjections(Collections.emptyList(), originalInjections, false)) {
+          myParentConfiguration.replaceInjections(newInjections, Collections.emptyList(), false);
           return true;
         }
       }
@@ -464,7 +467,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
       }
     }
     if (!originalInjections.isEmpty()) {
-      replaceInjectionsWithUndo(host.getProject(), newInjections, originalInjections, Collections.<PsiElement>emptyList());
+      replaceInjectionsWithUndo(host.getProject(), newInjections, originalInjections, Collections.emptyList());
       return true;
     }
     return false;
@@ -477,7 +480,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   }
 
   /**
-   * @param injectorId see {@link org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport#getId()}
+   * @param injectorId see {@link LanguageInjectionSupport#getId()}
    */
   @NotNull
   public List<BaseInjection> getInjections(final String injectorId) {
@@ -517,16 +520,12 @@ public class Configuration extends SimpleModificationTracker implements Persiste
         actualProcessor.process(add, remove);
       }
     };
-    final List<PsiFile> psiFiles = ContainerUtil.mapNotNull(psiElementsToRemove, new NullableFunction<PsiElement, PsiFile>() {
-      @Override
-      public PsiFile fun(final PsiElement psiAnnotation) {
-        return psiAnnotation instanceof PsiCompiledElement ? null : psiAnnotation.getContainingFile();
-      }
-    });
+    final List<PsiFile> psiFiles = ContainerUtil.mapNotNull(psiElementsToRemove, o -> o instanceof PsiCompiledElement ? null : o.getContainingFile());
     new WriteCommandAction.Simple(project, "Language Injection Configuration Update", PsiUtilCore.toPsiFileArray(psiFiles)) {
       @Override
       public void run() {
         for (PsiElement annotation : psiElementsToRemove) {
+          if (!annotation.isValid()) continue;
           annotation.delete();
         }
         actualProcessor.process(add, remove);

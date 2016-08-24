@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,19 +41,35 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.NavigatableWithText;
 import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
 
 public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements NavigatableWithText {
+
+  private final PsiFileSystemItemFilter myFilter;
+
   public PsiDirectoryNode(Project project, PsiDirectory value, ViewSettings viewSettings) {
+    this(project, value, viewSettings, null);
+  }
+
+  public PsiDirectoryNode(Project project, PsiDirectory value, ViewSettings viewSettings, @Nullable PsiFileSystemItemFilter filter) {
     super(project, value, viewSettings);
+    myFilter = filter;
+  }
+
+  @Nullable
+  public PsiFileSystemItemFilter getFilter() {
+    return myFilter;
   }
 
   protected boolean shouldShowModuleName() {
@@ -140,7 +156,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
 
   @Override
   public Collection<AbstractTreeNode> getChildrenImpl() {
-    return ProjectViewDirectoryHelper.getInstance(myProject).getDirectoryChildren(getValue(), getSettings(), true);
+    return ProjectViewDirectoryHelper.getInstance(myProject).getDirectoryChildren(getValue(), getSettings(), true, getFilter());
   }
 
   @Override
@@ -169,8 +185,17 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
       return false;
     }
 
+    final Project project = value.getProject();
+    PsiFileSystemItemFilter filter = getFilter();
+    if (filter != null) {
+      PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+      if (psiFile != null && !filter.shouldShow(psiFile)) return false;
+
+      PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(file);
+      if (psiDirectory != null && !filter.shouldShow(psiDirectory)) return false;
+    }
+
     if (Registry.is("ide.hide.excluded.files")) {
-      final Project project = value.getProject();
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
       return !fileIndex.isExcluded(file);
     }

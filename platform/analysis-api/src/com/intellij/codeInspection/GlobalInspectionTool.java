@@ -204,6 +204,17 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
   }
 
   /**
+   * @return JobDescriptors array to show inspection progress correctly. TotalAmount should be set (e.g. in
+   * {@link #runInspection(AnalysisScope, InspectionManager, GlobalInspectionContext, ProblemDescriptionsProcessor)})
+   * ProgressIndicator should progress with {@link GlobalInspectionContext#incrementJobDoneAmount(JobDescriptor, String)}
+   * @param context
+   */
+  @Nullable
+  public JobDescriptor[] getAdditionalJobs(GlobalInspectionContext context) {
+    return getAdditionalJobs();
+  }
+
+  /**
    * In some cases we can do highlighting in annotator or high. visitor based on global inspection or use a shared local inspection tool
    */
   public boolean worksInBatchModeOnly() {

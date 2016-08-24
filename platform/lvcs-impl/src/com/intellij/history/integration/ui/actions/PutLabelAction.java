@@ -27,9 +27,9 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.history.integration.LocalHistoryBundle.message;
 
-public class PutLabelAction extends LocalHistoryActionWithDialog {
+public class PutLabelAction extends LocalHistoryAction {
   @Override
-  protected void showDialog(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull AnActionEvent e) {
+  protected void actionPerformed(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull AnActionEvent e) {
     String labelName =
       Messages.showInputDialog(p, message("put.label.name"), message("put.label.dialog.title"), null, "", new NonEmptyInputValidator());
 
