@@ -168,21 +168,26 @@ public class ParameterHintsPresentationManager implements Disposable {
       if (myText != null && (step > steps || startWidth != 0)) {
         TextAttributes attributes = editor.getColorsScheme().getAttributes(JavaHighlightingColors.INLINE_PARAMETER_HINT);
         if (attributes != null) {
-          GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-          int shadeRectHeight = Math.min(4, r.height - 3);
           Color backgroundColor = attributes.getBackgroundColor();
-          g.setColor(ColorUtil.darker(backgroundColor, 1));
-          g.fillRoundRect(r.x + 2, r.y + r.height - shadeRectHeight - 1, r.width - 4, shadeRectHeight, 4, 4);
-          g.setColor(backgroundColor);
-          g.fillRoundRect(r.x + 2, r.y + 1, r.width - 4, r.height - 3, 4, 4);
-          g.setColor(attributes.getForegroundColor());
-          g.setFont(getFont(editor));
-          FontMetrics metrics = g.getFontMetrics();
-          Shape savedClip = g.getClip();
-          g.clipRect(r.x + 3, r.y + 1, r.width - 6, r.height - 3);
-          g.drawString(myText, r.x + 7, r.y + (r.height + metrics.getAscent() - metrics.getDescent()) / 2 - 1);
-          g.setClip(savedClip);
-          config.restore();
+          if (backgroundColor != null) {
+            GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+            int shadeRectHeight = Math.min(4, r.height - 3);
+            g.setColor(ColorUtil.darker(backgroundColor, 1));
+            g.fillRoundRect(r.x + 2, r.y + r.height - shadeRectHeight - 1, r.width - 4, shadeRectHeight, 4, 4);
+            g.setColor(backgroundColor);
+            g.fillRoundRect(r.x + 2, r.y + 1, r.width - 4, r.height - 3, 4, 4);
+            config.restore();
+          }
+          Color foregroundColor = attributes.getForegroundColor();
+          if (foregroundColor != null) {
+            g.setColor(foregroundColor);
+            g.setFont(getFont(editor));
+            FontMetrics metrics = g.getFontMetrics();
+            Shape savedClip = g.getClip();
+            g.clipRect(r.x + 3, r.y + 1, r.width - 6, r.height - 3);
+            g.drawString(myText, r.x + 7, r.y + (r.height + metrics.getAscent() - metrics.getDescent()) / 2 - 1);
+            g.setClip(savedClip);
+          }
         }
       }
     }
