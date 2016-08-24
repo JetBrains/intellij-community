@@ -556,7 +556,7 @@ public class FindDialog extends DialogWrapper {
     myModel = model;
     updateReplaceVisibility();
     updateTitle();
-    if (!Comparing.equal(newStringToFind, previousStringToFind)) {
+    if (newStringToFind.length() > 0 && !Comparing.equal(newStringToFind, previousStringToFind)) {
       myInputComboBox.getEditor().setItem(newStringToFind);
     }
   }
