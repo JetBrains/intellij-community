@@ -38,6 +38,12 @@ public class InstancesTracker extends AbstractProjectComponent
     return myState.classes.containsKey(className);
   }
 
+  @Nullable
+  public TrackingType getTrackingType(@NotNull String className) {
+    return myState.classes.getOrDefault(className, null);
+  }
+
+
   public Map<String, TrackingType> getTrackingClasses() {
     Map<String, TrackingType> copy = new HashMap<>(myState.classes);
     return Collections.unmodifiableMap(copy);
@@ -50,7 +56,7 @@ public class InstancesTracker extends AbstractProjectComponent
     }
 
     myState.classes.put(ref.name(), type);
-    myDispatcher.getMulticaster().classAdded(name, type);
+    myDispatcher.getMulticaster().classChanged(name, type);
   }
 
   public boolean remove(@NotNull ReferenceType ref) {

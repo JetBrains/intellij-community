@@ -69,7 +69,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     InstancesTracker tracker = InstancesTracker.getInstance(myDebugSession.getProject());
     tracker.addTrackerListener(new InstancesTrackerListener() {
       @Override
-      public void classAdded(@NotNull String name, @NotNull InstancesTracker.TrackingType type) {
+      public void classChanged(@NotNull String name, @NotNull InstancesTracker.TrackingType type) {
         myTrackedClasses.put(name, type);
         getRowSorter().allRowsChanged();
       }

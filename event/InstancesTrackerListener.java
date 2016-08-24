@@ -6,7 +6,7 @@ import org.jetbrains.debugger.memory.component.InstancesTracker;
 import java.util.EventListener;
 
 public interface InstancesTrackerListener extends EventListener{
-  default void classAdded(@NotNull String name, @NotNull InstancesTracker.TrackingType type) {
+  default void classChanged(@NotNull String name, @NotNull InstancesTracker.TrackingType type) {
   }
 
   default void classRemoved(@NotNull String name) {
