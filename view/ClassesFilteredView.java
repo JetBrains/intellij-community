@@ -6,11 +6,13 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerManagerImpl;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -38,7 +40,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
-public class ClassesFilteredView extends BorderLayoutPanel {
+public class ClassesFilteredView extends BorderLayoutPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance(ClassesFilteredView.class);
   private final static double DELAY_BEFORE_INSTANCES_QUERY_COEFFICIENT = 0.5;
   private final static int DEFAULT_BATCH_SIZE = Integer.MAX_VALUE;
@@ -66,6 +68,7 @@ public class ClassesFilteredView extends BorderLayoutPanel {
 
     myTable = new ClassesTable(myDebugSession, memoryViewManagerState.isShowWithDiffOnly,
         memoryViewManagerState.isShowWithInstancesOnly);
+    Disposer.register(this, myTable);
 
     myTable.addKeyListener(new KeyAdapter() {
       @Override
@@ -94,7 +97,7 @@ public class ClassesFilteredView extends BorderLayoutPanel {
       myTable.setFilteringByInstanceExists(state.isShowWithInstancesOnly);
     };
 
-    MemoryViewManager.getInstance().addMemoryViewManagerListener(memoryViewManagerListener);
+    MemoryViewManager.getInstance().addMemoryViewManagerListener(memoryViewManagerListener, this);
 
     myDebugSession.addSessionListener(new XDebugSessionListener() {
       @Override
@@ -106,7 +109,6 @@ public class ClassesFilteredView extends BorderLayoutPanel {
       @Override
       public void sessionStopped() {
         debugSession.removeSessionListener(this);
-        MemoryViewManager.getInstance().removeMemoryViewManagerListener(memoryViewManagerListener);
       }
 
       @Override
@@ -115,7 +117,7 @@ public class ClassesFilteredView extends BorderLayoutPanel {
           updateClassesAndCounts();
         }
       }
-    });
+    }, this);
 
     myFilterTextField.addDocumentListener(new DocumentAdapter() {
       @Override
@@ -133,7 +135,7 @@ public class ClassesFilteredView extends BorderLayoutPanel {
               .schedule(new MyUpdateClassesCommand(myLastSuspendContext));
         });
       }
-    });
+    }, this);
 
     myTable.addMouseListener(new PopupHandler() {
       @Override
@@ -181,6 +183,10 @@ public class ClassesFilteredView extends BorderLayoutPanel {
   private ActionPopupMenu createContextMenu() {
     ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("ClassesView.PopupActionGroup");
     return ActionManager.getInstance().createActionPopupMenu("ClassesView.PopupActionGroup", group);
+  }
+
+  @Override
+  public void dispose() {
   }
 
   private final class MyUpdateClassesCommand extends SuspendContextCommandImpl {

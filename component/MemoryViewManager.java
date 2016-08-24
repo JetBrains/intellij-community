@@ -1,5 +1,6 @@
 package org.jetbrains.debugger.memory.component;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
@@ -60,12 +61,8 @@ public class MemoryViewManager extends ApplicationComponent.Adapter
     return myState.isShowWithInstancesOnly;
   }
 
-  public void addMemoryViewManagerListener(MemoryViewManagerListener listener) {
-    myDispatcher.addListener(listener);
-  }
-
-  public void removeMemoryViewManagerListener(MemoryViewManagerListener listener) {
-    myDispatcher.removeListener(listener);
+  public void addMemoryViewManagerListener(MemoryViewManagerListener listener, @NotNull Disposable parentDisposable) {
+    myDispatcher.addListener(listener, parentDisposable);
   }
 
   @Nullable

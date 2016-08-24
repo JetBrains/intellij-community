@@ -1,35 +1,38 @@
 package org.jetbrains.debugger.memory.view;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.FList;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.debugger.memory.component.InstancesTracker;
+import org.jetbrains.debugger.memory.event.InstancesTrackerListener;
 import org.jetbrains.debugger.memory.utils.AbstractTableColumnDescriptor;
 import org.jetbrains.debugger.memory.utils.AbstractTableModelWithColumns;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableRowSorter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ClassesTable extends JBTable implements DataProvider {
+public class ClassesTable extends JBTable implements DataProvider, Disposable {
   public static final DataKey<ReferenceType> SELECTED_CLASS_KEY = DataKey.create("ClassesTable.SelectedClass");
   public static final DataKey<XDebugSession> DEBUG_SESSION_KEY = DataKey.create("ClassesTable.DebugSession");
   private static final int CLASSES_COLUMN_PREFERRED_WIDTH = 250;
@@ -43,6 +46,7 @@ public class ClassesTable extends JBTable implements DataProvider {
   private final DiffViewTableModel myModel = new DiffViewTableModel();
   private final UnknownDiffValue myUnknownValue = new UnknownDiffValue();
   private final XDebugSession myDebugSession;
+  private final Map<String, InstancesTracker.TrackingType> myTrackedClasses;
 
   private boolean myOnlyWithDiff;
   private boolean myOnlyWithInstances;
@@ -61,6 +65,22 @@ public class ClassesTable extends JBTable implements DataProvider {
     myOnlyWithInstances = onlyWithInstances;
 
     getEmptyText().setText(EMPTY_TABLE_CONTENT);
+
+    InstancesTracker tracker = InstancesTracker.getInstance(myDebugSession.getProject());
+    tracker.addTrackerListener(new InstancesTrackerListener() {
+      @Override
+      public void classAdded(@NotNull String name, @NotNull InstancesTracker.TrackingType type) {
+        myTrackedClasses.put(name, type);
+        getRowSorter().allRowsChanged();
+      }
+
+      @Override
+      public void classRemoved(@NotNull String name) {
+        myTrackedClasses.remove(name);
+        getRowSorter().allRowsChanged();
+      }
+    }, this);
+    myTrackedClasses = new HashMap<>(tracker.getTrackingClasses());
 
     TableColumn classesColumn = getColumnModel().getColumn(DiffViewTableModel.CLASSNAME_COLUMN_INDEX);
     TableColumn countColumn = getColumnModel().getColumn(DiffViewTableModel.COUNT_COLUMN_INDEX);
@@ -183,6 +203,10 @@ public class ClassesTable extends JBTable implements DataProvider {
     }
 
     return null;
+  }
+
+  @Override
+  public void dispose() {
   }
 
   private class DiffViewTableModel extends AbstractTableModelWithColumns {
@@ -308,6 +332,10 @@ public class ClassesTable extends JBTable implements DataProvider {
         return;
       }
 
+      String className = ((ReferenceType) getValueAt(row, DiffViewTableModel.CLASSNAME_COLUMN_INDEX)).name();
+      if (!selected && myTrackedClasses.containsKey(className)) {
+        setBackground(UIUtil.toAlpha(JBColor.yellow, 20));
+      }
       long val = (long) value;
       setTextAlign(SwingConstants.RIGHT);
       if (column == DiffViewTableModel.COUNT_COLUMN_INDEX) {
@@ -332,6 +360,9 @@ public class ClassesTable extends JBTable implements DataProvider {
     protected void customizeCellRenderer(JTable table, @Nullable Object value,
                                          boolean isSelected, boolean hasFocus, int row, int column) {
       String presentation = value == null ? "null" : ((ReferenceType) value).name();
+      if (value != null && !isSelected && myTrackedClasses.containsKey(presentation)) {
+        setBackground(UIUtil.toAlpha(JBColor.yellow, 20));
+      }
 
       append(" ");
       if (value != null && isSelected) {

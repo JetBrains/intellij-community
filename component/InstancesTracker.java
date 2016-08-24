@@ -1,5 +1,6 @@
 package org.jetbrains.debugger.memory.component;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.EventDispatcher;
@@ -48,6 +49,7 @@ public class InstancesTracker extends AbstractProjectComponent
     myDispatcher.getMulticaster().classAdded(name, type);
   }
 
+  @SuppressWarnings("unused")
   public boolean remove(@NotNull ReferenceType ref) {
     String name = ref.name();
     TrackingType removed = myState.classes.remove(name);
@@ -57,6 +59,10 @@ public class InstancesTracker extends AbstractProjectComponent
     }
 
     return false;
+  }
+
+  public void addTrackerListener(@NotNull InstancesTrackerListener listener, @NotNull Disposable parentDisposable) {
+    myDispatcher.addListener(listener, parentDisposable);
   }
 
   @Nullable

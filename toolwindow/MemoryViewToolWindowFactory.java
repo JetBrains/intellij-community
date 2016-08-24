@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
@@ -93,7 +94,10 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
   }
 
   private void removeSession(@NotNull XDebugSession session) {
-    myMemoryViews.remove(session);
+    ClassesFilteredView removed = myMemoryViews.remove(session);
+    if(removed != null) {
+      Disposer.dispose(removed);
+    }
   }
 
   private void updateCurrentMemoryView(@NotNull Project project, @NotNull ToolWindow toolWindow) {
