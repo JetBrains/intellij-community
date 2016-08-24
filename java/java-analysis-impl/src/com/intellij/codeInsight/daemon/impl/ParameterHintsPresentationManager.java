@@ -171,8 +171,6 @@ public class ParameterHintsPresentationManager implements Disposable {
           GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
           int shadeRectHeight = Math.min(4, r.height - 3);
           Color backgroundColor = attributes.getBackgroundColor();
-          g.setColor(ColorUtil.brighter(backgroundColor, 1));
-          g.fillRoundRect(r.x + 2, r.y + 1, r.width - 4, shadeRectHeight, 4, 4);
           g.setColor(ColorUtil.darker(backgroundColor, 1));
           g.fillRoundRect(r.x + 2, r.y + r.height - shadeRectHeight - 1, r.width - 4, shadeRectHeight, 4, 4);
           g.setColor(backgroundColor);
