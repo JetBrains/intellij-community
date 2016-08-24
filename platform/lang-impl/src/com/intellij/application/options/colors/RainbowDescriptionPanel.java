@@ -18,13 +18,16 @@ package com.intellij.application.options.colors;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
+import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptorWithPath;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ColorPanel;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.FontUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -82,24 +85,33 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
     myInheritedMessage = ApplicationBundle.message("label.inherited.gradient",
                                                    rainbowOptionsID,
                                                    languageDefaultPageID);
-    myInheritedMessageTooltip = ApplicationBundle.message("label.inherited.gradient.tooltip",
-                                                          rainbowOptionsID,
-                                                          languageDefaultPageID);
+
+    myInheritedMessageTooltip = checkRightArrow(ApplicationBundle.message("label.inherited.gradient.tooltip",
+                                                                          rainbowOptionsID,
+                                                                          languageDefaultPageID));
+
     myOverrideMessage = ApplicationBundle.message("label.override.gradient");
     HyperlinkListener listener = e -> myDispatcher.getMulticaster().onHyperLinkClicked(e);
 
     Messages.configureMessagePaneUi(myGradientLabel, myOverrideMessage, null);
     myGradientLabel.addHyperlinkListener(listener);
 
-    Messages.configureMessagePaneUi(myInheritanceLabel, ApplicationBundle.message("label.rainbow.inheritance",
-                                                                                  rainbowOptionsID,
-                                                                                  rainbowOptionsID,
-                                                                                  languageDefaultPageID), null);
-    myInheritanceLabel.setToolTipText(ApplicationBundle.message("label.rainbow.inheritance.tooltip",
-                                                                rainbowOptionsID,
-                                                                languageDefaultPageID));
+    Messages.configureMessagePaneUi(myInheritanceLabel,
+                                    checkRightArrow(ApplicationBundle.message("label.rainbow.inheritance",
+                                                                              rainbowOptionsID,
+                                                                              rainbowOptionsID,
+                                                                              languageDefaultPageID)),
+                                    null);
+    myInheritanceLabel.setToolTipText(checkRightArrow(ApplicationBundle.message("label.rainbow.inheritance.tooltip",
+                                                                                rainbowOptionsID,
+                                                                                languageDefaultPageID)));
     myInheritanceLabel.addHyperlinkListener(listener);
     myInheritanceLabel.setBorder(JBUI.Borders.empty(4, 0, 4, 4));
+  }
+
+  @NotNull
+  private static String checkRightArrow(@NotNull String str) {
+    return str.replaceAll("->", FontUtil.rightArrow(UIUtil.getLabelFont()));
   }
 
   @NotNull
