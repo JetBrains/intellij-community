@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -32,7 +31,7 @@ import java.util.List;
 /**
  * User: catherine
  */
-public class ReplaceListComprehensionWithForIntention implements IntentionAction {
+public class ReplaceListComprehensionWithForIntention extends PyBaseIntentionAction {
   @NotNull
   public String getText() {
     return PyBundle.message("INTN.replace.list.comprehensions.with.for");
@@ -61,7 +60,8 @@ public class ReplaceListComprehensionWithForIntention implements IntentionAction
     return false;
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  @Override
+  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PyListCompExpression expression = PsiTreeUtil.getTopmostParentOfType(
         file.findElementAt(editor.getCaretModel().getOffset()), PyListCompExpression.class);
     if (expression == null) {
@@ -119,9 +119,5 @@ public class ReplaceListComprehensionWithForIntention implements IntentionAction
     stringBuilder.append(result);
     return elementGenerator.createFromText(LanguageLevel.forElement(expression), PyForStatement.class,
                              stringBuilder.toString());
-  }
-
- public boolean startInWriteAction() {
-    return true;
   }
 }

@@ -48,7 +48,7 @@ import java.util.function.BiPredicate;
  *   doSomething(foo)
  *
  */
-public class ConvertVariadicParamIntention extends BaseIntentionAction {
+public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
 
   @Override
   @NotNull
@@ -106,7 +106,7 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
 
