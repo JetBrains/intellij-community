@@ -42,6 +42,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -91,6 +92,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
   private final String mySessionName;
   private final DebugProcessImpl myDebugProcess;
   private final GlobalSearchScope mySearchScope;
+  private final Sdk myAlternativeJre;
 
   private final DebuggerContextImpl SESSION_EMPTY_CONTEXT;
   //Thread, user is currently stepping through
@@ -115,6 +117,10 @@ public class DebuggerSession implements AbstractDebuggerSession {
   @NotNull
   public GlobalSearchScope getSearchScope() {
     return mySearchScope;
+  }
+
+  public Sdk getAlternativeJre() {
+    return myAlternativeJre;
   }
 
   public boolean isModifiedClassesScanRequired() {
@@ -207,6 +213,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
     myDebugProcess.addEvaluationListener(new MyEvaluationListener());
     ValueLookupManager.getInstance(getProject()).startListening();
     mySearchScope = environment.getSearchScope();
+    myAlternativeJre = environment.getAlternativeJre();
   }
 
   @NotNull
