@@ -54,7 +54,7 @@ class CallbackData {
                                     @NotNull Runnable afterUpdate,
                                     @Nullable String title,
                                     @Nullable ModalityState state) {
-    return mode.isSilently() ? createSilent(project, mode, afterUpdate) : createInteractive(project, mode, afterUpdate, title, state);
+    return mode.isSilent() ? createSilent(project, mode, afterUpdate) : createInteractive(project, mode, afterUpdate, title, state);
   }
 
   @NotNull
