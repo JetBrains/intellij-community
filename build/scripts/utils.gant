@@ -1164,14 +1164,6 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
       }
     }
   }
-  File launcher = new File(outputPath);
-  if (launcher.exists()) {
-    projectBuilder.stage("Signing windows launcher: $outputPath")
-    executeExternalAnt(["dirName": launcher.getParent(), "fileName": launcher.getName()], "$home/build/signBuild.xml")
-    projectBuilder.stage("Signing done")
-  } else {
-    projectBuilder.error("Windows launcher $outputPath is not created")
-  }
 })
 
 binding.setVariable("layoutUpdater", { String target, String jarName = "updater.jar" ->
