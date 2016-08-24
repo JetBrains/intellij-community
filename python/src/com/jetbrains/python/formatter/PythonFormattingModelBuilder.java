@@ -99,6 +99,7 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
       .afterInside(RARROW, ANNOTATION).spaces(1)
 
       .between(allButLambda(), PARAMETER_LIST).spaceIf(commonSettings.SPACE_BEFORE_METHOD_PARENTHESES)
+      .betweenInside(COMMA, RBRACE, DICT_LITERAL_EXPRESSION).spaceIf(commonSettings.SPACE_AFTER_COMMA, pySettings.DICT_NEW_LINE_BEFORE_RIGHT_BRACE)
       .afterInside(LBRACE, DICT_LITERAL_EXPRESSION).spaceIf(pySettings.SPACE_WITHIN_BRACES, pySettings.DICT_NEW_LINE_AFTER_LEFT_BRACE)
       .beforeInside(RBRACE, DICT_LITERAL_EXPRESSION).spaceIf(pySettings.SPACE_WITHIN_BRACES, pySettings.DICT_NEW_LINE_BEFORE_RIGHT_BRACE)
 
