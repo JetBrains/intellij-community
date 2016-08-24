@@ -27,7 +27,7 @@ public abstract class ClassesActionBase extends AnAction {
   protected abstract void perform(AnActionEvent e);
 
   @Nullable
-  ReferenceType getSelectedClass(AnActionEvent e) {
+  protected ReferenceType getSelectedClass(AnActionEvent e) {
     return e.getData(ClassesTable.SELECTED_CLASS_KEY);
   }
 
