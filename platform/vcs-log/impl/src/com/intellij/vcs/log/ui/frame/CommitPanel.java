@@ -40,6 +40,8 @@ import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
+import com.intellij.vcs.log.ui.render.RectangleReferencePainter;
 import com.intellij.vcs.log.ui.render.TagIcon;
 import com.intellij.vcs.log.ui.render.TextLabelPainter;
 import com.intellij.vcs.log.util.VcsUserUtil;
@@ -482,7 +484,7 @@ class CommitPanel extends JBPanel {
   private static class ReferencesPanel extends JPanel {
     private static final int H_GAP = 4;
     private static final int V_GAP = 0;
-    private static final int PADDING = 3;
+    public static final int PADDING = 3;
     @NotNull private List<VcsRef> myReferences;
 
     ReferencesPanel() {
@@ -499,34 +501,41 @@ class CommitPanel extends JBPanel {
     private void update() {
       removeAll();
       int height =
-        getFontMetrics(getCommitDetailsFont()).getHeight() + PADDING;
+        getFontMetrics(getCommitDetailsFont()).getHeight() + JBUI.scale(PADDING);
       JBLabel firstLabel = null;
       for (Map.Entry<VcsRefType, Collection<VcsRef>> typeAndRefs : ContainerUtil.groupBy(myReferences, VcsRef::getType).entrySet()) {
-        VcsRefType type = typeAndRefs.getKey();
-        int index = 0;
-        for (VcsRef reference : typeAndRefs.getValue()) {
-          Icon icon = null;
-          if (index == 0) {
-            Color color = type.getBackgroundColor();
-            icon = new TagIcon(height, getBackground(),
-                               typeAndRefs.getValue().size() > 1 ? new Color[]{color, color} : new Color[]{color});
+        if (GraphCommitCellRenderer.isRedesignedLabels()) {
+          VcsRefType type = typeAndRefs.getKey();
+          int index = 0;
+          for (VcsRef reference : typeAndRefs.getValue()) {
+            Icon icon = null;
+            if (index == 0) {
+              Color color = type.getBackgroundColor();
+              icon = new TagIcon(height, getBackground(),
+                                 typeAndRefs.getValue().size() > 1 ? new Color[]{color, color} : new Color[]{color});
+            }
+            JBLabel label =
+              new JBLabel(reference.getName() + (index != typeAndRefs.getValue().size() - 1 ? "," : ""),
+                          icon, SwingConstants.LEFT);
+            label.setFont(getCommitDetailsFont());
+            label.setIconTextGap(0);
+            label.setHorizontalAlignment(SwingConstants.LEFT);
+            if (firstLabel == null) {
+              firstLabel = label;
+              add(label);
+            }
+            else {
+              Wrapper wrapper = new Wrapper(label);
+              wrapper.setVerticalSizeReferent(firstLabel);
+              add(wrapper);
+            }
+            index++;
           }
-          JBLabel label =
-            new JBLabel(reference.getName() + (index != typeAndRefs.getValue().size() - 1 ? "," : ""),
-                        icon, SwingConstants.LEFT);
-          label.setFont(getCommitDetailsFont());
-          label.setIconTextGap(0);
-          label.setHorizontalAlignment(SwingConstants.LEFT);
-          if (firstLabel == null) {
-            firstLabel = label;
-            add(label);
+        }
+        else {
+          for (VcsRef reference : typeAndRefs.getValue()) {
+            add(new ReferencePanel(reference));
           }
-          else {
-            Wrapper wrapper = new Wrapper(label);
-            wrapper.setVerticalSizeReferent(firstLabel);
-            add(wrapper);
-          }
-          index++;
         }
       }
       setVisible(!myReferences.isEmpty());
@@ -545,13 +554,42 @@ class CommitPanel extends JBPanel {
     }
   }
 
+  private static class ReferencePanel extends JPanel {
+    @NotNull private final TextLabelPainter myLabelPainter;
+    @NotNull private final VcsRef myReference;
+
+    private ReferencePanel(@NotNull VcsRef reference) {
+      myReference = reference;
+      myLabelPainter = new TextLabelPainter(false);
+      setOpaque(false);
+    }
+
+    @Override
+    public void paint(Graphics g) {
+      myLabelPainter
+        .paint((Graphics2D)g, myReference.getName(), 0, 0,
+               RectangleReferencePainter.getLabelColor(myReference.getType().getBackgroundColor()));
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      Dimension dimension = myLabelPainter.calculateSize(myReference.getName(), getFontMetrics(TextLabelPainter.getFont()));
+      return new Dimension(dimension.width, dimension.height + JBUI.scale(ReferencesPanel.PADDING));
+    }
+
+    @Override
+    public Color getBackground() {
+      return getCommitDetailsBackground();
+    }
+  }
+
   private static class RootPanel extends JPanel {
     @NotNull private final TextLabelPainter myLabelPainter;
     @NotNull private String myText = "";
     @NotNull private Color myColor = getCommitDetailsBackground();
 
     RootPanel() {
-      myLabelPainter = new TextLabelPainter() {
+      myLabelPainter = new TextLabelPainter(true) {
         @Override
         protected Font getLabelFont() {
           return RootPanel.getLabelFont();

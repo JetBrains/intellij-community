@@ -1,9 +1,11 @@
 package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -33,7 +35,8 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
   @NotNull private final GraphCellPainter myPainter;
   @NotNull private final VcsLogGraphTable myGraphTable;
   @NotNull private final IssueLinkRenderer myIssueLinkRenderer;
-  @NotNull private final TagLabelPainter myTextLabelPainter = new TagLabelPainter();
+  @NotNull private final ReferencePainter myTextLabelPainter =
+    isRedesignedLabels() ? new TagLabelPainter() : new RectangleReferencePainter();
 
   @Nullable private PaintInfo myGraphImage;
   @NotNull private Font myFont;
@@ -74,7 +77,12 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
   public void paintComponent(Graphics g) {
     super.paintComponent(g);
 
-    myTextLabelPainter.paint((Graphics2D)g, getWidth() - myTextLabelPainter.getSize().width, 0, getHeight());
+    if (!myTextLabelPainter.isLeftAligned()) {
+      myTextLabelPainter.paint((Graphics2D)g, getWidth() - myTextLabelPainter.getSize().width, 0, getHeight());
+    }
+    else {
+      myTextLabelPainter.paint((Graphics2D)g, (myGraphImage != null) ? myGraphImage.getWidth() : 0, 0, getHeight());
+    }
 
     if (myGraphImage != null) {
       UIUtil.drawImage(g, myGraphImage.getImage(), 0, 0, null);
@@ -104,10 +112,7 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
       graphPadding = 0;
     }
 
-    setBorder(null);
-    append("");
-    appendTextPadding(graphPadding);
-    myIssueLinkRenderer.appendTextWithLinks(cell.getText(), myGraphTable.applyHighlighters(this, row, column, "", hasFocus, isSelected));
+    SimpleTextAttributes style = myGraphTable.applyHighlighters(this, row, column, "", hasFocus, isSelected);
 
     Collection<VcsRef> refs = cell.getRefsToThisCommit();
     Color foreground = ObjectUtils.assertNotNull(myGraphTable.getBaseStyle(row, column, "", hasFocus, isSelected).getForeground());
@@ -118,6 +123,11 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
       VirtualFile root = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(refs)).getRoot();
       myTextLabelPainter.customizePainter(this, refs, myLogData.getLogProvider(root).getReferenceManager(), getBackground(), foreground);
     }
+
+    setBorder(null);
+    append("");
+    appendTextPadding(graphPadding + (myTextLabelPainter.isLeftAligned() ? myTextLabelPainter.getSize().width : 0));
+    myIssueLinkRenderer.appendTextWithLinks(cell.getText(), style);
   }
 
   @Nullable
@@ -143,6 +153,10 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
   private static GraphCommitCell getAssertCommitCell(Object value) {
     assert value instanceof GraphCommitCell : "Value of incorrect class was supplied: " + value;
     return (GraphCommitCell)value;
+  }
+
+  public static boolean isRedesignedLabels() {
+    return Registry.is("vcs.log.labels.redesign");
   }
 
   private static class PaintInfo {

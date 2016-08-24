@@ -53,7 +53,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class TagLabelPainter {
+public class TagLabelPainter implements ReferencePainter {
   public static final int TOP_TEXT_PADDING = JBUI.scale(2);
   public static final int BOTTOM_TEXT_PADDING = JBUI.scale(1);
   public static final int GRADIENT_WIDTH = JBUI.scale(50);
@@ -161,8 +161,9 @@ public class TagLabelPainter {
     return new Dimension(myWidth, myHeight);
   }
 
-  protected Font getReferenceFont() {
-    return TextLabelPainter.getFont();
+  @Override
+  public boolean isLeftAligned() {
+    return false;
   }
 }
 

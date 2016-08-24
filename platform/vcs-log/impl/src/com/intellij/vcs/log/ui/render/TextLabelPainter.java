@@ -24,11 +24,19 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.awt.geom.RoundRectangle2D;
 
 public class TextLabelPainter {
   protected static final int TEXT_PADDING_X = JBUI.scale(5);
   public static final int TOP_TEXT_PADDING = JBUI.scale(2);
   public static final int BOTTOM_TEXT_PADDING = JBUI.scale(1);
+  private static final int LABEL_ARC = JBUI.scale(5);
+
+  private final boolean mySquare;
+
+  public TextLabelPainter(boolean square) {
+    mySquare = square;
+  }
 
   public static Font getFont() {
     return UIUtil.getLabelFont();
@@ -48,7 +56,12 @@ public class TextLabelPainter {
     int height = fontMetrics.getHeight() + TOP_TEXT_PADDING + BOTTOM_TEXT_PADDING;
 
     g2.setColor(color);
-    g2.fillRect(paddingX, paddingY, width, height);
+    if (mySquare) {
+      g2.fillRect(paddingX, paddingY, width, height);
+    }
+    else {
+      g2.fill(new RoundRectangle2D.Double(paddingX, paddingY, width, height, LABEL_ARC, LABEL_ARC));
+    }
 
     g2.setColor(JBColor.BLACK);
     int x = paddingX + TEXT_PADDING_X;
