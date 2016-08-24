@@ -60,13 +60,19 @@ public class Waiter extends Task.Modal {
   }
 
   @Override
-  public void onFinished() {
+  public void onCancel() {
+    onSuccess();
+  }
+
+  @Override
+  public void onSuccess() {
     // allow do not wait for done
     /*synchronized (myLock) {
       if (! myDone) {
         return;
       }
     }*/
+    // Be careful with changes here as "Waiter.onSuccess()" is explicitly invoked from "FictiveBackgroundable"
     if (myProject.isDisposed()) return;
     myRunnable.run();
     ChangesViewManager.getInstance(myProject).scheduleRefresh();
