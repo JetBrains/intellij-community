@@ -38,8 +38,6 @@ import java.util.*;
 public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.extensions.impl.ExtensionPointImpl");
 
-  private final LogProvider myLogger;
-
   private final AreaInstance myArea;
   private final String myName;
   private final String myClassName;
@@ -59,13 +57,12 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   private static final StringInterner INTERNER = new StringInterner();
 
-  public ExtensionPointImpl(@NotNull String name,
-                            @NotNull String className,
-                            @NotNull Kind kind,
-                            @NotNull ExtensionsAreaImpl owner,
-                            AreaInstance area,
-                            @NotNull LogProvider logger,
-                            @NotNull PluginDescriptor descriptor) {
+  ExtensionPointImpl(@NotNull String name,
+                     @NotNull String className,
+                     @NotNull Kind kind,
+                     @NotNull ExtensionsAreaImpl owner,
+                     AreaInstance area,
+                     @NotNull PluginDescriptor descriptor) {
     synchronized (INTERNER) {
       myName = INTERNER.intern(name);
     }
@@ -73,7 +70,6 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     myKind = kind;
     myOwner = owner;
     myArea = area;
-    myLogger = logger;
     myDescriptor = descriptor;
   }
 
@@ -134,13 +130,13 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   private void registerExtension(@NotNull T extension, @NotNull ExtensionComponentAdapter adapter, int index, boolean runNotifications) {
     if (myExtensions.contains(extension)) {
-      myLogger.error("Extension was already added: " + extension);
+      myOwner.error("Extension was already added: " + extension);
       return;
     }
 
     Class<T> extensionClass = getExtensionClass();
     if (!extensionClass.isInstance(extension)) {
-      myLogger.error("Extension " + extension.getClass() + " does not implement " + extensionClass);
+      myOwner.error("Extension " + extension.getClass() + " does not implement " + extensionClass);
       return;
     }
 
@@ -156,7 +152,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
             ((Extension)extension).extensionAdded(this);
           }
           catch (Throwable e) {
-            myLogger.error(e);
+            myOwner.error(e);
           }
         }
 
@@ -172,7 +168,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         listener.extensionAdded(extension, pluginDescriptor);
       }
       catch (Throwable e) {
-        myLogger.error(e);
+        myOwner.error(e);
       }
     }
   }
@@ -315,7 +311,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         ((Extension)extension).extensionRemoved(this);
       }
       catch (Throwable e) {
-        myLogger.error(e);
+        myOwner.error(e);
       }
     }
   }
@@ -326,7 +322,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         listener.extensionRemoved(extensionObject, pluginDescriptor);
       }
       catch (Throwable e) {
-        myLogger.error(e);
+        myOwner.error(e);
       }
     }
   }
@@ -362,7 +358,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
           listener.extensionAdded(extension, componentAdapter.getPluginDescriptor());
         }
         catch (Throwable e) {
-          myLogger.error(e);
+          myOwner.error(e);
         }
       }
     }
@@ -381,7 +377,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
           listener.extensionRemoved(extension, componentAdapter.getPluginDescriptor());
         }
         catch (Throwable e) {
-          myLogger.error(e);
+          myOwner.error(e);
         }
       }
     }
@@ -406,8 +402,8 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     if (extensionClass == null) {
       try {
         ClassLoader pluginClassLoader = myDescriptor.getPluginClassLoader();
-        @SuppressWarnings("unchecked") Class<T> extClass = pluginClassLoader == null
-            ? (Class<T>)Class.forName(myClassName) : (Class<T>)Class.forName(myClassName, true, pluginClassLoader);
+        @SuppressWarnings("unchecked") Class<T> extClass =
+          (Class<T>)(pluginClassLoader == null ? Class.forName(myClassName) : Class.forName(myClassName, true, pluginClassLoader));
         myExtensionClass = extensionClass = extClass;
       }
       catch (ClassNotFoundException e) {
@@ -430,7 +426,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     myExtensionsCache = null;
   }
 
-  public synchronized boolean unregisterExtensionAdapter(@NotNull ExtensionComponentAdapter adapter) {
+  private synchronized boolean unregisterExtensionAdapter(@NotNull ExtensionComponentAdapter adapter) {
     try {
       if (myExtensionAdapters.remove(adapter)) {
         return true;
