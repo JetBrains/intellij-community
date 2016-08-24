@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.passwordSafe.impl.providers.masterKey;
+package com.intellij.credentialStore;
 
 import com.intellij.ide.passwordSafe.impl.providers.ByteArrayWrapper;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -29,7 +29,7 @@ import java.util.Map;
 
 @Deprecated
 @State(name = "PasswordDatabase", storages = @Storage(value = "security.xml", roamingType = RoamingType.DISABLED, deprecated = true))
-public class PasswordDatabase implements PersistentStateComponent<PasswordDatabase.State> {
+class PasswordDatabase implements PersistentStateComponent<PasswordDatabase.State> {
   private final static Logger LOG = Logger.getInstance(PasswordDatabase.class.getName());
 
   public transient final Map<ByteArrayWrapper, byte[]> myDatabase = new HashMap<>();

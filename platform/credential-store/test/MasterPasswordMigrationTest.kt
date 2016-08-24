@@ -16,7 +16,6 @@
 package com.intellij.credentialStore
 
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterKeyPasswordSafeTest
-import com.intellij.ide.passwordSafe.impl.providers.masterKey.PasswordDatabase
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.runInEdtAndWait
