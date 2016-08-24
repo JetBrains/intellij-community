@@ -66,7 +66,7 @@ class KeePassDatabase(private val rootElement: Element = createEmptyDatabase()) 
     val element = Element(ENTRY_ELEMENT_NAME)
     ensureElements(element, mandatoryEntryElements)
 
-    val result = KdbxEntry(element, this)
+    val result = KdbxEntry(element, this, null)
     result.title = title
     result.ensureProperty("Notes")
     result.ensureProperty("Title")

@@ -20,6 +20,7 @@ import com.intellij.reference.SoftReference
 import com.intellij.util.text.CharSequenceReader
 import org.jdom.Document
 import org.jdom.Element
+import org.jdom.filter.ElementFilter
 import org.jdom.input.SAXBuilder
 import org.xml.sax.EntityResolver
 import org.xml.sax.InputSource
@@ -78,4 +79,15 @@ fun Element.element(name: String): Element {
   val element = Element(name)
   addContent(element)
   return element
+}
+
+fun <T> Element.remove(name: String, transform: (child: Element) -> T): List<T> {
+  val result = SmartList<T>()
+  val groupIterator = getContent(ElementFilter(name)).iterator()
+  while (groupIterator.hasNext()) {
+    val child = groupIterator.next()
+    result.add(transform(child))
+    groupIterator.remove()
+  }
+  return result
 }

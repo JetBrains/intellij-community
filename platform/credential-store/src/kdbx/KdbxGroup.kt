@@ -1,17 +1,16 @@
 package com.intellij.credentialStore.kdbx
 
-import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.Stack
 import com.intellij.util.get
 import com.intellij.util.getOrCreate
+import com.intellij.util.remove
 import org.jdom.Element
-import org.jdom.filter.ElementFilter
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
-class KdbxGroup(private val element: Element, private val database: KeePassDatabase, private var parent: KdbxGroup?) {
+class KdbxGroup(private val element: Element, private val database: KeePassDatabase, private @Volatile var parent: KdbxGroup?) {
   @Volatile var name = element.getChildText(NAME_ELEMENT_NAME) ?: "Unnamed"
     set(value) {
       if (field != value) {
@@ -20,21 +19,16 @@ class KdbxGroup(private val element: Element, private val database: KeePassDatab
       }
     }
 
-  private val subGroups: MutableList<KdbxGroup>
+  private val groups: MutableList<KdbxGroup>
+  val entries: MutableList<KdbxEntry>
 
   private @Volatile var locationChanged = element.get("Times")?.get("LocationChanged")?.text?.let(::parseTime) ?: 0
 
   init {
     locationChanged = element.get("Times")?.get("LocationChanged")?.text?.let(::parseTime) ?: 0
 
-    val groups = SmartList<KdbxGroup>()
-    val groupIterator = element.getContent(ElementFilter(GROUP_ELEMENT_NAME)).iterator()
-    while (groupIterator.hasNext()) {
-      val child = groupIterator.next()
-      groups.add(KdbxGroup(child, database, this))
-      groupIterator.remove()
-    }
-    subGroups = ContainerUtil.createLockFreeCopyOnWriteList<KdbxGroup>(groups)
+    groups = ContainerUtil.createLockFreeCopyOnWriteList(element.remove(GROUP_ELEMENT_NAME) { KdbxGroup(it, database, this) })
+    entries = ContainerUtil.createLockFreeCopyOnWriteList(element.remove(ENTRY_ELEMENT_NAME) { KdbxEntry(it, database, this) })
   }
 
   fun toXml(): Element {
@@ -51,8 +45,11 @@ class KdbxGroup(private val element: Element, private val database: KeePassDatab
       locationChangedElement.text = Instant.ofEpochMilli(locationChanged).atZone(ZoneOffset.UTC).format(dateFormatter)
     }
 
-    for (group in subGroups) {
+    for (group in groups) {
       element.addContent(group.toXml())
+    }
+    for (entry in entries) {
+      element.addContent(entry.element.clone())
     }
     return element
   }
@@ -63,7 +60,8 @@ class KdbxGroup(private val element: Element, private val database: KeePassDatab
     }
 
     group.parent?.removeGroup(group)
-    subGroups.add(group)
+    groups.add(group)
+    group.parent = this
     group.locationChanged = LocalDateTime.now(ZoneOffset.UTC).toEpochSecond(ZoneOffset.UTC)
 
     database.isDirty = true
@@ -71,7 +69,8 @@ class KdbxGroup(private val element: Element, private val database: KeePassDatab
   }
 
   fun removeGroup(group: KdbxGroup): KdbxGroup {
-    if (subGroups.remove(group)) {
+    if (groups.remove(group)) {
+      group.parent = null
       database.isDirty = true
     }
     return group
@@ -81,7 +80,7 @@ class KdbxGroup(private val element: Element, private val database: KeePassDatab
     getGroup(name)?.let { removeGroup(it) }
   }
 
-  fun getGroup(name: String) = subGroups.firstOrNull { it.name == name }
+  fun getGroup(name: String) = groups.firstOrNull { it.name == name }
 
   fun getOrCreateGroup(name: String) = getGroup(name) ?: createGroup(name)
 
@@ -92,32 +91,23 @@ class KdbxGroup(private val element: Element, private val database: KeePassDatab
     return result
   }
 
-  val entries: List<KdbxEntry>
-    get() = element.getChildren(ENTRY_ELEMENT_NAME).map { KdbxEntry(it, database) }
-
-  fun getEntry(matcher: (entry: KdbxEntry) -> Boolean): KdbxEntry? {
-    for (entryElement in element.getChildren(ENTRY_ELEMENT_NAME)) {
-      val entry = KdbxEntry(entryElement, database)
-      if (matcher(entry)) {
-        return entry
-      }
-    }
-
-    return null
-  }
+  fun getEntry(matcher: (entry: KdbxEntry) -> Boolean) = entries.firstOrNull(matcher)
 
   fun addEntry(entry: KdbxEntry): KdbxEntry {
-    entry.element.parentElement?.let {
-      it.removeContent(entry.element)
+    entry.group?.let {
+      it.removeEntry(entry)
     }
-    element.addContent(entry.element)
+    entries.add(entry)
+    entry.group = this
     database.isDirty = true
     return entry
   }
 
   fun removeEntry(entry: KdbxEntry): KdbxEntry {
-    element.removeContent(entry.element)
-    database.isDirty = true
+    if (entries.remove(entry)) {
+      entry.group = null
+      database.isDirty = true
+    }
     return entry
   }
 
@@ -135,14 +125,6 @@ class KdbxGroup(private val element: Element, private val database: KeePassDatab
 
   fun removeEntry(title: String, userName: String?) = getEntry(title, userName)?.let { removeEntry(it) }
 
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other == null || javaClass != other.javaClass) return false
-
-    val that = other as KdbxGroup?
-    return element == that!!.element && database == that.database
-  }
-
   val path: String
     get() {
       val parents = Stack<KdbxGroup>()
@@ -159,13 +141,7 @@ class KdbxGroup(private val element: Element, private val database: KeePassDatab
       return result.toString()
     }
 
-  override fun toString() = this.path
-
-  override fun hashCode(): Int {
-    var result = element.hashCode()
-    result = 31 * result + database.hashCode()
-    return result
-  }
+  override fun toString() = path
 }
 
 internal fun createGroup(db: KeePassDatabase, parent: KdbxGroup?): KdbxGroup {

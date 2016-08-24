@@ -23,7 +23,7 @@ import kotlin.reflect.KProperty
 
 private const val VALUE_ELEMENT_NAME = "Value"
 
-class KdbxEntry(val element: Element, internal val database: KeePassDatabase) {
+class KdbxEntry(val element: Element, internal val database: KeePassDatabase, internal @Volatile var group: KdbxGroup?) {
   fun getProperty(name: String) = getPropertyContainer(name)?.getChildText(VALUE_ELEMENT_NAME)
 
   fun setProperty(name: String, value: String?) {
