@@ -49,7 +49,7 @@ class KdbxGroup(private val element: Element, private val database: KeePassDatab
       element.addContent(group.toXml())
     }
     for (entry in entries) {
-      element.addContent(entry.element.clone())
+      element.addContent(entry.toXml())
     }
     return element
   }
