@@ -22,23 +22,14 @@ import com.intellij.layout.LCFlags.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.dialog
 import com.intellij.openapi.util.Computable
-import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
 import com.intellij.ui.DocumentAdapter
-import com.intellij.ui.JBColor
-import com.intellij.ui.SimpleColoredComponent
-import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.PathUtilRt
 import com.intellij.util.nullize
 import com.intellij.util.trimMiddle
 import com.intellij.util.ui.UIUtil
-import java.util.regex.Pattern
 import javax.swing.JPasswordField
 import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
-
-private val HREF_PATTERN = Pattern.compile("<a(?:\\s+href\\s*=\\s*[\"']([^\"']*)[\"'])?\\s*>([^<]*)</a>")
-private val LINK_TEXT_ATTRIBUTES = SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, JBColor.blue)
-private val SMALL_TEXT_ATTRIBUTES = SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, null)
 
 fun showAuthenticationForm(credentials: Credentials?, uri: String, host: String?, path: String?, sshKeyFile: String?): Credentials? {
   if (ApplicationManager.getApplication()?.isUnitTestMode === true) {
@@ -96,29 +87,4 @@ fun showAuthenticationForm(credentials: Credentials?, uri: String, host: String?
       null
     }
   })
-}
-
-private fun noteComponent(note: String): SimpleColoredComponent {
-  val noteComponent = SimpleColoredComponent()
-
-  val matcher = HREF_PATTERN.matcher(note)
-  var prev = 0
-  if (matcher.find()) {
-    do {
-      if (matcher.start() != prev) {
-        noteComponent.append(note.substring(prev, matcher.start()), SMALL_TEXT_ATTRIBUTES)
-      }
-      noteComponent.append(matcher.group(2), LINK_TEXT_ATTRIBUTES, SimpleColoredComponent.BrowserLauncherTag(matcher.group(1)))
-      prev = matcher.end()
-    }
-    while (matcher.find())
-
-    LinkMouseListenerBase.installSingleTagOn(noteComponent)
-  }
-
-  if (prev < note.length) {
-    noteComponent.append(note.substring(prev), SMALL_TEXT_ATTRIBUTES)
-  }
-
-  return noteComponent
 }

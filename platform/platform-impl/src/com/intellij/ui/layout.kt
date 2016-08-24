@@ -16,7 +16,11 @@
 package com.intellij.layout
 
 import com.intellij.BundleBase
+import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
 import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.JBColor
+import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.layout.*
@@ -26,6 +30,7 @@ import java.awt.Component
 import java.awt.Font
 import java.awt.LayoutManager
 import java.awt.event.ActionEvent
+import java.util.regex.Pattern
 import javax.swing.*
 
 // http://www.migcalendar.com/miglayout/mavensite/docs/cheatsheet.pdf
@@ -213,4 +218,33 @@ fun CC.apply(flags: Array<out CCFlags>): CC {
     }
   }
   return this
+}
+
+private val HREF_PATTERN = Pattern.compile("<a(?:\\s+href\\s*=\\s*[\"']([^\"']*)[\"'])?\\s*>([^<]*)</a>")
+private val LINK_TEXT_ATTRIBUTES = SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, JBColor.blue)
+private val SMALL_TEXT_ATTRIBUTES = SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, null)
+
+fun noteComponent(note: String): SimpleColoredComponent {
+  val noteComponent = SimpleColoredComponent()
+
+  val matcher = HREF_PATTERN.matcher(note)
+  var prev = 0
+  if (matcher.find()) {
+    do {
+      if (matcher.start() != prev) {
+        noteComponent.append(note.substring(prev, matcher.start()), SMALL_TEXT_ATTRIBUTES)
+      }
+      noteComponent.append(matcher.group(2), LINK_TEXT_ATTRIBUTES, SimpleColoredComponent.BrowserLauncherTag(matcher.group(1)))
+      prev = matcher.end()
+    }
+    while (matcher.find())
+
+    LinkMouseListenerBase.installSingleTagOn(noteComponent)
+  }
+
+  if (prev < note.length) {
+    noteComponent.append(note.substring(prev), SMALL_TEXT_ATTRIBUTES)
+  }
+
+  return noteComponent
 }
