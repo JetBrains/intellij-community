@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
  */
 package com.intellij.util.graph;
 
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import org.junit.Test;
 
 import java.util.*;
 
@@ -25,6 +27,7 @@ import java.util.*;
  * @author nik
  */
 public class KShortestPathsFinderTest extends GraphTestCase {
+  @Test
   public void testEmpty() {
     Map<String, String> graph = new HashMap<>();
     graph.put("s", "");
@@ -32,6 +35,7 @@ public class KShortestPathsFinderTest extends GraphTestCase {
     doTest(graph);
   }
 
+  @Test
   public void testOneEdge() {
     final Map<String, String> graph = new HashMap<>();
     graph.put("s", "t");
@@ -39,6 +43,7 @@ public class KShortestPathsFinderTest extends GraphTestCase {
     doTest(graph, "st");
   }
 
+  @Test
   public void testNoPaths() {
     final Map<String, String> graph = new HashMap<>();
     graph.put("s", "a");
@@ -48,12 +53,14 @@ public class KShortestPathsFinderTest extends GraphTestCase {
     doTest(graph);
   }
 
+  @Test
   public void testOneVertex() {
     Map<String, String> graph = new HashMap<>();
     graph.put("s", "");
     doTest(graph, "s", "s", 5, "s");
   }
 
+  @Test
   public void testTwoPaths() {
     final Map<String, String> graph = new HashMap<>();
     graph.put("s", "ta");
@@ -62,6 +69,7 @@ public class KShortestPathsFinderTest extends GraphTestCase {
     doTest(graph, "st", "sat");
   }
 
+  @Test
   public void testManyEdgesToTarget() {
     final Map<String, String> graph = new HashMap<>();
     graph.put("s", "a");
@@ -73,6 +81,7 @@ public class KShortestPathsFinderTest extends GraphTestCase {
     doTest(graph, "sat", "sabt", "sabct", "sabcdt");
   }
 
+  @Test
   public void testManyEdgesFromSource() {
     final Map<String, String> graph = new HashMap<>();
     graph.put("s", "abcdt");
@@ -84,6 +93,7 @@ public class KShortestPathsFinderTest extends GraphTestCase {
     doTest(graph, "st", "sdt", "scdt", "sbcdt", "sabcdt");
   }
 
+  @Test
   public void testTwoParts() {
     final Map<String, String> graph = new HashMap<>();
     graph.put("s", "ab");
@@ -96,6 +106,7 @@ public class KShortestPathsFinderTest extends GraphTestCase {
     doTest(graph, "sbct", "sabct", "sbdet", "sabdet");
   }
 
+  @Test
   public void testHangingEdges() {
     final Map<String, String> graph = new HashMap<>();
     graph.put("s", "ae");
@@ -108,6 +119,7 @@ public class KShortestPathsFinderTest extends GraphTestCase {
     doTest(graph, "set");
   }
 
+  @Test
   public void testSimpleCycle() {
     final Map<String, String> graph = new HashMap<>();
     graph.put("s", "t");
@@ -115,6 +127,7 @@ public class KShortestPathsFinderTest extends GraphTestCase {
     doTest(graph, 4, "st", "stst", "ststst", "stststst");
   }
 
+  @Test
   public void testComplexCycle() {
     final Map<String, String> graph = new HashMap<>();
     graph.put("s", "p");
@@ -125,6 +138,7 @@ public class KShortestPathsFinderTest extends GraphTestCase {
     doTest(graph, 5, "spt", "spqt", "spqvpt", "spqvpqt", "spqvpqvpt");
   }
 
+  @Test
   public void testHeap() {
     final Map<String, String> graph = new HashMap<>();
     graph.put("s", "a");
@@ -138,6 +152,7 @@ public class KShortestPathsFinderTest extends GraphTestCase {
     doTest(graph, "sabct", "sadeft", "sabdeft", "sabcdeft");
   }
 
+  @Test
   public void testBigHeap() {
     final Map<String, String> graph = new HashMap<>();
     graph.put("s", "lo");
@@ -170,8 +185,8 @@ public class KShortestPathsFinderTest extends GraphTestCase {
   }
 
   private static void doTest(Map<String, String> graph, final String start, final String finish, final int k, String... expectedPaths) {
-    final Graph<String> generator = initGraph(graph);
-    final List<List<String>> paths = getAlgorithmsInstance().findKShortestPaths(generator, start, finish, k, new EmptyProgressIndicator());
+    Graph<String> generator = initGraph(graph);
+    List<List<String>> paths = getAlgorithmsInstance().findKShortestPaths(generator, start, finish, k, new EmptyProgressIndicator(ModalityState.NON_MODAL));
     List<String> pathStrings = new ArrayList<>();
     Set<Integer> sizes = new HashSet<>();
     for (List<String> path : paths) {
