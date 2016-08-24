@@ -12,7 +12,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.FList;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -46,14 +45,14 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   private final DiffViewTableModel myModel = new DiffViewTableModel();
   private final UnknownDiffValue myUnknownValue = new UnknownDiffValue();
   private final XDebugSession myDebugSession;
-  private final Map<String, InstancesTracker.TrackingType> myTrackedClasses;
+  private final Map<ReferenceType, DiffValue> myCounts = new ConcurrentHashMap<>();
+  private final InstancesTracker myInstancesTracker;
 
   private boolean myOnlyWithDiff;
-  private boolean myOnlyWithInstances;
 
+  private boolean myOnlyWithInstances;
   private MinusculeMatcher myMatcher = NameUtil.buildMatcher("*").build();
   private String myFilteringPattern = "";
-  private ConcurrentHashMap<ReferenceType, DiffValue> myCounts = new ConcurrentHashMap<>();
 
   private volatile List<ReferenceType> myElems = Collections.unmodifiableList(new ArrayList<>());
 
@@ -63,6 +62,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     myDebugSession = session;
     myOnlyWithDiff = onlyWithDiff;
     myOnlyWithInstances = onlyWithInstances;
+    myInstancesTracker = InstancesTracker.getInstance(myDebugSession.getProject());
 
     getEmptyText().setText(EMPTY_TABLE_CONTENT);
 
@@ -70,17 +70,14 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     tracker.addTrackerListener(new InstancesTrackerListener() {
       @Override
       public void classChanged(@NotNull String name, @NotNull InstancesTracker.TrackingType type) {
-        myTrackedClasses.put(name, type);
         getRowSorter().allRowsChanged();
       }
 
       @Override
       public void classRemoved(@NotNull String name) {
-        myTrackedClasses.remove(name);
         getRowSorter().allRowsChanged();
       }
     }, this);
-    myTrackedClasses = new HashMap<>(tracker.getTrackingClasses());
 
     TableColumn classesColumn = getColumnModel().getColumn(DiffViewTableModel.CLASSNAME_COLUMN_INDEX);
     TableColumn countColumn = getColumnModel().getColumn(DiffViewTableModel.COUNT_COLUMN_INDEX);
@@ -209,6 +206,15 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   public void dispose() {
   }
 
+  private boolean needHighlightAsTracked(boolean isSelected, int row) {
+    if(isSelected){
+      return false;
+    }
+
+    ReferenceType ref = (ReferenceType) getValueAt(row, DiffViewTableModel.CLASSNAME_COLUMN_INDEX);
+    return myInstancesTracker.isTracked(ref.name());
+  }
+
   private class DiffViewTableModel extends AbstractTableModelWithColumns {
     private final static int CLASSNAME_COLUMN_INDEX = 0;
     private final static int COUNT_COLUMN_INDEX = 1;
@@ -327,15 +333,15 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   private class MyNumberTableCellRenderer extends ColoredTableCellRenderer {
     @Override
     protected void customizeCellRenderer(JTable table, @Nullable Object value,
-                                         boolean selected, boolean hasFocus, int row, int column) {
+                                         boolean isSelected, boolean hasFocus, int row, int column) {
       if (value == null) {
         return;
       }
 
-      String className = ((ReferenceType) getValueAt(row, DiffViewTableModel.CLASSNAME_COLUMN_INDEX)).name();
-      if (!selected && myTrackedClasses.containsKey(className)) {
+      if (needHighlightAsTracked(isSelected, row)) {
         setBackground(UIUtil.toAlpha(JBColor.yellow, 20));
       }
+
       long val = (long) value;
       setTextAlign(SwingConstants.RIGHT);
       if (column == DiffViewTableModel.COUNT_COLUMN_INDEX) {
@@ -360,7 +366,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     protected void customizeCellRenderer(JTable table, @Nullable Object value,
                                          boolean isSelected, boolean hasFocus, int row, int column) {
       String presentation = value == null ? "null" : ((ReferenceType) value).name();
-      if (value != null && !isSelected && myTrackedClasses.containsKey(presentation)) {
+      if (needHighlightAsTracked(isSelected, row)) {
         setBackground(UIUtil.toAlpha(JBColor.yellow, 20));
       }
 

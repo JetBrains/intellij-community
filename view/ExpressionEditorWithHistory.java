@@ -20,7 +20,6 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionEditor;
-import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,10 +30,10 @@ class ExpressionEditorWithHistory extends XDebuggerExpressionEditor {
   private static final String HISTORY_ID_PREFIX = "filtering";
 
   ExpressionEditorWithHistory(final @NotNull Project project,
-                              final @NotNull ReferenceType referenceType,
+                              final @NotNull String className,
                               final @NotNull XDebuggerEditorsProvider debuggerEditorsProvider,
                               final @Nullable Disposable parentDisposable) {
-    super(project, debuggerEditorsProvider, HISTORY_ID_PREFIX + referenceType.name(), null,
+    super(project, debuggerEditorsProvider, HISTORY_ID_PREFIX + className, null,
         XExpressionImpl.EMPTY_EXPRESSION, false, true, true);
 
     new AnAction("InstancesWindow.ShowHistory") {
@@ -53,7 +52,7 @@ class ExpressionEditorWithHistory extends XDebuggerExpressionEditor {
       @Override
       protected Void doInBackground() throws Exception {
         ApplicationManager.getApplication().runReadAction(() -> {
-          final PsiClass psiClass = DebuggerUtils.findClass(referenceType.name(),
+          final PsiClass psiClass = DebuggerUtils.findClass(className,
               project, GlobalSearchScope.allScope(project));
           XSourcePositionImpl position = XSourcePositionImpl.createByElement(psiClass);
           SwingUtilities.invokeLater(() -> setSourcePosition(position));

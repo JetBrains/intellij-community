@@ -12,6 +12,7 @@ import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +37,8 @@ public class ShowInstancesByClassAction extends XDebuggerTreeActionBase {
       XDebugSession debugSession = XDebuggerManager.getInstance(project).getCurrentSession();
       ObjectReference ref = getObjectReference(node);
       if(debugSession != null && ref != null){
-        new InstancesWindow(debugSession, ref.referenceType()).show();
+        ReferenceType referenceType = ref.referenceType();
+        new InstancesWindow(debugSession, referenceType::instances, referenceType.name()).show();
       }
     }
   }

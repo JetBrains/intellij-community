@@ -16,7 +16,7 @@ public class ShowInstancesFromClassesViewAction extends ClassesActionBase {
     XDebugSession debugSession = getDebugSession(e);
     ReferenceType selectedClass = getSelectedClass(e);
     if (debugSession != null && selectedClass != null) {
-      new InstancesWindow(debugSession, selectedClass).show();
+      new InstancesWindow(debugSession, selectedClass::instances, selectedClass.name()).show();
     }
   }
 }

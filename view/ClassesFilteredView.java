@@ -166,7 +166,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
 
   private void handleClassSelection(@Nullable ReferenceType ref) {
     if (ref != null && myDebugSession.isSuspended()) {
-      new InstancesWindow(myDebugSession, ref).show();
+      new InstancesWindow(myDebugSession, ref::instances, ref.name()).show();
     }
   }
 

@@ -50,14 +50,10 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.BooleanValue;
 import com.sun.jdi.ObjectReference;
-import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.debugger.memory.utils.AndroidUtil;
-import org.jetbrains.debugger.memory.utils.ErrorsValueGroup;
-import org.jetbrains.debugger.memory.utils.InstanceJavaValue;
-import org.jetbrains.debugger.memory.utils.InstanceValueDescriptor;
+import org.jetbrains.debugger.memory.utils.*;
 import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 
 import javax.swing.*;
@@ -77,16 +73,20 @@ public class InstancesWindow extends DialogWrapper {
 
   private final Project myProject;
   private final XDebugSession myDebugSession;
-  private final ReferenceType myReferenceType;
+  private final InstancesProvider myInstancesProvider;
+  private final String myClassName;
   private MyInstancesView myInstancesView;
 
   public InstancesWindow(@NotNull XDebugSession session,
-                         @NotNull ReferenceType referenceType) {
+                         @NotNull InstancesProvider provider,
+                         @NotNull String className) {
     super(session.getProject(), false);
 
     myProject = session.getProject();
     myDebugSession = session;
-    myReferenceType = referenceType;
+    myInstancesProvider = provider;
+    myClassName = className;
+
     addWarningMessage(null);
     myDebugSession.addSessionListener(new XDebugSessionListener() {
       @Override
@@ -106,7 +106,7 @@ public class InstancesWindow extends DialogWrapper {
 
   private void addWarningMessage(@Nullable String message) {
     String warning = message == null ? "" : String.format(". Warning: %s", message);
-    setTitle(String.format("Instances of %s%s", myReferenceType.name(), warning));
+    setTitle(String.format("Instances of %s%s", myClassName, warning));
   }
 
   @NotNull
@@ -164,6 +164,8 @@ public class InstancesWindow extends DialogWrapper {
     private final AnActionListener.Adapter myActionListener = new MyActionListener();
     private final Object myFilteringTaskLock = new Object();
 
+    private boolean myIsAndroidVM = false;
+
     private volatile MyFilteringWorker myFilteringTask = null;
 
     MyInstancesView() {
@@ -174,7 +176,7 @@ public class InstancesWindow extends DialogWrapper {
       myDebugSession.addSessionListener(myDebugSessionListener, InstancesWindow.this.myDisposable);
       JavaDebuggerEditorsProvider editorsProvider = new JavaDebuggerEditorsProvider();
 
-      myFilterConditionEditor = new ExpressionEditorWithHistory(myProject, myReferenceType,
+      myFilterConditionEditor = new ExpressionEditorWithHistory(myProject, myClassName,
           editorsProvider, InstancesWindow.this.myDisposable);
 
       myFilterButton.setBorder(BorderFactory.createEmptyBorder());
@@ -247,16 +249,16 @@ public class InstancesWindow extends DialogWrapper {
 
         @Override
         public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-          int limit = AndroidUtil.isAndroidVM(myReferenceType.virtualMachine())
+          myIsAndroidVM = AndroidUtil.isAndroidVM(debugProcess.getVirtualMachineProxy().getVirtualMachine());
+          int limit = myIsAndroidVM
               ? AndroidUtil.ANDROID_INSTANCES_LIMIT
               : DEFAULT_INSTANCES_COUNT;
-          List<ObjectReference> instances = myReferenceType.instances(limit);
+          List<ObjectReference> instances = myInstancesProvider.getInstances(limit);
 
           EvaluationContextImpl evaluationContext = debugProcess
               .getDebuggerContext().createEvaluationContext();
 
-          if (AndroidUtil.isAndroidVM(myReferenceType.virtualMachine())
-              && instances.size() == AndroidUtil.ANDROID_INSTANCES_LIMIT) {
+          if (myIsAndroidVM && instances.size() == AndroidUtil.ANDROID_INSTANCES_LIMIT) {
             addWarningMessage("Not all instances will be shown (android restriction)");
           }
 
@@ -400,7 +402,7 @@ public class InstancesWindow extends DialogWrapper {
       @Override
       @NotNull
       protected String getClassName() {
-        return myReferenceType.name();
+        return myClassName;
       }
 
       ExpressionEvaluator getEvaluator() throws EvaluateException {
