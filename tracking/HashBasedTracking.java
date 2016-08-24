@@ -6,9 +6,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class HashBasedTracking extends InstanceTrackingStrategy {
+class HashBasedTracking extends InstanceTrackingStrategy {
 
-  public HashBasedTracking(@NotNull List<ObjectReference> initialInstances) {
+  HashBasedTracking(@NotNull List<ObjectReference> initialInstances) {
 
   }
 

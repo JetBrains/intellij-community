@@ -5,13 +5,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class RetainReferencesTracking extends InstanceTrackingStrategy {
-  private final IdBasedTracking myIdTracker;
+class RetainReferencesTracking extends InstanceTrackingStrategy {
+  private final IdentityBasedTracking myIdTracker;
   @SuppressWarnings("unused")
   private List<ObjectReference> myHardRefs;
-  public RetainReferencesTracking(@NotNull List<ObjectReference> initialInstances) {
+  RetainReferencesTracking(@NotNull List<ObjectReference> initialInstances) {
     myHardRefs = initialInstances;
-    myIdTracker = new IdBasedTracking(initialInstances);
+    myIdTracker = new IdentityBasedTracking(initialInstances);
   }
 
   @NotNull

@@ -6,9 +6,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class IdBasedTracking extends InstanceTrackingStrategy {
+class IdentityBasedTracking extends InstanceTrackingStrategy {
   private long myLastId = -1;
-  public IdBasedTracking(@NotNull List<ObjectReference> initialInstances) {
+  IdentityBasedTracking(@NotNull List<ObjectReference> initialInstances) {
     myLastId = getMaxId(initialInstances);
   }
 
