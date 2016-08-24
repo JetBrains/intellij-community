@@ -41,6 +41,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
@@ -50,6 +51,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElementFinder;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.unscramble.ThreadState;
@@ -92,7 +94,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
   private final String mySessionName;
   private final DebugProcessImpl myDebugProcess;
   private final GlobalSearchScope mySearchScope;
-  private final Sdk myAlternativeJre;
+  private Sdk myAlternativeJre;
 
   private final DebuggerContextImpl SESSION_EMPTY_CONTEXT;
   //Thread, user is currently stepping through
@@ -121,6 +123,11 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
   public Sdk getAlternativeJre() {
     return myAlternativeJre;
+  }
+
+  public void setAlternativeJre(Sdk sdk) {
+    myAlternativeJre = sdk;
+    Extensions.findExtension(PsiElementFinder.EP_NAME, getProject(), AlternativeJreClassFinder.class).clearCache();
   }
 
   public boolean isModifiedClassesScanRequired() {
