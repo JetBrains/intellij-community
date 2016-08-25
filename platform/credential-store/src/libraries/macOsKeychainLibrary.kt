@@ -41,13 +41,24 @@ internal class KeyChainCredentialStore() : CredentialStore {
   }
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
+    val serviceName = attributes.serviceName.toByteArray()
     if (credentials.isEmpty()) {
-      deleteGenericPassword(attributes.serviceName.toByteArray(), attributes.userName!!)
+      val itemRef = PointerByReference()
+      val userName = attributes.userName?.toByteArray()
+      val code = LIBRARY.SecKeychainFindGenericPassword(null, serviceName.size, serviceName, userName?.size ?: 0, userName, null, null, itemRef)
+      if (code == errSecItemNotFound || code == errSecInvalidRecord) {
+        return
+      }
+
+      checkForError("find (for delete)", code)
+      itemRef.value?.let {
+        checkForError("delete", LIBRARY.SecKeychainItemDelete(it))
+        LIBRARY.CFRelease(it)
+      }
       return
     }
 
     val password = credentials!!.password?.toByteArray(false)
-    val serviceName = attributes.serviceName.toByteArray()
     val userName = (attributes.userName ?: credentials.userName)?.toByteArray()
     val itemRef = PointerByReference()
     val library = LIBRARY
@@ -90,22 +101,6 @@ fun findGenericPassword(serviceName: ByteArray, accountName: String?): Credentia
     }
   }
   return Credentials(effectiveAccountName, password)
-}
-
-fun deleteGenericPassword(serviceName: ByteArray, accountName: String) {
-  val itemRef = PointerByReference()
-  val accountNameBytes = accountName.toByteArray()
-  val code = LIBRARY.SecKeychainFindGenericPassword(null, serviceName.size, serviceName, accountNameBytes.size, accountNameBytes, null, null, itemRef)
-  if (code == errSecItemNotFound || code == errSecInvalidRecord) {
-    return
-  }
-
-  checkForError("find (for delete)", code)
-  val pointer = itemRef.value
-  if (pointer != null) {
-    checkForError("delete", LIBRARY.SecKeychainItemDelete(pointer))
-    LIBRARY.CFRelease(pointer)
-  }
 }
 
 // https://developer.apple.com/library/mac/documentation/Security/Reference/keychainservices/index.html

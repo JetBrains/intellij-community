@@ -6,7 +6,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.UsefulTestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
-import java.math.BigInteger
 import java.util.*
 
 private const val TEST_SERVICE_NAME = "IntelliJ Platform Test"
@@ -59,7 +58,7 @@ internal class NativeKeychainTest {
   }
 
   private fun doTest(store: CredentialStore) {
-    val pass = BigInteger(128, Random()).toString(32)
+    val pass = randomString()
     store.setPassword(CredentialAttributes(TEST_SERVICE_NAME, "test"), pass)
     assertThat(store.getPassword(CredentialAttributes(TEST_SERVICE_NAME, "test"))).isEqualTo(pass)
 
@@ -76,12 +75,26 @@ internal class NativeKeychainTest {
   }
 
   private fun testEmptyAccountName(store: CredentialStore) {
-    val serviceNameOnlyAttributes = CredentialAttributes("Test IJ - example.com")
-    store.set(serviceNameOnlyAttributes, Credentials("foo", OneTimeString("pass")))
-    assertThat(store.get(serviceNameOnlyAttributes)).isEqualTo(Credentials("foo", OneTimeString("pass")))
+    val serviceNameOnlyAttributes = CredentialAttributes("Test IJ — ${randomString()}")
+    try {
+      val credentials = Credentials(randomString(), OneTimeString("pass"))
+      store.set(serviceNameOnlyAttributes, credentials)
+      assertThat(store.get(serviceNameOnlyAttributes)).isEqualTo(credentials)
+    }
+    finally {
+      store.set(serviceNameOnlyAttributes, null)
+    }
 
-    val attributes = CredentialAttributes("Test IJ - foo.com", "noPassword")
-    store.set(attributes, Credentials("noPassword", null))
-    assertThat(store.get(attributes)).isEqualTo(Credentials("noPassword", if (SystemInfo.isMac) OneTimeString("") else null))
+    val userName = randomString()
+    val attributes = CredentialAttributes("Test IJ — ${randomString()}", userName)
+    try {
+      store.set(attributes, Credentials(userName, null))
+      assertThat(store.get(attributes)).isEqualTo(Credentials(userName, if (SystemInfo.isMac) OneTimeString("") else null))
+    }
+    finally {
+      store.set(attributes, null)
+    }
   }
 }
+
+private fun randomString() = UUID.randomUUID().toString()
