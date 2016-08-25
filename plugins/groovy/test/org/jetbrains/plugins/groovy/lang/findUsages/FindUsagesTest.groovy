@@ -24,6 +24,7 @@ import com.intellij.find.findUsages.FindUsagesOptions
 import com.intellij.find.impl.FindManagerImpl
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -455,4 +456,9 @@ new C().field             //unresolved
     assertUsageCount(usageCount);
   }
 
+  public void testWholeWordsIndexIsBuiltForLiterals() {
+    myFixture.configureByText("_.groovy", "11");
+    PsiFile[] words = PsiSearchHelper.SERVICE.getInstance(getProject()).findFilesWithPlainTextWords("11");
+    assertEquals(1, words.length);
+  }
 }
