@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.passwordSafe.ui;
 
-import com.intellij.credentialStore.CredentialAttributes;
+import com.intellij.credentialStore.CredentialAttributesKt;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -154,7 +154,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
       d.setErrorText(error);
       if (d.showAndGet()) {
         ref.set(new String(component.getPassword()));
-        ps.setPassword(new CredentialAttributes("IntelliJ Platform — " + requestor.getName(), accountName), ref.get(), !component.isRememberSelected());
+        ps.setPassword(CredentialAttributesKt.CredentialAttributes(requestor, accountName), ref.get(), !component.isRememberSelected());
       }
     }, ModalityState.any());
     return ref.get();
