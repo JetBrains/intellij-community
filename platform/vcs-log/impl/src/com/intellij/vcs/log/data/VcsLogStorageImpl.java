@@ -86,7 +86,7 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   @NotNull private static final String ROOT_STORAGE_KIND = "roots";
   private static final int ROOTS_STORAGE_VERSION = 0;
 
-  private static final int NO_INDEX = -1;
+  public static final int NO_INDEX = -1;
 
   @NotNull private final PersistentEnumeratorBase<CommitId> myCommitIdEnumerator;
   @NotNull private final PersistentUtil.MyPersistentEnumerator<VcsRef> myRefsEnumerator;
