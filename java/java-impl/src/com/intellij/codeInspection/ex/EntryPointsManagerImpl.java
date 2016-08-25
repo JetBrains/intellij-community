@@ -118,6 +118,7 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
             final LinkedHashSet<ClassPattern> patterns = entryPointsManagerBase.getPatterns();
             patterns.clear();
             patterns.addAll(list);
+            DaemonCodeAnalyzer.getInstance(entryPointsManagerBase.myProject).restart();
             super.doOKAction();
           }
         }.show();
