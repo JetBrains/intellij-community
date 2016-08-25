@@ -15,19 +15,21 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.formatting.Indent;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.lexer.JavaDocTokenTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.TokenType;
-import com.intellij.psi.impl.source.codeStyle.lineIndent.JavaLikeLangLineIndentProvider;
 import com.intellij.psi.impl.source.codeStyle.SemanticEditorPosition;
+import com.intellij.psi.impl.source.codeStyle.lineIndent.JavaLikeLangLineIndentProvider;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.formatting.Indent.Type.CONTINUATION;
 import static com.intellij.psi.impl.source.codeStyle.lineIndent.JavaLikeLangLineIndentProvider.JavaLikeElement.*;
 
 /**
@@ -65,5 +67,21 @@ public class JavaLineIndentProvider extends JavaLikeLangLineIndentProvider {
   @Override
   public boolean isSuitableForLanguage(@NotNull Language language) {
     return language.isKindOf(JavaLanguage.INSTANCE);
+  }
+
+  @Nullable
+  @Override
+  protected Indent.Type getIndentTypeInBlock(@NotNull Project project,
+                                             @Nullable Language language,
+                                             @NotNull SemanticEditorPosition blockStartPosition) {
+    SemanticEditorPosition beforeStart = blockStartPosition.before().beforeOptional(Whitespace);
+    if (beforeStart.isAt(JavaTokenType.EQ) ||
+        beforeStart.isAt(JavaTokenType.RBRACKET) ||
+        beforeStart.isAt(JavaTokenType.LPARENTH)
+      ) {
+      // For arrays like int x = {<caret>0, 1, 2}
+      return CONTINUATION;
+    }
+    return super.getIndentTypeInBlock(project, language, blockStartPosition);
   }
 }

@@ -126,7 +126,8 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
       else if (getPosition(editor, offset).matchesRule(
         position -> position.before().isAt(BlockOpeningBrace)
       )) {
-        return myFactory.createIndentCalculator(getIndentTypeInBlock(project, language), this::getBlockStatementStartOffset);
+        SemanticEditorPosition position = getPosition(editor, offset).before();
+        return myFactory.createIndentCalculator(getIndentTypeInBlock(project, language, position), this::getBlockStatementStartOffset);
       }
       else if (getPosition(editor, offset).matchesRule(
         position -> position.before().isAt(Colon) && position.isAfterOnSameLine(SwitchCase, SwitchDefault)
@@ -225,11 +226,13 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
   
   
   @Nullable
-  private static Type getIndentTypeInBlock(@NotNull Project project, @Nullable Language language) {
+  protected Type getIndentTypeInBlock(@NotNull Project project,
+                                           @Nullable Language language,
+                                           @NotNull SemanticEditorPosition blockStartPosition) {
     if (language != null) {
       CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project).getCommonSettings(language);
       if (settings.BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED) {
-        return  settings.METHOD_BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED ? NONE : null; 
+        return settings.METHOD_BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED ? NONE : null;
       }
     }
     return NORMAL;
