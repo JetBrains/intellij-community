@@ -193,7 +193,8 @@ public final class FieldFromParameterUtils {
                                                  final boolean isStatic,
                                                  final boolean isFinal) throws IncorrectOperationException {
     PsiManager psiManager = PsiManager.getInstance(project);
-    PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(psiManager.getProject());
+    PsiElementFactory factory = psiFacade.getElementFactory();
 
     PsiField field = factory.createField(fieldName, fieldType);
 
@@ -216,7 +217,9 @@ public final class FieldFromParameterUtils {
     Pair<PsiField, Boolean> fieldAnchor = anchorRef.get();
 
     String stmtText = fieldName + " = " + parameter.getName() + ";";
-    if (fieldName.equals(parameter.getName())) {
+
+    final PsiVariable variable = psiFacade.getResolveHelper().resolveReferencedVariable(fieldName, methodBody);
+    if (variable != null && !(variable instanceof PsiField)) {
       String prefix = isStatic ? targetClass.getName() == null ? "" : targetClass.getName() + "." : "this.";
       stmtText = prefix + stmtText;
     }
