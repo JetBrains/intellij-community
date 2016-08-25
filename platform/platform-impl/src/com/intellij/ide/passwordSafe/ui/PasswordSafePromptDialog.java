@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.passwordSafe.ui;
 
-import com.intellij.credentialStore.CredentialAttributes;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -28,15 +27,14 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.credentialStore.CredentialAttributesKt.CredentialAttributes;
+
 /**
  * The generic password dialog. Use it to ask a password from user with option to remember it.
  */
 public class PasswordSafePromptDialog extends DialogWrapper {
   private final PasswordPromptComponent myComponent;
 
-  /**
-   * The private constructor. Note that it does not do init on dialog.
-   */
   private PasswordSafePromptDialog(@Nullable Project project, @NotNull String title, @NotNull PasswordPromptComponent component) {
     super(project, true);
 
@@ -44,10 +42,6 @@ public class PasswordSafePromptDialog extends DialogWrapper {
     myComponent = component;
     setResizable(false);
     init();
-  }
-
-  public PasswordPromptComponent getComponent() {
-    return myComponent;
   }
 
   @Override
@@ -137,7 +131,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
                                     String checkboxLabel) {
     PasswordSafe ps = PasswordSafe.getInstance();
     if (resetPassword) {
-      ps.setPassword(requestor, accountName, null);
+      ps.set(CredentialAttributes(requestor, accountName), null);
     }
     else {
       String pw = ps.getPassword(requestor, accountName);
@@ -154,7 +148,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
       d.setErrorText(error);
       if (d.showAndGet()) {
         ref.set(new String(component.getPassword()));
-        ps.setPassword(new CredentialAttributes("IntelliJ Platform — " + requestor.getName(), accountName), ref.get(), !component.isRememberSelected());
+        ps.setPassword(CredentialAttributes(requestor, accountName), ref.get(), !component.isRememberSelected());
       }
     }, ModalityState.any());
     return ref.get();

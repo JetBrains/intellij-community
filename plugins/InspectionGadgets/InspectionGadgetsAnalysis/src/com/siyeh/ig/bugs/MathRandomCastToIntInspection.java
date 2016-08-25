@@ -161,7 +161,7 @@ public class MathRandomCastToIntInspection extends BaseInspection {
         return;
       }
       final String qualifiedName = containingClass.getQualifiedName();
-      if (!"java.lang.Math".equals(qualifiedName) && !"java.lang.StrictMath".equals(qualifiedName)) {
+      if (!CommonClassNames.JAVA_LANG_MATH.equals(qualifiedName) && !CommonClassNames.JAVA_LANG_STRICT_MATH.equals(qualifiedName)) {
         return;
       }
       registerError(methodCallExpression, expression, type);

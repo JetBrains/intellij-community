@@ -130,7 +130,7 @@ public class NonReproducibleMathCallInspection extends BaseInspection {
         return;
       }
       final String className = referencedClass.getQualifiedName();
-      if (!"java.lang.Math".equals(className)) {
+      if (!CommonClassNames.JAVA_LANG_MATH.equals(className)) {
         return;
       }
       registerMethodCallError(expression);

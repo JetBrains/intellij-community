@@ -1291,8 +1291,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         .descriptionAndTooltip("Method reference expression is not expected here").create());
     }
 
+    final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
     if (!myHolder.hasErrorResults()) {
-      final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
       if (functionalInterfaceType != null) {
         final boolean notFunctional = !LambdaUtil.isFunctionalType(functionalInterfaceType);
         if (notFunctional) {
@@ -1300,6 +1300,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
                          .descriptionAndTooltip(functionalInterfaceType.getPresentableText() + " is not a functional interface").create());
         }
       }
+    }
       if (!myHolder.hasErrorResults()) {
         final PsiElement referenceNameElement = expression.getReferenceNameElement();
         if (referenceNameElement instanceof PsiKeyword) {
@@ -1312,25 +1313,14 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           }
         }
       }
-      if (!myHolder.hasErrorResults()) {
-        final PsiClassType.ClassResolveResult resolveResult = checkFunctionalInterfaceTypeAccessible(expression, functionalInterfaceType);
+    if (!myHolder.hasErrorResults()) {
+      checkFunctionalInterfaceTypeAccessible(expression, functionalInterfaceType);
+    }
 
-        final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
-        if (interfaceMethod != null) {
-          if (!myHolder.hasErrorResults()) {
-            final String errorMessage = PsiMethodReferenceUtil.checkMethodReferenceContext(expression);
-            if (errorMessage != null) {
-              myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(errorMessage).create());
-            }
-          }
-
-          if (!myHolder.hasErrorResults()) {
-            final String badReturnTypeMessage = PsiMethodReferenceUtil.checkReturnType(expression, result, functionalInterfaceType);
-            if (badReturnTypeMessage != null) {
-              myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(badReturnTypeMessage).create());
-            }
-          }
-        }
+    if (!myHolder.hasErrorResults() && functionalInterfaceType != null) {
+      final String errorMessage = PsiMethodReferenceUtil.checkMethodReferenceContext(expression);
+      if (errorMessage != null) {
+        myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(errorMessage).create());
       }
     }
 
@@ -1359,9 +1349,17 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
 
     if (!myHolder.hasErrorResults()) {
+      final String badReturnTypeMessage = PsiMethodReferenceUtil.checkReturnType(expression, result, functionalInterfaceType);
+      if (badReturnTypeMessage != null) {
+        myHolder.add(
+          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(badReturnTypeMessage).create());
+      }
+    }
+
+    if (!myHolder.hasErrorResults()) {
       if (results.length == 0 || results[0] instanceof MethodCandidateInfo &&
                                  !((MethodCandidateInfo)results[0]).isApplicable() &&
-                                 expression.getFunctionalInterfaceType() != null) {
+                                 functionalInterfaceType != null) {
         String description = null;
         if (results.length == 1) {
           description = ((MethodCandidateInfo)results[0]).getInferenceErrorMessage();

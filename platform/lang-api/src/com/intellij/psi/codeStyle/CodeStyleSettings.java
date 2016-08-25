@@ -499,7 +499,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
     UnknownElementCollector unknownElementCollector = new UnknownElementCollector();
     for (CustomCodeStyleSettings settings : getCustomSettingsValues()) {
-      unknownElementCollector.addKnownName(settings.getTagName());
+      settings.getKnownTagNames().forEach(unknownElementCollector::addKnownName);
       settings.readExternal(element);
     }
 

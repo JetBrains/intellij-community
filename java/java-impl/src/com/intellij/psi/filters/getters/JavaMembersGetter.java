@@ -106,7 +106,7 @@ public class JavaMembersGetter extends MembersGetter {
         final PsiElement element = result.getElement();
         if (element instanceof PsiMethod) {
           final PsiClass aClass = ((PsiMethod)element).getContainingClass();
-          if (aClass != null && !"java.lang.Math".equals(aClass.getQualifiedName())) {
+          if (aClass != null && !CommonClassNames.JAVA_LANG_MATH.equals(aClass.getQualifiedName())) {
             return aClass;
           }
         }

@@ -48,15 +48,17 @@ public class TopCommitsCache {
     List<VcsCommitMetadata> result = ContainerUtil.newArrayList();
     while (it.hasNext()) {
       VcsCommitMetadata detail = it.next();
+      int index = getIndex(detail);
+      if (index == VcsLogStorageImpl.NO_INDEX) continue; // means some error happened (and reported) earlier, nothing we can do here
       if (result.size() < VcsLogData.RECENT_COMMITS_COUNT * 2) {
         result.add(detail);
-        myCache.put(getIndex(detail), detail);
+        myCache.put(index, detail);
       }
       else {
-        myCache.remove(getIndex(detail));
+        myCache.remove(index);
       }
     }
-    assert result.size() == myCache.size();
+    assert result.size() == myCache.size() : result.size() + " details to store, yet " + myCache.size() + " indexes in cache.";
     mySortedDetails = result;
   }
 

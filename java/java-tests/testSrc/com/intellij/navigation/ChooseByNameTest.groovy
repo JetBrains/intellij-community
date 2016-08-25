@@ -329,6 +329,16 @@ class Intf {
     assert popup.calcSelectedIndex(popupElements.toArray(), 'xfile') == 0
   }
 
+  public void "test prefer prefix match"() {
+    def wanted = myFixture.addClass('class PsiClassImpl {}')
+    def smth = myFixture.addClass('class DroolsPsiClassImpl {}')
+    def popup = createPopup(new GotoClassModel2(project))
+    def popupElements = calcPopupElements(popup, 'PsiCl', false)
+
+    assert popupElements == [wanted, ChooseByNameBase.NON_PREFIX_SEPARATOR, smth]
+    assert popup.calcSelectedIndex(popupElements.toArray(), 'PsiCl') == 0
+  }
+
   private List<Object> getPopupElements(ChooseByNameModel model, String text, boolean checkboxState = false) {
     return calcPopupElements(createPopup(model), text, checkboxState)
   }

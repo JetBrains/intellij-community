@@ -147,7 +147,7 @@ public class ParameterHintsPresentationManager implements Disposable {
       step = 1;
       steps = Math.max(1, Math.abs(endWidth - startWidth) / metrics.charWidth('a') / ANIMATION_CHARS_PER_STEP);
     }
-
+    
     public boolean nextStep() {
       return ++step <= steps;
     }

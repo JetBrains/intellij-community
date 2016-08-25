@@ -344,7 +344,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
    */
   @Override
   public PsiElement getParent() {
-    T stub = getStub();
+    T stub = getGreenStub();
     if (stub != null && !((ObjectStubBase)stub).isDangling()) {
       return stub.getParentStub().getPsi();
     }

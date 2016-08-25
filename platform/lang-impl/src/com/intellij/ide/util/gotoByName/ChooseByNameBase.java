@@ -1082,9 +1082,10 @@ public abstract class ChooseByNameBase {
     Matcher matcher = buildPatternMatcher(transformPattern(trimmedText));
     final String statContext = statisticsContext();
     Comparator<Object> itemComparator = Comparator.
-      comparing(e -> !trimmedText.equalsIgnoreCase(myModel.getElementName(e))).
+      comparing(e -> trimmedText.equalsIgnoreCase(myModel.getElementName(e))).
       thenComparing(e -> matchingDegree(matcher, e)).
-      thenComparing(e -> getUseCount(statContext, e));
+      thenComparing(e -> getUseCount(statContext, e)).
+      reversed();
 
     int bestPosition = 0;
     for (int i = 1; i < modelElements.length; i++) {

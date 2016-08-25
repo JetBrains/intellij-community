@@ -235,7 +235,7 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
     return Result.CONTINUE;
   }
 
-  static boolean fileContainsXmlLanguage(PsiFile editedFile) {
+  public static boolean fileContainsXmlLanguage(PsiFile editedFile) {
     if (editedFile.getLanguage() instanceof XMLLanguage) {
       return true;
     }

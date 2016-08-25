@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.execution;
 
+import com.intellij.credentialStore.CredentialAttributesKt;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -132,7 +133,7 @@ class HgCommandAuthenticator {
         myPassword = dialog.getPassword();
         ok = true;
         PasswordSafe.getInstance()
-          .setPassword(HgCommandAuthenticator.class, keyForUrlAndLogin(url, myUserName), myPassword, !dialog.isRememberPassword());
+          .setPassword(CredentialAttributesKt.CredentialAttributes(HgCommandAuthenticator.class, keyForUrlAndLogin(url, myUserName)), myPassword, !dialog.isRememberPassword());
         hgGlobalSettings.addRememberedUrl(url, myUserName);
       }
     }

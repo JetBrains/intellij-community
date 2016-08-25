@@ -660,4 +660,17 @@ public class PyFormatterTest extends PyTestCase {
     getPythonCodeStyleSettings().SPACE_AROUND_POWER_OPERATOR = false;
     doTest();
   }
+
+  // PY-20392
+  public void testSpaceAfterTrailingCommaInDictLiterals() {
+    doTest();
+  }
+
+  // PY-20392
+  public void testSpaceAfterTrailingCommaIfNoSpaceAfterCommaButWithinBracesOrBrackets() {
+    getPythonCodeStyleSettings().SPACE_WITHIN_BRACES = true;
+    getCommonCodeStyleSettings().SPACE_WITHIN_BRACKETS = true;
+    getCommonCodeStyleSettings().SPACE_AFTER_COMMA = false;
+    doTest();
+  }
 }
