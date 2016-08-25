@@ -17,7 +17,6 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint;
-import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
@@ -68,8 +67,8 @@ class ContractInferenceInterpreter {
   }
 
   List<MethodContract> inferContracts() {
-    List<MethodContract> contracts = doInferContracts();
-    if (contracts.isEmpty()) return contracts;
+    List<MethodContract> contracts = ContainerUtil.concat(doInferContracts(), c -> c.toContracts(myMethod));
+    if (contracts.isEmpty()) return Collections.emptyList();
     
     final PsiType returnType = myMethod.getReturnType();
     if (returnType != null && !(returnType instanceof PsiPrimitiveType)) {
@@ -99,20 +98,20 @@ class ContractInferenceInterpreter {
     });
   }
 
-  private List<MethodContract> doInferContracts() {
+  private List<PreContract> doInferContracts() {
     PsiCodeBlock body = myMethod.getBody();
     PsiStatement[] statements = body == null ? PsiStatement.EMPTY_ARRAY : body.getStatements();
     if (statements.length == 0) return Collections.emptyList();
 
     if (statements.length == 1) {
       if (statements[0] instanceof PsiReturnStatement) {
-        List<MethodContract> result = handleDelegation(((PsiReturnStatement)statements[0]).getReturnValue(), false);
+        List<PreContract> result = handleDelegation(((PsiReturnStatement)statements[0]).getReturnValue(), false);
         if (result != null) {
           return result;
         }
       }
       else if (statements[0] instanceof PsiExpressionStatement && ((PsiExpressionStatement)statements[0]).getExpression() instanceof PsiMethodCallExpression) {
-        List<MethodContract> result = handleDelegation(((PsiExpressionStatement)statements[0]).getExpression(), false);
+        List<PreContract> result = handleDelegation(((PsiExpressionStatement)statements[0]).getExpression(), false);
         if (result != null) return result;
       }
     }
@@ -121,7 +120,7 @@ class ContractInferenceInterpreter {
   }
 
   @Nullable
-  private List<MethodContract> handleDelegation(final PsiExpression expression, final boolean negated) {
+  private static List<PreContract> handleDelegation(final PsiExpression expression, final boolean negated) {
     if (expression instanceof PsiParenthesizedExpression) {
       return handleDelegation(((PsiParenthesizedExpression)expression).getExpression(), negated);
     }
@@ -131,59 +130,10 @@ class ContractInferenceInterpreter {
     }
 
     if (expression instanceof PsiMethodCallExpression) {
-      return handleCallDelegation((PsiMethodCallExpression)expression, negated);
+      return Collections.singletonList(new DelegationContract((PsiMethodCallExpression)expression, negated));
     }
 
     return null;
-  }
-
-  private List<MethodContract> handleCallDelegation(PsiMethodCallExpression expression, final boolean negated) {
-    JavaResolveResult result = expression.resolveMethodGenerics();
-    final PsiMethod targetMethod = (PsiMethod)result.getElement();
-    if (targetMethod == null) return Collections.emptyList();
-
-    final PsiParameter[] parameters = targetMethod.getParameterList().getParameters();
-    final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
-    final boolean varArgCall = MethodCallInstruction.isVarArgCall(targetMethod, result.getSubstitutor(), arguments, parameters);
-
-    final boolean notNull = NullableNotNullManager.isNotNull(targetMethod);
-    List<MethodContract> fromDelegate = ContainerUtil.mapNotNull(ControlFlowAnalyzer.getMethodContracts(targetMethod), delegateContract -> {
-      ValueConstraint[] answer = myEmptyConstraints;
-      for (int i = 0; i < delegateContract.arguments.length; i++) {
-        if (i >= arguments.length) return null;
-        ValueConstraint argConstraint = delegateContract.arguments[i];
-        if (argConstraint != ANY_VALUE) {
-          if (varArgCall && i >= parameters.length - 1) {
-            if (argConstraint == NULL_VALUE) {
-              return null;
-            }
-            break;
-          }
-
-          int paramIndex = resolveParameter(arguments[i]);
-          if (paramIndex < 0) {
-            if (argConstraint != getLiteralConstraint(arguments[i])) {
-              return null;
-            }
-          }
-          else {
-            answer = withConstraint(answer, paramIndex, argConstraint);
-            if (answer == null) {
-              return null;
-            }
-          }
-        }
-      }
-      ValueConstraint returnValue = negated ? negateConstraint(delegateContract.returnValue) : delegateContract.returnValue;
-      if (notNull && returnValue != THROW_EXCEPTION) {
-        returnValue = NOT_NULL_VALUE;
-      }
-      return answer == null ? null : new MethodContract(answer, returnValue);
-    });
-    if (notNull) {
-      return ContainerUtil.concat(fromDelegate, Collections.singletonList(new MethodContract(myEmptyConstraints, NOT_NULL_VALUE)));
-    }
-    return fromDelegate;
   }
 
   @NotNull
@@ -272,7 +222,7 @@ class ContractInferenceInterpreter {
   private MethodContract contractWithConstraint(ValueConstraint[] state,
                                                        int parameter, ValueConstraint paramConstraint,
                                                        ValueConstraint returnValue) {
-    ValueConstraint[] newState = withConstraint(state, parameter, paramConstraint);
+    ValueConstraint[] newState = withConstraint(state, parameter, paramConstraint, myMethod);
     return newState == null ? null : new MethodContract(newState, returnValue);
   }
 
@@ -309,7 +259,11 @@ class ContractInferenceInterpreter {
   }
 
   private PsiParameter getParameter(int parameter) {
-    return myMethod.getParameterList().getParameters()[parameter];
+    return getParameter(parameter, myMethod);
+  }
+
+  private static PsiParameter getParameter(int parameter, PsiMethod method) {
+    return method.getParameterList().getParameters()[parameter];
   }
 
   private static List<MethodContract> toContracts(List<ValueConstraint[]> states, ValueConstraint constraint) {
@@ -333,8 +287,8 @@ class ContractInferenceInterpreter {
   }
 
   @NotNull
-  private List<MethodContract> visitStatements(List<ValueConstraint[]> states, PsiStatement... statements) {
-    List<MethodContract> result = ContainerUtil.newArrayList();
+  private List<PreContract> visitStatements(List<ValueConstraint[]> states, PsiStatement... statements) {
+    List<PreContract> result = ContainerUtil.newArrayList();
     for (PsiStatement statement : statements) {
       if (statement instanceof PsiBlockStatement) {
         result.addAll(visitStatements(states, ((PsiBlockStatement)statement).getCodeBlock().getStatements()));
@@ -357,14 +311,14 @@ class ContractInferenceInterpreter {
         }
       }
       else if (statement instanceof PsiThrowStatement) {
-        result.addAll(toContracts(states, THROW_EXCEPTION));
+        result.addAll(ContainerUtil.map(toContracts(states, THROW_EXCEPTION), KnownContract::new));
       }
       else if (statement instanceof PsiReturnStatement) {
-        result.addAll(visitExpression(states, ((PsiReturnStatement)statement).getReturnValue()));
+        result.addAll(ContainerUtil.map(visitExpression(states, ((PsiReturnStatement)statement).getReturnValue()), KnownContract::new));
       }
       else if (statement instanceof PsiAssertStatement) {
         List<MethodContract> conditionResults = visitExpression(states, ((PsiAssertStatement)statement).getAssertCondition());
-        result.addAll(toContracts(antecedentsReturning(conditionResults, FALSE_VALUE), THROW_EXCEPTION));
+        result.addAll(ContainerUtil.map(toContracts(antecedentsReturning(conditionResults, FALSE_VALUE), THROW_EXCEPTION), KnownContract::new));
       }
       else if (statement instanceof PsiDeclarationStatement && !mayHaveSideEffects((PsiDeclarationStatement)statement)) {
         continue;
@@ -391,7 +345,7 @@ class ContractInferenceInterpreter {
   }
 
   @Nullable
-  private static ValueConstraint getLiteralConstraint(@Nullable PsiExpression expr) {
+  static ValueConstraint getLiteralConstraint(@Nullable PsiExpression expr) {
     if (expr instanceof PsiLiteralExpression) {
       if (expr.textMatches(PsiKeyword.TRUE)) return TRUE_VALUE;
       if (expr.textMatches(PsiKeyword.FALSE)) return FALSE_VALUE;
@@ -401,7 +355,7 @@ class ContractInferenceInterpreter {
     return null;
   }
 
-  private static ValueConstraint negateConstraint(@NotNull ValueConstraint constraint) {
+  static ValueConstraint negateConstraint(@NotNull ValueConstraint constraint) {
     //noinspection EnumSwitchStatementWhichMissesCases
     switch (constraint) {
       case NULL_VALUE: return NOT_NULL_VALUE;
@@ -413,9 +367,13 @@ class ContractInferenceInterpreter {
   }
 
   private int resolveParameter(@Nullable PsiExpression expr) {
+    return resolveParameter(expr, myMethod);
+  }
+
+  static int resolveParameter(@Nullable PsiExpression expr, PsiMethod method) {
     if (expr instanceof PsiReferenceExpression && !((PsiReferenceExpression)expr).isQualified()) {
       String name = expr.getText();
-      PsiParameter[] parameters = myMethod.getParameterList().getParameters();
+      PsiParameter[] parameters = method.getParameterList().getParameters();
       for (int i = 0; i < parameters.length; i++) {
         if (name.equals(parameters[i].getName())) {
           return i;
@@ -426,7 +384,7 @@ class ContractInferenceInterpreter {
   }
 
   @Nullable
-  private ValueConstraint[] withConstraint(ValueConstraint[] constraints, int index, ValueConstraint constraint) {
+  static ValueConstraint[] withConstraint(ValueConstraint[] constraints, int index, ValueConstraint constraint, PsiMethod method) {
     if (constraints[index] == constraint) return constraints;
 
     ValueConstraint negated = negateConstraint(constraint);
@@ -434,7 +392,7 @@ class ContractInferenceInterpreter {
       return null;
     }
 
-    if (constraint == NULL_VALUE && NullableNotNullManager.isNotNull(getParameter(index))) {
+    if (constraint == NULL_VALUE && NullableNotNullManager.isNotNull(getParameter(index, method))) {
       return null;
     }
 
