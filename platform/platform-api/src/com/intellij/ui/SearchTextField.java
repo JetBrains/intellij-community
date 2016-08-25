@@ -201,12 +201,16 @@ public class SearchTextField extends JPanel {
       }
     }
 
-    if (ApplicationManager.getApplication() != null) { //tests
+    if (toClearTextOnEscape()) {
       final ActionManager actionManager = ActionManager.getInstance();
       if (actionManager != null) {
         EmptyAction.registerWithShortcutSet(IdeActions.ACTION_CLEAR_TEXT, CommonShortcuts.ESCAPE, this);
       }
     }
+  }
+
+  protected boolean toClearTextOnEscape() {
+    return ApplicationManager.getApplication() != null;
   }
 
   protected void onFieldCleared() {
