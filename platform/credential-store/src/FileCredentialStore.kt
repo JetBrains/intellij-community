@@ -59,7 +59,7 @@ internal class FileCredentialStore(keyToValue: Map<CredentialAttributes, Credent
       for ((attributes, credentials) in keyToValue) {
         val entry = db.createEntry(attributes.serviceName)
         entry.userName = credentials.userName
-        entry.password = credentials.password
+        entry.password = credentials.password?.toString(clear = false)
         group.addEntry(entry)
       }
     }
@@ -114,8 +114,8 @@ internal class FileCredentialStore(keyToValue: Map<CredentialAttributes, Credent
       val oldAttributes = toOldKey(requestor, accountName)
       val credentials = db.rootGroup.getGroup(GROUP_NAME)?.removeEntry(oldAttributes.serviceName, oldAttributes.userName!!)
       if (credentials != null) {
-        set(CredentialAttributes(requestor, accountName), Credentials(accountName, credentials.password))
-        return credentials.password
+        set(CredentialAttributes(requestor, accountName), Credentials(accountName, credentials.password?.let(::OneTimeString)))
+        return credentials.password.toString()
       }
     }
     return password
@@ -123,7 +123,7 @@ internal class FileCredentialStore(keyToValue: Map<CredentialAttributes, Credent
 
   override fun get(attributes: CredentialAttributes): Credentials? {
     val entry = db.rootGroup.getGroup(GROUP_NAME)?.getEntry(attributes.serviceName, attributes.userName) ?: return null
-    return Credentials(entry.userName, entry.password)
+    return Credentials(entry.userName, entry.password?.let(::OneTimeString))
   }
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
@@ -131,7 +131,7 @@ internal class FileCredentialStore(keyToValue: Map<CredentialAttributes, Credent
       db.rootGroup.getGroup(GROUP_NAME)?.removeEntry(attributes.serviceName, attributes.userName)
     }
     else {
-      db.rootGroup.getOrCreateGroup(GROUP_NAME).getOrCreateEntry(attributes.serviceName, attributes.userName ?: credentials.userName).password = credentials.password
+      db.rootGroup.getOrCreateGroup(GROUP_NAME).getOrCreateEntry(attributes.serviceName, attributes.userName ?: credentials.userName).password = credentials.password?.toString(clear = false)
     }
 
     if (db.isDirty) {
@@ -144,7 +144,7 @@ internal class FileCredentialStore(keyToValue: Map<CredentialAttributes, Credent
     for (entry in group.entries) {
       val title = entry.title
       if (title != null) {
-        store.set(CredentialAttributes(title, entry.userName), Credentials(entry.userName, entry.password))
+        store.set(CredentialAttributes(title, entry.userName), Credentials(entry.userName, entry.password?.let(::OneTimeString)))
       }
     }
   }

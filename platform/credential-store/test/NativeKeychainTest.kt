@@ -1,9 +1,6 @@
 package com.intellij.credentialStore.linux
 
-import com.intellij.credentialStore.CredentialAttributes
-import com.intellij.credentialStore.CredentialStore
-import com.intellij.credentialStore.Credentials
-import com.intellij.credentialStore.FileCredentialStore
+import com.intellij.credentialStore.*
 import com.intellij.credentialStore.macOs.KeyChainCredentialStore
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.UsefulTestCase
@@ -80,7 +77,7 @@ internal class NativeKeychainTest {
 
   private fun testEmptyAccountName(store: CredentialStore) {
     val serviceNameOnlyAttributes = CredentialAttributes("Test IJ - example.com")
-    store.set(serviceNameOnlyAttributes, Credentials("foo", "pass"))
-    assertThat(store.get(serviceNameOnlyAttributes)).isEqualTo(Credentials("foo", "pass"))
+    store.set(serviceNameOnlyAttributes, Credentials("foo", OneTimeString("pass")))
+    assertThat(store.get(serviceNameOnlyAttributes)).isEqualTo(Credentials("foo", OneTimeString("pass")))
   }
 }

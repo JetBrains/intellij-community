@@ -68,7 +68,7 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
     val value = currentProvider.getPassword(requestor, accountName)
     if (value == null && memoryHelperProvider.isInitialized()) {
       // if password was set as `memoryOnly`
-      return memoryHelperProvider.value.get(CredentialAttributes(requestor, accountName))?.password
+      return memoryHelperProvider.value.get(CredentialAttributes(requestor, accountName))?.password?.toString()
     }
     return value
   }
@@ -94,7 +94,7 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
   }
 
   override fun setPassword(attributes: CredentialAttributes, value: String?, memoryOnly: Boolean) {
-    val credentials = value?.let { Credentials(attributes.userName, it) }
+    val credentials = value?.let { Credentials(attributes.userName, OneTimeString(it)) }
     if (memoryOnly) {
       memoryHelperProvider.value.set(attributes, credentials)
       // remove to ensure that on getPassword we will not return some value from default provider

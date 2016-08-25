@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 package org.jetbrains.io
 
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.text.CharArrayCharSequence
 import java.io.InputStreamReader
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
+import java.util.*
 
 fun InputStreamReader.readCharSequence(length: Int): CharSequence {
   use {
@@ -39,7 +39,7 @@ fun InputStreamReader.readCharSequence(length: Int): CharSequence {
 // we must return string on subSequence() - JsonReaderEx will call toString in any case
 class CharSequenceBackedByChars : CharArrayCharSequence {
   val byteBuffer: ByteBuffer
-    get() = CharsetToolkit.UTF8_CHARSET.encode(CharBuffer.wrap(myChars, myStart, length))
+    get() = Charsets.UTF_8.encode(CharBuffer.wrap(myChars, myStart, length))
 
   constructor(charBuffer: CharBuffer) : super(charBuffer.array(), charBuffer.arrayOffset(), charBuffer.position()) {
   }
@@ -53,4 +53,18 @@ class CharSequenceBackedByChars : CharArrayCharSequence {
   override fun subSequence(start: Int, end: Int): CharSequence {
     return if (start == 0 && end == length) this else String(myChars, myStart + start, end - start)
   }
+}
+
+fun ByteBuffer.toByteArray(): ByteArray {
+  if (hasArray()) {
+    val offset = arrayOffset()
+    if (offset == 0 && array().size == limit()) {
+      return array()
+    }
+    return Arrays.copyOfRange(array(), offset, offset + limit())
+  }
+
+  val bytes = ByteArray(limit())
+  get(bytes)
+  return bytes
 }

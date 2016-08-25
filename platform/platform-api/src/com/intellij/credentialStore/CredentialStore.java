@@ -25,12 +25,12 @@ public interface CredentialStore {
   @Nullable
   default String getPassword(@NotNull CredentialAttributes attributes) {
     Credentials credentials = get(attributes);
-    return credentials == null ? null : credentials.getPassword();
+    return credentials == null ? null : credentials.getPasswordAsString();
   }
 
   void set(@NotNull CredentialAttributes attributes, @Nullable Credentials credentials);
 
   default void setPassword(@NotNull CredentialAttributes attributes, @Nullable String password) {
-    set(attributes, password == null ? null : new Credentials(attributes.getUserName(), password));
+    set(attributes, password == null ? null : new Credentials(attributes.getUserName(), new OneTimeString(password)));
   }
 }
