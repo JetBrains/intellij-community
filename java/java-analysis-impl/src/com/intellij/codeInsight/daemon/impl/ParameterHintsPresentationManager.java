@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
-import com.intellij.openapi.editor.EditorCustomTextElementRenderer;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -125,7 +124,7 @@ public class ParameterHintsPresentationManager implements Disposable {
     return metrics;
   }
 
-  private static class MyRenderer implements EditorCustomTextElementRenderer {
+  private static class MyRenderer implements EditorCustomElementRenderer {
     private String myText;
     private int startWidth;
     private int steps;
@@ -149,12 +148,6 @@ public class ParameterHintsPresentationManager implements Disposable {
       steps = Math.max(1, Math.abs(endWidth - startWidth) / metrics.charWidth('a') / ANIMATION_CHARS_PER_STEP);
     }
     
-    @NotNull
-    @Override
-    public String getText() {
-      return myText;
-    }
-
     public boolean nextStep() {
       return ++step <= steps;
     }

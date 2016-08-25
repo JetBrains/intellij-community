@@ -15,13 +15,13 @@
  */
 package com.intellij.reporting
 
+import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorCustomTextElementRenderer
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
@@ -87,11 +87,8 @@ class ReportMissingOrExcessiveInlineHint : AnAction() {
   }
   
   private fun reportInlays(text: String, inlays: List<Inlay>) {
-    val hints = inlays
-        .map { it.renderer }
-        .mapNotNull { if (it is EditorCustomTextElementRenderer) it else null }
-        .map { it.text }
-    
+    val hintManager = ParameterHintsPresentationManager.getInstance()
+    val hints = inlays.mapNotNull { hintManager.getHintText(it) }
     trySend(text, hints)
   }
 
