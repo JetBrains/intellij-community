@@ -100,13 +100,15 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
       else if (getPosition(editor, offset).matchesRule(
         position -> position
           .before()
-          .beforeOptional(Semicolon)
           .beforeOptional(Whitespace)
           .isAt(BlockClosingBrace))) {
         return myFactory.createIndentCalculator(getBlockIndentType(project, language), IndentCalculator.LINE_BEFORE);
       }
       else if (getPosition(editor, offset).matchesRule(position -> position.before().isAt(Semicolon))) {
         SemanticEditorPosition beforeSemicolon = getPosition(editor, offset).before().beforeOptional(Semicolon);
+        if (beforeSemicolon.isAt(BlockClosingBrace)) {
+          beforeSemicolon.beforeParentheses(BlockOpeningBrace, BlockClosingBrace);
+        }
         int statementStart = getStatementStartOffset(beforeSemicolon);
         SemanticEditorPosition atStatementStart = getPosition(editor, statementStart);
         if (!atStatementStart.isAfterOnSameLine(ForKeyword)) {
@@ -194,7 +196,7 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
       }
       else if (position.isAtAnyOf(Semicolon,
                                   BlockOpeningBrace, 
-                                  BlockClosingBrace, 
+                                  BlockClosingBrace,
                                   BlockComment, 
                                   DocBlockEnd, 
                                   LineComment, 
