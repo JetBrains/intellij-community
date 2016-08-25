@@ -38,7 +38,7 @@ import javax.crypto.spec.SecretKeySpec
 
 private const val GROUP_NAME = "IntelliJ Platform"
 
-internal class FileCredentialStore(keyToValue: Map<CredentialAttributes, Credentials>? = null, baseDirectory: Path = Paths.get(PathManager.getConfigPath()), var memoryOnly: Boolean = false) : PasswordStorage, CredentialStore {
+internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Credentials>? = null, baseDirectory: Path = Paths.get(PathManager.getConfigPath()), var memoryOnly: Boolean = false) : PasswordStorage, CredentialStore {
   private val db: KeePassDatabase
 
   private val dbFile = baseDirectory.resolve("c.kdbx")

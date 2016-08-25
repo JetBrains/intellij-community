@@ -130,7 +130,7 @@ internal class PasswordDatabaseConvertor : ApplicationLoadListener {
                 return
               }
             }
-            FileCredentialStore(newDb).save()
+            KeePassCredentialStore(newDb).save()
           }
         }
       }

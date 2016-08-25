@@ -31,7 +31,7 @@ internal class NativeKeychainTest {
 
   @Test
   fun keepass() {
-    doTest(FileCredentialStore())
+    doTest(KeePassCredentialStore())
   }
 
   @Test
@@ -54,7 +54,7 @@ internal class NativeKeychainTest {
 
   @Test
   fun `keepass - testEmptyAccountName`() {
-    testEmptyAccountName(FileCredentialStore())
+    testEmptyAccountName(KeePassCredentialStore())
   }
 
   private fun doTest(store: CredentialStore) {
