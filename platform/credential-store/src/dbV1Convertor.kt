@@ -42,16 +42,11 @@ internal fun isMasterPasswordValid(password: String, @Suppress("DEPRECATION") db
   return false
 }
 
-internal fun checkPassAndConvertOldDb(password: String, @Suppress("DEPRECATION") db: PasswordDatabase): Map<String, String>? {
-  if (isMasterPasswordValid(password, db)) {
-    return convertOldDb(password, db)
-  }
-  else {
-    return null
-  }
+internal fun checkPassAndConvertOldDb(password: String, @Suppress("DEPRECATION") db: PasswordDatabase): Map<CredentialAttributes, Credentials>? {
+  return if (isMasterPasswordValid(password, db)) convertOldDb(password, db) else null
 }
 
-internal fun convertOldDb(@Suppress("DEPRECATION") db: PasswordDatabase): Map<String, String>? {
+internal fun convertOldDb(@Suppress("DEPRECATION") db: PasswordDatabase): Map<CredentialAttributes, Credentials>? {
   if (db.myDatabase.size <= 1) {
     return null
   }
@@ -77,7 +72,7 @@ internal fun convertOldDb(@Suppress("DEPRECATION") db: PasswordDatabase): Map<St
     return null
   }
 
-  var result: Map<String, String>? = null
+  var result: Map<CredentialAttributes, Credentials>? = null
   val dialog = MasterPasswordDialog(EnterPasswordComponent(Function {
     result = checkPassAndConvertOldDb(it, db)
     result != null
@@ -93,17 +88,18 @@ internal fun convertOldDb(@Suppress("DEPRECATION") db: PasswordDatabase): Map<St
   return result
 }
 
-internal fun convertOldDb(oldKey: String, @Suppress("DEPRECATION") db: PasswordDatabase): Map<String, String> {
+internal fun convertOldDb(oldKey: String, @Suppress("DEPRECATION") db: PasswordDatabase): Map<CredentialAttributes, Credentials> {
   val oldKeyB = EncryptionUtil.genPasswordKey(oldKey)
   val testKey = ByteArrayWrapper(EncryptionUtil.encryptKey(oldKeyB, rawTestKey(oldKey)))
-  val newDb = THashMap<String, String>(db.myDatabase.size)
+  val newDb = THashMap<CredentialAttributes, Credentials>(db.myDatabase.size)
   for ((key, value) in db.myDatabase) {
     if (testKey == key) {
       continue
     }
 
     // in old db we cannot get key value - it is hashed, so, we store it as a base64 encoded in the new DB
-    newDb.put(toOldKey(EncryptionUtil.decryptKey(oldKeyB, key.unwrap())), EncryptionUtil.decryptText(oldKeyB, value))
+    val attributes = toOldKeyAsIdentity(EncryptionUtil.decryptKey(oldKeyB, key.unwrap()))
+    newDb.put(attributes, Credentials(attributes.userName, EncryptionUtil.decryptText(oldKeyB, value)))
   }
   return newDb
 }
@@ -130,9 +126,7 @@ internal class PasswordDatabaseConvertor : ApplicationLoadListener {
             LOG.catchAndLog {
               for (factory in CredentialStoreFactory.CREDENTIAL_STORE_FACTORY.extensions) {
                 val store = factory.create() ?: continue
-                for ((k, v) in newDb) {
-                  store.setPassword(k, v)
-                }
+                copyTo(newDb, store)
                 return
               }
             }
