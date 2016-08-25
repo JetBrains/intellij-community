@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.passwordSafe.ui;
 
-import com.intellij.credentialStore.CredentialAttributesKt;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -27,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+
+import static com.intellij.credentialStore.CredentialAttributesKt.CredentialAttributes;
 
 /**
  * The generic password dialog. Use it to ask a password from user with option to remember it.
@@ -137,7 +138,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
                                     String checkboxLabel) {
     PasswordSafe ps = PasswordSafe.getInstance();
     if (resetPassword) {
-      ps.setPassword(requestor, accountName, null);
+      ps.set(CredentialAttributes(requestor, accountName), null);
     }
     else {
       String pw = ps.getPassword(requestor, accountName);
@@ -154,7 +155,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
       d.setErrorText(error);
       if (d.showAndGet()) {
         ref.set(new String(component.getPassword()));
-        ps.setPassword(CredentialAttributesKt.CredentialAttributes(requestor, accountName), ref.get(), !component.isRememberSelected());
+        ps.setPassword(CredentialAttributes(requestor, accountName), ref.get(), !component.isRememberSelected());
       }
     }, ModalityState.any());
     return ref.get();
