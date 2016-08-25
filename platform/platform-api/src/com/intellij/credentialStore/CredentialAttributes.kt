@@ -86,13 +86,16 @@ class OneTimeString(value: CharArray, offset: Int = 0, length: Int = value.size)
   }
 
   // string will be cleared and not valid after
-  fun toByteArray(): ByteArray {
-    if (!consumed.compareAndSet(false, true)) {
+  @JvmOverloads
+  fun toByteArray(clear: Boolean = true): ByteArray {
+    if (clear && !consumed.compareAndSet(false, true)) {
       throw Error("Already consumed")
     }
 
     val result = Charsets.UTF_8.encode(CharBuffer.wrap(myChars, myStart, length))
-    myChars.fill('\u0000', myStart, myEnd)
+    if (clear) {
+      myChars.fill('\u0000', myStart, myEnd)
+    }
     return result.toByteArray()
   }
 
