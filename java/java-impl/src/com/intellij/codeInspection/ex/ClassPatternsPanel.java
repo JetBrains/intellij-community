@@ -23,8 +23,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
@@ -71,7 +74,9 @@ class ClassPatternsPanel extends JPanel {
       .addExtraAction(new AnActionButton(addPatternMessage, IconUtil.getAddPatternIcon()) {
         @Override
         public void actionPerformed(AnActionEvent e) {
-          String selectedPattern = Messages.showInputDialog("Pattern:", "Class Name Pattern", Messages.getQuestionIcon());
+          final PsiNameHelper nameHelper = PsiNameHelper.getInstance(e.getProject());
+          String selectedPattern = Messages.showInputDialog("Pattern:", "Class Name Pattern", Messages.getQuestionIcon(), null,
+                                                            new ClassPatternValidator(nameHelper));
           if (selectedPattern != null) {
             insertRow(selectedPattern, table);
           }
@@ -124,6 +129,33 @@ class ClassPatternsPanel extends JPanel {
     column.setMinWidth(width);
 
     return result;
+  }
+
+  private static class ClassPatternValidator implements InputValidatorEx {
+    private final PsiNameHelper myNameHelper;
+
+    public ClassPatternValidator(PsiNameHelper nameHelper) {
+      myNameHelper = nameHelper;
+    }
+
+    @Nullable
+    @Override
+    public String getErrorText(String inputString) {
+      final String qualifiedNameStartingWithDot = inputString.replace("*", "");
+      final String qName = StringUtil.trimStart(qualifiedNameStartingWithDot, ".");
+      return !myNameHelper.isQualifiedName(qName)
+             ? "Pattern must be a valid java qualified name, only '*' are accepted as placeholders" : null;
+    }
+
+    @Override
+    public boolean checkInput(String inputString) {
+      return getErrorText(inputString) == null;
+    }
+
+    @Override
+    public boolean canClose(String inputString) {
+      return getErrorText(inputString) == null;
+    }
   }
 
   private class MyTableModel extends AbstractTableModel implements ItemRemovable {

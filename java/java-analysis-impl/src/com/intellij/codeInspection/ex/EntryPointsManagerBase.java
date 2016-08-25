@@ -46,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 @State(name = "EntryPointsManager")
 public abstract class EntryPointsManagerBase extends EntryPointsManager implements PersistentStateComponent<Element> {
@@ -459,8 +460,13 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     }
 
     final Pattern regexp = pattern.getRegexp();
-    if (regexp != null && regexp.matcher(qualifiedName).matches()) {
-      return true;
+    if (regexp != null) {
+      try {
+        if (regexp.matcher(qualifiedName).matches()) {
+          return true;
+        }
+      }
+      catch (PatternSyntaxException ignored) {}
     }
 
     if (pattern.hierarchically) {
@@ -497,7 +503,13 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     @Nullable
     public Pattern getRegexp() {
       if (regexp == null && pattern.contains("*")) {
-        regexp = Pattern.compile(pattern);
+        final String replace = pattern.replace("*", ".*");
+        try {
+          regexp = Pattern.compile(replace);
+        }
+        catch (PatternSyntaxException e) {
+          return null;
+        }
       }
       return regexp;
     }
