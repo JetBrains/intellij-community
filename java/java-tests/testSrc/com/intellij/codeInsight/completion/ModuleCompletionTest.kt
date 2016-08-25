@@ -16,15 +16,18 @@
 package com.intellij.codeInsight.completion
 
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.MultiModuleJava9ProjectDescriptor
 import org.assertj.core.api.Assertions.assertThat
 
 class ModuleCompletionTest : LightFixtureCompletionTestCase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_9
+  override fun getProjectDescriptor(): LightProjectDescriptor = MultiModuleJava9ProjectDescriptor
 
   fun testFileHeader() = complete("<caret>", "module <caret>")
   fun testStatements1() = variants("module M { <caret> }", "requires", "exports", "uses", "provides")
   fun testStatements2() = complete("module M { requires X; ex<caret> }", "module M { requires X; exports <caret> }")
+  fun testModuleRef() = complete("module M { requires M<caret> }", "module M { requires M2;<caret> }")
 
+  //<editor-fold desc="Helpers.">
   private fun complete(text: String, expected: String) {
     myFixture.configureByText("module-info.java", text)
     myFixture.completeBasic()
@@ -36,4 +39,5 @@ class ModuleCompletionTest : LightFixtureCompletionTestCase() {
     val result = myFixture.completeBasic()?.map { it.lookupString }
     assertThat(result).containsExactlyInAnyOrder(*variants)
   }
+  //</editor-fold>
 }

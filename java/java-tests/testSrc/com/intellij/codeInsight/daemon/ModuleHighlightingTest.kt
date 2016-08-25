@@ -16,24 +16,16 @@
 package com.intellij.codeInsight.daemon
 
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ContentEntry
-import com.intellij.openapi.roots.LanguageLevelModuleExtension
-import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiJavaModule
-import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
+import com.intellij.testFramework.MultiModuleJava9ProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 
 class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = DESCRIPTOR
+  override fun getProjectDescriptor(): LightProjectDescriptor = MultiModuleJava9ProjectDescriptor
 
   fun testWrongFileName() {
     myFixture.configureByText("M.java", """/* ... */ <error descr="Module declaration should be in a file named 'module-info.java'">module M</error> { }""")
@@ -67,27 +59,6 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
   }
 
   //<editor-fold desc="Helpers.">
-  companion object {
-    private val DESCRIPTOR = object : DefaultLightProjectDescriptor() {
-      override fun getSdk() = IdeaTestUtil.getMockJdk18()
-
-      override fun setUpProject(project: Project, handler: SetupHandler) {
-        super.setUpProject(project, handler)
-        runWriteAction {
-          val m2 = createModule(project, FileUtil.join(FileUtil.getTempDirectory(), "light_idea_test_case_m2.iml"))
-          val src2 = createSourceRoot(m2, "src2")
-          createContentEntry(m2, src2)
-
-          VfsUtil.saveText(src2.createChildData(this, "module-info.java"), "module M2 { requires M1; }")
-        }
-      }
-
-      override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
-        model.getModuleExtension(LanguageLevelModuleExtension::class.java).languageLevel = LanguageLevel.JDK_1_9
-      }
-    }
-  }
-
   private fun additionalFile(text: String) = myFixture.configureFromExistingVirtualFile(runWriteAction {
     val file = LightPlatformTestCase.getSourceRoot().createChildDirectory(this, "pkg").createChildData(this, "module-info.java")
     VfsUtil.saveText(file, text)
