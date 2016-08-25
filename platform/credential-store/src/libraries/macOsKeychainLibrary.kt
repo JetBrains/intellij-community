@@ -46,9 +46,22 @@ internal class KeyChainCredentialStore() : CredentialStore {
       return
     }
 
-    val password = credentials!!.password!!.toByteArray(false)
-    saveGenericPassword(attributes.serviceName.toByteArray(), attributes.userName ?: credentials.userName, password, password.size)
-    password.fill(0)
+    val password = credentials!!.password?.toByteArray(false)
+    val serviceName = attributes.serviceName.toByteArray()
+    val userName = (attributes.userName ?: credentials.userName)?.toByteArray()
+    val itemRef = PointerByReference()
+    val library = LIBRARY
+    checkForError("find (for save)", library.SecKeychainFindGenericPassword(null, serviceName.size, serviceName, userName?.size ?: 0, userName, null, null, itemRef))
+    val pointer = itemRef.value
+    if (pointer == null) {
+      checkForError("save (new)", library.SecKeychainAddGenericPassword(null, serviceName.size, serviceName, userName?.size ?: 0, userName, password?.size ?: 0, password))
+    }
+    else {
+      checkForError("save (update)", library.SecKeychainItemModifyContent(pointer, null, password?.size ?: 0, password))
+      library.CFRelease(pointer)
+    }
+
+    password?.fill(0)
   }
 }
 
@@ -98,9 +111,9 @@ fun deleteGenericPassword(serviceName: ByteArray, accountName: String) {
 // https://developer.apple.com/library/mac/documentation/Security/Reference/keychainservices/index.html
 // It is very, very important to use CFRelease/SecKeychainItemFreeContent You must do it, otherwise you can get "An invalid record was encountered."
 private interface MacOsKeychainLibrary : Library {
-  fun SecKeychainAddGenericPassword(keychain: Pointer?, serviceNameLength: Int, serviceName: ByteArray, accountNameLength: Int, accountName: ByteArray?, passwordLength: Int, passwordData: ByteArray, itemRef: Pointer? = null): Int
+  fun SecKeychainAddGenericPassword(keychain: Pointer?, serviceNameLength: Int, serviceName: ByteArray, accountNameLength: Int, accountName: ByteArray?, passwordLength: Int, passwordData: ByteArray?, itemRef: Pointer? = null): Int
 
-  fun SecKeychainItemModifyContent(itemRef: Pointer, /*SecKeychainAttributeList**/ attrList: Pointer?, length: Int, data: ByteArray): Int
+  fun SecKeychainItemModifyContent(itemRef: Pointer, /*SecKeychainAttributeList**/ attrList: Pointer?, length: Int, data: ByteArray?): Int
 
   fun SecKeychainFindGenericPassword(keychainOrArray: Pointer?,
                                      serviceNameLength: Int,
@@ -144,21 +157,6 @@ internal class SecKeychainAttributeInfo : Structure() {
   var format: Pointer? = null
 
   override fun getFieldOrder() = listOf("count", "tag", "format")
-}
-
-fun saveGenericPassword(serviceName: ByteArray, accountName: String?, password: ByteArray, passwordSize: Int = password.size) {
-  val accountNameBytes = accountName?.toByteArray()
-  val itemRef = PointerByReference()
-  val library = LIBRARY
-  checkForError("find (for save)", library.SecKeychainFindGenericPassword(null, serviceName.size, serviceName, accountNameBytes?.size ?: 0, accountNameBytes, null, null, itemRef))
-  val pointer = itemRef.value
-  if (pointer == null) {
-    checkForError("save (new)", library.SecKeychainAddGenericPassword(null, serviceName.size, serviceName, accountNameBytes?.size ?: 0, accountNameBytes, passwordSize, password))
-  }
-  else {
-    checkForError("save (update)", library.SecKeychainItemModifyContent(pointer, null, passwordSize, password))
-    library.CFRelease(pointer)
-  }
 }
 
 private fun checkForError(message: String, code: Int) {
