@@ -57,7 +57,7 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
 
   private class MoveEntriesToSuspicious extends QuickFixAction {
     private MoveEntriesToSuspicious(@NotNull InspectionToolWrapper toolWrapper) {
-      super(InspectionsBundle.message("inspection.dead.code.remove.from.entry.point.quickfix"), null, null, toolWrapper);
+      super(InspectionsBundle.message("inspection.dead.code.remove.user.defined.entry.point.quickfix"), null, null, toolWrapper);
     }
 
     @Override
@@ -66,22 +66,16 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
       if (e.getPresentation().isEnabled()) {
         final InspectionResultsView view = getInvoker(e);
         boolean permanentFound = false;
-        boolean nonPermanentFound = false;
         for (RefEntity point : view.getTree().getSelectedElements()) {
           if (point instanceof RefJavaElement && ((RefJavaElement)point).isEntry()) {
             if (((RefJavaElement)point).isPermanentEntry()) {
               permanentFound = true;
-            }
-            else {
-              nonPermanentFound = true;
+              break;
             }
           }
         }
 
-        if (permanentFound && nonPermanentFound) {
-          e.getPresentation().setText(InspectionsBundle.message("inspection.dead.code.remove.user.defined.entry.point.quickfix"));
-        }
-        else if (nonPermanentFound || !permanentFound) {
+        if (!permanentFound) {
           e.getPresentation().setEnabled(false);
         }
       }
