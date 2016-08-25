@@ -138,7 +138,7 @@ class ContractInferenceInterpreter {
   }
 
   @NotNull
-  private List<MethodContract> visitExpression(final List<ValueConstraint[]> states, @Nullable PsiExpression expr) {
+  private List<PreContract> visitExpression(final List<ValueConstraint[]> states, @Nullable PsiExpression expr) {
     if (states.isEmpty()) return Collections.emptyList();
     if (states.size() > 300) return Collections.emptyList(); // too complex
 
@@ -146,15 +146,15 @@ class ContractInferenceInterpreter {
       PsiExpression[] operands = ((PsiPolyadicExpression)expr).getOperands();
       IElementType op = ((PsiPolyadicExpression)expr).getOperationTokenType();
       if (operands.length == 2 && (op == JavaTokenType.EQEQ || op == JavaTokenType.NE)) {
-        return visitEqualityComparison(states, operands[0], operands[1], op == JavaTokenType.EQEQ);
+        return asPreContracts(visitEqualityComparison(states, operands[0], operands[1], op == JavaTokenType.EQEQ));
       }
       if (op == JavaTokenType.ANDAND || op == JavaTokenType.OROR) {
-        return visitLogicalOperation(operands, op == JavaTokenType.ANDAND, states);
+        return asPreContracts(visitLogicalOperation(operands, op == JavaTokenType.ANDAND, states));
       }
     }
 
     if (expr instanceof PsiConditionalExpression) {
-      List<MethodContract> conditionResults = visitExpression(states, ((PsiConditionalExpression)expr).getCondition());
+      List<PreContract> conditionResults = visitExpression(states, ((PsiConditionalExpression)expr).getCondition());
       return ContainerUtil.concat(
         visitExpression(antecedentsReturning(conditionResults, TRUE_VALUE), ((PsiConditionalExpression)expr).getThenExpression()),
         visitExpression(antecedentsReturning(conditionResults, FALSE_VALUE), ((PsiConditionalExpression)expr).getElseExpression()));
@@ -169,11 +169,9 @@ class ContractInferenceInterpreter {
     }
 
     if (expr instanceof PsiPrefixExpression && ((PsiPrefixExpression)expr).getOperationTokenType() == JavaTokenType.EXCL) {
-      List<MethodContract> result = ContainerUtil.newArrayList();
-      for (MethodContract contract : visitExpression(states, ((PsiPrefixExpression)expr).getOperand())) {
-        if (contract.returnValue == TRUE_VALUE || contract.returnValue == FALSE_VALUE) {
-          result.add(new MethodContract(contract.arguments, negateConstraint(contract.returnValue)));
-        }
+      List<PreContract> result = ContainerUtil.newArrayList();
+      for (PreContract contract : visitExpression(states, ((PsiPrefixExpression)expr).getOperand())) {
+        ContainerUtil.addIfNotNull(result, NegatingContract.negate(contract));
       }
       return result;
     }
@@ -181,23 +179,20 @@ class ContractInferenceInterpreter {
     if (expr instanceof PsiInstanceOfExpression) {
       final int parameter = resolveParameter(((PsiInstanceOfExpression)expr).getOperand());
       if (parameter >= 0) {
-        return ContainerUtil.mapNotNull(states, state -> contractWithConstraint(state, parameter, NULL_VALUE, FALSE_VALUE));
+        return asPreContracts(ContainerUtil.mapNotNull(states, state -> contractWithConstraint(state, parameter, NULL_VALUE, FALSE_VALUE)));
       }
     }
 
     if (expr instanceof PsiNewExpression) {
-      return toContracts(states, NOT_NULL_VALUE);
+      return asPreContracts(toContracts(states, NOT_NULL_VALUE));
     }
     if (expr instanceof PsiMethodCallExpression) {
-      PsiMethod method = ((PsiMethodCallExpression)expr).resolveMethod();
-      if (method != null && NullableNotNullManager.isNotNull(method)) {
-        return toContracts(states, NOT_NULL_VALUE);
-      }
+      return Collections.singletonList(new MethodCallContract((PsiMethodCallExpression)expr, states));
     }
 
     final ValueConstraint constraint = getLiteralConstraint(expr);
     if (constraint != null) {
-      return toContracts(states, constraint);
+      return asPreContracts(toContracts(states, constraint));
     }
 
     int paramIndex = resolveParameter(expr);
@@ -213,10 +208,15 @@ class ContractInferenceInterpreter {
           ContainerUtil.addIfNotNull(result, contractWithConstraint(state, paramIndex, FALSE_VALUE, FALSE_VALUE));
         }
       }
-      return result;
+      return asPreContracts(result);
     }
 
     return Collections.emptyList();
+  }
+
+  @NotNull
+  private static List<PreContract> asPreContracts(List<MethodContract> contracts) {
+    return ContainerUtil.map(contracts, KnownContract::new);
   }
 
   @Nullable
@@ -267,7 +267,7 @@ class ContractInferenceInterpreter {
     return method.getParameterList().getParameters()[parameter];
   }
 
-  private static List<MethodContract> toContracts(List<ValueConstraint[]> states, ValueConstraint constraint) {
+  static List<MethodContract> toContracts(List<ValueConstraint[]> states, ValueConstraint constraint) {
     return ContainerUtil.map(states, state -> new MethodContract(state, constraint));
   }
 
@@ -275,16 +275,20 @@ class ContractInferenceInterpreter {
     ValueConstraint breakValue = conjunction ? FALSE_VALUE : TRUE_VALUE;
     List<MethodContract> finalStates = ContainerUtil.newArrayList();
     for (PsiExpression operand : operands) {
-      List<MethodContract> opResults = visitExpression(states, operand);
-      finalStates.addAll(ContainerUtil.filter(opResults, contract -> contract.returnValue == breakValue));
+      List<PreContract> opResults = visitExpression(states, operand);
+      finalStates.addAll(ContainerUtil.filter(knownContracts(opResults), contract -> contract.returnValue == breakValue));
       states = antecedentsReturning(opResults, negateConstraint(breakValue));
     }
     finalStates.addAll(toContracts(states, negateConstraint(breakValue)));
     return finalStates;
   }
 
-  private static List<ValueConstraint[]> antecedentsReturning(List<MethodContract> values, ValueConstraint result) {
-    return ContainerUtil.mapNotNull(values, contract -> contract.returnValue == result ? contract.arguments : null);
+  private static List<MethodContract> knownContracts(List<PreContract> values) {
+    return ContainerUtil.mapNotNull(values, pc -> pc instanceof KnownContract ? ((KnownContract)pc).getContract() : null);
+  }
+
+  private static List<ValueConstraint[]> antecedentsReturning(List<PreContract> values, ValueConstraint result) {
+    return ContainerUtil.mapNotNull(knownContracts(values), contract -> contract.returnValue == result ? contract.arguments : null);
   }
 
   private static class CodeBlockContracts {
@@ -319,7 +323,7 @@ class ContractInferenceInterpreter {
         result.addAll(visitStatements(states, ((PsiBlockStatement)statement).getCodeBlock().getStatements()));
       }
       else if (statement instanceof PsiIfStatement) {
-        List<MethodContract> conditionResults = visitExpression(states, ((PsiIfStatement)statement).getCondition());
+        List<PreContract> conditionResults = visitExpression(states, ((PsiIfStatement)statement).getCondition());
 
         PsiStatement thenBranch = ((PsiIfStatement)statement).getThenBranch();
         if (thenBranch != null) {
@@ -336,14 +340,14 @@ class ContractInferenceInterpreter {
         }
       }
       else if (statement instanceof PsiThrowStatement) {
-        result.addAll(ContainerUtil.map(toContracts(states, THROW_EXCEPTION), KnownContract::new));
+        result.addAll(asPreContracts(toContracts(states, THROW_EXCEPTION)));
       }
       else if (statement instanceof PsiReturnStatement) {
-        result.addAll(ContainerUtil.map(visitExpression(states, ((PsiReturnStatement)statement).getReturnValue()), KnownContract::new));
+        result.addAll(visitExpression(states, ((PsiReturnStatement)statement).getReturnValue()));
       }
       else if (statement instanceof PsiAssertStatement) {
-        List<MethodContract> conditionResults = visitExpression(states, ((PsiAssertStatement)statement).getAssertCondition());
-        result.addAll(ContainerUtil.map(toContracts(antecedentsReturning(conditionResults, FALSE_VALUE), THROW_EXCEPTION), KnownContract::new));
+        List<PreContract> conditionResults = visitExpression(states, ((PsiAssertStatement)statement).getAssertCondition());
+        result.addAll(asPreContracts(toContracts(antecedentsReturning(conditionResults, FALSE_VALUE), THROW_EXCEPTION)));
       }
       else if (statement instanceof PsiDeclarationStatement) {
         result.declarations.add((PsiDeclarationStatement)statement);

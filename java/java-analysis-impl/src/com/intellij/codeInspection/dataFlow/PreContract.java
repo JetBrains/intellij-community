@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -42,8 +43,13 @@ public abstract class PreContract {
 class KnownContract extends PreContract {
   private final MethodContract myKnownContract;
 
-  public KnownContract(MethodContract knownContract) {
+  KnownContract(@NotNull MethodContract knownContract) {
     myKnownContract = knownContract;
+  }
+
+  @NotNull
+  MethodContract getContract() {
+    return myKnownContract;
   }
 
   @NotNull
@@ -58,7 +64,7 @@ class DelegationContract extends PreContract {
   private final PsiMethodCallExpression myExpression;
   private final boolean myNegated;
 
-  public DelegationContract(PsiMethodCallExpression expression, boolean negated) {
+  DelegationContract(PsiMethodCallExpression expression, boolean negated) {
     myExpression = expression;
     myNegated = negated;
   }
@@ -121,7 +127,7 @@ class SideEffectFilter extends PreContract {
   private final List<PsiExpression> myExpressionsToCheck;
   private final List<PreContract> myContracts;
 
-  public SideEffectFilter(List<PsiExpression> expressionsToCheck, List<PreContract> contracts) {
+  SideEffectFilter(List<PsiExpression> expressionsToCheck, List<PreContract> contracts) {
     myExpressionsToCheck = expressionsToCheck;
     myContracts = contracts;
   }
@@ -131,8 +137,57 @@ class SideEffectFilter extends PreContract {
   List<MethodContract> toContracts(@NotNull PsiMethod method) {
     if (ContainerUtil.exists(myExpressionsToCheck, d -> SideEffectChecker.mayHaveSideEffects(d))) {
       return Collections.emptyList();
-    };
+    }
     return ContainerUtil.concat(myContracts, c -> c.toContracts(method));
   }
 
+}
+
+class NegatingContract extends PreContract {
+  private final PreContract myNegated;
+
+  private NegatingContract(PreContract negated) {
+    myNegated = negated;
+  }
+
+  @NotNull
+  @Override
+  List<MethodContract> toContracts(@NotNull PsiMethod method) {
+    return ContainerUtil.mapNotNull(myNegated.toContracts(method), NegatingContract::negateContract);
+  }
+
+  @Nullable
+  static PreContract negate(@NotNull PreContract contract) {
+    if (contract instanceof KnownContract) {
+      MethodContract negated = negateContract(((KnownContract)contract).getContract());
+      return negated == null ? null : new KnownContract(negated);
+    }
+    return new NegatingContract(contract);
+  }
+
+  @Nullable
+  private static MethodContract negateContract(MethodContract c) {
+    ValueConstraint ret = c.returnValue;
+    return ret == TRUE_VALUE || ret == FALSE_VALUE ? new MethodContract(c.arguments, negateConstraint(ret)) : null;
+  }
+}
+
+class MethodCallContract extends PreContract {
+  private final PsiMethodCallExpression myCall;
+  private final List<ValueConstraint[]> myStates;
+
+  MethodCallContract(PsiMethodCallExpression call, List<ValueConstraint[]> states) {
+    myCall = call;
+    myStates = states;
+  }
+
+  @NotNull
+  @Override
+  List<MethodContract> toContracts(@NotNull PsiMethod method) {
+    PsiMethod target = myCall.resolveMethod();
+    if (target != null && NullableNotNullManager.isNotNull(target)) {
+      return ContractInferenceInterpreter.toContracts(myStates, NOT_NULL_VALUE);
+    }
+    return Collections.emptyList();
+  }
 }
