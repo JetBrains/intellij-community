@@ -174,8 +174,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
 
       final Project project = methodCall.getProject();
       final PsiExpression newMethodExpression = JavaPsiFacade.getElementFactory(project).createExpressionFromText(myMethodFQN, methodCall);
-      final PsiElement shortMethodExpression = JavaCodeStyleManager.getInstance(project).shortenClassReferences(newMethodExpression);
-      methodCall.getMethodExpression().replace(shortMethodExpression);
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(methodCall.getMethodExpression().replace(newMethodExpression));
     }
   }
 
