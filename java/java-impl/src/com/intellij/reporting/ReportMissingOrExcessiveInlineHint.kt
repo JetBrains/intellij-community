@@ -17,36 +17,16 @@ package com.intellij.reporting
 
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hint.HintManager
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import java.io.File
-
-
-class InlineHintReporterRegistration : ApplicationComponent {
-
-  override fun getComponentName() = "Inline Hints Reporter Initializer"
-
-  override fun initComponent() {
-    if (!isHintsEnabled()) return
-
-    val manager = ActionManager.getInstance()
-    val action = ReportMissingOrExcessiveInlineHint()
-    manager.registerAction("ReportMissingOrExcessiveInlineHint", action)
-
-    val group = manager.getAction("EditorPopupMenu") as DefaultActionGroup
-    group.add(action)
-  }
-
-  override fun disposeComponent() {
-  }
-
-}
 
 class ReportMissingOrExcessiveInlineHint : AnAction() {
   
@@ -63,12 +43,14 @@ class ReportMissingOrExcessiveInlineHint : AnAction() {
   private val file = File(PathManager.getTempPath(), recorderId)
   
   override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = false
+    
     if (!isHintsEnabled()) return
     val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
     
     val range = getCurrentLineRange(editor)
     if (editor.getInlays(range).isNotEmpty()) {
-      e.presentation.isEnabled = true
+      e.presentation.isEnabledAndVisible = true
     }
   }
 
