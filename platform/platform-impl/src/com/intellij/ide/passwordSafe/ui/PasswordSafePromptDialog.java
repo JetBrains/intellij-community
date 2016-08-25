@@ -35,9 +35,6 @@ import static com.intellij.credentialStore.CredentialAttributesKt.CredentialAttr
 public class PasswordSafePromptDialog extends DialogWrapper {
   private final PasswordPromptComponent myComponent;
 
-  /**
-   * The private constructor. Note that it does not do init on dialog.
-   */
   private PasswordSafePromptDialog(@Nullable Project project, @NotNull String title, @NotNull PasswordPromptComponent component) {
     super(project, true);
 
@@ -45,10 +42,6 @@ public class PasswordSafePromptDialog extends DialogWrapper {
     myComponent = component;
     setResizable(false);
     init();
-  }
-
-  public PasswordPromptComponent getComponent() {
-    return myComponent;
   }
 
   @Override
