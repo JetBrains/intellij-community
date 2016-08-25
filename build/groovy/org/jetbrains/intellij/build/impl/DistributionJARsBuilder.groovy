@@ -107,6 +107,9 @@ class DistributionJARsBuilder {
       productLayout.platformImplementationModules.each {
         withModule(it, productLayout.mainJarName)
       }
+      productLayout.moduleExcludes.entrySet().each {
+        layout.moduleExcludes.putAll(it.key, it.value)
+      }
       withModule("util")
       withModule("util-rt", "util.jar")
       withModule("annotations")
