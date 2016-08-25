@@ -48,7 +48,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -61,7 +60,6 @@ import javax.swing.*;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
@@ -118,14 +116,13 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
         }
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyEvent.VK_SPACE), myTable);
-    myTable.addMouseListener(new MouseAdapter() {
+    new DoubleClickListener() {
       @Override
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() >= 2) {
-          editRunConfiguration();
-        }
+      protected boolean onDoubleClick(MouseEvent e) {
+        editRunConfiguration();
+        return true;
       }
-    });
+    }.installOn(myTable);
 
     installRenderers();
     myDecorator = ToolbarDecorator.createDecorator(myTable)
