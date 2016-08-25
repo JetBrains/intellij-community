@@ -20,8 +20,10 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.RunResult;
-import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -57,48 +59,50 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
 
     Arrays.sort(files, FileComparator.getInstance());
 
-    final List<String> problems = ContainerUtil.newLinkedList();
-    new Task.Modal(project, "Deleting Files...", true) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        indicator.setIndeterminate(false);
-        int i = 0;
-        for (VirtualFile file : files) {
-          indicator.checkCanceled();
-          indicator.setText2(file.getPresentableUrl());
-          indicator.setFraction((double)i / files.length);
-          i++;
+    List<String> problems = ContainerUtil.newLinkedList();
+    CommandProcessor.getInstance().executeCommand(project, () -> {
+      new Task.Modal(project, "Deleting Files...", true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          indicator.setIndeterminate(false);
+          int i = 0;
+          for (VirtualFile file : files) {
+            indicator.checkCanceled();
+            indicator.setText2(file.getPresentableUrl());
+            indicator.setFraction((double)i / files.length);
+            i++;
 
-          RunResult result = new WriteCommandAction.Simple(project) {
-            @Override
-            protected void run() throws Throwable {
-              file.delete(this);
+            RunResult result = new WriteAction() {
+              @Override
+              protected void run(@NotNull Result result) throws Throwable {
+                file.delete(this);
+              }
+            }.execute();
+
+            if (result.hasException()) {
+              LOG.info("Error when deleting " + file, result.getThrowable());
+              problems.add(file.getName());
             }
-          }.execute();
-
-          if (result.hasException()) {
-            LOG.info("Error when deleting " + file, result.getThrowable());
-            problems.add(file.getName());
           }
         }
-      }
 
-      @Override
-      public void onSuccess() {
-        reportProblems();
-      }
-
-      @Override
-      public void onCancel() {
-        reportProblems();
-      }
-
-      private void reportProblems() {
-        if (!problems.isEmpty()) {
-          reportDeletionProblem(problems);
+        @Override
+        public void onSuccess() {
+          reportProblems();
         }
-      }
-    }.queue();
+
+        @Override
+        public void onCancel() {
+          reportProblems();
+        }
+
+        private void reportProblems() {
+          if (!problems.isEmpty()) {
+            reportDeletionProblem(problems);
+          }
+        }
+      }.queue();
+    }, "Deleting files", null);
   }
 
   private static void reportDeletionProblem(List<String> problems) {
