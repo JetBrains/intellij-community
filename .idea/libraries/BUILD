@@ -124,8 +124,8 @@ java_library(
 
 java_library(
     name = "builder-model",
-    runtime_deps = ["//prebuilts/tools/common/builder-model:builder-model-2.2.0-alpha6"],
-    exports = ["//prebuilts/tools/common/builder-model:builder-model-2.2.0-alpha6"],
+    runtime_deps = ["//prebuilts/tools/common/builder-model:builder-model-2.3.0-dev"],
+    exports = ["//prebuilts/tools/common/builder-model:builder-model-2.3.0-dev"],
     visibility = ["//visibility:public"],
 )
 
