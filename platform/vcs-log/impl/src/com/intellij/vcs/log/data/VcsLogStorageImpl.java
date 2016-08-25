@@ -101,12 +101,10 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     List<VirtualFile> roots =
       logProviders.keySet().stream().sorted((o1, o2) -> o1.getPath().compareTo(o2.getPath())).collect(Collectors.toList());
 
-
     String logId = PersistentUtil.calcLogId(project, logProviders);
-    myCommitIdEnumerator = PersistentUtil.createPersistentEnumerator(new MyCommitIdKeyDescriptor(roots), HASHES_STORAGE,
-                                                                     logId, VERSION);
-    myRefsEnumerator = PersistentUtil.createPersistentEnumerator(new VcsRefKeyDescriptor(logProviders), REFS_STORAGE,
-                                                                 logId, VERSION, new PagedFileStorage.StorageLockContext(false));
+    myCommitIdEnumerator = PersistentUtil.createPersistentEnumerator(new MyCommitIdKeyDescriptor(roots), HASHES_STORAGE, logId, VERSION);
+    myRefsEnumerator = PersistentUtil.createPersistentEnumerator(new VcsRefKeyDescriptor(logProviders), REFS_STORAGE, logId, VERSION,
+                                                                 new PagedFileStorage.StorageLockContext(false));
 
     // cleanup old root storages, to remove after 2016.3 release
     PersistentUtil
@@ -114,7 +112,6 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
     Disposer.register(parent, this);
   }
-
 
   @Nullable
   private CommitId doGetCommitId(int index) throws IOException {
