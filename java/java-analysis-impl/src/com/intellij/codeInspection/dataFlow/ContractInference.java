@@ -71,16 +71,13 @@ class ContractInferenceInterpreter {
     List<MethodContract> contracts = doInferContracts();
     if (contracts.isEmpty()) return contracts;
     
-    PsiTypeElement typeElement = myMethod.getReturnTypeElement();
-    final PsiType returnType = typeElement == null ? null : typeElement.getType();
-    boolean referenceTypeReturned = !(returnType instanceof PsiPrimitiveType);
-    final boolean notNull = referenceTypeReturned && 
-                            NullableNotNullManager.getInstance(myMethod.getProject()).isNotNull(myMethod, false);
-    if (referenceTypeReturned) {
+    final PsiType returnType = myMethod.getReturnType();
+    if (returnType != null && !(returnType instanceof PsiPrimitiveType)) {
       contracts = boxReturnValues(contracts);
     }
     List<MethodContract> compatible = ContainerUtil.filter(contracts, contract -> {
-      if (notNull && contract.returnValue == NOT_NULL_VALUE) {
+      if (contract.returnValue == NOT_NULL_VALUE &&
+          NullableNotNullManager.getInstance(myMethod.getProject()).isNotNull(myMethod, false)) {
         return false;
       }
       return InferenceFromSourceUtil.isReturnTypeCompatible(returnType, contract.returnValue);
