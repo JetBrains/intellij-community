@@ -44,44 +44,11 @@ import java.util.stream.Collectors;
  * Supports the int <-> Hash and int <-> VcsRef persistent mappings.
  */
 public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
-
-  public static final VcsLogStorage EMPTY = new VcsLogStorage() {
-    @Override
-    public int getCommitIndex(@NotNull Hash hash, @NotNull VirtualFile root) {
-      return 0;
-    }
-
-    @NotNull
-    @Override
-    public CommitId getCommitId(int commitIndex) {
-      throw new UnsupportedOperationException("Illegal access to empty hash map by index " + commitIndex);
-    }
-
-    @Nullable
-    @Override
-    public CommitId findCommitId(@NotNull Condition<CommitId> string) {
-      return null;
-    }
-
-    @Override
-    public int getRefIndex(@NotNull VcsRef ref) {
-      return 0;
-    }
-
-    @Nullable
-    @Override
-    public VcsRef getVcsRef(int refIndex) {
-      throw new UnsupportedOperationException("Illegal access to empty ref map by index " + refIndex);
-    }
-
-    @Override
-    public void flush() {
-    }
-  };
-
   @NotNull private static final Logger LOG = Logger.getInstance(VcsLogStorage.class);
   @NotNull private static final String HASHES_STORAGE = "hashes";
   @NotNull private static final String REFS_STORAGE = "refs";
+  @NotNull public static final VcsLogStorage EMPTY = new EmptyLogStorage();
+
   private static final int VERSION = 4;
   @NotNull private static final String ROOT_STORAGE_KIND = "roots";
   private static final int ROOTS_STORAGE_VERSION = 0;
@@ -249,6 +216,40 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     @Override
     public boolean isEqual(CommitId val1, CommitId val2) {
       return val1.equals(val2);
+    }
+  }
+
+  private static class EmptyLogStorage implements VcsLogStorage {
+    @Override
+    public int getCommitIndex(@NotNull Hash hash, @NotNull VirtualFile root) {
+      return 0;
+    }
+
+    @NotNull
+    @Override
+    public CommitId getCommitId(int commitIndex) {
+      throw new UnsupportedOperationException("Illegal access to empty hash map by index " + commitIndex);
+    }
+
+    @Nullable
+    @Override
+    public CommitId findCommitId(@NotNull Condition<CommitId> string) {
+      return null;
+    }
+
+    @Override
+    public int getRefIndex(@NotNull VcsRef ref) {
+      return 0;
+    }
+
+    @Nullable
+    @Override
+    public VcsRef getVcsRef(int refIndex) {
+      throw new UnsupportedOperationException("Illegal access to empty ref map by index " + refIndex);
+    }
+
+    @Override
+    public void flush() {
     }
   }
 
