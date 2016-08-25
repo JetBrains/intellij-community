@@ -536,7 +536,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       int startOffset = getStartOffset() - myBuilder.myOffset;
       int endOffset = isDone ? getEndOffset() - myBuilder.myOffset : myBuilder.getCurrentOffset();
       CharSequence text = originalText.subSequence(startOffset, endOffset);
-      return isDone ? text.toString() : text + "...";
+      return isDone ? text.toString() : text + "\u2026";
     }
   }
 
