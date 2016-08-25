@@ -20,6 +20,7 @@ import com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -114,4 +115,24 @@ class DelegationContract extends PreContract {
     }
     return fromDelegate;
   }
+}
+
+class SideEffectFilter extends PreContract {
+  private final List<PsiExpression> myExpressionsToCheck;
+  private final List<PreContract> myContracts;
+
+  public SideEffectFilter(List<PsiExpression> expressionsToCheck, List<PreContract> contracts) {
+    myExpressionsToCheck = expressionsToCheck;
+    myContracts = contracts;
+  }
+
+  @NotNull
+  @Override
+  List<MethodContract> toContracts(@NotNull PsiMethod method) {
+    if (ContainerUtil.exists(myExpressionsToCheck, d -> SideEffectChecker.mayHaveSideEffects(d))) {
+      return Collections.emptyList();
+    };
+    return ContainerUtil.concat(myContracts, c -> c.toContracts(method));
+  }
+
 }

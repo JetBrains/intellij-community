@@ -26,10 +26,11 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.SideEffectChecker;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -286,9 +287,33 @@ class ContractInferenceInterpreter {
     return ContainerUtil.mapNotNull(values, contract -> contract.returnValue == result ? contract.arguments : null);
   }
 
+  private static class CodeBlockContracts {
+    List<PreContract> accumulated = new ArrayList<>();
+    List<PsiDeclarationStatement> declarations = new ArrayList<>();
+
+    void addAll(List<PreContract> contracts) {
+      if (contracts.isEmpty()) return;
+
+      if (declarations.isEmpty()) {
+        accumulated.addAll(contracts);
+      } else {
+        accumulated.add(new SideEffectFilter(getVariableInitializers(), contracts));
+      }
+    }
+
+    @NotNull
+    List<PsiExpression> getVariableInitializers() {
+      return JBIterable.from(declarations).
+        flatMap(s -> JBIterable.of(s.getDeclaredElements())).
+        filter(PsiVariable.class).
+        flatMap(var -> JBIterable.of(var.getInitializer())).
+        toList();
+    }
+  }
+
   @NotNull
   private List<PreContract> visitStatements(List<ValueConstraint[]> states, PsiStatement... statements) {
-    List<PreContract> result = ContainerUtil.newArrayList();
+    CodeBlockContracts result = new CodeBlockContracts();
     for (PsiStatement statement : statements) {
       if (statement instanceof PsiBlockStatement) {
         result.addAll(visitStatements(states, ((PsiBlockStatement)statement).getCodeBlock().getStatements()));
@@ -320,7 +345,8 @@ class ContractInferenceInterpreter {
         List<MethodContract> conditionResults = visitExpression(states, ((PsiAssertStatement)statement).getAssertCondition());
         result.addAll(ContainerUtil.map(toContracts(antecedentsReturning(conditionResults, FALSE_VALUE), THROW_EXCEPTION), KnownContract::new));
       }
-      else if (statement instanceof PsiDeclarationStatement && !mayHaveSideEffects((PsiDeclarationStatement)statement)) {
+      else if (statement instanceof PsiDeclarationStatement) {
+        result.declarations.add((PsiDeclarationStatement)statement);
         continue;
       }
       else if (statement instanceof PsiDoWhileStatement) {
@@ -329,19 +355,7 @@ class ContractInferenceInterpreter {
 
       break; // visit only the first statement unless it's 'if' whose 'then' always returns and the next statement is effectively 'else'
     }
-    return result;
-  }
-
-  private static boolean mayHaveSideEffects(PsiDeclarationStatement statement) {
-    for (PsiElement element : statement.getDeclaredElements()) {
-      if (element instanceof PsiVariable) {
-        PsiExpression initializer = ((PsiVariable)element).getInitializer();
-        if (initializer != null && SideEffectChecker.mayHaveSideEffects(initializer)) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return result.accumulated;
   }
 
   @Nullable
