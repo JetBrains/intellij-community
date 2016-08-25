@@ -144,7 +144,8 @@ class DistributionJARsBuilder {
 
   List<String> getPlatformModules() {
     (platform.moduleJars.values() as List<String>) +
-    ["java-runtime"] //required to build searchable options index
+    ["java-runtime" /*required to build searchable options index*/, "updater"]
+
   }
 
   void buildJARs() {
