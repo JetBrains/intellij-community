@@ -46,7 +46,7 @@ internal class KeyChainCredentialStore() : CredentialStore {
       return
     }
 
-    val password = credentials!!.password!!.toByteArray()
+    val password = credentials!!.password!!.toByteArray(false)
     saveGenericPassword(attributes.serviceName.toByteArray(), attributes.userName ?: credentials.userName, password, password.size)
     password.fill(0)
   }

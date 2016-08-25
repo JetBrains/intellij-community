@@ -43,11 +43,11 @@ public abstract class BasePasswordSafeProvider implements PasswordStorage {
 
   public final void set(@NotNull CredentialAttributes attributes, @Nullable Credentials value) {
     byte[] key = EncryptionUtil.encryptKey(key(), EncryptionUtil.rawKey(attributes));
-    if (value == null) {
+    if (value == null || value.getPassword() == null) {
       removeEncryptedPassword(key);
     }
     else {
-      storeEncryptedPassword(key, EncryptionUtil.encryptText(key(), value == null ? null : value.getPassword()));
+      storeEncryptedPassword(key, EncryptionUtil.encryptText(key(), value.getPassword()));
     }
   }
 

@@ -171,7 +171,7 @@ public class EncryptionUtil {
    * @return encrypted text
    */
   public static byte[] encryptText(byte[] password, @NotNull OneTimeString value) {
-    byte[] data = value.toByteArray();
+    byte[] data = value.toByteArray(false);
     return encryptData(password, data.length, data);
   }
 
