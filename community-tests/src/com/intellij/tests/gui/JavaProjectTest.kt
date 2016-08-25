@@ -15,15 +15,16 @@
  */
 package com.intellij.tests.gui
 
+import com.intellij.tests.gui.fixtures.ActionLinkFixture
 import com.intellij.tests.gui.fixtures.DialogFixtures.CreateDialogFixture
 import com.intellij.tests.gui.fixtures.EditorFixture
 import com.intellij.tests.gui.fixtures.JBPopupFixture
-import com.intellij.tests.gui.framework.GuiTestCase
-import com.intellij.tests.gui.framework.TestGroup
-import com.intellij.tests.gui.framework.createNewProject
+import com.intellij.tests.gui.framework.*
+import com.intellij.ui.components.JBList
 import org.junit.Ignore
 import org.junit.Test
 import java.io.File
+import javax.swing.JTextField
 import javax.swing.text.JTextComponent
 
 /**
@@ -42,7 +43,8 @@ class JavaProjectTest: GuiTestCase() {
     val newProjectWizard = findNewProjectWizard()
     with(newProjectWizard){
       setupJdk()
-      selectProjectType("Java")
+//      selectProjectType("Java")
+      clickListItem("Java", robot(), this.target())
       selectFramework("JavaEE Persistence")
       clickNext()
       setProjectName(projectName);

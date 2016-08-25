@@ -23,27 +23,29 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.keymap.impl.keyGestures.GestureActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.StripeTable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeGlassPane;
+import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.WeakKeyWeakValueHashMap;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,15 +65,16 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
-import javax.xml.crypto.Data;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Vector;
 
 import static java.awt.event.MouseEvent.BUTTON1;
 import static java.awt.event.MouseEvent.MOUSE_CLICKED;
@@ -125,7 +128,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
             NotificationType.INFORMATION);
     }
   }
-  
+
   private static class InspectorWindow extends JDialog {
     private InspectorTable myInspectorTable;
     private Component myComponent;
@@ -424,6 +427,14 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
       myGlasspane = glasspane;
       setForeground(Gray._230);
       setFont(UIUtil.getLabelFont());
+    }
+
+    public MyLabel(String text, JComponent glassPane, int width) {
+      super(text);
+      myText = text;
+      myGlasspane = glassPane;
+      setForeground(Gray._230);
+      setFont(new Font(UIUtil.getLabelFont().getName(), Font.PLAIN, 6));
     }
 
     public void dispose() {
@@ -1019,9 +1030,15 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
 
         JRootPane rootPane = SwingUtilities.getRootPane(jbList);
         JComponent glassPane = (JComponent)rootPane.getGlassPane();
+        if (!(glassPane instanceof IdeGlassPane)) rootPane.setGlassPane(new IdeGlassPaneImpl(rootPane));
 
         myHighlightComponent = new HighlightComponent(new JBColor(JBColor.GREEN, JBColor.RED), glassPane, jbList);
-        myLabel = new MyLabel("JBList Cell: " + elementAt.getClass().getName() + " (\"" + elementAt.toString() +  "\")", glassPane);
+        if (elementAt instanceof PopupFactoryImpl.ActionItem) {
+          myLabel = new MyLabel(elementAt.getClass().getName() + " (\"" + elementAt.toString() +  "\")", glassPane, cellBounds.width);
+        } else {
+          myLabel = new MyLabel("JBList Cell: " + elementAt.getClass().getName() + " (\"" + elementAt.toString() +  "\")", glassPane);
+        }
+
 
         Point jbListLocationOnRootPane = SwingUtilities.convertPoint(jbList, new Point(0, 0), jbList.getRootPane());
         myHighlightComponent.setBounds(jbListLocationOnRootPane.x + cellBounds.x, jbListLocationOnRootPane.y + cellBounds.y, cellBounds.width, cellBounds.height);
@@ -1063,6 +1080,22 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
       }
       glassPane.revalidate();
       glassPane.repaint();
+    }
+
+    @Nullable
+    private static String getCellText(@NotNull JBList jbList, @NotNull Point pointOnList){
+      int index = jbList.locationToIndex(pointOnList);
+      Rectangle cellBounds = jbList.getCellBounds(index, index);
+      if (cellBounds.contains(pointOnList)) {
+        Object elementAt = jbList.getModel().getElementAt(index);
+        if (elementAt instanceof PopupFactoryImpl.ActionItem) {
+          return ((PopupFactoryImpl.ActionItem)elementAt).getText();
+        }
+        else {
+          return elementAt.toString();
+        }
+      }
+      return null;
     }
 
     private void cleanupHighlighting() {
@@ -1166,7 +1199,11 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
         //user click
         if (me.getClickCount() == 1 && me.getID() == MOUSE_CLICKED && me.getButton() == BUTTON1) {
           if (clickAction != null) {
-            DataContext dataContext = SimpleDataContext.getSimpleContext("Component", component);
+            Map<String, Object> dataMap = new HashMap<>();
+            dataMap.put("Component", component);
+            if (component instanceof JBList)
+              dataMap.put("ItemName", getCellText((JBList)component, mousePoint));
+            DataContext dataContext = SimpleDataContext.getSimpleContext(dataMap, null);
             AnActionEvent event = AnActionEvent.createFromDataContext(UI_DROPPER_PLACE, null, dataContext);
             clickAction.actionPerformed(event);
             return;

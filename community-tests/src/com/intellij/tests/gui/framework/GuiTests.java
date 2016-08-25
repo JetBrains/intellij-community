@@ -41,9 +41,7 @@ import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.ListPopupModel;
 import com.intellij.util.JdkBundle;
 import com.intellij.util.ui.EdtInvocationManager;
-import org.fest.swing.core.BasicRobot;
-import org.fest.swing.core.ComponentFinder;
-import org.fest.swing.core.GenericTypeMatcher;
+import org.fest.swing.core.*;
 import org.fest.swing.core.Robot;
 import org.fest.swing.edt.GuiActionRunner;
 import org.fest.swing.edt.GuiQuery;
@@ -609,6 +607,18 @@ public final class GuiTests {
     }
   }
 
+  @Nullable
+  public static JLabel findBoundedLabel(@NotNull Container container, @NotNull JTextField textField, @NotNull Robot robot) {
+    Collection<JLabel> labels = robot.finder().findAll(container, new GenericTypeMatcher<JLabel>(JLabel.class) {
+      @Override
+      protected boolean isMatching(@Nonnull JLabel label) {
+        return label.getLabelFor().equals(textField);
+      }
+    });
+    if (labels != null && !labels.isEmpty()) return labels.iterator().next();
+    else return null;
+  }
+
   @NotNull
   public static JButton findButton(@NotNull ContainerFixture<? extends Container> container, @NotNull final String text, Robot robot) {
     return robot.finder().find(container.target(), new GenericTypeMatcher<JButton>(JButton.class) {
@@ -741,4 +751,6 @@ public final class GuiTests {
     String homeSubPath = SystemInfo.isMac ? "/Contents/Home" : "";
     return jdkBundle.getLocation().getAbsolutePath() + homeSubPath;
   }
+
+
 }

@@ -33,6 +33,7 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static org.fest.swing.timing.Pause.pause;
 
 public class ActionLinkFixture extends JComponentFixture<ActionLinkFixture, ActionLink> {
+
   @NotNull
   public static ActionLinkFixture findByActionId(@NotNull final String actionId,
                                                  @NotNull final Robot robot,
@@ -66,6 +67,39 @@ public class ActionLinkFixture extends JComponentFixture<ActionLinkFixture, Acti
     }
     return new ActionLinkFixture(robot, actionLink);
   }
+
+  @NotNull
+  public static ActionLinkFixture findActionLinkByName(@NotNull final String actionName,
+                                                 @NotNull final Robot robot,
+                                                 @NotNull final Container container) {
+    final Ref<ActionLink> actionLinkRef = new Ref<ActionLink>();
+    pause(new Condition("Find ActionLink with name '" + actionName + "'") {
+      @Override
+      public boolean test() {
+        Collection<ActionLink> found = robot.finder().findAll(container, new GenericTypeMatcher<ActionLink>(ActionLink.class) {
+          @Override
+          protected boolean isMatching(@NotNull ActionLink actionLink) {
+            if (actionLink.isVisible()) {
+              return actionLink.getText().equals(actionName);
+            }
+            return false;
+          }
+        });
+        if (found.size() == 1) {
+          actionLinkRef.set(getFirstItem(found));
+          return true;
+        }
+        return false;
+      }
+    }, SHORT_TIMEOUT);
+
+    ActionLink actionLink = actionLinkRef.get();
+    if (actionLink == null) {
+      throw new ComponentLookupException("Failed to find ActionLink with name '" + actionName + "'");
+    }
+    return new ActionLinkFixture(robot, actionLink);
+  }
+
 
   private ActionLinkFixture(@NotNull Robot robot, @NotNull ActionLink target) {
     super(ActionLinkFixture.class, robot, target);
