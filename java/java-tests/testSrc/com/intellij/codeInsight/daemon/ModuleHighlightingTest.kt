@@ -42,21 +42,13 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
     myFixture.checkHighlighting()
   }
 
-  fun testDuplicateRequires() {
-    doTest("""module M { requires M2; <error descr="Duplicate requires: M2">requires M2;</error> }""", true)
-  }
+  fun testDuplicateRequires() = doTest("""module M { requires M2; <error descr="Duplicate requires: M2">requires M2;</error> }""", true)
 
-  fun testUnresolvedModule() {
-    doTest("""module M { requires <error descr="Module not found: M.missing">M.missing</error>; }""")
-  }
+  fun testUnresolvedModule() = doTest("""module M { requires <error descr="Module not found: M.missing">M.missing</error>; }""")
 
-  fun testSelfDependence() {
-    doTest("""module M { requires <error descr="Cyclic dependence: M">M</error>; }""")
-  }
+  fun testSelfDependence() = doTest("""module M { requires <error descr="Cyclic dependence: M">M</error>; }""")
 
-  fun testCyclicDependence() {
-    doTest("""module M1 { requires <error descr="Cyclic dependence: M1, M2">M2</error>; }""", true)
-  }
+  fun testCyclicDependence() = doTest("""module M1 { requires <error descr="Cyclic dependence: M1, M2">M2</error>; }""", true)
 
   //<editor-fold desc="Helpers.">
   private fun additionalFile(text: String) = myFixture.configureFromExistingVirtualFile(runWriteAction {
