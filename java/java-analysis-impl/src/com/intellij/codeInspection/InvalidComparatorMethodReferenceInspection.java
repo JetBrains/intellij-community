@@ -19,6 +19,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionBase;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +32,7 @@ public class InvalidComparatorMethodReferenceInspection extends BaseJavaBatchLoc
       public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
         PsiExpression qualifierExpression = expression.getQualifierExpression();
         PsiElement referenceNameElement = expression.getReferenceNameElement();
-        if (!(qualifierExpression instanceof PsiReference) || referenceNameElement == null) {
+        if (!(qualifierExpression instanceof PsiReferenceExpressionBase) || referenceNameElement == null) {
           return;
         }
         String name = referenceNameElement.getText();
@@ -46,12 +47,16 @@ public class InvalidComparatorMethodReferenceInspection extends BaseJavaBatchLoc
         if (targetType == null) {
           return;
         }
+        String targetClassName = targetType.getQualifiedName();
+        if(targetClassName == null || !targetClassName.equals(CommonClassNames.JAVA_UTIL_COMPARATOR)) {
+          return;
+        }
         PsiElement refType = ((PsiReference)qualifierExpression).resolve();
         if (!(refType instanceof PsiClass)) {
           return;
         }
         String className = ((PsiClass)refType).getQualifiedName();
-        if (className == null || (!className.equals(Integer.class.getName()) && !className.equals(Math.class.getName()))) {
+        if (className == null || (!className.equals(CommonClassNames.JAVA_LANG_INTEGER) && !className.equals(Math.class.getName()))) {
           return;
         }
         //noinspection DialogTitleCapitalization
