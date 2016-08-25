@@ -56,12 +56,7 @@ public class SameProgressRunner extends GeneralRunner {
   public void ping() {
     clearSuspend();
     if (Thread.currentThread().equals(myInitThread)) {
-      new Runnable() {
-        @Override
-        public void run() {
-          pingInSourceThread();
-        }
-      }.run();
+      pingInSourceThread();
     } else {
       mySemaphore.up();
     }
