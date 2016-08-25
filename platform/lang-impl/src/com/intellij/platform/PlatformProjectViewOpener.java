@@ -19,7 +19,9 @@ package com.intellij.platform;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -34,7 +36,27 @@ public class PlatformProjectViewOpener implements DirectoryProjectConfigurator {
   @Override
   public void configureProject(final Project project, @NotNull final VirtualFile baseDir, Ref<Module> moduleRef) {
     ToolWindowManagerEx manager = (ToolWindowManagerEx)ToolWindowManager.getInstance(project);
-    manager.addToolWindowManagerListener(new MyListener(manager, project));
+    ToolWindow toolWindow = manager.getToolWindow(ToolWindowId.PROJECT_VIEW);
+    if (toolWindow == null) {
+      manager.addToolWindowManagerListener(new MyListener(manager, project));
+    }
+    else {
+      StartupManager.getInstance(project).runWhenProjectIsInitialized(new DumbAwareRunnable() {
+        @Override
+        public void run() {
+          activateProjectToolWindow(project, toolWindow);
+        }
+      });
+    }
+  }
+
+  private static void activateProjectToolWindow(@NotNull Project project, @NotNull ToolWindow toolWindow) {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (project.isDisposed()) return;
+      if (toolWindow.getType() != ToolWindowType.SLIDING) {
+        toolWindow.activate(null);
+      }
+    }, ModalityState.NON_MODAL);
   }
 
   private static class MyListener extends ToolWindowManagerAdapter {
@@ -49,14 +71,7 @@ public class PlatformProjectViewOpener implements DirectoryProjectConfigurator {
     public void toolWindowRegistered(@NotNull final String id) {
       if (id.equals(ToolWindowId.PROJECT_VIEW)) {
         myManager.removeToolWindowManagerListener(this);
-        
-        ApplicationManager.getApplication().invokeLater(() -> {
-          if (myProject.isDisposed()) return;
-          ToolWindow toolWindow = myManager.getToolWindow(id);
-          if (toolWindow != null && toolWindow.getType() != ToolWindowType.SLIDING) {
-            toolWindow.activate(null);
-          }
-        }, ModalityState.NON_MODAL);
+        activateProjectToolWindow(myProject, myManager.getToolWindow(id));
       }
     }
   }
