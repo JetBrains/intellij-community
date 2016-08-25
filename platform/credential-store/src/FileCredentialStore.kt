@@ -105,25 +105,27 @@ internal class FileCredentialStore(keyToValue: Map<CredentialAttributes, Credent
     needToSave.set(db.isDirty)
   }
 
-  @Suppress("OverridingDeprecatedMember")
-  override fun getPassword(requestor: Class<*>, accountName: String): String? {
-    @Suppress("DEPRECATION")
-    val password = super<PasswordStorage>.getPassword(requestor, accountName)
-    if (password == null) {
-      // try old key - as hash
-      val oldAttributes = toOldKey(requestor, accountName)
-      val credentials = db.rootGroup.getGroup(GROUP_NAME)?.removeEntry(oldAttributes.serviceName, oldAttributes.userName!!)
-      if (credentials != null) {
-        set(CredentialAttributes(requestor, accountName), Credentials(accountName, credentials.password?.let(::OneTimeString)))
-        return credentials.password.toString()
-      }
-    }
-    return password
-  }
-
   override fun get(attributes: CredentialAttributes): Credentials? {
-    val entry = db.rootGroup.getGroup(GROUP_NAME)?.getEntry(attributes.serviceName, attributes.userName) ?: return null
-    return Credentials(entry.userName, entry.password?.let(::OneTimeString))
+    val requestor = attributes.requestor
+    val userName = attributes.userName
+    val entry = db.rootGroup.getGroup(GROUP_NAME)?.getEntry(attributes.serviceName, attributes.userName)
+    if (entry != null) {
+      return Credentials(attributes.userName ?: entry.userName, entry.password?.let(::OneTimeString))
+    }
+
+    if (requestor == null || userName == null) {
+      return null
+    }
+
+    // try old key - as hash
+    val oldAttributes = toOldKey(requestor, userName)
+    db.rootGroup.getGroup(GROUP_NAME)?.removeEntry(oldAttributes.serviceName, oldAttributes.userName)?.let {
+      val credentials = Credentials(userName, it.password?.let(::OneTimeString))
+      set(CredentialAttributes(requestor, userName), credentials)
+      return credentials
+    }
+
+    return null
   }
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?) {

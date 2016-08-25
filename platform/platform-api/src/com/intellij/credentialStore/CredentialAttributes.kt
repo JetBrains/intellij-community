@@ -25,14 +25,22 @@ import java.nio.CharBuffer
 import java.nio.charset.CodingErrorAction
 import java.util.concurrent.atomic.AtomicBoolean
 
-data class CredentialAttributes(val serviceName: String, val userName: String? = null) {
+/**
+ * requestor is deprecated. Never use it in new code.
+ */
+data class CredentialAttributes(val serviceName: String, val userName: String? = null, val requestor: Class<*>? = null) {
 }
 
 // user cannot be empty, but password can be
-class Credentials(user: String?, val password: OneTimeString?) {
+class Credentials(user: String?, val password: OneTimeString? = null) {
+  constructor(user: String?, password: String?) : this(user, password?.let(::OneTimeString))
+
+  constructor(user: String?, password: CharArray?) : this(user, password?.let { OneTimeString(it) })
+
   val userName = user.nullize()
 
-  fun getPasswordAsString() = password?.toString()
+  @JvmOverloads
+  fun getPasswordAsString(clear: Boolean = true) = password?.toString(clear)
 
   override fun equals(other: Any?): Boolean {
     if (other !is Credentials) return false
@@ -42,7 +50,11 @@ class Credentials(user: String?, val password: OneTimeString?) {
   override fun hashCode() = (userName?.hashCode() ?: 0) * 37 + (password?.hashCode() ?: 0)
 }
 
-fun CredentialAttributes(requestor: Class<*>, userName: String) = CredentialAttributes(requestor.name, userName)
+fun CredentialAttributes(requestor: Class<*>, userName: String?) = CredentialAttributes(requestor.name, userName, requestor)
+
+fun Credentials?.isFulfilled() = this != null && userName != null && password != null
+
+fun Credentials?.isEmpty() = this == null || (userName == null && password == null)
 
 // input will be cleared
 @JvmOverloads
@@ -69,8 +81,9 @@ fun SecureString(value: ByteArray, offset: Int = 0, length: Int = value.size - o
   return OneTimeString(charArray, 0, charBuffer.position())
 }
 
+@Suppress("EqualsOrHashCode")
 // todo - eliminate toString
-class OneTimeString(value: CharArray, offset: Int = 0, length: Int = value.size) : CharArrayCharSequence(value, offset, offset + length) {
+class OneTimeString @JvmOverloads constructor(value: CharArray, offset: Int = 0, length: Int = value.size) : CharArrayCharSequence(value, offset, offset + length) {
   private val consumed = AtomicBoolean()
 
   constructor(value: String): this(value.toCharArray()) {

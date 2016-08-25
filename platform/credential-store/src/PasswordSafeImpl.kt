@@ -62,17 +62,6 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
     })
   }
 
-  @Suppress("OverridingDeprecatedMember")
-  override fun getPassword(requestor: Class<*>, accountName: String): String? {
-    @Suppress("DEPRECATION")
-    val value = currentProvider.getPassword(requestor, accountName)
-    if (value == null && memoryHelperProvider.isInitialized()) {
-      // if password was set as `memoryOnly`
-      return memoryHelperProvider.value.get(CredentialAttributes(requestor, accountName))?.password?.toString()
-    }
-    return value
-  }
-
   override fun get(attributes: CredentialAttributes): Credentials? {
     val value = currentProvider.get(attributes)
     if (value == null && memoryHelperProvider.isInitialized()) {
@@ -93,8 +82,7 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
     }
   }
 
-  override fun setPassword(attributes: CredentialAttributes, value: String?, memoryOnly: Boolean) {
-    val credentials = value?.let { Credentials(attributes.userName, OneTimeString(it)) }
+  override fun setPassword(attributes: CredentialAttributes, credentials: Credentials?, memoryOnly: Boolean) {
     if (memoryOnly) {
       memoryHelperProvider.value.set(attributes, credentials)
       // remove to ensure that on getPassword we will not return some value from default provider

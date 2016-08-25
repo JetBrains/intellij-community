@@ -45,43 +45,19 @@ private class CredentialStoreWrapper(private val store: CredentialStore) : Passw
 
   private val postponedCredentials = ContainerUtil.newConcurrentMap<CredentialAttributes, Credentials>()
 
-  @Suppress("OverridingDeprecatedMember")
-  override fun getPassword(requestor: Class<*>, accountName: String): String? {
-    @Suppress("DEPRECATION")
-    val value = super.getPassword(requestor, accountName)
-    if (value == null) {
-      LOG.catchAndLog {
-        // try old key - as hash
-        var oldKey = toOldKey(requestor, accountName)
-        store.get(oldKey)?.let {
-          set(oldKey, null)
-          set(CredentialAttributes(requestor, accountName), it)
-          return it.password?.toString()
-        }
-
-        val appInfo = ApplicationInfoEx.getInstanceEx()
-        if (appInfo.isEAP || appInfo.build.isSnapshot) {
-          oldKey = CredentialAttributes("IntelliJ Platform", "${requestor.name}/$accountName")
-          store.get(oldKey)?.let {
-            set(oldKey, null)
-            set(CredentialAttributes(requestor, accountName), it)
-            return it.password?.toString()
-          }
-        }
-      }
-    }
-    return value
-  }
-
   override fun get(attributes: CredentialAttributes): Credentials? {
     postponedCredentials.get(attributes)?.let {
       return if (it == nullPassword) null else it
     }
 
     var store = if (fallbackStore.isInitialized()) fallbackStore.value else store
-
+    val requestor = attributes.requestor
+    val userName = attributes.userName
     try {
-      return store.get(attributes)
+      val value = store.get(attributes)
+      if (value != null || requestor == null || userName == null) {
+        return value
+      }
     }
     catch (e: UnsatisfiedLinkError) {
       store = fallbackStore.value
@@ -93,6 +69,27 @@ private class CredentialStoreWrapper(private val store: CredentialStore) : Passw
       LOG.error(e)
       return null
     }
+
+    LOG.catchAndLog {
+      fun setNew(oldKey: CredentialAttributes): Credentials? {
+        store.get(oldKey)?.let {
+          set(oldKey, null)
+          val credentials = Credentials(userName, it.password)
+          set(attributes, credentials)
+          return credentials
+        }
+        return null
+      }
+
+      // try old key - as hash
+      setNew(toOldKey(requestor, userName))?.let { return it }
+
+      val appInfo = ApplicationInfoEx.getInstanceEx()
+      if (appInfo.isEAP || appInfo.build.isSnapshot) {
+        setNew(CredentialAttributes("IntelliJ Platform", "${requestor.name}/$userName"))?.let { return it }
+      }
+    }
+    return null
   }
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
