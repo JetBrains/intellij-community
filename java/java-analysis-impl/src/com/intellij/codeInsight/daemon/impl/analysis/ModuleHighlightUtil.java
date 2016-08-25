@@ -34,6 +34,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.Graph;
 import org.jetbrains.annotations.NotNull;
@@ -161,7 +162,7 @@ public class ModuleHighlightUtil {
             String message = JavaErrorMessages.message("package.not.found", packageName);
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).description(message).create();
           }
-          if (isEmpty(directories, packageName)) {
+          if (PsiUtil.isPackageEmpty(directories, packageName)) {
             String message = JavaErrorMessages.message("package.is.empty", packageName);
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).description(message).create();
           }
@@ -226,19 +227,5 @@ public class ModuleHighlightUtil {
 
   private static TextRange range(PsiJavaModule module) {
     return new TextRange(module.getTextOffset(), module.getNameElement().getTextRange().getEndOffset());
-  }
-
-  private static boolean isEmpty(PsiDirectory[] directories, String packageName) {
-    for (PsiDirectory directory : directories) {
-      for (PsiFile file : directory.getFiles()) {
-        if (file instanceof PsiClassOwner &&
-            packageName.equals(((PsiClassOwner)file).getPackageName()) &&
-            ((PsiClassOwner)file).getClasses().length > 0) {
-          return false;
-        }
-      }
-    }
-
-    return true;
   }
 }

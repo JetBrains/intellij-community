@@ -1277,4 +1277,18 @@ public final class PsiUtil extends PsiUtilCore {
   public static boolean isModuleFile(@NotNull PsiFile file) {
     return file instanceof PsiJavaFile && ((PsiJavaFile)file).getModuleDeclaration() != null;
   }
+
+  public static boolean isPackageEmpty(@NotNull PsiDirectory[] directories, @NotNull String packageName) {
+    for (PsiDirectory directory : directories) {
+      for (PsiFile file : directory.getFiles()) {
+        if (file instanceof PsiClassOwner &&
+            packageName.equals(((PsiClassOwner)file).getPackageName()) &&
+            ((PsiClassOwner)file).getClasses().length > 0) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
 }

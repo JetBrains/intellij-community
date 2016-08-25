@@ -19,8 +19,13 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.JavaKeywordCompletion.OverrideableSpace;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.module.impl.scopes.ModulesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
@@ -48,7 +53,10 @@ class JavaModuleCompletion {
         addModuleStatementKeywords(position, result);
       }
       else if (context instanceof PsiJavaModuleReferenceElement) {
-        addModuleReferences(position, result);
+        addModuleReferences(context, result);
+      }
+      else if (context instanceof PsiJavaCodeReferenceElement) {
+        addCodeReferences(context, result);
       }
     }
   }
@@ -66,11 +74,11 @@ class JavaModuleCompletion {
     result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.PROVIDES), TailType.HUMBLE_SPACE_BEFORE_WORD));
   }
 
-  private static void addModuleReferences(PsiElement position, Consumer<LookupElement> result) {
-    PsiJavaModule host = PsiTreeUtil.getParentOfType(position, PsiJavaModule.class);
+  private static void addModuleReferences(PsiElement context, Consumer<LookupElement> result) {
+    PsiJavaModule host = PsiTreeUtil.getParentOfType(context, PsiJavaModule.class);
     if (host != null) {
       String hostName = host.getModuleName();
-      Project project = position.getProject();
+      Project project = context.getProject();
       JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
       GlobalSearchScope scope = ProjectScope.getAllScope(project);
       index.processAllKeys(project, name -> {
@@ -79,6 +87,27 @@ class JavaModuleCompletion {
         }
         return true;
       });
+    }
+  }
+
+  private static void addCodeReferences(PsiElement context, Consumer<LookupElement> result) {
+    PsiElement statement = PsiTreeUtil.skipParentsOfType(context, PsiJavaCodeReferenceElement.class);
+    if (statement instanceof PsiExportsStatement) {
+      Module module = ModuleUtilCore.findModuleForPsiElement(context);
+      PsiPackage topPackage = ServiceManager.getService(context.getProject(), JavaFileManager.class).findPackage("");
+      if (module != null && topPackage != null) {
+        processPackage(topPackage, new ModulesScope(module), result);
+      }
+    }
+  }
+
+  private static void processPackage(PsiPackage pkg, ModulesScope scope, Consumer<LookupElement> result) {
+    String packageName = pkg.getQualifiedName();
+    if (packageName.indexOf('.') > 0 && !PsiUtil.isPackageEmpty(pkg.getDirectories(scope), packageName)) {
+      result.consume(new OverrideableSpace(LookupElementBuilder.create(packageName), TailType.SEMICOLON));
+    }
+    for (PsiPackage subPackage : pkg.getSubPackages(scope)) {
+      processPackage(subPackage, scope, result);
     }
   }
 }

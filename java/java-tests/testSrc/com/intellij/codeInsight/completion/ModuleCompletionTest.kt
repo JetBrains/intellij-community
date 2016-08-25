@@ -15,8 +15,10 @@
  */
 package com.intellij.codeInsight.completion
 
+import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.MultiModuleJava9ProjectDescriptor
+import com.intellij.testFramework.VfsTestUtil
 import org.assertj.core.api.Assertions.assertThat
 
 class ModuleCompletionTest : LightFixtureCompletionTestCase() {
@@ -27,7 +29,16 @@ class ModuleCompletionTest : LightFixtureCompletionTestCase() {
   fun testStatements2() = complete("module M { requires X; ex<caret> }", "module M { requires X; exports <caret> }")
   fun testModuleRef() = complete("module M { requires M<caret> }", "module M { requires M2;<caret> }")
 
+  fun testExports() {
+    addFile("pkg/empty/package-info.java", "package pkg.empty;")
+    addFile("pkg/main/C.java", "package pkg.main;\nclass C { }")
+    addFile("pkg/other/C.groovy", "package pkg.other\nclass C { }")
+    variants("module M { exports pkg.<caret> }", "pkg.main", "pkg.other")
+  }
+
   //<editor-fold desc="Helpers.">
+  private fun addFile(path: String, text: String) = VfsTestUtil.createFile(LightPlatformTestCase.getSourceRoot(), path, text)
+
   private fun complete(text: String, expected: String) {
     myFixture.configureByText("module-info.java", text)
     myFixture.completeBasic()
