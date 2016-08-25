@@ -34,8 +34,8 @@ public interface RegExpLanguageHost {
 
   default boolean isValidGroupName(String name, @NotNull PsiElement context) {
     for (int i = 0, length = name.length(); i < length; i++) {
-      int c = name.codePointAt(i);
-      if (!(c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9' || c == '_')) {
+      final char c = name.charAt(i);
+      if (!(AsciiUtil.isLowerCase(c) || AsciiUtil.isUpperCase(c) || AsciiUtil.isDigit(c) || c == '_')) {
         return false;
       }
     }
