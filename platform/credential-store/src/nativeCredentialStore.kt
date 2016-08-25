@@ -37,7 +37,7 @@ private val NOTIFICATION_MANAGER by lazy {
 }
 
 private class CredentialStoreWrapper(private val store: CredentialStore) : PasswordStorage {
-  private val fallbackStore = lazy { FileCredentialStore(memoryOnly = true) }
+  private val fallbackStore = lazy { KeePassCredentialStore(memoryOnly = true) }
 
   private val queueProcessor = QueueProcessor<() -> Unit>({
                                                             it()

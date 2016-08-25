@@ -37,7 +37,7 @@ class FileCredentialStoreTest {
   @Test
   fun many() {
     val baseDir = tempDirManager.newPath()
-    var provider = FileCredentialStore(baseDirectory = baseDir)
+    var provider = KeePassCredentialStore(baseDirectory = baseDir)
 
     assertThat(baseDir).doesNotExist()
     val random = Random()
@@ -47,7 +47,7 @@ class FileCredentialStoreTest {
     }
 
     provider.save()
-    provider = FileCredentialStore(baseDirectory = baseDir)
+    provider = KeePassCredentialStore(baseDirectory = baseDir)
 
     provider.deleteFileStorage()
 
@@ -61,7 +61,7 @@ class FileCredentialStoreTest {
   @Test
   fun test() {
     val baseDir = tempDirManager.newPath()
-    var provider = FileCredentialStore(baseDirectory = baseDir)
+    var provider = KeePassCredentialStore(baseDirectory = baseDir)
 
     assertThat(baseDir).doesNotExist()
     val fooAttributes = CredentialAttributes(TEST_SERVICE_NAME, "foo")
@@ -93,7 +93,7 @@ class FileCredentialStoreTest {
     assertThat(pdbFile).isRegularFile()
     assertThat(pdbPwdFile).isRegularFile()
 
-    provider = FileCredentialStore(baseDirectory = baseDir)
+    provider = KeePassCredentialStore(baseDirectory = baseDir)
 
     assertThat(provider.get(fooAttributes)).isNull()
     assertThat(provider.getPassword(amAttributes)).isEqualTo("pass2")

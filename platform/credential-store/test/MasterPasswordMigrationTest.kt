@@ -54,7 +54,7 @@ internal class MasterPasswordMigrationTest {
     </State>"""))
     assertThat(passwordSafe).isNotEmpty
 
-    val provider = FileCredentialStore(passwordSafe)
+    val provider = KeePassCredentialStore(passwordSafe)
     @Suppress("DEPRECATION")
     assertThat(provider.getPassword(MasterKeyPasswordSafeTest::class.java, "TEST")).isEqualTo("test")
   }
@@ -84,7 +84,7 @@ internal class MasterPasswordMigrationTest {
       </State>"""))
     }
     assertThat(passwordSafe).isNotEmpty
-    val provider = FileCredentialStore(passwordSafe)
+    val provider = KeePassCredentialStore(passwordSafe)
     @Suppress("DEPRECATION")
     assertThat(provider.getPassword(MasterKeyPasswordSafeTest::class.java, "TEST")).isEqualTo("test")
   }
