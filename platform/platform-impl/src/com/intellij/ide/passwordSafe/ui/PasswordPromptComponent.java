@@ -17,8 +17,8 @@ package com.intellij.ide.passwordSafe.ui;
 
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,11 +36,11 @@ public class PasswordPromptComponent {
   private JTextField myUserTextField;
   private JLabel myIconLabel;
 
-  public PasswordPromptComponent(boolean memoryOnly,
-                                 String message,
-                                 boolean showUserName,
-                                 String passwordFieldLabel,
-                                 String rememberCheckBoxLabel) {
+  public PasswordPromptComponent(boolean memoryOnly, String message) {
+    this(memoryOnly, message, true, null);
+  }
+
+  public PasswordPromptComponent(boolean memoryOnly, String message, boolean showUserName, @Nullable String passwordFieldLabel) {
     myIconLabel.setText("");
     myIconLabel.setIcon(Messages.getWarningIcon());
     JTextPane messageField = Messages.configureMessagePaneUi(new JTextPane(), message, UIUtil.FontSize.SMALL);
@@ -57,10 +57,8 @@ public class PasswordPromptComponent {
     }
 
     setUserInputVisible(showUserName);
-    if (passwordFieldLabel != null) myPasswordLabel.setText(passwordFieldLabel);
-    if (rememberCheckBoxLabel != null) {
-      myRememberCheckBox.setText(rememberCheckBoxLabel);
-      DialogUtil.registerMnemonic(myRememberCheckBox);
+    if (passwordFieldLabel != null) {
+      myPasswordLabel.setText(passwordFieldLabel);
     }
   }
 
@@ -95,9 +93,5 @@ public class PasswordPromptComponent {
 
   public boolean isRememberSelected() {
     return myRememberCheckBox.isSelected();
-  }
-
-  public void setRememberSelected(boolean selected) {
-    myRememberCheckBox.setSelected(selected);
   }
 }

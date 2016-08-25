@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PasswordUtil {
@@ -27,23 +29,37 @@ public class PasswordUtil {
       return result;
     }
     for (int i = 0; i < password.length(); i++) {
-      int c = password.charAt(i);
-      c ^= 0xdfaa;
-      result += Integer.toHexString(c);
+      result += Integer.toHexString(password.charAt(i) ^ 0xdfaa);
+    }
+    return result;
+  }
+
+  public static String encodePassword(@Nullable char[] password) {
+    String result = "";
+    if (password == null) {
+      return result;
+    }
+    for (char c : password) {
+      result += Integer.toHexString(c ^ 0xdfaa);
     }
     return result;
   }
 
   public static String decodePassword(@Nullable String password) throws NumberFormatException {
-    String result = "";
+    return password == null ? "" : new String(decodePasswordAsCharArray(password));
+  }
+
+  @NotNull
+  public static char[] decodePasswordAsCharArray(@Nullable String password) throws NumberFormatException {
     if (password == null) {
-      return result;
+      return ArrayUtil.EMPTY_CHAR_ARRAY;
     }
+
+    char[] result = new char[password.length()];
     for (int i = 0; i < password.length(); i += 4) {
-      String s = password.substring(i, i + 4);
-      int c = Integer.parseInt(s, 16);
+      int c = Integer.parseInt(password.substring(i, i + 4), 16);
       c ^= 0xdfaa;
-      result += new Character((char)c).charValue();
+      result[i] = new Character((char)c).charValue();
     }
     return result;
   }

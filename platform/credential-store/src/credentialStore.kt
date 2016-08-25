@@ -26,7 +26,7 @@ private fun toOldKey(hash: ByteArray) = "old-hashed-key|" + Base64.getEncoder().
 
 internal fun toOldKeyAsIdentity(hash: ByteArray) = CredentialAttributes("IntelliJ Platform", toOldKey(hash))
 
-internal fun toOldKey(requestor: Class<*>, accountName: String) = CredentialAttributes("IntelliJ Platform", toOldKey(MessageDigest.getInstance("SHA-256").digest("${requestor.name}/$accountName".toByteArray())))
+fun toOldKey(requestor: Class<*>, userName: String) = CredentialAttributes("IntelliJ Platform", toOldKey(MessageDigest.getInstance("SHA-256").digest("${requestor.name}/$userName".toByteArray())))
 
 fun joinData(user: String?, password: OneTimeString?): String? {
   if (user == null && password == null) {
@@ -76,10 +76,6 @@ private fun parseString(data: String, delimiter: Char): List<String> {
 
   return result
 }
-
-fun Credentials?.isFulfilled() = this != null && userName != null && password != null
-
-fun Credentials?.isEmpty() = this == null || (userName == null && password == null)
 
 // check isEmpty before
 fun Credentials.serialize() = joinData(userName, password)!!.toByteArray()

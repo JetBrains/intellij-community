@@ -88,7 +88,7 @@ internal class NativeKeychainTest {
     val userName = randomString()
     val attributes = CredentialAttributes("Test IJ — ${randomString()}", userName)
     try {
-      store.set(attributes, Credentials(userName, null))
+      store.set(attributes, Credentials(userName))
       assertThat(store.get(attributes)).isEqualTo(Credentials(userName, if (store is KeyChainCredentialStore) OneTimeString("") else null))
     }
     finally {

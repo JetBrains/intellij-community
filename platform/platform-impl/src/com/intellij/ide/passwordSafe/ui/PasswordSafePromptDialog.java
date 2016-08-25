@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.passwordSafe.ui;
 
+import com.intellij.credentialStore.Credentials;
+import com.intellij.credentialStore.OneTimeString;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -72,7 +74,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
                                    @NotNull final Class<?> requestor,
                                    final String key,
                                    boolean resetPassword, String error) {
-    return askPassword(project, title, message, requestor, key, resetPassword, error, null, null);
+    return askPassword(project, title, message, requestor, key, resetPassword, error, null);
   }
 
   /**
@@ -115,8 +117,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
                                      final String key,
                                      boolean resetPassword,
                                      String error) {
-    return askPassword(project, title, message, requestor, key, resetPassword, error,
-                       "Passphrase:", "Remember the passphrase");
+    return askPassword(project, title, message, requestor, key, resetPassword, error, "Passphrase:");
   }
 
   @Nullable
@@ -127,8 +128,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
                                     String accountName,
                                     boolean resetPassword,
                                     String error,
-                                    String promptLabel,
-                                    String checkboxLabel) {
+                                    String promptLabel) {
     PasswordSafe ps = PasswordSafe.getInstance();
     if (resetPassword) {
       ps.set(CredentialAttributes(requestor, accountName), null);
@@ -140,18 +140,20 @@ public class PasswordSafePromptDialog extends DialogWrapper {
       }
     }
 
-    Ref<String> ref = Ref.create();
+    Ref<Credentials> ref = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      final PasswordPromptComponent component = new PasswordPromptComponent(ps.isMemoryOnly(), message, false, promptLabel, checkboxLabel);
+      final PasswordPromptComponent component = new PasswordPromptComponent(ps.isMemoryOnly(), message, false, promptLabel);
       PasswordSafePromptDialog d = new PasswordSafePromptDialog(project, title, component);
 
       d.setErrorText(error);
       if (d.showAndGet()) {
-        ref.set(new String(component.getPassword()));
-        ps.setPassword(CredentialAttributes(requestor, accountName), ref.get(), !component.isRememberSelected());
+        Credentials credentials = new Credentials(component.getUserName(), new OneTimeString(component.getPassword()));
+        ref.set(credentials);
+        ps.setPassword(CredentialAttributes(requestor, accountName), credentials, !component.isRememberSelected());
       }
     }, ModalityState.any());
-    return ref.get();
+    Credentials credentials = ref.get();
+    return credentials == null ? null : credentials.getPasswordAsString();
   }
 }
 
