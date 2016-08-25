@@ -140,6 +140,7 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
           myModel.fireTableDataChanged();
         }
       }).setButtonComparator("Add", "Add JIRA Pattern", "Add YouTrack Pattern", "Edit", "Remove")
+        .setEditOntDoubleClick()
         .disableUpDownActions().createPanel(), BorderLayout.CENTER);
   }
 

@@ -68,6 +68,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   private AnActionButtonUpdater myEditActionUpdater = null;
   private AnActionButtonUpdater myMoveUpActionUpdater = null;
   private AnActionButtonUpdater myMoveDownActionUpdater = null;
+  private boolean myEditOnDoubleClick;
   private Dimension myPreferredSize;
   private CommonActionsPanel myActionsPanel;
   private Comparator<AnActionButton> myButtonComparator;
@@ -320,6 +321,11 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     return this;
   }
 
+  public ToolbarDecorator setEditOntDoubleClick() {
+    myEditOnDoubleClick = true;
+    return this;
+  }
+
   /**
    * @return panel that contains wrapped component (with added scrollpane) and toolbar panel.
    */
@@ -327,11 +333,11 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     final CommonActionsPanel.Buttons[] buttons = getButtons();
     final JComponent contextComponent = getComponent();
     myActionsPanel = new CommonActionsPanel(this, contextComponent,
-                             myToolbarPosition,
-                             myExtraActions.toArray(new AnActionButton[myExtraActions.size()]),
-                             myButtonComparator,
-                             myAddName, myRemoveName, myMoveUpName, myMoveDownName, myEditName,
-                             myAddIcon, buttons);
+                                            myToolbarPosition,
+                                            myExtraActions.toArray(new AnActionButton[myExtraActions.size()]),
+                                            myButtonComparator,
+                                            myAddName, myRemoveName, myMoveUpName, myMoveDownName, myEditName,
+                                            myAddIcon, myEditOnDoubleClick, buttons);
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(contextComponent, true);
     if (myPreferredSize != null) {
       scrollPane.setPreferredSize(myPreferredSize);

@@ -147,7 +147,9 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
           public void run(AnActionButton button) {
             deleteItems();
           }
-        }).disableUpDownActions().createPanel();
+        })
+        .setEditOntDoubleClick()
+        .disableUpDownActions().createPanel();
     }
     return myPanel;
   }

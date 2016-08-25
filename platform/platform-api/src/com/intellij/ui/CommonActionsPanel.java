@@ -59,10 +59,6 @@ public class CommonActionsPanel extends JPanel {
       return null;
     }
 
-    MyActionButton createButton(final Listener listener, String name, Icon icon) {
-      return new MyActionButton(this, listener, name == null ? StringUtil.capitalize(name().toLowerCase()) : name, icon);
-    }
-
     public String getText() {
       return StringUtil.capitalize(name().toLowerCase());
     }
@@ -104,7 +100,7 @@ public class CommonActionsPanel extends JPanel {
   CommonActionsPanel(ListenerFactory factory, @Nullable JComponent contextComponent, ActionToolbarPosition position,
                      @Nullable AnActionButton[] additionalActions, @Nullable Comparator<AnActionButton> buttonComparator,
                      String addName, String removeName, String moveUpName, String moveDownName, String editName,
-                     Icon addIcon, Buttons... buttons) {
+                     Icon addIcon, boolean editOnDoubleClick, Buttons... buttons) {
     super(new BorderLayout());
     myPosition = position;
     final Listener listener = factory.createListener(this);
@@ -119,7 +115,10 @@ public class CommonActionsPanel extends JPanel {
         case UP:     name = moveUpName;   break;
         case DOWN:   name = moveDownName; break;
       }
-      final MyActionButton b = button.createButton(listener, name, button == Buttons.ADD && addIcon != null ? addIcon : button.getIcon());
+      if (name == null) name = StringUtil.capitalize(button.name().toLowerCase());
+      Icon icon = button == Buttons.ADD && addIcon != null ? addIcon : button.getIcon();
+      boolean doubleClickShortcut = button == Buttons.EDIT && editOnDoubleClick;
+      final MyActionButton b = new MyActionButton(button, listener, name, icon, doubleClickShortcut);
       actions[i] = b;
       myButtons.put(button, b);
     }
@@ -251,11 +250,13 @@ public class CommonActionsPanel extends JPanel {
   static class MyActionButton extends AnActionButton implements DumbAware {
     private final Buttons myButton;
     private final Listener myListener;
+    private final boolean myDoubleClickShortcut;
 
-    MyActionButton(Buttons button, Listener listener, String name, Icon icon) {
+    MyActionButton(Buttons button, Listener listener, String name, Icon icon, boolean doubleClickShortcut) {
       super(name, name, icon);
       myButton = button;
       myListener = listener;
+      myDoubleClickShortcut = doubleClickShortcut;
     }
 
     @Override
@@ -265,7 +266,11 @@ public class CommonActionsPanel extends JPanel {
 
     @Override
     public ShortcutSet getShortcut() {
-      return getCommonShortcut(myButton);
+      ShortcutSet shortcutSet = getCommonShortcut(myButton);
+      if (myDoubleClickShortcut) {
+        shortcutSet = new CompositeShortcutSet(shortcutSet, CommonShortcuts.DOUBLE_CLICK_1);
+      }
+      return shortcutSet;
     }
 
     @Override
