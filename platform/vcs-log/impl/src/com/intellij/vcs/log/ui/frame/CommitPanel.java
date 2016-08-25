@@ -29,10 +29,7 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.ui.HtmlPanel;
-import com.intellij.util.ui.JBEmptyBorder;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
@@ -65,6 +62,7 @@ import static com.intellij.openapi.vcs.history.VcsHistoryUtil.getCommitDetailsFo
 class CommitPanel extends JBPanel {
   public static final int BOTTOM_BORDER = 2;
   private static final int REFERENCES_BORDER = 12;
+  private static final int TOP_BORDER = 4;
 
   @NotNull private final VcsLogData myLogData;
 
@@ -620,13 +618,10 @@ class CommitPanel extends JBPanel {
     }
 
     @Override
-    public boolean isVisible() {
-      return !myText.isEmpty();
-    }
-
-    @Override
     protected void paintComponent(Graphics g) {
-      myLabelPainter.paint((Graphics2D)g, myText, 0, 0, myColor);
+      if (!myText.isEmpty()) {
+        myLabelPainter.paint((Graphics2D)g, myText, 0, 0, myColor);
+      }
     }
 
     @Override
@@ -636,6 +631,7 @@ class CommitPanel extends JBPanel {
 
     @Override
     public Dimension getPreferredSize() {
+      if (myText.isEmpty()) return new JBDimension(0, TOP_BORDER);
       return myLabelPainter.calculateSize(myText, getFontMetrics(getLabelFont()));
     }
 
