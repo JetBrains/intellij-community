@@ -26,7 +26,7 @@ import org.eclipse.jgit.internal.JGitText
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.FileMode
 import org.eclipse.jgit.lib.Repository
-import org.jetbrains.settingsRepository.byteBufferToBytes
+import org.jetbrains.io.toByteArray
 import java.io.File
 import java.io.FileInputStream
 import java.text.MessageFormat
@@ -134,7 +134,7 @@ interface PathEdit {
 abstract class PathEditBase(override final val path: ByteArray) : PathEdit
 
 private fun encodePath(path: String): ByteArray {
-  val bytes = byteBufferToBytes(Constants.CHARSET.encode(path))
+  val bytes = Constants.CHARSET.encode(path).toByteArray()
   if (SystemInfo.isWindows) {
     for (i in 0..bytes.size - 1) {
       if (bytes[i].toChar() == '\\') {

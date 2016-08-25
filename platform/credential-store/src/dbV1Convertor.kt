@@ -25,6 +25,7 @@ import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.exists
 import gnu.trove.THashMap
 import java.nio.file.Paths
@@ -36,7 +37,7 @@ internal fun isMasterPasswordValid(password: String, @Suppress("DEPRECATION") db
   val key = EncryptionUtil.genPasswordKey(password)
   val value = db.myDatabase.get(ByteArrayWrapper(EncryptionUtil.encryptKey(key, rawTestKey(password))))
   if (value != null) {
-    return EncryptionUtil.decryptText(key, value) == TEST_PASSWORD_VALUE
+    return StringUtil.equals(EncryptionUtil.decryptText(key, value), TEST_PASSWORD_VALUE)
   }
   return false
 }

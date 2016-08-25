@@ -17,6 +17,7 @@ package com.intellij.ide.passwordSafe.impl.providers;
 
 import com.intellij.credentialStore.CredentialAttributes;
 import com.intellij.credentialStore.Credentials;
+import com.intellij.credentialStore.OneTimeString;
 import com.intellij.ide.passwordSafe.PasswordStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +33,7 @@ public abstract class BasePasswordSafeProvider implements PasswordStorage {
   public Credentials get(@NotNull CredentialAttributes attributes) {
     byte[] masterKey = key();
     byte[] encryptedPassword = getEncryptedPassword(EncryptionUtil.encryptKey(masterKey, EncryptionUtil.rawKey(attributes)));
-    String password = encryptedPassword == null ? null : EncryptionUtil.decryptText(masterKey, encryptedPassword);
+    OneTimeString password = encryptedPassword == null ? null : EncryptionUtil.decryptText(masterKey, encryptedPassword);
     return password == null ? null : new Credentials(attributes.getUserName(), password);
   }
 
@@ -46,7 +47,7 @@ public abstract class BasePasswordSafeProvider implements PasswordStorage {
       removeEncryptedPassword(key);
     }
     else {
-      storeEncryptedPassword(key, EncryptionUtil.encryptText(key(), value.getPassword()));
+      storeEncryptedPassword(key, EncryptionUtil.encryptText(key(), value == null ? null : value.getPassword()));
     }
   }
 

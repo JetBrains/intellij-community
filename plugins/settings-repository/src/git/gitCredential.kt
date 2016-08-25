@@ -16,6 +16,7 @@
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.credentialStore.Credentials
+import com.intellij.credentialStore.OneTimeString
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.ProcessNotCreatedException
 import org.eclipse.jgit.lib.Repository
@@ -70,5 +71,5 @@ internal fun getCredentialsUsingGit(uri: URIish, repository: Repository): Creden
   if (errorText.isNotEmpty()) {
     LOG.warn(errorText)
   }
-  return if (username == null && password == null) null else Credentials(username, password)
+  return if (username == null && password == null) null else Credentials(username, password?.let(::OneTimeString))
 }

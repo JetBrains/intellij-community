@@ -29,7 +29,7 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.QueueProcessor
 import com.intellij.util.containers.ContainerUtil
 
-private val nullPassword = Credentials("\u0000", "\u0000")
+private val nullPassword = Credentials("\u0000", OneTimeString("\u0000"))
 
 private val NOTIFICATION_MANAGER by lazy {
   // we use name "Password Safe" instead of "Credentials Store" because it was named so previously (and no much sense to rename it)
@@ -56,7 +56,7 @@ private class CredentialStoreWrapper(private val store: CredentialStore) : Passw
         store.get(oldKey)?.let {
           set(oldKey, null)
           set(CredentialAttributes(requestor, accountName), it)
-          return it.password
+          return it.password?.toString()
         }
 
         val appInfo = ApplicationInfoEx.getInstanceEx()
@@ -65,7 +65,7 @@ private class CredentialStoreWrapper(private val store: CredentialStore) : Passw
           store.get(oldKey)?.let {
             set(oldKey, null)
             set(CredentialAttributes(requestor, accountName), it)
-            return it.password
+            return it.password?.toString()
           }
         }
       }

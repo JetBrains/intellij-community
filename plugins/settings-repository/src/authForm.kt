@@ -16,6 +16,7 @@
 package org.jetbrains.settingsRepository
 
 import com.intellij.credentialStore.Credentials
+import com.intellij.credentialStore.OneTimeString
 import com.intellij.layout.*
 import com.intellij.layout.CCFlags.*
 import com.intellij.layout.LCFlags.*
@@ -48,7 +49,7 @@ fun showAuthenticationForm(credentials: Credentials?, uri: String, host: String?
 
   return UIUtil.invokeAndWaitIfNeeded(Computable {
     val userField = JTextField(username)
-    val passwordField = JPasswordField(credentials?.password)
+    val passwordField = JPasswordField(credentials?.password.toString())
 
     val centerPanel = panel(fillX) {
       label(message, wrap, span, bold = true, gapBottom = 10)
@@ -81,7 +82,7 @@ fun showAuthenticationForm(credentials: Credentials?, uri: String, host: String?
     if (authenticationForm.showAndGet()) {
       username = sshKeyFile ?: userField.text.nullize(true)
       val passwordChars = passwordField.password
-      Credentials(username, if (passwordChars == null || passwordChars.isEmpty()) (if (username == null) null else "x-oauth-basic") else String(passwordChars))
+      Credentials(username, if (passwordChars == null || passwordChars.isEmpty()) (if (username == null) null else OneTimeString("x-oauth-basic")) else OneTimeString(passwordChars))
     }
     else {
       null

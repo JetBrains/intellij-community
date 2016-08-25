@@ -60,7 +60,7 @@ fun findGenericPassword(serviceName: ByteArray, accountName: String?): Credentia
   checkForError("find", LIBRARY.SecKeychainFindGenericPassword(null, serviceName.size, serviceName, accountNameBytes?.size ?: 0, accountNameBytes, passwordSize, passwordRef, itemRef))
 
   val pointer = passwordRef.value ?: return null
-  val password = String(pointer.getByteArray(0, passwordSize.get(0)))
+  val password = SecureString(pointer.getByteArray(0, passwordSize.get(0)))
   LIBRARY.SecKeychainItemFreeContent(null, pointer)
 
   var effectiveAccountName = accountName

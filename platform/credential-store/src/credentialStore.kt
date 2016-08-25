@@ -28,7 +28,7 @@ internal fun toOldKeyAsIdentity(hash: ByteArray) = CredentialAttributes("Intelli
 
 internal fun toOldKey(requestor: Class<*>, accountName: String) = CredentialAttributes("IntelliJ Platform", toOldKey(MessageDigest.getInstance("SHA-256").digest("${requestor.name}/$accountName".toByteArray())))
 
-fun joinData(user: String?, password: String?): String? {
+fun joinData(user: String?, password: OneTimeString?): String? {
   if (user == null && password == null) {
     return null
   }
@@ -41,7 +41,7 @@ fun splitData(data: String?): Credentials? {
   }
 
   val list = parseString(data!!, '@')
-  return Credentials(list.getOrNull(0), list.getOrNull(1))
+  return Credentials(list.getOrNull(0), list.getOrNull(1)?.let(::OneTimeString))
 }
 
 private const val ESCAPING_CHAR = '\\'
