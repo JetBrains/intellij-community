@@ -79,5 +79,9 @@ internal class NativeKeychainTest {
     val serviceNameOnlyAttributes = CredentialAttributes("Test IJ - example.com")
     store.set(serviceNameOnlyAttributes, Credentials("foo", OneTimeString("pass")))
     assertThat(store.get(serviceNameOnlyAttributes)).isEqualTo(Credentials("foo", OneTimeString("pass")))
+
+    val attributes = CredentialAttributes("Test IJ - foo.com", "noPassword")
+    store.set(attributes, Credentials("noPassword", null))
+    assertThat(store.get(attributes)).isEqualTo(Credentials("noPassword", if (SystemInfo.isMac) OneTimeString("") else null))
   }
 }
