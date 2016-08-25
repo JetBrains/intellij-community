@@ -1621,6 +1621,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkFileName(module, myFile));
     if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkFileDuplicates(module, myFile));
     if (!myHolder.hasErrorResults()) myHolder.addAll(ModuleHighlightUtil.checkDuplicateRequires(module));
+    if (!myHolder.hasErrorResults()) myHolder.addAll(ModuleHighlightUtil.checkDuplicateExports(module));
     if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkFileLocation(module, myFile));
   }
 
@@ -1631,6 +1632,17 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       PsiJavaModule container = (PsiJavaModule)statement.getParent();
       PsiJavaModuleReferenceElement ref = statement.getReferenceElement();
       if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkModuleReference(ref, container));
+    }
+  }
+
+  @Override
+  public void visitExportsStatement(PsiExportsStatement statement) {
+    super.visitExportsStatement(statement);
+    if (PsiUtil.isLanguageLevel9OrHigher(myFile)) {
+      PsiJavaModule container = (PsiJavaModule)statement.getParent();
+      PsiJavaCodeReferenceElement ref = statement.getPackageReference();
+      if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkPackageReference(ref));
+      if (!myHolder.hasErrorResults()) myHolder.addAll(ModuleHighlightUtil.checkExportTargets(statement, container));
     }
   }
 

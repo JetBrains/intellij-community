@@ -59,6 +59,28 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
         }""".trimIndent(), true)
   }
 
+  fun testExports() {
+    addFile("pkg/empty/package-info.java", "package pkg.empty;")
+    addFile("pkg/main/C.java", "package pkg.main;\nclass C { }")
+    addFile("pkg/other/C.groovy", "package pkg.other\nclass C { }")
+    doTest("""
+        module M {
+          exports pkg.<error descr="Cannot resolve symbol 'missing'">missing</error>;
+          exports <error descr="Package is empty: pkg.empty">pkg.empty</error>;
+          exports pkg.main to <error descr="Module not found: M.missing">M.missing</error>, M2, <error descr="Duplicate export: M2">M2</error>;
+          exports pkg.other to <warning descr="Exports to itself">M</warning>;
+        }""".trimIndent())
+  }
+
+  fun testDuplicateExports() {
+    addFile("pkg/main/C.java", "package pkg.main;\nclass C { }")
+    doTest("""
+        module M {
+          exports pkg.main;
+          <error descr="Duplicate export: pkg.main">exports pkg. main;</error>
+        }""".trimIndent())
+  }
+
   //<editor-fold desc="Helpers.">
   private fun addFile(path: String, text: String) = VfsTestUtil.createFile(LightPlatformTestCase.getSourceRoot(), path, text)
 

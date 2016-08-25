@@ -148,11 +148,97 @@ public class ModuleHighlightUtil {
     return null;
   }
 
+  @Nullable
+  static HighlightInfo checkPackageReference(@Nullable PsiJavaCodeReferenceElement refElement) {
+    if (refElement != null) {
+      PsiElement target = refElement.resolve();
+      if (target instanceof PsiPackage) {
+        Module module = ModuleUtilCore.findModuleForPsiElement(refElement);
+        if (module != null) {
+          String packageName = ((PsiPackage)target).getQualifiedName();
+          PsiDirectory[] directories = ((PsiPackage)target).getDirectories(new ModulesScope(module));
+          if (directories.length == 0) {
+            String message = JavaErrorMessages.message("package.not.found", packageName);
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).description(message).create();
+          }
+          if (isEmpty(directories, packageName)) {
+            String message = JavaErrorMessages.message("package.is.empty", packageName);
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).description(message).create();
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
+  @NotNull
+  static List<HighlightInfo> checkExportTargets(@NotNull PsiExportsStatement statement, @NotNull PsiJavaModule container) {
+    List<HighlightInfo> results = ContainerUtil.newSmartList();
+
+    Set<String> targets = ContainerUtil.newHashSet();
+    for (PsiJavaModuleReferenceElement refElement : psiTraverser().children(statement).filter(PsiJavaModuleReferenceElement.class)) {
+      String refText = refElement.getReferenceText();
+      PsiPolyVariantReference ref = refElement.getReference();
+      assert ref != null : statement;
+      PsiElement target = ref.resolve();
+      if (!(target instanceof PsiJavaModule)) {
+        String message = JavaErrorMessages.message("module.not.found", refText);
+        results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refElement).description(message).create());
+      }
+      else if (!targets.add(refText)) {
+        String message = JavaErrorMessages.message("module.duplicate.export", refText);
+        results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).description(message).create());
+      }
+      else if (target == container) {
+        String message = JavaErrorMessages.message("module.self.export");
+        results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(refElement).description(message).create());
+      }
+    }
+
+    return results;
+  }
+
+  @NotNull
+  static List<HighlightInfo> checkDuplicateExports(@NotNull PsiJavaModule module) {
+    List<HighlightInfo> results = ContainerUtil.newSmartList();
+
+    Set<String> names = ContainerUtil.newHashSet();
+    for (PsiExportsStatement statement : psiTraverser().children(module).filter(PsiExportsStatement.class)) {
+      PsiJavaCodeReferenceElement ref = statement.getPackageReference();
+      if (ref != null) {
+        String text = PsiNameHelper.getQualifiedClassName(ref.getText(), true);
+        if (!names.add(text)) {
+          String message = JavaErrorMessages.message("module.duplicate.export", text);
+          HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).description(message).create();
+          QuickFixAction.registerQuickFixAction(info, new DeleteElementFix(statement));
+          results.add(info);
+        }
+      }
+    }
+
+    return results;
+  }
+
   private static QuickFixFactory factory() {
     return QuickFixFactory.getInstance();
   }
 
   private static TextRange range(PsiJavaModule module) {
     return new TextRange(module.getTextOffset(), module.getNameElement().getTextRange().getEndOffset());
+  }
+
+  private static boolean isEmpty(PsiDirectory[] directories, String packageName) {
+    for (PsiDirectory directory : directories) {
+      for (PsiFile file : directory.getFiles()) {
+        if (file instanceof PsiClassOwner &&
+            packageName.equals(((PsiClassOwner)file).getPackageName()) &&
+            ((PsiClassOwner)file).getClasses().length > 0) {
+          return false;
+        }
+      }
+    }
+
+    return true;
   }
 }
