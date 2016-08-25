@@ -240,6 +240,22 @@ class BuildContextImpl extends BuildContext {
     return child
   }
 
+  @Override
+  BuildContext createCopyForProduct(ProductProperties productProperties, String buildOutputRoot, String projectHomeForCustomizers) {
+    def pathsCopy = new BuildPathsImpl(paths.communityHome, paths.projectHome, buildOutputRoot, paths.jdkHome)
+    pathsCopy.artifacts = paths.artifacts
+
+    WindowsDistributionCustomizer windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeForCustomizers)
+    LinuxDistributionCustomizer linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeForCustomizers)
+    MacDistributionCustomizer macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeForCustomizers)
+
+    def options = new BuildOptions()
+    options.useCompiledClassesFromProjectOutput = true
+    def copy = new BuildContextImpl(ant, messages, pathsCopy, project, global, projectBuilder, productProperties, windowsDistributionCustomizer,
+                                    linuxDistributionCustomizer, macDistributionCustomizer, proprietaryBuildTools, options, outputDirectoriesToKeep)
+    copy.bundledJreManager.baseDirectoryForJre = bundledJreManager.baseDirectoryForJre
+    return copy
+  }
 
   @Override
   boolean includeBreakGenLibraries() {

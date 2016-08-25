@@ -100,6 +100,8 @@ abstract class BuildContext {
    * other tasks running in parallel
    */
   abstract BuildContext forkForParallelTask(String taskName)
+
+  abstract BuildContext createCopyForProduct(ProductProperties productProperties, String buildOutputRoot, String projectHomeForCustomizers)
 }
 
 /**
