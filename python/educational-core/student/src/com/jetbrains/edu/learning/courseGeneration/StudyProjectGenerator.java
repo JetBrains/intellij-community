@@ -108,18 +108,18 @@ public class StudyProjectGenerator {
   @Nullable
   protected Course getCourse(@NotNull final Project project) {
 
-    //    final File courseFile = new File(new File(OUR_COURSES_DIR, mySelectedCourseInfo.getName()), EduNames.COURSE_META_FILE);
-    //    if (courseFile.exists()) {
-    //return readCourseFromCache(courseFile, false);
-    //    }
-    //    else if (myUser != null) {
-    //      final File adaptiveCourseFile = new File(new File(OUR_COURSES_DIR, ADAPTIVE_COURSE_PREFIX +
-    //                                                                         mySelectedCourseInfo.getName() + "_" +
-    //                                                                         myUser.getEmail()), EduNames.COURSE_META_FILE);
-    //      if (adaptiveCourseFile.exists()) {
-    //return readCourseFromCache(adaptiveCourseFile, true);
-    //      }
-    //    }
+    final File courseFile = new File(new File(OUR_COURSES_DIR, mySelectedCourseInfo.getName()), EduNames.COURSE_META_FILE);
+    if (courseFile.exists()) {
+      return readCourseFromCache(courseFile, false);
+    }
+    else if (myUser != null) {
+      final File adaptiveCourseFile = new File(new File(OUR_COURSES_DIR, ADAPTIVE_COURSE_PREFIX +
+                                                                         mySelectedCourseInfo.getName() + "_" +
+                                                                         myUser.getEmail()), EduNames.COURSE_META_FILE);
+      if (adaptiveCourseFile.exists()) {
+        return readCourseFromCache(adaptiveCourseFile, true);
+      }
+    }
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<Course, RuntimeException>() {
       @Override
       public Course compute() throws RuntimeException {

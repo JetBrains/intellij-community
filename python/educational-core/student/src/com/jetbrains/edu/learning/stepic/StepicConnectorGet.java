@@ -379,7 +379,7 @@ public class StepicConnectorGet {
     }
 
     String templateForTask;
-    templateForTask = step.options.codeTemplates.getTemplateForLanguage("java");
+    templateForTask = step.options.codeTemplates.getTemplateForLanguage("java8");
     if (templateForTask != null) {
       final TaskFile taskFile = new TaskFile();
       taskFile.name = "Main.java";
