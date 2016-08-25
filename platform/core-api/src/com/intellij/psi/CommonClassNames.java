@@ -92,6 +92,9 @@ public interface CommonClassNames {
   @NonNls String JAVA_LANG_STRING_BUILDER = "java.lang.StringBuilder";
   @NonNls String JAVA_LANG_ABSTRACT_STRING_BUILDER = "java.lang.AbstractStringBuilder";
 
+  @NonNls String JAVA_LANG_MATH = "java.lang.Math";
+  @NonNls String JAVA_LANG_STRICT_MATH = "java.lang.StrictMath";
+
   @NonNls String JAVA_LANG_CLONEABLE = "java.lang.Cloneable";
   @NonNls String JAVA_LANG_COMPARABLE = "java.lang.Comparable";
 

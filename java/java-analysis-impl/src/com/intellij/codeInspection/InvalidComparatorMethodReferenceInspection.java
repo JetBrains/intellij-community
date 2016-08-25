@@ -48,7 +48,7 @@ public class InvalidComparatorMethodReferenceInspection extends BaseJavaBatchLoc
           return;
         }
         String targetClassName = targetType.getQualifiedName();
-        if(targetClassName == null || !targetClassName.equals(CommonClassNames.JAVA_UTIL_COMPARATOR)) {
+        if (targetClassName == null || !targetClassName.equals(CommonClassNames.JAVA_UTIL_COMPARATOR)) {
           return;
         }
         PsiElement refType = ((PsiReference)qualifierExpression).resolve();
@@ -56,7 +56,8 @@ public class InvalidComparatorMethodReferenceInspection extends BaseJavaBatchLoc
           return;
         }
         String className = ((PsiClass)refType).getQualifiedName();
-        if (className == null || (!className.equals(CommonClassNames.JAVA_LANG_INTEGER) && !className.equals(Math.class.getName()))) {
+        if (!CommonClassNames.JAVA_LANG_INTEGER.equals(className) && !CommonClassNames.JAVA_LANG_MATH
+          .equals(className)) {
           return;
         }
         //noinspection DialogTitleCapitalization
