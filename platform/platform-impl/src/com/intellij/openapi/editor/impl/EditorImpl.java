@@ -946,6 +946,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       ((DocumentImpl)myDocument).giveUpTabTracking();
     }
     Disposer.dispose(myDisposable);
+    myVerticalScrollBar.setUI(null); // clear error panel's cached image
   }
 
   private void clearCaretThread() {
