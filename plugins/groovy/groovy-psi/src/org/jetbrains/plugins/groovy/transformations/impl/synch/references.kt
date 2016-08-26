@@ -16,10 +16,10 @@
 package org.jetbrains.plugins.groovy.transformations.impl.synch
 
 import com.intellij.psi.*
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 
 class SynchronizedReferenceContributor : PsiReferenceContributor() {
 
@@ -38,11 +38,8 @@ class SynchronizedReferenceProvider : PsiReferenceProvider() {
 
 class FieldReference(literal: GrLiteral) : PsiReferenceBase<GrLiteral>(literal) {
 
-  private val GrLiteral.annotatedMethod: GrMethod?
-    get() = parent?.parent?.parent?.parent?.parent as? GrMethod
-
   private val GrLiteral.containingClass: GrTypeDefinition?
-    get() = annotatedMethod?.containingClass as? GrTypeDefinition
+    get() = PsiTreeUtil.getParentOfType(this, GrTypeDefinition::class.java)
 
   override fun getVariants(): Array<out Any> = element.containingClass?.codeFields ?: emptyArray()
 

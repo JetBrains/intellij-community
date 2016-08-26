@@ -45,7 +45,7 @@ fun getImplicitLockUsages(field: GrField): Sequence<PsiAnnotation> {
 }
 
 private fun getImplicitLockUsages(clazz: PsiClass, static: Boolean) = clazz.methods.asSequence().filter { method ->
-  !static.xor(method.isStatic())
+  static == method.isStatic()
 }.mapNotNull { method ->
   AnnotationUtil.findAnnotation(method, ANNO_FQN)
 }.filter { anno ->
