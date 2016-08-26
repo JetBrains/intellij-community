@@ -7,7 +7,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.ColoredTableCellRenderer;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
@@ -24,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.memory.component.InstancesTracker;
 import org.jetbrains.debugger.memory.event.InstancesTrackerListener;
 import org.jetbrains.debugger.memory.tracking.InstanceTrackingStrategy;
+import org.jetbrains.debugger.memory.tracking.TrackingType;
 import org.jetbrains.debugger.memory.utils.AbstractTableColumnDescriptor;
 import org.jetbrains.debugger.memory.utils.AbstractTableModelWithColumns;
 import org.jetbrains.debugger.memory.utils.InstancesProvider;
@@ -78,7 +78,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     InstancesTracker tracker = InstancesTracker.getInstance(myDebugSession.getProject());
     tracker.addTrackerListener(new InstancesTrackerListener() {
       @Override
-      public void classChanged(@NotNull String name, @NotNull InstancesTracker.TrackingType type) {
+      public void classChanged(@NotNull String name, @NotNull TrackingType type) {
         getRowSorter().allRowsChanged();
       }
 
@@ -207,11 +207,11 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     if (DEBUG_SESSION_KEY.is(dataId)) {
       return myDebugSession;
     }
-    if(NEW_INSTANCES_PROVIDER_KEY.is(dataId)) {
+    if (NEW_INSTANCES_PROVIDER_KEY.is(dataId)) {
       ReferenceType selectedClass = getSelectedClass();
-      if(selectedClass != null) {
+      if (selectedClass != null) {
         InstanceTrackingStrategy strategy = myParent.getStrategy(selectedClass);
-        if(strategy != null) {
+        if (strategy != null) {
           List<ObjectReference> newInstances = strategy.getNewInstances();
           return (InstancesProvider) limit -> newInstances;
         }
@@ -226,13 +226,10 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   public void dispose() {
   }
 
-  private boolean needHighlightAsTracked(boolean isSelected, int row) {
-    if(isSelected){
-      return false;
-    }
-
+  @Nullable
+  private TrackingType getTrackingType(int row) {
     ReferenceType ref = (ReferenceType) getValueAt(row, DiffViewTableModel.CLASSNAME_COLUMN_INDEX);
-    return myInstancesTracker.isTracked(ref.name());
+    return myInstancesTracker.getTrackingType(ref.name());
   }
 
   private class DiffViewTableModel extends AbstractTableModelWithColumns {
@@ -324,6 +321,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
   private static class DiffValue {
     private long myOldCount;
+
     private long myCurrentCount;
 
     DiffValue(long count) {
@@ -348,9 +346,11 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     long diff() {
       return myCurrentCount - myOldCount;
     }
+
   }
 
   private class MyNumberTableCellRenderer extends ColoredTableCellRenderer {
+
     @Override
     protected void customizeCellRenderer(JTable table, @Nullable Object value,
                                          boolean isSelected, boolean hasFocus, int row, int column) {
@@ -358,8 +358,9 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
         return;
       }
 
-      if (needHighlightAsTracked(isSelected, row)) {
-        setBackground(UIUtil.toAlpha(JBColor.yellow, 20));
+      TrackingType trackingType = getTrackingType(row);
+      if (!isSelected && trackingType != null) {
+        setBackground(UIUtil.toAlpha(trackingType.color(), 20));
       }
 
       long val = (long) value;
@@ -379,15 +380,18 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
       append(String.valueOf(count));
 
     }
+
   }
 
   private class MyClassTableCellRenderer extends ColoredTableCellRenderer {
+
     @Override
     protected void customizeCellRenderer(JTable table, @Nullable Object value,
                                          boolean isSelected, boolean hasFocus, int row, int column) {
       String presentation = value == null ? "null" : ((ReferenceType) value).name();
-      if (needHighlightAsTracked(isSelected, row)) {
-        setBackground(UIUtil.toAlpha(JBColor.yellow, 20));
+      TrackingType trackingType = getTrackingType(row);
+      if (trackingType != null && !isSelected) {
+        setBackground(UIUtil.toAlpha(trackingType.color(), 20));
       }
 
       append(" ");
@@ -398,11 +402,14 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
               SimpleTextAttributes.STYLE_SEARCH_MATCH);
           SpeedSearchUtil.appendColoredFragments(this, presentation, textRanges,
               SimpleTextAttributes.REGULAR_ATTRIBUTES, attributes);
-          return;
         }
+      } else {
+        append(String.format("%s", presentation), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
 
-      append(String.format("%s", presentation), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      if (trackingType != null) {
+        append(String.format(" (%s)", trackingType.description()));
+      }
     }
   }
 }

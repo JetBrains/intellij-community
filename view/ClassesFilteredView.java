@@ -28,6 +28,7 @@ import org.jetbrains.debugger.memory.component.MemoryViewManager;
 import org.jetbrains.debugger.memory.component.MemoryViewManagerState;
 import org.jetbrains.debugger.memory.event.MemoryViewManagerListener;
 import org.jetbrains.debugger.memory.tracking.InstanceTrackingStrategy;
+import org.jetbrains.debugger.memory.tracking.TrackingType;
 import org.jetbrains.debugger.memory.utils.AndroidUtil;
 import org.jetbrains.debugger.memory.utils.KeyboardUtils;
 import org.jetbrains.debugger.memory.utils.SingleAlarmWithMutableDelay;
@@ -218,15 +219,19 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     @Override
     public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
       final List<ReferenceType> classes = myDebugProcess.getVirtualMachineProxy().allClasses();
-      for(ReferenceType ref : classes) {
-        InstancesTracker.TrackingType type = myInstancesTracker.getTrackingType(ref.name());
-        if(type != null && !myTrackedClasses.containsKey(ref)) {
-          List<ObjectReference> instances = ref.instances(0);
-          myTrackedClasses.put(ref, InstanceTrackingStrategy.create(ref, suspendContext, type, instances));
+      for (ReferenceType ref : classes) {
+        TrackingType type = myInstancesTracker.getTrackingType(ref.name());
+        if (type != null && !myTrackedClasses.containsKey(ref)) {
+          if (type == TrackingType.CREATION) {
+
+          } else {
+            List<ObjectReference> instances = ref.instances(0);
+            myTrackedClasses.put(ref, InstanceTrackingStrategy.create(ref, suspendContext, type, instances));
+          }
         }
       }
 
-      for(Map.Entry<ReferenceType, InstanceTrackingStrategy> entry : myTrackedClasses.entrySet()) {
+      for (Map.Entry<ReferenceType, InstanceTrackingStrategy> entry : myTrackedClasses.entrySet()) {
         entry.getValue().update(suspendContext, entry.getKey().instances(0));
       }
 

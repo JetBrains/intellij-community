@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.memory.component.InstancesTracker;
 import org.jetbrains.debugger.memory.view.ClassesTable;
 
-import static org.jetbrains.debugger.memory.component.InstancesTracker.TrackingType;
+import org.jetbrains.debugger.memory.tracking.TrackingType;
 
 abstract class InstancesTrackingActionBase extends ToggleAction {
   @Override

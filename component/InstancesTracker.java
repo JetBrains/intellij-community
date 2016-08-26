@@ -4,14 +4,13 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.memory.event.InstancesTrackerListener;
+import org.jetbrains.debugger.memory.tracking.TrackingType;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -30,10 +29,6 @@ public class InstancesTracker extends AbstractProjectComponent
     return project.getComponent(InstancesTracker.class);
   }
 
-  public enum TrackingType {
-    IDENTITY, HASH, RETAIN
-  }
-
   public boolean isTracked(@NotNull String className) {
     return myState.classes.containsKey(className);
   }
@@ -41,12 +36,6 @@ public class InstancesTracker extends AbstractProjectComponent
   @Nullable
   public TrackingType getTrackingType(@NotNull String className) {
     return myState.classes.getOrDefault(className, null);
-  }
-
-
-  public Map<String, TrackingType> getTrackingClasses() {
-    Map<String, TrackingType> copy = new HashMap<>(myState.classes);
-    return Collections.unmodifiableMap(copy);
   }
 
   public void add(@NotNull ReferenceType ref, @NotNull TrackingType type) {
