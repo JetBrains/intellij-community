@@ -211,7 +211,7 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
     return null;
   }
 
-  private boolean edgeIsVisibleInRow(@NotNull GraphEdge edge, int visibleRowIndex) {
+  private boolean isEdgeVisibleInRow(@NotNull GraphEdge edge, int visibleRowIndex) {
     NormalEdge normalEdge = asNormalEdge(edge);
     if (normalEdge == null) {
       // e.d. edge is special. See addSpecialEdges
@@ -251,7 +251,7 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
     result.add(myLinearGraph.getGraphNode(rowIndex));
 
     for (GraphEdge edge : myEdgesInRowGenerator.getEdgesInRow(rowIndex)) {
-      if (edgeIsVisibleInRow(edge, rowIndex)) result.add(edge);
+      if (isEdgeVisibleInRow(edge, rowIndex)) result.add(edge);
     }
 
     addSpecialEdges(result, rowIndex);
