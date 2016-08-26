@@ -16,7 +16,8 @@
 package com.intellij.reporting
 
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
-import com.intellij.codeInsight.hint.HintManager
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -24,6 +25,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import java.io.File
@@ -46,6 +48,7 @@ class ReportMissingOrExcessiveInlineHint : AnAction() {
     e.presentation.isEnabledAndVisible = false
     
     if (!isHintsEnabled()) return
+    CommonDataKeys.PROJECT.getData(e.dataContext) ?: return
     val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
     
     val range = getCurrentLineRange(editor)
@@ -55,6 +58,7 @@ class ReportMissingOrExcessiveInlineHint : AnAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
+    val project = CommonDataKeys.PROJECT.getData(e.dataContext)!!
     val editor = CommonDataKeys.EDITOR.getData(e.dataContext)!!
     val document = editor.document
 
@@ -64,7 +68,7 @@ class ReportMissingOrExcessiveInlineHint : AnAction() {
     if (inlays.isNotEmpty()) {
       val line = document.getText(range)
       reportInlays(line.trim(), inlays)
-      showHint(editor)
+      showHint(project)
     }
   }
   
@@ -91,11 +95,14 @@ class ReportMissingOrExcessiveInlineHint : AnAction() {
     }
   }
   
-  private fun showHint(editor: Editor) {
-    //hack, in most cases hint will not be shown without invokeLater, see IDEA-CR-13295
-    ApplicationManager.getApplication().invokeLater {
-      HintManager.getInstance().showInformationHint(editor, "Troubled inline hint was reported")  
-    }
+  private fun showHint(project: Project) {
+    val notification = Notification(
+        "Inline Hints",
+        "Inline Hints Reporting",
+        "Problematic inline hint was reported",
+        NotificationType.INFORMATION
+    )
+    notification.notify(project)
   }
 
   private fun writeToFile(line: String) {
