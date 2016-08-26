@@ -51,7 +51,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
   private static final Map<String, TypeConversionDescriptorFactory> DESCRIPTORS_MAP =
     new HashMap<>();
 
-  public static final Set<String> CHAIN_HEAD_METHODS = ContainerUtil.newHashSet("from", "of");
+  public static final Set<String> CHAIN_HEAD_METHODS = ContainerUtil.newHashSet("from", "of", "fromNullable");
   public static final String FLUENT_ITERABLE = "com.google.common.collect.FluentIterable";
   public static final String STREAM_COLLECT_TO_LIST = "$it$.collect(java.util.stream.Collectors.toList())";
 
@@ -352,7 +352,8 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
           return null;
         }
         final PsiClass aClass = method.getContainingClass();
-        if (aClass == null || !FLUENT_ITERABLE.equals(aClass.getQualifiedName())) {
+        if (aClass == null || !(FLUENT_ITERABLE.equals(aClass.getQualifiedName()) ||
+                                GuavaOptionalConversionRule.GUAVA_OPTIONAL.equals(aClass.getQualifiedName()))) {
           return null;
         }
         break;
