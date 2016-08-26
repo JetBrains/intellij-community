@@ -64,11 +64,19 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     List<SamDescriptor> descriptors = calcDescriptors(p);
     AtomicInteger exprCount = new AtomicInteger();
     AtomicInteger fileCount = new AtomicInteger();
-    processOffsets(descriptors, (file, offsets) -> {
-      fileCount.incrementAndGet();
-      exprCount.addAndGet(offsets.size());
-      return processFile(consumer, descriptors, file, offsets);
-    });
+
+    PsiManager manager = ReadAction.compute(() -> p.getElementToSearch().getManager());
+    manager.startBatchFilesProcessingMode();
+    try {
+      processOffsets(descriptors, (file, offsets) -> {
+        fileCount.incrementAndGet();
+        exprCount.addAndGet(offsets.size());
+        return processFile(consumer, descriptors, file, offsets);
+      });
+    }
+    finally {
+      manager.finishBatchFilesProcessingMode();
+    }
     if (exprCount.get() > 0) {
       LOG.debug("Loaded " + exprCount.get() + " fun-expressions in " + fileCount.get() + " files");
     }
