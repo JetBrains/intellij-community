@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,9 @@
 package org.intellij.lang.regexp.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElementVisitor;
 import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
 import org.intellij.lang.regexp.psi.RegExpPosixBracketExpression;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
@@ -39,5 +37,6 @@ public class RegExpPosixBracketExpressionImpl extends RegExpElementImpl implemen
   @Override
   public String getClassName() {
     final ASTNode nameNode = getNode().findChildByType(RegExpTT.NAME);
-    return nameNode != null ? nameNode.getText() : null;  }
+    return nameNode != null ? nameNode.getText() : null;
+  }
 }
