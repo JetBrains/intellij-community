@@ -448,7 +448,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
             if (qualifierExpression instanceof PsiReferenceExpression) {
               final PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
               if (resolve instanceof PsiVariable) {
-                if (resolve instanceof PsiLocalVariable && foreachStatement.equals(PsiTreeUtil.skipSiblingsForward(resolve.getParent(), PsiWhiteSpace.class))) {
+                if (resolve instanceof PsiLocalVariable && foreachStatement.equals(PsiTreeUtil.skipSiblingsForward(resolve.getParent(), PsiWhiteSpace.class, PsiComment.class))) {
                   final PsiExpression initializer = ((PsiVariable)resolve).getInitializer();
                   if (initializer instanceof PsiNewExpression) {
                     final PsiExpressionList argumentList = ((PsiNewExpression)initializer).getArgumentList();
