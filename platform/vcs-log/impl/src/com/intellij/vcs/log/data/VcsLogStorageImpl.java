@@ -24,7 +24,9 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Consumer;
-import com.intellij.util.io.*;
+import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.PersistentEnumeratorBase;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsRefImpl;
@@ -49,14 +51,14 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   @NotNull private static final String REFS_STORAGE = "refs";
   @NotNull public static final VcsLogStorage EMPTY = new EmptyLogStorage();
 
-  private static final int VERSION = 4;
+  private static final int VERSION = 5;
   @NotNull private static final String ROOT_STORAGE_KIND = "roots";
   private static final int ROOTS_STORAGE_VERSION = 0;
 
   public static final int NO_INDEX = -1;
 
   @NotNull private final PersistentEnumeratorBase<CommitId> myCommitIdEnumerator;
-  @NotNull private final PersistentUtil.MyPersistentEnumerator<VcsRef> myRefsEnumerator;
+  @NotNull private final PersistentEnumeratorBase<VcsRef> myRefsEnumerator;
   @NotNull private final Consumer<Exception> myExceptionReporter;
 
   public VcsLogStorageImpl(@NotNull Project project,
@@ -69,9 +71,10 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
       logProviders.keySet().stream().sorted((o1, o2) -> o1.getPath().compareTo(o2.getPath())).collect(Collectors.toList());
 
     String logId = PersistentUtil.calcLogId(project, logProviders);
-    myCommitIdEnumerator = PersistentUtil.createPersistentEnumerator(new MyCommitIdKeyDescriptor(roots), HASHES_STORAGE, logId, VERSION);
-    myRefsEnumerator = PersistentUtil.createPersistentEnumerator(new VcsRefKeyDescriptor(logProviders), REFS_STORAGE, logId, VERSION,
-                                                                 new PagedFileStorage.StorageLockContext(false));
+    MyCommitIdKeyDescriptor commitIdKeyDescriptor = new MyCommitIdKeyDescriptor(roots);
+    myCommitIdEnumerator = PersistentUtil.createPersistentEnumerator(commitIdKeyDescriptor, HASHES_STORAGE, logId, VERSION);
+    myRefsEnumerator =
+      PersistentUtil.createPersistentEnumerator(new VcsRefKeyDescriptor(logProviders, commitIdKeyDescriptor), REFS_STORAGE, logId, VERSION);
 
     // cleanup old root storages, to remove after 2016.3 release
     PersistentUtil
@@ -96,7 +99,6 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     }
     catch (IOException e) {
       myExceptionReporter.consume(e);
-      myRefsEnumerator.setCorrupted();
     }
     return NO_INDEX;
   }
@@ -113,7 +115,6 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     }
     catch (IOException e) {
       myExceptionReporter.consume(e);
-      myRefsEnumerator.setCorrupted();
     }
     return null;
   }
@@ -137,7 +138,6 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     }
     catch (IOException e) {
       myExceptionReporter.consume(e);
-      myRefsEnumerator.setCorrupted();
       return null;
     }
   }
@@ -253,11 +253,14 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     }
   }
 
-  private class VcsRefKeyDescriptor implements KeyDescriptor<VcsRef> {
+  private static class VcsRefKeyDescriptor implements KeyDescriptor<VcsRef> {
     @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
+    @NotNull private final KeyDescriptor<CommitId> myCommitIdKeyDescriptor;
 
-    public VcsRefKeyDescriptor(@NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
+    public VcsRefKeyDescriptor(@NotNull Map<VirtualFile, VcsLogProvider> logProviders,
+                               @NotNull KeyDescriptor<CommitId> commitIdKeyDescriptor) {
       myLogProviders = logProviders;
+      myCommitIdKeyDescriptor = commitIdKeyDescriptor;
     }
 
     @Override
@@ -275,14 +278,14 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
     @Override
     public void save(@NotNull DataOutput out, @NotNull VcsRef value) throws IOException {
-      DataInputOutputUtil.writeINT(out, myCommitIdEnumerator.enumerate(new CommitId(value.getCommitHash(), value.getRoot())));
+      myCommitIdKeyDescriptor.save(out, new CommitId(value.getCommitHash(), value.getRoot()));
       IOUtil.writeUTF(out, value.getName());
       myLogProviders.get(value.getRoot()).getReferenceManager().serialize(out, value.getType());
     }
 
     @Override
     public VcsRef read(@NotNull DataInput in) throws IOException {
-      CommitId commitId = myCommitIdEnumerator.valueOf(DataInputOutputUtil.readINT(in));
+      CommitId commitId = myCommitIdKeyDescriptor.read(in);
       if (commitId == null) throw new IOException("Can not read commit id for reference");
       String name = IOUtil.readUTF(in);
       VcsRefType type = myLogProviders.get(commitId.getRoot()).getReferenceManager().deserialize(in);

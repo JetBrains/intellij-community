@@ -24,7 +24,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.*;
 import com.intellij.vcs.log.VcsLogProvider;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -65,34 +64,9 @@ public class PersistentUtil {
                                                                            @NotNull String storageKind,
                                                                            @NotNull String logId,
                                                                            int version) throws IOException {
-    return createPersistentEnumerator(keyDescriptor, storageKind, logId, version, null);
-  }
-
-  @NotNull
-  public static <T> MyPersistentEnumerator<T> createPersistentEnumerator(@NotNull KeyDescriptor<T> keyDescriptor,
-                                                                         @NotNull String storageKind,
-                                                                         @NotNull String logId,
-                                                                         int version,
-                                                                         @Nullable PagedFileStorage.StorageLockContext context)
-    throws IOException {
     File storageFile = getStorageFile(storageKind, logId, version);
 
-    return IOUtil
-      .openCleanOrResetBroken(() -> new MyPersistentEnumerator(storageFile, keyDescriptor, context, version),
-                              storageFile);
-  }
-
-  public static class MyPersistentEnumerator<T> extends PersistentBTreeEnumerator<T> {
-    public MyPersistentEnumerator(File storageFile,
-                                  KeyDescriptor<T> keyDescriptor,
-                                  PagedFileStorage.StorageLockContext context,
-                                  int version)
-      throws IOException {
-      super(storageFile, keyDescriptor, Page.PAGE_SIZE, context, version);
-    }
-
-    public void setCorrupted() {
-      markCorrupted();
-    }
+    return IOUtil.openCleanOrResetBroken(() -> new PersistentBTreeEnumerator<>(storageFile, keyDescriptor, Page.PAGE_SIZE, null, version),
+                                         storageFile);
   }
 }
