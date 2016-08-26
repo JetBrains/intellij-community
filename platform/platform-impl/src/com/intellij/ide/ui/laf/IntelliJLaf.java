@@ -20,16 +20,11 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.MacUtil;
-import com.intellij.util.ui.FontInfo;
-import org.intellij.lang.annotations.JdkConstants;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.basic.BasicLookAndFeel;
 import javax.swing.plaf.metal.DefaultMetalTheme;
 import java.awt.*;
-import java.util.HashSet;
 
 /**
  * @author Konstantin Bulenkov
@@ -62,54 +57,6 @@ public class IntelliJLaf extends DarculaLaf {
   @Override
   protected DefaultMetalTheme createMetalTheme() {
     return new IdeaBlueMetalTheme();
-  }
-
-  @Override
-  public UIDefaults getDefaults() {
-    UIDefaults defaults = super.getDefaults();
-    if (SystemInfo.isMacOSYosemite) {
-      installMacOSXFonts(defaults);
-    }
-    return defaults;
-  }
-
-  private static void installMacOSXFonts(UIDefaults defaults) {
-    final String face = "HelveticaNeue-Regular";
-    final FontUIResource uiFont = getFont(face, 13, Font.PLAIN);
-    LafManagerImpl.initFontDefaults(defaults, 13, uiFont);
-    for (Object key : new HashSet<>(defaults.keySet())) {
-      Object value = defaults.get(key);
-      if (value instanceof FontUIResource) {
-        FontUIResource font = (FontUIResource)value;
-        if (font.getFamily().equals("Lucida Grande") || font.getFamily().equals("Serif")) {
-          if (!key.toString().contains("Menu")) {
-            defaults.put(key, getFont(face, font.getSize(), font.getStyle()));
-          }
-        }
-      }
-    }
-
-    FontUIResource uiFont11 = getFont(face, 11, Font.PLAIN);
-    defaults.put("TableHeader.font", uiFont11);
-
-    FontUIResource buttonFont = getFont("HelveticaNeue-Medium", 13, Font.PLAIN);
-    defaults.put("Button.font", buttonFont);
-    Font menuFont = getFont("Lucida Grande", 14, Font.PLAIN);
-    defaults.put("Menu.font", menuFont);
-    defaults.put("MenuItem.font", menuFont);
-    defaults.put("MenuItem.acceleratorFont", menuFont);
-    defaults.put("PasswordField.font", defaults.getFont("TextField.font"));
-  }
-
-  @NotNull
-  private static FontUIResource getFont(String yosemite, int size, @JdkConstants.FontStyle int style) {
-    if (SystemInfo.isMacOSElCapitan) {
-      Font font = FontInfo.get(".SF NS Display").getFont();
-      if (font != null) {
-        return new FontUIResource(font.deriveFont(style, size));
-      }
-    }
-    return new FontUIResource(yosemite, style, size);
   }
 
   public static boolean isGraphite() {
