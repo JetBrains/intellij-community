@@ -163,13 +163,6 @@ public class EncryptionUtil {
     }
   }
 
-  /**
-   * Encrypt text
-   *
-   * @param password the secret key to use
-   * @param text     the text to encrypt
-   * @return encrypted text
-   */
   public static byte[] encryptText(byte[] password, @NotNull OneTimeString value) {
     byte[] data = value.toByteArray(false);
     return encryptData(password, data.length, data);

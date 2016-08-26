@@ -43,7 +43,7 @@ class FileCredentialStoreTest {
     val random = Random()
     for (i in 0..9) {
       val accountName = BigInteger(8 * 16, random).toString()
-      provider.set(CredentialAttributes(TEST_SERVICE_NAME, accountName), Credentials(accountName, OneTimeString(BigInteger(8 * 16, random).toString())))
+      provider.set(CredentialAttributes(TEST_SERVICE_NAME, accountName), Credentials(accountName, BigInteger(8 * 16, random).toString()))
     }
 
     provider.save()

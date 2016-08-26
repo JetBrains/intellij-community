@@ -17,7 +17,6 @@ package com.intellij.ide.passwordSafe;
 
 import com.intellij.credentialStore.CredentialStore;
 import com.intellij.credentialStore.Credentials;
-import com.intellij.credentialStore.OneTimeString;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +32,7 @@ public interface PasswordStorage extends CredentialStore {
 
   @Deprecated
   default void setPassword(@NotNull Class<?> requestor, @NotNull String accountName, @Nullable String value) {
-    set(CredentialAttributes(requestor, accountName), value == null ? null : new Credentials(accountName, new OneTimeString(value)));
+    set(CredentialAttributes(requestor, accountName), value == null ? null : new Credentials(accountName, value));
   }
 
   /**

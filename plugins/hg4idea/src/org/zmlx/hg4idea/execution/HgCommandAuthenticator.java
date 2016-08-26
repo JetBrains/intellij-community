@@ -114,7 +114,7 @@ class HgCommandAuthenticator {
 
       // don't show dialog if we don't have to (both fields are known) except force authorization required
       if (!myForceAuthorization && !StringUtil.isEmptyOrSpaces(password) && !StringUtil.isEmptyOrSpaces(login)) {
-        myCredentials = new Credentials(login, new OneTimeString(password));
+        myCredentials = new Credentials(login, password);
         ok = true;
         return;
       }
@@ -129,7 +129,7 @@ class HgCommandAuthenticator {
                                                login, password, true);
       if (dialog.showAndGet()) {
         ok = true;
-        Credentials credentials = new Credentials(dialog.getUsername(), new OneTimeString(dialog.getPassword()));
+        Credentials credentials = new Credentials(dialog.getUsername(), dialog.getPassword());
         myCredentials = credentials;
         PasswordSafe.getInstance().set(CredentialAttributes(HgCommandAuthenticator.class, keyForUrlAndLogin(url, credentials.getUserName())), credentials, !dialog.isRememberPassword());
         hgGlobalSettings.addRememberedUrl(url, credentials.getUserName());
@@ -141,8 +141,7 @@ class HgCommandAuthenticator {
     }
 
     public String getPassword() {
-      OneTimeString password = myCredentials == null ? null : myCredentials.getPassword();
-      return password == null ? null : password.toString(false);
+      return myCredentials == null ? null : myCredentials.getPasswordAsString(false);
     }
 
     public boolean isOk() {

@@ -18,7 +18,6 @@ package org.jetbrains.settingsRepository.git
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.intellij.credentialStore.Credentials
-import com.intellij.credentialStore.OneTimeString
 import com.intellij.credentialStore.isFulfilled
 import com.intellij.credentialStore.macOs.isMacOsCredentialStoreSupported
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -96,7 +95,7 @@ class JGitCredentialsProvider(private val credentialsStore: Lazy<IcsCredentialsS
     val userFromUri: String? = if (sshKeyFile == null) uri.user.nullize() else null
     val passwordFromUri: String? = uri.pass.nullize()
     if (userFromUri != null && passwordFromUri != null) {
-      credentials = Credentials(userFromUri, OneTimeString(passwordFromUri))
+      credentials = Credentials(userFromUri, passwordFromUri)
     }
     else {
       catchAndLog {

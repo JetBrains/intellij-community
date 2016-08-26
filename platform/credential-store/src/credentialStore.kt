@@ -55,7 +55,7 @@ fun splitData(data: String?): Credentials? {
   }
 
   val list = parseString(data!!, '@')
-  return Credentials(list.getOrNull(0), list.getOrNull(1)?.let(::OneTimeString))
+  return Credentials(list.getOrNull(0), list.getOrNull(1))
 }
 
 private const val ESCAPING_CHAR = '\\'
