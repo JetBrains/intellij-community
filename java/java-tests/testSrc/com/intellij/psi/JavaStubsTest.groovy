@@ -18,11 +18,13 @@ package com.intellij.psi
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer
 import com.intellij.psi.impl.source.PsiClassImpl
 import com.intellij.psi.impl.source.PsiFileImpl
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.searches.AnnotatedElementsSearch
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 class JavaStubsTest extends LightCodeInsightFixtureTestCase {
 
-  public void "test resolve from annotation method default"() {
+  void "test resolve from annotation method default"() {
     def cls = myFixture.addClass("""
       public @interface BrokenAnnotation {
         enum Foo {DEFAULT, OTHER}
@@ -41,7 +43,7 @@ class JavaStubsTest extends LightCodeInsightFixtureTestCase {
     assert file.stub
   }
 
-  public void "test literal annotation value"() {
+  void "test literal annotation value"() {
     def cls = myFixture.addClass("""
       class Foo {
         @org.jetbrains.annotations.Contract(pure=true)
@@ -55,7 +57,23 @@ class JavaStubsTest extends LightCodeInsightFixtureTestCase {
     assert !file.contentsLoaded
   }
 
-  public void "test applying type annotations"() {
+  void "test local variable annotation doesn't cause stub-ast switch"() {
+    def cls = myFixture.addClass("""
+      class Foo {
+        @Anno int foo() {
+          @Anno int var = 2;
+        }
+      }
+      @interface Anno {}
+      """)
+
+    def file = cls.containingFile as PsiFileImpl
+    assert AnnotatedElementsSearch.searchPsiMethods(myFixture.findClass("Anno"), GlobalSearchScope.allScope(project)).size() == 1
+    assert file.stub
+    assert !file.contentsLoaded
+  }
+
+  void "test applying type annotations"() {
     def cls = myFixture.addClass("""
       import java.lang.annotation.*;
       class Foo {
