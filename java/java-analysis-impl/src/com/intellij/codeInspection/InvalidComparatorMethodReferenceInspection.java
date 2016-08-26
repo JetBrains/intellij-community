@@ -19,7 +19,6 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionBase;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +61,7 @@ public class InvalidComparatorMethodReferenceInspection extends BaseJavaBatchLoc
 
   static @Nullable String getMethodReferenceClassName(PsiMethodReferenceExpression expression) {
     PsiExpression qualifierExpression = expression.getQualifierExpression();
-    if (!(qualifierExpression instanceof PsiReferenceExpressionBase)) return null;
+    if (!(qualifierExpression instanceof PsiReferenceExpression)) return null;
     PsiElement refType = ((PsiReference)qualifierExpression).resolve();
     if (!(refType instanceof PsiClass)) return null;
     return ((PsiClass)refType).getQualifiedName();
