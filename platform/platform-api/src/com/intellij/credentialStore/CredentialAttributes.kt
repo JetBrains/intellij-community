@@ -127,4 +127,11 @@ class OneTimeString @JvmOverloads constructor(value: CharArray, offset: Int = 0,
     }
     return super.equals(other)
   }
+
+  fun appendTo(builder: StringBuilder) {
+    if (consumed.get()) {
+      throw Error("Already consumed")
+    }
+    builder.append(myChars, myStart, length)
+  }
 }
