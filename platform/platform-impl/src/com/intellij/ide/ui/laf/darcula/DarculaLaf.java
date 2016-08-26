@@ -100,9 +100,12 @@ public class DarculaLaf extends BasicLookAndFeel {
   @NotNull
   private static FontUIResource getFont(String yosemite, int size, @JdkConstants.FontStyle int style) {
     if (SystemInfo.isMacOSElCapitan) {
-      Font font = FontInfo.get(".SF NS Display").getFont();
-      if (font != null) {
-        return new FontUIResource(font.deriveFont(style, size));
+      FontInfo fontInfo = FontInfo.get(".SF NS Display");
+      if (fontInfo != null) {
+        Font font = fontInfo.getFont();
+        if (font != null) {
+          return new FontUIResource(font.deriveFont(style, size));
+        }
       }
     }
     return new FontUIResource(yosemite, style, size);
