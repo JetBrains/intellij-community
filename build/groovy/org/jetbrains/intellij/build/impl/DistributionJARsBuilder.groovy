@@ -94,6 +94,10 @@ class DistributionJARsBuilder {
       }
     }
 
+    Set<String> allProductDependencies = (productLayout.getIncludedPluginModules(allPlugins) + productLayout.includedPlatformModules).collectMany(new LinkedHashSet<String>()) {
+      JpsJavaExtensionService.dependencies(buildContext.findRequiredModule(it)).productionOnly().getModules().collect {it.name}
+    }
+
     platform = PlatformLayout.platform {
       productLayout.additionalPlatformJars.entrySet().each {
         def jarName = it.key
@@ -122,7 +126,9 @@ class DistributionJARsBuilder {
       withModule("platform-resources", "resources.jar")
       withModule("colorSchemes", "resources.jar")
       withModule("platform-resources-en", productLayout.mainJarName)
-      withModule("coverage-common", productLayout.mainJarName)
+      if (allProductDependencies.contains("coverage-common")) {
+        withModule("coverage-common", productLayout.mainJarName)
+      }
 
       ["linux", "macosx", "win"].each {
         withResource("lib/libpty/$it", "lib/libpty/$it")
