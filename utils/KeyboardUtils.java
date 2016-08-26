@@ -12,6 +12,10 @@ public class KeyboardUtils {
         keyCode == KeyEvent.VK_DOWN || keyCode == KeyEvent.VK_RIGHT;
   }
 
+  public static boolean isBackSpace(int keyCode) {
+    return keyCode == KeyEvent.VK_BACK_SPACE;
+  }
+
   public static boolean isCharacter(int keyCode) {
     return KeyEvent.getKeyText(keyCode).length() == 1;
   }

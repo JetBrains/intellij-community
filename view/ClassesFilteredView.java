@@ -73,10 +73,13 @@ public class ClassesFilteredView extends BorderLayoutPanel {
         int keyCode = e.getKeyCode();
         if (KeyboardUtils.isEnterKey(keyCode)) {
           handleClassSelection(myTable.getSelectedClass());
-        } else if (!KeyboardUtils.isArrowKey(keyCode) && KeyboardUtils.isCharacter(keyCode)) {
-          SwingUtilities.invokeLater(myFilterTextField::requestFocusInWindow);
+        } else if (KeyboardUtils.isCharacter(keyCode) || KeyboardUtils.isBackSpace(keyCode)) {
           String text = myFilterTextField.getText();
-          myFilterTextField.setText(text + KeyEvent.getKeyText(keyCode).toLowerCase());
+          String newText = KeyboardUtils.isBackSpace(keyCode)
+              ? text.substring(0, text.length() - 1)
+              : text + e.getKeyChar();
+          myFilterTextField.setText(newText);
+          FocusManager.getCurrentManager().focusNextComponent(myFilterTextField);
         }
       }
     });
