@@ -46,6 +46,14 @@ public interface RegExpLanguageHost {
     return true;
   }
 
+  default boolean supportsNamedCharacters(RegExpNamedCharacter namedCharacter) {
+    return false;
+  }
+
+  default boolean isValidNamedCharacter(RegExpNamedCharacter namedCharacter) {
+    return supportsNamedCharacters(namedCharacter);
+  }
+
   default boolean supportsBoundary(RegExpBoundary boundary) {
     switch (boundary.getType()) {
       case UNICODE_EXTENDED_GRAPHEME:

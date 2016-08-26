@@ -141,6 +141,11 @@ public class JavaRegExpHost implements RegExpLanguageHost {
   }
 
   @Override
+  public boolean supportsNamedCharacters(RegExpNamedCharacter namedCharacter) {
+    return hasAtLeastJdkVersion(namedCharacter, JavaSdkVersion.JDK_1_9);
+  }
+
+  @Override
   public boolean supportsPerl5EmbeddedComments() {
     return false;
   }

@@ -227,6 +227,17 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   }
 
   @Override
+  public void visitRegExpNamedCharacter(RegExpNamedCharacter namedCharacter) {
+    if (!myLanguageHosts.supportsNamedCharacters(namedCharacter)) {
+      myHolder.createErrorAnnotation(namedCharacter, "Named Unicode characters are not allowed in this regular expression dialect");
+    }
+    else if (!myLanguageHosts.isValidNamedCharacter(namedCharacter)) {
+      final Annotation a = myHolder.createErrorAnnotation(namedCharacter, "Unknown character name");
+      a.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+    }
+  }
+
+  @Override
   public void visitRegExpBackref(final RegExpBackref backref) {
     final RegExpGroup group = backref.resolve();
     if (group == null) {

@@ -263,6 +263,9 @@ public class RegExpParser implements PsiParser {
       else if (token == RegExpTT.PROPERTY) {
         parseProperty(builder);
       }
+      else if (token == RegExpTT.NAMED_CHARACTER) {
+        parseNamedCharacter(builder);
+      }
       else {
         if (count > 1) {
           marker.done(RegExpElementTypes.UNION);
@@ -442,6 +445,10 @@ public class RegExpParser implements PsiParser {
       marker.drop();
       parseProperty(builder);
     }
+    else if (type == RegExpTT.NAMED_CHARACTER) {
+      marker.drop();
+      parseNamedCharacter(builder);
+    }
     else if (RegExpTT.SIMPLE_CLASSES.contains(type)) {
       builder.advanceLexer();
       marker.done(RegExpElementTypes.SIMPLE_CLASS);
@@ -519,6 +526,15 @@ public class RegExpParser implements PsiParser {
       }
     }
     marker.done(RegExpElementTypes.PROPERTY);
+  }
+
+  private static void parseNamedCharacter(PsiBuilder builder) {
+    final PsiBuilder.Marker marker = builder.mark();
+    builder.advanceLexer();
+    checkMatches(builder, RegExpTT.LBRACE, "'{' expected");
+    checkMatches(builder, RegExpTT.NAME, "Unicode character name expected");
+    checkMatches(builder, RegExpTT.RBRACE, "'}' expected");
+    marker.done(RegExpElementTypes.NAMED_CHARACTER_ELEMENT);
   }
 
   private static void patternExpected(PsiBuilder builder) {
