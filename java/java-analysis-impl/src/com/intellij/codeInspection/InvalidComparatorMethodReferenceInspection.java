@@ -22,6 +22,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionBase;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class InvalidComparatorMethodReferenceInspection extends BaseJavaBatchLocalInspectionTool {
   @NotNull
@@ -30,36 +31,18 @@ public class InvalidComparatorMethodReferenceInspection extends BaseJavaBatchLoc
     return new JavaElementVisitor() {
       @Override
       public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
-        PsiExpression qualifierExpression = expression.getQualifierExpression();
         PsiElement referenceNameElement = expression.getReferenceNameElement();
-        if (!(qualifierExpression instanceof PsiReferenceExpressionBase) || referenceNameElement == null) {
-          return;
-        }
+        if(referenceNameElement == null) return;
         String name = referenceNameElement.getText();
-        if (!name.equals("min") && !name.equals("max")) {
-          return;
-        }
-        PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
-        if (!(functionalInterfaceType instanceof PsiClassType)) {
-          return;
-        }
-        PsiClass targetType = ((PsiClassType)functionalInterfaceType).resolve();
-        if (targetType == null) {
-          return;
-        }
-        String targetClassName = targetType.getQualifiedName();
-        if (!CommonClassNames.JAVA_UTIL_COMPARATOR.equals(targetClassName)) {
-          return;
-        }
-        PsiElement refType = ((PsiReference)qualifierExpression).resolve();
-        if (!(refType instanceof PsiClass)) {
-          return;
-        }
-        String className = ((PsiClass)refType).getQualifiedName();
+        if (!name.equals("min") && !name.equals("max")) return;
+
+        String className = getMethodReferenceClassName(expression);
         if (!CommonClassNames.JAVA_LANG_INTEGER.equals(className) && !CommonClassNames.JAVA_LANG_MATH
-          .equals(className)) {
-          return;
-        }
+          .equals(className)) return;
+
+        String functionalInterface = getFunctionalInterfaceClassName(expression);
+        if (!CommonClassNames.JAVA_UTIL_COMPARATOR.equals(functionalInterface)) return;
+
         //noinspection DialogTitleCapitalization
         holder
           .registerProblem(expression,
@@ -67,6 +50,22 @@ public class InvalidComparatorMethodReferenceInspection extends BaseJavaBatchLoc
                            new ReplaceWithComparatorQuickFix(name.equals("min")));
       }
     };
+  }
+
+  static @Nullable String getFunctionalInterfaceClassName(PsiMethodReferenceExpression expression) {
+    PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
+    if (!(functionalInterfaceType instanceof PsiClassType)) return null;
+    PsiClass targetType = ((PsiClassType)functionalInterfaceType).resolve();
+    if (targetType == null) return null;
+    return targetType.getQualifiedName();
+  }
+
+  static @Nullable String getMethodReferenceClassName(PsiMethodReferenceExpression expression) {
+    PsiExpression qualifierExpression = expression.getQualifierExpression();
+    if (!(qualifierExpression instanceof PsiReferenceExpressionBase)) return null;
+    PsiElement refType = ((PsiReference)qualifierExpression).resolve();
+    if (!(refType instanceof PsiClass)) return null;
+    return ((PsiClass)refType).getQualifiedName();
   }
 
   private static class ReplaceWithComparatorQuickFix implements LocalQuickFix {
