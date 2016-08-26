@@ -20,6 +20,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.MacUtil;
+import com.intellij.util.ui.FontInfo;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,7 +29,6 @@ import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.basic.BasicLookAndFeel;
 import javax.swing.plaf.metal.DefaultMetalTheme;
 import java.awt.*;
-import java.io.File;
 import java.util.HashSet;
 
 /**
@@ -74,8 +75,7 @@ public class IntelliJLaf extends DarculaLaf {
 
   private static void installMacOSXFonts(UIDefaults defaults) {
     final String face = "HelveticaNeue-Regular";
-    final String elCapitan = null;//"SFNSText-RegularG2"; // we can experiment with different fonts: /System/Library/Fonts/SFNS*
-    final FontUIResource uiFont = getFont(face, elCapitan, 13, Font.PLAIN);
+    final FontUIResource uiFont = getFont(face, 13, Font.PLAIN);
     LafManagerImpl.initFontDefaults(defaults, 13, uiFont);
     for (Object key : new HashSet<>(defaults.keySet())) {
       Object value = defaults.get(key);
@@ -83,18 +83,18 @@ public class IntelliJLaf extends DarculaLaf {
         FontUIResource font = (FontUIResource)value;
         if (font.getFamily().equals("Lucida Grande") || font.getFamily().equals("Serif")) {
           if (!key.toString().contains("Menu")) {
-            defaults.put(key, getFont(face, elCapitan, font.getSize(), font.getStyle()));
+            defaults.put(key, getFont(face, font.getSize(), font.getStyle()));
           }
         }
       }
     }
 
-    FontUIResource uiFont11 = getFont(face, elCapitan, 11, Font.PLAIN);
+    FontUIResource uiFont11 = getFont(face, 11, Font.PLAIN);
     defaults.put("TableHeader.font", uiFont11);
 
-    FontUIResource buttonFont = getFont("HelveticaNeue-Medium", elCapitan, 13, Font.PLAIN);
+    FontUIResource buttonFont = getFont("HelveticaNeue-Medium", 13, Font.PLAIN);
     defaults.put("Button.font", buttonFont);
-    Font menuFont = new FontUIResource("Lucida Grande", Font.PLAIN, 14);
+    Font menuFont = getFont("Lucida Grande", 14, Font.PLAIN);
     defaults.put("Menu.font", menuFont);
     defaults.put("MenuItem.font", menuFont);
     defaults.put("MenuItem.acceleratorFont", menuFont);
@@ -102,12 +102,11 @@ public class IntelliJLaf extends DarculaLaf {
   }
 
   @NotNull
-  private static FontUIResource getFont(String yosemite, String elCapitan, int size, int style) {
-    if (SystemInfo.isMacOSElCapitan && elCapitan != null) {
-      try {
-        final Font sfFont = Font.createFont(Font.TRUETYPE_FONT, new File("/System/Library/Fonts/" + elCapitan + ".otf"));
-        return new FontUIResource(sfFont.deriveFont(size + 0f));
-      } catch (Exception ignored) {
+  private static FontUIResource getFont(String yosemite, int size, @JdkConstants.FontStyle int style) {
+    if (SystemInfo.isMacOSElCapitan) {
+      Font font = FontInfo.get(".SF NS Display").getFont();
+      if (font != null) {
+        return new FontUIResource(font.deriveFont(style, size));
       }
     }
     return new FontUIResource(yosemite, style, size);
