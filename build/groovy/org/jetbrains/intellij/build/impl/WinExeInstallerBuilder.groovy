@@ -83,6 +83,9 @@ class WinExeInstallerBuilder {
     }
 
     prepareConfigurationFiles(box, winDistPath)
+    customizer.customNsiConfigurationFiles.each {
+      ant.copy(file: it, todir: "$box/nsiconf", overwrite: "true")
+    }
 
     ant.unzip(src: "$communityHome/build/tools/NSIS.zip", dest: box)
     buildContext.messages.progress("Running NSIS tool to build .exe installer for Windows")
