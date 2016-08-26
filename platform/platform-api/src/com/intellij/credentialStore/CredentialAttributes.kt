@@ -119,8 +119,11 @@ class OneTimeString @JvmOverloads constructor(value: CharArray, offset: Int = 0,
     return result.toByteArray()
   }
 
-  fun toCharArray(): CharArray {
-    consume()
+  @JvmOverloads
+  fun toCharArray(clear: Boolean = true): CharArray {
+    if (clear) {
+      consume()
+    }
     // todo clear
     return chars
   }
