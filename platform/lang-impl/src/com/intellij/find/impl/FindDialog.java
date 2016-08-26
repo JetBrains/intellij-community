@@ -378,7 +378,13 @@ public class FindDialog extends DialogWrapper {
         }
       };
       action.registerCustomShortcutSet(CommonShortcuts.getEditSource(), comboBox, myDisposable);
-      action.registerCustomShortcutSet(CommonShortcuts.ENTER, comboBox, myDisposable);
+      new AnAction() {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          if (!isResultsPreviewTabActive()) doOKAction();
+          else action.actionPerformed(e);
+        }
+      }.registerCustomShortcutSet(CommonShortcuts.ENTER, comboBox, myDisposable);
     }
   }
 
