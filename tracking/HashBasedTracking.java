@@ -29,11 +29,12 @@ class HashBasedTracking extends InstanceTrackingStrategy {
 
     for(ObjectReference ref : references) {
       Optional<Integer> hash = ref2hash.get(ref);
-      if(hash.isPresent() && myHashesSet.contains(hash.get())) {
+      if(hash.isPresent() && !myHashesSet.contains(hash.get())) {
         newInstances.add(ref);
       }
     }
 
+    myHashesSet = toSetOfHashes(ref2hash);
     return newInstances;
   }
 
@@ -67,7 +68,7 @@ class HashBasedTracking extends InstanceTrackingStrategy {
     return ref2hashCode.values().stream()
         .filter(Optional::isPresent)
         .map(Optional::get)
-        .collect(Collectors.toCollection(TreeSet::new));
+        .collect(Collectors.toCollection(HashSet::new));
   }
 
   @Nullable
