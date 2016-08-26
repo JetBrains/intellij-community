@@ -53,6 +53,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -631,7 +632,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private static boolean versionMatch(@Nullable Sdk sdk, String version) {
-    if (sdk != null) {
+    if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
       String versionString = sdk.getVersionString();
       return versionString != null && versionString.contains(version);
     }
