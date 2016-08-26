@@ -52,18 +52,16 @@ public abstract class PatchAction {
   protected static void writeLinkInfo(File file, OutputStream out) throws IOException {
     Path path = Paths.get(file.getAbsolutePath());
     String link = Files.readSymbolicLink(path).toString();
+    if (link.isEmpty()) throw new IOException("Invalid link: " + path);
     out.write(link.length());
-    byte[] byteArray = link.getBytes();
+    byte[] byteArray = link.getBytes("UTF-8");
     out.write(byteArray);
   }
 
   protected static String readLinkInfo(InputStream in, int length) throws IOException {
     byte[] byteArray = new byte[length];
-    String link = "";
-    if (in.read(byteArray) > -1){
-      link = new String(byteArray, "UTF-8");
-    }
-    return link;
+    if (length == 0 || in.read(byteArray) != length) throw new IOException("Stream format error");
+    return new String(byteArray, "UTF-8");
   }
 
   public boolean calculate(File olderDir, File newerDir) throws IOException {
