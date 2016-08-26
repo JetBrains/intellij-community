@@ -22,10 +22,10 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.refactoring.rename.RenameGrFieldProcessor
 
-class SynchronizedRenameFieldProceccor : RenameGrFieldProcessor() {
+class SynchronizedRenameFieldProcessor : RenameGrFieldProcessor() {
 
   override fun canProcessElement(element: PsiElement): Boolean {
-    return super.canProcessElement(element) && getMethodsImplicitlyReferencingLock(element as GrField).isNotEmpty()
+    return super.canProcessElement(element) && getImplicitLockUsages(element as GrField).isNotEmpty()
   }
 
   override fun renameElement(element: PsiElement,
@@ -34,8 +34,8 @@ class SynchronizedRenameFieldProceccor : RenameGrFieldProcessor() {
                              listener: RefactoringElementListener?) {
     element as GrField
     val value = GroovyPsiElementFactory.getInstance(element.project).createLiteralFromValue(newName)
-    getMethodsImplicitlyReferencingLock(element).forEach {
-      it.second.setDeclaredAttributeValue(null, value)
+    getImplicitLockUsages(element).forEach { anno ->
+      anno.setDeclaredAttributeValue(null, value)
     }
     super.renameElement(element, newName, usages, listener)
   }
