@@ -47,7 +47,7 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
   private static final boolean SHOW_ARROW_WHEN_SHOW_LONG_EDGES = true;
 
 
-  @NotNull private final SLRUMap<Integer, List<GraphElement>> cache = new SLRUMap<>(CACHE_SIZE, CACHE_SIZE * 2);
+  @NotNull private final SLRUMap<Integer, List<GraphElement>> myCache = new SLRUMap<>(CACHE_SIZE, CACHE_SIZE * 2);
   @NotNull private final EdgesInRowGenerator myEdgesInRowGenerator;
   @NotNull private final Comparator<GraphElement> myGraphElementComparator;
 
@@ -242,7 +242,7 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
 
   @NotNull
   private List<GraphElement> getSortedVisibleElementsInRow(int rowIndex) {
-    List<GraphElement> graphElements = cache.get(rowIndex);
+    List<GraphElement> graphElements = myCache.get(rowIndex);
     if (graphElements != null) {
       return graphElements;
     }
@@ -257,7 +257,7 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
     addSpecialEdges(result, rowIndex);
 
     Collections.sort(result, myGraphElementComparator);
-    cache.put(rowIndex, result);
+    myCache.put(rowIndex, result);
     return result;
   }
 }
