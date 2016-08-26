@@ -147,6 +147,7 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testCharclasses66() throws IOException { doCodeTest("\\X"); }
   public void testCharclasses67() throws IOException { doCodeTest("\\-[\\*\\-\\[\\]\\\\\\+]"); }
   public void testCharclasses68() throws IOException { doCodeTest("[\\b]"); }
+  public void testCharClasses69() throws IOException { doCodeTest("\\p{^L}"); }
 
   public void testGroups1() throws IOException { doCodeTest("()ef"); }
   public void testGroups2() throws IOException { doCodeTest("()*"); }
@@ -237,6 +238,7 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testNamedchars10() throws IOException { doCodeTest("\\p{unknown}+"); }
   public void testNamedchars11() throws IOException { doCodeTest("[:^xdigit:]+"); }
   public void testNamedchars12() throws IOException { doCodeTest("\\p{InArabic Extended-A}"); }
+  public void testNamedchars13() throws IOException { doCodeTest("\\N{Mahjong Tile Winter}"); }
 
   public void testBackrefs1() throws IOException { doCodeTest("(ac*)c*d[ac]*\\1"); }
   public void testBackrefs2() throws IOException { doCodeTest("(.)=\\1"); }

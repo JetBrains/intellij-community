@@ -79,7 +79,7 @@ public class GuessElementTypeMacro extends Macro {
     if (expr == null) return null;
     PsiType[] types = GuessManager.getInstance(project).guessContainerElementType(expr, new TextRange(context.getTemplateStartOffset(), context.getTemplateEndOffset()));
     for (int i = 0; i < types.length; i++) {
-      types[i] = GenericsUtil.eliminateWildcards(types[i], false, true);
+      types[i] = GenericsUtil.getVariableTypeByExpressionType(types[i]);
     }
     return types;
   }

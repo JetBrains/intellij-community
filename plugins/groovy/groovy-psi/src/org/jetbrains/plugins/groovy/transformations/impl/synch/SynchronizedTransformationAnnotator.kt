@@ -39,25 +39,25 @@ class SynchronizedTransformationAnnotator : Annotator {
       val field = element.parent as? GrField ?: return
       val staticField = field.isStatic()
       if (!staticField) {
-        val hasStaticMethods = getAllMethodsReferencingLock(field).any { it.first.isStatic() }
+        val hasStaticMethods = getMethodsReferencingLock(field).any { it.isStatic() }
         if (hasStaticMethods) {
           holder.createErrorAnnotation(element, "Lock field '${field.name}' must be static")
         }
       }
       else if (field.name == LOCK_NAME) {
-        val hasInstanceMethods = getAllMethodsReferencingLock(field).any { !it.first.isStatic() }
+        val hasInstanceMethods = getMethodsReferencingLock(field).any { !it.isStatic() }
         if (hasInstanceMethods) {
           holder.createErrorAnnotation(element, "Lock field '$LOCK_NAME' must not be static")
         }
       }
-
     }
     else if (PATTERN.accepts(element)) {
       element as GrLiteral
       val reference = element.reference ?: return
       val field = reference.resolve() as? GrField
       if (field == null) {
-        holder.createErrorAnnotation(reference.rangeInElement.shiftRight(element.textOffset), "Lock field '${element.value}' not found")
+        val range = reference.rangeInElement.shiftRight(element.textRange.startOffset)
+        holder.createErrorAnnotation(range, "Lock field '${element.value}' not found")
       }
     }
   }

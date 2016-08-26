@@ -74,9 +74,11 @@ private class CredentialStoreWrapper(private val store: CredentialStore) : Passw
       fun setNew(oldKey: CredentialAttributes): Credentials? {
         store.get(oldKey)?.let {
           set(oldKey, null)
-          val credentials = Credentials(userName, it.password)
-          set(attributes, credentials)
-          return credentials
+
+          // https://youtrack.jetbrains.com/issue/IDEA-160341
+          fun createCredentials() = Credentials(userName, it.password?.toCharArray(false)?.let { OneTimeString(it) })
+          set(attributes, createCredentials())
+          return createCredentials()
         }
         return null
       }

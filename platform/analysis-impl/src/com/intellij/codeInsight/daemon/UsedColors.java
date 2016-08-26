@@ -43,10 +43,10 @@ class UsedColors {
                                 @NotNull final String name,
                                 @NotNull RainbowHighlighter rainbowHighlighter) {
     int colorsCount = rainbowHighlighter.getColorsCount();
-    Object data = context.getUserData(USED_COLOR);
 
     int colorIndex;
     while (true) {
+      Object data = context.getUserData(USED_COLOR);
       Object newColors;
       if (data == null) {
         colorIndex = hashColor(name, colorsCount);

@@ -242,7 +242,7 @@ public class ForCanBeForeachInspection extends ForCanBeForeachInspectionBase {
       if (parameterTypes.length == 0) {
         return null;
       }
-      return GenericsUtil.eliminateWildcards(parameterTypes[0], false, true);
+      return GenericsUtil.getVariableTypeByExpressionType(parameterTypes[0]);
     }
 
     @Nullable

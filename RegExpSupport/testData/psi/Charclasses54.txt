@@ -3,8 +3,6 @@ REGEXP_FILE
     RegExpBranchImpl: <\pl>
       RegExpPropertyImpl: <\pl>
         PsiElement(PROPERTY)('\p')
-        PsiErrorElement:Character category expected
+        PsiErrorElement:Illegal category shorthand
           <empty list>
         PsiElement(CHARACTER)('l')
-        PsiErrorElement:Unclosed character family
-          <empty list>

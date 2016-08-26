@@ -200,7 +200,7 @@ public class EncryptionUtil {
     if (len < 0 || len > plain.length - 4) {
       throw new IllegalStateException("Unmatched password is used");
     }
-    return CredentialAttributesKt.SecureString(plain, 4, len);
+    return CredentialAttributesKt.OneTimeString(plain, 4, len);
   }
 
   /**

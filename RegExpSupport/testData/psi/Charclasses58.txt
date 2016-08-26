@@ -6,7 +6,7 @@ REGEXP_FILE
       RegExpPropertyImpl: <\p{123}>
         PsiElement(PROPERTY)('\p')
         PsiElement(LBRACE)('{')
-        PsiErrorElement:Character family name expected
+        PsiErrorElement:Property name expected
           <empty list>
         PsiElement(NUMBER)('123')
         PsiElement(RBRACE)('}')

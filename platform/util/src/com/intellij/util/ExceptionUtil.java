@@ -61,6 +61,11 @@ public class ExceptionUtil {
   }
 
   @NotNull
+  public static String currentStackTrace() {
+    return getThrowableText(new Throwable());
+  }
+
+  @NotNull
   public static String getThrowableText(@NotNull Throwable aThrowable) {
     StringWriter stringWriter = new StringWriter();
     PrintWriter writer = new PrintWriter(stringWriter);

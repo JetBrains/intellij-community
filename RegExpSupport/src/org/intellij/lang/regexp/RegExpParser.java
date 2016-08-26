@@ -20,12 +20,14 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 
 public class RegExpParser implements PsiParser {
+  private static final TokenSet PROPERTY_TOKENS = TokenSet.create(RegExpTT.NUMBER, RegExpTT.COMMA, RegExpTT.NAME, RegExpTT.RBRACE);
   private final EnumSet<RegExpCapability> myCapabilities;
 
   public RegExpParser() {
@@ -261,6 +263,9 @@ public class RegExpParser implements PsiParser {
       else if (token == RegExpTT.PROPERTY) {
         parseProperty(builder);
       }
+      else if (token == RegExpTT.NAMED_CHARACTER) {
+        parseNamedCharacter(builder);
+      }
       else {
         if (count > 1) {
           marker.done(RegExpElementTypes.UNION);
@@ -440,6 +445,10 @@ public class RegExpParser implements PsiParser {
       marker.drop();
       parseProperty(builder);
     }
+    else if (type == RegExpTT.NAMED_CHARACTER) {
+      marker.drop();
+      parseNamedCharacter(builder);
+    }
     else if (RegExpTT.SIMPLE_CLASSES.contains(type)) {
       builder.advanceLexer();
       marker.done(RegExpElementTypes.SIMPLE_CLASS);
@@ -466,30 +475,66 @@ public class RegExpParser implements PsiParser {
     marker.done(RegExpElementTypes.NAMED_GROUP_REF);
   }
 
-  private static void parseProperty(PsiBuilder builder) {
+  private static boolean isLetter(CharSequence text) {
+    assert text.length() == 1;
+    final char c = text.charAt(0);
+    return AsciiUtil.isUpperCase(c) || AsciiUtil.isLowerCase(c);
+  }
+
+  private void parseProperty(PsiBuilder builder) {
     final PsiBuilder.Marker marker = builder.mark();
     builder.advanceLexer();
     if (builder.getTokenType() == RegExpTT.CATEGORY_SHORT_HAND) {
+      if (!myCapabilities.contains(RegExpCapability.UNICODE_CATEGORY_SHORTHAND)) {
+        builder.error("Category shorthand not allowed in this regular expression dialect");
+      }
       builder.advanceLexer();
     }
     else {
-      checkMatches(builder, RegExpTT.LBRACE, "Character category expected");
-      if (builder.getTokenType() == RegExpTT.CARET) {
+      if (builder.getTokenType() == RegExpTT.CHARACTER && isLetter(builder.getTokenText())) {
+        builder.error(myCapabilities.contains(RegExpCapability.UNICODE_CATEGORY_SHORTHAND) ?
+                      "Illegal category shorthand" :
+                      "'{' expected");
         builder.advanceLexer();
       }
-      if (builder.getTokenType() == RegExpTT.NAME) {
-        builder.advanceLexer();
+      else if (checkMatches(builder, RegExpTT.LBRACE, myCapabilities.contains(RegExpCapability.UNICODE_CATEGORY_SHORTHAND) ?
+                                                      "'{' or category shorthand expected" :
+                                                      "'{' expected")) {
+        if (builder.getTokenType() == RegExpTT.CARET) {
+          if (!myCapabilities.contains(RegExpCapability.CARET_NEGATED_PROPERTIES)) {
+            builder.error("Negating a property not allowed in this regular expression dialect");
+          }
+          builder.advanceLexer();
+        }
+        if (builder.getTokenType() == RegExpTT.NAME) {
+          builder.advanceLexer();
+          checkMatches(builder, RegExpTT.RBRACE, "Unclosed property");
+        }
+        else
+        {
+          if (builder.getTokenType() == RegExpTT.RBRACE) {
+            builder.error("Empty property");
+            builder.advanceLexer();
+          }
+          else {
+            builder.error("Property name expected");
+          }
+          while (PROPERTY_TOKENS.contains(builder.getTokenType())) {
+            builder.advanceLexer();
+          }
+        }
       }
-      else if (builder.getTokenType() == RegExpTT.RBRACE) {
-        builder.error("Empty character family");
-      }
-      else {
-        builder.error("Character family name expected");
-        builder.advanceLexer();
-      }
-      checkMatches(builder, RegExpTT.RBRACE, "Unclosed character family");
     }
     marker.done(RegExpElementTypes.PROPERTY);
+  }
+
+  private static void parseNamedCharacter(PsiBuilder builder) {
+    final PsiBuilder.Marker marker = builder.mark();
+    builder.advanceLexer();
+    checkMatches(builder, RegExpTT.LBRACE, "'{' expected");
+    checkMatches(builder, RegExpTT.NAME, "Unicode character name expected");
+    checkMatches(builder, RegExpTT.RBRACE, "'}' expected");
+    marker.done(RegExpElementTypes.NAMED_CHARACTER_ELEMENT);
   }
 
   private static void patternExpected(PsiBuilder builder) {
@@ -505,12 +550,14 @@ public class RegExpParser implements PsiParser {
     }
   }
 
-  protected static void checkMatches(final PsiBuilder builder, final IElementType token, final String message) {
+  protected static boolean checkMatches(final PsiBuilder builder, final IElementType token, final String message) {
     if (builder.getTokenType() == token) {
       builder.advanceLexer();
+      return true;
     }
     else {
       builder.error(message);
+      return false;
     }
   }
 }

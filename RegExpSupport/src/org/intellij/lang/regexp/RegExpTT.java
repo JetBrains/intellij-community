@@ -89,6 +89,8 @@ public interface RegExpTT {
     IElementType CTRL = new RegExpElementType("CTRL");
     // "\\p" | "\\P"
     IElementType PROPERTY = new RegExpElementType("PROPERTY");
+    // "\\N
+    IElementType NAMED_CHARACTER = new RegExpElementType("NAMED_CHARACTER");
     // "L" | "M" | "Z" | "S" | "N" | "P" | "C" after a property escape
     IElementType CATEGORY_SHORT_HAND = new RegExpElementType("CATEGORY_SHORT_HAND");
 

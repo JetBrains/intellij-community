@@ -44,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassTagDescriptorBase;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyTagDescriptor;
+import org.jetbrains.plugins.javaFX.indexing.JavaFxControllerClassIndex;
 
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -1141,6 +1142,29 @@ public class JavaFxPsiUtil {
       }
     }
     return Pair.create(tagClass, false);
+  }
+
+  public static boolean isControllerClass(@NotNull PsiClass psiClass) {
+    final Project project = psiClass.getProject();
+    final GlobalSearchScope resolveScope = psiClass.getResolveScope();
+    if (isControllerClassName(project, psiClass.getQualifiedName(), resolveScope)) {
+      return true;
+    }
+    final Ref<Boolean> refFound = new Ref<>(false);
+    ClassInheritorsSearch.search(psiClass, resolveScope, true, true, false).forEach((aClass) -> {
+      if (isControllerClassName(project, aClass.getQualifiedName(), resolveScope)) {
+        refFound.set(true);
+        return false;
+      }
+      return true;
+    });
+    return refFound.get();
+  }
+
+  private static boolean isControllerClassName(@NotNull Project project,
+                                               @Nullable String qualifiedName,
+                                               @NotNull GlobalSearchScope resolveScope) {
+    return qualifiedName != null && !JavaFxControllerClassIndex.findFxmlWithController(project, qualifiedName, resolveScope).isEmpty();
   }
 
   private static class JavaFxControllerCachedValueProvider implements CachedValueProvider<PsiClass> {

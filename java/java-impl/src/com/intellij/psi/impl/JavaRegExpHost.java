@@ -23,6 +23,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import org.intellij.lang.regexp.AsciiUtil;
 import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider;
 import org.intellij.lang.regexp.RegExpLanguageHost;
 import org.intellij.lang.regexp.psi.*;
@@ -140,6 +141,11 @@ public class JavaRegExpHost implements RegExpLanguageHost {
   }
 
   @Override
+  public boolean supportsNamedCharacters(RegExpNamedCharacter namedCharacter) {
+    return hasAtLeastJdkVersion(namedCharacter, JavaSdkVersion.JDK_1_9);
+  }
+
+  @Override
   public boolean supportsPerl5EmbeddedComments() {
     return false;
   }
@@ -167,8 +173,8 @@ public class JavaRegExpHost implements RegExpLanguageHost {
   @Override
   public boolean isValidGroupName(String name, @NotNull PsiElement context) {
     for (int i = 0, length = name.length(); i < length; i++) {
-      int c = name.codePointAt(i);
-      if (!(c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9')) {
+      final char c = name.charAt(i);
+      if (!(AsciiUtil.isLowerCase(c) || AsciiUtil.isUpperCase(c) || AsciiUtil.isDigit(c))) {
         return false;
       }
     }

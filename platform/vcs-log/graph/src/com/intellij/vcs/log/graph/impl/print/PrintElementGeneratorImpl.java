@@ -16,6 +16,7 @@
 
 package com.intellij.vcs.log.graph.impl.print;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.SLRUMap;
@@ -35,6 +36,8 @@ import java.util.*;
 import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.*;
 
 public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
+  @NotNull private static final Logger LOG = Logger.getInstance(PrintElementGeneratorImpl.class);
+
   public static final int LONG_EDGE_SIZE = 30;
   private static final int LONG_EDGE_PART_SIZE = 1;
 
@@ -44,7 +47,7 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
   private static final boolean SHOW_ARROW_WHEN_SHOW_LONG_EDGES = true;
 
 
-  @NotNull private final SLRUMap<Integer, List<GraphElement>> cache = new SLRUMap<>(CACHE_SIZE, CACHE_SIZE * 2);
+  @NotNull private final SLRUMap<Integer, List<GraphElement>> myCache = new SLRUMap<>(CACHE_SIZE, CACHE_SIZE * 2);
   @NotNull private final EdgesInRowGenerator myEdgesInRowGenerator;
   @NotNull private final Comparator<GraphElement> myGraphElementComparator;
 
@@ -154,54 +157,64 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
 
       if (element instanceof GraphEdge) {
         GraphEdge edge = (GraphEdge)element;
-        NormalEdge normalEdge = asNormalEdge(edge);
-        if (normalEdge != null) {
-          int edgeSize = normalEdge.down - normalEdge.up;
-          int upOffset = visibleRowIndex - normalEdge.up;
-          int downOffset = normalEdge.down - visibleRowIndex;
-
-          if (edgeSize >= myLongEdgeSize) addArrowIfNeeded(result, edge, position, upOffset, downOffset, myVisiblePartSize);
-
-          if (edgeSize >= myEdgeWithArrowSize) addArrowIfNeeded(result, edge, position, upOffset, downOffset, 1);
-        }
-        else { // special edges
-          switch (edge.getType()) {
-            case DOTTED_ARROW_DOWN:
-            case NOT_LOAD_COMMIT:
-              if (intEqual(edge.getUpNodeIndex(), visibleRowIndex - 1)) {
-                result.add(new SimpleRowElement(edge, RowElementType.DOWN_ARROW, position));
-              }
-              break;
-            case DOTTED_ARROW_UP:
-              if (intEqual(edge.getDownNodeIndex(), visibleRowIndex + 1)) // todo case 0-row arrow
-              {
-                result.add(new SimpleRowElement(edge, RowElementType.UP_ARROW, position));
-              }
-              break;
-            default:
-              // todo log some error (nothing here)
-          }
+        RowElementType arrowType = getArrowType(edge, visibleRowIndex);
+        if (arrowType != null) {
+          result.add(new SimpleRowElement(edge, arrowType, position));
         }
       }
     }
     return result;
   }
 
-  private static void addArrowIfNeeded(@NotNull List<SimpleRowElement> result,
-                                       @NotNull GraphEdge edge,
-                                       int position,
-                                       int upOffset,
-                                       int downOffset,
-                                       int showingPartSize) {
-    if (upOffset == showingPartSize) result.add(new SimpleRowElement(edge, RowElementType.DOWN_ARROW, position));
+  @Nullable
+  private RowElementType getArrowType(@NotNull GraphEdge edge, int rowIndex) {
+    NormalEdge normalEdge = asNormalEdge(edge);
+    if (normalEdge != null) {
+      int edgeSize = normalEdge.down - normalEdge.up;
+      int upOffset = rowIndex - normalEdge.up;
+      int downOffset = normalEdge.down - rowIndex;
 
-    if (downOffset == showingPartSize) result.add(new SimpleRowElement(edge, RowElementType.UP_ARROW, position));
+      if (edgeSize >= myLongEdgeSize) {
+        if (upOffset == myVisiblePartSize) {
+          LOG.assertTrue(downOffset != myVisiblePartSize, "Both up and down arrow at row " +
+                                                          rowIndex); // this can not happen due to how constants are picked out, but just in case
+          return RowElementType.DOWN_ARROW;
+        }
+        if (downOffset == myVisiblePartSize) return RowElementType.UP_ARROW;
+      }
+      if (edgeSize >= myEdgeWithArrowSize) {
+        if (upOffset == 1) {
+          LOG.assertTrue(downOffset != 1, "Both up and down arrow at row " + rowIndex);
+          return RowElementType.DOWN_ARROW;
+        }
+        if (downOffset == 1) return RowElementType.UP_ARROW;
+      }
+    }
+    else { // special edges
+      switch (edge.getType()) {
+        case DOTTED_ARROW_DOWN:
+        case NOT_LOAD_COMMIT:
+          if (intEqual(edge.getUpNodeIndex(), rowIndex - 1)) {
+            return RowElementType.DOWN_ARROW;
+          }
+          break;
+        case DOTTED_ARROW_UP:
+          // todo case 0-row arrow
+          if (intEqual(edge.getDownNodeIndex(), rowIndex + 1)) {
+            return RowElementType.UP_ARROW;
+          }
+          break;
+        default:
+          LOG.error("Unknown special edge type " + edge.getType() + " at row " + rowIndex);
+      }
+    }
+    return null;
   }
 
-  private boolean edgeIsVisibleInRow(@NotNull GraphEdge edge, int visibleRowIndex) {
+  private boolean isEdgeVisibleInRow(@NotNull GraphEdge edge, int visibleRowIndex) {
     NormalEdge normalEdge = asNormalEdge(edge);
-    if (normalEdge == null) // e.d. edge is special. See addSpecialEdges
-    {
+    if (normalEdge == null) {
+      // e.d. edge is special. See addSpecialEdges
       return false;
     }
     if (normalEdge.down - normalEdge.up < myLongEdgeSize) {
@@ -229,7 +242,7 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
 
   @NotNull
   private List<GraphElement> getSortedVisibleElementsInRow(int rowIndex) {
-    List<GraphElement> graphElements = cache.get(rowIndex);
+    List<GraphElement> graphElements = myCache.get(rowIndex);
     if (graphElements != null) {
       return graphElements;
     }
@@ -238,13 +251,13 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
     result.add(myLinearGraph.getGraphNode(rowIndex));
 
     for (GraphEdge edge : myEdgesInRowGenerator.getEdgesInRow(rowIndex)) {
-      if (edgeIsVisibleInRow(edge, rowIndex)) result.add(edge);
+      if (isEdgeVisibleInRow(edge, rowIndex)) result.add(edge);
     }
 
     addSpecialEdges(result, rowIndex);
 
     Collections.sort(result, myGraphElementComparator);
-    cache.put(rowIndex, result);
+    myCache.put(rowIndex, result);
     return result;
   }
 }

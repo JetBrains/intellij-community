@@ -152,6 +152,16 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     return host != null ? host.isValidCategory(category) : myDefaultProvider.isValidCategory(category);
   }
 
+  public boolean supportsNamedCharacters(@NotNull final RegExpNamedCharacter namedCharacter) {
+    final RegExpLanguageHost host = findRegExpHost(namedCharacter);
+    return host != null && host.supportsNamedCharacters(namedCharacter);
+  }
+
+  public boolean isValidNamedCharacter(@NotNull final RegExpNamedCharacter namedCharacter) {
+    final RegExpLanguageHost host = findRegExpHost(namedCharacter);
+    return host != null && host.isValidNamedCharacter(namedCharacter);
+  }
+
   @NotNull
   public String[][] getAllKnownProperties(@NotNull final PsiElement element) {
     final RegExpLanguageHost host = findRegExpHost(element);

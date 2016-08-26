@@ -16,10 +16,10 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -52,23 +52,10 @@ public class IterableComponentTypeMacro extends Macro {
 
     PsiExpression expr = MacroUtil.resultToPsiExpression(result, context);
     if (expr == null) return null;
-    PsiType type = expr.getType();
 
-
-    if (type instanceof PsiArrayType) {
-      return new PsiTypeResult(((PsiArrayType)type).getComponentType(), project);
-    }
-
-    if (type instanceof PsiClassType) {
-      PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
-      PsiClass aClass = resolveResult.getElement();
-
-      if (aClass != null) {
-        PsiType component = PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_LANG_ITERABLE, 0, false);
-        if (component != null) {
-          return new PsiTypeResult(GenericsUtil.eliminateWildcards(component, false, true), project);
-        }
-      }
+    PsiType component = JavaGenericsUtil.getCollectionItemType(expr);
+    if (component != null) {
+      return new PsiTypeResult(GenericsUtil.getVariableTypeByExpressionType(component), project);
     }
 
     return null;

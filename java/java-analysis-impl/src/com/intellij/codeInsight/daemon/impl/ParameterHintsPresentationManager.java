@@ -22,6 +22,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -185,7 +186,8 @@ public class ParameterHintsPresentationManager implements Disposable {
             FontMetrics metrics = g.getFontMetrics();
             Shape savedClip = g.getClip();
             g.clipRect(r.x + 3, r.y + 1, r.width - 6, r.height - 3);
-            g.drawString(myText, r.x + 7, r.y + (r.height + metrics.getAscent() - metrics.getDescent()) / 2 - 1);
+            int editorAscent = editor instanceof EditorImpl ? ((EditorImpl)editor).getAscent() : 0;
+            g.drawString(myText, r.x + 7, r.y + Math.max(editorAscent, (r.height + metrics.getAscent() - metrics.getDescent()) / 2) - 1);
             g.setClip(savedClip);
           }
         }

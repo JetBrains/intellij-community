@@ -6,6 +6,6 @@ REGEXP_FILE
       RegExpPropertyImpl: <\p{}>
         PsiElement(PROPERTY)('\p')
         PsiElement(LBRACE)('{')
-        PsiErrorElement:Empty character family
+        PsiErrorElement:Empty property
           <empty list>
         PsiElement(RBRACE)('}')

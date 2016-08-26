@@ -17,6 +17,8 @@ package com.intellij.credentialStore
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.io.toByteArray
+import java.nio.CharBuffer
 import java.security.MessageDigest
 import java.util.*
 
@@ -28,11 +30,23 @@ internal fun toOldKeyAsIdentity(hash: ByteArray) = CredentialAttributes("Intelli
 
 fun toOldKey(requestor: Class<*>, userName: String) = CredentialAttributes("IntelliJ Platform", toOldKey(MessageDigest.getInstance("SHA-256").digest("${requestor.name}/$userName".toByteArray())))
 
-fun joinData(user: String?, password: OneTimeString?): String? {
+fun joinData(user: String?, password: OneTimeString?): ByteArray? {
   if (user == null && password == null) {
     return null
   }
-  return "${StringUtil.escapeChars(user.orEmpty(), '\\', '@')}${if (password == null) "" else "@$password"}"
+
+  val builder = StringBuilder(user.orEmpty())
+  StringUtil.escapeChar(builder, '\\')
+  StringUtil.escapeChar(builder, '@')
+  if (password != null) {
+    builder.append('@')
+    password.appendTo(builder)
+  }
+
+  val buffer = Charsets.UTF_8.encode(CharBuffer.wrap(builder))
+  // clear password
+  builder.setLength(0)
+  return buffer.toByteArray()
 }
 
 fun splitData(data: String?): Credentials? {
@@ -78,4 +92,4 @@ private fun parseString(data: String, delimiter: Char): List<String> {
 }
 
 // check isEmpty before
-fun Credentials.serialize() = joinData(userName, password)!!.toByteArray()
+fun Credentials.serialize() = joinData(userName, password)!!
