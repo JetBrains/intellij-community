@@ -27,7 +27,7 @@ class CredentialSerializeTest {
 
   private fun test(u: String?, p: String?, joined: String) {
     val pass = p?.let(::OneTimeString)
-    assertThat(joinData(u, pass)).isEqualTo(joined)
+    assertThat(joinData(u, pass)).isEqualTo(joined.toByteArray())
     assertThat(splitData(joined)).isEqualTo(Credentials(u, pass))
   }
 }

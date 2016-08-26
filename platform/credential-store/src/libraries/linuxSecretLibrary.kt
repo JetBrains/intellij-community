@@ -13,10 +13,13 @@ private const val SECRET_SCHEMA_NONE = 0
 private const val SECRET_SCHEMA_ATTRIBUTE_STRING = 0
 
 // explicitly create pointer to be explicitly dispose it to avoid sensitive data in the memory
-internal fun stringPointer(data: ByteArray): DisposableMemory {
+internal fun stringPointer(data: ByteArray, clearInput: Boolean = false): DisposableMemory {
   val pointer = DisposableMemory(data.size + 1L)
   pointer.write(0, data, 0, data.size)
   pointer.setByte(data.size.toLong(), 0.toByte())
+  if (clearInput) {
+    data.fill(0)
+  }
   return pointer
 }
 
@@ -74,7 +77,7 @@ internal class SecretCredentialStore(schemeName: String) : CredentialStore {
       return
     }
 
-    val passwordPointer = stringPointer(credentials!!.serialize())
+    val passwordPointer = stringPointer(credentials!!.serialize(), true)
     checkError("secret_password_store_sync") { errorRef ->
       try {
         if (accountName == null) {
