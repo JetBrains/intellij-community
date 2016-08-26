@@ -160,10 +160,12 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
   }
 
   private static abstract class ArraysAsListFix extends CallChainFixBase {
-    private final String myMethodFQN;
+    private final String myClassName;
+    private final String myMethodName;
 
-    private ArraysAsListFix(String methodFQN) {
-      myMethodFQN = methodFQN;
+    private ArraysAsListFix(String className, String methodName) {
+      myClassName = className;
+      myMethodName = methodName;
     }
 
     @Override
@@ -173,14 +175,21 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       methodCall.getArgumentList().replace(qualifierCall.getArgumentList());
 
       final Project project = methodCall.getProject();
-      final PsiExpression newMethodExpression = JavaPsiFacade.getElementFactory(project).createExpressionFromText(myMethodFQN, methodCall);
+      PsiType[] parameters = qualifierCall.getMethodExpression().getTypeParameters();
+      String replacement;
+      if(parameters.length == 1) {
+        replacement = myClassName + ".<" + parameters[0].getCanonicalText() + ">" + myMethodName;
+      } else {
+        replacement = myClassName + "." + myMethodName;
+      }
+      final PsiExpression newMethodExpression = JavaPsiFacade.getElementFactory(project).createExpressionFromText(replacement, methodCall);
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(methodCall.getMethodExpression().replace(newMethodExpression));
     }
   }
 
   private static class ArraysAsListVarargFix extends ArraysAsListFix {
     private ArraysAsListVarargFix() {
-      super(CommonClassNames.JAVA_UTIL_STREAM_STREAM + "." + OF_METHOD);
+      super(CommonClassNames.JAVA_UTIL_STREAM_STREAM, OF_METHOD);
     }
 
     @Nls
@@ -193,7 +202,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
 
   private static class ArraysAsListSingleArrayFix extends ArraysAsListFix {
     private ArraysAsListSingleArrayFix() {
-      super(CommonClassNames.JAVA_UTIL_ARRAYS + "." + STREAM_METHOD);
+      super(CommonClassNames.JAVA_UTIL_ARRAYS, STREAM_METHOD);
     }
 
     @Nls
