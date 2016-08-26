@@ -64,6 +64,8 @@ abstract class BuildTasks {
 
   abstract void compileModules(List<String> moduleNames, List<String> includingTestsInModules = [])
 
+  abstract void buildUpdaterJar()
+
   public static BuildTasks create(BuildContext context) {
     return new BuildTasksImpl(context)
   }
