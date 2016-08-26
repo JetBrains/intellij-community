@@ -27,7 +27,7 @@ public abstract class PasswordSafe implements PasswordStorage {
     return ServiceManager.getService(PasswordSafe.class);
   }
 
-  public abstract void setPassword(@NotNull CredentialAttributes attributes, @Nullable Credentials credentials, boolean memoryOnly);
+  public abstract void set(@NotNull CredentialAttributes attributes, @Nullable Credentials credentials, boolean memoryOnly);
 
   public abstract boolean isMemoryOnly();
 }

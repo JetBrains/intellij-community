@@ -131,7 +131,7 @@ class HgCommandAuthenticator {
         ok = true;
         Credentials credentials = new Credentials(dialog.getUsername(), new OneTimeString(dialog.getPassword()));
         myCredentials = credentials;
-        PasswordSafe.getInstance().setPassword(CredentialAttributes(HgCommandAuthenticator.class, keyForUrlAndLogin(url, credentials.getUserName())), credentials, !dialog.isRememberPassword());
+        PasswordSafe.getInstance().set(CredentialAttributes(HgCommandAuthenticator.class, keyForUrlAndLogin(url, credentials.getUserName())), credentials, !dialog.isRememberPassword());
         hgGlobalSettings.addRememberedUrl(url, credentials.getUserName());
       }
     }

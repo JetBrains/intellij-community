@@ -82,7 +82,7 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
     }
   }
 
-  override fun setPassword(attributes: CredentialAttributes, credentials: Credentials?, memoryOnly: Boolean) {
+  override fun set(attributes: CredentialAttributes, credentials: Credentials?, memoryOnly: Boolean) {
     if (memoryOnly) {
       memoryHelperProvider.value.set(attributes, credentials)
       // remove to ensure that on getPassword we will not return some value from default provider

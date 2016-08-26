@@ -149,7 +149,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
       if (d.showAndGet()) {
         Credentials credentials = new Credentials(component.getUserName(), new OneTimeString(component.getPassword()));
         ref.set(credentials);
-        ps.setPassword(CredentialAttributes(requestor, accountName), credentials, !component.isRememberSelected());
+        ps.set(CredentialAttributes(requestor, accountName), credentials, !component.isRememberSelected());
       }
     }, ModalityState.any());
     Credentials credentials = ref.get();

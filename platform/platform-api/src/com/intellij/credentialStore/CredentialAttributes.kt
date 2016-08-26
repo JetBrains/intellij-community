@@ -98,7 +98,7 @@ class OneTimeString @JvmOverloads constructor(value: CharArray, offset: Int = 0,
     }
 
     if (!willBeCleared) {
-      consumed.get()?.let { throw IllegalStateException("Already consumed at $it") }
+      consumed.get()?.let { throw IllegalStateException("Already consumed: $it\n---\n") }
     }
     else if (!consumed.compareAndSet(null, ExceptionUtil.currentStackTrace())) {
       throw IllegalStateException("Already consumed at ${consumed.get()}")

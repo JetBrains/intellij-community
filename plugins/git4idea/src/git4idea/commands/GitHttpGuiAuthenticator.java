@@ -173,7 +173,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     // save password
     if (myPasswordKey != null && myPassword != null) {
       Credentials credentials = new Credentials(myPasswordKey, new OneTimeString(myPassword));
-      PasswordSafe.getInstance().setPassword(CredentialAttributes(PASS_REQUESTER, credentials.getUserName()), credentials, !mySaveOnDisk);
+      PasswordSafe.getInstance().set(CredentialAttributes(PASS_REQUESTER, credentials.getUserName()), credentials, !mySaveOnDisk);
     }
   }
 
