@@ -312,12 +312,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   }
 
   /**
-   * In cases when stub hierarchy corresponds to AST hierarchy, i.e. both a parent and its child nodes support stubs, {@link #getParent()}
-   * can be implemented efficiently without loading AST, using this method instead. It checks if there is a stub present, takes its parent
-   * and returns the PSI corresponding to that parent. Please be careful when using this method and use it only in the described case,
-   * because if there are AST-only elements in the hierarchy, it'll return different results depending on whether this element is stub-based
-   * or has already been switched to PSI.
-   *
+   * Please consider using {@link #getParent()} instead, because this method can return different results before and after AST is loaded.
    * @return a PSI element taken from parent stub (if present) or parent AST node.
    */
   protected final PsiElement getParentByStub() {
@@ -330,10 +325,9 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   }
 
   /**
-   * @return parent PSI element taken from the parent of the corresponding AST node. If AST has not been loaded, it is loaded
-   * (in {@link #getNode()}), which might take significant time and memory cost. If possible, {@link #getParentByStub()}
-   * should be used instead.
+   * Please use {@link #getParent()} instead
    */
+  @Deprecated
   protected final PsiElement getParentByTree() {
     return SharedImplUtil.getParent(getNode());
   }
@@ -361,6 +355,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   }
 
   /**
+   * Note: for most clients (where the logic doesn't crucially differ for stub and AST cases), {@link #getGreenStub()} should be preferred.
    * @return the stub that this element is built upon, or null if the element is currently AST-based. The latter can happen
    * if the file text was loaded from the very beginning, or if it was loaded via {@link #getNode()} on this or any other element
    * in the containing file.
