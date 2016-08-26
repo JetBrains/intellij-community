@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.ProjectBundle;
@@ -36,6 +37,7 @@ import com.intellij.ui.ToolbarDecorator;
 import com.intellij.util.IconUtil;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author anna
@@ -92,6 +94,17 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
         requestDefaultFocus();
         setSelectedRoots(new Object[]{virtualFile});
       }
+    }
+
+    @Override
+    protected VirtualFile[] adjustAddedFileSet(Component component, VirtualFile[] files) {
+      VirtualFile[] finalFiles = files.clone();
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        for (VirtualFile file : finalFiles) {
+          JavadocQuarantineStatusCleaner.cleanIfNeeded(file);
+        }
+      });
+      return super.adjustAddedFileSet(component, files);
     }
   }
 }
