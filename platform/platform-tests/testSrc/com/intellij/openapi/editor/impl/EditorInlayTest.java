@@ -15,7 +15,12 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.util.containers.ContainerUtil;
+
+import java.util.Arrays;
 
 public class EditorInlayTest extends AbstractEditorTest {
   public void testCaretMovement() throws Exception {
@@ -94,6 +99,33 @@ public class EditorInlayTest extends AbstractEditorTest {
     delete();
     checkResultByText("a");
     checkCaretPosition(1, 1, 2);
+  }
+
+  public void testMulticaretDelete() throws Exception {
+    initText("<caret>ab <caret>ab");
+    addInlay(1);
+    addInlay(4);
+    right();
+    delete();
+    checkResultByText("a<caret>b a<caret>b");
+    delete();
+    checkResultByText("a<caret> a<caret>");
+  }
+
+  public void testMulticaretTyping() throws Exception {
+    initText("<caret>ab <caret>ab");
+    addInlay(1);
+    addInlay(4);
+    right();
+    type(' ');
+    checkResultByText("a <caret>b a <caret>b");
+    assertEquals(Arrays.asList(new VisualPosition(0, 2), new VisualPosition(0, 7)),
+                 ContainerUtil.map(myEditor.getCaretModel().getAllCarets(), Caret::getVisualPosition));
+    right();
+    type(' ');
+    checkResultByText("a  <caret>b a  <caret>b");
+    assertEquals(Arrays.asList(new VisualPosition(0, 4), new VisualPosition(0, 10)),
+                 ContainerUtil.map(myEditor.getCaretModel().getAllCarets(), Caret::getVisualPosition));
   }
 
   private static void checkCaretPositionAndSelection(int offset, int logicalColumn, int visualColumn,
