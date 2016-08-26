@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,15 +52,15 @@ public class PasswordUtil {
 
   @NotNull
   public static char[] decodePasswordAsCharArray(@Nullable String password) throws NumberFormatException {
-    if (password == null) {
+    if (StringUtil.isEmpty(password)) {
       return ArrayUtil.EMPTY_CHAR_ARRAY;
     }
 
-    char[] result = new char[password.length()];
-    for (int i = 0; i < password.length(); i += 4) {
+    char[] result = new char[password.length() / 4];
+    for (int i = 0, j = 0; i < password.length(); i += 4, j++) {
       int c = Integer.parseInt(password.substring(i, i + 4), 16);
       c ^= 0xdfaa;
-      result[i] = new Character((char)c).charValue();
+      result[j] = new Character((char)c).charValue();
     }
     return result;
   }

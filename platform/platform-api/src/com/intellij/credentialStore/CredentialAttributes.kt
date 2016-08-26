@@ -59,7 +59,7 @@ fun Credentials?.isEmpty() = this == null || (userName == null && password == nu
 
 // input will be cleared
 @JvmOverloads
-fun SecureString(value: ByteArray, offset: Int = 0, length: Int = value.size - offset): OneTimeString {
+fun OneTimeString(value: ByteArray, offset: Int = 0, length: Int = value.size - offset): OneTimeString {
   if (length == 0) {
     return OneTimeString(ArrayUtil.EMPTY_CHAR_ARRAY)
   }
@@ -82,6 +82,8 @@ fun SecureString(value: ByteArray, offset: Int = 0, length: Int = value.size - o
   return OneTimeString(charArray, 0, charBuffer.position())
 }
 
+private val oneTimeStringEnabled = com.intellij.util.SystemProperties.getBooleanProperty("one.time.string.enabled", false)
+
 @Suppress("EqualsOrHashCode")
 // todo - eliminate toString
 class OneTimeString @JvmOverloads constructor(value: CharArray, offset: Int = 0, length: Int = value.size) : CharArrayCharSequence(value, offset, offset + length) {
@@ -90,17 +92,22 @@ class OneTimeString @JvmOverloads constructor(value: CharArray, offset: Int = 0,
   constructor(value: String): this(value.toCharArray()) {
   }
 
-  private fun consume() {
-    if (!consumed.compareAndSet(null, ExceptionUtil.currentStackTrace())) {
+  private fun consume(willBeCleared: Boolean) {
+    if (!oneTimeStringEnabled) {
+      return
+    }
+
+    if (!willBeCleared) {
+      consumed.get()?.let { throw IllegalStateException("Already consumed at $it") }
+    }
+    else if (!consumed.compareAndSet(null, ExceptionUtil.currentStackTrace())) {
       throw IllegalStateException("Already consumed at ${consumed.get()}")
     }
   }
 
   @JvmOverloads
   fun toString(clear: Boolean = true): String {
-    if (clear) {
-      consume()
-    }
+    consume(clear)
     // todo clear
     return super.toString()
   }
@@ -108,12 +115,10 @@ class OneTimeString @JvmOverloads constructor(value: CharArray, offset: Int = 0,
   // string will be cleared and not valid after
   @JvmOverloads
   fun toByteArray(clear: Boolean = true): ByteArray {
-    if (clear) {
-      consume()
-    }
+    consume(clear)
 
     val result = Charsets.UTF_8.encode(CharBuffer.wrap(myChars, myStart, length))
-    if (clear) {
+    if (clear && oneTimeStringEnabled) {
       myChars.fill('\u0000', myStart, myEnd)
     }
     return result.toByteArray()
@@ -121,9 +126,7 @@ class OneTimeString @JvmOverloads constructor(value: CharArray, offset: Int = 0,
 
   @JvmOverloads
   fun toCharArray(clear: Boolean = true): CharArray {
-    if (clear) {
-      consume()
-    }
+    consume(clear)
     // todo clear
     return chars
   }
@@ -136,7 +139,7 @@ class OneTimeString @JvmOverloads constructor(value: CharArray, offset: Int = 0,
   }
 
   fun appendTo(builder: StringBuilder) {
-    consumed.get()?.let { throw IllegalStateException("Already consumed at $it") }
+    consume(false)
     builder.append(myChars, myStart, length)
   }
 }
