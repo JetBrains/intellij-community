@@ -47,7 +47,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.intellij.codeInsight.daemon.JavaErrorMessages.BUNDLE;
 import static com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE;
 import static com.intellij.psi.SyntaxTraverser.psiTraverser;
 
@@ -84,11 +83,45 @@ public class ModuleHighlightUtil {
   }
 
   @NotNull
-  static List<HighlightInfo> checkDuplicateRequires(@NotNull PsiJavaModule module) {
-    return checkDuplicateRefs(
+  static List<HighlightInfo> checkDuplicateStatements(@NotNull PsiJavaModule module) {
+    List<HighlightInfo> results = ContainerUtil.newSmartList();
+
+    checkDuplicateRefs(
       psiTraverser().children(module).filter(PsiRequiresStatement.class),
-      st -> Optional.ofNullable(st.getReferenceElement()).map(PsiJavaModuleReferenceElement::getReferenceText).orElse(null),
-      "module.duplicate.requires");
+      st -> Optional.ofNullable(st.getReferenceElement()).map(PsiJavaModuleReferenceElement::getReferenceText),
+      "module.duplicate.requires", results);
+
+    checkDuplicateRefs(
+      psiTraverser().children(module).filter(PsiExportsStatement.class),
+      st -> Optional.ofNullable(st.getPackageReference()).map(ModuleHighlightUtil::refText),
+      "module.duplicate.export", results);
+
+    checkDuplicateRefs(
+      psiTraverser().children(module).filter(PsiUsesStatement.class),
+      st -> Optional.ofNullable(st.getClassReference()).map(ModuleHighlightUtil::refText),
+      "module.duplicate.uses", results);
+
+    return results;
+  }
+
+  private static <T extends PsiElement> void checkDuplicateRefs(Iterable<T> statements,
+                                                                Function<T, Optional<String>> ref,
+                                                                @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String key,
+                                                                List<HighlightInfo> results) {
+    Set<String> filter = ContainerUtil.newHashSet();
+    for (T statement : statements) {
+      String refText = ref.apply(statement).orElse(null);
+      if (refText != null && !filter.add(refText)) {
+        String message = JavaErrorMessages.message(key, refText);
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).description(message).create();
+        QuickFixAction.registerQuickFixAction(info, new DeleteElementFix(statement));
+        results.add(info);
+      }
+    }
+  }
+
+  private static String refText(PsiJavaCodeReferenceElement ref) {
+    return PsiNameHelper.getQualifiedClassName(ref.getText(), true);
   }
 
   @Nullable
@@ -189,14 +222,6 @@ public class ModuleHighlightUtil {
     return results;
   }
 
-  @NotNull
-  static List<HighlightInfo> checkDuplicateExports(@NotNull PsiJavaModule module) {
-    return checkDuplicateRefs(
-      psiTraverser().children(module).filter(PsiExportsStatement.class),
-      st -> Optional.ofNullable(st.getPackageReference()).map(ref -> PsiNameHelper.getQualifiedClassName(ref.getText(), true)).orElse(null),
-      "module.duplicate.export");
-  }
-
   @Nullable
   static HighlightInfo checkServiceReference(@Nullable PsiJavaCodeReferenceElement refElement) {
     if (refElement != null) {
@@ -208,34 +233,6 @@ public class ModuleHighlightUtil {
     }
 
     return null;
-  }
-
-  @NotNull
-  static List<HighlightInfo> checkDuplicateUses(@NotNull PsiJavaModule module) {
-    return checkDuplicateRefs(
-      psiTraverser().children(module).filter(PsiUsesStatement.class),
-      st -> Optional.ofNullable(st.getClassReference()).map(ref -> PsiNameHelper.getQualifiedClassName(ref.getText(), true)).orElse(null),
-      "module.duplicate.uses");
-  }
-
-  private static <T extends PsiElement> List<HighlightInfo> checkDuplicateRefs(Iterable<T> statements,
-                                                                               Function<T, String> ref,
-                                                                               @PropertyKey(resourceBundle = BUNDLE) String key) {
-    List<HighlightInfo> results = null;
-
-    Set<String> names = ContainerUtil.newHashSet();
-    for (T statement : statements) {
-      String refText = ref.apply(statement);
-      if (refText != null && !names.add(refText)) {
-        String message = JavaErrorMessages.message(key, refText);
-        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).description(message).create();
-        QuickFixAction.registerQuickFixAction(info, new DeleteElementFix(statement));
-        if (results == null) results = ContainerUtil.newSmartList();
-        results.add(info);
-      }
-    }
-
-    return results != null ? results : Collections.emptyList();
   }
 
   private static QuickFixFactory factory() {

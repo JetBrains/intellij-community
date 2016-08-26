@@ -42,20 +42,25 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
     myFixture.checkHighlighting()
   }
 
+  fun testDuplicateStatements() {
+    addFile("pkg/main/C.java", "package pkg.main;\npublic class C { }")
+    doTest("""
+        module M {
+          requires M2;
+          <error descr="Duplicate requires: M2">requires M2;</error>
+          exports pkg.main;
+          <error descr="Duplicate export: pkg.main">exports pkg. main;</error>
+          uses pkg.main.C;
+          <error descr="Duplicate uses: pkg.main.C">uses pkg. main . /*...*/ C;</error>
+        }""".trimIndent(), true)
+  }
+
   fun testRequires() {
     doTest("""
         module M1 {
           requires <error descr="Module not found: M.missing">M.missing</error>;
           requires <error descr="Cyclic dependence: M1">M1</error>;
           requires <error descr="Cyclic dependence: M1, M2">M2</error>;
-        }""".trimIndent(), true)
-  }
-
-  fun testDuplicateRequires() {
-    doTest("""
-        module M {
-          requires M2;
-          <error descr="Duplicate requires: M2">requires M2;</error>
         }""".trimIndent(), true)
   }
 
@@ -72,15 +77,6 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
         }""".trimIndent())
   }
 
-  fun testDuplicateExports() {
-    addFile("pkg/main/C.java", "package pkg.main;\nclass C { }")
-    doTest("""
-        module M {
-          exports pkg.main;
-          <error descr="Duplicate export: pkg.main">exports pkg. main;</error>
-        }""".trimIndent())
-  }
-
   fun testUses() {
     addFile("pkg/main/C.java", "package pkg.main;\nclass C { }")
     addFile("pkg/main/E.java", "package pkg.main;\npublic enum E { }")
@@ -90,15 +86,6 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
           uses pkg.main.<error descr="Cannot resolve symbol 'X'">X</error>;
           uses pkg.main.<error descr="'pkg.main.C' is not public in 'pkg.main'. Cannot be accessed from outside package">C</error>;
           uses pkg.main.<error descr="The service definition is an enum: E">E</error>;
-        }""".trimIndent())
-  }
-
-  fun testDuplicateUses() {
-    addFile("pkg/main/C.java", "package pkg.main;\npublic class C { }")
-    doTest("""
-        module M {
-          uses pkg.main.C;
-          <error descr="Duplicate uses: pkg.main.C">uses pkg. main . /*...*/ C;</error>
         }""".trimIndent())
   }
 
