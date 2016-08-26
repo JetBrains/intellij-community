@@ -19,10 +19,12 @@ package com.intellij.vcs.log.graph.impl.print;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
+import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.api.printer.PrintElementManager;
@@ -45,6 +47,7 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
   private static final int VERY_LONG_EDGE_PART_SIZE = 250;
   private static final int CACHE_SIZE = 100;
   private static final boolean SHOW_ARROW_WHEN_SHOW_LONG_EDGES = true;
+  private static final int SAMPLE_SIZE = 20000;
 
 
   @NotNull private final SLRUMap<Integer, List<GraphElement>> myCache = new SLRUMap<>(CACHE_SIZE, CACHE_SIZE * 2);
@@ -54,6 +57,7 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
   private final int myLongEdgeSize;
   private final int myVisiblePartSize;
   private final int myEdgeWithArrowSize;
+  private int myRecommendedWidth = 0;
 
   public PrintElementGeneratorImpl(@NotNull LinearGraph graph, @NotNull PrintElementManager printElementManager, boolean showLongEdges) {
     super(graph, printElementManager);
@@ -88,6 +92,71 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
     myLongEdgeSize = longEdgeSize;
     myVisiblePartSize = visiblePartSize;
     myEdgeWithArrowSize = edgeWithArrowSize;
+  }
+
+  public int getRecommendedWidth() {
+    if (myRecommendedWidth <= 0) {
+      int n = Math.min(SAMPLE_SIZE, myLinearGraph.nodesCount());
+
+      double sum = 0;
+      double sumSquares = 0;
+      int edgesCount = 0;
+      Set<NormalEdge> currentNormalEdges = ContainerUtil.newHashSet();
+
+      for (int i = 0; i < n; i++) {
+        List<GraphEdge> adjacentEdges = myLinearGraph.getAdjacentEdges(i, EdgeFilter.ALL);
+        int upArrows = 0;
+        int downArrows = 0;
+        for (GraphEdge e : adjacentEdges) {
+          NormalEdge normalEdge = asNormalEdge(e);
+          if (normalEdge != null) {
+            if (isEdgeUp(e, i)) {
+              currentNormalEdges.remove(normalEdge);
+            }
+            else {
+              currentNormalEdges.add(normalEdge);
+            }
+          }
+          else {
+            if (e.getType() == GraphEdgeType.DOTTED_ARROW_UP) {
+              upArrows++;
+            }
+            else {
+              downArrows++;
+            }
+          }
+        }
+
+        int newEdgesCount = 0;
+        for (NormalEdge e : currentNormalEdges) {
+          if (isEdgeVisibleInRow(e, i)) {
+            newEdgesCount++;
+          }
+          else {
+            RowElementType arrow = getArrowType(e, i);
+            if (arrow == RowElementType.DOWN_ARROW) {
+              downArrows++;
+            }
+            else if (arrow == RowElementType.UP_ARROW) {
+              upArrows++;
+            }
+          }
+        }
+
+        int width = Math.max(edgesCount + upArrows, newEdgesCount + downArrows);
+
+        sum += width;
+        sumSquares += width * width;
+
+        edgesCount = newEdgesCount;
+      }
+
+      double average = sum / n;
+      double deviation = Math.sqrt(sumSquares / n - average * average);
+      myRecommendedWidth = (int)Math.round(average + deviation);
+    }
+
+    return myRecommendedWidth;
   }
 
   @NotNull
@@ -170,25 +239,7 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
   private RowElementType getArrowType(@NotNull GraphEdge edge, int rowIndex) {
     NormalEdge normalEdge = asNormalEdge(edge);
     if (normalEdge != null) {
-      int edgeSize = normalEdge.down - normalEdge.up;
-      int upOffset = rowIndex - normalEdge.up;
-      int downOffset = normalEdge.down - rowIndex;
-
-      if (edgeSize >= myLongEdgeSize) {
-        if (upOffset == myVisiblePartSize) {
-          LOG.assertTrue(downOffset != myVisiblePartSize, "Both up and down arrow at row " +
-                                                          rowIndex); // this can not happen due to how constants are picked out, but just in case
-          return RowElementType.DOWN_ARROW;
-        }
-        if (downOffset == myVisiblePartSize) return RowElementType.UP_ARROW;
-      }
-      if (edgeSize >= myEdgeWithArrowSize) {
-        if (upOffset == 1) {
-          LOG.assertTrue(downOffset != 1, "Both up and down arrow at row " + rowIndex);
-          return RowElementType.DOWN_ARROW;
-        }
-        if (downOffset == 1) return RowElementType.UP_ARROW;
-      }
+      return getArrowType(normalEdge, rowIndex);
     }
     else { // special edges
       switch (edge.getType()) {
@@ -211,18 +262,41 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
     return null;
   }
 
+  @Nullable
+  private RowElementType getArrowType(@NotNull NormalEdge normalEdge, int rowIndex) {
+    int edgeSize = normalEdge.down - normalEdge.up;
+    int upOffset = rowIndex - normalEdge.up;
+    int downOffset = normalEdge.down - rowIndex;
+
+    if (edgeSize >= myLongEdgeSize) {
+      if (upOffset == myVisiblePartSize) {
+        LOG.assertTrue(downOffset != myVisiblePartSize, "Both up and down arrow at row " +
+                                                        rowIndex); // this can not happen due to how constants are picked out, but just in case
+        return RowElementType.DOWN_ARROW;
+      }
+      if (downOffset == myVisiblePartSize) return RowElementType.UP_ARROW;
+    }
+    if (edgeSize >= myEdgeWithArrowSize) {
+      if (upOffset == 1) {
+        LOG.assertTrue(downOffset != 1, "Both up and down arrow at row " + rowIndex);
+        return RowElementType.DOWN_ARROW;
+      }
+      if (downOffset == 1) return RowElementType.UP_ARROW;
+    }
+    return null;
+  }
+
   private boolean isEdgeVisibleInRow(@NotNull GraphEdge edge, int visibleRowIndex) {
     NormalEdge normalEdge = asNormalEdge(edge);
     if (normalEdge == null) {
       // e.d. edge is special. See addSpecialEdges
       return false;
     }
-    if (normalEdge.down - normalEdge.up < myLongEdgeSize) {
-      return true;
-    }
-    else {
-      return visibleRowIndex - normalEdge.up <= myVisiblePartSize || normalEdge.down - visibleRowIndex <= myVisiblePartSize;
-    }
+    return isEdgeVisibleInRow(normalEdge, visibleRowIndex);
+  }
+
+  private boolean isEdgeVisibleInRow(@NotNull NormalEdge normalEdge, int visibleRowIndex) {
+    return normalEdge.down - normalEdge.up < myLongEdgeSize || getAttachmentDistance(normalEdge, visibleRowIndex) <= myVisiblePartSize;
   }
 
   private void addSpecialEdges(@NotNull List<GraphElement> result, int rowIndex) {
@@ -259,5 +333,9 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
     Collections.sort(result, myGraphElementComparator);
     myCache.put(rowIndex, result);
     return result;
+  }
+
+  private int getAttachmentDistance(@NotNull NormalEdge e1, int rowIndex) {
+    return Math.min(rowIndex - e1.up, e1.down - rowIndex);
   }
 }

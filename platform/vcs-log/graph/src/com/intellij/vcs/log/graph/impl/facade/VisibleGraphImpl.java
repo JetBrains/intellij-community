@@ -43,7 +43,7 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
   @NotNull private final GraphColorManager<CommitId> myColorManager;
 
   private PrintElementManagerImpl myPrintElementManager;
-  private PrintElementGenerator myPrintElementGenerator;
+  private PrintElementGeneratorImpl myPrintElementGenerator;
   private boolean myShowLongEdges = false;
 
   public VisibleGraphImpl(@NotNull LinearGraphController graphController,
@@ -125,6 +125,10 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
       .build(myGraphController.getCompiledGraph(), myPermanentGraph.getPermanentGraphLayout(), myPermanentGraph.getPermanentCommitsInfo(),
              myPermanentGraph.getLinearGraph().nodesCount(),
              myPermanentGraph.getBranchNodeIds());
+  }
+
+  public int getRecommendedWidth() {
+    return myPrintElementGenerator.getRecommendedWidth();
   }
 
   private class ActionControllerImpl implements ActionController<CommitId> {
