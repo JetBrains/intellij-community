@@ -48,7 +48,7 @@ public class InvalidComparatorMethodReferenceInspection extends BaseJavaBatchLoc
           return;
         }
         String targetClassName = targetType.getQualifiedName();
-        if (targetClassName == null || !targetClassName.equals(CommonClassNames.JAVA_UTIL_COMPARATOR)) {
+        if (!CommonClassNames.JAVA_UTIL_COMPARATOR.equals(targetClassName)) {
           return;
         }
         PsiElement refType = ((PsiReference)qualifierExpression).resolve();
@@ -98,8 +98,8 @@ public class InvalidComparatorMethodReferenceInspection extends BaseJavaBatchLoc
       if (parent != null) {
         PsiExpression newMethodExpression = JavaPsiFacade.getElementFactory(project)
           .createExpressionFromText(CommonClassNames.JAVA_UTIL_COMPARATOR + "." + (reverse ? "reverseOrder()" : "naturalOrder()"), parent);
-        PsiElement shortMethodExpression = JavaCodeStyleManager.getInstance(project).shortenClassReferences(newMethodExpression);
-        element.replace(shortMethodExpression);
+        element.replace(newMethodExpression);
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(parent);
       }
     }
   }
