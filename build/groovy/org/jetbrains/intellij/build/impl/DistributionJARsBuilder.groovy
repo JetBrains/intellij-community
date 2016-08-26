@@ -128,8 +128,6 @@ class DistributionJARsBuilder {
         withResource("lib/libpty/$it", "lib/libpty/$it")
       }
 
-      withResource("lib/src/trove4j_src.jar", "lib/src")
-
       projectLibrariesUsedByPlugins.each {
         if (!productLayout.projectLibrariesToUnpackIntoMainJar.contains(it.name)) {
           withProjectLibrary(it.name)
