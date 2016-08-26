@@ -43,7 +43,6 @@ class UsedColors {
                                 @NotNull final String name,
                                 @NotNull RainbowHighlighter rainbowHighlighter) {
     int colorsCount = rainbowHighlighter.getColorsCount();
-
     int colorIndex;
     while (true) {
       Object data = context.getUserData(USED_COLOR);
