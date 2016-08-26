@@ -31,22 +31,29 @@ import com.intellij.openapi.module.impl.scopes.ModulesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.graph.Graph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE;
 import static com.intellij.psi.SyntaxTraverser.psiTraverser;
 
@@ -101,6 +108,46 @@ public class ModuleHighlightUtil {
       st -> Optional.ofNullable(st.getClassReference()).map(ModuleHighlightUtil::refText),
       "module.duplicate.uses", results);
 
+    checkDuplicateRefs(
+      psiTraverser().children(module).filter(PsiProvidesStatement.class),
+      st -> Optional.of(pair(st.getInterfaceReference(), st.getImplementationReference()))
+        .map(p -> p.first != null && p.second != null ? refText(p.first) + " / " + refText(p.second) : null),
+      "module.duplicate.provides", results);
+
+    return results;
+  }
+
+  @NotNull
+  static List<HighlightInfo> checkUnusedServices(@NotNull PsiJavaModule module) {
+    List<HighlightInfo> results = ContainerUtil.newSmartList();
+
+    Set<String> exports = ContainerUtil.newTroveSet(), uses = ContainerUtil.newTroveSet();
+    for (PsiElement child : psiTraverser().children(module)) {
+      if (child instanceof PsiExportsStatement) {
+        PsiJavaCodeReferenceElement ref = ((PsiExportsStatement)child).getPackageReference();
+        if (ref != null) exports.add(refText(ref));
+      }
+      else if (child instanceof PsiUsesStatement) {
+        PsiJavaCodeReferenceElement ref = ((PsiUsesStatement)child).getClassReference();
+        if (ref != null) uses.add(refText(ref));
+      }
+    }
+
+    Module host = ModuleUtilCore.findModuleForPsiElement(module);
+    for (PsiProvidesStatement statement : psiTraverser().children(module).filter(PsiProvidesStatement.class)) {
+      PsiJavaCodeReferenceElement ref = statement.getInterfaceReference();
+      if (ref != null) {
+        PsiElement target = ref.resolve();
+        if (target instanceof PsiClass && ModuleUtilCore.findModuleForPsiElement(target) == host) {
+          String className = refText(ref), packageName = StringUtil.getPackageName(className);
+          if (!exports.contains(packageName) && !uses.contains(className)) {
+            String message = JavaErrorMessages.message("module.service.unused");
+            results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(range(ref)).description(message).create());
+          }
+        }
+      }
+    }
+
     return results;
   }
 
@@ -108,7 +155,7 @@ public class ModuleHighlightUtil {
                                                                 Function<T, Optional<String>> ref,
                                                                 @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String key,
                                                                 List<HighlightInfo> results) {
-    Set<String> filter = ContainerUtil.newHashSet();
+    Set<String> filter = ContainerUtil.newTroveSet();
     for (T statement : statements) {
       String refText = ref.apply(statement).orElse(null);
       if (refText != null && !filter.add(refText)) {
@@ -199,7 +246,7 @@ public class ModuleHighlightUtil {
   static List<HighlightInfo> checkExportTargets(@NotNull PsiExportsStatement statement, @NotNull PsiJavaModule container) {
     List<HighlightInfo> results = ContainerUtil.newSmartList();
 
-    Set<String> targets = ContainerUtil.newHashSet();
+    Set<String> targets = ContainerUtil.newTroveSet();
     for (PsiJavaModuleReferenceElement refElement : psiTraverser().children(statement).filter(PsiJavaModuleReferenceElement.class)) {
       String refText = refElement.getReferenceText();
       PsiPolyVariantReference ref = refElement.getReference();
@@ -229,6 +276,40 @@ public class ModuleHighlightUtil {
       if (target instanceof PsiClass && ((PsiClass)target).isEnum()) {
         String message = JavaErrorMessages.message("module.service.enum", ((PsiClass)target).getName());
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(refElement)).description(message).create();
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  static HighlightInfo checkServiceImplementation(@Nullable PsiJavaCodeReferenceElement implRef,
+                                                  @Nullable PsiJavaCodeReferenceElement intRef) {
+    if (implRef != null && intRef != null) {
+      PsiElement implTarget = implRef.resolve(), intTarget = intRef.resolve();
+      if (implTarget instanceof PsiClass && intTarget instanceof PsiClass) {
+        PsiClass implClass = (PsiClass)implTarget;
+        if (!InheritanceUtil.isInheritorOrSelf(implClass, (PsiClass)intTarget, true)) {
+          String message = JavaErrorMessages.message("module.service.subtype");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).description(message).create();
+        }
+        if (implClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+          String message = JavaErrorMessages.message("module.service.abstract", implClass.getName());
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).description(message).create();
+        }
+
+        PsiMethod[] constructors = implClass.getConstructors();
+        if (constructors.length > 0) {
+          PsiMethod constructor = JBIterable.of(constructors).find(c -> c.getParameterList().getParametersCount() == 0);
+          if (constructor == null) {
+            String message = JavaErrorMessages.message("module.service.no.ctor", implClass.getName());
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).description(message).create();
+          }
+          if (!constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
+            String message = JavaErrorMessages.message("module.service.hidden.ctor", implClass.getName());
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).description(message).create();
+          }
+        }
       }
     }
 

@@ -1619,6 +1619,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkFileName(module, myFile));
     if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkFileDuplicates(module, myFile));
     if (!myHolder.hasErrorResults()) myHolder.addAll(ModuleHighlightUtil.checkDuplicateStatements(module));
+    if (!myHolder.hasErrorResults()) myHolder.addAll(ModuleHighlightUtil.checkUnusedServices(module));
     if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkFileLocation(module, myFile));
   }
 
@@ -1648,6 +1649,15 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitUsesStatement(statement);
     if (PsiUtil.isLanguageLevel9OrHigher(myFile)) {
       if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkServiceReference(statement.getClassReference()));
+    }
+  }
+
+  @Override
+  public void visitProvidesStatement(PsiProvidesStatement statement) {
+    super.visitProvidesStatement(statement);
+    if (PsiUtil.isLanguageLevel9OrHigher(myFile)) {
+      PsiJavaCodeReferenceElement intRef = statement.getInterfaceReference(), implRef = statement.getImplementationReference();
+      if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkServiceImplementation(implRef, intRef));
     }
   }
 
