@@ -229,6 +229,24 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
       };
       needSpecifyType = false;
     }
+    else if (methodName.equals("last")) {
+      descriptorBase = new TypeConversionDescriptor("$it$.last()", null) {
+        @Override
+        public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) {
+          final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
+          String varA = suggestName("a", codeStyleManager, expression);
+          String varB = suggestName("b", codeStyleManager, expression);
+          setReplaceByString("$it$.reduce((" + varA + ", " + varB + ") -> " + varB + ")");
+          return super.replace(expression, evaluator);
+        }
+
+        private  String suggestName(String baseName, JavaCodeStyleManager codeStyleManager, PsiElement place) {
+          final SuggestedNameInfo suggestedNameInfo = codeStyleManager
+            .suggestVariableName(VariableKind.LOCAL_VARIABLE, baseName, null, null, false);
+          return codeStyleManager.suggestUniqueVariableName(suggestedNameInfo, place, false).names[0];
+        }
+      };
+    }
     else {
       final TypeConversionDescriptorFactory base = DESCRIPTORS_MAP.get(methodName);
       if (base != null) {
