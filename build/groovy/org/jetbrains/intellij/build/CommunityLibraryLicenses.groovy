@@ -107,6 +107,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "epydoc", attachedTo: "python-helpers", version: "3.0.1", license: "MIT", url: "http://epydoc.sourceforge.net/"),
     new LibraryLicense(name: "Fest", libraryName: "fest", version: "", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://code.google.com/p/fest/"),
+    new LibraryLicense(name: "FiraCode", attachedTo: "platform-resources", version: "1.200", license: "OFL", url: "https://github.com/tonsky/FiraCode/blob/master/LICENSE"),
     new LibraryLicense(name: "FreeMarker", attachedTo: "coverage", version: "2.3.15", license: "BSD", url: "http://freemarker.sourceforge.net/"),
     new LibraryLicense(name: "FreeMarker", libraryName: "freemarker-2.3.20", version: "2.3.20", license: "BSD",
                        url: "http://freemarker.sourceforge.net/"),
