@@ -96,7 +96,7 @@ public class ClassesFilteredView extends BorderLayoutPanel {
       }
 
       private void dispatch(KeyEvent e) {
-        if (KeyboardUtils.isArrowKey(e.getKeyCode())) {
+        if (KeyboardUtils.isUpDownKey(e.getKeyCode()) || KeyboardUtils.isEnterKey(e.getKeyCode())) {
           myTable.dispatchEvent(e);
         }
       }

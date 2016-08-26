@@ -7,9 +7,8 @@ public class KeyboardUtils {
     return keyCode == KeyEvent.VK_ENTER;
   }
 
-  public static boolean isArrowKey(int keyCode) {
-    return keyCode == KeyEvent.VK_UP || keyCode == KeyEvent.VK_LEFT ||
-        keyCode == KeyEvent.VK_DOWN || keyCode == KeyEvent.VK_RIGHT;
+  public static boolean isUpDownKey(int keyCode) {
+    return keyCode == KeyEvent.VK_UP || keyCode == KeyEvent.VK_DOWN;
   }
 
   public static boolean isBackSpace(int keyCode) {
