@@ -222,12 +222,12 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
         InstancesTracker.TrackingType type = myInstancesTracker.getTrackingType(ref.name());
         if(type != null && !myTrackedClasses.containsKey(ref)) {
           List<ObjectReference> instances = ref.instances(0);
-          myTrackedClasses.put(ref, InstanceTrackingStrategy.create(type, instances));
+          myTrackedClasses.put(ref, InstanceTrackingStrategy.create(ref, suspendContext, type, instances));
         }
       }
 
       for(Map.Entry<ReferenceType, InstanceTrackingStrategy> entry : myTrackedClasses.entrySet()) {
-        entry.getValue().update(entry.getKey().instances(0));
+        entry.getValue().update(suspendContext, entry.getKey().instances(0));
       }
 
       if (classes.isEmpty()) {

@@ -1,5 +1,6 @@
 package org.jetbrains.debugger.memory.tracking;
 
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,7 +15,8 @@ class IdentityBasedTracking extends InstanceTrackingStrategy {
 
   @NotNull
   @Override
-  protected List<ObjectReference> updateImpl(@NotNull List<ObjectReference> references) {
+  protected List<ObjectReference> updateImpl(@NotNull SuspendContextImpl suspendContext,
+                                             @NotNull List<ObjectReference> references) {
     List<ObjectReference> result = references.stream()
         .filter(reference -> reference.uniqueID() > myLastId)
         .collect(Collectors.toList());

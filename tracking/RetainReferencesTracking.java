@@ -1,5 +1,6 @@
 package org.jetbrains.debugger.memory.tracking;
 
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,8 +17,9 @@ class RetainReferencesTracking extends InstanceTrackingStrategy {
 
   @NotNull
   @Override
-  protected List<ObjectReference> updateImpl(@NotNull List<ObjectReference> references) {
-    myIdTracker.update(references);
+  protected List<ObjectReference> updateImpl(@NotNull SuspendContextImpl suspendContext,
+                                             @NotNull List<ObjectReference> references) {
+    myIdTracker.update(suspendContext, references);
     myHardRefs = references;
     return myIdTracker.getNewInstances();
   }
