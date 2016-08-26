@@ -94,9 +94,8 @@ class ProductModulesLayout {
 
   /**
    * Name of the module containing search/searchableOptions.xml file.
-   * //todo[nik] make this optional
    */
-  String searchableOptionsModule
+  String searchableOptionsModule = "platform-resources"
 
   /**
    * Paths to license files which are required to start IDE in headless mode to generate searchable options index
