@@ -81,6 +81,27 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
         }""".trimIndent())
   }
 
+  fun testUses() {
+    addFile("pkg/main/C.java", "package pkg.main;\nclass C { }")
+    addFile("pkg/main/E.java", "package pkg.main;\npublic enum E { }")
+    doTest("""
+        module M {
+          uses pkg.<error descr="Cannot resolve symbol 'main'">main</error>;
+          uses pkg.main.<error descr="Cannot resolve symbol 'X'">X</error>;
+          uses pkg.main.<error descr="'pkg.main.C' is not public in 'pkg.main'. Cannot be accessed from outside package">C</error>;
+          uses pkg.main.<error descr="The service definition is an enum: E">E</error>;
+        }""".trimIndent())
+  }
+
+  fun testDuplicateUses() {
+    addFile("pkg/main/C.java", "package pkg.main;\npublic class C { }")
+    doTest("""
+        module M {
+          uses pkg.main.C;
+          <error descr="Duplicate uses: pkg.main.C">uses pkg. main . /*...*/ C;</error>
+        }""".trimIndent())
+  }
+
   //<editor-fold desc="Helpers.">
   private fun addFile(path: String, text: String) = VfsTestUtil.createFile(LightPlatformTestCase.getSourceRoot(), path, text)
 

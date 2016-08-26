@@ -35,17 +35,19 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.Graph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.intellij.codeInsight.daemon.JavaErrorMessages.BUNDLE;
 import static com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE;
 import static com.intellij.psi.SyntaxTraverser.psiTraverser;
 
@@ -83,23 +85,10 @@ public class ModuleHighlightUtil {
 
   @NotNull
   static List<HighlightInfo> checkDuplicateRequires(@NotNull PsiJavaModule module) {
-    List<HighlightInfo> results = ContainerUtil.newSmartList();
-
-    Set<String> names = ContainerUtil.newHashSet();
-    for (PsiRequiresStatement statement : psiTraverser().children(module).filter(PsiRequiresStatement.class)) {
-      PsiJavaModuleReferenceElement ref = statement.getReferenceElement();
-      if (ref != null) {
-        String text = ref.getReferenceText();
-        if (!names.add(text)) {
-          String message = JavaErrorMessages.message("module.duplicate.requires", text);
-          HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).description(message).create();
-          QuickFixAction.registerQuickFixAction(info, new DeleteElementFix(statement));
-          results.add(info);
-        }
-      }
-    }
-
-    return results;
+    return checkDuplicateRefs(
+      psiTraverser().children(module).filter(PsiRequiresStatement.class),
+      st -> Optional.ofNullable(st.getReferenceElement()).map(PsiJavaModuleReferenceElement::getReferenceText).orElse(null),
+      "module.duplicate.requires");
   }
 
   @Nullable
@@ -202,23 +191,51 @@ public class ModuleHighlightUtil {
 
   @NotNull
   static List<HighlightInfo> checkDuplicateExports(@NotNull PsiJavaModule module) {
-    List<HighlightInfo> results = ContainerUtil.newSmartList();
+    return checkDuplicateRefs(
+      psiTraverser().children(module).filter(PsiExportsStatement.class),
+      st -> Optional.ofNullable(st.getPackageReference()).map(ref -> PsiNameHelper.getQualifiedClassName(ref.getText(), true)).orElse(null),
+      "module.duplicate.export");
+  }
 
-    Set<String> names = ContainerUtil.newHashSet();
-    for (PsiExportsStatement statement : psiTraverser().children(module).filter(PsiExportsStatement.class)) {
-      PsiJavaCodeReferenceElement ref = statement.getPackageReference();
-      if (ref != null) {
-        String text = PsiNameHelper.getQualifiedClassName(ref.getText(), true);
-        if (!names.add(text)) {
-          String message = JavaErrorMessages.message("module.duplicate.export", text);
-          HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).description(message).create();
-          QuickFixAction.registerQuickFixAction(info, new DeleteElementFix(statement));
-          results.add(info);
-        }
+  @Nullable
+  static HighlightInfo checkServiceReference(@Nullable PsiJavaCodeReferenceElement refElement) {
+    if (refElement != null) {
+      PsiElement target = refElement.resolve();
+      if (target instanceof PsiClass && ((PsiClass)target).isEnum()) {
+        String message = JavaErrorMessages.message("module.service.enum", ((PsiClass)target).getName());
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(refElement)).description(message).create();
       }
     }
 
-    return results;
+    return null;
+  }
+
+  @NotNull
+  static List<HighlightInfo> checkDuplicateUses(@NotNull PsiJavaModule module) {
+    return checkDuplicateRefs(
+      psiTraverser().children(module).filter(PsiUsesStatement.class),
+      st -> Optional.ofNullable(st.getClassReference()).map(ref -> PsiNameHelper.getQualifiedClassName(ref.getText(), true)).orElse(null),
+      "module.duplicate.uses");
+  }
+
+  private static <T extends PsiElement> List<HighlightInfo> checkDuplicateRefs(Iterable<T> statements,
+                                                                               Function<T, String> ref,
+                                                                               @PropertyKey(resourceBundle = BUNDLE) String key) {
+    List<HighlightInfo> results = null;
+
+    Set<String> names = ContainerUtil.newHashSet();
+    for (T statement : statements) {
+      String refText = ref.apply(statement);
+      if (refText != null && !names.add(refText)) {
+        String message = JavaErrorMessages.message(key, refText);
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).description(message).create();
+        QuickFixAction.registerQuickFixAction(info, new DeleteElementFix(statement));
+        if (results == null) results = ContainerUtil.newSmartList();
+        results.add(info);
+      }
+    }
+
+    return results != null ? results : Collections.emptyList();
   }
 
   private static QuickFixFactory factory() {
@@ -227,5 +244,9 @@ public class ModuleHighlightUtil {
 
   private static TextRange range(PsiJavaModule module) {
     return new TextRange(module.getTextOffset(), module.getNameElement().getTextRange().getEndOffset());
+  }
+
+  private static PsiElement range(PsiJavaCodeReferenceElement refElement) {
+    return ObjectUtils.notNull(refElement.getReferenceNameElement(), refElement);
   }
 }
