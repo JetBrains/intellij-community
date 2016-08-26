@@ -178,7 +178,7 @@ public class WhileCanBeForeachInspection extends WhileCanBeForeachInspectionBase
     @Nullable
     private static PsiType getContentType(PsiType type, String containerClassName) {
       PsiType parameterType = PsiUtil.substituteTypeParameter(type, containerClassName, 0, true);
-      return GenericsUtil.eliminateWildcards(parameterType, false, true);
+      return GenericsUtil.getVariableTypeByExpressionType(parameterType);
     }
   }
 }
