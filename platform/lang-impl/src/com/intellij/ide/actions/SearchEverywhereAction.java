@@ -163,13 +163,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private volatile GotoSymbolModel2 mySymbolsModel;
   private Component myFocusComponent;
   private JBPopup myPopup;
-  private Map<String, String> myConfigurables = new HashMap<String, String>();
+  private Map<String, String> myConfigurables = new HashMap<>();
 
   private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
   private JBList myList;
   private JCheckBox myNonProjectCheckBox;
   private AnActionEvent myActionEvent;
-  private Set<AnAction> myDisabledActions = new HashSet<AnAction>();
+  private Set<AnAction> myDisabledActions = new HashSet<>();
   private Component myContextComponent;
   private CalcThread myCalcThread;
   private static AtomicBoolean ourShiftIsPressed = new AtomicBoolean(false);
@@ -255,15 +255,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       new JBColor(new Color(46, 111, 205), new Color(53, 65, 87)));
   }
 
-  public SearchEverywhereAction() {
-    updateComponents();
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(() -> onFocusLost());
-
-  }
-
   private void updateComponents() {
-    myRenderer = new MyListRenderer();
     myList = new JBList(new SearchListModel()) {
       int lastKnownHeight = JBUI.scale(30);
       @Override
@@ -291,6 +283,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
       }
     };
+    myRenderer = new MyListRenderer(myList);
     myList.setCellRenderer(myRenderer);
     myList.addMouseListener(new MouseAdapter() {
       @Override
@@ -817,7 +810,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     final PropertiesComponent storage = PropertiesComponent.getInstance(project);
     final String[] values = storage.getValues(SE_HISTORY_KEY);
-    List<HistoryItem> history = new ArrayList<HistoryItem>();
+    List<HistoryItem> history = new ArrayList<>();
     if (values != null) {
       for (String s : values) {
         final String[] split = s.split("\t");
@@ -1028,6 +1021,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     private Project myProject;
     private MyAccessibleComponent myMainPanel = new MyAccessibleComponent(new BorderLayout());
     private JLabel myTitle = new JLabel();
+
+    MyListRenderer(@NotNull JBList myList) {
+      assert myList == SearchEverywhereAction.this.myList;
+    }
 
     private class MyAccessibleComponent extends JPanel {
       private Accessible myAccessible;
@@ -1310,8 +1307,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     private final ProgressIndicator myProgressIndicator = new ProgressIndicatorBase();
     private final ActionCallback myDone = new ActionCallback();
     private final SearchListModel myListModel;
-    private final ArrayList<VirtualFile> myAlreadyAddedFiles = new ArrayList<VirtualFile>();
-    private final ArrayList<AnAction> myAlreadyAddedActions = new ArrayList<AnAction>();
+    private final ArrayList<VirtualFile> myAlreadyAddedFiles = new ArrayList<>();
+    private final ArrayList<AnAction> myAlreadyAddedActions = new ArrayList<>();
 
 
     public CalcThread(Project project, String pattern, boolean reuseModel) {
@@ -1412,7 +1409,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       if (!Registry.is("search.everywhere.toolwindows")) {
         return;
       }
-      final List<ActivateToolWindowAction> actions = new ArrayList<ActivateToolWindowAction>();
+      final List<ActivateToolWindowAction> actions = new ArrayList<>();
       for (ActivateToolWindowAction action : ToolWindowsGroup.getToolWindowActions(project, false)) {
         String text = action.getTemplatePresentation().getText();
         if (text != null && StringUtil.startsWithIgnoreCase(text, pattern)) {
@@ -1519,7 +1516,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     private synchronized void buildStructure(final String pattern) {
       if (!Registry.is("search.everywhere.structure") || myStructureModel == null) return;
-      final List<StructureViewTreeElement> elements = new ArrayList<StructureViewTreeElement>();
+      final List<StructureViewTreeElement> elements = new ArrayList<>();
       final MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern).build();
       fillStructure(myStructureModel.getRoot(), elements, matcher);
       if (elements.size() > 0) {
@@ -1763,7 +1760,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     private synchronized void buildRecentFiles(String pattern) {
       final MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern).build();
-      final ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
+      final ArrayList<VirtualFile> files = new ArrayList<>();
       final List<VirtualFile> selected = Arrays.asList(FileEditorManager.getInstance(project).getSelectedFiles());
       for (VirtualFile file : ArrayUtil.reverseArray(EditorHistoryManager.getInstance(project).getFiles())) {
         if (StringUtil.isEmptyOrSpaces(pattern) || matcher.matches(file.getName())) {
@@ -1793,7 +1790,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     private synchronized void buildTopHit(String pattern) {
-      final List<Object> elements = new ArrayList<Object>();
+      final List<Object> elements = new ArrayList<>();
       final HistoryItem history = myHistoryItem;
       if (history != null) {
         final HistoryType type = parseHistoryType(history.type);
@@ -1865,7 +1862,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
       if (pattern.startsWith("#") && !pattern.contains(" ")) {
         String id = pattern.substring(1);
-        final HashSet<String> ids = new HashSet<String>();
+        final HashSet<String> ids = new HashSet<>();
         for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
           check();
           if (provider instanceof OptionsTopHitProvider) {
@@ -2018,14 +2015,15 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               .setCancelKeyEnabled(false)
               .setResizable(true)
               .setCancelCallback(() -> {
+                final JBPopup balloon = myBalloon;
                 final AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
                 if (event instanceof MouseEvent) {
                   final Component comp = ((MouseEvent)event).getComponent();
-                  if (UIUtil.getWindow(comp) == UIUtil.getWindow(myBalloon.getContent())) {
+                  if (balloon != null && UIUtil.getWindow(comp) == UIUtil.getWindow(balloon.getContent())) {
                     return false;
                   }
                 }
-                final boolean canClose = myBalloon == null || myBalloon.isDisposed() || (!getField().getTextEditor().hasFocus() && !mySkipFocusGain);
+                final boolean canClose = balloon == null || balloon.isDisposed() || (!getField().getTextEditor().hasFocus() && !mySkipFocusGain);
                 if (canClose) {
                   PropertiesComponent.getInstance().setValue("search.everywhere.max.popup.width", Math.max(content.getWidth(), JBUI.scale(600)), JBUI.scale(600));
                 }
