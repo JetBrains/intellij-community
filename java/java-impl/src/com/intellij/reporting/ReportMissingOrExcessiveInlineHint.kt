@@ -92,7 +92,8 @@ class ReportMissingOrExcessiveInlineHint : AnAction() {
   }
   
   private fun showHint(editor: Editor) {
-    ApplicationManager.getApplication().invokeLater { 
+    //hack, in most cases hint will not be shown without invokeLater, see IDEA-CR-13295
+    ApplicationManager.getApplication().invokeLater {
       HintManager.getInstance().showInformationHint(editor, "Troubled inline hint was reported")  
     }
   }
