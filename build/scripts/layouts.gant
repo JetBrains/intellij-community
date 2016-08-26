@@ -222,11 +222,6 @@ def layoutFull(BuildContext context) {
         include(name: "kotlin-reflect.jar")
       }
 
-      dir("src") {
-        fileset(dir: "$home/lib/src") {
-          include(name: "trove4j_src.jar")
-        }
-      }
       fileset(dir: "$home/xml/relaxng/lib", includes: "*.jar")
 
       dir("ant") {
