@@ -48,7 +48,7 @@ public class ClassesFilteredView extends BorderLayoutPanel {
   private final DebugProcess myDebugProcess;
   private final SingleAlarmWithMutableDelay mySingleAlarm;
 
-  private final SearchTextField myFilterTextField = new SearchTextField(false);
+  private final SearchTextField myFilterTextField = new FilterTextField();
   private final ClassesTable myTable;
 
   private volatile SuspendContextImpl myLastSuspendContext;
@@ -78,6 +78,31 @@ public class ClassesFilteredView extends BorderLayoutPanel {
           String text = myFilterTextField.getText();
           myFilterTextField.setText(text + KeyEvent.getKeyText(keyCode).toLowerCase());
         }
+      }
+    });
+
+    myFilterTextField.addKeyboardListener(new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        dispatch(e);
+      }
+
+      @Override
+      public void keyReleased(KeyEvent e) {
+        dispatch(e);
+      }
+
+      private void dispatch(KeyEvent e) {
+        if (KeyboardUtils.isArrowKey(e.getKeyCode())) {
+          myTable.dispatchEvent(e);
+        }
+      }
+    });
+
+    myFilterTextField.addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        myTable.setFilterPattern(myFilterTextField.getText());
       }
     });
 
@@ -114,13 +139,6 @@ public class ClassesFilteredView extends BorderLayoutPanel {
         if (myNeedReloadClasses) {
           updateClassesAndCounts();
         }
-      }
-    });
-
-    myFilterTextField.addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(DocumentEvent e) {
-        myTable.setFilterPattern(myFilterTextField.getText());
       }
     });
 
@@ -240,6 +258,21 @@ public class ClassesFilteredView extends BorderLayoutPanel {
 
     private boolean contextIsValid() {
       return ClassesFilteredView.this.getSuspendContext() == getSuspendContext();
+    }
+  }
+
+  private class FilterTextField extends SearchTextField {
+    FilterTextField() {
+      super(false);
+    }
+
+    @Override
+    protected void showPopup() {
+    }
+
+    @Override
+    protected boolean hasIconsOutsideOfTextField() {
+      return false;
     }
   }
 }
