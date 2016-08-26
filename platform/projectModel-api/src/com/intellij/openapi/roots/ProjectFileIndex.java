@@ -141,6 +141,16 @@ public interface ProjectFileIndex extends FileIndex {
   boolean isInLibraryClasses(@NotNull VirtualFile fileOrDir);
 
   /**
+   * Returns true if <code>fileOrDir</code> is a file which belongs to the classes or sources of some library.
+   *
+   * @param fileOrDir the file or directory to check.
+   * @return true if the file belongs to the classes or sources of some library, false otherwise.
+   */
+  default boolean isInLibrary(@NotNull VirtualFile fileOrDir) {
+    return isInLibraryClasses(fileOrDir) || isInLibrarySource(fileOrDir);
+  }
+
+  /**
    * Returns true if <code>fileOrDir</code> is a file or directory from library source.
    *
    * @param fileOrDir the file or directory to check.
