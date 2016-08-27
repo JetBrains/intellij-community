@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -49,13 +50,13 @@ public class PyMakeFunctionReturnTypeQuickFix implements LocalQuickFix {
   @NotNull
   public String getName() {
     PyFunction function = myFunction.getElement();
-    return String.format("Make '%s' return '%s'",
-                         function != null ? function.getName() : "function", myReturnTypeName);
+    String functionName = function != null ? function.getName() : "function";
+    return PyBundle.message("QFIX.NAME.make.$0.return.$1", functionName, myReturnTypeName);
   }
 
   @NotNull
   public String getFamilyName() {
-    return "Make function return inferred type";
+    return PyBundle.message("QFIX.NAME.make.$0.return.$1", "function", "inferred type");
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
