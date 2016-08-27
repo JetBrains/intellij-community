@@ -31,7 +31,6 @@ import java.util.zip.ZipInputStream;
 
 public class Runner {
   public static Logger logger = null;
-  private static String updaterLogFileName;
   private static boolean platformCaseSensitive;
   private static final String PATCH_FILE_NAME = "patch-file.zip";
 
@@ -130,8 +129,10 @@ public class Runner {
   }
 
   private static void checkIfPlatformCaseSensitive() throws Exception {
-    platformCaseSensitive = new File(updaterLogFileName.toLowerCase()).exists() &&
-                            new File(updaterLogFileName.toUpperCase()).exists() ?
+    long requiredFreeSpace = 1000000;
+    String logFolder = getDir(requiredFreeSpace);
+    platformCaseSensitive = new File(logFolder.toLowerCase()).exists() &&
+                            new File(logFolder.toUpperCase()).exists() ?
                             false : true;
   }
 
@@ -143,10 +144,9 @@ public class Runner {
     if (logger == null) {
       long requiredFreeSpace = 1000000;
       String logFolder = getDir(requiredFreeSpace);
-      updaterLogFileName = new File(logFolder, "idea_updater.log").getAbsolutePath();
       FileAppender update = new FileAppender();
-      update.setFile(updaterLogFileName);
 
+      update.setFile(new File(logFolder, "idea_updater.log").getAbsolutePath());
       update.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
       update.setThreshold(Level.ALL);
       update.setAppend(true);
