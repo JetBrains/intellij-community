@@ -23,37 +23,34 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyFunctionImpl;
-import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author lada
  */
-public class MakeFunctionReturnTypeQuickFix implements LocalQuickFix {
-  SmartPsiElementPointer<PyFunction> myFunction;
-  SmartPsiElementPointer<PyAnnotation> myAnnotation;
-  SmartPsiElementPointer<PsiComment> myTypeCommentAnnotation;
-  PyType myReturnType;
-  TypeEvalContext myTypeEvalContext;
+public class PyMakeFunctionReturnTypeQuickFix implements LocalQuickFix {
+  private final SmartPsiElementPointer<PyFunction> myFunction;
+  private final SmartPsiElementPointer<PyAnnotation> myAnnotation;
+  private final SmartPsiElementPointer<PsiComment> myTypeCommentAnnotation;
+  private final String myReturnTypeName;
 
-  public MakeFunctionReturnTypeQuickFix(PyFunction function, PyType returnType, TypeEvalContext context) {
-    myFunction = SmartPointerManager.getInstance(function.getProject()).createSmartPsiElementPointer(function);
+  public PyMakeFunctionReturnTypeQuickFix(@NotNull PyFunction function, @Nullable String returnTypeName, @NotNull TypeEvalContext context) {
+    final SmartPointerManager manager = SmartPointerManager.getInstance(function.getProject());
+    myFunction = manager.createSmartPsiElementPointer(function);
     PyAnnotation annotation = function.getAnnotation();
-    myAnnotation = annotation != null ? SmartPointerManager.getInstance(function.getProject()).createSmartPsiElementPointer(annotation) : null;
+    myAnnotation = annotation != null ? manager.createSmartPsiElementPointer(annotation) : null;
     PsiComment typeCommentAnnotation = function.getTypeComment();
-    myTypeCommentAnnotation = typeCommentAnnotation != null ? SmartPointerManager.getInstance(function.getProject()).createSmartPsiElementPointer(typeCommentAnnotation) : null;
-    myTypeEvalContext = context;
-    myReturnType = (returnType == null && function instanceof PyFunctionImpl) ? ((PyFunctionImpl)function).getReturnStatementType(myTypeEvalContext) : returnType;
+    myTypeCommentAnnotation = typeCommentAnnotation != null ? manager.createSmartPsiElementPointer(typeCommentAnnotation) : null;
+    myReturnTypeName = (returnTypeName == null) ? PythonDocumentationProvider.getTypeName(function.getReturnStatementType(context), context) : returnTypeName;
   }
 
   @NotNull
   public String getName() {
     PyFunction function = myFunction.getElement();
     return String.format("Make '%s' return '%s'",
-                         function != null ? function.getName() : "function",
-                         PythonDocumentationProvider.getTypeName(myReturnType, myTypeEvalContext));
+                         function != null ? function.getName() : "function", myReturnTypeName);
   }
 
   @NotNull
@@ -68,8 +65,7 @@ public class MakeFunctionReturnTypeQuickFix implements LocalQuickFix {
       if (annotation != null) {
         final PyExpression annotationExpr = annotation.getValue();
         if (annotationExpr == null) return;
-        annotationExpr.replace(elementGenerator.createExpressionFromText(LanguageLevel.PYTHON30,
-                                                                         PythonDocumentationProvider.getTypeName(myReturnType, myTypeEvalContext)));
+        annotationExpr.replace(elementGenerator.createExpressionFromText(LanguageLevel.PYTHON30, myReturnTypeName));
       }
     }
     else if (myTypeCommentAnnotation != null) {
@@ -77,7 +73,7 @@ public class MakeFunctionReturnTypeQuickFix implements LocalQuickFix {
       if (typeComment != null) {
         final StringBuilder typeCommentAnnotation = new StringBuilder(typeComment.getText());
         typeCommentAnnotation.delete(typeCommentAnnotation.indexOf("->"), typeCommentAnnotation.length());
-        typeCommentAnnotation.append("-> ").append(PythonDocumentationProvider.getTypeName(myReturnType, myTypeEvalContext));
+        typeCommentAnnotation.append("-> ").append(myReturnTypeName);
         final PsiComment newTypeComment = elementGenerator.createFromText(LanguageLevel.PYTHON27, PsiComment.class, typeCommentAnnotation.toString());
         typeComment.replace(newTypeComment);
       }
