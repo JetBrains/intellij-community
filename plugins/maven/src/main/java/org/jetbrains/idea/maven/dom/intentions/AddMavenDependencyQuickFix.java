@@ -25,7 +25,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,13 +40,13 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class AddMavenDependencyQuickFix implements IntentionAction, LowPriorityAction {
+public abstract class AddMavenDependencyQuickFix<T extends PsiElement> implements IntentionAction, LowPriorityAction {
 
   private static final Pattern CLASSNAME_PATTERN = Pattern.compile("(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*\\.)*\\p{Lu}\\p{javaJavaIdentifierPart}+");
 
-  private final PsiJavaCodeReferenceElement myRef;
+  protected final T myRef;
 
-  public AddMavenDependencyQuickFix(PsiJavaCodeReferenceElement ref) {
+  public AddMavenDependencyQuickFix(T ref) {
     myRef = ref;
   }
 
@@ -103,19 +102,7 @@ public class AddMavenDependencyQuickFix implements IntentionAction, LowPriorityA
     }.execute();
   }
 
-  public String getReferenceText() {
-    PsiJavaCodeReferenceElement result = myRef;
-    while (true) {
-      PsiElement parent = result.getParent();
-      if (!(parent instanceof PsiJavaCodeReferenceElement)) {
-        break;
-      }
-
-      result = (PsiJavaCodeReferenceElement)parent;
-    }
-
-    return result.getQualifiedName();
-  }
+  public abstract String getReferenceText();
 
   public boolean startInWriteAction() {
     return false;

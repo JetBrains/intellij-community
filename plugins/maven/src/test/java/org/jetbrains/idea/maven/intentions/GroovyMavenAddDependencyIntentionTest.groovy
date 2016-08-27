@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,16 @@
  */
 package org.jetbrains.idea.maven.intentions
 
-import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.idea.maven.dom.MavenDomTestCase
-import org.jetbrains.idea.maven.dom.intentions.AddMavenDependencyQuickFix
+import org.jetbrains.idea.maven.dom.intentions.GroovyAddMavenDependencyQuickFix
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 
 /**
- * @author Sergey Evdokimov
+ * @author Sang-Jin Park
  */
-class MavenAddDependencyIntentionTest extends MavenDomTestCase {
+class GroovyMavenAddDependencyIntentionTest extends MavenDomTestCase {
 
   @Override
   protected void setUp() throws Exception {
@@ -39,7 +39,7 @@ class MavenAddDependencyIntentionTest extends MavenDomTestCase {
   public void testAddDependencyVariableDeclaration() {
     doTest("""
 class A {
-  void foo() {
+  def foo() {
     Fo<caret>o x = null
   }
 }
@@ -49,7 +49,7 @@ class A {
   public void testAddDependencyWithQualifier() {
     doTest("""
 class A {
-  void foo() {
+  def foo() {
     java.xxx<caret>x.Foo foo
   }
 }
@@ -59,7 +59,7 @@ class A {
   public void testAddDependencyNotAClass() {
     doTest("""
 class A {
-  void foo() {
+  def foo() {
     return foo<caret>Xxx
   }
 }
@@ -69,7 +69,7 @@ class A {
   public void testAddDependencyFromExtendsWithGeneric() {
     doTest("""
 class A extends Fo<caret>o<String> {
-  void foo() { }
+  def foo() { }
 }
 """, "Foo")
   }
@@ -77,7 +77,7 @@ class A extends Fo<caret>o<String> {
   public void testAddDependencyFromClassInsideGeneric() {
     doTest("""
 class A extends List<Fo<caret>o> {
-  void foo() { }
+  def foo() { }
 }
 """, "Foo")
   }
@@ -85,20 +85,20 @@ class A extends List<Fo<caret>o> {
   public void testAddDependencyFromClassInsideGenericWithExtends() {
     doTest("""
 class A extends List<? extends Fo<caret>o> {
-  void foo() { }
+  def foo() { }
 }
 """, "Foo")
   }
 
   private void doTest(String classText, @Nullable String referenceText) {
-    def file = createProjectSubFile("src/main/java/A.java", classText)
+    def file = createProjectSubFile("src/main/groovy/A.groovy", classText)
 
     myFixture.configureFromExistingVirtualFile(file)
-    def element = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.caretOffset), PsiJavaCodeReferenceElement)
+    def element = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.caretOffset), GrReferenceElement)
 
     assert element.resolve() == null
 
-    AddMavenDependencyQuickFix fix = new AddMavenDependencyQuickFix(element)
+    GroovyAddMavenDependencyQuickFix fix = new GroovyAddMavenDependencyQuickFix(element)
 
     if (referenceText == null) {
       assert !fix.isAvailable(myProject, myFixture.editor, myFixture.file)
