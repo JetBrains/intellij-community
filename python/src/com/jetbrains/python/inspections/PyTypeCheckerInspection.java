@@ -118,13 +118,15 @@ public class PyTypeCheckerInspection extends PyInspection {
       final PyAnnotation annotation = node.getAnnotation();
       final String typeCommentAnnotation = node.getTypeCommentAnnotation();
       if (annotation != null || typeCommentAnnotation != null) {
-        final PyStatementList statements = node.getStatementList();
-        ReturnVisitor visitor = new ReturnVisitor(node);
-        statements.accept(visitor);
-        if (!visitor.myHasReturns && !PyUtil.isEmptyFunction(node)) {
-          final String expectedName = PythonDocumentationProvider.getTypeName(myTypeEvalContext.getReturnType(node), myTypeEvalContext);
-          registerProblem(annotation != null ? annotation : node.getTypeComment(),
-                          String.format("Expected to return '%s', got no return", expectedName));
+        if (!PyUtil.isEmptyFunction(node)) {
+          final PyStatementList statements = node.getStatementList();
+          ReturnVisitor visitor = new ReturnVisitor(node);
+          statements.accept(visitor);
+          if (!visitor.myHasReturns) {
+            final String expectedName = PythonDocumentationProvider.getTypeName(myTypeEvalContext.getReturnType(node), myTypeEvalContext);
+            registerProblem(annotation != null ? annotation : node.getTypeComment(),
+                            String.format("Expected to return '%s', got no return", expectedName));
+          }
         }
       }
     }
