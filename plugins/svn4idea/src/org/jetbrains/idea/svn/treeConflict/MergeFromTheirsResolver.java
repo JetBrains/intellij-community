@@ -238,7 +238,7 @@ public class MergeFromTheirsResolver {
                       @Nullable TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
       List<FilePatch> patches;
       try {
-        patches = ApplyPatchSaveToFileExecutor.patchGroupsToOneGroup(patchGroupsToApply, myBaseDir);
+        patches = ApplyPatchSaveToFileExecutor.toOnePatchGroup(patchGroupsToApply, myBaseDir);
       }
       catch (IOException e) {
         myInner.handleException(e, true);
