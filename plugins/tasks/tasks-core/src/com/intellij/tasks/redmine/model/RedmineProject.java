@@ -1,10 +1,10 @@
 package com.intellij.tasks.redmine.model;
 
-import com.intellij.tasks.impl.gson.Mandatory;
-import com.intellij.tasks.impl.gson.RestModel;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.io.mandatory.Mandatory;
+import org.jetbrains.io.mandatory.RestModel;
 
 /**
  * @author Mikhail Golubev

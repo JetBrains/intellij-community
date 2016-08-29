@@ -15,9 +15,9 @@
  */
 package org.jetbrains.plugins.github.api.data;
 
-import com.intellij.tasks.impl.gson.RestModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.io.mandatory.RestModel;
 
 import java.util.List;
 

@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.tasks.impl.gson;
+package org.jetbrains.io.mandatory;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -96,7 +97,9 @@ public class MandatoryTest extends TestCase {
   }
 
   private static void doTest(@NotNull String json, @NotNull Class<?> clazz, boolean expectedSuccess) {
-    Gson gson = TaskGsonUtil.createDefaultBuilder().create();
+    Gson gson = new GsonBuilder()
+      .registerTypeAdapterFactory(NullCheckingFactory.INSTANCE)
+      .create();
 
     boolean success;
     try {

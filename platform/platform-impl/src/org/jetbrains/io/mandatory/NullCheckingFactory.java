@@ -1,4 +1,4 @@
-package com.intellij.tasks.impl.gson;
+package org.jetbrains.io.mandatory;
 
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;

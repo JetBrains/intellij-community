@@ -1,4 +1,4 @@
-package com.intellij.tasks.impl.gson;
+package org.jetbrains.io.mandatory;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
