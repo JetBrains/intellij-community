@@ -503,7 +503,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     @Nullable
     public Pattern getRegexp() {
       if (regexp == null && pattern.contains("*")) {
-        final String replace = pattern.replace("*", ".*");
+        final String replace = pattern.replace("*", ".*").replace(".", "\\.");
         try {
           regexp = Pattern.compile(replace);
         }

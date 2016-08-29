@@ -132,6 +132,7 @@ class ClassPatternsPanel extends JPanel {
   }
 
   private static class ClassPatternValidator implements InputValidatorEx {
+    public static final String ERROR_MESSAGE = "Pattern must be a valid java qualified name, only '*' are accepted as placeholders";
     private final PsiNameHelper myNameHelper;
 
     public ClassPatternValidator(PsiNameHelper nameHelper) {
@@ -141,10 +142,9 @@ class ClassPatternsPanel extends JPanel {
     @Nullable
     @Override
     public String getErrorText(String inputString) {
-      final String qualifiedNameStartingWithDot = inputString.replace("*", "");
-      final String qName = StringUtil.trimStart(qualifiedNameStartingWithDot, ".");
-      return !myNameHelper.isQualifiedName(qName)
-             ? "Pattern must be a valid java qualified name, only '*' are accepted as placeholders" : null;
+      if (inputString.startsWith(".")) return ERROR_MESSAGE;
+      final String qName = inputString.replace("*", "").replace(".", "");
+      return !StringUtil.isEmpty(qName) && !myNameHelper.isQualifiedName(qName) ? ERROR_MESSAGE : null;
     }
 
     @Override
@@ -199,7 +199,7 @@ class ClassPatternsPanel extends JPanel {
     }
 
     public boolean isCellEditable(int row, int col) {
-      return col == 0;
+      return true;
     }
 
     public void setValueAt(Object aValue, int row, int col) {
