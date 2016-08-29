@@ -100,6 +100,8 @@ public class DarculaLaf extends BasicLookAndFeel {
   @NotNull
   private static FontUIResource getFont(String yosemite, int size, @JdkConstants.FontStyle int style) {
     if (SystemInfo.isMacOSElCapitan) {
+      // Text family should be used for relatively small sizes (<20pt), don't change to Display
+      // see more about SF https://medium.com/@mach/the-secret-of-san-francisco-fonts-4b5295d9a745#.2ndr50z2v
       FontInfo fontInfo = FontInfo.get(".SF NS Text");
       if (fontInfo != null) {
         Font font = fontInfo.getFont();
