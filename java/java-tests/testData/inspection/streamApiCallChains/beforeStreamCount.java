@@ -3,7 +3,7 @@
 import java.util.Arrays;
 
 class Test {
-  Long cnt() {
+  long cnt() {
     return Arrays.asList('d', 'e', 'f').st<caret>ream().count();
   }
 }
