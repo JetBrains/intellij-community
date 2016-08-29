@@ -146,7 +146,7 @@ public class TextComponentSelectionModel implements SelectionModel {
 
   @Override
   public void selectLineAtCaret() {
-    SelectionModelImpl.doSelectLineAtCaret(myEditor);
+    SelectionModelImpl.doSelectLineAtCaret(myEditor.getCaretModel().getPrimaryCaret());
   }
 
   @Override
