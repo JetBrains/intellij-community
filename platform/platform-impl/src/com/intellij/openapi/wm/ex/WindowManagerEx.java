@@ -42,6 +42,8 @@ public abstract class WindowManagerEx extends WindowManager {
 
   public abstract IdeFrameImpl getFrame(@Nullable Project project);
 
+  public void rescaleFrames(float scaleFactor) { }
+
   @Override
   public void requestUserAttention(@NotNull IdeFrame frame, boolean critical) {
     Project project = frame.getProject();

@@ -52,6 +52,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.PlatformScalingUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -729,7 +730,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.OVERRIDE_NONIDEA_LAF_FONTS) {
       storeOriginalFontDefaults(uiDefaults);
-      JBUI.setScaleFactor(uiSettings.FONT_SIZE/12f);
+      PlatformScalingUtil.getInstance().setActiveScaleFactorFromFontSize(uiSettings.FONT_SIZE);
       initFontDefaults(uiDefaults, uiSettings.FONT_SIZE, new FontUIResource(uiSettings.FONT_FACE, Font.PLAIN, uiSettings.FONT_SIZE));
     }
     else {
@@ -745,7 +746,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         defaults.put(resource, lfDefaults.get(resource));
       }
     }
-    JBUI.setScaleFactor(JBUI.Fonts.label().getSize()/12f);
+    PlatformScalingUtil.getInstance().setActiveScaleFactorFromFontSize(JBUI.Fonts.label().getSize());
   }
 
   private void storeOriginalFontDefaults(UIDefaults defaults) {

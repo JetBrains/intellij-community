@@ -35,6 +35,7 @@ import com.intellij.openapi.wm.impl.DesktopLayout;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.PlatformScalingUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -149,7 +150,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
       }
       float scaleFactor =  settings.PRESENTATION_MODE_FONT_SIZE / 12f;
       ourSavedScaleFactor = JBUI.scale(1f);
-      JBUI.setScaleFactor(scaleFactor);
+      PlatformScalingUtil.getInstance().setActiveScaleFactor(scaleFactor);
       for (Object key : ourSavedValues.keySet()) {
         Object v = ourSavedValues.get(key);
         if (v instanceof Font) {
@@ -165,7 +166,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
       for (Object key : ourSavedValues.keySet()) {
         defaults.put(key, ourSavedValues.get(key));
       }
-      JBUI.setScaleFactor(ourSavedScaleFactor);
+      PlatformScalingUtil.getInstance().setActiveScaleFactor(ourSavedScaleFactor);
       ourSavedValues.clear();
     }
   }

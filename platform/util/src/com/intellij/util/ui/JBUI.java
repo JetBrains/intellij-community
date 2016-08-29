@@ -17,10 +17,7 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.border.CustomLineBorder;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,89 +36,36 @@ public class JBUI {
   private static float SCALE_FACTOR = calculateScaleFactor();
 
   private static float calculateScaleFactor() {
-    if (SystemInfo.isMac) {
-      LOG.info("UI scale factor: 1.0");
-      return 1.0f;
-    }
-
-    if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
-      LOG.info("UI scale factor: 1.0");
-      return 1.0f;
-    }
-
-    float s = 1f;
-
-    // On Linux: rely on DPI
-    if (SystemInfo.isLinux) {
-      final int dpi = getSystemDPI();
-      if (dpi < 120) s = 1f;
-      else if (dpi < 144) s = 1.25f;
-      else if (dpi < 168) s = 1.5f;
-      else if (dpi < 192) s = 1.75f;
-      else s = 2f;
-
-      LOG.info("UI scale factor: " + s);
-      return s;
-    }
-
-    int size = -1;
-
-    // On Windows: rely on default system font
-    if (SystemInfo.isWindows) {
-      UIUtil.initSystemFontData();
-      Pair<String, Integer> fdata = UIUtil.getSystemFontData();
-      if (fdata != null) size = fdata.getSecond();
-    }
-    if (size == -1) {
-      size = Fonts.label().getSize();
-    }
-    if (size <= 13) s = 1.0f;
-    else if (size <= 16) s = 1.25f;
-    else if (size <= 18) s = 1.5f;
-    else if (size < 24)  s = 1.75f;
-    else s = 2.0f;
-
+    float s = PlatformScalingUtil.getInstance().getSystemScaleFactor();
     LOG.info("UI scale factor: " + s);
     return s;
   }
 
-  private static int getSystemDPI() {
-    try {
-      return Toolkit.getDefaultToolkit().getScreenResolution();
-    } catch (HeadlessException e) {
-      return 96;
-    }
-  }
-
   public static void setScaleFactor(float scale) {
-    if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
-      return;
-    }
-
-    if (scale < 1.25f) scale = 1.0f;
-    else if (scale < 1.5f) scale = 1.25f;
-    else if (scale < 1.75f) scale = 1.5f;
-    else if (scale < 2f) scale = 1.75f;
-    else scale = 2.0f;
-
-    if (SystemInfo.isLinux && scale == 1.25f) {
-      //Default UI font size for Unity and Gnome is 15. Scaling factor 1.25f works badly on Linux
-      scale = 1f;
-    }
+    scale = PlatformScalingUtil.getInstance().normalizeScaleFactor(scale);
     LOG.info("UI scale factor changed: " + scale);
-
     SCALE_FACTOR = scale;
     IconLoader.setScale(scale);
   }
 
   public static int scale(int i) {
-    return Math.round(SCALE_FACTOR * i);
+    return scaleEx(SCALE_FACTOR, i);
+  }
+
+  public static float scale(float f) { return scaleEx(SCALE_FACTOR, f); }
+
+  public static int scaleEx(float scaleFactor, int i) {
+    return Math.round(scaleFactor * i);
+  }
+
+  public static float scaleEx(float scaleFactor, float f) {
+    return f * scaleFactor;
   }
 
   public static int scaleFontSize(int fontSize) {
-    if (SCALE_FACTOR == 1.25f) return (int)(fontSize * 1.34f);
-    if (SCALE_FACTOR == 1.75f) return (int)(fontSize * 1.67f);
-    return scale(fontSize);
+    if (SCALE_FACTOR == 1.25f) return scaleEx(1.34f, fontSize);
+    if (SCALE_FACTOR == 1.75f) return scaleEx(1.67f, fontSize);
+    return scaleEx(SCALE_FACTOR, fontSize);
   }
 
   public static JBDimension size(int width, int height) {
@@ -174,10 +118,6 @@ public class JBUI {
 
   public static JBDimension emptySize() {
     return new JBDimension(0, 0);
-  }
-
-  public static float scale(float f) {
-    return f * SCALE_FACTOR;
   }
 
   public static JBInsets insets(Insets insets) {
