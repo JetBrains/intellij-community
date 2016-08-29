@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class InstanceTrackingStrategy {
+public abstract class InstanceTrackingStrategy implements TrackerForNewInstances {
   @NotNull
   private List<ObjectReference> myNewInstances = new ArrayList<>();
 

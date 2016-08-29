@@ -2,6 +2,7 @@ package org.jetbrains.debugger.memory.view;
 
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
@@ -27,7 +28,9 @@ import org.jetbrains.debugger.memory.component.InstancesTracker;
 import org.jetbrains.debugger.memory.component.MemoryViewManager;
 import org.jetbrains.debugger.memory.component.MemoryViewManagerState;
 import org.jetbrains.debugger.memory.event.MemoryViewManagerListener;
+import org.jetbrains.debugger.memory.tracking.ConstructorInstancesTracker;
 import org.jetbrains.debugger.memory.tracking.InstanceTrackingStrategy;
+import org.jetbrains.debugger.memory.tracking.TrackerForNewInstances;
 import org.jetbrains.debugger.memory.tracking.TrackingType;
 import org.jetbrains.debugger.memory.utils.AndroidUtil;
 import org.jetbrains.debugger.memory.utils.KeyboardUtils;
@@ -60,11 +63,10 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
   private final ClassesTable myTable;
   private final InstancesTracker myInstancesTracker;
   private final Map<ReferenceType, InstanceTrackingStrategy> myTrackedClasses = new ConcurrentHashMap<>();
-
+  private final Map<ReferenceType, ConstructorInstancesTracker> myConstructorTrackedClasses = new ConcurrentHashMap<>();
 
   private volatile SuspendContextImpl myLastSuspendContext;
   private volatile boolean myNeedReloadClasses = false;
-
 
   public ClassesFilteredView(@NotNull XDebugSession debugSession) {
     super();
@@ -113,6 +115,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     myDebugSession.addSessionListener(new XDebugSessionListener() {
       @Override
       public void sessionResumed() {
+        myConstructorTrackedClasses.values().forEach(ConstructorInstancesTracker::obsolete);
         SwingUtilities.invokeLater(myTable::hideContent);
         mySingleAlarm.cancelAllRequests();
       }
@@ -164,8 +167,12 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
   }
 
   @Nullable
-  InstanceTrackingStrategy getStrategy(@NotNull ReferenceType ref) {
-    return myTrackedClasses.getOrDefault(ref, null);
+  TrackerForNewInstances getStrategy(@NotNull ReferenceType ref) {
+    if(myTrackedClasses.containsKey(ref)) {
+      return myTrackedClasses.get(ref);
+    }
+
+    return myConstructorTrackedClasses.getOrDefault(ref, null);
   }
 
   public void setNeedReloadClasses(boolean value) {
@@ -221,9 +228,10 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
       final List<ReferenceType> classes = myDebugProcess.getVirtualMachineProxy().allClasses();
       for (ReferenceType ref : classes) {
         TrackingType type = myInstancesTracker.getTrackingType(ref.name());
-        if (type != null && !myTrackedClasses.containsKey(ref)) {
+        if (type != null && !myTrackedClasses.containsKey(ref) && !myConstructorTrackedClasses.containsKey(ref)) {
           if (type == TrackingType.CREATION) {
-
+            myConstructorTrackedClasses.put(ref,
+                new ConstructorInstancesTracker(ref, (DebugProcessImpl) myDebugProcess));
           } else {
             List<ObjectReference> instances = ref.instances(0);
             myTrackedClasses.put(ref, InstanceTrackingStrategy.create(ref, suspendContext, type, instances));

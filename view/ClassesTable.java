@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.memory.component.InstancesTracker;
 import org.jetbrains.debugger.memory.event.InstancesTrackerListener;
-import org.jetbrains.debugger.memory.tracking.InstanceTrackingStrategy;
+import org.jetbrains.debugger.memory.tracking.TrackerForNewInstances;
 import org.jetbrains.debugger.memory.tracking.TrackingType;
 import org.jetbrains.debugger.memory.utils.AbstractTableColumnDescriptor;
 import org.jetbrains.debugger.memory.utils.AbstractTableModelWithColumns;
@@ -210,12 +210,11 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     if (NEW_INSTANCES_PROVIDER_KEY.is(dataId)) {
       ReferenceType selectedClass = getSelectedClass();
       if (selectedClass != null) {
-        InstanceTrackingStrategy strategy = myParent.getStrategy(selectedClass);
+        TrackerForNewInstances strategy = myParent.getStrategy(selectedClass);
         if (strategy != null) {
           List<ObjectReference> newInstances = strategy.getNewInstances();
           return (InstancesProvider) limit -> newInstances;
         }
-
       }
     }
 
