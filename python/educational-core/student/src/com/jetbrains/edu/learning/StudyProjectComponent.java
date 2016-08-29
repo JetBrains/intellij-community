@@ -86,7 +86,9 @@ public class StudyProjectComponent implements ProjectComponent {
               registerShortcuts();
               EduUsagesCollector.projectTypeOpened(course.isAdaptive() ? EduNames.ADAPTIVE : EduNames.STUDY);
               //TODO use it
+              LOG.info("login from dialog");
               StepikConnectorLogin.loginFromDialog(myProject);
+              LOG.info("exit");
             }
           }
         });

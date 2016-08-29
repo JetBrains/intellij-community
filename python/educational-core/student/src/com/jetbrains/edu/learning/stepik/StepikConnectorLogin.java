@@ -65,9 +65,9 @@ public class StepikConnectorLogin {
     return ourClient;
   }
 
-  //use it !!
   @Deprecated
   public static boolean login(@NotNull final Project project) {
+    LOG.info("login");
     resetClient();
     StepikUser user = StudyTaskManager.getInstance(project).getUser();
     String email = user.getEmail();
@@ -85,6 +85,7 @@ public class StepikConnectorLogin {
     }
 
     try {
+      LOG.info("minor login");
       minorLogin(user);
     }
     catch (StepikAuthorizationException e) {
@@ -117,6 +118,7 @@ public class StepikConnectorLogin {
     StepikUser user = StudyTaskManager.getInstance(project).getUser();
     StepikUser defaultUser = StudyTaskManager.getInstance(ProjectManager.getInstance().getDefaultProject()).getUser();
     final String email = user.getEmail();
+    LOG.info("after get email");
     if (StringUtil.isEmptyOrSpaces(email)) {
       if (StringUtil.isEmptyOrSpaces(defaultUser.getEmail())) {
         return showLoginDialog();
@@ -127,9 +129,13 @@ public class StepikConnectorLogin {
       }
     }
     else {
-      if (minorLogin(new StepikUser(email, user.getPassword())) == null) {
+      if ((user = minorLogin(user)) == null) {
         return showLoginDialog();
       }
+      if (user.getEmail().equals(defaultUser.getEmail()) || defaultUser.getEmail().isEmpty()){
+        StudyTaskManager.getInstance(ProjectManager.getInstance().getDefaultProject()).setUser(user);
+      }
+      StudyTaskManager.getInstance(project).setUser(user);
     }
     return true;
   }
@@ -150,7 +156,34 @@ public class StepikConnectorLogin {
   }
 
   public static StepikUser minorLogin(StepikUser basicUser) {
-    StepikWrappers.TokenInfo tokenInfo = postCredentials(basicUser.getEmail(), basicUser.getPassword());
+    String refreshToken;
+    StepikWrappers.TokenInfo tokenInfo = null;
+    List<NameValuePair> nvps = new ArrayList<NameValuePair>();
+
+    if ( !(refreshToken = basicUser.getRefreshToken()).isEmpty()){
+      LOG.info("refresh_token auth");
+      nvps.add(new BasicNameValuePair("client_id", CLIENT_ID));
+      nvps.add(new BasicNameValuePair("content-type", "application/json"));
+      nvps.add(new BasicNameValuePair("grant_type", "refresh_token"));
+      nvps.add(new BasicNameValuePair("refresh_token", refreshToken));
+
+      tokenInfo = postCredentials(nvps);
+    }
+
+    nvps.clear();
+
+    if (tokenInfo == null){
+      LOG.info("credentials auth");
+      String password = basicUser.getPassword();
+      if (password.isEmpty()) return null;
+      nvps.add(new BasicNameValuePair("client_id", CLIENT_ID));
+      nvps.add(new BasicNameValuePair("grant_type", "password"));
+      nvps.add(new BasicNameValuePair("username", basicUser.getEmail()));
+      nvps.add(new BasicNameValuePair("password", password));
+
+      tokenInfo = postCredentials(nvps);
+    }
+
     if (tokenInfo == null) {
       return null;
     }
@@ -162,19 +195,17 @@ public class StepikConnectorLogin {
     return user;
   }
 
-  private static StepikWrappers.TokenInfo postCredentials(String user, String password) {
+  private static StepikWrappers.TokenInfo postCredentials(List<NameValuePair> nvps) {
     final Gson gson = new GsonBuilder()
       .registerTypeAdapter(TaskFile.class, new StudySerializationUtils.Json.StepikTaskFileAdapter())
-      .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+      .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+      .create();
 
     final HttpPost request = new HttpPost(EduStepikNames.TOKEN_URL);
-    List<NameValuePair> nvps = new ArrayList<NameValuePair>();
-    nvps.add(new BasicNameValuePair("grant_type", "password"));
-    nvps.add(new BasicNameValuePair("client_id", CLIENT_ID));
-    nvps.add(new BasicNameValuePair("username", user));
-    nvps.add(new BasicNameValuePair("password", password));
-
     request.setEntity(new UrlEncodedFormEntity(nvps, Consts.UTF_8));
+    //for (NameValuePair pair : nvps){
+    //  LOG.info(pair.getName() + " " + pair.getValue());
+    //}
 
     try {
       final CloseableHttpResponse response = StepikConnectorInit.getHttpClient().execute(request);

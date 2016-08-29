@@ -29,7 +29,7 @@ public class StepikUser {
 
   public StepikUser(StepikUser basicUser) {
     this.email = basicUser.getEmail();
-    setPassword(basicUser.getPassword());
+//    setPassword(basicUser.getPassword());
   }
 
   public StepikUser(StepikWrappers.TokenInfo tokenInfo) {
