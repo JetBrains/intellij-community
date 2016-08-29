@@ -61,7 +61,7 @@ class ClassPatternsPanel extends JPanel {
           Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(table));
           if (project == null) project = ProjectManager.getInstance().getDefaultProject();
           TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
-            .createWithInnerClassesScopeChooser(addClassMessage, GlobalSearchScope.projectScope(project), ClassFilter.ALL, null);
+            .createWithInnerClassesScopeChooser(addClassMessage, GlobalSearchScope.allScope(project), ClassFilter.ALL, null);
           chooser.showDialog();
           final PsiClass selected = chooser.getSelected();
           if (selected != null) {
