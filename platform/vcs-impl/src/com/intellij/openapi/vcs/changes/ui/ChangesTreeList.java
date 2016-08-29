@@ -44,7 +44,6 @@ import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
@@ -114,13 +113,7 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
     setRootVisible(false);
     setShowsRootHandles(true);
     setOpaque(false);
-    new TreeSpeedSearch(this, new Convertor<TreePath, String>() {
-      @Override
-      public String convert(TreePath o) {
-        ChangesBrowserNode node = (ChangesBrowserNode) o.getLastPathComponent();
-        return node.getTextPresentation();
-      }
-    });
+    new TreeSpeedSearch(this, ChangesBrowserNode.TO_TEXT_CONVERTER);
     setCellRenderer(myNodeRenderer);
 
     new MyToggleSelectionAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), this);
