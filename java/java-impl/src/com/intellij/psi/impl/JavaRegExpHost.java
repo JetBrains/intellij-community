@@ -174,7 +174,7 @@ public class JavaRegExpHost implements RegExpLanguageHost {
   public boolean isValidGroupName(String name, @NotNull PsiElement context) {
     for (int i = 0, length = name.length(); i < length; i++) {
       final char c = name.charAt(i);
-      if (!(AsciiUtil.isLowerCase(c) || AsciiUtil.isUpperCase(c) || AsciiUtil.isDigit(c))) {
+      if (!AsciiUtil.isLetterOrDigit(c)) {
         return false;
       }
     }

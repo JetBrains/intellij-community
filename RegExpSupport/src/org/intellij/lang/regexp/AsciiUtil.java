@@ -37,4 +37,8 @@ public final class AsciiUtil {
   public static boolean isDigit(char c) {
     return c >= '0' && c <= '9';
   }
+
+  public static boolean isLetterOrDigit(char c) {
+    return isLetter(c) || isDigit(c);
+  }
 }
