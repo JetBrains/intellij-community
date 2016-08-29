@@ -406,5 +406,10 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
     public String getPath() {
       return myPath;
     }
+
+    @Override
+    public String toString() {
+      return myPath;
+    }
   }
 }
