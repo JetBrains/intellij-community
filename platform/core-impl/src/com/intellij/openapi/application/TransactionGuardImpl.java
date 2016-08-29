@@ -296,6 +296,11 @@ public class TransactionGuardImpl extends TransactionGuard {
             myWritingAllowed = prev;
           }
         }
+
+        @Override
+        public String toString() {
+          return runnable.toString();
+        }
       };
     }
 
