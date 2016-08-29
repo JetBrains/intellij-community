@@ -42,13 +42,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
+import com.intellij.util.containers.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.HashSet;
-import java.util.List;
 
 public class HighlightClassUtil {
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
@@ -576,6 +575,7 @@ public class HighlightClassUtil {
     }
 
     if (varargConstructors.size() <= 1) return null;
+    Set<PsiMethod> lessSpecific = new HashSet<>();
     final PsiType[] types = varargConstructors.stream().map(c -> c.getParameterList().getParameters()[0].getType()).toArray(PsiType[]::new);
     for (int i = 1; i < types.length; i++) {
       PsiType t1 = types[i];
@@ -583,13 +583,14 @@ public class HighlightClassUtil {
         PsiType t2 = types[j];
 
         if (t1.isAssignableFrom(t2)) {
-          varargConstructors.remove(i);
+          lessSpecific.add(varargConstructors.get(i));
         }
         else if (t2.isAssignableFrom(t1)) {
-          varargConstructors.remove(j);
+          lessSpecific.add(varargConstructors.get(j));
         }
       }
     }
+    varargConstructors.removeAll(lessSpecific);
 
     if (varargConstructors.size() > 1) {
       final String m1 = PsiFormatUtil.formatMethod(varargConstructors.get(0), PsiSubstitutor.EMPTY,
