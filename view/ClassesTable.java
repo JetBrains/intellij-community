@@ -144,11 +144,15 @@ public class ClassesTable extends JBTable implements DataProvider {
     assert classes.size() == counts.length;
     ReferenceType selectedClass = myModel.getSelectedClassBeforeHided();
     int newSelectedIndex = classes.indexOf(selectedClass);
+    boolean isInitialized = !myElems.isEmpty();
     myElems = Collections.unmodifiableList(new ArrayList<>(classes));
 
     for (int i = 0, size = classes.size(); i < size; i++) {
       ReferenceType ref = classes.get(i);
-      myCounts.put(ref, myCounts.getOrDefault(ref, myUnknownValue).update(counts[i]));
+      DiffValue oldValue = isInitialized && !myCounts.containsKey(ref)
+          ? new DiffValue(0, 0)
+          : myCounts.getOrDefault(ref, myUnknownValue);
+      myCounts.put(ref, oldValue.update(counts[i]));
     }
 
     showContent();
