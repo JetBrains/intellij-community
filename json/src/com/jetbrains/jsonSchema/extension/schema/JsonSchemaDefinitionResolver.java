@@ -24,10 +24,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
+import com.jetbrains.jsonSchema.impl.JsonSchemaReader;
 import com.jetbrains.jsonSchema.impl.JsonSchemaResourcesRootsProvider;
 import com.jetbrains.jsonSchema.impl.JsonSchemaWalker;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +43,7 @@ import java.util.List;
  * @author Irina.Chernushina on 7/7/2016.
  */
 public class JsonSchemaDefinitionResolver {
+  public static final String PROPERTIES = "/properties/";
   @Nullable private String myRef;
   @Nullable JsonSchemaObject mySchemaObject;
 
@@ -87,23 +90,16 @@ public class JsonSchemaDefinitionResolver {
           public void consume(boolean isName, @NotNull JsonSchemaObject schema) {
             if (!ref.isNull()) return;
 
-            String definitionAddress = schema.getDefinitionAddress();
-            if (!StringUtil.isEmptyOrSpaces(definitionAddress) && definitionAddress.startsWith("#")) {
-              definitionAddress = definitionAddress.substring(1) + "/properties/" + propertyName;
-              ref.set(resolveByPath(definitionAddress));
-              if (!ref.isNull()) return;
-            }
+            ref.set(processDefinitionAddress(schema, propertyName));
+            if (!ref.isNull()) return;
+
             List<JsonSchemaObject> list = new ArrayList<>();
             if (schema.getAllOf() != null) list.addAll(schema.getAllOf());
             if (schema.getAnyOf() != null) list.addAll(schema.getAnyOf());
             if (schema.getOneOf() != null) list.addAll(schema.getOneOf());
             for (JsonSchemaObject schemaObject : list) {
-              definitionAddress = schemaObject.getDefinitionAddress();
-              if (!StringUtil.isEmptyOrSpaces(definitionAddress) && definitionAddress.startsWith("#")) {
-                definitionAddress = definitionAddress.substring(1) + "/properties/" + propertyName;
-                ref.set(resolveByPath(definitionAddress));
-                if (!ref.isNull()) return;
-              }
+              ref.set(processDefinitionAddress(schemaObject, propertyName));
+              if (!ref.isNull()) return;
             }
           }
         };
@@ -116,6 +112,27 @@ public class JsonSchemaDefinitionResolver {
     return ref.get();
   }
 
+  @Nullable
+  private PsiElement processDefinitionAddress(JsonSchemaObject parSchema, String propertyName) {
+      final String definitionAddress = parSchema.getDefinitionAddress();
+      if (StringUtil.isEmptyOrSpaces(definitionAddress)) return null;
+
+      final JsonSchemaReader.SchemaUrlSplitter splitter = new JsonSchemaReader.SchemaUrlSplitter(definitionAddress);
+
+      if (!splitter.isAbsolute()) {
+        return resolveByPath(definitionAddress.substring(1) + PROPERTIES + propertyName);
+      } else {
+        String relative = splitter.getRelativePath();
+        if (StringUtil.isEmptyOrSpaces(relative)) {
+          relative = PROPERTIES + propertyName;
+        } else {
+          relative += ((relative.endsWith("/") ? PROPERTIES.substring(1) : PROPERTIES) + propertyName);
+        }
+
+        return resolveInSomeSchema(relative, myElement.getProject(), splitter.getSchemaId(), GlobalSearchScope.allScope(myElement.getProject()));
+      }
+  }
+
   private PsiElement tryResolveByName() {
     if (myRef == null) initializeName();
     if (myRef == null) return null;
@@ -124,30 +141,37 @@ public class JsonSchemaDefinitionResolver {
   }
 
   @Nullable
-  private PsiElement resolveByPath(String referenceName) {
+  private PsiElement resolveByPath(@NotNull String referenceName) {
     final Project project = myElement.getProject();
-    final FileBasedIndex index = FileBasedIndex.getInstance();
-    final Ref<Pair<VirtualFile, Integer>> reference = new Ref<>();
-    GlobalSearchScope filter = mySchemaId != null && myInCurrentFile ? GlobalSearchScope.fileScope(myElement.getContainingFile()) :
+    final GlobalSearchScope filter = mySchemaId != null && myInCurrentFile ? GlobalSearchScope.fileScope(myElement.getContainingFile()) :
                                GlobalSearchScope.allScope(project);
-    filter = JsonSchemaResourcesRootsProvider.enlarge(project, filter);
+    return resolveInSomeSchema(referenceName, project, mySchemaId, filter);
+  }
 
+  @Nullable
+  private static PsiElement resolveInSomeSchema(@NotNull String referenceName,
+                                                @NotNull final Project project,
+                                                @Nullable final String schemaId,
+                                                final @NotNull GlobalSearchScope filter) {
+    final Ref<Pair<VirtualFile, Integer>> reference = new Ref<>();
+
+    final FileBasedIndex index = FileBasedIndex.getInstance();
     index.processValues(JsonSchemaFileIndex.PROPERTIES_INDEX, referenceName, null, new FileBasedIndex.ValueProcessor<Integer>() {
       @Override
       public boolean process(VirtualFile file, Integer value) {
-        if (mySchemaId != null) {
-          if (!JsonSchemaService.Impl.getEx(project).checkFileForId(mySchemaId, file)) {
+        if (schemaId != null) {
+          if (!JsonSchemaService.Impl.getEx(project).checkFileForId(schemaId, file)) {
             return true;
           }
         }
         reference.set(Pair.create(file, value));
         return false;
       }
-    }, filter);
+    }, JsonSchemaResourcesRootsProvider.enlarge(project, filter));
 
     if (!reference.isNull()) {
       final Pair<VirtualFile, Integer> pair = reference.get();
-      final PsiFile file = myElement.getManager().findFile(pair.getFirst());
+      final PsiFile file = PsiManager.getInstance(project).findFile(pair.getFirst());
       if (file != null) {
         return file.findElementAt(pair.getSecond());
       }
@@ -172,7 +196,7 @@ public class JsonSchemaDefinitionResolver {
     final StringBuilder path = new StringBuilder();
     Collections.reverse(names);
     for (String name : names) {
-      path.append("/properties/").append(name);
+      path.append(PROPERTIES).append(name);
     }
     myRef = path.toString();
   }
