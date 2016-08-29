@@ -18,9 +18,16 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.completion.util.MethodParenthesesHandler;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.codeInsight.template.impl.MacroCallNode;
+import com.intellij.codeInsight.template.macro.CompleteMacro;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.ClassConditionKey;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -148,15 +155,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     }
     else if (myHelper != null) {
       context.commitDocument();
-      if (willBeImported()) {
-        final PsiReferenceExpression ref = PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiReferenceExpression.class, false);
-        if (ref != null && myContainingClass != null && !ref.isReferenceTo(method)) {
-          ref.bindToElementViaStaticImport(myContainingClass);
-        }
-        return;
-      }
-
-      qualifyMethodCall(file, startOffset, document);
+      importOrQualify(document, file, method, startOffset);
     }
 
     final PsiType type = method.getReturnType();
@@ -171,6 +170,36 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
       }
     }
 
+    if (hasParams && Registry.is("java.completion.argument.live.template")) {
+      startArgumentLiveTemplate(context, method);
+    }
+  }
+
+  private void importOrQualify(Document document, PsiFile file, PsiMethod method, int startOffset) {
+    if (willBeImported()) {
+      final PsiReferenceExpression ref = PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiReferenceExpression.class, false);
+      if (ref != null && myContainingClass != null && !ref.isReferenceTo(method)) {
+        ref.bindToElementViaStaticImport(myContainingClass);
+      }
+      return;
+    }
+
+    qualifyMethodCall(file, startOffset, document);
+  }
+
+  private static void startArgumentLiveTemplate(InsertionContext context, PsiMethod method) {
+    TemplateManager manager = TemplateManager.getInstance(method.getProject());
+    Template template = manager.createTemplate("", "");
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    for (int i = 0; i < parameters.length; i++) {
+      if (i > 0) {
+        template.addTextSegment(", ");
+      }
+      String name = StringUtil.notNullize(parameters[i].getName());
+      template.addVariable(name, new MacroCallNode(new CompleteMacro()), new ConstantNode(name), true);
+    }
+
+    manager.startTemplate(context.getEditor(), template);
   }
 
   private boolean shouldInsertTypeParameters() {
