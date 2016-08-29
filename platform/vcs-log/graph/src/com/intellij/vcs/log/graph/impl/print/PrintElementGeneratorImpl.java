@@ -335,7 +335,7 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
     return result;
   }
 
-  private int getAttachmentDistance(@NotNull NormalEdge e1, int rowIndex) {
+  private static int getAttachmentDistance(@NotNull NormalEdge e1, int rowIndex) {
     return Math.min(rowIndex - e1.up, e1.down - rowIndex);
   }
 }
