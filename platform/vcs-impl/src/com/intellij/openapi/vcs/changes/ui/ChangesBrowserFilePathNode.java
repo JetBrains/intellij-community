@@ -74,7 +74,7 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
 
   @Override
   public String getTextPresentation() {
-    return getUserObject().getName();
+    return getRelativePath(getUserObject());
   }
 
   @Override
