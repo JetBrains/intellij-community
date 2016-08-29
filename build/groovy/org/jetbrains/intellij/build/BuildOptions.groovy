@@ -69,4 +69,10 @@ class BuildOptions {
    * By default some build steps are executed in parallel threads. Set this property to {@code false} to disable this.
    */
   boolean runBuildStepsInParallel = SystemProperties.getBooleanProperty("intellij.build.run.steps.in.parallel", true)
+
+  /**
+   * Build number without product code (e.g. '162.500.10'), if {@code null} '&lt;baseline&gt;.SNAPSHOT' will be used. Use {@link BuildContext#buildNumber} to
+   * get the actual build number in build scripts.
+   */
+  String buildNumber = System.getProperty("build.number")
 }

@@ -88,7 +88,7 @@ class BuildContextImpl extends BuildContext {
     def appInfoFile = findApplicationInfoInSources()
     applicationInfo = new ApplicationInfoProperties(appInfoFile.absolutePath)
 
-    buildNumber = System.getProperty("build.number") ?: readSnapshotBuildNumber()
+    buildNumber = options.buildNumber ?: readSnapshotBuildNumber()
     fullBuildNumber = "$productProperties.productCode-$buildNumber"
     systemSelector = productProperties.systemSelector(applicationInfo)
 
