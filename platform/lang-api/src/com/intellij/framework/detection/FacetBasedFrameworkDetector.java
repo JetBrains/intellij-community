@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,12 @@ import java.util.Set;
  * @author nik
  */
 public abstract class FacetBasedFrameworkDetector<F extends Facet, C extends FacetConfiguration> extends FrameworkDetector {
-  public FacetBasedFrameworkDetector(String detectorId) {
+  protected FacetBasedFrameworkDetector(String detectorId) {
     super(detectorId);
+  }
+
+  protected FacetBasedFrameworkDetector(@NotNull String detectorId, int detectorVersion) {
+    super(detectorId, detectorVersion);
   }
 
   public abstract FacetType<F, C> getFacetType();
