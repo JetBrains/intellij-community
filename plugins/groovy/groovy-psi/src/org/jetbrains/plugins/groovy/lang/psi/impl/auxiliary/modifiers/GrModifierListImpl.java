@@ -53,7 +53,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrModifierListStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -289,7 +289,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     else {
       setModifierPropertyInternal(name, doSet);
     }
-    if (isEmptyModifierList() && !PsiUtil.modifierListMayBeEmpty(this.getParent())) {
+    if (isEmptyModifierList() && !PsiUtilKt.modifierListMayBeEmpty(this.getParent())) {
       setModifierPropertyInternal(GrModifier.DEF, true);
     }
   }
