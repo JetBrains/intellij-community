@@ -1,6 +1,5 @@
-package com.intellij.tasks.integration.live;
+package com.intellij.tasks.live;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.CustomTaskState;
 import com.intellij.tasks.trello.TrelloRepository;

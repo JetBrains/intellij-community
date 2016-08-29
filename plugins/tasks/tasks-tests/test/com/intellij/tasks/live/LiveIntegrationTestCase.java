@@ -1,4 +1,4 @@
-package com.intellij.tasks.integration.live;
+package com.intellij.tasks.live;
 
 import com.intellij.tasks.TaskManagerTestCase;
 import com.intellij.tasks.TaskRepository;
