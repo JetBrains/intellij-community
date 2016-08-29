@@ -34,6 +34,8 @@ import org.jetbrains.annotations.Nullable;
 public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalInspectionTool {
   private static final String FOR_EACH_METHOD = "forEach";
   private static final String FOR_EACH_ORDERED_METHOD = "forEachOrdered";
+  private static final String COUNT_METHOD = "count";
+  private static final String SIZE_METHOD = "size";
   private static final String STREAM_METHOD = "stream";
   private static final String EMPTY_METHOD = "empty";
   private static final String AS_LIST_METHOD = "asList";
@@ -100,6 +102,9 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
           else if (isCallOf(method, CommonClassNames.JAVA_UTIL_STREAM_STREAM, FOR_EACH_ORDERED_METHOD, 1)) {
             name = FOR_EACH_ORDERED_METHOD;
           }
+          else if (isCallOf(method, CommonClassNames.JAVA_UTIL_STREAM_STREAM, COUNT_METHOD, 0)) {
+            name = COUNT_METHOD;
+          }
           else {
             return;
           }
@@ -107,16 +112,17 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
           if (qualifierCall == null) return;
           final PsiMethod qualifier = qualifierCall.resolveMethod();
           if (isCallOf(qualifier, CommonClassNames.JAVA_UTIL_COLLECTION, STREAM_METHOD, 0)) {
-            String message = "Collection.stream()." + name + "() can be replaced with Collection.forEach()";
-            final LocalQuickFix fix;
+            final ReplaceStreamMethodFix fix;
             if (FOR_EACH_METHOD.equals(name)) {
-              fix = new CollectionForEachFix();
+              fix = new ReplaceStreamMethodFix(name, FOR_EACH_METHOD, false);
+            }
+            else if (FOR_EACH_ORDERED_METHOD.equals(name)){
+              fix = new ReplaceStreamMethodFix(name, FOR_EACH_METHOD, true);
             }
             else {
-              fix = new CollectionForEachOrderedFix();
-              message += " (may change semantics)";
+              fix = new ReplaceStreamMethodFix(name, SIZE_METHOD, false);
             }
-            holder.registerProblem(methodCall, getCallChainRange(methodCall, qualifierCall), message, fix);
+            holder.registerProblem(methodCall, getCallChainRange(methodCall, qualifierCall), fix.getMessage(), fix);
           }
         }
       }
@@ -215,6 +221,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       myMethodName = methodName;
     }
 
+    @NotNull
     String getMessage() {
       return myQualifierCall + ".stream() can be replaced with " + ClassUtil.extractClassName(myClassName) + "." + myMethodName + "()";
     }
@@ -313,30 +320,31 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     }
   }
 
-  private static class CollectionForEachFix extends CallChainFixBase {
+  private static class ReplaceStreamMethodFix extends CallChainFixBase {
+    private final String myStreamMethod;
+    private final String myCollectionMethod;
+    private final boolean myChangeSemantics;
+
+    public ReplaceStreamMethodFix(String streamMethod, String collectionMethod, boolean changeSemantics) {
+      myStreamMethod = streamMethod;
+      myCollectionMethod = collectionMethod;
+      myChangeSemantics = changeSemantics;
+    }
+
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace Collection.stream()." + FOR_EACH_METHOD + "() with Collection.forEach()";
+      return "Replace Collection.stream()." + myStreamMethod +
+             "() with Collection." + myCollectionMethod + "()" +
+             (myChangeSemantics ? " (may change semantics)" : "");
     }
 
-    @Override
-    protected void replaceMethodCall(@NotNull PsiMethodCallExpression methodCall,
-                                     @NotNull PsiMethodCallExpression qualifierCall,
-                                     @Nullable PsiExpression qualifierExpression) {
-      if (qualifierExpression != null) {
-        qualifierCall.replace(qualifierExpression);
-      }
-    }
-  }
-
-  private static class CollectionForEachOrderedFix extends CollectionForEachFix {
-    @Nls
     @NotNull
-    @Override
-    public String getFamilyName() {
-      return "Replace Collection.stream()." + FOR_EACH_ORDERED_METHOD + "() with Collection.forEach() (may change semantics)";
+    String getMessage() {
+      return "Collection.stream()." + myStreamMethod +
+             "() can be replaced with Collection." + myCollectionMethod + "()" +
+             (myChangeSemantics ? " (may change semantics)" : "");
     }
 
     @Override
@@ -347,9 +355,11 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
         final PsiElement nameElement = methodCall.getMethodExpression().getReferenceNameElement();
         if (nameElement != null) {
           qualifierCall.replace(qualifierExpression);
-          final Project project = methodCall.getProject();
-          PsiIdentifier forEachIdentifier = JavaPsiFacade.getElementFactory(project).createIdentifier(FOR_EACH_METHOD);
-          nameElement.replace(forEachIdentifier);
+          if (!myStreamMethod.equals(myCollectionMethod)) {
+            final Project project = methodCall.getProject();
+            PsiIdentifier collectionMethod = JavaPsiFacade.getElementFactory(project).createIdentifier(myCollectionMethod);
+            nameElement.replace(collectionMethod);
+          }
         }
       }
     }
