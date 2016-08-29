@@ -34,6 +34,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -567,8 +568,9 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
         return externalDoc;
       }
     }
-    catch (Exception ignored) {
-      //try to generate some javadoc
+    catch (ProcessCanceledException ignored) {}
+    catch (Exception e) {
+      LOG.warn(e);
     }
     return null;
   }
