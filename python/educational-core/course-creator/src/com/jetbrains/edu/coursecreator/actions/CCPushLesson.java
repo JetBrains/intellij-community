@@ -14,12 +14,12 @@ import com.intellij.psi.PsiDirectory;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
-import com.jetbrains.edu.learning.stepic.StepicConnectorPost;
+import com.jetbrains.edu.learning.stepik.StepikConnectorPost;
 import org.jetbrains.annotations.NotNull;
 
 public class CCPushLesson extends DumbAwareAction {
   public CCPushLesson() {
-    super("Update Lesson on Stepic", "Update Lesson on Stepic", null);
+    super("Update Lesson on Stepik", "Update Lesson on Stepik", null);
   }
 
   @Override
@@ -66,8 +66,8 @@ public class CCPushLesson extends DumbAwareAction {
     ProgressManager.getInstance().run(new Task.Modal(project, "Uploading Lesson", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        indicator.setText("Uploading lesson to http://stepic.org");
-        StepicConnectorPost.updateLesson(project, lesson, indicator);
+        indicator.setText("Uploading lesson to http://stepik.org");
+        StepikConnectorPost.updateLesson(project, lesson, indicator);
       }});
   }
 

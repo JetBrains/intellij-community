@@ -1,9 +1,9 @@
-package com.jetbrains.edu.learning.stepic;
+package com.jetbrains.edu.learning.stepik;
 
-public class EduStepicNames {
-  public static final String STEPIC_URL = "https://stepic.org";
-  public static final String STEPIC_API_URL = STEPIC_URL + "/api";
-  public static final String TOKEN_URL = STEPIC_URL + "/oauth2/token/";
+public class EduStepikNames {
+  public static final String STEPIK_URL = "https://stepik.org";
+  public static final String STEPIK_API_URL = STEPIK_URL + "/api";
+  public static final String TOKEN_URL = STEPIK_URL + "/oauth2/token/";
   public static final String RECOMMENDATIONS_URL = "/recommendations";
   public static final String CONTENT_TYPE_APPL_JSON = "application/json";
   public static final String LESSONS = "/lessons/";
@@ -23,5 +23,5 @@ public class EduStepicNames {
   public static final String STEPS = "/steps";
   public static final String SECTIONS = "/sections/";
   public static final String ENROLLMENTS = "/enrollments";
-  public static final String STEPIC_SIGN_IN_LINK = "https://stepic.org/accounts/signup/?next=/users/16516293/learn";
+  public static final String STEPIK_SIGN_IN_LINK = "https://stepik.org/accounts/signup/?next=/users/16516293/learn";
 }

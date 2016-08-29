@@ -30,7 +30,7 @@
 
   <application-components>
     <component>
-      <implementation-class>com.jetbrains.edu.learning.stepic.EduStepicUpdater</implementation-class>
+      <implementation-class>com.jetbrains.edu.learning.stepik.EduStepikUpdater</implementation-class>
     </component>
   </application-components>
 
@@ -105,10 +105,10 @@
 
     <statistics.usagesCollector implementation="com.jetbrains.edu.learning.statistics.EduUsagesCollector"/>
     <applicationService serviceImplementation="com.jetbrains.edu.learning.statistics.EduUsagesCollector"/>
-    <applicationService serviceImplementation="com.jetbrains.edu.learning.stepic.StepicUpdateSettings"/>
+    <applicationService serviceImplementation="com.jetbrains.edu.learning.stepik.StepikUpdateSettings"/>
   </extensions>
 
   <extensions defaultExtensionNs="Edu">
-    <optionsProvider instance="com.jetbrains.edu.learning.stepic.StepicStudyOptions"/>
+    <optionsProvider instance="com.jetbrains.edu.learning.stepik.StepikStudyOptions"/>
   </extensions>
 </idea-plugin>

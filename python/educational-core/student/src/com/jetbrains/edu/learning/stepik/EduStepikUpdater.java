@@ -1,4 +1,4 @@
-package com.jetbrains.edu.learning.stepic;
+package com.jetbrains.edu.learning.stepik;
 
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.notification.Notification;
@@ -15,13 +15,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class EduStepicUpdater {
+public class EduStepikUpdater {
   private static final long CHECK_INTERVAL = DateFormatUtil.DAY;
 
   private final Runnable myCheckRunnable = () -> updateCourseList().doWhenDone(() -> queueNextCheck(CHECK_INTERVAL));
   private final Alarm myCheckForUpdatesAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  public EduStepicUpdater(@NotNull Application application) {
+  public EduStepikUpdater(@NotNull Application application) {
     scheduleCourseListUpdate(application);
   }
 
@@ -33,7 +33,7 @@ public class EduStepicUpdater {
       @Override
       public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
 
-        long timeToNextCheck = StepicUpdateSettings.getInstance().getLastTimeChecked() + CHECK_INTERVAL - System.currentTimeMillis();
+        long timeToNextCheck = StepikUpdateSettings.getInstance().getLastTimeChecked() + CHECK_INTERVAL - System.currentTimeMillis();
         if (timeToNextCheck <= 0) {
           myCheckRunnable.run();
         }
@@ -47,10 +47,10 @@ public class EduStepicUpdater {
   private static ActionCallback updateCourseList() {
     ActionCallback callback = new ActionCallback();
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      final List<CourseInfo> courses = StepicConnectorGet.getCourses();
+      final List<CourseInfo> courses = StepikConnectorGet.getCourses();
       final List<CourseInfo> cachedCourses = StudyProjectGenerator.getCoursesFromCache();
       StudyProjectGenerator.flushCache(courses);
-      StepicUpdateSettings.getInstance().setLastTimeChecked(System.currentTimeMillis());
+      StepikUpdateSettings.getInstance().setLastTimeChecked(System.currentTimeMillis());
 
       courses.removeAll(cachedCourses);
       if (!courses.isEmpty() && !cachedCourses.isEmpty()) {
@@ -78,7 +78,7 @@ public class EduStepicUpdater {
 
   private static boolean checkNeeded() {
     final List<CourseInfo> courses = StudyProjectGenerator.getCoursesFromCache();
-    long timeToNextCheck = StepicUpdateSettings.getInstance().getLastTimeChecked() + CHECK_INTERVAL - System.currentTimeMillis();
+    long timeToNextCheck = StepikUpdateSettings.getInstance().getLastTimeChecked() + CHECK_INTERVAL - System.currentTimeMillis();
     return courses.isEmpty() || timeToNextCheck <= 0;
   }
 }

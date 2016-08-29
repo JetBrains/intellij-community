@@ -36,7 +36,7 @@ import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.editor.StudyEditorFactoryListener;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
-import com.jetbrains.edu.learning.stepic.StepicConnectorLogin;
+import com.jetbrains.edu.learning.stepik.StepikConnectorLogin;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import javafx.application.Platform;
@@ -86,7 +86,7 @@ public class StudyProjectComponent implements ProjectComponent {
               registerShortcuts();
               EduUsagesCollector.projectTypeOpened(course.isAdaptive() ? EduNames.ADAPTIVE : EduNames.STUDY);
               //TODO use it
-              StepicConnectorLogin.loginFromDialog(myProject);
+              StepikConnectorLogin.loginFromDialog(myProject);
             }
           }
         });
@@ -95,7 +95,7 @@ public class StudyProjectComponent implements ProjectComponent {
   }
 
   public void registerStudyToolWindow(@Nullable final Course course) {
-    //if (course != null && ("PyCharm".equals(course.getCourseType()) || EduNames.STEPIC_CODE.equals(course.getCourseType()))) {
+    //if (course != null && ("PyCharm".equals(course.getCourseType()) || EduNames.STEPIK_CODE.equals(course.getCourseType()))) {
     if (course != null) {
       final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
       registerToolWindows(toolWindowManager);

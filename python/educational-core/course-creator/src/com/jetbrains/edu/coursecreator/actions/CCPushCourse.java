@@ -11,12 +11,12 @@ import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
-import com.jetbrains.edu.learning.stepic.StepicConnectorPost;
+import com.jetbrains.edu.learning.stepik.StepikConnectorPost;
 import org.jetbrains.annotations.NotNull;
 
 public class CCPushCourse extends DumbAwareAction {
   public CCPushCourse() {
-    super("Upload Course to Stepic", "Upload Course to Stepic", null);
+    super("Upload Course to Stepik", "Upload Course to Stepik", null);
   }
 
   @Override
@@ -37,7 +37,7 @@ public class CCPushCourse extends DumbAwareAction {
     if (course == null) {
       return;
     }
-    StepicConnectorPost.postCourseWithProgress(project, course);
+    StepikConnectorPost.postCourseWithProgress(project, course);
     EduUsagesCollector.courseUploaded();
   }
 

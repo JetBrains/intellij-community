@@ -1,4 +1,4 @@
-package com.jetbrains.edu.learning.stepic;
+package com.jetbrains.edu.learning.stepik;
 
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.ide.passwordSafe.PasswordSafeException;
@@ -8,9 +8,9 @@ import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import org.jetbrains.annotations.NotNull;
 
-public class StepicUser {
-  private static final String STEPIC_SETTINGS_PASSWORD_KEY = "STEPIC_SETTINGS_PASSWORD_KEY";
-  private static final Logger LOG = Logger.getInstance(StepicUser.class);
+public class StepikUser {
+  private static final String STEPIK_SETTINGS_PASSWORD_KEY = "STEPIK_SETTINGS_PASSWORD_KEY";
+  private static final Logger LOG = Logger.getInstance(StepikUser.class);
   private int id = -1;
   private String firstName = "";
   private String lastName = "";
@@ -19,20 +19,20 @@ public class StepicUser {
   private String refreshToken = "";
 
 
-  public StepicUser() {
+  public StepikUser() {
   }
   
-  public StepicUser(@NotNull final String email, @NotNull final String password) {
+  public StepikUser(@NotNull final String email, @NotNull final String password) {
     this.email = email;
     setPassword(password);
   }
 
-  public StepicUser(StepicUser basicUser) {
+  public StepikUser(StepikUser basicUser) {
     this.email = basicUser.getEmail();
     setPassword(basicUser.getPassword());
   }
 
-  public StepicUser(StepicWrappers.TokenInfo tokenInfo) {
+  public StepikUser(StepikWrappers.TokenInfo tokenInfo) {
     this.accessToken = tokenInfo.accessToken;
     this.refreshToken = tokenInfo.refreshToken;
   }
@@ -80,10 +80,10 @@ public class StepicUser {
 
     String password;
     try {
-      password = PasswordSafe.getInstance().getPassword(null, StudyTaskManager.class, STEPIC_SETTINGS_PASSWORD_KEY + email);
+      password = PasswordSafe.getInstance().getPassword(null, StudyTaskManager.class, STEPIK_SETTINGS_PASSWORD_KEY + email);
     }
     catch (PasswordSafeException e) {
-      LOG.info("Couldn't get password for key [" + STEPIC_SETTINGS_PASSWORD_KEY + "]", e);
+      LOG.info("Couldn't get password for key [" + STEPIK_SETTINGS_PASSWORD_KEY + "]", e);
       password = "";
     }
 
@@ -94,10 +94,10 @@ public class StepicUser {
   public void setPassword(@NotNull final String password) {
     if (password.isEmpty()) return;
     try {
-      PasswordSafe.getInstance().storePassword(null, StudyTaskManager.class, STEPIC_SETTINGS_PASSWORD_KEY + getEmail(), password);
+      PasswordSafe.getInstance().storePassword(null, StudyTaskManager.class, STEPIK_SETTINGS_PASSWORD_KEY + getEmail(), password);
     }
     catch (PasswordSafeException e) {
-      LOG.info("Couldn't set password for key [" + STEPIC_SETTINGS_PASSWORD_KEY + getEmail() + "]", e);
+      LOG.info("Couldn't set password for key [" + STEPIK_SETTINGS_PASSWORD_KEY + getEmail() + "]", e);
     }
   }
 
@@ -122,12 +122,12 @@ public class StepicUser {
     this.refreshToken = refreshToken;
   }
 
-  public void setupTokenInfo(StepicWrappers.TokenInfo tokenInfo) {
+  public void setupTokenInfo(StepikWrappers.TokenInfo tokenInfo) {
     accessToken = tokenInfo.getAccessToken();
     refreshToken = tokenInfo.getRefreshToken();
   }
 
-  public void update(StepicUser tmpUser) {
+  public void update(StepikUser tmpUser) {
     id = tmpUser.getId();
     firstName = tmpUser.getFirstName();
     lastName = tmpUser.getLastName();
@@ -135,7 +135,7 @@ public class StepicUser {
 
   @Override
   public String toString() {
-    return "StepicUser{" +
+    return "StepikUser{" +
             "id=" + id +
             ", firstName='" + firstName + '\'' +
             ", email='" + email + '\'' +

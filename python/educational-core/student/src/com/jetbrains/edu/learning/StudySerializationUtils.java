@@ -374,7 +374,7 @@ public class StudySerializationUtils {
       }
     }
 
-    public static class StepicTaskFileAdapter implements JsonDeserializer<TaskFile> {
+    public static class StepikTaskFileAdapter implements JsonDeserializer<TaskFile> {
 
       @Override
       public TaskFile deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {

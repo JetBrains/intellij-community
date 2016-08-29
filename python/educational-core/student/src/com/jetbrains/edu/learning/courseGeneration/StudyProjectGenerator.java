@@ -34,9 +34,9 @@ import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
-import com.jetbrains.edu.learning.stepic.CourseInfo;
-import com.jetbrains.edu.learning.stepic.StepicConnectorGet;
-import com.jetbrains.edu.learning.stepic.StepicUser;
+import com.jetbrains.edu.learning.stepik.CourseInfo;
+import com.jetbrains.edu.learning.stepik.StepikConnectorGet;
+import com.jetbrains.edu.learning.stepik.StepikUser;
 import org.apache.commons.codec.binary.Base64;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +56,7 @@ public class StudyProjectGenerator {
   private static final String COURSE_DESCRIPTION = "description";
   protected static final String CACHE_NAME = "courseNames.txt";
   private final List<SettingsListener> myListeners = ContainerUtil.newArrayList();
-  @Nullable public StepicUser myUser;
+  @Nullable public StepikUser myUser;
   protected List<CourseInfo> myCourses = new ArrayList<>();
   private List<Integer> myEnrolledCoursesIds = new ArrayList<>();
   protected CourseInfo mySelectedCourseInfo;
@@ -126,7 +126,7 @@ public class StudyProjectGenerator {
         ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
         return execCancelable(() -> {
 
-          final Course course = StepicConnectorGet.getCourse(project, mySelectedCourseInfo);
+          final Course course = StepikConnectorGet.getCourse(project, mySelectedCourseInfo);
           if (course != null) {
             flushCourse(project, course);
             course.initCourse(false);
@@ -372,7 +372,7 @@ public class StudyProjectGenerator {
       myCourses = getCoursesFromCache();
     }
     if (force || myCourses.isEmpty()) {
-      myCourses = execCancelable(StepicConnectorGet::getCourses);
+      myCourses = execCancelable(StepikConnectorGet::getCourses);
       flushCache(myCourses);
     }
     if (myCourses.isEmpty()) {
@@ -540,13 +540,13 @@ public class StudyProjectGenerator {
         courseInfo.setName(courseName);
         courseInfo.setDescription(courseDescription);
         courseInfo.setType("pycharm " + language);
-        final ArrayList<StepicUser> authors = new ArrayList<>();
+        final ArrayList<StepikUser> authors = new ArrayList<>();
         for (JsonElement author : courseAuthors) {
           final JsonObject authorAsJsonObject = author.getAsJsonObject();
-          final StepicUser stepicUser = new StepicUser();
-          stepicUser.setFirstName(authorAsJsonObject.get("first_name").getAsString());
-          stepicUser.setLastName(authorAsJsonObject.get("last_name").getAsString());
-          authors.add(stepicUser);
+          final StepikUser stepikUser = new StepikUser();
+          stepikUser.setFirstName(authorAsJsonObject.get("first_name").getAsString());
+          stepikUser.setLastName(authorAsJsonObject.get("last_name").getAsString());
+          authors.add(stepikUser);
         }
         courseInfo.setAuthors(authors);
       }

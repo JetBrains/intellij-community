@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.edu.learning.stepic;
+package com.jetbrains.edu.learning.stepik;
 
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
@@ -47,46 +47,46 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-public class StepicConnectorGet {
-  private static final Logger LOG = Logger.getInstance(StepicConnectorGet.class.getName());
-  private static final String stepicUrl = "https://stepic.org/";
+public class StepikConnectorGet {
+  private static final Logger LOG = Logger.getInstance(StepikConnectorGet.class.getName());
+  private static final String stepikUrl = "https://stepik.org/";
   public static final String PYCHARM_PREFIX = "pycharm";
   public static final String CODE_PREFIX = "code";
   public static final String PYTHON27 = "python27";
   public static final String PYTHON3 = "python3";
 
   static final private Gson GSON =
-    new GsonBuilder().registerTypeAdapter(TaskFile.class, new StudySerializationUtils.Json.StepicTaskFileAdapter())
+    new GsonBuilder().registerTypeAdapter(TaskFile.class, new StudySerializationUtils.Json.StepikTaskFileAdapter())
       .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
 
 
-  static <T> T getFromStepic(String link, final Class<T> container) throws IOException {
-    return getFromStepic(link, container, StepicConnectorLogin.getHttpClient());
+  static <T> T getFromStepik(String link, final Class<T> container) throws IOException {
+    return getFromStepik(link, container, StepikConnectorLogin.getHttpClient());
   }
 
-  static <T> T getFromStepicUnLogin(String link, final Class<T> container) throws IOException {
-    return getFromStepic(link, container, StepicConnectorInit.getHttpClient());
+  static <T> T getFromStepikUnLogin(String link, final Class<T> container) throws IOException {
+    return getFromStepik(link, container, StepikConnectorInit.getHttpClient());
   }
 
-  private static <T> T getFromStepic(String link, final Class<T> container, CloseableHttpClient client) throws IOException {
-    final HttpGet request = new HttpGet(EduStepicNames.STEPIC_API_URL + link);
+  private static <T> T getFromStepik(String link, final Class<T> container, CloseableHttpClient client) throws IOException {
+    final HttpGet request = new HttpGet(EduStepikNames.STEPIK_API_URL + link);
 
     final CloseableHttpResponse response = client.execute(request);
     final StatusLine statusLine = response.getStatusLine();
     final HttpEntity responseEntity = response.getEntity();
     final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
     if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
-      throw new IOException("Stepic returned non 200 status code " + responseString);
+      throw new IOException("Stepik returned non 200 status code " + responseString);
     }
     return GSON.fromJson(responseString, container);
-    //    return getFromStepic(link, container, client, new ArrayList<NameValuePair>());
+    //    return getFromStepik(link, container, client, new ArrayList<NameValuePair>());
   }
 
-  private static <T> T getFromStepic(String link, final Class<T> container, CloseableHttpClient client, List<NameValuePair> nvps)
+  private static <T> T getFromStepik(String link, final Class<T> container, CloseableHttpClient client, List<NameValuePair> nvps)
     throws IOException {
     URI uri;
     try {
-      uri = new URIBuilder(EduStepicNames.STEPIC_API_URL + link).addParameters(nvps).build();
+      uri = new URIBuilder(EduStepikNames.STEPIK_API_URL + link).addParameters(nvps).build();
     }
     catch (URISyntaxException e) {
       LOG.warn(e.getMessage());
@@ -99,7 +99,7 @@ public class StepicConnectorGet {
     final HttpEntity responseEntity = response.getEntity();
     final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
     if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
-      throw new IOException("Stepic returned non 200 status code " + responseString);
+      throw new IOException("Stepik returned non 200 status code " + responseString);
     }
     return GSON.fromJson(responseString, container);
   }
@@ -110,7 +110,7 @@ public class StepicConnectorGet {
     try {
       List<CourseInfo> result = new ArrayList<CourseInfo>();
       int pageNumber = 1;
-      while (addCoursesFromStepic(result, pageNumber)) {
+      while (addCoursesFromStepik(result, pageNumber)) {
         pageNumber += 1;
       }
       return result;
@@ -142,7 +142,7 @@ public class StepicConnectorGet {
   public static CourseInfo getDefaultCourse() {
     CourseInfo courseInfo = null;
     try {
-      courseInfo = getFromStepic(EduStepicNames.COURSES + "/217", StepicWrappers.CoursesContainer.class).courses.get(0);
+      courseInfo = getFromStepik(EduStepikNames.COURSES + "/217", StepikWrappers.CoursesContainer.class).courses.get(0);
     }
     catch (IOException e) {
       e.printStackTrace();
@@ -150,9 +150,9 @@ public class StepicConnectorGet {
     return courseInfo;
   }
 
-  private static boolean addCoursesFromStepic(List<CourseInfo> result, int pageNumber) throws IOException {
-    final String url = pageNumber == 0 ? EduStepicNames.COURSES : EduStepicNames.COURSES_FROM_PAGE + String.valueOf(pageNumber);
-    final StepicWrappers.CoursesContainer coursesContainer = getFromStepicUnLogin(url, StepicWrappers.CoursesContainer.class);
+  private static boolean addCoursesFromStepik(List<CourseInfo> result, int pageNumber) throws IOException {
+    final String url = pageNumber == 0 ? EduStepikNames.COURSES : EduStepikNames.COURSES_FROM_PAGE + String.valueOf(pageNumber);
+    final StepikWrappers.CoursesContainer coursesContainer = getFromStepikUnLogin(url, StepikWrappers.CoursesContainer.class);
     final List<CourseInfo> courseInfos = coursesContainer.courses;
     for (CourseInfo info : courseInfos) {
       final String courseType = info.getType();
@@ -161,8 +161,8 @@ public class StepicConnectorGet {
       // TODO: should adaptive course be of PyCharmType ?
       if (info.isAdaptive() || (typeLanguage.size() == 2 && PYCHARM_PREFIX.equals(typeLanguage.get(0)))) {
         for (Integer instructor : info.instructors) {
-          final StepicUser author =
-            getFromStepicUnLogin(EduStepicNames.USERS + "/" + String.valueOf(instructor), StepicWrappers.AuthorWrapper.class).users.get(0);
+          final StepikUser author =
+            getFromStepikUnLogin(EduStepikNames.USERS + "/" + String.valueOf(instructor), StepikWrappers.AuthorWrapper.class).users.get(0);
           info.addAuthor(author);
         }
 
@@ -176,9 +176,9 @@ public class StepicConnectorGet {
   }
 
   public static boolean addCoursesFromStepik(List<CourseInfo> result, int pageNumber, List<NameValuePair> nvps) throws IOException {
-    final String url = pageNumber == 0 ? EduStepicNames.COURSES : EduStepicNames.COURSES_FROM_PAGE + String.valueOf(pageNumber);
-    final StepicWrappers.CoursesContainer coursesContainer =
-      getFromStepic(url, StepicWrappers.CoursesContainer.class, StepicConnectorLogin.getHttpClient(), nvps);
+    final String url = pageNumber == 0 ? EduStepikNames.COURSES : EduStepikNames.COURSES_FROM_PAGE + String.valueOf(pageNumber);
+    final StepikWrappers.CoursesContainer coursesContainer =
+      getFromStepik(url, StepikWrappers.CoursesContainer.class, StepikConnectorLogin.getHttpClient(), nvps);
     final List<CourseInfo> courseInfos = coursesContainer.courses;
     for (CourseInfo info : courseInfos) {
       final String courseType = info.getType();
@@ -187,9 +187,9 @@ public class StepicConnectorGet {
       // TODO: should adaptive course be of PyCharmType ?
       //if (info.isAdaptive() || (typeLanguage.size() == 2 && PYCHARM_PREFIX.equals(typeLanguage.get(0)))) {
       for (Integer instructor : info.instructors) {
-        final StepicUser author =
-          getFromStepic(EduStepicNames.USERS + "/" + String.valueOf(instructor), StepicWrappers.AuthorWrapper.class,
-                        StepicConnectorInit.getHttpClient()).users.get(0);
+        final StepikUser author =
+          getFromStepik(EduStepikNames.USERS + "/" + String.valueOf(instructor), StepikWrappers.AuthorWrapper.class,
+                        StepikConnectorInit.getHttpClient()).users.get(0);
         info.addAuthor(author);
       }
 
@@ -208,7 +208,7 @@ public class StepicConnectorGet {
     course.setDescription(info.getDescription());
     course.setAdaptive(info.isAdaptive());
     course.setId(info.id);
-    course.setUpToDate(true);  // TODO: get from stepic
+    course.setUpToDate(true);  // TODO: get from stepik
 
     if (course.isAdaptive()) {
       course = getAdaptiveCourse(project, course, info);
@@ -222,14 +222,14 @@ public class StepicConnectorGet {
   private static Course getRegularCourse(@NotNull final Project project, Course course, @NotNull final CourseInfo info) {
     String courseType = info.getType();
     course.setName(info.getName());
-    course.setCourseType(info.getType().startsWith("pycharm") ? info.getType() : "stepic");
+    course.setCourseType(info.getType().startsWith("pycharm") ? info.getType() : "stepik");
 
     //    what for?
     course.setLanguage(courseType.substring(PYCHARM_PREFIX.length() + 1));
     try {
       for (Integer section : info.sections) {
         switch (course.getCourseType()) {
-          case ("stepic"):
+          case ("stepik"):
             course.addLessons(getLessonsWithSectionNames(section));
             break;
           default:
@@ -250,7 +250,7 @@ public class StepicConnectorGet {
     //TODO: more specific name?
     lesson.setName("Adaptive");
     course.addLesson(lesson);
-    final Task recommendation = EduAdaptiveStepicConnector.getNextRecommendation(project, course);
+    final Task recommendation = EduAdaptiveStepikConnector.getNextRecommendation(project, course);
     if (recommendation != null) {
       lesson.addTask(recommendation);
       return course;
@@ -261,16 +261,16 @@ public class StepicConnectorGet {
   }
 
   public static List<Lesson> getLessons(int sectionId) throws IOException {
-    final StepicWrappers.SectionContainer
-      sectionContainer = getFromStepic(EduStepicNames.SECTIONS + String.valueOf(sectionId), StepicWrappers.SectionContainer.class);
+    final StepikWrappers.SectionContainer
+      sectionContainer = getFromStepik(EduStepikNames.SECTIONS + String.valueOf(sectionId), StepikWrappers.SectionContainer.class);
     List<Integer> unitIds = sectionContainer.sections.get(0).units;
 
-    StepicWrappers.UnitContainer
-      unitContainer = getFromStepic(EduStepicNames.UNITS + "/" + getIdQuery(unitIds), StepicWrappers.UnitContainer.class);
+    StepikWrappers.UnitContainer
+      unitContainer = getFromStepik(EduStepikNames.UNITS + "/" + getIdQuery(unitIds), StepikWrappers.UnitContainer.class);
     List<Integer> lessonsIds = new ArrayList<>();
     unitContainer.units.forEach(x -> lessonsIds.add(x.lesson));
-    StepicWrappers.LessonContainer
-      lessonContainer = getFromStepic(EduStepicNames.LESSONS + getIdQuery(lessonsIds), StepicWrappers.LessonContainer.class);
+    StepikWrappers.LessonContainer
+      lessonContainer = getFromStepik(EduStepikNames.LESSONS + getIdQuery(lessonsIds), StepikWrappers.LessonContainer.class);
 
     final List<Lesson> lessons = new ArrayList<Lesson>();
     for (Lesson lesson : lessonContainer.lessons) {
@@ -284,17 +284,17 @@ public class StepicConnectorGet {
   }
 
   public static List<Lesson> getLessonsWithSectionNames(int sectionId) throws IOException {
-    final StepicWrappers.SectionContainer
-      sectionContainer = getFromStepic(EduStepicNames.SECTIONS + String.valueOf(sectionId), StepicWrappers.SectionContainer.class);
+    final StepikWrappers.SectionContainer
+      sectionContainer = getFromStepik(EduStepikNames.SECTIONS + String.valueOf(sectionId), StepikWrappers.SectionContainer.class);
     List<Integer> unitIds = sectionContainer.sections.get(0).units;
     sectionContainer.sections.forEach(x -> x.title = x.position + "." + x.title);
 
-    StepicWrappers.UnitContainer
-      unitContainer = getFromStepic(EduStepicNames.UNITS + "/" + getIdQuery(unitIds), StepicWrappers.UnitContainer.class);
+    StepikWrappers.UnitContainer
+      unitContainer = getFromStepik(EduStepikNames.UNITS + "/" + getIdQuery(unitIds), StepikWrappers.UnitContainer.class);
     List<Integer> lessonsIds = new ArrayList<>();
     unitContainer.units.forEach(x -> lessonsIds.add(x.lesson));
-    StepicWrappers.LessonContainer
-      lessonContainer = getFromStepic(EduStepicNames.LESSONS + getIdQuery(lessonsIds), StepicWrappers.LessonContainer.class);
+    StepikWrappers.LessonContainer
+      lessonContainer = getFromStepik(EduStepikNames.LESSONS + getIdQuery(lessonsIds), StepikWrappers.LessonContainer.class);
 
     final int[] i = {1};
     lessonContainer.lessons.forEach(x -> x.setName(i[0]++ + "." + x.getName()));
@@ -311,12 +311,12 @@ public class StepicConnectorGet {
     return lessons;
   }
 
-  private static void createTasks(Lesson lesson, List<Integer> stepicIds) throws IOException {
-    final StepicWrappers.StepContainer stepContainer = getSteps(stepicIds);
-    for (StepicWrappers.StepSource stepSource : stepContainer.steps) {
+  private static void createTasks(Lesson lesson, List<Integer> stepikIds) throws IOException {
+    final StepikWrappers.StepContainer stepContainer = getSteps(stepikIds);
+    for (StepikWrappers.StepSource stepSource : stepContainer.steps) {
       if (supported(stepSource.block.name)) {
         final Task task = new Task();
-        task.setStepicId(stepSource.id);
+        task.setStepikId(stepSource.id);
         task.setPosition(stepSource.position);
 
         switch (stepSource.block.name) {
@@ -336,10 +336,10 @@ public class StepicConnectorGet {
     return CODE_PREFIX.equals(name) || PYCHARM_PREFIX.equals(name);
   }
 
-  private static void createPyCharmTask(Task task, StepicWrappers.Step step) {
+  private static void createPyCharmTask(Task task, StepikWrappers.Step step) {
     task.setName(step.options != null ? step.options.title : PYCHARM_PREFIX);
     task.setText(step.text);
-    for (StepicWrappers.TestFileWrapper wrapper : step.options.test) {
+    for (StepikWrappers.TestFileWrapper wrapper : step.options.test) {
       task.addTestsTexts(wrapper.name, wrapper.text);
     }
 
@@ -351,7 +351,7 @@ public class StepicConnectorGet {
     }
   }
 
-  private static void createCodeTask(Task task, StepicWrappers.Step step) {
+  private static void createCodeTask(Task task, StepikWrappers.Step step) {
     task.setName("step" + task.getPosition());
     if (step.options.samples != null) {
       final StringBuilder builder = new StringBuilder();
@@ -396,17 +396,17 @@ public class StepicConnectorGet {
     }
   }
 
-  public static StepicWrappers.StepContainer getSteps(List<Integer> steps) throws IOException {
-    return getFromStepic(EduStepicNames.STEPS + "/" + getIdQuery(steps), StepicWrappers.StepContainer.class);
+  public static StepikWrappers.StepContainer getSteps(List<Integer> steps) throws IOException {
+    return getFromStepik(EduStepikNames.STEPS + "/" + getIdQuery(steps), StepikWrappers.StepContainer.class);
   }
 
-  public static StepicWrappers.Step getStep(Integer step) throws IOException {
-    return getFromStepic(EduStepicNames.STEPS + "/" + String.valueOf(step), StepicWrappers.StepContainer.class).steps.get(0).block;
+  public static StepikWrappers.Step getStep(Integer step) throws IOException {
+    return getFromStepik(EduStepikNames.STEPS + "/" + String.valueOf(step), StepikWrappers.StepContainer.class).steps.get(0).block;
   }
 
-  public static StepicWrappers.AuthorWrapper getCurrentUser() {
+  public static StepikWrappers.AuthorWrapper getCurrentUser() {
     try {
-      return getFromStepic(EduStepicNames.CURRENT_USER, StepicWrappers.AuthorWrapper.class);
+      return getFromStepik(EduStepikNames.CURRENT_USER, StepikWrappers.AuthorWrapper.class);
     }
     catch (IOException e) {
       LOG.warn("Couldn't get author info");
@@ -414,10 +414,10 @@ public class StepicConnectorGet {
     return null;
   }
 
-  public static StepicWrappers.ResultSubmissionWrapper getStatus(int submissionID) {
-    final String url = EduStepicNames.SUBMISSIONS + "/" + submissionID;
+  public static StepikWrappers.ResultSubmissionWrapper getStatus(int submissionID) {
+    final String url = EduStepikNames.SUBMISSIONS + "/" + submissionID;
     try {
-      return getFromStepic(url, StepicWrappers.ResultSubmissionWrapper.class);
+      return getFromStepik(url, StepikWrappers.ResultSubmissionWrapper.class);
     }
     catch (IOException e) {
       LOG.warn("Couldn't get Submission");
@@ -437,8 +437,8 @@ public class StepicConnectorGet {
   @NotNull
   public static List<Integer> getEnrolledCoursesIds() {
     try {
-      final URI enrolledCoursesUri = new URIBuilder(EduStepicNames.COURSES).addParameter("enrolled", "true").build();
-      final List<CourseInfo> courses = getFromStepic(enrolledCoursesUri.toString(), StepicWrappers.CoursesContainer.class).courses;
+      final URI enrolledCoursesUri = new URIBuilder(EduStepikNames.COURSES).addParameter("enrolled", "true").build();
+      final List<CourseInfo> courses = getFromStepik(enrolledCoursesUri.toString(), StepikWrappers.CoursesContainer.class).courses;
       final ArrayList<Integer> ids = new ArrayList<>();
       for (CourseInfo course : courses) {
         ids.add(course.getId());
@@ -454,9 +454,9 @@ public class StepicConnectorGet {
     return Collections.emptyList();
   }
 
-  public static StepicWrappers.SubmissionContainer getSubmissions(List<NameValuePair> nvps) {
+  public static StepikWrappers.SubmissionContainer getSubmissions(List<NameValuePair> nvps) {
     try {
-      return getFromStepic(EduStepicNames.SUBMISSIONS, StepicWrappers.SubmissionContainer.class, StepicConnectorLogin.getHttpClient(),
+      return getFromStepik(EduStepikNames.SUBMISSIONS, StepikWrappers.SubmissionContainer.class, StepikConnectorLogin.getHttpClient(),
                            nvps);
     }
     catch (IOException e) {
@@ -465,9 +465,9 @@ public class StepicConnectorGet {
     }
   }
 
-  public static StepicWrappers.UnitContainer getUnits(String unitId) {
+  public static StepikWrappers.UnitContainer getUnits(String unitId) {
     try {
-      return getFromStepic(EduStepicNames.UNITS + "/" + unitId, StepicWrappers.UnitContainer.class, StepicConnectorLogin.getHttpClient());
+      return getFromStepik(EduStepikNames.UNITS + "/" + unitId, StepikWrappers.UnitContainer.class, StepikConnectorLogin.getHttpClient());
     }
     catch (IOException e) {
       LOG.warn("Can't get Units\n" + e.getMessage());
@@ -475,10 +475,10 @@ public class StepicConnectorGet {
     }
   }
 
-  public static StepicWrappers.SectionContainer getSections(String sectionId) {
+  public static StepikWrappers.SectionContainer getSections(String sectionId) {
     try {
-      return getFromStepic(EduStepicNames.SECTIONS + sectionId, StepicWrappers.SectionContainer.class,
-                           StepicConnectorLogin.getHttpClient());
+      return getFromStepik(EduStepikNames.SECTIONS + sectionId, StepikWrappers.SectionContainer.class,
+                           StepikConnectorLogin.getHttpClient());
     }
     catch (IOException e) {
       LOG.warn("Can't get Sections\n" + e.getMessage());
@@ -486,10 +486,10 @@ public class StepicConnectorGet {
     }
   }
 
-  public static StepicWrappers.CoursesContainer getCourseInfos(String courseId) {
+  public static StepikWrappers.CoursesContainer getCourseInfos(String courseId) {
     try {
-      return getFromStepic(EduStepicNames.COURSES + "/" + courseId, StepicWrappers.CoursesContainer.class,
-                           StepicConnectorLogin.getHttpClient());
+      return getFromStepik(EduStepikNames.COURSES + "/" + courseId, StepikWrappers.CoursesContainer.class,
+                           StepikConnectorLogin.getHttpClient());
     }
     catch (IOException e) {
       LOG.warn("Can't get courses Info\n" + e.getMessage());

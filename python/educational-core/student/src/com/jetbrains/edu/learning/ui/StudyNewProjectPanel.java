@@ -27,7 +27,7 @@ import com.intellij.ui.PanelWithAnchor;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
-import com.jetbrains.edu.learning.stepic.*;
+import com.jetbrains.edu.learning.stepik.*;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,8 +58,8 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
   private static final String INVALID_COURSE = "Selected course is invalid";
   private FacetValidatorsManager myValidationManager;
   private boolean isComboboxInitialized;
-  private static final String LOGIN_TO_STEPIC_MESSAGE = "<html><u>Login to Stepic</u> to open the adaptive course </html>";
-  private static final String LOGIN_TO_STEPIC = "Login to Stepic";
+  private static final String LOGIN_TO_STEPIK_MESSAGE = "<html><u>Login to Stepik</u> to open the adaptive course </html>";
+  private static final String LOGIN_TO_STEPIK = "Login to Stepik";
 
   public StudyNewProjectPanel(@NotNull final StudyProjectGenerator generator) {
     super(new VerticalFlowLayout(true, true));
@@ -128,7 +128,7 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
       myGenerator.setSelectedCourse(selectedCourse);
 
       if (selectedCourse.isAdaptive() && !myGenerator.isLoggedIn()) {
-        setError(LOGIN_TO_STEPIC_MESSAGE);
+        setError(LOGIN_TO_STEPIK_MESSAGE);
       }
       else {
         setOK();
@@ -151,7 +151,7 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
     };
     myBrowseButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final BaseListPopupStep<String> popupStep = new BaseListPopupStep<String>("", "Add local course", LOGIN_TO_STEPIC) {
+        final BaseListPopupStep<String> popupStep = new BaseListPopupStep<String>("", "Add local course", LOGIN_TO_STEPIK) {
           @Override
           public PopupStep onChosen(final String selectedValue, boolean finalChoice) {
             return doFinalStep(() -> {
@@ -181,8 +181,8 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
                                          }
                                        });
               }
-              else if (LOGIN_TO_STEPIC.equals(selectedValue)) {
-                showLoginDialog(true, "Signing In And Getting Stepic Course List");
+              else if (LOGIN_TO_STEPIK.equals(selectedValue)) {
+                showLoginDialog(true, "Signing In And Getting Stepik Course List");
               }
             });
           }
@@ -304,7 +304,7 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
       setOK();
       if (selectedCourse.isAdaptive()) {
         if (!myGenerator.isLoggedIn()) {
-          setError(LOGIN_TO_STEPIC_MESSAGE);
+          setError(LOGIN_TO_STEPIK_MESSAGE);
         }
       }
     }
@@ -337,14 +337,14 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
         ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
 
-        final StepicUser stepicUser =
-          StudyUtils.execCancelable(() -> StepicConnectorLogin.minorLogin(new StepicUser(myLoginPanel.getLogin(),
+        final StepikUser stepikUser =
+          StudyUtils.execCancelable(() -> StepikConnectorLogin.minorLogin(new StepikUser(myLoginPanel.getLogin(),
                                                                                          myLoginPanel.getPassword())));
-        if (stepicUser != null) {
-          stepicUser.setEmail(myLoginPanel.getLogin());
-          stepicUser.setPassword(myLoginPanel.getPassword());
-          myGenerator.myUser = stepicUser;
-          myGenerator.setEnrolledCoursesIds(StepicConnectorGet.getEnrolledCoursesIds());
+        if (stepikUser != null) {
+          stepikUser.setEmail(myLoginPanel.getLogin());
+          stepikUser.setPassword(myLoginPanel.getPassword());
+          myGenerator.myUser = stepikUser;
+          myGenerator.setEnrolledCoursesIds(StepikConnectorGet.getEnrolledCoursesIds());
 
           final List<CourseInfo> courses = myGenerator.getCourses(true);
           if (courses != null && myRefreshCourseList) {

@@ -1,4 +1,4 @@
-package com.jetbrains.edu.learning.stepic;
+package com.jetbrains.edu.learning.stepik;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -16,7 +16,7 @@ public class LoginDialog extends DialogWrapper {
   public LoginDialog() {
     super(false);
     myLoginPanel = new LoginPanel(this);
-    setTitle("Login to Stepic");
+    setTitle("Login to Stepik");
     setOKButtonText("Login");
     init();
   }
@@ -33,7 +33,7 @@ public class LoginDialog extends DialogWrapper {
 
   @Override
   protected String getHelpId() {
-    return "login_to_stepic";
+    return "login_to_stepik";
   }
 
   @Override
@@ -44,8 +44,8 @@ public class LoginDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     if (!validateLoginAndPasswordFields()) return;
-    StepicUser basicUser = new StepicUser(myLoginPanel.getLogin(), myLoginPanel.getPassword());
-    final StepicUser user = StepicConnectorLogin.minorLogin(basicUser);
+    StepikUser basicUser = new StepikUser(myLoginPanel.getLogin(), myLoginPanel.getPassword());
+    final StepikUser user = StepikConnectorLogin.minorLogin(basicUser);
     if (user != null) {
       doJustOkAction();
       final Project project = ProjectUtil.guessCurrentProject(myLoginPanel.getContentPanel());

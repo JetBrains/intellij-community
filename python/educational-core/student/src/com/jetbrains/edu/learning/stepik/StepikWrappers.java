@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.edu.learning.stepic;
+package com.jetbrains.edu.learning.stepik;
 
 import com.google.gson.annotations.Expose;
 import com.intellij.openapi.application.ApplicationManager;
@@ -37,7 +37,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class StepicWrappers {
+public class StepikWrappers {
   private static final Logger LOG = Logger.getInstance(StepOptions.class);
 
   static class StepContainer {
@@ -133,11 +133,11 @@ public class StepicWrappers {
 
     @Nullable
     public String getTemplateForLanguage(@NotNull final String langauge) {
-      if (langauge.equals(EduAdaptiveStepicConnector.PYTHON27)) {
+      if (langauge.equals(EduAdaptiveStepikConnector.PYTHON27)) {
         return python27;
       }
 
-      if (langauge.equals(EduAdaptiveStepicConnector.PYTHON3)) {
+      if (langauge.equals(EduAdaptiveStepikConnector.PYTHON3)) {
         return python3;
       }
 
@@ -314,7 +314,7 @@ public class StepicWrappers {
   }
 
   public static class AuthorWrapper {
-    public List<StepicUser> users;
+    public List<StepikUser> users;
   }
 
   public static class SubmissionContainer {
@@ -351,10 +351,10 @@ public class StepicWrappers {
   }
 
   static class UserWrapper {
-    StepicUser user;
+    StepikUser user;
 
     public UserWrapper(String user, String password) {
-      this.user = new StepicUser(user, password);
+      this.user = new StepikUser(user, password);
     }
   }
 

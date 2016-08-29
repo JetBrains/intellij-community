@@ -14,7 +14,7 @@ import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.learning.courseFormat.*;
-import com.jetbrains.edu.learning.stepic.StepicUser;
+import com.jetbrains.edu.learning.stepik.StepikUser;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
@@ -33,7 +33,7 @@ import java.util.*;
 public class StudyTaskManager implements PersistentStateComponent<Element>, DumbAware {
   private static final Logger LOG = Logger.getInstance(StudyTaskManager.class);
   public static final int CURRENT_VERSION = 3;
-  private StepicUser myUser = new StepicUser();
+  private StepikUser myUser = new StepikUser();
   private Course myCourse;
   public int VERSION = 3;
 
@@ -198,11 +198,11 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   }
 
   @NotNull
-  public StepicUser getUser() {
+  public StepikUser getUser() {
     return myUser;
   }
 
-  public void setUser(@NotNull final StepicUser user) {
+  public void setUser(@NotNull final StepikUser user) {
     myUser = user;
   }
 
