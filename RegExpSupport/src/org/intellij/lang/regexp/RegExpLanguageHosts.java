@@ -18,9 +18,8 @@ package org.intellij.lang.regexp;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.ClassExtension;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -58,12 +57,30 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     if (element == null) {
       return null;
     }
-    PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(element.getProject()).getInjectionHost(element);
-    if (host instanceof RegExpLanguageHost) {
-      return (RegExpLanguageHost)host;
-    }
+    PsiLanguageInjectionHost injectionHost = InjectedLanguageManager.getInstance(element.getProject()).getInjectionHost(element);
+    final RegExpLanguageHost host = getRegExpHost(injectionHost);
     if (host != null) {
-      return INSTANCE.forClass(host.getClass());
+      return host;
+    }
+    final PsiFile file = element.getContainingFile();
+    final SmartPsiElementPointer pointer = file.getUserData(FileContextUtil.INJECTED_IN_ELEMENT);
+    if (pointer == null) {
+      return null;
+    }
+    final PsiElement pointerElement = pointer.getElement();
+    if (pointerElement == null) {
+      return null;
+    }
+    return getRegExpHost(pointerElement);
+  }
+
+  @Nullable
+  private static RegExpLanguageHost getRegExpHost(@Nullable PsiElement languageInjectionHostElement) {
+    if (languageInjectionHostElement instanceof RegExpLanguageHost) {
+      return (RegExpLanguageHost)languageInjectionHostElement;
+    }
+    if (languageInjectionHostElement != null) {
+      return INSTANCE.forClass(languageInjectionHostElement.getClass());
     }
     return null;
   }
@@ -154,6 +171,7 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
 
   public boolean supportsNamedCharacters(@NotNull final RegExpNamedCharacter namedCharacter) {
     final RegExpLanguageHost host = findRegExpHost(namedCharacter);
+    System.out.println("host = " + host);
     return host != null && host.supportsNamedCharacters(namedCharacter);
   }
 
