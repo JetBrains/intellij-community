@@ -17,7 +17,6 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.BuildTasksImpl
-import org.jetbrains.intellij.build.impl.PluginLayout
 
 /**
  * @author nik
@@ -25,17 +24,17 @@ import org.jetbrains.intellij.build.impl.PluginLayout
 @CompileStatic
 abstract class BuildTasks {
   /**
-   * Build sources.zip archive containing the project source files keeping the original layout
+   * Builds sources.zip archive containing the project source files keeping the original layout
    */
   abstract void zipProjectSources()
 
   /**
-   * Build archive containing production source roots of the project modules
+   * Builds archive containing production source roots of the project modules
    */
   abstract void zipSourcesOfModules(Collection<String> modules, String targetFilePath)
 
   /**
-   * Update search/searchableOptions.xml file in {@code targetModuleName} module output directory
+   * Updates search/searchableOptions.xml file in {@code targetModuleName} module output directory
    * <br>
    * todo[nik] this is temporary solution until code from layouts.gant files moved to the new builders. After that this method will
    * be called inside {@link #buildDistributions()}
@@ -43,7 +42,7 @@ abstract class BuildTasks {
   abstract void buildSearchableOptions(String targetModuleName, List<String> modulesToIndex, List<String> pathsToLicenses)
 
   /**
-   * Create a copy of *ApplicationInfo.xml file with substituted __BUILD_NUMBER__ and __BUILD_DATE__ placeholders
+   * Creates a copy of *ApplicationInfo.xml file with substituted __BUILD_NUMBER__ and __BUILD_DATE__ placeholders
    * <br>
    * todo[nik] this is temporary solution until code from layouts.gant files moved to the new builders. After that this method will
    * be called inside {@link #buildDistributions()}
@@ -52,11 +51,15 @@ abstract class BuildTasks {
   abstract File patchApplicationInfo()
 
   /**
-   * Create distribution for all operating system from JAR files located at {@link BuildPaths#distAll}
+   * Creates distribution for all operating systems from JAR files located at {@link BuildPaths#distAll}
    */
   abstract void buildDistributions()
 
-  abstract void compileModulesAndBuildDistributions(List<PluginLayout> allPlugins)
+  /**
+   * Produces distributions for all operating systems from sources. This includes compiling required modules, packing their output into JAR
+   * files accordingly to {@link ProductProperties#productLayout}, and creating distributions and installers for all OS.
+   */
+  abstract void compileModulesAndBuildDistributions()
 
   abstract void cleanOutput()
 

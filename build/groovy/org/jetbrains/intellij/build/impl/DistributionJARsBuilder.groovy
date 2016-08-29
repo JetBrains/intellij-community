@@ -50,13 +50,11 @@ class DistributionJARsBuilder {
   private static final String RESOURCES_INCLUDED = "resources.included"
   private static final String RESOURCES_EXCLUDED = "resources.excluded"
   private final BuildContext buildContext
-  private final List<PluginLayout> allPlugins
   private final Set<String> usedModules = new LinkedHashSet<>()
   private final PlatformLayout platform
 
-  DistributionJARsBuilder(BuildContext buildContext, List<PluginLayout> allPlugins) {
+  DistributionJARsBuilder(BuildContext buildContext) {
     this.buildContext = buildContext
-    this.allPlugins = allPlugins
     buildContext.ant.patternset(id: RESOURCES_INCLUDED) {
       include(name: "**/*Bundle*.properties")
       include(name: "**/*Messages.properties")
@@ -94,7 +92,7 @@ class DistributionJARsBuilder {
       }
     }
 
-    Set<String> allProductDependencies = (productLayout.getIncludedPluginModules(allPlugins) + productLayout.includedPlatformModules).collectMany(new LinkedHashSet<String>()) {
+    Set<String> allProductDependencies = (productLayout.getIncludedPluginModules(buildContext.productProperties.allPlugins) + productLayout.includedPlatformModules).collectMany(new LinkedHashSet<String>()) {
       JpsJavaExtensionService.dependencies(buildContext.findRequiredModule(it)).productionOnly().getModules().collect {it.name}
     }
 
@@ -246,7 +244,7 @@ class DistributionJARsBuilder {
 
   private List<PluginLayout> getPluginsByModules(Collection<String> modules) {
     def modulesToInclude = modules as Set<String>
-    allPlugins.findAll { modulesToInclude.contains(it.mainModule) }
+    buildContext.productProperties.allPlugins.findAll { modulesToInclude.contains(it.mainModule) }
   }
 
   private void buildPlugins(LayoutBuilder layoutBuilder, List<PluginLayout> pluginsToInclude, String targetDirectory) {

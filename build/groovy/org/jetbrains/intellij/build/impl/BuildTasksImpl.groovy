@@ -258,13 +258,13 @@ idea.fatal.error.notification=disabled
   }
 
   @Override
-  void compileModulesAndBuildDistributions(List<PluginLayout> allPlugins) {
-    def productLayout = buildContext.productProperties.productLayout
+  void compileModulesAndBuildDistributions() {
     checkProductProperties()
-    checkProductLayout(productLayout, allPlugins)
+    checkProductLayout()
     cleanOutput()
-    def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, allPlugins)
-    compileModules(productLayout.getIncludedPluginModules(allPlugins) + distributionJARsBuilder.getPlatformModules())
+    def distributionJARsBuilder = new DistributionJARsBuilder(buildContext)
+    def pluginModules = buildContext.productProperties.productLayout.getIncludedPluginModules(buildContext.productProperties.allPlugins)
+    compileModules(pluginModules + distributionJARsBuilder.getPlatformModules())
     buildContext.messages.block("Build platform and plugin JARs") {
       distributionJARsBuilder.buildJARs()
     }
@@ -298,7 +298,9 @@ idea.fatal.error.notification=disabled
     checkPaths([macCustomizer?.dmgImagePathForEAP], "productProperties.macCustomizer.dmgImagePathForEAP")
   }
 
-  private void checkProductLayout(ProductModulesLayout layout, List<PluginLayout> allPlugins) {
+  private void checkProductLayout() {
+    ProductModulesLayout layout = buildContext.productProperties.productLayout
+    List<PluginLayout> allPlugins = buildContext.productProperties.allPlugins
     def allPluginModules = allPlugins.collectMany { [it.mainModule] + it.optionalModules } as Set<String>
     checkPaths(layout.licenseFilesToBuildSearchableOptions, "productProperties.productLayout.licenseFilesToBuildSearchableOptions")
     checkPluginModules(layout.bundledPluginModules, "bundledPluginModules", allPluginModules)
@@ -334,7 +336,7 @@ idea.fatal.error.notification=disabled
     if (!unknownBundledPluginModules.empty) {
       buildContext.messages.error(
         "The following modules from productProperties.productLayout.$fieldName aren't found in the registered plugins: $unknownBundledPluginModules. " +
-        "Make sure that the plugin layouts are specified in one of *_REPOSITORY_PLUGINS lists and you refer to either main plugin module or an optional module."
+        "Make sure that the plugin layouts are specified in productProperties.productLayout.allPlugins and you refer to either main plugin module or an optional module."
       )
     }
   }

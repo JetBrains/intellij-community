@@ -23,7 +23,7 @@ class PyCharmEduBuilder {
                                                   "$home/community", home, "$home/out/pycharmEDU", new PyCharmEduProperties(home),
                                                   JetBrainsBuildTools.create("$home/build/lib/jet-sign.jar"))
     def buildTasks = BuildTasks.create(buildContext)
-    buildTasks.compileModulesAndBuildDistributions(CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS)
+    buildTasks.compileModulesAndBuildDistributions()
     buildTasks.zipProjectSources()
   }
 }
