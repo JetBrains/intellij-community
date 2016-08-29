@@ -53,15 +53,12 @@ public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInsp
   public PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder,
                                         final boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
+    if (!JavaFxFileTypeFactory.isFxml(session.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
+
     return new XmlElementVisitor() {
       @Override
-      public void visitXmlFile(XmlFile file) {
-        if (!JavaFxFileTypeFactory.isFxml(file)) return;
-        super.visitXmlFile(file);
-      }
-
-      @Override
       public void visitXmlAttribute(XmlAttribute attribute) {
+        super.visitXmlAttribute(attribute);
         if (FxmlConstants.FX_ID.equals(attribute.getName())) {
           final XmlAttributeValue valueElement = attribute.getValueElement();
           if (valueElement != null && valueElement.getTextLength() > 0) {
