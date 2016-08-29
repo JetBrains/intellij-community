@@ -102,7 +102,7 @@ class JavaStubsTest extends LightCodeInsightFixtureTestCase {
     assert p1.getCanonicalText(true) == "@Foo.TA int"
   }
 
-  public void "test containing class of an local class is null"() {
+  public void "test containing class of a local class is null"() {
     def foo = myFixture.addClass("class Foo {{ class Bar extends Foo {} }}")
     def bar = ClassInheritorsSearch.search(foo).findFirst()
 
@@ -128,5 +128,18 @@ class JavaStubsTest extends LightCodeInsightFixtureTestCase {
       assert foo == superType.resolve()
       assert bar.typeParameters[0] == PsiUtil.resolveClassInClassTypeOnly(superType.parameters[0])
     }
+  }
+
+  public void "test default annotation attribute name"() {
+    def cls = myFixture.addClass('@Anno("foo") class Foo {}')
+    def file = (PsiFileImpl)cls.containingFile
+    assert !file.contentsLoaded
+
+    def attr = cls.modifierList.annotations[0].parameterList.attributes[0]
+    assert attr.name == null
+    assert !file.contentsLoaded
+
+    attr.node
+    assert attr.name == null
   }
 }
