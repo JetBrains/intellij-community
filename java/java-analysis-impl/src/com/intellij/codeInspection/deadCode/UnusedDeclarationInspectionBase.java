@@ -67,6 +67,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   public boolean ADD_APPLET_TO_ENTRIES = true;
   public boolean ADD_SERVLET_TO_ENTRIES = true;
   public boolean ADD_NONJAVA_TO_ENTRIES = true;
+  protected boolean TEST_ENTRY_POINTS = true;
 
   public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.dead.code.display.name");
   public static final String SHORT_NAME = HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME;
@@ -128,6 +129,14 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     return ADD_NONJAVA_TO_ENTRIES;
   }
 
+  public boolean isTestEntryPoints() {
+    return TEST_ENTRY_POINTS;
+  }
+
+  public void setTestEntryPoints(boolean testEntryPoints) {
+    TEST_ENTRY_POINTS = testEntryPoints;
+  }
+
   @Override
   @NotNull
   public String getDisplayName() {
@@ -153,12 +162,19 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     for (EntryPoint extension : myExtensions) {
       extension.readExternal(node);
     }
+
+    final String testEntriesAttr = node.getAttributeValue("test_entries");
+    TEST_ENTRY_POINTS = testEntriesAttr == null || Boolean.parseBoolean(testEntriesAttr);
   }
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
     myLocalInspectionBase.writeSettings(node);
     writeUnusedDeclarationSettings(node);
+
+    if (!TEST_ENTRY_POINTS) {
+      node.setAttribute("test_entries", Boolean.toString(false));
+    }
   }
 
   protected void writeUnusedDeclarationSettings(Element node) throws WriteExternalException {

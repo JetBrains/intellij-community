@@ -23,13 +23,16 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import org.jdom.Element;
@@ -109,7 +112,17 @@ public class RefJavaManagerImpl extends RefJavaManager {
 
   public boolean isEntryPoint(final RefElement element) {
     UnusedDeclarationInspectionBase tool = getDeadCodeTool(element);
-    return tool != null && tool.isEntryPoint(element);
+    return tool != null && tool.isEntryPoint(element) && isTestSource(tool, element);
+  }
+
+  private static boolean isTestSource(UnusedDeclarationInspectionBase tool, RefElement refElement) {
+    if (tool.isTestEntryPoints()) return true;
+    final PsiElement element = refElement.getElement();
+    final VirtualFile file = PsiUtilCore.getVirtualFile(element);
+    if (file != null) {
+      return !ProjectRootManager.getInstance(element.getProject()).getFileIndex().isInTestSourceContent(file);
+    }
+    return false;
   }
 
   @Nullable
