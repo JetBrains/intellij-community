@@ -521,7 +521,7 @@
     <projectService serviceInterface="com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager"
                     serviceImplementation="com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager"/>
 
-    <multiHostInjector implementation="com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager$Concatenation2InjectorAdapter" order="last"/>
+    <multiHostInjector implementation="com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager$Concatenation2InjectorAdapter" order="first"/>
 
     <projectService serviceInterface="com.intellij.psi.SmartTypePointerManager"
                     serviceImplementation="com.intellij.psi.impl.smartPointers.SmartTypePointerManagerImpl"/>

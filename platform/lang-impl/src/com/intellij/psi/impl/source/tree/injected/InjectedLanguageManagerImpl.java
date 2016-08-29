@@ -241,7 +241,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
       }
     }
 
-    ClassMapCachingNulls<MultiHostInjector> result = new ClassMapCachingNulls<>(injectors, new MultiHostInjector[0]);
+    ClassMapCachingNulls<MultiHostInjector> result = new ClassMapCachingNulls<>(injectors, new MultiHostInjector[0], allInjectors);
     cachedInjectors = result;
     return result;
   }
