@@ -395,7 +395,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     UISettings settings = UISettings.getInstance();
 
     boolean isModified = false;
-    isModified |= !Comparing.equal(myComponent.myFontCombo.getFontName(), settings.FONT_FACE) && myComponent.myOverrideLAFFonts.isSelected() != settings.OVERRIDE_NONIDEA_LAF_FONTS;
+    isModified |= !Comparing.equal(myComponent.myFontCombo.getFontName(), settings.FONT_FACE) && myComponent.myOverrideLAFFonts.isSelected();
     isModified |= !Comparing.equal(myComponent.myFontSizeCombo.getEditor().getItem(), Integer.toString(settings.FONT_SIZE));
 
     isModified |= myComponent.myAntialiasingInIDE.getSelectedItem() != settings.IDE_AA_TYPE;
