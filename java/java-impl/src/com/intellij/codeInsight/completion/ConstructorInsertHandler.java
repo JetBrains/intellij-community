@@ -192,7 +192,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
                                           LookupElement delegate,
                                           final PsiClass psiClass,
                                           final boolean forAnonymous) {
-    if (context.getCompletionChar() == '[') {
+    if (context.getCompletionChar() == '[' || JavaConstructorCallElement.isWrapped(delegate)) {
       return false;
     }
 
