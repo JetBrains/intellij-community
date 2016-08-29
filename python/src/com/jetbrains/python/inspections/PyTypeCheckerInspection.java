@@ -124,8 +124,10 @@ public class PyTypeCheckerInspection extends PyInspection {
           statements.accept(visitor);
           if (!visitor.myHasReturns) {
             final String expectedName = PythonDocumentationProvider.getTypeName(myTypeEvalContext.getReturnType(node), myTypeEvalContext);
-            registerProblem(annotation != null ? annotation : node.getTypeComment(),
-                            String.format("Expected to return '%s', got no return", expectedName));
+            if (!expectedName.equals("None") && !expectedName.equals("Any")) {
+              registerProblem(annotation != null ? annotation : node.getTypeComment(),
+                              String.format("Expected to return '%s', got no return", expectedName));
+            }
           }
         }
       }

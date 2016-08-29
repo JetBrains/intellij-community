@@ -48,3 +48,8 @@ def i():
 def j(x):
     <warning descr="Expected to return 'Union[int, str]', got no return"># type: () -> Union[int, str]</warning>
     x = 42
+
+def k():
+    # type: () -> None
+    if True:
+        pass
