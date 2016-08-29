@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -131,7 +132,8 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
         // Rule out cases like Arrays.<String[]>asList(stringArr)
         if(methodType instanceof PsiClassType) {
           PsiType[] parameters = ((PsiClassType)methodType).getParameters();
-          if(parameters.length == 1 && parameters[0].equals(type))
+          if(parameters.length == 1 && TypeConversionUtil.isAssignable(parameters[0], type)
+            && !TypeConversionUtil.isAssignable(parameters[0], ((PsiArrayType)type).getComponentType()))
             return false;
         }
         return true;
