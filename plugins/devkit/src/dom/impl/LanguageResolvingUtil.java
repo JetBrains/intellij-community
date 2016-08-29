@@ -17,19 +17,14 @@ package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.completion.CompletionContributorEP;
 import com.intellij.codeInspection.dataFlow.StringExpressionHelper;
-import com.intellij.codeInspection.i18n.JavaI18nUtil;
-import com.intellij.codeInspection.i18n.folding.PropertyFoldingBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.DependentLanguage;
 import com.intellij.lang.Language;
-import com.intellij.lang.properties.IProperty;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.ProjectScope;
@@ -191,28 +186,6 @@ class LanguageResolvingUtil {
 
   @Nullable
   private static String getStringConstantExpression(PsiElement psiElement) {
-    if (psiElement instanceof PsiMethodCallExpression) {
-      final PsiExpression[] args = ((PsiMethodCallExpression)psiElement).getArgumentList().getExpressions();
-      if (args.length > 0 && args[0] instanceof PsiLiteralExpression && args[0].isValid()
-          && PropertyFoldingBuilder.isI18nProperty((PsiLiteralExpression)args[0])) {
-        final int count = JavaI18nUtil.getPropertyValueParamsMaxCount(args[0]);
-        if (args.length == 1 + count) {
-          IProperty property = PropertyFoldingBuilder.getI18nProperty((PsiLiteralExpression)args[0]);
-          String text = property != null ? property.getValue() : null;
-          if (text == null) {
-            return null;
-          }
-          for (int i = 1; i < count + 1; i++) {
-            Object value = JavaConstantExpressionEvaluator.computeConstantExpression(args[i], false);
-            if (value == null) {
-              return null;
-            }
-            text = text.replace("{" + (i - 1) + "}", value.toString());
-          }
-          return text == null || text.equals(psiElement.getText()) ? text : text.replace("''", "'");
-        }
-      }
-    }
     final Pair<PsiElement, String> pair = StringExpressionHelper.evaluateConstantExpression(psiElement);
     return pair != null ? pair.second : null;
   }

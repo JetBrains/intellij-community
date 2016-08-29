@@ -257,8 +257,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
     def lookupElements = myFixture.complete(CompletionType.BASIC).sort { it.lookupString }
     assertLookupElement(lookupElements[0], "MyAnonymousLanguageID", "MyLanguage.MySubLanguage")
-    assertLookupElement(lookupElements[1], "MyAnonymousLanguageWithNameFromBundleID", "MyLanguage")
-    assertLookupElement(lookupElements[2], "MyLanguageID", "MyLanguage")
+    assertLookupElement(lookupElements[1], "MyLanguageID", "MyLanguage")
   }
 
   private static void assertLookupElement(LookupElement element, String lookupString, String typeText) {
@@ -273,22 +272,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                        "public class Language { " +
                        "  protected Language(String id) {}" +
                        "}")
-    myFixture.addClass("package org.jetbrains.annotations;\n" +
-                       "import java.lang.annotation.Documented;\n" +
-                       "import java.lang.annotation.ElementType;\n" +
-                       "import java.lang.annotation.Retention;\n" +
-                       "import java.lang.annotation.RetentionPolicy;\n" +
-                       "import java.lang.annotation.Target;\n" +
-                       "\n" +
-                       "@Documented\n" +
-                       "@Retention(RetentionPolicy.CLASS)\n" +
-                       "@Target({ElementType.PARAMETER, ElementType.LOCAL_VARIABLE, ElementType.FIELD})\n" +
-                       "public @interface PropertyKey {\n" +
-                       "    String resourceBundle();\n" +
-                       "}")
     myFixture.allowTreeAccessForFile(myFixture.copyFileToProject("MyLanguage.java"))
-    myFixture.allowTreeAccessForFile(myFixture.copyFileToProject("MyBundle.java"))
-    myFixture.allowTreeAccessForFile(myFixture.copyFileToProject("MyBundle.properties"))
   }
 
   public void testIconAttribute() {
