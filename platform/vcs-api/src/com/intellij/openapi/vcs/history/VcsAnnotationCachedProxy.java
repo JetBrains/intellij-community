@@ -23,7 +23,6 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.VcsAnnotation;
@@ -31,6 +30,8 @@ import com.intellij.openapi.vcs.annotate.VcsCacheableAnnotationProvider;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,13 +88,14 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider {
                                   final ThrowableComputable<FileAnnotation, VcsException> delegate) throws VcsException {
     final AnnotationProvider annotationProvider = myAnnotationProvider;
 
-    final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
+    final FilePath filePath = VcsUtil.getFilePath(file);
 
     final VcsCacheableAnnotationProvider cacheableAnnotationProvider = (VcsCacheableAnnotationProvider)annotationProvider;
 
     VcsAnnotation vcsAnnotation = null;
     if (revisionNumber != null) {
-      vcsAnnotation = myCache.get(VcsContextFactory.SERVICE.getInstance().createFilePathOn(file), myVcs.getKeyInstanceMethod(), revisionNumber);
+      Object cachedData = myCache.get(filePath, myVcs.getKeyInstanceMethod(), revisionNumber);
+      vcsAnnotation = ObjectUtils.tryCast(cachedData, VcsAnnotation.class);
     }
 
     if (vcsAnnotation != null) {

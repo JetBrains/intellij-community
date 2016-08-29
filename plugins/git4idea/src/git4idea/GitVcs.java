@@ -36,7 +36,6 @@ import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
-import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
@@ -102,7 +101,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private final GitUpdateEnvironment myUpdateEnvironment;
   private final GitAnnotationProvider myAnnotationProvider;
   private final DiffProvider myDiffProvider;
-  private final VcsHistoryProvider myHistoryProvider;
+  private final GitHistoryProvider myHistoryProvider;
   @NotNull private final Git myGit;
   private final ProjectLevelVcsManager myVcsManager;
   private final GitVcsApplicationSettings myAppSettings;
@@ -203,12 +202,12 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   @NotNull
-  public VcsHistoryProvider getVcsHistoryProvider() {
+  public GitHistoryProvider getVcsHistoryProvider() {
     return myHistoryProvider;
   }
 
   @Override
-  public VcsHistoryProvider getVcsBlockHistoryProvider() {
+  public GitHistoryProvider getVcsBlockHistoryProvider() {
     return myHistoryProvider;
   }
 

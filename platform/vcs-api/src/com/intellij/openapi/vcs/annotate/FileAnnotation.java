@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.annotate;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsKey;
@@ -23,20 +24,24 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * Represents annotations ("vcs blame") for some file in a specific revision
  * @see AnnotationProvider
  */
 public abstract class FileAnnotation {
+  private static final Logger LOG = Logger.getInstance(FileAnnotation.class);
+
   @NotNull private final Project myProject;
 
   private Runnable myCloser;
+  private Runnable myReloader;
 
   protected FileAnnotation(@NotNull Project project) {
     myProject = project;
@@ -175,15 +180,157 @@ public abstract class FileAnnotation {
   }
 
   /**
+   * Notify that annotation information has changed, and UI should be updated.
+   */
+  public final void reload() {
+    if (myReloader != null) myReloader.run();
+  }
+
+  /**
    * @see #close()
    */
   public final void setCloser(@NotNull Runnable closer) {
     myCloser = closer;
   }
 
+  /**
+   * @see #reload()
+   */
+  public final void setReloader(@Nullable Runnable reloader) {
+    myReloader = reloader;
+  }
+
 
   @Deprecated
   public boolean revisionsNotEmpty() {
     return true;
+  }
+
+
+  @Nullable
+  public CurrentFileRevisionProvider getCurrentFileRevisionProvider() {
+    return createDefaultCurrentFileRevisionProvider(this);
+  }
+
+  @Nullable
+  public PreviousFileRevisionProvider getPreviousFileRevisionProvider() {
+    return createDefaultPreviousFileRevisionProvider(this);
+  }
+
+  @Nullable
+  public AuthorsMappingProvider getAuthorsMappingProvider() {
+    return createDefaultAuthorsMappingProvider(this);
+  }
+
+  @Nullable
+  public RevisionsOrderProvider getRevisionsOrderProvider() {
+    return createDefaultRevisionsOrderProvider(this);
+  }
+
+
+  public interface CurrentFileRevisionProvider {
+    @Nullable
+    VcsFileRevision getRevision(int lineNumber);
+  }
+
+  public interface PreviousFileRevisionProvider {
+    @Nullable
+    VcsFileRevision getPreviousRevision(int lineNumber);
+
+    @Nullable
+    VcsFileRevision getLastRevision();
+  }
+
+  public interface AuthorsMappingProvider {
+    @NotNull
+    Map<VcsRevisionNumber, String> getAuthors();
+  }
+
+  public interface RevisionsOrderProvider {
+    @NotNull
+    List<List<VcsRevisionNumber>> getOrderedRevisions();
+  }
+
+
+  @Nullable
+  private static CurrentFileRevisionProvider createDefaultCurrentFileRevisionProvider(@NotNull FileAnnotation annotation) {
+    List<VcsFileRevision> revisions = annotation.getRevisions();
+    if (revisions == null) return null;
+
+
+    Map<VcsRevisionNumber, VcsFileRevision> map = new HashMap<>();
+    for (VcsFileRevision revision : revisions) {
+      map.put(revision.getRevisionNumber(), revision);
+    }
+
+    List<VcsFileRevision> lineToRevision = new ArrayList<>(annotation.getLineCount());
+    for (int i = 0; i < annotation.getLineCount(); i++) {
+      lineToRevision.add(map.get(annotation.getLineRevisionNumber(i)));
+    }
+
+    return (lineNumber) -> {
+      LOG.assertTrue(lineNumber >= 0 && lineNumber < lineToRevision.size());
+      return lineToRevision.get(lineNumber);
+    };
+  }
+
+  @Nullable
+  private static PreviousFileRevisionProvider createDefaultPreviousFileRevisionProvider(@NotNull FileAnnotation annotation) {
+    List<VcsFileRevision> revisions = annotation.getRevisions();
+    if (revisions == null) return null;
+
+    Map<VcsRevisionNumber, VcsFileRevision> map = new HashMap<>();
+    for (int i = 0; i < revisions.size(); i++) {
+      VcsFileRevision revision = revisions.get(i);
+      VcsFileRevision previousRevision = i + 1 < revisions.size() ? revisions.get(i + 1) : null;
+      map.put(revision.getRevisionNumber(), previousRevision);
+    }
+
+    List<VcsFileRevision> lineToRevision = new ArrayList<>(annotation.getLineCount());
+    for (int i = 0; i < annotation.getLineCount(); i++) {
+      lineToRevision.add(map.get(annotation.getLineRevisionNumber(i)));
+    }
+
+    VcsFileRevision lastRevision = ContainerUtil.getFirstItem(revisions);
+
+    return new PreviousFileRevisionProvider() {
+      @Nullable
+      @Override
+      public VcsFileRevision getPreviousRevision(int lineNumber) {
+        LOG.assertTrue(lineNumber >= 0 && lineNumber < lineToRevision.size());
+        return lineToRevision.get(lineNumber);
+      }
+
+      @Nullable
+      @Override
+      public VcsFileRevision getLastRevision() {
+        return lastRevision;
+      }
+    };
+  }
+
+  @Nullable
+  private static AuthorsMappingProvider createDefaultAuthorsMappingProvider(@NotNull FileAnnotation annotation) {
+    List<VcsFileRevision> revisions = annotation.getRevisions();
+    if (revisions == null) return null;
+
+    Map<VcsRevisionNumber, String> authorsMapping = new HashMap<>();
+    for (VcsFileRevision revision : revisions) {
+      authorsMapping.put(revision.getRevisionNumber(), revision.getAuthor());
+    }
+
+    return () -> authorsMapping;
+  }
+
+  @Nullable
+  private static RevisionsOrderProvider createDefaultRevisionsOrderProvider(@NotNull FileAnnotation annotation) {
+    List<VcsFileRevision> revisions = annotation.getRevisions();
+    if (revisions == null) return null;
+
+    List<List<VcsRevisionNumber>> orderedRevisions = ContainerUtil.map(revisions, (revision) -> {
+      return Collections.singletonList(revision.getRevisionNumber());
+    });
+
+    return () -> orderedRevisions;
   }
 }
