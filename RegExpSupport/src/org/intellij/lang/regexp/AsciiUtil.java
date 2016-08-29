@@ -30,6 +30,10 @@ public final class AsciiUtil {
     return c >= 'a' && c <= 'z';
   }
 
+  public static boolean isLetter(char c) {
+    return isUpperCase(c) || isLowerCase(c);
+  }
+
   public static boolean isDigit(char c) {
     return c >= '0' && c <= '9';
   }

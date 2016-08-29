@@ -478,7 +478,7 @@ public class RegExpParser implements PsiParser {
   private static boolean isLetter(CharSequence text) {
     assert text.length() == 1;
     final char c = text.charAt(0);
-    return AsciiUtil.isUpperCase(c) || AsciiUtil.isLowerCase(c);
+    return AsciiUtil.isLetter(c);
   }
 
   private void parseProperty(PsiBuilder builder) {
