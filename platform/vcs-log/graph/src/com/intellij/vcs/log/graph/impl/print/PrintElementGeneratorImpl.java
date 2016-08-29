@@ -198,17 +198,13 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
       toPosition.put(visibleElementsInNextRow.get(position), position);
     }
 
-    return new NullableFunction<GraphEdge, Integer>() {
-      @Override
-      @Nullable
-      public Integer fun(GraphEdge edge) {
-        Integer position = toPosition.get(edge);
-        if (position == null) {
-          Integer downNodeIndex = edge.getDownNodeIndex();
-          if (downNodeIndex != null) position = toPosition.get(myLinearGraph.getGraphNode(downNodeIndex));
-        }
-        return position;
+    return edge -> {
+      Integer position = toPosition.get(edge);
+      if (position == null) {
+        Integer downNodeIndex = edge.getDownNodeIndex();
+        if (downNodeIndex != null) position = toPosition.get(myLinearGraph.getGraphNode(downNodeIndex));
       }
+      return position;
     };
   }
 
