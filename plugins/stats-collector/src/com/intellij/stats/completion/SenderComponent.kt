@@ -1,5 +1,6 @@
 package com.intellij.stats.completion
 
+import com.google.common.net.HttpHeaders
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.openapi.components.ServiceManager
@@ -11,9 +12,12 @@ import com.intellij.util.Time
 import org.apache.http.client.fluent.Form
 import org.apache.http.client.fluent.Request
 import org.apache.http.entity.ContentType
+import org.apache.http.message.BasicHeader
 import org.apache.http.util.EntityUtils
 import java.io.File
+import java.io.FileInputStream
 import java.io.IOException
+import java.util.zip.GZIPInputStream
 import javax.swing.SwingUtilities
 
 fun assertNotEDT() {
@@ -76,7 +80,7 @@ class StatisticSender(val requestService: RequestService, val filePathProvider: 
     }
 
     private fun sendContent(url: String, file: File): Boolean {
-        val data = requestService.post(url, file)
+        val data = requestService.postZipped(url, file)
         if (data != null && data.code >= 200 && data.code < 300) {
             return true
         }
@@ -89,6 +93,7 @@ class StatisticSender(val requestService: RequestService, val filePathProvider: 
 abstract class RequestService {
     abstract fun post(url: String, params: Map<String, String>): ResponseData?
     abstract fun post(url: String, file: File): ResponseData?
+    abstract fun postZipped(url: String, file: File): ResponseData?
     abstract fun get(url: String): ResponseData?
     
     companion object {
@@ -106,6 +111,21 @@ class SimpleRequestService: RequestService() {
             val response = Request.Post(url).bodyForm(form.build()).execute()
             val httpResponse = response.returnResponse()
             return ResponseData(httpResponse.statusLine.statusCode)
+        } catch (e: IOException) {
+            LOG.debug(e)
+            return null
+        }
+    }
+
+    override fun postZipped(url: String, file: File): ResponseData? {
+        try {
+            val gzipStream = GZIPInputStream(FileInputStream(file))
+            val request = Request.Post(url).bodyStream(gzipStream)
+            request.addHeader(BasicHeader(HttpHeaders.CONTENT_ENCODING, "gzip"))
+            val response = request.execute()
+            val httpResponse = response.returnResponse()
+            val text = EntityUtils.toString(httpResponse.entity)
+            return ResponseData(httpResponse.statusLine.statusCode, text)
         } catch (e: IOException) {
             LOG.debug(e)
             return null
