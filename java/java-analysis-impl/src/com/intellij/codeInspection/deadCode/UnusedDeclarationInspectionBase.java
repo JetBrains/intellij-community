@@ -278,23 +278,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
             }
             return;
           }
-
-          refElement.accept(new RefJavaVisitor() {
-            @Override
-            public void visitMethod(@NotNull RefMethod method) {
-              if (isAddMainsEnabled() && method.isAppMain()) {
-                getEntryPointsManager(globalContext).addEntryPoint(method, false);
-              }
-            }
-
-            @Override
-            public void visitClass(@NotNull RefClass aClass) {
-              if (isAddAppletEnabled() && aClass.isApplet() ||
-                  isAddServletEnabled() && aClass.isServlet()) {
-                getEntryPointsManager(globalContext).addEntryPoint(aClass, false);
-              }
-            }
-          });
         }
       }
     });
@@ -378,7 +361,18 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
           return true;
         }
       }
+
+      if (isAddMainsEnabled() && owner instanceof RefMethod && ((RefMethod)owner).isAppMain()) {
+        return true;
+      }
+
+      if (owner instanceof RefClass) {
+        if (isAddAppletEnabled() && ((RefClass)owner).isApplet() || isAddServletEnabled() && ((RefClass)owner).isServlet()) {
+          return true;
+        }
+      }
     }
+
     return false;
   }
 

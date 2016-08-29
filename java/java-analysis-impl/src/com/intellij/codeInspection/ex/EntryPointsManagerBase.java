@@ -226,7 +226,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
         classPattern.pattern = new SmartRefElementPointerImpl(newEntryPoint, true).getFQName();
         getPatterns().add(classPattern);
 
-        final EntryPointsManager entryPointsManager = getInstance(newEntryPoint.getElement().getProject());
+        final EntryPointsManager entryPointsManager = getInstance(newEntryPoint.getRefManager().getProject());
         if (this != entryPointsManager) {
           entryPointsManager.addEntryPoint(newEntryPoint, true);
         }
@@ -266,7 +266,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
         ((RefElementImpl)newEntryPoint).setEntry(true);
         ((RefElementImpl)newEntryPoint).setPermanentEntry(true);
         if (entry.isPersistent()) { //do save entry points
-          final EntryPointsManager entryPointsManager = getInstance(newEntryPoint.getElement().getProject());
+          final EntryPointsManager entryPointsManager = getInstance(newEntryPoint.getRefManager().getProject());
           if (this != entryPointsManager) {
             entryPointsManager.addEntryPoint(newEntryPoint, true);
           }
