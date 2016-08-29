@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import org.intellij.lang.regexp.AsciiUtil;
+import org.intellij.lang.regexp.UnicodeCharacterNames;
 import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider;
 import org.intellij.lang.regexp.RegExpLanguageHost;
 import org.intellij.lang.regexp.psi.*;
@@ -320,6 +321,11 @@ public class JavaRegExpHost implements RegExpLanguageHost {
     catch (IllegalArgumentException ignore) {
       return false;
     }
+  }
+
+  @Override
+  public boolean isValidNamedCharacter(RegExpNamedCharacter namedCharacter) {
+    return UnicodeCharacterNames.getCodePoint(namedCharacter.getName()) >= 0;
   }
 
   @NotNull

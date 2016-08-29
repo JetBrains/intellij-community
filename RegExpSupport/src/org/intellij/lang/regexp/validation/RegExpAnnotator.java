@@ -232,8 +232,11 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
       myHolder.createErrorAnnotation(namedCharacter, "Named Unicode characters are not allowed in this regular expression dialect");
     }
     else if (!myLanguageHosts.isValidNamedCharacter(namedCharacter)) {
-      final Annotation a = myHolder.createErrorAnnotation(namedCharacter, "Unknown character name");
-      a.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+      final ASTNode node = namedCharacter.getNameNode();
+      if (node != null) {
+        final Annotation a = myHolder.createErrorAnnotation(node, "Unknown character name");
+        a.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+      }
     }
   }
 
