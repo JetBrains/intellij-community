@@ -120,7 +120,7 @@ public class DfaPsiUtil {
   private static Nullness inferLambdaParameterNullness(PsiLambdaExpression lambda, int parameterIndex) {
     PsiElement expression = lambda;
     PsiElement expressionParent = lambda.getParent();
-    while(expressionParent instanceof PsiConditionalExpression) {
+    while(expressionParent instanceof PsiConditionalExpression || expressionParent instanceof PsiParenthesizedExpression) {
       expression = expressionParent;
       expressionParent = expressionParent.getParent();
     }
