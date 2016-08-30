@@ -29,8 +29,8 @@ import org.jetbrains.annotations.NotNull
  */
 public class JavaFolding8Test extends LightCodeInsightFixtureTestCase {
 
-  def JavaCodeFoldingSettingsImpl myFoldingSettings
-  def JavaCodeFoldingSettingsImpl myFoldingStateToRestore
+  JavaCodeFoldingSettingsImpl myFoldingSettings
+  JavaCodeFoldingSettingsImpl myFoldingStateToRestore
 
   @NotNull
   @Override
