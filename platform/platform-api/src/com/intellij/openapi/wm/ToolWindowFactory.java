@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,24 @@ import org.jetbrains.annotations.NotNull;
  * Performs lazy initialization of a toolwindow registered in plugin.xml.
  *
  * @author yole
+ * @author Konstantin Bulenkov
  * @see ToolWindowEP
  */
 public interface ToolWindowFactory {
   void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow);
+
+  /**
+   * Perform additional initialisation routine here
+   * @param window Tool Window
+   */
+  default void init(ToolWindow window) {}
+
+  /**
+   * Tool Window saves its state on project close and restore on when project opens
+   * In some cases, it is useful to postpone Tool Window activation until user explicitly activates it.
+   * Example: Tool Window initialisation takes huge amount of time and makes project loading slower.
+   * @return {@code true} if Tool Window should not be activated on start even if was opened previously.
+   *         {@code false} otherwise.
+   */
+  default boolean isDoNotActivateOnStart() {return false;}
 }
