@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -294,9 +294,15 @@ public abstract class TokenSets {
                                                                GroovyElementTypes.DISJUNCTION_TYPE_ELEMENT);
 
 
-  public static final TokenSet TYPE_DEFINITIONS = TokenSet.create(GroovyElementTypes.CLASS_DEFINITION, 
+  public static final TokenSet TYPE_DEFINITIONS = TokenSet.create(GroovyElementTypes.CLASS_DEFINITION,
                                                                   GroovyElementTypes.ENUM_DEFINITION,
                                                                   GroovyElementTypes.INTERFACE_DEFINITION,
                                                                   GroovyElementTypes.ANNOTATION_DEFINITION,
                                                                   GroovyElementTypes.TRAIT_DEFINITION);
+
+  public static final TokenSet METHOD_IDENTIFIERS = TokenSet.create(
+    GroovyTokenTypes.mIDENT,
+    GroovyTokenTypes.mGSTRING_LITERAL,
+    GroovyTokenTypes.mSTRING_LITERAL
+  );
 }

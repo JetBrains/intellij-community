@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,17 @@
 package org.jetbrains.plugins.groovy.testIntegration;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.testIntegration.TestRunLineMarkerProvider;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+
+import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.METHOD_IDENTIFIERS;
 
 /**
  * @author Dmitry Avdeev
  */
 public class GroovyTestLineMarkerContributor extends TestRunLineMarkerProvider {
+
   @Override
   protected boolean isIdentifier(PsiElement e) {
-    IElementType type = e.getNode().getElementType();
-    return type == GroovyTokenTypes.mIDENT || type == GroovyTokenTypes.mGSTRING_LITERAL;
+    return METHOD_IDENTIFIERS.contains(e.getNode().getElementType());
   }
 }
