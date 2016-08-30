@@ -115,14 +115,6 @@ def getProperties(String home, String buildNumber) {
             }
           }
 
-          dir("analytics") {
-            dir("lib") {
-              jar("analytics.jar") {
-                module("analytics")
-              }
-            }
-          }
-
           dir("games") {
             dir("lib") {
               jar("games.jar") {

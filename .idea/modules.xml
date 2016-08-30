@@ -13,7 +13,6 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/adt-ui/adt-ui.iml" filepath="$PROJECT_DIR$/../adt/idea/adt-ui/adt-ui.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/platform/analysis-api/analysis-api.iml" filepath="$PROJECT_DIR$/platform/analysis-api/analysis-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/analysis-impl/analysis-impl.iml" filepath="$PROJECT_DIR$/platform/analysis-impl/analysis-impl.iml" group="platform" />
-      <module fileurl="file://$PROJECT_DIR$/../vendor/google/analytics/analytics.iml" filepath="$PROJECT_DIR$/../vendor/google/analytics/analytics.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../analytics-library/inspector/analytics-inspector.iml" filepath="$PROJECT_DIR$/../analytics-library/inspector/analytics-inspector.iml" group="android/sdktools/analytics-library" />
       <module fileurl="file://$PROJECT_DIR$/../analytics-library/protos/analytics-protos.iml" filepath="$PROJECT_DIR$/../analytics-library/protos/analytics-protos.iml" group="android/sdktools/analytics-library" />
       <module fileurl="file://$PROJECT_DIR$/../analytics-library/publisher/analytics-publisher.iml" filepath="$PROJECT_DIR$/../analytics-library/publisher/analytics-publisher.iml" group="android/sdktools/analytics-library" />
