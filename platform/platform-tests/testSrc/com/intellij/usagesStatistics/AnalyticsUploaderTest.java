@@ -84,26 +84,6 @@ public class AnalyticsUploaderTest extends TestCase {
     assertEquals("StringIndexOutOfBoundsEx @ . < AdbService:83", AnalyticsUploader.getDescription(t));
   }
 
-  public void testExceptionCounterUrl() throws MalformedURLException, UnsupportedEncodingException {
-    Map<String, String> params = new TreeMap<String, String>();
-    params.put("activity", "1200");
-    params.put("exc", "10");
-    params.put("exf", "0");
-    URL url = AnalyticsUploader.getPingUrl("excstudio", "1.2.null.null ", "u", params);
-    assertNotNull(url);
-    assertEquals("https://tools.google.com/service/update?as=androidsdk_excstudio&version=1.2.null.null+&uid=u&activity=1200&exc=10&exf=0",
-                 url.toString());
-
-    params = new TreeMap<String, String>();
-    params.put("activity", "50");
-    params.put("exc", "10");
-    params.put("exf", "50");
-    url = AnalyticsUploader.getPingUrl("excstudio", "1.2.3.4", "u", params);
-    assertNotNull(url);
-    assertEquals("https://tools.google.com/service/update?as=androidsdk_excstudio&version=1.2.3.4&uid=u&activity=50&exc=10&exf=50",
-                          url.toString());
-  }
-
   // Copied from RenderErrorPanelTest
   @SuppressWarnings("ThrowableInstanceNeverThrown")
   private static Throwable createExceptionFromDesc(String desc, @Nullable Throwable throwable) {

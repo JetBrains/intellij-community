@@ -20,6 +20,7 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.LinkedHashMultiset;
 import com.google.common.collect.Multiset;
 import com.google.common.io.Files;
+import com.google.wireless.android.sdk.stats.AndroidStudioStats;
 import com.google.wireless.android.sdk.stats.AndroidStudioStats.AndroidStudioEvent;
 import com.google.wireless.android.sdk.stats.AndroidStudioStats.AndroidStudioEvent.EventCategory;
 import com.google.wireless.android.sdk.stats.AndroidStudioStats.AndroidStudioEvent.EventKind;
@@ -109,7 +110,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
 
       StudioCrashDetection.updateRecordedVersionNumber(ApplicationInfo.getInstance().getStrictVersion());
       startActivityMonitoring();
-      AnalyticsUploader.trackCrashes(StudioCrashDetection.reapCrashDescriptions());
+      trackCrashes(StudioCrashDetection.reapCrashDescriptions());
 
       Application application = ApplicationManager.getApplication();
       application.getMessageBus().connect(application).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
@@ -158,6 +159,37 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
           }
         }
       }
+    }
+  }
+
+  public static void trackCrashes(@NotNull Iterable<String> descriptions) {
+    long crashCount = 0;
+    for (String description : descriptions) {
+      AnalyticsUploader.trackCrash(description);
+      ++crashCount;
+    }
+    trackExceptionsAndActivity(0, 0, 0, 0, crashCount);
+  }
+
+  public static void trackExceptionsAndActivity(final long activityCount,
+                                                final long exceptionCount,
+                                                final long bundledPluginExceptionCount,
+                                                final long nonBundledPluginExceptionCount,
+                                                final long fatalExceptionCount) {
+    if (!StatisticsUploadAssistant.isSendAllowed()) {
+      return;
+    }
+
+    if (!ApplicationManager.getApplication().isInternal()) {
+      UsageTracker.getInstance().log(AndroidStudioEvent.newBuilder()
+                                       .setCategory(EventCategory.PING)
+                                       .setKind(EventKind.STUDIO_CRASH)
+                                       .setStudioCrash(AndroidStudioStats.StudioCrash.newBuilder()
+                                                         .setActions(activityCount)
+                                                         .setExceptions(exceptionCount)
+                                                         .setBundledPluginExceptions(bundledPluginExceptionCount)
+                                                         .setNonBundledPluginExceptions(nonBundledPluginExceptionCount)
+                                                         .setCrashes(fatalExceptionCount)));
     }
   }
 
@@ -317,8 +349,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
         }
 
         if (activityCount > 0 || exceptionCount > 0) {
-          AnalyticsUploader.trackExceptionsAndActivity(
-            activityCount, exceptionCount, bundledPluginExceptionCount, nonBundledPluginExceptionCount, 0);
+          trackExceptionsAndActivity(activityCount, exceptionCount, bundledPluginExceptionCount, nonBundledPluginExceptionCount, 0);
         }
         reportActionInvocations();
       }
