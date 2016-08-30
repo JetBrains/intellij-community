@@ -1,8 +1,6 @@
 '''
-Id:          "$Id$"
-Copyright:   Copyright (c) 2015 Bank of America Merrill Lynch, All Rights Reserved
-Description:
-Test:
+License: Apache 2.0
+Author: Yuli Fitterman
 '''
 # noinspection PyBroadException
 import types
