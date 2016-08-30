@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,16 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy;
+package org.jetbrains.plugins.groovy
 
-import com.intellij.lang.Language;
+import com.intellij.lang.Language
 
 /**
  * All main properties for Groovy language
  *
  * @author ilyas
  */
-public class GroovyLanguage extends Language {
-  public static final GroovyLanguage INSTANCE = new GroovyLanguage();
-  public GroovyLanguage() {
-    super("Groovy");
-  }
+object GroovyLanguage : Language("Groovy") {
 
-  @Override
-  public boolean isCaseSensitive() {
-    return true;
-  }
+  override fun isCaseSensitive() = true
 }

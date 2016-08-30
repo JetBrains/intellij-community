@@ -32,7 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 class GroovyBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
 
   private companion object {
-    val ourLanguages: Array<Language> = arrayOf(GroovyLanguage.INSTANCE)
+    val ourLanguages: Array<Language> = arrayOf(GroovyLanguage)
   }
 
   override fun getLanguages() = ourLanguages
