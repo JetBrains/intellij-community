@@ -17,6 +17,7 @@ package com.intellij.reporting
 
 import com.google.gson.Gson
 import com.intellij.openapi.application.PermanentInstallationID
+import com.intellij.openapi.diagnostic.Logger
 import org.apache.http.client.fluent.Request
 import org.apache.http.entity.ContentType
 
@@ -32,7 +33,8 @@ private object Utils {
 
 object StatsSender {
   private val infoUrl = "https://www.jetbrains.com/config/features-service-status.json"
-
+  private val LOG = Logger.getInstance(StatsSender::class.java)
+  
   private fun requestServerUrl(): String? {
     try {
       val response = Request.Get(infoUrl).execute().returnContent().asString()
@@ -40,6 +42,7 @@ object StatsSender {
       if (info.isServiceAlive()) return info.url
     }
     catch (e: Exception) {
+      LOG.debug(e)
     }
 
     return null
@@ -55,6 +58,7 @@ object StatsSender {
       }
     }
     catch (e: Exception) {
+      LOG.debug(e)
     }
     return false
   }

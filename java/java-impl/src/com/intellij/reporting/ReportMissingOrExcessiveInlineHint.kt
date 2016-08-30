@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.project.Project
@@ -34,6 +35,10 @@ class ReportMissingOrExcessiveInlineHint : AnAction() {
   
   private val text = "Report Missing or Excessive Inline Hint"
   private val description = "Text line at caret will be anonymously reported to our servers"
+  
+  companion object {
+    private val LOG = Logger.getInstance(ReportMissingOrExcessiveInlineHint::class.java)
+  }
   
   init {
     val presentation = templatePresentation
@@ -85,12 +90,14 @@ class ReportMissingOrExcessiveInlineHint : AnAction() {
   }
 
   private fun trySendFileInBackground() {
+    LOG.debug("File: ${file.path} Length: ${file.length()}")
     if (!file.exists() || file.length() == 0L) return
-
     ApplicationManager.getApplication().executeOnPooledThread {
       val text = file.readText()
+      LOG.debug("File text $text")
       if (StatsSender.send(text)) {
         file.delete()
+        LOG.debug("File deleted")
       }
     }
   }
