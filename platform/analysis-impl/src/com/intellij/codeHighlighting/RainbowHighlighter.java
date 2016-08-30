@@ -17,7 +17,6 @@ package com.intellij.codeHighlighting;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,6 +25,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.options.SchemeMetaInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
+import java.util.Properties;
 
 public class RainbowHighlighter {
   private static final JBColor[] RAINBOW_JB_COLORS_DEFAULT = {
@@ -51,15 +52,11 @@ public class RainbowHighlighter {
   public static final TextAttributesKey[] RAINBOW_COLOR_KEYS = new TextAttributesKey[RAINBOW_JB_COLORS_DEFAULT.length];
   private static final int RAINBOW_COLORS_BETWEEN = 4;
   private static final String UNIT_TEST_COLORS = "#000001,#000002,#000003,#000004"; // Do not modify!
-  private static String FALSE = "false";
-  private static String TRUE = "true";
-  private static String INHERITED = "inherited";
+  private static final String INHERITED = "inherited";
 
   static {
     for (int i = 0; i < RAINBOW_JB_COLORS_DEFAULT.length; ++i) {
-      JBColor jbColor = RAINBOW_JB_COLORS_DEFAULT[i];
-      TextAttributes textAttributes = new TextAttributes(jbColor, null, null, null, Font.PLAIN);
-      RAINBOW_COLOR_KEYS[i] = TextAttributesKey.createTextAttributesKey("RAINBOW_COLOR" + i, textAttributes);
+      RAINBOW_COLOR_KEYS[i] = TextAttributesKey.createTextAttributesKey("RAINBOW_COLOR" + i, createRainbowAttribute(RAINBOW_JB_COLORS_DEFAULT[i]));
     }
   }
   public final static String RAINBOW_TYPE = "rainbow";
@@ -77,28 +74,36 @@ public class RainbowHighlighter {
   public static final HighlightInfoType RAINBOW_ELEMENT = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, DefaultLanguageHighlighterColors.CONSTANT);
 
   @Nullable
-  @Contract("null -> !null")
-  public static Boolean isRainbowEnabled(@Nullable Language language) {
-    String value = PropertiesComponent.getInstance().getValue(getKey(language), INHERITED);
-    if (TRUE.equals(value)) return Boolean.TRUE;
-    if (FALSE.equals(value)) return Boolean.FALSE;
-    return language == null ? DEFAULT_RAINBOW_ON : null;
+  @Contract("_, null -> !null")
+  public static Boolean isRainbowEnabled(@Nullable TextAttributesScheme colorsScheme, @Nullable Language language) {
+    if (colorsScheme instanceof SchemeMetaInfo) {
+      String value = ((SchemeMetaInfo)colorsScheme).getMetaProperties().getProperty(getKey(language), INHERITED);
+      if (String.valueOf(true).equals(value)) return Boolean.TRUE;
+      if (String.valueOf(false).equals(value)) return Boolean.FALSE;
+      return language == null ? DEFAULT_RAINBOW_ON : null;
+    }
+    return false;
   }
 
-  public static boolean isRainbowEnabledWithInheritance(@Nullable Language language) {
-    Boolean rainbowEnabled = isRainbowEnabled(language);
-    return rainbowEnabled != null ? rainbowEnabled : isRainbowEnabled(null);
+  public static boolean isRainbowEnabledWithInheritance(@Nullable TextAttributesScheme colorsScheme, @Nullable Language language) {
+    Boolean rainbowEnabled = isRainbowEnabled(colorsScheme, language);
+    return rainbowEnabled != null ? rainbowEnabled : isRainbowEnabled(colorsScheme, null);
   }
 
-  public static void setRainbowEnabled(@Nullable Language language, @Nullable Boolean enabled) {
-    PropertiesComponent.getInstance().setValue(
-      getKey(language),
-      enabled == null ? INHERITED : enabled.toString());
+  public static void setRainbowEnabled(@NotNull SchemeMetaInfo colorsScheme, @Nullable Language language, @Nullable Boolean enabled) {
+    Properties properties = colorsScheme.getMetaProperties();
+    String key = getKey(language);
+    if (enabled == null || (language == null && enabled == DEFAULT_RAINBOW_ON)) {
+      properties.remove(key);
+    }
+    else {
+      properties.setProperty(key, String.valueOf(enabled));
+    }
   }
 
   @NotNull
   private static String getKey(@Nullable Language language) {
-    return RAINBOW_TYPE + (language == null ? "Default language" : language.getID());
+    return RAINBOW_TYPE + " " + (language == null ? "Default language" : language.getID());
   }
 
   public static int hashColor(@NotNull String name, int colorsCount) {
@@ -186,5 +191,12 @@ public class RainbowHighlighter {
                                          .getAttributes(colorKey)
                                          .getFlyweight()
                                          .withForeground(calculateForeground(colorIndex))));
+  }
+
+  @NotNull
+  public static  TextAttributes createRainbowAttribute(@Nullable Color color) {
+    TextAttributes ret = new TextAttributes();
+    ret.setForegroundColor(color);
+    return ret;
   }
 }

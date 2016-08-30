@@ -19,33 +19,22 @@ import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptorWithPath;
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-import java.util.List;
-
 class RainbowAttributeDescriptor implements EditorSchemeAttributeDescriptorWithPath {
   private final String myGroup;
-  private final ColorAndFontGlobalState myColorAndFontGlobalState;
   private final String myDisplayName;
   private final EditorColorsScheme myScheme;
   private final Language myLanguage;
   private final RainbowColorsInSchemeState myRainbowColorsInSchemaState;
 
-  public ColorAndFontGlobalState getColorAndFontGlobalState() {
-    return myColorAndFontGlobalState;
-  }
-
   public RainbowAttributeDescriptor(@Nullable Language language,
-                                    @NotNull ColorAndFontGlobalState colorAndFontGlobalState,
                                     @NotNull String group,
                                     @NotNull String displayNameWithPath,
                                     @NotNull EditorColorsScheme scheme,
                                     @NotNull RainbowColorsInSchemeState rainbowState) {
     myLanguage = language;
-    myColorAndFontGlobalState = colorAndFontGlobalState;
     myDisplayName = displayNameWithPath;
     myRainbowColorsInSchemaState = rainbowState;
     myScheme = scheme;
@@ -75,23 +64,14 @@ class RainbowAttributeDescriptor implements EditorSchemeAttributeDescriptorWithP
   @Override
   public void apply(@NotNull EditorColorsScheme scheme) {
     if (myLanguage == null) {
+      // call it once for 'Default Language'
       myRainbowColorsInSchemaState.apply(scheme);
     }
-    // see myColorAndFontGlobalState apply
   }
 
   @Override
   public boolean isModified() {
-    return (myLanguage == null && myRainbowColorsInSchemaState.isModified())
-           || myColorAndFontGlobalState.isModified(myLanguage);
-  }
-
-  public List<Pair<Boolean, Color>> getRainbowColorsInSchemaState() {
-    return myRainbowColorsInSchemaState.getInheritanceAndColors();
-  }
-
-  public Color getDefaultColor(int index) {
-    return RainbowHighlighter.RAINBOW_COLOR_KEYS[index].getDefaultAttributes().getForegroundColor();
+    return myRainbowColorsInSchemaState.isModified(myLanguage);
   }
 
   public Language getLanguage() {

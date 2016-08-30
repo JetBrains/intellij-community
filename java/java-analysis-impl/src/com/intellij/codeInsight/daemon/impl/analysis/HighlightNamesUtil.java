@@ -155,8 +155,9 @@ public class HighlightNamesUtil {
     }
 
     HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(varType).range(elementToHighlight);
-    return RainbowHighlighter.isRainbowEnabledWithInheritance(JavaLanguage.INSTANCE) ? builder.createUnconditionally()
-                                                                                     : builder.create();
+    return RainbowHighlighter.isRainbowEnabledWithInheritance(colorsScheme, JavaLanguage.INSTANCE)
+           ? builder.createUnconditionally()
+           : builder.create();
   }
 
   @Nullable

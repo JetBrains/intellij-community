@@ -16,75 +16,69 @@
 package com.intellij.application.options.colors;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.lang.Language;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
-import java.util.List;
 
 public class RainbowColorsInSchemeState {
-  private final RainbowColorsInSchemeState myReferenceState;
-  private final List<Pair<Boolean, Color>> myInheritanceAndColors = new ArrayList<>();
+  private final EditorColorsScheme myEditedScheme;
+  private final EditorColorsScheme myOriginalScheme;
 
-  public List<Pair<Boolean, Color>> getInheritanceAndColors() {
-    return myInheritanceAndColors;
-  }
-
-  private RainbowColorsInSchemeState(@NotNull EditorColorsScheme scheme,
-                                     @SuppressWarnings("UnusedParameters") boolean unused) {
-    myReferenceState = null;
-    for (TextAttributesKey rainbowKey : RainbowHighlighter.RAINBOW_COLOR_KEYS) {
-      myInheritanceAndColors.add(getColorStateFromScheme(scheme, rainbowKey));
-    }
-  }
-
-  public RainbowColorsInSchemeState(@NotNull EditorColorsScheme scheme) {
-    myReferenceState = new RainbowColorsInSchemeState(scheme, true);
-    copyFrom(myReferenceState);
-  }
-
-  private void copyFrom(@NotNull RainbowColorsInSchemeState state) {
-    assert this != state;
-    myInheritanceAndColors.clear();
-    myInheritanceAndColors.addAll(state.myInheritanceAndColors);
+  public RainbowColorsInSchemeState(@NotNull EditorColorsScheme editedScheme,
+                                    @NotNull EditorColorsScheme originalScheme) {
+    myEditedScheme = editedScheme;
+    myOriginalScheme = originalScheme;
   }
 
   public void apply(@NotNull EditorColorsScheme scheme) {
-    int i = 0;
-    for (TextAttributesKey rainbowKey : RainbowHighlighter.RAINBOW_COLOR_KEYS) {
-      Pair<Boolean, Color> pair = myInheritanceAndColors.get(i);
-      scheme.setAttributes(rainbowKey, pair.first ? new TextAttributes(pair.second, null, null, null, Font.PLAIN)
-                                                  : rainbowKey.getDefaultAttributes());
-      ++i;
+    if (scheme != myEditedScheme) {
+      scheme.getMetaProperties().clear();
+      //noinspection UseOfPropertiesAsHashtable
+      scheme.getMetaProperties().putAll(myEditedScheme.getMetaProperties());
+      for (TextAttributesKey key : RainbowHighlighter.RAINBOW_COLOR_KEYS) {
+        Color color = myEditedScheme.getAttributes(key).getForegroundColor();
+        if (!color.equals(scheme.getAttributes(key).getForegroundColor()) ) {
+          scheme.setAttributes(key, RainbowHighlighter.createRainbowAttribute(color));
+        }
+      }
+      updateRainbowMarkup();
     }
-    //myReferenceState.copyFrom(this);
   }
 
-  @NotNull
-  private static Pair<Boolean, Color> getColorStateFromScheme(@NotNull EditorColorsScheme scheme, TextAttributesKey rainbowKey) {
-    TextAttributes schemeAttributes = scheme.getAttributes(rainbowKey);
-    @NotNull Color defaultRainbow = rainbowKey.getDefaultAttributes().getForegroundColor();
-    Pair<Boolean, Color> pair;
-    if (schemeAttributes == null) {
-      pair = Pair.create(false, defaultRainbow);
-    }
-    else {
-      Color schemeColor = schemeAttributes.getForegroundColor();
-      if (schemeColor == null) {
-        pair = Pair.create(false, defaultRainbow);
-      }
-      else {
-        pair = Pair.create(!defaultRainbow.equals(schemeColor), schemeColor);
+  private static void updateRainbowMarkup() {
+    Editor[] allEditors = EditorFactory.getInstance().getAllEditors();
+    for (Editor editor : allEditors) {
+      final Project project = editor.getProject();
+      if (project != null) {
+        PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+        if (file != null) {
+          DaemonCodeAnalyzer.getInstance(project).restart(file);
+        }
       }
     }
-    return pair;
   }
 
-  public boolean isModified() {
-    return !myInheritanceAndColors.equals(myReferenceState.myInheritanceAndColors);
+  public boolean isModified(@Nullable Language language) {
+    return (language == null && isRainbowColorsModified())
+           || RainbowHighlighter.isRainbowEnabled(myEditedScheme, language) != RainbowHighlighter.isRainbowEnabled(myOriginalScheme, language);
+  }
+
+  private boolean isRainbowColorsModified() {
+    for (TextAttributesKey key : RainbowHighlighter.RAINBOW_COLOR_KEYS) {
+      if (!myEditedScheme.getAttributes(key).equals(myOriginalScheme.getAttributes(key)) ) {
+        return true;
+      }
+    }
+    return false;
   }
 }

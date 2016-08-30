@@ -134,7 +134,7 @@ public class NewColorAndFontPanel extends JPanel {
 
     final OptionsPanel optionsPanel = new OptionsPanelImpl(
       options, schemesPanel, category,
-      new CustomizedSwitcherPanel(options.getColorAndFontGlobalState(), previewPanel, page));
+      new CustomizedSwitcherPanel(previewPanel, page));
 
     return new NewColorAndFontPanel(schemesPanel, optionsPanel, previewPanel, category, optionList, page);
   }

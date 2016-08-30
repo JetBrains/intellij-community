@@ -37,7 +37,6 @@ import java.util.*;
 import java.util.List;
 
 class CustomizedSwitcherPanel extends JPanel implements OptionsPanelImpl.ColorDescriptionPanel {
-  private ColorAndFontGlobalState myColorAndFontGlobalState;
   private ColorSettingsPage myPage;
 
   private PreviewPanel myPreviewPanel;
@@ -46,11 +45,9 @@ class CustomizedSwitcherPanel extends JPanel implements OptionsPanelImpl.ColorDe
 
   private OptionsPanelImpl.ColorDescriptionPanel myActive;
 
-  public CustomizedSwitcherPanel(@NotNull ColorAndFontGlobalState colorAndFontGlobalState,
-                                 @Nullable PreviewPanel previewPanel,
+  public CustomizedSwitcherPanel(@Nullable PreviewPanel previewPanel,
                                  @Nullable ColorSettingsPage page) {
     super();
-    myColorAndFontGlobalState = colorAndFontGlobalState;
     myPage = page;
     myPreviewPanel = previewPanel;
 
@@ -165,46 +162,48 @@ class CustomizedSwitcherPanel extends JPanel implements OptionsPanelImpl.ColorDe
 
   protected void updatePreviewPanel(@NotNull EditorSchemeAttributeDescriptor descriptor) {
     if (!(myPreviewPanel instanceof SimpleEditorPreview)) return;
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> ApplicationManager.getApplication().runWriteAction(() -> {
-        SimpleEditorPreview simpleEditorPreview = (SimpleEditorPreview)myPreviewPanel;
-        try {
-          simpleEditorPreview.setNavigationBlocked(true);
-          String demoText = (myPage instanceof RainbowColorSettingsPage
-                             && descriptor instanceof RainbowAttributeDescriptor)
-                            ? ((RainbowColorSettingsPage)myPage).getRainbowDemoText()
-                            : myPage.getDemoText();
-          List<HighlightData> showLineData = null;
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> ApplicationManager.getApplication().runWriteAction(() -> {
+      SimpleEditorPreview simpleEditorPreview = (SimpleEditorPreview)myPreviewPanel;
+      try {
+        simpleEditorPreview.setNavigationBlocked(true);
+        String demoText = (myPage instanceof RainbowColorSettingsPage
+                           && descriptor instanceof RainbowAttributeDescriptor)
+                          ? ((RainbowColorSettingsPage)myPage).getRainbowDemoText()
+                          : myPage.getDemoText();
+        List<HighlightData> showLineData = null;
 
-          if (myPage instanceof RainbowColorSettingsPage
-              && myColorAndFontGlobalState.isRainbowOnWithInheritance(((RainbowColorSettingsPage)myPage).getLanguage())) {
-            RainbowHighlighter highlighter = new RainbowHighlighter(descriptor.getScheme());
-            TextAttributesKey[] tempKeys = highlighter.getRainbowTempKeys();
-            EditorEx editor = simpleEditorPreview.getEditor();
-            if (myActive == myRainbowPanel) {
-              Pair<String, List<HighlightData>> demo = getColorDemoLine(highlighter, tempKeys);
-              simpleEditorPreview.setDemoText(demo.first + "\n" + demoText);
-              showLineData = demo.second;
-            }
-            else {
-              simpleEditorPreview.setDemoText(demoText);
-            }
-            addRainbowHighlighting(editor.getDocument(),
-                                   showLineData,
-                                   simpleEditorPreview.getHighlightDataForExtension(),
-                                   tempKeys);
+        if (myPage instanceof RainbowColorSettingsPage
+            && RainbowHighlighter.isRainbowEnabledWithInheritance(descriptor.getScheme(),
+                                                                  ((RainbowColorSettingsPage)myPage).getLanguage())) {
+          RainbowHighlighter highlighter = new RainbowHighlighter(descriptor.getScheme());
+          TextAttributesKey[] tempKeys = highlighter.getRainbowTempKeys();
+          EditorEx editor = simpleEditorPreview.getEditor();
+          if (myActive == myRainbowPanel) {
+            Pair<String, List<HighlightData>> demo = getColorDemoLine(highlighter, tempKeys);
+            simpleEditorPreview.setDemoText(demo.first + "\n" + demoText);
+            showLineData = demo.second;
           }
           else {
             simpleEditorPreview.setDemoText(demoText);
           }
-
-          simpleEditorPreview.updateView();
-          if (descriptor instanceof RainbowAttributeDescriptor) {
-            simpleEditorPreview.scrollHighlightInView(showLineData);
-          }
-        } finally {
-          simpleEditorPreview.setNavigationBlocked(false);
+          addRainbowHighlighting(editor.getDocument(),
+                                 showLineData,
+                                 simpleEditorPreview.getHighlightDataForExtension(),
+                                 tempKeys);
         }
-      }));
+        else {
+          simpleEditorPreview.setDemoText(demoText);
+        }
+
+        simpleEditorPreview.updateView();
+        if (descriptor instanceof RainbowAttributeDescriptor) {
+          simpleEditorPreview.scrollHighlightInView(showLineData);
+        }
+      }
+      finally {
+        simpleEditorPreview.setNavigationBlocked(false);
+      }
+    }));
   }
 
   @NotNull

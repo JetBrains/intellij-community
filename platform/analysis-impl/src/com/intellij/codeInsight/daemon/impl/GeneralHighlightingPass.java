@@ -143,7 +143,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     List<HighlightVisitor> list = Arrays.asList(highlightVisitors);
     for (HighlightVisitor visitor : DumbService.getInstance(myProject).filterByDumbAwareness(list)) {
       if (visitor instanceof RainbowVisitor
-          && !RainbowHighlighter.isRainbowEnabledWithInheritance(psiFile.getLanguage())) {
+          && !RainbowHighlighter.isRainbowEnabledWithInheritance(getColorsScheme(), psiFile.getLanguage())) {
         continue;
       }
       if (visitor.suitableForFile(psiFile)) {

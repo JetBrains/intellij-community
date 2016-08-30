@@ -15,15 +15,15 @@
  */
 package com.intellij.application.options.colors;
 
+import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
-import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptorWithPath;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ColorPanel;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.FontUtil;
 import com.intellij.util.ui.JBUI;
@@ -33,9 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
 
 
 public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.ColorDescriptionPanel {
@@ -44,12 +42,12 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
   protected JPanel myPanel;
 
   private JTextPane myGradientLabel;
-  private JBCheckBox myCbStop1;
-  private JBCheckBox myCbStop2;
-  private JBCheckBox myCbStop3;
-  private JBCheckBox myCbStop4;
-  private JBCheckBox myCbStop5;
-  private JBCheckBox[] myCbStops = new JBCheckBox[]{myCbStop1, myCbStop2, myCbStop3, myCbStop4, myCbStop5};
+  private JBLabel myLStop1;
+  private JBLabel myLStop2;
+  private JBLabel myLStop3;
+  private JBLabel myLStop4;
+  private JBLabel myLStop5;
+  private JBLabel[] myLStops = new JBLabel[]{myLStop1, myLStop2, myLStop3, myLStop4, myLStop5};
 
   protected ColorPanel myStop1;
   protected ColorPanel myStop2;
@@ -73,7 +71,7 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
     setBorder(JBUI.Borders.empty(4, 0, 4, 4));
 
     ActionListener actionListener = e -> myDispatcher.getMulticaster().onSettingsChanged(e);
-    for (JBCheckBox c : new JBCheckBox[]{myRainbow, myCbStop1, myCbStop2, myCbStop3, myCbStop4, myCbStop5, myInheritAttributesBox}) {
+    for (JBCheckBox c : new JBCheckBox[]{myRainbow, myInheritAttributesBox}) {
       c.addActionListener(actionListener);
     }
     for (ColorPanel c : new ColorPanel[]{myStop1, myStop2, myStop3, myStop4, myStop5}) {
@@ -129,33 +127,27 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
     if (!(attributeDescriptor instanceof RainbowAttributeDescriptor)) return;
     RainbowAttributeDescriptor descriptor = (RainbowAttributeDescriptor)attributeDescriptor;
 
-    List<Pair<Boolean, Color>> rainbowState = descriptor.getRainbowColorsInSchemaState();
-    if (rainbowState.size() < myCbStops.length) return;
-    Boolean rainbowOn = descriptor.getColorAndFontGlobalState().isRainbowOn(descriptor.getLanguage());
+    EditorColorsScheme editedColorsScheme = descriptor.getScheme();
+    Boolean rainbowOn = RainbowHighlighter.isRainbowEnabled(editedColorsScheme, descriptor.getLanguage());
     boolean isInherited = false;
-    if (rainbowOn == null) {
-      isInherited = true;
-      rainbowOn = descriptor.getColorAndFontGlobalState().isRainbowOn(null);
-    }
-    myRainbow.setEnabled(!isInherited);
-    myRainbow.setSelected(rainbowOn);
-
     // the colors are editable only for default language
     boolean isDefaultLanguage = descriptor.getLanguage() == null;
-    boolean isEnable = !ColorAndFontOptions.isReadOnly(attributeDescriptor.getScheme()) && isDefaultLanguage;
-    //myGradientLabel.setEnabled(isEnable);
-    for (int i = 0; i < myCbStops.length; ++i) {
-      Pair<Boolean, Color> state = rainbowState.get(i);
-      myCbStops[i].setEnabled(isEnable);
+    boolean isEnable = !ColorAndFontOptions.isReadOnly(editedColorsScheme);
+    if (rainbowOn == null) {
+      isInherited = true;
+      rainbowOn = RainbowHighlighter.isRainbowEnabled(editedColorsScheme, null);
+    }
+    myRainbow.setEnabled(isEnable && !isInherited);
+    myRainbow.setSelected(rainbowOn);
 
-      boolean isOverride = state.first;
-      myCbStops[i].setSelected(isOverride);
-
-      myStops[i].setEditable(isEnable && isOverride);
-      myStops[i].setSelectedColor(state.second);
+    for (int i = 0; i < myLStops.length; ++i) {
+      myLStops[i].setEnabled(isEnable && isDefaultLanguage);
+      myStops[i].setEditable(isEnable && isDefaultLanguage);
+      myStops[i].setSelectedColor(editedColorsScheme.getAttributes(RainbowHighlighter.RAINBOW_COLOR_KEYS[i]).getForegroundColor());
     }
 
     myInheritanceLabel.setVisible(!isDefaultLanguage);
+    myInheritAttributesBox.setEnabled(isEnable);
     myInheritAttributesBox.setSelected(isInherited);
     myInheritAttributesBox.setVisible(!isDefaultLanguage);
     myGradientLabel.setText(isDefaultLanguage ? myOverrideMessage : myInheritedMessage);
@@ -167,22 +159,16 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
     if (!(attributeDescriptor instanceof RainbowAttributeDescriptor)) return;
     RainbowAttributeDescriptor descriptor = (RainbowAttributeDescriptor)attributeDescriptor;
 
-    List<Pair<Boolean, Color>> rainbowCurState = descriptor.getRainbowColorsInSchemaState();
-    if (rainbowCurState.size() < myCbStops.length) return;
-
     boolean isDefaultLanguage = descriptor.getLanguage() == null;
-    descriptor
-      .getColorAndFontGlobalState()
-      .setRainbowOn(descriptor.getLanguage(),
-                    isDefaultLanguage ? Boolean.valueOf(myRainbow.isSelected())
-                                      : myInheritAttributesBox.isSelected() ? null
-                                                                            : Boolean.valueOf(myRainbow.isSelected()));
-    for (int i = 0; i < myCbStops.length; ++i) {
-      boolean isOverride = myCbStops[i].isSelected();
-      rainbowCurState.set(i, Pair.create(isOverride,
-                                         isOverride ? myStops[i].getSelectedColor() : descriptor.getDefaultColor(i)));
-    }
+    RainbowHighlighter.setRainbowEnabled(scheme,
+                                         descriptor.getLanguage(),
+                                         isDefaultLanguage ? Boolean.valueOf(myRainbow.isSelected())
+                                                           : myInheritAttributesBox.isSelected() ? null
+                                                                                                 : Boolean.valueOf(myRainbow.isSelected()));
 
+    for (int i = 0; i < myStops.length; ++i) {
+      scheme.setAttributes(RainbowHighlighter.RAINBOW_COLOR_KEYS[i], RainbowHighlighter.createRainbowAttribute(myStops[i].getSelectedColor()));
+    }
     descriptor.apply(scheme);
   }
 
