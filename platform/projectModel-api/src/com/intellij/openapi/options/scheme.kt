@@ -38,9 +38,11 @@ abstract class SchemeManagerFactory {
    * directoryName — like "keymaps".
    */
   @JvmOverloads
-  fun <SCHEME : Scheme, MUTABLE_SCHEME: SCHEME> create(directoryName: String, processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>, presentableName: String? = null, isUseOldFileNameSanitize: Boolean = false): SchemeManager<SCHEME> = create(directoryName, processor, presentableName, RoamingType.DEFAULT, isUseOldFileNameSanitize)
+  fun <SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> create(directoryName: String, processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>, presentableName: String? = null): SchemeManager<SCHEME> {
+    return create(directoryName, processor, presentableName, RoamingType.DEFAULT, false)
+  }
 
-  protected abstract fun <SCHEME : Scheme, MUTABLE_SCHEME: SCHEME> create(directoryName: String, processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>, presentableName: String? = null, roamingType: RoamingType = RoamingType.DEFAULT, isUseOldFileNameSanitize: Boolean = false): SchemeManager<SCHEME>
+  abstract fun <SCHEME : Scheme, MUTABLE_SCHEME: SCHEME> create(directoryName: String, processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>, presentableName: String? = null, roamingType: RoamingType = RoamingType.DEFAULT, isUseOldFileNameSanitize: Boolean = false): SchemeManager<SCHEME>
 }
 
 enum class SchemeState {

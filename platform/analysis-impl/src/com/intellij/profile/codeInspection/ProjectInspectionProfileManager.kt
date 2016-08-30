@@ -25,7 +25,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -43,6 +42,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters
 import com.intellij.util.xmlb.XmlSerializer
+import com.intellij.util.xmlb.annotations.OptionTag
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.Promise
@@ -92,42 +92,43 @@ class ProjectInspectionProfileManager(val project: Project,
     }
   }
 
-  override val schemeManager: SchemeManager<InspectionProfileImpl>
+  override val schemeManager = schemeManagerFactory.create("inspectionProfiles", object : InspectionProfileProcessor() {
+    override fun createScheme(dataHolder: SchemeDataHolder<InspectionProfileImpl>,
+                              name: String,
+                              attributeProvider: Function<String, String?>): InspectionProfileImpl {
+      val profile = InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this@ProjectInspectionProfileManager,
+                                          InspectionProfileImpl.getDefaultProfile(), dataHolder)
+      profile.isProjectLevel = true
+      return profile
+    }
 
-  private data class State(@field:com.intellij.util.xmlb.annotations.OptionTag("PROJECT_PROFILE") var projectProfile: String? = PROJECT_DEFAULT_PROFILE_NAME,
-                           @field:com.intellij.util.xmlb.annotations.OptionTag("USE_PROJECT_PROFILE") var useProjectProfile: Boolean = true)
+    override fun isSchemeFile(name: CharSequence) = !StringUtil.equals(name, "profiles_settings.xml")
+
+    override fun isSchemeDefault(scheme: InspectionProfileImpl, digest: ByteArray): Boolean {
+      return scheme.name == PROJECT_DEFAULT_PROFILE_NAME && Arrays.equals(digest, defaultSchemeDigest)
+    }
+
+    override fun onSchemeDeleted(scheme: InspectionProfileImpl) {
+      schemeRemoved(scheme)
+    }
+
+    override fun onSchemeAdded(scheme: InspectionProfileImpl) {
+      if (scheme.wasInitialized()) {
+        fireProfileChanged(scheme)
+      }
+    }
+
+    override fun onCurrentSchemeSwitched(oldScheme: InspectionProfileImpl?, newScheme: InspectionProfileImpl?) {
+      for (adapter in profileListeners) {
+        adapter.profileActivated(oldScheme, newScheme)
+      }
+    }
+  }, isUseOldFileNameSanitize = true)
+
+  private data class State(@field:OptionTag("PROJECT_PROFILE") var projectProfile: String? = PROJECT_DEFAULT_PROFILE_NAME,
+                           @field:OptionTag("USE_PROJECT_PROFILE") var useProjectProfile: Boolean = true)
 
   init {
-    schemeManager = schemeManagerFactory.create("inspectionProfiles", object : InspectionProfileProcessor() {
-      override fun createScheme(dataHolder: SchemeDataHolder<InspectionProfileImpl>, name: String, attributeProvider: Function<String, String?>): InspectionProfileImpl {
-        val profile = InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this@ProjectInspectionProfileManager, InspectionProfileImpl.getDefaultProfile(), dataHolder)
-        profile.isProjectLevel = true
-        return profile
-      }
-
-      override fun isSchemeFile(name: CharSequence) = !StringUtil.equals(name, "profiles_settings.xml")
-
-      override fun isSchemeDefault(scheme: InspectionProfileImpl, digest: ByteArray): Boolean {
-        return scheme.name == PROJECT_DEFAULT_PROFILE_NAME && Arrays.equals(digest, defaultSchemeDigest)
-      }
-
-      override fun onSchemeDeleted(scheme: InspectionProfileImpl) {
-        schemeRemoved(scheme)
-      }
-
-      override fun onSchemeAdded(scheme: InspectionProfileImpl) {
-        if (scheme.wasInitialized()) {
-          fireProfileChanged(scheme)
-        }
-      }
-
-      override fun onCurrentSchemeSwitched(oldScheme: InspectionProfileImpl?, newScheme: InspectionProfileImpl?) {
-        for (adapter in profileListeners) {
-          adapter.profileActivated(oldScheme, newScheme)
-        }
-      }
-    }, isUseOldFileNameSanitize = true)
-
     val app = ApplicationManager.getApplication()
     if (app.isUnitTestMode) {
       initialLoadSchemesFuture = resolvedPromise()
