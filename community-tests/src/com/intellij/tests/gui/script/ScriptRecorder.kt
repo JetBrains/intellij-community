@@ -19,7 +19,6 @@ import com.intellij.internal.inspector.UiDropperActionExtension
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.tests.gui.framework.GuiTests
 import org.fest.swing.core.BasicRobot
-import org.fest.swing.core.Robot
 import java.awt.Component
 import java.awt.Container
 import javax.swing.*
