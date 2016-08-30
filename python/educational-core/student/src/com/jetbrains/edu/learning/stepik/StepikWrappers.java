@@ -67,7 +67,7 @@ public class StepikWrappers {
     @Expose List<List<String>> samples;
     @Expose Integer executionMemoryLimit;
     @Expose Integer executionTimeLimit;
-//    @Expose Map<String, String> codeTemplates;
+    //    @Expose Map<String, String> codeTemplates;
     @Expose CodeTemplatesWrapper codeTemplates;
 
     public static StepOptions fromTask(final Project project, @NotNull final Task task) {
@@ -489,4 +489,51 @@ public class StepikWrappers {
       return refreshToken;
     }
   }
+
+  public static class Metric {
+    String name = "IDE_plugin";
+    Tags tags;
+    Data data;
+
+    public Metric(String tags_name, String tags_action, int courseId, int stepId) {
+      this.tags = new Tags(tags_name, tags_action);
+      this.data = new Data(courseId, stepId);
+    }
+
+    public class Tags {
+      String name;
+      String action;
+
+      public Tags(String action) {
+        this.action = action;
+      }
+
+      public Tags(String name, String action) {
+        this.name = name;
+        this.action = action;
+      }
+    }
+
+    public class Data {
+      int courseId;
+      int stepId;
+
+      public Data(int courseId, int stepId) {
+        this.courseId = courseId;
+        this.stepId = stepId;
+      }
+    }
+
+    public interface MetricActions {
+      String POST = "post";
+      String DOWNLOAD = "download";
+      String GET_COURSE = "get_course";
+    }
+
+    public interface PluginNames {
+      String S_Union = "S_Union";
+      String S_CLion = "S_CLion";
+      String S_PyCharm = "S_PyCharm";
+    }
   }
+}

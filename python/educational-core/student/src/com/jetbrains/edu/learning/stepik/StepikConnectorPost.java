@@ -81,6 +81,7 @@ public class StepikConnectorPost {
     final HttpPost request = new HttpPost(EduStepikNames.STEPIK_API_URL + link);
     request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
 
+
     final CloseableHttpResponse response = StepikConnectorLogin.getHttpClient().execute(request);
     final StatusLine statusLine = response.getStatusLine();
     final HttpEntity responseEntity = response.getEntity();
@@ -106,6 +107,7 @@ public class StepikConnectorPost {
     }
   }
 
+  @Deprecated
   public static StepikWrappers.SubmissionContainer postSubmission(String text, String attemptId) {
     String requestBody = new Gson().toJson(new StepikWrappers.SubmissionToPostWrapper(attemptId, "java8", text));
     try {
@@ -506,4 +508,18 @@ public class StepikConnectorPost {
       }
     });
   }
+
+  public static StepikWrappers.Metric postMetric(StepikWrappers.Metric metric) {
+    String requestBody = GSON.toJson(metric);
+    LOG.info(requestBody.toString());
+    try {
+      //return postToStepik(EduStepikNames.METRICS, StepikWrappers.Metric.class, requestBody);
+      throw new IOException();
+    }
+    catch (IOException e) {
+      LOG.warn("Can't post a metric\n" + e.toString());
+      return null;
+    }
+  }
+
 }
