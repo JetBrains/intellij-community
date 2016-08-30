@@ -47,8 +47,8 @@ public class BinaryPatchWriter {
 
   public static void writeBinaries(@Nullable String basePath,
                                    @NotNull List<BinaryFilePatch> patches,
-                                   @NotNull Writer writer,
-                                   @NotNull final String lineSeparator) throws IOException {
+                                   @NotNull Writer writer) throws IOException {
+    String lineSeparator = "\n"; //use it for git headers&binary content, otherwise git won't parse&apply it properly                           
     for (FilePatch patch : patches) {
       BinaryFilePatch filePatch = (BinaryFilePatch)patch;
       writer.write(String.format(GIT_DIFF_HEADER, filePatch.getBeforeName(), filePatch.getAfterName()));

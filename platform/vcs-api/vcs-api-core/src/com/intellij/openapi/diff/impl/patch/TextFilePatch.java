@@ -27,10 +27,16 @@ import java.util.List;
  */
 public class TextFilePatch extends FilePatch {
   private Charset myCharset;
+  @Nullable private String myLineSeparator;
   private final List<PatchHunk> myHunks;
 
   public TextFilePatch(@Nullable Charset charset) {
+    this(charset, null);
+  }
+
+  public TextFilePatch(@Nullable Charset charset, @Nullable String lineSeparator) {
     myCharset = charset;
+    myLineSeparator = lineSeparator;
     myHunks = new ArrayList<>();
   }
 
@@ -45,6 +51,7 @@ public class TextFilePatch extends FilePatch {
     setBeforeName(patch.getBeforeName());
     setAfterName(patch.getAfterName());
     myHunks = patch.myHunks;
+    myLineSeparator = patch.getLineSeparator();
   }
 
   public void addHunk(final PatchHunk hunk) {
@@ -72,5 +79,10 @@ public class TextFilePatch extends FilePatch {
   @Nullable
   public Charset getCharset() {
     return myCharset;
+  }
+
+  @Nullable
+  public String getLineSeparator() {
+    return myLineSeparator;
   }
 }
