@@ -49,6 +49,7 @@ public class TransactionGuardImpl extends TransactionGuard {
   private final Map<ModalityState, Boolean> myWriteSafeModalities = ContainerUtil.createConcurrentWeakMap();
   private TransactionIdImpl myCurrentTransaction;
   private boolean myWritingAllowed;
+  private static boolean ourTestingTransactions;
 
   public TransactionGuardImpl() {
     myWriteSafeModalities.put(ModalityState.NON_MODAL, true);
@@ -230,7 +231,7 @@ public class TransactionGuardImpl extends TransactionGuard {
 
   public void assertWriteActionAllowed() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (Registry.is("ide.require.transaction.for.model.changes", false) && !myWritingAllowed) {
+    if (areAssertionsEnabled() && !myWritingAllowed) {
       String message = "Write access is allowed from write-safe contexts only. " +
                        "Please ensure you're using invokeLater/invokeAndWait with a correct modality state (not \"any\"). " +
                        "See TransactionGuard documentation for details";
@@ -240,6 +241,14 @@ public class TransactionGuardImpl extends TransactionGuard {
       // please assign exceptions here to Peter
       LOG.error(message);
     }
+  }
+
+  private static boolean areAssertionsEnabled() {
+    Application app = ApplicationManager.getApplication();
+    if (app.isUnitTestMode() && !ourTestingTransactions) {
+      return false;
+    }
+    return Registry.is("ide.require.transaction.for.model.changes", false);
   }
 
   @Override
@@ -313,6 +322,10 @@ public class TransactionGuardImpl extends TransactionGuard {
       .add("currentTransaction", myCurrentTransaction)
       .add("writingAllowed", myWritingAllowed)
       .toString();
+  }
+
+  public static void setTestingTransactions(boolean testingTransactions) {
+    ourTestingTransactions = testingTransactions;
   }
 
   private static class Transaction {
