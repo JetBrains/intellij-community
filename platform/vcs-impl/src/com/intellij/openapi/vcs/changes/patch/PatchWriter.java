@@ -59,7 +59,7 @@ public class PatchWriter {
       UnifiedDiffWriter
         .write(project, basePath, patches, writer, lineSeparator, Extensions.getExtensions(PatchEP.EP_NAME, project), commitContext);
       if (includeBinaries) {
-        BinaryPatchWriter.writeBinaries(basePath, ContainerUtil.findAll(patches, BinaryFilePatch.class), writer, lineSeparator);
+        BinaryPatchWriter.writeBinaries(basePath, ContainerUtil.findAll(patches, BinaryFilePatch.class), writer);
       }
     }
     finally {

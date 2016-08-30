@@ -63,8 +63,7 @@ public class TextPatchBuilder {
                                            @NotNull String basePath,
                                            boolean reversePatch,
                                            boolean isCaseSensitive,
-                                           @Nullable Runnable cancelChecker,
-                                           boolean includeBaseText) throws VcsException {
+                                           @Nullable Runnable cancelChecker) throws VcsException {
     TextPatchBuilder builder = new TextPatchBuilder(basePath, reversePatch, isCaseSensitive, cancelChecker);
     return builder.build(changes);
   }
@@ -345,7 +344,7 @@ public class TextPatchBuilder {
   @NotNull
   private TextFilePatch buildPatchHeading(@NotNull AirContentRevision beforeRevision,
                                           @NotNull AirContentRevision afterRevision) {
-    TextFilePatch result = new TextFilePatch(afterRevision.getCharset());
+    TextFilePatch result = new TextFilePatch(afterRevision.getCharset(), afterRevision.getLineSeparator());
     setPatchHeading(result, beforeRevision, afterRevision);
     return result;
   }
