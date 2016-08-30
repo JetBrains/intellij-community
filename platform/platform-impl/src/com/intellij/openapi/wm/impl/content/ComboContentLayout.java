@@ -79,7 +79,7 @@ class ComboContentLayout extends ContentLayout {
   public void paintComponent(Graphics g) {
     if (!isToDrawCombo()) return;
 
-    Rectangle r = myComboLabel.getBounds();
+    Rectangle r = myIdLabel.getBounds();
     g.setColor(ColorUtil.toAlpha(UIUtil.getLabelForeground(), 20));
     g.drawLine(r.width, 0, r.width, r.height);
     g.setColor(UIUtil.CONTRAST_BORDER_COLOR);

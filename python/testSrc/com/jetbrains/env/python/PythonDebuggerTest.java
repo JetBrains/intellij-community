@@ -1026,6 +1026,12 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         int numberOfReferringObjects = getNumberOfReferringObjects("l");
         assertEquals(3, numberOfReferringObjects);
       }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-iron");
+      }
     });
   }
 
