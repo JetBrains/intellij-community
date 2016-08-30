@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull
 /**
  * @author peter
  */
-public class ResourcePatternsTest extends LightCodeInsightFixtureTestCase {
+class ResourcePatternsTest extends LightCodeInsightFixtureTestCase {
   String[] oldPatterns
 
   @NotNull
@@ -44,14 +44,14 @@ public class ResourcePatternsTest extends LightCodeInsightFixtureTestCase {
     super.tearDown()
   }
 
-  public void testFilePattern() {
+  void testFilePattern() {
     conf.addResourceFilePattern('*.ttt')
 
     assert conf.isResourceFile(createFile('foo/bar.ttt'))
     assert !conf.isResourceFile(createFile('foo/bar.xxx'))
   }
 
-  public void testWildcards() {
+  void testWildcards() {
     conf.addResourceFilePattern('*.t?t')
     assert conf.isResourceFile(createFile('foo/bar.txt'))
     assert conf.isResourceFile(createFile('foo/bar.ttt'))
@@ -59,14 +59,14 @@ public class ResourcePatternsTest extends LightCodeInsightFixtureTestCase {
     assert !conf.isResourceFile(createFile('foo/bar.xml'))
   }
 
-  public void testDirectory() {
+  void testDirectory() {
     conf.addResourceFilePattern('*/foo/*')
     assert conf.isResourceFile(createFile('goo/foo/bar.ttt'))
     assert !conf.isResourceFile(createFile('goo/foo.zzz'))
     assert !conf.isResourceFile(createFile('foo/bar.ttt'))
   }
 
-  public void testRootDirectory() {
+  void testRootDirectory() {
     conf.addResourceFilePattern('foo/*')
     assert !conf.isResourceFile(createFile('goo/foo/bar.ttt'))
     assert !conf.isResourceFile(createFile('goo/foo.zzz'))
@@ -74,7 +74,7 @@ public class ResourcePatternsTest extends LightCodeInsightFixtureTestCase {
     assert conf.isResourceFile(createFile('foo/bar.ttt'))
   }
 
-  public void testDoubleAsterisk() {
+  void testDoubleAsterisk() {
     conf.addResourceFilePattern('**/foo/*')
     assert conf.isResourceFile(createFile('foo/bar.ttt'))
     assert conf.isResourceFile(createFile('goo/foo/bar.ttt'))
@@ -82,7 +82,7 @@ public class ResourcePatternsTest extends LightCodeInsightFixtureTestCase {
     assert conf.isResourceFile(createFile('goo/foo/zzz'))
   }
 
-  public void testResourceRoot() {
+  void testResourceRoot() {
     conf.addResourceFilePattern('bbb:*.ttt')
 
     assert conf.isResourceFile(createFile('foo/bar.ttt'))
