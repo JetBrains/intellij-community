@@ -19,6 +19,7 @@ import com.intellij.codeInspection.InspectionProfile
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.configurationStore.SchemeDataHolder
+import com.intellij.configurationStore.SchemeManagerIprProvider
 import com.intellij.configurationStore.digest
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -35,6 +36,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.profile.Profile
+import com.intellij.project.isDirectoryBased
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
 import com.intellij.util.loadElement
@@ -92,6 +94,8 @@ class ProjectInspectionProfileManager(val project: Project,
     }
   }
 
+  private val schemeManagerIprProvider = if (project.isDirectoryBased()) null else SchemeManagerIprProvider()
+
   override val schemeManager = schemeManagerFactory.create("inspectionProfiles", object : InspectionProfileProcessor() {
     override fun createScheme(dataHolder: SchemeDataHolder<InspectionProfileImpl>,
                               name: String,
@@ -123,7 +127,7 @@ class ProjectInspectionProfileManager(val project: Project,
         adapter.profileActivated(oldScheme, newScheme)
       }
     }
-  }, isUseOldFileNameSanitize = true)
+  }, isUseOldFileNameSanitize = true, streamProvider = schemeManagerIprProvider)
 
   private data class State(@field:OptionTag("PROJECT_PROFILE") var projectProfile: String? = PROJECT_DEFAULT_PROFILE_NAME,
                            @field:OptionTag("USE_PROJECT_PROFILE") var useProjectProfile: Boolean = true)
@@ -206,6 +210,7 @@ class ProjectInspectionProfileManager(val project: Project,
   }
 
   @Synchronized override fun loadState(state: Element) {
+    schemeManagerIprProvider?.load(state)
     val data = state.getChild("settings")
 
     val newState = State()
@@ -251,6 +256,9 @@ class ProjectInspectionProfileManager(val project: Project,
     }
 
     severityRegistrar.writeExternal(result)
+
+    schemeManagerIprProvider?.writeState(result)
+
     if (JDOMUtil.isEmpty(result)) {
       result.name = "state"
       return result

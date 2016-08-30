@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework
 
+import com.intellij.configurationStore.StreamProvider
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.options.*
 
@@ -25,7 +26,8 @@ class MockSchemeManagerFactory : SchemeManagerFactory() {
                                                                  processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>,
                                                                  presentableName: String?,
                                                                  roamingType: RoamingType,
-                                                                 isUseOldFileNameSanitize: Boolean): SchemeManager<SCHEME> {
+                                                                 isUseOldFileNameSanitize: Boolean,
+                                                                 streamProvider: StreamProvider?): SchemeManager<SCHEME> {
     @Suppress("UNCHECKED_CAST")
     return EMPTY as SchemeManager<SCHEME>
   }

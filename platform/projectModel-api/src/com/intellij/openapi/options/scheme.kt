@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.options
 
+import com.intellij.configurationStore.StreamProvider
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
@@ -39,10 +40,15 @@ abstract class SchemeManagerFactory {
    */
   @JvmOverloads
   fun <SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> create(directoryName: String, processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>, presentableName: String? = null): SchemeManager<SCHEME> {
-    return create(directoryName, processor, presentableName, RoamingType.DEFAULT, false)
+    return create(directoryName, processor, presentableName, RoamingType.DEFAULT)
   }
 
-  abstract fun <SCHEME : Scheme, MUTABLE_SCHEME: SCHEME> create(directoryName: String, processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>, presentableName: String? = null, roamingType: RoamingType = RoamingType.DEFAULT, isUseOldFileNameSanitize: Boolean = false): SchemeManager<SCHEME>
+  abstract fun <SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> create(directoryName: String,
+                                                                 processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>,
+                                                                 presentableName: String? = null,
+                                                                 roamingType: RoamingType = RoamingType.DEFAULT,
+                                                                 isUseOldFileNameSanitize: Boolean = false,
+                                                                 streamProvider: StreamProvider? = null): SchemeManager<SCHEME>
 }
 
 enum class SchemeState {
