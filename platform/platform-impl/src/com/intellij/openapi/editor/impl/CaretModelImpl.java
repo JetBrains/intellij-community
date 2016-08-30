@@ -551,7 +551,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   @Override
   public void onRemoved(@NotNull Inlay inlay) {
-    if (myEditor.getDocument().isInBulkUpdate()) return;
+    if (myEditor.getDocument().isInEventsHandling() || myEditor.getDocument().isInBulkUpdate()) return;
     doWithCaretMerging(this::updateVisualPosition);
   }
 

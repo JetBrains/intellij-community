@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -128,6 +130,20 @@ public class EditorInlayTest extends AbstractEditorTest {
                  ContainerUtil.map(myEditor.getCaretModel().getAllCarets(), Caret::getVisualPosition));
   }
 
+  public void testDocumentEditingWithSoftWraps() throws Exception {
+    initText("long line");
+    configureSoftWraps(7);
+    Inlay inlay = addInlay(1);
+    assertNotNull(myEditor.getSoftWrapModel().getSoftWrap(5));
+    new WriteCommandAction.Simple<Void>(ourProject) {
+      @Override
+      protected void run() throws Throwable {
+        myEditor.getDocument().setText(" ");
+      }
+    }.execute();
+    assertFalse(inlay.isValid());
+  }
+
   private static void checkCaretPositionAndSelection(int offset, int logicalColumn, int visualColumn,
                                                      int selectionStartOffset, int selectionEndOffset) {
     checkCaretPosition(offset, logicalColumn, visualColumn);
@@ -143,7 +159,7 @@ public class EditorInlayTest extends AbstractEditorTest {
     assertEquals(visualColumn, myEditor.getCaretModel().getVisualPosition().column);
   }
 
-  private static void addInlay(int offset) {
-    EditorTestUtil.addInlay(myEditor, offset);
+  private static Inlay addInlay(int offset) {
+    return EditorTestUtil.addInlay(myEditor, offset);
   }
 }
