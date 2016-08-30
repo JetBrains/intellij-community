@@ -25,16 +25,21 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
+import static com.intellij.psi.tree.TokenSet.andNot;
+import static com.intellij.psi.tree.TokenSet.orSet;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNLS;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSEMI;
+import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.WHITE_SPACES_OR_COMMENTS;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.CLOSABLE_BLOCK;
 
 public class GrUnnecessarySemicolonInspection extends GroovySuppressableInspectionTool implements CleanupLocalInspectionTool {
 
-  private static final TokenSet SET = TokenSet.orSet(TokenSets.WHITE_SPACES_OR_COMMENTS, TokenSet.create(mSEMI));
+  private static final TokenSet NLS_SET = TokenSet.create(mNLS);
+  private static final TokenSet FORWARD_SET = andNot(orSet(WHITE_SPACES_OR_COMMENTS, TokenSet.create(mSEMI)), NLS_SET);
+  private static final TokenSet BACKWARD_SET = andNot(WHITE_SPACES_OR_COMMENTS, NLS_SET);
+
   private static final LocalQuickFix FIX = new LocalQuickFix() {
 
     @Nls
@@ -74,19 +79,19 @@ public class GrUnnecessarySemicolonInspection extends GroovySuppressableInspecti
   }
 
   private static boolean isSemicolonUnnecessary(@NotNull PsiElement semicolon) {
-    PsiElement next = PsiUtil.skipSet(semicolon.getNextSibling(), true, SET, false);
+    PsiElement next = PsiUtil.skipLeafSet(semicolon, true, FORWARD_SET);
     if (next == null) return true;
-    if (next.getNode().getElementType() == GroovyTokenTypes.mNLS) {
+    if (next.getNode().getElementType() == mNLS) {
       PsiElement nextSibling = next.getNextSibling();
-      if (nextSibling == null || nextSibling.getNode().getElementType() != GroovyElementTypes.CLOSABLE_BLOCK) {
+      if (nextSibling == null || nextSibling.getNode().getElementType() != CLOSABLE_BLOCK) {
         return true;
       }
     }
 
-    PsiElement previous = PsiUtil.skipWhitespacesAndComments(semicolon.getPrevSibling(), false, false);
+    PsiElement previous = PsiUtil.skipLeafSet(semicolon, false, BACKWARD_SET);
     if (previous == null) return true;
     IElementType previousType = previous.getNode().getElementType();
-    if (previousType == GroovyTokenTypes.mNLS || previousType == mSEMI) {
+    if (previousType == mNLS || previousType == mSEMI) {
       return true;
     }
 
