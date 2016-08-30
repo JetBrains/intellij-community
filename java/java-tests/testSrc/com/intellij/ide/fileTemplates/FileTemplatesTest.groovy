@@ -166,7 +166,7 @@ class FileTemplatesTest extends IdeaTestCase {
     String qName = template.getQualifiedName()
     templateManager.saveTemplates()
     templateManager.removeTemplate(qName)
-    FileTemplateTestUtil.loadCustomizedContent(templateManager)
+    templateManager.setScheme(FileTemplatesScheme.DEFAULT);
     FileTemplate loadedTemplate = templateManager.findTemplateByName(name)
     assertNotNull("Template '" + qName + "' was not found", loadedTemplate)
     assertEquals(name, loadedTemplate.getName())

@@ -40,8 +40,4 @@ public class FileTemplateTestUtil {
       return myTestConfigDir;
     }
   }
-
-  public static void loadCustomizedContent(FTManager templateManager) {
-    templateManager.loadCustomizedContent();
-  }
 }
