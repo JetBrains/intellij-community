@@ -18,7 +18,6 @@ package com.intellij.profile.codeInspection.ui.header;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.profile.Profile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListCellRendererWrapper;
@@ -32,6 +31,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -45,7 +45,9 @@ public abstract class ProfilesComboBox extends ComboBox<InspectionProfileImpl> {
   private InspectionProfileImpl myFirstGlobalProfile;
 
   public ProfilesComboBox() {
-    myComboModel = new SortedComboBoxModel<>(this::compare);
+    final Comparator<InspectionProfileImpl> comparator =
+      Comparator.comparing(InspectionProfileImpl::isProjectLevel).reversed().thenComparing(InspectionProfileImpl::getDisplayName);
+    myComboModel = new SortedComboBoxModel<>(comparator);
     setModel(myComboModel);
     //noinspection GtkPreferredJComboBoxRenderer
     setRenderer(new ListCellRenderer<Object>() {
@@ -57,9 +59,9 @@ public abstract class ProfilesComboBox extends ComboBox<InspectionProfileImpl> {
                               final boolean selected,
                               final boolean hasFocus) {
           if (index == -1) {
-            setIcon(isProjectLevel(value) ? AllIcons.General.ProjectSettings : AllIcons.General.Settings);
+            setIcon(value.isProjectLevel() ? AllIcons.General.ProjectSettings : AllIcons.General.Settings);
           }
-          setText(getProfileName(value));
+          setText(value.getDisplayName());
         }
       };
 
@@ -111,11 +113,6 @@ public abstract class ProfilesComboBox extends ComboBox<InspectionProfileImpl> {
     });
   }
 
-  protected abstract boolean isProjectLevel(final InspectionProfileImpl p);
-
-  @NotNull
-  protected abstract String getProfileName(final InspectionProfileImpl p);
-
   protected abstract void onProfileChosen(final InspectionProfileImpl inspectionProfile);
 
   public void selectProfile(InspectionProfileImpl inspectionProfile) {
@@ -133,14 +130,14 @@ public abstract class ProfilesComboBox extends ComboBox<InspectionProfileImpl> {
 
   void removeProfile(InspectionProfileImpl profile) {
     myComboModel.remove(profile);
-    if (!isProjectLevel(profile) && profile == myFirstGlobalProfile) {
+    if (!profile.isProjectLevel() && profile == myFirstGlobalProfile) {
       findFirstGlobalProfile();
     }
   }
 
   public void addProfile(InspectionProfileImpl inspectionProfile) {
     myComboModel.add(inspectionProfile);
-    if (!isProjectLevel(inspectionProfile)) {
+    if (!inspectionProfile.isProjectLevel()) {
       findFirstGlobalProfile();
     }
   }
@@ -154,22 +151,10 @@ public abstract class ProfilesComboBox extends ComboBox<InspectionProfileImpl> {
     return myComboModel.getItems();
   }
 
-  private int compare(@NotNull InspectionProfileImpl p1, @NotNull InspectionProfileImpl p2) {
-    final boolean isProjectLevel1 = isProjectLevel(p1);
-    final boolean isProjectLevel2 = isProjectLevel(p2);
-    int res = Comparing.compare(isProjectLevel2, isProjectLevel1);
-    if (res != 0) {
-      return res;
-    }
-    final String currentProfileName1 = getProfileName(p1);
-    final String currentProfileName2 = getProfileName(p2);
-    return Comparing.compare(currentProfileName1, currentProfileName2);
-  }
-
   private void findFirstGlobalProfile() {
     myFirstGlobalProfile = null;
     for (InspectionProfileImpl profile : getProfiles()) {
-      if (!isProjectLevel(profile)) {
+      if (!profile.isProjectLevel()) {
         myFirstGlobalProfile = profile;
         break;
       }

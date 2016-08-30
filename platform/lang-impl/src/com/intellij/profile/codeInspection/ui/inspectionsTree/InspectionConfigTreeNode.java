@@ -18,6 +18,7 @@ package com.intellij.profile.codeInspection.ui.inspectionsTree;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.openapi.util.ClearableLazyValue;
+import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.profile.codeInspection.ui.ToolDescriptors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +29,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
  * @author anna
  * @since 14-May-2009
  */
-public class InspectionConfigTreeNode extends DefaultMutableTreeNode {
+public abstract class InspectionConfigTreeNode extends DefaultMutableTreeNode {
   private final ClearableLazyValue<Boolean> myProperSetting = new ClearableLazyValue<Boolean>() {
     @NotNull
     @Override
@@ -48,8 +49,25 @@ public class InspectionConfigTreeNode extends DefaultMutableTreeNode {
     }
   };
 
-  public InspectionConfigTreeNode(@NotNull Object userObject) {
-    super(userObject);
+  public static class Group extends InspectionConfigTreeNode {
+    public Group(@NotNull String label) {
+      setUserObject(label);
+    }
+  }
+
+  public static class Tool extends InspectionConfigTreeNode {
+    @NotNull private final HighlightDisplayKey myKey;
+    @NotNull private final SingleInspectionProfilePanel myPanel;
+
+    public Tool(@NotNull HighlightDisplayKey key, @NotNull SingleInspectionProfilePanel panel) {
+      myKey = key;
+      myPanel = panel;
+    }
+
+    @Override
+    public Object getUserObject() {
+      return myPanel.getInitialToolDescriptors().get(myKey);
+    }
   }
 
   public HighlightDisplayKey getKey() {
@@ -64,12 +82,13 @@ public class InspectionConfigTreeNode extends DefaultMutableTreeNode {
 
   @Nullable
   public ToolDescriptors getDescriptors() {
-    if (userObject instanceof String) return null;
-    return (ToolDescriptors)userObject;
+    final Object userObject = getUserObject();
+    return userObject instanceof String ? null : (ToolDescriptors)userObject;
   }
 
   @Nullable
   public String getGroupName() {
+
     return userObject instanceof String ? (String)userObject : null;
   }
 
@@ -89,6 +108,7 @@ public class InspectionConfigTreeNode extends DefaultMutableTreeNode {
 
   @Override
   public String toString() {
+    final Object userObject = getUserObject();
     if (userObject instanceof ToolDescriptors) {
       return ((ToolDescriptors)userObject).getDefaultDescriptor().getText();
     }

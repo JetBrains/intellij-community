@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -52,17 +51,6 @@ public abstract class ProfilesChooser extends JPanel {
       protected void onProfileChosen(InspectionProfileImpl inspectionProfile) {
         ProfilesChooser.this.onProfileChosen(inspectionProfile);
       }
-
-      @Override
-      protected boolean isProjectLevel(InspectionProfileImpl p) {
-        return ProfilesChooser.this.isProjectLevel(p);
-      }
-
-      @NotNull
-      @Override
-      protected String getProfileName(InspectionProfileImpl p) {
-        return ProfilesChooser.this.getProfileName(p);
-      }
     };
     myComboBoxPanel.add(myProfilesComboBox, COMBO_CARD);
 
@@ -83,11 +71,6 @@ public abstract class ProfilesChooser extends JPanel {
   }
 
   protected abstract void onProfileChosen(InspectionProfileImpl profile);
-
-  protected abstract boolean isProjectLevel(final InspectionProfileImpl p);
-
-  @NotNull
-  protected abstract String getProfileName(final InspectionProfileImpl p);
 
   void showEditCard(final String initialValue, final SaveInputComponentValidator inputValidator) {
     mySaveListener.setDelegate(inputValidator);
