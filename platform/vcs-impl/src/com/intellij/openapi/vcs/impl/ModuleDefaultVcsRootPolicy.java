@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,6 +36,7 @@ import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.project.ProjectKt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +68,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
         result.add(myBaseDir);
       }
     }
-    if (ProjectUtil.isDirectoryBased(myProject) && myBaseDir != null) {
+    if (ProjectKt.isDirectoryBased(myProject) && myBaseDir != null) {
       final VirtualFile ideaDir = myBaseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
       if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory()) {
         final AbstractVcs vcsFor = vcsManager.getVcsFor(ideaDir);
@@ -123,7 +123,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     if (contentRoot != null) {
       return contentRoot;
     }
-    if (ProjectUtil.isDirectoryBased(myProject) && (myBaseDir != null)) {
+    if (ProjectKt.isDirectoryBased(myProject) && (myBaseDir != null)) {
       final VirtualFile ideaDir = myBaseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
       if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory()) {
         if (VfsUtilCore.isAncestor(ideaDir, file, false)) {
@@ -139,7 +139,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
   public Collection<VirtualFile> getDirtyRoots() {
     Collection<VirtualFile> dirtyRoots = ContainerUtil.newHashSet();
 
-    if (ProjectUtil.isDirectoryBased(myProject) && myBaseDir != null) {
+    if (ProjectKt.isDirectoryBased(myProject) && myBaseDir != null) {
       VirtualFile ideaDir = myBaseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
       if (ideaDir != null) {
         dirtyRoots.add(ideaDir);

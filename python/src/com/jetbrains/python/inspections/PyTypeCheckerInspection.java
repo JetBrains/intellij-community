@@ -29,6 +29,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
+import com.jetbrains.python.inspections.quickfix.PyMakeFunctionReturnTypeQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.Nls;
@@ -90,22 +91,61 @@ public class PyTypeCheckerInspection extends PyInspection {
 
     @Override
     public void visitPyReturnStatement(PyReturnStatement node) {
-      final PyExpression returnExpr = node.getExpression();
-      if (returnExpr != null) {
-        ScopeOwner owner = ScopeUtil.getScopeOwner(returnExpr);
-        if (owner instanceof PyFunction) {
-          final PyFunction function = (PyFunction)owner;
-          final PyAnnotation annotation = function.getAnnotation();
-          final String typeCommentAnnotation = function.getTypeCommentAnnotation();
-          if (annotation != null || typeCommentAnnotation != null) {
-            final PyType actual = myTypeEvalContext.getType(returnExpr);
-            final PyType expected = myTypeEvalContext.getReturnType(function);
-            if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
-              final String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
-              final String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
-              registerProblem(returnExpr, String.format("Expected type '%s', got '%s' instead", expectedName, actualName));
+      final ScopeOwner owner = ScopeUtil.getScopeOwner(node);
+      if (owner instanceof PyFunction) {
+        final PyFunction function = (PyFunction)owner;
+        final PyAnnotation annotation = function.getAnnotation();
+        final String typeCommentAnnotation = function.getTypeCommentAnnotation();
+        if (annotation != null || typeCommentAnnotation != null) {
+          final PyExpression returnExpr = node.getExpression();
+          final PyType actual = returnExpr != null ? myTypeEvalContext.getType(returnExpr) : PyNoneType.INSTANCE;
+          final PyType expected = myTypeEvalContext.getReturnType(function);
+          if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
+            final String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
+            final String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
+            PyMakeFunctionReturnTypeQuickFix localQuickFix = new PyMakeFunctionReturnTypeQuickFix(function, actualName, myTypeEvalContext);
+            PyMakeFunctionReturnTypeQuickFix globalQuickFix = new PyMakeFunctionReturnTypeQuickFix(function, null, myTypeEvalContext);
+            registerProblem(returnExpr != null ? returnExpr : node,
+                            String.format("Expected type '%s', got '%s' instead", expectedName, actualName),
+                            localQuickFix, globalQuickFix);
+          }
+        }
+      }
+    }
+
+    @Override
+    public void visitPyFunction(PyFunction node) {
+      final PyAnnotation annotation = node.getAnnotation();
+      final String typeCommentAnnotation = node.getTypeCommentAnnotation();
+      if (annotation != null || typeCommentAnnotation != null) {
+        if (!PyUtil.isEmptyFunction(node)) {
+          final PyStatementList statements = node.getStatementList();
+          ReturnVisitor visitor = new ReturnVisitor(node);
+          statements.accept(visitor);
+          if (!visitor.myHasReturns) {
+            final PyType expected = myTypeEvalContext.getReturnType(node);
+            final String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
+            if (expected != null && !(expected instanceof PyNoneType)) {
+              registerProblem(annotation != null ? annotation : node.getTypeComment(),
+                              String.format("Expected to return '%s', got no return", expectedName));
             }
           }
+        }
+      }
+    }
+
+    private static class ReturnVisitor extends PyRecursiveElementVisitor {
+      private final PyFunction myFunction;
+      private boolean myHasReturns = false;
+
+      public ReturnVisitor(PyFunction function) {
+        myFunction = function;
+      }
+
+      @Override
+      public void visitPyReturnStatement(PyReturnStatement node) {
+        if (ScopeUtil.getScopeOwner(node) == myFunction) {
+          myHasReturns = true;
         }
       }
     }

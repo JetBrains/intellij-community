@@ -105,7 +105,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     // this is needed to prevent memory leak, since the command is put into undo queue
     final RunResult[] results = {result};
 
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+    doExecuteCommand(new Runnable() {
       @Override
       public void run() {
         AccessToken token = getApplication().acquireWriteActionLock(WriteCommandAction.this.getClass());
@@ -117,7 +117,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
           token.finish();
         }
       }
-    }, getCommandName(), getGroupID(), getUndoConfirmationPolicy());
+    });
   }
 
   protected boolean isGlobalUndoAction() {
@@ -128,23 +128,42 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     return UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION;
   }
 
+  /**
+   * See {@link CommandProcessor#executeCommand(com.intellij.openapi.project.Project, java.lang.Runnable, java.lang.String, java.lang.Object, com.intellij.openapi.command.UndoConfirmationPolicy, boolean)} for details.
+   * 
+   */
+  protected boolean shouldRecordActionForActiveDocument() {
+    return true;
+  }
+
   public void performCommand() throws Throwable {
     //this is needed to prevent memory leak, since command
     // is put into undo queue
     final RunResult[] results = {new RunResult<T>(this)};
     final Ref<Throwable> exception = new Ref<Throwable>();
 
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+    doExecuteCommand(new Runnable() {
       @Override
       public void run() {
-        if (isGlobalUndoAction()) CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
         exception.set(results[0].run().getThrowable());
         results[0] = null;
       }
-    }, getCommandName(), getGroupID(), getUndoConfirmationPolicy());
+    });
 
     Throwable throwable = exception.get();
     if (throwable != null) throw throwable;
+  }
+
+  private void doExecuteCommand(final Runnable runnable) {
+    Runnable wrappedRunnable = new Runnable() {
+      @Override
+      public void run() {
+        if (isGlobalUndoAction()) CommandProcessor.getInstance().markCurrentCommandAsGlobal(getProject());
+        runnable.run();
+      }
+    };
+    CommandProcessor.getInstance().executeCommand(getProject(), wrappedRunnable, getCommandName(), getGroupID(), 
+                                                  getUndoConfirmationPolicy(), shouldRecordActionForActiveDocument());
   }
 
   /**

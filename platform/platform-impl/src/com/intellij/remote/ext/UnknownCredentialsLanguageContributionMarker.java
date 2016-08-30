@@ -13,16 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.components.impl.stores;
+package com.intellij.remote.ext;
 
-import com.intellij.util.messages.Topic;
-
-public interface BatchUpdateListener {
-  Topic<BatchUpdateListener> TOPIC = new Topic<>("batch update listener", BatchUpdateListener.class);
-
-  default void onBatchUpdateStarted() {
-  }
-
-  default void onBatchUpdateFinished() {
-  }
+/**
+ * @author Irina.Chernushina on 8/30/2016.
+ */
+public interface UnknownCredentialsLanguageContributionMarker {
 }

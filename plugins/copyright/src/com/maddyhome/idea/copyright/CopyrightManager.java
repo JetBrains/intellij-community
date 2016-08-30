@@ -164,11 +164,6 @@ public class CopyrightManager extends AbstractProjectComponent implements Persis
     if (myDefaultCopyright != null) {
       state.setAttribute(DEFAULT, myDefaultCopyright.getName());
     }
-    else if (!myProject.isDefault()) {
-      // todo we still add empty attribute to avoid annoying change (idea 12 - attribute exists, idea 13 - attribute doesn't exists)
-      // CR-IC-3403#CFR-62470, idea <= 12 compatibility
-      state.setAttribute(DEFAULT, "");
-    }
 
     return state;
   }

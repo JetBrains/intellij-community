@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.components.impl.stores;
+package com.intellij.project
 
-import com.intellij.util.messages.Topic;
+import com.intellij.openapi.components.StorageScheme
+import com.intellij.openapi.components.impl.stores.IProjectStore
+import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.project.Project
 
-public interface BatchUpdateListener {
-  Topic<BatchUpdateListener> TOPIC = new Topic<>("batch update listener", BatchUpdateListener.class);
-
-  default void onBatchUpdateStarted() {
-  }
-
-  default void onBatchUpdateFinished() {
-  }
+val Project.isDirectoryBased: Boolean
+  get() {
+  val store = stateStore
+  return store is IProjectStore && StorageScheme.DIRECTORY_BASED == store.storageScheme
 }
+

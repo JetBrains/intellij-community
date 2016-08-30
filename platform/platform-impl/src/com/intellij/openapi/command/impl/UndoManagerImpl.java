@@ -174,7 +174,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
       @Override
       public void commandStarted(CommandEvent event) {
-        onCommandStarted(event.getProject(), event.getUndoConfirmationPolicy());
+        onCommandStarted(event.getProject(), event.getUndoConfirmationPolicy(), event.shouldRecordActionForOriginalDocument());
       }
 
       @Override
@@ -186,7 +186,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
       public void undoTransparentActionStarted() {
         if (!isInsideCommand()) {
           myStarted = true;
-          onCommandStarted(myProject, UndoConfirmationPolicy.DEFAULT);
+          onCommandStarted(myProject, UndoConfirmationPolicy.DEFAULT, true);
         }
       }
 
@@ -220,7 +220,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     return myCommandLevel > 0;
   }
 
-  private void onCommandStarted(final Project project, UndoConfirmationPolicy undoConfirmationPolicy) {
+  private void onCommandStarted(final Project project, UndoConfirmationPolicy undoConfirmationPolicy, boolean recordOriginalReference) {
     if (myCommandLevel == 0) {
       for (UndoProvider undoProvider : myUndoProviders) {
         undoProvider.commandStarted(project);
@@ -228,7 +228,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
       myCurrentActionProject = project;
     }
 
-    commandStarted(undoConfirmationPolicy, myProject == project);
+    commandStarted(undoConfirmationPolicy, myProject == project && recordOriginalReference);
 
     LOG.assertTrue(myCommandLevel == 0 || !(myCurrentActionProject instanceof DummyProject));
   }

@@ -20,7 +20,6 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.impl.FileTemplateBase;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.projectWizard.ProjectTemplateFileProcessor;
 import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -48,6 +47,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.project.ProjectKt;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
@@ -78,7 +78,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = getEventProject(e);
     assert project != null;
-    if (!ProjectUtil.isDirectoryBased(project)) {
+    if (!ProjectKt.isDirectoryBased(project)) {
       Messages.showErrorDialog(project, "Project templates do not support old .ipr (file-based) format.\n" +
                                         "Please convert your project via File->Save as Directory-Based format.", CommonBundle.getErrorTitle());
       return;
