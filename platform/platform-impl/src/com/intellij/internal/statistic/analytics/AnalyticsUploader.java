@@ -15,7 +15,6 @@
  */
 package com.intellij.internal.statistic.analytics;
 
-import com.android.tools.analytics.UsageTracker;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
@@ -23,10 +22,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.wireless.android.sdk.stats.AndroidStudioStats.AndroidStudioEvent;
-import com.google.wireless.android.sdk.stats.AndroidStudioStats.AndroidStudioEvent.EventCategory;
-import com.google.wireless.android.sdk.stats.AndroidStudioStats.AndroidStudioEvent.EventKind;
-import com.google.wireless.android.sdk.stats.AndroidStudioStats.StudioCrash;
 import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.ide.SystemHealthMonitor;
 import com.intellij.ide.plugins.PluginManager;
@@ -55,12 +50,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 // Note: Methods such as trackException() are called from within the logger when an exception is detected,
 // so don't use a Logger in this class and possibly end up in an infinite recursion.
@@ -110,9 +102,6 @@ public class AnalyticsUploader {
   private static final String CD_UPDATE_CHANNEL = "cd4";
   private static final String CD_LOCALE = "cd5";
 
-  // Custom metrics should match the index given to them in Analytics
-  private static final String CM_ACTIVITY_COUNT = "cm1";
-
   private static final List<BasicNameValuePair> analyticsBaseData = ImmutableList
     .of(new BasicNameValuePair(PROTOCOL_VERSION, "1"),
         new BasicNameValuePair(TRACKING_ID, ANALYTICS_ID),
@@ -157,16 +146,7 @@ public class AnalyticsUploader {
     postToAnalytics(postData);
   }
 
-  public static void trackCrashes(@NotNull Iterable<String> descriptions) {
-    long crashCount = 0;
-    for (String description : descriptions) {
-      trackCrash(description);
-      ++crashCount;
-    }
-    trackExceptionsAndActivity(0, 0, 0, 0, crashCount);
-  }
-
-  private static void trackCrash(@NotNull String description) {
+  public static void trackCrash(@NotNull String description) {
     if (!trackingEnabled()) {
       return;
     }
@@ -216,45 +196,6 @@ public class AnalyticsUploader {
       if (DEBUG) {
         System.err.println("Unexpected error while reporting a crash: " + throwable);
       }
-    }
-  }
-
-  public static void trackExceptionsAndActivity(final long activityCount,
-                                                final long exceptionCount,
-                                                final long bundledPluginExceptionCount,
-                                                final long nonBundledPluginExceptionCount,
-                                                final long fatalExceptionCount) {
-    if (!trackingEnabled()) {
-      return;
-    }
-
-    // send activity count to GA
-    try {
-      // @formatter:off
-      postToAnalytics(ImmutableList.of(new BasicNameValuePair(HIT_TYPE, HIT_TYPE_EVENT),
-                                       new BasicNameValuePair(EVENT_CATEGORY, "ActivityTracker"),
-                                       new BasicNameValuePair(EVENT_ACTION, "Hit"),
-                                       new BasicNameValuePair(EVENT_VALUE, Long.toString(activityCount)),
-                                       new BasicNameValuePair(CM_ACTIVITY_COUNT, Long.toString(activityCount))));
-      // @formatter:on
-    } catch (Throwable throwable) {
-      if (DEBUG) {
-        System.err.println("Unexpected error while reporting a activity: " + throwable);
-      }
-    }
-
-    // send all the counters to tools.google.com
-    if (!ApplicationManager.getApplication().isInternal()) {
-      UsageTracker.getInstance().log(AndroidStudioEvent.newBuilder()
-                                     .setCategory(EventCategory.PING)
-                                     .setKind(EventKind.STUDIO_CRASH)
-                                     .setStudioCrash(StudioCrash.newBuilder()
-                                                     .setActions(activityCount)
-                                                     .setExceptions(exceptionCount)
-                                                     .setBundledPluginExceptions(bundledPluginExceptionCount)
-                                                     .setNonBundledPluginExceptions(nonBundledPluginExceptionCount)
-                                                     .setCrashes(fatalExceptionCount)));
-      // @formatter:on
     }
   }
 
@@ -410,29 +351,5 @@ public class AnalyticsUploader {
     } else {
       return fileName;
     }
-  }
-
-  @VisibleForTesting
-  @NotNull
-  public static URL getPingUrl(@NotNull String categoryId,
-                               @NotNull String version,
-                               @NotNull String installationId,
-                               @NotNull Map<String, String> parameters) throws MalformedURLException, UnsupportedEncodingException {
-    String urlPrefix = String.format(Locale.US,
-                             "https://tools.google.com/service/update?as=androidsdk_%1$s&version=%2$s&uid=%3$s",
-                             categoryId,
-                             URLEncoder.encode(version, Charsets.UTF_8.name()),
-                             URLEncoder.encode(installationId, Charsets.UTF_8.name()));
-
-    StringBuilder sb = new StringBuilder(urlPrefix);
-    for (String key : parameters.keySet()) {
-      String value = parameters.get(key);
-      sb.append('&');
-      sb.append(URLEncoder.encode(key, Charsets.UTF_8.name()));
-      sb.append('=');
-      sb.append(URLEncoder.encode(value, Charsets.UTF_8.name()));
-    }
-
-    return new URL(sb.toString());
   }
 }
