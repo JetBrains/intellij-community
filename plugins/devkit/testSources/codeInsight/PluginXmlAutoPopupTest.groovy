@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.intellij.codeInsight.completion.CompletionAutoPopupTestCase
  */
 class PluginXmlAutoPopupTest extends CompletionAutoPopupTestCase {
 
-  public void "test autopopup for class references"() {
+  void "test autopopup for class references"() {
     myFixture.addClass("public class FooFooFooFooFoo { }");
     myFixture.configureByText 'plugin.xml', '''
 <idea-plugin>
@@ -36,7 +36,7 @@ class PluginXmlAutoPopupTest extends CompletionAutoPopupTestCase {
     assert myFixture.lookupElementStrings == ['FooFooFooFooFoo']
   }
 
-  public void "test no autopopup when only word completion is available"() {
+  void "test no autopopup when only word completion is available"() {
     myFixture.configureByText 'plugin.xml', '''
 <idea-plugin>
   <extensionPoints>

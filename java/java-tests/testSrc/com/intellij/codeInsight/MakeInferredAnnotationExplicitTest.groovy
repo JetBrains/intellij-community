@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
  */
 class MakeInferredAnnotationExplicitTest extends LightCodeInsightFixtureTestCase {
 
-  public void "test contract and notNull"() {
+  void "test contract and notNull"() {
     myFixture.configureByText 'a.java', '''
 class Foo {
     static String f<caret>oo() {
@@ -44,8 +44,8 @@ class Foo {
 '''
 
   }
-  
-  public void "test custom notNull"() {
+
+  void "test custom notNull"() {
     myFixture.addClass("package foo; public @interface MyNotNull {}")
     NullableNotNullManager.getInstance(project).notNulls = ['foo.MyNotNull']
     NullableNotNullManager.getInstance(project).defaultNotNull = 'foo.MyNotNull'

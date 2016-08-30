@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import org.jetbrains.idea.maven.dom.inspections.MavenDuplicateDependenciesInspec
  */
 class MavenDuplicatedDependencyInspectionTest extends MavenDomTestCase {
 
-  public void testDuplicatedInSameFile() {
+  void testDuplicatedInSameFile() {
     myFixture.enableInspections(MavenDuplicateDependenciesInspection)
 
     createProjectPom("""
@@ -49,7 +49,7 @@ class MavenDuplicatedDependencyInspectionTest extends MavenDomTestCase {
     checkHighlighting()
   }
 
-  public void testDuplicatedInSameFileDifferentVersion() {
+  void testDuplicatedInSameFileDifferentVersion() {
     myFixture.enableInspections(MavenDuplicateDependenciesInspection)
 
     createProjectPom("""
@@ -74,7 +74,7 @@ class MavenDuplicatedDependencyInspectionTest extends MavenDomTestCase {
     checkHighlighting()
   }
 
-  public void testDuplicatedInParentDifferentScope() {
+  void testDuplicatedInParentDifferentScope() {
     myFixture.enableInspections(MavenDuplicateDependenciesInspection)
 
     createModulePom("child", """
@@ -123,7 +123,7 @@ class MavenDuplicatedDependencyInspectionTest extends MavenDomTestCase {
     checkHighlighting(myProjectPom, true, false, true)
   }
 
-  public void testDuplicatedInParentSameScope() {
+  void testDuplicatedInParentSameScope() {
     myFixture.enableInspections(MavenDuplicateDependenciesInspection)
 
     createModulePom("child", """
@@ -171,7 +171,7 @@ class MavenDuplicatedDependencyInspectionTest extends MavenDomTestCase {
     checkHighlighting(myProjectPom, true, false, true)
   }
 
-  public void testDuplicatedInParentDifferentVersion() {
+  void testDuplicatedInParentDifferentVersion() {
     myFixture.enableInspections(MavenDuplicateDependenciesInspection)
 
     createModulePom("child", """
@@ -216,7 +216,7 @@ class MavenDuplicatedDependencyInspectionTest extends MavenDomTestCase {
     checkHighlighting(myProjectPom, true, false, true)
   }
 
-  public void testDuplicatedInManagedDependencies() {
+  void testDuplicatedInManagedDependencies() {
     myFixture.enableInspections(MavenDuplicateDependenciesInspection)
 
     createProjectPom("""

@@ -27,9 +27,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 /**
  * @author peter
  */
-public class GroovyOverrideImplementTest extends LightGroovyTestCase {
+class GroovyOverrideImplementTest extends LightGroovyTestCase {
 
-  public void testInEmptyBraces() throws Exception {
+  void testInEmptyBraces() throws Exception {
     myFixture.configureByText "a.groovy", """
 class Test {<caret>}
 """
@@ -43,8 +43,8 @@ class Test {
 }
 """
   }
-  
-  public void testConstructor() throws Exception {
+
+  void testConstructor() throws Exception {
     myFixture.configureByText "a.groovy", """
 class Test {<caret>}
 """
@@ -58,7 +58,7 @@ class Test {
 """
   }
 
-  public void testNoSuperReturnType() throws Exception {
+  void testNoSuperReturnType() throws Exception {
     myFixture.addFileToProject("Foo.groovy", """
     class Foo {
       def foo() {
@@ -80,7 +80,7 @@ class Test {
 """
   }
 
-  public void testMethodTypeParameters() {
+  void testMethodTypeParameters() {
     myFixture.addFileToProject "v.java", """
 class Base<E> {
   public <T> T[] toArray(T[] t) {return (T[])new Object[0];}
@@ -198,7 +198,7 @@ interface I {
 ''')
   }
 
-  public void _testImplementIntention() {
+  void _testImplementIntention() {
     myFixture.configureByText('a.groovy', '''
 class Base<E> {
   public <E> E fo<caret>o(E e){}

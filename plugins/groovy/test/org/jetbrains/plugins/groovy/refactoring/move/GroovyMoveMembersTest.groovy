@@ -1,17 +1,17 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package org.jetbrains.plugins.groovy.refactoring.move
@@ -33,14 +33,14 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyMoveMembersTest extends LightCodeInsightFixtureTestCase {
+class GroovyMoveMembersTest extends LightCodeInsightFixtureTestCase {
   final String basePath = TestUtils.testDataPath + "refactoring/move/moveMembers/"
 
   /*public void testJavadocRefs() throws Exception {
     doTest("Class1", "Class2", 0);
   }*/
 
-  public void testWeirdDeclaration() throws Exception {
+  void testWeirdDeclaration() throws Exception {
     doTest("A", "B", 0);
   }
 
@@ -49,55 +49,55 @@ public class GroovyMoveMembersTest extends LightCodeInsightFixtureTestCase {
     doTest("A", "B", 0);
   }*/
 
-  public void testScr11871() throws Exception {
+  void testScr11871() throws Exception {
     doTest("pack1.A", "pack1.B", 0);
   }
 
-  public void testOuterClassTypeParameters() throws Exception {
+  void testOuterClassTypeParameters() throws Exception {
     doTest("pack1.A", "pack2.B", 0);
   }
 
-  public void testscr40064() throws Exception {
+  void testscr40064() throws Exception {
     doTest("Test", "Test1", 0);
   }
 
-  public void testscr40947() throws Exception {
+  void testscr40947() throws Exception {
     doTest("A", "Test", 0, 1);
   }
 
-  public void testIDEADEV11416() throws Exception {
+  void testIDEADEV11416() throws Exception {
     doTest("Y", "X", 0);
   }
 
-  public void testTwoMethods() throws Exception {
+  void testTwoMethods() throws Exception {
     doTest("pack1.A", "pack1.C", 0, 1, 2);
   }
 
-  public void testIDEADEV12448() throws Exception {
+  void testIDEADEV12448() throws Exception {
     doTest("B", "A", 0);
   }
 
-  public void testFieldForwardRef() throws Exception {
+  void testFieldForwardRef() throws Exception {
     doTest("A", "Constants", 0);
   }
 
-  public void testStaticImport() throws Exception {
+  void testStaticImport() throws Exception {
     doTest("C", "B", 0);
   }
 
-  public void testOtherPackageImport() throws Exception {
+  void testOtherPackageImport() throws Exception {
     doTest("pack1.ClassWithStaticMethod", "pack2.OtherClass", 1);
   }
 
-  public void testEnumConstant() throws Exception {
+  void testEnumConstant() throws Exception {
     doTest("B", "A", 0);
   }
 
-  public void testAliasedImported() {
+  void testAliasedImported() {
     doTest("A", "B", 0);
   }
 
-  public void testDoc() {
+  void testDoc() {
     doTest("A", "B", 0, 1);
   }
 

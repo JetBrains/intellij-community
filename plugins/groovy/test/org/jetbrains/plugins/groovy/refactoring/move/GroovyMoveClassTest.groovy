@@ -1,17 +1,17 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package org.jetbrains.plugins.groovy.refactoring.move
@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyMoveClassTest extends GroovyMoveTestBase {
+class GroovyMoveClassTest extends GroovyMoveTestBase {
   protected String getBasePath() {
     return TestUtils.getTestDataPath() + "refactoring/move/moveClass/";
   }
@@ -70,51 +70,51 @@ class ${NAME} {
     super.tearDown();
   }
 
-  public void testMoveMultiple1() throws Exception {
+  void testMoveMultiple1() throws Exception {
     doTest("pack2", "pack1.Class1", "pack1.Class2");
   }
 
-  public void testSecondaryClass() throws Exception {
+  void testSecondaryClass() throws Exception {
     doTest("pack1", "pack1.Class2");
   }
 
-  public void testStringsAndComments() throws Exception {
+  void testStringsAndComments() throws Exception {
     doTest("pack2", "pack1.Class1");
   }
 
-  public void testStringsAndComments2() throws Exception {
+  void testStringsAndComments2() throws Exception {
     doTest("pack2", "pack1.AClass");
   }
 
-  public void testLocalClass() throws Exception {
+  void testLocalClass() throws Exception {
     doTest("pack2", "pack1.A");
   }
 
-  public void testClassAndSecondary() throws Exception {
+  void testClassAndSecondary() throws Exception {
     doTest("pack2", "pack1.Class1", "pack1.Class2");
   }
 
-  public void testIdeadev27996() throws Exception {
+  void testIdeadev27996() throws Exception {
     doTest("pack2", "pack1.X");
   }
 
-  public void testScript() throws Exception {
+  void testScript() throws Exception {
     doTest("pack2", "pack1.Xx");
   }
 
-  public void testTwoClasses() {
+  void testTwoClasses() {
     doTest("p2", "p1.C1", "p1.C2");
   }
 
-  public void testStaticImport() {
+  void testStaticImport() {
     doTest("p2", "p1.C1");
   }
 
-  public void testAliasImported() {
+  void testAliasImported() {
     doTest("p2", "p1.C1");
   }
 
-  public boolean perform(VirtualFile root, String newPackageName, String... classNames) {
+  boolean perform(VirtualFile root, String newPackageName, String... classNames) {
     final PsiClass[] classes = new PsiClass[classNames.length];
     for (int i = 0; i < classes.length; i++) {
       String className = classNames[i];

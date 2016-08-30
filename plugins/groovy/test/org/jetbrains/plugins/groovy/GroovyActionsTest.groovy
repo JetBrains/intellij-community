@@ -22,17 +22,17 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author peter
  */
-public class GroovyActionsTest extends LightCodeInsightFixtureTestCase {
+class GroovyActionsTest extends LightCodeInsightFixtureTestCase {
 
   final String basePath = TestUtils.testDataPath + 'groovy/actions/';
 
-  public void testSelectWordBeforeMethod() {
+  void testSelectWordBeforeMethod() {
     doTestForSelectWord 1;
   }
 
-  public void testSWInGString() { doTestSelectWordUpTo 5 }
+  void testSWInGString() { doTestSelectWordUpTo 5 }
 
-  public void 'test select word in GString select line before injection'() {
+  void 'test select word in GString select line before injection'() {
     doTestForSelectWord 2, '''\
 print """
 asddf
@@ -48,7 +48,7 @@ fdsas
 '''
   }
 
-  public void 'test select word in GString select line after injection'() {
+  void 'test select word in GString select line after injection'() {
     doTestForSelectWord 2, '''\
 print """
 asddf
@@ -63,7 +63,8 @@ fdsas
 """
 '''
   }
-  public void 'test select word in GString select line before end'() {
+
+  void 'test select word in GString select line before end'() {
     doTestForSelectWord 2, '''\
 print """
 asddf
@@ -77,41 +78,41 @@ asdf $b sfsasdf
 '''
   }
 
-  public void testSWInGStringMultiline() { doTestSelectWordUpTo 4 }
+  void testSWInGStringMultiline() { doTestSelectWordUpTo 4 }
 
-  public void testSWInGStringBegin() { doTestSelectWordUpTo 2 }
+  void testSWInGStringBegin() { doTestSelectWordUpTo 2 }
 
-  public void testSWInGStringEnd() { doTestSelectWordUpTo 2 }
+  void testSWInGStringEnd() { doTestSelectWordUpTo 2 }
 
-  public void testSWInParameterList() { doTestForSelectWord(3); }
+  void testSWInParameterList() { doTestForSelectWord(3); }
 
-  public void testSWInArgLabel1() { doTestForSelectWord(2) }
+  void testSWInArgLabel1() { doTestForSelectWord(2) }
 
-  public void testSWInArgLabel2() { doTestForSelectWord(2) }
+  void testSWInArgLabel2() { doTestForSelectWord(2) }
 
-  public void testSWInArgLabel3() { doTestForSelectWord(2) }
+  void testSWInArgLabel3() { doTestForSelectWord(2) }
 
-  public void testSWEscapesInString() {
+  void testSWEscapesInString() {
     doTestForSelectWord 1,
       "String s = \"abc\\nd<caret>ef\"",
       "String s = \"abc\\n<selection>d<caret>ef</selection>\""
   }
 
-  public void testSWListLiteralArgument() {
+  void testSWListLiteralArgument() {
     doTestForSelectWord 2,
 "foo([a<caret>], b)",
 "foo(<selection>[a<caret>]</selection>, b)"
   }
 
-  public void testSWMethodParametersBeforeQualifier() {
+  void testSWMethodParametersBeforeQualifier() {
     doTestForSelectWord 2,
 "a.fo<caret>o(b)",
 "a.<selection>foo(b)</selection>"
   }
 
-  public void testSWInCodeBlock() {doTestForSelectWord 5}
+  void testSWInCodeBlock() { doTestForSelectWord 5 }
 
-  public void testElseBranch() {
+  void testElseBranch() {
     doTestForSelectWord (3, '''\
 def foo() {
   if (a){
@@ -169,7 +170,7 @@ this.allOptions = [:];
 ''')
   }
 
-  public void "test hippie completion in groovydoc"() {
+  void "test hippie completion in groovydoc"() {
     myFixture.configureByText 'a.groovy', '''
 class A {
 
@@ -185,7 +186,7 @@ class A {
     assert myFixture.editor.document.text.contains('** longName\n')
   }
 
-  public void "test hippie completion with hyphenated match"() {
+  void "test hippie completion with hyphenated match"() {
     myFixture.configureByText 'a.groovy', '''
 foo = [ helloWorld: 1, "hello-world": {
     hw<caret>

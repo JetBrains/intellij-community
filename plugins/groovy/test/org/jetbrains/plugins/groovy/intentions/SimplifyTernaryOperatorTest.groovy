@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,39 +28,39 @@ class SimplifyTernaryOperatorTest extends GrIntentionTestCase {
     doTextTest before, intentionName, after
   }
 
-  public void testDoNotTriggerOnNormalConditional() throws Exception {
+  void testDoNotTriggerOnNormalConditional() throws Exception {
     doAntiTest 'aaa ?<caret> bbb : ccc', intentionName
     doAntiTest 'aaa ?<caret> false : ccc', intentionName
     doAntiTest 'aaa ?<caret> bbb : true', intentionName
   }
 
-  public void "test don't trigger for non-boolean conditions"() throws Exception {
+  void "test don't trigger for non-boolean conditions"() throws Exception {
     doAntiTest 'def a = 0\n' +
                'def b = 2\n' +
                'println a <caret>? true : b', intentionName
   }
 
 
-  public void testSimplifyWhenThenIsTrue() throws Exception {
+  void testSimplifyWhenThenIsTrue() throws Exception {
     doTest 'aaa ?<caret> true: bbb', 'aaa ||<caret> bbb'
   }
 
 
-  public void testSimplifyWhenThenIsTrueComplexArguments() throws Exception {
+  void testSimplifyWhenThenIsTrueComplexArguments() throws Exception {
     doTest 'aaa ?<caret> true : bbb ? ccc : ddd', 'aaa || (bbb ? ccc : ddd)'
   }
 
-  public void testSimplifyWhenElseIsFalseComplexArguments() throws Exception {
+  void testSimplifyWhenElseIsFalseComplexArguments() throws Exception {
     doTest 'aaa || bbb ? ccc || ddd : false', '(aaa || bbb) && (ccc || ddd)'
   }
 
-  public void testSimplifyWhenElseIsFalse() throws Exception {
+  void testSimplifyWhenElseIsFalse() throws Exception {
     doTest 'aaa ?<caret> bbb : false', 'aaa &&<caret> bbb'
   }
 
   // aaa ? false : bbb -> (!aaa) && bbb
 
-  public void testResultisWrappedInParenthesesWhenNeeded() throws Exception {
+  void testResultisWrappedInParenthesesWhenNeeded() throws Exception {
     doTest 'a ?<caret> b ? true : d : false', 'a &&<caret> (b ? true : d)'
   }
 

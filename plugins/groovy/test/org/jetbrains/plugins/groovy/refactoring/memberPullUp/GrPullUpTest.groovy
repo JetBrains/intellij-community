@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,107 +38,107 @@ class GrPullUpTest extends LightGroovyTestCase {
     TestUtils.testDataPath + 'refactoring/pullUp'
   }
 
-  public void testQualifiedThis() {
+  void testQualifiedThis() {
     doTest(new MemberDescriptor("Inner", PsiClass));
   }
 
-  public void testQualifiedSuper() {
+  void testQualifiedSuper() {
     doTest(new MemberDescriptor("Inner", PsiClass));
   }
 
-  public void testQualifiedReference() {     // IDEADEV-25008
+  void testQualifiedReference() {     // IDEADEV-25008
     doTest(new MemberDescriptor("getX", PsiMethod),
            new MemberDescriptor("setX", PsiMethod),
            new MemberDescriptor("x", PsiField));
   }
 
-  public void testPullUpInheritedStaticClasses() {
+  void testPullUpInheritedStaticClasses() {
     doTest(new MemberDescriptor("C", PsiClass),
            new MemberDescriptor("D", PsiClass));
   }
 
-  public void testPullUpPrivateInnerClassWithPrivateConstructor() {
+  void testPullUpPrivateInnerClassWithPrivateConstructor() {
     doTest(new MemberDescriptor("C", PsiClass));
   }
 
-  public void testPullUpAndMakeAbstract() {
+  void testPullUpAndMakeAbstract() {
     doTest(new MemberDescriptor("a", PsiMethod),
            new MemberDescriptor("b", PsiMethod, true));
   }
 
-  public void _testTryCatchFieldInitializer() {
+  void _testTryCatchFieldInitializer() {
     doTest(new MemberDescriptor("field", PsiField));
   }
 
-  public void testIfFieldInitializationWithNonMovedField() {
+  void testIfFieldInitializationWithNonMovedField() {
     doTest(new MemberDescriptor("f", PsiField));
   }
 
-  public void _testIfFieldMovedInitialization() {
+  void _testIfFieldMovedInitialization() {
     doTest(new MemberDescriptor("f", PsiField));
   }
 
-  public void _testMultipleConstructorsFieldInitialization() {
+  void _testMultipleConstructorsFieldInitialization() {
     doTest(new MemberDescriptor("f", PsiField));
   }
 
-  public void _testMultipleConstructorsFieldInitializationNoGood() {
+  void _testMultipleConstructorsFieldInitializationNoGood() {
     doTest(new MemberDescriptor("f", PsiField));
   }
 
-  public void _testRemoveOverride() {
+  void _testRemoveOverride() {
     doTest(new MemberDescriptor("get", PsiMethod));
   }
 
-  public void testTypeParamErasure() {
+  void testTypeParamErasure() {
     doTest(new MemberDescriptor("f", PsiField));
   }
 
-  public void testTypeParamSubst() {
+  void testTypeParamSubst() {
     doTest(new MemberDescriptor("f", PsiField));
   }
 
-  public void testTypeArgument() {
+  void testTypeArgument() {
     doTest(new MemberDescriptor("f", PsiField));
   }
 
-  public void testGenericsInAbstractMethod() {
+  void testGenericsInAbstractMethod() {
     doTest(new MemberDescriptor("method", PsiMethod, true));
   }
 
-  public void _testReplaceDuplicatesInInheritors() {
+  void _testReplaceDuplicatesInInheritors() {
     doTest(new MemberDescriptor("foo", PsiMethod, false));
   }
 
-  public void testGenericsInImplements() {
+  void testGenericsInImplements() {
     doTest(false, new MemberDescriptor("I", PsiClass));
   }
 
-  public void testUpdateStaticRefs() {
+  void testUpdateStaticRefs() {
     doTest(false, new MemberDescriptor("foo", PsiMethod));
   }
 
-  public void testRemoveOverrideFromPulledMethod() {
+  void testRemoveOverrideFromPulledMethod() {
     doTest(false, new MemberDescriptor("foo", PsiMethod));
   }
 
-  public void testPreserveOverrideInPulledMethod() {
+  void testPreserveOverrideInPulledMethod() {
     doTest(false, new MemberDescriptor("foo", PsiMethod));
   }
 
-  public void testMergeInterfaces() {
+  void testMergeInterfaces() {
     doTest(false, new MemberDescriptor("I", PsiClass));
   }
 
-  public void testTypeParamsConflictingNames() {
+  void testTypeParamsConflictingNames() {
     doTest(false, new MemberDescriptor("foo", PsiMethod));
   }
 
-  public void testEscalateVisibility() {
+  void testEscalateVisibility() {
     doTest(false, new MemberDescriptor("foo", PsiMethod));
   }
 
-  public void testPreserveOverride() {
+  void testPreserveOverride() {
     doTest(false, new MemberDescriptor("foo", PsiMethod));
   }
 
@@ -185,7 +185,7 @@ class GrPullUpTest extends LightGroovyTestCase {
     final int[] countMoved = [0];
     final MoveMemberListener listener = new MoveMemberListener() {
       @Override
-      public void memberMoved(PsiClass aClass, PsiMember member) {
+      void memberMoved(PsiClass aClass, PsiMember member) {
         assertEquals(sourceClass, aClass);
         countMoved[0]++;
       }
@@ -201,24 +201,24 @@ class GrPullUpTest extends LightGroovyTestCase {
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 
-  public static class MemberDescriptor {
+  static class MemberDescriptor {
     private String myName;
     private Class<? extends PsiMember> myClass;
     private boolean myAbstract;
 
-    public MemberDescriptor(String name, Class<? extends PsiMember> aClass, boolean isAbstract) {
+    MemberDescriptor(String name, Class<? extends PsiMember> aClass, boolean isAbstract) {
       myName = name;
       myClass = aClass;
       myAbstract = isAbstract;
     }
 
 
-    public MemberDescriptor(String name, Class<? extends PsiMember> aClass) {
+    MemberDescriptor(String name, Class<? extends PsiMember> aClass) {
       this(name, aClass, false);
     }
   }
 
-  public static MemberInfo[] findMembers(final PsiClass sourceClass, final MemberDescriptor... membersToFind) {
+  static MemberInfo[] findMembers(final PsiClass sourceClass, final MemberDescriptor... membersToFind) {
     MemberInfo[] infos = new MemberInfo[membersToFind.length]
     for (int i = 0; i < membersToFind.length; i++) {
       final Class<? extends PsiMember> clazz = membersToFind[i].myClass

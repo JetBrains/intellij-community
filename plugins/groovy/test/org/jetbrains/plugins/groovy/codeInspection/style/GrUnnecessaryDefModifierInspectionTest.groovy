@@ -21,7 +21,7 @@ import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 
 @CompileStatic
-public class GrUnnecessaryDefModifierInspectionTest extends LightGroovyTestCase {
+class GrUnnecessaryDefModifierInspectionTest extends LightGroovyTestCase {
 
   final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
 

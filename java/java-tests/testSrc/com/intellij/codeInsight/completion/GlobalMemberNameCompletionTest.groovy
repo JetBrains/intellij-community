@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight.completion
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings
 import com.intellij.codeInsight.lookup.LookupElement
@@ -6,9 +21,9 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 /**
  * @author peter
  */
-public class GlobalMemberNameCompletionTest extends LightCodeInsightFixtureTestCase {
+class GlobalMemberNameCompletionTest extends LightCodeInsightFixtureTestCase {
 
-  public void testMethodName() throws Exception {
+  void testMethodName() throws Exception {
     myFixture.addClass("""
 package foo;
 
@@ -23,7 +38,7 @@ public class Foo {
 class Bar {{ abcmethod()<caret> }}"""
   }
 
-  public void testFieldName() throws Exception {
+  void testFieldName() throws Exception {
     myFixture.addClass("""
 package foo;
 
@@ -38,7 +53,7 @@ public class Foo {
 class Bar {{ abcfield<caret> }}"""
   }
 
-  public void testFieldNameQualified() throws Exception {
+  void testFieldNameQualified() throws Exception {
     myFixture.addClass("""
 package foo;
 
@@ -53,7 +68,7 @@ public class Foo {
 class Bar {{ Foo.abcfield<caret> }}"""
   }
 
-  public void testFieldNamePresentation() {
+  void testFieldNamePresentation() {
     myFixture.addClass("""
 package foo;
 
@@ -74,7 +89,7 @@ public class Foo {
     myFixture.complete(CompletionType.BASIC, 2)
   }
 
-  public void testQualifiedMethodName() throws Exception {
+  void testQualifiedMethodName() throws Exception {
     myFixture.addClass("""
 package foo;
 
@@ -88,7 +103,7 @@ public class Foo {
 class Bar {{ Foo.abcmethod()<caret> }}"""
   }
 
-  public void testIfThereAreAlreadyStaticImportsWithThatClass() throws Exception {
+  void testIfThereAreAlreadyStaticImportsWithThatClass() throws Exception {
     myFixture.addClass("""
 package foo;
 
@@ -109,7 +124,7 @@ class Bar {{ abcmethod(); anotherMethod(<caret>) }}"""
   }
 
 
-  public void testExcludeClassFromCompletion() throws Exception {
+  void testExcludeClassFromCompletion() throws Exception {
     myFixture.addClass("""package foo;
       public class Foo {
         public static int abcmethod() {}
@@ -128,7 +143,7 @@ class Bar {{ abcmethod(); anotherMethod(<caret>) }}"""
 class Bar {{ abcmethod()<caret> }}"""
   }
 
-  public void testExcludeMethodFromCompletion() throws Exception {
+  void testExcludeMethodFromCompletion() throws Exception {
     myFixture.addClass("""package foo;
       public class Foo {
         public static int abcmethod1() {}
@@ -143,7 +158,7 @@ class Bar {{ abcmethod()<caret> }}"""
 class Bar {{ abcmethod1()<caret> }}"""
   }
 
-  public void testMergeOverloads() throws Exception {
+  void testMergeOverloads() throws Exception {
     myFixture.addClass("""package foo;
       public class Foo {
         public static int abcmethod(int a) {}
@@ -164,7 +179,7 @@ class Bar {{ abcmethod1()<caret> }}"""
     assertOrderedEquals myFixture.lookupElementStrings, "abcmethod", "abcmethod1"
   }
 
-  public void testMethodFromTheSameClass() {
+  void testMethodFromTheSameClass() {
     myFixture.configureByText("a.java", """
 class A {
   static void foo() {}
@@ -189,7 +204,7 @@ class A {
 '''
   }
 
-  public void "test static import before an identifier"() {
+  void "test static import before an identifier"() {
     myFixture.addClass '''
 package test.t1;
 
@@ -238,7 +253,7 @@ public class Demo {
     myFixture.checkResult output
   }
 
-  public void "test no results in incomplete static import"() {
+  void "test no results in incomplete static import"() {
     def text = """
 package p;
 

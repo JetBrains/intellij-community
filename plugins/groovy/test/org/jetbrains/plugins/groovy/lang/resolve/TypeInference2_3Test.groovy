@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ class TypeInference2_3Test extends TypeInferenceTestBase {
     return GroovyLightProjectDescriptor.GROOVY_2_3
   }
 
-  public void testContravariantType() throws Exception {
+  void testContravariantType() throws Exception {
     doTest('''\
 import groovy.transform.CompileStatic
 import java.util.concurrent.Callable

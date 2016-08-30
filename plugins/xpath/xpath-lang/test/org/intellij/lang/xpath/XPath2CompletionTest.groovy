@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package org.intellij.lang.xpath
 
-public class XPath2CompletionTest extends TestBase {
+class XPath2CompletionTest extends TestBase {
 
-  public void testCastInsert() throws Throwable {
+  void testCastInsert() throws Throwable {
     TestNamespaceContext.install(getTestRootDisposable());
     configure()
     assert myFixture.lookupElementStrings.containsAll("xs:anyAtomicType", "xs:untypedAtomic", "xs:anyURI")
@@ -29,7 +29,7 @@ public class XPath2CompletionTest extends TestBase {
     myFixture.completeBasic();
   }
 
-  public void testTreatInsert() throws Throwable {
+  void testTreatInsert() throws Throwable {
     configure()
     myFixture.type('\n');
     myFixture.checkResultByFile(getTestFileName() + "_after.xpath2");

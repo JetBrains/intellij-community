@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ import com.intellij.util.PairFunction
 /**
  * @author peter
  */
-public class FragmentCompletionTest extends LightCodeInsightFixtureTestCase {
-  public void testDontCompleteFieldsAndMethodsInReferenceCodeFragment() throws Throwable {
+class FragmentCompletionTest extends LightCodeInsightFixtureTestCase {
+  void testDontCompleteFieldsAndMethodsInReferenceCodeFragment() throws Throwable {
     final String text = CommonClassNames.JAVA_LANG_OBJECT + ".<caret>";
     PsiFile file = JavaCodeFragmentFactory.getInstance(project).createReferenceCodeFragment(text, null, true, true);
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
@@ -36,7 +36,7 @@ public class FragmentCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResult(text);
   }
 
-  public void testNoKeywordsInReferenceCodeFragment() throws Throwable {
+  void testNoKeywordsInReferenceCodeFragment() throws Throwable {
     PsiFile file = JavaCodeFragmentFactory.getInstance(project).createReferenceCodeFragment("<caret>", null, true, true);
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
     assert myFixture.completeBasic()
@@ -44,7 +44,7 @@ public class FragmentCompletionTest extends LightCodeInsightFixtureTestCase {
     assert !('import' in myFixture.lookupElementStrings)
   }
 
-  public void "test no classes in reference code fragment"() throws Throwable {
+  void "test no classes in reference code fragment"() throws Throwable {
     myFixture.addClass("package foo; public interface FooIntf { }")
 
     def text = "FooInt<caret>"
@@ -54,7 +54,7 @@ public class FragmentCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResult(text)
   }
 
-  public void "test no constants in reference code fragment"() throws Throwable {
+  void "test no constants in reference code fragment"() throws Throwable {
     myFixture.addClass("package foo; public interface FooIntf { int constant = 2 }")
 
     def text = "FooInt.con<caret>"
@@ -64,7 +64,7 @@ public class FragmentCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResult(text)
   }
 
-  public void testNoPackagesInExpressionCodeFragment() throws Throwable {
+  void testNoPackagesInExpressionCodeFragment() throws Throwable {
     final String text = "jav<caret>";
     PsiFile file = JavaCodeFragmentFactory.getInstance(project).createExpressionCodeFragment(text, null, null, true);
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
@@ -72,14 +72,14 @@ public class FragmentCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResult(text);
   }
 
-  public void testSubPackagesInExpressionCodeFragment() throws Throwable {
+  void testSubPackagesInExpressionCodeFragment() throws Throwable {
     PsiFile file = JavaCodeFragmentFactory.getInstance(project).createExpressionCodeFragment("java.la<caret>", null, null, true);
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
     assert !myFixture.completeBasic()
     myFixture.checkResult("java.lang.<caret>");
   }
 
-  public void testPrimitivesInTypeCodeFragmentWithParameterListContext() throws Throwable {
+  void testPrimitivesInTypeCodeFragmentWithParameterListContext() throws Throwable {
     def clazz = myFixture.addClass("class Foo { void foo(int a) {} }")
 
     PsiFile file = JavaCodeFragmentFactory.getInstance(project).createTypeCodeFragment("b<caret>", clazz.methods[0].parameterList, true);
@@ -88,7 +88,7 @@ public class FragmentCompletionTest extends LightCodeInsightFixtureTestCase {
     assert myFixture.lookupElementStrings[0..1] == ['boolean', 'byte']
   }
 
-  public void testQualifierCastingInExpressionCodeFragment() throws Throwable {
+  void testQualifierCastingInExpressionCodeFragment() throws Throwable {
     final ctxText = "class Bar {{ Object o; o=null }}"
     final ctxFile = createLightFile(StdFileTypes.JAVA, ctxText)
     final context = ctxFile.findElementAt(ctxText.indexOf("o="))
@@ -100,7 +100,7 @@ public class FragmentCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResult("o instanceof String && ((String) o).substring(<caret>)");
   }
 
-  public void testNoGenericQualifierCastingWithRuntimeType() throws Throwable {
+  void testNoGenericQualifierCastingWithRuntimeType() throws Throwable {
     final ctxText = "import java.util.*; class Bar {{ Map<Integer,Integer> map = new HashMap<Integer,Integer>(); map=null; }}"
     final ctxFile = createLightFile(StdFileTypes.JAVA, ctxText)
     final context = ctxFile.findElementAt(ctxText.indexOf("map="))
@@ -118,7 +118,7 @@ public class FragmentCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResult("map.entrySet()<caret>");
   }
 
-  public void "test no static after instance in expression fragment"() {
+  void "test no static after instance in expression fragment"() {
     def ctxFile = myFixture.addClass("package foo; public class Class {{\n int a = 2; }}").containingFile
     def context = ctxFile.findElementAt(ctxFile.text.indexOf('int'))
 
@@ -129,7 +129,7 @@ public class FragmentCompletionTest extends LightCodeInsightFixtureTestCase {
     assert !myFixture.lookupElementStrings.contains('valueOf')
   }
 
-  public void "test no class keywords in expression fragment"() {
+  void "test no class keywords in expression fragment"() {
     def ctxFile = myFixture.addClass("package foo; public class Class {{\n int a = 2; }}").containingFile
     def context = ctxFile.findElementAt(ctxFile.text.indexOf('int'))
 
@@ -140,7 +140,7 @@ public class FragmentCompletionTest extends LightCodeInsightFixtureTestCase {
     assert !myFixture.lookupElementStrings.contains('class')
   }
 
-  public void "test annotation context"() {
+  void "test annotation context"() {
     def ctxFile = myFixture.addClass("class Class { void foo(int context) { @Anno int a; } }").containingFile
     def context = ctxFile.findElementAt(ctxFile.text.indexOf('Anno'))
     PsiFile file = JavaCodeFragmentFactory.getInstance(project).createExpressionCodeFragment("c<caret>", context, null, true);

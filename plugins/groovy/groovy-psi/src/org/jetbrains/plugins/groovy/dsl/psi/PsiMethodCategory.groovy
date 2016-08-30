@@ -22,10 +22,10 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author ilyas
  */
-public class PsiMethodCategory implements PsiEnhancerCategory {
+class PsiMethodCategory implements PsiEnhancerCategory {
 
   @Nullable
-  public static PsiClass getClassType(PsiField field) {
+  static PsiClass getClassType(PsiField field) {
     final PsiType type = field.getType();
     return PsiCategoryUtil.getClassType(type, field);
   }

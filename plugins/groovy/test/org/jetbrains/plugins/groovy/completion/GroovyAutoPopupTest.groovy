@@ -45,7 +45,7 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     super.tearDown()
   }
 
-  public void testGenerallyFocusLookup() {
+  void testGenerallyFocusLookup() {
     myFixture.configureByText("a.groovy", """
         String foo(String xxxxxx) {
           return xx<caret>
@@ -56,19 +56,19 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     assert lookup.focused
   }
 
-  public void testTopLevelFocus() {
+  void testTopLevelFocus() {
     myFixture.configureByText 'a.groovy', '<caret>'
     type 'p'
     assert lookup.focused
   }
 
-  public void testNoLookupFocusOnUnresolvedQualifier() {
+  void testNoLookupFocusOnUnresolvedQualifier() {
     myFixture.configureByText("a.groovy", """xxx.<caret>""")
     type 'h' //hashCode
     assert !lookup
   }
 
-  public void testNoLookupFocusOnUntypedQualifier() {
+  void testNoLookupFocusOnUntypedQualifier() {
     myFixture.configureByText("a.groovy", """
       def foo(xxx) {
         xxx.<caret>
@@ -77,26 +77,26 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     assert !lookup
   }
 
-  public void testImpossibleClosureParameter() {
+  void testImpossibleClosureParameter() {
     myFixture.configureByText("a.groovy", "String a; { a.<caret> }")
     type 'h'
     assert lookup.focused
   }
 
-  public void testFieldTypeLowercase() {
+  void testFieldTypeLowercase() {
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
     myFixture.configureByText "a.groovy", "class Foo { <caret> }"
     type 'aioobe'
     assert myFixture.lookupElementStrings == [ArrayIndexOutOfBoundsException.simpleName]
   }
 
-  public void testNoWordCompletionAutoPopup() {
+  void testNoWordCompletionAutoPopup() {
     myFixture.configureByText "a.groovy", 'def foo = "f<caret>"'
     type 'o'
     assert !lookup
   }
 
-  public void testClassesAndPackagesInUnqualifiedImports() {
+  void testClassesAndPackagesInUnqualifiedImports() {
     myFixture.addClass("package Xxxxx; public class Xxxxxxxxx {}")
     myFixture.configureByText 'a.groovy', 'package foo; import <caret>'
     type 'Xxx'
@@ -104,7 +104,7 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
   }
 
 
-  public void testPopupAfterDotAfterPackage() {
+  void testPopupAfterDotAfterPackage() {
     myFixture.configureByText 'a.groovy', '<caret>'
     type 'import jav'
     assert lookup
@@ -112,7 +112,7 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     assert lookup
   }
 
-  public void testTypingFirstVarargDot() {
+  void testTypingFirstVarargDot() {
     myFixture.addClass("class Foo { static class Bar {} }")
     myFixture.configureByText "a.groovy", "void foo(Foo<caret>[] a) { }"
     type '.'
@@ -121,7 +121,7 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     myFixture.checkResult('void foo(Foo..<caret>[] a) { }')
   }
 
-  public void testTypingFirstVarargDot2() {
+  void testTypingFirstVarargDot2() {
     myFixture.addClass("class Foo { static class Bar {} }")
     myFixture.configureByText "a.groovy", "void foo(Foo<caret>) { }"
     type '.'
@@ -130,7 +130,7 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     myFixture.checkResult('void foo(Foo..<caret>) { }')
   }
 
-  public void testDotDot() {
+  void testDotDot() {
     myFixture.configureByText "a.groovy", '2<caret>'
     type '.'
     assert lookup
@@ -140,21 +140,21 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     myFixture.checkResult '2..<caret>'
   }
 
-  public void testInsideClosure() {
+  void testInsideClosure() {
     myFixture.configureByText 'a.groovy', 'def cl = { foo(); <caret> }'
     type 'h'
     assert lookup
     assert lookup.focused
   }
 
-  public void testNonImportedClass() {
+  void testNonImportedClass() {
     myFixture.addClass("package foo; public class Abcdefg {}")
     myFixture.configureByText 'a.groovy', '<caret>'
     type 'Abcde '
     myFixture.checkResult 'import foo.Abcdefg\n\nAbcdefg <caret>'
   }
 
-  public void "test two non-imported classes when space does not select first autopopup item"() {
+  void "test two non-imported classes when space does not select first autopopup item"() {
     CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
 
     myFixture.addClass("package foo; public class Abcdefg {}")
@@ -170,7 +170,7 @@ class Foo extends Abcdefg <caret>'''
   }
 
 
-  public void testTwoNonImportedClasses() {
+  void testTwoNonImportedClasses() {
     myFixture.addClass("package foo; public class Abcdefg {}")
     myFixture.addClass("package bar; public class Abcdefg {}")
     myFixture.configureByText 'a.groovy', '<caret>'
@@ -180,39 +180,39 @@ class Foo extends Abcdefg <caret>'''
 Abcdefg <caret>'''
   }
 
-  public void testPrivate() {
+  void testPrivate() {
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
     myFixture.configureByText 'a.groovy', 'class Foo { <caret> }'
     type 'pri'
     assert myFixture.lookupElementStrings[0] == 'private'
   }
 
-  public void testFieldTypeNonImported() {
+  void testFieldTypeNonImported() {
     myFixture.addClass("package foo; public class PrimaBalerina {}")
     myFixture.configureByText 'a.groovy', 'class Foo { <caret> }'
     type 'PrimaB'
     assert myFixture.lookupElementStrings == ['PrimaBalerina']
   }
 
-  public void testEnteringLabel() {
+  void testEnteringLabel() {
     myFixture.configureByText 'a.groovy', '<caret>'
     type 'FIS:'
     assert myFixture.editor.document.text == 'FIS:'
   }
 
-  public void testEnteringNamedArg() {
+  void testEnteringNamedArg() {
     myFixture.configureByText 'a.groovy', 'foo(<caret>)'
     type 'has:'
     myFixture.checkResult 'foo(has:<caret>)'
   }
 
-  public void testEnteringMapKey() {
+  void testEnteringMapKey() {
     myFixture.configureByText 'a.groovy', '[<caret>]'
     type 'has:'
     myFixture.checkResult '[has:<caret>]'
   }
 
-  public void testPreferRightCasedVariant() {
+  void testPreferRightCasedVariant() {
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
     myFixture.configureByText 'a.groovy', '<caret>'
     type 'boo'
@@ -221,7 +221,7 @@ Abcdefg <caret>'''
     myFixture.assertPreferredCompletionItems 0, 'Boolean'
   }
 
-  public void testPackageQualifier() {
+  void testPackageQualifier() {
     CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
 
     myFixture.addClass("package com.too; public class Util {}")
@@ -230,7 +230,7 @@ Abcdefg <caret>'''
     assert myFixture.lookupElementStrings.containsAll(['too', 'command.toString'])
   }
 
-  public void testVarargParenthesis() {
+  void testVarargParenthesis() {
     myFixture.configureByText 'a.groovy', '''
 void foo(File... files) { }
 foo(new <caret>)
@@ -241,7 +241,7 @@ foo(new <caret>)
     assert myFixture.editor.document.text.contains('new File()')
   }
 
-  public void testNoAutopopupAfterDef() {
+  void testNoAutopopupAfterDef() {
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
     myFixture.configureByText 'a.groovy', 'def <caret>'
     type 'a'

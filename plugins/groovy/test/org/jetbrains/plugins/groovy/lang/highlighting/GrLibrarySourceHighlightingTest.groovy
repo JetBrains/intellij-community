@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ class GrLibrarySourceHighlightingTest extends GrHighlightingTestBase {
 
   final LightProjectDescriptor projectDescriptor = new DefaultLightProjectDescriptor() {
     @Override
-    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+    void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       final absoluteBasePath = "${TestUtils.absoluteTestDataPath}${basePath}"
       final lib = JarFileSystem.instance.refreshAndFindFileByPath("$absoluteBasePath/some-library.jar!/")
       final src = LocalFileSystem.instance.refreshAndFindFileByPath("$absoluteBasePath/src/")

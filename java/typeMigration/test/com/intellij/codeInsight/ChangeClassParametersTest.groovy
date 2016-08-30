@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
  * User: anna
  */
 class ChangeClassParametersTest extends LightCodeInsightFixtureTestCase {
-  public void "test nested type elements"() {
+  void "test nested type elements"() {
     def text = """\
      interface Fun<A, B> {}
      class Test {

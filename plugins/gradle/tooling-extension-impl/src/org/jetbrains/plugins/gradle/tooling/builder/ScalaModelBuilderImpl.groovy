@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,17 +35,17 @@ import org.jetbrains.plugins.gradle.tooling.internal.scala.ScalaModelImpl
  * @author Vladislav.Soroka
  * @since 1/31/14
  */
-public class ScalaModelBuilderImpl implements ModelBuilderService {
+class ScalaModelBuilderImpl implements ModelBuilderService {
 
   private static final String COMPILE_SCALA_TASK = "compileScala";
 
   @Override
-  public boolean canBuild(String modelName) {
+  boolean canBuild(String modelName) {
     return ScalaModel.name.equals(modelName)
   }
 
   @Override
-  public Object buildAll(String modelName, Project project) {
+  Object buildAll(String modelName, Project project) {
     final ScalaPlugin scalaPlugin = project.plugins.findPlugin(ScalaPlugin)
 
     ScalaModel scalaModel = null
@@ -79,7 +79,7 @@ public class ScalaModelBuilderImpl implements ModelBuilderService {
 
   @NotNull
   @Override
-  public ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
+  ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
     return ErrorMessageBuilder.create(
       project, e, "Scala import errors"
     ).withDescription("Unable to build Scala project configuration")

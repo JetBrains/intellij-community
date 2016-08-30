@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ class CustomFileTypeLexerTest extends TestCase {
 
   }
 
-  public void testSpacesInsideKeywords() {
+  void testSpacesInsideKeywords() {
     def table = createGenericTable()
     table.addKeyword1("sysvar ");
     doTest table, 'if length(if_variable)then return 1 sysvar  ', '''\
@@ -78,7 +78,7 @@ WHITESPACE (' ')
 '''
   }
 
-  public void testFortranComments() {
+  void testFortranComments() {
     doTest createGenericTable(), '''
 foo;noncomment
 ;comment
@@ -97,7 +97,7 @@ WHITESPACE ('\\n')
 '''
   }
 
-  public void "test punctuation keywords"() {
+  void "test punctuation keywords"() {
     def table = createGenericTable()
     table.addKeyword4("+")
     table.addKeyword4("-")
@@ -214,7 +214,7 @@ PUNCTUATION (';')
     return table;
   }
 
-  public void testParseSampleCode() {
+  void testParseSampleCode() {
     doTest createJavaSyntaxTable(), "private some text f b g\n\n\n//   1\n  public static void main(String[] args) {\n}\n-10 - 10\n\"dsfdfdf\"\n/* a\n *bc */", '''\
 KEYWORD_1 ('private')
 WHITESPACE (' ')
@@ -262,23 +262,23 @@ MULTI_LINE_COMMENT ('/* a\\n *bc */')
 '''
   }
 
-  public void testBlockCommentStart() {
+  void testBlockCommentStart() {
     doTest createJavaSyntaxTable(), "/*", 'MULTI_LINE_COMMENT (\'/*\')\n'
   }
 
-  public void testLineCommentStart() {
+  void testLineCommentStart() {
     doTest createJavaSyntaxTable(), "//", 'LINE_COMMENT (\'//\')\n'
   }
 
-  public void testEmpty() {
+  void testEmpty() {
     doTest createJavaSyntaxTable(), "", ''
   }
 
-  public void testSpace() {
+  void testSpace() {
     doTest createJavaSyntaxTable(), " ", 'WHITESPACE (\' \')\n'
   }
 
-  public void testParseSampleCodeFromTo() {
+  void testParseSampleCodeFromTo() {
     String sampleCode = "  int n=123;\n  float z=1;";
     def lexer = new CustomFileTypeLexer(createJavaSyntaxTable())
     lexer.start(sampleCode, 5, 5);
@@ -302,7 +302,7 @@ MULTI_LINE_COMMENT ('/* a\\n *bc */')
     return table;
   }
 
-  public void testSimple() {
+  void testSimple() {
     doTest createPropTable(), "# Comment\n" +
                               "x.1.a=12.2L\n" +
                               "   y.2.b=13.4 # comment\n" +
@@ -344,7 +344,7 @@ IDENTIFIER ('k')
 '''
   }
 
-  public void testCpp() {
+  void testCpp() {
     SyntaxTable table = new SyntaxTable()
     table.addKeyword1('->')
     doTest table, "foo->bar", '''\
@@ -354,7 +354,7 @@ IDENTIFIER ('bar')
 '''
   }
 
-  public void testNumber() {
+  void testNumber() {
     doTest createPropTable(), "1.23=1.24", '''\
 NUMBER ('1.23')
 CHARACTER ('=')
@@ -362,7 +362,7 @@ NUMBER ('1.24')
 '''
   }
 
-  public void testPostfix() {
+  void testPostfix() {
     doTest createPropTable(), "abc 1.2ltext", '''\
 IDENTIFIER ('abc')
 WHITESPACE (' ')
@@ -371,7 +371,7 @@ IDENTIFIER ('text')
 '''
   }
 
-  public void testWeird() {
+  void testWeird() {
     doTest createPropTable(), "test.1.", '''\
 IDENTIFIER ('test')
 PUNCTUATION ('.')
@@ -379,7 +379,7 @@ NUMBER ('1.')
 '''
   }
 
-  public void testParenths() throws Exception {
+  void testParenths() throws Exception {
     doTest createPropTable(),"value(255)", '''\
 KEYWORD_1 ('value')
 CHARACTER ('(')
@@ -388,7 +388,7 @@ CHARACTER (')')
 '''
   }
 
-  public void testSpecialCharactersInKeywords() {
+  void testSpecialCharactersInKeywords() {
     SyntaxTable table = new SyntaxTable()
     table.addKeyword1("a*")
     table.addKeyword1("b-c")
@@ -411,7 +411,7 @@ KEYWORD_2 ('foo{}')
 '''
   }
 
-  public void testWordsScanner() {
+  void testWordsScanner() {
     SyntaxTable table = new SyntaxTable()
     table.addKeyword1("a*")
     def scanner = IdTableBuilding.createCustomFileTypeScanner(table)
@@ -428,7 +428,7 @@ KEYWORD_2 ('foo{}')
     assert StringUtil.getWordsIn(text) == expectedWords 
   }
 
-  public void "test quote block comment"() {
+  void "test quote block comment"() {
     SyntaxTable table = new SyntaxTable()
     table.startComment = '"'
     table.endComment = 'x'
@@ -438,7 +438,7 @@ IDENTIFIER ('a')
 '''
   }
 
-  public void testPlainText() {
+  void testPlainText() {
     doTest PlainTextSyntaxHighlighterFactory.createPlainTextLexer(), 'ab.@c  (<def>)', '''\
 CHARACTER ('ab.@c')
 WHITESPACE ('  ')
@@ -450,7 +450,7 @@ R_PARENTH (')')
 '''
   }
 
-  public void "test hex literals"() {
+  void "test hex literals"() {
     SyntaxTable table = new SyntaxTable()
     table.hexPrefix = '0y'
     doTest table, '1 0yabc0', '''\
@@ -460,7 +460,7 @@ NUMBER ('0yabc0')
 '''
   }
 
-  public void testKeywordLexerPerformance() {
+  void testKeywordLexerPerformance() {
     int count = 3000
     List<String> keywords = []
     for (i in 0..<count) {

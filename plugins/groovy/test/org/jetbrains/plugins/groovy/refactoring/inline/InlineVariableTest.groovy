@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,44 +35,66 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author ilyas
  */
-public class InlineVariableTest extends LightCodeInsightFixtureTestCase {
+class InlineVariableTest extends LightCodeInsightFixtureTestCase {
   final String basePath = TestUtils.testDataPath + "groovy/refactoring/inlineLocal/"
 
-  public void testGRVY_1232() { doTest(); }
-  public void testGRVY_1248() { doTest(); }
-  public void testVar1() { doTest(); }
-  public void testVar2() { doTest(); }
-  public void testVar3() { doTest(); }
-  public void testVar4() { doTest(); }
-  public void testVar5() { doTest(); }
-  public void testVar6() { doTest(); }
-  public void testVarInGString() { doTest(); }
-  public void testVarInGString2() { doTest(); }
-  public void testVarInGString3() { doTest(); }
-  public void testVarInGString4() { doTest(); }
+  void testGRVY_1232() { doTest(); }
 
-  public void testField() {doFieldTest();}
+  void testGRVY_1248() { doTest(); }
 
-  public void testPartial1() {doTest();}
-  public void testPartial2() {doTest();}
-  public void testPartial3() {doTest();}
-  public void testPartial4() {doTest();}
+  void testVar1() { doTest(); }
 
-  public void testClosure1() {doTest();}
-  public void testClosure2() {doTest();}
-  public void testClosure3() {doTest();}
-  public void testAnonymousClass1() {doTest();}
+  void testVar2() { doTest(); }
 
-  public void testRegexInCommandArg1() {doTest();}
-  public void testRegexInCommandArg2() {doTest();}
-  public void testRegexInCommandArg3() {doTest();}
-  public void testRegexInCommandArg4() {doTest();}
-  public void testRegexInCommandArg5() {doTest();}
+  void testVar3() { doTest(); }
 
-  public void testUndefinedVarInline() {doTest()}
+  void testVar4() { doTest(); }
 
-  public void testImplicitCast1() { doTest() }
-  public void testImplicitCast2() { doTest() }
+  void testVar5() { doTest(); }
+
+  void testVar6() { doTest(); }
+
+  void testVarInGString() { doTest(); }
+
+  void testVarInGString2() { doTest(); }
+
+  void testVarInGString3() { doTest(); }
+
+  void testVarInGString4() { doTest(); }
+
+  void testField() { doFieldTest(); }
+
+  void testPartial1() { doTest(); }
+
+  void testPartial2() { doTest(); }
+
+  void testPartial3() { doTest(); }
+
+  void testPartial4() { doTest(); }
+
+  void testClosure1() { doTest(); }
+
+  void testClosure2() { doTest(); }
+
+  void testClosure3() { doTest(); }
+
+  void testAnonymousClass1() { doTest(); }
+
+  void testRegexInCommandArg1() { doTest(); }
+
+  void testRegexInCommandArg2() { doTest(); }
+
+  void testRegexInCommandArg3() { doTest(); }
+
+  void testRegexInCommandArg4() { doTest(); }
+
+  void testRegexInCommandArg5() { doTest(); }
+
+  void testUndefinedVarInline() { doTest() }
+
+  void testImplicitCast1() { doTest() }
+
+  void testImplicitCast2() { doTest() }
 
   protected void doFieldTest() {
     InlineMethodTest.doInlineTest(myFixture, testDataPath + getTestName(true) + ".test", new GroovyInlineHandler());
@@ -124,7 +146,7 @@ public class InlineVariableTest extends LightCodeInsightFixtureTestCase {
     }
   }
 
-  public static void performInline(Project project, Editor editor) {
+  static void performInline(Project project, Editor editor) {
     PsiElement element = TargetElementUtil.findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED |
                                                                          TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     assertInstanceOf(element, GrVariable);
@@ -132,7 +154,7 @@ public class InlineVariableTest extends LightCodeInsightFixtureTestCase {
     GroovyInlineLocalHandler.invoke(project, editor, element as GrVariable);
   }
 
-  public static void performDefInline(Project project, Editor editor) {
+  static void performDefInline(Project project, Editor editor) {
     PsiReference reference = TargetElementUtil.findReference(editor);
     assertTrue(reference instanceof PsiReferenceExpression);
     final PsiElement local = reference.resolve();

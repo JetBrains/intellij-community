@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,11 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  * @author peter
  */
 @SuppressWarnings(["JUnitTestClassNamingConvention"])
-public class Groovy16HighlightingTest extends LightCodeInsightFixtureTestCase {
+class Groovy16HighlightingTest extends LightCodeInsightFixtureTestCase {
   @NotNull
   final LightProjectDescriptor projectDescriptor = new DefaultLightProjectDescriptor() {
     @Override
-    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+    void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel
       final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath("$TestUtils.mockGroovy1_6LibraryName!/")
       modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES)
@@ -51,15 +51,15 @@ public class Groovy16HighlightingTest extends LightCodeInsightFixtureTestCase {
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".groovy")
   }
 
-  public void testInnerEnum() { doTest() }
+  void testInnerEnum() { doTest() }
 
-  public void testSuperWithNotEnclosingClass() { doTest() }
+  void testSuperWithNotEnclosingClass() { doTest() }
 
-  public void _testThisWithWrongQualifier() { doTest() }
+  void _testThisWithWrongQualifier() { doTest() }
 
-  public void testImplicitEnumCoercion1_6() { doTest(new GroovyAssignabilityCheckInspection()) }
+  void testImplicitEnumCoercion1_6() { doTest(new GroovyAssignabilityCheckInspection()) }
 
-  public void testSlashyStrings() { doTest() }
+  void testSlashyStrings() { doTest() }
 
-  public void testDiamonds() { doTest() }
+  void testDiamonds() { doTest() }
 }

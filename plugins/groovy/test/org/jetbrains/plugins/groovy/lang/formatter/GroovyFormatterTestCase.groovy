@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
 /**
  * @author peter
  */
-public abstract class GroovyFormatterTestCase extends LightCodeInsightFixtureTestCase {
+abstract class GroovyFormatterTestCase extends LightCodeInsightFixtureTestCase {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.formatter.GroovyFormatterTestCase");
   protected CodeStyleSettings myTempSettings;
 
@@ -95,10 +95,10 @@ public abstract class GroovyFormatterTestCase extends LightCodeInsightFixtureTes
   protected void doFormat(final PsiFile file) {
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       @Override
-      public void run() {
+      void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
-          public void run() {
+          void run() {
             try {
               TextRange myTextRange = file.getTextRange();
               CodeStyleManager.getInstance(file.getProject()).reformatText(file, myTextRange.getStartOffset(), myTextRange.getEndOffset());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.GroovyLanguage
  */
 class InjectedGroovyTest extends LightCodeInsightFixtureTestCase {
 
-  public void testTabMethodParentheses() {
+  void testTabMethodParentheses() {
     myFixture.configureByText("a.xml", """<groovy>
 String s = "foo"
 s.codePo<caret>charAt(0)
@@ -45,7 +45,7 @@ s.codePointAt(<caret>0)
 </groovy>""")
   }
 
-  public void testIntelliLangInjections() throws Exception {
+  void testIntelliLangInjections() throws Exception {
     myFixture.addClass("package groovy.lang; public class GroovyShell { public void evaluate(String s) { }}");
     final PsiFile psiFile = myFixture.configureByText("script.groovy", 'new groovy.lang.GroovyShell().evaluate("s = new String()")');
     assertNotNull(psiFile);
@@ -55,7 +55,7 @@ s.codePointAt(<caret>0)
     assert InjectedLanguageUtil.findInjectedPsiNoCommit(psiFile, offset)
   }
 
-  public void testRegexInjections() {
+  void testRegexInjections() {
     myFixture.addClass("package groovy.lang; public class GroovyShell { public void evaluate(String s) { }}");
     final PsiFile psiFile = myFixture.configureByText("script.groovy", 'new groovy.lang.GroovyShell().evaluate(/ blah-blah-blah \\ language won\'t be injected here /)');
     assertNotNull(psiFile);
@@ -64,7 +64,7 @@ s.codePointAt(<caret>0)
     assert InjectedLanguageUtil.findInjectedPsiNoCommit(psiFile, psiFile.getText().indexOf('injected') + 1)
   }
 
-  public void testResolveAnnotationsInInjectedCode() {
+  void testResolveAnnotationsInInjectedCode() {
     myFixture.addClass("package foo; @interface Bar{}")
 
     myFixture.addClass("package groovy.lang; public class GroovyShell { public void evaluate(String s) { }}");
@@ -83,7 +83,7 @@ def abc = null
 
   }
 
-  public void testResolveAnnotationsInInjectedCodeInMethodCall() {
+  void testResolveAnnotationsInInjectedCodeInMethodCall() {
     myFixture.addClass("package foo; @interface Bar{}")
 
     myFixture.addClass("package groovy.lang; public class GroovyShell { public void evaluate(String s) { }}");

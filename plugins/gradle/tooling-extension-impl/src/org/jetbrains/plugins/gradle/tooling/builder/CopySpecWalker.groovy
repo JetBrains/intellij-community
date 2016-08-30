@@ -82,7 +82,7 @@ class CopySpecWalker {
 
       resolver.source.visit(new FileVisitor() {
         @Override
-        public void visitDir(FileVisitDetails dirDetails) {
+        void visitDir(FileVisitDetails dirDetails) {
           try {
             visitor.visitDir(relativePath, dirDetails)
           }
@@ -91,7 +91,7 @@ class CopySpecWalker {
         }
 
         @Override
-        public void visitFile(FileVisitDetails fileDetails) {
+        void visitFile(FileVisitDetails fileDetails) {
           try {
             visitor.visitFile(relativePath, fileDetails)
           }

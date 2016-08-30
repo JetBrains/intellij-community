@@ -46,7 +46,7 @@ class ChooseByNameTest extends LightCodeInsightFixtureTestCase {
     super.tearDown()
   }
 
-  public void "test goto class order by matching degree"() {
+  void "test goto class order by matching degree"() {
     def startMatch = myFixture.addClass("class UiUtil {}")
     def wordSkipMatch = myFixture.addClass("class UiAbstractUtil {}")
     def camelMatch = myFixture.addClass("class UberInstructionUxTopicInterface {}")
@@ -55,14 +55,14 @@ class ChooseByNameTest extends LightCodeInsightFixtureTestCase {
     assert elements == [startMatch, wordSkipMatch, camelMatch, ChooseByNameBase.NON_PREFIX_SEPARATOR, middleMatch]
   }
 
-  public void "test annotation syntax"() {
+  void "test annotation syntax"() {
     def match = myFixture.addClass("@interface Anno1 {}")
     myFixture.addClass("class Anno2 {}")
     def elements = getPopupElements(new GotoClassModel2(project), "@Anno")
     assert elements == [match]
   }
 
-  public void "test no result for empty patterns"() {
+  void "test no result for empty patterns"() {
     myFixture.addClass("@interface Anno1 {}")
     myFixture.addClass("class Anno2 {}")
 
@@ -79,7 +79,7 @@ class ChooseByNameTest extends LightCodeInsightFixtureTestCase {
     popup.close(false)
   }
 
-  public void "test filter overridden methods from goto symbol"() {
+  void "test filter overridden methods from goto symbol"() {
     def intf = myFixture.addClass("""
 class Intf {
   void xxx1() {}
@@ -101,7 +101,7 @@ class Impl extends Intf {
     assert !(impl.findMethodsByName('xxx1', false)[0] in elements)
   }
 
-  public void "test disprefer underscore"() {
+  void "test disprefer underscore"() {
     def intf = myFixture.addClass("""
 class Intf {
   void _xxx1() {}
@@ -119,21 +119,21 @@ class Intf {
     assert elements == [xxx2, ChooseByNameBase.NON_PREFIX_SEPARATOR, xxx1]
   }
 
-  public void "test prefer exact extension matches"() {
+  void "test prefer exact extension matches"() {
     def m = myFixture.addFileToProject("relaunch.m", "")
     def mod = myFixture.addFileToProject("reference.mod", "")
     def elements = getPopupElements(new GotoFileModel(project), "re*.m")
     assert elements == [m, mod]
   }
 
-  public void "test consider dot-idea files out of project"() {
+  void "test consider dot-idea files out of project"() {
     def outside = myFixture.addFileToProject(".idea/workspace.xml", "")
     def inside = myFixture.addFileToProject("workspace.txt", "")
     assert getPopupElements(new GotoFileModel(project), "work", false) == [inside]
     assert getPopupElements(new GotoFileModel(project), "work", true) == [inside, outside]
   }
 
-  public void "test prefer better path matches"() {
+  void "test prefer better path matches"() {
     def fooIndex = myFixture.addFileToProject("foo/index.html", "foo")
     def fooBarIndex = myFixture.addFileToProject("foo/bar/index.html", "foo bar")
     def barFooIndex = myFixture.addFileToProject("bar/foo/index.html", "bar foo")
@@ -141,13 +141,13 @@ class Intf {
     assert elements == [fooIndex, barFooIndex, fooBarIndex]
   }
 
-  public void "test sort same-named items by path"() {
+  void "test sort same-named items by path"() {
     def files = (30..10).collect { i -> myFixture.addFileToProject("foo$i/index.html", "foo$i") }.reverse()
     def elements = getPopupElements(new GotoFileModel(project), "index")
     assert elements == files
   }
 
-  public void "test middle matching for directories"() {
+  void "test middle matching for directories"() {
     def fooIndex = myFixture.addFileToProject("foo/index.html", "foo")
     def ooIndex = myFixture.addFileToProject("oo/index.html", "oo")
     def fooBarIndex = myFixture.addFileToProject("foo/bar/index.html", "foo bar")
@@ -155,7 +155,7 @@ class Intf {
     assert elements == [ooIndex, fooIndex, fooBarIndex]
   }
 
-  public void "test prefer files from current directory"() {
+  void "test prefer files from current directory"() {
     def fooIndex = myFixture.addFileToProject("foo/index.html", "foo")
     def barIndex = myFixture.addFileToProject("bar/index.html", "bar")
     def fooContext = myFixture.addFileToProject("foo/context.html", "")
@@ -170,14 +170,14 @@ class Intf {
 
   }
 
-  public void "test accept file paths starting with a dot"() {
+  void "test accept file paths starting with a dot"() {
     def file = myFixture.addFileToProject("foo/index.html", "foo")
     def model = new GotoFileModel(project)
     def popup = ChooseByNamePopup.createPopup(project, model, new GotoFileItemProvider(project, null, model))
     assert calcPopupElements(popup, "./foo/in") == [file]
   }
 
-  public void "test goto file can go to dir"() {
+  void "test goto file can go to dir"() {
     PsiFile fooIndex = myFixture.addFileToProject("foo/index.html", "foo")
     PsiFile barIndex = myFixture.addFileToProject("bar.txt/bar.txt", "foo")
 
@@ -208,7 +208,7 @@ class Intf {
     popup.close(false)
   }
 
-  public void "test find method by qualified name"() {
+  void "test find method by qualified name"() {
     def clazz = myFixture.addClass("package foo.bar; class Goo { void zzzZzz() {} }")
     def method = ApplicationManager.application.runReadAction( { clazz.methods[0] } as Computable)
     assert getPopupElements(new GotoSymbolModel2(project), 'zzzZzz') == [method]
@@ -219,7 +219,7 @@ class Intf {
     assert getPopupElements(new GotoSymbolModel2(project), 'bar.goo.zzzZzz') == [method]
   }
 
-  public void "test line and column suffix"() {
+  void "test line and column suffix"() {
     def c = myFixture.addClass("package foo; class Bar {}")
     assert getPopupElements(new GotoClassModel2(project), 'Bar') == [c]
     assert getPopupElements(new GotoClassModel2(project), 'Bar:2') == [c]
@@ -228,7 +228,7 @@ class Intf {
     assert getPopupElements(new GotoClassModel2(project), 'Bar:[2,3]') == [c]
   }
 
-  public void "test custom line suffixes"() {
+  void "test custom line suffixes"() {
     def file = myFixture.addFileToProject("Bar.txt", "")
     def model = new GotoFileModel(project)
     assert getPopupElements(model, 'Bar:2') == [file]
@@ -237,7 +237,7 @@ class Intf {
     assert getPopupElements(model, 'Bar at line 2') == [file]
   }
 
-  public void "test dollar"() {
+  void "test dollar"() {
     def bar = myFixture.addClass("package foo; class Bar { class Foo {} }")
     def foo = ApplicationManager.application.runReadAction( { bar.innerClasses[0] } as Computable)
     myFixture.addClass("package goo; class Goo { }")
@@ -250,12 +250,12 @@ class Intf {
     assert !getPopupElements(new GotoClassModel2(project), 'foo$Goo')
   }
 
-  public void "test anonymous classes"() {
+  void "test anonymous classes"() {
     def goo = myFixture.addClass("package goo; class Goo { Runnable r = new Runnable() {}; }")
     assert getPopupElements(new GotoClassModel2(project), 'Goo$1') == [goo]
   }
 
-  public void "test qualified name matching"() {
+  void "test qualified name matching"() {
     def bar = myFixture.addClass("package foo.bar; class Bar { }")
     def bar2 = myFixture.addClass("package goo.baz; class Bar { }")
     assert getPopupElements(new GotoClassModel2(project), 'foo.Bar') == [bar]
@@ -264,7 +264,7 @@ class Intf {
     assert getPopupElements(new GotoClassModel2(project), 'goo.baz.Bar') == [bar2]
   }
 
-  public void "test try lowercase pattern if nothing matches"() {
+  void "test try lowercase pattern if nothing matches"() {
     def match = myFixture.addClass("class IPRoi { }")
     def nonMatch = myFixture.addClass("class InspectionProfileImpl { }")
     assert getPopupElements(new GotoClassModel2(project), 'IPRoi') == [match]
@@ -277,7 +277,7 @@ class Intf {
     } as Computable)
   }
 
-  public void "test super method in jdk"() {
+  void "test super method in jdk"() {
     def clazz = myFixture.addClass("package foo.bar; class Goo implements Runnable { public void run() {} }")
     def ourRun
     def sdkRun
@@ -295,7 +295,7 @@ class Intf {
     assert !(sdkRun in noLibs)
   }
 
-  public void "test super method not matching query qualifier"() {
+  void "test super method not matching query qualifier"() {
     def baseClass = myFixture.addClass("class Base { void xpaint() {} }")
     def subClass = myFixture.addClass("class Sub extends Base { void xpaint() {} }")
     
@@ -310,7 +310,7 @@ class Intf {
     assert getPopupElements(new GotoSymbolModel2(project), 'Su.xpai', false) == [sub]
   }
 
-  public void "test groovy script class with non-identifier name"() {
+  void "test groovy script class with non-identifier name"() {
     GroovyFile file1 = myFixture.addFileToProject('foo.groovy', '')
     GroovyFile file2 = myFixture.addFileToProject('foo-bar.groovy', '')
 
@@ -318,7 +318,7 @@ class Intf {
     runInEdtAndWait { assert variants == [file1.scriptClass, file2.scriptClass] }
   }
 
-  public void "test prefer case-insensitive exact prefix match"() {
+  void "test prefer case-insensitive exact prefix match"() {
     def wanted = myFixture.addClass('class XFile {}')
     def smth1 = myFixture.addClass('class xfilterExprOwner {}')
     def smth2 = myFixture.addClass('class xfile_baton_t {}')
@@ -329,7 +329,7 @@ class Intf {
     assert popup.calcSelectedIndex(popupElements.toArray(), 'xfile') == 0
   }
 
-  public void "test prefer prefix match"() {
+  void "test prefer prefix match"() {
     def wanted = myFixture.addClass('class PsiClassImpl {}')
     def smth = myFixture.addClass('class DroolsPsiClassImpl {}')
     def popup = createPopup(new GotoClassModel2(project))

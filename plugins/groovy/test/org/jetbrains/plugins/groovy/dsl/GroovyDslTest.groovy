@@ -35,7 +35,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  * @author peter
  */
 @CompileStatic
-public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
+class GroovyDslTest extends LightCodeInsightFixtureTestCase {
   private static LightProjectDescriptor descriptor = new DefaultLightProjectDescriptor() {
     @Override
     void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
@@ -65,11 +65,11 @@ public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
     GroovyDslFileIndex.activate(file.virtualFile)
   }
 
-  public void doTest() throws Throwable {
+  void doTest() throws Throwable {
     myFixture.testCompletion(getTestName(false) + ".gdsl", getTestName(false) + "_after.gdsl")
   }
 
-  public void testCompleteTopLevel() throws Throwable {
+  void testCompleteTopLevel() throws Throwable {
     myFixture.configureByText 'a.gdsl', '<caret>'
     myFixture.completeBasic()
     def expected = ['contributor', 'contribute', 'currentType', 'assertVersion']
@@ -78,7 +78,7 @@ public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
     }
   }
 
-  public void testCompleteInContributor() throws Throwable {
+  void testCompleteInContributor() throws Throwable {
     myFixture.configureByText 'a.gdsl', 'contribute { <caret> }'
     myFixture.completeBasic()
     def expected = ['method', 'property', 'parameter']
@@ -87,7 +87,7 @@ public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
     }
   }
 
-  public void testCompleteClassMethod() throws Throwable {
+  void testCompleteClassMethod() throws Throwable {
     doCustomTest("""
       def ctx = context(ctype: "java.lang.String")
 
@@ -97,7 +97,7 @@ public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
 """)
   }
 
-  public void "test on anonymous class"() {
+  void "test on anonymous class"() {
     addGdsl '''
 import com.intellij.patterns.PsiJavaPatterns
 
@@ -115,7 +115,7 @@ class Foo<T> {
     myFixture.assertPreferredCompletionItems 0, 'finalize', 'fooT'
   }
 
-  public void testDelegateToThrowable() throws Throwable {
+  void testDelegateToThrowable() throws Throwable {
     doCustomTest("""
       def ctx = context(ctype: "java.lang.String")
 
@@ -125,7 +125,7 @@ class Foo<T> {
 """)
   }
 
-  public void testDelegateToArgument() throws Throwable {
+  void testDelegateToArgument() throws Throwable {
     doCustomTest("""
       def ctx = context(scope: closureScope(isArgument: true))
 
@@ -141,7 +141,7 @@ class Foo<T> {
 """)
   }
 
-  public void testDelegateToArgument2() throws Throwable {
+  void testDelegateToArgument2() throws Throwable {
     doCustomTest("""
       def ctx = context(scope: closureScope(isArgument: true))
 
@@ -154,7 +154,7 @@ class Foo<T> {
 """)
   }
 
-  public void testClassContext() throws Throwable {
+  void testClassContext() throws Throwable {
     addGdsl("""
      def ctx = context(scope: classScope(name: /.*WsSecurityConfig/))
      
@@ -165,7 +165,7 @@ class Foo<T> {
     myFixture.testCompletionTyping(getTestName(false) + ".groovy", '\n', getTestName(false) + "_after.groovy")
   }
 
-  public void testCategoryWhenMethodRenamed() {
+  void testCategoryWhenMethodRenamed() {
     PsiClass category = myFixture.addClass("""
 public class MyCategory {
   public void foo(String s) {}
@@ -178,7 +178,7 @@ public class MyCategory {
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy")
   }
 
-  public void testPathRegexp() {
+  void testPathRegexp() {
     addGdsl "contributor(pathRegexp: '.*aaa.*') { property name:'fffooo', type:'int' }"
 
     myFixture.configureFromExistingVirtualFile myFixture.addFileToProject("aaa/foo.groovy", "fff<caret>x").virtualFile
@@ -190,7 +190,7 @@ public class MyCategory {
     assertEmpty myFixture.lookupElementStrings
   }
 
-  public void testNamedParameters() {
+  void testNamedParameters() {
     addGdsl '''contribute(currentType(String.name)) {
   method name:'foo', type:void, params:[:], namedParams:[
     parameter(name:'param1', type:String),
@@ -202,7 +202,7 @@ public class MyCategory {
     myFixture.assertPreferredCompletionItems 0, 'param1', 'param2'
   }
 
-  public void testNamedParametersGroovyConvention() {
+  void testNamedParametersGroovyConvention() {
     addGdsl '''contribute(currentType(String.name)) {
   method name:'foo', type:void, params:[args:[
       parameter(name:'param1', type:String, doc:'My doc'),
@@ -220,7 +220,7 @@ public class MyCategory {
     return new GroovyDocumentationProvider().generateDoc(element, null)
   }
 
-  public void testCheckNamedArgumentTypes() {
+  void testCheckNamedArgumentTypes() {
     addGdsl '''contribute(currentType(String.name)) {
   method name:'foo', type:void, params:[args:[
       parameter(name:'param1', type:File),
@@ -234,7 +234,7 @@ public class MyCategory {
     myFixture.checkHighlighting(true, false, false)
   }
 
-  public void testMethodDoc() {
+  void testMethodDoc() {
     addGdsl '''contribute(currentType(String.name)) {
   method name:'foo', type:void, params:[:], doc:'Some doc'
 }'''
@@ -245,7 +245,7 @@ public class MyCategory {
     assert generateDoc().contains('()')
   }
 
-  public void testPropertyDoc() {
+  void testPropertyDoc() {
     addGdsl '''contribute(currentType(String.name)) {
   property name:'foo', type:int, doc:'Some doc2'
 }'''
@@ -255,7 +255,7 @@ public class MyCategory {
     assert generateDoc().contains('getFoo')
   }
 
-  public void testVariableInAnnotationClosureContext() {
+  void testVariableInAnnotationClosureContext() {
     addGdsl '''
       contributor(scope: closureScope(annotationName:'Ensures')) {
         variable(name: 'result', type:'java.lang.Object')
@@ -272,7 +272,7 @@ public class MyCategory {
     assertNotNull(myFixture.getReferenceAtCaretPosition().resolve())
   }
 
-  public void testVariableInMethodCallClosureContext() {
+  void testVariableInMethodCallClosureContext() {
     addGdsl '''
       contributor(scope: closureScope(methodName:'ensures')) {
         variable(name: 'result', type:'java.lang.Object')

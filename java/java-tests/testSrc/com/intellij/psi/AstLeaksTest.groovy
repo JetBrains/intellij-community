@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import com.intellij.util.Processor
  */
 class AstLeaksTest extends LightCodeInsightFixtureTestCase {
 
-  public void "test AST should be on a soft reference, for changed files as well"() {
+  void "test AST should be on a soft reference, for changed files as well"() {
     def file = myFixture.addClass('class Foo {}').containingFile
     assert file.findElementAt(0) instanceof PsiKeyword
     LeakHunter.checkLeak(file, JavaFileElement)
@@ -42,7 +42,7 @@ class AstLeaksTest extends LightCodeInsightFixtureTestCase {
     LeakHunter.checkLeak(file, JavaFileElement)
   }
 
-  public void "test super methods held via their signatures in class user data"() {
+  void "test super methods held via their signatures in class user data"() {
     def superClass = myFixture.addClass('class Super { void foo() {} }')
     superClass.text // load AST
 
@@ -56,7 +56,7 @@ class AstLeaksTest extends LightCodeInsightFixtureTestCase {
     } as Processor<MethodElement>)
   }
 
-  public void "test no hard refs to AST after highlighting"() {
+  void "test no hard refs to AST after highlighting"() {
     def sup = myFixture.addFileToProject('sup.java', 'class Super { Super() {} }')
     assert sup.findElementAt(0) // load AST
     assert !((PsiFileImpl)sup).stub
@@ -74,7 +74,7 @@ class AstLeaksTest extends LightCodeInsightFixtureTestCase {
     LeakHunter.checkLeak(sup, MethodElement, { it.psi.containingFile == sup } as Processor)
   }
 
-  public void "test no hard refs to Default File Template inspection internal AST"() {
+  void "test no hard refs to Default File Template inspection internal AST"() {
     myFixture.addFileToProject('sup.java', 'class Super { void bar() {} }')
     def file = myFixture.addFileToProject('a.java', 'class Foo { void bar() { bar(); } }')
     myFixture.configureFromExistingVirtualFile(file.virtualFile)

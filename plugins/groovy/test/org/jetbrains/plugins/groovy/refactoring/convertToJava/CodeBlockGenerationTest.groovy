@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Maxim.Medvedev
  */
-public class CodeBlockGenerationTest extends LightGroovyTestCase {
+class CodeBlockGenerationTest extends LightGroovyTestCase {
   final String basePath = TestUtils.testDataPath + 'refactoring/convertGroovyToJava/codeBlock'
 
   private void doTest() {

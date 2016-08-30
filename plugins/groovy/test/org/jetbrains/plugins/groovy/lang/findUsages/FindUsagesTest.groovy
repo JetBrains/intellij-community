@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author ven
  */
-public class FindUsagesTest extends LightGroovyTestCase {
+class FindUsagesTest extends LightGroovyTestCase {
   @Override
   protected String getBasePath() {
     return "${TestUtils.testDataPath}findUsages/${getTestName(true)}/";
@@ -60,7 +60,7 @@ public class FindUsagesTest extends LightGroovyTestCase {
     assertEquals(expectedCount, query.findAll().size());
   }
 
-  public void testDerivedClass() throws Throwable {
+  void testDerivedClass() throws Throwable {
     myFixture.configureByFiles("p/B.java", "A.groovy");
     final PsiElement elementAt = myFixture.file.findElementAt(myFixture.editor.caretModel.offset);
     final PsiClass clazz = PsiTreeUtil.getParentOfType(elementAt, PsiClass.class);
@@ -72,11 +72,11 @@ public class FindUsagesTest extends LightGroovyTestCase {
     assertEquals(1, query.findAll().size());
   }
 
-  public void testConstructor1() throws Throwable {
+  void testConstructor1() throws Throwable {
     doConstructorTest("A.groovy", 2);
   }
 
-  public void testConstructorUsageInNewExpression() throws Throwable {
+  void testConstructorUsageInNewExpression() throws Throwable {
     myFixture.configureByFile("ConstructorUsageInNewExpression.groovy");
     final PsiElement resolved = TargetElementUtil.findTargetElement(myFixture.editor, TargetElementUtil.instance.referenceSearchFlags);
     assertNotNull("Could not resolve reference", resolved);
@@ -85,7 +85,7 @@ public class FindUsagesTest extends LightGroovyTestCase {
     assertEquals(4, MethodReferencesSearch.search((PsiMethod)resolved, projectScope, false).findAll().size());
   }
 
-  public void testGotoConstructor() throws Throwable {
+  void testGotoConstructor() throws Throwable {
     myFixture.configureByFile("GotoConstructor.groovy");
     final PsiElement target = TargetElementUtil.findTargetElement(myFixture.editor, TargetElementUtil.instance.referenceSearchFlags);
     assertNotNull(target);
@@ -94,69 +94,69 @@ public class FindUsagesTest extends LightGroovyTestCase {
     assertTrue(((PsiMethod)target).parameterList.parametersCount == 0);
   }
 
-  public void testSetter1() throws Throwable {
+  void testSetter1() throws Throwable {
     doTestImpl("A.groovy", 2);
   }
 
-  public void testGetter1() throws Throwable {
+  void testGetter1() throws Throwable {
     doTestImpl("A.groovy", 1);
   }
 
-  public void testProperty1() throws Throwable {
+  void testProperty1() throws Throwable {
     doTestImpl("A.groovy", 2);
   }
 
-  public void testProperty2() throws Throwable {
+  void testProperty2() throws Throwable {
     doTestImpl("A.groovy", 1);
   }
 
-  public void testEscapedReference() throws Throwable {
+  void testEscapedReference() throws Throwable {
     doTestImpl("A.groovy", 1);
   }
 
-  public void testKeywordPropertyName() throws Throwable {
+  void testKeywordPropertyName() throws Throwable {
     doTestImpl("A.groovy", 1);
   }
 
-  public void testTypeAlias() throws Throwable {
+  void testTypeAlias() throws Throwable {
     doTestImpl("A.groovy", 2);
   }
 
-  public void testMethodAlias() throws Throwable {
+  void testMethodAlias() throws Throwable {
     doTestImpl("A.groovy", 2);
   }
 
-  public void testAliasImportedProperty() throws Throwable {
+  void testAliasImportedProperty() throws Throwable {
     myFixture.addFileToProject("Abc.groovy", "class Abc {static def foo}");
     doTestImpl("A.groovy", 5);
   }
 
-  public void testGetterWhenAliasedImportedProperty() throws Throwable {
+  void testGetterWhenAliasedImportedProperty() throws Throwable {
     myFixture.addFileToProject("Abc.groovy", "class Abc {static def foo}");
     doTestImpl("A.groovy", 5);
   }
 
-  public void testForInParameter() throws Throwable {
+  void testForInParameter() throws Throwable {
     doTestImpl("A.groovy", 1);
   }
 
-  public void testSyntheticParameter() throws Throwable {
+  void testSyntheticParameter() throws Throwable {
     doTestImpl("A.groovy", 1);
   }
 
-  public void testOverridingMethodUsage() throws Throwable {
+  void testOverridingMethodUsage() throws Throwable {
     doTestImpl("OverridingMethodUsage.groovy", 2);
   }
 
-  public void testDynamicUsages() {
+  void testDynamicUsages() {
     doTestImpl("DynamicUsages.groovy", 2);
   }
 
-  public void testDynamicCallExpressionUsages() {
+  void testDynamicCallExpressionUsages() {
     doTestImpl("DynamicCallExpressionUsages.groovy", 2);
   }
 
-  public void testAnnotatedMemberSearch() throws Throwable {
+  void testAnnotatedMemberSearch() throws Throwable {
 
     final PsiReference ref = myFixture.getReferenceAtCaretPosition("A.groovy");
     assertNotNull("Did not find reference", ref);
@@ -202,26 +202,26 @@ public class FindUsagesTest extends LightGroovyTestCase {
     assertEquals(expectedUsagesCount, processor.getResults().size());
   }
 
-  public void testGdkMethod() throws Exception {
+  void testGdkMethod() throws Exception {
     myFixture.configureByText("a.groovy", "[''].ea<caret>ch {}");
     assertUsageCount(1);
   }
 
-  public void testGDKSuperMethodSearch() throws Exception {
+  void testGDKSuperMethodSearch() throws Exception {
     doSuperMethodTest("T");
   }
 
-  public void testGDKSuperMethodForMapSearch() throws Exception {
+  void testGDKSuperMethodForMapSearch() throws Exception {
     doSuperMethodTest("Map");
   }
 
-  public void testLabels() throws Exception {
+  void testLabels() throws Exception {
     myFixture.configureByFile(getTestName(false) + ".groovy");
     final GroovyFile file = (GroovyFile)myFixture.getFile();
     assertEquals(2, ReferencesSearch.search(file.getTopStatements()[0]).findAll().size());
   }
 
-  public void testConstructorUsageInAnonymousClass() {
+  void testConstructorUsageInAnonymousClass() {
     doTestImpl("A.groovy", 1);
   }
 
@@ -456,7 +456,7 @@ new C().field             //unresolved
     assertUsageCount(usageCount);
   }
 
-  public void testWholeWordsIndexIsBuiltForLiterals() {
+  void testWholeWordsIndexIsBuiltForLiterals() {
     myFixture.configureByText("_.groovy", "11");
     PsiFile[] words = PsiSearchHelper.SERVICE.getInstance(getProject()).findFilesWithPlainTextWords("11");
     assertEquals(1, words.length);

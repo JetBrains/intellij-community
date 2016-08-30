@@ -39,11 +39,11 @@ class GroovyTransformationsTest extends LightCodeInsightFixtureTestCase {
     TestUtils.getTestDataPath() + "groovy/dsl/transform"
   }
 
-  public void doPlainTest(String type = "") throws Throwable {
+  void doPlainTest(String type = "") throws Throwable {
     myFixture.testCompletionTyping(getTestName(false) + ".groovy", type, getTestName(false) + "_after.groovy")
   }
 
-  public void doVariantsTest(String ... variants) throws Throwable {
+  void doVariantsTest(String... variants) throws Throwable {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", variants)
   }
 
@@ -52,26 +52,28 @@ class GroovyTransformationsTest extends LightCodeInsightFixtureTestCase {
     return descriptor;
   }
 
-  public void testDelegateAnnotation() throws Throwable { doPlainTest() }
+  void testDelegateAnnotation() throws Throwable { doPlainTest() }
 
-  public void testSingletonTransform() throws Throwable { doVariantsTest('instance', 'newInstance', 'newInstance', 'isInstance', 'getInstance', 'setInstance') }
+  void testSingletonTransform() throws Throwable {
+    doVariantsTest('instance', 'newInstance', 'newInstance', 'isInstance', 'getInstance', 'setInstance')
+  }
 
-  public void testCategoryTransform() throws Throwable { doVariantsTest('name', 'getName') }
+  void testCategoryTransform() throws Throwable { doVariantsTest('name', 'getName') }
 
-  public void testMixinTransform() throws Throwable { doPlainTest() }
+  void testMixinTransform() throws Throwable { doPlainTest() }
 
-  public void testBindableTransform() throws Throwable { doPlainTest() }
+  void testBindableTransform() throws Throwable { doPlainTest() }
 
-  public void testVetoableTransform() throws Throwable { doPlainTest() }
+  void testVetoableTransform() throws Throwable { doPlainTest() }
 
-  public void testNewifyTransform1() throws Throwable {
+  void testNewifyTransform1() throws Throwable {
     myFixture.configureByFile(getTestName(false) + ".groovy")
     myFixture.completeBasic()
     assert myFixture.lookupElementStrings.containsAll(['newInstance', 'new', 'new', 'newInstance'])
   }
 
-  public void testNewifyTransform2() throws Throwable { doVariantsTest('Leaf', 'Leaf', 'Leaf', 'Boolean') }
+  void testNewifyTransform2() throws Throwable { doVariantsTest('Leaf', 'Leaf', 'Leaf', 'Boolean') }
 
-  public void testNewifyTransform3() throws Throwable { doVariantsTest('Bazz', 'Bazz') }
+  void testNewifyTransform3() throws Throwable { doVariantsTest('Bazz', 'Bazz') }
 
 }

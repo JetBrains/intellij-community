@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.application
 
 import com.intellij.ide.IdeEventQueue
@@ -52,7 +67,7 @@ class TransactionTest extends LightPlatformTestCase {
     super.tearDown()
   }
 
-  public void "test write action without transaction prohibited"() {
+  void "test write action without transaction prohibited"() {
     assert app.isDispatchThread()
     assert !app.isWriteAccessAllowed()
 
@@ -61,7 +76,7 @@ class TransactionTest extends LightPlatformTestCase {
     UIUtil.dispatchAllInvocationEvents()
   }
 
-  public void "test write action allowed inside user activity but not in modal dialog shown from non-modal invokeLater"() {
+  void "test write action allowed inside user activity but not in modal dialog shown from non-modal invokeLater"() {
     SwingUtilities.invokeLater {
       guard.performUserActivity { app.runWriteAction { log << '1' } }
 
@@ -100,7 +115,7 @@ class TransactionTest extends LightPlatformTestCase {
     ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.instance, false, true)
   }
 
-  public void "test parent disposable"() {
+  void "test parent disposable"() {
     def parent = Disposer.newDisposable()
 
     SwingUtilities.invokeLater { TransactionGuard.submitTransaction parent, { log << "1" } }
@@ -113,7 +128,7 @@ class TransactionTest extends LightPlatformTestCase {
     assert log == ['1']
   }
 
-  public void "test no context transaction inside invokeLater"() {
+  void "test no context transaction inside invokeLater"() {
     TransactionGuard.submitTransaction testRootDisposable, {
       SwingUtilities.invokeLater {
         log << '2'
@@ -129,7 +144,7 @@ class TransactionTest extends LightPlatformTestCase {
   }
 
 
-  public void "test has id inside nested transaction"() {
+  void "test has id inside nested transaction"() {
     TransactionGuard.submitTransaction testRootDisposable, {
       log << '1'
       def id = guard.contextTransaction
@@ -145,7 +160,7 @@ class TransactionTest extends LightPlatformTestCase {
     assert log == ['1', '2']
   }
 
-  public void "test modal progress started from inside a transaction has the same id"() {
+  void "test modal progress started from inside a transaction has the same id"() {
     TransactionGuard.submitTransaction testRootDisposable, {
       log << '1'
       def id = guard.contextTransaction
@@ -159,7 +174,8 @@ class TransactionTest extends LightPlatformTestCase {
     UIUtil.dispatchAllInvocationEvents()
     assert log == ['1', '2']
   }
-  public void "test no id on pooled thread"() {
+
+  void "test no id on pooled thread"() {
     TransactionGuard.submitTransaction testRootDisposable, {
       log << '1'
       ApplicationManager.application.executeOnPooledThread({
@@ -172,7 +188,7 @@ class TransactionTest extends LightPlatformTestCase {
     assert log == ['1', '2']
   }
 
-  public void "test do not merge transactions with null id"() {
+  void "test do not merge transactions with null id"() {
     TransactionGuard.submitTransaction testRootDisposable, {
       log << '1'
       guard.submitTransaction testRootDisposable, (TransactionId)null, { log << '2' }
@@ -183,7 +199,7 @@ class TransactionTest extends LightPlatformTestCase {
     assert log == ['1', '2']
   }
 
-  public void "test do not merge into newly started nested transactions"() {
+  void "test do not merge into newly started nested transactions"() {
     TransactionGuard.submitTransaction testRootDisposable, {
       log << '1'
       def id = guard.contextTransaction
@@ -212,7 +228,7 @@ class TransactionTest extends LightPlatformTestCase {
     }
   }
 
-  public void "test submit with finished transaction id"() {
+  void "test submit with finished transaction id"() {
     TransactionGuard.submitTransaction testRootDisposable, {
       log << '1'
       TransactionId id = null
@@ -231,7 +247,7 @@ class TransactionTest extends LightPlatformTestCase {
     }
   }
 
-  public void "test write access in modal invokeLater"() {
+  void "test write access in modal invokeLater"() {
     LaterInvocator.enterModal(new Object())
     UIUtil.dispatchAllInvocationEvents()
     def unsafeModality = ModalityState.current()
@@ -265,7 +281,7 @@ class TransactionTest extends LightPlatformTestCase {
     assert log == ['1', '2', '3', '4', '5']
   }
 
-  public void "test submitTransactionLater happens ASAP regardless of modality bounds"() {
+  void "test submitTransactionLater happens ASAP regardless of modality bounds"() {
     TransactionGuard.submitTransaction testRootDisposable, {
       log << '1'
       guard.submitTransactionLater testRootDisposable, { log << '2' }
@@ -278,7 +294,7 @@ class TransactionTest extends LightPlatformTestCase {
     assert log == ['1', '2', '3']
   }
 
-  public void "test don't add transaction to outdated queue"() {
+  void "test don't add transaction to outdated queue"() {
     TransactionGuard.submitTransaction testRootDisposable, {
       log << '1'
       guard.submitTransactionLater testRootDisposable, { log << '3' }
@@ -292,7 +308,7 @@ class TransactionTest extends LightPlatformTestCase {
     assert log == ['1', '2', '3']
   }
 
-  public void "test no synchronous transactions inside invokeLater"() {
+  void "test no synchronous transactions inside invokeLater"() {
     LoggedErrorProcessor.instance.disableStderrDumping(testRootDisposable)
     SwingUtilities.invokeLater {
       log << '1'
@@ -307,7 +323,7 @@ class TransactionTest extends LightPlatformTestCase {
     assert log == ['1', 'assert']
   }
 
-  public void "test write-unsafe modality ends inside a transaction"() {
+  void "test write-unsafe modality ends inside a transaction"() {
     LaterInvocator.enterModal(new Object())
     guard.performUserActivity { assertWritingProhibited() }
     TransactionGuard.submitTransaction testRootDisposable, {
@@ -321,7 +337,7 @@ class TransactionTest extends LightPlatformTestCase {
     assert log == ['1', '2']
   }
 
-  public void "test progress created on EDT and run on pooled thread"() {
+  void "test progress created on EDT and run on pooled thread"() {
     TransactionGuard.submitTransaction testRootDisposable, {
       def progress = new ProgressWindow(true, project)
 

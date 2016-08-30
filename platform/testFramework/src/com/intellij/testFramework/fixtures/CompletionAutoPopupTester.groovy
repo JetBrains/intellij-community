@@ -96,7 +96,7 @@ class CompletionAutoPopupTester {
     def closureSeq = cnt.getAndIncrement()
     Runnable r = new Runnable() {
       @Override
-      public void run() {
+      void run() {
         run.set(true)
         ApplicationManager.application.invokeLater {
           c1();
@@ -105,7 +105,7 @@ class CompletionAutoPopupTester {
       }
 
       @Override
-      public String toString() {
+      String toString() {
         return "Closure "+closureSeq;
       }
     };

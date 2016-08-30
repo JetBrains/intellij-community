@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Max Medvedev
  */
-public class GroovyMoveClassToInnerTest extends GroovyMoveTestBase {
+class GroovyMoveClassToInnerTest extends GroovyMoveTestBase {
   private String[] myConflicts = null
 
   @Override
@@ -35,19 +35,19 @@ public class GroovyMoveClassToInnerTest extends GroovyMoveTestBase {
     return "${TestUtils.testDataPath}refactoring/move/moveClassToInner/";
   }
 
-  public void testContextChange1() {
+  void testContextChange1() {
     doTest("pack2.A", "pack1.Class1");
   }
 
-  public void testContextChange2() {
+  void testContextChange2() {
     doTest("pack2.A", "pack1.Class1");
   }
 
-  public void testInnerImport() throws Exception {
+  void testInnerImport() throws Exception {
     doTest("pack2.A", "pack1.Class1");
   }
 
-  public void testInsertInnerClassImport() throws Exception {
+  void testInsertInnerClassImport() throws Exception {
     final settings = CodeStyleSettingsManager.getSettings(myFixture.project).getCustomSettings(GroovyCodeStyleSettings.class)
     def oldValue = settings.INSERT_INNER_CLASS_IMPORTS
     settings.INSERT_INNER_CLASS_IMPORTS = true;
@@ -59,7 +59,7 @@ public class GroovyMoveClassToInnerTest extends GroovyMoveTestBase {
     }
   }
 
-  public void testSimultaneousMove() throws Exception {
+  void testSimultaneousMove() throws Exception {
     final settings = CodeStyleSettingsManager.instance.currentSettings.getCustomSettings(GroovyCodeStyleSettings.class)
     final oldValue = settings.INSERT_INNER_CLASS_IMPORTS
     settings.INSERT_INNER_CLASS_IMPORTS = false
@@ -71,59 +71,59 @@ public class GroovyMoveClassToInnerTest extends GroovyMoveTestBase {
     }
   }
 
-  public void testMoveMultiple1() throws Exception {
+  void testMoveMultiple1() throws Exception {
     doTest("pack2.A", "pack1.Class1", "pack1.Class2");
   }
 
-  public void testRefToInner() throws Exception {
+  void testRefToInner() throws Exception {
     doTest("pack2.A", "pack1.Class1");
   }
 
-  public void testRefToConstructor() throws Exception {
+  void testRefToConstructor() throws Exception {
     doTest("pack2.A", "pack1.Class1");
   }
 
-  public void testSecondaryClass() throws Exception {
+  void testSecondaryClass() throws Exception {
     doTest("pack1.User", "pack1.Class2");
   }
 
-  public void testStringsAndComments() throws Exception {
+  void testStringsAndComments() throws Exception {
     doTest("pack1.A", "pack1.Class1");
   }
 
-  public void testStringsAndComments2() throws Exception {
+  void testStringsAndComments2() throws Exception {
     doTest("pack1.A", "pack1.Class1");
   }
 
-  public void testNonJava() throws Exception {
+  void testNonJava() throws Exception {
     doTest("pack1.A", "pack1.Class1");
   }
 
-  public void testLocallyUsedPackageLocalToPublicInterface() throws Exception {
+  void testLocallyUsedPackageLocalToPublicInterface() throws Exception {
     doTest("pack2.A", "pack1.Class1");
   }
 
-  public void _testPackageLocalClass() throws Exception {
+  void _testPackageLocalClass() throws Exception {
     doTestConflicts("pack1.Class1", "pack2.A", "Field <b><code>Class1.c2</code></b> uses a package-private class <b><code>pack1.Class2</code></b>.");
   }
 
-  public void _testMoveIntoPackageLocalClass() throws Exception {
+  void _testMoveIntoPackageLocalClass() throws Exception {
     doTestConflicts("pack1.Class1", "pack2.A", "Class <b><code>Class1</code></b> will no longer be accessible from field <b><code>Class2.c1</code></b>");
   }
 
-  public void _testMoveOfPackageLocalClass() throws Exception {
+  void _testMoveOfPackageLocalClass() throws Exception {
     doTestConflicts("pack1.Class1", "pack2.A", "Class <b><code>Class1</code></b> will no longer be accessible from field <b><code>Class2.c1</code></b>");
   }
 
-  public void testMoveIntoPrivateInnerClass() throws Exception {
+  void testMoveIntoPrivateInnerClass() throws Exception {
     doTestConflicts("pack1.Class1", "pack1.A.PrivateInner", "Class <b><code>Class1</code></b> will no longer be accessible from class <b><code>pack1.Class2</code></b>");
   }
 
-  public void _testMoveWithPackageLocalMember() throws Exception {
+  void _testMoveWithPackageLocalMember() throws Exception {
     doTestConflicts("pack1.Class1", "pack2.A", "Method <b><code>Class1.doStuff()</code></b> will no longer be accessible from method <b><code>Class2.test()</code></b>");
   }
 
-  public void testDuplicateInner() throws Exception {
+  void testDuplicateInner() throws Exception {
     doTestConflicts("pack1.Class1", "pack2.A", "Class <b><code>pack2.A</code></b> already contains an inner class named <b><code>Class1</code></b>");
   }
 

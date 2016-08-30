@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
  */
 class SurrounderOrderTest extends LightCodeInsightFixtureTestCase {
 
-  public void testStatementSurrounders() {
+  void testStatementSurrounders() {
     def names = getSurrounders("<selection>println a</selection>")
     assertOrderedEquals names,
                         "if", "if / else",
@@ -44,7 +44,7 @@ class SurrounderOrderTest extends LightCodeInsightFixtureTestCase {
                         "region...endregion Comments"
   }
 
-  public void testStatementWithSemicolon() throws Exception {
+  void testStatementWithSemicolon() throws Exception {
     def names = getSurrounders("<selection>println a;</selection>")
     assertOrderedEquals names,
                         "if", "if / else", "while",
@@ -57,7 +57,7 @@ class SurrounderOrderTest extends LightCodeInsightFixtureTestCase {
                         "region...endregion Comments"
   }
 
-  public void testStatementsWithComments() throws Exception {
+  void testStatementsWithComments() throws Exception {
     def names = getSurrounders("""<selection>println a; //a is very important
 println b
 println c /*also important */
@@ -73,12 +73,12 @@ println c /*also important */
                         "region...endregion Comments"
   }
 
-  public void testInnerExpressionSurrounders() {
+  void testInnerExpressionSurrounders() {
     def names = getSurrounders("boolean a; println <selection>a</selection>")
     assertOrderedEquals names, "(expr)", "!(expr)", "((Type) expr)"
   }
 
-  public void testOuterExpressionSurrounders() {
+  void testOuterExpressionSurrounders() {
     def names = getSurrounders("boolean a; <selection>a</selection>")
     assertOrderedEquals names,
                         "if",

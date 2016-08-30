@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.documentation.GroovyDocumentationProvid
 @CompileStatic
 class GroovyDocumentationTest extends LightCodeInsightFixtureTestCase {
 
-  public void testGenericMethod() {
+  void testGenericMethod() {
     myFixture.configureByText 'a.groovy', '''
 class Bar<T> { java.util.List<T> foo(T param); }
 new Bar<String>().f<caret>oo();
@@ -37,7 +37,7 @@ Bar
 <a href="psi_element://java.util.List"><code>List</code></a>&lt;<a href="psi_element://java.lang.String"><code>String</code></a>&gt; foo (<a href="psi_element://java.lang.String"><code>String</code></a> param)"""
   }
 
-  public void testGenericField() {
+  void testGenericField() {
     myFixture.configureByText 'a.groovy', '''
 class Bar<T> { T field; }
 new Bar<Integer>().fi<caret>eld
@@ -48,7 +48,7 @@ Bar
 <a href="psi_element://java.lang.Integer"><code>Integer</code></a> getField ()"""
   }
 
-  public void testLink() {
+  void testLink() {
     doTest '''\
 class Gr {
   /**

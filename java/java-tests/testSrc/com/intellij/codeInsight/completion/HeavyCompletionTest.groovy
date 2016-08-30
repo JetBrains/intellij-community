@@ -1,6 +1,17 @@
 /*
- * Copyright (c) 2000-2005 by JetBrains s.r.o. All Rights Reserved.
- * Use is subject to license terms.
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.intellij.codeInsight.completion
 
@@ -34,14 +45,14 @@ import org.jetbrains.annotations.NotNull
 /**
  * @author peter
  */
-public class HeavyCompletionTest extends JavaCodeInsightFixtureTestCase {
+class HeavyCompletionTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testPackagePrefix() throws Throwable {
+  void testPackagePrefix() throws Throwable {
     myFixture.configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
     ApplicationManager.application.runWriteAction {
       final ModifiableRootModel model = ModuleRootManager.getInstance(myFixture.getModule()).getModifiableModel();
@@ -56,7 +67,7 @@ public class HeavyCompletionTest extends JavaCodeInsightFixtureTestCase {
     assertTrue(JavaPsiFacade.getInstance(getProject()).findPackage("foo.bar.goo").isValid());
   }
 
-  public void testPreferTestCases() throws Throwable {
+  void testPreferTestCases() throws Throwable {
     myFixture.configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
     ApplicationManager.application.runWriteAction {
       final ModifiableRootModel model = ModuleRootManager.getInstance(myFixture.getModule()).getModifiableModel();
@@ -76,7 +87,7 @@ public class HeavyCompletionTest extends JavaCodeInsightFixtureTestCase {
     myFixture.assertPreferredCompletionItems(0, "SomeTestCase", "SomeAnchor", "SomeTestec");
   }
 
-  public void testAllClassesWhenNothingIsFound() throws Throwable {
+  void testAllClassesWhenNothingIsFound() throws Throwable {
     myFixture.addClass("package foo.bar; public class AxBxCxDxEx {}");
 
     myFixture.configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
@@ -85,7 +96,7 @@ public class HeavyCompletionTest extends JavaCodeInsightFixtureTestCase {
     myFixture.checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
   }
 
-  public void testAllClassesOnSecondBasicCompletion() throws Throwable {
+  void testAllClassesOnSecondBasicCompletion() throws Throwable {
     myFixture.addClass("package foo.bar; public class AxBxCxDxEx {}");
 
     myFixture.configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
@@ -110,7 +121,7 @@ public class HeavyCompletionTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
-  public void testMapsInvalidation() throws Exception {
+  void testMapsInvalidation() throws Exception {
     JavaAutoPopupTest.registerCompletionContributor(CacheVerifyingContributor, testRootDisposable, LoadingOrder.FIRST)
     myFixture.configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
     assertInstanceOf(myFixture.getFile().getVirtualFile().getFileSystem(), LocalFileSystem.class); // otherwise the completion copy won't be preserved which is critical here
@@ -120,7 +131,7 @@ public class HeavyCompletionTest extends JavaCodeInsightFixtureTestCase {
     assert myFixture.completeBasic() == null
   }
 
-  public void testQualifyInaccessibleClassName() throws Exception {
+  void testQualifyInaccessibleClassName() throws Exception {
     PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "second", myFixture.getTempDirFixture().findOrCreateDir("second"));
     myFixture.addFileToProject("second/foo/bar/AxBxCxDxEx.java", "package foo.bar; class AxBxCxDxEx {}");
 
@@ -129,7 +140,7 @@ public class HeavyCompletionTest extends JavaCodeInsightFixtureTestCase {
     myFixture.checkResult("class Main { foo.bar.AxBxCxDxEx<caret> }");
   }
 
-  public void testPreferOwnMethods() {
+  void testPreferOwnMethods() {
     def lib = LocalFileSystem.getInstance().refreshAndFindFileByPath(PathManagerEx.getTestDataPath() + "/../../../lib")
     def nanoJar = lib.children.find { it.name.startsWith("nanoxml") }
 
@@ -148,7 +159,7 @@ public class Test {
     myFixture.assertPreferredCompletionItems 0, 'getBuilder'
   }
 
-  public void testNoJavaStructureModificationOnSecondInvocation() {
+  void testNoJavaStructureModificationOnSecondInvocation() {
     myFixture.configureByText 'a.java', 'class Foo { Xxxxx<caret> }'
     def oldCount = PsiManager.getInstance(project).modificationTracker.javaStructureModificationCount
     assert !myFixture.completeBasic()
@@ -156,7 +167,7 @@ public class Test {
     assert oldCount == PsiManager.getInstance(project).modificationTracker.javaStructureModificationCount
   }
 
-  public void testNoJavaStructureModificationOnSecondInvocationAfterTyping() {
+  void testNoJavaStructureModificationOnSecondInvocationAfterTyping() {
     myFixture.configureByText 'a.java', 'class Foo { Xxxxx<caret> }'
 
     def tracker = PsiManager.getInstance(project).modificationTracker
@@ -174,7 +185,7 @@ public class Test {
     assert oldCount == tracker.javaStructureModificationCount
   }
 
-  public void testForbiddenApiVariants() {
+  void testForbiddenApiVariants() {
     IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_1_4)
     myFixture.addClass("""\
 package java.nio.channels;
@@ -203,7 +214,7 @@ public class SocketChannel {
     assert p.itemTextForeground == JBColor.foreground()
   }
 
-  public void "test seemingly scrambled subclass"() {
+  void "test seemingly scrambled subclass"() {
     PsiTestUtil.addLibrary(myModule, JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/normal/seemsScrambled.jar")
     myFixture.configureByText 'a.java', '''import test.Books;
 
@@ -217,7 +228,7 @@ class Foo {{ Books.Test.v1<caret> }}
 
   }
 
-  public void "test different jdks in different modules"() {
+  void "test different jdks in different modules"() {
     (StatisticsManager.instance as StatisticsManagerImpl).enableStatistics(testRootDisposable)
 
     def anotherModule = PsiTestUtil.addModule(project, StdModuleTypes.JAVA, 'another', myFixture.tempDirFixture.findOrCreateDir('another'))
