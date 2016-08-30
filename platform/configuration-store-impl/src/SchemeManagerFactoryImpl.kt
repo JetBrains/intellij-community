@@ -15,7 +15,6 @@
  */
 package com.intellij.configurationStore
 
-import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.RoamingType
@@ -26,6 +25,7 @@ import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.options.SchemeProcessor
 import com.intellij.openapi.project.Project
+import com.intellij.project.isDirectoryBased
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.lang.CompoundRuntimeException
@@ -121,7 +121,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
   private class ProjectSchemeManagerFactory(private val project: Project) : SchemeManagerFactoryBase() {
     override val componentManager = project
 
-    override fun pathToFile(path: String) = Paths.get(project.basePath, if (ProjectUtil.isDirectoryBased(project)) "${Project.DIRECTORY_STORE_FOLDER}/$path" else ".$path")!!
+    override fun pathToFile(path: String) = Paths.get(project.basePath, if (project.isDirectoryBased) "${Project.DIRECTORY_STORE_FOLDER}/$path" else ".$path")!!
   }
 
   @TestOnly

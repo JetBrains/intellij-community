@@ -52,7 +52,13 @@ class SchemeManagerIprProvider : StreamProvider {
     nameToData.put(name, ArrayUtil.realloc(content, size))
   }
 
-  fun load(state: Element) {
+  fun load(state: Element?) {
+    nameToData.clear()
+
+    if (state == null) {
+      return
+    }
+
     for (profileElement in state.getChildren("profile")) {
       var name: String? = null
       for (optionElement in profileElement.getChildren("option")) {
@@ -65,7 +71,7 @@ class SchemeManagerIprProvider : StreamProvider {
         continue
       }
 
-      nameToData.put(name, profileElement.toByteArray())
+      nameToData.put("$name.xml", profileElement.toByteArray())
     }
   }
 

@@ -20,7 +20,8 @@ import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.Project
 
-fun Project.isDirectoryBased(): Boolean {
+val Project.isDirectoryBased: Boolean
+  get() {
   val store = stateStore
   return store is IProjectStore && StorageScheme.DIRECTORY_BASED == store.storageScheme
 }

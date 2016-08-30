@@ -163,7 +163,6 @@ internal class ProjectInspectionManagerTest {
     }
   }
 
-
   @Test fun `ipr`() {
     val emptyProjectFile = """
       <?xml version="1.0" encoding="UTF-8"?>
@@ -197,12 +196,11 @@ internal class ProjectInspectionManagerTest {
       <project version="4">
         <component name="InspectionProjectProfileManager">
           <settings>
-            <component name="InspectionProjectProfileManager">
-              <profile version="1.0">
-                <option name="myName" value="Project Default" />
-                <inspection_tool class="Convert2Diamond" enabled="false" level="WARNING" enabled_by_default="false" />
-              </profile>
-            </component>
+            <profile version="1.0">
+              <option name="myName" value="Project Default" />
+              <inspection_tool class="Convert2Diamond" enabled="false" level="WARNING" enabled_by_default="false" />
+            </profile>
+            <version value="1.0" />
           </settings>
         </component>
       </project>""".trimIndent())

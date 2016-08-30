@@ -19,7 +19,6 @@ import com.intellij.configurationStore.StreamProvider
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.WriteExternalException
 import org.jdom.Parent
 
 interface ExternalizableScheme : Scheme {
@@ -61,7 +60,6 @@ abstract class SchemeProcessor<SCHEME : Scheme, in MUTABLE_SCHEME: SCHEME> {
   /**
    * Element will not be modified, it is safe to return non-cloned instance.
    */
-  @Throws(WriteExternalException::class)
   abstract fun writeScheme(scheme: MUTABLE_SCHEME): Parent
 
   open fun initScheme(scheme: MUTABLE_SCHEME) {

@@ -94,7 +94,7 @@ class ProjectInspectionProfileManager(val project: Project,
     }
   }
 
-  private val schemeManagerIprProvider = if (project.isDirectoryBased()) null else SchemeManagerIprProvider()
+  private val schemeManagerIprProvider = if (project.isDirectoryBased) null else SchemeManagerIprProvider()
 
   override val schemeManager = schemeManagerFactory.create("inspectionProfiles", object : InspectionProfileProcessor() {
     override fun createScheme(dataHolder: SchemeDataHolder<InspectionProfileImpl>,
@@ -134,7 +134,7 @@ class ProjectInspectionProfileManager(val project: Project,
 
   init {
     val app = ApplicationManager.getApplication()
-    if (app.isUnitTestMode) {
+    if (!project.isDirectoryBased || app.isUnitTestMode) {
       initialLoadSchemesFuture = resolvedPromise()
     }
     else {
@@ -210,8 +210,12 @@ class ProjectInspectionProfileManager(val project: Project,
   }
 
   @Synchronized override fun loadState(state: Element) {
-    schemeManagerIprProvider?.load(state)
     val data = state.getChild("settings")
+
+    schemeManagerIprProvider?.let {
+      it.load(data)
+      schemeManager.reload()
+    }
 
     val newState = State()
 
@@ -248,6 +252,9 @@ class ProjectInspectionProfileManager(val project: Project,
 
   @Synchronized override fun getState(): Element? {
     val result = Element("settings")
+
+    schemeManagerIprProvider?.writeState(result)
+
     val state = this.state
     state.projectProfile = schemeManager.currentSchemeName
     XmlSerializer.serializeInto(state, result, skipDefaultsSerializationFilter)
@@ -256,8 +263,6 @@ class ProjectInspectionProfileManager(val project: Project,
     }
 
     severityRegistrar.writeExternal(result)
-
-    schemeManagerIprProvider?.writeState(result)
 
     if (JDOMUtil.isEmpty(result)) {
       result.name = "state"
