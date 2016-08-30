@@ -153,47 +153,8 @@ public class SaveProjectAsTemplateAction extends AnAction {
                         : ModuleRootManager.getInstance(moduleToSave).getFileIndex();
       final ZipOutputStream finalStream = stream;
 
-      index.iterateContent(new ContentIterator() {
-        @Override
-        public boolean processFile(final VirtualFile virtualFile) {
-          if (!virtualFile.isDirectory()) {
-            final String fileName = virtualFile.getName();
-            indicator.setText2(fileName);
-            try {
-              String relativePath = VfsUtilCore.getRelativePath(virtualFile, dir, '/');
-              if (relativePath == null) {
-                throw new RuntimeException("Can't find relative path for " + virtualFile + " in " + dir);
-              }
-              final boolean system = Project.DIRECTORY_STORE_FOLDER.equals(virtualFile.getParent().getName());
-              if (system) {
-                if (!fileName.equals("description.html") &&
-                    !fileName.equals(PROJECT_TEMPLATE_XML) &&
-                    !fileName.equals(LocalArchivedTemplate.TEMPLATE_META_XML) &&
-                    !fileName.equals("misc.xml") &&
-                    !fileName.equals("modules.xml") &&
-                    !fileName.equals("workspace.xml") &&
-                    !fileName.endsWith(".iml")) {
-                  return true;
-                }
-              }
-
-              ZipUtil.addFileToZip(finalStream, new File(virtualFile.getPath()), dir.getName() + "/" + relativePath, null, null, new ZipUtil.FileContentProcessor() {
-                @Override
-                public InputStream getContent(final File file) throws IOException {
-                  if (virtualFile.getFileType().isBinary() || PROJECT_TEMPLATE_XML.equals(virtualFile.getName())) return STANDARD.getContent(file);
-                  String result = getEncodedContent(virtualFile, project, parameters, getFileHeaderTemplateName(), shouldEscape);
-                  return new ByteArrayInputStream(result.getBytes(CharsetToolkit.UTF8_CHARSET));
-                }
-              });
-            }
-            catch (IOException e) {
-              LOG.error(e);
-            }
-          }
-          indicator.checkCanceled();
-          return true;
-        }
-      });
+      ContentIterator iterator = new MyContentIterator(indicator, dir, finalStream, project, parameters, shouldEscape);
+      index.iterateContent(iterator);
     }
     catch (Exception ex) {
       LOG.error(ex);
@@ -339,5 +300,71 @@ public class SaveProjectAsTemplateAction extends AnAction {
   public void update(AnActionEvent e) {
     Project project = getEventProject(e);
     e.getPresentation().setEnabled(project != null && !project.isDefault());
+  }
+
+  private static class MyContentIterator implements ContentIterator {
+    private final ProgressIndicator myIndicator;
+    private final VirtualFile myRootDir;
+    private final ZipOutputStream myFinalStream;
+    private final Project myProject;
+    private final Map<String, String> myParameters;
+    private final boolean myShouldEscape;
+
+    public MyContentIterator(ProgressIndicator indicator,
+                             VirtualFile dir,
+                             ZipOutputStream finalStream,
+                             Project project,
+                             Map<String, String> parameters,
+                             boolean shouldEscape) {
+      myIndicator = indicator;
+      myRootDir = dir;
+      myFinalStream = finalStream;
+      myProject = project;
+      myParameters = parameters;
+      myShouldEscape = shouldEscape;
+    }
+
+    @Override
+    public boolean processFile(final VirtualFile virtualFile) {
+      if (!virtualFile.isDirectory()) {
+        final String fileName = virtualFile.getName();
+        myIndicator.setText2(fileName);
+        try {
+          String relativePath = VfsUtilCore.getRelativePath(virtualFile, myRootDir, '/');
+          if (relativePath == null) {
+            throw new RuntimeException("Can't find relative path for " + virtualFile + " in " + myRootDir);
+          }
+          final boolean system = Project.DIRECTORY_STORE_FOLDER.equals(virtualFile.getParent().getName());
+          if (system) {
+            if (!fileName.equals("description.html") &&
+                !fileName.equals(PROJECT_TEMPLATE_XML) &&
+                !fileName.equals(LocalArchivedTemplate.TEMPLATE_META_XML) &&
+                !fileName.equals("misc.xml") &&
+                !fileName.equals("modules.xml") &&
+                !fileName.equals("workspace.xml") &&
+                !fileName.endsWith(".iml")) {
+              return true;
+            }
+          }
+
+          ZipUtil.addFileToZip(myFinalStream, new File(virtualFile.getPath()), myRootDir.getName() + "/" + relativePath, null, null,
+                               new ZipUtil.FileContentProcessor() {
+                                 @Override
+                                 public InputStream getContent(final File file) throws IOException {
+                                   if (virtualFile.getFileType().isBinary() || PROJECT_TEMPLATE_XML.equals(virtualFile.getName()))
+                                     return STANDARD.getContent(file);
+                                   String result =
+                                     getEncodedContent(virtualFile, myProject, myParameters, getFileHeaderTemplateName(), myShouldEscape);
+                                   return new ByteArrayInputStream(result.getBytes(CharsetToolkit.UTF8_CHARSET));
+                                 }
+                               });
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
+      myIndicator.checkCanceled();
+      return true;
+    }
   }
 }
