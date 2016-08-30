@@ -831,7 +831,7 @@
                      displayName="Unnecessary 'def'" cleanupTool="true" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessaryDefModifierInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" groupName="Style"
-                     displayName="Unnecessary 'public'" cleanupTool="true"
+                     displayName="Unnecessary 'public'" cleanupTool="true" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessaryPublicModifierInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" groupName="Style"
                      displayName="Unnecessary semicolon" cleanupTool="true"
