@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.stats.completion.experiment.StatusInfoProvider
 import com.intellij.util.Alarm
 import com.intellij.util.Time
+import org.apache.commons.codec.binary.Base64InputStream
 import org.apache.http.client.fluent.Form
 import org.apache.http.client.fluent.Request
 import org.apache.http.entity.ContentType
@@ -119,8 +120,8 @@ class SimpleRequestService: RequestService() {
 
     override fun postZipped(url: String, file: File): ResponseData? {
         try {
-            val gzipStream = GZIPInputStream(FileInputStream(file))
-            val request = Request.Post(url).bodyStream(gzipStream)
+            val base64GzipStream = Base64InputStream(GZIPInputStream(FileInputStream(file)))
+            val request = Request.Post(url).bodyStream(base64GzipStream)
             request.addHeader(BasicHeader(HttpHeaders.CONTENT_ENCODING, "gzip"))
             val response = request.execute()
             val httpResponse = response.returnResponse()
