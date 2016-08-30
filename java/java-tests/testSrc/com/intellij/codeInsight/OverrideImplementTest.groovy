@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ interface B extends A {
 """).containingFile.virtualFile
     myFixture.configureFromExistingVirtualFile(file)
 
-    def Presentation presentation = new Presentation()
+    Presentation presentation = new Presentation()
     presentation.setText(ActionsBundle.message("action.ImplementMethods.text"))
     CommandProcessor.instance.executeCommand(project, { invokeAction(true) }, presentation.text, null)
 
@@ -87,7 +87,7 @@ class C extends B implements A {
 """).containingFile.virtualFile
     myFixture.configureFromExistingVirtualFile(file)
 
-    def Presentation presentation = new Presentation()
+    Presentation presentation = new Presentation()
     presentation.setText(ActionsBundle.message("action.ImplementMethods.text"))
     CommandProcessor.instance.executeCommand(project, { invokeAction(true) }, presentation.text, null)
 
@@ -124,7 +124,7 @@ class B implements Main1.I, Main2.I {
 """).containingFile.virtualFile
     myFixture.configureFromExistingVirtualFile(file)
 
-    def Presentation presentation = new Presentation()
+    Presentation presentation = new Presentation()
     presentation.setText(ActionsBundle.message("action.ImplementMethods.text"))
     CommandProcessor.instance.executeCommand(project, { invokeAction(true) }, presentation.text, null)
 

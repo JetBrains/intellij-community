@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public class PsiMethodCategory implements PsiEnhancerCategory {
   }
 
   static Map getParamStringVector(PsiMethod method) {
-    def Map result = [:]
+    Map result = [:]
     int idx = 1
     for (p in method.parameterList.parameters) {
       result.put("value$idx", p.getType().getCanonicalText())
