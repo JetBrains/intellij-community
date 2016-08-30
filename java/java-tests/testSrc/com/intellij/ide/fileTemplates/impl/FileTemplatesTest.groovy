@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.fileTemplates
+package com.intellij.ide.fileTemplates.impl
 
-import com.intellij.ide.fileTemplates.impl.CustomFileTemplate
-import com.intellij.ide.fileTemplates.impl.FileTemplateTestUtil
+import com.intellij.ide.fileTemplates.FileTemplate
+import com.intellij.ide.fileTemplates.FileTemplateManager
+import com.intellij.ide.fileTemplates.FileTemplateUtil
+import com.intellij.ide.fileTemplates.JavaTemplateUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.roots.ModuleRootManager
@@ -160,13 +162,12 @@ class FileTemplatesTest extends IdeaTestCase {
   }
 
   void doTestSaveLoadTemplate(String name, String ext) {
-    FileTemplateTestUtil.TestFTManager templateManager = new FileTemplateTestUtil.TestFTManager("test", "testTemplates",
-                                                                                                getTestConfigRoot())
+    FTManager templateManager = new FTManager("test", getTestConfigRoot())
     FileTemplate template = templateManager.addTemplate(name, ext)
     String qName = template.getQualifiedName()
     templateManager.saveTemplates()
     templateManager.removeTemplate(qName)
-    FileTemplateTestUtil.loadCustomizedContent(templateManager)
+    templateManager.loadCustomizedContent();
     FileTemplate loadedTemplate = templateManager.findTemplateByName(name)
     assertNotNull("Template '" + qName + "' was not found", loadedTemplate)
     assertEquals(name, loadedTemplate.getName())

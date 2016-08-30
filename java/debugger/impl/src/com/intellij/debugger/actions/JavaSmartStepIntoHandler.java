@@ -16,8 +16,13 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
+import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
+import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.MethodBytecodeUtil;
@@ -36,6 +41,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.Range;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.OrderedSet;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.sun.jdi.Location;
@@ -68,7 +74,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         List<SmartStepTarget> targets = ApplicationManager.getApplication().runReadAction(
-          (Computable<List<SmartStepTarget>>)() -> findSmartStepTargets(position, suspendContext));
+          (Computable<List<SmartStepTarget>>)() -> findSmartStepTargets(position, suspendContext, getDebuggerContext()));
         DebuggerUIUtil.invokeLater(() -> {
           if (targets.isEmpty()) {
             doStepInto(session, Registry.is("debugger.single.smart.step.force"), null);
@@ -93,7 +99,9 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
     throw new IllegalStateException("Should not be used");
   }
 
-  protected List<SmartStepTarget> findSmartStepTargets(final SourcePosition position, @Nullable SuspendContextImpl suspendContext) {
+  protected List<SmartStepTarget> findSmartStepTargets(final SourcePosition position,
+                                                       @Nullable SuspendContextImpl suspendContext,
+                                                       @NotNull DebuggerContextImpl debuggerContext) {
     final int line = position.getLine();
     if (line < 0) {
       return Collections.emptyList(); // the document has been changed
@@ -174,38 +182,64 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
         @Override
         public void visitField(PsiField field) {
-          TextRange range = field.getTextRange();
-          if (lineRange.intersects(range)) {
-            //textRange.set(textRange.get().union(range));
+          if (checkTextRange(field, false)) {
             super.visitField(field);
           }
         }
 
         @Override
         public void visitMethod(PsiMethod method) {
-          TextRange range = method.getTextRange();
-          if (lineRange.intersects(range)) {
-            //textRange.set(textRange.get().union(range));
+          if (checkTextRange(method, false)) {
             super.visitMethod(method);
           }
         }
 
         @Override
         public void visitStatement(PsiStatement statement) {
-          TextRange range = statement.getTextRange();
-          if (lineRange.intersects(range)) {
-            textRange.set(textRange.get().union(range));
+          if (checkTextRange(statement, true)) {
             super.visitStatement(statement);
           }
         }
 
         @Override
+        public void visitConditionalExpression(PsiConditionalExpression expression) {
+          PsiExpression condition = expression.getCondition();
+          condition.accept(this);
+          ThreeState conditionRes = ThreeState.UNSURE;
+          if (!DebuggerUtils.hasSideEffects(condition)) {
+            try {
+              ExpressionEvaluator evaluator = EvaluatorBuilderImpl.getInstance().build(condition, position);
+              conditionRes = ThreeState.fromBoolean(DebuggerUtilsEx.evaluateBoolean(evaluator, debuggerContext.createEvaluationContext()));
+            }
+            catch (EvaluateException e) {
+              LOG.info(e);
+            }
+          }
+          PsiExpression thenExpression = expression.getThenExpression();
+          if (conditionRes != ThreeState.NO && thenExpression != null) {
+            thenExpression.accept(this);
+          }
+          PsiExpression elseExpression = expression.getElseExpression();
+          if (conditionRes != ThreeState.YES && elseExpression != null) {
+            elseExpression.accept(this);
+          }
+        }
+
+        @Override
         public void visitExpression(PsiExpression expression) {
+          checkTextRange(expression, true);
+          super.visitExpression(expression);
+        }
+
+        boolean checkTextRange(PsiElement expression, boolean expand) {
           TextRange range = expression.getTextRange();
           if (lineRange.intersects(range)) {
-            textRange.set(textRange.get().union(range));
+            if (expand) {
+              textRange.set(textRange.get().union(range));
+            }
+            return true;
           }
-          super.visitExpression(expression);
+          return false;
         }
 
         public void visitExpressionList(PsiExpressionList expressionList) {

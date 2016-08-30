@@ -97,6 +97,12 @@ public final class RegExpCompletionContributor extends CompletionContributor {
       final ElementPattern<PsiElement> propertyNamePattern
               = psiElement().afterLeaf(psiElement().withText("{").afterLeaf(propertyPattern));
       extend(CompletionType.BASIC, propertyNamePattern, new PropertyNameCompletionProvider());
+
+      final PsiElementPattern.Capture<PsiElement> namedCharacterPattern = psiElement().withText("N");
+      extend(CompletionType.BASIC, psiElement().afterLeaf(namedCharacterPattern),
+             new NamedCharacterCompletionProvider(true));
+      extend(CompletionType.BASIC, psiElement().afterLeaf(psiElement(RegExpTT.LBRACE).afterLeaf(namedCharacterPattern)),
+             new NamedCharacterCompletionProvider(false));
     }
   }
 

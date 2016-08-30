@@ -245,12 +245,12 @@ public class ClipboardSynchronizer implements ApplicationComponent {
     private static Transferable getContentsSafe() {
       final FutureResult<Transferable> result = new FutureResult<>();
 
-      Foundation.executeOnMainThread(() -> {
+      Foundation.executeOnMainThread(true, false, () -> {
         Transferable transferable = getClipboardContentNatively();
         if (transferable != null) {
           result.set(transferable);
         }
-      }, true, false);
+      });
 
       try {
         return result.get(10, TimeUnit.MILLISECONDS);

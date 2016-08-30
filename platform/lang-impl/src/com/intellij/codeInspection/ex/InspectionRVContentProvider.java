@@ -20,6 +20,7 @@
  */
 package com.intellij.codeInspection.ex;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.reference.RefDirectory;
@@ -279,21 +280,25 @@ public abstract class InspectionRVContentProvider {
                 continue;
               }
             }
-            for (RefElementNode parentNode : parentNodes) {
-              final List<ProblemDescriptionNode> nodes = new ArrayList<>();
-              TreeUtil.traverse(parentNode, new TreeUtil.Traverse() {
-                @Override
-                public boolean accept(final Object node) {
-                  if (node instanceof ProblemDescriptionNode) {
-                    nodes.add((ProblemDescriptionNode)node);
+
+            //allow unused declaration to have structure at file level even when there are unused parameters
+            if (!HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME.equals(toolWrapper.getShortName())) {
+              for (RefElementNode parentNode : parentNodes) {
+                final List<ProblemDescriptionNode> nodes = new ArrayList<>();
+                TreeUtil.traverse(parentNode, new TreeUtil.Traverse() {
+                  @Override
+                  public boolean accept(final Object node) {
+                    if (node instanceof ProblemDescriptionNode) {
+                      nodes.add((ProblemDescriptionNode)node);
+                    }
+                    return true;
                   }
-                  return true;
+                });
+                if (nodes.isEmpty()) continue;
+                parentNode.removeAllChildren();
+                for (ProblemDescriptionNode node : nodes) {
+                  parentNode.add(node);
                 }
-              });
-              if (nodes.isEmpty()) continue;  //FilteringInspectionTool == DeadCode
-              parentNode.removeAllChildren();
-              for (ProblemDescriptionNode node : nodes) {
-                parentNode.add(node);
               }
             }
             for (RefElementNode node : parentNodes) {

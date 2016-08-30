@@ -20,8 +20,8 @@ import com.intellij.configurationStore.TestScheme
 import com.intellij.configurationStore.TestSchemesProcessor
 import com.intellij.configurationStore.save
 import com.intellij.testFramework.ProjectRule
+import com.intellij.util.toByteArray
 import com.intellij.util.xmlb.serialize
-import com.intellij.util.xmlb.toByteArray
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.jgit.lib.Repository
 import org.jetbrains.settingsRepository.ReadonlySource
@@ -31,7 +31,7 @@ import org.jetbrains.settingsRepository.git.commit
 import org.junit.ClassRule
 import org.junit.Test
 
-private val dirName = "keymaps"
+private const val dirName = "keymaps"
 
 class LoadTest : IcsTestCase() {
   companion object {

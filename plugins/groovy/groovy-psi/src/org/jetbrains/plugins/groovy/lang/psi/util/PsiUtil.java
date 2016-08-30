@@ -785,6 +785,21 @@ public class PsiUtil {
   }
 
   @Nullable
+  public static PsiElement skipLeafSet(@NotNull PsiElement element, boolean forward, @NotNull TokenSet set) {
+    do {
+      if (forward) {
+        element = PsiTreeUtil.nextLeaf(element);
+      }
+      else {
+        element = PsiTreeUtil.prevLeaf(element);
+      }
+    }
+    while (element != null && element.getNode() != null && set.contains(element.getNode().getElementType()));
+
+    return element;
+  }
+
+  @Nullable
   public static PsiElement skipWhitespaces(@Nullable PsiElement elem, boolean forward) {
     return skipSet(elem, forward, TokenSets.WHITE_SPACES_SET, true);
   }

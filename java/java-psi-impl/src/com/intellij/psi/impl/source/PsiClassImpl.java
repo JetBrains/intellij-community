@@ -242,7 +242,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   @Override
   @Nullable
   public PsiClass getContainingClass() {
-    final PsiClassStub stub = getStub();
+    final PsiClassStub stub = getGreenStub();
     if (stub != null) {
       StubElement parent = stub.getParentStub();
       return parent instanceof PsiClassStub ? ((PsiClassStub<?>)parent).getPsi() : null;
@@ -540,7 +540,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   private static boolean isAnonymousOrLocal(PsiClass aClass) {
     if (aClass instanceof PsiAnonymousClass) return true;
 
-    final PsiClassStub stub = ((PsiClassImpl)aClass).getStub();
+    final PsiClassStub stub = ((PsiClassImpl)aClass).getGreenStub();
     if (stub != null) {
       final StubElement parentStub = stub.getParentStub();
       return !(parentStub instanceof PsiClassStub || parentStub instanceof PsiFileStub);

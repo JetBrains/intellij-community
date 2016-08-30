@@ -35,7 +35,7 @@ public class PatchTest extends PatchTestCase {
   public void testDigestFiles() throws Exception {
     Patch patch = createPatch();
     Map<String, Long> checkSums = patch.digestFiles(getDataDir(), Collections.emptyList(), false, TEST_UI);
-    assertEquals(9, checkSums.size());
+    assertEquals(11, checkSums.size());
   }
 
   @Test
@@ -43,6 +43,7 @@ public class PatchTest extends PatchTestCase {
     Patch patch = createPatch();
     assertThat(patch.getActions()).containsOnly(
       new CreateAction(patch, "newDir/newFile.txt"),
+      new CreateAction(patch, "newDir/"),
       new UpdateAction(patch, "Readme.txt", CHECKSUMS.README_TXT),
       new UpdateZipAction(patch, "lib/annotations.jar",
                           Collections.singletonList("org/jetbrains/annotations/NewClass.class"),
@@ -67,6 +68,7 @@ public class PatchTest extends PatchTestCase {
 
     assertThat(patch.getActions()).containsOnly(
       new CreateAction(patch, "newDir/newFile.txt"),
+      new CreateAction(patch, "newDir/"),
       new UpdateZipAction(patch, "lib/annotations.jar",
                           Collections.singletonList("org/jetbrains/annotations/NewClass.class"),
                           Collections.singletonList("org/jetbrains/annotations/Nullable.class"),

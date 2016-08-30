@@ -16,6 +16,7 @@
 package com.intellij.application
 
 import com.intellij.ide.IdeEventQueue
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.progress.ProgressManager
@@ -23,7 +24,6 @@ import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LoggedErrorProcessor
@@ -55,13 +55,13 @@ class TransactionTest extends LightPlatformTestCase {
   protected void setUp() throws Exception {
     assert LaterInvocator.currentModalityState == ModalityState.NON_MODAL
     super.setUp()
-    Registry.get("ide.require.transaction.for.model.changes").setValue(true)
+    TransactionGuardImpl.testingTransactions = true
   }
 
   @Override
   protected void tearDown() throws Exception {
     UIUtil.dispatchAllInvocationEvents()
-    Registry.get("ide.require.transaction.for.model.changes").resetToDefault()
+    TransactionGuardImpl.testingTransactions = false
     log.clear()
     LaterInvocator.leaveAllModals()
     super.tearDown()

@@ -264,7 +264,6 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "alt UP",                   "MoveStatementUp", "Arrangement.Rule.Match.Condition.Move.Up"},
     { "alt HOME",                 "ViewNavigationBar", "ShowNavBar"},
     { "control F10",              "ShowPopupMenu", "javaee.UpdateRunningApplication", "liveedit.UpdateRunningApplication"},
-    { "control F11",              "Rerun", "ToggleBookmarkWithMnemonic"},
     { "control D",                "EditorDeleteLine", "Diff.ShowDiff", "CompareTwoFiles", "SendEOF", "FileChooser.GotoDesktop"},
     { "control L",                "Vcs.Log.FocusTextFilter", "GotoLine"},
     { "control N",                "ShowPopupMenu", "FileChooser.NewFolder"},

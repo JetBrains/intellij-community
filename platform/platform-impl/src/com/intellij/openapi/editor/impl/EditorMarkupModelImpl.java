@@ -627,7 +627,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     
     @Override
     protected void paintTrack(@NotNull Graphics g, @NotNull JComponent c, @NotNull Rectangle trackBounds) {
-      if (transparent()) {
+      if (transparent() && !myEditor.isDisposed()) {
         doPaintTrack(g, c, trackBounds);
       }
       else {

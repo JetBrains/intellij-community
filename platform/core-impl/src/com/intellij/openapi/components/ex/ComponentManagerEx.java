@@ -18,19 +18,9 @@ package com.intellij.openapi.components.ex;
 import com.intellij.openapi.components.ComponentManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 /**
  * @author max
  */
 public interface ComponentManagerEx extends ComponentManager {
   void initializeComponent(@NotNull Object component, boolean service);
-
-  /**
-   * Gets all components whose implementation class is derived from <code>baseClass</code>.
-   *
-   * Consider using extension points instead.
-   */
-  @NotNull
-  <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass);
 }

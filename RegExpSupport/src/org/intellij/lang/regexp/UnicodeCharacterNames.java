@@ -33,14 +33,16 @@ public class UnicodeCharacterNames {
     try {
       final Class<?> aClass = Class.forName("java.lang.CharacterName");
       final Method initNamePool = ReflectionUtil.getDeclaredMethod(aClass, "initNamePool");
-      final int[][] lookup2d = ReflectionUtil.getField(aClass, null, int[][].class, "lookup");
-      if (initNamePool != null && lookup2d != null) { // jdk 8
-        byte[] namePool = (byte[])initNamePool.invoke(null);
+      if (initNamePool != null) { // jdk 8
+        byte[] namePool = (byte[])initNamePool.invoke(null); // initializes "lookup" field
+        final int[][] lookup2d = ReflectionUtil.getStaticFieldValue(aClass, int[][].class, "lookup");
+        if (lookup2d == null) {
+          return;
+        }
         for (int[] indexes : lookup2d) {
           if (indexes != null) {
             for (int index : indexes) {
               if (index != 0) {
-                ;
                 final String name = new String(namePool, index >>> 8, index & 0xff, AsciiUtil.ASCII_CHARSET);
                 consumer.accept(name);
               }

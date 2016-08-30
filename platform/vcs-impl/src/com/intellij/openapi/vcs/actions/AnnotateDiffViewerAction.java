@@ -297,7 +297,6 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
       return null;
     }
 
-    // TODO: cache them too, listening for ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener() ?
     return new FileAnnotationLoader(vcs) {
       @Override
       public FileAnnotation compute() throws VcsException {

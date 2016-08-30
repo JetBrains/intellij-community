@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.components
 
-import com.intellij.openapi.components.ex.ComponentManagerEx
+import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.project.Project
 
@@ -30,4 +30,4 @@ val ComponentManager.stateStore: IComponentStore
   }
 
 @Suppress("DEPRECATION")
-fun <T> ComponentManager.getComponents(baseClass: Class<T>) = (this as ComponentManagerEx).getComponentInstancesOfType(baseClass)
+fun <T> ComponentManager.getComponents(baseClass: Class<T>) = (this as ComponentManagerImpl).getComponentInstancesOfType(baseClass)

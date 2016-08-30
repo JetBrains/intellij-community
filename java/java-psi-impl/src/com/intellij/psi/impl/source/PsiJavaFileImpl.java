@@ -38,7 +38,7 @@ public class PsiJavaFileImpl extends PsiJavaFileBaseImpl {
   @Nullable
   @Override
   public PsiJavaModule getModuleDeclaration() {
-    PsiJavaFileStub stub = (PsiJavaFileStub)getStub();
+    PsiJavaFileStub stub = (PsiJavaFileStub)getGreenStub();
     if (stub != null) {
       return stub.getModule();
     }

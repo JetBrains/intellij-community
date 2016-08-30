@@ -103,9 +103,6 @@ class ModuleStoreTest {
         override fun onBatchUpdateStarted() {
           nameToCount.put(moduleName, ++batchUpdateCount)
         }
-
-        override fun onBatchUpdateFinished() {
-        }
       })
 
       //
@@ -137,9 +134,6 @@ class ModuleStoreTest {
     projectRule.project.messageBus.connect(m1).subscribe(BatchUpdateListener.TOPIC, object : BatchUpdateListener {
       override fun onBatchUpdateStarted() {
         nameToCount.put("p", ++projectBatchUpdateCount)
-      }
-
-      override fun onBatchUpdateFinished() {
       }
     })
 

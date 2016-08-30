@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.startup.impl;
 
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -43,6 +42,7 @@ import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.project.ProjectKt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
@@ -242,7 +242,7 @@ public class StartupManagerImpl extends StartupManagerEx {
       if (path == null || FileUtil.isAncestor(PathManager.getConfigPath(), path, true)) {
         return;
       }
-      if (ProjectUtil.isDirectoryBased(myProject)) {
+      if (ProjectKt.isDirectoryBased(myProject)) {
         path = PathUtil.getParentPath(path);
       }
 

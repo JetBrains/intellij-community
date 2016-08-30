@@ -26,9 +26,12 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
@@ -1171,21 +1174,22 @@ public class JavaFxPsiUtil {
     return ourGuard.doPreventingRecursion(containingFile, true, () -> {
       final Project project = containingFile.getProject();
       final Ref<PsiClass> injectedController = new Ref<>();
-      final Ref<PsiFile> dep = new Ref<>();
       final PsiClass fxmlLoader =
         JavaPsiFacade.getInstance(project).findClass(JavaFxCommonNames.JAVAFX_FXML_FXMLLOADER, GlobalSearchScope.allScope(project));
       if (fxmlLoader != null) {
         final PsiMethod[] injectControllerMethods = fxmlLoader.findMethodsByName("setController", false);
         if (injectControllerMethods.length == 1) {
-          final JavaFxRetrieveControllerProcessor processor = new JavaFxRetrieveControllerProcessor() {
-            @Override
-            protected boolean isResolveToSetter(PsiMethodCallExpression methodCallExpression) {
-              return methodCallExpression.resolveMethod() == injectControllerMethods[0];
-            }
-          };
           final GlobalSearchScope globalSearchScope = GlobalSearchScope
             .getScopeRestrictedByFileTypes(containingFile.getResolveScope(), StdFileTypes.JAVA);
-          ReferencesSearch.search(containingFile, globalSearchScope).forEach(reference -> {
+          final VirtualFile[] virtualFiles = CacheManager.SERVICE.getInstance(project).getVirtualFilesWithWord(
+            ClassUtil.extractClassName(JavaFxCommonNames.JAVAFX_FXML_FXMLLOADER), UsageSearchContext.IN_CODE, globalSearchScope, true);
+          if (virtualFiles.length == 0) {
+            return new CachedValueProvider.Result<>(null, PsiModificationTracker.MODIFICATION_COUNT);
+          }
+          final GlobalSearchScope filesScope = GlobalSearchScope.filesScope(project, Arrays.asList(virtualFiles));
+          final Processor<PsiReference> processor =
+            loaderReference -> findControllerClassInjection(loaderReference, injectedController, injectControllerMethods[0]);
+          ReferencesSearch.search(containingFile, filesScope).forEach(reference -> {
             final PsiElement element = reference.getElement();
             if (element instanceof PsiLiteralExpression) {
               final PsiNewExpression expression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class);
@@ -1194,11 +1198,9 @@ public class JavaFxPsiUtil {
                 if (type != null && type.equalsToText(JavaFxCommonNames.JAVAFX_FXML_FXMLLOADER)) {
                   final PsiElement parent = expression.getParent();
                   if (parent instanceof PsiLocalVariable) {
-                    ReferencesSearch.search(parent).forEach(processor);
-                    final PsiClass controller = processor.getInjectedController();
+                    ReferencesSearch.search(parent, parent.getUseScope()).forEach(processor);
+                    final PsiClass controller = injectedController.get();
                     if (controller != null) {
-                      injectedController.set(controller);
-                      dep.set(processor.getContainingFile());
                       return false;
                     }
                   }
@@ -1209,42 +1211,27 @@ public class JavaFxPsiUtil {
           });
         }
       }
-      return new CachedValueProvider.Result<>(injectedController.get(), dep.get() != null ? dep.get() : PsiModificationTracker.MODIFICATION_COUNT);
+      return new CachedValueProvider.Result<>(injectedController.get(), PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
-  private static abstract class JavaFxRetrieveControllerProcessor implements Processor<PsiReference> {
-    private final Ref<PsiClass> myInjectedController = new Ref<>();
-    private final Ref<PsiFile> myContainingFile = new Ref<>();
-
-    protected abstract boolean isResolveToSetter(PsiMethodCallExpression methodCallExpression);
-
-    @Override
-    public boolean process(PsiReference reference) {
-      final PsiElement element = reference.getElement();
-      if (element instanceof PsiReferenceExpression) {
-        final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
-        if (methodCallExpression != null && isResolveToSetter(methodCallExpression)) {
-          final PsiExpression[] expressions = methodCallExpression.getArgumentList().getExpressions();
-          if (expressions.length > 0) {
-            final PsiClass psiClass = PsiUtil.resolveClassInType(expressions[0].getType());
-            if (psiClass != null) {
-              myInjectedController.set(psiClass);
-              myContainingFile.set(methodCallExpression.getContainingFile());
-              return false;
-            }
+  private static boolean findControllerClassInjection(@NotNull PsiReference loaderReference,
+                                                      @NotNull Ref<PsiClass> injectedController,
+                                                      PsiMethod injectControllerMethod) {
+    final PsiElement element = loaderReference.getElement();
+    if (element instanceof PsiReferenceExpression) {
+      final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
+      if (methodCallExpression != null && methodCallExpression.resolveMethod() == injectControllerMethod) {
+        final PsiExpression[] expressions = methodCallExpression.getArgumentList().getExpressions();
+        if (expressions.length > 0) {
+          final PsiClass psiClass = PsiUtil.resolveClassInType(expressions[0].getType());
+          if (psiClass != null) {
+            injectedController.set(psiClass);
+            return false;
           }
         }
       }
-      return true;
     }
-
-    private PsiClass getInjectedController() {
-      return myInjectedController.get();
-    }
-
-    private PsiFile getContainingFile() {
-      return myContainingFile.get();
-    }
+    return true;
   }
 }
