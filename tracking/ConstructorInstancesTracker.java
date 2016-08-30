@@ -27,9 +27,11 @@ import java.util.List;
 
 public class ConstructorInstancesTracker implements TrackerForNewInstances {
   private final HashSet<ObjectReference> myNewObjects = new HashSet<>();
+  private final ReferenceType myReference;
 
   public ConstructorInstancesTracker(@NotNull ReferenceType ref,
                                      @NotNull DebugProcessImpl debugProcess) {
+    myReference = ref;
     Project project = debugProcess.getProject();
     JavaLineBreakpointType breakPointType = new JavaLineBreakpointType();
 
@@ -84,8 +86,9 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances {
         SuspendContextImpl suspendContext = action.getSuspendContext();
         if (suspendContext != null) {
           ObjectReference thisRef = getThisObject(suspendContext, event);
-          System.out.println("new object " + thisRef.uniqueID() + " added.");
-          myNewObjects.add(thisRef);
+          if (myReference.equals(thisRef.referenceType())) {
+            myNewObjects.add(thisRef);
+          }
         }
       } catch (EvaluateException e) {
         e.printStackTrace();
