@@ -901,6 +901,17 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     return Lists.newArrayList();
   }
 
+  @NotNull
+  public String getDescription(String prefix) throws Exception {
+    if (isConnected()) {
+      dropFrameCaches();
+      final PyStackFrame frame = currentFrame();
+      return myDebugger.getDescription(frame.getThreadId(), frame.getFrameId(), prefix);
+    }
+    return "";
+  }
+
+
   @Override
   public void startNotified(ProcessEvent event) {
   }

@@ -139,6 +139,7 @@ CMD_STEP_INTO_MY_CODE = 144
 CMD_GET_CONCURRENCY_EVENT = 145
 CMD_SHOW_RETURN_VALUES = 146
 CMD_INPUT_REQUESTED = 147
+CMD_GET_DESCRIPTION = 148
 
 CMD_VERSION = 501
 CMD_RETURN = 502
@@ -193,6 +194,7 @@ ID_TO_MEANING = {
     '145': 'CMD_GET_CONCURRENCY_EVENT',
     '146': 'CMD_SHOW_RETURN_VALUES',
     '147': 'CMD_INPUT_REQUESTED',
+    '148': 'CMD_GET_DESCRIPTION',
 
     '501': 'CMD_VERSION',
     '502': 'CMD_RETURN',
@@ -700,6 +702,12 @@ class NetCommandFactory:
         except Exception:
             return self.make_error_message(seq, get_exception_traceback_str())
 
+    def make_get_description_message(self, seq, payload):
+        try:
+            return NetCommand(CMD_GET_DESCRIPTION, seq, payload)
+        except Exception:
+            return self.make_error_message(seq, get_exception_traceback_str())
+
     def make_get_frame_message(self, seq, payload):
         try:
             return NetCommand(CMD_GET_FRAME, seq, payload)
@@ -1134,6 +1142,36 @@ class InternalGetCompletions(InternalThreadCommand):
             sys.stderr.write('%s\n' % (exc,))
             cmd = dbg.cmd_factory.make_error_message(self.sequence, "Error evaluating expression " + exc)
             dbg.writer.add_command(cmd)
+
+
+# =======================================================================================================================
+# InternalGetDescription
+# =======================================================================================================================
+class InternalGetDescription(InternalThreadCommand):
+    """ Fetch the variable description stub from the debug console
+    """
+
+    def __init__(self, seq, thread_id, frame_id, expression):
+        self.sequence = seq
+        self.thread_id = thread_id
+        self.frame_id = frame_id
+        self.expression = expression
+
+    def do_it(self, dbg):
+        """ Get completions and write back to the client
+        """
+        try:
+            frame = pydevd_vars.find_frame(self.thread_id, self.frame_id)
+            description = pydevd_console.get_description(frame, self.thread_id, self.frame_id, self.expression)
+            description = pydevd_vars.make_valid_xml_value(quote(description, '/>_= \t'))
+            description_xml = '<xml><var name="" type="" value="%s"/></xml>' % description
+            cmd = dbg.cmd_factory.make_get_description_message(self.sequence, description_xml)
+            dbg.writer.add_command(cmd)
+        except:
+            exc = get_exception_traceback_str()
+            cmd = dbg.cmd_factory.make_error_message(self.sequence, "Error in fetching description" + exc)
+            dbg.writer.add_command(cmd)
+
 
 #=======================================================================================================================
 # InternalGetBreakpointException
