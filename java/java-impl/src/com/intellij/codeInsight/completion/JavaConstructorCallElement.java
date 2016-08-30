@@ -34,13 +34,13 @@ import java.util.function.Supplier;
 public class JavaConstructorCallElement extends JavaMethodCallElement {
   private static final Key<JavaConstructorCallElement> WRAPPING_CONSTRUCTOR_CALL = Key.create("WRAPPING_CONSTRUCTOR_CALL");
   @NotNull private final LookupElement myClassItem;
-  @NotNull private final Supplier<PsiType> myType;
+  @NotNull private final PsiClassType myType;
 
-  private JavaConstructorCallElement(@NotNull LookupElement classItem, @NotNull PsiMethod constructor, @NotNull Supplier<PsiType> type) {
+  private JavaConstructorCallElement(@NotNull LookupElement classItem, @NotNull PsiMethod constructor, @NotNull Supplier<PsiClassType> type) {
     super(constructor);
     myClassItem = classItem;
-    myType = type;
-    setQualifierSubstitutor(((PsiClassType) type.get()).resolveGenerics().getSubstitutor());
+    myType = type.get();
+    setQualifierSubstitutor(myType.resolveGenerics().getSubstitutor());
 
     LookupElement delegate = classItem;
     while (true) {
@@ -53,7 +53,7 @@ public class JavaConstructorCallElement extends JavaMethodCallElement {
   @NotNull
   @Override
   public PsiType getType() {
-    return myType.get();
+    return myType;
   }
 
   @Override
@@ -76,12 +76,15 @@ public class JavaConstructorCallElement extends JavaMethodCallElement {
     return wrap(classItem, psiClass, position, () -> JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, PsiSubstitutor.EMPTY));
   }
 
-  static List<? extends LookupElement> wrap(LookupElement classItem, PsiClass psiClass, PsiElement position, Supplier<PsiType> type) {
+  static List<? extends LookupElement> wrap(LookupElement classItem, PsiClass psiClass, PsiElement position, Supplier<PsiClassType> type) {
     if (Registry.is("java.completion.show.constructors") && JavaClassNameCompletionContributor.AFTER_NEW.accepts(position)) {
-      return JBIterable.of(psiClass.getConstructors()).
-        filter(JavaCompletionUtil::isConstructorCompletable).
-        map(c -> new JavaConstructorCallElement(classItem, c, type)).
-        toList();
+      PsiMethod[] constructors = psiClass.getConstructors();
+      if (constructors.length > 0) {
+        return JBIterable.of(constructors).
+          filter(JavaCompletionUtil::isConstructorCompletable).
+          map(c -> new JavaConstructorCallElement(classItem, c, type)).
+          toList();
+      }
     }
     return Collections.singletonList(classItem);
   }

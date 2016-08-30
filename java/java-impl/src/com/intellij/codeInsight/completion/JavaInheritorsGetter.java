@@ -87,7 +87,7 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
     processInheritors(parameters, classTypes, prefixMatcher, type -> {
       final LookupElement element = addExpectedType(type, parameters);
       if (element != null) {
-        Supplier<PsiType> itemType = () -> ObjectUtils.assertNotNull(element.as(TypedLookupItem.CLASS_CONDITION_KEY)).getType();
+        Supplier<PsiClassType> itemType = () -> (PsiClassType)ObjectUtils.assertNotNull(element.as(TypedLookupItem.CLASS_CONDITION_KEY)).getType();
         JavaConstructorCallElement.wrap(element, (PsiClass)element.getObject(), parameters.getPosition(), itemType).forEach(consumer::consume);
       }
       if (arraysWelcome) {
