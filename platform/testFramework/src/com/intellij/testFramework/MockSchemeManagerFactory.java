@@ -13,24 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.testFramework;
+package com.intellij.testFramework
 
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.options.*;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.options.*
 
-public class MockSchemeManagerFactory extends SchemeManagerFactory {
-  private static final SchemeManager EMPTY = new EmptySchemesManager();
+private val EMPTY = EmptySchemesManager()
 
-  @NotNull
-  @Override
-  protected <SCHEME extends Scheme, MUTABLE_SCHEME extends SCHEME> SchemeManager<SCHEME> create(@NotNull String directoryName,
-                                                                                                @NotNull SchemeProcessor<SCHEME, ? super MUTABLE_SCHEME> processor,
-                                                                                                @Nullable String presentableName,
-                                                                                                @NotNull RoamingType roamingType,
-                                                                                                boolean isUseOldFileNameSanitize) {
-    //noinspection unchecked
-    return EMPTY;
+class MockSchemeManagerFactory : SchemeManagerFactory() {
+  override fun <SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> create(directoryName: String,
+                                                                 processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>,
+                                                                 presentableName: String?,
+                                                                 roamingType: RoamingType,
+                                                                 isUseOldFileNameSanitize: Boolean): SchemeManager<SCHEME> {
+    @Suppress("UNCHECKED_CAST")
+    return EMPTY as SchemeManager<SCHEME>
   }
 }
