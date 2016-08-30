@@ -23,7 +23,10 @@ import com.intellij.ide.fileTemplates.FileTemplatesScheme;
 import com.intellij.ide.fileTemplates.InternalTemplateBean;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
@@ -111,9 +114,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
 
   private void setScheme(@NotNull FileTemplatesScheme scheme) {
     myScheme = scheme;
-    for (FTManager manager : getAllManagers()) {
-      manager.setScheme(scheme);
-    }
     myInitialized = true;
   }
 
