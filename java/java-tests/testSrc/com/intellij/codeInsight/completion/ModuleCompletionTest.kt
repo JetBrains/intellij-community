@@ -33,7 +33,22 @@ class ModuleCompletionTest : LightFixtureCompletionTestCase() {
     addFile("pkg/empty/package-info.java", "package pkg.empty;")
     addFile("pkg/main/C.java", "package pkg.main;\nclass C { }")
     addFile("pkg/other/C.groovy", "package pkg.other\nclass C { }")
-    variants("module M { exports pkg.<caret> }", "pkg.main", "pkg.other")
+    variants("module M { exports pkg.<caret> }", "main", "other")
+    complete("module M { exports pkg.o<caret> }", "module M { exports pkg.other;<caret> }")
+  }
+
+  fun testUses() {
+    addFile("pkg/main/MySvc.java", "package pkg.main;\npublic class MySvc { }")
+    addFile("pkg/main/MySvcImpl.java", "package pkg.main;\nclass MySvcImpl extends MySvc { }")
+    complete("module M { uses MyS<caret> }", "module M { uses pkg.main.MySvc;<caret> }")
+  }
+
+  fun testProvides() {
+    addFile("pkg/main/MySvc.java", "package pkg.main;\npublic class MySvc { }")
+    addFile("pkg/main/MySvcImpl.java", "package pkg.main;\nclass MySvcImpl extends MySvc { }")
+    complete("module M { provides MyS<caret> }", "module M { provides pkg.main.MySvc <caret> }")
+    complete("module M { provides pkg.main.MySvc <caret> }", "module M { provides pkg.main.MySvc with <caret> }")
+    complete("module M { provides pkg.main.MySvc with MSI<caret> }", "module M { provides pkg.main.MySvc with pkg.main.MySvcImpl;<caret> }")
   }
 
   //<editor-fold desc="Helpers.">
