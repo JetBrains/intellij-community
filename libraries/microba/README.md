@@ -9,7 +9,6 @@ This project is on hiatus.
 For a date picker with support for JSR-310 check out [LGoodDatePicker](https://github.com/LGoodDatePicker/LGoodDatePicker)
 
 This is the new home of Microba Project. It was previously hosted on SofurceForge.net [here](http://microba.sf.net)
-There is currently a plan to resume supporting the library, so if you are still stuck writing Swing applications, rejoice! :-)
 
 Features
 ---------
