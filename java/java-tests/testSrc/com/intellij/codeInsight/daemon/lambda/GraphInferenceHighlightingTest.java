@@ -478,7 +478,7 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
-  @Bombed(month = Calendar.AUGUST, day = 30, user = "ann")
+  @Bombed(month = Calendar.SEPTEMBER, day = 30, user = "ann")
   public void testResolutionOrderForVariableCycles() throws Exception {
     doTest();
   }
