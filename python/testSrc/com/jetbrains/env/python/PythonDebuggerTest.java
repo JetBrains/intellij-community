@@ -966,6 +966,12 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         assertNull(getRunningThread());
         resume();
       }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-iron");
+      }
     });
   }
 
@@ -987,6 +993,12 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForPause();
         eval("x").hasValue("12");
         resume();
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-iron");
       }
     });
   }
