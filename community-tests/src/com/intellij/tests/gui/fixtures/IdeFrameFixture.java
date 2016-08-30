@@ -86,11 +86,12 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   private EditorFixture myEditor;
 
   @NotNull
-  public static IdeFrameFixture find(@NotNull final Robot robot, @NotNull final File projectPath, @Nullable final String projectName) {
+  public static IdeFrameFixture find(@NotNull final Robot robot, @Nullable final File projectPath, @Nullable final String projectName) {
     final GenericTypeMatcher<IdeFrameImpl> matcher = new GenericTypeMatcher<IdeFrameImpl>(IdeFrameImpl.class) {
       @Override
       protected boolean isMatching(@NotNull IdeFrameImpl frame) {
         Project project = frame.getProject();
+        if (projectPath == null && project != null) return true;
         if (project != null && toSystemIndependentName(projectPath.getPath()).equals(project.getBasePath())) {
           return projectName == null || projectName.equals(project.getName());
         }
@@ -98,7 +99,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
       }
     };
 
-    pause(new Condition("IdeFrame " + quote(projectPath.getPath()) + " to show up") {
+    pause(new Condition("IdeFrame " + (projectPath != null ? quote(projectPath.getPath()) : "") + " to show up") {
       @Override
       public boolean test() {
         Collection<IdeFrameImpl> frames = robot.finder().findAll(matcher);
@@ -107,7 +108,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     }, LONG_TIMEOUT);
 
     IdeFrameImpl ideFrame = robot.finder().find(matcher);
-    return new IdeFrameFixture(robot, ideFrame, projectPath);
+    return new IdeFrameFixture(robot, ideFrame, new File(ideFrame.getProject().getBasePath()));
   }
 
   public IdeFrameFixture(@NotNull Robot robot, @NotNull IdeFrameImpl target, @NotNull File projectPath) {

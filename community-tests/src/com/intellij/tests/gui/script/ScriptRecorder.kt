@@ -17,7 +17,11 @@ package com.intellij.tests.gui.script
 
 import com.intellij.internal.inspector.UiDropperActionExtension
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.tests.gui.framework.GuiTests
+import org.fest.swing.core.BasicRobot
+import org.fest.swing.core.Robot
 import java.awt.Component
+import java.awt.Container
 import javax.swing.*
 
 /**
@@ -59,7 +63,11 @@ class ScriptRecorder() : AnAction(), UiDropperActionExtension {
       is JButton -> write(Templates.findAndClickButton(cmp.text))
       is com.intellij.ui.components.labels.ActionLink -> write(Templates.clickActionLink(cmp.text))
       is JTextField -> {
-        write(Templates.findJTextField())
+        val label = getLabel(currentContextComponent as Container, cmp)
+        if (label == null)
+          write(Templates.findJTextField())
+        else
+          write(Templates.findJTextFieldByLabel(label.text))
       }
       is com.intellij.ui.components.JBList -> {
         val itemName = e.dataContext.getData("ItemName") as String
@@ -72,6 +80,10 @@ class ScriptRecorder() : AnAction(), UiDropperActionExtension {
   }
 
   private fun isPopupList(cmp: Component) = cmp.javaClass.name.toLowerCase().contains("listpopup")
+  private fun getLabel(container: Container, jTextField: JTextField): JLabel? {
+    val robot = BasicRobot.robotWithCurrentAwtHierarchyWithoutScreenLock()
+    return GuiTests.findBoundedLabel(container, jTextField, robot)
+  }
 
   fun checkContext(cmp: Component) {
     cmp as JComponent

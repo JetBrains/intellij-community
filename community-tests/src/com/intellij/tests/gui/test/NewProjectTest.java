@@ -13,13 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.tests.gui;
+package com.intellij.tests.gui.test;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.tests.gui.BelongsToTestGroups;
 import com.intellij.tests.gui.fixtures.ProjectViewFixture;
 import com.intellij.tests.gui.fixtures.newProjectWizard.NewProjectWizardFixture;
-import com.intellij.tests.gui.framework.*;
+import com.intellij.tests.gui.framework.GuiTestCase;
+import com.intellij.tests.gui.framework.GuiTests;
+import com.intellij.tests.gui.framework.IdeGuiTest;
+import com.intellij.tests.gui.framework.TestGroup;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -48,7 +52,6 @@ public class NewProjectTest extends GuiTestCase {
     DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
     Date date = new Date();
     String projectName = "smoke-test-project-" + dateFormat.format(date);
-
 
     findWelcomeFrame().createNewProject();
     NewProjectWizardFixture newProjectWizard = findNewProjectWizard();

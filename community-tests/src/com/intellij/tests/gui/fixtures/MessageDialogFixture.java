@@ -36,19 +36,19 @@ class MessageDialogFixture extends IdeaDialogFixture<DialogWrapper> implements M
     JDialog dialog = waitUntilFound(robot, new GenericTypeMatcher<JDialog>(JDialog.class) {
       @Override
       protected boolean isMatching(@NotNull JDialog dialog) {
-        if (!title.equals(dialog.getTitle()) || !dialog.isShowing()) {
+          if (!title.equals(dialog.getTitle()) || !dialog.isShowing()) {
+            return false;
+          }
+          DialogWrapper wrapper = getDialogWrapperFrom(dialog, DialogWrapper.class);
+          if (wrapper != null) {
+            String typeName = Messages.class.getName() + "$MessageDialog";
+            if (typeName.equals(wrapper.getClass().getName())) {
+              wrapperRef.set(wrapper);
+              return true;
+            }
+          }
           return false;
         }
-        DialogWrapper wrapper = getDialogWrapperFrom(dialog, DialogWrapper.class);
-        if (wrapper != null) {
-          String typeName = Messages.class.getName() + "$MessageDialog";
-          if (typeName.equals(wrapper.getClass().getName())) {
-            wrapperRef.set(wrapper);
-            return true;
-          }
-        }
-        return false;
-      }
     });
     return new MessageDialogFixture(robot, dialog, wrapperRef.get());
   }

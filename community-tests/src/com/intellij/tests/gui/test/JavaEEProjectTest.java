@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.tests.gui;
+package com.intellij.tests.gui.test;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.progress.ProgressManager;
@@ -21,6 +21,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.tests.gui.BelongsToTestGroups;
 import com.intellij.tests.gui.fixtures.ActionLinkFixture;
 import com.intellij.tests.gui.fixtures.ProjectViewFixture;
 import com.intellij.tests.gui.fixtures.ToolWindowFixture;

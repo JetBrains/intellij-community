@@ -387,6 +387,11 @@ public abstract class GuiTestCase {
     return IdeFrameFixture.find(myRobot, projectPath, null);
   }
 
+
+  protected IdeFrameFixture findIdeFrame(){
+    return IdeFrameFixture.find(myRobot, null, null);
+  }
+
   protected void refreshFiles() {
     execute(new GuiTask() {
       @Override

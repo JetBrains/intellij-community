@@ -1,6 +1,5 @@
 package com.intellij.tests.gui.framework
 
-import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.tests.gui.fixtures.WelcomeFrameFixture
 import com.intellij.ui.components.JBList
 import org.fest.swing.core.Robot
@@ -11,6 +10,8 @@ import java.awt.Container
 
 /**
     We presume that IDEA is already started, shows "Welcome dialog" and we could create a new project
+
+ !!UNFINISHED!!
 **/
 
 

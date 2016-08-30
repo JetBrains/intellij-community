@@ -50,6 +50,7 @@ import org.fest.swing.exception.WaitTimedOutError;
 import org.fest.swing.fixture.ContainerFixture;
 import org.fest.swing.fixture.DialogFixture;
 import org.fest.swing.fixture.JListFixture;
+import org.fest.swing.fixture.JTextComponentFixture;
 import org.fest.swing.timing.Condition;
 import org.fest.swing.timing.Pause;
 import org.fest.swing.timing.Timeout;
@@ -61,6 +62,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
 import javax.swing.*;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -612,7 +614,7 @@ public final class GuiTests {
     Collection<JLabel> labels = robot.finder().findAll(container, new GenericTypeMatcher<JLabel>(JLabel.class) {
       @Override
       protected boolean isMatching(@Nonnull JLabel label) {
-        return label.getLabelFor().equals(textField);
+        return (label.getLabelFor() != null && label.getLabelFor().equals(textField));
       }
     });
     if (labels != null && !labels.isEmpty()) return labels.iterator().next();
@@ -751,6 +753,12 @@ public final class GuiTests {
     String homeSubPath = SystemInfo.isMac ? "/Contents/Home" : "";
     return jdkBundle.getLocation().getAbsolutePath() + homeSubPath;
   }
+
+  @NotNull
+  public static JTextComponentFixture findTextField(@NotNull Robot robot, @NotNull final String labelText) {
+    return new JTextComponentFixture(robot, robot.finder().findByLabel(labelText, JTextComponent.class));
+  }
+
 
 
 }

@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.tests.gui
+package com.intellij.tests.gui.test
 
-import com.intellij.tests.gui.fixtures.ActionLinkFixture
+import com.intellij.tests.gui.BelongsToTestGroups
 import com.intellij.tests.gui.fixtures.DialogFixtures.CreateDialogFixture
 import com.intellij.tests.gui.fixtures.EditorFixture
 import com.intellij.tests.gui.fixtures.JBPopupFixture
-import com.intellij.tests.gui.framework.*
-import com.intellij.ui.components.JBList
+import com.intellij.tests.gui.framework.GuiTestCase
+import com.intellij.tests.gui.framework.TestGroup
+import com.intellij.tests.gui.framework.clickListItem
+import com.intellij.tests.gui.framework.createNewProject
 import org.junit.Ignore
 import org.junit.Test
 import java.io.File
-import javax.swing.JTextField
 import javax.swing.text.JTextComponent
 
 /**
