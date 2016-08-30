@@ -64,7 +64,7 @@ public class PydevConsoleReference extends PsiPolyVariantReferenceBase<PyReferen
     if (!myAllowRemoteResolve) {
       return RatedResolveResult.EMPTY_ARRAY;
     }
-    PyExpression pyExpression = resolveFromStub();
+    PyExpression pyExpression = resolveToDummyDescription();
     if (pyExpression == null) {
       return RatedResolveResult.EMPTY_ARRAY;
     }
@@ -84,11 +84,11 @@ public class PydevConsoleReference extends PsiPolyVariantReferenceBase<PyReferen
   }
 
   public PyElement getDocumentationElement() {
-    return resolveFromStub();
+    return resolveToDummyDescription();
   }
 
 
-  private PyExpression resolveFromStub() {
+  private PyExpression resolveToDummyDescription() {
     String qualifiedName = myElement.getText();
     if (qualifiedName == null) {
       return null;
