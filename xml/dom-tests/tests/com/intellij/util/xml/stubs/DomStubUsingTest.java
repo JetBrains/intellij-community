@@ -43,6 +43,9 @@ public class DomStubUsingTest extends DomStubTest {
     assertFalse(file.getNode().isParsed());
 
     Foo foo = fileElement.getRootElement();
+    assertEquals("foo", foo.getId().getValue());
+    assertFalse(file.getNode().isParsed());
+
     List<Bar> bars = foo.getBars();
     assertFalse(file.getNode().isParsed());
 
