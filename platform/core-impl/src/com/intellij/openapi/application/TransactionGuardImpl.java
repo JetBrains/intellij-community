@@ -17,6 +17,7 @@ package com.intellij.openapi.application;
 
 import com.google.common.base.MoreObjects;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -246,6 +247,9 @@ public class TransactionGuardImpl extends TransactionGuard {
   private static boolean areAssertionsEnabled() {
     Application app = ApplicationManager.getApplication();
     if (app.isUnitTestMode() && !ourTestingTransactions) {
+      return false;
+    }
+    if (app instanceof ApplicationEx && !((ApplicationEx)app).isLoaded()) {
       return false;
     }
     return Registry.is("ide.require.transaction.for.model.changes", false);
