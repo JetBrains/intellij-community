@@ -49,6 +49,7 @@ import java.util.List;
  */
 public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreakpointProperties> {
   public static final ExtensionPointName<XBreakpointType> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.xdebugger.breakpointType");
+  public static final SuspendPolicy DEFAULT_SUSPEND_POLICY = SuspendPolicy.ALL;
   private final @NonNls @NotNull String myId;
   private final @Nls @NotNull String myTitle;
   private final boolean mySuspendThreadSupported;
@@ -82,6 +83,10 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
    */
   public boolean isSuspendThreadSupported() {
     return mySuspendThreadSupported;
+  }
+
+  public SuspendPolicy getDefaultSuspendPolicy() {
+    return DEFAULT_SUSPEND_POLICY;
   }
 
   public enum StandardPanels {SUSPEND_POLICY, ACTIONS, DEPENDENCY}
