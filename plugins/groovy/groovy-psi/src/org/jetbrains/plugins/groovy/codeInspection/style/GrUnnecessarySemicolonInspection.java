@@ -25,6 +25,7 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import static com.intellij.psi.tree.TokenSet.andNot;
@@ -79,6 +80,7 @@ public class GrUnnecessarySemicolonInspection extends GroovySuppressableInspecti
   }
 
   private static boolean isSemicolonUnnecessary(@NotNull PsiElement semicolon) {
+    if (semicolon.getParent() instanceof GrTraditionalForClause) return false;
     PsiElement next = PsiUtil.skipLeafSet(semicolon, true, FORWARD_SET);
     if (next == null) return true;
     if (next.getNode().getElementType() == mNLS) {
