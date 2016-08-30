@@ -45,15 +45,22 @@ class HashBasedTracking extends InstanceTrackingStrategy {
     Map<ObjectReference, Optional<Integer>> result = new HashMap<>();
     ThreadReferenceProxy threadProxy = suspendContext.getThread();
     ThreadReference thread = threadProxy != null ? threadProxy.getThreadReference() : null;
-    if(thread == null) {
+    if(thread == null || hashCodeMethod == null) {
       return result;
     }
 
     for (ObjectReference ref : references) {
       Optional<Integer> hash = Optional.empty();
       try {
-        Value value = ref.invokeMethod(thread, hashCodeMethod, Collections.emptyList(), 0);
-        hash = Optional.of(((IntegerValue)value).value());
+        if(!ref.isCollected()) {
+          ref.disableCollection();
+          if(!ref.isCollected()) {
+            Value value = ref.invokeMethod(thread, hashCodeMethod, Collections.emptyList(),
+                ObjectReference.INVOKE_NONVIRTUAL);
+            hash = Optional.of(((IntegerValue)value).value());
+          }
+          ref.enableCollection();
+        }
       } catch (InvalidTypeException | ClassNotLoadedException |
           IncompatibleThreadStateException | InvocationException ignored) {
       }
