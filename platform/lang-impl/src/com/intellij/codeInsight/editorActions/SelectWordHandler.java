@@ -75,7 +75,8 @@ public class SelectWordHandler extends EditorActionHandler {
       if (range == null || !isInsideEditableInjection((EditorWindow)editor, range, project) || TextRange.from(0, editor.getDocument().getTextLength()).equals(
         new TextRange(caret.getSelectionStart(), caret.getSelectionEnd()))) {
         editor = ((EditorWindow)editor).getDelegate();
-        range = selectWord(((InjectedCaret)caret).getDelegate(), project);
+        caret = ((InjectedCaret)caret).getDelegate();
+        range = selectWord(caret, project);
       }
     }
     if (range == null) {
