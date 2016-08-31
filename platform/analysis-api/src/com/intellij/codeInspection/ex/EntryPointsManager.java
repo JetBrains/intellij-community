@@ -59,4 +59,6 @@ public abstract class EntryPointsManager implements Disposable {
   public abstract JButton createConfigureAnnotationsBtn();
 
   public abstract boolean isEntryPoint(@NotNull PsiElement element);
+
+  public abstract boolean isImplicitWrite(PsiElement element);
 }

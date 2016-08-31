@@ -74,6 +74,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     return annos;
   }
   public JDOMExternalizableStringList ADDITIONAL_ANNOTATIONS = new JDOMExternalizableStringList();
+  protected List<String> myWriteAnnotations = new ArrayList<>();
   private final Map<String, SmartRefElementPointer> myPersistentEntryPoints;
   private final LinkedHashSet<ClassPattern> myPatterns = new LinkedHashSet<>();
   private final Set<RefElement> myTemporaryEntryPoints;
@@ -148,6 +149,17 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
       XmlSerializer.deserializeInto(classPattern, pattern);
       getPatterns().add(classPattern);
     }
+
+    myWriteAnnotations.clear();
+    final Element writeAnnotations = element.getChild("writeAnnotations");
+    if (writeAnnotations != null) {
+      for (Element annoElement : writeAnnotations.getChildren("writeAnnotation")) {
+        final String value = annoElement.getAttributeValue("name");
+        if (value != null) {
+          myWriteAnnotations.add(value);
+        }
+      }
+    }
   }
 
   @Override
@@ -159,6 +171,14 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
       for (ClassPattern pattern : getPatterns()) {
         element.addContent(XmlSerializer.serialize(pattern, new SkipDefaultsSerializationFilter()));
       }
+    }
+
+    if (!myWriteAnnotations.isEmpty()) {
+      final Element writeAnnotations = new Element("writeAnnotations");
+      for (String writeAnnotation : myWriteAnnotations) {
+        writeAnnotations.addContent(new Element("writeAnnotation").setAttribute("name", writeAnnotation));
+      }
+      element.addContent(writeAnnotations);
     }
     return element;
   }
@@ -427,6 +447,11 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   }
 
   @Override
+  public boolean isImplicitWrite(PsiElement element) {
+    return element instanceof PsiField && AnnotationUtil.isAnnotated((PsiModifierListOwner)element, myWriteAnnotations);
+  }
+
+  @Override
   public boolean isEntryPoint(@NotNull PsiElement element) {
     if (!(element instanceof PsiModifierListOwner)) return false;
     PsiModifierListOwner owner = (PsiModifierListOwner)element;
@@ -573,5 +598,12 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
         return null;
       }
     }
+  }
+
+  public static class AnnotationPattern {
+    public boolean readWriteAccess = true;
+    public String pattern = "";
+
+
   }
 }
