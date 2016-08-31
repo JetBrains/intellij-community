@@ -52,6 +52,7 @@ public class TerminalOptionsProvider implements PersistentStateComponent<Termina
     myState.myCopyOnSelection = state.myCopyOnSelection;
     myState.myPasteOnMiddleMouseButton = state.myPasteOnMiddleMouseButton;
     myState.myOverrideIdeShortcuts = state.myOverrideIdeShortcuts;
+    myState.myShellIntegration = state.myShellIntegration;
   }
 
   public boolean closeSessionOnLogout() {
@@ -78,6 +79,14 @@ public class TerminalOptionsProvider implements PersistentStateComponent<Termina
     myState.myOverrideIdeShortcuts = overrideIdeShortcuts;
   }
 
+  public boolean shellIntegration() {
+    return myState.myShellIntegration;
+  }
+
+  public void setShellIntegration(boolean shellIntegration) {
+    myState.myShellIntegration = shellIntegration;
+  }
+
   public static class State {
     public String myShellPath = getDefaultShellPath();
     public String myTabName = "Local";
@@ -87,6 +96,7 @@ public class TerminalOptionsProvider implements PersistentStateComponent<Termina
     public boolean myCopyOnSelection = true;
     public boolean myPasteOnMiddleMouseButton = true;
     public boolean myOverrideIdeShortcuts = true;
+    public boolean myShellIntegration = true;
   }
 
   public String getShellPath() {
@@ -95,11 +105,11 @@ public class TerminalOptionsProvider implements PersistentStateComponent<Termina
 
   private static String getDefaultShellPath() {
     String shell = System.getenv("SHELL");
-    
+
     if (shell != null && new File(shell).canExecute()) {
       return shell;
     }
-    
+
     if (SystemInfo.isUnix) {
       return "/bin/bash";
     }

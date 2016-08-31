@@ -173,7 +173,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         String rcFilePath = findRCFile(shellName);
 
 
-        if (rcFilePath != null && (shellName.equals("bash") || shellName.equals("sh"))) {
+        if (rcFilePath != null &&
+            TerminalOptionsProvider.getInstance().shellIntegration() &&
+            (shellName.equals("bash") || shellName.equals("sh"))) {
           result.add("--rcfile");
           result.add(rcFilePath);
         }
