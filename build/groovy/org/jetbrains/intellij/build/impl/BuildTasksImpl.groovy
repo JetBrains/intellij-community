@@ -84,7 +84,7 @@ class BuildTasksImpl extends BuildTasks {
 
   @Override
   void buildSearchableOptions(String targetModuleName, List<String> modulesToIndex, List<String> pathsToLicenses) {
-    buildSearchableOptions(new File(buildContext.projectBuilder.moduleOutput(buildContext.findModule(targetModuleName))), modulesToIndex, pathsToLicenses)
+    buildSearchableOptions(new File(buildContext.projectBuilder.moduleOutput(buildContext.findRequiredModule(targetModuleName))), modulesToIndex, pathsToLicenses)
   }
 
 //todo[nik] do we need 'cp' and 'jvmArgs' parameters?
