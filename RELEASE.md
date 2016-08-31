@@ -162,6 +162,9 @@ betas.)
     \ No newline at end of file
     ```
 
+--------------------------------------------------------------------------------
+For final build (post RC) :
+
 10. Ensure that the default Update channel (for new users downloading this build)
     is set to stable, not something else.
 
