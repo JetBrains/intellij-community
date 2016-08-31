@@ -62,9 +62,10 @@ import org.jetbrains.annotations.Nullable;
  *
  * Q: I've got <b>"Write access is allowed from model transactions only"</b>
  *    or <b>"Cannot run synchronous submitTransactionAndWait"</b> exception, what do I do?<br/>
- * A: You're likely inside an "invokeLater"-like call. If this code is showing a dialog that requires model consistency during its lifetime,
+ * A: You're likely inside an "invokeLater" or "invokeLaterIfNeeded"-like call. If this code is showing a dialog that requires model consistency during its lifetime,
  * consider replacing invokeLater with {@link #submitTransaction(Disposable, Runnable)} or
- * {@link #submitTransaction(Disposable, TransactionId, Runnable)}.
+ * {@link #submitTransaction(Disposable, TransactionId, Runnable)}.<br/>
+ * If you're inside an "invokeAndWaitIfNeeded" call, use {@link #submitTransactionAndWait(Runnable)}.<br/>
  * Otherwise, use {@link Application#invokeLater(Runnable, ModalityState)}
  * and pass a modality state that appeared in a write-safe context (e.g. a background progress started in an action).
  * Most likely {@link ModalityState#defaultModalityState()} will do.
