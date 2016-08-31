@@ -39,7 +39,7 @@ public class CreateAction extends PatchAction {
     ValidationResult result = doValidateAccess(toFile, ValidationResult.Action.CREATE);
     if (result != null) return result;
 
-    if (toFile.exists() && Runner.isPlatformCaseSensitive()) {
+    if (toFile.exists()) {
       ValidationResult.Option[] options = myPatch.isStrict()
                                           ? new ValidationResult.Option[]{ValidationResult.Option.REPLACE}
                                           : new ValidationResult.Option[]{ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP};
