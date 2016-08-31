@@ -27,6 +27,13 @@ else
    fi
 fi
 
+
+# mappings for Ctrl-left-arrow and Ctrl-right-arrow for word moving
+bind '"\e\e[C":forward-word'
+bind '"\e\e[D": backward-word'
+bind '"\e\O[C":forward-word'
+bind '"\e\O[D": backward-word'
+
 function generate_command_executed_sequence() {
    printf '\e\7'
 }
