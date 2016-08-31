@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,16 @@
  */
 package com.maddyhome.idea.copyright.ui;
 
+import com.intellij.copyright.CopyrightManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.scopeChooser.PackageSetChooserCombo;
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.packageDependencies.DefaultScopesProvider;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -34,9 +35,7 @@ import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.Function;
 import com.intellij.util.ui.*;
-import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +57,7 @@ public class ProjectSettingsPanel {
 
   private final TableView<ScopeSetting> myScopeMappingTable;
   private final ListTableModel<ScopeSetting> myScopeMappingModel;
-  private final JComboBox myProfilesComboBox = new JComboBox();
+  private final JComboBox myProfilesComboBox = new ComboBox();
 
   private final HyperlinkLabel myScopesLink = new HyperlinkLabel();
 
@@ -135,7 +134,7 @@ public class ProjectSettingsPanel {
     ElementProducer<ScopeSetting> producer = new ElementProducer<ScopeSetting>() {
       @Override
       public ScopeSetting createElement() {
-        return new ScopeSetting(DefaultScopesProvider.getAllScope(), myProfilesModel.getAllProfiles().values().iterator().next());
+        return new ScopeSetting(CustomScopesProviderEx.getAllScope(), myProfilesModel.getAllProfiles().values().iterator().next());
       }
 
       @Override
@@ -158,7 +157,7 @@ public class ProjectSettingsPanel {
       if (defaultCopyright == null) return true;
       if (!defaultCopyright.equals(selected)) return true;
     }
-    final Map<String, String> map = myManager.getCopyrightsMapping();
+    final Map<String, String> map = myManager.getScopeToCopyright();
     if (map.size() != myScopeMappingModel.getItems().size()) return true;
     final Iterator<String> iterator = map.keySet().iterator();
     for (ScopeSetting setting : myScopeMappingModel.getItems()) {
@@ -174,22 +173,17 @@ public class ProjectSettingsPanel {
   }
 
   public void apply() {
-    Collection<CopyrightProfile> profiles = new ArrayList<>(myManager.getCopyrights());
-    myManager.clearCopyrights();
-    for (CopyrightProfile profile : profiles) {
-      myManager.addCopyright(profile);
-    }
-    final List<ScopeSetting> settingList = myScopeMappingModel.getItems();
-    for (ScopeSetting scopeSetting : settingList) {
+    myManager.setDefaultCopyright((CopyrightProfile)myProfilesComboBox.getSelectedItem());
+    myManager.clearMappings();
+    for (ScopeSetting scopeSetting : myScopeMappingModel.getItems()) {
       myManager.mapCopyright(scopeSetting.getScope().getName(), scopeSetting.getProfileName());
     }
-    myManager.setDefaultCopyright((CopyrightProfile)myProfilesComboBox.getSelectedItem());
   }
 
   public void reset() {
     myProfilesComboBox.setSelectedItem(myManager.getDefaultCopyright());
     final List<ScopeSetting> mappings = new ArrayList<>();
-    final Map<String, String> copyrights = myManager.getCopyrightsMapping();
+    final Map<String, String> copyrights = myManager.getScopeToCopyright();
     final DependencyValidationManager manager = DependencyValidationManager.getInstance(myProject);
     final Set<String> scopes2Unmap = new HashSet<>();
     for (final String scopeName : copyrights.keySet()) {
@@ -206,7 +200,6 @@ public class ProjectSettingsPanel {
     }
     myScopeMappingModel.setItems(mappings);
   }
-
 
   private class ScopeSetting {
     private NamedScope myScope;

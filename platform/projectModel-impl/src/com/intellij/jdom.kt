@@ -82,6 +82,8 @@ fun Element.element(name: String): Element {
   return element
 }
 
+fun Element.attribute(name: String, value: String?): Element = setAttribute(name, value)
+
 fun <T> Element.remove(name: String, transform: (child: Element) -> T): List<T> {
   val result = SmartList<T>()
   val groupIterator = getContent(ElementFilter(name)).iterator()

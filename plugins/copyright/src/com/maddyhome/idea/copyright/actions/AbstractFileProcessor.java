@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.maddyhome.idea.copyright.actions;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.copyright.CopyrightManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -30,13 +31,12 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
-import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -51,38 +51,10 @@ public abstract class AbstractFileProcessor {
   private PsiDirectory directory = null;
   private PsiFile file = null;
   private PsiFile[] files = null;
-  private boolean subdirs = false;
   private final String message;
   private final String title;
 
   protected abstract Runnable preprocessFile(PsiFile file, boolean allowReplacement) throws IncorrectOperationException;
-
-  protected AbstractFileProcessor(Project project, String title, String message) {
-    myProject = project;
-    myModule = null;
-    directory = null;
-    subdirs = true;
-    this.title = title;
-    this.message = message;
-  }
-
-  protected AbstractFileProcessor(Project project, Module module, String title, String message) {
-    myProject = project;
-    myModule = module;
-    directory = null;
-    subdirs = true;
-    this.title = title;
-    this.message = message;
-  }
-
-  protected AbstractFileProcessor(Project project, PsiDirectory dir, boolean subdirs, String title, String message) {
-    myProject = project;
-    myModule = null;
-    directory = dir;
-    this.subdirs = subdirs;
-    this.message = message;
-    this.title = title;
-  }
 
   protected AbstractFileProcessor(Project project, PsiFile file, String title, String message) {
     myProject = project;
@@ -92,7 +64,7 @@ public abstract class AbstractFileProcessor {
     this.title = title;
   }
 
-  protected AbstractFileProcessor(Project project, PsiFile[] files, String title, String message, Runnable runnable) {
+  protected AbstractFileProcessor(Project project, PsiFile[] files, String title, String message) {
     myProject = project;
     myModule = null;
     this.files = files;
@@ -102,7 +74,7 @@ public abstract class AbstractFileProcessor {
 
   public void run() {
     if (directory != null) {
-      process(directory, subdirs);
+      process(directory, false);
     }
     else if (files != null) {
       process(files);
@@ -275,7 +247,7 @@ public abstract class AbstractFileProcessor {
     for (PsiFile psiFile : files) {
       vFiles.add(psiFile.getVirtualFile());
     }
-    if (!ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(VfsUtil.toVirtualFileArray(vFiles))
+    if (!ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(VfsUtilCore.toVirtualFileArray(vFiles))
       .hasReadonlyFiles()) {
       if (!files.isEmpty()) {
         final Runnable[] resultRunnable = new Runnable[1];
@@ -296,15 +268,12 @@ public abstract class AbstractFileProcessor {
       if (opts != null && FileTypeUtil.isSupportedFile(local)) {
         files.add(local);
       }
-
     }
 
     if (subdirs) {
-      PsiDirectory[] dirs = directory.getSubdirectories();
-      for (PsiDirectory dir : dirs) {
-        findFiles(files, dir, subdirs);
+      for (PsiDirectory dir : directory.getSubdirectories()) {
+        findFiles(files, dir, true);
       }
-
     }
   }
 
