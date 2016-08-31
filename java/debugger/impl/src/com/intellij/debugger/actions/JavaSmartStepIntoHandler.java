@@ -202,27 +202,41 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         }
 
         @Override
+        public void visitIfStatement(PsiIfStatement statement) {
+          visitConditional(statement.getCondition(), statement.getThenBranch(), statement.getElseBranch());
+        }
+
+        @Override
         public void visitConditionalExpression(PsiConditionalExpression expression) {
-          PsiExpression condition = expression.getCondition();
-          condition.accept(this);
-          ThreeState conditionRes = ThreeState.UNSURE;
-          if (!DebuggerUtils.hasSideEffects(condition)) {
+          visitConditional(expression.getCondition(), expression.getThenExpression(), expression.getElseExpression());
+        }
+
+        private void visitConditional(@Nullable PsiElement condition,
+                                      @Nullable PsiElement thenBranch,
+                                      @Nullable PsiElement elseBranch) {
+          if (condition != null) {
+            condition.accept(this);
+          }
+          ThreeState conditionRes = evaluateCondition(condition);
+          if (conditionRes != ThreeState.NO && thenBranch != null) {
+            thenBranch.accept(this);
+          }
+          if (conditionRes != ThreeState.YES && elseBranch != null) {
+            elseBranch.accept(this);
+          }
+        }
+
+        private ThreeState evaluateCondition(@Nullable PsiElement condition) {
+          if (condition != null && !DebuggerUtils.hasSideEffects(condition)) {
             try {
               ExpressionEvaluator evaluator = EvaluatorBuilderImpl.getInstance().build(condition, position);
-              conditionRes = ThreeState.fromBoolean(DebuggerUtilsEx.evaluateBoolean(evaluator, debuggerContext.createEvaluationContext()));
+              return ThreeState.fromBoolean(DebuggerUtilsEx.evaluateBoolean(evaluator, debuggerContext.createEvaluationContext()));
             }
             catch (EvaluateException e) {
               LOG.info(e);
             }
           }
-          PsiExpression thenExpression = expression.getThenExpression();
-          if (conditionRes != ThreeState.NO && thenExpression != null) {
-            thenExpression.accept(this);
-          }
-          PsiExpression elseExpression = expression.getElseExpression();
-          if (conditionRes != ThreeState.YES && elseExpression != null) {
-            elseExpression.accept(this);
-          }
+          return ThreeState.UNSURE;
         }
 
         @Override
