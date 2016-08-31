@@ -305,18 +305,13 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
   @Override
   public void removeNotify() {
     super.removeNotify();
-    if (myEditorField != null) {
-      releaseEditor();
-      myEditorField = null;
-    }
+    releaseEditor();
+    myEditorField = null;
   }
 
   private void releaseEditor() {
     if (myEditorField != null) {
-      final Editor editor = myEditorField.getEditor();
-      if (editor != null) {
-        myEditorField.releaseEditor(editor);
-      }
+      myEditorField.releaseEditorLater();
     }
   }
 
