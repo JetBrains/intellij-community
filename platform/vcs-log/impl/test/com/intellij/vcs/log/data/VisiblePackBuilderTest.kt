@@ -248,6 +248,10 @@ class VisiblePackBuilderTest {
   }
 
   class EmptyIndex : VcsLogIndex {
+    override fun isIndexed(root: VirtualFile): Boolean {
+      return false
+    }
+
     override fun isIndexed(commit: Int): Boolean {
       return false
     }

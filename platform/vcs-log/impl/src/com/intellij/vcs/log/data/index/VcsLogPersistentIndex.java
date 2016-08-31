@@ -53,6 +53,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.stream.IntStream;
 
 public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
@@ -70,6 +72,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   @Nullable private final VcsLogMessagesTrigramIndex myTrigramIndex;
   @Nullable private final VcsLogUserIndex myUserIndex;
   @Nullable private final VcsLogPathsIndex myPathsIndex;
+
+  @NotNull private final Map<VirtualFile, AtomicInteger> myNumberOfTasks = ContainerUtil.newHashMap();
 
   @NotNull private Map<VirtualFile, TIntHashSet> myCommitsToIndex = ContainerUtil.newHashMap();
 
@@ -92,6 +96,10 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     myTrigramIndex = createIndex(() -> new VcsLogMessagesTrigramIndex(logId, this));
     myUserIndex = createIndex(() -> new VcsLogUserIndex(logId, myUserRegistry, this));
     myPathsIndex = createIndex(() -> new VcsLogPathsIndex(logId, myRoots, this));
+
+    for (VirtualFile root : myRoots) {
+      myNumberOfTasks.put(root, new AtomicInteger());
+    }
 
     Disposer.register(disposableParent, this);
   }
@@ -124,6 +132,10 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   public synchronized void scheduleIndex(boolean full) {
     if (myCommitsToIndex.isEmpty()) return;
     Map<VirtualFile, TIntHashSet> commitsToIndex = myCommitsToIndex;
+
+    for (VirtualFile root : commitsToIndex.keySet()) {
+      myNumberOfTasks.get(root).incrementAndGet();
+    }
     myCommitsToIndex = ContainerUtil.newHashMap();
 
     Task.Backgroundable task = new MyIndexingTask(commitsToIndex, full);
@@ -178,6 +190,11 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       myFatalErrorsConsumer.consume(e);
     }
     return false;
+  }
+
+  @Override
+  public synchronized boolean isIndexed(@NotNull VirtualFile root) {
+    return !myCommitsToIndex.containsKey(root) && myNumberOfTasks.get(root).get() == 0;
   }
 
   @Override
@@ -362,11 +379,16 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       LOG.info("Indexing " + counter.allCommits + " commits");
 
       for (VirtualFile root : myCommits.keySet()) {
-        if (myFull) {
-          indexAll(root, myCommits.get(root), counter);
+        try {
+          if (myFull) {
+            indexAll(root, myCommits.get(root), counter);
+          }
+          else {
+            indexOneByOne(root, myCommits.get(root), counter);
+          }
         }
-        else {
-          indexOneByOne(root, myCommits.get(root), counter);
+        finally {
+          myNumberOfTasks.get(root).decrementAndGet();
         }
       }
 

@@ -27,6 +27,8 @@ public interface VcsLogIndex {
 
   boolean isIndexed(int commit);
 
+  boolean isIndexed(@NotNull VirtualFile root);
+
   void markForIndexing(int commit, @NotNull VirtualFile root);
 
   boolean canFilter(@NotNull List<VcsLogDetailsFilter> filters);
