@@ -79,6 +79,8 @@ class CopyrightManager(private val project: Project, schemeManagerFactory: Schem
   val scopeToCopyright = LinkedHashMap<String, String>()
   val options = Options()
 
+  private val schemeManagerIprProvider = if (project.isDirectoryBased) null else SchemeManagerIprProvider()
+
   val schemeManager = schemeManagerFactory.create("copyright", object : LazySchemeProcessor<SchemeWrapper<CopyrightProfile>, SchemeWrapper<CopyrightProfile>>() {
     override fun createScheme(dataHolder: SchemeDataHolder<SchemeWrapper<CopyrightProfile>>,
                               name: String,
@@ -89,7 +91,7 @@ class CopyrightManager(private val project: Project, schemeManagerFactory: Schem
     override fun getState(scheme: SchemeWrapper<CopyrightProfile>) = scheme.schemeState
 
     override fun isSchemeFile(name: CharSequence) = !StringUtil.equals(name, "profiles_settings.xml")
-  }, isUseOldFileNameSanitize = true)
+  }, isUseOldFileNameSanitize = true, streamProvider = schemeManagerIprProvider)
 
   init {
     val app = ApplicationManager.getApplication()
@@ -113,6 +115,8 @@ class CopyrightManager(private val project: Project, schemeManagerFactory: Schem
   override fun getState(): Element? {
     val result = Element("settings")
     try {
+      schemeManagerIprProvider?.writeState(result)
+
       if (!scopeToCopyright.isEmpty()) {
         val map = Element(MODULE2COPYRIGHT)
         for ((scopeName, profileName) in scopeToCopyright) {
@@ -138,7 +142,17 @@ class CopyrightManager(private val project: Project, schemeManagerFactory: Schem
   }
 
   override fun loadState(state: Element) {
-    val data = state.getChild("settings")
+    val data: Element? = state.getChild("settings")
+
+    schemeManagerIprProvider?.let {
+      it.load(data)
+      schemeManager.reload()
+    }
+
+    if (data == null) {
+      return
+    }
+
     val moduleToCopyright = data.getChild(MODULE2COPYRIGHT)
     if (moduleToCopyright != null) {
       for (element in moduleToCopyright.getChildren(ELEMENT)) {
