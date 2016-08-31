@@ -200,7 +200,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   private static boolean loginOrInteractive(List<String> command) {
-    return command.contains("-i") || command.contains("--login");
+    return command.contains("-i") || command.contains("--login") || command.contains("-l");
   }
 
   private static class PtyProcessHandler extends ProcessHandler implements TaskExecutor {
