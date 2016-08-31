@@ -7,6 +7,7 @@ includeTool << JpsGantTool
 target("default": "Default") {
   String home = new File(IdeaProjectLoader.guessHome(this)).parentFile.absolutePath
   BuildUtils.addToClassPath("$home/build/groovy", ant)
+  BuildUtils.addToClassPath("$home/community/python/build/groovy", ant)
   BuildUtils.addToClassPath("$home/community/python/educational-python/build/groovy", ant)
   Class.forName("org.jetbrains.intellij.build.pycharm.edu.PyCharmEduBuilder").constructors[0].newInstance(home, binding).build()
 }

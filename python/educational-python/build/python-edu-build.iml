@@ -11,5 +11,6 @@
     <orderEntry type="module" module-name="jps-standalone-builder" />
     <orderEntry type="module" module-name="build" />
     <orderEntry type="module" module-name="buildScripts" />
+    <orderEntry type="module" module-name="python-community-build" />
   </component>
 </module>

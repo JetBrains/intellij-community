@@ -78,7 +78,7 @@ abstract class WindowsDistributionCustomizer {
   /**
    * The returned name will be used to create links on Desktop
    */
-  String fullNameIncludingEditionAndVendor(ApplicationInfoProperties applicationInfo) { applicationInfo.shortCompanyName + " " + applicationInfo.productName }
+  String fullNameIncludingEditionAndVendor(ApplicationInfoProperties applicationInfo) { applicationInfo.shortCompanyName + " " + fullNameIncludingEdition(applicationInfo) }
 
   String uninstallFeedbackPageUrl(ApplicationInfoProperties applicationInfo) {
     return null
