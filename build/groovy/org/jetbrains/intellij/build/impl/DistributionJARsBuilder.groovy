@@ -79,6 +79,7 @@ class DistributionJARsBuilder {
       exclude(name: "tips/**")
       exclude(name: "tips")
       exclude(name: "search/**")
+      exclude(name: "**/icon-robots.txt")
     }
 
     def productLayout = buildContext.productProperties.productLayout
