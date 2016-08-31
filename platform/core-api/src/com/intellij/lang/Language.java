@@ -118,8 +118,8 @@ public abstract class Language extends UserDataHolderBase {
    * @return instance of the <code>klass</code> language registered if any.
    */
   public static <T extends Language> T findInstance(@NotNull Class<T> klass) {
-    //noinspection unchecked
-    return (T)ourRegisteredLanguages.get(klass);
+    @SuppressWarnings("unchecked") T t = (T)ourRegisteredLanguages.get(klass);
+    return t;
   }
 
   /**
