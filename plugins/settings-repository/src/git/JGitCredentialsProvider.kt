@@ -37,7 +37,7 @@ class JGitCredentialsProvider(private val credentialsStore: Lazy<IcsCredentialsS
   private val credentialsFromGit = CacheBuilder.newBuilder()
       .expireAfterAccess(5, TimeUnit.MINUTES)
       .build(object : CacheLoader<URIish, Credentials>() {
-        override fun load(it: URIish) = getCredentialsUsingGit(it, repository) ?: Credentials(null, null)
+        override fun load(it: URIish) = getCredentialsUsingGit(it, repository) ?: Credentials(null)
       })
 
   override fun isInteractive() = true
@@ -120,7 +120,7 @@ class JGitCredentialsProvider(private val credentialsStore: Lazy<IcsCredentialsS
         passwordItem.value = credentials?.password?.toCharArray()
       }
       else {
-        (passwordItem as CredentialItem.StringType).value = credentials?.password
+        (passwordItem as CredentialItem.StringType).value = credentials?.password?.toString()
       }
     }
 

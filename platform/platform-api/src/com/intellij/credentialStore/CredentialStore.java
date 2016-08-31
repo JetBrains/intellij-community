@@ -25,7 +25,7 @@ public interface CredentialStore {
   @Nullable
   default String getPassword(@NotNull CredentialAttributes attributes) {
     Credentials credentials = get(attributes);
-    return credentials == null ? null : credentials.getPassword();
+    return credentials == null ? null : credentials.getPasswordAsString();
   }
 
   void set(@NotNull CredentialAttributes attributes, @Nullable Credentials credentials);

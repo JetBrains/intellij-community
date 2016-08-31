@@ -23,57 +23,57 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author ven
  */
-public class ResolveClassTest extends GroovyResolveTestCase {
+class ResolveClassTest extends GroovyResolveTestCase {
   @Override
   protected String getBasePath() {
     return TestUtils.testDataPath + "resolve/class/";
   }
 
-  public void testInnerJavaClass() throws Exception {
+  void testInnerJavaClass() throws Exception {
     doTest("B.groovy");
   }
 
-  public void testSamePackage() throws Exception {
+  void testSamePackage() throws Exception {
     doTest("B.groovy");
   }
 
-  public void testImplicitImport() throws Exception {
+  void testImplicitImport() throws Exception {
     doTest("B.groovy");
   }
 
-  public void testOnDemandImport() throws Exception {
+  void testOnDemandImport() throws Exception {
     doTest("B.groovy");
   }
 
-  public void testSimpleImport() throws Exception {
+  void testSimpleImport() throws Exception {
     doTest("B.groovy");
   }
 
-  public void testQualifiedName() throws Exception {
+  void testQualifiedName() throws Exception {
     doTest("B.groovy");
   }
 
-  public void testImportAlias() throws Exception {
+  void testImportAlias() throws Exception {
     doTest("B.groovy");
   }
 
-  public void testQualifiedRefExpr() throws Exception {
+  void testQualifiedRefExpr() throws Exception {
     doTest("A.groovy");
   }
 
-  public void testGrvy102() throws Exception {
+  void testGrvy102() throws Exception {
     doTest("Test.groovy");
   }
 
-  public void testClassVsProperty() throws Exception {
+  void testClassVsProperty() throws Exception {
     doTest("Test.groovy");
   }
 
-  public void testGrvy901() throws Exception {
+  void testGrvy901() throws Exception {
     doTest("Test.groovy");
   }
 
-  public void testGrvy641() throws Exception {
+  void testGrvy641() throws Exception {
     PsiReference ref = configureByFile("grvy641/A.groovy")
     PsiClass resolved = assertInstanceOf(ref.resolve(), PsiClass)
     if (!"List".equals(resolved.qualifiedName)) {
@@ -83,78 +83,84 @@ public class ResolveClassTest extends GroovyResolveTestCase {
     }
   }
 
-  public void testGrvy1139() throws Exception {
+  void testGrvy1139() throws Exception {
     PsiReference ref = configureByFile("grvy1139/p/User.groovy");
     assertNull(ref.resolve());
   }
 
-  public void testGrvy1420() throws Exception {
+  void testGrvy1420() throws Exception {
     PsiReference ref = configureByFile("grvy1420/Test.groovy");
     assertNull(ref.resolve());
   }
 
-  public void testGrvy1420_1() throws Exception {
+  void testGrvy1420_1() throws Exception {
     PsiReference ref = configureByFile("grvy1420_1/Test.groovy");
     assertNull(ref.resolve());
   }
 
-  public void testGrvy1461() throws Exception {
+  void testGrvy1461() throws Exception {
     PsiReference ref = configureByFile("grvy1461/AssertionUtils.groovy");
     assertNotNull(ref.resolve());
   }
 
-  public void _testImportStaticFromJavaUtil() throws Throwable { doTest(); }
-  public void testInnerEnum() throws Throwable { doTest(); }
-  public void testInnerClass()throws Throwable {doTest();}
-  public void testInnerClassInSubclass()throws Throwable {doTest();}
-  public void testInnerClassUsageInsideOuterSubclass() throws Throwable { doTest() }
-  public void testInnerClassOfInterface() { assertNull(resolve()) }
-  public void testInnerClassOfClassInSubClass1() { assertNull(resolve()) }
+  void _testImportStaticFromJavaUtil() throws Throwable { doTest(); }
 
-  public void testAliasedImportVsImplicitImport() throws Exception {
+  void testInnerEnum() throws Throwable { doTest(); }
+
+  void testInnerClass() throws Throwable { doTest(); }
+
+  void testInnerClassInSubclass() throws Throwable { doTest(); }
+
+  void testInnerClassUsageInsideOuterSubclass() throws Throwable { doTest() }
+
+  void testInnerClassOfInterface() { assertNull(resolve()) }
+
+  void testInnerClassOfClassInSubClass1() { assertNull(resolve()) }
+
+  void testAliasedImportVsImplicitImport() throws Exception {
     PsiReference ref = configureByFile("aliasedImportVsImplicitImport/Test.groovy");
     final PsiElement resolved = ref.resolve();
     assertInstanceOf(resolved, PsiClass.class);
     assertEquals("java.util.ArrayList", ((PsiClass)resolved).qualifiedName);
   }
 
-  public void testNotQualifiedStaticImport() throws Exception {
+  void testNotQualifiedStaticImport() throws Exception {
     myFixture.addFileToProject("foo/A.groovy", "package foo \nclass Foo{ }");
     PsiReference ref = configureByFile("notQualifiedStaticImport/Test.groovy");
     final PsiElement resolved = ref.resolve();
     assertInstanceOf(resolved, PsiClass.class);
   }
 
-  public void testEnumVsProperty() throws Exception {
+  void testEnumVsProperty() throws Exception {
     PsiReference ref = configureByFile("enumVsProperty/Test.groovy");
     final PsiElement resolved = ref.resolve();
     assertInstanceOf(resolved, PsiField.class);
   }
 
-  public void testTwoStaticImports() throws Exception {
+  void testTwoStaticImports() throws Exception {
     final PsiReference ref = configureByFile("twoStaticImports/Test.groovy");
     final PsiElement resolved = ref.resolve();
     assertNotNull(resolved);
   }
 
-  public void testAliasedImportedClassFromDefaultPackage() throws Exception {
+  void testAliasedImportedClassFromDefaultPackage() throws Exception {
     myFixture.addClass("class Foo{}");
     final PsiReference ref = configureByFile("aliasedImportedClassFromDefaultPackage/Test.groovy");
     final PsiElement resolved = ref.resolve();
     assertNotNull(resolved);
   }
 
-  public void testQualifiedRefToInnerClass() {
+  void testQualifiedRefToInnerClass() {
     myFixture.addFileToProject('A.groovy', 'class A {class Bb {}}')
     final PsiReference ref = configureByText('b.groovy', 'A.B<ref>b b = new A.Bb()')
     assertNotNull(ref.resolve())
   }
 
-  public void testClassVsPropertyGetter() {
+  void testClassVsPropertyGetter() {
     doTest();
   }
 
-  public void testPackageVsProperty1() {
+  void testPackageVsProperty1() {
     myFixture.addFileToProject("foo/Foo.groovy", """package foo
 class Referenced {
   static def foo = new X()
@@ -171,7 +177,7 @@ class X {
     assertInstanceOf resolved, GrAccessorMethod;
   }
 
-  public void testPackageVsProperty2() {
+  void testPackageVsProperty2() {
     myFixture.addFileToProject("foo/Foo.groovy", """package foo
 class Referenced {
   static def foo = new X()
@@ -188,11 +194,11 @@ class X {
     assertInstanceOf resolved, GrAccessorMethod;
   }
 
-  public void testLowerCaseClassName() {
+  void testLowerCaseClassName() {
     doTest()
   }
 
-  public void testInnerClassIsResolvedInAnonymous() {
+  void testInnerClassIsResolvedInAnonymous() {
     myFixture.addFileToProject "/p/Super.groovy", """
 package p
 
@@ -205,7 +211,7 @@ interface Super {
     assertInstanceOf resolve("A.groovy"), PsiClass;
   }
 
-  public void testPreferImportsToInheritance() {
+  void testPreferImportsToInheritance() {
     myFixture.addClass("package java.util; public class MyMap { static interface Entry<K,V> {} } ")
     myFixture.addClass("package java.util; public class MainMap { static interface Entry<K,V> {} } ")
 

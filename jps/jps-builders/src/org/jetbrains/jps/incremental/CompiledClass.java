@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * In-memory representation of JVM *.class file produced by a compiler.
@@ -84,7 +85,7 @@ public class CompiledClass extends UserDataHolderBase{
   }
 
   @NotNull
-  public Collection<String> getSourceFilesPaths() {
+  public List<String> getSourceFilesPaths() {
     return ContainerUtil.map(mySourceFiles, new Function<File, String>() {
       @Override
       public String fun(File file) {

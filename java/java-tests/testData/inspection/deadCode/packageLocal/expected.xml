@@ -4,7 +4,7 @@
     <file>A.java</file>
     <line>3</line>
     <problem_class>unused declaration</problem_class>
-    <description>Class is not instantiated.</description>
+    <description>Class has one instantiation but it is not reachable from entry points.</description>
   </problem>
   <problem>
     <file>A.java</file>

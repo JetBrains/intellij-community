@@ -53,6 +53,11 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -86,7 +91,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.*;
@@ -605,11 +609,34 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private void checkVirtualMachineVersion(VirtualMachine vm) {
     final String version = vm.version();
     if ("1.4.0".equals(version)) {
-      SwingUtilities.invokeLater(() -> Messages.showMessageDialog(
-        getProject(),
+      DebuggerInvocationUtil.swingInvokeLater(myProject, () -> Messages.showMessageDialog(
+        myProject,
         DebuggerBundle.message("warning.jdk140.unstable"), DebuggerBundle.message("title.jdk140.unstable"), Messages.getWarningIcon()
       ));
     }
+    Sdk projectSdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
+    if (getSession().getAlternativeJre() == null && !versionMatch(projectSdk, version)) {
+      for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
+        if (versionMatch(sdk, version)) {
+          XDebugSessionImpl.NOTIFICATION_GROUP.createNotification(
+            DebuggerBundle.message("message.remote.jre.version.mismatch",
+                                   version,
+                                   projectSdk != null ? projectSdk.getVersionString() : "unknown",
+                                   sdk.getName())
+            , MessageType.INFO).notify(myProject);
+          getSession().setAlternativeJre(sdk);
+          break;
+        }
+      }
+    }
+  }
+
+  private static boolean versionMatch(@Nullable Sdk sdk, String version) {
+    if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
+      String versionString = sdk.getVersionString();
+      return versionString != null && versionString.contains(version);
+    }
+    return false;
   }
 
   /*Event dispatching*/

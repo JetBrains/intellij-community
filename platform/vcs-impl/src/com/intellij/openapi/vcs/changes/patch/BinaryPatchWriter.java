@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.BinaryEncoder;
 import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +59,8 @@ public class BinaryPatchWriter {
         writer.write(lineSeparator);
       }
       else if (filePatch.isNewFile()) {
-        writer.write(getFileModeHeader(FileStatus.ADDED, afterFile.canExecute() ? EXECUTABLE_FILE_MODE : REGULAR_FILE_MODE));
+        writer.write(getFileModeHeader(FileStatus.ADDED, !SystemInfo.isWindows && afterFile.canExecute()
+                                                         ? EXECUTABLE_FILE_MODE : REGULAR_FILE_MODE));
         writer.write(lineSeparator);
       }
       byte[] afterContent = filePatch.getAfterContent();

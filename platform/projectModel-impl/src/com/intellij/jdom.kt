@@ -16,6 +16,7 @@
 package com.intellij.util
 
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.reference.SoftReference
 import com.intellij.util.text.CharSequenceReader
 import org.jdom.Document
@@ -81,6 +82,8 @@ fun Element.element(name: String): Element {
   return element
 }
 
+fun Element.attribute(name: String, value: String?): Element = setAttribute(name, value)
+
 fun <T> Element.remove(name: String, transform: (child: Element) -> T): List<T> {
   val result = SmartList<T>()
   val groupIterator = getContent(ElementFilter(name)).iterator()
@@ -90,4 +93,10 @@ fun <T> Element.remove(name: String, transform: (child: Element) -> T): List<T> 
     groupIterator.remove()
   }
   return result
+}
+
+fun Element.toByteArray(): ByteArray {
+  val out = BufferExposingByteArrayOutputStream(512)
+  JDOMUtil.writeParent(this, out, "\n")
+  return out.toByteArray()
 }

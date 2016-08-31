@@ -161,13 +161,13 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @NotNull
   public static <E> JBIterable<E> of(@Nullable E... elements) {
-    return elements == null ? JBIterable.<E>empty() : from(ContainerUtil.newArrayList(elements));
+    return elements == null ? JBIterable.<E>empty() : from(ContainerUtilRt.newArrayList(elements));
   }
 
   private static final JBIterable EMPTY = new JBIterable() {
     @Override
     public Iterator iterator() {
-      return ContainerUtil.emptyIterator();
+      return EmptyIterator.getInstance();
     }
   };
 
@@ -370,7 +370,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * contains the corresponding element.
    */
   @NotNull
-  public <T> JBIterable<T> flatten(final Function<? super E, ? extends Iterable<? extends T>> function) {
+  public <T> JBIterable<T> flatten(@NotNull final Function<? super E, ? extends Iterable<? extends T>> function) {
     return intercept(new Function<Iterator<E>, Iterator<T>>() {
       @Override
       public Iterator<T> fun(final Iterator<E> iterator) {
@@ -386,6 +386,30 @@ public abstract class JBIterable<E> implements Iterable<E> {
             return skip();
           }
         };
+      }
+    });
+  }
+
+  /**
+   * Filters out duplicate items.
+   */
+  @NotNull
+  public final JBIterable<E> unique() {
+    return unique(Function.ID);
+  }
+
+  /**
+   * Filters out duplicate items, where an element identity is provided by the specified function.
+   */
+  @NotNull
+  public final JBIterable<E> unique(@NotNull final Function<? super E, ?> identity) {
+    return filter(new StatefulFilter<E>() {
+      HashSet<Object> visited;
+
+      @Override
+      public boolean value(E e) {
+        if (visited == null) visited = new HashSet<Object>();
+        return visited.add(identity.fun(e));
       }
     });
   }
@@ -496,7 +520,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
         return new JBIterator<List<E>>() {
           @Override
           protected List<E> nextImpl() {
-            ArrayList<E> next = ContainerUtil.newArrayListWithCapacity(n);
+            ArrayList<E> next = ContainerUtilRt.newArrayListWithCapacity(n);
             for (E e : once(orig).take(n)) {
               next.add(e);
             }
@@ -577,7 +601,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @NotNull
   public final List<E> toList() {
-    return Collections.unmodifiableList(ContainerUtil.newArrayList(myIterable));
+    return Collections.unmodifiableList(ContainerUtilRt.newArrayList(myIterable));
   }
 
   /**
@@ -586,7 +610,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @NotNull
   public final Set<E> toSet() {
-    return Collections.unmodifiableSet(ContainerUtil.newLinkedHashSet(myIterable));
+    return Collections.unmodifiableSet(ContainerUtilRt.newLinkedHashSet(myIterable));
   }
 
   /**

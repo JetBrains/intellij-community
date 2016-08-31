@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
     ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).disableBackgroundCommit(testRootDisposable)
   }
 
-  public void "test concurrent switching with checkCanceled"() {
+  void "test concurrent switching with checkCanceled"() {
     def N = Math.max(2, (int)(Runtime.runtime.availableProcessors()));
     for (iteration in 1..200) {
       def name = "Foo" + iteration
@@ -87,7 +87,7 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
-  public void "test cancellable and non-cancellable progress"() {
+  void "test cancellable and non-cancellable progress"() {
     def N = Math.max(2, (int)(Runtime.runtime.availableProcessors()));
     PsiFileImpl file = (PsiFileImpl) myFixture.addFileToProject("Foo.java", "class Foo {" + ("public void foo() {}\n") * 1000 + "}")
     assert myFixture.findClass("Foo").node
@@ -129,7 +129,7 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
-  public void "test forceUpdateAffectsReadOfDataForUnsavedDocuments"() {
+  void "test forceUpdateAffectsReadOfDataForUnsavedDocuments"() {
     def N = Math.max(2, (int)(Runtime.runtime.availableProcessors()));
     PsiFileImpl file = (PsiFileImpl) myFixture.addFileToProject("Foo.java", "class Foo {" + ("public void foo() {}\n") * 1000 + "}")
     assert myFixture.findClass("Foo").node

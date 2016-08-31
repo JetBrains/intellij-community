@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,19 +23,19 @@ import static com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl.
  */
 class SeemsScrambledTest extends LightCodeInsightFixtureTestCase {
 
-  public void "test Id annotation"() {
+  void "test Id annotation"() {
     assert !seemsScrambledByStructure(myFixture.addClass('public @interface Id {}'))
   }
 
-  public void "test inner enum"() {
+  void "test inner enum"() {
     assert !seemsScrambledByStructure(myFixture.addClass('public class Foo { enum v1 {} }').innerClasses[0])
   }
 
-  public void "test scrambled"() {
+  void "test scrambled"() {
     assert seemsScrambledByStructure(myFixture.addClass('public class a { void b() {} }'))
   }
 
-  public void "test has non-scrambled method"() {
+  void "test has non-scrambled method"() {
     assert !seemsScrambledByStructure(myFixture.addClass('public class a { void doSomething() {} }'))
   }
 

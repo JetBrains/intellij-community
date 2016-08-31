@@ -43,7 +43,7 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
   @NotNull
   @Override
   public String getModuleName() {
-    PsiJavaModuleStub stub = getStub();
+    PsiJavaModuleStub stub = getGreenStub();
     if (stub != null) {
       return stub.getName();
     }

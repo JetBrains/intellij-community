@@ -74,6 +74,10 @@ public class UnusedDeclarationTest extends InspectionTestCase {
     doTest();
   }
 
+  public void testDefaultConstructor() throws Exception {
+    doTest();
+  }
+
   public void testReachableFromMain() {
     myTool.ADD_MAINS_TO_ENTRIES = true;
     doTest();

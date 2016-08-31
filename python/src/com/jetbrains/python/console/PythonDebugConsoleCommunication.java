@@ -55,8 +55,8 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
   }
 
   @Override
-  public String getDescription(String text) {
-    return null;
+  public String getDescription(String refExpression) throws Exception {
+    return myDebugProcess.getDescription(refExpression);
   }
 
   @Override

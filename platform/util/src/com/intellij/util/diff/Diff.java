@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Enumerator;
 import org.jetbrains.annotations.NonNls;
@@ -179,8 +180,24 @@ public class Diff {
 
   public static int translateLine(@NotNull CharSequence before, @NotNull CharSequence after, int line, boolean approximate)
     throws FilesTooBigForDiffException {
-    Change change = buildChanges(before, after);
+    String[] strings1 = LineTokenizer.tokenize(before, false);
+    String[] strings2 = LineTokenizer.tokenize(after, false);
+    if (approximate) {
+      strings1 = trim(strings1);
+      strings2 = trim(strings2);
+    }
+    Change change = buildChanges(strings1, strings2);
     return translateLine(change, line, approximate);
+  }
+
+  @NotNull
+  private static String[] trim(@NotNull String[] lines) {
+    return ContainerUtil.map2Array(lines, String.class, new Function<String, String>() {
+      @Override
+      public String fun(String s) {
+        return s.trim();
+      }
+    });
   }
 
   /**

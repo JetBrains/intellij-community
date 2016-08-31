@@ -45,7 +45,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule>
-  implements CommonJavaRunConfigurationParameters, SingleClassConfiguration, RefactoringListenerProvider, ConfigurationWithAlternativeJre {
+  implements CommonJavaRunConfigurationParameters, SingleClassConfiguration, RefactoringListenerProvider {
 
   public String MAIN_CLASS_NAME;
   public String VM_PARAMETERS;

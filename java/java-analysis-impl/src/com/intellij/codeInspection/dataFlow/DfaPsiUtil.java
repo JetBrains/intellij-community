@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -102,12 +103,53 @@ public class DfaPsiUtil {
     if (PsiJavaPatterns.psiParameter().withParents(PsiParameterList.class, PsiLambdaExpression.class).accepts(owner)) {
       PsiLambdaExpression lambda = (PsiLambdaExpression)owner.getParent().getParent();
       int index = lambda.getParameterList().getParameterIndex((PsiParameter)owner);
+      Nullness nullness = inferLambdaParameterNullness(lambda, index);
+      if(nullness != Nullness.UNKNOWN) {
+        return nullness;
+      }
       PsiMethod sam = LambdaUtil.getFunctionalInterfaceMethod(lambda.getFunctionalInterfaceType());
       if (sam != null && index < sam.getParameterList().getParametersCount()) {
         return getElementNullability(null, sam.getParameterList().getParameters()[index]);
       }
     }
 
+    return Nullness.UNKNOWN;
+  }
+
+  @NotNull
+  private static Nullness inferLambdaParameterNullness(PsiLambdaExpression lambda, int parameterIndex) {
+    PsiElement expression = lambda;
+    PsiElement expressionParent = lambda.getParent();
+    while(expressionParent instanceof PsiConditionalExpression || expressionParent instanceof PsiParenthesizedExpression) {
+      expression = expressionParent;
+      expressionParent = expressionParent.getParent();
+    }
+    if(expressionParent instanceof PsiExpressionList) {
+      PsiExpressionList list = (PsiExpressionList)expressionParent;
+      PsiElement listParent = list.getParent();
+      if(listParent instanceof PsiMethodCallExpression) {
+        PsiMethod method = ((PsiMethodCallExpression)listParent).resolveMethod();
+        if(method != null) {
+          int expressionIndex = ArrayUtil.find(list.getExpressions(), expression);
+          return getLambdaParameterNullness(method, expressionIndex, parameterIndex);
+        }
+      }
+    }
+    return Nullness.UNKNOWN;
+  }
+
+  @NotNull
+  private static Nullness getLambdaParameterNullness(@NotNull PsiMethod method, int parameterIndex, int lambdaParameterIndex) {
+    PsiClass type = method.getContainingClass();
+    if(type != null) {
+      if(CommonClassNames.JAVA_UTIL_OPTIONAL.equals(type.getQualifiedName())) {
+        String methodName = method.getName();
+        if((methodName.equals("map") || methodName.equals("filter") || methodName.equals("ifPresent") || methodName.equals("flatMap"))
+          && parameterIndex == 0 && lambdaParameterIndex == 0) {
+          return Nullness.NOT_NULL;
+        }
+      }
+    }
     return Nullness.UNKNOWN;
   }
 

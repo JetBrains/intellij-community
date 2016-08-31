@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ package org.jetbrains.idea.maven.dom
  */
 class MavenDontCheckDependencyInManagementSectionTest extends MavenDomTestCase {
 
-  public void testHighlighting() {
+  void testHighlighting() {
     importProject("""
 <groupId>test</groupId>
 <artifactId>m1</artifactId>

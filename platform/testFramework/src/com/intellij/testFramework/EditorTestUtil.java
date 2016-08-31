@@ -456,8 +456,8 @@ public class EditorTestUtil {
   }
 
 
-  public static void addInlay(@NotNull Editor editor, int offset) {
-    editor.getInlayModel().addInlineElement(offset, new EditorCustomElementRenderer() {
+  public static Inlay addInlay(@NotNull Editor editor, int offset) {
+    return editor.getInlayModel().addInlineElement(offset, new EditorCustomElementRenderer() {
       @Override
       public int calcWidthInPixels(@NotNull Editor editor) { return 1; }
 

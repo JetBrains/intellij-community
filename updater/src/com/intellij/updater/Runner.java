@@ -31,7 +31,6 @@ import java.util.zip.ZipInputStream;
 
 public class Runner {
   public static Logger logger = null;
-
   private static final String PATCH_FILE_NAME = "patch-file.zip";
 
   public static void main(String[] args) throws Exception {

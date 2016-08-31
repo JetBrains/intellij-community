@@ -1051,6 +1051,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         }
         else if (VirtualFile.PROP_SYMLINK_TARGET.equals(propertyChangeEvent.getPropertyName())) {
           executeSetTarget(file, (String)newValue);
+          markForContentReloadRecursively(getFileId(file));
         }
       }
     }
@@ -1227,15 +1228,14 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   public void cleanPersistedContents() {
     final int[] roots = FSRecords.listRoots();
     for (int root : roots) {
-      cleanPersistedContentsRecursively(root);
+      markForContentReloadRecursively(root);
     }
   }
 
-  @TestOnly
-  private void cleanPersistedContentsRecursively(int id) {
+  private void markForContentReloadRecursively(int id) {
     if (isDirectory(getFileAttributes(id))) {
       for (int child : FSRecords.list(id)) {
-        cleanPersistedContentsRecursively(child);
+        markForContentReloadRecursively(child);
       }
     }
     else {

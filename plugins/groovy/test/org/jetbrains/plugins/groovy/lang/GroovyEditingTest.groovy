@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author peter
  */
-public class GroovyEditingTest extends LightCodeInsightFixtureTestCase {
+class GroovyEditingTest extends LightCodeInsightFixtureTestCase {
   final String basePath = TestUtils.testDataPath + "editing/"
 
   private void doTest(@Nullable String before = null, final String chars, @Nullable String after = null) {
@@ -48,26 +48,35 @@ public class GroovyEditingTest extends LightCodeInsightFixtureTestCase {
     }
   }
 
-  public void testCodeBlockRightBrace() throws Throwable { doTest('{'); }
-  public void testInterpolationInsideStringRightBrace() throws Throwable { doTest('{'); }
-  public void testStructuralInterpolationInsideStringRightBrace() throws Throwable { doTest('{'); }
-  public void testEnterInMultilineString() throws Throwable { doTest('\n'); }
-  public void testEnterInStringInRefExpr() throws Throwable {doTest('\n');}
-  public void testEnterInGStringInRefExpr() throws Throwable {doTest('\n');}
-  public void testPairAngleBracketAfterClassName() throws Throwable {doTest('<');}
-  public void testPairAngleBracketAfterClassNameOvertype() throws Throwable {doTest('>');}
-  public void testPairAngleBracketAfterClassNameBackspace() throws Throwable {doTest('\b');}
-  public void testNoPairLess() throws Throwable {doTest('<');}
+  void testCodeBlockRightBrace() throws Throwable { doTest('{'); }
 
-  public void testTripleString() {
+  void testInterpolationInsideStringRightBrace() throws Throwable { doTest('{'); }
+
+  void testStructuralInterpolationInsideStringRightBrace() throws Throwable { doTest('{'); }
+
+  void testEnterInMultilineString() throws Throwable { doTest('\n'); }
+
+  void testEnterInStringInRefExpr() throws Throwable { doTest('\n'); }
+
+  void testEnterInGStringInRefExpr() throws Throwable { doTest('\n'); }
+
+  void testPairAngleBracketAfterClassName() throws Throwable { doTest('<'); }
+
+  void testPairAngleBracketAfterClassNameOvertype() throws Throwable { doTest('>'); }
+
+  void testPairAngleBracketAfterClassNameBackspace() throws Throwable { doTest('\b'); }
+
+  void testNoPairLess() throws Throwable { doTest('<'); }
+
+  void testTripleString() {
     doTest('', "'''", "'''<caret>'''")
   }
 
-  public void testTripleGString() {
+  void testTripleGString() {
     doTest('', '"""', '"""<caret>"""')
   }
 
-  public void "test pair brace after doc with mismatch"() {
+  void "test pair brace after doc with mismatch"() {
     doTest('''
 class Foo {
   /**
@@ -238,8 +247,8 @@ class A {}
   void testDollarRegex1() {
     doTest('$<caret>', '/', '$/<caret>/$')
   }*/
-  
-  public void testKeepMultilineStringTrailingSpaces() throws Throwable {
+
+  void testKeepMultilineStringTrailingSpaces() throws Throwable {
     myFixture.configureByFile(getTestName(false) + '.groovy')
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     String stripSpaces = editorSettings.getStripTrailingSpaces();

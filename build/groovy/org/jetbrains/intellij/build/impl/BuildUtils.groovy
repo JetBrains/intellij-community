@@ -38,17 +38,6 @@ class BuildUtils {
     }
   }
 
-  static void doLayout(GantBinding binding, Closure body) {
-    def script = new Script(binding) {
-      @Override
-      Object run() {
-        return body()
-      }
-    }
-    body.delegate = script
-    script.run()
-  }
-
   static String replaceAll(String text, Map<String, String> replacements, String marker = "__") {
     replacements.each {
       text = StringUtil.replace(text, "$marker$it.key$marker", it.value)

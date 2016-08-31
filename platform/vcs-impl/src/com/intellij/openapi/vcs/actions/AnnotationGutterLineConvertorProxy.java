@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.annotate.AnnotationSource;
 
 import java.awt.*;
@@ -32,9 +31,9 @@ import java.util.List;
  */
 public class AnnotationGutterLineConvertorProxy implements ActiveAnnotationGutter {
   private final UpToDateLineNumberProvider myGetUpToDateLineNumber;
-  private final AnnotationFieldGutter myDelegate;
+  private final ActiveAnnotationGutter myDelegate;
 
-  public AnnotationGutterLineConvertorProxy(final UpToDateLineNumberProvider getUpToDateLineNumber, final AnnotationFieldGutter delegate) {
+  public AnnotationGutterLineConvertorProxy(final UpToDateLineNumberProvider getUpToDateLineNumber, final ActiveAnnotationGutter delegate) {
     myGetUpToDateLineNumber = getUpToDateLineNumber;
     myDelegate = delegate;
   }
@@ -49,12 +48,6 @@ public class AnnotationGutterLineConvertorProxy implements ActiveAnnotationGutte
     int currentLine = myGetUpToDateLineNumber.getLineNumber(line);
     if (!canBeAnnotated(currentLine)) return "";
     return myDelegate.getToolTip(currentLine, editor);
-  }
-
-  public Computable<String> getToolTipAsync(int line, Editor editor) {
-    int currentLine = myGetUpToDateLineNumber.getLineNumber(line);
-    if (!canBeAnnotated(currentLine)) return null;
-    return myDelegate.getToolTipAsync(currentLine, editor);
   }
 
   public EditorFontType getStyle(int line, Editor editor) {

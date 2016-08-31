@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 /**
  * @author peter
  */
-public class XmlLiveTemplateTest extends LightCodeInsightFixtureTestCase {
+class XmlLiveTemplateTest extends LightCodeInsightFixtureTestCase {
 
   private TemplateState getState() {
     TemplateManagerImpl.getTemplateState(myFixture.getEditor())
@@ -46,7 +46,7 @@ public class XmlLiveTemplateTest extends LightCodeInsightFixtureTestCase {
     super.tearDown();
   }
 
-  public void "test tag template in xml"() {
+  void "test tag template in xml"() {
     final TemplateManager manager = TemplateManager.getInstance(getProject());
     final Template template = manager.createTemplate("frm", "user", '$VAR$');
     template.addVariable('VAR', new EmptyNode(), new ConstantNode("<"), true)
@@ -56,7 +56,7 @@ public class XmlLiveTemplateTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResult '<tag><selection><</selection><caret></tag>'
   }
 
-  public void "test insert CDATA by CD and tab"() {
+  void "test insert CDATA by CD and tab"() {
     myFixture.configureByText 'a.xml', '<tag><caret></tag>'
     myFixture.type('CD\t')
     myFixture.checkResult '''<tag><![CDATA[
@@ -64,13 +64,13 @@ public class XmlLiveTemplateTest extends LightCodeInsightFixtureTestCase {
 ]]></tag>'''
   }
 
-  public void testAvailabilityCDATA() {
+  void testAvailabilityCDATA() {
     final TemplateImpl template = TemplateSettings.getInstance().getTemplate("CD", "html/xml");
     assertTrue(isApplicable("<foo><caret> </foo>", template));
     assertFalse(isApplicable("<foo bar=\"<caret>\"></foo>", template));
   }
 
-  public void testAvailabilityT() {
+  void testAvailabilityT() {
     final TemplateImpl template = TemplateSettings.getInstance().getTemplate("T", "html/xml");
     assertTrue(isApplicable("<foo><caret> </foo>", template));
     assertFalse(isApplicable("<foo bar=\"<caret>\"></foo>", template));

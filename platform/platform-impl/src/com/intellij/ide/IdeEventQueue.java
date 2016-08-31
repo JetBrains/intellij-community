@@ -139,7 +139,7 @@ public class IdeEventQueue extends EventQueue {
     systemEventQueue.push(this);
     addIdleTimeCounterRequest();
 
-    final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+    KeyboardFocusManager keyboardFocusManager = IdeKeyboardFocusManager.replaceDefault();
     keyboardFocusManager.addPropertyChangeListener("permanentFocusOwner", e -> {
       final Application application = ApplicationManager.getApplication();
       if (application == null) {
@@ -373,7 +373,7 @@ public class IdeEventQueue extends EventQueue {
     }
 
     boolean wasInputEvent = myIsInInputEvent;
-    myIsInInputEvent = e instanceof InputEvent || e instanceof InputMethodEvent || e instanceof WindowEvent || e instanceof ActionEvent;
+    myIsInInputEvent = isInputEvent(e);
     if (myIsInInputEvent) {
       HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
     } else {
@@ -382,8 +382,7 @@ public class IdeEventQueue extends EventQueue {
     AWTEvent oldEvent = myCurrentEvent;
     myCurrentEvent = e;
 
-    boolean userActivity = myIsInInputEvent || e instanceof ItemEvent || e instanceof FocusEvent;
-    try (AccessToken ignored = startActivity(userActivity)) {
+    try (AccessToken ignored = startActivity(e)) {
       _dispatchEvent(e, false);
     }
     catch (Throwable t) {
@@ -403,6 +402,10 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
+  private static boolean isInputEvent(@NotNull AWTEvent e) {
+    return e instanceof InputEvent || e instanceof InputMethodEvent || e instanceof WindowEvent || e instanceof ActionEvent;
+  }
+
   @Override
   public AWTEvent getNextEvent() throws InterruptedException {
     AWTEvent event = super.getNextEvent();
@@ -413,11 +416,13 @@ public class IdeEventQueue extends EventQueue {
   }
 
   @Nullable
-  private static AccessToken startActivity(boolean userActivity) {
+  static AccessToken startActivity(AWTEvent e) {
     if (ourTransactionGuard == null && appIsLoaded()) {
       ourTransactionGuard = (TransactionGuardImpl)TransactionGuard.getInstance();
     }
-    return ourTransactionGuard == null ? null : ourTransactionGuard.startActivity(userActivity);
+    return ourTransactionGuard == null
+           ? null
+           : ourTransactionGuard.startActivity(isInputEvent(e) || e instanceof ItemEvent || e instanceof FocusEvent);
   }
 
   private void processException(Throwable t) {

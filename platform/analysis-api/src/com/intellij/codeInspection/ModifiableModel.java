@@ -38,8 +38,6 @@ public interface ModifiableModel extends Profile {
 
   void enableTool(@NotNull String inspectionTool, NamedScope namedScope, Project project);
 
-  void disableTool(@NotNull String inspectionTool, NamedScope namedScope, @NotNull Project project);
-
   void setErrorLevel(HighlightDisplayKey key, @NotNull HighlightDisplayLevel level, Project project);
 
   HighlightDisplayLevel getErrorLevel(HighlightDisplayKey inspectionToolKey, PsiElement element);
@@ -56,7 +54,7 @@ public interface ModifiableModel extends Profile {
 
   boolean isProperSetting(@NotNull String toolId);
 
-  void resetToBase(Project project);
+  void resetToBase(@Nullable Project project);
 
   void resetToEmpty(Project project);
 
@@ -83,5 +81,5 @@ public interface ModifiableModel extends Profile {
 
   void disableTool(@NotNull String toolId, @NotNull PsiElement element);
 
-  void disableTool(@NotNull String inspectionTool, Project project);
+  void disableTool(@NotNull String inspectionTool, @Nullable Project project);
 }

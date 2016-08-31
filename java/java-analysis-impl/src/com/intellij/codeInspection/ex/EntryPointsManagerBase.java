@@ -31,10 +31,9 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.*;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.*;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -45,7 +44,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.HashSet;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 @State(name = "EntryPointsManager")
 public abstract class EntryPointsManagerBase extends EntryPointsManager implements PersistentStateComponent<Element> {
@@ -225,7 +226,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
         classPattern.pattern = new SmartRefElementPointerImpl(newEntryPoint, true).getFQName();
         getPatterns().add(classPattern);
 
-        final EntryPointsManager entryPointsManager = getInstance(newEntryPoint.getElement().getProject());
+        final EntryPointsManager entryPointsManager = getInstance(newEntryPoint.getRefManager().getProject());
         if (this != entryPointsManager) {
           entryPointsManager.addEntryPoint(newEntryPoint, true);
         }
@@ -265,7 +266,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
         ((RefElementImpl)newEntryPoint).setEntry(true);
         ((RefElementImpl)newEntryPoint).setPermanentEntry(true);
         if (entry.isPersistent()) { //do save entry points
-          final EntryPointsManager entryPointsManager = getInstance(newEntryPoint.getElement().getProject());
+          final EntryPointsManager entryPointsManager = getInstance(newEntryPoint.getRefManager().getProject());
           if (this != entryPointsManager) {
             entryPointsManager.addEntryPoint(newEntryPoint, true);
           }
@@ -438,8 +439,29 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
       final String qualifiedName = ((PsiClass)element).getQualifiedName();
       if (qualifiedName != null) {
         for (ClassPattern pattern : getPatterns()) {
-          if (isAcceptedByPattern((PsiClass)element, qualifiedName, pattern, new HashSet<>())) {
+          if (pattern.method.isEmpty() && isAcceptedByPattern((PsiClass)element, qualifiedName, pattern, new HashSet<>())) {
             return true;
+          }
+        }
+      }
+    }
+
+    if (element instanceof PsiMethod) {
+      final PsiClass containingClass = ((PsiMethod)element).getContainingClass();
+      if (containingClass != null) {
+        final String qualifiedName = containingClass.getQualifiedName();
+        if (qualifiedName != null) {
+          final String name = ((PsiMethod)element).getName();
+          for (ClassPattern pattern : getPatterns()) {
+            if (pattern.method.isEmpty()) continue;
+            boolean acceptedName = name.equals(pattern.method);
+            if (!acceptedName) {
+              final Pattern methodRegexp = pattern.getMethodRegexp();
+              acceptedName = methodRegexp != null && methodRegexp.matcher(name).matches();
+            }
+            if (acceptedName && isAcceptedByPattern(containingClass, qualifiedName, pattern, new HashSet<>())) {
+              return true;
+            }
           }
         }
       }
@@ -459,8 +481,13 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     }
 
     final Pattern regexp = pattern.getRegexp();
-    if (regexp != null && regexp.matcher(qualifiedName).matches()) {
-      return true;
+    if (regexp != null) {
+      try {
+        if (regexp.matcher(qualifiedName).matches()) {
+          return true;
+        }
+      }
+      catch (PatternSyntaxException ignored) {}
     }
 
     if (pattern.hierarchically) {
@@ -485,11 +512,17 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     @Attribute("hierarchically")
     public boolean hierarchically = false;
 
+    @Attribute("method")
+    public String method = "";
+
+
     private Pattern regexp;
+    private Pattern methodRegexp;
 
     public ClassPattern(ClassPattern classPattern) {
       hierarchically = classPattern.hierarchically;
       pattern = classPattern.pattern;
+      method = classPattern.method;
     }
 
     public ClassPattern() {}
@@ -497,7 +530,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     @Nullable
     public Pattern getRegexp() {
       if (regexp == null && pattern.contains("*")) {
-        regexp = Pattern.compile(pattern);
+        regexp = createRegexp(pattern);
       }
       return regexp;
     }
@@ -507,10 +540,11 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      ClassPattern otherPattern = (ClassPattern)o;
+      ClassPattern pattern1 = (ClassPattern)o;
 
-      if (hierarchically != otherPattern.hierarchically) return false;
-      if (!pattern.equals(otherPattern.pattern)) return false;
+      if (hierarchically != pattern1.hierarchically) return false;
+      if (!pattern.equals(pattern1.pattern)) return false;
+      if (!method.equals(pattern1.method)) return false;
 
       return true;
     }
@@ -519,7 +553,25 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     public int hashCode() {
       int result = pattern.hashCode();
       result = 31 * result + (hierarchically ? 1 : 0);
+      result = 31 * result + method.hashCode();
       return result;
+    }
+
+    public Pattern getMethodRegexp() {
+      if (methodRegexp == null && method.contains("*")) {
+        methodRegexp = createRegexp(method);
+      }
+      return methodRegexp;
+    }
+
+    private static Pattern createRegexp(final String pattern) {
+      final String replace = pattern.replace("*", ".*").replace(".", "\\.");
+      try {
+        return Pattern.compile(replace);
+      }
+      catch (PatternSyntaxException e) {
+        return null;
+      }
     }
   }
 }

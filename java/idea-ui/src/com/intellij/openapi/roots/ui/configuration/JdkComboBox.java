@@ -163,7 +163,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
             final JdkListConfigurable configurable = JdkListConfigurable.getInstance(project);
             configurable.addJdkNode(jdk, false);
           }
-          reloadModel(new JdkComboBoxItem(jdk), project);
+          reloadModel(new ActualJdkComboBoxItem(jdk), project);
           setSelectedJdk(jdk); //restore selection
           if (additionalSetup != null) {
             if (additionalSetup.value(jdk)) { //leave old selection
@@ -285,7 +285,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
     }
     Collections.sort(projectJdks, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
     for (Sdk projectJdk : projectJdks) {
-      model.addElement(new JdkComboBox.JdkComboBoxItem(projectJdk));
+      model.addElement(new ActualJdkComboBoxItem(projectJdk));
     }
   }
 
@@ -296,7 +296,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
       Arrays.sort(jdks, (s1, s2) -> s1.getName().compareToIgnoreCase(s2.getName()));
       for (Sdk jdk : jdks) {
         if (sdkFilter == null || sdkFilter.value(jdk)) {
-          addElement(new JdkComboBoxItem(jdk));
+          addElement(new ActualJdkComboBoxItem(jdk));
         }
       }
       if (addSuggested) {
@@ -327,44 +327,50 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
     return filter == null ? Conditions.<Sdk>alwaysTrue() : (Condition<Sdk>)sdk -> filter.value(sdk.getSdkType());
   }
 
-  public static class JdkComboBoxItem {
+  public abstract static class JdkComboBoxItem {
+    @Nullable
+    public Sdk getJdk() {
+      return null;
+    }
+
+    @Nullable
+    public String getSdkName() {
+      return null;
+    }
+  }
+
+  public static class ActualJdkComboBoxItem extends JdkComboBoxItem {
     private final Sdk myJdk;
 
-    public JdkComboBoxItem(@Nullable Sdk jdk) {
+    public ActualJdkComboBoxItem(@NotNull Sdk jdk) {
       myJdk = jdk;
     }
 
+    @Override
+    public String toString() {
+      return myJdk.getName();
+    }
+
+    @Nullable
+    @Override
     public Sdk getJdk() {
       return myJdk;
     }
 
-    public SdkType getSdkType() { return myJdk == null ? null : (SdkType)myJdk.getSdkType(); }
-
     @Nullable
+    @Override
     public String getSdkName() {
-      return myJdk != null ? myJdk.getName() : null;
-    }
-    
-    public String toString() {
       return myJdk.getName();
     }
   }
 
   public static class ProjectJdkComboBoxItem extends JdkComboBoxItem {
-    public ProjectJdkComboBoxItem() {
-      super(null);
-    }
-
     public String toString() {
       return ProjectBundle.message("jdk.combo.box.project.item");
     }
   }
 
   public static class NoneJdkComboBoxItem extends JdkComboBoxItem {
-    public NoneJdkComboBoxItem() {
-      super(null);
-    }
-
     public String toString() {
       return ProjectBundle.message("jdk.combo.box.none.item");
     }
@@ -374,7 +380,6 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
     private final String mySdkName;
 
     public InvalidJdkComboBoxItem(String name) {
-      super(null);
       mySdkName = name;
     }
 
@@ -393,17 +398,20 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
     private final String myPath;
 
     public SuggestedJdkItem(SdkType sdkType, @NotNull String path) {
-      super(null);
       mySdkType = sdkType;
       myPath = path;
     }
 
-    @Override
     public SdkType getSdkType() {
       return mySdkType;
     }
 
     public String getPath() {
+      return myPath;
+    }
+
+    @Override
+    public String toString() {
       return myPath;
     }
   }

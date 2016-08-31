@@ -139,18 +139,23 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
       }
     }
 
+    RefMethod varargConstructor = null;
     for (PsiMethod psiMethod : psiMethods) {
       RefMethod refMethod = (RefMethod)getRefManager().getReference(psiMethod);
 
       if (refMethod != null) {
         if (psiMethod.isConstructor()) {
-          if (psiMethod.getParameterList().getParametersCount() > 0 || !psiMethod.hasModifierProperty(PsiModifier.PRIVATE)) {
+          final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+          if (parameters.length > 0 || !psiMethod.hasModifierProperty(PsiModifier.PRIVATE)) {
             setUtilityClass(false);
           }
 
           addConstructor(refMethod);
-          if (psiMethod.getParameterList().getParametersCount() == 0) {
+          if (parameters.length == 0) {
             setDefaultConstructor((RefMethodImpl)refMethod);
+          }
+          else if (parameters.length == 1 && parameters[0].isVarArgs()) {
+            varargConstructor = refMethod;
           }
         }
         else {
@@ -159,6 +164,10 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
           }
         }
       }
+    }
+
+    if (varargConstructor != null && getDefaultConstructor() == null) {
+      setDefaultConstructor((RefMethodImpl)varargConstructor);
     }
 
     if (getConstructors().isEmpty() && !isInterface() && !isAnonymous()) {

@@ -36,45 +36,45 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Maxim.Medvedev
  */
-public class IntroduceConstantTest extends LightCodeInsightFixtureTestCase {
+class IntroduceConstantTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     TestUtils.testDataPath + "refactoring/introduceConstant/"
   }
 
-  public void testSimple() {
+  void testSimple() {
     doTest();
   }
 
-  public void testReplaceAllOccurences() {
+  void testReplaceAllOccurences() {
     doTest();
   }
 
-  public void testEscalateVisibility() {
+  void testEscalateVisibility() {
     doTest("Other", true, false, VisibilityUtil.ESCALATE_VISIBILITY);
   }
 
-  public void testInsertInEnum() {
+  void testInsertInEnum() {
     doTest("Planet", false, false, PsiModifier.PROTECTED);
   }
 
-  public void testInsertInInterface() {
+  void testInsertInInterface() {
     doTest("MyInterface", false, false, PsiModifier.PROTECTED);
   }
 
-  public void testTupleDeclaration() {
+  void testTupleDeclaration() {
     doTest("Test", true, false, PsiModifier.PUBLIC);
   }
 
-  public void testStringPart() {
+  void testStringPart() {
     doTest();
   }
 
-  public void testAnonymousClass() {
+  void testAnonymousClass() {
     doTest();
   }
 
-  public void testFieldWithClassName() {
+  void testFieldWithClassName() {
     doTest();
   }
 
@@ -124,7 +124,7 @@ public class IntroduceConstantTest extends LightCodeInsightFixtureTestCase {
   }
 
   @Nullable
-  public static GrVariable findVariable(JavaCodeInsightTestFixture fixture) {
+  static GrVariable findVariable(JavaCodeInsightTestFixture fixture) {
     final Editor editor = fixture.getEditor();
     final int start = editor.getSelectionModel().getSelectionStart();
     final int end = editor.getSelectionModel().getSelectionEnd();
@@ -132,7 +132,7 @@ public class IntroduceConstantTest extends LightCodeInsightFixtureTestCase {
   }
 
   @Nullable
-  public static GrExpression findExpression(JavaCodeInsightTestFixture fixture) {
+  static GrExpression findExpression(JavaCodeInsightTestFixture fixture) {
     final Editor editor = fixture.getEditor();
     final int start = editor.getSelectionModel().getSelectionStart();
     final int end = editor.getSelectionModel().getSelectionEnd();
@@ -140,7 +140,7 @@ public class IntroduceConstantTest extends LightCodeInsightFixtureTestCase {
   }
 
   @Nullable
-  public static StringPartInfo findStringPart(JavaCodeInsightTestFixture fixture) {
+  static StringPartInfo findStringPart(JavaCodeInsightTestFixture fixture) {
     final Editor editor = fixture.getEditor();
     final int start = editor.getSelectionModel().getSelectionStart();
     final int end = editor.getSelectionModel().getSelectionEnd();
@@ -164,27 +164,27 @@ public class IntroduceConstantTest extends LightCodeInsightFixtureTestCase {
     }
 
     @Override
-    public String getVisibilityModifier() {
+    String getVisibilityModifier() {
       return myModifier;
     }
 
     @Override
-    public PsiClass getTargetClass() {
+    PsiClass getTargetClass() {
       return myTargetClass;
     }
 
     @Override
-    public String getName() {
+    String getName() {
       return "CONST";
     }
 
     @Override
-    public boolean replaceAllOccurrences() {
+    boolean replaceAllOccurrences() {
       return myReplaceAllOccurrences;
     }
 
     @Override
-    public PsiType getSelectedType() {
+    PsiType getSelectedType() {
       return mySelectedType;
     }
   }

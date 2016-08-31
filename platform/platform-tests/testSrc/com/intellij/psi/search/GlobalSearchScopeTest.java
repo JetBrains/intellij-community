@@ -19,6 +19,10 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TempFiles;
+import org.jetbrains.annotations.NotNull;
+
+import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class GlobalSearchScopeTest extends PlatformTestCase {
   public void testUniteDirectorySearchScopeDoesNotSOE() throws Exception {
@@ -75,5 +79,32 @@ public class GlobalSearchScopeTest extends PlatformTestCase {
 
     GlobalSearchScope notAllScope = GlobalSearchScope.notScope(allScope);
     assertFalse(notAllScope.contains(moduleRoot));
+  }
+
+  public void testIntersectionPreservesOrderInCaseClientsWantToPutCheaperChecksFirst() throws IOException {
+    AtomicInteger targetCalled = new AtomicInteger();
+    GlobalSearchScope alwaysTrue = new DelegatingGlobalSearchScope(new EverythingGlobalScope()) {
+      @Override
+      public boolean contains(@NotNull VirtualFile file) {
+        return true;
+      }
+    };
+    GlobalSearchScope target = new DelegatingGlobalSearchScope(new EverythingGlobalScope()) {
+      @Override
+      public boolean contains(@NotNull VirtualFile file) {
+        targetCalled.incrementAndGet();
+        return true;
+      }
+    };
+    GlobalSearchScope trueIntersection = target.intersectWith(alwaysTrue);
+
+    VirtualFile file1 = getVirtualFile(createTempFile("file1", ""));
+    VirtualFile file2 = getVirtualFile(createTempFile("file2", ""));
+
+    assertTrue(trueIntersection.contains(file2));
+    assertEquals(1, targetCalled.get());
+
+    assertFalse(GlobalSearchScope.fileScope(myProject, file1).intersectWith(trueIntersection).contains(file2));
+    assertEquals(1, targetCalled.get());
   }
 }

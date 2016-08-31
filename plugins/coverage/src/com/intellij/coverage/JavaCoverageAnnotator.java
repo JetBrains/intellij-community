@@ -232,7 +232,8 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   }
 
   private static String getPercentage(int covered, int total) {
-    return (int)((double)covered /total * 100) +"% (" + covered + "/" + total + ")";
+    final int percentage = total == 0 ? 100 : (int)((double)covered / total * 100);
+    return percentage + "% (" + covered + "/" + total + ")";
   }
 
   public static PackageAnnotator.SummaryCoverageInfo merge(@Nullable final PackageAnnotator.SummaryCoverageInfo info,

@@ -27,10 +27,10 @@ import org.jetbrains.annotations.NotNull
 /**
  * @author peter
  */
-public class JavaFolding8Test extends LightCodeInsightFixtureTestCase {
+class JavaFolding8Test extends LightCodeInsightFixtureTestCase {
 
-  def JavaCodeFoldingSettingsImpl myFoldingSettings
-  def JavaCodeFoldingSettingsImpl myFoldingStateToRestore
+  JavaCodeFoldingSettingsImpl myFoldingSettings
+  JavaCodeFoldingSettingsImpl myFoldingStateToRestore
 
   @NotNull
   @Override
@@ -39,7 +39,7 @@ public class JavaFolding8Test extends LightCodeInsightFixtureTestCase {
   }
 
   @Override
-  public void setUp() {
+  void setUp() {
     super.setUp()
     myFoldingSettings = JavaCodeFoldingSettings.instance as JavaCodeFoldingSettingsImpl
     myFoldingStateToRestore = new JavaCodeFoldingSettingsImpl()
@@ -52,7 +52,7 @@ public class JavaFolding8Test extends LightCodeInsightFixtureTestCase {
     super.tearDown()
   }
 
-  public void "test no plain lambda folding where anonymous class can be real lambda but fold otherwise"() {
+  void "test no plain lambda folding where anonymous class can be real lambda but fold otherwise"() {
     myFixture.addClass('interface Runnable2 { void run(); }')
     myFixture.addClass('abstract class MyAction { public void run(); public void update() {} }')
     def text = """\

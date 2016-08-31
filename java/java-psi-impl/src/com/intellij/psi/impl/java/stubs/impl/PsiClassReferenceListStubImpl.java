@@ -19,8 +19,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.java.stubs.JavaClassReferenceListElementType;
 import com.intellij.psi.impl.java.stubs.PsiClassReferenceListStub;
-import com.intellij.psi.impl.java.stubs.PsiClassStub;
-import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.stubs.StubBase;
@@ -72,7 +70,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
     final boolean compiled = ((JavaClassReferenceListElementType)getStubType()).isCompiled(this);
     if (compiled) {
       for (int i = 0; i < types.length; i++) {
-        types[i] = new PsiClassReferenceType(new ClsJavaCodeReferenceElementImpl(getPsi(), StringRef.toString(myNames[i])), null);
+        types[i] = new PsiClassReferenceType(new ClsJavaCodeReferenceElementImpl(getPsi(), myNames[i].toString()), null);
       }
     }
     else {
@@ -81,13 +79,8 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
       int nullCount = 0;
       final PsiReferenceList psi = getPsi();
       for (int i = 0; i < types.length; i++) {
-        PsiElement context = psi;
-        if (getParentStub() instanceof PsiClassStub) {
-          context = ((PsiClassImpl)getParentStub().getPsi()).calcBasesResolveContext(PsiNameHelper.getShortClassName(StringRef.toString(myNames[i])), psi);
-        }
-
         try {
-          final PsiJavaCodeReferenceElement ref = factory.createReferenceFromText(StringRef.toString(myNames[i]), context);
+          final PsiJavaCodeReferenceElement ref = factory.createReferenceFromText(myNames[i].toString(), psi);
           ((PsiJavaCodeReferenceElementImpl)ref).setKindWhenDummy(PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND);
           types[i] = factory.createType(ref);
         }

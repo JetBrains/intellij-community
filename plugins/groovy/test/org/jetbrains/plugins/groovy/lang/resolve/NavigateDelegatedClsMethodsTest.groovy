@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,12 +33,12 @@ import static org.jetbrains.plugins.groovy.util.TestUtils.getAbsoluteTestDataPat
 /**
  * @author Max Medvedev
  */
-public class NavigateDelegatedClsMethodsTest extends LightGroovyTestCase {
+class NavigateDelegatedClsMethodsTest extends LightGroovyTestCase {
   final String basePath = TestUtils.testDataPath + 'resolve/clsMethod'
 
   final LightProjectDescriptor projectDescriptor = new GroovyLightProjectDescriptor(TestUtils.mockGroovy2_1LibraryName) {
     @Override
-    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+    void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       super.configureModule(module, model, contentEntry)
 
       final Library.ModifiableModel gebModel = model.moduleLibraryTable.createLibrary("Geb").modifiableModel;

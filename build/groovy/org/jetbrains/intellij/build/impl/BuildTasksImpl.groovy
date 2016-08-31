@@ -17,11 +17,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildMessages
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.BuildTasks
-import org.jetbrains.intellij.build.ProductModulesLayout
+import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
@@ -88,7 +84,7 @@ class BuildTasksImpl extends BuildTasks {
 
   @Override
   void buildSearchableOptions(String targetModuleName, List<String> modulesToIndex, List<String> pathsToLicenses) {
-    buildSearchableOptions(new File(buildContext.projectBuilder.moduleOutput(buildContext.findModule(targetModuleName))), modulesToIndex, pathsToLicenses)
+    buildSearchableOptions(new File(buildContext.projectBuilder.moduleOutput(buildContext.findRequiredModule(targetModuleName))), modulesToIndex, pathsToLicenses)
   }
 
 //todo[nik] do we need 'cp' and 'jvmArgs' parameters?
@@ -147,6 +143,14 @@ class BuildTasksImpl extends BuildTasks {
     File originalFile = new File("$buildContext.paths.communityHome/bin/idea.properties")
 
     String text = originalFile.text
+    if (!buildContext.shouldIDECopyJarsByDefault()) {
+      text += """
+#---------------------------------------------------------------------
+# IDE can copy library .jar files to prevent their locking. Set this property to 'false' to enable copying.
+#---------------------------------------------------------------------
+idea.jars.nocopy=true
+"""
+    }
     buildContext.productProperties.additionalIDEPropertiesFilePaths.each {
       text += "\n" + new File(it).text
     }
@@ -262,12 +266,13 @@ idea.fatal.error.notification=disabled
   }
 
   @Override
-  void compileModulesAndBuildDistributions(List<PluginLayout> allPlugins) {
-    def productLayout = buildContext.productProperties.productLayout
-    checkProductLayout(productLayout, allPlugins)
+  void compileModulesAndBuildDistributions() {
+    checkProductProperties()
+    checkProductLayout()
     cleanOutput()
-    def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, allPlugins)
-    compileModules(productLayout.getIncludedPluginModules(allPlugins) + distributionJARsBuilder.getPlatformModules())
+    def distributionJARsBuilder = new DistributionJARsBuilder(buildContext)
+    def pluginModules = buildContext.productProperties.productLayout.getIncludedPluginModules(buildContext.productProperties.allPlugins)
+    compileModules(pluginModules + distributionJARsBuilder.getPlatformModules())
     buildContext.messages.block("Build platform and plugin JARs") {
       distributionJARsBuilder.buildJARs()
     }
@@ -282,8 +287,30 @@ idea.fatal.error.notification=disabled
     buildDistributions()
   }
 
-  private void checkProductLayout(ProductModulesLayout layout, List<PluginLayout> allPlugins) {
+  private void checkProductProperties() {
+    def properties = buildContext.productProperties
+    checkPaths(properties.brandingResourcePaths, "productProperties.brandingResourcePaths")
+    checkPaths(properties.additionalIDEPropertiesFilePaths, "productProperties.additionalIDEPropertiesFilePaths")
+    checkPaths([properties.yourkitAgentBinariesDirectoryPath], "productProperties.yourkitAgentBinariesDirectoryPath")
+    checkPaths(properties.additionalDirectoriesWithLicenses, "productProperties.additionalDirectoriesWithLicenses")
+
+    def winCustomizer = buildContext.windowsDistributionCustomizer
+    checkPaths([winCustomizer?.icoPath], "productProperties.windowsCustomizer.icoPath")
+    checkPaths([winCustomizer?.installerImagesPath], "productProperties.windowsCustomizer.installerImagesPath")
+
+    checkPaths([buildContext.linuxDistributionCustomizer?.iconPngPath], "productProperties.linuxCustomizer.iconPngPath")
+
+    def macCustomizer = buildContext.macDistributionCustomizer
+    checkPaths([macCustomizer?.icnsPath], "productProperties.macCustomizer.icnsPath")
+    checkPaths([macCustomizer?.dmgImagePath], "productProperties.macCustomizer.dmgImagePath")
+    checkPaths([macCustomizer?.dmgImagePathForEAP], "productProperties.macCustomizer.dmgImagePathForEAP")
+  }
+
+  private void checkProductLayout() {
+    ProductModulesLayout layout = buildContext.productProperties.productLayout
+    List<PluginLayout> allPlugins = buildContext.productProperties.allPlugins
     def allPluginModules = allPlugins.collectMany { [it.mainModule] + it.optionalModules } as Set<String>
+    checkPaths(layout.licenseFilesToBuildSearchableOptions, "productProperties.productLayout.licenseFilesToBuildSearchableOptions")
     checkPluginModules(layout.bundledPluginModules, "bundledPluginModules", allPluginModules)
     checkPluginModules(layout.pluginModulesToPublish, "pluginModulesToPublish", allPluginModules)
 
@@ -317,8 +344,15 @@ idea.fatal.error.notification=disabled
     if (!unknownBundledPluginModules.empty) {
       buildContext.messages.error(
         "The following modules from productProperties.productLayout.$fieldName aren't found in the registered plugins: $unknownBundledPluginModules. " +
-        "Make sure that the plugin layouts are specified in one of *_REPOSITORY_PLUGINS lists and you refer to either main plugin module or an optional module."
+        "Make sure that the plugin layouts are specified in productProperties.productLayout.allPlugins and you refer to either main plugin module or an optional module."
       )
+    }
+  }
+
+  private void checkPaths(Collection<String> paths, String fieldName) {
+    def nonExistingFiles = paths.findAll { it != null && !new File(it).exists() }
+    if (!nonExistingFiles.empty) {
+      buildContext.messages.error("$fieldName contains non-existing path${nonExistingFiles.size() > 1 ? "s" : ""}: ${nonExistingFiles.join(",")}")
     }
   }
 
@@ -414,6 +448,15 @@ idea.fatal.error.notification=disabled
     if (!errors.empty) {
       errors.subList(1, errors.size()).each { it.printStackTrace() }
       throw errors.first()
+    }
+  }
+
+  @Override
+  void buildUpdaterJar() {
+    new LayoutBuilder(buildContext.ant, buildContext.project, false).layout(buildContext.paths.artifacts) {
+      jar("updater.jar") {
+        module("updater")
+      }
     }
   }
 

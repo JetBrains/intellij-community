@@ -15,13 +15,14 @@
  */
 package com.intellij.openapi.vcs.history;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.VcsAnnotation;
@@ -29,6 +30,8 @@ import com.intellij.openapi.vcs.annotate.VcsCacheableAnnotationProvider;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,11 +46,11 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider {
   private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.history.VcsAnnotationCachedProxy");
   private final AnnotationProvider myAnnotationProvider;
 
-  public VcsAnnotationCachedProxy(final AbstractVcs vcs, final VcsHistoryCache cache) {
-    assert vcs.getAnnotationProvider() instanceof VcsCacheableAnnotationProvider;
+  public VcsAnnotationCachedProxy(@NotNull AbstractVcs vcs, @NotNull AnnotationProvider provider) {
+    assert provider instanceof VcsCacheableAnnotationProvider;
     myVcs = vcs;
-    myCache = cache;
-    myAnnotationProvider = myVcs.getAnnotationProvider();
+    myCache = ProjectLevelVcsManager.getInstance(vcs.getProject()).getVcsHistoryCache();
+    myAnnotationProvider = provider;
   }
 
   @Override
@@ -73,6 +76,11 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider {
     });
   }
 
+  @Override
+  public boolean isCaching() {
+    return true;
+  }
+
   /**
    * @param currentRevision - just a hint for optimization
    */
@@ -80,27 +88,25 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider {
                                   final ThrowableComputable<FileAnnotation, VcsException> delegate) throws VcsException {
     final AnnotationProvider annotationProvider = myAnnotationProvider;
 
-    final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
+    final FilePath filePath = VcsUtil.getFilePath(file);
 
     final VcsCacheableAnnotationProvider cacheableAnnotationProvider = (VcsCacheableAnnotationProvider)annotationProvider;
 
     VcsAnnotation vcsAnnotation = null;
     if (revisionNumber != null) {
-      vcsAnnotation = myCache.get(VcsContextFactory.SERVICE.getInstance().createFilePathOn(file), myVcs.getKeyInstanceMethod(), revisionNumber);
+      Object cachedData = myCache.get(filePath, myVcs.getKeyInstanceMethod(), revisionNumber);
+      vcsAnnotation = ObjectUtils.tryCast(cachedData, VcsAnnotation.class);
     }
 
     if (vcsAnnotation != null) {
       final VcsHistoryProvider historyProvider = myVcs.getVcsHistoryProvider();
-      // question is whether we need "not moved" path here?
-      FileAnnotation restored = cacheableAnnotationProvider.restore(vcsAnnotation, revisionNumber);
-      if (restored != null) {
-        return restored;
-      }
-      final ContentRevision fileContent = myVcs.getDiffProvider().createFileContent(revisionNumber, file);
       final VcsAbstractHistorySession history = getHistory(revisionNumber, filePath, historyProvider, vcsAnnotation.getFirstRevision());
       if (history == null) return null;
-      restored = cacheableAnnotationProvider.
-        restore(vcsAnnotation, history, fileContent.getContent(), currentRevision, revisionNumber);
+      // question is whether we need "not moved" path here?
+      final ContentRevision fileContent = myVcs.getDiffProvider().createFileContent(revisionNumber, file);
+      final FileAnnotation restored = cacheableAnnotationProvider.
+        restore(vcsAnnotation, history, fileContent.getContent(), currentRevision,
+                                                                          revisionNumber);
       if (restored != null) {
         return restored;
       }
@@ -113,7 +119,28 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider {
     if (revisionNumber != null) {
       myCache.put(filePath, myVcs.getKeyInstanceMethod(), revisionNumber, vcsAnnotation);
     }
+
+    if (myVcs.getVcsHistoryProvider() instanceof VcsCacheableHistorySessionFactory) {
+      loadHistoryInBackgroundToCache(revisionNumber, filePath, vcsAnnotation);
+    }
     return fileAnnotation;
+  }
+
+  // todo will be removed - when annotation will be presented together with history
+  private void loadHistoryInBackgroundToCache(final VcsRevisionNumber revisionNumber,
+                                              final FilePath filePath,
+                                              final VcsAnnotation vcsAnnotation) {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          getHistory(revisionNumber, filePath, myVcs.getVcsHistoryProvider(), vcsAnnotation.getFirstRevision());
+        }
+        catch (VcsException e) {
+          LOG.info(e);
+        }
+      }
+    });
   }
 
   private VcsAbstractHistorySession getHistory(VcsRevisionNumber revision, FilePath filePath, VcsHistoryProvider historyProvider,

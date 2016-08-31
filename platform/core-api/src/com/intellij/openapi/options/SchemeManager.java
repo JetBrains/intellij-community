@@ -30,6 +30,9 @@ public abstract class SchemeManager<T extends Scheme> {
   @NotNull
   public abstract Collection<T> loadSchemes();
 
+  public void reload() {
+  }
+
   public abstract void addNewScheme(@NotNull T scheme, boolean replaceExisting);
 
   public void addScheme(@NotNull T scheme) {

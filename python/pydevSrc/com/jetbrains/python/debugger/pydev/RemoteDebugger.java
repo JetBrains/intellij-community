@@ -762,6 +762,13 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
+  public String getDescription(String threadId, String frameId, String cmd) {
+    final GetDescriptionCommand command = new GetDescriptionCommand(this, threadId, frameId, cmd);
+    execute(command);
+    return command.getResult();
+  }
+
+  @Override
   public void addExceptionBreakpoint(ExceptionBreakpointCommandFactory factory) {
     execute(factory.createAddCommand(this));
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Max Medvedev
  */
-public class GrIntroduceParameterInClosureTest extends LightCodeInsightFixtureTestCase {
+class GrIntroduceParameterInClosureTest extends LightCodeInsightFixtureTestCase {
   protected String getBasePath() {
     return TestUtils.getTestDataPath() + "refactoring/introduceParameterInClosure/";
   }
@@ -62,47 +62,47 @@ public class GrIntroduceParameterInClosureTest extends LightCodeInsightFixtureTe
     myFixture.checkResult(after);
   }
 
-  public void testSimpleClosure() {
+  void testSimpleClosure() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null, false);
   }
 
-  public void testRemoveUnusedParam() {
+  void testRemoveUnusedParam() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, null, false);
   }
 
-  public void testLocalVarUsage() {
+  void testLocalVarUsage() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null, false);
   }
 
-  public void testField() {
+  void testField() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, true, true, null, false);
   }
 
-  public void testReplaceWithGetter() {
+  void testReplaceWithGetter() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, true, true, null, false);
   }
 
-  public void testDontReplaceWithGetter() {
+  void testDontReplaceWithGetter() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, true, null, false);
   }
 
-  public void testReplaceGetterCall() {
+  void testReplaceGetterCall() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, true, true, null, false);
   }
 
-  public void testClosureRefWithoutCall() {
+  void testClosureRefWithoutCall() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null, false);
   }
 
-  public void testClosureCall() {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null, false);
-  }
-  
-  public void testVarAssignedToClosure() {
+  void testClosureCall() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null, false);
   }
 
-  public void testCorrectOccurrencesForLocalVar() {
+  void testVarAssignedToClosure() {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null, false);
+  }
+
+  void testCorrectOccurrencesForLocalVar() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null, false);
   }
 

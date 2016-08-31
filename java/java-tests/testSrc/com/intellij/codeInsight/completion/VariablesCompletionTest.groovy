@@ -1,10 +1,25 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight.completion
 import com.intellij.JavaTestUtil
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 
-public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
+class VariablesCompletionTest extends LightFixtureCompletionTestCase {
   public static final String FILE_PREFIX = "/codeInsight/completion/variables/";
 
   @Override
@@ -12,72 +27,73 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
     return JavaTestUtil.getRelativeJavaTestDataPath();
   }
 
-  public void testObjectVariable() throws Exception {
+  void testObjectVariable() throws Exception {
     configureByFile(FILE_PREFIX + "locals/" + getTestName(false) + ".java");
     checkResultByFile(FILE_PREFIX + "locals/" + getTestName(false) + "_after.java");
   }
 
-  public void testStringVariable() throws Exception {
+  void testStringVariable() throws Exception {
     configureByFile(FILE_PREFIX + "locals/" + getTestName(false) + ".java");
     checkResultByFile(FILE_PREFIX + "locals/" + getTestName(false) + "_after.java");
   }
 
-  public void testInputMethodEventVariable() throws Exception {
+  void testInputMethodEventVariable() throws Exception {
     myFixture.addClass("package java.awt.event; public interface InputMethodEvent {}");
 
     configureByFile(FILE_PREFIX + "locals/" + getTestName(false) + ".java");
     checkResultByFile(FILE_PREFIX + "locals/" + getTestName(false) + "_after.java");
   }
 
-  public void testLocals1() throws Exception {
+  void testLocals1() throws Exception {
     doSelectTest("TestSource1.java", "TestResult1.java");
   }
 
-  public void testInterfaceMethod() throws Exception {
+  void testInterfaceMethod() throws Exception {
     configureByFile(FILE_PREFIX + "locals/" + "InterfaceMethod.java");
     assertStringItems("calcGooBarDoo", "calcBarDoo", "calcDoo");
   }
 
-  public void testLocals2() throws Exception {
+  void testLocals2() throws Exception {
     configureByFile(FILE_PREFIX + "locals/" + "TestSource2.java");
     myFixture.assertPreferredCompletionItems 0, 'abc', 'aaa'
     checkResultByFile(FILE_PREFIX + "locals/" + "TestResult2.java");
   }
 
-  public void testLocals3() throws Exception {
+  void testLocals3() throws Exception {
     doTest("TestSource3.java", "TestResult3.java");
   }
 
-  public void testLocals4() throws Exception {
+  void testLocals4() throws Exception {
     doSelectTest("TestSource4.java", "TestResult4.java");
   }
 
-  public void testLocals5() throws Exception {
+  void testLocals5() throws Exception {
     doTest("TestSource5.java", "TestResult5.java");
   }
 
-  public void testLocals6() throws Exception {
+  void testLocals6() throws Exception {
     doSelectTest("TestSource6.java", "TestResult6.java");
   }
 
-  public void testLocals7() throws Exception {
+  void testLocals7() throws Exception {
     doTest("TestSource7.java", "TestResult7.java");
   }
 
-  public void testLocalReserved() throws Exception {
+  void testLocalReserved() throws Exception {
     doTest("LocalReserved.java", "LocalReserved_after.java");
   }
 
-  public void testLocalReserved2() throws Exception {
+  void testLocalReserved2() throws Exception {
     configureByFile(FILE_PREFIX + "locals/" + "LocalReserved2.java")
     checkResultByFile(FILE_PREFIX + "locals/" + "LocalReserved2.java");
     assert !myFixture.lookupElementStrings
   }
 
-  public void testUniqueNameInFor() throws Exception {
+  void testUniqueNameInFor() throws Exception {
     doTest(getTestName(false) + ".java", getTestName(false) + "_after.java");
   }
-  public void testWithBuilderParameter() throws Exception {
+
+  void testWithBuilderParameter() throws Exception {
     doTest(getTestName(false) + ".java", getTestName(false) + "_after.java");
   }
 
@@ -92,16 +108,16 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(FILE_PREFIX + "locals/" + after);
   }
 
-  public void testLocals8() throws Exception {
+  void testLocals8() throws Exception {
     doTest("TestSource8.java", "TestResult8.java");
   }
 
-  public void testUnresolvedReference() throws Exception {
+  void testUnresolvedReference() throws Exception {
     configureByFile(FILE_PREFIX + "locals/" + getTestName(false) + ".java");
     assertStringItems("o", "psiClass");
   }
 
-  public void testFieldNameCompletion1() throws Exception {
+  void testFieldNameCompletion1() throws Exception {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     String oldPrefix = settings.FIELD_NAME_PREFIX;
     settings.FIELD_NAME_PREFIX = "my";
@@ -113,7 +129,7 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
     }
   }
 
-  public void testFieldNameCompletion2() throws Exception {
+  void testFieldNameCompletion2() throws Exception {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
     String oldPrefix = settings.FIELD_NAME_PREFIX;
     settings.FIELD_NAME_PREFIX = "my";
@@ -122,7 +138,7 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(FILE_PREFIX + "locals/" + "FieldNameCompletion2-result.java");
   }
 
-  public void testFieldNameCompletion3() throws Exception {
+  void testFieldNameCompletion3() throws Exception {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
     String oldPrefix = settings.FIELD_NAME_PREFIX;
     settings.FIELD_NAME_PREFIX = "my";
@@ -132,71 +148,71 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(FILE_PREFIX + "locals/" + "FieldNameCompletion3-result.java");
   }
 
-  public void testLocals9() throws Exception {
+  void testLocals9() throws Exception {
     doSelectTest("TestSource9.java", "TestResult9.java");
   }
 
-  public void testFieldOutOfAnonymous() throws Exception {
+  void testFieldOutOfAnonymous() throws Exception {
     doTest("TestFieldOutOfAnonymous.java", "TestFieldOutOfAnonymousResult.java");
   }
 
-  public void testUnresolvedMethodName() throws Exception {
+  void testUnresolvedMethodName() throws Exception {
     configureByFile(FILE_PREFIX + "locals/" + "UnresolvedMethodName.java");
     complete();
     checkResultByFile(FILE_PREFIX + "locals/" + "UnresolvedMethodName_after.java");
   }
 
-  public void testArrayMethodName() throws Throwable {
+  void testArrayMethodName() throws Throwable {
     doTest("ArrayMethodName.java", "ArrayMethodName-result.java");
   }
 
-  public void testInitializerMatters() throws Exception {
+  void testInitializerMatters() throws Exception {
     myFixture.configureByText(JavaFileType.INSTANCE, "class Foo {{ String f<caret>x = getFoo(); }; String getFoo() {}; }");
     complete();
     assertStringItems("foo");
   }
 
-  public void testFieldInitializerMatters() throws Exception {
+  void testFieldInitializerMatters() throws Exception {
     myFixture.configureByText(JavaFileType.INSTANCE, "class Foo { String f<caret>x = getFoo(); String getFoo() {}; }");
     complete();
     assertStringItems("foo", "fString");
   }
 
-  public void testNoKeywordsInForLoopVariableName() throws Throwable {
+  void testNoKeywordsInForLoopVariableName() throws Throwable {
     configure()
     assertStringItems("stringBuffer", "buffer");
   }
 
-  public void testDontIterateOverLoopVariable() throws Throwable {
+  void testDontIterateOverLoopVariable() throws Throwable {
     configure()
     myFixture.assertPreferredCompletionItems 0, 'nodes', 'new', 'null'
   }
 
-  public void testDuplicateSuggestionsFromUsage() {
+  void testDuplicateSuggestionsFromUsage() {
     configure();
     assertStringItems("preferencePolicy", "policy", "aPreferencePolicy");
   }
 
-  public void testSuggestVariablesInTypePosition() {
+  void testSuggestVariablesInTypePosition() {
     configure();
     assertStringItems("myField", "myField2");
   }
 
-  public void configure() {
+  void configure() {
     configureByFile(FILE_PREFIX + getTestName(false) + ".java")
   }
 
-  public void testAnnotationValue() {
+  void testAnnotationValue() {
     configure()
     checkResultByFile(FILE_PREFIX + getTestName(false) + "_after.java")
   }
 
-  public void testConstructorParameterName() {
+  void testConstructorParameterName() {
     configure()
     assertStringItems("color");
   }
 
-  public void testConstructorParameterNameWithPrefix() {
+  void testConstructorParameterNameWithPrefix() {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
     String oldField = settings.FIELD_NAME_PREFIX;
     String oldParam = settings.PARAMETER_NAME_PREFIX;
@@ -211,7 +227,7 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
     assertStringItems("pColor");
   }
 
-  public void "test finish with ="() {
+  void "test finish with ="() {
     myFixture.configureByText 'a.java', '''
 class FooFoo {
   FooFoo f<caret>
@@ -227,7 +243,7 @@ class FooFoo {
 '''
   }
 
-  public void "test suggest variable names by non-getter initializer call"() {
+  void "test suggest variable names by non-getter initializer call"() {
     myFixture.configureByText 'a.java', '''
 class FooFoo {
   { long <caret>x = System.nanoTime(); }
@@ -237,7 +253,7 @@ class FooFoo {
     myFixture.assertPreferredCompletionItems 0, 'l', 'nanoTime', 'time'
   }
 
-  public void "test use superclass for inner class variable name suggestion"() {
+  void "test use superclass for inner class variable name suggestion"() {
     myFixture.configureByText 'a.java', '''
 class FooFoo {
   { Rectangle2D.Double <caret>x }
@@ -250,7 +266,7 @@ class Rectangle2D {
     myFixture.assertPreferredCompletionItems 0, 'aDouble', 'rectangle2D'
   }
 
-  public void "test suggest field-shadowing parameter name"() {
+  void "test suggest field-shadowing parameter name"() {
     myFixture.configureByText 'a.java', '''
 class FooFoo {
   private final Collection<MaterialQuality> materialQualities;

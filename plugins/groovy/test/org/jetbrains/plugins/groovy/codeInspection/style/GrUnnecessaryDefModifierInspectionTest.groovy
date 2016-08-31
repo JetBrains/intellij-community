@@ -21,7 +21,7 @@ import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 
 @CompileStatic
-public class GrUnnecessaryDefModifierInspectionTest extends LightGroovyTestCase {
+class GrUnnecessaryDefModifierInspectionTest extends LightGroovyTestCase {
 
   final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
 
@@ -39,6 +39,11 @@ def (int a, b) = [1, 2]
 class A {
   <warning descr="Modifier 'def' is not necessary">def</warning> A() {}
 }
+def loops(List list) {
+  for (def a : list) {}
+  for (<warning descr="Modifier 'def' is not necessary">def</warning> b in list) {}
+  for (def c = 0; c < 10; c++) {}
+}
 '''
       checkHighlighting()
       launchAction findSingleIntention("Fix all 'Unnecessary 'def''")
@@ -52,6 +57,11 @@ def baf
 def (int a, b) = [1, 2]
 class A {
   A() {}
+}
+def loops(List list) {
+  for (def a : list) {}
+  for (b in list) {}
+  for (def c = 0; c < 10; c++) {}
 }
 '''
     }

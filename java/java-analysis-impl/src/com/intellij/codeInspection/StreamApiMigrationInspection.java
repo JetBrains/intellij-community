@@ -99,7 +99,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           final PsiStatement body = statement.getBody();
           if (iteratedValue != null && body != null) {
             final PsiType iteratedValueType = iteratedValue.getType();
-            final PsiClass iteratorClass = PsiUtil.resolveClassInType(iteratedValueType);
+            final PsiClass iteratorClass = PsiUtil.resolveClassInClassTypeOnly(iteratedValueType);
             final PsiClass collectionClass = JavaPsiFacade.getInstance(body.getProject()).findClass(CommonClassNames.JAVA_UTIL_COLLECTION, statement.getResolveScope());
             if (collectionClass != null && InheritanceUtil.isInheritorOrSelf(iteratorClass, collectionClass, true)) {
               try {
@@ -448,7 +448,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
             if (qualifierExpression instanceof PsiReferenceExpression) {
               final PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
               if (resolve instanceof PsiVariable) {
-                if (resolve instanceof PsiLocalVariable && foreachStatement.equals(PsiTreeUtil.skipSiblingsForward(resolve.getParent(), PsiWhiteSpace.class))) {
+                if (resolve instanceof PsiLocalVariable && foreachStatement.equals(PsiTreeUtil.skipSiblingsForward(resolve.getParent(), PsiWhiteSpace.class, PsiComment.class))) {
                   final PsiExpression initializer = ((PsiVariable)resolve).getInitializer();
                   if (initializer instanceof PsiNewExpression) {
                     final PsiExpressionList argumentList = ((PsiNewExpression)initializer).getArgumentList();

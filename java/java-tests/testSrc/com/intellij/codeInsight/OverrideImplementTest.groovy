@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,15 +33,21 @@ class OverrideImplementTest extends LightCodeInsightFixtureTestCase {
     JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/overrideImplement"
   }
 
-  public void testImplementExtensionMethods() { doTest(true) }
-  public void testOverrideExtensionMethods() { doTest(false) }
-  public void testDoNotImplementExtensionMethods() { doTest(true) }
-  public void testSkipUnknownAnnotations() { doTest(true) }
-  public void testMultipleInheritedThrows() { doTest(false) }
-  public void testOverrideInInterface() { doTest(false) }
-  public void testMultipleInheritanceWithThrowables() { doTest(true) }
+  void testImplementExtensionMethods() { doTest(true) }
 
-  public void testImplementInInterface() {
+  void testOverrideExtensionMethods() { doTest(false) }
+
+  void testDoNotImplementExtensionMethods() { doTest(true) }
+
+  void testSkipUnknownAnnotations() { doTest(true) }
+
+  void testMultipleInheritedThrows() { doTest(false) }
+
+  void testOverrideInInterface() { doTest(false) }
+
+  void testMultipleInheritanceWithThrowables() { doTest(true) }
+
+  void testImplementInInterface() {
     myFixture.addClass """\
 interface A {
     void foo();
@@ -54,7 +60,7 @@ interface B extends A {
 """).containingFile.virtualFile
     myFixture.configureFromExistingVirtualFile(file)
 
-    def Presentation presentation = new Presentation()
+    Presentation presentation = new Presentation()
     presentation.setText(ActionsBundle.message("action.ImplementMethods.text"))
     CommandProcessor.instance.executeCommand(project, { invokeAction(true) }, presentation.text, null)
 
@@ -68,7 +74,7 @@ interface B extends A {
 """
   }
 
-  public void testImplementInterfaceWhenClassProvidesProtectedImplementation() {
+  void testImplementInterfaceWhenClassProvidesProtectedImplementation() {
     myFixture.addClass """\
 interface A {
   void f();
@@ -87,7 +93,7 @@ class C extends B implements A {
 """).containingFile.virtualFile
     myFixture.configureFromExistingVirtualFile(file)
 
-    def Presentation presentation = new Presentation()
+    Presentation presentation = new Presentation()
     presentation.setText(ActionsBundle.message("action.ImplementMethods.text"))
     CommandProcessor.instance.executeCommand(project, { invokeAction(true) }, presentation.text, null)
 
@@ -101,7 +107,7 @@ class C extends B implements A {
 """
   }
 
-  public void testImplementSameNamedInterfaces() {
+  void testImplementSameNamedInterfaces() {
     myFixture.addClass """\
 class Main1 {
    interface I {
@@ -124,7 +130,7 @@ class B implements Main1.I, Main2.I {
 """).containingFile.virtualFile
     myFixture.configureFromExistingVirtualFile(file)
 
-    def Presentation presentation = new Presentation()
+    Presentation presentation = new Presentation()
     presentation.setText(ActionsBundle.message("action.ImplementMethods.text"))
     CommandProcessor.instance.executeCommand(project, { invokeAction(true) }, presentation.text, null)
 
@@ -143,7 +149,7 @@ class B implements Main1.I, Main2.I {
 """
   }
 
-  public void "test overriding overloaded method"() {
+  void "test overriding overloaded method"() {
     myFixture.addClass """\
 package bar;
 interface A {
@@ -177,7 +183,7 @@ class Test implements A {
 """
   }
 
-  public void testTypeAnnotationsInImplementedMethod() {
+  void testTypeAnnotationsInImplementedMethod() {
     myFixture.addClass """\
       import java.lang.annotation.*;
       @Target(ElementType.TYPE_USE)

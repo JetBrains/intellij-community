@@ -15,16 +15,37 @@
  */
 package com.intellij.psi.impl.source;
 
-import com.intellij.psi.JavaElementVisitor;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiProvidesStatement;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiProvidesStatementImpl extends CompositePsiElement implements PsiProvidesStatement {
   public PsiProvidesStatementImpl() {
     super(JavaElementType.PROVIDES_STATEMENT);
+  }
+
+  @Nullable
+  @Override
+  public PsiJavaCodeReferenceElement getInterfaceReference() {
+    for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (child instanceof PsiJavaCodeReferenceElement) return (PsiJavaCodeReferenceElement)child;
+      if (PsiUtil.isJavaToken(child, JavaTokenType.WITH_KEYWORD)) break;
+    }
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public PsiJavaCodeReferenceElement getImplementationReference() {
+    boolean afterWith = false;
+    for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (afterWith && child instanceof PsiJavaCodeReferenceElement) return (PsiJavaCodeReferenceElement)child;
+      if (PsiUtil.isJavaToken(child, JavaTokenType.WITH_KEYWORD)) afterWith = true;
+    }
+    return null;
   }
 
   @Override

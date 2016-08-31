@@ -470,7 +470,7 @@ public class PackageAnnotator {
 
     classCoverageInfo.totalMethodCount += toplevelClassCoverageInfo.totalMethodCount;
     classCoverageInfo.coveredMethodCount += toplevelClassCoverageInfo.coveredMethodCount;
-    if (toplevelClassCoverageInfo.coveredMethodCount > 0) {
+    if (toplevelClassCoverageInfo.getCoveredLineCount() > 0) {
       classCoverageInfo.coveredClassCount++;
     }
   }

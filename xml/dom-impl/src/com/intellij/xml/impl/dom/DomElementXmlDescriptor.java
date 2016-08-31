@@ -74,7 +74,9 @@ public class DomElementXmlDescriptor extends AbstractDomChildrenDescriptor imple
         element = myManager.getDomElement(tag.getParentTag());
       }
       if (element != null && file instanceof XmlFile && !(myChildrenDescription instanceof MyRootDomChildrenDescription)) {
-        final String namespace = DomService.getInstance().getEvaluatedXmlName(element).evaluateChildName(myChildrenDescription.getXmlName()).getNamespace(tag, (XmlFile)file);
+        final String namespace = DomService.getInstance().getEvaluatedXmlName(element)
+          .evaluateChildName(myChildrenDescription.getXmlName())
+          .getNamespace(tag, (XmlFile)file);
         if (!tag.getNamespaceByPrefix("").equals(namespace)) {
           final String s = tag.getPrefixByNamespace(namespace);
           if (StringUtil.isNotEmpty(s)) {
@@ -138,37 +140,37 @@ public class DomElementXmlDescriptor extends AbstractDomChildrenDescriptor imple
 
     @Override
     @NotNull
-      public String getCommonPresentableName(@NotNull final DomNameStrategy strategy) {
+    public String getCommonPresentableName(@NotNull final DomNameStrategy strategy) {
       throw new UnsupportedOperationException("Method getCommonPresentableName not implemented in " + getClass());
     }
 
     @Override
     @NotNull
-      public String getCommonPresentableName(@NotNull final DomElement parent) {
+    public String getCommonPresentableName(@NotNull final DomElement parent) {
       throw new UnsupportedOperationException("Method getCommonPresentableName not implemented in " + getClass());
     }
 
     @Override
     @NotNull
-      public List<? extends DomElement> getValues(@NotNull final DomElement parent) {
+    public List<? extends DomElement> getValues(@NotNull final DomElement parent) {
       throw new UnsupportedOperationException("Method getValues not implemented in " + getClass());
     }
 
     @Override
     @NotNull
-      public List<? extends DomElement> getStableValues(@NotNull final DomElement parent) {
+    public List<? extends DomElement> getStableValues(@NotNull final DomElement parent) {
       throw new UnsupportedOperationException("Method getStableValues not implemented in " + getClass());
     }
 
     @Override
     @NotNull
-      public Type getType() {
+    public Type getType() {
       throw new UnsupportedOperationException("Method getType not implemented in " + getClass());
     }
 
     @Override
     @NotNull
-      public DomNameStrategy getDomNameStrategy(@NotNull final DomElement parent) {
+    public DomNameStrategy getDomNameStrategy(@NotNull final DomElement parent) {
       throw new UnsupportedOperationException("Method getDomNameStrategy not implemented in " + getClass());
     }
 
@@ -184,9 +186,9 @@ public class DomElementXmlDescriptor extends AbstractDomChildrenDescriptor imple
 
     @Override
     @Nullable
-      public <T extends Annotation> T getAnnotation(final Class<T> annotationClass) {
-          throw new UnsupportedOperationException("Method getAnnotation not implemented in " + getClass());
-        }
+    public <T extends Annotation> T getAnnotation(final Class<T> annotationClass) {
+      throw new UnsupportedOperationException("Method getAnnotation not implemented in " + getClass());
+    }
 
     @Override
     @Nullable
@@ -204,5 +206,4 @@ public class DomElementXmlDescriptor extends AbstractDomChildrenDescriptor imple
       return false;
     }
   }
-
 }

@@ -36,19 +36,23 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author ven
  */
-public class RenameTest extends LightGroovyTestCase {
+class RenameTest extends LightGroovyTestCase {
   @Override
   protected String getBasePath() {
     TestUtils.testDataPath + 'groovy/refactoring/rename/'
   }
 
-  public void testClosureIt() throws Throwable { doTest(); }
-  public void testTo_getter() throws Throwable { doTest(); }
-  public void testTo_prop() throws Throwable { doTest(); }
-  public void testTo_setter() throws Throwable { doTest(); }
-  public void testScriptMethod() throws Throwable { doTest(); }
+  void testClosureIt() throws Throwable { doTest(); }
 
-  public void testParameterIsNotAUsageOfGroovyParameter() throws Exception {
+  void testTo_getter() throws Throwable { doTest(); }
+
+  void testTo_prop() throws Throwable { doTest(); }
+
+  void testTo_setter() throws Throwable { doTest(); }
+
+  void testScriptMethod() throws Throwable { doTest(); }
+
+  void testParameterIsNotAUsageOfGroovyParameter() throws Exception {
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
 def foo(f) {
   // Parameter
@@ -71,7 +75,7 @@ def foo(newName) {
     assertEquals txt, txtFile.text
   }
 
-  public void testPreserveUnknownImports() throws Exception {
+  void testPreserveUnknownImports() throws Exception {
     def someClass = myFixture.addClass("public class SomeClass {}")
 
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
@@ -87,7 +91,7 @@ Zoo zoo
 """
   }
 
-  public void testRenameGetter() throws Exception {
+  void testRenameGetter() throws Exception {
     myFixture.addFileToProject("Foo.groovy", "class Foo { def getFoo(){return 2}}")
     final PsiClass clazz = myFixture.findClass("Foo")
     def methods = clazz.findMethodsByName("getFoo", false)
@@ -96,7 +100,7 @@ Zoo zoo
     myFixture.checkResult "print new Foo().get()"
   }
 
-  public void testRenameSetter() throws Exception {
+  void testRenameSetter() throws Exception {
     myFixture.addFileToProject("Foo.groovy","class Foo { def setFoo(def foo){}}")
     def clazz = myFixture.findClass("Foo")
     def methods = clazz.findMethodsByName("setFoo", false)
@@ -105,7 +109,7 @@ Zoo zoo
     myFixture.checkResult "print new Foo().set(2)"
   }
 
-  public void testProperty() {
+  void testProperty() {
     myFixture.configureByText("a.groovy", """
 class Foo {
   def p<caret>rop
@@ -135,7 +139,7 @@ class Foo {
 }"""
   }
 
-  public void testPropertyWithLocalCollision() {
+  void testPropertyWithLocalCollision() {
     myFixture.configureByText("a.groovy", """
 class Foo {
   def p<caret>rop
@@ -171,7 +175,7 @@ class Foo {
 }"""
   }
 
-  public void testPropertyWithFieldCollision() {
+  void testPropertyWithFieldCollision() {
     myFixture.configureByText("a.groovy", """\
 class A {
   String na<caret>me;
@@ -209,7 +213,7 @@ class A {
 }"""
   }
 
-  public void testRenameFieldWithNonstandardName() {
+  void testRenameFieldWithNonstandardName() {
     def file = myFixture.configureByText("a.groovy", """
 class SomeBean {
   String xXx<caret> = "field"
@@ -259,7 +263,7 @@ print new Foo(1)
 '''
   }
 
-  public void doTest() {
+  void doTest() {
     final String testFile = getTestName(true).replace('$', '/') + ".test";
     final List<String> list = TestUtils.readInput(TestUtils.absoluteTestDataPath + "groovy/refactoring/rename/" + testFile);
 
@@ -298,7 +302,7 @@ print new Foo(1)
     return newName;
   }
 
-  public void testRecursivePathRename() {
+  void testRecursivePathRename() {
     def file = myFixture.configureByText("SomeBean.groovy", """
 class SomeBean {
 
@@ -323,7 +327,7 @@ class SomeBean {
 """, file.text
   }
 
-  public void testDontAutoRenameDynamicallyTypeUsage() throws Exception {
+  void testDontAutoRenameDynamicallyTypeUsage() throws Exception {
     myFixture.configureByText "a.groovy", """
 class Goo {
   def pp<caret>roject() {}
@@ -341,7 +345,7 @@ def foo(p) {
     assert usages[1].isNonCodeUsage
   }
 
-  public void testRenameAliasImportedProperty() {
+  void testRenameAliasImportedProperty() {
     myFixture.addFileToProject("Foo.groovy", """class Foo {
 static def bar
 }""")
@@ -363,7 +367,7 @@ setFoo(2)
 foo = 4"""
   }
 
-  public void testRenameAliasImportedClass() {
+  void testRenameAliasImportedClass() {
     myFixture.addFileToProject("Foo.groovy", """class Foo {
 static def bar
 }""")
@@ -379,7 +383,7 @@ Bar bar = new Bar()
 """
   }
 
-  public void testRenameAliasImportedMethod() {
+  void testRenameAliasImportedMethod() {
     myFixture.addFileToProject("Foo.groovy", """class Foo {
 static def bar(){}
 }""")
@@ -395,7 +399,7 @@ foo()
 """
   }
 
-  public void testRenameAliasImportedField() {
+  void testRenameAliasImportedField() {
     myFixture.addFileToProject("Foo.groovy", """class Foo {
 public static bar
 }""")
@@ -413,15 +417,15 @@ print foo
 foo = 4"""
   }
 
-  public void testInplaceRename() {
+  void testInplaceRename() {
    doInplaceRenameTest();
   }
 
-  public void testInplaceRenameWithGetter() {
+  void testInplaceRenameWithGetter() {
    doInplaceRenameTest();
   }
 
-  public void testInplaceRenameWithStaticField() {
+  void testInplaceRenameWithStaticField() {
    doInplaceRenameTest();
   }
 
@@ -429,7 +433,7 @@ foo = 4"""
     doInplaceRenameTest()
   }
 
-  public void testRenameClassWithLiteralUsages() throws Exception {
+  void testRenameClassWithLiteralUsages() throws Exception {
     def file = myFixture.addFileToProject("aaa.groovy", """
       class Foo {
         Foo(int a) {}
@@ -449,13 +453,13 @@ foo = 4"""
 """
   }
 
-  public void testExtensionOnClassRename() {
+  void testExtensionOnClassRename() {
     myFixture.configureByText "Foo.gy", "class Foo {}"
     myFixture.renameElement myFixture.findClass("Foo"), "Bar"
     assert "gy", myFixture.file.virtualFile.extension
   }
 
-  public void testRenameJavaUsageFail() {
+  void testRenameJavaUsageFail() {
     myFixture.addFileToProject "Bar.java", """
 class Bar {
   void bar() {
@@ -475,7 +479,7 @@ class Foo {
     assertTrue false
   }
 
-  public void testRenameJavaPrivateField() {
+  void testRenameJavaPrivateField() {
     myFixture.addFileToProject "Foo.java", """
 public class Foo {
   private int field;

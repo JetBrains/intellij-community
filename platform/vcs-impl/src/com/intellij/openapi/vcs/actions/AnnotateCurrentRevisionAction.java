@@ -1,44 +1,37 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.history.VcsRevisionDescription;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.util.containers.HashMap;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 class AnnotateCurrentRevisionAction extends AnnotateRevisionAction {
-  @Nullable private final List<VcsRevisionDescription> myRevisions;
+  @Nullable private final FileAnnotation.CurrentFileRevisionProvider myProvider;
 
   public AnnotateCurrentRevisionAction(@NotNull FileAnnotation annotation, @NotNull AbstractVcs vcs) {
     super("Annotate Revision", "Annotate selected revision in new tab", AllIcons.Actions.Annotate,
           annotation, vcs);
-    List<? extends VcsRevisionDescription> revisions = annotation.getRevisionDescriptions();
-    if (revisions == null) {
-      myRevisions = null;
-      return;
-    }
-
-    Map<VcsRevisionNumber, VcsRevisionDescription> map = new HashMap<>();
-    for (VcsRevisionDescription revision : revisions) {
-      map.put(revision.getRevisionNumber(), revision);
-    }
-
-    myRevisions = new ArrayList<>(annotation.getLineCount());
-    for (int i = 0; i < annotation.getLineCount(); i++) {
-      myRevisions.add(map.get(annotation.getLineRevisionNumber(i)));
-    }
+    myProvider = annotation.getCurrentFileRevisionProvider();
   }
 
   @Override
+  public void update(@NotNull AnActionEvent e) {
+    if (myProvider == null) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
+    super.update(e);
+  }
+
   @Nullable
-  public List<VcsRevisionDescription> getRevisions() {
-    return myRevisions;
+  @Override
+  protected VcsFileRevision getRevision(int lineNumber) {
+    assert myProvider != null;
+
+    if (lineNumber < 0 || lineNumber >= myAnnotation.getLineCount()) return null;
+    return myProvider.getRevision(lineNumber);
   }
 }

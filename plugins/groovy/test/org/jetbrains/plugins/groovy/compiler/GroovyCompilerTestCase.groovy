@@ -61,7 +61,7 @@ import org.jetbrains.plugins.groovy.util.Slow
  */
 @Slow
 @CompileStatic
-public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase implements CompilerMethods {
+abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase implements CompilerMethods {
 
   protected CompilerTester myCompilerTester;
 
@@ -217,7 +217,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     final StringBuffer sb = new StringBuffer();
     ProcessHandler process = runProcess(className, module, DefaultRunExecutor.class, new ProcessAdapter() {
       @Override
-      public void onTextAvailable(ProcessEvent event, Key outputType) {
+      void onTextAvailable(ProcessEvent event, Key outputType) {
         if (ProcessOutputTypes.SYSTEM != outputType) {
           sb.append(event.getText());
         }

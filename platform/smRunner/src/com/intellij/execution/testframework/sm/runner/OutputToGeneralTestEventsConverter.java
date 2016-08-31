@@ -92,7 +92,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     fireOnUncapturedOutput("\n", ProcessOutputTypes.STDOUT);
   }
 
-  private void processConsistentText(String text, final Key outputType, boolean tcLikeFakeOutput) {
+  protected void processConsistentText(String text, final Key outputType, boolean tcLikeFakeOutput) {
     if (text.length() > CYCLE_BUFFER_SIZE) {
       final StringBuilder builder = new StringBuilder(CYCLE_BUFFER_SIZE);
       builder.append(text, 0, CYCLE_BUFFER_SIZE - 105);

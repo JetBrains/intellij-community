@@ -61,7 +61,8 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.*;
+import com.intellij.util.containers.HashSet;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -609,16 +610,18 @@ public class PyUtil {
   @NotNull
   public static PsiElement resolveToTheTop(@NotNull final PsiElement elementToResolve) {
     PsiElement currentElement = elementToResolve;
+    final Set<PsiElement> checkedElements = new HashSet<>(); // To prevent PY-20553
     while (true) {
       final PsiReference reference = currentElement.getReference();
       if (reference == null) {
         break;
       }
       final PsiElement resolve = reference.resolve();
-      if ((resolve == null) || resolve.equals(currentElement) || !inSameFile(resolve, currentElement)) {
+      if ((resolve == null) ||  checkedElements.contains(resolve) || resolve.equals(currentElement) || !inSameFile(resolve, currentElement)) {
         break;
       }
       currentElement = resolve;
+      checkedElements.add(resolve);
     }
     return currentElement;
   }
@@ -1829,6 +1832,45 @@ public class PyUtil {
     }
 
     return null;
+  }
+
+  public static boolean isEmptyFunction(@NotNull PyFunction function) {
+    final PyStatementList statementList = function.getStatementList();
+    final PyStatement[] statements = statementList.getStatements();
+    if (statements.length == 0) {
+      return true;
+    }
+    else if (statements.length == 1) {
+      if (isStringLiteral(statements[0]) || isPassOrRaiseOrEmptyReturn(statements[0])) {
+        return true;
+      }
+    }
+    else if (statements.length == 2) {
+      if (isStringLiteral(statements[0]) && (isPassOrRaiseOrEmptyReturn(statements[1]))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isPassOrRaiseOrEmptyReturn(PyStatement stmt) {
+    if (stmt instanceof PyPassStatement || stmt instanceof PyRaiseStatement) {
+      return true;
+    }
+    if (stmt instanceof PyReturnStatement && ((PyReturnStatement)stmt).getExpression() == null) {
+      return true;
+    }
+    return false;
+  }
+
+  private static boolean isStringLiteral(PyStatement stmt) {
+    if (stmt instanceof PyExpressionStatement) {
+      final PyExpression expr = ((PyExpressionStatement)stmt).getExpression();
+      if (expr instanceof PyStringLiteralExpression) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**

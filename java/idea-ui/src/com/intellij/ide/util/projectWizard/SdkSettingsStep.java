@@ -190,10 +190,10 @@ public class SdkSettingsStep extends ModuleWizardStep {
     }
     try {
       if (item instanceof JdkComboBox.SuggestedJdkItem) {
-        SdkType type = item.getSdkType();
+        SdkType type = ((JdkComboBox.SuggestedJdkItem)item).getSdkType();
         String path = ((JdkComboBox.SuggestedJdkItem)item).getPath();
         myModel.addSdk(type, path, sdk -> {
-          myJdkComboBox.reloadModel(new JdkComboBox.JdkComboBoxItem(sdk), myWizardContext.getProject());
+          myJdkComboBox.reloadModel(new JdkComboBox.ActualJdkComboBoxItem(sdk), myWizardContext.getProject());
           myJdkComboBox.setSelectedJdk(sdk);
         });
       }

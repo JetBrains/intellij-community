@@ -24,16 +24,16 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
-import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
-import com.jetbrains.jsonSchema.impl.JsonSchemaResourcesRootsProvider;
-import com.jetbrains.jsonSchema.impl.JsonSchemaWalker;
+import com.jetbrains.jsonSchema.impl.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -41,12 +41,12 @@ import java.util.List;
  * @author Irina.Chernushina on 7/7/2016.
  */
 public class JsonSchemaDefinitionResolver {
+  public static final String PROPERTIES = "/properties/";
   @Nullable private String myRef;
   @Nullable JsonSchemaObject mySchemaObject;
 
   @NotNull private final PsiElement myElement;
   @Nullable final String mySchemaId;
-  private boolean myInCurrentFile;
 
   public JsonSchemaDefinitionResolver(@NotNull PsiElement element, @Nullable String schemaId) {
     myElement = element;
@@ -87,23 +87,16 @@ public class JsonSchemaDefinitionResolver {
           public void consume(boolean isName, @NotNull JsonSchemaObject schema) {
             if (!ref.isNull()) return;
 
-            String definitionAddress = schema.getDefinitionAddress();
-            if (!StringUtil.isEmptyOrSpaces(definitionAddress) && definitionAddress.startsWith("#")) {
-              definitionAddress = definitionAddress.substring(1) + "/properties/" + propertyName;
-              ref.set(resolveByPath(definitionAddress));
-              if (!ref.isNull()) return;
-            }
+            ref.set(processDefinitionAddress(schema, propertyName));
+            if (!ref.isNull()) return;
+
             List<JsonSchemaObject> list = new ArrayList<>();
             if (schema.getAllOf() != null) list.addAll(schema.getAllOf());
             if (schema.getAnyOf() != null) list.addAll(schema.getAnyOf());
             if (schema.getOneOf() != null) list.addAll(schema.getOneOf());
             for (JsonSchemaObject schemaObject : list) {
-              definitionAddress = schemaObject.getDefinitionAddress();
-              if (!StringUtil.isEmptyOrSpaces(definitionAddress) && definitionAddress.startsWith("#")) {
-                definitionAddress = definitionAddress.substring(1) + "/properties/" + propertyName;
-                ref.set(resolveByPath(definitionAddress));
-                if (!ref.isNull()) return;
-              }
+              ref.set(processDefinitionAddress(schemaObject, propertyName));
+              if (!ref.isNull()) return;
             }
           }
         };
@@ -116,38 +109,81 @@ public class JsonSchemaDefinitionResolver {
     return ref.get();
   }
 
+  @Nullable
+  private PsiElement processDefinitionAddress(JsonSchemaObject parSchema, String propertyName) {
+      final String definitionAddress = parSchema.getDefinitionAddress();
+      if (StringUtil.isEmptyOrSpaces(definitionAddress)) return null;
+
+      final JsonSchemaReader.SchemaUrlSplitter splitter = new JsonSchemaReader.SchemaUrlSplitter(definitionAddress);
+
+      if (!splitter.isAbsolute()) {
+        VirtualFile schemaFile = null;
+        if (parSchema.getId() != null) {
+          schemaFile = JsonSchemaService.Impl.getEx(myElement.getProject()).getSchemaFileById(parSchema.getId());
+        }
+        return resolveInSomeSchema(definitionAddress.substring(1) + PROPERTIES + propertyName, myElement.getProject(), parSchema.getId(), schemaFile);
+      } else {
+        String relative = splitter.getRelativePath();
+        if (StringUtil.isEmptyOrSpaces(relative)) {
+          relative = PROPERTIES + propertyName;
+        } else {
+          relative += ((relative.endsWith("/") ? PROPERTIES.substring(1) : PROPERTIES) + propertyName);
+        }
+
+        return resolveInSomeSchema(relative, myElement.getProject(), splitter.getSchemaId(), null);
+      }
+  }
+
   private PsiElement tryResolveByName() {
     if (myRef == null) initializeName();
     if (myRef == null) return null;
 
-    return resolveByPath(myRef);
+    VirtualFile filter = null;
+    if (mySchemaId != null && myRef.startsWith("#/")) {
+      filter = myElement.getContainingFile().getVirtualFile();
+    }
+    else {
+      final JsonSchemaServiceEx schemaServiceEx = JsonSchemaService.Impl.getEx(myElement.getProject());
+      final Collection<Pair<VirtualFile, String>> pairs = schemaServiceEx.getSchemaFilesByFile(myElement.getContainingFile().getVirtualFile());
+      if (pairs != null && ! pairs.isEmpty()) {
+        for (Pair<VirtualFile, String> pair : pairs) {
+          final PsiElement element = resolveInSomeSchema(myRef, myElement.getProject(), pair.getSecond(), pair.getFirst());
+          if (element != null) return element;
+        }
+        // if not in schema file
+        if (mySchemaId == null) return null;
+      }
+    }
+    return resolveInSomeSchema(myRef, myElement.getProject(), mySchemaId, filter);
   }
 
   @Nullable
-  private PsiElement resolveByPath(String referenceName) {
-    final Project project = myElement.getProject();
-    final FileBasedIndex index = FileBasedIndex.getInstance();
+  private static PsiElement resolveInSomeSchema(@NotNull String referenceName,
+                                                @NotNull final Project project,
+                                                @Nullable final String schemaId,
+                                                final @Nullable VirtualFile filterFile) {
     final Ref<Pair<VirtualFile, Integer>> reference = new Ref<>();
-    GlobalSearchScope filter = mySchemaId != null && myInCurrentFile ? GlobalSearchScope.fileScope(myElement.getContainingFile()) :
-                               GlobalSearchScope.allScope(project);
-    filter = JsonSchemaResourcesRootsProvider.enlarge(project, filter);
 
+    final FileBasedIndex index = FileBasedIndex.getInstance();
+    final GlobalSearchScope fileScope = filterFile == null ? null : GlobalSearchScope.fileScope(project, filterFile);
+    final GlobalSearchScope enlarged = fileScope != null && JsonSchemaResourcesRootsProvider.ourFiles.getValue().contains(filterFile) ? fileScope :
+                                       JsonSchemaResourcesRootsProvider.enlarge(project, fileScope == null ? GlobalSearchScope.allScope(project) : fileScope);
     index.processValues(JsonSchemaFileIndex.PROPERTIES_INDEX, referenceName, null, new FileBasedIndex.ValueProcessor<Integer>() {
       @Override
       public boolean process(VirtualFile file, Integer value) {
-        if (mySchemaId != null) {
-          if (!JsonSchemaService.Impl.getEx(project).checkFileForId(mySchemaId, file)) {
+        if (schemaId != null) {
+          if (!JsonSchemaService.Impl.getEx(project).checkFileForId(schemaId, file)) {
             return true;
           }
         }
         reference.set(Pair.create(file, value));
         return false;
       }
-    }, filter);
+    }, enlarged);
 
     if (!reference.isNull()) {
       final Pair<VirtualFile, Integer> pair = reference.get();
-      final PsiFile file = myElement.getManager().findFile(pair.getFirst());
+      final PsiFile file = PsiManager.getInstance(project).findFile(pair.getFirst());
       if (file != null) {
         return file.findElementAt(pair.getSecond());
       }
@@ -172,13 +208,8 @@ public class JsonSchemaDefinitionResolver {
     final StringBuilder path = new StringBuilder();
     Collections.reverse(names);
     for (String name : names) {
-      path.append("/properties/").append(name);
+      path.append(PROPERTIES).append(name);
     }
     myRef = path.toString();
-  }
-
-  public JsonSchemaDefinitionResolver setInCurrentFile(boolean inCurrentFile) {
-    myInCurrentFile = inCurrentFile;
-    return this;
   }
 }

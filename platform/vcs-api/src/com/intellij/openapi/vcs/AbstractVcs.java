@@ -21,7 +21,6 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
-import com.intellij.openapi.vcs.annotate.VcsCacheableAnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeListEditHandler;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
@@ -29,7 +28,6 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
-import com.intellij.openapi.vcs.history.VcsAnnotationCachedProxy;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeProvider;
@@ -56,9 +54,6 @@ import java.util.List;
  * @see ProjectLevelVcsManager
  */
 public abstract class AbstractVcs<ComList extends CommittedChangeList> extends StartedActivated {
-  // true is default
-  private static final String USE_ANNOTATION_CACHE = "vcs.use.annotation.cache";
-
   @NonNls protected static final String ourIntegerPattern = "\\d+";
 
   @NotNull
@@ -71,15 +66,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   private CheckinEnvironment myCheckinEnvironment;
   private UpdateEnvironment myUpdateEnvironment;
   private RollbackEnvironment myRollbackEnvironment;
-  private static boolean ourUseAnnotationCache;
-
-  static {
-    final String property = System.getProperty(USE_ANNOTATION_CACHE);
-    ourUseAnnotationCache = true;
-    if (property != null) {
-      ourUseAnnotationCache = Boolean.valueOf(property);
-    }
-  }
 
   public AbstractVcs(@NotNull Project project, final String name) {
     super(project);
@@ -601,15 +587,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
       }
     };
     return VcsSynchronousProgressWrapper.wrap(runnable, getProject(), "Load revision contents") ? list[0] : null;
-  }
-
-  @Nullable
-  public AnnotationProvider getCachingAnnotationProvider() {
-    final AnnotationProvider ap = getAnnotationProvider();
-    if (ourUseAnnotationCache && ap instanceof VcsCacheableAnnotationProvider) {
-      return new VcsAnnotationCachedProxy(this, ProjectLevelVcsManager.getInstance(myProject).getVcsHistoryCache());
-    }
-    return ap;
   }
 
   @Override

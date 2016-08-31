@@ -61,7 +61,8 @@ class ProductModulesLayout {
 
   /**
    * Names of the main modules (containing META-INF/plugin.xml) of the plugins which need to be bundled with the product. It may also
-   * includes names of optional modules from these plugins which need to be included into the plugin distribution for this product.
+   * includes names of optional modules (added via {@link org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec#withOptionalModule})
+   * from these plugins which need to be included into the plugin distribution for this product.
    */
   List<String> bundledPluginModules = []
 
@@ -81,6 +82,11 @@ class ProductModulesLayout {
    */
   MultiValuesMap<String, String> additionalPlatformJars = new MultiValuesMap<>(true)
 
+  /** Module name to entries which should be excluded from its output.
+   * <strong>This is a temporary property added to keep layout of some products. If some directory from a module shouldn't be included into the
+   * product JAR it's strongly recommended to move that directory outside of the module source roots.</strong>
+   */
+  MultiValuesMap<String, String> moduleExcludes = new MultiValuesMap<>(true)
 
   /**
    * Name of the module which classpath will be used to build searchable options index
@@ -89,9 +95,8 @@ class ProductModulesLayout {
 
   /**
    * Name of the module containing search/searchableOptions.xml file.
-   * //todo[nik] make this optional
    */
-  String searchableOptionsModule
+  String searchableOptionsModule = "platform-resources"
 
   /**
    * Paths to license files which are required to start IDE in headless mode to generate searchable options index

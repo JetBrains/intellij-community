@@ -157,9 +157,9 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     }
 
     @Override
-    protected void addProfile(InspectionProfileImpl model, InspectionProfileImpl profile) {
-      super.addProfile(model, profile);
-      myProfilesCombo.addProfile(profile);
+    protected void addProfile(InspectionProfileImpl model) {
+      super.addProfile(model);
+      myProfilesCombo.addProfile((InspectionProfileImpl)model.getParentProfile());
     }
 
     @Override
@@ -193,17 +193,6 @@ public class CodeInspectionAction extends BaseAnalysisAction {
 
     private void createUIComponents() {
       myBrowseProfilesCombo = new ComboboxWithBrowseButton(new ProfilesComboBox() {
-        @Override
-        protected boolean isProjectLevel(InspectionProfileImpl p) {
-          return p.isProjectLevel();
-        }
-
-        @NotNull
-        @Override
-        protected String getProfileName(InspectionProfileImpl p) {
-          return p.getDisplayName();
-        }
-
         @Override
         protected void onProfileChosen(InspectionProfileImpl inspectionProfile) {
           //do nothing here

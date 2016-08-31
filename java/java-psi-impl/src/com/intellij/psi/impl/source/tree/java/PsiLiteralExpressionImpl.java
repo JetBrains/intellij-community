@@ -98,7 +98,7 @@ public class PsiLiteralExpressionImpl
   }
 
   public IElementType getLiteralElementType() {
-    PsiLiteralStub stub = getStub();
+    PsiLiteralStub stub = getGreenStub();
     if (stub != null) return stub.getLiteralType();
 
     return getNode().getFirstChildNode().getElementType();
@@ -111,7 +111,7 @@ public class PsiLiteralExpressionImpl
 
   @Override
   public String getText() {
-    PsiLiteralStub stub = getStub();
+    PsiLiteralStub stub = getGreenStub();
     if (stub != null) return stub.getLiteralText();
 
     return super.getText();

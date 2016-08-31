@@ -15,11 +15,13 @@
  */
 package com.intellij.codeInsight.template.emmet.actions;
 
+import com.intellij.codeInsight.editorActions.XmlGtTypedHandler;
 import com.intellij.lang.Language;
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.tree.IElementType;
@@ -33,12 +35,12 @@ import com.intellij.util.ObjectUtils;
  */
 public class EmmetEditPointUtil {
   public static void moveForward(final Editor editor, final PsiFile file) {
-    if (!isApplicableFile(file)) return;
+    if (!XmlGtTypedHandler.fileContainsXmlLanguage(file)) return;
     moveToNextPoint(editor, file, editor.getCaretModel().getOffset(), 1);
   }
 
   public static void moveBackward(final Editor editor, final PsiFile file) {
-    if (!isApplicableFile(file)) return;
+    if (!XmlGtTypedHandler.fileContainsXmlLanguage(file)) return;
     moveToNextPoint(editor, file, editor.getCaretModel().getOffset(), -1);
   }
 
@@ -97,14 +99,6 @@ public class EmmetEditPointUtil {
     if (type == XmlTokenType.XML_END_TAG_START || type == XmlTokenType.XML_START_TAG_START) {
       final PsiElement prev = PsiTreeUtil.prevLeaf(element);
       return prev != null && prev.getNode().getElementType() == XmlTokenType.XML_TAG_END;
-    }
-    return false;
-  }
-
-  static boolean isApplicableFile(PsiFile file) {
-    if (file == null) return false;
-    for (Language language : file.getViewProvider().getLanguages()) {
-      if (language.isKindOf(XMLLanguage.INSTANCE) || "JavaScript".equals(language.getID())) return true;
     }
     return false;
   }

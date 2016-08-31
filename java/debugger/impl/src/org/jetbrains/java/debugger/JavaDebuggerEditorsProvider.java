@@ -42,6 +42,7 @@ import java.util.Collections;
 import java.util.stream.Collectors;
 
 public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase {
+  @NotNull
   @Override
   public FileType getFileType() {
     return JavaFileType.INSTANCE;

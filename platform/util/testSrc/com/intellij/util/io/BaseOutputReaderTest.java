@@ -92,7 +92,7 @@ public class BaseOutputReaderTest {
   @Test(timeout = 30000)
   public void testNonBlockingRead() throws Exception {
     List<String> lines = readLines(BaseDataReader.SleepingPolicy.SIMPLE, true, true, true);
-    assertThat(lines.size()).isBetween(7, 8);
+    assertThat(lines.size()).as("chunks: " + lines).isBetween(7, 8);
     assertThat(lines).startsWith(r(TEST_DATA[0]), r(TEST_DATA[1]), r(TEST_DATA[2])).endsWith(r(TEST_DATA[4]), r(TEST_DATA[5]), r(TEST_DATA[6]));
     assertThat(StringUtil.join(lines, "")).isEqualTo(StringUtil.join(TEST_DATA, BaseOutputReaderTest::r, ""));
   }

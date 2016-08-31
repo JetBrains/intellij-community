@@ -33,6 +33,7 @@ public interface RegExpElementTypes {
     IElementType CHAR = new RegExpElementType("CHAR");
     IElementType GROUP = new RegExpElementType("GROUP");
     IElementType PROPERTY = new RegExpElementType("PROPERTY");
+    IElementType NAMED_CHARACTER_ELEMENT = new RegExpElementType("NAMED_CHARACTER_ELEMENT");
     IElementType OPTIONS = new RegExpElementType("OPTIONS");
     IElementType SET_OPTIONS = new RegExpElementType("SET_OPTIONS");
     IElementType BACKREF = new RegExpElementType("BACKREF");

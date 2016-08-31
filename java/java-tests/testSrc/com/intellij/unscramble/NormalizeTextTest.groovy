@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.unscramble;
 
 import junit.framework.TestCase;
@@ -6,8 +21,8 @@ import org.jetbrains.annotations.NonNls;
 /**
  * @author cdr
  */
-public class NormalizeTextTest extends TestCase {
-  public void testCausedBy() {
+class NormalizeTextTest extends TestCase {
+  void testCausedBy() {
     doTest("""\
 javax.faces.FacesException: Error calling action method of component with id _id6:_id10
         at java.lang.Th
@@ -26,7 +41,7 @@ Caused by: javax.faces.el.EvaluationException: Exception while invoking expressi
            );
   }
 
-  public void testThreadNames() {
+  void testThreadNames() {
     doTest('''\
 "Background process" prio=6 tid=0x21193b88 nid=0x11ea4 waiting on condition [0x2
 2cbf000..0x22cbfd68]
@@ -64,7 +79,7 @@ Background process" prio=6 tid=0x21193b88 nid=0x11ea4 waiting on condition [0x22
            );
   }
 
-  public void testLocked() {
+  void testLocked() {
     doTest("""\
        at com.intellij.lang.jsp.JspFileViewProviderImpl.getKeyPrefixes(JspFileV
 iewProviderImpl.java:76)
@@ -83,7 +98,8 @@ exer.java:39)
         at com.intellij.psi.impl.source.parsing.jsp.JspLexer.doInitOriginal(JspLexer.java:39)
         at com.intellij.psi.impl.source.parsing.jsp.JspLexer.start(JspLexer.java:49)""");
   }
-  public void testAtSplit() {
+
+  void testAtSplit() {
     doTest("""\
 java.lang.Throwable
 at
@@ -98,8 +114,8 @@ java.lang.Throwable
 at com.intellij.openapi.util.objectTree.ObjectNode.<init>(ObjectNode.java:31)
 at com.intellij.openapi.util.objectTree.ObjectTree.getNodeFor(ObjectTree.java:79)""");
   }
-  
-  public void testSplitMergedLines() {
+
+  void testSplitMergedLines() {
     doTest("org.apache.velocity.exception.MethodInvocationException " +
            "at org.apache.velocity.runtime.parser.node.ASTMethod.execute(ASTMethod.java:246) " +
            "at org.apache.velocity.runtime.parser.node.ASTReference.execute(ASTReference.java:175) " +
@@ -132,7 +148,7 @@ at org.apache.velocity.runtime.parser.node.SimpleNode.render(SimpleNode.java:230
 at org.apache.velocity.Template.merge(Template.java:256)""");
   }
 
-  public void testWithoutAt() {
+  void testWithoutAt() {
     doTest('''\
  java.util.concurrent.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1407)
  java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:289)
@@ -147,7 +163,7 @@ at org.apache.velocity.Template.merge(Template.java:256)""");
  java.util.concurrent.ForkJoinTask.invokeAll(ForkJoinTask.java:837)''');
   }
 
-  public void "test do not merge words"() {
+  void "test do not merge words"() {
     def text = '''
 "Performance watcher" #35 prio=1 os_prio=-2 tid=0x3ea60c00 nid=0xbfc
 waiting on condition [0x445ef000]

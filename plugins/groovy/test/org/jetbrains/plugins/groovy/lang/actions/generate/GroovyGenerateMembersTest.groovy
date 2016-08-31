@@ -34,20 +34,20 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author peter
  */
-public class GroovyGenerateMembersTest extends LightCodeInsightFixtureTestCase {
-  public void testConstructorAtOffset() {
+class GroovyGenerateMembersTest extends LightCodeInsightFixtureTestCase {
+  void testConstructorAtOffset() {
     doConstructorTest();
   }
 
-  public void testConstructorAtEnd() {
+  void testConstructorAtEnd() {
     doConstructorTest();
   }
 
-  public void testLonelyConstructor() {
+  void testLonelyConstructor() {
     doConstructorTest();
   }
 
-  public void testConstructorInJavaInheritor() {
+  void testConstructorInJavaInheritor() {
     myFixture.configureByText "GrBase.groovy", """
 abstract class GrBase {
     GrBase(int i) { }
@@ -68,7 +68,7 @@ class Inheritor extends GrBase {
 """
   }
 
-  public void testExplicitArgumentTypes() {
+  void testExplicitArgumentTypes() {
     myFixture.configureByText("a.groovy", """
 class Super {
   def Super(a, int b) {}

@@ -22,7 +22,7 @@ import com.intellij.psi.PsiManager
  */
 class MavenDomPathWithPropertyTest extends MavenDomTestCase {
 
-  public void testRename() {
+  void testRename() {
     importProject("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
@@ -91,7 +91,7 @@ class MavenDomPathWithPropertyTest extends MavenDomTestCase {
 """)
   }
 
-  public void testCompletionDirectoriesOnly() {
+  void testCompletionDirectoriesOnly() {
     createProjectPom("""
     <groupId>test</groupId>
     <artifactId>project</artifactId>

@@ -15,10 +15,10 @@
  */
 package com.intellij.openapi.options
 
+import com.intellij.configurationStore.StreamProvider
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.WriteExternalException
 import org.jdom.Parent
 
 interface ExternalizableScheme : Scheme {
@@ -38,9 +38,16 @@ abstract class SchemeManagerFactory {
    * directoryName — like "keymaps".
    */
   @JvmOverloads
-  fun <SCHEME : Scheme, MUTABLE_SCHEME: SCHEME> create(directoryName: String, processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>, presentableName: String? = null, isUseOldFileNameSanitize: Boolean = false): SchemeManager<SCHEME> = create(directoryName, processor, presentableName, RoamingType.DEFAULT, isUseOldFileNameSanitize)
+  fun <SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> create(directoryName: String, processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>, presentableName: String? = null): SchemeManager<SCHEME> {
+    return create(directoryName, processor, presentableName, RoamingType.DEFAULT)
+  }
 
-  protected abstract fun <SCHEME : Scheme, MUTABLE_SCHEME: SCHEME> create(directoryName: String, processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>, presentableName: String? = null, roamingType: RoamingType = RoamingType.DEFAULT, isUseOldFileNameSanitize: Boolean = false): SchemeManager<SCHEME>
+  abstract fun <SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> create(directoryName: String,
+                                                                 processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>,
+                                                                 presentableName: String? = null,
+                                                                 roamingType: RoamingType = RoamingType.DEFAULT,
+                                                                 isUseOldFileNameSanitize: Boolean = false,
+                                                                 streamProvider: StreamProvider? = null): SchemeManager<SCHEME>
 }
 
 enum class SchemeState {
@@ -53,7 +60,6 @@ abstract class SchemeProcessor<SCHEME : Scheme, in MUTABLE_SCHEME: SCHEME> {
   /**
    * Element will not be modified, it is safe to return non-cloned instance.
    */
-  @Throws(WriteExternalException::class)
   abstract fun writeScheme(scheme: MUTABLE_SCHEME): Parent
 
   open fun initScheme(scheme: MUTABLE_SCHEME) {

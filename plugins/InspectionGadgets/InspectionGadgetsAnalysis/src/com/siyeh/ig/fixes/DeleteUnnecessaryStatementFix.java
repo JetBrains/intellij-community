@@ -56,6 +56,10 @@ public class DeleteUnnecessaryStatementFix extends InspectionGadgetsFix {
     if (statement == null) {
       return;
     }
+    deleteUnnecessaryStatement(statement);
+  }
+
+  public static void deleteUnnecessaryStatement(PsiStatement statement) {
     final PsiElement parent = statement.getParent();
     if (parent instanceof PsiIfStatement ||
         parent instanceof PsiWhileStatement ||

@@ -33,9 +33,7 @@ import java.util.EnumSet;
     private boolean allowHexDigitClass;
     private boolean allowEmptyCharacterClass;
     private boolean allowHorizontalWhitespaceClass;
-    private boolean allowCategoryShorthand;
     private boolean allowPosixBracketExpressions;
-    private boolean allowCaretNegatedProperties;
 
     _RegExLexer(EnumSet<RegExpCapability> capabilities) {
       this((java.io.Reader)null);
@@ -47,9 +45,7 @@ import java.util.EnumSet;
       this.allowHexDigitClass = capabilities.contains(RegExpCapability.ALLOW_HEX_DIGIT_CLASS);
       this.allowHorizontalWhitespaceClass = capabilities.contains(RegExpCapability.ALLOW_HORIZONTAL_WHITESPACE_CLASS);
       this.allowEmptyCharacterClass = capabilities.contains(RegExpCapability.ALLOW_EMPTY_CHARACTER_CLASS);
-      this.allowCategoryShorthand = capabilities.contains(RegExpCapability.UNICODE_CATEGORY_SHORTHAND);
       this.allowPosixBracketExpressions = capabilities.contains(RegExpCapability.POSIX_BRACKET_EXPRESSIONS);
-      this.allowCaretNegatedProperties = capabilities.contains(RegExpCapability.CARET_NEGATED_PROPERTIES);
     }
 
     private void yypushstate(int state) {
@@ -80,6 +76,7 @@ import java.util.EnumSet;
 %xstate NEGATE_CLASS1
 %state CLASS2
 %state PROP
+%state NAMED
 %xstate OPTIONS
 %xstate COMMENT
 %xstate NAMED_GROUP
@@ -99,7 +96,7 @@ LBRACKET="["
 RBRACKET="]"
 
 ESCAPE="\\"
-NAME=[:letter:]([:letter:]|_|[:digit:])*
+NAME=[:letter:]([:letter:]|_|-|" "|"("|")"|[:digit:])*
 ANY=[^]
 
 META1 = {ESCAPE} | {LBRACKET} | "^"
@@ -183,6 +180,7 @@ HEX_CHAR=[0-9a-fA-F]
 {ESCAPE}  {CONTROL}           { return RegExpTT.ESC_CTRL_CHARACTER; }
 
 {ESCAPE} [hH]                 { return (allowHexDigitClass || allowHorizontalWhitespaceClass ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN); }
+{ESCAPE} "N"                  { yypushstate(NAMED); return RegExpTT.NAMED_CHARACTER; }
 {ESCAPE} "k<"                 { yybegin(NAMED_GROUP); return RegExpTT.RUBY_NAMED_GROUP_REF; }
 {ESCAPE} "k'"                 { yybegin(QUOTED_NAMED_GROUP); return RegExpTT.RUBY_QUOTED_NAMED_GROUP_REF; }
 {ESCAPE} "g<"                 { yybegin(NAMED_GROUP); return RegExpTT.RUBY_NAMED_GROUP_CALL; }
@@ -201,7 +199,12 @@ HEX_CHAR=[0-9a-fA-F]
 
 <PROP> {
   {LBRACE}                    { yypopstate(); yypushstate(EMBRACED); return RegExpTT.LBRACE; }
-  "L"|"M"|"Z"|"S"|"N"|"P"|"C" { yypopstate(); if (allowCategoryShorthand) return RegExpTT.CATEGORY_SHORT_HAND; else yypushback(1); }
+  "L"|"M"|"Z"|"S"|"N"|"P"|"C" { yypopstate(); return RegExpTT.CATEGORY_SHORT_HAND; }
+  {ANY}                       { yypopstate(); yypushback(1); }
+}
+
+<NAMED> {
+  {LBRACE}                    { yypopstate(); yypushstate(EMBRACED); return RegExpTT.LBRACE; }
   {ANY}                       { yypopstate(); yypushback(1); }
 }
 
@@ -210,27 +213,13 @@ HEX_CHAR=[0-9a-fA-F]
 {LBRACE}              { if (yystate() != CLASS2) yypushstate(EMBRACED); return RegExpTT.LBRACE; }
 
 <EMBRACED> {
-  "^"                 {
-                        if (allowCaretNegatedProperties) {
-                          return RegExpTT.CARET;
-                        } else if (allowDanglingMetacharacters) {
-                          yypopstate();
-                          yypushback(1);
-                        } else {
-                          return RegExpTT.BAD_CHARACTER;
-                        }
-                      }
+  "^"                 { return RegExpTT.CARET;  }
   {NAME}              { return RegExpTT.NAME;   }
   [:digit:]+          { return RegExpTT.NUMBER; }
   ","                 { return RegExpTT.COMMA;  }
 
   {RBRACE}            { yypopstate(); return RegExpTT.RBRACE; }
-  {ANY}               { if (allowDanglingMetacharacters) {
-                          yypopstate(); yypushback(1);
-                        } else {
-                          return RegExpTT.BAD_CHARACTER;
-                        }
-                      }
+  {ANY}               { yypopstate(); yypushback(1); }
 }
 
 "-"                   { return RegExpTT.MINUS; }

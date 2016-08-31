@@ -16,17 +16,17 @@
 package org.jetbrains.settingsRepository
 
 import com.intellij.credentialStore.Credentials
+import com.intellij.credentialStore.OneTimeString
 import com.intellij.layout.*
 import com.intellij.layout.CCFlags.*
 import com.intellij.layout.LCFlags.*
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.ui.dialog
-import com.intellij.openapi.util.Computable
 import com.intellij.ui.DocumentAdapter
 import com.intellij.util.PathUtilRt
 import com.intellij.util.nullize
 import com.intellij.util.trimMiddle
-import com.intellij.util.ui.UIUtil
 import javax.swing.JPasswordField
 import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
@@ -37,18 +37,18 @@ fun showAuthenticationForm(credentials: Credentials?, uri: String, host: String?
   }
 
   val isGitHub = host == "github.com"
-    val note = if (sshKeyFile == null) icsMessage(if (isGitHub) "login.github.note" else "login.other.git.provider.note") else null
-    var username = credentials?.userName
-    if (username == null && isGitHub && path != null && sshKeyFile == null) {
-      val firstSlashIndex = path.indexOf('/', 1)
-      username = path.substring(1, if (firstSlashIndex == -1) path.length else firstSlashIndex)
-    }
+  val note = if (sshKeyFile == null) icsMessage(if (isGitHub) "login.github.note" else "login.other.git.provider.note") else null
+  var username = credentials?.userName
+  if (username == null && isGitHub && path != null && sshKeyFile == null) {
+    val firstSlashIndex = path.indexOf('/', 1)
+    username = path.substring(1, if (firstSlashIndex == -1) path.length else firstSlashIndex)
+  }
 
-    val message = if (sshKeyFile == null) icsMessage("log.in.to", uri.trimMiddle(50)) else icsMessage("enter.your.password.for.ssh.key", PathUtilRt.getFileName(sshKeyFile))
+  val message = if (sshKeyFile == null) icsMessage("log.in.to", uri.trimMiddle(50)) else icsMessage("enter.your.password.for.ssh.key", PathUtilRt.getFileName(sshKeyFile))
 
-  return UIUtil.invokeAndWaitIfNeeded(Computable {
+  return invokeAndWaitIfNeed {
     val userField = JTextField(username)
-    val passwordField = JPasswordField(credentials?.password)
+    val passwordField = JPasswordField(credentials?.password.toString())
 
     val centerPanel = panel(fillX) {
       label(message, wrap, span, bold = true, gapBottom = 10)
@@ -68,7 +68,7 @@ fun showAuthenticationForm(credentials: Credentials?, uri: String, host: String?
         title = "Settings Repository",
         resizable = false,
         centerPanel = centerPanel,
-        preferedFocusComponent = userField,
+        preferedFocusComponent = if (userField.parent == null) passwordField else userField,
         okActionEnabled = false)
 
     passwordField.document.addDocumentListener(object : DocumentAdapter() {
@@ -81,10 +81,10 @@ fun showAuthenticationForm(credentials: Credentials?, uri: String, host: String?
     if (authenticationForm.showAndGet()) {
       username = sshKeyFile ?: userField.text.nullize(true)
       val passwordChars = passwordField.password
-      Credentials(username, if (passwordChars == null || passwordChars.isEmpty()) (if (username == null) null else "x-oauth-basic") else String(passwordChars))
+      Credentials(username, if (passwordChars == null || passwordChars.isEmpty()) (if (username == null) null else OneTimeString("x-oauth-basic")) else OneTimeString(passwordChars))
     }
     else {
       null
     }
-  })
+  }
 }

@@ -521,7 +521,7 @@
     <projectService serviceInterface="com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager"
                     serviceImplementation="com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager"/>
 
-    <multiHostInjector implementation="com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager$Concatenation2InjectorAdapter" order="last"/>
+    <multiHostInjector implementation="com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager$Concatenation2InjectorAdapter" order="first"/>
 
     <projectService serviceInterface="com.intellij.psi.SmartTypePointerManager"
                     serviceImplementation="com.intellij.psi.impl.smartPointers.SmartTypePointerManagerImpl"/>
@@ -747,13 +747,17 @@
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.AnonymousCanBeLambdaInspection" />
     <localInspection groupPath="Java" language="JAVA" shortName="Convert2streamapi" displayName="foreach loop can be collapsed with Stream API"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.intellij.codeInspection.StreamApiMigrationInspection"/>
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.intellij.codeInspection.StreamApiMigrationInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="Anonymous2MethodRef" displayName="Anonymous type can be replaced with method reference"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.AnonymousCanBeMethodReferenceInspection" />
     <localInspection groupPath="Java" language="JAVA" shortName="Convert2MethodRef" displayName="Lambda can be replaced with method reference"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="InvalidComparatorMethodReference" displayName="Invalid method reference used for Comparator"
+                     groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.InvalidComparatorMethodReferenceInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="TrivialMethodReference" displayName="Method reference can be replaced with its qualifier"
                      groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.TrivialMethodReferenceInspection"/>
@@ -1627,7 +1631,7 @@
     <debugger.syntheticProvider implementation="com.intellij.debugger.engine.DefaultSyntheticProvider"/>
     <debugger.sourcePositionProvider implementation="com.intellij.debugger.engine.DefaultSourcePositionProvider" order="last"/>
     <debugger.sourcePositionHighlighter implementation="com.intellij.debugger.engine.JavaSourcePositionHighlighter"/>
-    <indexedRootsProvider implementation="com.intellij.debugger.impl.AlternativeJreIndexHelper"/>
+    <java.elementFinder implementation="com.intellij.debugger.impl.AlternativeJreClassFinder" order="last"/>
 
     <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.ColorObjectRenderer"/>
     <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.ImageObjectRenderer"/>
@@ -1782,6 +1786,9 @@
     </action>
     <action id="ShowRecentTests" class="com.intellij.testIntegration.ShowRecentTests">
       <keyboard-shortcut first-keystroke="control shift SEMICOLON" keymap="$default"/>
+    </action>
+    <action id="ReportMissingOrExcessiveInlineHint" class="com.intellij.reporting.ReportMissingOrExcessiveInlineHint">
+      <add-to-group group-id="EditorPopupMenu"/>
     </action>
     <action class="com.intellij.execution.testDiscovery.ConfigureTestDiscoveryAction" internal="true" id="TestDiscoveryIndexChooser" text="Choose external test discovery indices">
       <add-to-group group-id="Internal" anchor="last"/>

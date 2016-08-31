@@ -330,7 +330,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
 
   @Override
   public boolean isAlternativeJrePathEnabled() {
-    throw new UnsupportedOperationException();
+    return false;
   }
 
   @Override

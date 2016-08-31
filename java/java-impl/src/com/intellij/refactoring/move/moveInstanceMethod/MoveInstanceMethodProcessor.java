@@ -333,7 +333,13 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
           }
         }
         else {
-          thisArgumentText = classReferencedByThis.getName() + ".this";
+          final String name = classReferencedByThis.getName();
+          if (name != null) {
+            thisArgumentText = name + ".this";
+          }
+          else {
+            thisArgumentText = "this";
+          }
         }
 
         if (thisArgumentText != null) {

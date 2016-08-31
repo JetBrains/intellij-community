@@ -26,7 +26,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
  */
 class GotoActionTest extends LightCodeInsightFixtureTestCase {
 
-  public void "test shorter actions first despite ellipsis"() {
+  void "test shorter actions first despite ellipsis"() {
     def pattern = 'Rebas'
     def fork = 'Rebase my GitHub fork'
     def rebase = 'Rebase...'
@@ -35,7 +35,7 @@ class GotoActionTest extends LightCodeInsightFixtureTestCase {
     assert [rebase, fork] == items.collect { it.valueText }
   }
 
-  public void "test sort by match mode"() {
+  void "test sort by match mode"() {
     def pattern = 'by'
     def byName = 'By Name'
     def byDesc = 'By Desc'
@@ -44,7 +44,7 @@ class GotoActionTest extends LightCodeInsightFixtureTestCase {
     assert [byName, byDesc] == items.collect { it.valueText }
   }
 
-  public void "test sort by degree"() {
+  void "test sort by degree"() {
     def pattern = 'c'
     def copy = 'Copy'
     def aardvark = 'Aardvarck'

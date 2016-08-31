@@ -9,6 +9,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.PrintElement;
+import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.PaintParameters;
 import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
@@ -26,6 +27,7 @@ import java.util.Map;
 public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
 
   private static final Logger LOG = Logger.getInstance(GraphCommitCellRenderer.class);
+  private static final int MAX_GRAPH_WIDTH = 10;
 
   @NotNull private final VcsLogData myLogData;
   @NotNull private final GraphCellPainter myPainter;
@@ -123,12 +125,14 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
 
   @Nullable
   private PaintInfo getGraphImage(int row) {
-    Collection<? extends PrintElement> printElements = myGraphTable.getVisibleGraph().getRowInfo(row).getPrintElements();
+    VisibleGraph<Integer> graph = myGraphTable.getVisibleGraph();
+    Collection<? extends PrintElement> printElements = graph.getRowInfo(row).getPrintElements();
     int maxIndex = 0;
     for (PrintElement printElement : printElements) {
       maxIndex = Math.max(maxIndex, printElement.getPositionInCurrentRow());
     }
     maxIndex++;
+    maxIndex = Math.max(maxIndex, Math.min(MAX_GRAPH_WIDTH, graph.getRecommendedWidth()));
     final BufferedImage image = UIUtil
       .createImage(PaintParameters.getNodeWidth(myGraphTable.getRowHeight()) * (maxIndex + 4), myGraphTable.getRowHeight(),
                    BufferedImage.TYPE_INT_ARGB);

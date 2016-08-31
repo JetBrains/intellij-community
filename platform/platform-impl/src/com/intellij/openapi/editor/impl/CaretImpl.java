@@ -109,7 +109,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   private int myStartVirtualOffset;
   private int myEndVirtualOffset;
 
-  private boolean myAfterInlayOnDeletion;
+  private boolean myAfterInlayOnDocumentUpdate;
 
   CaretImpl(EditorImpl editor) {
     myEditor = editor;
@@ -150,8 +150,13 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
   void beforeDocumentChange(DocumentEvent e) {
     int startOffset = e.getOffset();
-    myAfterInlayOnDeletion = e.getNewLength() == 0 && myOffset >= startOffset && myOffset <= startOffset + e.getOldLength() &&
-                             myEditor.getInlayModel().hasInlineElementAt(startOffset);
+    boolean insideChangedRegion = myOffset >= startOffset && myOffset <= startOffset + e.getOldLength();
+    myAfterInlayOnDocumentUpdate = insideChangedRegion &&
+                                   e.getNewLength() == 0 &&
+                                   myEditor.getInlayModel().hasInlineElementAt(startOffset) ||
+                                   !insideChangedRegion &&
+                                   myLogicalCaret.leansForward &&
+                                   myEditor.getInlayModel().hasInlineElementAt(myOffset);
     saveSelectionBeforeDocumentChange();
   }
 
@@ -488,7 +493,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       }
     }
 
-    myEditor.getFoldingModel().flushCaretPosition();
+    myEditor.getFoldingModel().flushCaretPosition(this);
 
     VerticalInfo oldInfo = myCaretInfo;
     LogicalPosition oldCaretPosition = myLogicalCaret;
@@ -677,7 +682,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
     updateVisualLineInfo();
 
-    myEditor.getFoldingModel().flushCaretPosition();
+    myEditor.getFoldingModel().flushCaretPosition(this);
 
     setLastColumnNumber(myLogicalCaret.column);
     myDesiredSelectionStartColumn = myDesiredSelectionEndColumn = -1;
@@ -846,34 +851,27 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       int startOffset = event.getOffset();
       int oldEndOffset = startOffset + event.getOldLength();
 
-      if (myAfterInlayOnDeletion) {
-        VisualPosition pos = myEditor.offsetToVisualPosition(startOffset, true, false);
-        moveToVisualPosition(pos);
+      int newOffset = myOffset;
+
+      if (myOffset > oldEndOffset || myOffset == oldEndOffset && needToShiftWhiteSpaces(event)) {
+        newOffset += event.getNewLength() - event.getOldLength();
+      }
+      else if (myOffset >= startOffset && myOffset <= oldEndOffset) {
+        newOffset = Math.min(newOffset, startOffset + event.getNewLength());
+      }
+
+      newOffset = Math.min(newOffset, document.getTextLength());
+
+      if (myOffset != startOffset || myAfterInlayOnDocumentUpdate) {
+        LogicalPosition pos = myEditor.offsetToLogicalPosition(newOffset);
+        moveToLogicalPosition(new LogicalPosition(pos.line, pos.column + myVirtualSpaceOffset, myAfterInlayOnDocumentUpdate),
+                              performSoftWrapAdjustment, null, true);
       }
       else {
-        int newOffset = myOffset;
-
-        if (myOffset > oldEndOffset || myOffset == oldEndOffset && needToShiftWhiteSpaces(event)) {
-          newOffset += event.getNewLength() - event.getOldLength();
-        }
-        else if (myOffset >= startOffset && myOffset <= oldEndOffset) {
-          newOffset = Math.min(newOffset, startOffset + event.getNewLength());
-        }
-
-        newOffset = Math.min(newOffset, document.getTextLength());
-
-        if (myOffset != startOffset) {
-          LogicalPosition pos = myEditor.offsetToLogicalPosition(newOffset);
-          moveToLogicalPosition(new LogicalPosition(pos.line, pos.column + myVirtualSpaceOffset), // retain caret in the virtual space
-                                performSoftWrapAdjustment, null, true);
-        }
-        else {
-          moveToOffset(newOffset, performSoftWrapAdjustment);
-        }
+        moveToOffset(newOffset, performSoftWrapAdjustment);
       }
     }
 
-    updateVisualLineInfo();
     updateSelectionOnDocumentChange();
   }
 
@@ -1389,7 +1387,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   @Override
   public void selectLineAtCaret() {
     validateContext(true);
-    myEditor.getCaretModel().doWithCaretMerging(() -> SelectionModelImpl.doSelectLineAtCaret(myEditor));
+    myEditor.getCaretModel().doWithCaretMerging(() -> SelectionModelImpl.doSelectLineAtCaret(this));
   }
 
   @Override

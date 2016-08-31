@@ -121,6 +121,10 @@ public abstract class SemanticEditorPosition {
   public boolean isAt(@NotNull SyntaxElement syntaxElement) {
     return !myIterator.atEnd() && syntaxElement.equals(map(myIterator.getTokenType()));
   }
+
+  public boolean isAt(@NotNull IElementType elementType) {
+    return !myIterator.atEnd() && myIterator.getTokenType() == elementType;
+  }
   
   public boolean isAtEnd() {
     return myIterator.atEnd();

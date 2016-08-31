@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ class InvertIfTest extends GrIntentionTestCase {
     super(GroovyIntentionsBundle.message("invert.if.intention.name"))
   }
 
-  public void testDoNotTriggerOnIncompleteIf() {
+  void testDoNotTriggerOnIncompleteIf() {
     doAntiTest '''
 i<caret>f () {
   succes
@@ -35,7 +35,7 @@ i<caret>f () {
 
   }
 
-  public void testSimpleCondition() {
+  void testSimpleCondition() {
     doTextTest '''
 i<caret>f (a) {
     succes
@@ -50,7 +50,7 @@ i<caret>f (a) {
 '''
   }
 
-  public void testCallCondition() {
+  void testCallCondition() {
 
     doTextTest '''
 i<caret>f (func()) {
@@ -66,7 +66,7 @@ i<caret>f (func()) {
 '''
   }
 
-  public void testComplexCondition() {
+  void testComplexCondition() {
     doTextTest '''
 i<caret>f (a && b) {
     succes
@@ -81,7 +81,7 @@ i<caret>f (a && b) {
 '''
   }
 
-  public void testNegatedComplexCondition() {
+  void testNegatedComplexCondition() {
     doTextTest '''
 i<caret>f (!(a && b)) {
     succes
@@ -96,7 +96,7 @@ i<caret>f (!(a && b)) {
 '''
   }
 
-  public void testNegatedSimpleCondition() {
+  void testNegatedSimpleCondition() {
     doTextTest '''
 i<caret>f (!a) {
     succes
@@ -111,7 +111,7 @@ i<caret>f (!a) {
 '''
   }
 
-  public void testNoElseBlock() {
+  void testNoElseBlock() {
     doTextTest '''
 i<caret>f (a) {
     succes
@@ -125,7 +125,7 @@ nosuccess
 '''
   }
 
-  public void testEmptyThenBlockIsRemoved() {
+  void testEmptyThenBlockIsRemoved() {
     doTextTest '''
 i<caret>f (a) {
 } else {

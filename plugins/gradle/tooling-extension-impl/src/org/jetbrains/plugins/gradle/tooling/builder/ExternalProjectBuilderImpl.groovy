@@ -52,13 +52,13 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
   private SourceSetCachedFinder mySourceSetFinder
 
   @Override
-  public boolean canBuild(String modelName) {
+  boolean canBuild(String modelName) {
     return ExternalProject.name == modelName || ExternalProjectPreview.name == modelName
   }
 
   @Nullable
   @Override
-  public Object buildAll(final String modelName, final Project project) {
+  Object buildAll(final String modelName, final Project project) {
     ExternalProject externalProject = cache[project.path]
     if (externalProject != null) return externalProject
 
@@ -521,7 +521,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
 
   @NotNull
   @Override
-  public ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
+  ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
     return ErrorMessageBuilder.create(
       project, e, "Project resolve errors"
     ).withDescription("Unable to resolve additional project configuration.")

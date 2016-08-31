@@ -19,6 +19,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.DifferenceFilter;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.JBTreeTraverser;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -623,4 +625,16 @@ public class ReflectionUtil {
   public static boolean isAssignable(@NotNull Class<?> ancestor, @NotNull Class<?> descendant) {
     return ancestor == descendant || ancestor.isAssignableFrom(descendant);
   }
+
+  @NotNull
+  public static JBTreeTraverser<Class> classTraverser(@Nullable Class root) {
+    return new JBTreeTraverser<Class>(CLASS_STRUCTURE).unique().withRoot(root);
+  }
+
+  private static final Function<Class, Iterable<Class>> CLASS_STRUCTURE = new Function<Class, Iterable<Class>>() {
+    @Override
+    public Iterable<Class> fun(Class aClass) {
+      return JBIterable.of(aClass.getSuperclass()).append(aClass.getInterfaces());
+    }
+  };
 }

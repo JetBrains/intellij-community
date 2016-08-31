@@ -16,6 +16,8 @@
 package com.intellij.ide.passwordSafe.impl.providers;
 
 import com.intellij.credentialStore.CredentialAttributes;
+import com.intellij.credentialStore.CredentialAttributesKt;
+import com.intellij.credentialStore.OneTimeString;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 
@@ -161,18 +163,10 @@ public class EncryptionUtil {
     }
   }
 
-  /**
-   * Encrypt text
-   *
-   * @param password the secret key to use
-   * @param text     the text to encrypt
-   * @return encrypted text
-   */
-  public static byte[] encryptText(byte[] password, String text) {
-    byte[] data = getUTF8Bytes(text);
+  public static byte[] encryptText(byte[] password, @NotNull OneTimeString value) {
+    byte[] data = value.toByteArray(false);
     return encryptData(password, data.length, data);
   }
-
 
   /**
    * Decrypt key (does not use salting, so the encryption result is the same for the same input)
@@ -193,13 +187,13 @@ public class EncryptionUtil {
   }
 
   @NotNull
-  public static String decryptText(byte[] password, byte[] data) {
+  public static OneTimeString decryptText(byte[] password, byte[] data) {
     byte[] plain = decryptData(password, data);
     int len = ((plain[0] & 0xff) << 24) + ((plain[1] & 0xff) << 16) + ((plain[2] & 0xff) << 8) + (plain[3] & 0xff);
     if (len < 0 || len > plain.length - 4) {
       throw new IllegalStateException("Unmatched password is used");
     }
-    return new String(plain, 4, len, CharsetToolkit.UTF8_CHARSET);
+    return CredentialAttributesKt.OneTimeString(plain, 4, len);
   }
 
   /**

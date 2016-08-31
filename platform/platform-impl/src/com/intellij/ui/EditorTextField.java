@@ -40,6 +40,8 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ex.AbstractDelegatingToRootTraversalPolicy;
 import com.intellij.psi.PsiDocumentManager;
@@ -55,6 +57,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
@@ -124,14 +127,10 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     // todo[dsl,max]
     setFocusable(true);
     // dsl: this is a weird way of doing things....
-    super.addFocusListener(new FocusListener() {
+    super.addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
         requestFocus();
-      }
-
-      @Override
-      public void focusLost(FocusEvent e) {
       }
     });
 
@@ -139,6 +138,14 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     setFocusTraversalPolicy(new Jdk7DelegatingToRootTraversalPolicy());
 
     setFont(UIManager.getFont("TextField.font"));
+    if (project != null) {
+      ProjectManager.getInstance().addProjectManagerListener(project, new ProjectManagerListener() {
+        @Override
+        public void projectClosing(Project project) {
+           releaseEditor();
+        }
+      });
+    }
   }
 
   public void setSupplementary(boolean supplementary) {
@@ -212,21 +219,21 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
     myDocument = document;
     installDocumentListener();
-    if (myEditor == null) return;
+    if (myEditor != null) {
+      //MainWatchPanel watches the oldEditor's focus in order to remove debugger combobox when focus is lost
+      //we should first transfer focus to new oldEditor and only then remove current oldEditor
+      //MainWatchPanel check that oldEditor.getParent == newEditor.getParent and does not remove oldEditor in such cases
 
-    //MainWatchPanel watches the oldEditor's focus in order to remove debugger combobox when focus is lost
-    //we should first transfer focus to new oldEditor and only then remove current oldEditor
-    //MainWatchPanel check that oldEditor.getParent == newEditor.getParent and does not remove oldEditor in such cases
+      boolean isFocused = isFocusOwner();
+      Editor editor = myEditor;
+      myEditor = createEditor();
+      releaseEditor(editor);
+      add(myEditor.getComponent(), BorderLayout.CENTER);
 
-    boolean isFocused = isFocusOwner();
-    Editor editor = myEditor;
-    myEditor = createEditor();
-    releaseEditor(editor);
-    add(myEditor.getComponent(), BorderLayout.CENTER);
-
-    validate();
-    if (isFocused) {
-      myEditor.getContentComponent().requestFocus();
+      validate();
+      if (isFocused) {
+        myEditor.getContentComponent().requestFocus();
+      }
     }
   }
 
@@ -352,7 +359,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
   @Override
   public void addNotify() {
-    releaseEditor();
+    unsetAndReleaseEditorLater();
 
     boolean isFocused = isFocusOwner();
 
@@ -383,7 +390,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   @Override
   public void removeNotify() {
     super.removeNotify();
-    releaseEditor();
+    unsetAndReleaseEditorLater();
   }
 
   private void releaseEditor() {
@@ -392,6 +399,15 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     final Editor editor = myEditor;
     myEditor = null;
     
+    releaseEditor(editor);
+  }
+
+  private void unsetAndReleaseEditorLater() {
+    if (myEditor == null) return;
+
+    final Editor editor = myEditor;
+    myEditor = null;
+
     // releasing an editor implies removing it from a component hierarchy
     // invokeLater is required because releaseEditor() may be called from
     // removeNotify(), so we need to let swing complete its removeNotify() chain
@@ -449,13 +465,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     LOG.assertTrue(myDocument != null);
 
     final EditorFactory factory = EditorFactory.getInstance();
-    EditorEx editor;
-    if (myIsViewer) {
-      editor = myProject == null ? (EditorEx)factory.createViewer(myDocument) : (EditorEx)factory.createViewer(myDocument, myProject);
-    }
-    else {
-      editor = myProject == null ? (EditorEx)factory.createEditor(myDocument) : (EditorEx)factory.createEditor(myDocument, myProject);
-    }
+    EditorEx editor = (EditorEx)(myIsViewer ? factory.createViewer(myDocument, myProject) : factory.createEditor(myDocument, myProject));
 
     final EditorSettings settings = editor.getSettings();
     settings.setAdditionalLinesCount(0);
@@ -627,7 +637,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
   @Override
   public Dimension getPreferredSize() {
-    if (super.isPreferredSizeSet()) {
+    if (isPreferredSizeSet()) {
       return super.getPreferredSize();
     }
 
@@ -663,7 +673,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
   @Override
   public Dimension getMinimumSize() {
-    if (super.isMinimumSizeSet()) {
+    if (isMinimumSizeSet()) {
       return super.getMinimumSize();
     }
 
@@ -789,7 +799,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     setNewDocumentAndFileType(fileType, getDocument());
   }
 
-  public void setNewDocumentAndFileType(final FileType fileType, Document document) {
+  public void setNewDocumentAndFileType(@NotNull FileType fileType, Document document) {
     myFileType = fileType;
     setDocument(document);
   }

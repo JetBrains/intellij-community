@@ -1122,6 +1122,15 @@
       <val val="&quot;null,_-&gt;fail&quot;"/>
     </annotation>
   </item>
+  <item name='java.util.Optional T get()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Optional T orElse(T)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;!null -&gt; !null&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.util.ResourceBundle boolean containsKey(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>

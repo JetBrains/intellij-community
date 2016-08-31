@@ -1500,7 +1500,7 @@ public class JavaDocInfoGenerator {
     buffer.append(StringUtil.replaceUnicodeEscapeSequences(text));
   }
 
-  private static void generateLinkValue(PsiInlineDocTag tag, StringBuilder buffer, boolean plainLink) {
+  protected void generateLinkValue(PsiInlineDocTag tag, StringBuilder buffer, boolean plainLink) {
     PsiElement[] tagElements = tag.getDataElements();
     String text = createLinkText(tagElements);
     if (!text.isEmpty()) {
@@ -1544,7 +1544,7 @@ public class JavaDocInfoGenerator {
     }
   }
 
-  private static String createLinkText(final PsiElement[] tagElements) {
+  protected String createLinkText(final PsiElement[] tagElements) {
     int predictOffset = tagElements.length > 0 ? tagElements[0].getTextOffset() + tagElements[0].getText().length() : 0;
     StringBuilder buffer = new StringBuilder();
     for (int j = 0; j < tagElements.length; j++) {
@@ -1562,7 +1562,7 @@ public class JavaDocInfoGenerator {
     return buffer.toString().trim();
   }
 
-  private static void collectElementText(final StringBuilder buffer, PsiElement element) {
+  protected void collectElementText(final StringBuilder buffer, PsiElement element) {
     element.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
@@ -1602,7 +1602,7 @@ public class JavaDocInfoGenerator {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private static void generateSeeAlsoSection(StringBuilder buffer, PsiDocComment comment) {
+  protected void generateSeeAlsoSection(StringBuilder buffer, PsiDocComment comment) {
     PsiDocTag[] tags = comment.findTagsByName("see");
     if (tags.length > 0) {
       buffer.append("<DD><DL>");

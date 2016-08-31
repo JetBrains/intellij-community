@@ -343,6 +343,7 @@ public class MoveClassesOrPackagesUtil {
     final PsiDirectory[] directories = aPackage.getDirectories();
     sourceRoots:
     for (VirtualFile root : contentSourceRoots) {
+      if (!root.isDirectory()) continue;
       for (PsiDirectory directory : directories) {
         if (VfsUtil.isAncestor(root, directory.getVirtualFile(), false)) {
           targetDirectories.add(directory);

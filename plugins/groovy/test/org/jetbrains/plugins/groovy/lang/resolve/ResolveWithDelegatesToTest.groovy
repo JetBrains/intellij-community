@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 class ResolveWithDelegatesToTest extends LightGroovyTestCase {
 
   @Override
-  public void setUp() throws Exception {
+  void setUp() throws Exception {
     super.setUp();
 
     myFixture.addClass('''\

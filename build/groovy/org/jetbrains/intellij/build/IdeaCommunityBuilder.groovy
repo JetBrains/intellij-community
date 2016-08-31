@@ -60,7 +60,7 @@ class IdeaCommunityBuilder {
     tasks.buildSearchableOptions("resources-en", ["community-main"], [])
 
     layoutAll(true)
-    layoutUpdater(buildContext.paths.artifacts)
+    tasks.buildUpdaterJar()
     tasks.zipProjectSources()
   }
 
@@ -90,18 +90,5 @@ class IdeaCommunityBuilder {
 
     BuildTasks.create(buildContext).buildDistributions()
     return info
-  }
-
-  private void layoutUpdater(String target, String jarName = "updater.jar") {
-    BuildUtils.doLayout(binding) {
-      layout(target) {
-        jar(jarName) {
-          module("updater")
-          manifest {
-            attribute(name: "Main-Class", value: "com.intellij.updater.Bootstrap")
-          }
-        }
-      }
-    }
   }
 }

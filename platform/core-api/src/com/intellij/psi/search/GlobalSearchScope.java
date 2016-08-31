@@ -89,8 +89,8 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   @NotNull
   public GlobalSearchScope intersectWith(@NotNull GlobalSearchScope scope) {
     if (scope == this) return this;
-    if (scope instanceof IntersectionScope) {
-      return scope.intersectWith(this);
+    if (scope instanceof IntersectionScope && ((IntersectionScope)scope).containsScope(this)) {
+      return scope;
     }
     return new IntersectionScope(this, scope, null);
   }
@@ -368,10 +368,14 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     @NotNull
     @Override
     public GlobalSearchScope intersectWith(@NotNull GlobalSearchScope scope) {
-      if (myScope1.equals(scope) || myScope2.equals(scope) || equals(scope)) {
-        return this;
-      }
-      return new IntersectionScope(this, scope, null);
+      return containsScope(scope) ? this : new IntersectionScope(this, scope, null);
+    }
+
+    private boolean containsScope(@NotNull GlobalSearchScope scope) {
+      if (myScope1.equals(scope) || myScope2.equals(scope) || equals(scope)) return true;
+      if (myScope1 instanceof IntersectionScope && ((IntersectionScope)myScope1).containsScope(scope)) return true;
+      if (myScope2 instanceof IntersectionScope && ((IntersectionScope)myScope2).containsScope(scope)) return true;
+      return false;
     }
 
     @NotNull

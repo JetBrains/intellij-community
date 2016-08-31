@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.LineTokenizer;
@@ -401,5 +403,13 @@ public class EditorModificationUtil {
       }
     }
     return caretStates;
+  }
+
+  public static boolean requestWriting(@NotNull Editor editor) {
+    if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), editor.getProject())) {
+      HintManager.getInstance().showInformationHint(editor, EditorBundle.message("editing.read.only.file.hint"));
+      return false;
+    }
+    return true;
   }
 }

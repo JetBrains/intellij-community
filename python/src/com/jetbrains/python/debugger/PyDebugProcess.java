@@ -60,7 +60,6 @@ import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueChildrenList;
-import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
@@ -902,6 +901,17 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     return Lists.newArrayList();
   }
 
+  @NotNull
+  public String getDescription(String prefix) throws Exception {
+    if (isConnected()) {
+      dropFrameCaches();
+      final PyStackFrame frame = currentFrame();
+      return myDebugger.getDescription(frame.getThreadId(), frame.getFrameId(), prefix);
+    }
+    return "";
+  }
+
+
   @Override
   public void startNotified(ProcessEvent event) {
   }
@@ -986,7 +996,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
     if (Strings.isNullOrEmpty(parentType)) {
       final Ref<PsiElement> elementRef = resolveInCurrentFrame(name, currentPosition, file);
-      return elementRef.isNull() ? null : XSourcePositionImpl.createByElement(elementRef.get());
+      return elementRef.isNull() ? null : XDebuggerUtil.getInstance().createPositionByElement(elementRef.get());
     }
     else {
       final PyType parentDef = resolveTypeFromString(parentType, file);
@@ -996,7 +1006,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       List<? extends RatedResolveResult> results =
         parentDef.resolveMember(name, null, AccessDirection.READ, PyResolveContext.noImplicits());
       if (results != null && !results.isEmpty()) {
-        return XSourcePositionImpl.createByElement(results.get(0).getElement());
+        return XDebuggerUtil.getInstance().createPositionByElement(results.get(0).getElement());
       }
       else {
         return typeToPosition(parentDef); // at least try to return parent
@@ -1079,12 +1089,12 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     final PyClassType classType = PyUtil.as(pyType, PyClassType.class);
 
     if (classType != null) {
-      return XSourcePositionImpl.createByElement(classType.getPyClass());
+      return XDebuggerUtil.getInstance().createPositionByElement(classType.getPyClass());
     }
 
     final PyModuleType moduleType = PyUtil.as(pyType, PyModuleType.class);
     if (moduleType != null) {
-      return XSourcePositionImpl.createByElement(moduleType.getModule());
+      return XDebuggerUtil.getInstance().createPositionByElement(moduleType.getModule());
     }
     return null;
   }

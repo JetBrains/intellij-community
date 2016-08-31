@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Maxim.Medvedev
  */
-public class ConvertConcatenationToGstringTest extends GrIntentionTestCase {
+class ConvertConcatenationToGstringTest extends GrIntentionTestCase {
   ConvertConcatenationToGstringTest() {
     super("Convert to GString")
   }
@@ -41,7 +41,7 @@ public class ConvertConcatenationToGstringTest extends GrIntentionTestCase {
   @NotNull
   final LightProjectDescriptor projectDescriptor = new DefaultLightProjectDescriptor() {
     @Override
-    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+    void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel;
       final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath(TestUtils.mockGroovy1_7LibraryName + "!/");
       modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
@@ -51,27 +51,27 @@ public class ConvertConcatenationToGstringTest extends GrIntentionTestCase {
   
   final String basePath = TestUtils.testDataPath + 'intentions/convertConcatenationToGstring/'
 
-  public void testSimpleCase() {
+  void testSimpleCase() {
     doTest(true);
   }
 
-  public void testVeryComplicatedCase() {
+  void testVeryComplicatedCase() {
     doTest(true);
   }
 
-  public void testQuotes() {
+  void testQuotes() {
     doTest(true);
   }
 
-  public void testQuotes2() {
+  void testQuotes2() {
     doTest(true);
   }
 
-  public void testQuotesInMultilineString() {
+  void testQuotesInMultilineString() {
     doTest(true);
   }
 
-  public void testDot() {
+  void testDot() {
     doTest(true);
   }
 }

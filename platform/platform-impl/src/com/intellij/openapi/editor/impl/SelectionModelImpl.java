@@ -245,24 +245,24 @@ public class SelectionModelImpl implements SelectionModel {
     }
   }
 
-  public static void doSelectLineAtCaret(Editor editor) {
-    int lineNumber = editor.getCaretModel().getLogicalPosition().line;
+  public static void doSelectLineAtCaret(Caret caret) {
+    Editor editor = caret.getEditor();
+    int lineNumber = caret.getLogicalPosition().line;
     Document document = editor.getDocument();
     if (lineNumber >= document.getLineCount()) {
       return;
     }
 
-    Pair<LogicalPosition, LogicalPosition> lines = EditorUtil.calcCaretLineRange(editor);
+    Pair<LogicalPosition, LogicalPosition> lines = EditorUtil.calcCaretLineRange(caret);
     LogicalPosition lineStart = lines.first;
     LogicalPosition nextLineStart = lines.second;
 
     int start = editor.logicalPositionToOffset(lineStart);
     int end = editor.logicalPositionToOffset(nextLineStart);
 
-    //myEditor.getCaretModel().moveToOffset(start);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    editor.getSelectionModel().removeSelection();
-    editor.getSelectionModel().setSelection(start, end);
+    caret.removeSelection();
+    caret.setSelection(start, end);
   }
 
   @Override

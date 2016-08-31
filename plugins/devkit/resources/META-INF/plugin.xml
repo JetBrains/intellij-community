@@ -11,7 +11,6 @@
   <vendor>JetBrains</vendor>
 
   <depends>com.intellij.properties</depends>
-  <depends>com.intellij.java-i18n</depends>
 
   <resource-bundle>org.jetbrains.idea.devkit.DevKitBundle</resource-bundle>
 

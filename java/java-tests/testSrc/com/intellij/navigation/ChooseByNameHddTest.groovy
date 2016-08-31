@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull
  */
 class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
 
-  public void "test go to file by full path"() {
+  void "test go to file by full path"() {
     def psiFile = myFixture.addFileToProject("foo/index.html", "foo")
     def vFile = psiFile.virtualFile
     def path = vFile.path
@@ -49,7 +49,7 @@ class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
-  public void "test prefer same-named classes visible in current module"() {
+  void "test prefer same-named classes visible in current module"() {
     int moduleCount = 10
     def modules = (0..moduleCount-1).collect {
       PsiTestUtil.addModule(project, StdModuleTypes.JAVA, "mod$it", myFixture.tempDirFixture.findOrCreateDir("mod$it"))

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ class CopySpecWalker {
       return
     }
 
-    copySpec.walk({ def resolver ->
+    copySpec.walk({ resolver ->
       // def resolver ->
       //      in Gradle v1.x - org.gradle.api.internal.file.copy.CopySpecInternal
       //      in Gradle v2.x - org.gradle.api.internal.file.copy.CopySpecResolver
@@ -73,7 +73,7 @@ class CopySpecWalker {
       }
 
       if (sourcePaths) {
-        (sourcePaths.flatten() as List).each { def path ->
+        (sourcePaths.flatten() as List).each { path ->
           if (path instanceof String) {
             visitor.visitSourcePath(relativePath, path)
           }
@@ -82,7 +82,7 @@ class CopySpecWalker {
 
       resolver.source.visit(new FileVisitor() {
         @Override
-        public void visitDir(FileVisitDetails dirDetails) {
+        void visitDir(FileVisitDetails dirDetails) {
           try {
             visitor.visitDir(relativePath, dirDetails)
           }
@@ -91,7 +91,7 @@ class CopySpecWalker {
         }
 
         @Override
-        public void visitFile(FileVisitDetails fileDetails) {
+        void visitFile(FileVisitDetails fileDetails) {
           try {
             visitor.visitFile(relativePath, fileDetails)
           }

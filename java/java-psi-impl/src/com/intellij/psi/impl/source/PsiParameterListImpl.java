@@ -59,7 +59,7 @@ public class PsiParameterListImpl extends JavaStubPsiElement<PsiParameterListStu
 
   @Override
   public int getParametersCount() {
-    final PsiParameterListStub stub = getStub();
+    final PsiParameterListStub stub = getGreenStub();
     if (stub != null) {
       return stub.getChildrenStubs().size();
     }

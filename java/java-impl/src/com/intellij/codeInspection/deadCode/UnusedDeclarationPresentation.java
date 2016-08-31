@@ -67,6 +67,7 @@ import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
+import javax.swing.tree.TreePath;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -182,7 +183,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @Override
-  public QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements, CommonProblemDescriptor[] allowedDescriptors) {
+  public QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements, InspectionTree tree) {
     boolean showFixes = false;
     for (RefEntity element : refElements) {
       if (!getIgnoredRefElements().contains(element) && element.isValid()) {
@@ -192,8 +193,23 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     }
 
     if (showFixes) {
-      final QuickFixAction[] fixes = super.getQuickFixes(refElements, allowedDescriptors);
-      return fixes != null ? ArrayUtil.mergeArrays(fixes, myQuickFixActions) : myQuickFixActions;
+      final TreePath[] paths = tree.getSelectionPaths();
+      if (paths != null) {
+        int count = 0;
+        for (TreePath path : paths) {
+          final Object component = path.getLastPathComponent();
+          if (component instanceof ProblemDescriptionNode) {
+            count++;
+          }
+        }
+        if (count > 0) {
+          final QuickFixAction[] fixes = super.getQuickFixes(refElements, tree);
+          if (fixes != null) {
+            return count == paths.length ? fixes : ArrayUtil.mergeArrays(fixes, myQuickFixActions);
+          }
+        }
+      }
+      return myQuickFixActions;
     }
     return QuickFixAction.EMPTY;
   }
@@ -435,6 +451,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
         RefJavaElement refElement = (RefJavaElement)refEntity;
         if (!compareVisibilities(refElement, localInspectionTool)) return;
         if (!(getContext().getUIOptions().FILTER_RESOLVED_ITEMS && getIgnoredRefElements().contains(refElement)) && refElement.isValid() && getFilter().accepts(refElement)) {
+          if (getTool().isEntryPoint(refElement)) return;
           registerContentEntry(refEntity, RefJavaUtil.getInstance().getPackageName(refEntity));
         }
       }

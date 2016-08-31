@@ -22,8 +22,10 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
@@ -44,6 +46,12 @@ public final class RegExpCompletionContributor extends CompletionContributor {
 
   public RegExpCompletionContributor() {
     {
+      final PsiElementPattern.Capture<PsiElement> namedCharacterPattern = psiElement().withText("\\N");
+      extend(CompletionType.BASIC, psiElement().afterLeaf(namedCharacterPattern),
+             new NamedCharacterCompletionProvider(true));
+      extend(CompletionType.BASIC, psiElement().afterLeaf(psiElement(RegExpTT.LBRACE).afterLeaf(namedCharacterPattern)),
+             new NamedCharacterCompletionProvider(false));
+
       extend(CompletionType.BASIC, psiElement().withText("\\I"), new CharacterClassesNameCompletionProvider());
 
       final ElementPattern<PsiElement> propertyPattern = psiElement().withText("\\p");
@@ -60,6 +68,12 @@ public final class RegExpCompletionContributor extends CompletionContributor {
 
     {
       // TODO: backSlashPattern is needed for reg exp in injected context, remove when unescaping will be performed by Injecting framework
+      final PsiElementPattern.Capture<PsiElement> namedCharacterPattern = psiElement().withText("\\\\N");
+      extend(CompletionType.BASIC, psiElement().afterLeaf(namedCharacterPattern),
+             new NamedCharacterCompletionProvider(true));
+      extend(CompletionType.BASIC, psiElement().afterLeaf(psiElement(RegExpTT.LBRACE).afterLeaf(namedCharacterPattern)),
+             new NamedCharacterCompletionProvider(false));
+
       final ElementPattern<PsiElement> backSlashPattern = psiElement().withText("\\\\I");
       extend(CompletionType.BASIC, backSlashPattern, new CharacterClassesNameCompletionProvider());
 
@@ -83,6 +97,12 @@ public final class RegExpCompletionContributor extends CompletionContributor {
       final ElementPattern<PsiElement> propertyNamePattern
               = psiElement().afterLeaf(psiElement().withText("{").afterLeaf(propertyPattern));
       extend(CompletionType.BASIC, propertyNamePattern, new PropertyNameCompletionProvider());
+
+      final PsiElementPattern.Capture<PsiElement> namedCharacterPattern = psiElement().withText("N");
+      extend(CompletionType.BASIC, psiElement().afterLeaf(namedCharacterPattern),
+             new NamedCharacterCompletionProvider(true));
+      extend(CompletionType.BASIC, psiElement().afterLeaf(psiElement(RegExpTT.LBRACE).afterLeaf(namedCharacterPattern)),
+             new NamedCharacterCompletionProvider(false));
     }
   }
 
@@ -124,6 +144,7 @@ public final class RegExpCompletionContributor extends CompletionContributor {
 
   private static class PropertyNameCompletionProvider extends CompletionProvider<CompletionParameters> {
 
+    @Override
     public void addCompletions(@NotNull final CompletionParameters parameters,
                                final ProcessingContext context,
                                @NotNull final CompletionResultSet result) {
@@ -136,6 +157,7 @@ public final class RegExpCompletionContributor extends CompletionContributor {
 
   private static class PropertyCompletionProvider extends CompletionProvider<CompletionParameters> {
 
+    @Override
     public void addCompletions(@NotNull final CompletionParameters parameters,
                                final ProcessingContext context,
                                @NotNull final CompletionResultSet result) {
@@ -147,6 +169,7 @@ public final class RegExpCompletionContributor extends CompletionContributor {
 
   private static class CharacterClassesNameCompletionProvider extends CompletionProvider<CompletionParameters> {
 
+    @Override
     public void addCompletions(@NotNull final CompletionParameters parameters,
                                final ProcessingContext context,
                                @NotNull final CompletionResultSet result)
@@ -158,6 +181,33 @@ public final class RegExpCompletionContributor extends CompletionContributor {
       for (String[] stringArray : RegExpLanguageHosts.getInstance().getAllKnownProperties(parameters.getPosition())) {
         addLookupElement(result, "p{" + stringArray[0] + "}", stringArray.length > 1? stringArray[1]:null, PlatformIcons.PROPERTY_ICON);
       }
+    }
+  }
+
+  private static class NamedCharacterCompletionProvider extends CompletionProvider<CompletionParameters> {
+
+    private final boolean myEmbrace;
+
+    public NamedCharacterCompletionProvider(boolean embrace) {
+      myEmbrace = embrace;
+    }
+
+    @Override
+    protected void addCompletions(@NotNull CompletionParameters parameters,
+                                  ProcessingContext context,
+                                  @NotNull CompletionResultSet result) {
+      UnicodeCharacterNames.iterate(name -> {
+        if (result.getPrefixMatcher().prefixMatches(name)) {
+          final String type = new String(new int[] {UnicodeCharacterNames.getCodePoint(name)}, 0, 1);
+          if (myEmbrace) {
+            result.addElement(createLookupElement("{" + name + "}", type, emptyIcon));
+          }
+          else {
+            result.addElement(TailTypeDecorator.withTail(createLookupElement(name, type, emptyIcon), TailType.createSimpleTailType('}')));
+          }
+        }
+        ProgressManager.checkCanceled();
+      });
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,10 @@ import com.intellij.psi.util.PsiTreeUtil
 /**
  * @author ven
  */
-public class CreateMethodFromUsageTest extends LightQuickFixTestCase {
-  public void test() throws Exception { doAllTests(); }
+class CreateMethodFromUsageTest extends LightQuickFixTestCase {
+  void test() throws Exception { doAllTests(); }
 
-  public void testTemplateAssertions() throws Exception {
+  void testTemplateAssertions() throws Exception {
     configureFromFileText "a.java", """
 class SomeOuterClassWithLongName {
     void foo(PropertyDescriptorWithVeryLongName.Group group, PropertyDescriptorWithVeryLongName.Group child) {
@@ -81,7 +81,7 @@ class SomeOuterClassWithLongName {
 
   }
 
-  public void "test prefer nearby return types"() {
+  void "test prefer nearby return types"() {
     configureFromFileText "a.java", """
 class Singleton {
     boolean add(Object o) {}
@@ -100,8 +100,8 @@ class Usage {
     // parameter type
     assert LookupManager.getActiveLookup(editor)?.currentItem?.lookupString == 'Singleton'
   }
-  
-  public void "test delete created modifiers"() {
+
+  void "test delete created modifiers"() {
     configureFromFileText "a.java", """
 interface Singleton {
     default boolean add(Object o) {}
@@ -130,7 +130,7 @@ class Usage {
     state.gotoEnd(false)
   }
 
-  public void "test prefer outer class when static is not applicable for inner"() {
+  void "test prefer outer class when static is not applicable for inner"() {
     configureFromFileText "a.java", """
 class A {
     int x;

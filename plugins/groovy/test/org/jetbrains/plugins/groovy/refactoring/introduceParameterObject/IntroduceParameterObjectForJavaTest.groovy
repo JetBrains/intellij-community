@@ -25,10 +25,10 @@ import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 @CompileStatic
-public class IntroduceParameterObjectForJavaTest extends LightCodeInsightFixtureTestCase {
+class IntroduceParameterObjectForJavaTest extends LightCodeInsightFixtureTestCase {
   final String basePath = TestUtils.testDataPath + "/refactoring/introduceParameterObjectForJava/"
 
-  public void testSimple() throws Exception {
+  void testSimple() throws Exception {
     doTest()
   }
 

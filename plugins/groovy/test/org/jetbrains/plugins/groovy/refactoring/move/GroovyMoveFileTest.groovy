@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,13 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Max Medvedev
  */
-public class GroovyMoveFileTest extends GroovyMoveTestBase {
+class GroovyMoveFileTest extends GroovyMoveTestBase {
   @Override
   protected String getBasePath() {
     return "${TestUtils.testDataPath}refactoring/move/moveFile/";
   }
 
-  public void testMoveJavaGroovyText() {
+  void testMoveJavaGroovyText() {
     doTest 'pack2', 'A.groovy', 'B.java', 'C.txt'
   }
 

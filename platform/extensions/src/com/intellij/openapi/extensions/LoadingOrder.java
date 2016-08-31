@@ -133,7 +133,7 @@ public class LoadingOrder {
       LoadingOrder order = o.getOrder();
       cachedMap.put(o, order);
       if (order.myFirst) first.add(o);
-      if (order.myBefore.size() != 0) hasBefore.add(o);
+      if (!order.myBefore.isEmpty()) hasBefore.add(o);
     }
 
     GraphGenerator.SemiGraph<Orderable> graph = new GraphGenerator.SemiGraph<Orderable>() {

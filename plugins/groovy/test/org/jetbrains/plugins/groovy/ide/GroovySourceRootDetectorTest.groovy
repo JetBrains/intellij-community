@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,27 +22,27 @@ import org.jetbrains.plugins.groovy.GroovySourceRootDetector
  * @author nik
  */
 class GroovySourceRootDetectorTest extends TestCase {
-  public void testEmpty() {
+  void testEmpty() {
     doTest("", "")
   }
 
-  public void testComment() {
+  void testComment() {
     doTest("//comment", "")
     doTest("  /* comment */", "")
   }
 
-  public void testStatement() {
+  void testStatement() {
     doTest("def a = 0;", "")
   }
 
-  public void testSimplePackage() {
+  void testSimplePackage() {
     doTest("package simple", "simple")
     doTest("package simple;", "simple")
     doTest("""//comment
             package simple;""", "simple")
   }
 
-  public void testComplexPackage() {
+  void testComplexPackage() {
     doTest("package com.simple", "com.simple")
     doTest("package com.simple;", "com.simple")
     doTest("""

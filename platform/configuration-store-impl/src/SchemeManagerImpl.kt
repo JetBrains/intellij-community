@@ -22,6 +22,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil.DEFAULT_EXT
+import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.extensions.AbstractExtensionPointBean
 import com.intellij.openapi.options.*
 import com.intellij.openapi.project.ProjectBundle
@@ -104,12 +105,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     }
 
     if (useVfs && (provider == null || !provider.isApplicable(fileSpec, roamingType))) {
-      try {
-        refreshVirtualDirectoryAndAddListener()
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-      }
+      LOG.catchAndLog { refreshVirtualDirectoryAndAddListener() }
     }
   }
 
@@ -333,7 +329,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     }
   }
 
-  fun reload() {
+  override fun reload() {
     // we must not remove non-persistent (e.g. predefined) schemes, because we cannot load it (obviously)
     removeExternalizableSchemes()
 
@@ -374,11 +370,15 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
     override fun updateDigest(scheme: MUTABLE_SCHEME) {
       try {
-        externalInfo.digest = (processor.writeScheme(scheme) as Element).digest()
+        updateDigest(processor.writeScheme(scheme) as Element)
       }
       catch (e: WriteExternalException) {
         LOG.error("Cannot update digest", e)
       }
+    }
+
+    override fun updateDigest(data: Element) {
+      externalInfo.digest = data.digest()
     }
   }
 
@@ -442,7 +442,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
           XmlPullParser.START_TAG -> {
             if (!isUseOldFileNameSanitize || parser.name != "component") {
               var name: String? = null
-              if (isUseOldFileNameSanitize && parser.name == "profile") {
+              if (isUseOldFileNameSanitize && (parser.name == "profile" || parser.name == "copyright")) {
                 eventType = parser.next()
                 findName@ while (eventType != XmlPullParser.END_DOCUMENT) {
                   when (eventType) {

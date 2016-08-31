@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable
  */
 class GenerateGetterSetterTest extends LightCodeInsightFixtureTestCase {
 
-  public void "test don't strip is of non-boolean fields"() {
+  void "test don't strip is of non-boolean fields"() {
     myFixture.addClass('class YesNoRAMField {}')
     myFixture.configureByText 'a.java', '''
 class Foo {
@@ -52,8 +52,8 @@ class Foo {
 }
 '''
   }
-  
-  public void "test strip is of boolean fields"() {
+
+  void "test strip is of boolean fields"() {
     myFixture.configureByText 'a.java', '''
 class Foo {
     boolean isStateForceMailField;
@@ -77,9 +77,9 @@ class Foo {
     }
 }
 '''
-  } 
-  
-  public void "test strip is of boolean fields setter"() {
+  }
+
+  void "test strip is of boolean fields setter"() {
     myFixture.configureByText 'a.java', '''
 class Foo {
     boolean isStateForceMailField;
@@ -99,7 +99,7 @@ class Foo {
 '''
   }
 
-  public void "test strip field prefix"() {
+  void "test strip field prefix"() {
     def settings = CodeStyleSettingsManager.getInstance(getProject()).currentSettings
     String oldPrefix = settings.FIELD_NAME_PREFIX
     try {
@@ -127,7 +127,7 @@ class Foo {
     }
   }
 
-  public void "test qualified this"() {
+  void "test qualified this"() {
     myFixture.enableInspections(UnqualifiedFieldAccessInspection.class)
     myFixture.configureByText 'a.java', '''
 class Foo {
@@ -148,7 +148,7 @@ class Foo {
 '''
   }
 
-  public void "test nullable stuff"() {
+  void "test nullable stuff"() {
     myFixture.addClass("package org.jetbrains.annotations;\n" +
                        "public @interface NotNull {}")
     myFixture.configureByText 'a.java', '''
@@ -197,7 +197,7 @@ class Foo {
     UIUtil.dispatchAllInvocationEvents()
   }
 
-  public void "test static or this setter with same name parameter"() {
+  void "test static or this setter with same name parameter"() {
     myFixture.enableInspections(UnqualifiedFieldAccessInspection.class)
     myFixture.configureByText 'a.java', '''
 class Foo {

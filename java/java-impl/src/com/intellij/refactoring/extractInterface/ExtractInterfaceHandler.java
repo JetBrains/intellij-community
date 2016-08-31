@@ -42,8 +42,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
 public class ExtractInterfaceHandler implements RefactoringActionHandler, ElementsHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractInterface.ExtractInterfaceHandler");
 
@@ -121,7 +119,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
       final SmartPsiElementPointer<PsiClass> classPointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(myClass);
       final SmartPsiElementPointer<PsiClass> interfacePointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(anInterface);
       final Runnable turnRefsToSuperRunnable = () -> ExtractClassUtil.askAndTurnRefsToSuper(myProject, classPointer, interfacePointer);
-      SwingUtilities.invokeLater(turnRefsToSuperRunnable);
+      ApplicationManager.getApplication().invokeLater(turnRefsToSuperRunnable);
     }
   }
 

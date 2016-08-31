@@ -521,6 +521,16 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     return templateState != null ? templateState.getTemplate() : null;
   }
 
+  @Override
+  public boolean finishTemplate(@NotNull Editor editor) {
+    TemplateState state = getTemplateState(editor);
+    if (state != null) {
+      state.gotoEnd();
+      return true;
+    }
+    return false;
+  }
+
   public static boolean isApplicable(PsiFile file, int offset, TemplateImpl template) {
     return isApplicable(template, getApplicableContextTypes(file, offset));
   }

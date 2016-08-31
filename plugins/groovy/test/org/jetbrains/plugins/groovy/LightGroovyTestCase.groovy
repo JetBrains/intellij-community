@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable
 /**
  * @author peter
  */
-public abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCase {
+abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCase {
 
   JavaCodeInsightTestFixture getFixture() {
     myFixture
@@ -260,7 +260,7 @@ public abstract class TestCase extends junit.framework.Assert implements junit.f
 ''')
   }
 
-  public static void assertType(@Nullable String expected, @Nullable PsiType actual) {
+  static void assertType(@Nullable String expected, @Nullable PsiType actual) {
     if (expected == null) {
       assertNull(actual)
       return

@@ -169,6 +169,16 @@ class CommunityRepositoryModules {
       excludeFromModule("xslt-debugger-engine-impl", "xalan.jar")
     },
     plugin("settings-repository"),
-    plugin("rest")
+    plugin("rest"),
+    plugin("student"),
+    plugin("student-python") {
+      withResource("resources/courses", "lib/courses")
+      excludeFromModule("student-python", "courses")
+    },
+    plugin("course-creator"),
+    plugin("course-creator-python"),
+    plugin("ipnb"),
+    plugin("IntelliLang-python"),
+    plugin("python-rest")
   ]
 }

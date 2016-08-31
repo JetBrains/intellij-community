@@ -83,7 +83,8 @@ public class TestMethods extends TestMethod {
       if (containingClass != null) {
         final String proxyName = testInfo.getName();
         final String methodName = ((PsiMethod)element).getName();
-        return JavaExecutionUtil.getRuntimeQualifiedName(containingClass) + "," + proxyName.substring(proxyName.indexOf(methodName));
+        return JavaExecutionUtil.getRuntimeQualifiedName(containingClass) + "," +
+               (proxyName.contains(methodName) ? proxyName.substring(proxyName.indexOf(methodName)) : methodName);
       }
     }
     return null;

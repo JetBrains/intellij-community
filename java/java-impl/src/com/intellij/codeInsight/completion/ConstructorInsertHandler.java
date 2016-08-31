@@ -7,7 +7,10 @@ import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementDecorator;
+import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.template.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.application.ApplicationManager;
@@ -192,7 +195,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
                                           LookupElement delegate,
                                           final PsiClass psiClass,
                                           final boolean forAnonymous) {
-    if (context.getCompletionChar() == '[') {
+    if (context.getCompletionChar() == '[' || JavaConstructorCallElement.isWrapped(delegate)) {
       return false;
     }
 
@@ -260,6 +263,8 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
 
   private static Runnable createOverrideRunnable(final Editor editor, final PsiFile file, final Project project) {
     return () -> {
+      TemplateManager.getInstance(project).finishTemplate(editor);
+
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
       final PsiAnonymousClass
         aClass = PsiTreeUtil.findElementOfClassAtOffset(file, editor.getCaretModel().getOffset(), PsiAnonymousClass.class, false);

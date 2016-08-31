@@ -188,7 +188,14 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
 
   @Override
   public boolean isInLibrarySource(@NotNull VirtualFile fileOrDir) {
-    return getInfoForFileOrDirectory(fileOrDir).isInLibrarySource();
+    DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
+    return info.isInProject() && info.isInLibrarySource();
+  }
+
+  // a slightly faster implementation then the default one
+  public boolean isInLibrary(@NotNull VirtualFile fileOrDir) {
+    DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
+    return info.isInProject() && (info.hasLibraryClassRoot() || info.isInLibrarySource());
   }
 
   @Override

@@ -21,7 +21,10 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import org.intellij.lang.regexp.AsciiUtil;
+import org.intellij.lang.regexp.UnicodeCharacterNames;
 import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider;
 import org.intellij.lang.regexp.RegExpLanguageHost;
 import org.intellij.lang.regexp.psi.*;
@@ -139,6 +142,11 @@ public class JavaRegExpHost implements RegExpLanguageHost {
   }
 
   @Override
+  public boolean supportsNamedCharacters(RegExpNamedCharacter namedCharacter) {
+    return hasAtLeastJdkVersion(namedCharacter, JavaSdkVersion.JDK_1_9);
+  }
+
+  @Override
   public boolean supportsPerl5EmbeddedComments() {
     return false;
   }
@@ -161,6 +169,17 @@ public class JavaRegExpHost implements RegExpLanguageHost {
   @Override
   public boolean supportsNamedGroupRefSyntax(RegExpNamedGroupRef ref) {
     return ref.isNamedGroupRef() && hasAtLeastJdkVersion(ref, JavaSdkVersion.JDK_1_7);
+  }
+
+  @Override
+  public boolean isValidGroupName(String name, @NotNull PsiElement context) {
+    for (int i = 0, length = name.length(); i < length; i++) {
+      final char c = name.charAt(i);
+      if (!AsciiUtil.isLetterOrDigit(c)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override
@@ -304,17 +323,29 @@ public class JavaRegExpHost implements RegExpLanguageHost {
     }
   }
 
+  @Override
+  public boolean isValidNamedCharacter(RegExpNamedCharacter namedCharacter) {
+    return UnicodeCharacterNames.getCodePoint(namedCharacter.getName()) >= 0;
+  }
+
   @NotNull
   @Override
   public String[][] getAllKnownProperties() {
-    return myPropertiesProvider.getAllKnownProperties();
+    return myPropertyNames;
   }
 
   @Nullable
   @Override
   public String getPropertyDescription(@Nullable String name) {
-    return myPropertiesProvider.getPropertyDescription(name);
-  }
+    if (StringUtil.isEmptyOrSpaces(name)) {
+      return null;
+    }
+    for (String[] stringArray : myPropertyNames) {
+      if (stringArray[0].equals(name)) {
+        return stringArray.length > 1 ? stringArray[1] : stringArray[0];
+      }
+    }
+    return null;  }
 
   @NotNull
   @Override

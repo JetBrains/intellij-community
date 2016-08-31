@@ -153,13 +153,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     ComplementaryFontsRegistry.getFontAbleToDisplay(' ', 0, Font.PLAIN, UIManager.getFont("Label.font").getFamily()); // load costly font info
 
     Cursor emptyCursor = null;
-    try {
-      emptyCursor = Toolkit.getDefaultToolkit().createCustomCursor(UIUtil.createImage(1, 1, BufferedImage.TYPE_INT_ARGB),
-                                                                    new Point(),
-                                                                    "Empty cursor");
-    }
-    catch (Exception e){
-      LOG.warn("Couldn't create an empty cursor", e);
+    if (!GraphicsEnvironment.isHeadless()) {
+      try {
+        emptyCursor = Toolkit.getDefaultToolkit().createCustomCursor(UIUtil.createImage(1, 1, BufferedImage.TYPE_INT_ARGB),
+                                                                     new Point(),
+                                                                     "Empty cursor");
+      }
+      catch (Exception e){
+        LOG.warn("Couldn't create an empty cursor", e);
+      }
     }
     EMPTY_CURSOR = emptyCursor;
   }
@@ -946,6 +948,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       ((DocumentImpl)myDocument).giveUpTabTracking();
     }
     Disposer.dispose(myDisposable);
+    myVerticalScrollBar.setUI(null); // clear error panel's cached image
   }
 
   private void clearCaretThread() {

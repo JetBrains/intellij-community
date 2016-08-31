@@ -148,6 +148,11 @@ public class AppUIUtil {
       registerFont("/fonts/SourceCodePro-Bold.ttf");
       registerFont("/fonts/SourceCodePro-It.ttf");
       registerFont("/fonts/SourceCodePro-BoldIt.ttf");
+      registerFont("/fonts/FiraCode-Regular.ttf");
+      registerFont("/fonts/FiraCode-Bold.ttf");
+      registerFont("/fonts/FiraCode-Light.ttf");
+      registerFont("/fonts/FiraCode-Medium.ttf");
+      registerFont("/fonts/FiraCode-Retina.ttf");
     }
   }
 

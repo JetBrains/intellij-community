@@ -19,7 +19,6 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.ide.PasteProvider;
 import com.intellij.lang.LanguageFormatting;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,7 +30,6 @@ import com.intellij.openapi.editor.actions.PasteAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -85,7 +83,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
 
     final Document document = editor.getDocument();
-    if (!FileDocumentManager.getInstance().requestWriting(document, CommonDataKeys.PROJECT.getData(dataContext))) {
+    if (!EditorModificationUtil.requestWriting(editor)) {
       return;
     }
 

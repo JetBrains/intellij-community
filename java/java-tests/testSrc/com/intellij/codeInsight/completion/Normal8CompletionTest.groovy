@@ -22,16 +22,16 @@ import com.intellij.testFramework.LightProjectDescriptor
 /**
  * @author anna
  */
-public class Normal8CompletionTest extends LightFixtureCompletionTestCase {
+class Normal8CompletionTest extends LightFixtureCompletionTestCase {
   final LightProjectDescriptor projectDescriptor = JAVA_8
   final String basePath = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/lambda/completion/normal/"
 
-  public void testSelfStaticsOnly() {
+  void testSelfStaticsOnly() {
     configureByFile("SelfStaticsOnly.java");
     assertStringItems("ba", "bar");
   }
 
-  public void testFinishWithColon() {
+  void testFinishWithColon() {
     myFixture.configureByText "a.java", """
 class Foo {{ Object o = Fo<caret>x }}
 """
@@ -42,7 +42,7 @@ class Foo {{ Object o = Foo::<caret>x }}
 """
   }
 
-  public void testNoSuggestionsAfterMethodReferenceAndDot() {
+  void testNoSuggestionsAfterMethodReferenceAndDot() {
     String text = """
 class Foo {{ Object o = StringBuilder::append.<caret> }}
 """
@@ -51,7 +51,7 @@ class Foo {{ Object o = StringBuilder::append.<caret> }}
     myFixture.checkResult(text)
   }
 
-  public void "test suggest lambda signature"() {
+  void "test suggest lambda signature"() {
     myFixture.configureByText "a.java", """
 interface I {
   void m(int x);
@@ -66,7 +66,7 @@ class Test {
     assert LookupElementPresentation.renderElement(items[0]).itemText == 'x1 -> {}'
   }
 
-  public void "test lambda signature duplicate parameter name"() {
+  void "test lambda signature duplicate parameter name"() {
     myFixture.configureByText "a.java", """
 import java.util.function.Function;
 
@@ -92,7 +92,7 @@ class InterestingClass {}
     assert LookupElementPresentation.renderElement(items[0]).itemText == 'interestingClass -> {}'
   }
 
-  public void "test suggest this method references"() {
+  void "test suggest this method references"() {
     myFixture.configureByText "a.java", """
 interface I {
   void m(int x);
@@ -109,7 +109,7 @@ class Test {
     assert items.find { LookupElementPresentation.renderElement(it).itemText.contains('this::bar') } != null
   }
 
-  public void "test suggest receiver method reference"() {
+  void "test suggest receiver method reference"() {
     myFixture.configureByText "a.java", """
 class MethodRef {
 
@@ -131,7 +131,7 @@ class MethodRef {
     assert items.find {LookupElementPresentation.renderElement(it).itemText.contains('MethodRef::boo')}
   }
 
-  public void "test constructor ref"() {
+  void "test constructor ref"() {
     myFixture.configureByText "a.java", """
 interface Foo9 {
   Bar test(int p);
@@ -167,12 +167,12 @@ class Test88 {
 """
   }
 
-  public void testInheritorConstructorRef() {
+  void testInheritorConstructorRef() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'ArrayList::new', 'ArrayList'
   }
 
-  public void "test constructor ref without start"() {
+  void "test constructor ref without start"() {
     myFixture.configureByText "a.java", """
 interface Foo9 {
   Bar test(int p);
@@ -191,8 +191,8 @@ class Test88 {
     def items = myFixture.completeBasic()
     assert items.find {LookupElementPresentation.renderElement(it).itemText.contains('Bar::new')}
   }
-  
-  public void "test new array ref"() {
+
+  void "test new array ref"() {
     myFixture.configureByText "a.java", """
 interface Foo9<T> {
   T test(int p);
@@ -208,53 +208,55 @@ class Test88 {
     assert items.find {LookupElementPresentation.renderElement(it).itemText.contains('String[]::new')}
   }
 
-  public void testCollectorsToList() {
+  void testCollectorsToList() {
     configureByTestName()
     selectItem(myItems.find { it.lookupString.contains('toList') })
     checkResultByFile(getTestName(false) + "_after.java")
   }
 
-  public void testStaticallyImportedCollectorsToList() {
+  void testStaticallyImportedCollectorsToList() {
     configureByTestName()
     selectItem(myItems.find { it.lookupString.contains('collect(toList())') })
     checkResultByFile(getTestName(false) + "_after.java")
   }
 
-  public void testAllCollectors() {
+  void testAllCollectors() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'collect', 'collect', 'collect(Collectors.toCollection())', 'collect(Collectors.toList())', 'collect(Collectors.toSet())'
     selectItem(myItems.find { it.lookupString.contains('toCollection') })
     checkResultByFile(getTestName(false) + "_after.java")
   }
 
-  public void testCollectorsToSet() {
+  void testCollectorsToSet() {
     configureByTestName()
     selectItem(myItems.find { it.lookupString.contains('toSet') })
     checkResultByFile(getTestName(false) + "_after.java")
   }
 
-  public void testNoExplicitTypeArgsInTernary() {
+  void testNoExplicitTypeArgsInTernary() {
     configureByTestName()
     selectItem(myItems.find { it.lookupString.contains('empty') })
     checkResultByFile(getTestName(false) + "_after.java")
   }
 
-  public void testCallBeforeLambda() {
+  void testCallBeforeLambda() {
     configureByTestName()
     checkResultByFile(getTestName(false) + "_after.java")
   }
 
-  public void testLambdaInAmbiguousCall() {
+  void testLambdaInAmbiguousCall() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems(0, 'toString', 'wait')
   }
 
-  public void testLambdaWithSuperWildcardInAmbiguousCall() {
+  void testLambdaWithSuperWildcardInAmbiguousCall() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems(0, 'substring', 'substring', 'subSequence')
   }
 
-  public void testUnexpectedLambdaInAmbiguousCall() { doAntiTest() }
-  public void testNoCollectorsInComment() { doAntiTest() }
-  public void testNoContinueInsideLambdaInLoop() { doAntiTest(); }
+  void testUnexpectedLambdaInAmbiguousCall() { doAntiTest() }
+
+  void testNoCollectorsInComment() { doAntiTest() }
+
+  void testNoContinueInsideLambdaInLoop() { doAntiTest(); }
 }

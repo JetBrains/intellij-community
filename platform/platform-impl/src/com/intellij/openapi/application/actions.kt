@@ -38,12 +38,21 @@ inline fun <T> runBatchUpdate(messageBus: MessageBus, runnable: () -> T): T {
 /**
  * @exclude Internal use only
  */
-fun invokeAndWaitIfNeed(runnable: () -> Unit) {
+fun <T> invokeAndWaitIfNeed(runnable: () -> T): T {
   val app = ApplicationManager.getApplication()
   if (app == null) {
-    if (SwingUtilities.isEventDispatchThread()) runnable() else SwingUtilities.invokeAndWait(runnable)
+    if (SwingUtilities.isEventDispatchThread()) {
+      return runnable()
+    }
+    else {
+      var result: T? = null
+      SwingUtilities.invokeAndWait { result = runnable() }
+      return result as T
+    }
   }
   else {
-    app.invokeAndWait(runnable, ModalityState.defaultModalityState())
+    var result: T? = null
+    app.invokeAndWait({ result = runnable() }, ModalityState.defaultModalityState())
+    return result as T
   }
 }

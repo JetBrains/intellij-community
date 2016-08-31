@@ -103,7 +103,7 @@ public class UnsecureRandomNumberGenerationInspection
         return;
       }
       final String className = containingClass.getQualifiedName();
-      if (!"java.lang.Math".equals(className)) {
+      if (!CommonClassNames.JAVA_LANG_MATH.equals(className)) {
         return;
       }
       registerMethodCallError(expression, expression);

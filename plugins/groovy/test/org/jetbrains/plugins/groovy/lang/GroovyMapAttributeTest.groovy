@@ -43,7 +43,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 class GroovyMapAttributeTest extends LightCodeInsightFixtureTestCase {
   final LightProjectDescriptor projectDescriptor = new DefaultLightProjectDescriptor() {
     @Override
-    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+    void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel;
       final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath(TestUtils.mockGroovy1_7LibraryName + "!/");
       modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
@@ -73,7 +73,7 @@ class GroovyMapAttributeTest extends LightCodeInsightFixtureTestCase {
     }
   }
 
-  public void testEmptyConstructorCompletion() {
+  void testEmptyConstructorCompletion() {
     doTestCompletion("""
 class Aaa {
   String sss1
@@ -88,7 +88,7 @@ class Aaa {
 """, true)
   }
 
-  public void testNoDefaultConstructor() {
+  void testNoDefaultConstructor() {
     doTestCompletion("""
 class Aaa {
   String sss1
@@ -103,7 +103,7 @@ class Aaa {
 """, false)
   }
 
-  public void testDefaultConstructorAndNonDefault() {
+  void testDefaultConstructorAndNonDefault() {
     doTestCompletion("""
 class Aaa {
   String sss1
@@ -120,7 +120,7 @@ class Aaa {
 """, true)
   }
 
-  public void testHasMapConstructor() {
+  void testHasMapConstructor() {
     doTestCompletion("""
 class Aaa {
   String sss1
@@ -138,7 +138,7 @@ class Aaa {
 """, true)
   }
 
-  public void testHasHashMapConstructor() {
+  void testHasHashMapConstructor() {
     doTestCompletion("""
 class Aaa {
   String sss1
@@ -156,7 +156,7 @@ class Aaa {
 """, true)
   }
 
-  public void testMapNotFirstConstructor() {
+  void testMapNotFirstConstructor() {
     doTestCompletion("""
 class Aaa {
   String sss1
@@ -173,7 +173,7 @@ class Aaa {
 """, true)
   }
 
-  public void testCallOtherConstructor() {
+  void testCallOtherConstructor() {
     doTestCompletion("""
 class Aaa {
   String sss1
@@ -188,7 +188,7 @@ class Aaa {
 """, false)
   }
 
-  public void testWithMap() {
+  void testWithMap() {
     doTestCompletion("""
 class Aaa {
   String sss1
@@ -207,7 +207,7 @@ class Aaa {
 """, true)
   }
 
-  public void testWithMap2() {
+  void testWithMap2() {
     doTestCompletion("""
 class Aaa {
   String sss1
@@ -226,7 +226,7 @@ class Aaa {
 """, true)
   }
 
-  public void testAlreadyHasNonMapParameter() {
+  void testAlreadyHasNonMapParameter() {
     doTestCompletion("""
 class Aaa {
   String sss1
@@ -241,7 +241,7 @@ class Aaa {
 """, false)
   }
 
-  public void testAlreadyHasNonMapParameter1() {
+  void testAlreadyHasNonMapParameter1() {
     doTestCompletion("""
 class Aaa {
   String sss1
@@ -257,7 +257,7 @@ class Aaa {
 """, false)
   }
 
-  public void testConstructorInJavaClass() {
+  void testConstructorInJavaClass() {
     myFixture.addFileToProject("Ccc.java", """
 public class Ccc {
   private String sss1
@@ -277,7 +277,7 @@ public class Ccc {
     myFixture.assertPreferredCompletionItems 0, 'sss1', 'sss2', 'sss3', 'sss4'
   }
 
-  public void testRenameProperty() {
+  void testRenameProperty() {
     def groovyFile = myFixture.addFileToProject("g.groovy", "new Aaa(sss: '1')")
     myFixture.configureByText("Aaa.java", """
 public class Aaa {
@@ -289,7 +289,7 @@ public class Aaa {
     assertEquals("new Aaa(field: '1')", groovyFile.text)
   }
 
-  public void testRenameMethod() {
+  void testRenameMethod() {
     def groovyFile = myFixture.addFileToProject("g.groovy", "new Aaa(sss: '1')")
     myFixture.configureByText("Aaa.java", """
 public class Aaa {
@@ -309,7 +309,7 @@ public class Aaa {
     myFixture.checkHighlighting(true, false, true)
   }
 
-  public void testCheckingTypeString() {
+  void testCheckingTypeString() {
     doTestHighlighting """
 class Ccc {
   String foo
@@ -328,7 +328,7 @@ println(new Ccc(foo: Collections.singletonList("as")))
 """
   }
 
-  public void testCheckingTypeInt() {
+  void testCheckingTypeInt() {
     doTestHighlighting """
 class Ccc {
   int foo
@@ -350,7 +350,7 @@ println(new Ccc(foo: <warning descr="Type of argument 'foo' can not be 'List<Str
 """
   }
 
-  public void testCheckingTypeInteger() {
+  void testCheckingTypeInteger() {
     doTestHighlighting """
 class Ccc {
   Integer foo
@@ -372,7 +372,7 @@ println(new Ccc(foo: <warning descr="Type of argument 'foo' can not be 'List<Str
 """
   }
 
-  public void testCheckingTypeList() {
+  void testCheckingTypeList() {
     doTestHighlighting """
 class Ccc {
   List foo
@@ -390,7 +390,7 @@ println(new Ccc(foo: Collections.singletonList(1)))
 """
   }
 
-  public void testCheckingTypeGeneric() {
+  void testCheckingTypeGeneric() {
     myFixture.addFileToProject("Ccc.groovy", """
 class Ccc<T> {
   public void setFoo(T t) {}
@@ -410,7 +410,7 @@ println(new CccList(foo: <warning descr="Type of argument 'foo' can not be 'Link
 """
   }
 
-  public void testCompletionFieldClosureParam() {
+  void testCompletionFieldClosureParam() {
     doTestCompletion("""
 class Test {
   def field = {attr ->
@@ -424,7 +424,7 @@ class Test {
 """, true);
   }
 
-  public void testCompletionVariableClosureParam() {
+  void testCompletionVariableClosureParam() {
     doTestCompletion("""
 class Test {
   {
@@ -438,7 +438,7 @@ class Test {
 """, true);
   }
 
-  public void testCompletionReturnMethod() {
+  void testCompletionReturnMethod() {
     myFixture.addFileToProject("Ccc.groovy", """
 class Ccc {
   String sss1;
@@ -459,11 +459,11 @@ class Test {
 """, true
   }
 
-  public void 'test completion within some map'() {
+  void 'test completion within some map'() {
     doTestCompletionWithinMap '[<caret>]', '[bar: <caret>]'
   }
 
-  public void 'test completion within map in argument list'() {
+  void 'test completion within map in argument list'() {
     doTestCompletionWithinMap 'foo(1, 2, 3, [<caret>])', 'foo(1, 2, 3, [bar: <caret>])'
   }
 
