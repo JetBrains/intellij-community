@@ -17,6 +17,11 @@ package com.intellij.diagnostic;
 
 import com.android.tools.analytics.UsageTracker;
 import com.intellij.diagnostic.VMOptions.MemoryKind;
+import com.intellij.errorreport.crash.CrashReport;
+import com.intellij.errorreport.crash.GoogleCrash;
+import com.intellij.ide.SystemHealthMonitor;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.internal.statistic.analytics.AnalyticsUploader;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -26,6 +31,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.ErrorLogger;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.io.MappingFailedException;
@@ -82,7 +88,12 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     if (UsageTracker.getInstance().getAnalyticsSettings().hasOptedIn()) {
       Throwable t = event.getThrowable();
       if (t != null) {
-        AnalyticsUploader.trackException(t, false);
+        t = CrashReport.getRootCause(t);
+        if (GoogleCrash.isReportableCrash(t)) {
+          incrementAndSaveExceptionCount(t);
+          CrashReport report = CrashReport.Builder.createForException(t).build();
+          GoogleCrash.getInstance().submit(report);
+        }
       }
     }
 
@@ -116,6 +127,20 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
       if (message != null && message.contains("Could not initialize class com.intellij.diagnostic.MessagePool") ||
           e instanceof NullPointerException && ApplicationManager.getApplication() == null) {
         ourLoggerBroken = true;
+      }
+    }
+  }
+
+  private static void incrementAndSaveExceptionCount(Throwable t) {
+    SystemHealthMonitor.incrementAndSaveExceptionCount();
+    PluginId pluginId = IdeErrorsDialog.findPluginId(t);
+    if (pluginId != null) {
+      IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
+      if (plugin != null && plugin.isBundled()) {
+        SystemHealthMonitor.incrementAndSaveBundledPluginsExceptionCount();
+      }
+      else {
+        SystemHealthMonitor.incrementAndSaveNonBundledPluginsExceptionCount();
       }
     }
   }

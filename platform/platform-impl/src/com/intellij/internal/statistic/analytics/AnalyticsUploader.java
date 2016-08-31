@@ -22,15 +22,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.intellij.diagnostic.IdeErrorsDialog;
-import com.intellij.ide.SystemHealthMonitor;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.ChannelStatus;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
@@ -70,25 +66,12 @@ public class AnalyticsUploader {
   private static final String INSTALLATION_ID =
     UNIT_TEST_MODE ? "unit-test" : UpdateChecker.getInstallationUID(PropertiesComponent.getInstance());
 
-  private static final int MAX_DESCRIPTION_SIZE = 150; // max allowed by GA
-
-  /** {@link Throwable} classes with messages expected to be useful for debugging and not to contain PII. */
-  private static final ImmutableSet<Class<? extends Throwable>> THROWABLE_CLASSES_TO_TRACK_MESSAGES =
-    ImmutableSet.<Class<? extends Throwable>>of(
-      ArrayIndexOutOfBoundsException.class, ClassCastException.class, ClassNotFoundException.class);
-
   private static final String PROTOCOL_VERSION = "v";
   private static final String TRACKING_ID = "tid";
   private static final String APPLICATION_NAME = "an";
   private static final String APPLICATION_VERSION = "av";
   private static final String CLIENT_ID = "cid";
   private static final String HIT_TYPE = "t";
-
-  private static final String HIT_TYPE_EVENT = "event";
-  private static final String EVENT_CATEGORY = "ec";
-  private static final String EVENT_ACTION = "ea";
-  private static final String EVENT_LABEL = "el";
-  private static final String EVENT_VALUE = "ev";
 
   private static final String HIT_TYPE_EXCEPTION = "exception";
   private static final String EXCEPTION_DESCRIPTION = "exd";
@@ -113,8 +96,6 @@ public class AnalyticsUploader {
         new BasicNameValuePair(CD_JAVA_RUNTIME_VERSION, SystemInfo.JAVA_RUNTIME_VERSION),
         new BasicNameValuePair(CD_LOCALE, getLanguage()));
 
-  private static final LastSeenExceptions ourLastSeenExceptions = new LastSeenExceptions(3);
-
   private static String getLanguage() {
     Locale locale = Locale.getDefault();
     return locale == null ? "unknown" : locale.toString();
@@ -122,28 +103,6 @@ public class AnalyticsUploader {
 
   private static boolean trackingEnabled() {
     return DEBUG || StatisticsUploadAssistant.isSendAllowed();
-  }
-
-  private static void trackEvent(@NotNull String eventCategory,
-                         @NotNull String eventAction,
-                         @Nullable String eventLabel,
-                         @Nullable Integer eventValue) {
-    List<BasicNameValuePair> postData = Lists.newArrayList(analyticsBaseData);
-
-    postData.add(new BasicNameValuePair(HIT_TYPE, HIT_TYPE_EVENT));
-    postData.add(new BasicNameValuePair(EVENT_CATEGORY, eventCategory));
-    postData.add(new BasicNameValuePair(EVENT_ACTION, eventAction));
-    if(!StringUtil.isEmpty(eventLabel)) {
-      postData.add(new BasicNameValuePair(EVENT_LABEL, eventLabel));
-    }
-    if(eventValue != null) {
-      if(eventValue < 0 && DEBUG) {
-        System.err.println("Attempting to send negative event value to the analytics server");
-      } else {
-        postData.add(new BasicNameValuePair(EVENT_VALUE, eventValue.toString()));
-      }
-    }
-    postToAnalytics(postData);
   }
 
   public static void trackCrash(@NotNull String description) {
@@ -155,43 +114,6 @@ public class AnalyticsUploader {
       postToAnalytics(ImmutableList.of(new BasicNameValuePair(HIT_TYPE, HIT_TYPE_EXCEPTION),
                                        new BasicNameValuePair(EXCEPTION_DESCRIPTION, "StudioCrash: " + description),
                                        new BasicNameValuePair(EXCEPTION_FATAL, "1")));
-    } catch (Throwable throwable) {
-      if (DEBUG) {
-        System.err.println("Unexpected error while reporting a crash: " + throwable);
-      }
-    }
-  }
-
-  public static void trackException(@NotNull Throwable t, boolean fatal) {
-    if (!trackingEnabled()) {
-      return;
-    }
-
-    try {
-      t = getRootCause(t);
-      if (t instanceof Logger.EmptyThrowable) {
-        return;
-      }
-
-      SystemHealthMonitor.incrementAndSaveExceptionCount();
-      PluginId pluginId = IdeErrorsDialog.findPluginId(t);
-      if (pluginId != null) {
-        if (PluginManager.getPlugin(pluginId).isBundled()) {
-          SystemHealthMonitor.incrementAndSaveBundledPluginsExceptionCount();
-        }
-        else {
-          SystemHealthMonitor.incrementAndSaveNonBundledPluginsExceptionCount();
-        }
-      }
-      String description = getDescription(t);
-      postToAnalytics(ImmutableList.of(new BasicNameValuePair(HIT_TYPE, HIT_TYPE_EXCEPTION),
-                                       new BasicNameValuePair(EXCEPTION_DESCRIPTION, description),
-                                       new BasicNameValuePair(EXCEPTION_FATAL, fatal ? "1" : "0")));
-      if (THROWABLE_CLASSES_TO_TRACK_MESSAGES.contains(t.getClass())) {
-        trackEvent("Throwable.detailMessage", t.getClass().getSimpleName(), t.getMessage(), null);
-      }
-
-      ourLastSeenExceptions.add(description);
     } catch (Throwable throwable) {
       if (DEBUG) {
         System.err.println("Unexpected error while reporting a crash: " + throwable);
@@ -236,120 +158,5 @@ public class AnalyticsUploader {
         }
       }
     });
-  }
-
-  /**
-   * Returns the description corresponding to a throwable suitable for consumption by GA measurement protocol.
-   * The description cannot include PII, and should be < 150 bytes.
-   */
-  @VisibleForTesting
-  @NotNull
-  public static String getDescription(@NotNull Throwable t) {
-    StringBuilder sb = new StringBuilder(MAX_DESCRIPTION_SIZE);
-    String simpleName = t.getClass().getSimpleName().replace("Exception", "Ex").replace("Error", "Er");
-    sb.append(simpleName);
-
-    StackTraceElement[] stackTraceElements = t.getStackTrace();
-    if (stackTraceElements.length > 0) {
-      sb.append(" @ ");
-    }
-
-    boolean androidPlugin = false;
-    String lastFileName = "";
-
-    int i;
-    for (i = 0; i < stackTraceElements.length && sb.length() < MAX_DESCRIPTION_SIZE; i++) {
-      StackTraceElement el = stackTraceElements[i];
-
-      // skip java[x].* packages
-      String className = el.getClassName();
-      if (className != null && (className.startsWith("java.") || className.startsWith("javax."))) {
-        sb.append('.');
-        continue;
-      }
-
-      if (i != 0) {
-        sb.append(" < ");
-      }
-
-      String fileName = getBaseName(el.getFileName());
-
-      // The Kotlin plugin repackages some of our familiar classes (but
-      // from older versions)
-      if (className != null && className.contains(".klint.")) {
-        fileName = "Kt:" + fileName;
-      }
-
-      // skip filename if it is the same as the previous stack element
-      if (!StringUtil.equals(fileName, lastFileName)) {
-        sb.append(fileName);
-        lastFileName = fileName;
-      }
-
-      sb.append(':');
-      sb.append(el.getLineNumber());
-
-      // track whether we've included an element from the android plugin
-      if (!androidPlugin) {
-        androidPlugin = fromAndroidPlugin(el);
-      }
-    }
-
-    String desc = sb.toString();
-
-    // if we have not included an android plugin in the description so far, then let's check to see if one should be..
-    if (!androidPlugin && i < stackTraceElements.length) {
-      for (; i < stackTraceElements.length; i++) {
-        StackTraceElement el = stackTraceElements[i];
-        if (fromAndroidPlugin(el)) {
-          String android = "... < " + getBaseName(el.getFileName()) + ":" + el.getLineNumber();
-          if (desc.length() + android.length() > MAX_DESCRIPTION_SIZE) {
-            desc = desc.substring(0, MAX_DESCRIPTION_SIZE - android.length());
-          }
-          desc += android;
-          break;
-        }
-      }
-    }
-
-    // make sure the description is within size limits
-    if (desc.length() > MAX_DESCRIPTION_SIZE) {
-      desc = desc.substring(0, MAX_DESCRIPTION_SIZE - 1) + ">";
-    }
-
-    // most likely all file names are ASCII, so this should be unnecessary, but lets be safe
-    while (desc.getBytes(Charsets.UTF_8).length > MAX_DESCRIPTION_SIZE) {
-      desc = desc.substring(0, desc.length() - 1);
-    }
-
-    return desc;
-  }
-
-  private static boolean fromAndroidPlugin(StackTraceElement el) {
-    return el.getClassName().contains("android");
-  }
-
-  // Similar to ExceptionUntil.getRootCause, but attempts to avoid infinite recursion
-  // Copied to LLDBUsageTracker.getRootCause
-  private static Throwable getRootCause(Throwable e) {
-    int depth = 0;
-    while (depth++ < 20) {
-      if (e.getCause() == null) return e;
-      e = e.getCause();
-    }
-    return e;
-  }
-
-  private static String getBaseName(@Nullable String fileName) {
-    if (Strings.isNullOrEmpty(fileName)) {
-      return "U";
-    }
-
-    int extension = fileName.indexOf('.');
-    if (extension > 0) {
-      return fileName.substring(0, extension);
-    } else {
-      return fileName;
-    }
   }
 }
