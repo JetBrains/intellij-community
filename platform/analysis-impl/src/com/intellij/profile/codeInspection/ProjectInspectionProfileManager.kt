@@ -18,10 +18,7 @@ package com.intellij.profile.codeInspection
 import com.intellij.codeInspection.InspectionProfile
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
-import com.intellij.configurationStore.SchemeDataHolder
-import com.intellij.configurationStore.SchemeManagerIprProvider
-import com.intellij.configurationStore.digest
-import com.intellij.configurationStore.wrapState
+import com.intellij.configurationStore.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
@@ -94,7 +91,7 @@ class ProjectInspectionProfileManager(val project: Project,
     }
   }
 
-  private val schemeManagerIprProvider = if (project.isDirectoryBased) null else SchemeManagerIprProvider()
+  private val schemeManagerIprProvider = if (project.isDirectoryBased) null else SchemeManagerIprProvider("profile")
 
   override val schemeManager = schemeManagerFactory.create("inspectionProfiles", object : InspectionProfileProcessor() {
     override fun createScheme(dataHolder: SchemeDataHolder<InspectionProfileImpl>,
@@ -223,16 +220,11 @@ class ProjectInspectionProfileManager(val project: Project,
 
     severityRegistrar.writeExternal(result)
 
-    return wrapState(result)
+    return wrapState(result, project)
   }
 
   @Synchronized override fun loadState(state: Element) {
-    val data = state.getChild("settings")
-
-    schemeManagerIprProvider?.let {
-      it.load(data)
-      schemeManager.reload()
-    }
+    val data = unwrapState(state, project, schemeManagerIprProvider, schemeManager)
 
     val newState = State()
 

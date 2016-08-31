@@ -79,7 +79,13 @@ class CopyrightManager(private val project: Project, schemeManagerFactory: Schem
   val scopeToCopyright = LinkedHashMap<String, String>()
   val options = Options()
 
-  private val schemeManagerIprProvider = if (project.isDirectoryBased) null else SchemeManagerIprProvider()
+  private val schemeWriter = { scheme: CopyrightProfile ->
+    val element = Element("copyright")
+    scheme.writeExternal(element)
+    if (project.isDirectoryBased) wrapScheme(element) else element
+  }
+
+  private val schemeManagerIprProvider = if (project.isDirectoryBased) null else SchemeManagerIprProvider("copyright")
 
   val schemeManager = schemeManagerFactory.create("copyright", object : LazySchemeProcessor<SchemeWrapper<CopyrightProfile>, SchemeWrapper<CopyrightProfile>>() {
     override fun createScheme(dataHolder: SchemeDataHolder<SchemeWrapper<CopyrightProfile>>,
@@ -138,24 +144,14 @@ class CopyrightManager(private val project: Project, schemeManagerFactory: Schem
       result.setAttribute(DEFAULT, it)
     }
 
-    return wrapState(result)
+    return wrapState(result, project)
   }
 
   override fun loadState(state: Element) {
-    val data: Element? = state.getChild("settings")
+    val data: Element = unwrapState(state, project, schemeManagerIprProvider, schemeManager) ?: return
 
-    schemeManagerIprProvider?.let {
-      it.load(data)
-      schemeManager.reload()
-    }
-
-    if (data == null) {
-      return
-    }
-
-    val moduleToCopyright = data.getChild(MODULE2COPYRIGHT)
-    if (moduleToCopyright != null) {
-      for (element in moduleToCopyright.getChildren(ELEMENT)) {
+    data.getChild(MODULE2COPYRIGHT)?.let {
+      for (element in it.getChildren(ELEMENT)) {
         scopeToCopyright.put(element.getAttributeValue(MODULE), element.getAttributeValue(COPYRIGHT))
       }
     }
@@ -257,12 +253,6 @@ private fun wrapScheme(element: Element): Element {
   return wrapper
 }
 
-private val schemeWriter = { scheme: CopyrightProfile ->
-  val element = Element("copyright")
-  scheme.writeExternal(element)
-  wrapScheme(element)
-}
-
 private class LazySchemeWrapper(name: String,
                         dataHolder: SchemeDataHolder<SchemeWrapper<CopyrightProfile>>,
                         private val writer: (scheme: CopyrightProfile) -> Element,
@@ -273,7 +263,11 @@ private class LazySchemeWrapper(name: String,
     val scheme = CopyrightProfile()
     @Suppress("NAME_SHADOWING")
     val dataHolder = this.dataHolder.getAndSet(null)
-    val element = dataHolder.read().getChild(subStateTagName)
+    var element = dataHolder.read()
+    if (element.name != subStateTagName) {
+      element = element.getChild(subStateTagName)
+    }
+
     scheme.readExternal(element)
     dataHolder.updateDigest(writer(scheme))
     scheme

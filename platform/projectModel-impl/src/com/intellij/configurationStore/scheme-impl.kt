@@ -15,10 +15,9 @@
  */
 package com.intellij.configurationStore
 
-import com.intellij.openapi.options.ExternalizableSchemeAdapter
-import com.intellij.openapi.options.Scheme
-import com.intellij.openapi.options.SchemeProcessor
-import com.intellij.openapi.options.SchemeState
+import com.intellij.openapi.options.*
+import com.intellij.openapi.project.Project
+import com.intellij.project.isDirectoryBased
 import com.intellij.util.isEmpty
 import org.jdom.Element
 import java.io.OutputStream
@@ -111,8 +110,17 @@ class InitializedSchemeWrapper<out T : Scheme>(scheme: T, private val writer: (s
   override fun writeScheme() = writer(scheme)
 }
 
-fun wrapState(element: Element): Element {
-  if (element.isEmpty()) {
+fun unwrapState(element: Element, project: Project, iprAdapter: SchemeManagerIprProvider?, schemeManager: SchemeManager<*>): Element? {
+  val data = if (project.isDirectoryBased) element.getChild("settings") else element
+  iprAdapter?.let {
+    it.load(data)
+    schemeManager.reload()
+  }
+  return data
+}
+
+fun wrapState(element: Element, project: Project): Element {
+  if (element.isEmpty() || !project.isDirectoryBased) {
     element.name = "state"
     return element
   }

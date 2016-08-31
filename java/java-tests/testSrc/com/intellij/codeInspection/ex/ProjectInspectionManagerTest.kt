@@ -195,13 +195,11 @@ internal class ProjectInspectionManagerTest {
       <?xml version="1.0" encoding="UTF-8"?>
       <project version="4">
         <component name="InspectionProjectProfileManager">
-          <settings>
-            <profile version="1.0">
-              <option name="myName" value="Project Default" />
-              <inspection_tool class="Convert2Diamond" enabled="false" level="WARNING" enabled_by_default="false" />
-            </profile>
-            <version value="1.0" />
-          </settings>
+          <profile version="1.0">
+            <option name="myName" value="Project Default" />
+            <inspection_tool class="Convert2Diamond" enabled="false" level="WARNING" enabled_by_default="false" />
+          </profile>
+          <version value="1.0" />
         </component>
       </project>""".trimIndent())
       assertThat(projectFile.parent.resolve(".inspectionProfiles")).doesNotExist()
