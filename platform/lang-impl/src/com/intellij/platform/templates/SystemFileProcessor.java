@@ -16,6 +16,9 @@
 package com.intellij.platform.templates;
 
 import com.intellij.ide.util.projectWizard.ProjectTemplateFileProcessor;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -29,7 +32,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
@@ -77,28 +79,28 @@ public class SystemFileProcessor extends ProjectTemplateFileProcessor {
           final Element element = new Element("component");
           element.setAttribute("name", ComponentManagerImpl.getComponentName(component));
           root.addContent(element);
-          UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-            @Override
-            public void run() {
-              if (component instanceof JDOMExternalizable) {
-                try {
-                  ((JDOMExternalizable)component).writeExternal(element);
-                }
-                catch (WriteExternalException ignore) {
-                  LOG.error(ignore);
-                }
+          ApplicationManager.getApplication().invokeAndWait(() -> {
+            if (component instanceof JDOMExternalizable) {
+              try {
+                ((JDOMExternalizable)component).writeExternal(element);
               }
-              else if (component instanceof PersistentStateComponent) {
-                Object state = ((PersistentStateComponent)component).getState();
-                if(state == null){
-                  return;
-                }
-                Element element1 = state instanceof Element ? (Element)state : XmlSerializer.serialize(state);
-                element.addContent(element1.cloneContent());
-                element.setAttribute("name", StoreUtil.getStateSpec((PersistentStateComponent)component).name());
+              catch (WriteExternalException ignore) {
+                LOG.error(ignore);
               }
             }
-          });
+            else if (component instanceof PersistentStateComponent) {
+              AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(SystemFileProcessor.class);
+              Object state = ((PersistentStateComponent)component).getState();
+              token.finish();
+
+              if(state == null){
+                return;
+              }
+              Element element1 = state instanceof Element ? (Element)state : XmlSerializer.serialize(state);
+              element.addContent(element1.cloneContent());
+              element.setAttribute("name", StoreUtil.getStateSpec((PersistentStateComponent)component).name());
+            }
+          }, ModalityState.defaultModalityState());
         }
         PathMacroManager.getInstance(project).collapsePaths(root);
         return JDOMUtil.writeElement(root);
