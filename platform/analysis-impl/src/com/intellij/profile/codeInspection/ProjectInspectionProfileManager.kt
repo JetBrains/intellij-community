@@ -209,6 +209,23 @@ class ProjectInspectionProfileManager(val project: Project,
     }
   }
 
+  @Synchronized override fun getState(): Element? {
+    val result = Element("settings")
+
+    schemeManagerIprProvider?.writeState(result)
+
+    val state = this.state
+    state.projectProfile = schemeManager.currentSchemeName
+    XmlSerializer.serializeInto(state, result, skipDefaultsSerializationFilter)
+    if (!result.children.isEmpty()) {
+      result.addContent(Element("version").setAttribute("value", VERSION))
+    }
+
+    severityRegistrar.writeExternal(result)
+
+    return wrapState(result)
+  }
+
   @Synchronized override fun loadState(state: Element) {
     val data = state.getChild("settings")
 
@@ -248,23 +265,6 @@ class ProjectInspectionProfileManager(val project: Project,
     if (newState.useProjectProfile) {
       schemeManager.currentSchemeName = newState.projectProfile
     }
-  }
-
-  @Synchronized override fun getState(): Element? {
-    val result = Element("settings")
-
-    schemeManagerIprProvider?.writeState(result)
-
-    val state = this.state
-    state.projectProfile = schemeManager.currentSchemeName
-    XmlSerializer.serializeInto(state, result, skipDefaultsSerializationFilter)
-    if (!result.children.isEmpty()) {
-      result.addContent(Element("version").setAttribute("value", VERSION))
-    }
-
-    severityRegistrar.writeExternal(result)
-
-    return wrapState(result)
   }
 
   override fun getScopesManager() = scopeManager

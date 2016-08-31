@@ -150,12 +150,10 @@ public class ProjectSettingsPanel {
   }
 
   public boolean isModified() {
-    final CopyrightProfile defaultCopyright = myManager.getDefaultCopyright();
+    CopyrightProfile defaultCopyright = myManager.getDefaultCopyright();
     final Object selected = myProfilesComboBox.getSelectedItem();
-    if (defaultCopyright != selected) {
-      if (selected == null) return true;
-      if (defaultCopyright == null) return true;
-      if (!defaultCopyright.equals(selected)) return true;
+    if (defaultCopyright != selected && (selected == null || defaultCopyright == null || !defaultCopyright.equals(selected))) {
+      return true;
     }
     final Map<String, String> map = myManager.getScopeToCopyright();
     if (map.size() != myScopeMappingModel.getItems().size()) return true;

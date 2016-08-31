@@ -15,10 +15,7 @@
  */
 package com.intellij.copyright
 
-import com.intellij.configurationStore.LazySchemeProcessor
-import com.intellij.configurationStore.SchemeDataHolder
-import com.intellij.configurationStore.SchemeWrapper
-import com.intellij.configurationStore.wrapState
+import com.intellij.configurationStore.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -71,7 +68,14 @@ class CopyrightManager(private val project: Project, schemeManagerFactory: Schem
     fun getInstance(project: Project) = project.service<CopyrightManager>()
   }
 
-  var defaultCopyright: CopyrightProfile? = null
+  private var defaultCopyrightName: String? = null
+
+  var defaultCopyright: CopyrightProfile?
+    get() = defaultCopyrightName?.let { schemeManager.findSchemeByName(it)?.scheme }
+    set(value) {
+      defaultCopyrightName = value?.name
+    }
+
   val scopeToCopyright = LinkedHashMap<String, String>()
   val options = Options()
 
@@ -103,11 +107,11 @@ class CopyrightManager(private val project: Project, schemeManagerFactory: Schem
   }
 
   fun hasAnyCopyrights(): Boolean {
-    return defaultCopyright != null || !scopeToCopyright.isEmpty()
+    return defaultCopyrightName != null || !scopeToCopyright.isEmpty()
   }
 
   override fun getState(): Element? {
-    val state = Element("settings")
+    val result = Element("settings")
     try {
       if (!scopeToCopyright.isEmpty()) {
         val map = Element(MODULE2COPYRIGHT)
@@ -116,25 +120,26 @@ class CopyrightManager(private val project: Project, schemeManagerFactory: Schem
               .attribute(MODULE, scopeName)
               .attribute(COPYRIGHT, profileName)
         }
-        state.addContent(map)
+        result.addContent(map)
       }
 
-      options.writeExternal(state)
+      options.writeExternal(result)
     }
     catch (e: WriteExternalException) {
       LOG.error(e)
       return null
     }
 
-    if (defaultCopyright != null) {
-      state.setAttribute(DEFAULT, defaultCopyright!!.name)
+    defaultCopyrightName?.let {
+      result.setAttribute(DEFAULT, it)
     }
 
-    return wrapState(state)
+    return wrapState(result)
   }
 
   override fun loadState(state: Element) {
-    val moduleToCopyright = state.getChild(MODULE2COPYRIGHT)
+    val data = state.getChild("settings")
+    val moduleToCopyright = data.getChild(MODULE2COPYRIGHT)
     if (moduleToCopyright != null) {
       for (element in moduleToCopyright.getChildren(ELEMENT)) {
         scopeToCopyright.put(element.getAttributeValue(MODULE), element.getAttributeValue(COPYRIGHT))
@@ -142,8 +147,8 @@ class CopyrightManager(private val project: Project, schemeManagerFactory: Schem
     }
 
     try {
-      defaultCopyright = schemeManager.findSchemeByName(state.getAttributeValue(DEFAULT).orEmpty())?.scheme
-      options.readExternal(state)
+      defaultCopyrightName = data.getAttributeValue(DEFAULT)
+      options.readExternal(data)
     }
     catch (e: InvalidDataException) {
       LOG.error(e)
@@ -172,10 +177,6 @@ class CopyrightManager(private val project: Project, schemeManagerFactory: Schem
   }
 
   fun replaceCopyright(name: String, profile: CopyrightProfile) {
-    if (defaultCopyright?.name == name) {
-      defaultCopyright = profile
-    }
-
     val existingScheme = schemeManager.findSchemeByName(name)
     if (existingScheme == null) {
       addCopyright(profile)
@@ -246,12 +247,6 @@ private val schemeWriter = { scheme: CopyrightProfile ->
   val element = Element("copyright")
   scheme.writeExternal(element)
   wrapScheme(element)
-}
-
-private class InitializedSchemeWrapper(scheme: CopyrightProfile, private val writer: (scheme: CopyrightProfile) -> Element) : SchemeWrapper<CopyrightProfile>(scheme.name) {
-  override val lazyScheme = lazyOf(scheme)
-
-  override fun writeScheme() = writer(scheme)
 }
 
 private class LazySchemeWrapper(name: String,

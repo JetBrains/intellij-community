@@ -105,6 +105,12 @@ abstract class SchemeWrapper<out T : Scheme>(name: String) : ExternalizableSchem
   }
 }
 
+class InitializedSchemeWrapper<out T : Scheme>(scheme: T, private val writer: (scheme: T) -> Element) : SchemeWrapper<T>(scheme.name) {
+  override val lazyScheme = lazyOf(scheme)
+
+  override fun writeScheme() = writer(scheme)
+}
+
 fun wrapState(element: Element): Element {
   if (element.isEmpty()) {
     element.name = "state"
