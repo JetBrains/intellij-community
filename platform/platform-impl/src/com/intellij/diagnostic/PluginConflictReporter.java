@@ -17,13 +17,10 @@ package com.intellij.diagnostic;
 
 import com.intellij.diagnostic.errordialog.PluginConflictDialog;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -55,12 +52,6 @@ public enum PluginConflictReporter {
       return;
     }
 
-    boolean finalHasConflictWithPlatform = hasConflictWithPlatform;
-    ApplicationManager.getApplication().invokeLater(() -> {
-      final JFrame frame = WindowManager.getInstance().findVisibleFrame();
-      if (frame != null) {
-        new PluginConflictDialog(frame, new ArrayList<>(foundPlugins), finalHasConflictWithPlatform).show();
-      }
-    });
+    new PluginConflictDialog(new ArrayList<>(foundPlugins), hasConflictWithPlatform).show();
   }
 }

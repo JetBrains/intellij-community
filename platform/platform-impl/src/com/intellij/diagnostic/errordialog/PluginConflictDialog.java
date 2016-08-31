@@ -18,8 +18,8 @@ package com.intellij.diagnostic.errordialog;
 import com.intellij.diagnostic.DiagnosticBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -56,10 +56,9 @@ public class PluginConflictDialog extends DialogWrapper {
 
   private JBLabel myBottomMessageLabel;
 
-  public PluginConflictDialog(@NotNull Component parent,
-                              @NotNull List<PluginId> conflictingPlugins,
+  public PluginConflictDialog(@NotNull List<PluginId> conflictingPlugins,
                               boolean isConflictWithPlatform) {
-    super(parent, false);
+    super(false);
 
     myConflictingPlugins = conflictingPlugins;
     myIsConflictWithPlatform = isConflictWithPlatform;
@@ -236,7 +235,7 @@ public class PluginConflictDialog extends DialogWrapper {
         }
       }
       close(OK_EXIT_CODE);
-      PluginManagerConfigurable.shutdownOrRestartApp("");
+      ApplicationManagerEx.getApplicationEx().restart(true);
     }
   }
 }
