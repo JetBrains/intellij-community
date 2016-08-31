@@ -46,9 +46,4 @@ class PyCharmWindowsDistributionCustomizer extends WindowsDistributionCustomizer
       }
     }
   }
-
-  @Override
-  String rootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
-    ""
-  }
 }
