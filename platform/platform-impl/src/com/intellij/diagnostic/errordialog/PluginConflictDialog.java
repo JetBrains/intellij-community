@@ -73,6 +73,7 @@ public class PluginConflictDialog extends DialogWrapper {
     $$$setupUI$$$();
     setTitle(DiagnosticBundle.message("error.dialog.conflict.plugin.title"));
     init();
+    setCrossClosesWindow(false);
 
     myTopMessageLabel.setText(getTopMessageText(conflictingPlugins, isConflictWithPlatform));
     myBottomMessageLabel.setText(DiagnosticBundle.message("error.dialog.conflict.plugin.footer"));
@@ -213,6 +214,12 @@ public class PluginConflictDialog extends DialogWrapper {
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(new JBLabel(DiagnosticBundle.message("error.dialog.conflict.plugin.disable.all")));
     return panel;
+  }
+
+  @NotNull
+  @Override
+  protected Action[] createActions() {
+    return new Action[]{getOKAction()};
   }
 
   @NotNull
