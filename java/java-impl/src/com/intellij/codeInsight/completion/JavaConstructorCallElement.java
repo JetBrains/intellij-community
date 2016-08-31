@@ -20,7 +20,11 @@ import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,6 +46,10 @@ public class JavaConstructorCallElement extends JavaMethodCallElement {
     myType = type.get();
     setQualifierSubstitutor(myType.resolveGenerics().getSubstitutor());
 
+    markClassItemWrapped(classItem);
+  }
+
+  private void markClassItemWrapped(@NotNull LookupElement classItem) {
     LookupElement delegate = classItem;
     while (true) {
       delegate.putUserData(WRAPPING_CONSTRUCTOR_CALL, this);
@@ -65,19 +73,24 @@ public class JavaConstructorCallElement extends JavaMethodCallElement {
   @Override
   public void renderElement(LookupElementPresentation presentation) {
     myClassItem.renderElement(presentation);
-    String itemText = presentation.getItemText();
 
-    super.renderElement(presentation);
-    presentation.setItemText(itemText);
+    String tailText = StringUtil.notNullize(presentation.getTailText());
+    int genericsEnd = tailText.lastIndexOf('>') + 1;
+
+    presentation.clearTail();
+    presentation.appendTailText(tailText.substring(0, genericsEnd), false);
+    presentation.appendTailText(MemberLookupHelper.getMethodParameterString(getObject(), getSubstitutor()), false);
+    presentation.appendTailText(tailText.substring(genericsEnd), true);
   }
 
-  static List<? extends LookupElement> wrap(JavaPsiClassReferenceElement classItem, PsiElement position) {
+  static List<? extends LookupElement> wrap(@NotNull JavaPsiClassReferenceElement classItem, @NotNull PsiElement position) {
     PsiClass psiClass = classItem.getObject();
     return wrap(classItem, psiClass, position, () -> JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, PsiSubstitutor.EMPTY));
   }
 
-  static List<? extends LookupElement> wrap(LookupElement classItem, PsiClass psiClass, PsiElement position, Supplier<PsiClassType> type) {
-    if (Registry.is("java.completion.show.constructors") && JavaClassNameCompletionContributor.AFTER_NEW.accepts(position)) {
+  static List<? extends LookupElement> wrap(@NotNull LookupElement classItem, @NotNull PsiClass psiClass,
+                                            @NotNull PsiElement position, @NotNull Supplier<PsiClassType> type) {
+    if (Registry.is("java.completion.show.constructors") && isConstructorCallPlace(position)) {
       PsiMethod[] constructors = psiClass.getConstructors();
       if (constructors.length > 0) {
         return JBIterable.of(constructors).
@@ -87,6 +100,14 @@ public class JavaConstructorCallElement extends JavaMethodCallElement {
       }
     }
     return Collections.singletonList(classItem);
+  }
+
+  private static boolean isConstructorCallPlace(@NotNull PsiElement position) {
+    return CachedValuesManager.getCachedValue(position, () -> {
+      boolean result = JavaClassNameCompletionContributor.AFTER_NEW.accepts(position) &&
+                       !JavaClassNameInsertHandler.isArrayTypeExpected(PsiTreeUtil.getParentOfType(position, PsiNewExpression.class));
+      return CachedValueProvider.Result.create(result, position);
+    });
   }
 
   static boolean isWrapped(LookupElement element) {

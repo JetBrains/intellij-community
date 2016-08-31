@@ -528,10 +528,7 @@ public class JavaCompletionUtil {
                                                                                                                .accepts(reference),
                                                                                                              JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER,
                                                                                                              Conditions.alwaysTrue());
-        if (JavaClassNameCompletionContributor.AFTER_NEW.accepts(reference)) {
-          return JBIterable.from(classItems).flatMap(i -> JavaConstructorCallElement.wrap(i, reference.getElement()));
-        }
-        return classItems;
+        return JBIterable.from(classItems).flatMap(i -> JavaConstructorCallElement.wrap(i, reference.getElement()));
       }
     }
     
@@ -544,11 +541,7 @@ public class JavaCompletionUtil {
     if (completion instanceof PsiClass) {
       JavaPsiClassReferenceElement classItem =
         JavaClassNameCompletionContributor.createClassLookupItem((PsiClass)completion, true).setSubstitutor(substitutor);
-      if (JavaClassNameCompletionContributor.AFTER_NEW.accepts(reference)) {
-        return JavaConstructorCallElement.wrap(classItem, reference.getElement());
-      }
-
-      return Collections.singletonList(classItem);
+      return JavaConstructorCallElement.wrap(classItem, reference.getElement());
     }
     if (completion instanceof PsiMethod) {
       JavaMethodCallElement item = new JavaMethodCallElement((PsiMethod)completion).setQualifierSubstitutor(substitutor);
