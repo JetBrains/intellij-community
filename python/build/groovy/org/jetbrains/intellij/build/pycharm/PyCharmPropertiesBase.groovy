@@ -43,7 +43,6 @@ import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 abstract class PyCharmPropertiesBase extends ProductProperties {
   PyCharmPropertiesBase(String home) {
     baseFileName = "pycharm"
-    additionalIDEPropertiesFilePaths = ["$home/build/conf/ideaJNC.properties"]
     reassignAltClickToMultipleCarets = true
     productLayout.mainJarName = "pycharm.jar"
     productLayout.additionalPlatformJars.put("pycharm-pydev.jar", "python-pydev")

@@ -259,8 +259,18 @@ class BuildContextImpl extends BuildContext {
 
   @Override
   boolean includeBreakGenLibraries() {
+    return isJavaSupportedInProduct()
+  }
+
+  @Override
+  boolean shouldIDECopyJarsByDefault() {
+    return isJavaSupportedInProduct()
+  }
+
+  private boolean isJavaSupportedInProduct() {
     def productLayout = productProperties.productLayout
-    return productLayout.mainJarName == null || //todo[nik] remove this condition later
+    return productLayout.mainJarName == null ||
+           //todo[nik] remove this condition later; currently build scripts for IDEA don't fully migrated to the new scheme
            productLayout.includedPlatformModules.contains("execution-impl")
   }
 

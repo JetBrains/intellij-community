@@ -143,6 +143,14 @@ class BuildTasksImpl extends BuildTasks {
     File originalFile = new File("$buildContext.paths.communityHome/bin/idea.properties")
 
     String text = originalFile.text
+    if (!buildContext.shouldIDECopyJarsByDefault()) {
+      text += """
+#---------------------------------------------------------------------
+# IDE can copy library .jar files to prevent their locking. Set this property to 'false' to enable copying.
+#---------------------------------------------------------------------
+idea.jars.nocopy=true
+"""
+    }
     buildContext.productProperties.additionalIDEPropertiesFilePaths.each {
       text += "\n" + new File(it).text
     }
