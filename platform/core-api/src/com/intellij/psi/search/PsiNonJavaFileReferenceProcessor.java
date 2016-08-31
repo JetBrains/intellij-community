@@ -17,6 +17,7 @@ package com.intellij.psi.search;
 
 import com.intellij.psi.PsiFile;
 
+@FunctionalInterface
 public interface PsiNonJavaFileReferenceProcessor {
   boolean process(PsiFile file, int startOffset, int endOffset);
 }
