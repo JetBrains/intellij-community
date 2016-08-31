@@ -15,7 +15,9 @@
  */
 package com.intellij.idea;
 
+import com.intellij.diagnostic.ImplementationConflictException;
 import com.intellij.diagnostic.LogMessageEx;
+import com.intellij.diagnostic.PluginConflictReporter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -121,6 +123,10 @@ public class IdeaLogger extends Log4jBasedLogger {
       else {
         throw new RuntimeException(t);
       }
+    }
+
+    if (t instanceof ImplementationConflictException) {
+      PluginConflictReporter.INSTANCE.reportConflictByClasses(((ImplementationConflictException)t).getConflictingClasses());
     }
 
     String detailString = StringUtil.join(details, "\n");

@@ -15,6 +15,7 @@
  */
 package com.intellij.lang;
 
+import com.intellij.diagnostic.ImplementationConflictException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -79,12 +80,18 @@ public abstract class Language extends UserDataHolderBase {
     Class<? extends Language> langClass = getClass();
     Language prev = ourRegisteredLanguages.put(langClass, this);
     if (prev != null) {
-      LOG.error("Language of '" + langClass + "' is already registered: " + prev);
+      LOG.error(new ImplementationConflictException("Language of '" + langClass + "' is already registered: " + prev,
+                                                    null,
+                                                    prev,
+                                                    this));
       return;
     }
     prev = ourRegisteredIDs.put(ID, this);
     if (prev != null) {
-      LOG.error("Language with ID '" + ID + "' is already registered: " + prev.getClass());
+      LOG.error(new ImplementationConflictException("Language with ID '" + ID + "' is already registered: " + prev.getClass(),
+                                                    null,
+                                                    prev,
+                                                    this));
     }
     for (String mimeType : mimeTypes) {
       if (StringUtil.isEmpty(mimeType)) {
