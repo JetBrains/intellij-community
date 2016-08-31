@@ -1,0 +1,14 @@
+<html>
+<body>
+This inspection detects <code>return</code> statements which return a local variable, where the value of the variable is computed
+somewhere else within the same code block with the <code>return</code> statement.
+<p>The quick fix inlines the returned variable by moving the return statement to the location where the value of the variable is computed.
+  For example, the code below could be simplified:
+<pre><code>int n = -1;
+if (condition) n = compute();
+return n;</code></pre>
+  After the quick fix it becomes the following:
+<pre><code>if (condition) return compute();
+return -1;</code></pre>
+</body>
+</html>
