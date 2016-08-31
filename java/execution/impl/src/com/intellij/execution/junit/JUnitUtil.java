@@ -112,7 +112,7 @@ public class JUnitUtil {
     if (psiMethod.hasModifierProperty(PsiModifier.STATIC) && SUITE_METHOD_NAME.equals(psiMethod.getName())) return false;
     if (!psiMethod.getName().startsWith("test")) return false;
     PsiClass testCaseClass = getTestCaseClassOrNull(location);
-    return testCaseClass != null && psiMethod.getContainingClass().isInheritor(testCaseClass, true);
+    return testCaseClass != null && psiMethod.getContainingClass().isInheritor(testCaseClass, true) && PsiType.VOID.equals(psiMethod.getReturnType());
   }
 
   public static boolean isTestCaseInheritor(final PsiClass aClass) {
