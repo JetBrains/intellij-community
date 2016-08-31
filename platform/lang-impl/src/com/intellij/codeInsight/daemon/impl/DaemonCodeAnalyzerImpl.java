@@ -20,6 +20,7 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
@@ -853,7 +854,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
         Editor activeEditor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
 
         if (activeEditor == null) {
-          submitPassesRunnable.run();
+          AutoPopupController.runTransactionWithEverythingCommitted(myProject, submitPassesRunnable);
         }
         else {
           ((PsiDocumentManagerBase)myPsiDocumentManager).cancelAndRunWhenAllCommitted("start daemon when all committed", submitPassesRunnable);
