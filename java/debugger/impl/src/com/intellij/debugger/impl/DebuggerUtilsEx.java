@@ -25,6 +25,8 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
+import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
+import com.intellij.debugger.engine.evaluation.expression.UnBoxingEvaluator;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.Requestor;
@@ -863,6 +865,14 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       return ((PsiParameterListOwner)method).getParameterList().getParameters();
     }
     return PsiParameter.EMPTY_ARRAY;
+  }
+
+  public static boolean evaluateBoolean(ExpressionEvaluator evaluator, EvaluationContextImpl context) throws EvaluateException {
+    Object value = UnBoxingEvaluator.unbox(evaluator.evaluate(context), context);
+    if (!(value instanceof BooleanValue)) {
+      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.boolean.expected"));
+    }
+    return ((BooleanValue)value).booleanValue();
   }
 
   public static boolean intersects(@NotNull TextRange range, @NotNull PsiElement elem) {

@@ -14,5 +14,6 @@
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="library" name="Velocity" level="project" />
     <orderEntry type="module" module-name="xml" />
+    <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
   </component>
 </module>

@@ -84,7 +84,7 @@ class BuildTasksImpl extends BuildTasks {
 
   @Override
   void buildSearchableOptions(String targetModuleName, List<String> modulesToIndex, List<String> pathsToLicenses) {
-    buildSearchableOptions(new File(buildContext.projectBuilder.moduleOutput(buildContext.findModule(targetModuleName))), modulesToIndex, pathsToLicenses)
+    buildSearchableOptions(new File(buildContext.projectBuilder.moduleOutput(buildContext.findRequiredModule(targetModuleName))), modulesToIndex, pathsToLicenses)
   }
 
 //todo[nik] do we need 'cp' and 'jvmArgs' parameters?
@@ -143,6 +143,14 @@ class BuildTasksImpl extends BuildTasks {
     File originalFile = new File("$buildContext.paths.communityHome/bin/idea.properties")
 
     String text = originalFile.text
+    if (!buildContext.shouldIDECopyJarsByDefault()) {
+      text += """
+#---------------------------------------------------------------------
+# IDE can copy library .jar files to prevent their locking. Set this property to 'false' to enable copying.
+#---------------------------------------------------------------------
+idea.jars.nocopy=true
+"""
+    }
     buildContext.productProperties.additionalIDEPropertiesFilePaths.each {
       text += "\n" + new File(it).text
     }

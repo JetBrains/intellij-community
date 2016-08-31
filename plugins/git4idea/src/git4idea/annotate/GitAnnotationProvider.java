@@ -129,12 +129,13 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
     assert vcs != null;
 
     VcsRevisionNumber actualRevision = revision != null ? revision : vcs.getDiffProvider().getCurrentRevision(file);
+
     if (actualRevision != null) {
       Object annotatedData = myCache.get(repositoryFilePath, GitVcs.getKey(), actualRevision);
-      if (annotatedData instanceof CachedData) return restoreFromCache(file, revision, (CachedData)annotatedData);
+      if (annotatedData instanceof CachedData) return restoreFromCache(file, actualRevision, (CachedData)annotatedData);
     }
 
-    GitFileAnnotation fileAnnotation = doAnnotate(repositoryFilePath, revision, file);
+    GitFileAnnotation fileAnnotation = doAnnotate(repositoryFilePath, actualRevision, file);
 
     if (actualRevision != null) {
       myCache.put(repositoryFilePath, GitVcs.getKey(), actualRevision, cacheData(fileAnnotation));

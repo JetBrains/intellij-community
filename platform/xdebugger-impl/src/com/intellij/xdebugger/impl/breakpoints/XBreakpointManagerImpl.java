@@ -121,7 +121,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
                                                                                       boolean defaultBreakpoint) {
     BreakpointState<?,T,?> state = new BreakpointState<>(enabled,
                                                          type.getId(),
-                                                         defaultBreakpoint ? 0 : myTime++);
+                                                         defaultBreakpoint ? 0 : myTime++, type.getDefaultSuspendPolicy());
     getBreakpointDefaults(type).applyDefaults(state);
     state.setGroup(myDefaultGroup);
     return new XBreakpointBase<XBreakpoint<T>,T, BreakpointState<?,T,?>>(type, this, properties, state);
@@ -217,7 +217,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
                                                                                 boolean temporary) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     LineBreakpointState<T> state = new LineBreakpointState<>(true, type.getId(), fileUrl, line, temporary,
-                                                             myTime++);
+                                                             myTime++, type.getDefaultSuspendPolicy());
     getBreakpointDefaults(type).applyDefaults(state);
     state.setGroup(myDefaultGroup);
     XLineBreakpointImpl<T> breakpoint = new XLineBreakpointImpl<>(type, this, properties,
@@ -508,6 +508,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   private static BreakpointState createBreakpointDefaults(@NotNull XBreakpointType type) {
     BreakpointState state = new BreakpointState();
     state.setTypeId(type.getId());
+    state.setSuspendPolicy(type.getDefaultSuspendPolicy());
     return state;
   }
 

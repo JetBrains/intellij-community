@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.debugger.array;
 
+import com.google.common.base.Strings;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.NotNull;
@@ -87,7 +88,9 @@ public class JBTableWithRowHeaders extends JBTable {
 
     @Override
     protected void paintComponent(@NotNull Graphics g) {
-      getEmptyText().setText("");
+      if (!Strings.isNullOrEmpty(getEmptyText().getText())) {
+        getEmptyText().setText("");
+      }
       super.paintComponent(g);
     }
 
@@ -105,7 +108,10 @@ public class JBTableWithRowHeaders extends JBTable {
 
     @Override
     public int getRowHeight(int row) {
-      setRowHeight(myMainTable.getRowHeight());
+      int height = super.getRowHeight();
+      if (height != myMainTable.getRowHeight()) {
+        setRowHeight(myMainTable.getRowHeight());
+      }
       return super.getRowHeight(row);
     }
 

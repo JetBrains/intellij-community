@@ -226,12 +226,8 @@ public class JavaCompletionContributor extends CompletionContributor {
     PrefixMatcher matcher = result.getPrefixMatcher();
     PsiElement parent = position.getParent();
 
-    if (JavaModuleCompletion.isModuleFile(position.getContainingFile())) {
-      JavaModuleCompletion.addVariants(position, element -> {
-        if (element.getLookupString().startsWith(result.getPrefixMatcher().getPrefix())) {
-          result.addElement(element);
-        }
-      });
+    if (JavaModuleCompletion.isModuleFile(parameters.getOriginalFile())) {
+      JavaModuleCompletion.addVariants(position, result);
       result.stopHere();
       return;
     }

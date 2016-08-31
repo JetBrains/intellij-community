@@ -30,7 +30,9 @@ public abstract class AbstractCommand<T> {
   public static final int LOAD_SOURCE = 124;
   public static final int SMART_STEP_INTO = 128;
   public static final int EXIT = 129;
-  
+  public static final int GET_DESCRIPTION = 148;
+
+
   public static final int CALL_SIGNATURE_TRACE = 130;
 
   public static final int CMD_SET_PY_EXCEPTION = 131;
@@ -51,6 +53,7 @@ public abstract class AbstractCommand<T> {
   public static final int LOG_CONCURRENCY_EVENT = 145;
   public static final int SHOW_RETURN_VALUES = 146;
   public static final int INPUT_REQUESTED = 147;
+
 
   public static final int ERROR = 901;
 

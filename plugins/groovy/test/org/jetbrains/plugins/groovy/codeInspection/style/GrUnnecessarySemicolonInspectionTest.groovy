@@ -75,6 +75,10 @@ print(a); {->}
     doTest 'for (int i = 0; i < 10;) {}'
   }
 
+  void 'test traditional for without condition'() {
+    doTest 'for (int i = 0; ; i++) {}'
+  }
+
   void 'test class members'() {
     doTest '''\
 class A {

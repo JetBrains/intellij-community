@@ -79,6 +79,7 @@ class DistributionJARsBuilder {
       exclude(name: "tips/**")
       exclude(name: "tips")
       exclude(name: "search/**")
+      exclude(name: "**/icon-robots.txt")
     }
 
     def productLayout = buildContext.productProperties.productLayout
@@ -146,7 +147,8 @@ class DistributionJARsBuilder {
 
   List<String> getPlatformModules() {
     (platform.moduleJars.values() as List<String>) +
-    ["java-runtime" /*required to build searchable options index*/, "updater"]
+    ["java-runtime", "platform-main", /*required to build searchable options index*/
+     "updater", buildContext.productProperties.productLayout.mainModule]
 
   }
 

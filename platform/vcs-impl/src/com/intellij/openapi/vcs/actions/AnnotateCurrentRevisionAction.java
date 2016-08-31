@@ -30,6 +30,8 @@ class AnnotateCurrentRevisionAction extends AnnotateRevisionAction {
   @Override
   protected VcsFileRevision getRevision(int lineNumber) {
     assert myProvider != null;
+
+    if (lineNumber < 0 || lineNumber >= myAnnotation.getLineCount()) return null;
     return myProvider.getRevision(lineNumber);
   }
 }

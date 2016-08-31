@@ -169,7 +169,7 @@ public class XSuspendPolicyPanel extends XBreakpointPropertiesSubPanel {
       return mySuspendAll.isSelected() ? SuspendPolicy.ALL : SuspendPolicy.THREAD;
     }
     else {
-      return SuspendPolicy.ALL;
+      return myBreakpoint.getType().getDefaultSuspendPolicy();
     }
   }
 

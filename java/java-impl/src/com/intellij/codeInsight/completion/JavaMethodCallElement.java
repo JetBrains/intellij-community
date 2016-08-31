@@ -22,10 +22,15 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.codeInsight.template.macro.CompleteMacro;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.ClassConditionKey;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -170,7 +175,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
       }
     }
 
-    if (hasParams && Registry.is("java.completion.argument.live.template")) {
+    if (hasParams && context.getCompletionChar() != Lookup.COMPLETE_STATEMENT_SELECT_CHAR && Registry.is("java.completion.argument.live.template")) {
       startArgumentLiveTemplate(context, method);
     }
   }
@@ -187,7 +192,8 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     qualifyMethodCall(file, startOffset, document);
   }
 
-  private static void startArgumentLiveTemplate(InsertionContext context, PsiMethod method) {
+  public static final Key<JavaMethodCallElement> ARGUMENT_TEMPLATE_ACTIVE = Key.create("ARGUMENT_TEMPLATE_ACTIVE");
+  private void startArgumentLiveTemplate(InsertionContext context, PsiMethod method) {
     TemplateManager manager = TemplateManager.getInstance(method.getProject());
     Template template = manager.createTemplate("", "");
     PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -199,7 +205,18 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
       template.addVariable(name, new MacroCallNode(new CompleteMacro()), new ConstantNode(name), true);
     }
 
-    manager.startTemplate(context.getEditor(), template);
+    Editor editor = context.getEditor();
+    manager.startTemplate(editor, template);
+
+    TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
+    if (templateState == null) return;
+
+    editor.putUserData(ARGUMENT_TEMPLATE_ACTIVE, this);
+    Disposer.register(templateState, () -> {
+      if (editor.getUserData(ARGUMENT_TEMPLATE_ACTIVE) == this) {
+        editor.putUserData(ARGUMENT_TEMPLATE_ACTIVE, null);
+      }
+    });
   }
 
   private boolean shouldInsertTypeParameters() {

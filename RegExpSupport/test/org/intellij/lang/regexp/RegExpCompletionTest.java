@@ -15,9 +15,11 @@
  */
 package org.intellij.lang.regexp;
 
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -55,6 +57,17 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
       myFixture.configureByText(RegExpFileType.INSTANCE, "[[:^alp<caret>");
       myFixture.completeBasic();
       myFixture.checkResult("[[:^alpha:]<caret>");
+    }
+
+    public void testNamedCharacter() {
+      myFixture.configureByText(RegExpFileType.INSTANCE, "\\\\N{SMILE<caret>}");
+      final LookupElement[] elements = myFixture.completeBasic();
+      final List<String> strings = ContainerUtil.map(elements, LookupElement::getLookupString);
+      assertEquals(Arrays.asList("SMILE", "SMILING FACE WITH SMILING EYES", "SMILING FACE WITH HEART-SHAPED EYES",
+                                 "SMILING CAT FACE WITH HEART-SHAPED EYES", "SMILING FACE WITH OPEN MOUTH AND SMILING EYES",
+                                 "SMILING FACE WITH OPEN MOUTH AND TIGHTLY-CLOSED EYES", "CAT FACE WITH WRY SMILE",
+                                 "GRINNING CAT FACE WITH SMILING EYES", "GRINNING FACE WITH SMILING EYES",
+                                 "KISSING FACE WITH SMILING EYES"), strings);
     }
 
     public void testBackSlashVariants() throws Throwable {

@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase implements DumbAware, UpToDateLineNumberListener {
-  @NotNull private final FileAnnotation myAnnotation;
+  @NotNull protected final FileAnnotation myAnnotation;
   @NotNull private final AbstractVcs myVcs;
 
   private int currentLine;
@@ -83,7 +83,6 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
   @Nullable
   @Override
   protected VcsFileRevision getFileRevision(@NotNull AnActionEvent e) {
-    if (currentLine < 0 || currentLine >= myAnnotation.getLineCount()) return null;
     return getRevision(currentLine);
   }
 

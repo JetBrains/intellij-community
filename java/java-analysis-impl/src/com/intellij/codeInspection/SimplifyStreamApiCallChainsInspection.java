@@ -45,6 +45,16 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
   private static final String EMPTY_SET_METHOD = "emptySet";
   private static final String SINGLETON_LIST_METHOD = "singletonList";
   private static final String SINGLETON_METHOD = "singleton";
+  private static final String COLLECT_METHOD = "collect";
+
+  private static final String COUNTING_COLLECTOR = "counting";
+  private static final String MIN_BY_COLLECTOR = "minBy";
+  private static final String MAX_BY_COLLECTOR = "maxBy";
+  private static final String MAPPING_COLLECTOR = "mapping";
+  private static final String REDUCING_COLLECTOR = "reducing";
+  private static final String SUMMING_INT_COLLECTOR = "summingInt";
+  private static final String SUMMING_LONG_COLLECTOR = "summingLong";
+  private static final String SUMMING_DOUBLE_COLLECTOR = "summingDouble";
 
   @Override
   public boolean isEnabledByDefault() {
@@ -93,6 +103,44 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
           }
           if (fix != null) {
             holder.registerProblem(methodCall, null, fix.getMessage(), fix);
+          }
+        }
+        else if (isCallOf(method, CommonClassNames.JAVA_UTIL_STREAM_STREAM, COLLECT_METHOD, 1)) {
+          PsiElement parameter = methodCall.getArgumentList().getExpressions()[0];
+          if(parameter instanceof PsiMethodCallExpression) {
+            PsiMethodCallExpression collectorCall = (PsiMethodCallExpression)parameter;
+            PsiMethod collectorMethod = collectorCall.resolveMethod();
+            ReplaceCollectorFix fix = null;
+            if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, COUNTING_COLLECTOR, 0)) {
+              fix = new ReplaceCollectorFix(COUNTING_COLLECTOR, "count()", false);
+            } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, MIN_BY_COLLECTOR, 1)) {
+              fix = new ReplaceCollectorFix(MIN_BY_COLLECTOR, "min({1})", true);
+            } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, MAX_BY_COLLECTOR, 1)) {
+              fix = new ReplaceCollectorFix(MAX_BY_COLLECTOR, "max({1})", true);
+            } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, MAPPING_COLLECTOR, 2)) {
+              fix = new ReplaceCollectorFix(MAPPING_COLLECTOR, "map({1}).collect({2})", false);
+            } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, REDUCING_COLLECTOR, 1)) {
+              fix = new ReplaceCollectorFix(REDUCING_COLLECTOR, "reduce({1})", true);
+            } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, REDUCING_COLLECTOR, 2)) {
+              fix = new ReplaceCollectorFix(REDUCING_COLLECTOR, "reduce({1}, {2})", false);
+            } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, REDUCING_COLLECTOR, 3)) {
+              fix = new ReplaceCollectorFix(REDUCING_COLLECTOR, "map({2}).reduce({1}, {3})", false);
+            } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, SUMMING_INT_COLLECTOR, 1)) {
+              fix = new ReplaceCollectorFix(SUMMING_INT_COLLECTOR, "mapToInt({1}).sum()", false);
+            } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, SUMMING_LONG_COLLECTOR, 1)) {
+              fix = new ReplaceCollectorFix(SUMMING_LONG_COLLECTOR, "mapToLong({1}).sum()", false);
+            } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, SUMMING_DOUBLE_COLLECTOR, 1)) {
+              fix = new ReplaceCollectorFix(SUMMING_DOUBLE_COLLECTOR, "mapToDouble({1}).sum()", false);
+            }
+            if (fix != null &&
+                collectorCall.getArgumentList().getExpressions().length == collectorMethod.getParameterList().getParametersCount()) {
+              TextRange range = methodCall.getTextRange();
+              PsiElement nameElement = methodCall.getMethodExpression().getReferenceNameElement();
+              if(nameElement != null) {
+                range = new TextRange(nameElement.getTextOffset(), range.getEndOffset());
+              }
+              holder.registerProblem(methodCall, range.shiftRight(-methodCall.getTextOffset()), fix.getMessage(), fix);
+            }
           }
         }
         else {
@@ -390,4 +438,87 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       }
     }
   }
+
+  private static class ReplaceCollectorFix implements LocalQuickFix {
+    private final String myCollector;
+    private final String myStreamSequence;
+    private final String myStreamSequenceStripped;
+    private final boolean myChangeSemantics;
+
+    public ReplaceCollectorFix(String collector, String streamSequence, boolean changeSemantics) {
+      myCollector = collector;
+      myStreamSequence = streamSequence;
+      myStreamSequenceStripped = streamSequence.replaceAll("\\([^)]+\\)", "()");
+      myChangeSemantics = changeSemantics;
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getName() {
+      return getFamilyName();
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Replace Stream.collect(" + myCollector +
+             "()) with Stream." + myStreamSequenceStripped +
+             (myChangeSemantics ? " (may change semantics when result is null)" : "");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiElement element = descriptor.getStartElement();
+      if (element instanceof PsiMethodCallExpression) {
+        PsiMethodCallExpression collectCall = (PsiMethodCallExpression)element;
+        PsiExpression qualifierExpression = collectCall.getMethodExpression().getQualifierExpression();
+        if (qualifierExpression != null) {
+          PsiElement parameter = collectCall.getArgumentList().getExpressions()[0];
+          if (parameter instanceof PsiMethodCallExpression) {
+            PsiMethodCallExpression collectorCall = (PsiMethodCallExpression)parameter;
+            PsiExpression[] collectorArgs = collectorCall.getArgumentList().getExpressions();
+            String result = myStreamSequence;
+            for(int i=0; i<collectorArgs.length; i++) {
+              result = result.replace("{"+(i+1)+"}", collectorArgs[i].getText());
+            }
+            if (!FileModificationService.getInstance().preparePsiElementForWrite(element.getContainingFile())) return;
+            PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+            PsiExpression replacement = factory.createExpressionFromText(
+              qualifierExpression.getText() + "." + result, collectCall);
+            PsiElement expression = collectCall.replace(replacement);
+            // Replacements like .collect(counting()) -> .count() change the result type from boxed to primitive
+            // In rare cases it's necessary to add cast to return back to boxed type
+            // example:
+            // List<Integer> intList; List<String> stringList;
+            // intList.remove(stringList.stream().collect(summingInt(String::length)) -- remove given element
+            // intList.remove(stringList.stream().mapToInt(String::length).sum()) -- remove element by index
+            if(expression instanceof PsiExpression) {
+              PsiType type = ((PsiExpression)expression).getType();
+              if(type instanceof PsiPrimitiveType) {
+                PsiClassType boxedType = ((PsiPrimitiveType)type).getBoxedType(expression);
+                if(boxedType != null) {
+                  PsiExpression castExpression =
+                    factory.createExpressionFromText("(" + boxedType.getCanonicalText() + ") " + expression.getText(), expression);
+                  PsiElement cast = expression.replace(castExpression);
+                  if (cast instanceof PsiTypeCastExpression && RedundantCastUtil.isCastRedundant((PsiTypeCastExpression)cast)) {
+                    RedundantCastUtil.removeCast((PsiTypeCastExpression)cast);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    @NotNull
+    String getMessage() {
+      return "Stream.collect(" + myCollector +
+             "()) can be replaced with Stream." + myStreamSequenceStripped + "()" +
+             (myChangeSemantics ? " (may change semantics when result is null)" : "");
+    }
+  }
+
 }

@@ -159,6 +159,11 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
         read.add(severity);
       }
     }
+    myOrderMap = ensureAllStandardIncluded(read, knownSeverities);
+    severitiesChanged();
+  }
+
+  private OrderMap ensureAllStandardIncluded(List<HighlightSeverity> read, final List<HighlightSeverity> knownSeverities) {
     OrderMap orderMap = fromList(read);
     if (orderMap.isEmpty()) {
       orderMap = fromList(knownSeverities);
@@ -182,8 +187,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
       }
       orderMap = fromList(list);
     }
-    myOrderMap = orderMap;
-    severitiesChanged();
+    return orderMap;
   }
 
   public void writeExternal(Element element) {
@@ -345,7 +349,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   }
 
   public void setOrder(@NotNull List<HighlightSeverity> orderList) {
-    myOrderMap = fromList(orderList);
+    myOrderMap = ensureAllStandardIncluded(orderList, getDefaultOrder());
     myReadOrder = null;
     severitiesChanged();
   }

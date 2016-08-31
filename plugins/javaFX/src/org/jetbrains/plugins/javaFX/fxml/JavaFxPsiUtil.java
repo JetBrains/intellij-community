@@ -1198,7 +1198,7 @@ public class JavaFxPsiUtil {
                 if (type != null && type.equalsToText(JavaFxCommonNames.JAVAFX_FXML_FXMLLOADER)) {
                   final PsiElement parent = expression.getParent();
                   if (parent instanceof PsiLocalVariable) {
-                    ReferencesSearch.search(parent, parent.getUseScope()).forEach(processor);
+                    ReferencesSearch.search(parent).forEach(processor);
                     final PsiClass controller = injectedController.get();
                     if (controller != null) {
                       return false;

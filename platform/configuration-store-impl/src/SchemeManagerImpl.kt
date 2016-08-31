@@ -370,11 +370,15 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
     override fun updateDigest(scheme: MUTABLE_SCHEME) {
       try {
-        externalInfo.digest = (processor.writeScheme(scheme) as Element).digest()
+        updateDigest(processor.writeScheme(scheme) as Element)
       }
       catch (e: WriteExternalException) {
         LOG.error("Cannot update digest", e)
       }
+    }
+
+    override fun updateDigest(data: Element) {
+      externalInfo.digest = data.digest()
     }
   }
 
@@ -438,7 +442,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
           XmlPullParser.START_TAG -> {
             if (!isUseOldFileNameSanitize || parser.name != "component") {
               var name: String? = null
-              if (isUseOldFileNameSanitize && parser.name == "profile") {
+              if (isUseOldFileNameSanitize && (parser.name == "profile" || parser.name == "copyright")) {
                 eventType = parser.next()
                 findName@ while (eventType != XmlPullParser.END_DOCUMENT) {
                   when (eventType) {

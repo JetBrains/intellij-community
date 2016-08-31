@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -528,10 +528,7 @@ public class JavaCompletionUtil {
                                                                                                                .accepts(reference),
                                                                                                              JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER,
                                                                                                              Conditions.alwaysTrue());
-        if (JavaClassNameCompletionContributor.AFTER_NEW.accepts(reference)) {
-          return JBIterable.from(classItems).flatMap(i -> JavaConstructorCallElement.wrap(i, reference.getElement()));
-        }
-        return classItems;
+        return JBIterable.from(classItems).flatMap(i -> JavaConstructorCallElement.wrap(i, reference.getElement()));
       }
     }
     
@@ -544,11 +541,7 @@ public class JavaCompletionUtil {
     if (completion instanceof PsiClass) {
       JavaPsiClassReferenceElement classItem =
         JavaClassNameCompletionContributor.createClassLookupItem((PsiClass)completion, true).setSubstitutor(substitutor);
-      if (JavaClassNameCompletionContributor.AFTER_NEW.accepts(reference)) {
-        return JavaConstructorCallElement.wrap(classItem, reference.getElement());
-      }
-
-      return Collections.singletonList(classItem);
+      return JavaConstructorCallElement.wrap(classItem, reference.getElement());
     }
     if (completion instanceof PsiMethod) {
       JavaMethodCallElement item = new JavaMethodCallElement((PsiMethod)completion).setQualifierSubstitutor(substitutor);
@@ -934,5 +927,15 @@ public class JavaCompletionUtil {
       aClass = aClass.getContainingClass();
     }
     return false;
+  }
+
+  public static int findQualifiedNameStart(@NotNull InsertionContext context) {
+    int start = context.getTailOffset() - 1;
+    while (start >= 0) {
+      char ch = context.getDocument().getCharsSequence().charAt(start);
+      if (!Character.isJavaIdentifierPart(ch) && ch != '.') break;
+      start--;
+    }
+    return start + 1;
   }
 }
