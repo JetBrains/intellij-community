@@ -52,7 +52,7 @@ public class FileTemplateSettings extends FileTemplatesLoader implements Persist
   @Nullable
   @Override
   public Element getState() {
-    Element element = null;
+    Element element = new Element("fileTemplateSettings");
     for (FTManager manager : getAllManagers()) {
       Element templatesGroup = null;
       for (FileTemplateBase template : manager.getAllTemplates(true)) {
@@ -75,9 +75,6 @@ public class FileTemplateSettings extends FileTemplatesLoader implements Persist
 
         if (templatesGroup == null) {
           templatesGroup = new Element(getXmlElementGroupName(manager));
-          if (element == null) {
-            element = new Element("fileTemplateSettings");
-          }
           element.addContent(templatesGroup);
         }
         templatesGroup.addContent(templateElement);
