@@ -64,7 +64,8 @@ public abstract class DumbService {
   }
 
   /**
-   * Executes the runnable immediately if not in dumb mode, or on AWT Event Dispatch thread after the dumb mode ends.
+   * Executes the runnable immediately if the project is initialized and there's no dumb mode in progress,
+   * or on AWT Event Dispatch thread after the dumb mode ends.
    * Note that it's not guaranteed that the dumb mode won't start again during this runnable execution, it should manage that situation explicitly
    * (e.g. by starting a read action; it's still necessary to check isDumb inside the read action).
    * @param runnable runnable to run

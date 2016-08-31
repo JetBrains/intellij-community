@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.terminal;
 
+import com.google.common.collect.Lists;
 import com.intellij.execution.TaskExecutor;
 import com.intellij.execution.configurations.EncodingEnvironmentUtil;
 import com.intellij.execution.process.ProcessAdapter;
@@ -27,19 +28,22 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.HashMap;
 import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
-import com.pty4j.util.PtyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URI;
+import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -65,18 +69,22 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return new File(path).getName();
   }
 
-  private static File findRCFile() {
-    try {
-      final String folder = PtyUtil.getPtyLibFolderPath();
-      if (folder != null) {
-        File rcFile = new File(folder, "jediterm.in");
-        if (rcFile.exists()) {
-          return rcFile;
+  private static String findRCFile(String shellName) {
+    if (shellName != null) {
+      if ("bash".equals(shellName)) {
+        shellName = "sh";
+      }
+      try {
+
+        URL resource = LocalTerminalDirectRunner.class.getClassLoader().getResource("jediterm-" + shellName + ".in");
+        if (resource != null) {
+          URI uri = resource.toURI();
+          return uri.getPath();
         }
       }
-    }
-    catch (Exception e) {
-      LOG.warn("Unable to get JAR folder", e);
+      catch (Exception e) {
+        LOG.warn("Unable to find " + "jediterm-" + shellName + ".in configuration file", e);
+      }
     }
     return null;
   }
@@ -93,15 +101,15 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       envs.put("TERM", "xterm-256color");
     }
     EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, myDefaultCharset);
-    
-    for (LocalTerminalCustomizer customizer: LocalTerminalCustomizer.EP_NAME.getExtensions()) {
+
+    for (LocalTerminalCustomizer customizer : LocalTerminalCustomizer.EP_NAME.getExtensions()) {
       customizer.setupEnvironment(myProject, envs);
 
       if (directory == null) {
         directory = customizer.getDefaultFolder();
       }
     }
-    
+
     try {
       return PtyProcess.exec(getCommand(), envs, directory != null ? directory : currentProjectFolder());
     }
@@ -141,30 +149,60 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return "Local Terminal";
   }
 
+
   public String[] getCommand() {
-    String[] command;
+
     String shellPath = TerminalOptionsProvider.getInstance().getShellPath();
 
+    return getCommand(shellPath);
+  }
+
+  @NotNull
+  public static String[] getCommand(String shellPath) {
     if (SystemInfo.isUnix) {
-      File rcFile = findRCFile();
+      List<String> command = Lists.newArrayList(shellPath.split(" "));
 
-      String shellName = getShellName(shellPath);
+      String shellName = command.size() > 0 ? getShellName(command.get(0)) : null;
 
-      if (rcFile != null && (shellName.equals("bash") || shellName.equals("sh"))) {
-        command = new String[]{shellPath, "--rcfile", rcFile.getAbsolutePath(), "-i"};
-      }
-      else if (hasLoginArgument(shellName)) {
-        command = new String[]{shellPath, "--login"};
+
+      if (shellName != null) {
+        command.remove(0);
+
+        List<String> result = Lists.newArrayList(shellName);
+
+        String rcFilePath = findRCFile(shellName);
+
+
+        if (rcFilePath != null &&
+            TerminalOptionsProvider.getInstance().shellIntegration() &&
+            (shellName.equals("bash") || shellName.equals("sh"))) {
+          result.add("--rcfile");
+          result.add(rcFilePath);
+        }
+
+        if (!loginOrInteractive(command)) {
+          if (hasLoginArgument(shellName) && SystemInfo.isMac) {
+            result.add("--login");
+          }
+          else {
+            result.add("-i");
+          }
+        }
+
+        result.addAll(command);
+        return ArrayUtil.toStringArray(result);
       }
       else {
-        command = shellPath.split(" ");
+        return ArrayUtil.toStringArray(command);
       }
     }
     else {
-      command = new String[]{shellPath};
+      return new String[]{shellPath};
     }
+  }
 
-    return command;
+  private static boolean loginOrInteractive(List<String> command) {
+    return command.contains("-i") || command.contains("--login") || command.contains("-l");
   }
 
   private static class PtyProcessHandler extends ProcessHandler implements TaskExecutor {

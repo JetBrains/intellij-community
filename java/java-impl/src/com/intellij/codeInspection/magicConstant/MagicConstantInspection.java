@@ -422,12 +422,8 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
 
   private static AllowedValues parseBeanInfo(@NotNull PsiModifierListOwner owner, @NotNull PsiManager manager) {
     PsiFile containingFile = owner.getContainingFile();
-    if (containingFile != null) {
-      GlobalSearchScope sourceFile = GlobalSearchScope.fileScope((PsiFile)containingFile.getNavigationElement());
-      if (FileBasedIndex.getInstance().getContainingFiles(IdIndex.NAME, new IdIndexEntry("beaninfo", true), sourceFile).isEmpty()) {
-        // optimisation: do not parse library sources if there are no "beaninfo" text in the file
-        return null;
-      }
+    if (containingFile != null && !containsBeanInfoText((PsiFile)containingFile.getNavigationElement())) {
+      return null;
     }
     PsiMethod method = null;
     if (owner instanceof PsiParameter) {
@@ -500,6 +496,15 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
     if (values.isEmpty()) return null;
     PsiAnnotationMemberValue[] array = values.toArray(new PsiAnnotationMemberValue[values.size()]);
     return new AllowedValues(array, false);
+  }
+
+  private static boolean containsBeanInfoText(@NotNull PsiFile file) {
+    return CachedValuesManager.getCachedValue(file, () -> {
+      Collection<VirtualFile> files = FileBasedIndex.getInstance().getContainingFiles(IdIndex.NAME,
+                                                                                      new IdIndexEntry("beaninfo", true),
+                                                                                      GlobalSearchScope.fileScope(file));
+      return CachedValueProvider.Result.create(!files.isEmpty(), file);
+    });
   }
 
   private static PsiType getType(@NotNull PsiModifierListOwner element) {

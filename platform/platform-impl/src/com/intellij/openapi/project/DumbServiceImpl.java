@@ -26,6 +26,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.AppIconScheme;
@@ -53,13 +54,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.DumbServiceImpl");
-  private static final NotNullLazyValue<DumbPermissionServiceImpl> ourPermissionService = new NotNullLazyValue<DumbPermissionServiceImpl>() {
-    @NotNull
-    @Override
-    protected DumbPermissionServiceImpl compute() {
-      return (DumbPermissionServiceImpl)ServiceManager.getService(DumbPermissionService.class);
-    }
-  };
+  private static final NotNullLazyValue<DumbPermissionServiceImpl> ourPermissionService = NotNullLazyValue.createValue(
+    () -> (DumbPermissionServiceImpl)ServiceManager.getService(DumbPermissionService.class));
   private static Throwable ourForcedTrace;
   private final AtomicReference<State> myState = new AtomicReference<>(State.SMART);
   private volatile Throwable myDumbStart;
@@ -152,14 +148,16 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void runWhenSmart(@NotNull Runnable runnable) {
-    synchronized (myRunWhenSmartQueue) {
-      if (isDumb()) {
-        myRunWhenSmartQueue.addLast(runnable);
-        return;
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> {
+      synchronized (myRunWhenSmartQueue) {
+        if (isDumb()) {
+          myRunWhenSmartQueue.addLast(runnable);
+          return;
+        }
       }
-    }
 
-    runnable.run();
+      runnable.run();
+    });
   }
 
   @Override
@@ -294,7 +292,10 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   private void queueUpdateFinished(boolean modal) {
     if (myState.compareAndSet(State.RUNNING_DUMB_TASKS, State.WAITING_FOR_FINISH)) {
-      TransactionGuard.getInstance().submitTransaction(myProject, myDumbStartTransaction, () -> WriteAction.run(() -> updateFinished(modal)));
+      StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
+        () -> TransactionGuard.getInstance().submitTransaction(myProject, myDumbStartTransaction, () ->
+          WriteAction.run(
+            () -> updateFinished(modal))));
     }
   }
 
