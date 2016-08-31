@@ -28,9 +28,7 @@ import com.intellij.ui.EditorComboBox
 import org.fest.swing.edt.GuiActionRunner
 import org.fest.swing.edt.GuiTask
 import org.fest.swing.fixture.DialogFixture
-import org.fest.swing.fixture.JTextComponentFixture
 import org.junit.Test
-import javax.swing.text.JTextComponent
 
 /**
  * Created by karashevich on 18/06/16.
