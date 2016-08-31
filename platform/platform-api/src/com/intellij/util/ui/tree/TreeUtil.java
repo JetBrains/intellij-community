@@ -693,6 +693,12 @@ public final class TreeUtil {
         moveDown(tree);
       }
     });
+    tree.getActionMap().put("cancelEditing", new AbstractAction() {
+      @Override
+      public void actionPerformed(final ActionEvent e) {
+        tree.cancelEditing();
+      }
+    });
     copyAction(tree, "selectLast", "selectLastChangeLead");
     copyAction(tree, "selectFirst", "selectFirstChangeLead");
 
@@ -703,6 +709,7 @@ public final class TreeUtil {
     UIUtil.maybeInstall(inputMap, "selectPrevious", KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0));
     UIUtil.maybeInstall(inputMap, "selectLast", KeyStroke.getKeyStroke(KeyEvent.VK_END, 0));
     UIUtil.maybeInstall(inputMap, "selectFirst", KeyStroke.getKeyStroke(KeyEvent.VK_HOME, 0));
+    UIUtil.maybeInstall(tree.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT), "cancelEditing", KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
   }
 
   private static void copyAction(@NotNull final JTree tree, String original, String copyTo) {
