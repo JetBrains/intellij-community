@@ -33,20 +33,17 @@ package org.jetbrains.intellij.build.pycharm
 import org.jetbrains.intellij.build.ApplicationInfoProperties
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildTasks
-import org.jetbrains.intellij.build.MacDistributionCustomizer
 import org.jetbrains.intellij.build.ProductProperties
-import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 
 /**
  * @author nik
  */
 abstract class PyCharmPropertiesBase extends ProductProperties {
-  PyCharmPropertiesBase(String home) {
+  PyCharmPropertiesBase() {
     baseFileName = "pycharm"
     reassignAltClickToMultipleCarets = true
     productLayout.mainJarName = "pycharm.jar"
     productLayout.additionalPlatformJars.put("pycharm-pydev.jar", "python-pydev")
-    additionalDirectoriesWithLicenses = ["$home/python/license"]
   }
 
   @Override
