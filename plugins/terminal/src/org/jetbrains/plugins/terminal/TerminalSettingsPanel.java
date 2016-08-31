@@ -37,6 +37,7 @@ public class TerminalSettingsPanel {
   private JBCheckBox myPasteOnMiddleButtonCheckBox;
   private JBCheckBox myCopyOnSelectionCheckBox;
   private JBCheckBox myOverrideIdeShortcuts;
+  private JBCheckBox myShellIntegration;
   private TerminalOptionsProvider myOptionsProvider;
 
   public JComponent createPanel(@NotNull TerminalOptionsProvider provider) {
@@ -65,6 +66,7 @@ public class TerminalSettingsPanel {
            || (myCopyOnSelectionCheckBox.isSelected() != myOptionsProvider.copyOnSelection())
            || (myPasteOnMiddleButtonCheckBox.isSelected() != myOptionsProvider.pasteOnMiddleMouseButton())
            || (myOverrideIdeShortcuts.isSelected() != myOptionsProvider.overrideIdeShortcuts())
+           || (myShellIntegration.isSelected() != myOptionsProvider.shellIntegration())
       ;
   }
 
@@ -77,6 +79,7 @@ public class TerminalSettingsPanel {
     myOptionsProvider.setCopyOnSelection(myCopyOnSelectionCheckBox.isSelected());
     myOptionsProvider.setPasteOnMiddleMouseButton(myPasteOnMiddleButtonCheckBox.isSelected());
     myOptionsProvider.setOverrideIdeShortcuts(myOverrideIdeShortcuts.isSelected());
+    myOptionsProvider.setShellIntegration(myShellIntegration.isSelected());
   }
 
   public void reset() {
@@ -88,5 +91,6 @@ public class TerminalSettingsPanel {
     myCopyOnSelectionCheckBox.setSelected(myOptionsProvider.copyOnSelection());
     myPasteOnMiddleButtonCheckBox.setSelected(myOptionsProvider.pasteOnMiddleMouseButton());
     myOverrideIdeShortcuts.setSelected(myOptionsProvider.overrideIdeShortcuts());
+    myShellIntegration.setSelected(myOptionsProvider.shellIntegration());
   }
 }

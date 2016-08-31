@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
+import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
@@ -63,6 +64,6 @@ public class RefUtil {
     for (ImplicitUsageProvider provider : implicitUsageProviders) {
       if (provider.isImplicitWrite(element)) return true;
     }
-    return false;
+    return EntryPointsManager.getInstance(element.getProject()).isImplicitWrite(element);
   }
 }

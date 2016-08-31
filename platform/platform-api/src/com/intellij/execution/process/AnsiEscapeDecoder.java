@@ -18,6 +18,7 @@ package com.intellij.execution.process;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +35,7 @@ public class AnsiEscapeDecoder {
   private static final char ESC_CHAR = '\u001B'; // Escape sequence start character
   private static final String CSI = ESC_CHAR + "["; // "Control Sequence Initiator"
   private static final Pattern INNER_PATTERN = Pattern.compile(Pattern.quote("m" + CSI));
+  private static final char BACKSPACE = '\b';
 
   private Key myCurrentTextAttributes;
 
@@ -48,6 +50,7 @@ public class AnsiEscapeDecoder {
   public void escapeText(@NotNull String text, @NotNull Key outputType, @NotNull ColoredTextAcceptor textAcceptor) {
     List<Pair<String, Key>> chunks = null;
     int pos = 0;
+    text = normalizeAsciiControlCharacters(text);
     while (true) {
       int escSeqBeginInd = text.indexOf(CSI, pos);
       if (escSeqBeginInd < 0) {
@@ -75,6 +78,48 @@ public class AnsiEscapeDecoder {
     if (chunks != null && textAcceptor instanceof ColoredChunksAcceptor) {
       ((ColoredChunksAcceptor)textAcceptor).coloredChunksAvailable(chunks);
     }
+  }
+
+  @NotNull
+  private static String normalizeAsciiControlCharacters(@NotNull String text) {
+    int ind = text.indexOf(BACKSPACE);
+    if (ind == -1) {
+      return text;
+    }
+    StringBuilder result = new StringBuilder();
+    int i = 0;
+    int guardIndex = 0;
+    boolean removalFromPrevTextAttempted = false;
+    while (i < text.length()) {
+      LineSeparator lineSeparator = StringUtil.findStartingLineSeparator(text, i);
+      if (lineSeparator != null) {
+        i += lineSeparator.getSeparatorString().length();
+        result.append(lineSeparator.getSeparatorString());
+        guardIndex = result.length();
+      }
+      else {
+        if (text.charAt(i) == BACKSPACE) {
+          if (result.length() > guardIndex) {
+            result.setLength(result.length() - 1);
+          }
+          else if (guardIndex == 0) {
+            removalFromPrevTextAttempted = true;
+          }
+        }
+        else {
+          result.append(text.charAt(i));
+        }
+        i++;
+      }
+    }
+    if (removalFromPrevTextAttempted) {
+      // This workaround allows to pretty print progress splitting it into several lines:
+      //  25% 1/4 build modules
+      //  40% 2/4 build modules
+      // instead of one single line "25% 1/4 build modules 40% 2/4 build modules"
+      result.insert(0, LineSeparator.LF.getSeparatorString());
+    }
+    return result.toString();
   }
 
   /*
