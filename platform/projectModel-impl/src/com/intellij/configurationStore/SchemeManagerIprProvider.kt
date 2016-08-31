@@ -24,8 +24,8 @@ import com.intellij.util.toByteArray
 import org.jdom.Element
 import java.io.InputStream
 
-class SchemeManagerIprProvider : StreamProvider {
-  var nameToData = ContainerUtil.newConcurrentMap<String, ByteArray>()
+class SchemeManagerIprProvider(private val subStateTagName: String) : StreamProvider {
+  private val nameToData = ContainerUtil.newConcurrentMap<String, ByteArray>()
 
   override fun read(fileSpec: String, roamingType: RoamingType): InputStream? {
     val name = PathUtilRt.getFileName(fileSpec)
@@ -59,7 +59,7 @@ class SchemeManagerIprProvider : StreamProvider {
       return
     }
 
-    for (profileElement in state.getChildren("profile")) {
+    for (profileElement in state.getChildren(subStateTagName)) {
       var name: String? = null
       for (optionElement in profileElement.getChildren("option")) {
         if (optionElement.getAttributeValue("name") == "myName") {

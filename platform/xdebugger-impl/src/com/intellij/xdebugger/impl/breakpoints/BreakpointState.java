@@ -53,10 +53,11 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
   public BreakpointState() {
   }
 
-  public BreakpointState(final boolean enabled, final String typeId, final long timeStamp) {
+  public BreakpointState(final boolean enabled, final String typeId, final long timeStamp, final SuspendPolicy suspendPolicy) {
     myEnabled = enabled;
     myTypeId = typeId;
     myTimeStamp = timeStamp;
+    mySuspendPolicy = suspendPolicy;
   }
 
   @Attribute("enabled")

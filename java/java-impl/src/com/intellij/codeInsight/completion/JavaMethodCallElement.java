@@ -175,9 +175,16 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
       }
     }
 
-    if (hasParams && context.getCompletionChar() != Lookup.COMPLETE_STATEMENT_SELECT_CHAR && Registry.is("java.completion.argument.live.template")) {
+    context.commitDocument();
+    if (hasParams && context.getCompletionChar() != Lookup.COMPLETE_STATEMENT_SELECT_CHAR && Registry.is("java.completion.argument.live.template") && isArgumentListEmpty(context)) {
       startArgumentLiveTemplate(context, method);
     }
+  }
+
+  private static boolean isArgumentListEmpty(InsertionContext context) {
+    PsiCallExpression call = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiCallExpression.class, false);
+    PsiExpressionList argList = call == null ? null : call.getArgumentList();
+    return argList != null && argList.getExpressions().length == 0;
   }
 
   private void importOrQualify(Document document, PsiFile file, PsiMethod method, int startOffset) {

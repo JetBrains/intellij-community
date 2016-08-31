@@ -55,9 +55,6 @@ class IdeaCommunityProperties extends ProductProperties {
       }
 
       @Override
-      String rootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) { "" }
-
-      @Override
       String fullNameIncludingEdition(ApplicationInfoProperties applicationInfo) { "IntelliJ IDEA Community Edition" }
 
       @Override

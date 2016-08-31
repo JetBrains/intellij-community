@@ -3147,10 +3147,23 @@ public class StringUtil extends StringUtilRt {
   public static LineSeparator detectSeparators(@NotNull CharSequence text) {
     int index = indexOfAny(text, "\n\r");
     if (index == -1) return null;
-    if (startsWith(text, index, "\r\n")) return LineSeparator.CRLF;
-    if (text.charAt(index) == '\r') return LineSeparator.CR;
-    if (text.charAt(index) == '\n') return LineSeparator.LF;
-    throw new IllegalStateException();
+    LineSeparator lineSeparator = findStartingLineSeparator(text, index);
+    if (lineSeparator == null) {
+      throw new AssertionError();
+    }
+    return lineSeparator;
+  }
+
+  @Nullable
+  public static LineSeparator findStartingLineSeparator(@NotNull CharSequence text, int startIndex) {
+    if (startIndex < 0 || startIndex >= text.length()) {
+      return null;
+    }
+    char ch = text.charAt(startIndex);
+    if (ch == '\r') {
+      return startIndex + 1 < text.length() && text.charAt(startIndex + 1) == '\n' ? LineSeparator.CRLF : LineSeparator.CR;
+    }
+    return ch == '\n' ? LineSeparator.LF : null;
   }
 
   @NotNull

@@ -18,9 +18,7 @@ package com.intellij.profile.codeInspection
 import com.intellij.codeInspection.InspectionProfile
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
-import com.intellij.configurationStore.SchemeDataHolder
-import com.intellij.configurationStore.SchemeManagerIprProvider
-import com.intellij.configurationStore.digest
+import com.intellij.configurationStore.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
@@ -32,7 +30,6 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.profile.Profile
@@ -94,7 +91,7 @@ class ProjectInspectionProfileManager(val project: Project,
     }
   }
 
-  private val schemeManagerIprProvider = if (project.isDirectoryBased) null else SchemeManagerIprProvider()
+  private val schemeManagerIprProvider = if (project.isDirectoryBased) null else SchemeManagerIprProvider("profile")
 
   override val schemeManager = schemeManagerFactory.create("inspectionProfiles", object : InspectionProfileProcessor() {
     override fun createScheme(dataHolder: SchemeDataHolder<InspectionProfileImpl>,
@@ -209,13 +206,25 @@ class ProjectInspectionProfileManager(val project: Project,
     }
   }
 
-  @Synchronized override fun loadState(state: Element) {
-    val data = state.getChild("settings")
+  @Synchronized override fun getState(): Element? {
+    val result = Element("settings")
 
-    schemeManagerIprProvider?.let {
-      it.load(data)
-      schemeManager.reload()
+    schemeManagerIprProvider?.writeState(result)
+
+    val state = this.state
+    state.projectProfile = schemeManager.currentSchemeName
+    XmlSerializer.serializeInto(state, result, skipDefaultsSerializationFilter)
+    if (!result.children.isEmpty()) {
+      result.addContent(Element("version").setAttribute("value", VERSION))
     }
+
+    severityRegistrar.writeExternal(result)
+
+    return wrapState(result, project)
+  }
+
+  @Synchronized override fun loadState(state: Element) {
+    val data = unwrapState(state, project, schemeManagerIprProvider, schemeManager)
 
     val newState = State()
 
@@ -247,29 +256,6 @@ class ProjectInspectionProfileManager(val project: Project,
 
     if (newState.useProjectProfile) {
       schemeManager.currentSchemeName = newState.projectProfile
-    }
-  }
-
-  @Synchronized override fun getState(): Element? {
-    val result = Element("settings")
-
-    schemeManagerIprProvider?.writeState(result)
-
-    val state = this.state
-    state.projectProfile = schemeManager.currentSchemeName
-    XmlSerializer.serializeInto(state, result, skipDefaultsSerializationFilter)
-    if (!result.children.isEmpty()) {
-      result.addContent(Element("version").setAttribute("value", VERSION))
-    }
-
-    severityRegistrar.writeExternal(result)
-
-    if (JDOMUtil.isEmpty(result)) {
-      result.name = "state"
-      return result
-    }
-    else {
-      return Element("state").addContent(result)
     }
   }
 

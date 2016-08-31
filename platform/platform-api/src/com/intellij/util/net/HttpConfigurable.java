@@ -32,11 +32,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.util.Base64;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.ContainerUtil;
@@ -61,6 +59,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -269,11 +268,11 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
 
   private static String decode(String value) {
-    return new String(Base64.decode(value), CharsetToolkit.UTF8_CHARSET);
+    return new String(Base64.getDecoder().decode(value), StandardCharsets.UTF_8);
   }
 
   private static String encode(String password) {
-    return Base64.encode(password.getBytes(CharsetToolkit.UTF8_CHARSET));
+    return Base64.getEncoder().encodeToString(password.getBytes(StandardCharsets.UTF_8));
   }
 
   public PasswordAuthentication getGenericPromptedAuthentication(final String prefix, final String host, final String prompt, final int port, final boolean remember) {
