@@ -15,6 +15,10 @@
  */
 package com.intellij.util;
 
+/**
+ * @deprecated Please use java.util.Base64
+ */
+@Deprecated
 public class Base64 {
   private Base64() { }
 
