@@ -76,7 +76,7 @@ public class AnalysisScope {
   protected List<Module> myModules;
   protected Module myModule;
   protected PsiElement myElement;
-  private SearchScope myScope;
+  private final SearchScope myScope;
   private boolean mySearchInLibraries;
   private GlobalSearchScope myFilter;
   @Type protected int myType;
@@ -355,20 +355,17 @@ public class AnalysisScope {
   @NotNull
   private ContentIterator createScopeIterator(@NotNull final Processor<VirtualFile> processor, 
                                               @Nullable final SearchScope searchScope) {
-    return new ContentIterator() {
+    return fileOrDir -> {
+      final boolean isInScope = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
         @Override
-        public boolean processFile(@NotNull final VirtualFile fileOrDir) {
-          final boolean isInScope = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-            @Override
-            public Boolean compute() {
-              if (isFiltered(fileOrDir)) return false;
-              if (GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(fileOrDir, myProject)) return false;
-              return searchScope == null || ((GlobalSearchScope)searchScope).contains(fileOrDir);
-            }
-          }).booleanValue();
-          return !isInScope || processor.process(fileOrDir);
+        public Boolean compute() {
+          if (isFiltered(fileOrDir)) return false;
+          if (GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(fileOrDir, myProject)) return false;
+          return searchScope == null || ((GlobalSearchScope)searchScope).contains(fileOrDir);
         }
-      };
+      }).booleanValue();
+      return !isInScope || processor.process(fileOrDir);
+    };
   }
 
   private static boolean processFile(@NotNull final VirtualFile vFile,
@@ -437,17 +434,13 @@ public class AnalysisScope {
     final Project project = dir.getProject();
     //we should analyze generated source files only if the action is explicitly invoked for a directory located under generated roots
     final boolean processGeneratedFiles = GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(dir.getVirtualFile(), project);
-    return VfsUtilCore.iterateChildrenRecursively(dir.getVirtualFile(), VirtualFileFilter.ALL, new ContentIterator() {
-      @Override
-      @SuppressWarnings({"SimplifiableIfStatement"})
-      public boolean processFile(@NotNull final VirtualFile fileOrDir) {
-        if (isFiltered(fileOrDir)) return true;
-        if (!processGeneratedFiles && GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(fileOrDir, project)) return true;
-        if (!fileOrDir.isDirectory()) {
-          return processor.process(fileOrDir);
-        }
-        return true;
+    return VfsUtilCore.iterateChildrenRecursively(dir.getVirtualFile(), VirtualFileFilter.ALL, fileOrDir -> {
+      if (isFiltered(fileOrDir)) return true;
+      if (!processGeneratedFiles && GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(fileOrDir, project)) return true;
+      if (!fileOrDir.isDirectory()) {
+        return processor.process(fileOrDir);
       }
+      return true;
     });
   }
 
@@ -482,7 +475,7 @@ public class AnalysisScope {
       case MODULES:
         String modules = StringUtil.join(myModules, module -> pathToName(module.getModuleFilePath()), ", ");
 
-        return AnalysisScopeBundle.message("scope.module.list", modules, Integer.valueOf(myModules.size()));
+        return AnalysisScopeBundle.message("scope.module.list", modules, myModules.size());
 
       case PROJECT:
         return AnalysisScopeBundle.message("scope.project", myProject.getName());
@@ -510,7 +503,7 @@ public class AnalysisScope {
 
       case MODULES:
         String modules = StringUtil.join(myModules, Module::getName, ", ");
-        return AnalysisScopeBundle.message("scope.module.list", modules, Integer.valueOf(myModules.size()));
+        return AnalysisScopeBundle.message("scope.module.list", modules, myModules.size());
 
       case PROJECT:
         return AnalysisScopeBundle.message("scope.project", myProject.getName());
