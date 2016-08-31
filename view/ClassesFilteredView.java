@@ -238,7 +238,7 @@ public class ClassesFilteredView extends BorderLayoutPanel {
       List<long[]> chunks = new SmartList<>();
       int size = classes.size();
       for (int begin = 0, end = Math.min(batchSize, size);
-           begin != size && contextIsValid();
+           begin != size && isContextValid();
            begin = end, end = Math.min(end + batchSize, size)) {
         List<ReferenceType> batch = classes.subList(begin, end);
 
@@ -252,21 +252,21 @@ public class ClassesFilteredView extends BorderLayoutPanel {
         LOG.info(String.format("Instances query time = %d ms. Count = %d", delay, batch.size()));
       }
 
-      final long[] counts = chunks.size() == 1 ? chunks.get(0) : IntStream.range(0, chunks.size()).boxed()
-          .flatMapToLong(integer -> Arrays.stream(chunks.get(integer)))
-          .toArray();
+      if(isContextValid()) {
+        final long[] counts = chunks.size() == 1 ? chunks.get(0) : IntStream.range(0, chunks.size()).boxed()
+            .flatMapToLong(integer -> Arrays.stream(chunks.get(integer)))
+            .toArray();
+        SwingUtilities.invokeLater(() -> myTable.setClassesAndUpdateCounts(classes, counts));
+      }
 
-      SwingUtilities.invokeLater(() -> {
-        myTable.setClassesAndUpdateCounts(classes, counts);
-        myTable.setBusy(false);
-      });
+      SwingUtilities.invokeLater(() -> myTable.setBusy(false));
     }
 
     @Override
     public void commandCancelled() {
     }
 
-    private boolean contextIsValid() {
+    private boolean isContextValid() {
       return ClassesFilteredView.this.getSuspendContext() == getSuspendContext();
     }
   }
