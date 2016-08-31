@@ -73,16 +73,15 @@ public class GitFileAnnotation extends FileAnnotation {
     }
   };
 
-  public GitFileAnnotation(@NotNull final Project project,
+  public GitFileAnnotation(@NotNull Project project,
                            @NotNull VirtualFile file,
-                           @Nullable final VcsRevisionNumber revision,
+                           @Nullable VcsRevisionNumber revision,
                            @NotNull List<LineInfo> lines) {
     super(project);
     myProject = project;
     myFile = file;
     myVcs = ObjectUtils.assertNotNull(GitVcs.getInstance(myProject));
-    myBaseRevision = revision == null ? (myVcs.getDiffProvider().getCurrentRevision(file)) : revision;
-
+    myBaseRevision = revision;
     myLines = lines;
   }
 
