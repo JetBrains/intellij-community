@@ -43,7 +43,7 @@ class GitGuiTest : GuiTestCase() {
 
     val welcomeFrame = WelcomeFrameFixture.find(myRobot)
     welcomeFrame.checkoutFrom()
-    ListPopupFixture.findListPopup(myRobot).invokeAction(vcsName)
+    JBListPopupFixture.findListPopup(myRobot).invokeAction(vcsName)
 
     val cloneVcsDialog = DialogFixture(myRobot, IdeaDialogFixture.find(myRobot, CloneDvcsDialog::class.java).dialog) //don't miss robot as the first argument or you'll stuck with a deadlock
     with(cloneVcsDialog) {

@@ -34,23 +34,23 @@ import static org.fest.swing.timing.Pause.pause;
 /**
  * Created by jetbrains on 29/08/16.
  */
-public class ListPopupFixture extends JComponentFixture<ListPopupFixture, JBList> {
+public class JBListPopupFixture extends JComponentFixture<JBListPopupFixture, JBList> {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.tests.gui.fixtures.ListPopupFixture");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.tests.gui.fixtures.JBListPopupFixture");
 
   private JBList myJBList;
   private Robot myRobot;
 
-  private ListPopupFixture(JBList jbList, Robot robot) {
-    super(ListPopupFixture.class, robot, jbList);
+  private JBListPopupFixture(JBList jbList, Robot robot) {
+    super(JBListPopupFixture.class, robot, jbList);
 
     myJBList = jbList;
     myRobot = robot;
   }
 
-  public static ListPopupFixture findListPopup(Robot robot) {
+  public static JBListPopupFixture findListPopup(Robot robot) {
 
-    pause(new Condition("Find list popup") {
+    pause(new Condition("Find JBList popup") {
       @Override
       public boolean test() {
         final JBList jblist = getList(robot);
@@ -61,7 +61,7 @@ public class ListPopupFixture extends JComponentFixture<ListPopupFixture, JBList
     final JBList jblist = getList(robot);
     Assert.assertNotNull(jblist);
 
-    return new ListPopupFixture(jblist, robot);
+    return new JBListPopupFixture(jblist, robot);
   }
 
   private static JBList getList(Robot robot) {

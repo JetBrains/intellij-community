@@ -15,7 +15,6 @@
  */
 package com.intellij.tests.gui.fixtures.DialogFixtures;
 
-import com.intellij.find.impl.FindDialog;
 import com.intellij.ide.actions.CreateFileFromTemplateDialog;
 import com.intellij.tests.gui.fixtures.IdeaDialogFixture;
 import com.intellij.tests.gui.framework.GuiTests;
