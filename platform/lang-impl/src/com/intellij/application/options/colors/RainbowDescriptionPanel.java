@@ -142,6 +142,7 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
 
     for (int i = 0; i < myLStops.length; ++i) {
       myLStops[i].setEnabled(isEnable && isDefaultLanguage);
+      myStops[i].setEnabled(rainbowOn);
       myStops[i].setEditable(isEnable && isDefaultLanguage);
       myStops[i].setSelectedColor(editedColorsScheme.getAttributes(RainbowHighlighter.RAINBOW_COLOR_KEYS[i]).getForegroundColor());
     }

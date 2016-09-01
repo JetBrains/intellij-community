@@ -17,14 +17,10 @@ package com.intellij.openapi.options.colors;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface RainbowColorSettingsPage extends ColorSettingsPage {
   boolean isRainbowType(TextAttributesKey type);
-
-  @NotNull
-  String getRainbowDemoText();
 
   @Nullable
   Language getLanguage();

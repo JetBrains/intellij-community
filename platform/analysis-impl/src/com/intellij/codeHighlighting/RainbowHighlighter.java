@@ -27,7 +27,6 @@ import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.SchemeMetaInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.ColorUtil;
@@ -38,7 +37,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 public class RainbowHighlighter {
@@ -56,11 +57,17 @@ public class RainbowHighlighter {
 
   static {
     for (int i = 0; i < RAINBOW_JB_COLORS_DEFAULT.length; ++i) {
+      //noinspection deprecation
       RAINBOW_COLOR_KEYS[i] = TextAttributesKey.createTextAttributesKey("RAINBOW_COLOR" + i, createRainbowAttribute(RAINBOW_JB_COLORS_DEFAULT[i]));
     }
   }
   public final static String RAINBOW_TYPE = "rainbow";
   private final static String RAINBOW_TEMP_PREF = "RAINBOW_TEMP_";
+
+  @SuppressWarnings("deprecation")
+  public final static TextAttributesKey RAINBOW_ANCHOR = TextAttributesKey.createTextAttributesKey(RAINBOW_TYPE, new TextAttributes());
+  @SuppressWarnings("deprecation")
+  public final static TextAttributesKey RAINBOW_GRADIENT_DEMO = TextAttributesKey.createTextAttributesKey("rainbow_demo", new TextAttributes());
   public final static Boolean DEFAULT_RAINBOW_ON = Boolean.FALSE;
 
   @NotNull private final TextAttributesScheme myColorsScheme;
@@ -106,28 +113,20 @@ public class RainbowHighlighter {
     return RAINBOW_TYPE + " " + (language == null ? "Default language" : language.getID());
   }
 
-  public static int hashColor(@NotNull String name, int colorsCount) {
-    return Math.abs(StringHash.murmur(name, 0x55AA)) % colorsCount;
-  }
-
-  public static int getColorIndex(@NotNull int[] index2usage, int hashedIndex, int colorsCount) {
-    int minIndex1 = indexOfMin(index2usage, hashedIndex, colorsCount);
-    int minIndex2 = indexOfMin(index2usage, 0, hashedIndex);
-    return index2usage[minIndex1] <= index2usage[minIndex2] ? minIndex1 : minIndex2;
-  }
-
-  @Contract(pure = true)
-  private static int indexOfMin(@NotNull int[] index2usage, int start, int end) {
-    int min = Integer.MAX_VALUE;
-    int minIndex = start;
-    for (int i = start; i < end; i++) {
-      int value = index2usage[i];
-      if (value < min) {
-        min = value;
-        minIndex = i;
+  @NotNull
+  public static String generatePaletteExample() {
+    int stopCount = RAINBOW_COLOR_KEYS.length;
+    StringBuilder sb = new StringBuilder();
+    String tagRainbow = RAINBOW_GRADIENT_DEMO.getExternalName();
+    for (int i = 0; i < RAINBOW_TEMP_KEYS.length; ++i) {
+      if (sb.length() != 0) {
+        sb.append(" ");
       }
+      sb.append("<").append(tagRainbow).append(">");
+      sb.append((i % stopCount == 0) ? "Stop#" + String.valueOf(i / stopCount + 1) : "T");
+      sb.append("</").append(tagRainbow).append(">");
     }
-    return minIndex;
+    return sb.toString();
   }
 
   @NotNull
@@ -160,6 +159,7 @@ public class RainbowHighlighter {
   public TextAttributesKey[] getRainbowTempKeys() {
     TextAttributesKey[] keys = new TextAttributesKey[myRainbowColors.length];
     for (int i = 0; i < myRainbowColors.length; ++i) {
+      //noinspection deprecation
       TextAttributesKey key = TextAttributesKey.createTextAttributesKey(RAINBOW_TEMP_PREF + i, new TextAttributes());
       key.getDefaultAttributes().setForegroundColor(myRainbowColors[i]);
       keys[i] = key;
@@ -193,10 +193,22 @@ public class RainbowHighlighter {
                                          .withForeground(calculateForeground(colorIndex))));
   }
 
+  private static final TextAttributesKey[] RAINBOW_TEMP_KEYS = new RainbowHighlighter(null).getRainbowTempKeys();
+
   @NotNull
   public static  TextAttributes createRainbowAttribute(@Nullable Color color) {
     TextAttributes ret = new TextAttributes();
     ret.setForegroundColor(color);
     return ret;
+  }
+
+  public static Map<String, TextAttributesKey> createRainbowHLM() {
+    Map<String, TextAttributesKey> hashMap = new HashMap<>();
+    hashMap.put(RAINBOW_ANCHOR.getExternalName(), RAINBOW_ANCHOR);
+    hashMap.put(RAINBOW_GRADIENT_DEMO.getExternalName(), RAINBOW_GRADIENT_DEMO);
+    for (TextAttributesKey key : RAINBOW_TEMP_KEYS) {
+      hashMap.put(key.getExternalName(), key);
+    }
+    return hashMap;
   }
 }

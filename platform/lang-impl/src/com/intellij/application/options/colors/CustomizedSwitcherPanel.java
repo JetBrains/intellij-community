@@ -15,26 +15,17 @@
  */
 package com.intellij.application.options.colors;
 
-import com.intellij.application.options.colors.highlighting.HighlightData;
-import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.options.colors.RainbowColorSettingsPage;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
-import java.util.List;
 
 class CustomizedSwitcherPanel extends JPanel implements OptionsPanelImpl.ColorDescriptionPanel {
   private ColorSettingsPage myPage;
@@ -120,37 +111,6 @@ class CustomizedSwitcherPanel extends JPanel implements OptionsPanelImpl.ColorDe
     return null;
   }
 
-  private void addRainbowHighlighting(@NotNull DocumentEx document,
-                                      @Nullable List<HighlightData> showLineData,
-                                      @NotNull List<HighlightData> data,
-                                      @NotNull TextAttributesKey[] rainbowTempKeys) {
-    int colorCount = rainbowTempKeys.length;
-    if (colorCount != 0) {
-      List<HighlightData> newData = new ArrayList<>();
-      if (showLineData != null) newData.addAll(showLineData);
-
-      int[] index2usage = new int[colorCount];
-      for (HighlightData d : data) {
-        if (((RainbowColorSettingsPage)myPage).isRainbowType(d.getHighlightKey())) {
-          String id = document.getText(TextRange.create(d.getStartOffset(), d.getEndOffset()));
-
-          int index = RainbowHighlighter.getColorIndex(index2usage, RainbowHighlighter.hashColor(id, colorCount), colorCount);
-          ++index2usage[index];
-          HighlightData rainbow = new HighlightData(d.getStartOffset(), d.getEndOffset(), rainbowTempKeys[index]);
-
-          //fixme: twisted coloring in editor. We need add rainbow-tag twice.
-          newData.add(rainbow);
-          newData.add(d);
-          newData.add(rainbow);
-        }
-        else {
-          newData.add(d);
-        }
-      }
-      data.clear();
-      data.addAll(newData);
-    }
-  }
 
   @Override
   public void apply(@NotNull EditorSchemeAttributeDescriptor descriptor, EditorColorsScheme scheme) {
@@ -161,71 +121,12 @@ class CustomizedSwitcherPanel extends JPanel implements OptionsPanelImpl.ColorDe
   }
 
   protected void updatePreviewPanel(@NotNull EditorSchemeAttributeDescriptor descriptor) {
-    if (!(myPreviewPanel instanceof SimpleEditorPreview)) return;
+    if (!(myPreviewPanel instanceof SimpleEditorPreview && myPage instanceof RainbowColorSettingsPage)) return;
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> ApplicationManager.getApplication().runWriteAction(() -> {
       SimpleEditorPreview simpleEditorPreview = (SimpleEditorPreview)myPreviewPanel;
-      try {
-        simpleEditorPreview.setNavigationBlocked(true);
-        String demoText = (myPage instanceof RainbowColorSettingsPage
-                           && descriptor instanceof RainbowAttributeDescriptor)
-                          ? ((RainbowColorSettingsPage)myPage).getRainbowDemoText()
-                          : myPage.getDemoText();
-        List<HighlightData> showLineData = null;
-
-        if (myPage instanceof RainbowColorSettingsPage
-            && RainbowHighlighter.isRainbowEnabledWithInheritance(descriptor.getScheme(),
-                                                                  ((RainbowColorSettingsPage)myPage).getLanguage())) {
-          RainbowHighlighter highlighter = new RainbowHighlighter(descriptor.getScheme());
-          TextAttributesKey[] tempKeys = highlighter.getRainbowTempKeys();
-          EditorEx editor = simpleEditorPreview.getEditor();
-          if (myActive == myRainbowPanel) {
-            Pair<String, List<HighlightData>> demo = getColorDemoLine(highlighter, tempKeys);
-            simpleEditorPreview.setDemoText(demo.first + "\n" + demoText);
-            showLineData = demo.second;
-          }
-          else {
-            simpleEditorPreview.setDemoText(demoText);
-          }
-          addRainbowHighlighting(editor.getDocument(),
-                                 showLineData,
-                                 simpleEditorPreview.getHighlightDataForExtension(),
-                                 tempKeys);
-        }
-        else {
-          simpleEditorPreview.setDemoText(demoText);
-        }
-
-        simpleEditorPreview.updateView();
-        if (descriptor instanceof RainbowAttributeDescriptor) {
-          simpleEditorPreview.scrollHighlightInView(showLineData);
-        }
-      }
-      finally {
-        simpleEditorPreview.setNavigationBlocked(false);
-      }
+      simpleEditorPreview.setupRainbow(descriptor.getScheme(), (RainbowColorSettingsPage)myPage);
+      simpleEditorPreview.updateView();
     }));
-  }
-
-  @NotNull
-  private static Pair<String, List<HighlightData>> getColorDemoLine(RainbowHighlighter highlighter, TextAttributesKey[] tempKeys) {
-    int colorsCount = highlighter.getColorsCount();
-    int stopCount = RainbowHighlighter.RAINBOW_COLOR_KEYS.length;
-    List<HighlightData> markup = new ArrayList<>(colorsCount);
-    StringBuilder sb = new StringBuilder();
-    int pos = 0;
-    int i = 0;
-    for (TextAttributesKey key : tempKeys) {
-      String toAdd = (i % stopCount == 0) ? "Stop#" + String.valueOf(i / stopCount + 1) : "T";
-      int end = pos + toAdd.length();
-      markup.add(new HighlightData(pos, end, key));
-      if (sb.length() != 0) {
-        sb.append(" ");
-      }
-      sb.append(toAdd);
-      pos = end + 1;
-      ++i;
-    }
-    return Pair.create(sb.toString(), markup);
   }
 
   @Override

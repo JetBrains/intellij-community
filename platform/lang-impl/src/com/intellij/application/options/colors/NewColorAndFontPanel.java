@@ -148,13 +148,7 @@ public class NewColorAndFontPanel extends JPanel {
     if (myOptionList == null) {
       return myOptionsPanel.processListOptions();
     }
-    else {
-      final HashSet<String> result = new HashSet<>();
-      for (String s : myOptionList) {
-        result.add(s);
-      }
-      return result;
-    }
+    return new HashSet<>(myOptionList);
   }
 
 
