@@ -32,6 +32,7 @@ package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -59,6 +60,10 @@ public class TagLabelPainter implements ReferencePainter {
   public static final int GRADIENT_WIDTH = JBUI.scale(50);
   public static final int RIGHT_PADDING = JBUI.scale(5);
   public static final int MIDDLE_PADDING = JBUI.scale(5);
+  private static final int MAX_LENGTH = 22;
+  private static final String THREE_DOTS = "...";
+  private static final String TWO_DOTS = "..";
+  private static final String SEPARATOR = "/";
 
   @NotNull
   private List<Pair<String, TagIcon>> myLabels = ContainerUtil.newArrayList();
@@ -88,7 +93,7 @@ public class TagLabelPainter implements ReferencePainter {
       if (group.isExpanded()) {
         for (VcsRef ref : group.getRefs()) {
           TagIcon tagIcon = new TagIcon(myHeight, myBackground, ref.getType().getBackgroundColor());
-          String text = ref.getName();
+          String text = shortenRefName(ref.getName());
 
           myLabels.add(Pair.create(text, tagIcon));
           myWidth += tagIcon.getIconWidth() + metrics.stringWidth(text) + MIDDLE_PADDING;
@@ -97,12 +102,25 @@ public class TagLabelPainter implements ReferencePainter {
       else {
 
         TagIcon tagIcon = new TagIcon(myHeight, myBackground, getGroupColors(group));
-        String text = group.getName();
+        String text = shortenRefName(group.getName());
 
         myLabels.add(Pair.create(text, tagIcon));
         myWidth += tagIcon.getIconWidth() + metrics.stringWidth(text) + MIDDLE_PADDING;
       }
     }
+  }
+
+  @NotNull
+  private static String shortenRefName(@NotNull String refName) {
+    int textLength = refName.length();
+    if (textLength > MAX_LENGTH) {
+      int separatorIndex = refName.indexOf(SEPARATOR);
+      if (separatorIndex > TWO_DOTS.length()) {
+        refName = TWO_DOTS + refName.substring(separatorIndex);
+      }
+      return StringUtil.shortenTextWithEllipsis(refName, MAX_LENGTH, 0, THREE_DOTS);
+    }
+    return refName;
   }
 
   @NotNull
