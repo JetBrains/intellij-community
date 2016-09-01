@@ -15,10 +15,17 @@
  */
 package com.intellij.errorreport.crash;
 
+import com.android.tools.analytics.Anonymizer;
+import com.android.utils.NullLogger;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Joiner;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
@@ -33,6 +40,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+import java.lang.management.MemoryUsage;
+import java.lang.management.RuntimeMXBean;
+import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ForkJoinPool;
 
@@ -48,6 +60,10 @@ public class GoogleCrash {
   private static final String CRASH_URL =
     (UNIT_TEST_MODE || DEBUG_BUILD) ? "https://clients2.google.com/cr/staging_report" : "https://clients2.google.com/cr/report";
 
+  @Nullable
+  private static final String ANONYMIZED_UID = getAnonymizedUid();
+  private static final String LOCALE = Locale.getDefault() == null ? "unknown" : Locale.getDefault().toString();
+
   // The standard keys expected by crash backend. The product id and version are required, others are optional.
   static final String KEY_PRODUCT_ID = "productId";
   static final String KEY_VERSION = "version";
@@ -55,6 +71,20 @@ public class GoogleCrash {
 
   private static GoogleCrash ourInstance;
   private final String myCrashUrl;
+
+  @Nullable
+  private static String getAnonymizedUid() {
+    if (UNIT_TEST_MODE) {
+      return "UnitTest";
+    }
+
+    try {
+      return Anonymizer.anonymizeUtf8(new NullLogger(), UpdateChecker.getInstallationUID(PropertiesComponent.getInstance()));
+    }
+    catch (IOException e) {
+      return null;
+    }
+  }
 
   private GoogleCrash() {
     this(CRASH_URL);
@@ -110,10 +140,32 @@ public class GoogleCrash {
 
     MultipartEntityBuilder builder = MultipartEntityBuilder.create();
 
+    // key names recognized by crash
     builder.addTextBody(KEY_PRODUCT_ID, report.productId);
     builder.addTextBody(KEY_VERSION, strictVersion);
     builder.addTextBody(KEY_EXCEPTION_INFO, report.exceptionInfo);
+    if (ANONYMIZED_UID != null) {
+      builder.addTextBody("guid", ANONYMIZED_UID);
+    }
+    RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
+    builder.addTextBody("ptime", Long.toString(runtimeMXBean.getUptime()));
+
+    // product specific key value pairs
     builder.addTextBody("fullVersion", applicationInfo == null ? "0.0.0.0" : applicationInfo.getFullVersion());
+
+    builder.addTextBody("osName", StringUtil.notNullize(SystemInfo.OS_NAME));
+    builder.addTextBody("osVersion", StringUtil.notNullize(SystemInfo.OS_VERSION));
+    builder.addTextBody("osArch", StringUtil.notNullize(SystemInfo.OS_ARCH));
+    builder.addTextBody("locale", StringUtil.notNullize(LOCALE));
+
+    builder.addTextBody("vmName", StringUtil.notNullize(runtimeMXBean.getVmName()));
+    builder.addTextBody("vmVendor", StringUtil.notNullize(runtimeMXBean.getVmVendor()));
+    builder.addTextBody("vmVersion", StringUtil.notNullize(runtimeMXBean.getVmVersion()));
+
+    MemoryUsage usage = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
+    builder.addTextBody("heapUsed", Long.toString(usage.getUsed()));
+    builder.addTextBody("heapCommitted", Long.toString(usage.getCommitted()));
+    builder.addTextBody("heapMax", Long.toString(usage.getMax()));
 
     post.setEntity(builder.build());
     return post;
