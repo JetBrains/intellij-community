@@ -36,6 +36,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.EmptyClipboardOwner;
@@ -96,18 +97,11 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
    */
   private int myDesiredX = -1;
 
-  private volatile RangeMarker mySelectionMarker;
+  private volatile SelectionMarker mySelectionMarker;
   private volatile VisualPosition myRangeMarkerStartPosition;
   private volatile VisualPosition myRangeMarkerEndPosition;
   private volatile boolean myRangeMarkerEndPositionIsLead;
-
-  private int startBefore;
-  private int endBefore;
   boolean myUnknownDirection;
-  // offsets of selection start/end position relative to end of line - can be non-zero in column selection mode
-  // these are non-negative values, myStartVirtualOffset is always less or equal to myEndVirtualOffset
-  private int myStartVirtualOffset;
-  private int myEndVirtualOffset;
 
   private boolean myAfterInlayOnDocumentUpdate;
 
@@ -127,7 +121,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     Document doc = myEditor.getDocument();
     if (myOffset > doc.getTextLength() || savedBeforeBulkCaretMarker != null) return;
     savedBeforeBulkCaretMarker = doc.createRangeMarker(myOffset, myOffset);
-    saveSelectionBeforeDocumentChange();
   }
 
   void onBulkDocumentUpdateFinished() {
@@ -145,7 +138,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       }
       releaseBulkCaretMarker();
     }
-    updateSelectionOnDocumentChange();
   }
 
   void beforeDocumentChange(DocumentEvent e) {
@@ -157,44 +149,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
                                    !insideChangedRegion &&
                                    myLogicalCaret.leansForward &&
                                    myEditor.getInlayModel().hasInlineElementAt(myOffset);
-    saveSelectionBeforeDocumentChange();
-  }
-
-  void saveSelectionBeforeDocumentChange() {
-    RangeMarker marker = mySelectionMarker;
-    if (marker != null && marker.isValid()) {
-      startBefore = marker.getStartOffset();
-      endBefore = marker.getEndOffset();
-    }
-  }
-
-  private void updateSelectionOnDocumentChange() {
-    RangeMarker marker = mySelectionMarker;
-    if (marker != null) {
-      int endAfter;
-      int startAfter;
-      if (marker.isValid()) {
-        startAfter = marker.getStartOffset();
-        endAfter = marker.getEndOffset();
-        if (myEndVirtualOffset > 0 && (!isVirtualSelectionEnabled()
-                                       || !EditorUtil.isAtLineEnd(myEditor, endAfter)
-                                       || myEditor.getDocument().getLineNumber(startAfter) != myEditor.getDocument().getLineNumber(endAfter))) {
-          myStartVirtualOffset = 0;
-          myEndVirtualOffset = 0;
-        }
-      }
-      else {
-        startAfter = endAfter = getOffset();
-        marker.dispose();
-        myStartVirtualOffset = 0;
-        myEndVirtualOffset = 0;
-        mySelectionMarker = null;
-      }
-
-      if (startBefore != startAfter || endBefore != endAfter) {
-        myEditor.getSelectionModel().fireSelectionChanged(startBefore, endBefore, startAfter, endAfter);
-      }
-    }
   }
 
   @Override
@@ -870,8 +824,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
         moveToOffset(newOffset, performSoftWrapAdjustment);
       }
     }
-
-    updateSelectionOnDocumentChange();
   }
 
   void onInlayAdded(int offset) {
@@ -1077,11 +1029,12 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   public VisualPosition getSelectionStartPosition() {
     validateContext(false);
     VisualPosition position;
-    if (hasSelection() && mySelectionMarker != null) {
+    SelectionMarker marker = mySelectionMarker;
+    if (hasSelection()) {
       position = getRangeMarkerStartPosition();
       if (position == null) {
-        VisualPosition startPosition = myEditor.offsetToVisualPosition(mySelectionMarker.getStartOffset(), true, false);
-        VisualPosition endPosition = myEditor.offsetToVisualPosition(mySelectionMarker.getEndOffset(), false, true);
+        VisualPosition startPosition = myEditor.offsetToVisualPosition(marker.getStartOffset(), true, false);
+        VisualPosition endPosition = myEditor.offsetToVisualPosition(marker.getEndOffset(), false, true);
         position = startPosition.after(endPosition) ? endPosition : startPosition;
       }
     }
@@ -1090,7 +1043,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
                  myEditor.offsetToVisualPosition(getOffset(), myLogicalCaret.leansForward, false);
     }
     if (hasVirtualSelection()) {
-      position = new VisualPosition(position.line, position.column + myStartVirtualOffset);
+      position = new VisualPosition(position.line, position.column + marker.startVirtualOffset);
     }
     return position;
   }
@@ -1112,11 +1065,12 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   public VisualPosition getSelectionEndPosition() {
     validateContext(false);
     VisualPosition position;
-    if (hasSelection() && mySelectionMarker != null) {
+    SelectionMarker marker = mySelectionMarker;
+    if (hasSelection()) {
       position = getRangeMarkerEndPosition();
       if (position == null) {
-        VisualPosition startPosition = myEditor.offsetToVisualPosition(mySelectionMarker.getStartOffset(), true, false);
-        VisualPosition endPosition = myEditor.offsetToVisualPosition(mySelectionMarker.getEndOffset(), false, true);
+        VisualPosition startPosition = myEditor.offsetToVisualPosition(marker.getStartOffset(), true, false);
+        VisualPosition endPosition = myEditor.offsetToVisualPosition(marker.getEndOffset(), false, true);
         position = startPosition.after(endPosition) ? startPosition : endPosition;
       }
     }
@@ -1125,7 +1079,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
                  myEditor.offsetToVisualPosition(getOffset(), myLogicalCaret.leansForward, false);
     }
     if (hasVirtualSelection()) {
-      position = new VisualPosition(position.line, position.column + myEndVirtualOffset);
+      position = new VisualPosition(position.line, position.column + marker.endVirtualOffset);
     }
     return position;
   }
@@ -1133,9 +1087,9 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   @Override
   public boolean hasSelection() {
     validateContext(false);
-    RangeMarker marker = mySelectionMarker;
+    SelectionMarker marker = mySelectionMarker;
     return marker != null && marker.isValid() && (marker.getEndOffset() > marker.getStartOffset()
-                                                  || isVirtualSelectionEnabled() && myEndVirtualOffset > myStartVirtualOffset);
+                                                  || isVirtualSelectionEnabled() && marker.hasVirtualSelection());
   }
 
   @Override
@@ -1238,14 +1192,12 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
         oldSelectionStart = oldSelectionEnd = getOffset();
       }
 
-      RangeMarker marker = mySelectionMarker;
+      SelectionMarker marker = mySelectionMarker;
       if (marker != null) {
         marker.dispose();
       }
 
-      marker = doc.createRangeMarker(startOffset, endOffset);
-      myStartVirtualOffset = 0;
-      myEndVirtualOffset = 0;
+      marker = new SelectionMarker(startOffset, endOffset);
       if (visualPositionAware) {
         if (endPosition.after(startPosition)) {
           setRangeMarkerStartPosition(startPosition);
@@ -1265,8 +1217,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
             EditorUtil.isAtLineEnd(myEditor, switchedOffsets ? endOffset : startOffset) ? startPosition.column - endLineColumn : 0;
           int endDiff =
             EditorUtil.isAtLineEnd(myEditor, switchedOffsets ? startOffset : endOffset) ? endPosition.column - endLineColumn : 0;
-          myStartVirtualOffset = Math.max(0, Math.min(startDiff, endDiff));
-          myEndVirtualOffset = Math.max(0, Math.max(startDiff, endDiff));
+          marker.startVirtualOffset = Math.max(0, Math.min(startDiff, endDiff));
+          marker.endVirtualOffset = Math.max(0, Math.max(startDiff, endDiff));
         }
       }
       mySelectionMarker = marker;
@@ -1299,13 +1251,11 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       validateContext(true);
       int caretOffset = getOffset();
       RangeMarker marker = mySelectionMarker;
-      if (marker != null) {
+      if (marker != null && marker.isValid()) {
         int startOffset = marker.getStartOffset();
         int endOffset = marker.getEndOffset();
         marker.dispose();
         mySelectionMarker = null;
-        myStartVirtualOffset = 0;
-        myEndVirtualOffset = 0;
         myEditor.getSelectionModel().fireSelectionChanged(startOffset, endOffset, caretOffset, caretOffset);
       }
     });
@@ -1317,7 +1267,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     int caretOffset = getOffset();
     if (hasSelection()) {
       RangeMarker marker = mySelectionMarker;
-      if (marker != null) {
+      if (marker != null && marker.isValid()) {
         int startOffset = marker.getStartOffset();
         int endOffset = marker.getEndOffset();
         if (caretOffset != startOffset && caretOffset != endOffset) {
@@ -1348,12 +1298,12 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   @NotNull
   @Override
   public VisualPosition getLeadSelectionPosition() {
-    RangeMarker marker = mySelectionMarker;
+    SelectionMarker marker = mySelectionMarker;
     VisualPosition caretPosition = getVisualPosition();
     if (isVirtualSelectionEnabled() && !hasSelection()) {
       return caretPosition;
     }
-    if (marker == null) {
+    if (marker == null || !marker.isValid()) {
       return caretPosition;
     }
 
@@ -1364,7 +1314,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       }
       else {
         if (hasVirtualSelection()) {
-          result = new VisualPosition(result.line, result.column + myEndVirtualOffset);
+          result = new VisualPosition(result.line, result.column + marker.endVirtualOffset);
         }
         return result;
       }
@@ -1376,7 +1326,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       }
       else {
         if (hasVirtualSelection()) {
-          result = new VisualPosition(result.line, result.column + myStartVirtualOffset);
+          result = new VisualPosition(result.line, result.column + marker.startVirtualOffset);
         }
         return result;
       }
@@ -1420,12 +1370,13 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     if (!hasSelection()) {
       return null;
     }
+    SelectionMarker selectionMarker = mySelectionMarker;
     CharSequence text = myEditor.getDocument().getCharsSequence();
     int selectionStart = getSelectionStart();
     int selectionEnd = getSelectionEnd();
     String selectedText = text.subSequence(selectionStart, selectionEnd).toString();
-    if (isVirtualSelectionEnabled() && myEndVirtualOffset > myStartVirtualOffset) {
-      int padding = myEndVirtualOffset - myStartVirtualOffset;
+    if (isVirtualSelectionEnabled() && selectionMarker.hasVirtualSelection()) {
+      int padding = selectionMarker.endVirtualOffset - selectionMarker.startVirtualOffset;
       StringBuilder builder = new StringBuilder(selectedText.length() + padding);
       builder.append(selectedText);
       for (int i = 0; i < padding; i++) {
@@ -1454,8 +1405,13 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
   boolean hasVirtualSelection() {
     validateContext(false);
-    RangeMarker marker = mySelectionMarker;
-    return marker != null && marker.isValid() && isVirtualSelectionEnabled() && myEndVirtualOffset > myStartVirtualOffset;
+    SelectionMarker marker = mySelectionMarker;
+    return marker != null && marker.isValid() && isVirtualSelectionEnabled() && marker.hasVirtualSelection();
+  }
+
+  void resetVirtualSelection() {
+    SelectionMarker marker = mySelectionMarker;
+    if (marker != null) marker.resetVirtualSelection();
   }
 
   private int getCurrentX() {
@@ -1502,12 +1458,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
            ", rangeMarker start position: " + myRangeMarkerStartPosition +
            ", rangeMarker end position: " + myRangeMarkerEndPosition +
            ", rangeMarker end position is lead: " + myRangeMarkerEndPositionIsLead +
-           ", selection start before change: " + startBefore +
-           ", selection end after change: " + endBefore +
            ", unknown direction: " + myUnknownDirection +
-           ", virtual space offset: " + myVirtualSpaceOffset +
-           ", virtual selection start offset: " + myStartVirtualOffset +
-           ", virtual selection end offset: " + myEndVirtualOffset + '}';
+           ", virtual space offset: " + myVirtualSpaceOffset + '}';
   }
 
   /**
@@ -1562,6 +1514,52 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
         && model.getSoftWrap(endOffset) == null && !inlayModel.hasInlineElementAt(endOffset)) {
       myRangeMarkerStartPosition = null;
       myRangeMarkerEndPosition = null;
+    }
+  }
+
+  class SelectionMarker extends RangeMarkerImpl {
+    // offsets of selection start/end position relative to end of line - can be non-zero in column selection mode
+    // these are non-negative values, myStartVirtualOffset is always less or equal to myEndVirtualOffset
+    private int startVirtualOffset;
+    private int endVirtualOffset;
+
+    private SelectionMarker(int start, int end) {
+      super(myEditor.getDocument(), start, end, false);
+      myEditor.getCaretModel().mySelectionMarkerTree.addInterval(this, start, end, false, false, 0);
+    }
+
+    private void resetVirtualSelection() {
+      startVirtualOffset = 0;
+      endVirtualOffset = 0;
+    }
+
+    private boolean hasVirtualSelection() {
+      return endVirtualOffset > startVirtualOffset;
+    }
+
+    @Override
+    public void dispose() {
+      if (isValid()) {
+        myEditor.getCaretModel().mySelectionMarkerTree.removeInterval(this);
+      }
+    }
+
+    @Override
+    protected void changedUpdateImpl(@NotNull DocumentEvent e) {
+      super.changedUpdateImpl(e);
+      if (endVirtualOffset > 0 && isValid()) {
+        Document document = e.getDocument();
+        int startAfter = intervalStart();
+        int endAfter = intervalEnd();
+        if (!DocumentUtil.isAtLineEnd(endAfter, document) || document.getLineNumber(startAfter) != document.getLineNumber(endAfter)) {
+          resetVirtualSelection();
+        }
+      }
+    }
+
+    @Override
+    public String toString() {
+      return super.toString() + (hasVirtualSelection() ? (" virtual selection: " + startVirtualOffset + "-" + endVirtualOffset) : "");
     }
   }
 }

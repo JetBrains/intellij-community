@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -41,6 +42,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.*;
 
 public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, Disposable, Dumpable, InlayModel.Listener {
@@ -52,13 +55,27 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   boolean myIsInUpdate;
 
+  final RangeMarkerTree<CaretImpl.SelectionMarker> mySelectionMarkerTree;
+
   private final LinkedList<CaretImpl> myCarets = new LinkedList<>();
   private CaretImpl myCurrentCaret; // active caret in the context of 'runForEachCaret' call
   private boolean myPerformCaretMergingAfterCurrentOperation;
 
   public CaretModelImpl(EditorImpl editor) {
     myEditor = editor;
+    myEditor.addPropertyChangeListener(new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        if (EditorEx.PROP_COLUMN_MODE.equals(evt.getPropertyName()) && !myEditor.isColumnMode()) {
+          for (CaretImpl caret : myCarets) {
+            caret.resetVirtualSelection();
+          }
+        }
+      }
+    }, this);
     myCarets.add(new CaretImpl(myEditor));
+
+    mySelectionMarkerTree = new RangeMarkerTree<>(myEditor.getDocument());
   }
 
   void onBulkDocumentUpdateStarted() {

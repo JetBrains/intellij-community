@@ -112,4 +112,8 @@ public final class DocumentUtil {
   public static boolean isAtLineStart(int offset, @NotNull Document document) {
     return offset >= 0 && offset <= document.getTextLength() && offset == document.getLineStartOffset(document.getLineNumber(offset));
   }
+
+  public static boolean isAtLineEnd(int offset, @NotNull Document document) {
+    return offset >= 0 && offset <= document.getTextLength() && offset == document.getLineEndOffset(document.getLineNumber(offset));
+  }
 }
