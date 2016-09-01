@@ -72,15 +72,13 @@ private class CredentialStoreWrapper(private val store: CredentialStore) : Passw
 
     LOG.catchAndLog {
       fun setNew(oldKey: CredentialAttributes): Credentials? {
-        store.get(oldKey)?.let {
+        return store.get(oldKey)?.let {
           set(oldKey, null)
 
           // https://youtrack.jetbrains.com/issue/IDEA-160341
-          fun createCredentials() = Credentials(userName, it.password?.toCharArray(false)?.let { OneTimeString(it) })
-          set(attributes, createCredentials())
-          return createCredentials()
+          set(attributes, Credentials(userName, it.password?.clone(false, true)))
+          Credentials(userName, it.password)
         }
-        return null
       }
 
       // try old key - as hash

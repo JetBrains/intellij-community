@@ -13,7 +13,6 @@
 package org.zmlx.hg4idea.execution;
 
 import com.intellij.credentialStore.Credentials;
-import com.intellij.credentialStore.OneTimeString;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -141,7 +140,7 @@ class HgCommandAuthenticator {
     }
 
     public String getPassword() {
-      return myCredentials == null ? null : myCredentials.getPasswordAsString(false);
+      return myCredentials == null ? null : myCredentials.getPasswordAsString();
     }
 
     public boolean isOk() {
