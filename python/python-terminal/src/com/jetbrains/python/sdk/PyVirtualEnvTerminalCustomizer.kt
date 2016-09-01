@@ -47,13 +47,13 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
         val shellName = File(shellPath).name
 
         if (shellName == "bash" || shellName == "sh") {
-          //for bash and sh we pass activate script to jediterm shell integration (see jediterm-sh.in)
+          //for bash and sh we pass activate script to jediterm shell integration (see jediterm-sh.in) to source it there
           findActivateScript(path, shellPath)?.let { activate -> envs.put("JEDITERM_SOURCE", activate) }
         }
         else {
-          //for other shells we read envs from activate script by the default shell and pass it to the process
-          val pyVirtualEnvReader = PyVirtualEnvReader(path)
-          pyVirtualEnvReader.activate?.let { envs.putAll(pyVirtualEnvReader.readShellEnv()) }
+          //for other shells we read envs from activate script by the default shell and pass them to the process
+          val reader = PyVirtualEnvReader(path)
+          reader.activate?.let { envs.putAll(reader.readShellEnv()) }
         }
 
       }
