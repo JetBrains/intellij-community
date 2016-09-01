@@ -66,11 +66,11 @@ public class JavaEEProjectTest extends GuiTestCase {
     //select project type and framework
     newProjectWizard.
       selectProjectType("Java").
-      selectFramework("JavaEE Persistence").
-      clickNext().
-      setProjectName(projectName).
-      clickFinish();
+      selectFramework("JavaEE Persistence");
 
+    newProjectWizard.clickNext();
+
+    newProjectWizard.setProjectName(projectName);
     final File locationInFileSystem = newProjectWizard.getLocationInFileSystem();
     newProjectWizard.clickFinish();
 
