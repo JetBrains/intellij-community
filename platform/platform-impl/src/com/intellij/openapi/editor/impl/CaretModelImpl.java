@@ -51,7 +51,6 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   private TextAttributes myTextAttributes;
 
   boolean myIsInUpdate;
-  boolean isDocumentChanged;
 
   private final LinkedList<CaretImpl> myCarets = new LinkedList<>();
   private CaretImpl myCurrentCaret; // active caret in the context of 'runForEachCaret' call
@@ -78,19 +77,13 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   @Override
   public void documentChanged(final DocumentEvent e) {
-    isDocumentChanged = true;
-    try {
-      myIsInUpdate = false;
-      if (!myEditor.getDocument().isInBulkUpdate()) {
-        doWithCaretMerging(() -> {
-          for (CaretImpl caret : myCarets) {
-            caret.afterDocumentChange((DocumentEventImpl)e);
-          }
-        });
-      }
-    }
-    finally {
-      isDocumentChanged = false;
+    myIsInUpdate = false;
+    if (!myEditor.getDocument().isInBulkUpdate()) {
+      doWithCaretMerging(() -> {
+        for (CaretImpl caret : myCarets) {
+          caret.afterDocumentChange((DocumentEventImpl)e);
+        }
+      });
     }
   }
 
@@ -536,7 +529,6 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   @Override
   public String dumpState() {
     return "[in update: " + myIsInUpdate +
-           ", document changed: " + isDocumentChanged +
            ", perform caret merging: " + myPerformCaretMergingAfterCurrentOperation +
            ", current caret: " + myCurrentCaret +
            ", all carets: " + ContainerUtil.map(myCarets, CaretImpl::dumpState) + "]";

@@ -256,7 +256,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     if (myReportCaretMoves) {
       LogMessageEx.error(LOG, "Unexpected caret move request");
     }
-    if (!myEditor.isStickySelection() && !myEditor.getCaretModel().isDocumentChanged) {
+    if (!myEditor.isStickySelection() && !myEditor.getDocument().isInEventsHandling()) {
       CopyPasteManager.getInstance().stopKillRings();
     }
     myEditor.getCaretModel().doWithCaretMerging(() -> {
@@ -638,7 +638,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     if (myReportCaretMoves) {
       LogMessageEx.error(LOG, "Unexpected caret move request");
     }
-    if (!myEditor.isStickySelection() && !myEditor.getCaretModel().isDocumentChanged && !pos.equals(myVisibleCaret)) {
+    if (!myEditor.isStickySelection() && !myEditor.getDocument().isInEventsHandling() && !pos.equals(myVisibleCaret)) {
       CopyPasteManager.getInstance().stopKillRings();
     }
 
@@ -706,7 +706,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     if (myReportCaretMoves) {
       LogMessageEx.error(LOG, "Unexpected caret move request");
     }
-    if (!myEditor.isStickySelection() && !myEditor.getCaretModel().isDocumentChanged && !pos.equals(myLogicalCaret)) {
+    if (!myEditor.isStickySelection() && !myEditor.getDocument().isInEventsHandling() && !pos.equals(myLogicalCaret)) {
       CopyPasteManager.getInstance().stopKillRings();
     }
 
