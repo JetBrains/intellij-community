@@ -48,7 +48,7 @@ fun showAuthenticationForm(credentials: Credentials?, uri: String, host: String?
 
   return invokeAndWaitIfNeed {
     val userField = JTextField(username)
-    val passwordField = JPasswordField(credentials?.password.toString())
+    val passwordField = JPasswordField(credentials?.password?.toString())
 
     val centerPanel = panel(fillX) {
       label(message, wrap, span, bold = true, gapBottom = 10)

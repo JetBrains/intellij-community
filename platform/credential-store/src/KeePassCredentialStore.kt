@@ -59,7 +59,7 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
       for ((attributes, credentials) in keyToValue) {
         val entry = db.createEntry(attributes.serviceName)
         entry.userName = credentials.userName
-        entry.password = credentials.password?.toString(clear = false)
+        entry.password = credentials.password?.let(::SecureString)
         group.addEntry(entry)
       }
     }
@@ -110,7 +110,7 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
     val userName = attributes.userName
     val entry = db.rootGroup.getGroup(GROUP_NAME)?.getEntry(attributes.serviceName, attributes.userName)
     if (entry != null) {
-      return Credentials(attributes.userName ?: entry.userName, entry.password)
+      return Credentials(attributes.userName ?: entry.userName, entry.password?.get())
     }
 
     if (requestor == null || userName == null) {
@@ -120,7 +120,7 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
     // try old key - as hash
     val oldAttributes = toOldKey(requestor, userName)
     db.rootGroup.getGroup(GROUP_NAME)?.removeEntry(oldAttributes.serviceName, oldAttributes.userName)?.let {
-      fun createCredentials() = Credentials(userName, it.password)
+      fun createCredentials() = Credentials(userName, it.password?.get())
       set(CredentialAttributes(requestor, userName), createCredentials())
       return createCredentials()
     }
@@ -133,7 +133,7 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
       db.rootGroup.getGroup(GROUP_NAME)?.removeEntry(attributes.serviceName, attributes.userName)
     }
     else {
-      db.rootGroup.getOrCreateGroup(GROUP_NAME).getOrCreateEntry(attributes.serviceName, attributes.userName ?: credentials.userName).password = credentials.password?.toString(clear = false)
+      db.rootGroup.getOrCreateGroup(GROUP_NAME).getOrCreateEntry(attributes.serviceName, attributes.userName ?: credentials.userName).password = credentials.password?.let(::SecureString)
     }
 
     if (db.isDirty) {
@@ -146,7 +146,7 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
     for (entry in group.entries) {
       val title = entry.title
       if (title != null) {
-        store.set(CredentialAttributes(title, entry.userName), Credentials(entry.userName, entry.password))
+        store.set(CredentialAttributes(title, entry.userName), Credentials(entry.userName, entry.password?.get()))
       }
     }
   }

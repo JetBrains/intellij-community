@@ -82,12 +82,12 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    Object[] entities = LaterInvocator.getCurrentModalEntities();
-    for (int i = entities.length - 1; i >= 0; i--) {
-      Object state = entities[i];
-      LaterInvocator.leaveModal(state);
+    try {
+      LaterInvocator.leaveAllModals();
     }
-    super.tearDown();
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testGetCachedPsiFile_NoFile() throws Exception {
@@ -482,31 +482,8 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     });
     assertNotSame(ModalityState.NON_MODAL, ApplicationManager.getApplication().getCurrentModalityState());
 
-    // must not be committed until exit modal dialog
-    waitTenSecondsForCommit(document);
-    assertFalse(getPsiDocumentManager().isCommitted(document));
-
-    LaterInvocator.leaveModal(dialog);
-    assertEquals(ModalityState.NON_MODAL, ApplicationManager.getApplication().getCurrentModalityState());
-
-    // must commit
     waitTenSecondsForCommit(document);
     assertTrue(getPsiDocumentManager().isCommitted(document));
-
-    // check that inside modal dialog commit is possible
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      // commit thread is paused
-
-      LaterInvocator.enterModal(dialog);
-      document.setText("yyy");
-    });
-    assertNotSame(ModalityState.NON_MODAL, ApplicationManager.getApplication().getCurrentModalityState());
-
-    // must commit
-    waitTenSecondsForCommit(document);
-
-    assertTrue(getPsiDocumentManager().isCommitted(document));
-    LaterInvocator.leaveModal(dialog);
   }
 
   public void testChangeDocumentThenEnterModalDialogThenCallPerformWhenAllCommittedShouldFireWhileInsideModal() throws IOException {
@@ -532,11 +509,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertNotSame(ModalityState.NON_MODAL, ApplicationManager.getApplication().getCurrentModalityState());
 
 
-    // must not commit in background by default when modality changed
-    waitTenSecondsForCommit(document);
-    assertFalse(getPsiDocumentManager().isCommitted(document));
-
-    // but, when performWhenAllCommitted() in modal context called, should re-add documents into queue nevertheless
+    // when performWhenAllCommitted() in modal context called, should re-add documents into queue nevertheless
     boolean[] calledPerformWhenAllCommitted = new boolean[1];
     getPsiDocumentManager().performWhenAllCommitted(() -> calledPerformWhenAllCommitted[0] = true);
 
@@ -544,9 +517,6 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     waitTenSecondsForCommit(document);
     assertTrue(getPsiDocumentManager().isCommitted(document));
     assertTrue(calledPerformWhenAllCommitted[0]);
-
-    LaterInvocator.leaveModal(dialog);
-    assertEquals(ModalityState.NON_MODAL, ApplicationManager.getApplication().getCurrentModalityState());
   }
 
   private void waitTenSecondsForCommit(Document document) {

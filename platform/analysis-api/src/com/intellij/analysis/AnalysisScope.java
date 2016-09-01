@@ -209,7 +209,7 @@ public class AnalysisScope {
 
   private static String displayProjectRelativePath(@NotNull PsiFileSystemItem item) {
     VirtualFile virtualFile = item.getVirtualFile();
-    LOG.assertTrue(virtualFile != null);
+    LOG.assertTrue(virtualFile != null, item);
     return ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), item.getProject(), true, false);
   }
 

@@ -17,12 +17,3 @@ class B1 extends A1 {
 }
 class C1 extends A1 {}
 
-class A2 {
-  A2(int... i){}
-  A2(Object... i){}
-}
-class B2 extends A2 {
-  <error descr="Ambiguous method call: both 'A2.A2(int...)' and 'A2.A2(Object...)' match">public B2()</error> {
-  }
-}
-<error descr="Ambiguous method call: both 'A2.A2(int...)' and 'A2.A2(Object...)' match">class C2 extends A2</error> {}

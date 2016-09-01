@@ -39,15 +39,14 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
-import com.intellij.util.containers.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.HashSet;
 
 public class HighlightClassUtil {
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
@@ -527,7 +526,7 @@ public class HighlightClassUtil {
     PsiMethod[] constructors = baseClass.getConstructors();
     if (constructors.length == 0) return null;
 
-    final HighlightInfo highlightInfo = constructors.length > 1 ? checkAmbiguityOfImplicitConstructorCall(constructors, range) : null;
+    final HighlightInfo highlightInfo = constructors.length > 1 ? checkAmbiguityOfImplicitConstructorCall(constructors, range, aClass, baseClass) : null;
     if (highlightInfo != null) {
       return highlightInfo;
     }
@@ -561,36 +560,24 @@ public class HighlightClassUtil {
   }
 
   @Nullable
-  private static HighlightInfo checkAmbiguityOfImplicitConstructorCall(PsiMethod[] constructors, TextRange range) {
+  private static HighlightInfo checkAmbiguityOfImplicitConstructorCall(@NotNull PsiMethod[] constructors,
+                                                                       @NotNull TextRange range,
+                                                                       @NotNull PsiClass subClass,
+                                                                       @NotNull PsiClass superClass) {
+    PsiElement resolved = JavaResolveUtil.resolveImaginarySuperCallInThisPlace(subClass, subClass.getProject(), superClass);
+    if (resolved != null) {
+      return null;
+    }
+
+    // find two ambiguous var-args-only constructors
     List<PsiMethod> varargConstructors = new ArrayList<>();
     for (PsiMethod constructor : constructors) {
       final PsiParameter[] parameters = constructor.getParameterList().getParameters();
-      if (parameters.length == 0) {
-        varargConstructors.clear();
-        break;
-      }
       if (parameters.length == 1 && parameters[0].isVarArgs()) {
         varargConstructors.add(constructor);
+        if (varargConstructors.size() == 2) break;
       }
     }
-
-    if (varargConstructors.size() <= 1) return null;
-    Set<PsiMethod> lessSpecific = new HashSet<>();
-    final PsiType[] types = varargConstructors.stream().map(c -> c.getParameterList().getParameters()[0].getType()).toArray(PsiType[]::new);
-    for (int i = 1; i < types.length; i++) {
-      PsiType t1 = types[i];
-      for (int j = 0; j < i; j++) {
-        PsiType t2 = types[j];
-
-        if (t1.isAssignableFrom(t2)) {
-          lessSpecific.add(varargConstructors.get(i));
-        }
-        else if (t2.isAssignableFrom(t1)) {
-          lessSpecific.add(varargConstructors.get(j));
-        }
-      }
-    }
-    varargConstructors.removeAll(lessSpecific);
 
     if (varargConstructors.size() > 1) {
       final String m1 = PsiFormatUtil.formatMethod(varargConstructors.get(0), PsiSubstitutor.EMPTY,
