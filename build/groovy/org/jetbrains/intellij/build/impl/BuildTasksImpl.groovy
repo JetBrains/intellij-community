@@ -220,19 +220,19 @@ idea.fatal.error.notification=disabled
       @Override
       void run(BuildContext buildContext) {
         def windowsDistributionCustomizer = buildContext.windowsDistributionCustomizer
-        if (windowsDistributionCustomizer != null) {
-          buildContext.executeStep("Build Windows distribution", BuildOptions.WINDOWS_DISTRIBUTION_STEP, {
+        if (windowsDistributionCustomizer != null && buildContext.shouldBuildDistributionForOS(BuildOptions.OS_WINDOWS)) {
+          buildContext.messages.block("Build Windows distribution") {
             windowsBuilder = new WindowsDistributionBuilder(buildContext, windowsDistributionCustomizer)
             windowsBuilder.layoutWin(propertiesFile)
-          })
+          }
         }
       }
     }, new BuildTaskRunnable("linux") {
       @Override
       void run(BuildContext buildContext) {
         def linuxDistributionCustomizer = buildContext.linuxDistributionCustomizer
-        if (linuxDistributionCustomizer != null) {
-          buildContext.executeStep("Build Linux distribution", BuildOptions.LINUX_DISTRIBUTION_STEP) {
+        if (linuxDistributionCustomizer != null && buildContext.shouldBuildDistributionForOS(BuildOptions.OS_LINUX)) {
+          buildContext.messages.block("Build Linux distribution") {
             linuxBuilder = new LinuxDistributionBuilder(buildContext, linuxDistributionCustomizer)
             linuxBuilder.layoutUnix(propertiesFile)
           }
@@ -242,8 +242,8 @@ idea.fatal.error.notification=disabled
       @Override
       void run(BuildContext buildContext) {
         def macDistributionCustomizer = buildContext.macDistributionCustomizer
-        if (macDistributionCustomizer != null) {
-          buildContext.executeStep("Build Mac OS distribution", BuildOptions.MAC_DISTRIBUTION_STEP) {
+        if (macDistributionCustomizer != null && buildContext.shouldBuildDistributionForOS(BuildOptions.OS_MAC)) {
+          buildContext.messages.block("Build Mac OS distribution") {
             macBuilder = new MacDistributionBuilder(buildContext, macDistributionCustomizer)
             macBuilder.layoutMac(propertiesFile)
           }

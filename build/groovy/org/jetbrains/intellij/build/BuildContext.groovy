@@ -92,6 +92,8 @@ abstract class BuildContext {
    */
   abstract void executeStep(String stepMessage, String stepId, Closure step)
 
+  abstract boolean shouldBuildDistributionForOS(String os)
+
   public static BuildContext createContext(AntBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
                                            String communityHome, String projectHome, String buildOutputRoot, ProductProperties productProperties,
                                            ProprietaryBuildTools proprietaryBuildTools = ProprietaryBuildTools.DUMMY,

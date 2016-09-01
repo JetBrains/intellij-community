@@ -230,6 +230,11 @@ class BuildContextImpl extends BuildContext {
   }
 
   @Override
+  boolean shouldBuildDistributionForOS(String os) {
+    options.targetOS.toLowerCase() in [BuildOptions.OS_ALL, os]
+  }
+
+  @Override
   BuildContext forkForParallelTask(String taskName) {
     def ant = new AntBuilder(ant.project)
     def messages = messages.forkForParallelTask(taskName)
