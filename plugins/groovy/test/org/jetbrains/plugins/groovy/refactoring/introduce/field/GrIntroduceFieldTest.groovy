@@ -34,65 +34,65 @@ import static org.jetbrains.plugins.groovy.refactoring.introduce.field.GrIntrodu
 /**
  * @author Maxim.Medvedev
  */
-public class GrIntroduceFieldTest extends LightGroovyTestCase {
+class GrIntroduceFieldTest extends LightGroovyTestCase {
   @Override
   protected String getBasePath() {
     "${TestUtils.testDataPath}refactoring/introduceField/";
   }
 
-  public void testSimple() {
+  void testSimple() {
     doTest(false, false, false, CUR_METHOD, false, null);
   }
 
-  public void testDeclareFinal() {
+  void testDeclareFinal() {
     doTest(false, false, true, FIELD_DECLARATION, false, null);
   }
 
-  public void testCreateConstructor() {
+  void testCreateConstructor() {
     doTest(false, false, true, CONSTRUCTOR, true, null);
   }
 
-  public void testManyConstructors() {
+  void testManyConstructors() {
     doTest(false, false, true, CONSTRUCTOR, true, null);
   }
 
-  public void testDontReplaceStaticOccurrences() {
+  void testDontReplaceStaticOccurrences() {
     doTest(false, false, true, FIELD_DECLARATION, true, null);
   }
 
-  public void testQualifyUsages() {
+  void testQualifyUsages() {
     doTest(false, false, true, FIELD_DECLARATION, true, null);
   }
 
-  public void testReplaceLocalVar() {
+  void testReplaceLocalVar() {
     doTest(false, true, false, CUR_METHOD, true, null);
   }
 
-  public void testIntroduceLocalVarByDeclaration() {
+  void testIntroduceLocalVarByDeclaration() {
     doTest(false, true, false, FIELD_DECLARATION, true, null);
   }
 
-  public void testReplaceExpressionWithAssignment() {
+  void testReplaceExpressionWithAssignment() {
     doTest(false, false, false, CUR_METHOD, false, null);
   }
 
-  public void testAnonymousClass() {
+  void testAnonymousClass() {
     doTest(false, false, false, CUR_METHOD, false, null);
   }
 
-  public void testAnonymous2() {
+  void testAnonymous2() {
     doTest(false, false, false, CONSTRUCTOR, false, null);
   }
 
-  public void testAnonymous3() {
+  void testAnonymous3() {
     doTest(false, false, false, CONSTRUCTOR, false, null);
   }
 
-  public void testInitializeInCurrentMethod() {
+  void testInitializeInCurrentMethod() {
     doTest(false, true, true, CUR_METHOD, false, null);
   }
 
-  public void testScriptBody() {
+  void testScriptBody() {
     addGroovyTransformField()
     doTest('''\
 print <selection>'abc'</selection>
@@ -104,7 +104,7 @@ print f<caret>
 ''', false, false, false, FIELD_DECLARATION)
   }
 
-  public void testScriptMethod() {
+  void testScriptMethod() {
     addGroovyTransformField()
     doTest('''\
 def foo() {
@@ -121,7 +121,7 @@ def foo() {
 ''', false, false, true, FIELD_DECLARATION)
   }
 
-  public void testStaticScriptMethod() {
+  void testStaticScriptMethod() {
     addGroovyTransformField()
     doTest('''\
 static def foo() {
@@ -138,7 +138,7 @@ static def foo() {
 ''', true, false, false, FIELD_DECLARATION)
   }
 
-  public void testScriptMethod2() {
+  void testScriptMethod2() {
     addGroovyTransformField()
     doTest('''\
 def foo() {
@@ -156,7 +156,7 @@ def foo() {
 ''', false, false, false, CUR_METHOD)
   }
 
-  public void testSetUp1() throws Exception {
+  void testSetUp1() throws Exception {
     addTestCase()
     doTest('''\
 class MyTest extends GroovyTestCase {
@@ -181,7 +181,7 @@ class MyTest extends GroovyTestCase {
 false, false, false, SETUP_METHOD)
   }
 
-  public void testSetUp2() throws Exception {
+  void testSetUp2() throws Exception {
     addTestCase()
 
     doTest('''\

@@ -29,3 +29,16 @@ def g(x) -> int:
         return <warning descr="Expected type 'int', got 'str' instead">'abc'</warning>
     else:
         return <warning descr="Expected type 'int', got 'dict' instead">{}</warning>
+
+def h(x) -> int:
+    <warning descr="Expected type 'int', got 'None' instead">return</warning>
+
+def i() -> Union[int, str]:
+    pass
+
+def j(x) <warning descr="Expected to return 'Union[int, str]', got no return">-> Union[int, str]</warning>:
+    x = 42
+
+def k() -> None:
+    if True:
+        pass

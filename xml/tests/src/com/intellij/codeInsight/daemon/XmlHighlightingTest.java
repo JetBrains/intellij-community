@@ -183,7 +183,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   public void testEntityRefWithNoDtd() throws Exception { doTest(); }
   public void testNoSpaceBeforeAttrAndNoCdataEnd() throws Exception { doTest(); }
 
-  // TODO: external validator should not be lauched due to error detected after general highlighting pass!
+  // TODO: external validator should not be launched due to error detected after general highlighting pass!
   @HighlightingFlags(HighlightingFlag.SkipExternalValidation)
   public void testEntityRefWithEmptyDtd() throws Exception { doTest(); }
   public void testEmptyNSRef() throws Exception { doTest(); }

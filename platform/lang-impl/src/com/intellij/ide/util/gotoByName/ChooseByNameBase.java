@@ -16,6 +16,7 @@
 
 package com.intellij.ide.util.gotoByName;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.Patches;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
@@ -38,7 +39,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
-import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -121,7 +121,7 @@ public abstract class ChooseByNameBase {
   protected final MyTextField myTextField = new MyTextField();
   private final CardLayout myCard = new CardLayout();
   private final JPanel myCardContainer = new JPanel(myCard);
-  protected JCheckBox myCheckBox;
+  protected final JCheckBox myCheckBox = new JCheckBox();
   /**
    * the tool area of the popup, it is just after card box
    */
@@ -282,7 +282,7 @@ public abstract class ChooseByNameBase {
     @Override
     public Object getData(String dataId) {
       if (PlatformDataKeys.SEARCH_INPUT_TEXT.is(dataId)) {
-        return myTextField == null ? null : myTextField.getText();
+        return myTextField.getText();
       }
 
       if (PlatformDataKeys.HELP_ID.is(dataId)) {
@@ -319,7 +319,7 @@ public abstract class ChooseByNameBase {
         return getBounds();
       }
       else if (PlatformDataKeys.SEARCH_INPUT_TEXT.is(dataId)) {
-        return myTextField == null ? null : myTextField.getText();
+        return myTextField.getText();
       }
       return null;
     }
@@ -400,11 +400,11 @@ public abstract class ChooseByNameBase {
     myCardContainer.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 4));  // space between checkbox and filter/show all in view buttons
 
     final String checkBoxName = myModel.getCheckBoxName();
-    myCheckBox = new JCheckBox(checkBoxName != null ? checkBoxName +
-                                                      (myCheckBoxShortcut != null && myCheckBoxShortcut.getShortcuts().length > 0
-                                                       ? " (" + KeymapUtil.getShortcutsText(myCheckBoxShortcut.getShortcuts()) + ")"
-                                                       : "")
-                                                    : "");
+    myCheckBox.setText(checkBoxName != null ? checkBoxName +
+                                              (myCheckBoxShortcut != null && myCheckBoxShortcut.getShortcuts().length > 0
+                                               ? " (" + KeymapUtil.getShortcutsText(myCheckBoxShortcut.getShortcuts()) + ")"
+                                               : "")
+                                            : "");
     myCheckBox.setAlignmentX(SwingConstants.RIGHT);
 
     if (!SystemInfo.isMac) {
@@ -493,7 +493,7 @@ public abstract class ChooseByNameBase {
     myTextField.setFont(editorFont);
 
     if (checkBoxName != null) {
-      if (myCheckBox != null && myCheckBoxShortcut != null) {
+      if (myCheckBoxShortcut != null) {
         new DumbAwareAction("change goto check box", null, null) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
@@ -558,15 +558,13 @@ public abstract class ChooseByNameBase {
       });
     }
 
-    if (myCheckBox != null) {
-      myCheckBox.addItemListener(new ItemListener() {
-        @Override
-        public void itemStateChanged(@NotNull ItemEvent e) {
-          rebuildList(false);
-        }
-      });
-      myCheckBox.setFocusable(false);
-    }
+    myCheckBox.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(@NotNull ItemEvent e) {
+        rebuildList(false);
+      }
+    });
+    myCheckBox.setFocusable(false);
 
     myTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -731,12 +729,7 @@ public abstract class ChooseByNameBase {
   @NotNull
   private static Set<KeyStroke> getShortcuts(@NotNull String actionId) {
     Set<KeyStroke> result = new HashSet<>();
-    Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
-    Shortcut[] shortcuts = keymap.getShortcuts(actionId);
-    if (shortcuts == null) {
-      return result;
-    }
-    for (Shortcut shortcut : shortcuts) {
+    for (Shortcut shortcut : KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId)) {
       if (shortcut instanceof KeyboardShortcut) {
         KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
         result.add(keyboardShortcut.getFirstKeyStroke());
@@ -1066,7 +1059,7 @@ public abstract class ChooseByNameBase {
     myTextField.setForeground(UIUtil.getTextFieldForeground());
     if (commands.isEmpty()) {
       if (pos <= 0) {
-        pos = detectBestStatisticalPosition();
+        pos = calcSelectedIndex(newElements, getTrimmedText());
       }
 
       ScrollingUtil.selectItem(myList, Math.min(pos, myListModel.size() - 1));
@@ -1080,40 +1073,45 @@ public abstract class ChooseByNameBase {
     }
   }
 
-  private int detectBestStatisticalPosition() {
+  @VisibleForTesting
+  public int calcSelectedIndex(Object[] modelElements, String trimmedText) {
     if (myModel instanceof Comparator) {
       return 0;
     }
 
-    int best = 0;
-    int bestPosition = 0;
-    int bestMatch = Integer.MIN_VALUE;
-    final int count = myListModel.getSize();
-
-    Matcher matcher = buildPatternMatcher(transformPattern(getTrimmedText()));
-
+    Matcher matcher = buildPatternMatcher(transformPattern(trimmedText));
     final String statContext = statisticsContext();
-    for (int i = 0; i < count; i++) {
-      final Object modelElement = myListModel.getElementAt(i);
-      String text = EXTRA_ELEM.equals(modelElement) || NON_PREFIX_SEPARATOR.equals(modelElement) ? null : myModel.getFullName(modelElement);
-      if (text != null) {
-        String shortName = myModel.getElementName(modelElement);
-        int match = shortName != null && matcher instanceof MinusculeMatcher
-                    ? ((MinusculeMatcher)matcher).matchingDegree(shortName) : Integer.MIN_VALUE;
-        int stats = StatisticsManager.getInstance().getUseCount(new StatisticsInfo(statContext, text));
-        if (match > bestMatch || match == bestMatch && stats > best) {
-          best = stats;
-          bestPosition = i;
-          bestMatch = match;
-        }
+    Comparator<Object> itemComparator = Comparator.
+      comparing(e -> trimmedText.equalsIgnoreCase(myModel.getElementName(e))).
+      thenComparing(e -> matchingDegree(matcher, e)).
+      thenComparing(e -> getUseCount(statContext, e)).
+      reversed();
+
+    int bestPosition = 0;
+    for (int i = 1; i < modelElements.length; i++) {
+      final Object modelElement = modelElements[i];
+      if (EXTRA_ELEM.equals(modelElement) || NON_PREFIX_SEPARATOR.equals(modelElement)) continue;
+
+      if (itemComparator.compare(modelElement, modelElements[bestPosition]) < 0) {
+        bestPosition = i;
       }
     }
 
-    if (bestPosition < count - 1 && myListModel.getElementAt(bestPosition) == NON_PREFIX_SEPARATOR) {
+    if (bestPosition < modelElements.length - 1 && modelElements[bestPosition] == NON_PREFIX_SEPARATOR) {
       bestPosition++;
     }
 
     return bestPosition;
+  }
+
+  private int getUseCount(String statContext, Object modelElement) {
+    String text = myModel.getFullName(modelElement);
+    return text == null ? Integer.MIN_VALUE : StatisticsManager.getInstance().getUseCount(new StatisticsInfo(statContext, text));
+  }
+
+  private int matchingDegree(Matcher matcher, Object modelElement) {
+    String name = myModel.getElementName(modelElement);
+    return name != null && matcher instanceof MinusculeMatcher ? ((MinusculeMatcher)matcher).matchingDegree(name) : Integer.MIN_VALUE;
   }
 
   @NotNull
@@ -1184,7 +1182,7 @@ public abstract class ChooseByNameBase {
             myTextFieldPanel.repositionHint();
 
             if (!myListModel.isEmpty()) {
-              int pos = selectionPos <= 0 ? detectBestStatisticalPosition() : selectionPos;
+              int pos = selectionPos <= 0 ? calcSelectedIndex(myListModel.toArray(), ChooseByNameBase.this.getTrimmedText()) : selectionPos;
               ScrollingUtil.selectItem(myList, Math.min(pos, myListModel.size() - 1));
             }
           }
@@ -1606,7 +1604,7 @@ public abstract class ChooseByNameBase {
   }
 
   @NotNull
-  private String patternToLowerCase(String pattern) {
+  private static String patternToLowerCase(String pattern) {
     return pattern.toLowerCase(Locale.US);
   }
 

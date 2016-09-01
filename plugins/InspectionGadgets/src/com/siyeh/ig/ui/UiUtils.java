@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2014 Bas Leijdekkers
+ * Copyright 2010-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -209,9 +209,7 @@ public class UiUtils {
         }
         final ListWrappingTableModel tableModel = table.getModel();
         for (int i = minIndex; i <= maxIndex; i++) {
-          if (selectionModel.isSelectedIndex(i)) {
-            tableModel.removeRow(i);
-          }
+          tableModel.removeRow(minIndex);
         }
         final int count = tableModel.getRowCount();
         if (count <= minIndex) {

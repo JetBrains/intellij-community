@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.artifacts.JpsBuilderArtifactService;
 import org.jetbrains.jps.model.JpsModel;
@@ -84,20 +82,13 @@ public class ArtifactSorter {
     final DFSTBuilder<JpsArtifact> builder = new DFSTBuilder<JpsArtifact>(graph);
     if (builder.isAcyclic() && result.isEmpty()) return Collections.emptyMap();
 
-    final TIntArrayList sccs = builder.getSCCs();
-    sccs.forEach(new TIntProcedure() {
-      int myTNumber = 0;
-      public boolean execute(int size) {
-        if (size > 1) {
-          for (int j = 0; j < size; j++) {
-            final JpsArtifact artifact = builder.getNodeByTNumber(myTNumber + j);
-            result.put(artifact, artifact);
-          }
+    for (Collection<JpsArtifact> component : builder.getComponents()) {
+      if (component.size() > 1) {
+        for (JpsArtifact artifact : component) {
+          result.put(artifact, artifact);
         }
-        myTNumber += size;
-        return true;
       }
-    });
+    }
 
     for (int i = 0; i < graph.getNodes().size(); i++) {
       final JpsArtifact artifact = builder.getNodeByTNumber(i);

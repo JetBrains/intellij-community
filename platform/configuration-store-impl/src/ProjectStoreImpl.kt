@@ -24,7 +24,6 @@ import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorage.SaveSession
-import com.intellij.openapi.components.ex.ComponentManagerEx
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.impl.stores.StoreUtil
@@ -388,7 +387,8 @@ fun removeWorkspaceComponentConfiguration(defaultProject: Project, element: Elem
     return
   }
 
-  val projectComponents = (defaultProject as ComponentManagerEx).getComponentInstancesOfType(PersistentStateComponent::class.java)
+  @Suppress("DEPRECATION")
+  val projectComponents = defaultProject.getComponents(PersistentStateComponent::class.java)
   projectComponents.forEachGuaranteed {
     val stateAnnotation = StoreUtil.getStateSpec(it.javaClass)
     if (stateAnnotation == null || stateAnnotation.name.isNullOrEmpty()) {

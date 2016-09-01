@@ -604,6 +604,14 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     executeAction("EditorRight");
   }
 
+  protected static void leftWithSelection() {
+    executeAction("EditorLeftWithSelection");
+  }
+
+  protected static void rightWithSelection() {
+    executeAction("EditorRightWithSelection");
+  }
+
   protected static void up() {
     executeAction("EditorUp");
   }

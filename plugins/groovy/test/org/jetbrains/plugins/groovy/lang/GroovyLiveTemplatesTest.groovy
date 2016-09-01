@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,31 +29,31 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author peter
  */
-public class GroovyLiveTemplatesTest extends LightCodeInsightFixtureTestCase{
+class GroovyLiveTemplatesTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return TestUtils.getTestDataPath() + "liveTemplates/";
   }
 
-  public void testJavaTemplatesWorkInGroovyContext() throws Throwable {
+  void testJavaTemplatesWorkInGroovyContext() throws Throwable {
     myFixture.configureByFile(getTestName(false) + ".groovy");
     expandTemplate(myFixture.getEditor());
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 
-  public void testSout() {
+  void testSout() {
     myFixture.configureByText("a.groovy", "sout<caret>");
     expandTemplate(myFixture.getEditor());
     myFixture.checkResult("println <caret>");
   }
 
-  public void testSoutv() {
+  void testSoutv() {
     myFixture.configureByText("a.groovy", "def x = 2\nsoutv<caret>");
     expandTemplate(myFixture.getEditor());
     myFixture.checkResult("def x = 2\nprintln \"x = \$x\"");
   }
 
-  public void testSoutp() {
+  void testSoutp() {
     myFixture.configureByText("a.groovy", """
 void usage(int num, boolean someBoolean, List<String> args){
   soutp<caret>
@@ -67,7 +67,7 @@ void usage(int num, boolean someBoolean, List<String> args){
 '''
   }
 
-  public static void expandTemplate(final Editor editor) {
+  static void expandTemplate(final Editor editor) {
     WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       void run() {
@@ -77,7 +77,7 @@ void usage(int num, boolean someBoolean, List<String> args){
     })
   }
 
-  public void testGroovyStatementContext() throws Exception {
+  void testGroovyStatementContext() throws Exception {
     final TemplateImpl template = TemplateSettings.getInstance().getTemplate("inst", "other");
     assertFalse(isApplicable("class Foo {{ if (a <caret>inst) }}", template));
     assertTrue(isApplicable("class Foo {{ <caret>inst }}", template));
@@ -88,7 +88,7 @@ void usage(int num, boolean someBoolean, List<String> args){
     assertTrue(isApplicable("<caret>a()", template));
   }
 
-  public void testGroovyExpressionContext() throws Exception {
+  void testGroovyExpressionContext() throws Exception {
     final TemplateImpl template = TemplateSettings.getInstance().getTemplate("lst", "other");
     assertFalse(isApplicable("class Foo {{ if (a <caret>toar) }}", template));
     assertTrue(isApplicable("class Foo {{ <caret>xxx }}", template));
@@ -97,7 +97,7 @@ void usage(int num, boolean someBoolean, List<String> args){
     assertFalse(isApplicable("class Foo {{ return (xxx <caret>yyy) }}", template));
   }
 
-  public void testGroovyDeclarationContext() throws Exception {
+  void testGroovyDeclarationContext() throws Exception {
     final TemplateImpl template = TemplateSettings.getInstance().getTemplate("psvm", "other");
     assertFalse(isApplicable("class Foo {{ <caret>xxx }}", template));
     assertFalse(isApplicable("class Foo {{ <caret>xxx }}", template));

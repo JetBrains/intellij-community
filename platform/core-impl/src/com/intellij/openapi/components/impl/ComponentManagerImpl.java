@@ -236,7 +236,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @NotNull
-  @Override
   public final <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass) {
     List<T> result = null;
     // we must use instances only from our adapter (could be service or extension point or something else)
@@ -384,11 +383,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   private void registerComponents(@NotNull ComponentConfig config) {
     ClassLoader loader = config.getClassLoader();
     try {
-      final Class<?> interfaceClass = Class.forName(config.getInterfaceClass(), true, loader);
-      final Class<?> implementationClass = Comparing.equal(config.getInterfaceClass(), config.getImplementationClass())
-                                           ?
-                                           interfaceClass
-                                           : StringUtil.isEmpty(config.getImplementationClass()) ? null : Class.forName(config.getImplementationClass(), true, loader);
+      Class<?> interfaceClass = Class.forName(config.getInterfaceClass(), true, loader);
+      Class<?> implementationClass = Comparing.equal(config.getInterfaceClass(), config.getImplementationClass()) ? interfaceClass :
+                                     StringUtil.isEmpty(config.getImplementationClass()) ? null :
+                                     Class.forName(config.getImplementationClass(), true, loader);
       MutablePicoContainer picoContainer = getPicoContainer();
       if (config.options != null && Boolean.parseBoolean(config.options.get("overrides"))) {
         ComponentAdapter oldAdapter = picoContainer.getComponentAdapterOfType(interfaceClass);
@@ -399,8 +397,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       }
       // implementationClass == null means we want to unregister this component
       if (implementationClass != null) {
-        picoContainer.registerComponent(new ComponentConfigComponentAdapter(interfaceClass, implementationClass, config.getPluginId(),
-                                                                            config.options != null && Boolean.parseBoolean(config.options.get("workspace"))));
+        boolean ws = config.options != null && Boolean.parseBoolean(config.options.get("workspace"));
+        picoContainer.registerComponent(new ComponentConfigComponentAdapter(interfaceClass, implementationClass, config.getPluginId(), ws));
       }
     }
     catch (Throwable t) {

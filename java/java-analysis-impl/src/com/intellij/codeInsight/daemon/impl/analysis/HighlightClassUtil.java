@@ -39,16 +39,15 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class HighlightClassUtil {
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
@@ -237,7 +236,7 @@ public class HighlightClassUtil {
     if (aClass.getParent() != containingFile || !aClass.hasModifierProperty(PsiModifier.PUBLIC) || !(containingFile instanceof PsiJavaFile)) return null;
     PsiJavaFile file = (PsiJavaFile)containingFile;
     VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile == null || aClass.getName().equals(virtualFile.getNameWithoutExtension())) {
+    if (virtualFile == null || virtualFile.getNameWithoutExtension().equals(aClass.getName())) {
       return null;
     }
     String message = JavaErrorMessages.message("public.class.should.be.named.after.file", aClass.getName());
@@ -255,7 +254,7 @@ public class HighlightClassUtil {
     for (PsiClass otherClass : classes) {
       if (!otherClass.getManager().areElementsEquivalent(otherClass, aClass) &&
           otherClass.hasModifierProperty(PsiModifier.PUBLIC) &&
-          otherClass.getName().equals(virtualFile.getNameWithoutExtension())) {
+          virtualFile.getNameWithoutExtension().equals(otherClass.getName())) {
         return errorResult;
       }
     }
@@ -528,6 +527,11 @@ public class HighlightClassUtil {
     PsiMethod[] constructors = baseClass.getConstructors();
     if (constructors.length == 0) return null;
 
+    final HighlightInfo highlightInfo = constructors.length > 1 ? checkAmbiguityOfImplicitConstructorCall(constructors, range, aClass, baseClass) : null;
+    if (highlightInfo != null) {
+      return highlightInfo;
+    }
+
     for (PsiMethod constructor : constructors) {
       if (resolveHelper.isAccessible(constructor, aClass, null)) {
         if (constructor.getParameterList().getParametersCount() == 0 ||
@@ -554,6 +558,49 @@ public class HighlightClassUtil {
     QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createCreateConstructorMatchingSuperFix(aClass));
 
     return info;
+  }
+
+  @Nullable
+  private static HighlightInfo checkAmbiguityOfImplicitConstructorCall(@NotNull PsiMethod[] constructors,
+                                                                       @NotNull TextRange range,
+                                                                       @NotNull PsiClass subClass,
+                                                                       @NotNull PsiClass superClass) {
+    Project project = subClass.getProject();
+    PsiElement resolved = JavaResolveUtil.resolveImaginarySuperCallInThisPlace(subClass, project, superClass);
+    if (resolved != null) {
+      return null;
+    }
+
+    // find two ambiguous var-args-only constructors
+    List<PsiMethod> varargConstructors = Arrays.stream(constructors)
+      .filter(constructor -> constructor.getParameterList().getParameters().length == 1)
+      .filter(constructor -> constructor.getParameterList().getParameters()[0].isVarArgs())
+      .filter(constructor -> PsiResolveHelper.SERVICE.getInstance(project).isAccessible(constructor, subClass, subClass))
+      .limit(2).collect(Collectors.toList());
+
+    //List<PsiMethod> varargConstructors = Arrays.stream(constructors)
+    //  .map(constructor -> Pair.create(constructor, constructor.getParameterList().getParameters()))
+    //  .filter(p -> p.second.length == 1 && p.second[0].isVarArgs() && PsiResolveHelper.SERVICE.getInstance(project).isAccessible(p.first, subClass, subClass))
+    //  .map(p -> p.first)
+    //  .limit(2).collect(Collectors.toList());
+    //
+    if (varargConstructors.size() == 2) {
+      final String m1 = PsiFormatUtil.formatMethod(varargConstructors.get(0), PsiSubstitutor.EMPTY,
+                                                   PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
+                                                   PsiFormatUtilBase.SHOW_NAME |
+                                                   PsiFormatUtilBase.SHOW_PARAMETERS,
+                                                   PsiFormatUtilBase.SHOW_TYPE);
+      final String m2 = PsiFormatUtil.formatMethod(varargConstructors.get(1), PsiSubstitutor.EMPTY,
+                                                   PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
+                                                   PsiFormatUtilBase.SHOW_NAME |
+                                                   PsiFormatUtilBase.SHOW_PARAMETERS,
+                                                   PsiFormatUtilBase.SHOW_TYPE);
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+        .range(range)
+        .descriptionAndTooltip(JavaErrorMessages.message("ambiguous.method.call", m1, m2))
+        .create();
+    }
+    return null;
   }
 
   @Nullable

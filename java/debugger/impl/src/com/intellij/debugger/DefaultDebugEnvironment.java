@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger;
 
-import com.intellij.debugger.impl.AlternativeJreIndexHelper;
+import com.intellij.debugger.impl.AlternativeJreClassFinder;
 import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.ExecutionException;
@@ -94,6 +94,6 @@ public class DefaultDebugEnvironment implements DebugEnvironment {
   @Nullable
   @Override
   public Sdk getAlternativeJre() {
-    return AlternativeJreIndexHelper.getAlternativeJre(environment.getRunProfile());
+    return AlternativeJreClassFinder.getAlternativeJre(environment.getRunProfile());
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,14 @@ package com.jetbrains.python.testing.pytest;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Base64;
 import com.jetbrains.python.traceBackParsers.LinkInTrace;
-import org.apache.log4j.Level;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.charset.Charset;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -54,7 +53,7 @@ public final class PyTestTracebackParserTest {
     }
     final String longString = StringUtil.repeat("1", junkSize);
     myStringJunk = String.format("%s:%s", longString, longString);
-    myBase64Junk = Base64.encode(junk);
+    myBase64Junk = Base64.getEncoder().encodeToString(junk);
     myStringJunkWithSpaces = StringUtil.repeat("dd ddddddddd", junkSize);
     myStringJunkWithSpacesAndLine = myStringJunkWithSpaces + " c:/file:12";
   }

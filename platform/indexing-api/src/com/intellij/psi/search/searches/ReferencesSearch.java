@@ -43,6 +43,7 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
   public static class SearchParameters implements DumbAwareSearchParameters {
     private final PsiElement myElementToSearch;
     private final SearchScope myScope;
+    private volatile SearchScope myEffectiveScope;
     private final boolean myIgnoreAccessScope;
     private final SearchRequestCollector myOptimizer;
     private final Project myProject;
@@ -104,8 +105,13 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
       if (myIgnoreAccessScope) {
         return myScope;
       }
-      SearchScope accessScope = PsiSearchHelper.SERVICE.getInstance(myElementToSearch.getProject()).getUseScope(myElementToSearch);
-      return myScope.intersectWith(accessScope);
+
+      SearchScope scope = myEffectiveScope;
+      if (scope == null) {
+        SearchScope useScope = PsiSearchHelper.SERVICE.getInstance(myElementToSearch.getProject()).getUseScope(myElementToSearch);
+        myEffectiveScope = scope = myScope.intersectWith(useScope);
+      }
+      return scope;
     }
   }
 

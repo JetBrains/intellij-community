@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,24 @@
  */
 package org.jetbrains.idea.devkit.dom.impl;
 
-import com.intellij.lang.properties.BundleNameEvaluator;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.references.PropertyReference;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
-import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
@@ -124,6 +122,11 @@ public class PropertyKeyReferenceProvider extends PsiReferenceProvider {
 
     @Override
     protected List<PropertiesFile> retrievePropertyFilesByBundleName(String bundleName, PsiElement element) {
+      final Module module = ModuleUtilCore.findModuleForPsiElement(element);
+      if (module == null) {
+        return Collections.emptyList();
+      }
+
       final List<String> allBundleNames;
       if (bundleName == null) {
         allBundleNames = getPluginResourceBundles(element);
@@ -134,12 +137,10 @@ public class PropertyKeyReferenceProvider extends PsiReferenceProvider {
 
       final Project project = element.getProject();
       final PropertiesReferenceManager propertiesReferenceManager = PropertiesReferenceManager.getInstance(project);
-      final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
 
       final List<PropertiesFile> allPropertiesFiles = new ArrayList<>();
       for (String name : allBundleNames) {
-        final List<PropertiesFile> propertiesFiles = propertiesReferenceManager
-          .findPropertiesFiles(searchScope, name, BundleNameEvaluator.DEFAULT);
+        final List<PropertiesFile> propertiesFiles = propertiesReferenceManager.findPropertiesFiles(module, name);
         allPropertiesFiles.addAll(propertiesFiles);
       }
       return allPropertiesFiles;

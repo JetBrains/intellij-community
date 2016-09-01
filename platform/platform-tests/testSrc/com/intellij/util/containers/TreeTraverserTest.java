@@ -323,6 +323,14 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(it.partition(2, false).toList(), it.partition(HEAD, o -> o % 2 == 0).map(o -> o.toList()).toList());
   }
 
+  public void testIterateUnique() {
+    JBIterable<Integer> it = JBIterable.generate(1, INCREMENT).take(30);
+    assertEquals(it.toList(), it.unique().toList());
+    JBIterable<Integer> uniqueMod5 = it.unique((o) -> o % 5);
+    assertEquals(Arrays.asList(1, 2, 3, 4, 5), uniqueMod5.toList());
+    assertEquals(Arrays.asList(1, 2, 3, 4, 5), uniqueMod5.toList()); // same results again
+  }
+
   // TreeTraversal ----------------------------------------------
 
   @NotNull
@@ -466,6 +474,20 @@ public class TreeTraverserTest extends TestCase {
 
     assertEquals(JBIterable.of(1, 2, 2, 4, 4, 4, 4, 8, 8, 8, 8, 8, 8, 8, 8).toList(), result);
   }
+
+  public void testTraverseUnique() {
+    assertEquals(Arrays.asList(1, 2, 5, 6, 7, 3, 8, 9, 10, 4, 11, 12, 13), numTraverser(TreeTraversal.PRE_ORDER_DFS.unique()).fun(1).toList());
+    JBIterable<Integer> uniqueMod5 = numTraverser(TreeTraversal.PRE_ORDER_DFS.unique((Integer o) -> o % 5)).fun(1);
+    assertEquals(Arrays.asList(1, 2, 5, 3, 9), uniqueMod5.toList());
+    assertEquals(Arrays.asList(1, 2, 5, 3, 9), uniqueMod5.toList()); // same results again
+
+    JBIterable<Integer> uniqueMod7 = numTraverser(TreeTraversal.PRE_ORDER_DFS.unique((Integer o) -> o % 5).unique((Integer o) -> o % 7)).fun(1);
+    assertEquals(Arrays.asList(1, 2, 5, 6, 7, 3, 4), uniqueMod7.toList());
+
+    assertEquals(JBIterable.generate(1, INCREMENT).take(37).toList(), numTraverser2(TreeTraversal.PLAIN_BFS.unique()).fun(1).toList());
+    assertEquals(JBIterable.generate(1, INCREMENT).take(37).toList(), numTraverser2(TreeTraversal.PLAIN_BFS.unique().unique()).fun(1).toList());
+  }
+
   // GuidedTraversal ----------------------------------------------
 
   @NotNull

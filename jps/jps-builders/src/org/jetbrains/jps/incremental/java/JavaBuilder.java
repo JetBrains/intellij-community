@@ -55,11 +55,13 @@ import org.jetbrains.jps.model.java.LanguageLevel;
 import org.jetbrains.jps.model.java.compiler.*;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsModuleType;
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import javax.tools.*;
 import java.io.*;
@@ -81,11 +83,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
   public static final Key<Boolean> IS_ENABLED = Key.create("_java_compiler_enabled_");
   private static final Key<JavaCompilingTool> COMPILING_TOOL = Key.create("_java_compiling_tool_");
   private static final Key<AtomicReference<String>> COMPILER_VERSION_INFO = Key.create("_java_compiler_version_info_");
+  private static final String MODULE_INFO_FILE = "module-info.java";
 
-  private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Collections.<String>singletonList(
+  private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Collections.singletonList(
     "-target"
   ));
-  private static final Set<String> FILTERED_SINGLE_OPTIONS = new HashSet<String>(Arrays.<String>asList(
+  private static final Set<String> FILTERED_SINGLE_OPTIONS = new HashSet<String>(Arrays.asList(
     "-g", "-deprecation", "-nowarn", "-verbose", "-proc:none", "-proc:only", "-proceedOnError"
   ));
 
@@ -114,7 +117,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     ourDefaultRtJar = rtJar;
   }
 
-  // todo: remove this prop. when there appears a way to undestand directly from the project model, whether we should use model_path
+  // todo: remove this prop. when there appears a way to understand directly from the project model, whether we should use model_path
   private static final boolean JAVA9_MODULE_PATH_ENABLED = Boolean.valueOf(System.getProperty("compiler.java9.use.module_path", "false"));
 
   private static boolean isRtJarPath(String path) {
@@ -174,7 +177,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
   public ExitCode doBuild(@NotNull CompileContext context,
                           @NotNull ModuleChunk chunk,
                           @NotNull DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
-                          @NotNull OutputConsumer outputConsumer, JavaCompilingTool compilingTool) throws ProjectBuildException, IOException {
+                          @NotNull OutputConsumer outputConsumer,
+                          @NotNull JavaCompilingTool compilingTool) throws ProjectBuildException, IOException {
     try {
       final Set<File> filesToCompile = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
 
@@ -187,6 +191,17 @@ public class JavaBuilder extends ModuleLevelBuilder {
           return true;
         }
       });
+
+      if (!filesToCompile.isEmpty() || dirtyFilesHolder.hasRemovedFiles()) {
+        for (JpsModule module : chunk.getModules()) {
+          for (JpsModuleSourceRoot root : module.getSourceRoots()) {
+            File descriptor = new File(JpsPathUtil.urlToOsPath(root.getUrl()), MODULE_INFO_FILE);
+            if (!filesToCompile.contains(descriptor) && descriptor.isFile()) {
+              filesToCompile.add(descriptor);
+            }
+          }
+        }
+      }
 
       if (JavaBuilderUtil.isCompileJavaIncrementally(context)) {
         final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
@@ -227,11 +242,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
-  private ExitCode compile(final CompileContext context,
+  private ExitCode compile(CompileContext context,
                            ModuleChunk chunk,
                            DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                            Collection<File> files,
-                           OutputConsumer outputConsumer, @NotNull JavaCompilingTool compilingTool)
+                           OutputConsumer outputConsumer,
+                           JavaCompilingTool compilingTool)
     throws Exception {
     ExitCode exitCode = ExitCode.NOTHING_DONE;
 

@@ -78,10 +78,10 @@ public class AnnotationsPreloader {
           }
 
           AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
-          if (vcs == null || !(vcs.getAnnotationProvider() instanceof VcsCacheableAnnotationProvider)) return;
+          if (vcs == null) return;
 
-          AnnotationProvider annotationProvider = vcs.getCachingAnnotationProvider();
-          assert annotationProvider != null;
+          AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
+          if (annotationProvider == null || !annotationProvider.isCaching()) return;
 
           annotationProvider.annotate(file);
           if (LOG.isDebugEnabled()) {

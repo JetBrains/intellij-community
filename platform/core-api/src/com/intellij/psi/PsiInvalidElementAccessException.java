@@ -116,7 +116,12 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
       String traceText = !isTrackingInvalidation() ? "disabled" :
                          trace != null ? "see attachment" :
                          "no info";
-      reason += " because: " + reason(element) + "\ninvalidated at: " + traceText;
+      try {
+        reason += " because: " + reason(element);
+      }
+      catch (PsiInvalidElementAccessException ignore) {
+      }
+      reason += "\ninvalidated at: " + traceText;
     }
     return reason + (message == null ? "" : "; " + message);
   }

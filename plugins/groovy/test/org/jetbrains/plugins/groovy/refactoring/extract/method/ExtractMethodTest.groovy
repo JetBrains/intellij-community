@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author ilyas
  */
-public class ExtractMethodTest extends LightGroovyTestCase {
+class ExtractMethodTest extends LightGroovyTestCase {
   final String basePath = TestUtils.testDataPath + 'groovy/refactoring/extractMethod/'
 
   private void doAntiTest(String errorMessage) {
@@ -103,71 +103,105 @@ public class ExtractMethodTest extends LightGroovyTestCase {
     };
   }
 
-  public void testClos_em() throws Throwable { doTest(); }
-  public void testEm1() throws Throwable { doTest(); }
-  public void testEnum1() throws Throwable { doTest(); }
-  public void testErr1() throws Throwable { doTest(); }
-  public void testExpr1() throws Throwable { doTest(); }
-  public void testExpr2() throws Throwable { doTest(); }
-  public void testExpr3() throws Throwable { doTest(); }
-  public void testInput1() throws Throwable { doTest(); }
-  public void testInput2() throws Throwable { doTest(); }
-  public void testInter1() throws Throwable { doTest(); }
-  public void testInter2() throws Throwable { doAntiTest("Refactoring is not supported when return statement interrupts the execution flow"); }
-  public void testInter3() throws Throwable { doAntiTest("Refactoring is not supported when return statement interrupts the execution flow"); }
-  public void testInter4() throws Throwable { doTest(); }
-  public void testMeth_em1() throws Throwable { doTest(); }
-  public void testMeth_em2() throws Throwable { doTest(); }
-  public void testMeth_em3() throws Throwable { doTest(); }
-  public void testOutput1() throws Throwable { doTest(); }
-  public void testResul1() throws Throwable { doTest(); }
-  public void testRet1() throws Throwable { doTest(); }
-  public void testRet2() throws Throwable { doTest(); }
-  public void testRet3() throws Throwable { doTest(); }
-  public void testRet4() throws Throwable { doAntiTest("Refactoring is not supported when return statement interrupts the execution flow"); }
-  public void testVen1() throws Throwable { doTest(); }
-  public void testVen2() throws Throwable { doTest(); }
-  public void testVen3() throws Throwable { doTest(); }
-  public void testForIn() throws Throwable { doTest(); }
-  public void testInCatch() {doTest();}
+  void testClos_em() throws Throwable { doTest(); }
 
-  public void testClosureIt() throws Throwable { doTest(); }
-  public void testImplicitReturn() {doTest();}
+  void testEm1() throws Throwable { doTest(); }
 
-  public void testMultiOutput1() {doTest();}
-  public void testMultiOutput2() {doTest();}
-  public void testMultiOutput3() {doTest();}
-  public void testMultiOutput4() {doTest();}
-  public void testMultiOutput5() {doTest();}
+  void testEnum1() throws Throwable { doTest(); }
 
-  public void testDontShortenRefsIncorrect() {doTest();}
+  void testErr1() throws Throwable { doTest(); }
 
-  public void testLastBlockStatementInterruptsControlFlow() {doTest();}
+  void testExpr1() throws Throwable { doTest(); }
 
-  public void testAOOBE() {doTest();}
+  void testExpr2() throws Throwable { doTest(); }
 
-  public void testWildCardReturnType() {doTest();}
-  public void testParamChangedInsideExtractedMethod() {doTest();}
+  void testExpr3() throws Throwable { doTest(); }
 
-  public void testTerribleAppStatement() {doTest()}
+  void testInput1() throws Throwable { doTest(); }
 
-  public void testArgsUsedOnlyInClosure() {doTest()}
-  public void testArgsUsedOnlyInAnonymousClass() {doTest()}
+  void testInput2() throws Throwable { doTest(); }
 
-  public void testTwoVars() {doTest()}
+  void testInter1() throws Throwable { doTest(); }
 
-  public void testContextConflicts() {doTest()}
-  public void testNoContextConflicts() {doTest()}
+  void testInter2() throws Throwable { doAntiTest("Refactoring is not supported when return statement interrupts the execution flow"); }
 
-  public void testTupleDeclaration() { doTest() }
+  void testInter3() throws Throwable { doAntiTest("Refactoring is not supported when return statement interrupts the execution flow"); }
 
-  public void testNonIdentifierName() {doTest('f*f')}
+  void testInter4() throws Throwable { doTest(); }
 
-  public void testAutoSelectExpression() { doTest() }
+  void testMeth_em1() throws Throwable { doTest(); }
 
-  public void testUnassignedVar() { doTest() }
+  void testMeth_em2() throws Throwable { doTest(); }
 
-  public void testStringPart0() {
+  void testMeth_em3() throws Throwable { doTest(); }
+
+  void testOutput1() throws Throwable { doTest(); }
+
+  void testResul1() throws Throwable { doTest(); }
+
+  void testRet1() throws Throwable { doTest(); }
+
+  void testRet2() throws Throwable { doTest(); }
+
+  void testRet3() throws Throwable { doTest(); }
+
+  void testRet4() throws Throwable { doAntiTest("Refactoring is not supported when return statement interrupts the execution flow"); }
+
+  void testVen1() throws Throwable { doTest(); }
+
+  void testVen2() throws Throwable { doTest(); }
+
+  void testVen3() throws Throwable { doTest(); }
+
+  void testForIn() throws Throwable { doTest(); }
+
+  void testInCatch() { doTest(); }
+
+  void testClosureIt() throws Throwable { doTest(); }
+
+  void testImplicitReturn() { doTest(); }
+
+  void testMultiOutput1() { doTest(); }
+
+  void testMultiOutput2() { doTest(); }
+
+  void testMultiOutput3() { doTest(); }
+
+  void testMultiOutput4() { doTest(); }
+
+  void testMultiOutput5() { doTest(); }
+
+  void testDontShortenRefsIncorrect() { doTest(); }
+
+  void testLastBlockStatementInterruptsControlFlow() { doTest(); }
+
+  void testAOOBE() { doTest(); }
+
+  void testWildCardReturnType() { doTest(); }
+
+  void testParamChangedInsideExtractedMethod() { doTest(); }
+
+  void testTerribleAppStatement() { doTest() }
+
+  void testArgsUsedOnlyInClosure() { doTest() }
+
+  void testArgsUsedOnlyInAnonymousClass() { doTest() }
+
+  void testTwoVars() { doTest() }
+
+  void testContextConflicts() { doTest() }
+
+  void testNoContextConflicts() { doTest() }
+
+  void testTupleDeclaration() { doTest() }
+
+  void testNonIdentifierName() { doTest('f*f') }
+
+  void testAutoSelectExpression() { doTest() }
+
+  void testUnassignedVar() { doTest() }
+
+  void testStringPart0() {
     doTest('''\
 def foo() {
     print 'a<begin>b<end>c'

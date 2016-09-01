@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -263,7 +263,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     myId = element.getAttributeValue(ID_ATTR);
     myWasRead = true;
     try {
-      myActive = Boolean.valueOf(element.getAttributeValue(ACTIVE_ATTR)).booleanValue();
+      myActive = Boolean.valueOf(element.getAttributeValue(ACTIVE_ATTR)).booleanValue() && canActivateOnStart(myId);
     }
     catch (NumberFormatException ignored) {
     }
@@ -283,7 +283,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     }
     catch (IllegalArgumentException ignored) {
     }
-    myVisible = Boolean.valueOf(element.getAttributeValue(VISIBLE_ATTR)).booleanValue();
+    myVisible = Boolean.valueOf(element.getAttributeValue(VISIBLE_ATTR)).booleanValue() && canActivateOnStart(myId);
     if (element.getAttributeValue(SHOW_STRIPE_BUTTON) != null) {
       myShowStripeButton = Boolean.valueOf(element.getAttributeValue(SHOW_STRIPE_BUTTON)).booleanValue();
     }
@@ -317,6 +317,16 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     mySplitMode = Boolean.parseBoolean(element.getAttributeValue(SIDE_TOOL_ATTR));
 
     myContentUiType = ToolWindowContentUiType.getInstance(element.getAttributeValue(CONTENT_UI_ATTR));
+  }
+
+  private static boolean canActivateOnStart(String id) {
+    for (ToolWindowEP ep : ToolWindowEP.EP_NAME.getExtensions()) {
+      if (id.equals(ep.id)) {
+        ToolWindowFactory factory = ep.getToolWindowFactory();
+        return !factory.isDoNotActivateOnStart();
+      }
+    }
+    return true;
   }
 
   /**

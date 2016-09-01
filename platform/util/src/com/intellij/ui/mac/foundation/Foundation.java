@@ -18,6 +18,7 @@ package com.intellij.ui.mac.foundation;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
 import com.sun.jna.*;
+import com.sun.jna.ptr.PointerByReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * @author spleaner
@@ -77,8 +79,25 @@ public class Foundation {
     return invoke(getObjcClass(cls), createSelector(selector), args);
   }
 
+  public static ID safeInvoke(final String stringCls, final String stringSelector, Object... args) {
+    ID cls = getObjcClass(stringCls);
+    Pointer selector = createSelector(stringSelector);
+    if (invoke(cls, "respondsToSelector:", selector).intValue() == 0) {
+      throw new RuntimeException(String.format("Missing selector %s for %s", stringSelector, stringCls));
+    }
+    return invoke(cls, selector, args);
+  }
+
   public static ID invoke(final ID id, final String selector, Object... args) {
     return invoke(id, createSelector(selector), args);
+  }
+
+  public static ID safeInvoke(final ID id, final String stringSelector, Object... args) {
+    Pointer selector = createSelector(stringSelector);
+    if (!id.equals(ID.NIL) && invoke(id, "respondsToSelector:", selector).intValue() == 0) {
+      throw new RuntimeException(String.format("Missing selector %s for %s", stringSelector, toStringViaUTF8(invoke(id, "description"))));
+    }
+    return invoke(id, selector, args);
   }
 
   public static ID allocateObjcClassPair(ID superCls, String name) {
@@ -173,6 +192,14 @@ public class Foundation {
     }
   }
 
+  public static ID nsUUID(@NotNull UUID uuid) {
+    return nsUUID(uuid.toString());
+  }
+
+  public static ID nsUUID(@NotNull String uuid) {
+    return invoke(invoke(invoke("NSUUID", "alloc"), "initWithUUIDString:", nsString(uuid)), "autorelease");
+  }
+
   @Nullable
   public static String toStringViaUTF8(ID cfString) {
     if (cfString.intValue() == 0) return null;
@@ -184,6 +211,16 @@ public class Foundation {
     byte ok = myFoundationLibrary.CFStringGetCString(cfString, buffer, buffer.length, FoundationLibrary.kCFStringEncodingUTF8);
     if (ok == 0) throw new RuntimeException("Could not convert string");
     return Native.toString(buffer);
+  }
+
+  @Nullable
+  public static String getNSErrorText(@Nullable ID error) {
+    if (error == null || error.byteValue() == 0) return null;
+
+    String description = toStringViaUTF8(invoke(error, "localizedDescription"));
+    String recovery = toStringViaUTF8(invoke(error, "localizedRecoverySuggestion"));
+    if (recovery != null) description += "\n" + recovery;
+    return StringUtil.notNullize(description);
   }
 
   @Nullable
@@ -245,7 +282,7 @@ public class Foundation {
     boolean myUseAutoreleasePool;
   }
 
-  public static void executeOnMainThread(final Runnable runnable, final boolean withAutoreleasePool, final boolean waitUntilDone) {
+  public static void executeOnMainThread(final boolean withAutoreleasePool, final boolean waitUntilDone, final Runnable runnable) {
     initRunnableSupport();
 
     synchronized (RUNNABLE_LOCK) {
@@ -321,6 +358,22 @@ public class Foundation {
     }
 
     public NSArray keys() { return new NSArray(invoke(myDelegate, "allKeys")); }
+
+    @NotNull
+    public static Map<String, String> toStringMap(ID delegate) {
+      NSDictionary dict = new NSDictionary(delegate);
+
+      NSArray keys = dict.keys();
+      Map<String, String> result = new HashMap<String, String>();
+
+      for (int i = 0; i < keys.count(); i++) {
+        String key = toStringViaUTF8(keys.at(i));
+        String val = toStringViaUTF8(dict.get(key));
+        result.put(key, val);
+      }
+
+      return result;
+    }
   }
 
   public static class NSArray {
@@ -471,6 +524,13 @@ public class Foundation {
     final ID nsKeys = invoke("NSArray", "arrayWithObjects:", convertTypes(keys));
     final ID nsData = invoke("NSArray", "arrayWithObjects:", convertTypes(values));
     return invoke("NSDictionary", "dictionaryWithObjects:forKeys:", nsData, nsKeys);
+  }
+
+  @NotNull
+  public static PointerType createPointerReference() {
+    PointerType reference = new PointerByReference(new Memory(Native.POINTER_SIZE));
+    reference.getPointer().clear(Native.POINTER_SIZE);
+    return reference;
   }
 
   private static Object[] convertTypes(@NotNull Object[] v) {

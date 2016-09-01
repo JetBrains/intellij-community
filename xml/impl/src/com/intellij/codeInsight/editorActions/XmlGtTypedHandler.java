@@ -43,6 +43,7 @@ import com.intellij.xml.XmlElementDescriptorWithCDataContent;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -235,7 +236,8 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
     return Result.CONTINUE;
   }
 
-  static boolean fileContainsXmlLanguage(PsiFile editedFile) {
+  public static boolean fileContainsXmlLanguage(@Nullable PsiFile editedFile) {
+    if (editedFile == null) return false;
     if (editedFile.getLanguage() instanceof XMLLanguage) {
       return true;
     }

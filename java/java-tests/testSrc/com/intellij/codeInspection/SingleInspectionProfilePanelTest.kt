@@ -37,7 +37,7 @@ class SingleInspectionProfilePanelTest : LightIdeaTestCase() {
     val profile = configureInspections(arrayOf(myInspection), project, testRootDisposable)
 
     val model = profile.modifiableModel
-    val panel = SingleInspectionProfilePanel(ProjectInspectionProfileManager.getInstanceImpl(project), profile.name, model, profile)
+    val panel = SingleInspectionProfilePanel(ProjectInspectionProfileManager.getInstanceImpl(project), model)
     panel.isVisible = true
     panel.reset()
 
@@ -63,7 +63,7 @@ class SingleInspectionProfilePanelTest : LightIdeaTestCase() {
 
     val model = profile.modifiableModel
 
-    val panel = SingleInspectionProfilePanel(profileManager, profile.name, model, profile)
+    val panel = SingleInspectionProfilePanel(profileManager, model)
     panel.isVisible = true
     panel.reset()
     TestCase.assertEquals(InspectionProfileTest.getInitializedTools(model).toString(), 1,

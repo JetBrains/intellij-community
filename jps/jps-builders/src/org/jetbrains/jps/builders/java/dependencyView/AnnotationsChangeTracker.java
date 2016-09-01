@@ -28,12 +28,16 @@ import java.util.Set;
  * Every time changes in annotation set on mentioned program elements are detected, all registered extensions are queried, and
  * all requested dependencies are marked for recompilation.
  *
+ * <p/>
  * To register custom AnnotationsChangeTracker, a JPS plugin must:
- * - define a subclass of this class implementing desired callback methods
- * - register this implementation via standard java Service Provider Interface mechanism:
- *   create a file 'META-INF/services/org.jetbrains.jps.builders.java.dependencyView.AnnotationsChangeTracker'
- *   containing fully qualified name of extension implementation, e.g. "org.plugin-name.MyAnnotationsChangeTrackerImpl"
- *
+ * <ul>
+ * <li> define a subclass of this class implementing desired callback methods
+ * <li> register this implementation via standard java Service Provider Interface mechanism:
+ *   <ul>
+ *     <li>create a file 'META-INF/services/org.jetbrains.jps.builders.java.dependencyView.AnnotationsChangeTracker'
+ *     <li>containing fully qualified name of extension implementation, e.g. "org.plugin-name.MyAnnotationsChangeTrackerImpl"
+ *   </ul>
+ * </ul>
  * @author Eugene Zhuravlev
  *         Date: 25-Jul-16
  * @noinspection UnusedParameters
@@ -71,7 +75,6 @@ public abstract class AnnotationsChangeTracker {
 
   /**
    * Invoked when changes in annotation list or parameter annotations for some method are detected
-   * @param context
    * @param method the method in question
    * @param annotationsDiff differences descriptor for annotations on the method
    * @param paramAnnotationsDiff differences descriptor on method parameters annotations

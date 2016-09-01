@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,27 +28,26 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
-import org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateGetterSetterAction
 import org.jetbrains.plugins.groovy.actions.generate.constructors.GroovyGenerateConstructorHandler
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author peter
  */
-public class GroovyGenerateMembersTest extends LightCodeInsightFixtureTestCase {
-  public void testConstructorAtOffset() {
+class GroovyGenerateMembersTest extends LightCodeInsightFixtureTestCase {
+  void testConstructorAtOffset() {
     doConstructorTest();
   }
 
-  public void testConstructorAtEnd() {
+  void testConstructorAtEnd() {
     doConstructorTest();
   }
 
-  public void testLonelyConstructor() {
+  void testLonelyConstructor() {
     doConstructorTest();
   }
 
-  public void testConstructorInJavaInheritor() {
+  void testConstructorInJavaInheritor() {
     myFixture.configureByText "GrBase.groovy", """
 abstract class GrBase {
     GrBase(int i) { }
@@ -69,7 +68,7 @@ class Inheritor extends GrBase {
 """
   }
 
-  public void testExplicitArgumentTypes() {
+  void testExplicitArgumentTypes() {
     myFixture.configureByText("a.groovy", """
 class Super {
   def Super(a, int b) {}
@@ -374,8 +373,6 @@ class GrImportStatementStub {
   }
 
   private void generateGetter() {
-    //noinspection GroovyResultOfObjectAllocationIgnored
-    new GroovyGenerateGetterSetterAction() //don't remove it!!!
     new WriteCommandAction(project, PsiFile.EMPTY_ARRAY) {
       protected void run(@NotNull Result result) throws Throwable {
         new GenerateGetterHandler() {
@@ -391,8 +388,6 @@ class GrImportStatementStub {
   }
 
   private void generateSetter() {
-    //noinspection GroovyResultOfObjectAllocationIgnored
-    new GroovyGenerateGetterSetterAction() //don't remove it!!!
     new WriteCommandAction(project, PsiFile.EMPTY_ARRAY) {
       protected void run(@NotNull Result result) throws Throwable {
         new GenerateSetterHandler() {

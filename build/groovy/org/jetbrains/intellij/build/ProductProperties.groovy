@@ -16,6 +16,7 @@
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
+import org.jetbrains.intellij.build.impl.PluginLayout
 
 /**
  * @author nik
@@ -69,7 +70,9 @@ public abstract class ProductProperties {
    * An identifier which will be used to form names for directories where configuration and caches will be stored, usually a product name
    * without spaces with added version ('IntelliJIdea2016.1' for IntelliJ IDEA 2016.1)
    */
-  abstract String systemSelector(ApplicationInfoProperties applicationInfo)
+  String systemSelector(ApplicationInfoProperties applicationInfo) {
+    "${applicationInfo.productName}${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart}"
+  }
 
   /**
    * If {@code true} Alt+Button1 shortcut will be removed from 'Quick Evaluate Expression' action and assigned to 'Add/Remove Caret' action
@@ -94,9 +97,15 @@ public abstract class ProductProperties {
   boolean scrambleMainJar = false
 
   /**
-   * Described which modules should be included into the product's platform and which plugins should be bundled with the product
+   * Describes which modules should be included into the product's platform and which plugins should be bundled with the product
    */
   ProductModulesLayout productLayout = new ProductModulesLayout()
+
+  /**
+   * Describes layout of all plugins which may be included into the product. The actual list of the plugins need to be bundled with the product
+   * is specified by {@link ProductModulesLayout#bundledPluginModules}.
+   */
+  List<PluginLayout> allPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS
 
   /**
    * If {@code true} cross-platform ZIP archive containing binaries for all OS will be built

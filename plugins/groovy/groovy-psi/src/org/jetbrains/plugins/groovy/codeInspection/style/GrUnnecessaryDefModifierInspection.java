@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.codeInspection.bugs.GrRemoveModifierFix;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt;
 
 public class GrUnnecessaryDefModifierInspection extends GroovySuppressableInspectionTool implements CleanupLocalInspectionTool{
 
@@ -46,7 +46,7 @@ public class GrUnnecessaryDefModifierInspection extends GroovySuppressableInspec
         if (!(list instanceof GrModifierList)) return;
 
         PsiElement owner = list.getParent();
-        if (!PsiUtil.modifierListMayBeEmpty(owner)) return;
+        if (!PsiUtilKt.modifierListMayBeEmpty(owner)) return;
 
         holder.registerProblem(
           modifier,

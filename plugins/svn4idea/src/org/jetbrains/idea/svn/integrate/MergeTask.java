@@ -91,10 +91,7 @@ public class MergeTask extends BaseMergeTask {
   private void refreshChanges(@NotNull final ContinuationContext context) {
     context.suspend();
 
-    ChangeListManager.getInstance(myMergeContext.getProject()).invokeAfterUpdate(new Runnable() {
-      public void run() {
-        context.ping();
-      }
-    }, InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE_NOT_AWT, "", ModalityState.NON_MODAL);
+    ChangeListManager.getInstance(myMergeContext.getProject())
+      .invokeAfterUpdate(() -> context.ping(), InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE, "", ModalityState.NON_MODAL);
   }
 }

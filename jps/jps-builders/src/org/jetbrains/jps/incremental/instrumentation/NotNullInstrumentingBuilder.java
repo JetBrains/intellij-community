@@ -93,9 +93,9 @@ public class NotNullInstrumentingBuilder extends BaseInstrumentingBuilder{
         }
       }) + ": " + e.getMessage();
       context.processMessage(new CompilerMessage(getPresentableName(),
+                                                 BuildMessage.Kind.ERROR,
                                                  msg,
-                                                 compiledClass.getSourceFilesPaths(),
-                                                 BuildMessage.Kind.ERROR));
+                                                 ContainerUtil.getFirstItem(compiledClass.getSourceFilesPaths())));
     }
     return null;
   }

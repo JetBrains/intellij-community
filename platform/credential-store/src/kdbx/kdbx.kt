@@ -17,7 +17,7 @@ package com.intellij.credentialStore.kdbx
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.SmartList
-import com.intellij.util.inputStream
+import com.intellij.util.inputStreamIfExists
 import com.intellij.util.loadElement
 import org.bouncycastle.crypto.engines.Salsa20Engine
 import org.bouncycastle.crypto.params.KeyParameter
@@ -33,7 +33,7 @@ import java.time.format.DateTimeParseException
 import java.util.*
 import javax.xml.bind.DatatypeConverter
 
-internal fun loadKdbx(file: Path, credentials: KeePassCredentials) = file.inputStream().use {
+internal fun loadKdbx(file: Path, credentials: KeePassCredentials) = file.inputStreamIfExists()?.use {
   KeePassDatabase(KdbxStreamFormat().load(credentials, it))
 }
 

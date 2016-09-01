@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,9 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 /**
  * @author peter
  */
-public class GroovyFixesTest extends LightCodeInsightFixtureTestCase {
+class GroovyFixesTest extends LightCodeInsightFixtureTestCase {
 
-  public void testSuppressForIfStatement() throws Throwable {
+  void testSuppressForIfStatement() throws Throwable {
     myFixture.enableInspections new GroovyConstantIfStatementInspection()
     myFixture.configureByText("a.groovy", """
 <caret>if (true) {
@@ -39,7 +39,7 @@ if (true) {
 }"""
   }
 
-  public void testShallowChangeToGroovyStylePropertyAccess() throws Throwable {
+  void testShallowChangeToGroovyStylePropertyAccess() throws Throwable {
     myFixture.enableInspections new JavaStylePropertiesInvocationInspection()
     myFixture.configureByText "a.groovy", """class GroovyClasss {
   def initializer
@@ -54,7 +54,7 @@ if (true) {
     assertEmpty myFixture.filterAvailableIntentions("Change to Groovy-style property reference")
   }
 
-  public void testSecondAnnotationSuppression() {
+  void testSecondAnnotationSuppression() {
     myFixture.enableInspections(new GrUnresolvedAccessInspection())
     myFixture.configureByText "a.groovy", """\
 class FooBarGoo {
@@ -75,7 +75,7 @@ class FooBarGoo {
 """
   }
 
-  public void testSecondAnnotationSuppression2() {
+  void testSecondAnnotationSuppression2() {
     myFixture.enableInspections new GrUnresolvedAccessInspection()
     myFixture.configureByText "a.groovy", """class FooBarGoo {
   @SuppressWarnings("GroovyParameterNamingConvention")
@@ -94,7 +94,7 @@ class FooBarGoo {
 """
   }
 
-  public void testFixPackageName() {
+  void testFixPackageName() {
     myFixture.configureByText('Foo.groovy', '''\
 #!/usr/bin/groovy
 

@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ven
  */
+@FunctionalInterface
 public interface TextOccurenceProcessor {
   boolean execute(@NotNull PsiElement element, int offsetInElement);
 }

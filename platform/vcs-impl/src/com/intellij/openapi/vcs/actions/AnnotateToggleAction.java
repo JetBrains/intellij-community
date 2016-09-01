@@ -32,7 +32,7 @@ import com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider;
 import com.intellij.openapi.vcs.annotate.AnnotationSourceSwitcher;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
-import com.intellij.openapi.vcs.history.VcsRevisionDescription;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -87,32 +87,32 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
                                 @Nullable final VirtualFile currentFile,
                                 @NotNull final FileAnnotation fileAnnotation,
                                 @NotNull final AbstractVcs vcs,
-                                @Nullable UpToDateLineNumberProvider getUpToDateLineNumber) {
+                                @Nullable final UpToDateLineNumberProvider upToDateLineNumberProvider) {
     if (fileAnnotation.getFile() != null && fileAnnotation.getFile().isInLocalFileSystem()) {
       ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener().registerAnnotation(fileAnnotation.getFile(), fileAnnotation);
     }
 
     editor.getGutter().closeAllAnnotations();
 
-    fileAnnotation.setCloser(new Runnable() {
-      @Override
-      public void run() {
+    fileAnnotation.setCloser(() -> {
+      UIUtil.invokeLaterIfNeeded(() -> {
         if (project.isDisposed()) return;
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            if (project.isDisposed()) return;
-            editor.getGutter().closeAllAnnotations();
-          }
-        });
-      }
+        editor.getGutter().closeAllAnnotations();
+      });
     });
 
+    fileAnnotation.setReloader(() -> {
+      if (editor.getGutter().isAnnotationsShown()) {
+        doAnnotate(editor, project, currentFile, fileAnnotation, vcs, upToDateLineNumberProvider);
+      }
+    });
 
     final EditorGutterComponentEx editorGutter = (EditorGutterComponentEx)editor.getGutter();
     final List<AnnotationFieldGutter> gutters = new ArrayList<>();
     final AnnotationSourceSwitcher switcher = fileAnnotation.getAnnotationSourceSwitcher();
-    if (getUpToDateLineNumber == null) getUpToDateLineNumber = new UpToDateLineNumberProviderImpl(editor.getDocument(), project);
+    UpToDateLineNumberProvider getUpToDateLineNumber = upToDateLineNumberProvider != null ?
+                                                       upToDateLineNumberProvider :
+                                                       new UpToDateLineNumberProviderImpl(editor.getDocument(), project);
 
     final AnnotationPresentation presentation = new AnnotationPresentation(fileAnnotation, getUpToDateLineNumber, switcher);
     if (currentFile != null && vcs.getCommittedChangesProvider() != null) {
@@ -186,11 +186,11 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
   @Nullable
   private static Map<VcsRevisionNumber, Integer> computeLineNumbers(@NotNull FileAnnotation fileAnnotation) {
     final Map<VcsRevisionNumber, Integer> numbers = new HashMap<>();
-    final List<? extends VcsRevisionDescription> fileRevisionList = fileAnnotation.getRevisionDescriptions();
+    final List<VcsFileRevision> fileRevisionList = fileAnnotation.getRevisions();
     if (fileRevisionList != null) {
       int size = fileRevisionList.size();
       for (int i = 0; i < size; i++) {
-        VcsRevisionDescription revision = fileRevisionList.get(i);
+        VcsFileRevision revision = fileRevisionList.get(i);
         final VcsRevisionNumber number = revision.getRevisionNumber();
 
         numbers.put(number, size - i);
@@ -201,39 +201,47 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
 
   @Nullable
   private static Couple<Map<VcsRevisionNumber, Color>> computeBgColors(@NotNull FileAnnotation fileAnnotation, @NotNull Editor editor) {
-    final List<? extends VcsRevisionDescription> fileRevisionList = fileAnnotation.getRevisionDescriptions();
-    if (ContainerUtil.isEmpty(fileRevisionList)) return null;
-
-    final Map<VcsRevisionNumber, Color> commitOrderColors = new HashMap<>();
-    final Map<VcsRevisionNumber, Color> commitAuthorColors = new HashMap<>();
-    final Map<String, Color> authorColors = new HashMap<>();
+    Map<VcsRevisionNumber, Color> commitOrderColors = new HashMap<>();
+    Map<VcsRevisionNumber, Color> commitAuthorColors = new HashMap<>();
 
     EditorColorsScheme colorScheme = editor.getColorsScheme();
     AnnotationsSettings settings = AnnotationsSettings.getInstance();
     List<Color> authorsColorPalette = settings.getAuthorsColors(colorScheme);
     List<Color> orderedColorPalette = settings.getOrderedColors(colorScheme);
-    final int revisionsCount = fileRevisionList.size();
 
-    for (int i = 0; i < fileRevisionList.size(); i++) {
-      VcsRevisionDescription revision = fileRevisionList.get(i);
-      final VcsRevisionNumber number = revision.getRevisionNumber();
-      final String author = revision.getAuthor();
-      if (number == null) continue;
+    FileAnnotation.AuthorsMappingProvider authorsMappingProvider = fileAnnotation.getAuthorsMappingProvider();
+    if (authorsMappingProvider != null) {
+      Map<VcsRevisionNumber, String> authorsMap = authorsMappingProvider.getAuthors();
 
-      if (!commitAuthorColors.containsKey(number)) {
-        if (author != null && !authorColors.containsKey(author)) {
-          final int index = authorColors.size();
-          Color color = authorsColorPalette.get(index % authorsColorPalette.size());
-          authorColors.put(author, color);
-        }
-
-        commitAuthorColors.put(number, authorColors.get(author));
+      Map<String, Color> authorColors = new HashMap<>();
+      for (String author : ContainerUtil.newTreeSet(authorsMap.values())) {
+        int index = authorColors.size();
+        Color color = authorsColorPalette.get(index % authorsColorPalette.size());
+        authorColors.put(author, color);
       }
-      if (!commitOrderColors.containsKey(number)) {
-        Color color = orderedColorPalette.get(orderedColorPalette.size() * i / revisionsCount);
-        commitOrderColors.put(number, color);
+
+      for (Map.Entry<VcsRevisionNumber, String> entry : authorsMap.entrySet()) {
+        VcsRevisionNumber revision = entry.getKey();
+        String author = entry.getValue();
+        Color color = authorColors.get(author);
+        commitAuthorColors.put(revision, color);
       }
     }
+
+    FileAnnotation.RevisionsOrderProvider revisionsOrderProvider = fileAnnotation.getRevisionsOrderProvider();
+    if (revisionsOrderProvider != null) {
+      List<List<VcsRevisionNumber>> orderedRevisions = revisionsOrderProvider.getOrderedRevisions();
+
+      int revisionsCount = orderedRevisions.size();
+      for (int index = 0; index < revisionsCount; index++) {
+        Color color = orderedColorPalette.get(orderedColorPalette.size() * index / revisionsCount);
+
+        for (VcsRevisionNumber number : orderedRevisions.get(index)) {
+          commitOrderColors.put(number, color);
+        }
+      }
+    }
+
     return Couple.of(commitOrderColors.size() > 1 ? commitOrderColors : null,
                      commitAuthorColors.size() > 1 ? commitAuthorColors : null);
   }

@@ -80,7 +80,7 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   @NotNull
   Set<RefModule> getModuleProblems();
   @Nullable
-  QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements, @Nullable CommonProblemDescriptor[] descriptors);
+  QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements, @Nullable InspectionTree tree);
   @NotNull
   Map<RefEntity, CommonProblemDescriptor[]> getProblemElements();
   @NotNull

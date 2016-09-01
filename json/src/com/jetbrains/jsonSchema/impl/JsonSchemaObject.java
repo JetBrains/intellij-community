@@ -1,5 +1,7 @@
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.openapi.util.text.StringUtil;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -118,6 +120,9 @@ public class JsonSchemaObject {
     myProperties.putAll(other.myProperties);
     myDefinitions = copyMap(myDefinitions, other.myDefinitions);
     myPatternProperties = copyMap(myPatternProperties, other.myPatternProperties);
+    if (!StringUtil.isEmptyOrSpaces(other.myDescription)) {
+      myDescription = other.myDescription;
+    }
 
     if (other.myType != null) myType = other.myType;
     if (other.myDefault != null) myDefault = other.myDefault;

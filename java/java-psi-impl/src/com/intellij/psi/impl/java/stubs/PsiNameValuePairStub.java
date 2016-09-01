@@ -17,7 +17,6 @@ package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.stubs.StubElement;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -26,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface PsiNameValuePairStub extends StubElement<PsiNameValuePair> {
 
-  @NotNull String getName();
+  @Nullable String getName();
 
   @Nullable
   String getValue();

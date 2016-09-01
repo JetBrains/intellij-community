@@ -42,7 +42,7 @@ import static com.intellij.openapi.externalSystem.test.ExternalSystemTestCase.co
  * @author Denis Zhdanov
  * @since 8/8/13 5:17 PM
  */
-public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
+class ExternalProjectServiceTest extends AbstractExternalSystemTest {
 
   void 'test no duplicate library dependency is added on subsequent refresh when there is an unresolved library'() {
     DataNode<ProjectData> projectNode = buildExternalProjectInfo {

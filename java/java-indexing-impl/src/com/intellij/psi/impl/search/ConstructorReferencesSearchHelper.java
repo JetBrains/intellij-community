@@ -17,11 +17,11 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMemberReference;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchRequestCollector;
 import com.intellij.psi.search.SearchScope;
@@ -60,14 +60,15 @@ class ConstructorReferencesSearchHelper {
     final boolean[] isEnum = new boolean[1];
     final boolean[] isUnder18 = new boolean[1];
 
-    DumbService.getInstance(project).runReadActionInSmartMode(new Computable<Void>() {
-      @Override
-      public Void compute() {
-        constructorCanBeCalledImplicitly[0] = constructor.getParameterList().getParametersCount() == 0;
-        isEnum[0] = containingClass.isEnum();
-        isUnder18[0] = PsiUtil.getLanguageLevel(containingClass).isAtLeast(LanguageLevel.JDK_1_8);
-        return null;
+    DumbService.getInstance(project).runReadActionInSmartMode(() -> {
+      final PsiParameter[] parameters = constructor.getParameterList().getParameters();
+      constructorCanBeCalledImplicitly[0] = parameters.length == 0;
+      if (!constructorCanBeCalledImplicitly[0]) {
+        constructorCanBeCalledImplicitly[0] = parameters.length == 1 && parameters[0].isVarArgs();
       }
+      isEnum[0] = containingClass.isEnum();
+      isUnder18[0] = PsiUtil.getLanguageLevel(containingClass).isAtLeast(LanguageLevel.JDK_1_8);
+      return null;
     });
 
     if (isEnum[0]) {
@@ -107,7 +108,7 @@ class ConstructorReferencesSearchHelper {
     if (!DumbService.getInstance(project).runReadActionInSmartMode(
       () -> processSuperOrThis(containingClass, constructor, constructorCanBeCalledImplicitly[0], searchScope, project,
                                isStrictSignatureSearch,
-                               PsiKeyword.THIS, processor))) {
+                               PsiKeyword.THIS, PsiKeyword.SUPER, processor))) {
       return false;
     }
 
@@ -116,7 +117,7 @@ class ConstructorReferencesSearchHelper {
       final PsiElement navigationElement = inheritor.getNavigationElement();
       if (navigationElement instanceof PsiClass) {
         return processSuperOrThis((PsiClass)navigationElement, constructor, constructorCanBeCalledImplicitly[0], searchScope, project,
-                                  isStrictSignatureSearch, PsiKeyword.SUPER, processor);
+                                  isStrictSignatureSearch, PsiKeyword.SUPER, PsiKeyword.THIS, processor);
       }
       return true;
     };
@@ -172,6 +173,7 @@ class ConstructorReferencesSearchHelper {
                                      @NotNull Project project,
                                      final boolean isStrictSignatureSearch,
                                      @NotNull String superOrThisKeyword,
+                                     @NotNull String thisOrSuperKeyword,
                                      @NotNull Processor<PsiReference> processor) {
     PsiMethod[] constructors = inheritor.getConstructors();
     if (constructors.length == 0 && constructorCanBeCalledImplicitly) {
@@ -202,6 +204,9 @@ class ConstructorReferencesSearchHelper {
                 //as long as we've encountered super/this keyword, no implicit ctr calls are possible here
                 continue;
               }
+              else if (refExpr.textMatches(thisOrSuperKeyword)) {
+                continue;
+              }
             }
           }
         }
@@ -220,9 +225,22 @@ class ConstructorReferencesSearchHelper {
                                                  @NotNull final Project project,
                                                  @NotNull final PsiClass containingClass) {
     if (containingClass instanceof PsiAnonymousClass) return true;
-    boolean same = DumbService.getInstance(project).runReadActionInSmartMode(
-      () -> myManager.areElementsEquivalent(constructor.getContainingClass(), containingClass.getSuperClass()));
-    if (!same) {
+
+    PsiClass ctrClass = constructor.getContainingClass();
+    if (ctrClass == null) return true;
+
+    boolean isImplicitSuper = DumbService.getInstance(project).runReadActionInSmartMode(
+      () -> myManager.areElementsEquivalent(ctrClass, containingClass.getSuperClass()));
+    if (!isImplicitSuper) {
+      return true;
+    }
+
+    PsiElement resolved = JavaResolveUtil.resolveImaginarySuperCallInThisPlace(usage, project, ctrClass);
+
+    boolean resolvesToThisConstructor = DumbService.getInstance(project).runReadActionInSmartMode(
+      () -> myManager.areElementsEquivalent(constructor, resolved));
+
+    if (!resolvesToThisConstructor) {
       return true;
     }
     return processor.process(new LightMemberReference(myManager, usage, PsiSubstitutor.EMPTY) {

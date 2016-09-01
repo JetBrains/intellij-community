@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,6 +140,15 @@ public class ControlFlowStatementWithoutBracesInspection
     @Contract("null->false")
     @Override
     protected boolean isApplicable(PsiStatement body) {
+      if (body instanceof PsiIfStatement && isHighlightOnlyKeyword(body)) {
+        final PsiElement parent = body.getParent();
+        if (parent instanceof PsiIfStatement) {
+          final PsiIfStatement ifStatement = (PsiIfStatement)parent;
+          if (ifStatement.getElseBranch() == body) {
+            return false;
+          }
+        }
+      }
       return body != null && !(body instanceof PsiBlockStatement);
     }
 

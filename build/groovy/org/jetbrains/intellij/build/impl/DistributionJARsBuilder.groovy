@@ -50,13 +50,11 @@ class DistributionJARsBuilder {
   private static final String RESOURCES_INCLUDED = "resources.included"
   private static final String RESOURCES_EXCLUDED = "resources.excluded"
   private final BuildContext buildContext
-  private final List<PluginLayout> allPlugins
   private final Set<String> usedModules = new LinkedHashSet<>()
   private final PlatformLayout platform
 
-  DistributionJARsBuilder(BuildContext buildContext, List<PluginLayout> allPlugins) {
+  DistributionJARsBuilder(BuildContext buildContext) {
     this.buildContext = buildContext
-    this.allPlugins = allPlugins
     buildContext.ant.patternset(id: RESOURCES_INCLUDED) {
       include(name: "**/*Bundle*.properties")
       include(name: "**/*Messages.properties")
@@ -81,6 +79,7 @@ class DistributionJARsBuilder {
       exclude(name: "tips/**")
       exclude(name: "tips")
       exclude(name: "search/**")
+      exclude(name: "**/icon-robots.txt")
     }
 
     def productLayout = buildContext.productProperties.productLayout
@@ -92,6 +91,10 @@ class DistributionJARsBuilder {
           !(it.createReference().parentReference instanceof JpsModuleReference) && !plugin.includedProjectLibraries.contains(it.name)
         }
       }
+    }
+
+    Set<String> allProductDependencies = (productLayout.getIncludedPluginModules(buildContext.productProperties.allPlugins) + productLayout.includedPlatformModules).collectMany(new LinkedHashSet<String>()) {
+      JpsJavaExtensionService.dependencies(buildContext.findRequiredModule(it)).productionOnly().getModules().collect {it.name}
     }
 
     platform = PlatformLayout.platform {
@@ -107,6 +110,9 @@ class DistributionJARsBuilder {
       productLayout.platformImplementationModules.each {
         withModule(it, productLayout.mainJarName)
       }
+      productLayout.moduleExcludes.entrySet().each {
+        layout.moduleExcludes.putAll(it.key, it.value)
+      }
       withModule("util")
       withModule("util-rt", "util.jar")
       withModule("annotations")
@@ -119,13 +125,13 @@ class DistributionJARsBuilder {
       withModule("platform-resources", "resources.jar")
       withModule("colorSchemes", "resources.jar")
       withModule("platform-resources-en", productLayout.mainJarName)
-      withModule("coverage-common", productLayout.mainJarName)
+      if (allProductDependencies.contains("coverage-common")) {
+        withModule("coverage-common", productLayout.mainJarName)
+      }
 
       ["linux", "macosx", "win"].each {
         withResource("lib/libpty/$it", "lib/libpty/$it")
       }
-
-      withResource("lib/src/trove4j_src.jar", "lib/src")
 
       projectLibrariesUsedByPlugins.each {
         if (!productLayout.projectLibrariesToUnpackIntoMainJar.contains(it.name)) {
@@ -141,7 +147,9 @@ class DistributionJARsBuilder {
 
   List<String> getPlatformModules() {
     (platform.moduleJars.values() as List<String>) +
-    ["java-runtime"] //required to build searchable options index
+    ["java-runtime", "platform-main", /*required to build searchable options index*/
+     "updater", buildContext.productProperties.productLayout.mainModule]
+
   }
 
   void buildJARs() {
@@ -238,7 +246,7 @@ class DistributionJARsBuilder {
 
   private List<PluginLayout> getPluginsByModules(Collection<String> modules) {
     def modulesToInclude = modules as Set<String>
-    allPlugins.findAll { modulesToInclude.contains(it.mainModule) }
+    buildContext.productProperties.allPlugins.findAll { modulesToInclude.contains(it.mainModule) }
   }
 
   private void buildPlugins(LayoutBuilder layoutBuilder, List<PluginLayout> pluginsToInclude, String targetDirectory) {

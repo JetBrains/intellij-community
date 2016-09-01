@@ -158,7 +158,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
         @NotNull
         @Override
         public Collection<VirtualFile> getAdditionalProjectLibrarySourceRoots(@NotNull Project project) {
-          return Collections.singletonList(myLibAdditionalSrcDir);
+          return myProject == project ? Collections.singletonList(myLibAdditionalSrcDir) : Collections.emptyList();
         }
       }, getTestRootDisposable());
 
@@ -858,7 +858,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
 
   private void checkInfo(VirtualFile file,
                          @Nullable Module module,
-                         boolean isInLibrary,
+                         boolean isInLibraryClasses,
                          boolean isInLibrarySource,
                          @Nullable String packageName, 
                          @Nullable final JpsModuleSourceRootType<?> moduleSourceRootType,
@@ -872,8 +872,9 @@ public class DirectoryIndexTest extends IdeaTestCase {
     else {
       assertFalse("isInModuleSource", info.isInModuleSource());
     }
-    assertEquals(isInLibrary, info.hasLibraryClassRoot());
+    assertEquals(isInLibraryClasses, info.hasLibraryClassRoot());
     assertEquals(isInLibrarySource, info.isInLibrarySource());
+    assertEquals(isInLibraryClasses || isInLibrarySource, myFileIndex.isInLibrary(file));
 
     if (file.isDirectory()) {
       assertEquals(packageName, myFileIndex.getPackageNameByDirectory(file));

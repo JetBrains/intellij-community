@@ -308,7 +308,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
             if (func.asMethod() != null) {
               Boolean isEmpty = emptyFunctions.get(func);
               if (isEmpty == null) {
-                isEmpty = isEmptyFunction(func);
+                isEmpty = PyUtil.isEmptyFunction(func);
                 emptyFunctions.put(func, isEmpty);
               }
               if (isEmpty && !mayBeField) {
@@ -433,44 +433,5 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     public String getFamilyName() {
       return getName();
     }
-  }
-
-  private static boolean isEmptyFunction(@NotNull PyFunction f) {
-    final PyStatementList statementList = f.getStatementList();
-    final PyStatement[] statements = statementList.getStatements();
-    if (statements.length == 0) {
-      return true;
-    }
-    else if (statements.length == 1) {
-      if (isStringLiteral(statements[0]) || isPassOrRaiseOrEmptyReturn(statements[0])) {
-        return true;
-      }
-    }
-    else if (statements.length == 2) {
-      if (isStringLiteral(statements[0]) && (isPassOrRaiseOrEmptyReturn(statements[1]))) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static boolean isPassOrRaiseOrEmptyReturn(PyStatement stmt) {
-    if (stmt instanceof PyPassStatement || stmt instanceof PyRaiseStatement) {
-      return true;
-    }
-    if (stmt instanceof PyReturnStatement && ((PyReturnStatement)stmt).getExpression() == null) {
-      return true;
-    }
-    return false;
-  }
-
-  private static boolean isStringLiteral(PyStatement stmt) {
-    if (stmt instanceof PyExpressionStatement) {
-      final PyExpression expr = ((PyExpressionStatement)stmt).getExpression();
-      if (expr instanceof PyStringLiteralExpression) {
-        return true;
-      }
-    }
-    return false;
   }
 }

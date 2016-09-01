@@ -225,7 +225,7 @@ class X {
     assert file.contentsLoaded
   }
 
-  public void "test do not load content for findMethodsByName"() {
+  void "test do not load content for findMethodsByName"() {
     GroovyFileImpl file = myFixture.addFileToProject('usage.groovy', '''\
 class X {
   void foo(int a, int b = 2) {}

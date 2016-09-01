@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,8 +53,11 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.*;
 import com.intellij.psi.util.proximity.ReferenceListWeigher;
 import com.intellij.ui.JBColor;
-import com.intellij.util.*;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -308,7 +311,7 @@ public class JavaCompletionUtil {
 
     final Set<PsiMember> mentioned = new THashSet<>();
     for (CompletionElement completionElement : processor.getResults()) {
-      for (LookupElement item : createLookupElements(completionElement, javaReference, processor)) {
+      for (LookupElement item : createLookupElements(completionElement, javaReference)) {
         item.putUserData(QUALIFIER_TYPE_ATTR, qualifierType);
         final Object o = item.getObject();
         if (o instanceof PsiClass && !isSourceLevelAccessible(element, (PsiClass)o, pkgContext)) {
@@ -509,7 +512,7 @@ public class JavaCompletionUtil {
     return false;
   }
 
-  static List<? extends LookupElement> createLookupElements(CompletionElement completionElement, PsiJavaReference reference, JavaCompletionProcessor processor) {
+  static Iterable<? extends LookupElement> createLookupElements(CompletionElement completionElement, PsiJavaReference reference) {
     Object completion = completionElement.getElement();
     assert !(completion instanceof LookupElement);
 
@@ -520,10 +523,12 @@ public class JavaCompletionUtil {
       }
 
       if (completion instanceof PsiClass) {
-        return JavaClassNameCompletionContributor.createClassLookupItems((PsiClass)completion,
-                                                                         JavaClassNameCompletionContributor.AFTER_NEW.accepts(reference),
-                                                                         JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER,
-                                                                         Conditions.<PsiClass>alwaysTrue());
+        List<JavaPsiClassReferenceElement> classItems = JavaClassNameCompletionContributor.createClassLookupItems((PsiClass)completion,
+                                                                                                             JavaClassNameCompletionContributor.AFTER_NEW
+                                                                                                               .accepts(reference),
+                                                                                                             JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER,
+                                                                                                             Conditions.alwaysTrue());
+        return JBIterable.from(classItems).flatMap(i -> JavaConstructorCallElement.wrap(i, reference.getElement()));
       }
     }
     
@@ -534,7 +539,9 @@ public class JavaCompletionUtil {
     PsiSubstitutor substitutor = completionElement.getSubstitutor();
     if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
     if (completion instanceof PsiClass) {
-      return Collections.singletonList(JavaClassNameCompletionContributor.createClassLookupItem((PsiClass)completion, true).setSubstitutor(substitutor));
+      JavaPsiClassReferenceElement classItem =
+        JavaClassNameCompletionContributor.createClassLookupItem((PsiClass)completion, true).setSubstitutor(substitutor);
+      return JavaConstructorCallElement.wrap(classItem, reference.getElement());
     }
     if (completion instanceof PsiMethod) {
       JavaMethodCallElement item = new JavaMethodCallElement((PsiMethod)completion).setQualifierSubstitutor(substitutor);
@@ -554,15 +561,12 @@ public class JavaCompletionUtil {
     final PsiClass psiClass = PsiUtil.resolveClassInType(type);
     if (psiClass == null || psiClass.isEnum() || psiClass.isAnnotationType()) return false;
 
-    if (!(psiClass instanceof PsiCompiledElement)) return true;
+    PsiMethod[] methods = psiClass.getConstructors();
+    return methods.length == 0 || Arrays.stream(methods).anyMatch(JavaCompletionUtil::isConstructorCompletable);
+  }
 
-    final PsiMethod[] methods = psiClass.getConstructors();
-    if (methods.length == 0) return true;
-
-    for (final PsiMethod method : methods) {
-      if (!method.hasModifierProperty(PsiModifier.PRIVATE)) return true;
-    }
-    return false;
+  static boolean isConstructorCompletable(@NotNull PsiMethod constructor) {
+    return !(constructor instanceof PsiCompiledElement) || !constructor.hasModifierProperty(PsiModifier.PRIVATE);
   }
 
   public static Set<String> getAllLookupStrings(@NotNull PsiMember member) {
@@ -923,5 +927,15 @@ public class JavaCompletionUtil {
       aClass = aClass.getContainingClass();
     }
     return false;
+  }
+
+  public static int findQualifiedNameStart(@NotNull InsertionContext context) {
+    int start = context.getTailOffset() - 1;
+    while (start >= 0) {
+      char ch = context.getDocument().getCharsSequence().charAt(start);
+      if (!Character.isJavaIdentifierPart(ch) && ch != '.') break;
+      start--;
+    }
+    return start + 1;
   }
 }

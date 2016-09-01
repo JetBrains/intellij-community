@@ -20,14 +20,14 @@ import com.intellij.configurationStore.PROJECT_CONFIG_DIR
 import com.intellij.configurationStore.StoreAwareProjectManager
 import com.intellij.configurationStore.loadAndUseProject
 import com.intellij.configurationStore.saveStore
+import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
+import com.intellij.testFramework.*
 import com.intellij.testFramework.Assertions.assertThat
-import com.intellij.testFramework.InitInspectionRule
-import com.intellij.testFramework.ProjectRule
-import com.intellij.testFramework.RuleChain
-import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.delete
 import com.intellij.util.readText
 import com.intellij.util.write
@@ -161,5 +161,54 @@ internal class ProjectInspectionManagerTest {
       (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedAlarm()
       assertThat(projectInspectionProfileManager.currentProfile.getToolDefaultState("Convert2Diamond", project).level).isEqualTo(HighlightDisplayLevel.ERROR)
     }
+  }
+
+  @Test fun `ipr`() {
+    val emptyProjectFile = """
+      <?xml version="1.0" encoding="UTF-8"?>
+      <project version="4">
+      </project>""".trimIndent()
+    loadAndUseProject(tempDirManager, {
+      it.writeChild("test${ProjectFileType.DOT_DEFAULT_EXTENSION}", emptyProjectFile).path
+    }) { project ->
+      val projectInspectionProfileManager = ProjectInspectionProfileManager.getInstanceImpl(project)
+      projectInspectionProfileManager.forceLoadSchemes()
+
+      assertThat(projectInspectionProfileManager.state).isEmpty()
+
+      val currentProfile = projectInspectionProfileManager.currentProfile
+      assertThat(currentProfile.isProjectLevel).isTrue()
+      currentProfile.disableTool("Convert2Diamond", project)
+      currentProfile.profileChanged()
+
+      project.saveStore()
+      val projectFile = Paths.get((project.stateStore as IProjectStore).projectFilePath)
+
+      assertThat(projectFile.parent.resolve(".inspectionProfiles")).doesNotExist()
+
+      assertThat(projectFile.readText()).isEqualTo(emptyProjectFile)
+
+      currentProfile.disableAllTools(project)
+      currentProfile.profileChanged()
+      project.saveStore()
+      assertThat(projectFile.readText()).isEqualTo("""
+      <?xml version="1.0" encoding="UTF-8"?>
+      <project version="4">
+        <component name="InspectionProjectProfileManager">
+          <profile version="1.0">
+            <option name="myName" value="Project Default" />
+            <inspection_tool class="Convert2Diamond" enabled="false" level="WARNING" enabled_by_default="false" />
+          </profile>
+          <version value="1.0" />
+        </component>
+      </project>""".trimIndent())
+      assertThat(projectFile.parent.resolve(".inspectionProfiles")).doesNotExist()
+    }
+  }
+}
+
+fun InspectionProfileImpl.disableAllTools(project: Project?) {
+  for (entry in getInspectionTools(null)) {
+    disableTool(entry.shortName, project)
   }
 }

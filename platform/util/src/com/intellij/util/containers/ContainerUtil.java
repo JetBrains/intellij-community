@@ -2906,6 +2906,12 @@ public class ContainerUtil extends ContainerUtilRt {
     protected Map<K, Collection<V>> createMap(int initialCapacity, float loadFactor) {
       return new TreeMap<K, Collection<V>>();
     }
+
+    @NotNull
+    public NavigableSet<K> navigableKeySet() {
+      //noinspection unchecked
+      return ((TreeMap)myMap).navigableKeySet();
+    }
   }
 
   @NotNull

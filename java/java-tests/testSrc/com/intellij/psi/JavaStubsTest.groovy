@@ -16,13 +16,21 @@
 package com.intellij.psi
 
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.psi.impl.source.PsiClassImpl
 import com.intellij.psi.impl.source.PsiFileImpl
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.searches.AnnotatedElementsSearch
+import com.intellij.psi.search.searches.ClassInheritorsSearch
+import com.intellij.psi.util.PsiUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+
+import java.util.concurrent.Callable
 
 class JavaStubsTest extends LightCodeInsightFixtureTestCase {
 
-  public void "test resolve from annotation method default"() {
+  void "test resolve from annotation method default"() {
     def cls = myFixture.addClass("""
       public @interface BrokenAnnotation {
         enum Foo {DEFAULT, OTHER}
@@ -41,7 +49,7 @@ class JavaStubsTest extends LightCodeInsightFixtureTestCase {
     assert file.stub
   }
 
-  public void "test literal annotation value"() {
+  void "test literal annotation value"() {
     def cls = myFixture.addClass("""
       class Foo {
         @org.jetbrains.annotations.Contract(pure=true)
@@ -55,7 +63,23 @@ class JavaStubsTest extends LightCodeInsightFixtureTestCase {
     assert !file.contentsLoaded
   }
 
-  public void "test applying type annotations"() {
+  void "test local variable annotation doesn't cause stub-ast switch"() {
+    def cls = myFixture.addClass("""
+      class Foo {
+        @Anno int foo() {
+          @Anno int var = 2;
+        }
+      }
+      @interface Anno {}
+      """)
+
+    def file = cls.containingFile as PsiFileImpl
+    assert AnnotatedElementsSearch.searchPsiMethods(myFixture.findClass("Anno"), GlobalSearchScope.allScope(project)).size() == 1
+    assert file.stub
+    assert !file.contentsLoaded
+  }
+
+  void "test applying type annotations"() {
     def cls = myFixture.addClass("""
       import java.lang.annotation.*;
       class Foo {
@@ -76,5 +100,46 @@ class JavaStubsTest extends LightCodeInsightFixtureTestCase {
     assert f1.getCanonicalText(true) == "java.lang.@Foo.TA String"
     assert m1.getCanonicalText(true) == "@Foo.TA int"
     assert p1.getCanonicalText(true) == "@Foo.TA int"
+  }
+
+  void "test containing class of a local class is null"() {
+    def foo = myFixture.addClass("class Foo {{ class Bar extends Foo {} }}")
+    def bar = ClassInheritorsSearch.search(foo).findFirst()
+
+    def file = (PsiFileImpl)foo.containingFile
+    assert !file.contentsLoaded
+
+    assert bar.containingClass == null
+    assert !file.contentsLoaded
+
+    bar.node
+    assert bar.containingClass == null
+    assert file.contentsLoaded
+  }
+
+  void "test stub-based super class type parameter resolve"() {
+    for (int i = 0; i < 100; i++) {
+      def foo = myFixture.addClass("class Foo$i<T> {}")
+      def bar = myFixture.addClass("class Bar$i<T> extends Foo$i<T> {}")
+
+      def app = ApplicationManager.application
+      app.executeOnPooledThread({ ReadAction.compute { bar.node } })
+      def superType = app.executeOnPooledThread({ ReadAction.compute { bar.superTypes[0] }} as Callable<PsiClassType>).get()
+      assert foo == superType.resolve()
+      assert bar.typeParameters[0] == PsiUtil.resolveClassInClassTypeOnly(superType.parameters[0])
+    }
+  }
+
+  void "test default annotation attribute name"() {
+    def cls = myFixture.addClass('@Anno("foo") class Foo {}')
+    def file = (PsiFileImpl)cls.containingFile
+    assert !file.contentsLoaded
+
+    def attr = cls.modifierList.annotations[0].parameterList.attributes[0]
+    assert attr.name == null
+    assert !file.contentsLoaded
+
+    attr.node
+    assert attr.name == null
   }
 }

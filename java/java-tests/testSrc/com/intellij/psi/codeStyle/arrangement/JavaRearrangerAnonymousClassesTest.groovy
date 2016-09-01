@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.En
 
 class JavaRearrangerAnonymousClassesTest extends AbstractJavaRearrangerTest {
 
-  public void "test rearrangement doesn't brake anon classes alignment"() {
+  void "test rearrangement doesn't brake anon classes alignment"() {
 
     def text = '''\
 public class Test {
@@ -44,7 +44,7 @@ public class Test {
     )
   }
 
-  public void "test anonymous classes inside method"() {
+  void "test anonymous classes inside method"() {
     doTest(
       initial: '''\
 public class Rearranging {

@@ -32,8 +32,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiVariableEx;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +52,7 @@ public class JavaSuppressionUtil {
   }
 
   @Nullable
-  public static String getInspectionIdSuppressedInAnnotationAttribute(PsiElement element) {
+  private static String getInspectionIdSuppressedInAnnotationAttribute(PsiElement element) {
     if (element instanceof PsiLiteralExpression) {
       final Object value = ((PsiLiteralExpression)element).getValue();
       if (value instanceof String) {
@@ -73,7 +72,7 @@ public class JavaSuppressionUtil {
   }
 
   @NotNull
-  public static Collection<String> getInspectionIdsSuppressedInAnnotation(final PsiModifierList modifierList) {
+  public static Collection<String> getInspectionIdsSuppressedInAnnotation(@Nullable PsiModifierList modifierList) {
     if (modifierList == null) {
       return Collections.emptyList();
     }
@@ -86,6 +85,13 @@ public class JavaSuppressionUtil {
     if (annotation == null) {
       return Collections.emptyList();
     }
+    return CachedValuesManager.getCachedValue(annotation, () ->
+      CachedValueProvider.Result.create(getInspectionIdsSuppressedInAnnotation(annotation),
+                                        PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT));
+  }
+
+  @NotNull
+  private static Collection<String> getInspectionIdsSuppressedInAnnotation(PsiAnnotation annotation) {
     final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
     if (attributes.length == 0) {
       return Collections.emptyList();

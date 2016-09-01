@@ -35,7 +35,6 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
@@ -82,7 +81,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
     setRootVisible(false);
     setDragEnabled(true);
 
-    new TreeSpeedSearch(this, new NodeToTextConvertor());
+    new TreeSpeedSearch(this, TO_TEXT_CONVERTER);
     SmartExpander.installOn(this);
     myCopyProvider = new ChangesBrowserNodeCopyProvider(this);
     new TreeLinkMouseListener(new ChangesBrowserNodeRenderer(myProject, BooleanGetter.FALSE, false)).installOn(this);
@@ -352,14 +351,6 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
 
   private void updateMenu() {
     PopupHandler.installPopupHandler(this, myMenuGroup, ActionPlaces.CHANGES_VIEW_POPUP, ActionManager.getInstance());
-  }
-
-  private static class NodeToTextConvertor implements Convertor<TreePath, String> {
-    @Override
-    public String convert(final TreePath path) {
-      ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
-      return node.getTextPresentation();
-    }
   }
 
   @Override

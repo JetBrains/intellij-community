@@ -29,7 +29,10 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -302,9 +305,12 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
     String name = names[0];
     if (targetClass != null) {
       for (String curName : names) {
-        if (!usedNames.contains(curName) && targetClass.findFieldByName(curName, false) != null) {
-          name = curName;
-          break;
+        if (!usedNames.contains(curName)) {
+          final PsiField fieldByName = targetClass.findFieldByName(curName, false);
+          if (fieldByName != null && (!method.isConstructor() || !isFieldAssigned(fieldByName, method)) && fieldByName.getType().isAssignableFrom(parameter.getType())) {
+            name = curName;
+            break;
+          }
         }
       }
     }
@@ -337,6 +343,15 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
         LOG.error(e);
       }
     });
+  }
+
+  private static boolean isFieldAssigned(PsiField field, PsiMethod method) {
+    for (PsiReference reference : ReferencesSearch.search(field, new LocalSearchScope(method))) {
+      if (reference instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand((PsiReferenceExpression)reference)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override

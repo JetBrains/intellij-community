@@ -59,12 +59,14 @@ import java.util.Map;
 import java.util.Set;
 
 public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor {
-  @NotNull
   private final PsiResolveHelper myResolveHelper;
 
   private HighlightInfoHolder myHolder;
-
   private RefCountHolder myRefCountHolder;
+  private LanguageLevel myLanguageLevel;
+  private JavaSdkVersion myJavaSdkVersion;
+
+  @SuppressWarnings("StatefulEp") private PsiFile myFile;
 
   // map codeBlock->List of PsiReferenceExpression of uninitialized final variables
   private final Map<PsiElement, Collection<PsiReferenceExpression>> myUninitializedVarProblems = new THashMap<>();
@@ -76,7 +78,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   private final Map<String, Pair<PsiImportStaticReferenceElement, PsiClass>> mySingleImportedClasses = new THashMap<>();
   private final Map<String, Pair<PsiImportStaticReferenceElement, PsiField>> mySingleImportedFields = new THashMap<>();
-  private PsiFile myFile;
+
   private final PsiElementVisitor REGISTER_REFERENCES_VISITOR = new PsiRecursiveElementWalkingVisitor() {
     @Override public void visitElement(PsiElement element) {
       super.visitElement(element);
@@ -93,8 +95,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   };
   private final Map<PsiClass, MostlySingularMultiMap<MethodSignature, PsiMethod>> myDuplicateMethods = new THashMap<>();
   private final Set<PsiClass> myOverrideEquivalentMethodsVisitedClasses = new THashSet<>();
-  private LanguageLevel myLanguageLevel;
-  private JavaSdkVersion myJavaSdkVersion;
 
   private static class Holder {
     private static final boolean CHECK_ELEMENT_LEVEL = ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal();
@@ -1291,8 +1291,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         .descriptionAndTooltip("Method reference expression is not expected here").create());
     }
 
+    final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
     if (!myHolder.hasErrorResults()) {
-      final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
       if (functionalInterfaceType != null) {
         final boolean notFunctional = !LambdaUtil.isFunctionalType(functionalInterfaceType);
         if (notFunctional) {
@@ -1300,6 +1300,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
                          .descriptionAndTooltip(functionalInterfaceType.getPresentableText() + " is not a functional interface").create());
         }
       }
+    }
       if (!myHolder.hasErrorResults()) {
         final PsiElement referenceNameElement = expression.getReferenceNameElement();
         if (referenceNameElement instanceof PsiKeyword) {
@@ -1312,25 +1313,14 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           }
         }
       }
-      if (!myHolder.hasErrorResults()) {
-        final PsiClassType.ClassResolveResult resolveResult = checkFunctionalInterfaceTypeAccessible(expression, functionalInterfaceType);
+    if (!myHolder.hasErrorResults()) {
+      checkFunctionalInterfaceTypeAccessible(expression, functionalInterfaceType);
+    }
 
-        final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
-        if (interfaceMethod != null) {
-          if (!myHolder.hasErrorResults()) {
-            final String errorMessage = PsiMethodReferenceUtil.checkMethodReferenceContext(expression);
-            if (errorMessage != null) {
-              myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(errorMessage).create());
-            }
-          }
-
-          if (!myHolder.hasErrorResults()) {
-            final String badReturnTypeMessage = PsiMethodReferenceUtil.checkReturnType(expression, result, functionalInterfaceType);
-            if (badReturnTypeMessage != null) {
-              myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(badReturnTypeMessage).create());
-            }
-          }
-        }
+    if (!myHolder.hasErrorResults() && functionalInterfaceType != null) {
+      final String errorMessage = PsiMethodReferenceUtil.checkMethodReferenceContext(expression);
+      if (errorMessage != null) {
+        myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(errorMessage).create());
       }
     }
 
@@ -1359,9 +1349,17 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
 
     if (!myHolder.hasErrorResults()) {
+      final String badReturnTypeMessage = PsiMethodReferenceUtil.checkReturnType(expression, result, functionalInterfaceType);
+      if (badReturnTypeMessage != null) {
+        myHolder.add(
+          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(badReturnTypeMessage).create());
+      }
+    }
+
+    if (!myHolder.hasErrorResults()) {
       if (results.length == 0 || results[0] instanceof MethodCandidateInfo &&
                                  !((MethodCandidateInfo)results[0]).isApplicable() &&
-                                 expression.getFunctionalInterfaceType() != null) {
+                                 functionalInterfaceType != null) {
         String description = null;
         if (results.length == 1) {
           description = ((MethodCandidateInfo)results[0]).getInferenceErrorMessage();
@@ -1620,7 +1618,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(checkFeature(module, Feature.MODULES));
     if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkFileName(module, myFile));
     if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkFileDuplicates(module, myFile));
-    if (!myHolder.hasErrorResults()) myHolder.addAll(ModuleHighlightUtil.checkDuplicateRequires(module));
+    if (!myHolder.hasErrorResults()) myHolder.addAll(ModuleHighlightUtil.checkDuplicateStatements(module));
+    if (!myHolder.hasErrorResults()) myHolder.addAll(ModuleHighlightUtil.checkUnusedServices(module));
     if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkFileLocation(module, myFile));
   }
 
@@ -1628,8 +1627,37 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitRequiresStatement(PsiRequiresStatement statement) {
     super.visitRequiresStatement(statement);
     if (PsiUtil.isLanguageLevel9OrHigher(myFile)) {
+      PsiJavaModule container = (PsiJavaModule)statement.getParent();
       PsiJavaModuleReferenceElement ref = statement.getReferenceElement();
-      if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkModuleReference(ref));
+      if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkModuleReference(ref, container));
+    }
+  }
+
+  @Override
+  public void visitExportsStatement(PsiExportsStatement statement) {
+    super.visitExportsStatement(statement);
+    if (PsiUtil.isLanguageLevel9OrHigher(myFile)) {
+      PsiJavaModule container = (PsiJavaModule)statement.getParent();
+      PsiJavaCodeReferenceElement ref = statement.getPackageReference();
+      if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkPackageReference(ref));
+      if (!myHolder.hasErrorResults()) myHolder.addAll(ModuleHighlightUtil.checkExportTargets(statement, container));
+    }
+  }
+
+  @Override
+  public void visitUsesStatement(PsiUsesStatement statement) {
+    super.visitUsesStatement(statement);
+    if (PsiUtil.isLanguageLevel9OrHigher(myFile)) {
+      if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkServiceReference(statement.getClassReference()));
+    }
+  }
+
+  @Override
+  public void visitProvidesStatement(PsiProvidesStatement statement) {
+    super.visitProvidesStatement(statement);
+    if (PsiUtil.isLanguageLevel9OrHigher(myFile)) {
+      PsiJavaCodeReferenceElement intRef = statement.getInterfaceReference(), implRef = statement.getImplementationReference();
+      if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkServiceImplementation(implRef, intRef));
     }
   }
 

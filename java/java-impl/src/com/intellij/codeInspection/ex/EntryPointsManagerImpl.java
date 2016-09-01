@@ -31,6 +31,8 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +52,10 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
   @Override
   public void configureAnnotations() {
     final List<String> list = new ArrayList<>(ADDITIONAL_ANNOTATIONS);
+    final List<String> writeList = new ArrayList<>(myWriteAnnotations);
+
     final JPanel listPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(list, "Mark as entry point if annotated by", true);
+    final JPanel writeAnnotationsPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(writeList, "Mark field as implicitly write if annotated by", false);
     new DialogWrapper(myProject) {
       {
         init();
@@ -59,13 +64,20 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
 
       @Override
       protected JComponent createCenterPanel() {
-        return listPanel;
+        final JPanel panel = new JPanel(new VerticalFlowLayout());
+        panel.add(listPanel);
+        panel.add(writeAnnotationsPanel);
+        return panel;
       }
 
       @Override
       protected void doOKAction() {
         ADDITIONAL_ANNOTATIONS.clear();
         ADDITIONAL_ANNOTATIONS.addAll(list);
+
+        myWriteAnnotations.clear();
+        myWriteAnnotations.addAll(writeList);
+
         DaemonCodeAnalyzer.getInstance(myProject).restart();
         super.doOKAction();
       }
@@ -90,34 +102,42 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
   }
 
   public static JButton createConfigureClassPatternsButton() {
-    final JButton configureClassPatterns = new JButton("Configure class patterns...");
+    final JButton configureClassPatterns = new JButton("Configure code patterns...");
     configureClassPatterns.setHorizontalAlignment(SwingConstants.LEFT);
     configureClassPatterns.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final EntryPointsManagerBase entryPointsManagerBase = getInstance(ProjectUtil.guessCurrentProject(configureClassPatterns));
+        final Project project = ProjectUtil.guessCurrentProject(configureClassPatterns);
+        final EntryPointsManagerBase entryPointsManagerBase = getInstance(project);
         final ArrayList<ClassPattern> list = new ArrayList<>();
         for (ClassPattern pattern : entryPointsManagerBase.getPatterns()) {
           list.add(new ClassPattern(pattern));
         }
+        final ClassPatternsPanel panel = new ClassPatternsPanel(list);
         new DialogWrapper(entryPointsManagerBase.myProject) {
 
           {
             init();
-            setTitle("Configure Class Patterns");
+            setTitle("Configure Code Patterns");
           }
 
           @Nullable
           @Override
           protected JComponent createCenterPanel() {
-            return new ClassPatternsPanel(list);
+            return panel;
           }
 
           @Override
           protected void doOKAction() {
+            final String error = panel.getValidationError(project);
+            if (error != null) {
+              Messages.showErrorDialog(panel, error);
+              return;
+            }
             final LinkedHashSet<ClassPattern> patterns = entryPointsManagerBase.getPatterns();
             patterns.clear();
             patterns.addAll(list);
+            DaemonCodeAnalyzer.getInstance(entryPointsManagerBase.myProject).restart();
             super.doOKAction();
           }
         }.show();

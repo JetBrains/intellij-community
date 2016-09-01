@@ -175,21 +175,51 @@ public class JsonSchemaReader {
   private static JsonSchemaObject findAbsoluteDefinition(@Nullable VirtualFile key,
                                                          @NotNull String ref,
                                                          @Nullable JsonSchemaExportedDefinitions definitions) {
-    if (!ref.startsWith("#/")) {
-      if (definitions == null || key == null) return null;
-      int idx = ref.indexOf("#/");
-      final String url;
-      final String relative;
-      if (idx == -1) {
-        url = ref.endsWith("#") ? ref.substring(0, ref.length() - 1) : ref;
-        relative = "";
-      } else {
-        url = ref.substring(0, idx);
-        relative = ref.substring(idx);
-      }
-      return definitions.findDefinition(key, url, relative);
+    if (definitions == null || key == null) return null;
+
+    final SchemaUrlSplitter splitter = new SchemaUrlSplitter(ref);
+    if (splitter.isAbsolute()) {
+      //noinspection ConstantConditions
+      return definitions.findDefinition(key, splitter.getSchemaId(), splitter.getRelativePath());
     }
     return null;
+  }
+
+  public static class SchemaUrlSplitter {
+    @Nullable
+    private final String mySchemaId;
+    @NotNull
+    private final String myRelativePath;
+
+    public SchemaUrlSplitter(@NotNull final String ref) {
+      if (!ref.startsWith("#/")) {
+        int idx = ref.indexOf("#/");
+        if (idx == -1) {
+          mySchemaId = ref.endsWith("#") ? ref.substring(0, ref.length() - 1) : ref;
+          myRelativePath = "";
+        } else {
+          mySchemaId = ref.substring(0, idx);
+          myRelativePath = ref.substring(idx);
+        }
+      } else {
+        mySchemaId = null;
+        myRelativePath = ref;
+      }
+    }
+
+    public boolean isAbsolute() {
+      return mySchemaId != null;
+    }
+
+    @Nullable
+    public String getSchemaId() {
+      return mySchemaId;
+    }
+
+    @NotNull
+    public String getRelativePath() {
+      return myRelativePath;
+    }
   }
 
   @Nullable

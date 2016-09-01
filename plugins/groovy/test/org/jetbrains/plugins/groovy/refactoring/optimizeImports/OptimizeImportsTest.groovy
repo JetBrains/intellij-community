@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author ilyas
  */
-public class OptimizeImportsTest extends LightGroovyTestCase {
+class OptimizeImportsTest extends LightGroovyTestCase {
 
   final String basePath = "${TestUtils.testDataPath}optimizeImports/"
 
@@ -47,66 +47,66 @@ public class OptimizeImportsTest extends LightGroovyTestCase {
     super.tearDown()
   }
 
-  public void testNewline() {
+  void testNewline() {
     doTest();
   }
 
-  public void testAliased() {
+  void testAliased() {
     doTest();
   }
 
-  public void testSimpleOptimize() {
+  void testSimpleOptimize() {
     doTest();
   }
 
-  public void testCommented() {
+  void testCommented() {
     doTest();
   }
 
-  public void testOptimizeExists() {
+  void testOptimizeExists() {
     doTest();
   }
 
-  public void testOptimizeAlias() {
+  void testOptimizeAlias() {
     doTest();
   }
 
-  public void testFoldImports() {
+  void testFoldImports() {
     doTest();
   }
 
-  public void testFoldImports2() {
+  void testFoldImports2() {
     doTest();
   }
 
-  public void testUntypedCall() {
+  void testUntypedCall() {
     doTest();
   }
 
-  public void testFoldImports3() {
+  void testFoldImports3() {
     doTest();
   }
 
-  public void testFoldImports4() {
+  void testFoldImports4() {
     doTest();
   }
 
-  public void testFoldImports5() {
+  void testFoldImports5() {
     doTest();
   }
 
-  public void testFixPoint() {
+  void testFixPoint() {
     doTest();
   }
 
-  public void testPreserveImportAnnotations() { doTest(); }
+  void testPreserveImportAnnotations() { doTest(); }
 
-  public void testUtilListMasked() {
+  void testUtilListMasked() {
     myFixture.addClass("package java.awt; public class List {}");
     doTest();
   }
 
-  public void testExtraLineFeed() {
+  void testExtraLineFeed() {
     myFixture.addClass("package groovy.io; public class EncodingAwareBufferedWriter {}");
     myFixture.addClass("package groovy.io; public class PlatformLineWriter {}");
     myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".groovy", "foo/bar.groovy"));
@@ -115,43 +115,53 @@ public class OptimizeImportsTest extends LightGroovyTestCase {
     myFixture.checkResultByFile(getTestName(false) + ".groovy");
   }
 
-  public void testSemicolons() {
+  void testSemicolons() {
     doTest();
   }
 
-  public void testSameFile() {
+  void testSameFile() {
     doTest();
   }
 
-  public void testSamePackage() {
+  void testSamePackage() {
     myFixture.addClass("package foo; public class Bar {}");
     myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".groovy", "foo/Foo.groovy"));
     doOptimizeImports();
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 
-  public void testQualifiedUsage() {
+  void testQualifiedUsage() {
     myFixture.addClass("package foo; public class Bar {}");
     doTest();
   }
 
-  public void testFileHeader() {
+  void testFileHeader() {
     doTest();
   }
 
-  public void testRemoveImplicitlyImported() { doTest(); }
-  public void testRemoveImplicitlyDemandImported() { doTest(); }
-  public void testDontRemoveRedImports() { doTest(); }
-  public void testDontRemoveRedImports2() { doTest(); }
-  public void testDontRemoveRedImports3() { doTest(); }
-  public void testDontRemoveRedImports4() { doTest(); }
-  public void testDontRemoveRedImports5() { doTest(); }
-  public void testDontRemoveRedImports6() { doTest(); }
-  public void testDontRemoveRedImports7() { doTest(); }
-  public void testDontRemoveRedImports8() { doTest(); }
-  public void testDontRemoveRedImports9() { doTest(); }
+  void testRemoveImplicitlyImported() { doTest(); }
 
-  public void testRemoveSamePackaged() {
+  void testRemoveImplicitlyDemandImported() { doTest(); }
+
+  void testDontRemoveRedImports() { doTest(); }
+
+  void testDontRemoveRedImports2() { doTest(); }
+
+  void testDontRemoveRedImports3() { doTest(); }
+
+  void testDontRemoveRedImports4() { doTest(); }
+
+  void testDontRemoveRedImports5() { doTest(); }
+
+  void testDontRemoveRedImports6() { doTest(); }
+
+  void testDontRemoveRedImports7() { doTest(); }
+
+  void testDontRemoveRedImports8() { doTest(); }
+
+  void testDontRemoveRedImports9() { doTest(); }
+
+  void testRemoveSamePackaged() {
     myFixture.addClass("package foo.bar; public class Aaaa {}");
     myFixture.addClass("package foo.bar; public class Bbbb {}");
     myFixture.addClass("package foo.bar; public class Zzzz {}");
@@ -160,13 +170,13 @@ public class OptimizeImportsTest extends LightGroovyTestCase {
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 
-  public void testJustWrongImport() throws Exception {
+  void testJustWrongImport() throws Exception {
     myFixture.configureByText("a.groovy", "import a.b.c.d; final d c;");
     doOptimizeImports();
     myFixture.checkResult("import a.b.c.d; final d c;");
   }
 
-  public void testCleanBeforeJavadoc() throws Exception {
+  void testCleanBeforeJavadoc() throws Exception {
     myFixture.configureByText("a.groovy", """import javax.swing.JFrame
 
 /**
@@ -206,13 +216,13 @@ class Fooxx <caret>{
 
     CommandProcessor.instance.executeCommand(project, new Runnable() {
       @Override
-      public void run() {
+      void run() {
         ApplicationManager.application.runWriteAction(runnable);
       }
     }, "Optimize imports", null);
   }
 
-  public void testOptimizeOnTheFly() {
+  void testOptimizeOnTheFly() {
     myFixture.configureFromExistingVirtualFile(myFixture.addFileToProject("a.groovy", "import java.lang.String<caret>").virtualFile)
     //myFixture.configureByText "a.groovy", "import java.lang.String<caret>"
     myFixture.type '\n\nfoo'
@@ -220,14 +230,14 @@ class Fooxx <caret>{
     myFixture.checkResult "foo<caret>"
   }
 
-  public void testNoOptimizeOnTheFlyDuringEditing() {
+  void testNoOptimizeOnTheFlyDuringEditing() {
     myFixture.configureByText "a.groovy", "import java.util.String<caret>"
     myFixture.type '\nimport java.lang.String'
     myFixture.doHighlighting()
     myFixture.checkResult "import java.util.String\nimport java.lang.String<caret>"
   }
 
-  public void testNoOptimizeOnDummyChange() {
+  void testNoOptimizeOnDummyChange() {
     myFixture.addClass "package foo; public class Foo {}"
     myFixture.configureByText "a.groovy", "import foo.Foo\n\ndef foo() { <caret> Foo f}"
     myFixture.doHighlighting()
@@ -236,13 +246,13 @@ class Fooxx <caret>{
     myFixture.checkResult "import foo.Foo\n\ndef foo() { \n    <caret>Foo f}"
   }
 
-  public void testUnusedImportsForImportsOnDemand() {
+  void testUnusedImportsForImportsOnDemand() {
     myFixture.enableInspections(new GroovyAccessibilityInspection())
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".groovy")
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 
-  public void testSorting() {
+  void testSorting() {
     myFixture.addClass("package foo; public class Foo{}");
     myFixture.addClass("package foo; public class Bar{public static void foo0(){}}");
     myFixture.addClass("package java.test; public class Test{public static void foo(){}}");

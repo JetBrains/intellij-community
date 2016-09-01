@@ -15,15 +15,44 @@
  */
 package com.intellij.codeInsight.completion
 
+import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.MultiModuleJava9ProjectDescriptor
+import com.intellij.testFramework.VfsTestUtil
 import org.assertj.core.api.Assertions.assertThat
 
 class ModuleCompletionTest : LightFixtureCompletionTestCase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_9
+  override fun getProjectDescriptor(): LightProjectDescriptor = MultiModuleJava9ProjectDescriptor
 
   fun testFileHeader() = complete("<caret>", "module <caret>")
   fun testStatements1() = variants("module M { <caret> }", "requires", "exports", "uses", "provides")
   fun testStatements2() = complete("module M { requires X; ex<caret> }", "module M { requires X; exports <caret> }")
+  fun testModuleRef() = complete("module M { requires M<caret> }", "module M { requires M2;<caret> }")
+
+  fun testExports() {
+    addFile("pkg/empty/package-info.java", "package pkg.empty;")
+    addFile("pkg/main/C.java", "package pkg.main;\nclass C { }")
+    addFile("pkg/other/C.groovy", "package pkg.other\nclass C { }")
+    variants("module M { exports pkg.<caret> }", "main", "other")
+    complete("module M { exports pkg.o<caret> }", "module M { exports pkg.other;<caret> }")
+  }
+
+  fun testUses() {
+    addFile("pkg/main/MySvc.java", "package pkg.main;\npublic class MySvc { }")
+    addFile("pkg/main/MySvcImpl.java", "package pkg.main;\nclass MySvcImpl extends MySvc { }")
+    complete("module M { uses MyS<caret> }", "module M { uses pkg.main.MySvc;<caret> }")
+  }
+
+  fun testProvides() {
+    addFile("pkg/main/MySvc.java", "package pkg.main;\npublic class MySvc { }")
+    addFile("pkg/main/MySvcImpl.java", "package pkg.main;\nclass MySvcImpl extends MySvc { }")
+    complete("module M { provides MyS<caret> }", "module M { provides pkg.main.MySvc <caret> }")
+    complete("module M { provides pkg.main.MySvc <caret> }", "module M { provides pkg.main.MySvc with <caret> }")
+    complete("module M { provides pkg.main.MySvc with MSI<caret> }", "module M { provides pkg.main.MySvc with pkg.main.MySvcImpl;<caret> }")
+  }
+
+  //<editor-fold desc="Helpers.">
+  private fun addFile(path: String, text: String) = VfsTestUtil.createFile(LightPlatformTestCase.getSourceRoot(), path, text)
 
   private fun complete(text: String, expected: String) {
     myFixture.configureByText("module-info.java", text)
@@ -36,4 +65,5 @@ class ModuleCompletionTest : LightFixtureCompletionTestCase() {
     val result = myFixture.completeBasic()?.map { it.lookupString }
     assertThat(result).containsExactlyInAnyOrder(*variants)
   }
+  //</editor-fold>
 }

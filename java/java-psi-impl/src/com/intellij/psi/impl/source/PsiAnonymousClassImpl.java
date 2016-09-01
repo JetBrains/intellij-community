@@ -20,7 +20,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
@@ -66,7 +65,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
   @Override
   @NotNull
   public PsiClassType getBaseClassType() {
-    final PsiClassStub stub = getStub();
+    final PsiClassStub stub = getGreenStub();
     if (stub == null) {
       myCachedBaseType = null;
       return getTypeByTree();
@@ -192,7 +191,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
 
   @Override
   public boolean isInQualifiedNew() {
-    final PsiClassStub stub = getStub();
+    final PsiClassStub stub = getGreenStub();
     if (stub != null) {
       return stub.isAnonymousInQualifiedNew();
     }

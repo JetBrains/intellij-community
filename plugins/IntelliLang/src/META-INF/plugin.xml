@@ -45,8 +45,8 @@
 
     <projectConfigurable groupId="editor" displayName="Language Injections" dynamic="true" id="IntelliLang.Configuration" instance="org.intellij.plugins.intelliLang.InjectionsSettingsUI" nonDefaultProject="true"/>
 
-    <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.CommentLanguageInjector"/>
-    <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.TemporaryPlacesInjector"/>
+    <multiHostInjector id="TemporaryPlacesInjector" implementation="org.intellij.plugins.intelliLang.inject.TemporaryPlacesInjector" order="first"/>
+    <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.CommentLanguageInjector" order="after TemporaryPlacesInjector"/>
     <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.DefaultLanguageInjector" order="last"/>
 
     <projectService serviceInterface="org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry"

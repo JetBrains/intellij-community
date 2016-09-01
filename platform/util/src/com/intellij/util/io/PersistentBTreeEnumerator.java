@@ -367,7 +367,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   @Override
-  protected int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
+  protected synchronized int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
     try {
       lockStorage();
       if (IntToIntBtree.doDump) System.out.println(value);

@@ -65,6 +65,12 @@ abstract class BuildContext {
 
   abstract boolean includeBreakGenLibraries()
 
+  /**
+   * If the method returns {@code false} 'idea.jars.nocopy' property will be set to {@code true} in idea.properties by default. Otherwise it
+   * won't be set and the IDE will copy library *.jar files to avoid their locking when running under Windows.
+   */
+  abstract boolean shouldIDECopyJarsByDefault()
+
   abstract void patchInspectScript(String path)
 
   abstract String getAdditionalJvmArguments()
@@ -86,6 +92,8 @@ abstract class BuildContext {
    */
   abstract void executeStep(String stepMessage, String stepId, Closure step)
 
+  abstract boolean shouldBuildDistributionForOS(String os)
+
   public static BuildContext createContext(AntBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
                                            String communityHome, String projectHome, String buildOutputRoot, ProductProperties productProperties,
                                            ProprietaryBuildTools proprietaryBuildTools = ProprietaryBuildTools.DUMMY,
@@ -100,6 +108,8 @@ abstract class BuildContext {
    * other tasks running in parallel
    */
   abstract BuildContext forkForParallelTask(String taskName)
+
+  abstract BuildContext createCopyForProduct(ProductProperties productProperties, String buildOutputRoot, String projectHomeForCustomizers)
 }
 
 /**

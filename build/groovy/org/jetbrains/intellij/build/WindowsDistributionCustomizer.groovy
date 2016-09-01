@@ -54,9 +54,14 @@ abstract class WindowsDistributionCustomizer {
   List<String> fileAssociations = []
 
   /**
+   * Paths to files which will be used to overwrite the standard *.nsi files
+   */
+  List<String> customNsiConfigurationFiles = []
+
+  /**
    * Name of the root directory in Windows .zip archive
    */
-  abstract String rootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber)
+  String rootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) { "" }
 
   /**
    * Override this method to copy additional files to Windows distribution of the product.
@@ -73,7 +78,7 @@ abstract class WindowsDistributionCustomizer {
   /**
    * The returned name will be used to create links on Desktop
    */
-  String fullNameIncludingEditionAndVendor(ApplicationInfoProperties applicationInfo) { applicationInfo.shortCompanyName + " " + applicationInfo.productName }
+  String fullNameIncludingEditionAndVendor(ApplicationInfoProperties applicationInfo) { applicationInfo.shortCompanyName + " " + fullNameIncludingEdition(applicationInfo) }
 
   String uninstallFeedbackPageUrl(ApplicationInfoProperties applicationInfo) {
     return null

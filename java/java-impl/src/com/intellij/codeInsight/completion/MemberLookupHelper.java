@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -78,9 +79,7 @@ public class MemberLookupHelper {
     final String params = myMergedOverloads
                           ? "(...)"
                           : myMember instanceof PsiMethod
-                            ? PsiFormatUtil.formatMethod((PsiMethod)myMember, substitutor,
-                                                         PsiFormatUtilBase.SHOW_PARAMETERS,
-                                                         PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE)
+                            ? getMethodParameterString((PsiMethod)myMember, substitutor)
                             : "";
     presentation.clearTail();
     presentation.appendTailText(params, false);
@@ -96,5 +95,9 @@ public class MemberLookupHelper {
     }
   }
 
-
+  @NotNull
+  static String getMethodParameterString(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
+    return PsiFormatUtil.formatMethod(method, substitutor,
+                                      PsiFormatUtilBase.SHOW_PARAMETERS, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE);
+  }
 }

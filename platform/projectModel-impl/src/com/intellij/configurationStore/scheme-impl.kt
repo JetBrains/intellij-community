@@ -15,8 +15,10 @@
  */
 package com.intellij.configurationStore
 
-import com.intellij.openapi.options.Scheme
-import com.intellij.openapi.options.SchemeProcessor
+import com.intellij.openapi.options.*
+import com.intellij.openapi.project.Project
+import com.intellij.project.isDirectoryBased
+import com.intellij.util.isEmpty
 import org.jdom.Element
 import java.io.OutputStream
 import java.security.MessageDigest
@@ -29,6 +31,8 @@ interface SchemeDataHolder<in MUTABLE_SCHEME : Scheme> {
   fun read(): Element
 
   fun updateDigest(scheme: MUTABLE_SCHEME)
+
+  fun updateDigest(data: Element)
 }
 
 interface SerializableScheme {
@@ -84,4 +88,44 @@ fun Element.digest(): ByteArray {
   val digest = MessageDigest.getInstance("SHA-1")
   serializeElementToBinary(this, DigestOutputStream(digest))
   return digest.digest()
+}
+
+abstract class SchemeWrapper<out T : Scheme>(name: String) : ExternalizableSchemeAdapter(), SerializableScheme {
+  protected abstract val lazyScheme: Lazy<T>
+
+  val scheme: T
+    get() = lazyScheme.value
+
+  val schemeState: SchemeState
+    get() = if (lazyScheme.isInitialized()) SchemeState.POSSIBLY_CHANGED else SchemeState.UNCHANGED
+
+  init {
+    this.name = name
+  }
+}
+
+class InitializedSchemeWrapper<out T : Scheme>(scheme: T, private val writer: (scheme: T) -> Element) : SchemeWrapper<T>(scheme.name) {
+  override val lazyScheme = lazyOf(scheme)
+
+  override fun writeScheme() = writer(scheme)
+}
+
+fun unwrapState(element: Element, project: Project, iprAdapter: SchemeManagerIprProvider?, schemeManager: SchemeManager<*>): Element? {
+  val data = if (project.isDirectoryBased) element.getChild("settings") else element
+  iprAdapter?.let {
+    it.load(data)
+    schemeManager.reload()
+  }
+  return data
+}
+
+fun wrapState(element: Element, project: Project): Element {
+  if (element.isEmpty() || !project.isDirectoryBased) {
+    element.name = "state"
+    return element
+  }
+
+  val wrapper = Element("state")
+  wrapper.addContent(element)
+  return wrapper
 }

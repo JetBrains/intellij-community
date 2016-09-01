@@ -216,7 +216,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
 
               if (defaultConstructorOnly) {
                 RefMethodImpl refDefaultConstructor = (RefMethodImpl)refClass.getDefaultConstructor();
-                if (refDefaultConstructor != null && !(refDefaultConstructor instanceof RefImplicitConstructor)) {
+                if (refDefaultConstructor != null) {
                   refDefaultConstructor.addInReference(refFrom);
                   refFrom.addOutReference(refDefaultConstructor);
                   hasConstructorsMarked = true;

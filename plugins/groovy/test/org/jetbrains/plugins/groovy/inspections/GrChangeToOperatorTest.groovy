@@ -26,7 +26,7 @@ import java.util.regex.Pattern
 import static org.jetbrains.plugins.groovy.GroovyFileType.GROOVY_FILE_TYPE
 import static org.jetbrains.plugins.groovy.util.TestUtils.CARET_MARKER
 
-public class GrChangeToOperatorTest extends LightGroovyTestCase {
+class GrChangeToOperatorTest extends LightGroovyTestCase {
 
   final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
 

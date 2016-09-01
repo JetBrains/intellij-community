@@ -348,6 +348,8 @@
     <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameAliasImportedMethodProcessor"
                                order="first"/>
     <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameGroovyScriptProcessor"/>
+    <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.transformations.impl.synch.SynchronizedRenameFieldProcessor"
+                               order="first, before groovyFieldRenameProcessor"/>
 
     <rename.inplace.resolveSnapshotProvider language="Groovy"
                                             implementationClass="org.jetbrains.plugins.groovy.refactoring.rename.inplace.GroovyResolveSnapshotProvider"/>
@@ -374,6 +376,7 @@
 
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.annotator.GrAnnotatorImpl"/>
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.dsl.GroovyDslAnnotator"/>
+    <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.transformations.impl.synch.SynchronizedTransformationAnnotator"/>
 
     <lang.psiStructureViewFactory language="Groovy"
                                   implementationClass="org.jetbrains.plugins.groovy.structure.GroovyStructureViewFactory"/>
@@ -594,6 +597,7 @@
                     serviceImplementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration"/>
 
     <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.providers.GroovyReferenceContributor"/>
+    <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.transformations.impl.synch.SynchronizedReferenceContributor"/>
 
     <resolveScopeProvider implementation="org.jetbrains.plugins.groovy.lang.resolve.GroovyResolveScopeProvider"/>
 
@@ -824,10 +828,10 @@
                      groupName="Style" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.JavaStylePropertiesInvocationInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" groupName="Style"
-                     displayName="Unnecessary 'def'" cleanupTool="true"
+                     displayName="Unnecessary 'def'" cleanupTool="true" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessaryDefModifierInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" groupName="Style"
-                     displayName="Unnecessary 'public'" cleanupTool="true"
+                     displayName="Unnecessary 'public'" cleanupTool="true" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessaryPublicModifierInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" groupName="Style"
                      displayName="Unnecessary semicolon" cleanupTool="true"
@@ -1162,6 +1166,7 @@
                                  implementationClass="org.jetbrains.plugins.groovy.codeInspection.dependencies.GrDependencyVisitorFactory"/>
 
     <implicitUsageProvider implementation="org.jetbrains.plugins.groovy.findUsages.GrImplicitUsageProvider"/>
+    <implicitUsageProvider implementation="org.jetbrains.plugins.groovy.transformations.impl.synch.SynchronizedImplicitUsageProvider"/>
 
     <scratch.rootType implementation="org.jetbrains.plugins.groovy.console.GroovyConsoleRootType"/>
     <resolveScopeProvider implementation="org.jetbrains.plugins.groovy.console.GroovyConsoleResolveScopeProvider"/>
@@ -1612,6 +1617,7 @@
     <documentationDelegateProvider implementation="org.jetbrains.plugins.groovy.lang.documentation.GrLightDocumentationDelegateProvider"/>
     <breadcrumbsInfoProvider implementation="org.jetbrains.plugins.groovy.editor.GroovyBreadcrumbsInfoProvider"/>
     <stripTrailingSpacesFilterFactory implementation="org.jetbrains.plugins.groovy.editor.GroovyStripTrailingSpacesFilterFactory"/>
+    <generateAccessorProvider implementation="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateAccessorProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">

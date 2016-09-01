@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.plugins;
 
+import com.intellij.diagnostic.ImplementationConflictException;
+import com.intellij.diagnostic.PluginConflictReporter;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.ClassUtilCore;
 import com.intellij.ide.IdeBundle;
@@ -118,6 +120,11 @@ public class PluginManager extends PluginManagerCore {
           getLogger().error(t);
         }
         catch (Throwable ignore) { }
+      }
+
+      final ImplementationConflictException conflictException = findCause(t, ImplementationConflictException.class);
+      if (conflictException != null) {
+        PluginConflictReporter.INSTANCE.reportConflictByClasses(conflictException.getConflictingClasses());
       }
 
       if (pluginId != null && !CORE_PLUGIN_ID.equals(pluginId.getIdString())) {

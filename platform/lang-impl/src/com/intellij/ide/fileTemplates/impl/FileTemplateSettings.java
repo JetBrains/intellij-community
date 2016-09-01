@@ -19,6 +19,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.project.Project;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,14 +45,14 @@ public class FileTemplateSettings extends FileTemplatesLoader implements Persist
   static final String ATTRIBUTE_LIVE_TEMPLATE = "live-template-enabled";
   static final String ATTRIBUTE_ENABLED = "enabled";
 
-  public FileTemplateSettings(@NotNull FileTypeManagerEx typeManager) {
-    super(typeManager);
+  public FileTemplateSettings(@NotNull FileTypeManagerEx typeManager, @Nullable Project project) {
+    super(typeManager, project);
   }
 
   @Nullable
   @Override
   public Element getState() {
-    Element element = null;
+    Element element = new Element("fileTemplateSettings");
     for (FTManager manager : getAllManagers()) {
       Element templatesGroup = null;
       for (FileTemplateBase template : manager.getAllTemplates(true)) {
@@ -74,9 +75,6 @@ public class FileTemplateSettings extends FileTemplatesLoader implements Persist
 
         if (templatesGroup == null) {
           templatesGroup = new Element(getXmlElementGroupName(manager));
-          if (element == null) {
-            element = new Element("fileTemplateSettings");
-          }
           element.addContent(templatesGroup);
         }
         templatesGroup.addContent(templateElement);

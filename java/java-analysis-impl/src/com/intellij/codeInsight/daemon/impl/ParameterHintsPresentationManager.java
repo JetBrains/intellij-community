@@ -22,6 +22,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -147,7 +148,7 @@ public class ParameterHintsPresentationManager implements Disposable {
       step = 1;
       steps = Math.max(1, Math.abs(endWidth - startWidth) / metrics.charWidth('a') / ANIMATION_CHARS_PER_STEP);
     }
-
+    
     public boolean nextStep() {
       return ++step <= steps;
     }
@@ -168,23 +169,27 @@ public class ParameterHintsPresentationManager implements Disposable {
       if (myText != null && (step > steps || startWidth != 0)) {
         TextAttributes attributes = editor.getColorsScheme().getAttributes(JavaHighlightingColors.INLINE_PARAMETER_HINT);
         if (attributes != null) {
-          GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-          int shadeRectHeight = Math.min(4, r.height - 3);
           Color backgroundColor = attributes.getBackgroundColor();
-          g.setColor(ColorUtil.brighter(backgroundColor, 1));
-          g.fillRoundRect(r.x + 2, r.y + 1, r.width - 4, shadeRectHeight, 4, 4);
-          g.setColor(ColorUtil.darker(backgroundColor, 1));
-          g.fillRoundRect(r.x + 2, r.y + r.height - shadeRectHeight - 1, r.width - 4, shadeRectHeight, 4, 4);
-          g.setColor(backgroundColor);
-          g.fillRoundRect(r.x + 2, r.y + 2, r.width - 4, r.height - 4, 4, 4);
-          g.setColor(attributes.getForegroundColor());
-          g.setFont(getFont(editor));
-          FontMetrics metrics = g.getFontMetrics();
-          Shape savedClip = g.getClip();
-          g.clipRect(r.x + 3, r.y + 2, r.width - 6, r.height - 4);
-          g.drawString(myText, r.x + 7, r.y + (r.height + metrics.getAscent() - metrics.getDescent()) / 2);
-          g.setClip(savedClip);
-          config.restore();
+          if (backgroundColor != null) {
+            GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+            int shadeRectHeight = Math.min(4, r.height - 3);
+            g.setColor(ColorUtil.darker(backgroundColor, 1));
+            g.fillRoundRect(r.x + 2, r.y + r.height - shadeRectHeight - 1, r.width - 4, shadeRectHeight, 4, 4);
+            g.setColor(backgroundColor);
+            g.fillRoundRect(r.x + 2, r.y + 1, r.width - 4, r.height - 3, 4, 4);
+            config.restore();
+          }
+          Color foregroundColor = attributes.getForegroundColor();
+          if (foregroundColor != null) {
+            g.setColor(foregroundColor);
+            g.setFont(getFont(editor));
+            FontMetrics metrics = g.getFontMetrics();
+            Shape savedClip = g.getClip();
+            g.clipRect(r.x + 3, r.y + 1, r.width - 6, r.height - 3);
+            int editorAscent = editor instanceof EditorImpl ? ((EditorImpl)editor).getAscent() : 0;
+            g.drawString(myText, r.x + 7, r.y + Math.max(editorAscent, (r.height + metrics.getAscent() - metrics.getDescent()) / 2) - 1);
+            g.setClip(savedClip);
+          }
         }
       }
     }

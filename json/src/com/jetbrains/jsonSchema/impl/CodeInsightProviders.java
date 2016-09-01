@@ -18,6 +18,8 @@ package com.jetbrains.jsonSchema.impl;
 import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,4 +37,6 @@ public interface CodeInsightProviders {
   DocumentationProvider getDocumentationProvider();
 
   boolean iterateSchemaObjects(@NotNull Processor<JsonSchemaObject> consumer);
+
+  void iterateSchemaFiles(@NotNull PairConsumer<VirtualFile, String> consumer);
 }

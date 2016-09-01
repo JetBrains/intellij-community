@@ -28,7 +28,7 @@ class DelegatesToSupportTest extends LightGroovyTestCase {
   final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
 
   @Override
-  public void setUp() throws Exception {
+  void setUp() throws Exception {
     super.setUp();
     fixture.enableInspections(GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection)
   }

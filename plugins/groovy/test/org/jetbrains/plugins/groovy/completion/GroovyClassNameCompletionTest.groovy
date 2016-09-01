@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCase {
+class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCase {
   private boolean old;
 
   @Override
@@ -48,9 +48,11 @@ public class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCa
     myFixture.addClass("package $packageName; public class $name {}");
   }
 
-  public void testInFieldDeclaration() throws Exception {doTest();}
-  public void testInParameter() throws Exception {doTest();}
-  public void testInImport() throws Exception {
+  void testInFieldDeclaration() throws Exception { doTest(); }
+
+  void testInParameter() throws Exception { doTest(); }
+
+  void testInImport() throws Exception {
     addClassToProject("a", "FooBar")
     myFixture.configureByFile(getTestName(false) + ".groovy")
     complete()
@@ -58,7 +60,7 @@ public class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCa
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 
-  public void testWhenClassExistsInSamePackage() throws Exception {
+  void testWhenClassExistsInSamePackage() throws Exception {
     addClassToProject("a", "FooBar")
     myFixture.configureByFile(getTestName(false) + ".groovy")
     complete()
@@ -68,11 +70,13 @@ public class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCa
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 
-  public void testInComment() throws Exception {doTest();}
-  public void testInTypeElementPlace() throws Exception {doTest();}
-  public void testWhenImportExists() throws Exception{doTest();}
+  void testInComment() throws Exception { doTest(); }
 
-  public void testFinishByDot() throws Exception{
+  void testInTypeElementPlace() throws Exception { doTest(); }
+
+  void testWhenImportExists() throws Exception { doTest(); }
+
+  void testFinishByDot() throws Exception {
     addClassToProject("a", "FooBar");
     myFixture.configureByText("a.groovy", "FB<caret>a")
     complete()
@@ -84,7 +88,7 @@ public class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCa
     myFixture.complete(CompletionType.BASIC, 2)
   }
 
-  public void testDelegateBasicToClassName() throws Exception{
+  void testDelegateBasicToClassName() throws Exception {
     addClassToProject("a", "FooBarGooDoo");
     myFixture.configureByText("a.groovy", "FBGD<caret>a")
     myFixture.complete(CompletionType.BASIC, 2)
@@ -92,7 +96,7 @@ public class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCa
     myFixture.checkResult "a.FooBarGooDoo.<caret>a"
   }
 
-  public void testDelegateBasicToClassNameAutoinsert() throws Exception{
+  void testDelegateBasicToClassNameAutoinsert() throws Exception {
     addClassToProject("a", "FooBarGooDoo");
     myFixture.configureByText("a.groovy", "FBGD<caret>")
     myFixture.complete(CompletionType.BASIC, 2)
@@ -102,7 +106,7 @@ import a.FooBarGooDoo
 FooBarGooDoo<caret>"""
   }
 
-  public void testImportedStaticMethod() throws Exception {
+  void testImportedStaticMethod() throws Exception {
     myFixture.addFileToProject("b.groovy", """
 class Foo {
   static def abcmethod1(int a) {}
@@ -127,7 +131,7 @@ def foo() {
 
   }
 
-  public void testImportedStaticField() throws Exception {
+  void testImportedStaticField() throws Exception {
     myFixture.addFileToProject("b.groovy", """
 class Foo {
   static def abcfield1
@@ -147,7 +151,7 @@ def foo() {
 
   }
 
-  public void testImportedInterfaceConstant() throws Exception {
+  void testImportedInterfaceConstant() throws Exception {
     myFixture.addFileToProject("b.groovy", """
 interface Foo {
   static def abcfield1 = 2
@@ -167,7 +171,7 @@ def foo() {
 
   }
 
-  public void testQualifiedStaticMethod() throws Exception {
+  void testQualifiedStaticMethod() throws Exception {
     myFixture.addFileToProject("foo/b.groovy", """package foo
 class Foo {
   static def abcmethod(int a) {}
@@ -184,7 +188,7 @@ def foo() {
 
   }
 
-  public void testQualifiedStaticMethodIfThereAreAlreadyStaticImportsFromThatClass() throws Exception {
+  void testQualifiedStaticMethodIfThereAreAlreadyStaticImportsFromThatClass() throws Exception {
     myFixture.addFileToProject("foo/b.groovy", """package foo
 class Foo {
   static def abcMethod() {}
@@ -215,7 +219,7 @@ abcMethod()<caret>"""
     return LookupElementPresentation.renderElement(element)
   }
 
-  public void testNewClassName() {
+  void testNewClassName() {
     addClassToProject("foo", "Fxoo")
     myFixture.configureByText("a.groovy", "new Fxo<caret>\n")
     myFixture.complete(CompletionType.BASIC, 2)
@@ -225,47 +229,47 @@ new Fxoo()<caret>\n"""
 
   }
 
-  public void testNewImportedClassName() {
+  void testNewImportedClassName() {
     myFixture.configureByText("a.groovy", "new ArrayIndexOut<caret>\n")
     myFixture.completeBasic()
     myFixture.checkResult "new ArrayIndexOutOfBoundsException(<caret>)\n"
   }
 
-  public void testOnlyAnnotationsAfterAt() {
+  void testOnlyAnnotationsAfterAt() {
     myFixture.addClass "class AbcdClass {}; @interface AbcdAnno {}"
     myFixture.configureByText "a.groovy", "@Abcd<caret>"
     complete()
     assert myFixture.lookupElementStrings[0] == 'AbcdAnno'
   }
 
-  public void testOnlyExceptionsInCatch() {
+  void testOnlyExceptionsInCatch() {
     myFixture.addClass "class AbcdClass {}; class AbcdException extends Throwable {}"
     myFixture.configureByText "a.groovy", "try {} catch (Abcd<caret>"
     complete()
     assert myFixture.lookupElementStrings[0] == 'AbcdException'
   }
 
-  public void testClassNameInMultilineString() {
+  void testClassNameInMultilineString() {
     myFixture.configureByText "a.groovy", 'def s = """a\nAIOOBE<caret>\na"""'
     complete()
     myFixture.checkResult 'def s = """a\njava.lang.ArrayIndexOutOfBoundsException<caret>\na"""'
   }
 
-  public void testDoubleClass() {
+  void testDoubleClass() {
     myFixture.addClass "package foo; public class Zooooooo {}"
     myFixture.configureByText("a.groovy", """import foo.Zooooooo
 Zoooo<caret>x""")
     assertOneElement(myFixture.completeBasic())
   }
 
-  public void testClassOnlyOnce() {
+  void testClassOnlyOnce() {
     myFixture.addClass('class FooBarGoo {}')
     myFixture.configureByText('a.groovy', 'FoBaGo<caret>')
     assert !complete()
     myFixture.checkResult('''FooBarGoo<caret>''')
   }
 
-  public void testMethodFromTheSameClass() {
+  void testMethodFromTheSameClass() {
     myFixture.configureByText("a.groovy", """
 class A {
   static void foo() {}
@@ -290,7 +294,7 @@ class A {
 '''
   }
 
-  public void testInnerClassCompletion() {
+  void testInnerClassCompletion() {
     myFixture.addClass('''\
 package foo;
 

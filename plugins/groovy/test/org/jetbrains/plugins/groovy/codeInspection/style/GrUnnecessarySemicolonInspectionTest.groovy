@@ -71,6 +71,14 @@ print(a); {->}
            'for(int i = 0; i < 5; i++)'
   }
 
+  void 'test traditional for without update'() {
+    doTest 'for (int i = 0; i < 10;) {}'
+  }
+
+  void 'test traditional for without condition'() {
+    doTest 'for (int i = 0; ; i++) {}'
+  }
+
   void 'test class members'() {
     doTest '''\
 class A {
@@ -94,6 +102,14 @@ class A {
 //      checkHighlighting()
       launchAction findSingleIntention("Fix all 'Unnecessary semicolon'")
       checkResult after
+    }
+  }
+
+  private doTest(String text) {
+    fixture.with {
+      enableInspections GrUnnecessarySemicolonInspection
+      configureByText '_.groovy', text
+      checkHighlighting()
     }
   }
 

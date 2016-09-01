@@ -4,10 +4,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
-import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.XmlSuppressableInspectionTool;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -44,14 +41,10 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
 
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new XmlElementVisitor() {
-      @Override
-      public void visitXmlFile(XmlFile file) {
-        if (!JavaFxFileTypeFactory.isFxml(file)) return;
-        super.visitXmlFile(file);
-      }
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+    if (!JavaFxFileTypeFactory.isFxml(session.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
 
+    return new XmlElementVisitor() {
       @Override
       public void visitXmlAttributeValue(XmlAttributeValue xmlAttributeValue) {
         super.visitXmlAttributeValue(xmlAttributeValue);

@@ -132,6 +132,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
         chooseAndImport();
       }
     });
+    myImportButton.setVisible(isImportAvailable());
     panel.add(myImportButton,
               new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new JBInsets(0, 0, 5, 5), 0,
                                      0));
@@ -242,5 +243,8 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
       }
     }
   }
-  
+
+  private static boolean isImportAvailable() {
+    return !SchemeImporterEP.getExtensions(EditorColorsScheme.class).isEmpty();
+  }
 }

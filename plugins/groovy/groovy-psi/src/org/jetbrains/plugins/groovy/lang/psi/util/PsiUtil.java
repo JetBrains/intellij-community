@@ -105,31 +105,6 @@ public class PsiUtil {
   private PsiUtil() {
   }
 
-  /**
-   * @param owner modifier list owner
-   * @return <ul>
-   * <li>{@code true} when owner has explicit type or it's not required for owner to have explicit type</li>
-   * <li>{@code false} when doesn't have explicit type and it's required to have a type or modifier</li>
-   * <li>{@code defaultValue} for the other owners</li>
-   * </ul>
-   */
-  public static boolean modifierListMayBeEmpty(@Nullable PsiElement owner) {
-    if (owner instanceof GrParameter) {
-      return true;
-    }
-    if (owner instanceof GrMethod) {
-      GrMethod method = (GrMethod)owner;
-      return method.isConstructor() || method.getReturnTypeElementGroovy() != null && !method.hasTypeParameters();
-    }
-    else if (owner instanceof GrVariable) {
-      return ((GrVariable)owner).getTypeElementGroovy() != null;
-    }
-    else if (owner instanceof GrVariableDeclaration) {
-      return ((GrVariableDeclaration)owner).getTypeElementGroovy() != null;
-    }
-    return true;
-  }
-
   @Nullable
   public static String getMethodName(GrMethodCall methodCall) {
     GrExpression invokedExpression = methodCall.getInvokedExpression();
@@ -807,6 +782,21 @@ public class PsiUtil {
       }
     }
     return elem;
+  }
+
+  @Nullable
+  public static PsiElement skipLeafSet(@NotNull PsiElement element, boolean forward, @NotNull TokenSet set) {
+    do {
+      if (forward) {
+        element = PsiTreeUtil.nextLeaf(element);
+      }
+      else {
+        element = PsiTreeUtil.prevLeaf(element);
+      }
+    }
+    while (element != null && element.getNode() != null && set.contains(element.getNode().getElementType()));
+
+    return element;
   }
 
   @Nullable

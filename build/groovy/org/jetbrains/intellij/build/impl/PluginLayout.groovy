@@ -107,7 +107,8 @@ class PluginLayout extends BaseLayout {
     }
 
     /**
-     * Register an optional module which may be excluded from the plugin distribution in some products
+     * Register an optional module which may be excluded from the plugin distribution in some products. These modules are included in plugin
+     * distribution only if they are added to {@link org.jetbrains.intellij.build.ProductModulesLayout#bundledPluginModules} list.
      */
     void withOptionalModule(String moduleName, String relativeJarPath = "${moduleName}.jar") {
       layout.optionalModules << moduleName

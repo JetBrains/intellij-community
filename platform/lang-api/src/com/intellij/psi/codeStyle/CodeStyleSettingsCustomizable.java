@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -308,26 +308,30 @@ public interface CodeStyleSettingsCustomizable {
 
   void showStandardOptions(String... optionNames);
 
-  void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
+  default void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
                         String fieldName,
                         String title,
                         @Nullable String groupName,
-                        Object... options);
+                        Object... options) {
+  }
 
-  void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
+  default void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
                         String fieldName,
                         String title,
                         @Nullable String groupName,
                         @Nullable OptionAnchor anchor,
                         @Nullable String anchorFieldName,
-                        Object... options);
+                        Object... options) {
+  }
 
-  void renameStandardOption(String fieldName, String newTitle);
+  default void renameStandardOption(String fieldName, String newTitle) {
+  }
 
   /**
    * Moves a standard option to another group.
    * @param fieldName The field name of the option to move (as defined in <code>CommonCodeStyleSettings</code> class).
    * @param newGroup  The new group name (the group may be one of existing ones). A custom group name can be used if supported by consumer.
    */
-  void moveStandardOption(String fieldName, String newGroup);
+  default void moveStandardOption(String fieldName, String newGroup) {
+  }
 }

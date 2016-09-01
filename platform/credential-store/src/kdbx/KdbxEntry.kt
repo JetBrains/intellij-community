@@ -15,6 +15,7 @@
  */
 package com.intellij.credentialStore.kdbx
 
+import com.intellij.credentialStore.SecureString
 import com.intellij.util.element
 import com.intellij.util.getOrCreate
 import org.jdom.Element
@@ -40,7 +41,7 @@ class KdbxEntry(private val element: Element, private val database: KeePassDatab
       }
     }
 
-  @Volatile var password: String? = element.removeProperty("Password")
+  @Volatile var password =  element.removeProperty("Password")?.let(::SecureString)
     set(value) {
       if (field != value) {
         field = value
@@ -54,7 +55,7 @@ class KdbxEntry(private val element: Element, private val database: KeePassDatab
     element.setProperty("Title", title)
     element.ensureProperty("URL")
     element.setProperty("UserName", userName)
-    element.setProperty("Password", password)
+    element.setProperty("Password", password?.get()?.toString())
     element.ensureProperty("Notes")
     return element
   }

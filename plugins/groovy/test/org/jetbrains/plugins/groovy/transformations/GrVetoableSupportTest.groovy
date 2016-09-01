@@ -48,7 +48,7 @@ class GrVetoableSupportTest {
   }
 
   @Parameterized.Parameters(name = "{0}")
-  public static Collection<Object[]> data() {
+  static Collection<Object[]> data() {
     [
       '@Vetoable on class'               : '@groovy.beans.Vetoable class Person {}',
       '@Vetoable on class @CompileStatic': '@groovy.transform.CompileStatic @groovy.beans.Vetoable class Person {}',

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -868,7 +868,7 @@ class DependencyResolverImpl implements DependencyResolver {
                         sourcePaths = mainSpec.sourcePaths
                       }
                       if (sourcePaths) {
-                        (sourcePaths.flatten() as List).each { def path ->
+                        (sourcePaths.flatten() as List).each { path ->
                           if (path instanceof String) {
                             def file = new File(path)
                             if (file.isAbsolute()) {

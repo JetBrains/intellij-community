@@ -670,6 +670,10 @@ public final class EditorUtil {
     return calcSurroundingRange(editor, editor.getCaretModel().getVisualPosition(), editor.getCaretModel().getVisualPosition());
   }
 
+  public static Pair<LogicalPosition, LogicalPosition> calcCaretLineRange(@NotNull Caret caret) {
+    return calcSurroundingRange(caret.getEditor(), caret.getVisualPosition(), caret.getVisualPosition());
+  }
+
   /**
    * Calculates logical positions that surround given visual positions and conform to the following criteria:
    * <pre>

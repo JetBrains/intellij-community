@@ -6,6 +6,7 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.Processor;
 import com.jetbrains.jsonSchema.extension.SchemaType;
 import org.jetbrains.annotations.NotNull;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 class JsonSchemaObjectCodeInsightWrapper implements CodeInsightProviders {
   @NotNull private final String myName;
   @NotNull private final SchemaType mySchemaType;
+  @NotNull private final VirtualFile mySchemaFile;
   @NotNull private final JsonSchemaObject mySchemaObject;
 
   @NotNull
@@ -30,6 +32,7 @@ class JsonSchemaObjectCodeInsightWrapper implements CodeInsightProviders {
                                             @NotNull JsonSchemaObject schemaObject) {
     myName = name;
     mySchemaType = type;
+    mySchemaFile = schemaFile;
     mySchemaObject = schemaObject;
     myContributor = new JsonBySchemaObjectCompletionContributor(type, schemaObject);
     myAnnotator = new JsonBySchemaObjectAnnotator(schemaObject);
@@ -62,6 +65,11 @@ class JsonSchemaObjectCodeInsightWrapper implements CodeInsightProviders {
   @Override
   public boolean iterateSchemaObjects(@NotNull final Processor<JsonSchemaObject> consumer) {
     return consumer.process(mySchemaObject);
+  }
+
+  @Override
+  public void iterateSchemaFiles(@NotNull final PairConsumer<VirtualFile, String> consumer) {
+    consumer.consume(mySchemaFile, mySchemaObject.getId());
   }
 
   public boolean isUserSchema() {

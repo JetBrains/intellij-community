@@ -523,10 +523,8 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     return myFoldTextAttributes;
   }
 
-  public void flushCaretPosition() {
-    for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
-      caret.putUserData(SAVED_CARET_POSITION, null);
-    }
+  void flushCaretPosition(@NotNull Caret caret) {
+    caret.putUserData(SAVED_CARET_POSITION, null);
   }
 
   void onBulkDocumentUpdateStarted() {

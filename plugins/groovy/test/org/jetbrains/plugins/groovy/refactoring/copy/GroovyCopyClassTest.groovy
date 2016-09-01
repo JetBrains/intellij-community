@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,14 +28,14 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author peter
  */
-public class GroovyCopyClassTest extends LightCodeInsightFixtureTestCase {
+class GroovyCopyClassTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
     return "${TestUtils.testDataPath}refactoring/copy/";
   }
 
-  public void testBetweenPackages() throws Throwable {
+  void testBetweenPackages() throws Throwable {
     final String testName = getTestName(false);
     myFixture.copyFileToProject("${testName}.groovy", "foo/${testName}.groovy");
     myFixture.addClass("package foo; public class Bar {}");
@@ -55,7 +55,7 @@ public class GroovyCopyClassTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResultByFile("bar/${testName}_after.groovy", "${testName}_after.groovy", true);
   }
 
-  public void testCopyScript() throws Throwable {
+  void testCopyScript() throws Throwable {
     final String testName = getTestName(false);
     def file = myFixture.copyFileToProject("${testName}.groovy", "/foo/${testName}.groovy");
     def psiFile = myFixture.psiManager.findFile(file)

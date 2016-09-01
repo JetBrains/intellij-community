@@ -15,13 +15,13 @@
  */
 package git4idea.commands;
 
+import com.intellij.credentialStore.Credentials;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.ide.passwordSafe.ui.PasswordSafePromptDialog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -40,6 +40,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.credentialStore.CredentialAttributesKt.CredentialAttributes;
 
 /**
  * <p>Handles "ask username" and "ask password" requests from Git:
@@ -169,7 +171,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
     // save password
     if (myPasswordKey != null && myPassword != null) {
-      PasswordSafe.getInstance().setPassword(PASS_REQUESTER, myPasswordKey, myPassword, !mySaveOnDisk);
+      Credentials credentials = new Credentials(myPasswordKey, myPassword);
+      PasswordSafe.getInstance().set(CredentialAttributes(PASS_REQUESTER, credentials.getUserName()), credentials, !mySaveOnDisk);
     }
   }
 
@@ -209,12 +212,9 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
   @NotNull
   private String findPresetHttpUrl() {
-    return ObjectUtils.chooseNotNull(ContainerUtil.find(myUrlsFromCommand, new Condition<String>() {
-      @Override
-      public boolean value(String url) {
-        String scheme = UriUtil.splitScheme(url).getFirst();
-        return scheme.startsWith("http");
-      }
+    return ObjectUtils.chooseNotNull(ContainerUtil.find(myUrlsFromCommand, url -> {
+      String scheme = UriUtil.splitScheme(url).getFirst();
+      return scheme.startsWith("http");
     }), ContainerUtil.getFirstItem(myUrlsFromCommand));
   }
 

@@ -31,16 +31,26 @@ class BuildOptions {
   boolean useCompiledClassesFromProjectOutput = SystemProperties.getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, false)
 
   /**
-   * Pass comma-separated names of build steps (see below) to 'intellij.build.skipBuildSteps' system property to skip them when building locally.
+   * Specifies for which operating systems distributions should be built.
+   */
+  String targetOS = System.getProperty("intellij.build.target.os", OS_ALL)
+  static final String OS_LINUX = "linux"
+  static final String OS_WINDOWS = "windows"
+  static final String OS_MAC = "mac"
+  static final String OS_ALL = "all"
+
+  /**
+   * Pass comma-separated names of build steps (see below) to 'intellij.build.skip.build.steps' system property to skip them when building locally.
    */
   Set<String> buildStepsToSkip = System.getProperty("intellij.build.skip.build.steps", "").split(",") as Set<String>
+  /** generate actual searchableOptions.xml file. If it is skipped the version of this file located in sources will be used, it may be outdated. */
   static final SEARCHABLE_OPTIONS_INDEX_STEP = "search_index"
   static final SOURCES_ARCHIVE_STEP = "sources_archive"
-  static final MAC_DISTRIBUTION_STEP = "mac_dist"
+  /** product DMG file for Mac OS X. If it is skipped only sit archive will be produced. */
   static final MAC_DMG_STEP = "mac_dmg"
+  /** sign additional binary files in Mac OS X distribution */
   static final MAC_SIGN_STEP = "mac_sign"
-  static final LINUX_DISTRIBUTION_STEP = "linux_dist"
-  static final WINDOWS_DISTRIBUTION_STEP = "windows_dist"
+  /** create *.exe installer for Windows distribution. If it is skipped only zip archive will be produced. */
   static final WINDOWS_EXE_INSTALLER_STEP = "windows_exe_installer"
   static final CROSS_PLATFORM_DISTRIBUTION_STEP = "cross_platform_dist"
   static final SCRAMBLING_STEP = "scramble"
@@ -65,4 +75,10 @@ class BuildOptions {
    * By default some build steps are executed in parallel threads. Set this property to {@code false} to disable this.
    */
   boolean runBuildStepsInParallel = SystemProperties.getBooleanProperty("intellij.build.run.steps.in.parallel", true)
+
+  /**
+   * Build number without product code (e.g. '162.500.10'), if {@code null} '&lt;baseline&gt;.SNAPSHOT' will be used. Use {@link BuildContext#buildNumber} to
+   * get the actual build number in build scripts.
+   */
+  String buildNumber = System.getProperty("build.number")
 }

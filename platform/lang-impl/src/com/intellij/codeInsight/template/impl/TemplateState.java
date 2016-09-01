@@ -122,7 +122,7 @@ public class TemplateState implements Disposable {
     myLookupListener = new LookupAdapter() {
       @Override
       public void itemSelected(LookupEvent event) {
-        if (isCaretOutsideCurrentSegment()) {
+        if (isCaretOutsideCurrentSegment() && !isCaretInsideNextVariable()) {
           gotoEnd(true);
         }
       }
@@ -183,6 +183,15 @@ public class TemplateState implements Disposable {
     }
     myDocument.addDocumentListener(myEditorDocumentListener, this);
     CommandProcessor.getInstance().addCommandListener(myCommandListener, this);
+  }
+
+  private boolean isCaretInsideNextVariable() {
+    if (myEditor != null && myCurrentVariableNumber >= 0) {
+      int nextVar = getNextVariableNumber(myCurrentVariableNumber);
+      TextRange range = nextVar < 0 ? null : getVariableRange(myTemplate.getVariableNameAt(nextVar));
+      return range != null && range.containsOffset(myEditor.getCaretModel().getOffset());
+    }
+    return false;
   }
 
   private boolean isCaretOutsideCurrentSegment() {
@@ -535,13 +544,14 @@ public class TemplateState implements Disposable {
   }
 
   private int getCurrentSegmentNumber() {
-    if (myCurrentVariableNumber == -1) {
+    int varNumber = myCurrentVariableNumber;
+    if (varNumber == -1) {
       return -1;
     }
-    String variableName = myTemplate.getVariableNameAt(myCurrentVariableNumber);
+    String variableName = myTemplate.getVariableNameAt(varNumber);
     int segmentNumber = myTemplate.getVariableSegmentNumber(variableName);
     if (segmentNumber < 0) {
-      LOG.error("No segment for variable: var=" + myCurrentVariableNumber + "; name=" + variableName + "; " + presentTemplate(myTemplate) +
+      LOG.error("No segment for variable: var=" + varNumber + "; name=" + variableName + "; " + presentTemplate(myTemplate) +
                 "; offset: " + myEditor.getCaretModel().getOffset(), AttachmentFactory.createAttachment(myDocument));
     }
     return segmentNumber;
@@ -935,7 +945,7 @@ public class TemplateState implements Disposable {
     TextRange range = getCurrentVariableRange();
     if (range != null && range.getLength() > 0) {
       int caret = myEditor.getCaretModel().getOffset();
-      if (caret == range.getEndOffset()) {
+      if (caret == range.getEndOffset() || isCaretInsideNextVariable()) {
         nextTab();
       }
       else if (caret > range.getEndOffset()) {

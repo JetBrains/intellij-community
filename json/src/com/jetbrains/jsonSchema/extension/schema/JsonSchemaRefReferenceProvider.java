@@ -60,7 +60,7 @@ public class JsonSchemaRefReferenceProvider extends PsiReferenceProvider {
         ref = text.substring(idx + 1);
       }
 
-      return new JsonSchemaDefinitionResolver(getElement(), id).setRef(ref).setInCurrentFile(!isGlobal).doResolve();
+      return new JsonSchemaDefinitionResolver(getElement(), id).setRef(ref).doResolve();
     }
   }
 }

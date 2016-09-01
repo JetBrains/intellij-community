@@ -32,13 +32,13 @@ import org.jetbrains.annotations.NotNull
 /**
  * @author peter
  */
-public class FileLocalResolverTest extends LightCodeInsightFixtureTestCase {
+class FileLocalResolverTest extends LightCodeInsightFixtureTestCase {
 
-  public void "test unknown variable"() {
+  void "test unknown variable"() {
     assertDoesNotResolve 'class C {{ <caret>a = 2; }}'
   }
 
-  public void "test code block variable"() {
+  void "test code block variable"() {
     assertResolves '''class C {{
   int a;
   int b;
@@ -48,105 +48,105 @@ public class FileLocalResolverTest extends LightCodeInsightFixtureTestCase {
 }}'''
   }
 
-  public void "test variables in the same declaration"() {
+  void "test variables in the same declaration"() {
     assertResolves '''
 class C {{
   int a = 2, b = <caret>a;
 }}'''
   }
 
-  public void "test inside for loop var"() {
+  void "test inside for loop var"() {
     assertResolves '''
 class C {{
   for (int a = 2, b = <caret>a;;) {}
 }}'''
   }
 
-  public void "test for loop var in body"() {
+  void "test for loop var in body"() {
     assertResolves '''
 class C {{
   for (int a = 2;;) { b = <caret>a; }
 }}'''
   }
 
-  public void "test for loop var in condition"() {
+  void "test for loop var in condition"() {
     assertResolves '''
 class C {{
   for (int a = 2; <caret>a < 3;) {}
 }}'''
   }
 
-  public void "test for loop var in modification"() {
+  void "test for loop var in modification"() {
     assertResolves '''
 class C {{
   for (int a = 2; ; <caret>a++) {}
 }}'''
   }
 
-  public void "test foreach loop var in body"() {
+  void "test foreach loop var in body"() {
     assertResolves '''
 class C {{
   for (Object x : xs) { <caret>x = null; }
 }}'''
   }
 
-  public void "test resource var in try body"() {
+  void "test resource var in try body"() {
     assertResolves '''
 class C {{
   try (Smth x = smth) { <caret>x = null; }
 }}'''
   }
 
-  public void "test resource var in second resource var"() {
+  void "test resource var in second resource var"() {
     assertResolves '''
 class C {{
   try (Smth x = smth; Smth y = <caret>x) { }
 }}'''
   }
 
-  public void "test no forward references in resource list"() {
+  void "test no forward references in resource list"() {
     assertDoesNotResolve '''
 class C {{
   try (Smth y = <caret>x; Smth x = smth) { }
 }}'''
   }
 
-  public void "test catch parameter"() {
+  void "test catch parameter"() {
     assertResolves '''
 class C {{
   try { } catch (IOException e) { <caret>e = null; }
 }}'''
   }
 
-  public void "test single lambda parameter"() {
+  void "test single lambda parameter"() {
     assertResolves '''
 class C {{
   Some r = param -> sout(para<caret>m);
 }}'''
   }
 
-  public void "test listed lambda parameter"() {
+  void "test listed lambda parameter"() {
     assertResolves '''
 class C {{
   Some r = (param, p2) -> sout(para<caret>m);
 }}'''
   }
 
-  public void "test typed lambda parameter"() {
+  void "test typed lambda parameter"() {
     assertResolves '''
 class C {{
   Some r = (String param, int p2) -> sout(<caret>p2);
 }}'''
   }
 
-  public void "test method parameter"() {
+  void "test method parameter"() {
     assertResolves '''
 class C { void foo(int param) {
   sout(para<caret>m);
 }}'''
   }
 
-  public void "test field"() {
+  void "test field"() {
     assertResolves '''
 class C {
 {
@@ -156,7 +156,7 @@ int f = 2;
 }'''
   }
 
-  public void "test possible anonymous super class field"() {
+  void "test possible anonymous super class field"() {
     assert FileLocalResolver.LightResolveResult.UNKNOWN == configureAndResolve('''
 class C {
 {
@@ -191,7 +191,7 @@ int field = 1;
 }''')
   }
 
-  public void "test no method resolving"() {
+  void "test no method resolving"() {
     assertDoesNotResolve '''
 class C {
   int a = 1;
@@ -200,7 +200,7 @@ class C {
 '''
   }
 
-  public void "test no qualified reference resolving"() {
+  void "test no qualified reference resolving"() {
     assertDoesNotResolve '''
 class C {
   int a = 1;
@@ -257,59 +257,59 @@ class C {
     return myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
   }
 
-  public void "test short field type name"() {
+  void "test short field type name"() {
     assert 'Bar' == getShortClassTypeName('''
 class Foo {
   foo.Bar <caret>f;
 }''')
   }
 
-  public void "test short field type name that coincides with a type parameter"() {
+  void "test short field type name that coincides with a type parameter"() {
     assert 'Bar' == getShortClassTypeName('''
 class Foo<Bar> {
   foo.Bar <caret>f;
 }''')
   }
 
-  public void "test generic field type name"() {
+  void "test generic field type name"() {
     assert null == getShortClassTypeName('''
 class Foo<Bar> {
   Bar <caret>f;
 }''')
   }
 
-  public void "test variable type name in a static method"() {
+  void "test variable type name in a static method"() {
     assert 'Bar' == getShortClassTypeName('''
 class Foo<Bar> {
   static void foo() { Bar <caret>f; }
 }''')
   }
 
-  public void "test variable type name in an instance method"() {
+  void "test variable type name in an instance method"() {
     assert null == getShortClassTypeName('''
 class Foo<Bar> {
   void foo() { Bar <caret>f; }
 }''')
   }
 
-  public void "test parameter type name in a generic method"() {
+  void "test parameter type name in a generic method"() {
     assert null == getShortClassTypeName('''
 class Foo<Bar> {
   <Bar> void foo(Bar <caret>b) { }
 }''')
   }
 
-  public void "test missing lambda parameter type name"() {
+  void "test missing lambda parameter type name"() {
     assert null == getShortClassTypeName('''
 class Foo {{ I i = <caret>a -> a }}''')
   }
 
-  public void "test primitive var type name"() {
+  void "test primitive var type name"() {
     assert null == getShortClassTypeName('''
 class Foo {{ int <caret>i = 2; }}''')
   }
 
-  public void "test array var type name"() {
+  void "test array var type name"() {
     assert null == getShortClassTypeName('''
 class Foo {{ String[] <caret>i = 2; }}''')
   }

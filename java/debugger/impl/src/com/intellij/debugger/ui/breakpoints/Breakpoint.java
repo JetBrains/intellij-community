@@ -25,8 +25,8 @@ import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
-import com.intellij.debugger.engine.evaluation.expression.UnBoxingEvaluator;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
@@ -371,13 +371,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
           return EvaluatorBuilderImpl.build(getCondition(), contextPsiElement, contextSourcePosition, project);
         }
       });
-      Object value = UnBoxingEvaluator.unbox(evaluator.evaluate(context), context);
-      if (!(value instanceof BooleanValue)) {
-        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.boolean.expected"));
-      }
-      if (!((BooleanValue)value).booleanValue()) {
-        return false;
-      }
+      return DebuggerUtilsEx.evaluateBoolean(evaluator, context);
     }
     catch (EvaluateException ex) {
       if (ex.getCause() instanceof VMDisconnectedException) {
@@ -387,7 +381,6 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         DebuggerBundle.message("error.failed.evaluating.breakpoint.condition", getCondition(), ex.getMessage())
       );
     }
-    return true;
   }
 
   protected String calculateEventClass(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {

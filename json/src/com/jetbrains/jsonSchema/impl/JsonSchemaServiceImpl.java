@@ -168,7 +168,8 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
   public List<Pair<Boolean, String>> getMatchingSchemaDescriptors(@Nullable VirtualFile file) {
     final List<JsonSchemaObjectCodeInsightWrapper> wrappers = getWrappers(file);
     if (wrappers == null || wrappers.isEmpty()) return null;
-    return ContainerUtil.map(wrappers, (NotNullFunction<JsonSchemaObjectCodeInsightWrapper, Pair<Boolean, String>>)wrapper -> Pair.create(wrapper.isUserSchema(), wrapper.getName()));
+    return ContainerUtil.map(wrappers, (NotNullFunction<JsonSchemaObjectCodeInsightWrapper, Pair<Boolean, String>>)
+      wrapper -> Pair.create(wrapper.isUserSchema(), wrapper.getName()));
   }
 
   @Nullable
@@ -349,11 +350,36 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
       }
       return true;
     }
+
+    @Override
+    public void iterateSchemaFiles(@NotNull PairConsumer<VirtualFile, String> consumer) {
+      for (JsonSchemaObjectCodeInsightWrapper wrapper : myWrappers) {
+        wrapper.iterateSchemaFiles(consumer);
+      }
+    }
   }
 
   @Override
   public boolean checkFileForId(@NotNull final String id, @NotNull final VirtualFile file) {
     return myDefinitions.checkFileForId(id, file);
+  }
+
+  @Override
+  @Nullable
+  public VirtualFile getSchemaFileById(@NotNull String id) {
+    return myDefinitions.getSchemaFileById(id);
+  }
+
+  @Override
+  @Nullable
+  public Collection<Pair<VirtualFile, String>> getSchemaFilesByFile(@NotNull final VirtualFile file) {
+    final CodeInsightProviders wrapper = getWrapper(file);
+    if (wrapper != null) {
+      final List<Pair<VirtualFile, String>> result = new ArrayList<>();
+      wrapper.iterateSchemaFiles((schemaFile, schemaId) -> result.add(Pair.create(schemaFile, schemaId)));
+      return result;
+    }
+    return null;
   }
 
   @Override

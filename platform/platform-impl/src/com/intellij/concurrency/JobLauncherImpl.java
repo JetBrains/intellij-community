@@ -19,7 +19,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
+import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
@@ -47,7 +47,8 @@ public class JobLauncherImpl extends JobLauncher {
                                                      boolean failFastOnAcquireReadAction,
                                                      @NotNull final Processor<? super T> thingProcessor) throws ProcessCanceledException {
     // supply our own indicator even if we haven't given one - to support cancellation
-    final ProgressIndicator wrapper = progress == null ? new AbstractProgressIndicatorBase() : new SensitiveProgressWrapper(progress);
+    // use StandardProgressIndicator by default to avoid assertion in SensitiveProgressWrapper() ctr later
+    final ProgressIndicator wrapper = progress == null ? new StandardProgressIndicatorBase() : new SensitiveProgressWrapper(progress);
 
     Boolean result = processImmediatelyIfTooFew(things, wrapper, runInReadAction, thingProcessor);
     if (result != null) return result.booleanValue();

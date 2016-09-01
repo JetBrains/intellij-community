@@ -140,17 +140,17 @@ public class BackgroundTaskUtil {
     return resultRef.get();
   }
 
-  @CalledInAwt
   @NotNull
+  @CalledInAny
   public static ProgressIndicator executeOnPooledThread(@NotNull Consumer<ProgressIndicator> task, @NotNull Disposable parent) {
-    final ModalityState modalityState = ModalityState.current();
+    ModalityState modalityState = ApplicationManager.getApplication().getDefaultModalityState();
     return executeOnPooledThread(task, parent, modalityState);
   }
 
   @NotNull
   @CalledInAny
-  public static ProgressIndicator executeOnPooledThread(@NotNull final Runnable runnable, @NotNull Disposable parent) {
-    return executeOnPooledThread(indicator -> runnable.run(), parent, ModalityState.NON_MODAL);
+  public static ProgressIndicator executeOnPooledThread(@NotNull Runnable runnable, @NotNull Disposable parent) {
+    return executeOnPooledThread(indicator -> runnable.run(), parent);
   }
 
   @NotNull

@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class UsedColors {
+class UsedColors {
   private static final Key<Object/*UsedColor or UsedColor[]*/> USED_COLOR = Key.create("USED_COLOR");
 
   public static final AtomicInteger counter = new AtomicInteger();
@@ -42,10 +42,9 @@ public class UsedColors {
   public static int getOrAddColorIndex(@NotNull final UserDataHolderEx context,
                                        @NotNull final String name,
                                        int colorsCount) {
-    Object data = context.getUserData(USED_COLOR);
-
     int colorIndex;
     while (true) {
+      Object data = context.getUserData(USED_COLOR);
       Object newColors;
       if (data == null) {
         colorIndex = hashColor(name, colorsCount);

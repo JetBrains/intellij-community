@@ -25,10 +25,10 @@ import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
-public class AddImportActionTest extends LightCodeInsightFixtureTestCase {
+class AddImportActionTest extends LightCodeInsightFixtureTestCase {
   private CodeStyleSettings settings
 
-  public void testMap15() {
+  void testMap15() {
     IdeaTestUtil.withLevel(myModule, LanguageLevel.JDK_1_5, {
       myFixture.configureByText 'a.java', '''\
 public class Foo {
@@ -49,7 +49,7 @@ public class Foo {
     })
   }
 
-  public void testMapLatestLanguageLevel() {
+  void testMapLatestLanguageLevel() {
     myFixture.configureByText 'a.java', '''\
 public class Foo {
     void foo() {
@@ -68,7 +68,7 @@ public class Foo {
 '''
   }
 
-  public void testStringValue() {
+  void testStringValue() {
     myFixture.addClass 'package java.lang; class StringValue {}'
     myFixture.addClass 'package foo; public class StringValue {}'
     myFixture.configureByText 'a.java', '''\
@@ -85,7 +85,7 @@ public class Foo {
 '''
   }
 
-  public void testPackageLocalInner() {
+  void testPackageLocalInner() {
     myFixture.addClass 'package foo; class Outer { static class Inner {static String FOO = "";}}'
 
     myFixture.configureByText 'a.java', '''\
@@ -108,7 +108,7 @@ class Usage {
 '''
   }
 
-  public void testWrongTypeParams() throws Exception {
+  void testWrongTypeParams() throws Exception {
     myFixture.addClass 'package f; public class Foo {}'
     myFixture.configureByText 'a.java', '''\
 public class Bar {
@@ -125,7 +125,7 @@ public class Bar {
 '''
   }
 
-  public void testUseContext() {
+  void testUseContext() {
     myFixture.addClass 'package foo; public class Log {}'
     myFixture.addClass 'package bar; public class Log {}'
     myFixture.addClass 'package bar; public class LogFactory { public static Log log(){} }'
@@ -143,7 +143,7 @@ public class Foo {
 '''
   }
 
-  public void "test use initializer"() {
+  void "test use initializer"() {
     myFixture.addClass 'package foo; public class Map {}'
     myFixture.configureByText 'a.java', '''\
 import java.util.HashMap;
@@ -156,7 +156,7 @@ public class Foo {
     assert intention.classesToImport.collect { it.qualifiedName } == ['java.util.Map']
   }
 
-  public void testUseOverrideContext() {
+  void testUseOverrideContext() {
     myFixture.addClass 'package foo; public class Log {}'
     myFixture.addClass 'package bar; public class Log {}'
     myFixture.addClass 'package goo; public class Super { public void foo(foo.Log log) {} }'
@@ -176,7 +176,7 @@ public class Foo extends goo.Super {
 '''
   }
 
-  public void testImportFoldingWithConflicts() {
+  void testImportFoldingWithConflicts() {
 
     myFixture.addClass 'package p1; public class B {}'
     myFixture.addClass 'package p1; public class A1 {}'
@@ -227,7 +227,7 @@ class C {
 '''
   }
 
-  public void testAnnotatedImport() {
+  void testAnnotatedImport() {
     myFixture.addClass '''
       import java.lang.annotation.*;
       @Target(ElementType.TYPE_USE) @interface TA { }'''.stripIndent().trim()
@@ -249,7 +249,7 @@ class C {
       }'''.stripIndent().trim()
   }
 
-  public void testAnnotatedQualifiedImport() {
+  void testAnnotatedQualifiedImport() {
     myFixture.addClass '''
       import java.lang.annotation.*;
       @Target(ElementType.TYPE_USE) @interface TA { }'''.stripIndent().trim()
@@ -269,7 +269,7 @@ class C {
       }'''.stripIndent().trim()
   }
 
-  public void testUnresolvedAnnotatedImport() {
+  void testUnresolvedAnnotatedImport() {
     myFixture.configureByText 'a.java', '''
       class Test {
           @Nullable Collection<caret> c;
@@ -286,7 +286,7 @@ class C {
       }'''.stripIndent().trim()
   }
 
-  public void "test import class in class reference expression"() {
+  void "test import class in class reference expression"() {
     myFixture.configureByText 'a.java', '''
 class Test {
     {
@@ -305,7 +305,7 @@ class Test {
 '''
   }
 
-  public void "test import class in qualifier expression"() {
+  void "test import class in qualifier expression"() {
     myFixture.configureByText 'a.java', '''
 class Test {
     {
@@ -324,7 +324,7 @@ class Test {
 '''
   }
 
-  public void "test don't import class in method call argument"() {
+  void "test don't import class in method call argument"() {
     myFixture.configureByText 'a.java', '''
 class Test {
     {
@@ -335,7 +335,7 @@ class Test {
     assert !myFixture.filterAvailableIntentions("Import class")
   }
 
-  public void "test don't import class if qualified name is not valid"() {
+  void "test don't import class if qualified name is not valid"() {
     myFixture.addClass('''
 package a..p;
 public class MMM {}
@@ -350,7 +350,7 @@ class Test {
     assert !myFixture.filterAvailableIntentions("Import class")
   }
 
-  public void "test don't import class in assignment"() {
+  void "test don't import class in assignment"() {
     myFixture.configureByText 'a.java', '''
 class Test {
     {
@@ -361,7 +361,7 @@ class Test {
     assert !myFixture.filterAvailableIntentions("Import class")
   }
 
-  public void "test don't import class in qualified reference at reference name"() {
+  void "test don't import class in qualified reference at reference name"() {
     myFixture.configureByText 'a.java', '''
 class Test {
     {
@@ -372,7 +372,7 @@ class Test {
     assert !myFixture.filterAvailableIntentions("Import class")
   }
 
-  public void "test don't import class in qualified reference at foreign place"() {
+  void "test don't import class in qualified reference at foreign place"() {
     myFixture.configureByText 'a.java', '''
 class Test {
     {
@@ -385,7 +385,7 @@ class Test {
     assert !myFixture.filterAvailableIntentions("Import class")
   }
 
-    public void "test allow to add import from javadoc"() {
+  void "test allow to add import from javadoc"() {
     myFixture.configureByText 'a.java', '''
 class Test {
 
@@ -411,7 +411,7 @@ class Test {
 '''
   }
 
-  public void "test do not add import for default package"() {
+  void "test do not add import for default package"() {
     myFixture.configureByText 'a.java', '''
 class Test {
 
@@ -435,7 +435,7 @@ class Test {
 '''
   }
 
-  public void "test do not allow to add import in package-info file"() {
+  void "test do not allow to add import in package-info file"() {
     myFixture.configureByText 'package-info.java', '''
 
 /**
@@ -447,7 +447,7 @@ package com.rocket.test;
   }
 
 
-  public void "test keep methods formatting on add import"() {
+  void "test keep methods formatting on add import"() {
     settings.getCommonSettings(JavaLanguage.INSTANCE).ALIGN_GROUP_FIELD_DECLARATIONS = true;
 
     myFixture.configureByText 'Tq.java', '''
@@ -485,14 +485,14 @@ class Tq {
   }
 
   @Override
-  public void setUp() throws Exception {
+  void setUp() throws Exception {
     super.setUp();
     settings = new CodeStyleSettings()
     CodeStyleSettingsManager.getInstance(myFixture.project).setTemporarySettings(settings);
   }
 
   @Override
-  public void tearDown() throws Exception {
+  void tearDown() throws Exception {
     CodeStyleSettingsManager.getInstance(myFixture.project).dropTemporarySettings();
     settings = null
     super.tearDown();
@@ -506,7 +506,7 @@ class Tq {
     myFixture.launchAction(myFixture.findSingleIntention("Replace qualified name with 'import'"))
   }
 
-  public void "test disprefer deprecated classes"() {
+  void "test disprefer deprecated classes"() {
     myFixture.addClass 'package foo; public class Log {}'
     myFixture.addClass 'package bar; @Deprecated public class Log {}'
     myFixture.configureByText 'a.java', '''\
@@ -524,7 +524,7 @@ public class Foo {
 
   }
 
-  public void "prefer from imported package"() {
+  void "prefer from imported package"() {
     myFixture.addClass 'package foo; public class Log {}'
     myFixture.addClass 'package foo; public class Imported {}'
     myFixture.addClass 'package bar; public class Log {}'
@@ -545,7 +545,7 @@ public class Foo {
 '''
   }
 
-  public void "test prefer from imported package sibling"() {
+  void "test prefer from imported package sibling"() {
     myFixture.addClass 'package com.foo.doo; public class Log {}'
     myFixture.addClass 'package com.foo.imported; public class Imported {}'
     myFixture.addClass 'package com.bar; public class Log {}'
@@ -568,7 +568,7 @@ public class Foo {
 
   }
 
-  public void "test remember chosen variants"() {
+  void "test remember chosen variants"() {
     ((StatisticsManagerImpl)StatisticsManager.getInstance()).enableStatistics(getTestRootDisposable());
     myFixture.addClass 'package foo; public class Log {}'
     myFixture.addClass 'package bar; public class Log {}'

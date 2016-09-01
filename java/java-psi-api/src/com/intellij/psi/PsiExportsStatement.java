@@ -15,10 +15,13 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Represents an {@code exports} statement of a Java module declaration.
  *
  * @since 2016.3
  */
 public interface PsiExportsStatement extends PsiElement {
+  @Nullable PsiJavaCodeReferenceElement getPackageReference();
 }

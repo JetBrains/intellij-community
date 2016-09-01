@@ -98,7 +98,17 @@ public class JavaKeywordCompletion {
                   new SuperParentFilter(new ClassFilter(PsiAnnotation.class))
                 )
               ),
-              new TextFilter("*/"),
+              new ElementFilter() {
+                @Override
+                public boolean isAcceptable(Object element, @Nullable PsiElement context) {
+                  return ((PsiElement)element).getText().endsWith("*/");
+                }
+
+                @Override
+                public boolean isClassAcceptable(Class hintClass) {
+                  return true;
+                }
+              },
               new TokenTypeFilter(JspElementType.HOLDER_TEMPLATE_DATA),
               new ClassFilter(OuterLanguageElement.class),
               new AndFilter(

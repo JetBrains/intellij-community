@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEn
  */
 class GroovyStubsTest extends LightCodeInsightFixtureTestCase {
 
-  public void testEnumConstant() {
+  void testEnumConstant() {
     myFixture.tempDirFixture.createFile('A.groovy', 'enum A { MyEnumConstant }')
     GrEnumConstant ec = (GrEnumConstant)PsiShortNamesCache.getInstance(project).getFieldsByName("MyEnumConstant", GlobalSearchScope.allScope(project))[0]
     def file = (PsiFileImpl)ec.containingFile
@@ -51,7 +51,7 @@ class GroovyStubsTest extends LightCodeInsightFixtureTestCase {
     assert file.stub
   }
 
-  public void testStubIndexMismatch() {
+  void testStubIndexMismatch() {
     ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).disableBackgroundCommit(testRootDisposable)
 
     VirtualFile vFile = myFixture.getTempDirFixture().createFile("foo.groovy");
@@ -60,7 +60,7 @@ class GroovyStubsTest extends LightCodeInsightFixtureTestCase {
     final Document fooDocument = fooFile.getViewProvider().getDocument();
     assert !JavaPsiFacade.getInstance(project).findClass("Fooxx", GlobalSearchScope.allScope(project))
     new WriteCommandAction.Simple(project, fooFile) {
-      public void run() {
+      void run() {
         fooDocument.setText("class Fooxx {}");
       }
     }.execute();

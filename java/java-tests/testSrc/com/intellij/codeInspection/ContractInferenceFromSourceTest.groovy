@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -184,7 +184,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == ['null -> fail']
   }
 
-  public void "test plain delegation"() {
+  void "test plain delegation"() {
     def c = inferContracts("""
   boolean delegating(Object o) {
     return smth(o);
@@ -197,7 +197,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == ['null -> fail']
   }
 
-  public void "test arg swapping delegation"() {
+  void "test arg swapping delegation"() {
     def c = inferContracts("""
   boolean delegating(Object o, Object o1) {
     return smth(o1, o);
@@ -209,7 +209,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == ['_, !null -> false', 'null, null -> false', '!null, null -> true']
   }
 
-  public void "test negating delegation"() {
+  void "test negating delegation"() {
     def c = inferContracts("""
   boolean delegating(Object o) {
     return !smth(o);
@@ -221,7 +221,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == ['null -> false', '!null -> true']
   }
 
-  public void "test delegation with constant"() {
+  void "test delegation with constant"() {
     def c = inferContracts("""
   boolean delegating(Object o) {
     return smth(null);
@@ -233,7 +233,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == ['_ -> true']
   }
 
-  public void "test boolean autoboxing"() {
+  void "test boolean autoboxing"() {
     def c = inferContracts("""
     static Object test1(Object o1) {
         return o1 == null;
@@ -241,7 +241,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == []
   }
 
-  public void "test return boxed integer"() {
+  void "test return boxed integer"() {
     def c = inferContracts("""
     static Object test1(Object o1) {
         return o1 == null ? 1 : smth();
@@ -252,7 +252,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == ['null -> !null']
   }
 
-  public void "test return boxed boolean"() {
+  void "test return boxed boolean"() {
     def c = inferContracts("""
     static Object test1(Object o1) {
         return o1 == null ? false : smth();
@@ -263,7 +263,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == ['null -> !null']
   }
 
-  public void "test boolean autoboxing in delegation"() {
+  void "test boolean autoboxing in delegation"() {
     def c = inferContracts("""
     static Boolean test04(String s) {
         return test03(s);
@@ -275,7 +275,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == []
   }
 
-  public void "test boolean auto-unboxing"() {
+  void "test boolean auto-unboxing"() {
     def c = inferContracts("""
       static boolean test02(String s) {
           return test01(s);
@@ -291,7 +291,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == []
   }
 
-  public void "test double constant auto-unboxing"() {
+  void "test double constant auto-unboxing"() {
     def c = inferContracts("""
       static double method() {
         return 1;
@@ -300,7 +300,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == []
   }
 
-  public void "test non-returning delegation"() {
+  void "test non-returning delegation"() {
     def c = inferContracts("""
     static void test2(Object o) {
         assertNotNull(o);
@@ -316,7 +316,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == ['null -> fail']
   }
 
-  public void "test instanceof notnull"() {
+  void "test instanceof notnull"() {
     def c = inferContracts("""
     public boolean test2(Object o) {
         if (o != null) {
@@ -332,7 +332,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == []
   }
 
-  public void "test no duplicates in delegation"() {
+  void "test no duplicates in delegation"() {
     def c = inferContracts("""
     static boolean test2(Object o1, Object o2) {
         return  test1(o1, o1);
@@ -344,7 +344,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == ['null, _ -> false', '!null, _ -> true']
   }
 
-  public void "test take explicit parameter notnull into account"() {
+  void "test take explicit parameter notnull into account"() {
     def c = inferContracts("""
     final Object foo(@org.jetbrains.annotations.NotNull Object bar) {
         if (!(bar instanceof CharSequence)) return null;
@@ -354,7 +354,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == []
   }
 
-  public void "test skip empty declarations"() {
+  void "test skip empty declarations"() {
     def c = inferContracts("""
     final Object foo(Object bar) {
         Object o = 2;
@@ -365,7 +365,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == ['null -> null', '!null -> !null']
   }
 
-  public void "test go inside do-while"() {
+  void "test go inside do-while"() {
     def c = inferContracts("""
     final Object foo(Object bar) {
         do {
@@ -378,7 +378,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == ['null -> null']
   }
 
-  public void "test use invoked method notnull"() {
+  void "test use invoked method notnull"() {
     def c = inferContracts("""
     final Object foo(Object bar) {
         if (bar == null) return null;
@@ -390,7 +390,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == ['null -> null', '!null -> !null']
   }
 
-  public void "test use delegated method notnull"() {
+  void "test use delegated method notnull"() {
     def c = inferContracts("""
     final Object foo(Object bar, boolean b) {
         return b ? doo() : null;
@@ -401,7 +401,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == ['_, true -> !null', '_, false -> null']
   }
 
-  public void "test use delegated method notnull with contracts"() {
+  void "test use delegated method notnull with contracts"() {
     def c = inferContracts("""
     final Object foo(Object bar, Object o2) {
         return doo(o2);
@@ -415,7 +415,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == ['_, null -> fail']
   }
 
-  public void "test dig into type cast"() {
+  void "test dig into type cast"() {
     def c = inferContracts("""
   public static String cast(Object o) {
     return o instanceof String ? (String)o : null;
@@ -424,7 +424,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == ['null -> null']
   }
 
-  public void "test compare with string literal"() {
+  void "test compare with string literal"() {
     def c = inferContracts("""
   String s(String s) {
     return s == "a" ? "b" : null;
@@ -432,8 +432,8 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     """)
     assert c == ['null -> null']
   }
-  
-  public void "test negative compare with string literal"() {
+
+  void "test negative compare with string literal"() {
     def c = inferContracts("""
   String s(String s) {
     return s != "a" ? "b" : null;
@@ -442,7 +442,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == ['null -> !null']
   }
 
-  public void "test primitive return type"() {
+  void "test primitive return type"() {
     def c = inferContracts("""
   String s(String s) {
     return s != "a" ? "b" : null;
@@ -451,7 +451,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == ['null -> !null']
   }
 
-  public void "test return after if without else"() {
+  void "test return after if without else"() {
     def c = inferContracts("""
 public static boolean isBlank(String s) {
         if (s != null) {
@@ -468,7 +468,7 @@ public static boolean isBlank(String s) {
     assert c == ['null -> true']
   }
 
-  public void "test do not generate too many contract clauses"() {
+  void "test do not generate too many contract clauses"() {
     def c = inferContracts("""
 public static void validate(String p1, String p2, String p3, String p4, String p5, String
             p6, Integer p7, Integer p8, Integer p9, Boolean p10, String p11, Integer p12, Integer p13) {
@@ -486,7 +486,7 @@ public static void validate(String p1, String p2, String p3, String p4, String p
     assert c.size() <= ContractInference.MAX_CONTRACT_COUNT // there could be 74 of them in total
   }
 
-  public void "test no inference for unused anonymous class methods where annotations won't be used anyway"() {
+  void "test no inference for unused anonymous class methods where annotations won't be used anyway"() {
     def method = PsiTreeUtil.findChildOfType(myFixture.addClass("""
 class Foo {{
   new Object() {
@@ -496,7 +496,7 @@ class Foo {{
     assert ContractInference.inferContracts(method).collect { it as String } == []
   }
 
-  public void "test inference for used anonymous class methods"() {
+  void "test inference for used anonymous class methods"() {
     def method = PsiTreeUtil.findChildOfType(myFixture.addClass("""
 class Foo {{
   new Object() {
@@ -507,7 +507,7 @@ class Foo {{
     assert ContractInference.inferContracts(method).collect { it as String } == [' -> null']
   }
 
-  public void "test anonymous class methods potentially used from outside"() {
+  void "test anonymous class methods potentially used from outside"() {
     def method = PsiTreeUtil.findChildOfType(myFixture.addClass("""
 class Foo {{
   Runnable r = new Runnable() {
@@ -519,7 +519,7 @@ class Foo {{
     assert ContractInference.inferContracts(method).collect { it as String } == [' -> fail']
   }
 
-  public void "test vararg delegation"() {
+  void "test vararg delegation"() {
     def c = inferContracts("""
   boolean delegating(Object o, Object o1) {
     return smth(o, o1);

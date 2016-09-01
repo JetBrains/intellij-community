@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -548,12 +549,16 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
   }
 
   @Nullable
-  public static String generateExternalJavadoc(final PsiElement element) {
+  public static String generateExternalJavadoc(@NotNull final PsiElement element) {
     final JavaDocInfoGenerator javaDocInfoGenerator = JavaDocInfoGeneratorFactory.create(element.getProject(), element);
-    final List<String> docURLs = getExternalJavaDocUrl(element);
-    return JavaDocExternalFilter.filterInternalDocInfo(javaDocInfoGenerator.generateDocInfo(docURLs));
+    return generateExternalJavadoc(element, javaDocInfoGenerator);
   }
 
+  @Nullable
+  public static String generateExternalJavadoc(@NotNull final PsiElement element, @NotNull JavaDocInfoGenerator generator) {
+    final List<String> docURLs = getExternalJavaDocUrl(element);
+    return JavaDocExternalFilter.filterInternalDocInfo(generator.generateDocInfo(docURLs));
+  }
 
   @Nullable
   private static String fetchExternalJavadoc(final PsiElement element, String fromUrl, @NotNull JavaDocExternalFilter filter) {
@@ -563,8 +568,9 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
         return externalDoc;
       }
     }
-    catch (Exception ignored) {
-      //try to generate some javadoc
+    catch (ProcessCanceledException ignored) {}
+    catch (Exception e) {
+      LOG.warn(e);
     }
     return null;
   }

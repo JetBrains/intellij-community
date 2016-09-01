@@ -21,13 +21,19 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 import static com.intellij.lang.PsiBuilderUtil.expect;
 import static com.intellij.lang.java.parser.JavaParserUtil.error;
 import static com.intellij.lang.java.parser.JavaParserUtil.semicolon;
 
 public class ModuleParser {
+  private static final Set<String> STATEMENT_KEYWORDS =
+    ContainerUtil.newHashSet(PsiKeyword.REQUIRES, PsiKeyword.EXPORTS, PsiKeyword.USES, PsiKeyword.PROVIDES);
+
   public static void parseModule(@NotNull PsiBuilder builder) {
     PsiBuilder.Marker module = builder.mark();
     mapAndAdvance(builder, JavaTokenType.MODULE_KEYWORD);
@@ -225,7 +231,15 @@ public class ModuleParser {
       }
     }
     else if (!hasError) {
-      error(builder, JavaErrorMessages.message("expected.with"));
+      IElementType next = builder.getTokenType();
+      if (next == JavaTokenType.IDENTIFIER && !STATEMENT_KEYWORDS.contains(builder.getTokenText())) {
+        PsiBuilder.Marker marker = builder.mark();
+        builder.advanceLexer();
+        marker.error(JavaErrorMessages.message("expected.with"));
+      }
+      else {
+        error(builder, JavaErrorMessages.message("expected.with"));
+      }
       hasError = true;
     }
 

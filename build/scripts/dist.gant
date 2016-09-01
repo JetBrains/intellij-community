@@ -31,7 +31,9 @@ target(compile: "Compile project") {
 }
 
 target('default': 'The default target') {
-  new IdeaCommunityBuilder(home, out, binding).buildDistributions()
+  def options = new BuildOptions()
+  options.buildNumber = null //we cannot provide consistent build number for IDEA Community if it's built separately so use *.SNAPSHOT number to avoid confusion
+  new IdeaCommunityBuilder(home, out, binding, options).buildDistributions()
 }
 
 //todo[nik] do we really need this target? update.xml calls layout.gant directly

@@ -16,23 +16,64 @@
 package com.intellij.credentialStore;
 
 import com.intellij.credentialStore.macOs.MacOsKeychainLibraryKt;
+import com.intellij.icons.AllIcons;
+import com.intellij.layout.LayoutKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.function.Function;
 
 /**
  * @author gregsh
  */
-class EnterPasswordComponent extends PasswordComponentBase {
+class EnterPasswordComponent {
+  private JPanel myRootPanel;
+  private JLabel myIconLabel;
+  protected JEditorPane myPromptLabel;
+
+  protected JPanel myPasswordPanel;
+  protected JPasswordField myPasswordField;
+  protected JLabel myPasswordLabel;
+
+  public JPanel getComponent() {
+    return myRootPanel;
+  }
+
+  public JComponent getPreferredFocusedComponent() {
+    return myPasswordField;
+  }
+
   @NotNull
   private final Function<String, Boolean> myPasswordConsumer;
 
   public EnterPasswordComponent(@NotNull Function<String, Boolean> passwordConsumer) {
+    myIconLabel.setText("");
+    myIconLabel.setIcon(AllIcons.General.PasswordLock);
+    myIconLabel.setDisabledIcon(AllIcons.General.PasswordLock);
     myPasswordConsumer = passwordConsumer;
 
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      myPasswordField.setText("pass");
+    }
+  }
+
+  public ValidationInfo apply() {
+    String password = new String(myPasswordField.getPassword());
+    if (!myPasswordConsumer.apply(password)) {
+      return new ValidationInfo("Password is incorrect", myPasswordField);
+    }
+    return null;
+  }
+
+  public String getHelpId() {
+    return "settings_passwords_master_password_enter";
+  }
+
+  private void createUIComponents() {
     String note;
     if (MacOsKeychainLibraryKt.isMacOsCredentialStoreSupported()) {
       note = "The passwords will be stored in the system MacOS keychain.";
@@ -44,29 +85,17 @@ class EnterPasswordComponent extends PasswordComponentBase {
       note = "The passwords will be stored in the KeePass database protected by your Windows account.";
     }
     else {
-      String subNote = SystemInfo.isMacIntel64 ? "at least OS X 10.5 is required<br>to store in the system MacOS keychain" : "your OS is not supported, please file issue";
-      note = "The passwords will be stored in IDE configuration files with weak protection (" + subNote + ").";
+      String subNote;
+      if (SystemInfo.isMacIntel64) {
+        subNote = "at least OS X 10.5 is required<br>to store in the system MacOS keychain";
+      }
+      else {
+        subNote =
+          "your OS is not supported, please <a href=\"https://youtrack.jetbrains.com/newIssue?project=IDEA&clearDraft=true&c=Assignee+develar&c=Subsystem+Password+Safe\">file issue</a>";
+      }
+      note = "The passwords will be stored in IDE configuration files with weak protection<br>(" + subNote + ").";
     }
 
-    myPromptLabel.setText("<html>Master password is required to convert saved passwords.<br>" + note + "</html>");
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      myPasswordField.setText("pass");
-    }
-  }
-
-  @Override
-  public ValidationInfo apply() {
-    // enter password — only and only old key, so, we use EncryptionUtil.genPasswordKey
-    String password = new String(myPasswordField.getPassword());
-    if (!myPasswordConsumer.apply(password)) {
-      return new ValidationInfo("Password is incorrect", myPasswordField);
-    }
-    return null;
-  }
-
-  @Override
-  public String getHelpId() {
-    return "settings_passwords_master_password_enter";
+    myPromptLabel = LayoutKt.htmlComponent("Master password is required to convert saved passwords.<br>" + note, UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
   }
 }

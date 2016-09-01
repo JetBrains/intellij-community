@@ -147,7 +147,8 @@ public class LowLevelSearchUtil {
         if (leafElement == null) break;
       }
     }
-    assert run == scope: "Malbuilt PSI: scopeNode="+scope+"; leafNode="+run+"; isAncestor="+ PsiTreeUtil.isAncestor(scope, run, false);
+    assert run == scope: "Malbuilt PSI; scopeNode: "+scope+"; containingFile:" + PsiTreeUtil.getParentOfType(scope, PsiFile.class, false) +
+                         "; leafNode: "+run+"; isAncestor="+ PsiTreeUtil.isAncestor(scope, run, false)+"; in same file: "+(PsiTreeUtil.getParentOfType(scope, PsiFile.class, false) == PsiTreeUtil.getParentOfType(run, PsiFile.class, false));
 
     return lastElement;
   }

@@ -110,7 +110,8 @@ import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -749,7 +750,7 @@ public class BuildManager implements Disposable {
 
               Integer debugPort = processHandler.getUserData(COMPILER_PROCESS_DEBUG_PORT);
               if (debugPort != null) {
-                String message = "Make: waiting for debugger connection on port " + debugPort;
+                String message = "Build: waiting for debugger connection on port " + debugPort;
                 messageHandler
                   .handleCompileMessage(sessionId, CmdlineProtoUtil.createCompileProgressMessageResponse(message).getCompileMessage());
               }

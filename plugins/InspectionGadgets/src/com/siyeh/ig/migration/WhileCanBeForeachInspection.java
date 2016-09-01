@@ -21,12 +21,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,12 +94,12 @@ public class WhileCanBeForeachInspection extends WhileCanBeForeachInspectionBase
       if (collectionType == null) {
         return;
       }
-      final PsiType contentType = getContentType(collectionType, CommonClassNames.JAVA_LANG_ITERABLE, whileStatement);
+      final PsiType contentType = getContentType(collectionType, CommonClassNames.JAVA_LANG_ITERABLE);
       if (contentType == null) {
         return;
       }
       final PsiType iteratorType = iterator.getType();
-      final PsiType iteratorContentType = getContentType(iteratorType, "java.util.Iterator", whileStatement);
+      final PsiType iteratorContentType = getContentType(iteratorType, "java.util.Iterator");
       if (iteratorContentType == null) {
         return;
       }
@@ -176,38 +176,9 @@ public class WhileCanBeForeachInspection extends WhileCanBeForeachInspectionBase
     }
 
     @Nullable
-    private static PsiType getContentType(PsiType type, String containerClassName, PsiElement context) {
-      if (!(type instanceof PsiClassType)) {
-        return null;
-      }
-      final PsiClassType classType = (PsiClassType)type;
-      final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
-      final PsiClass aClass = resolveResult.getElement();
-      if (aClass == null) {
-        return null;
-      }
-      final Project project = context.getProject();
-      final PsiClass iterableClass = JavaPsiFacade.getInstance(project).findClass(containerClassName, aClass.getResolveScope());
-      if (iterableClass == null) {
-        return null;
-      }
-      final PsiSubstitutor substitutor1 = resolveResult.getSubstitutor();
-      final PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(iterableClass, aClass, substitutor1);
-      if (substitutor == null) {
-        return null;
-      }
-      PsiType parameterType = substitutor.substitute(iterableClass.getTypeParameters()[0]);
-      if (parameterType instanceof PsiCapturedWildcardType) {
-        parameterType = ((PsiCapturedWildcardType)parameterType).getWildcard();
-      }
-      if (parameterType != null) {
-        if (parameterType instanceof PsiWildcardType) {
-          final PsiWildcardType wildcardType = (PsiWildcardType)parameterType;
-          return wildcardType.isExtends() ? wildcardType.getBound() : TypeUtils.getObjectType(context);
-        }
-        return parameterType;
-      }
-      return TypeUtils.getObjectType(context);
+    private static PsiType getContentType(PsiType type, String containerClassName) {
+      PsiType parameterType = PsiUtil.substituteTypeParameter(type, containerClassName, 0, true);
+      return GenericsUtil.getVariableTypeByExpressionType(parameterType);
     }
   }
 }

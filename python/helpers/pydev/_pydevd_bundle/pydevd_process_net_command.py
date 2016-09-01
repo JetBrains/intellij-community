@@ -16,11 +16,10 @@ from _pydevd_bundle.pydevd_comm import CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, C
     CMD_SET_PY_EXCEPTION, CMD_GET_FILE_CONTENTS, CMD_SET_PROPERTY_TRACE, CMD_ADD_EXCEPTION_BREAK, \
     CMD_REMOVE_EXCEPTION_BREAK, CMD_LOAD_SOURCE, CMD_ADD_DJANGO_EXCEPTION_BREAK, CMD_REMOVE_DJANGO_EXCEPTION_BREAK, \
     CMD_EVALUATE_CONSOLE_EXPRESSION, InternalEvaluateConsoleExpression, InternalConsoleGetCompletions, \
-    CMD_RUN_CUSTOM_OPERATION, InternalRunCustomOperation, CMD_IGNORE_THROWN_EXCEPTION_AT, CMD_ENABLE_DONT_TRACE,\
-    CMD_SHOW_RETURN_VALUES, ID_TO_MEANING
+    CMD_RUN_CUSTOM_OPERATION, InternalRunCustomOperation, CMD_IGNORE_THROWN_EXCEPTION_AT, CMD_ENABLE_DONT_TRACE, \
+    CMD_SHOW_RETURN_VALUES, ID_TO_MEANING, CMD_GET_DESCRIPTION, InternalGetDescription
 from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K, DebugInfoHolder, dict_contains, dict_keys, dict_pop, \
     STATE_RUN
-import pydevd_file_utils
 
 
 def process_net_command(py_db, cmd_id, seq, text):
@@ -227,6 +226,14 @@ def process_net_command(py_db, cmd_id, seq, text):
                     int_cmd = InternalGetCompletions(seq, thread_id, frame_id, act_tok)
                     py_db.post_internal_command(int_cmd, thread_id)
 
+                except:
+                    traceback.print_exc()
+            elif cmd_id == CMD_GET_DESCRIPTION:
+                try:
+
+                    thread_id, frame_id, expression = text.split('\t', 2)
+                    int_cmd = InternalGetDescription(seq, thread_id, frame_id, expression)
+                    py_db.post_internal_command(int_cmd, thread_id)
                 except:
                     traceback.print_exc()
 

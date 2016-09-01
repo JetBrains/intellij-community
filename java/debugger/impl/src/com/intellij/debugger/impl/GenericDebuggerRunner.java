@@ -33,9 +33,7 @@ import com.intellij.execution.runners.JavaPatchableProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
@@ -118,12 +116,6 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
     }
 
     final DebugProcessImpl debugProcess = debuggerSession.getProcess();
-
-    // index alternative jdk if needed
-    if (AlternativeJreIndexHelper.getAlternativeJre(env.getRunProfile()) != null) {
-      DumbService.getInstance(debuggerSession.getProject()).queueTask(new UnindexedFilesUpdater(debuggerSession.getProject(), false));
-    }
-
     return XDebuggerManager.getInstance(env.getProject()).startSession(env, new XDebugProcessStarter() {
       @Override
       @NotNull

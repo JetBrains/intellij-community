@@ -20,9 +20,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutterAction;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
 import com.intellij.openapi.vcs.annotate.TextAnnotationPresentation;
@@ -103,12 +103,6 @@ public class AnnotationFieldGutter implements ActiveAnnotationGutter {
     return isAvailable() ? XmlStringUtil.escapeString(myAnnotation.getToolTip(line)) : null;
   }
 
-  @Nullable
-  @Override
-  public Computable<String> getToolTipAsync(int line, Editor editor) {
-    return isAvailable() ? myAnnotation.getToolTipAsync(line) : null;
-  }
-
   public void doAction(int line) {
     if (myIsGutterAction) {
       ((EditorGutterAction)myAspect).doAction(line);
@@ -138,7 +132,7 @@ public class AnnotationFieldGutter implements ActiveAnnotationGutter {
   }
 
   public void gutterClosed() {
-    myAnnotation.unregister();
+    ProjectLevelVcsManager.getInstance(myAnnotation.getProject()).getAnnotationLocalChangesListener().unregisterAnnotation(myAnnotation.getFile(), myAnnotation);
     myAnnotation.dispose();
   }
 

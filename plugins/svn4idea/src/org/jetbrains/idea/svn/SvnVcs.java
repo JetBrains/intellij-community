@@ -37,6 +37,7 @@ import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
+import com.intellij.openapi.vcs.history.VcsAnnotationCachedProxy;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeProvider;
@@ -529,7 +530,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     if (myAnnotationProvider == null) {
       myAnnotationProvider = new SvnAnnotationProvider(this);
     }
-    return myAnnotationProvider;
+    return new VcsAnnotationCachedProxy(this, myAnnotationProvider);
   }
 
   @Override

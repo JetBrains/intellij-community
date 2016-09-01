@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.lang;
 
+import com.intellij.diagnostic.ImplementationConflictException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -24,7 +25,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,12 +33,10 @@ import java.util.concurrent.ConcurrentMap;
 
 /**
  * The base class for all programming language support implementations. Specific language implementations should inherit from this class
- * and its register instance wrapped with {@link com.intellij.openapi.fileTypes.LanguageFileType} instance through
- * <code>FileTypeManager.getInstance().registerFileType</code>
+ * and its register instance wrapped with {@link LanguageFileType} instance via {@code FileTypeManager.getInstance().registerFileType()}.
  * There should be exactly one instance of each Language.
- * It is usually created when creating {@link com.intellij.openapi.fileTypes.LanguageFileType} and can be retrieved later
- * with {@link #findInstance(Class)}.
- * For the list of standard languages, see {@link com.intellij.lang.StdLanguages}.
+ * It is usually created when creating {@link LanguageFileType} and can be retrieved later with {@link #findInstance(Class)}.
+ * For the list of standard languages, see {@code com.intellij.lang.StdLanguages}.
  */
 public abstract class Language extends UserDataHolderBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.Language");
@@ -46,14 +44,15 @@ public abstract class Language extends UserDataHolderBase {
   private static final Map<Class<? extends Language>, Language> ourRegisteredLanguages = ContainerUtil.newConcurrentMap();
   private static final ConcurrentMap<String, List<Language>> ourRegisteredMimeTypes = ContainerUtil.newConcurrentMap();
   private static final Map<String, Language> ourRegisteredIDs = ContainerUtil.newConcurrentMap();
+
   private final Language myBaseLanguage;
   private final String myID;
   private final String[] myMimeTypes;
   private final List<Language> myDialects = ContainerUtil.createLockFreeCopyOnWriteList();
+
   public static final Language ANY = new Language("") {
     @Override
     public String toString() {
-      //noinspection HardCodedStringLiteral
       return "Language: ANY";
     }
 
@@ -64,28 +63,30 @@ public abstract class Language extends UserDataHolderBase {
     }
   };
 
-  protected Language(@NotNull @NonNls String ID) {
+  protected Language(@NotNull String ID) {
     this(ID, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
-  protected Language(@NotNull @NonNls final String ID, @NotNull @NonNls final String... mimeTypes) {
+  protected Language(@NotNull String ID, @NotNull String... mimeTypes) {
     this(null, ID, mimeTypes);
   }
 
-  protected Language(@Nullable Language baseLanguage, @NotNull @NonNls final String ID, @NotNull @NonNls final String... mimeTypes) {
+  protected Language(@Nullable Language baseLanguage, @NotNull String ID, @NotNull String... mimeTypes) {
     myBaseLanguage = baseLanguage;
     myID = ID;
     myMimeTypes = mimeTypes;
+
     Class<? extends Language> langClass = getClass();
     Language prev = ourRegisteredLanguages.put(langClass, this);
     if (prev != null) {
-      LOG.error("Language of '" + langClass + "' is already registered: " + prev);
-      return;
+      throw new ImplementationConflictException("Language of '" + langClass + "' is already registered: " + prev, null, prev, this);
     }
+
     prev = ourRegisteredIDs.put(ID, this);
     if (prev != null) {
-      LOG.error("Language with ID '" + ID + "' is already registered: " + prev.getClass());
+      throw new ImplementationConflictException("Language with ID '" + ID + "' is already registered: " + prev.getClass(), null, prev, this);
     }
+
     for (String mimeType : mimeTypes) {
       if (StringUtil.isEmpty(mimeType)) {
         continue;
@@ -96,6 +97,7 @@ public abstract class Language extends UserDataHolderBase {
       }
       languagesByMimeType.add(this);
     }
+
     if (baseLanguage != null) {
       baseLanguage.myDialects.add(this);
     }
@@ -115,8 +117,8 @@ public abstract class Language extends UserDataHolderBase {
    * @return instance of the <code>klass</code> language registered if any.
    */
   public static <T extends Language> T findInstance(@NotNull Class<T> klass) {
-    //noinspection unchecked
-    return (T)ourRegisteredLanguages.get(klass);
+    @SuppressWarnings("unchecked") T t = (T)ourRegisteredLanguages.get(klass);
+    return t;
   }
 
   /**
@@ -129,10 +131,8 @@ public abstract class Language extends UserDataHolderBase {
     return result == null ? Collections.<Language>emptyList() : Collections.unmodifiableCollection(result);
   }
 
-
   @Override
   public String toString() {
-    //noinspection HardCodedStringLiteral
     return "Language: " + myID;
   }
 

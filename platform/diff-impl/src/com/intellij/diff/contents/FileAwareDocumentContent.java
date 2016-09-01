@@ -1,6 +1,7 @@
 package com.intellij.diff.contents;
 
 import com.intellij.diff.tools.util.DiffNotifications;
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.LineCol;
 import com.intellij.openapi.editor.Document;
@@ -75,6 +76,7 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
     private Charset myCharset;
     private Charset mySuggestedCharset;
     private boolean myMalformedContent;
+    private String myFileName;
 
     public Builder(@Nullable Project project) {
       myProject = project;
@@ -89,6 +91,7 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
       myHighlightFile = path.getVirtualFile();
       myFileType = path.getFileType();
       mySuggestedCharset = path.getCharset(myProject);
+      myFileName = path.getName();
       return this;
     }
 
@@ -97,6 +100,7 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
       myHighlightFile = highlightFile;
       myFileType = highlightFile.getFileType();
       mySuggestedCharset = highlightFile.getCharset();
+      myFileName = highlightFile.getName();
       return this;
     }
 
@@ -139,6 +143,7 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
       FileAwareDocumentContent content
         = new FileAwareDocumentContent(myProject, myDocument, myFileType, myHighlightFile, mySeparator, myCharset);
       DiffUtil.addNotification(createNotification(), content);
+      content.putUserData(DiffUserDataKeysEx.FILE_NAME, myFileName);
       return content;
     }
   }

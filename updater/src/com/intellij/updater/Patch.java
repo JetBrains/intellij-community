@@ -264,12 +264,27 @@ public class Patch {
         myActions.add(0, new DeleteAction(this, file, Digester.INVALID));
       }
     }
+    List<String> deleteElements = new ArrayList<>();
     Runner.logger.info("Validating installation...");
     forEach(myActions, "Validating installation...", ui, true,
             new ActionsProcessor() {
               @Override
               public void forEach(PatchAction each) throws IOException {
+                String action = each.toString().toLowerCase();
                 ValidationResult validationResult = each.validate(toDir);
+
+                if (action.startsWith("delete")) {
+                  deleteElements.add(each.getPath().toLowerCase());
+                // create action + the same element was deleted + validated as already exists
+                } else if (action.startsWith("create") &&
+                          (validationResult != null &&
+                           validationResult.message.equals(ValidationResult.ALREADY_EXISTS_MESSAGE))){
+                    for (String deleteElement : deleteElements) {
+                      if (each.getPath().toLowerCase().equals(deleteElement)) {
+                        validationResult = null;
+                      }
+                    }
+                }
                 if (validationResult != null) result.add(validationResult);
               }
             });

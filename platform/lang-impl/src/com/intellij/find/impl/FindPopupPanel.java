@@ -524,9 +524,12 @@ public class FindPopupPanel extends JBPanel {
         if (index != -1) {
           UsageInfo usageInfo = ((UsageInfo2UsageAdapter)myResultsPreviewTable.getModel().getValueAt(index, 0)).getUsageInfo();
           myUsagePreviewPanel.updateLayout(Collections.singletonList(usageInfo));
+          VirtualFile file = usageInfo.getVirtualFile();
+          myUsagePreviewPanel.setBorder(IdeBorderFactory.createTitledBorder(file != null ? file.getPath() : "", false));
         }
         else {
           myUsagePreviewPanel.updateLayout(null);
+          myUsagePreviewPanel.setBorder(IdeBorderFactory.createBorder());
         }
       }
     });

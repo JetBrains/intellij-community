@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.maddyhome.idea.copyright.actions;
 
+import com.intellij.copyright.CopyrightManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.ui.CopyrightProjectConfigurable;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 import org.jetbrains.annotations.Nullable;

@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.execution;
 
+import com.intellij.credentialStore.Credentials;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -24,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgGlobalSettings;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
+
+import static com.intellij.credentialStore.CredentialAttributesKt.CredentialAttributes;
 
 /**
  * Base class for any command interacting with a remote repository and which needs authentication.
@@ -61,13 +64,11 @@ class HgCommandAuthenticator {
   }
 
   private static class GetPasswordRunnable implements Runnable {
-    private String myUserName;
-    private String myPassword;
+    private Credentials myCredentials;
     private final Project myProject;
     @NotNull private final String myProposedLogin;
     private boolean ok = false;
     @NotNull private final String myURL;
-    private boolean myRememberPassword;
     private final boolean myForceAuthorization;
     private final boolean mySilent;
 
@@ -111,10 +112,8 @@ class HgCommandAuthenticator {
       }
 
       // don't show dialog if we don't have to (both fields are known) except force authorization required
-      if (!myForceAuthorization && !StringUtil.isEmptyOrSpaces(
-        password) && !StringUtil.isEmptyOrSpaces(login)) {
-        myUserName = login;
-        myPassword = password;
+      if (!myForceAuthorization && !StringUtil.isEmptyOrSpaces(password) && !StringUtil.isEmptyOrSpaces(login)) {
+        myCredentials = new Credentials(login, password);
         ok = true;
         return;
       }
@@ -128,21 +127,20 @@ class HgCommandAuthenticator {
                                                HgVcsMessages.message("hg4idea.dialog.login.description", myURL),
                                                login, password, true);
       if (dialog.showAndGet()) {
-        myUserName = dialog.getUsername();
-        myPassword = dialog.getPassword();
         ok = true;
-        PasswordSafe.getInstance()
-          .setPassword(HgCommandAuthenticator.class, keyForUrlAndLogin(url, myUserName), myPassword, !dialog.isRememberPassword());
-        hgGlobalSettings.addRememberedUrl(url, myUserName);
+        Credentials credentials = new Credentials(dialog.getUsername(), dialog.getPassword());
+        myCredentials = credentials;
+        PasswordSafe.getInstance().set(CredentialAttributes(HgCommandAuthenticator.class, keyForUrlAndLogin(url, credentials.getUserName())), credentials, !dialog.isRememberPassword());
+        hgGlobalSettings.addRememberedUrl(url, credentials.getUserName());
       }
     }
 
     public String getUserName() {
-      return myUserName;
+      return myCredentials.getUserName();
     }
 
     public String getPassword() {
-      return myPassword;
+      return myCredentials == null ? null : myCredentials.getPasswordAsString();
     }
 
     public boolean isOk() {

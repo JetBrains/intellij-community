@@ -374,6 +374,28 @@ public class StringUtilTest {
   }
 
   @Test
+  public void testFindStartingLineSeparator() {
+    assertEquals(null, StringUtil.getLineSeparatorAt("", -1));
+    assertEquals(null, StringUtil.getLineSeparatorAt("", 0));
+    assertEquals(null, StringUtil.getLineSeparatorAt("", 1));
+    assertEquals(null, StringUtil.getLineSeparatorAt("\nHello", -1));
+    assertEquals(null, StringUtil.getLineSeparatorAt("\nHello", 1));
+    assertEquals(null, StringUtil.getLineSeparatorAt("\nH\rel\nlo", 6));
+
+    assertEquals(LineSeparator.LF, StringUtil.getLineSeparatorAt("\nHello", 0));
+    assertEquals(LineSeparator.LF, StringUtil.getLineSeparatorAt("\nH\rel\nlo", 5));
+    assertEquals(LineSeparator.LF, StringUtil.getLineSeparatorAt("Hello\n", 5));
+
+    assertEquals(LineSeparator.CR, StringUtil.getLineSeparatorAt("\rH\r\nello", 0));
+    assertEquals(LineSeparator.CR, StringUtil.getLineSeparatorAt("Hello\r", 5));
+    assertEquals(LineSeparator.CR, StringUtil.getLineSeparatorAt("Hello\b\r", 6));
+
+    assertEquals(LineSeparator.CRLF, StringUtil.getLineSeparatorAt("\rH\r\nello", 2));
+    assertEquals(LineSeparator.CRLF, StringUtil.getLineSeparatorAt("\r\nH\r\nello", 0));
+    assertEquals(LineSeparator.CRLF, StringUtil.getLineSeparatorAt("\r\nH\r\nello\r\n", 9));
+  }
+
+  @Test
   public void testFormatFileSize() {
     assertEquals("0B", StringUtil.formatFileSize(0));
     assertEquals("1B", StringUtil.formatFileSize(1));

@@ -455,6 +455,17 @@ public class EditorTestUtil {
     return ref.get();
   }
 
+
+  public static Inlay addInlay(@NotNull Editor editor, int offset) {
+    return editor.getInlayModel().addInlineElement(offset, new EditorCustomElementRenderer() {
+      @Override
+      public int calcWidthInPixels(@NotNull Editor editor) { return 1; }
+
+      @Override
+      public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {}
+    });
+  }
+
   public static class CaretAndSelectionState {
     public final List<CaretInfo> carets;
     public final TextRange blockSelection;

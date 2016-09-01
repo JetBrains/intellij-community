@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,10 @@ import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author maxim
- * @since 18.07.2006
+ * @deprecated Please use java.util.Base64
  */
+@SuppressWarnings("unused")
+@Deprecated
 public class Base64Converter {
   private static final char[] alphabet = {
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',   //  0 to  7

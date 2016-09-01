@@ -1259,7 +1259,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     if (moveRequired || syncUpdateRequired) {
       // find the changes for the added files and move them to the necessary changelist
       InvokeAfterUpdateMode updateMode =
-        syncUpdateRequired ? InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE : InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE_NOT_AWT;
+        syncUpdateRequired ? InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE : InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE;
 
       invokeAfterUpdate(new Runnable() {
         @Override

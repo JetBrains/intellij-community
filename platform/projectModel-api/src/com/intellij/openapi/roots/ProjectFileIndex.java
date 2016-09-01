@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,8 +32,7 @@ import java.util.List;
  */
 public interface ProjectFileIndex extends FileIndex {
   class SERVICE {
-    private SERVICE() {
-    }
+    private SERVICE() { }
 
     public static ProjectFileIndex getInstance(Project project) {
       return ServiceManager.getService(project, ProjectFileIndex.class);
@@ -40,29 +40,21 @@ public interface ProjectFileIndex extends FileIndex {
   }
 
   /**
-   * Returns module to which the specified file belongs.
-   *
-   * @param file the file for which the module is requested.
-   * @return the module instance or null if the file does not belong to content of any module.
+   * Returns module to which content the specified file belongs or null if the file does not belong to content of any module.
    */
   @Nullable
   Module getModuleForFile(@NotNull VirtualFile file);
 
   /**
-   * Returns module to which the specified file belongs.
+   * Returns module to which content the specified file belongs or null if the file does not belong to content of any module.
    *
-   * @param file the file for which the module is requested.
    * @param honorExclusion if {@code false} the containing module will be returned even if the file is located under a folder marked as excluded
-   * @return the module instance or null if the file does not belong to content of any module.
    */
   @Nullable
   Module getModuleForFile(@NotNull VirtualFile file, boolean honorExclusion);
 
   /**
    * Returns the order entries which contain the specified file (either in CLASSES or SOURCES).
-   *
-   * @param file the file for which the order entries are requested.
-   * @return the array of order entries containing the file.
    */
   @NotNull
   List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile file);
@@ -70,7 +62,6 @@ public interface ProjectFileIndex extends FileIndex {
   /**
    * Returns a classpath entry to which the specified file or directory belongs.
    *
-   * @param file the file or directory for which the information is requested.
    * @return the file for the classpath entry, or null if the file is not a compiled
    *         class file or directory belonging to a library.
    */
@@ -78,31 +69,23 @@ public interface ProjectFileIndex extends FileIndex {
   VirtualFile getClassRootForFile(@NotNull VirtualFile file);
 
   /**
-   * Returns the module source root or library source root to which the specified file
-   * or directory belongs.
+   * Returns the module source root or library source root to which the specified file or directory belongs.
    *
-   * @param file the file or directory for which the information is requested.
-   * @return the file for the source root, or null if the file is not located under any
-   *         of the source roots for the module.
+   * @return the file for the source root, or null if the file is not located under any of the source roots for the module.
    */
   @Nullable
   VirtualFile getSourceRootForFile(@NotNull VirtualFile file);
 
   /**
-   * Returns the module content root to which the specified file or directory belongs.
-   *
-   * @param file the file or directory for which the information is requested.
-   * @return the file for the content root, or null if the file does not belong to this project.
+   * Returns the module content root to which the specified file or directory belongs or null if the file does not belong to content of any module.
    */
   @Nullable
   VirtualFile getContentRootForFile(@NotNull VirtualFile file);
 
   /**
-   * Returns the module content root to which the specified file or directory belongs.
+   * Returns the module content root to which the specified file or directory belongs or null if the file does not belong to content of any module.
    *
-   * @param file the file or directory for which the information is requested.
    * @param honorExclusion if {@code false} the containing content root will be returned even if the file is located under a folder marked as excluded
-   * @return the file for the content root, or null if the file does not belong to this project.
    */
   @Nullable
   VirtualFile getContentRootForFile(@NotNull VirtualFile file, final boolean honorExclusion);
@@ -110,66 +93,60 @@ public interface ProjectFileIndex extends FileIndex {
   /**
    * Returns the name of the package corresponding to the specified directory.
    *
-   * @param dir the directory for which the package name is requested.
    * @return the package name, or null if the directory does not correspond to any package.
    */
   @Nullable
   String getPackageNameByDirectory(@NotNull VirtualFile dir); //Q: move to FileIndex?
 
   /**
-   * Returns true if <code>file</code> is a file which belongs to the classes (not sources) of some library.
-   *
-   * @param file the file to check.
-   * @return true if the file belongs to library classes, false otherwise.
+   * Returns true if <code>file</code> is a file which belongs to the classes (not sources) of some library which is included into dependencies
+   * of some module.
    */
   boolean isLibraryClassFile(@NotNull VirtualFile file);
 
   /**
-   * Returns true if <code>fileOrDir</code> is a file or directory from the content production/test source or library source.
-   *
-   * @param fileOrDir the file or directory to check.
-   * @return true if the file or directory belongs to project or library sources, false otherwise.
+   * Returns true if <code>fileOrDir</code> is a file or directory from production/test sources of some module or sources of some library which is included into dependencies
+   * of some module.
    */
   boolean isInSource(@NotNull VirtualFile fileOrDir);
 
   /**
-   * Returns true if <code>fileOrDir</code> is a file or directory from library classes.
-   *
-   * @param fileOrDir the file or directory to check.
-   * @return true if the file belongs to library classes, false otherwise.
+   * Returns true if <code>fileOrDir</code> belongs to classes of some library which is included into dependencies of some module.
    */
   boolean isInLibraryClasses(@NotNull VirtualFile fileOrDir);
 
   /**
-   * Returns true if <code>fileOrDir</code> is a file or directory from library source.
-   *
-   * @param fileOrDir the file or directory to check.
-   * @return true if the file belongs to library sources, false otherwise.
+   * @return true if the file belongs to the classes or sources of a library added to dependencies of the project,
+   *         false otherwise
+   */
+  boolean isInLibrary(@NotNull VirtualFile fileOrDir);
+
+  /**
+   * Returns true if <code>fileOrDir</code> is a file or directory from sources of some library which is included into dependencies
+   * of some module.
    */
   boolean isInLibrarySource(@NotNull VirtualFile fileOrDir);
 
   /**
-   * @deprecated name of this method may be confusing. If you want to check if the file is excluded or ignored use {@link #isExcluded(com.intellij.openapi.vfs.VirtualFile)}.
-   * If you want to check if the file is ignored use {@link com.intellij.openapi.fileTypes.FileTypeRegistry#isFileIgnored(com.intellij.openapi.vfs.VirtualFile)}.
-   * If you want to check if the file or one of its parents is ignored use {@link #isUnderIgnored(com.intellij.openapi.vfs.VirtualFile)}.
+   * @deprecated name of this method may be confusing. If you want to check if the file is excluded or ignored use {@link #isExcluded(VirtualFile)}.
+   * If you want to check if the file is ignored use {@link FileTypeRegistry#isFileIgnored(VirtualFile)}.
+   * If you want to check if the file or one of its parents is ignored use {@link #isUnderIgnored(VirtualFile)}.
    */
   @Deprecated
   boolean isIgnored(@NotNull VirtualFile file);
 
   /**
    * Checks if the specified file or directory is located under project roots but the file itself or one of its parent directories is
-   * either excluded from the project or ignored by {@link com.intellij.openapi.fileTypes.FileTypeRegistry#isFileIgnored(com.intellij.openapi.vfs.VirtualFile)}).
+   * either excluded from the project or ignored by {@link FileTypeRegistry#isFileIgnored(VirtualFile)}).
    *
-   * @param file the file to check.
    * @return true if <code>file</code> is excluded or ignored, false otherwise.
    */
   boolean isExcluded(@NotNull VirtualFile file);
 
   /**
    * Checks if the specified file or directory is located under project roots but the file itself or one of its parent directories is ignored
-   * by {@link com.intellij.openapi.fileTypes.FileTypeRegistry#isFileIgnored(com.intellij.openapi.vfs.VirtualFile)}).
+   * by {@link FileTypeRegistry#isFileIgnored(VirtualFile)}).
    *
-   * @param file the file to check.
    * @return true if <code>file</code> is ignored, false otherwise.
    */
   boolean isUnderIgnored(@NotNull VirtualFile file);
