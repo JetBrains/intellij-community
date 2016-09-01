@@ -18,7 +18,6 @@ package org.jetbrains.intellij.build.pycharm
 import org.codehaus.gant.GantBinding
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildTasks
-import org.jetbrains.intellij.build.JetBrainsBuildTools
 
 /**
  * @author nik
@@ -34,10 +33,8 @@ class PyCharmCommunityBuilder {
 
   def build() {
     def buildContext = BuildContext.createContext(binding.ant, binding.projectBuilder, binding.project, binding.global,
-                                                  "$home/community", home, "$home/out/pycharmCE", new PyCharmCommunityProperties(home),
-                                                  JetBrainsBuildTools.create("$home/build/lib/jet-sign.jar"))
+                                                  home, home, "$home/out/pycharmCE", new PyCharmCommunityProperties(home))
     def buildTasks = BuildTasks.create(buildContext)
     buildTasks.compileModulesAndBuildDistributions()
-    buildTasks.zipProjectSources()
   }
 }

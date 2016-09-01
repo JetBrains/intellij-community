@@ -53,9 +53,9 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
     tasks.zipSourcesOfModules(["python-openapi", "python-psi-api"], "$targetDirectory/lib/src/pycharm-openapi-src.zip")
 
     context.ant.copy(todir: "$targetDirectory/helpers") {
-      fileset(dir: "$context.paths.projectHome/community/python/helpers")
+      fileset(dir: "$context.paths.communityHome/python/helpers")
     }
-    context.ant.copy(todir: "$targetDirectory/help") {
+    context.ant.copy(todir: "$targetDirectory/help", failonerror: false) {
       fileset(dir: "$context.paths.projectHome/python/help") {
         include(name: "*.pdf")
       }

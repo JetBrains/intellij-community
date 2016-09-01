@@ -21,18 +21,18 @@ import org.jetbrains.intellij.build.*
  * @author nik
  */
 class PyCharmCommunityProperties extends PyCharmPropertiesBase {
-  PyCharmCommunityProperties(String home) {
+  PyCharmCommunityProperties(String communityHome) {
     productCode = "PC"
     platformPrefix = "PyCharmCore"
     applicationInfoModule = "python-community-ide-resources"
-    brandingResourcePaths = ["$home/community/python/resources"]
+    brandingResourcePaths = ["$communityHome/python/resources"]
 
     productLayout.platformApiModules = CommunityRepositoryModules.PLATFORM_API_MODULES + ["dom-openapi"]
     productLayout.platformImplementationModules = CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES + [
       "dom-impl", "python-community", "python-community-ide-resources",
       "python-ide-community", "python-community-configure", "python-openapi", "python-psi-api", "platform-main"
     ]
-    productLayout.bundledPluginModules = new File("$home/community/python/build/plugin-list.txt").readLines()
+    productLayout.bundledPluginModules = new File("$communityHome/python/build/plugin-list.txt").readLines()
     productLayout.mainModule = "main_pycharm_ce"
   }
 
@@ -60,7 +60,7 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
     return new PyCharmWindowsDistributionCustomizer() {
       {
         buildZipWithBundledOracleJre = true
-        installerImagesPath = "$projectHome/community/python/build/resources"
+        installerImagesPath = "$projectHome/python/build/resources"
         fileAssociations = [".py"]
       }
 
@@ -81,7 +81,7 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
   LinuxDistributionCustomizer createLinuxCustomizer(String projectHome) {
     return new LinuxDistributionCustomizer() {
       {
-        iconPngPath = "$projectHome/community/python/resources/PyCharmCore128.png"
+        iconPngPath = "$projectHome/python/resources/PyCharmCore128.png"
       }
       @Override
       String rootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
@@ -99,10 +99,10 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
   MacDistributionCustomizer createMacCustomizer(String projectHome) {
     return new PyCharmMacDistributionCustomizer() {
       {
-        icnsPath = "$projectHome/community/python/resources/PyCharmCore.icns"
+        icnsPath = "$projectHome/python/resources/PyCharmCore.icns"
         bundleIdentifier = "com.jetbrains.pycharm"
         helpId = "PY"
-        dmgImagePath = "$projectHome/community/python/build/DMG_background.png"
+        dmgImagePath = "$projectHome/python/build/DMG_background.png"
       }
 
       @Override
