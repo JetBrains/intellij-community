@@ -1,17 +1,19 @@
 package org.jetbrains.debugger.memory.action.tracking;
 
-import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.memory.action.DebuggerTreeAction;
 import org.jetbrains.debugger.memory.component.CreationPositionTracker;
+import org.jetbrains.debugger.memory.utils.StackFrameDescriptor;
+import org.jetbrains.debugger.memory.view.StackFrameSelector;
 
 import java.util.List;
 
@@ -23,12 +25,16 @@ public class GetAllocationSourceAction extends DebuggerTreeAction {
 
   @Override
   protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
-    List<StackFrameProxyImpl> stack = getStack(e);
-    System.out.println(stack != null);
+    Project project = e.getProject();
+    List<StackFrameDescriptor> stack = getStack(e);
+    Editor editor = project == null ? null : FileEditorManager.getInstance(project).getSelectedTextEditor();
+    if(project != null && stack != null && editor != null) {
+      new StackFrameSelector(project, stack, editor).show();
+    }
   }
 
   @Nullable
-  private List<StackFrameProxyImpl> getStack(AnActionEvent e) {
+  private List<StackFrameDescriptor> getStack(AnActionEvent e) {
     Project project = e.getProject();
     XValueNodeImpl selectedNode = getSelectedNode(e.getDataContext());
     ObjectReference ref = selectedNode != null ? getObjectReference(selectedNode) : null;

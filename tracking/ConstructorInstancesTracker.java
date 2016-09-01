@@ -15,20 +15,20 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.LineBreakpointState;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
-import com.sun.jdi.Location;
-import com.sun.jdi.Method;
-import com.sun.jdi.ObjectReference;
-import com.sun.jdi.ReferenceType;
+import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.BreakpointRequest;
 import com.sun.jdi.request.EventRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.debugger.memory.component.CreationPositionTracker;
+import org.jetbrains.debugger.memory.utils.StackFrameDescriptor;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class ConstructorInstancesTracker implements TrackerForNewInstances {
   private final HashSet<ObjectReference> myNewObjects = new HashSet<>();
@@ -102,8 +102,18 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances {
             myNewObjects.add(thisRef);
             ThreadReferenceProxyImpl threadReferenceProxy = suspendContext.getThread();
             List<StackFrameProxyImpl> stack = threadReferenceProxy == null ? null : threadReferenceProxy.frames();
-            if(stack != null) {
-              myPositionTracker.addStack(myDebugSession, thisRef, stack);
+
+
+            if (stack != null) {
+              List<StackFrameDescriptor> stackFrameDescriptors = stack.stream().map(frame -> {
+                try {
+                  Location loc = frame.location();
+                  return new StackFrameDescriptor(loc.declaringType().name(), frame.getIndexFromBottom(), loc.lineNumber());
+                } catch (EvaluateException e) {
+                  return null;
+                }
+              }).filter(Objects::nonNull).collect(Collectors.toList());
+              myPositionTracker.addStack(myDebugSession, thisRef, stackFrameDescriptors);
             }
           }
         }
