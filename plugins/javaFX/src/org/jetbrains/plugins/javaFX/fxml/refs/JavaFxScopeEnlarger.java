@@ -86,7 +86,7 @@ public class JavaFxScopeEnlarger extends UseScopeEnlarger {
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      return super.contains(file) && JavaFxFileTypeFactory.isFxml(file);
+      return JavaFxFileTypeFactory.isFxml(file) && super.contains(file);
     }
   }
 }
