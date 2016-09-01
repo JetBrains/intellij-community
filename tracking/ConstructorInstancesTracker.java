@@ -57,6 +57,7 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
         ((XDebuggerManagerImpl) XDebuggerManagerImpl.getInstance(project)).getBreakpointManager(),
         new JavaLineBreakpointProperties(),
         new LineBreakpointState<>());
+
     myBreakpoint= new MyConstructorBreakpoints(project, bpn);
     myBreakpoint.createRequestForPreparedClass(myDebugProcess, ref);
   }
@@ -103,6 +104,10 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
         breakpointRequest.enable();
         myRequests.add(breakpointRequest);
       }
+    }
+
+    @Override
+    public void reload() {
     }
 
     @Override

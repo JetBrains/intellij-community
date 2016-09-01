@@ -267,15 +267,16 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     @Override
     public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
       final List<ReferenceType> classes = myDebugProcess.getVirtualMachineProxy().allClasses();
+
+      for (Map.Entry<ReferenceType, InstanceTrackingStrategy> entry : myTrackedClasses.entrySet()) {
+        entry.getValue().update(suspendContext, entry.getKey().instances(0));
+      }
+
       for (ReferenceType ref : classes) {
         TrackingType type = myInstancesTracker.getTrackingType(ref.name());
         if (type != null && !myTrackedClasses.containsKey(ref) && !myConstructorTrackedClasses.containsKey(ref)) {
           trackClass(ref, type, suspendContext);
         }
-      }
-
-      for (Map.Entry<ReferenceType, InstanceTrackingStrategy> entry : myTrackedClasses.entrySet()) {
-        entry.getValue().update(suspendContext, entry.getKey().instances(0));
       }
 
       if (classes.isEmpty()) {
