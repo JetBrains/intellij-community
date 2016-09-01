@@ -71,8 +71,9 @@ public class EditInspectionToolsSettingsInSuppressedPlaceIntention implements In
 
   private static boolean isCaretOnSuppressedId(PsiFile file, int caretOffset, String suppressedId) {
     CharSequence fileText = file.getViewProvider().getContents();
-    CharSequence vicinity = fileText.subSequence(caretOffset - suppressedId.length(), caretOffset + suppressedId.length());
-    return StringUtil.indexOf(vicinity, suppressedId) >= 0;
+    int start = Math.max(0, caretOffset - suppressedId.length());
+    int end = Math.min(caretOffset + suppressedId.length(), fileText.length());
+    return StringUtil.indexOf(fileText.subSequence(start, end), suppressedId) >= 0;
   }
 
   @Override
