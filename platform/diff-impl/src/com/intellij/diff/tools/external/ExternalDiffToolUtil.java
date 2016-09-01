@@ -18,6 +18,9 @@ package com.intellij.diff.tools.external;
 import com.intellij.diff.contents.*;
 import com.intellij.diff.merge.MergeResult;
 import com.intellij.diff.merge.ThreesideMergeRequest;
+import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.diff.util.Side;
+import com.intellij.diff.util.ThreeSide;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
@@ -67,11 +70,11 @@ public class ExternalDiffToolUtil {
   }
 
   @NotNull
-  private static InputFile createFile(@NotNull DiffContent content, @Nullable String title, @Nullable String windowTitle)
+  private static InputFile createFile(@NotNull DiffContent content, @NotNull FileNameInfo fileName)
     throws IOException {
 
     if (content instanceof EmptyContent) {
-      return new TempInputFile(createFile(new byte[0], "empty"));
+      return new TempInputFile(createFile(new byte[0], fileName));
     }
     else if (content instanceof FileContent) {
       VirtualFile file = ((FileContent)content).getFile();
@@ -85,12 +88,10 @@ public class ExternalDiffToolUtil {
         return new LocalInputFile(file);
       }
 
-      String tempFileName = getFileName(title, windowTitle, content.getContentType());
-      return new TempInputFile(createTempFile(file, tempFileName));
+      return new TempInputFile(createTempFile(file, fileName));
     }
     else if (content instanceof DocumentContent) {
-      String tempFileName = getFileName(title, windowTitle, content.getContentType());
-      return new TempInputFile(createTempFile((DocumentContent)content, tempFileName));
+      return new TempInputFile(createTempFile((DocumentContent)content, fileName));
     }
     else if (content instanceof DirectoryContent) {
       VirtualFile file = ((DirectoryContent)content).getFile();
@@ -105,7 +106,7 @@ public class ExternalDiffToolUtil {
   }
 
   @NotNull
-  private static File createTempFile(@NotNull final DocumentContent content, @NotNull String tempFileName) throws IOException {
+  private static File createTempFile(@NotNull final DocumentContent content, @NotNull FileNameInfo fileName) throws IOException {
     FileDocumentManager.getInstance().saveDocument(content.getDocument());
 
     LineSeparator separator = content.getLineSeparator();
@@ -122,17 +123,17 @@ public class ExternalDiffToolUtil {
     }
 
     byte[] bytes = contentData.getBytes(charset);
-    return createFile(bytes, tempFileName);
+    return createFile(bytes, fileName);
   }
 
   @NotNull
-  private static File createTempFile(@NotNull VirtualFile file, @NotNull String tempFileName) throws IOException {
+  private static File createTempFile(@NotNull VirtualFile file, @NotNull FileNameInfo fileName) throws IOException {
     byte[] bytes = file.contentsToByteArray();
-    return createFile(bytes, tempFileName);
+    return createFile(bytes, fileName);
   }
 
   @NotNull
-  private static OutputFile createOutputFile(@NotNull DiffContent content, @Nullable String windowTitle) throws IOException {
+  private static OutputFile createOutputFile(@NotNull DiffContent content, @NotNull FileNameInfo fileName) throws IOException {
     if (content instanceof FileContent) {
       VirtualFile file = ((FileContent)content).getFile();
 
@@ -145,36 +146,19 @@ public class ExternalDiffToolUtil {
         return new LocalOutputFile(file);
       }
 
-      String tempFileName = getFileName(null, windowTitle, content.getContentType());
-      File tempFile = createTempFile(file, tempFileName);
+      File tempFile = createTempFile(file, fileName);
       return new NonLocalOutputFile(file, tempFile);
     }
     else if (content instanceof DocumentContent) {
-      String tempFileName = getFileName(null, windowTitle, content.getContentType());
-      File tempFile = createTempFile(((DocumentContent)content), tempFileName);
+      File tempFile = createTempFile(((DocumentContent)content), fileName);
       return new DocumentOutputFile(((DocumentContent)content).getDocument(), ((DocumentContent)content).getCharset(), tempFile);
     }
     throw new IllegalArgumentException(content.toString());
   }
 
   @NotNull
-  private static String getFileName(@Nullable String title, @Nullable String windowTitle, @Nullable FileType fileType) {
-    String prefix = "";
-    if (title != null && windowTitle != null) {
-      prefix = title + "_" + windowTitle;
-    }
-    else if (title != null || windowTitle != null) {
-      prefix = title != null ? title : windowTitle;
-    }
-    // TODO: keep file name in DiffContent ?
-    String ext = fileType != null ? fileType.getDefaultExtension() : "tmp";
-    if (prefix.length() > 50) prefix = prefix.substring(0, 50);
-    return PathUtil.suggestFileName(prefix + "." + ext, true, false);
-  }
-
-  @NotNull
-  private static File createFile(@NotNull byte[] bytes, @NotNull String name) throws IOException {
-    File tempFile = FileUtil.createTempFile("tmp_", "_" + name, true);
+  private static File createFile(@NotNull byte[] bytes, @NotNull FileNameInfo fileName) throws IOException {
+    File tempFile = FileUtil.createTempFile(fileName.prefix + "_", "_" + fileName.name, true);
     FileUtil.writeToFile(tempFile, bytes);
     return tempFile;
   }
@@ -189,7 +173,9 @@ public class ExternalDiffToolUtil {
 
     List<InputFile> files = new ArrayList<>();
     for (int i = 0; i < contents.size(); i++) {
-      files.add(createFile(contents.get(i), titles.get(i), windowTitle));
+      DiffContent content = contents.get(i);
+      FileNameInfo fileName = FileNameInfo.create(contents, titles, windowTitle, i);
+      files.add(createFile(content, fileName));
     }
 
     Map<String, String> patterns = ContainerUtil.newHashMap();
@@ -225,10 +211,12 @@ public class ExternalDiffToolUtil {
       assert titles.size() == contents.size();
 
       for (int i = 0; i < contents.size(); i++) {
-        inputFiles.add(createFile(contents.get(i), titles.get(i), windowTitle));
+        DiffContent content = contents.get(i);
+        FileNameInfo fileName = FileNameInfo.create(contents, titles, windowTitle, i);
+        inputFiles.add(createFile(content, fileName));
       }
 
-      outputFile = createOutputFile(outputContent, windowTitle);
+      outputFile = createOutputFile(outputContent, FileNameInfo.createMergeResult(outputContent, windowTitle));
 
       Map<String, String> patterns = new HashMap<>();
       patterns.put("%1", inputFiles.get(0).getPath());
@@ -422,6 +410,90 @@ public class ExternalDiffToolUtil {
     @Override
     public void cleanup() {
       FileUtil.delete(myLocalFile);
+    }
+  }
+
+  private static class FileNameInfo {
+    @NotNull public final String prefix;
+    @NotNull public final String name;
+
+    public FileNameInfo(@NotNull String prefix, @NotNull String name) {
+      this.prefix = prefix;
+      this.name = name;
+    }
+
+    @NotNull
+    public static FileNameInfo create(@NotNull List<? extends DiffContent> contents,
+                                      @NotNull List<String> titles,
+                                      @Nullable String windowTitle,
+                                      int index) {
+      if (contents.size() == 2) {
+        Side side = Side.fromIndex(index);
+        DiffContent content = side.select(contents);
+        String title = side.select(titles);
+        String prefix = side.select("before", "after");
+
+        String name = getFileName(content, title, windowTitle);
+        return new FileNameInfo(prefix, name);
+      }
+      else if (contents.size() == 3) {
+        ThreeSide side = ThreeSide.fromIndex(index);
+        DiffContent content = side.select(contents);
+        String title = side.select(titles);
+        String prefix = side.select("left", "base", "right");
+
+        String name = getFileName(content, title, windowTitle);
+        return new FileNameInfo(prefix, name);
+      }
+      else {
+        throw new IllegalArgumentException(String.valueOf(contents.size()));
+      }
+    }
+
+    @NotNull
+    public static FileNameInfo createMergeResult(@NotNull DiffContent content, @Nullable String windowTitle) {
+      String name = getFileName(content, null, windowTitle);
+      return new FileNameInfo("merge_result", name);
+    }
+
+    @NotNull
+    private static String getFileName(@NotNull DiffContent content,
+                                      @Nullable String title,
+                                      @Nullable String windowTitle) {
+      if (content instanceof EmptyContent) {
+        return "no_content.tmp";
+      }
+
+      String fileName = content.getUserData(DiffUserDataKeysEx.FILE_NAME);
+
+      if (fileName == null && content instanceof DocumentContent) {
+        VirtualFile highlightFile = ((DocumentContent)content).getHighlightFile();
+        fileName = highlightFile != null ? highlightFile.getName() : null;
+      }
+
+      if (fileName == null && content instanceof FileContent) {
+        fileName = ((FileContent)content).getFile().getName();
+      }
+
+      if (!StringUtil.isEmptyOrSpaces(fileName)) {
+        return fileName;
+      }
+
+
+      FileType fileType = content.getContentType();
+      String ext = fileType != null ? fileType.getDefaultExtension() : null;
+      if (StringUtil.isEmptyOrSpaces(ext)) ext = "tmp";
+
+      String name = "";
+      if (title != null && windowTitle != null) {
+        name = title + "_" + windowTitle;
+      }
+      else if (title != null || windowTitle != null) {
+        name = title != null ? title : windowTitle;
+      }
+      if (name.length() > 50) name = name.substring(0, 50);
+
+      return PathUtil.suggestFileName(name + "." + ext, true, false);
     }
   }
 }

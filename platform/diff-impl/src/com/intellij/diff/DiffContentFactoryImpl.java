@@ -17,12 +17,12 @@ package com.intellij.diff;
 
 import com.intellij.diff.actions.DocumentFragmentContent;
 import com.intellij.diff.contents.*;
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
@@ -173,7 +173,9 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
     FileType type = mainContent != null ? mainContent.getContentType() : null;
     VirtualFile highlightFile = mainContent != null ? mainContent.getHighlightFile() : null;
 
-    return createImpl(StringUtil.notNullize(text), type, highlightFile, null, true, false);
+    DocumentContent content = createImpl(StringUtil.notNullize(text), type, highlightFile, null, true, false);
+    content.putUserData(DiffUserDataKeysEx.FILE_NAME, "Clipboard.txt");
+    return content;
   }
 
   @NotNull
@@ -217,7 +219,7 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
   @Override
   @NotNull
   public DiffContent createBinary(@Nullable Project project,
-                                  @NotNull String name,
+                                  @NotNull String fileName,
                                   @NotNull FileType type,
                                   @NotNull byte[] content) throws IOException {
     // workaround - our JarFileSystem and decompilers can't process non-local files
@@ -225,15 +227,10 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
 
     VirtualFile file;
     if (useTemporalFile) {
-      if (type.getDefaultExtension().isEmpty()) {
-        file = createTemporalFile(project, "tmp_", "_" + name, content);
-      }
-      else {
-        file = createTemporalFile(project, name + "_", "." + type.getDefaultExtension(), content);
-      }
+      file = createTemporalFile(project, "tmp", fileName, content);
     }
     else {
-      file = new BinaryLightVirtualFile(name, type, content);
+      file = new BinaryLightVirtualFile(fileName, type, content);
       file.setWritable(false);
     }
 

@@ -100,7 +100,7 @@ public abstract class DiffContentFactory {
 
   @NotNull
   public abstract DiffContent createBinary(@Nullable Project project,
-                                           @NotNull String name,
+                                           @NotNull String fileName,
                                            @NotNull FileType type,
                                            @NotNull byte[] content) throws IOException;
 }
