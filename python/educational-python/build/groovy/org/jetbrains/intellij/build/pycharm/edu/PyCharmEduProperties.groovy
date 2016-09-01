@@ -10,7 +10,6 @@ import org.jetbrains.intellij.build.pycharm.PyCharmWindowsDistributionCustomizer
  */
 class PyCharmEduProperties extends PyCharmPropertiesBase {
   PyCharmEduProperties(String home) {
-    super(home)
     productCode = "PE"
     platformPrefix = "PyCharmEdu"
     applicationInfoModule = "educational-python"

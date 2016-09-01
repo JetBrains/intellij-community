@@ -388,6 +388,8 @@ idea.fatal.error.notification=disabled
       return
     }
 
+    ensureKotlinCompilerAddedToClassPath()
+
     buildContext.projectBuilder.cleanOutput()
     if (moduleNames == null) {
       buildContext.projectBuilder.buildProduction()
@@ -403,6 +405,24 @@ idea.fatal.error.notification=disabled
     }
     for (String moduleName : includingTestsInModules) {
       buildContext.projectBuilder.makeModuleTests(buildContext.findModule(moduleName))
+    }
+  }
+
+  private void ensureKotlinCompilerAddedToClassPath() {
+    try {
+      Class.forName("org.jetbrains.kotlin.jps.build.KotlinBuilder")
+      return
+    }
+    catch (ClassNotFoundException ignored) {}
+
+    def kotlinPluginLibPath = "$buildContext.paths.communityHome/build/kotlinc/plugin/Kotlin/lib"
+    if (new File(kotlinPluginLibPath).exists()) {
+      ["jps/kotlin-jps-plugin.jar", "kotlin-plugin.jar", "kotlin-runtime.jar"].each {
+        BuildUtils.addToJpsClassPath("$kotlinPluginLibPath/$it", buildContext.ant)
+      }
+    }
+    else {
+      buildContext.messages.error("Could not find Kotlin JARs at $kotlinPluginLibPath: run download_kotlin.gant script to download them")
     }
   }
 

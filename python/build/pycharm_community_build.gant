@@ -5,8 +5,7 @@ import org.jetbrains.jps.idea.IdeaProjectLoader
 includeTool << JpsGantTool
 
 target("default": "Default") {
-  String home = new File(IdeaProjectLoader.guessHome(this)).parentFile.absolutePath
-  BuildUtils.addToClassPath("$home/build/groovy", ant)
-  BuildUtils.addToClassPath("$home/community/python/build/groovy", ant)
+  String home = new File(IdeaProjectLoader.guessHome(this)).absolutePath
+  BuildUtils.addToClassPath("$home/python/build/groovy", ant)
   Class.forName("org.jetbrains.intellij.build.pycharm.PyCharmCommunityBuilder").constructors[0].newInstance(home, binding).build()
 }
