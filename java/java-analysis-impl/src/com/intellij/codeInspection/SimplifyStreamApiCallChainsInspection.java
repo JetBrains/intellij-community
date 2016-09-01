@@ -165,14 +165,11 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
           final PsiMethod qualifier = qualifierCall.resolveMethod();
           if (isCallOf(qualifier, CommonClassNames.JAVA_UTIL_COLLECTION, STREAM_METHOD, 0)) {
             final ReplaceStreamMethodFix fix;
-            if (FOR_EACH_METHOD.equals(name)) {
-              fix = new ReplaceStreamMethodFix(name, FOR_EACH_METHOD, false);
-            }
-            else if (FOR_EACH_ORDERED_METHOD.equals(name)) {
-              fix = new ReplaceStreamMethodFix(name, FOR_EACH_METHOD, true);
+            if (COUNT_METHOD.equals(name)) {
+              fix = new StreamCountFix();
             }
             else {
-              fix = new StreamCountFix();
+              fix = new ReplaceStreamMethodFix(name, FOR_EACH_METHOD, true);
             }
             holder.registerProblem(methodCall, getCallChainRange(methodCall, qualifierCall), fix.getMessage(), fix);
           }
