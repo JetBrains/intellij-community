@@ -29,6 +29,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.MessageFormat;
+import java.util.Arrays;
+
 /**
  * @author Pavel.Dolgov
  */
@@ -114,23 +117,23 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
             if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, COUNTING_COLLECTOR, 0)) {
               fix = new ReplaceCollectorFix(COUNTING_COLLECTOR, "count()", false);
             } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, MIN_BY_COLLECTOR, 1)) {
-              fix = new ReplaceCollectorFix(MIN_BY_COLLECTOR, "min({1})", true);
+              fix = new ReplaceCollectorFix(MIN_BY_COLLECTOR, "min({0})", true);
             } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, MAX_BY_COLLECTOR, 1)) {
-              fix = new ReplaceCollectorFix(MAX_BY_COLLECTOR, "max({1})", true);
+              fix = new ReplaceCollectorFix(MAX_BY_COLLECTOR, "max({0})", true);
             } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, MAPPING_COLLECTOR, 2)) {
-              fix = new ReplaceCollectorFix(MAPPING_COLLECTOR, "map({1}).collect({2})", false);
+              fix = new ReplaceCollectorFix(MAPPING_COLLECTOR, "map({0}).collect({1})", false);
             } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, REDUCING_COLLECTOR, 1)) {
-              fix = new ReplaceCollectorFix(REDUCING_COLLECTOR, "reduce({1})", true);
+              fix = new ReplaceCollectorFix(REDUCING_COLLECTOR, "reduce({0})", true);
             } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, REDUCING_COLLECTOR, 2)) {
-              fix = new ReplaceCollectorFix(REDUCING_COLLECTOR, "reduce({1}, {2})", false);
+              fix = new ReplaceCollectorFix(REDUCING_COLLECTOR, "reduce({0}, {1})", false);
             } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, REDUCING_COLLECTOR, 3)) {
-              fix = new ReplaceCollectorFix(REDUCING_COLLECTOR, "map({2}).reduce({1}, {3})", false);
+              fix = new ReplaceCollectorFix(REDUCING_COLLECTOR, "map({1}).reduce({0}, {2})", false);
             } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, SUMMING_INT_COLLECTOR, 1)) {
-              fix = new ReplaceCollectorFix(SUMMING_INT_COLLECTOR, "mapToInt({1}).sum()", false);
+              fix = new ReplaceCollectorFix(SUMMING_INT_COLLECTOR, "mapToInt({0}).sum()", false);
             } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, SUMMING_LONG_COLLECTOR, 1)) {
-              fix = new ReplaceCollectorFix(SUMMING_LONG_COLLECTOR, "mapToLong({1}).sum()", false);
+              fix = new ReplaceCollectorFix(SUMMING_LONG_COLLECTOR, "mapToLong({0}).sum()", false);
             } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, SUMMING_DOUBLE_COLLECTOR, 1)) {
-              fix = new ReplaceCollectorFix(SUMMING_DOUBLE_COLLECTOR, "mapToDouble({1}).sum()", false);
+              fix = new ReplaceCollectorFix(SUMMING_DOUBLE_COLLECTOR, "mapToDouble({0}).sum()", false);
             }
             if (fix != null &&
                 collectorCall.getArgumentList().getExpressions().length == collectorMethod.getParameterList().getParametersCount()) {
@@ -479,34 +482,35 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
           if (parameter instanceof PsiMethodCallExpression) {
             PsiMethodCallExpression collectorCall = (PsiMethodCallExpression)parameter;
             PsiExpression[] collectorArgs = collectorCall.getArgumentList().getExpressions();
-            String result = myStreamSequence;
-            for(int i=0; i<collectorArgs.length; i++) {
-              result = result.replace("{"+(i+1)+"}", collectorArgs[i].getText());
-            }
+            String result = MessageFormat.format(myStreamSequence, Arrays.stream(collectorArgs).map(PsiExpression::getText).toArray());
             if (!FileModificationService.getInstance().preparePsiElementForWrite(element.getContainingFile())) return;
             PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-            PsiExpression replacement = factory.createExpressionFromText(
-              qualifierExpression.getText() + "." + result, collectCall);
-            PsiElement expression = collectCall.replace(replacement);
-            // Replacements like .collect(counting()) -> .count() change the result type from boxed to primitive
-            // In rare cases it's necessary to add cast to return back to boxed type
-            // example:
-            // List<Integer> intList; List<String> stringList;
-            // intList.remove(stringList.stream().collect(summingInt(String::length)) -- remove given element
-            // intList.remove(stringList.stream().mapToInt(String::length).sum()) -- remove element by index
-            if(expression instanceof PsiExpression) {
-              PsiType type = ((PsiExpression)expression).getType();
-              if(type instanceof PsiPrimitiveType) {
-                PsiClassType boxedType = ((PsiPrimitiveType)type).getBoxedType(expression);
-                if(boxedType != null) {
-                  PsiExpression castExpression =
-                    factory.createExpressionFromText("(" + boxedType.getCanonicalText() + ") " + expression.getText(), expression);
-                  PsiElement cast = expression.replace(castExpression);
-                  if (cast instanceof PsiTypeCastExpression && RedundantCastUtil.isCastRedundant((PsiTypeCastExpression)cast)) {
-                    RedundantCastUtil.removeCast((PsiTypeCastExpression)cast);
-                  }
-                }
-              }
+            PsiExpression replacement = factory.createExpressionFromText(qualifierExpression.getText() + "." + result, collectCall);
+            addBoxingIfNecessary(factory, collectCall.replace(replacement));
+          }
+        }
+      }
+    }
+
+    /*
+    Replacements like .collect(counting()) -> .count() change the result type from boxed to primitive
+    In rare cases it's necessary to add cast to return back to boxed type
+    example:
+    List<Integer> intList; List<String> stringList;
+    intList.remove(stringList.stream().collect(summingInt(String::length)) -- remove given element
+    intList.remove(stringList.stream().mapToInt(String::length).sum()) -- remove element by index
+    */
+    private static void addBoxingIfNecessary(PsiElementFactory factory, PsiElement expression) {
+      if(expression instanceof PsiExpression) {
+        PsiType type = ((PsiExpression)expression).getType();
+        if(type instanceof PsiPrimitiveType) {
+          PsiClassType boxedType = ((PsiPrimitiveType)type).getBoxedType(expression);
+          if(boxedType != null) {
+            PsiExpression castExpression =
+              factory.createExpressionFromText("(" + boxedType.getCanonicalText() + ") " + expression.getText(), expression);
+            PsiElement cast = expression.replace(castExpression);
+            if (cast instanceof PsiTypeCastExpression && RedundantCastUtil.isCastRedundant((PsiTypeCastExpression)cast)) {
+              RedundantCastUtil.removeCast((PsiTypeCastExpression)cast);
             }
           }
         }
@@ -520,5 +524,4 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
              (myChangeSemantics ? " (may change semantics when result is null)" : "");
     }
   }
-
 }
