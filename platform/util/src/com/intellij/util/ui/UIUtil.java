@@ -2236,8 +2236,7 @@ public class UIUtil {
   }
 
   /**
-   * @deprecated
-   * @use JBColor.border()
+   * @deprecated use {@link JBColor#border()}
    */
   public static Color getBorderColor() {
     return isUnderDarcula() ? Gray._50 : BORDER_COLOR;
