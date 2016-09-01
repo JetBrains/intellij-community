@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -46,6 +47,7 @@ import org.fest.swing.core.Robot;
 import org.fest.swing.edt.GuiActionRunner;
 import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.edt.GuiTask;
+import org.fest.swing.exception.ComponentLookupException;
 import org.fest.swing.exception.WaitTimedOutError;
 import org.fest.swing.fixture.ContainerFixture;
 import org.fest.swing.fixture.DialogFixture;
@@ -96,7 +98,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 public final class GuiTests {
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.tests.gui.framework.GuiTests");
+
   public static final Timeout THIRTY_SEC_TIMEOUT = timeout(30, SECONDS);
+  public static final Timeout MINUTE_TIMEOUT = timeout(1, MINUTES);
   public static final Timeout SHORT_TIMEOUT = timeout(2, MINUTES);
   public static final Timeout LONG_TIMEOUT = timeout(5, MINUTES);
 
@@ -247,8 +253,7 @@ public final class GuiTests {
       final MyProjectManagerListener listener = new MyProjectManagerListener();
 
       //[ACCEPT IntelliJ IDEA Privacy Policy Agreement]
-      //acceptAgreement(robot);
-      //[Complete Installation]
+      acceptAgreementIfNeeded(robot);
 
       findFrame(new GenericTypeMatcher<Frame>(Frame.class) {
         @Override
@@ -304,8 +309,33 @@ public final class GuiTests {
     }
   }
 
-  private static void acceptAgreement(Robot robot) {
+  private static void acceptAgreementIfNeeded(Robot robot) {
     final String policyAgreement = "Privacy Policy Agreement";
+
+    try {
+      pause(new Condition("Waiting for " + policyAgreement + " dialog") {
+        @Override
+        public boolean test() {
+          try {
+            robot.finder().find(new GenericTypeMatcher<JDialog>(JDialog.class) {
+              @Override
+              protected boolean isMatching(@NotNull JDialog dialog) {
+                if (dialog.getTitle() == null) return false;
+                return dialog.getTitle().contains(policyAgreement) && dialog.isShowing();
+              }
+            });
+          } catch (ComponentLookupException e) {
+            return false;
+          }
+          return true;
+        }
+      }, MINUTE_TIMEOUT);
+    } catch (WaitTimedOutError timedOutError) {
+      LOG.info(policyAgreement + " dialog wasn't found. Skipped to next step");
+      return;
+    }
+
+
     try {
       final DialogFixture
         privacyDialogFixture = findDialog(new GenericTypeMatcher<JDialog>(JDialog.class) {
@@ -314,7 +344,6 @@ public final class GuiTests {
           if (dialog.getTitle() == null) return false;
           return dialog.getTitle().contains(policyAgreement) && dialog.isShowing();
         }
-
       }).withTimeout(LONG_TIMEOUT.duration()).using(robot);
       String buttonText = "Accept";
       JButton acceptButton = privacyDialogFixture.button(new GenericTypeMatcher<JButton>(JButton.class) {
@@ -617,8 +646,12 @@ public final class GuiTests {
         return (label.getLabelFor() != null && label.getLabelFor().equals(textField));
       }
     });
-    if (labels != null && !labels.isEmpty()) return labels.iterator().next();
-    else return null;
+    if (labels != null && !labels.isEmpty()) {
+      return labels.iterator().next();
+    }
+    else {
+      return null;
+    }
   }
 
   @NotNull
@@ -745,7 +778,7 @@ public final class GuiTests {
     }
   }
 
-  public static String getBundledJdLocation(){
+  public static String getBundledJdLocation() {
 
     ArrayList<JdkBundle> bundleList = SwitchBootJdkAction.findJdkPaths().toArrayList();
     //we believe that Idea has at least one bundled jdk
@@ -758,7 +791,4 @@ public final class GuiTests {
   public static JTextComponentFixture findTextField(@NotNull Robot robot, @NotNull final String labelText) {
     return new JTextComponentFixture(robot, robot.finder().findByLabel(labelText, JTextComponent.class));
   }
-
-
-
 }
