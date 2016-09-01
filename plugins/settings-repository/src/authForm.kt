@@ -37,7 +37,8 @@ fun showAuthenticationForm(credentials: Credentials?, uri: String, host: String?
   }
 
   val isGitHub = host == "github.com"
-  val note = if (sshKeyFile == null) icsMessage(if (isGitHub) "login.github.note" else "login.other.git.provider.note") else null
+  val isBitbucket = host == "bitbucket.org"
+  val note = if (sshKeyFile == null) icsMessage(if (isGitHub) "login.github.note" else if (isBitbucket) "login.bitbucket.note" else "login.other.git.provider.note") else null
   var username = credentials?.userName
   if (username == null && isGitHub && path != null && sshKeyFile == null) {
     val firstSlashIndex = path.indexOf('/', 1)
@@ -48,7 +49,7 @@ fun showAuthenticationForm(credentials: Credentials?, uri: String, host: String?
 
   return invokeAndWaitIfNeed {
     val userField = JTextField(username)
-    val passwordField = JPasswordField(credentials?.password.toString())
+    val passwordField = JPasswordField(credentials?.password?.toString())
 
     val centerPanel = panel(fillX) {
       label(message, wrap, span, bold = true, gapBottom = 10)

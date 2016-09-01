@@ -25,6 +25,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.charset.Charset;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -52,7 +53,7 @@ public final class PyTestTracebackParserTest {
     }
     final String longString = StringUtil.repeat("1", junkSize);
     myStringJunk = String.format("%s:%s", longString, longString);
-    myBase64Junk = java.util.Base64.getEncoder().encodeToString(junk);
+    myBase64Junk = Base64.getEncoder().encodeToString(junk);
     myStringJunkWithSpaces = StringUtil.repeat("dd ddddddddd", junkSize);
     myStringJunkWithSpacesAndLine = myStringJunkWithSpaces + " c:/file:12";
   }

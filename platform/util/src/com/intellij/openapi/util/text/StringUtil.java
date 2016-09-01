@@ -3147,7 +3147,7 @@ public class StringUtil extends StringUtilRt {
   public static LineSeparator detectSeparators(@NotNull CharSequence text) {
     int index = indexOfAny(text, "\n\r");
     if (index == -1) return null;
-    LineSeparator lineSeparator = findStartingLineSeparator(text, index);
+    LineSeparator lineSeparator = getLineSeparatorAt(text, index);
     if (lineSeparator == null) {
       throw new AssertionError();
     }
@@ -3155,7 +3155,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Nullable
-  public static LineSeparator findStartingLineSeparator(@NotNull CharSequence text, int startIndex) {
+  public static LineSeparator getLineSeparatorAt(@NotNull CharSequence text, int startIndex) {
     if (startIndex < 0 || startIndex >= text.length()) {
       return null;
     }

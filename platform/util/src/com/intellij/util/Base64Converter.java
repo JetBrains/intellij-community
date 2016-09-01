@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @deprecated Please use java.util.Base64
  */
+@SuppressWarnings("unused")
 @Deprecated
 public class Base64Converter {
   private static final char[] alphabet = {

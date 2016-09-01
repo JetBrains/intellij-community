@@ -18,10 +18,10 @@ package com.intellij.ui;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -42,6 +42,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ex.AbstractDelegatingToRootTraversalPolicy;
 import com.intellij.psi.PsiDocumentManager;
@@ -95,6 +96,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   private int myPreferredWidth = -1;
   private int myCaretPosition = -1;
   private final List<EditorSettingsProvider> mySettingsProviders = new ArrayList<>();
+  private final Disposable myDisposable = Disposer.newDisposable("ETF dispose");
 
   public EditorTextField() {
     this("");
@@ -138,14 +140,6 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     setFocusTraversalPolicy(new Jdk7DelegatingToRootTraversalPolicy());
 
     setFont(UIManager.getFont("TextField.font"));
-    if (project != null) {
-      ProjectManager.getInstance().addProjectManagerListener(project, new ProjectManagerListener() {
-        @Override
-        public void projectClosing(Project project) {
-           releaseEditor();
-        }
-      });
-    }
   }
 
   public void setSupplementary(boolean supplementary) {
@@ -225,9 +219,9 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       //MainWatchPanel check that oldEditor.getParent == newEditor.getParent and does not remove oldEditor in such cases
 
       boolean isFocused = isFocusOwner();
-      Editor editor = myEditor;
-      myEditor = createEditor();
-      releaseEditor(editor);
+      EditorEx newEditor = createEditor();
+      releaseEditor();
+      myEditor = newEditor;
       add(myEditor.getComponent(), BorderLayout.CENTER);
 
       validate();
@@ -329,37 +323,23 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     return super.isFocusOwner();
   }
 
-  void releaseEditor(@NotNull final Editor editor) {
-    // todo IMHO this should be removed completely
-    if (myProject != null && !myProject.isDisposed() && myIsViewer) {
-      final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-      if (psiFile != null) {
-        DaemonCodeAnalyzer.getInstance(myProject).setHighlightingEnabled(psiFile, true);
-      }
-    }
-
-    remove(editor.getComponent());
-
-    editor.getContentComponent().removeFocusListener(this);
-
-    final Application application = ApplicationManager.getApplication();
-    final Runnable runnable = () -> {
-      if (!editor.isDisposed()) {
-        EditorFactory.getInstance().releaseEditor(editor);
-      }
-    };
-
-    if (application.isUnitTestMode() || application.isDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      application.invokeLater(runnable);
-    }
-  }
-
   @Override
   public void addNotify() {
-    unsetAndReleaseEditorLater();
+    Disposer.register(myDisposable, this::releaseEditorLater);
+    if (myProject != null) {
+      ProjectManagerListener listener = new ProjectManagerListener() {
+        @Override
+        public void projectClosing(Project project) {
+          releaseEditor();
+        }
+      };
+      ProjectManager.getInstance().addProjectManagerListener(myProject, listener);
+      Disposer.register(myDisposable, ()->ProjectManager.getInstance().removeProjectManagerListener(myProject, listener));
+    }
+
+    if (myEditor != null) {
+      releaseEditorLater();
+    }
 
     boolean isFocused = isFocusOwner();
 
@@ -390,30 +370,39 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   @Override
   public void removeNotify() {
     super.removeNotify();
-    unsetAndReleaseEditorLater();
+    Disposer.dispose(myDisposable);
   }
 
   private void releaseEditor() {
     if (myEditor == null) return;
-    
+
     final Editor editor = myEditor;
     myEditor = null;
-    
-    releaseEditor(editor);
+
+    // todo IMHO this should be removed completely
+    if (myProject != null && !myProject.isDisposed() && myIsViewer) {
+      final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+      if (psiFile != null) {
+        DaemonCodeAnalyzer.getInstance(myProject).setHighlightingEnabled(psiFile, true);
+      }
+    }
+
+    remove(editor.getComponent());
+
+    editor.getContentComponent().removeFocusListener(this);
+
+    if (!editor.isDisposed()) {
+      EditorFactory.getInstance().releaseEditor(editor);
+    }
   }
 
-  private void unsetAndReleaseEditorLater() {
-    if (myEditor == null) return;
-
-    final Editor editor = myEditor;
-    myEditor = null;
-
+  void releaseEditorLater() {
     // releasing an editor implies removing it from a component hierarchy
     // invokeLater is required because releaseEditor() may be called from
     // removeNotify(), so we need to let swing complete its removeNotify() chain
     // and only then execute another removal from the hierarchy. Otherwise
     // swing goes nuts because of nested removals and indices get corrupted
-    SwingUtilities.invokeLater(() -> releaseEditor(editor));
+    SwingUtilities.invokeLater(this::releaseEditor);
   }
 
   @Override
@@ -433,7 +422,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     return myOneLineMode;
   }
 
-  protected void initOneLineMode(final EditorEx editor) {
+  private void initOneLineMode(final EditorEx editor) {
     final boolean isOneLineMode = isOneLineMode();
 
     // set mode in editor
@@ -590,12 +579,11 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       super.setEnabled(enabled);
       setViewerEnabled(enabled);
       EditorEx editor = myEditor;
-      if (editor == null) {
-        return;
+      if (editor != null) {
+        releaseEditor();
+        initEditor();
+        revalidate();
       }
-      releaseEditor(editor);
-      initEditor();
-      revalidate();
     }
   }
 
@@ -659,7 +647,8 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
       JBInsets.addTo(preferredSize, getInsets());
       size = preferredSize;
-    } else if (myPassivePreferredSize != null) {
+    }
+    else if (myPassivePreferredSize != null) {
       size = myPassivePreferredSize;
     }
 

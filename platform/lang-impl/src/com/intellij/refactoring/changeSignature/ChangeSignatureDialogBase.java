@@ -139,6 +139,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
 
     setTitle(ChangeSignatureHandler.REFACTORING_NAME);
     init();
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
     doUpdateSignature();
     Disposer.register(myDisposable, new Disposable() {
       @Override
@@ -596,7 +597,8 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     final Runnable updateRunnable = () -> {
       if (myDisposed) return;
       myUpdateSignatureAlarm.cancelAllRequests();
-      myUpdateSignatureAlarm.addRequest(() -> updateSignatureAlarmFired(), 100, ModalityState.stateForComponent(mySignatureArea));
+      myUpdateSignatureAlarm.addRequest(() ->
+        PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> updateSignatureAlarmFired()), 100, ModalityState.stateForComponent(mySignatureArea));
     };
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(updateRunnable);
@@ -608,7 +610,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
   }
 
   private void doUpdateSignature() {
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    LOG.assertTrue(!PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments());
     mySignatureArea.setSignature(calculateSignature());
   }
 

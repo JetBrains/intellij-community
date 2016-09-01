@@ -18,7 +18,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.Base64Converter;
+import com.intellij.util.Base64;
 import com.intellij.util.ThreeState;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -260,7 +260,7 @@ public class URLUtil {
       try {
         String content = matcher.group(4);
         return ";base64".equalsIgnoreCase(matcher.group(3))
-               ? Base64Converter.decode(content.getBytes(CharsetToolkit.UTF8_CHARSET))
+               ? Base64.decode(content)
                : content.getBytes(CharsetToolkit.UTF8_CHARSET);
       }
       catch (IllegalArgumentException e) {

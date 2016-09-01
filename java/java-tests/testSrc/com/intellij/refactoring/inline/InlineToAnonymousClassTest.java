@@ -49,6 +49,10 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
     doTest(false, false);
   }
 
+  public void testUnrelatedParameters() throws Exception {
+    doTest(false, false);
+  }
+
   public void testConstructorWithArgumentsInExpression() throws Exception {
     doTest(false, false);
   }

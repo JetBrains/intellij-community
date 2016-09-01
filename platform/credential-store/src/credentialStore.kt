@@ -17,10 +17,13 @@ package com.intellij.credentialStore
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.EncryptionSupport
+import com.intellij.util.generateAesKey
 import org.jetbrains.io.toByteArray
 import java.nio.CharBuffer
 import java.security.MessageDigest
 import java.util.*
+import javax.crypto.spec.SecretKeySpec
 
 internal val LOG = Logger.getInstance(CredentialStore::class.java)
 
@@ -93,3 +96,15 @@ private fun parseString(data: String, delimiter: Char): List<String> {
 
 // check isEmpty before
 fun Credentials.serialize() = joinData(userName, password)!!
+
+fun SecureString(value: CharSequence) = SecureString(Charsets.UTF_8.encode(CharBuffer.wrap(value)).toByteArray())
+
+class SecureString(value: ByteArray) {
+  companion object {
+    private val encryptionSupport = EncryptionSupport(SecretKeySpec(generateAesKey(), "AES"))
+  }
+
+  private val data = encryptionSupport.encrypt(value)
+
+  fun get(clearable: Boolean = true) = OneTimeString(encryptionSupport.decrypt(data), clearable = clearable)
+}

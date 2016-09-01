@@ -124,7 +124,7 @@ class JGitCredentialsProvider(private val credentialsStore: Lazy<IcsCredentialsS
       }
     }
 
-    return credentials != null
+    return credentials.isFulfilled()
   }
 
   override fun reset(uri: URIish) {

@@ -30,6 +30,9 @@ class BuildOptions {
   public static final String USE_COMPILED_CLASSES_PROPERTY = "intellij.build.use.compiled.classes"
   boolean useCompiledClassesFromProjectOutput = SystemProperties.getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, false)
 
+  /**
+   * Specifies for which operating systems distributions should be built.
+   */
   String targetOS = System.getProperty("intellij.build.target.os", OS_ALL)
   static final String OS_LINUX = "linux"
   static final String OS_WINDOWS = "windows"

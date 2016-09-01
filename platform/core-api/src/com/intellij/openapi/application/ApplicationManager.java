@@ -22,7 +22,7 @@ import com.intellij.openapi.util.Getter;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Provides access to the <code>Application</code>.
+ * Provides access to the {@code Application}.
  */
 public class ApplicationManager {
   protected static Application ourApplication;
@@ -30,7 +30,7 @@ public class ApplicationManager {
   /**
    * Gets Application.
    *
-   * @return <code>Application</code>
+   * @return {@code Application}
    */
   public static Application getApplication() {
     return ourApplication;

@@ -63,10 +63,10 @@ public class LaterInvocator {
     @NotNull private final Condition<?> expired;
     @NotNull private final ActionCallback callback;
 
-    public RunnableInfo(@NotNull Runnable runnable,
-                        @NotNull ModalityState modalityState,
-                        @NotNull Condition<?> expired,
-                        @NotNull ActionCallback callback) {
+    RunnableInfo(@NotNull Runnable runnable,
+                 @NotNull ModalityState modalityState,
+                 @NotNull Condition<?> expired,
+                 @NotNull ActionCallback callback) {
       this.runnable = runnable;
       this.modalityState = modalityState;
       this.expired = expired;

@@ -45,7 +45,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class FindUsagesTest extends PsiTestCase{
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -102,6 +101,17 @@ public class FindUsagesTest extends PsiTestCase{
     PsiMethod usedMethod = ctrs[1];
     assertEquals(1, usedMethod.getParameterList().getParametersCount());
     assertEquals(1, ReferencesSearch.search(usedMethod).findAll().size());
+  }
+
+  public void testImplicitVarArgsConstructorsUsage() throws Throwable {
+    PsiMethod[] ctrs = myJavaFacade.findClass("A1", GlobalSearchScope.allScope(myProject)).getConstructors();
+    PsiMethod usedCtr = ctrs[0];
+    assertEquals("java.lang.String", ((PsiEllipsisType)usedCtr.getParameterList().getParameters()[0].getType()).getComponentType().getCanonicalText());
+    assertEquals(1, ReferencesSearch.search(usedCtr).findAll().size());
+
+    PsiMethod unusedCtr = ctrs[1];
+    assertEquals("java.lang.Object", ((PsiEllipsisType)unusedCtr.getParameterList().getParameters()[0].getType()).getComponentType().getCanonicalText());
+    assertEquals(0, ReferencesSearch.search(unusedCtr).findAll().size());
   }
 
   private static void addReference(PsiReference ref, ArrayList<PsiFile> filesList, IntArrayList startsList, IntArrayList endsList) {
