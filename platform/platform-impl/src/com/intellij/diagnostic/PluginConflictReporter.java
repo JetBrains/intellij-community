@@ -34,7 +34,8 @@ public enum PluginConflictReporter {
     boolean hasConflictWithPlatform = false;
 
     if (conflictingClasses.size() < 2) {
-      throw new IllegalArgumentException("One should provide at least two conflicting classes to report");
+      Logger.getInstance(PluginConflictReporter.class).warn("One should provide at least two conflicting classes to report");
+      return;
     }
 
     for (Class<?> aClass : conflictingClasses) {
