@@ -140,7 +140,7 @@ public abstract class ControlFlowStatementVisitorBase extends BaseInspectionVisi
     }
   }
 
-  private boolean isHighlightOnlyKeyword(PsiElement element) {
+  protected boolean isHighlightOnlyKeyword(@NotNull PsiElement element) {
     if (!isOnTheFly()) {
       return true;
     }
