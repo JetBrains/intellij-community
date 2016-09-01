@@ -15,6 +15,7 @@
  */
 package com.intellij.updater;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import org.junit.Test;
 
@@ -23,27 +24,28 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileLock;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Function;
 
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
 
 public class PatchTest extends PatchTestCase {
   @Test
   public void testDigestFiles() throws Exception {
     Patch patch = createPatch();
     Map<String, Long> checkSums = patch.digestFiles(getDataDir(), Collections.emptyList(), false, TEST_UI);
-    assertEquals(11, checkSums.size());
+    assertThat(checkSums.size()).isEqualTo(11);
   }
 
   @Test
   public void testBasics() throws Exception {
     Patch patch = createPatch();
-    assertThat(patch.getActions()).containsOnly(
-      new CreateAction(patch, "newDir/newFile.txt"),
+    assertThat(sortActions(patch.getActions())).containsExactly(
+      new DeleteAction(patch, "bin/idea.bat", CHECKSUMS.IDEA_BAT),
       new CreateAction(patch, "newDir/"),
+      new CreateAction(patch, "newDir/newFile.txt"),
       new UpdateAction(patch, "Readme.txt", CHECKSUMS.README_TXT),
       new UpdateZipAction(patch, "lib/annotations.jar",
                           Collections.singletonList("org/jetbrains/annotations/NewClass.class"),
@@ -54,8 +56,7 @@ public class PatchTest extends PatchTestCase {
                           Collections.emptyList(),
                           Collections.emptyList(),
                           Collections.singletonList("com/intellij/ide/ClassloaderUtil.class"),
-                          CHECKSUMS.BOOTSTRAP_JAR),
-      new DeleteAction(patch, "bin/idea.bat", CHECKSUMS.IDEA_BAT));
+                          CHECKSUMS.BOOTSTRAP_JAR));
   }
 
   @Test
@@ -66,9 +67,9 @@ public class PatchTest extends PatchTestCase {
       .setIgnoredFiles(Arrays.asList("Readme.txt", "bin/idea.bat"));
     Patch patch = new Patch(spec, TEST_UI);
 
-    assertThat(patch.getActions()).containsOnly(
-      new CreateAction(patch, "newDir/newFile.txt"),
+    assertThat(sortActions(patch.getActions())).containsExactly(
       new CreateAction(patch, "newDir/"),
+      new CreateAction(patch, "newDir/newFile.txt"),
       new UpdateZipAction(patch, "lib/annotations.jar",
                           Collections.singletonList("org/jetbrains/annotations/NewClass.class"),
                           Collections.singletonList("org/jetbrains/annotations/Nullable.class"),
@@ -93,7 +94,17 @@ public class PatchTest extends PatchTestCase {
     FileUtil.writeToFile(new File(myOlderDir, "lib/annotations.jar"), "changed");
     FileUtil.delete(new File(myOlderDir, "lib/bootstrap.jar"));
 
-    assertThat(patch.validate(myOlderDir, TEST_UI)).containsOnly(
+    assertThat(sortResults(patch.validate(myOlderDir, TEST_UI))).containsExactly(
+      new ValidationResult(ValidationResult.Kind.CONFLICT,
+                           "bin/idea.bat",
+                           ValidationResult.Action.DELETE,
+                           ValidationResult.MODIFIED_MESSAGE,
+                           ValidationResult.Option.DELETE, ValidationResult.Option.KEEP),
+      new ValidationResult(ValidationResult.Kind.CONFLICT,
+                           "newDir/",
+                           ValidationResult.Action.CREATE,
+                           ValidationResult.ALREADY_EXISTS_MESSAGE,
+                           ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP),
       new ValidationResult(ValidationResult.Kind.CONFLICT,
                            "newDir/newFile.txt",
                            ValidationResult.Action.CREATE,
@@ -113,19 +124,39 @@ public class PatchTest extends PatchTestCase {
                            "lib/bootstrap.jar",
                            ValidationResult.Action.UPDATE,
                            ValidationResult.ABSENT_MESSAGE,
-                           ValidationResult.Option.IGNORE),
-      new ValidationResult(ValidationResult.Kind.CONFLICT,
-                           "bin/idea.bat",
-                           ValidationResult.Action.DELETE,
-                           ValidationResult.MODIFIED_MESSAGE,
-                           ValidationResult.Option.DELETE, ValidationResult.Option.KEEP));
+                           ValidationResult.Option.IGNORE));
+  }
+
+  @Test
+  public void testValidatingCaseOnlyRename() throws Exception {
+    Patch patch = createCaseOnlyRenamePatch();
+    assertThat(patch.validate(myOlderDir, TEST_UI)).isEmpty();
+  }
+
+  @Test
+  public void testValidatingCaseOnlyRenameWithConflict() throws Exception {
+    Patch patch = createCaseOnlyRenamePatch();
+    FileUtil.writeToFile(new File(myOlderDir, "bin/IDEA.bat"), FileUtil.loadFileBytes(new File(myOlderDir, "bin/idea.bat")));
+
+    List<ValidationResult> results = patch.validate(myOlderDir, TEST_UI);
+    if (SystemInfo.isFileSystemCaseSensitive) {
+      assertThat(results).containsExactly(
+        new ValidationResult(ValidationResult.Kind.CONFLICT,
+                             "bin/IDEA.bat",
+                             ValidationResult.Action.CREATE,
+                             ValidationResult.ALREADY_EXISTS_MESSAGE,
+                             ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP));
+    }
+    else {
+      assertThat(results).isEmpty();
+    }
   }
 
   @Test
   public void testValidationWithOptionalFiles() throws Exception {
     Patch patch1 = createPatch();
     FileUtil.writeToFile(new File(myOlderDir, "lib/annotations.jar"), "changed");
-    assertThat(patch1.validate(myOlderDir, TEST_UI)).containsOnly(
+    assertThat(patch1.validate(myOlderDir, TEST_UI)).containsExactly(
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "lib/annotations.jar",
                            ValidationResult.Action.UPDATE,
@@ -146,11 +177,13 @@ public class PatchTest extends PatchTestCase {
     Patch patch = createPatch();
     File f = new File(myOlderDir, "Readme.txt");
     try (FileOutputStream s = new FileOutputStream(f, true); FileLock ignored = s.getChannel().lock()) {
-      String message = UtilsTest.mIsWindows ? System.getProperty("java.vm.name").contains("OpenJDK")
-                                              ? "Locked by: OpenJDK Platform binary" : "Locked by: Java(TM) Platform SE binary"
-                                            : ValidationResult.ACCESS_DENIED_MESSAGE;
+      String message = UtilsTest.mIsWindows
+                       ? System.getProperty("java.vm.name").contains("OpenJDK")
+                         ? "Locked by: OpenJDK Platform binary"
+                         : "Locked by: Java(TM) Platform SE binary"
+                       : ValidationResult.ACCESS_DENIED_MESSAGE;
       ValidationResult.Option option = UtilsTest.mIsWindows ? ValidationResult.Option.KILL_PROCESS : ValidationResult.Option.IGNORE;
-      assertThat(patch.validate(myOlderDir, TEST_UI)).containsOnly(
+      assertThat(patch.validate(myOlderDir, TEST_UI)).containsExactly(
         new ValidationResult(ValidationResult.Kind.ERROR,
                              "Readme.txt",
                              ValidationResult.Action.UPDATE,
@@ -167,7 +200,7 @@ public class PatchTest extends PatchTestCase {
       patch.write(out);
     }
     try (FileInputStream in = new FileInputStream(f)) {
-      assertEquals(patch.getActions(), new Patch(in).getActions());
+      assertThat(new Patch(in).getActions()).isEqualTo(patch.getActions());
     }
   }
 
@@ -176,5 +209,35 @@ public class PatchTest extends PatchTestCase {
       .setOldFolder(myOlderDir.getAbsolutePath())
       .setNewFolder(myNewerDir.getAbsolutePath());
     return new Patch(spec, TEST_UI);
+  }
+
+  private Patch createCaseOnlyRenamePatch() throws IOException, OperationCancelledException {
+    Patch patch = createPatch();
+    PatchAction action = patch.getActions().get(0);
+    assertThat(action).isInstanceOf(DeleteAction.class);
+    assertThat(action.getPath()).isEqualTo("bin/idea.bat");
+    patch.getActions().add(1, new CreateAction(patch, "bin/IDEA.bat")); // simulates rename "idea.bat" -> "IDEA.bat"
+    return patch;
+  }
+
+  private static List<PatchAction> sortActions(List<PatchAction> actions) {
+    return sort(actions, a -> a.getClass().getSimpleName().charAt(0), (a1, a2) -> a1.getPath().compareTo(a2.getPath()));
+  }
+
+  private static List<ValidationResult> sortResults(List<ValidationResult> results) {
+    return sort(results, r -> r.action, (r1, r2) -> r1.path.compareTo(r2.path));
+  }
+
+  private static <T> List<T> sort(List<T> list, Function<T, ?> classifier, Comparator<T> sorter) {
+    // splits the list into groups
+    Collection<List<T>> groups = list.stream().collect(groupingBy(classifier, LinkedHashMap::new, toList())).values();
+    // verifies the list is monotonic
+    List<T> joined = groups.stream().reduce(new ArrayList<>(list.size()), (acc, elements) -> { acc.addAll(elements); return acc; });
+    assertThat(list).isEqualTo(joined);
+    // sorts group elements by paths and joins groups back into a list
+    return groups.stream()
+      .map(elements -> elements.stream().sorted(sorter))
+      .flatMap(stream -> stream)
+      .collect(toList());
   }
 }
