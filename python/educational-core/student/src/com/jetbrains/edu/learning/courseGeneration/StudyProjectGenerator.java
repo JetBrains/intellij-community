@@ -138,7 +138,7 @@ public class StudyProjectGenerator {
   }
 
   @Nullable
-  private static Course readCourseFromCache(@NotNull File courseFile, boolean isAdaptive) {
+  protected static Course readCourseFromCache(@NotNull File courseFile, boolean isAdaptive) {
     Reader reader = null;
     try {
       reader = new InputStreamReader(new FileInputStream(courseFile), "UTF-8");

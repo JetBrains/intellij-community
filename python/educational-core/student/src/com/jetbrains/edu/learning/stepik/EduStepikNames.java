@@ -24,5 +24,5 @@ public class EduStepikNames {
   public static final String SECTIONS = "/sections/";
   public static final String ENROLLMENTS = "/enrollments";
   public static final String METRICS = "/metrics";
-  public static final String STEPIK_SIGN_IN_LINK = "https://stepik.org/accounts/signup/?next=/users/16516293/learn";
+  public static final String STEPIK_SIGN_IN_LINK = "https://stepic.org/registration?next=%2Fexplore%2Fcourses";
 }

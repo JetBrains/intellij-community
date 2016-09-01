@@ -89,9 +89,25 @@ public class StepikConnectorPost {
     if (statusLine.getStatusCode() != HttpStatus.SC_CREATED) {
       throw new IOException("Stepik returned non " + HttpStatus.SC_CREATED + " status code " + responseString);
     }
-    LOG.info("request "+requestBody);
-    LOG.info("response "+responseString);
+    //LOG.info("request "+requestBody);
+    //LOG.info("response "+responseString);
     return GSON.fromJson(responseString, container);
+  }
+
+  private static void postToStepikVoid(String link, final Class<?> container, String requestBody) throws IOException {
+    final HttpPost request = new HttpPost(EduStepikNames.STEPIK_API_URL + link);
+    request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
+
+    final CloseableHttpResponse response = StepikConnectorLogin.getHttpClient().execute(request);
+    final StatusLine statusLine = response.getStatusLine();
+    final HttpEntity responseEntity = response.getEntity();
+    final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
+    if (statusLine.getStatusCode() != HttpStatus.SC_CREATED) {
+      throw new IOException("Stepik returned non " + HttpStatus.SC_CREATED + " status code " + responseString);
+    }
+    //LOG.info("request "+requestBody);
+    //LOG.info("response "+responseString);
+    return;
   }
 
 
@@ -509,16 +525,17 @@ public class StepikConnectorPost {
     });
   }
 
-  public static StepikWrappers.Metric postMetric(StepikWrappers.Metric metric) {
+  public static void postMetric(StepikWrappers.MetricsWrapper metric) {
     String requestBody = GSON.toJson(metric);
     LOG.info(requestBody.toString());
     try {
-      //return postToStepik(EduStepikNames.METRICS, StepikWrappers.Metric.class, requestBody);
+//      postToStepikVoid(EduStepikNames.METRICS, StepikWrappers.MetricsWrapper.class, requestBody);
+//      return;
       throw new IOException();
     }
     catch (IOException e) {
       LOG.warn("Can't post a metric\n" + e.toString());
-      return null;
+      return;
     }
   }
 
