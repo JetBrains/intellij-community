@@ -34,7 +34,6 @@ public class Runner {
   private static final String PATCH_FILE_NAME = "patch-file.zip";
 
   public static void main(String[] args) throws Exception {
-
     String jarFile = getArgument(args, "jar");
     jarFile = jarFile == null ? resolveJarFile() : jarFile;
 
@@ -86,7 +85,8 @@ public class Runner {
 
       if ("install".equals(args[0])) {
         install(jarFile, destFolder);
-      } else {
+      }
+      else {
         apply(jarFile, destFolder);
       }
     }
@@ -224,25 +224,15 @@ public class Runner {
       logger.info("Packing JAR file: " + spec.getPatchFile() );
       ui.startProcess("Packing JAR file '" + spec.getPatchFile() + "'...");
 
-      FileOutputStream fileOut = new FileOutputStream(spec.getPatchFile());
-      try {
-        ZipOutputWrapper out = new ZipOutputWrapper(fileOut);
-        ZipInputStream in = new ZipInputStream(new FileInputStream(new File(spec.getJarFile())));
-        try {
-          ZipEntry e;
-          while ((e = in.getNextEntry()) != null) {
-            out.zipEntry(e, in);
-          }
-        }
-        finally {
-          in.close();
+      try (ZipOutputWrapper out = new ZipOutputWrapper(new FileOutputStream(spec.getPatchFile()));
+           ZipInputStream in = new ZipInputStream(new FileInputStream(new File(spec.getJarFile())))) {
+        ZipEntry e;
+        while ((e = in.getNextEntry()) != null) {
+          out.zipEntry(e, in);
         }
 
         out.zipFile(PATCH_FILE_NAME, tempPatchFile);
         out.finish();
-      }
-      finally {
-        fileOut.close();
       }
     }
     finally {
@@ -257,16 +247,14 @@ public class Runner {
     Utils.cleanup();
   }
 
-  private static void install(final String jarFile, final String destFolder) throws Exception {
-    new SwingUpdaterUI(new SwingUpdaterUI.InstallOperation() {
-                         public boolean execute(UpdaterUI ui) throws OperationCancelledException {
-                           logger.info("installing patch to the " + destFolder);
-                           return doInstall(jarFile, ui, destFolder);
-                         }
-                       });
+  private static void install(String jarFile, String destFolder) throws Exception {
+    new SwingUpdaterUI(ui -> {
+      logger.info("Installing patch to the " + destFolder);
+      return doInstall(jarFile, ui, destFolder);
+    });
   }
 
-  private static void apply(final String jarFile, final String destFolder) throws Exception {
+  private static void apply(String jarFile, String destFolder) throws Exception {
      logger.info("Applying patch to the " + destFolder);
      doInstall(jarFile, new ConsoleUpdaterUI(), destFolder);
   }
@@ -275,24 +263,14 @@ public class Runner {
     try {
       try {
         File patchFile = Utils.createTempFile();
-        ZipFile zipFile = new ZipFile(jarFile);
 
         logger.info("Extracting patch file...");
         ui.startProcess("Extracting patch file...");
         ui.setProgressIndeterminate();
-        try {
-          InputStream in = Utils.getEntryInputStream(zipFile, PATCH_FILE_NAME);
-          OutputStream out = new BufferedOutputStream(new FileOutputStream(patchFile));
-          try {
-            Utils.copyStream(in, out);
-          }
-          finally {
-            in.close();
-            out.close();
-          }
-        }
-        finally {
-          zipFile.close();
+        try (ZipFile zipFile = new ZipFile(jarFile);
+             InputStream in = Utils.getEntryInputStream(zipFile, PATCH_FILE_NAME);
+             OutputStream out = new BufferedOutputStream(new FileOutputStream(patchFile))) {
+          Utils.copyStream(in, out);
         }
 
         ui.checkCancelled();
