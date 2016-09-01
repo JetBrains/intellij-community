@@ -229,7 +229,7 @@ public class ExternalDiffToolUtil {
       if (settings.isMergeTrustExitCode()) {
         final Ref<Boolean> resultRef = new Ref<>();
 
-        ProgressManager.getInstance().run(new Task.Modal(project, "Waiting for external tool", true) {
+        ProgressManager.getInstance().run(new Task.Modal(project, "Waiting for External Tool", true) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             final Semaphore semaphore = new Semaphore(0);
@@ -266,7 +266,7 @@ public class ExternalDiffToolUtil {
         success = resultRef.get() == Boolean.TRUE;
       }
       else {
-        ProgressManager.getInstance().run(new Task.Modal(project, "Launching external tool", false) {
+        ProgressManager.getInstance().run(new Task.Modal(project, "Launching External Tool", false) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             indicator.setIndeterminate(true);

@@ -91,7 +91,7 @@ public class AnsiEscapeDecoder {
     int guardIndex = 0;
     boolean removalFromPrevTextAttempted = false;
     while (i < text.length()) {
-      LineSeparator lineSeparator = StringUtil.findStartingLineSeparator(text, i);
+      LineSeparator lineSeparator = StringUtil.getLineSeparatorAt(text, i);
       if (lineSeparator != null) {
         i += lineSeparator.getSeparatorString().length();
         result.append(lineSeparator.getSeparatorString());
