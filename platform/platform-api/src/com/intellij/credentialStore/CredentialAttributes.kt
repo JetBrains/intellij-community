@@ -40,8 +40,7 @@ class Credentials(user: String?, val password: OneTimeString? = null) {
 
   val userName = user.nullize()
 
-  @JvmOverloads
-  fun getPasswordAsString(clear: Boolean = true) = password?.toString(clear)
+  fun getPasswordAsString() = password?.toString()
 
   override fun equals(other: Any?): Boolean {
     if (other !is Credentials) return false
@@ -59,7 +58,7 @@ fun Credentials?.isEmpty() = this == null || (userName == null && password == nu
 
 // input will be cleared
 @JvmOverloads
-fun OneTimeString(value: ByteArray, offset: Int = 0, length: Int = value.size - offset): OneTimeString {
+fun OneTimeString(value: ByteArray, offset: Int = 0, length: Int = value.size - offset, clearable: Boolean = false): OneTimeString {
   if (length == 0) {
     return OneTimeString(ArrayUtil.EMPTY_CHAR_ARRAY)
   }
@@ -79,21 +78,28 @@ fun OneTimeString(value: ByteArray, offset: Int = 0, length: Int = value.size - 
   }
 
   value.fill(0, offset, offset + length)
-  return OneTimeString(charArray, 0, charBuffer.position())
+  return OneTimeString(charArray, 0, charBuffer.position(), clearable = clearable)
 }
 
-private val oneTimeStringEnabled = com.intellij.util.SystemProperties.getBooleanProperty("one.time.string.enabled", false)
-
+/**
+ * clearable only if specified explicitly.
+ *
+ * Case —
+ * 1) you create OneTimeString manually on user input.
+ * 2) you store it in CredentialStore
+ * 3) you consume it... BUT native credentials store do not store credentials immediately — write is postponed, so, will be an critical error.
+ *
+ * so, currently — only credentials store implementations should set this flag on get.
+ */
 @Suppress("EqualsOrHashCode")
-// todo - eliminate toString
-class OneTimeString @JvmOverloads constructor(value: CharArray, offset: Int = 0, length: Int = value.size) : CharArrayCharSequence(value, offset, offset + length) {
+class OneTimeString @JvmOverloads constructor(value: CharArray, offset: Int = 0, length: Int = value.size, private var clearable: Boolean = false) : CharArrayCharSequence(value, offset, offset + length) {
   private val consumed = AtomicReference<String?>()
 
   constructor(value: String): this(value.toCharArray()) {
   }
 
   private fun consume(willBeCleared: Boolean) {
-    if (!oneTimeStringEnabled) {
+    if (!clearable) {
       return
     }
 
@@ -105,11 +111,11 @@ class OneTimeString @JvmOverloads constructor(value: CharArray, offset: Int = 0,
     }
   }
 
-  @JvmOverloads
-  fun toString(clear: Boolean = true): String {
+  fun toString(clear: Boolean = false): String {
     consume(clear)
-    // todo clear
-    return super.toString()
+    val result = super.toString()
+    clear()
+    return result
   }
 
   // string will be cleared and not valid after
@@ -118,18 +124,33 @@ class OneTimeString @JvmOverloads constructor(value: CharArray, offset: Int = 0,
     consume(clear)
 
     val result = Charsets.UTF_8.encode(CharBuffer.wrap(myChars, myStart, length))
-    if (clear && oneTimeStringEnabled) {
-      myChars.fill('\u0000', myStart, myEnd)
+    if (clear) {
+      clear()
     }
     return result.toByteArray()
+  }
+
+  private fun clear() {
+    if (clearable) {
+      myChars.fill('\u0000', myStart, myEnd)
+    }
   }
 
   @JvmOverloads
   fun toCharArray(clear: Boolean = true): CharArray {
     consume(clear)
-    // todo clear
-    return chars
+    if (clear) {
+      val result = CharArray(length)
+      getChars(result, 0)
+      clear()
+      return result
+    }
+    else {
+      return chars
+    }
   }
+
+  fun clone(clear: Boolean, clearable: Boolean) = OneTimeString(toCharArray(clear), clearable = clearable)
 
   override fun equals(other: Any?): Boolean {
     if (other is CharSequence) {
