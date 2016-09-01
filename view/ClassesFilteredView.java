@@ -2,7 +2,6 @@ package org.jetbrains.debugger.memory.view;
 
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
@@ -231,7 +230,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
         if (type != null && !myTrackedClasses.containsKey(ref) && !myConstructorTrackedClasses.containsKey(ref)) {
           if (type == TrackingType.CREATION) {
             myConstructorTrackedClasses.put(ref,
-                new ConstructorInstancesTracker(ref, (DebugProcessImpl) myDebugProcess));
+                new ConstructorInstancesTracker(ref, myDebugSession));
           } else {
             List<ObjectReference> instances = ref.instances(0);
             myTrackedClasses.put(ref, InstanceTrackingStrategy.create(ref, suspendContext, type, instances));
