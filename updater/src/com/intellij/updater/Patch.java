@@ -281,12 +281,12 @@ public class Patch {
       ValidationResult result = action.validate(toDir);
 
       if (action instanceof DeleteAction) {
-        deletedPaths.add(action.getPath().toLowerCase(Locale.getDefault()));
+        deletedPaths.add(mapPath(action.getPath()));
       }
       else if (action instanceof CreateAction &&
                result != null &&
                ValidationResult.ALREADY_EXISTS_MESSAGE.equals(result.message) &&
-               deletedPaths.contains(action.getPath().toLowerCase(Locale.getDefault()))) {
+               deletedPaths.contains(mapPath(action.getPath()))) {
         // create action + the same element was deleted + validated as already exists
         result = null;
       }
@@ -295,6 +295,10 @@ public class Patch {
     });
 
     return results;
+  }
+
+  private static String mapPath(String path) {
+    return Runner.isCaseSensitiveFs() ? path : path.toLowerCase(Locale.getDefault());
   }
 
   public ApplicationResult apply(ZipFile patchFile,

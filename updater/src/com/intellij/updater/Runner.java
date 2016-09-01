@@ -33,6 +33,12 @@ public class Runner {
   public static Logger logger = null;
   private static final String PATCH_FILE_NAME = "patch-file.zip";
 
+  private static boolean ourCaseSensitiveFs;
+
+  public static boolean isCaseSensitiveFs() {
+    return ourCaseSensitiveFs;
+  }
+
   public static void main(String[] args) throws Exception {
     String jarFile = getArgument(args, "jar");
     jarFile = jarFile == null ? resolveJarFile() : jarFile;
@@ -43,6 +49,8 @@ public class Runner {
       String oldFolder = args[3];
       String newFolder = args[4];
       String patchFile = args[5];
+
+      checkCaseSensitivity(newFolder);
       initLogger();
 
       // See usage for an explanation of these flags
@@ -80,8 +88,10 @@ public class Runner {
     }
     else if (args.length >= 2 && ("install".equals(args[0]) || "apply".equals(args[0]))) {
       String destFolder = args[1];
+      checkCaseSensitivity(destFolder);
+
       initLogger();
-      logger.info("destFolder: " + destFolder);
+      logger.info("destFolder: " + destFolder + ", case-sensitive: " + ourCaseSensitiveFs);
 
       if ("install".equals(args[0])) {
         install(jarFile, destFolder);
@@ -93,6 +103,10 @@ public class Runner {
     else {
       printUsage();
     }
+  }
+
+  public static void checkCaseSensitivity(String path) {
+    ourCaseSensitiveFs = new File(path.toUpperCase()).exists() != new File(path.toLowerCase()).exists();
   }
 
   private static Map<String, String> buildWarningMap(List<String> warnings) {

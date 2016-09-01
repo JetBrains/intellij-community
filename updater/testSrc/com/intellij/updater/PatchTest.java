@@ -15,6 +15,7 @@
  */
 package com.intellij.updater;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import org.junit.Test;
 
@@ -127,6 +128,31 @@ public class PatchTest extends PatchTestCase {
   }
 
   @Test
+  public void testValidatingCaseOnlyRename() throws Exception {
+    Patch patch = createCaseOnlyRenamePatch();
+    assertThat(patch.validate(myOlderDir, TEST_UI)).isEmpty();
+  }
+
+  @Test
+  public void testValidatingCaseOnlyRenameWithConflict() throws Exception {
+    Patch patch = createCaseOnlyRenamePatch();
+    FileUtil.writeToFile(new File(myOlderDir, "bin/IDEA.bat"), FileUtil.loadFileBytes(new File(myOlderDir, "bin/idea.bat")));
+
+    List<ValidationResult> results = patch.validate(myOlderDir, TEST_UI);
+    if (SystemInfo.isFileSystemCaseSensitive) {
+      assertThat(results).containsExactly(
+        new ValidationResult(ValidationResult.Kind.CONFLICT,
+                             "bin/IDEA.bat",
+                             ValidationResult.Action.CREATE,
+                             ValidationResult.ALREADY_EXISTS_MESSAGE,
+                             ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP));
+    }
+    else {
+      assertThat(results).isEmpty();
+    }
+  }
+
+  @Test
   public void testValidationWithOptionalFiles() throws Exception {
     Patch patch1 = createPatch();
     FileUtil.writeToFile(new File(myOlderDir, "lib/annotations.jar"), "changed");
@@ -183,6 +209,15 @@ public class PatchTest extends PatchTestCase {
       .setOldFolder(myOlderDir.getAbsolutePath())
       .setNewFolder(myNewerDir.getAbsolutePath());
     return new Patch(spec, TEST_UI);
+  }
+
+  private Patch createCaseOnlyRenamePatch() throws IOException, OperationCancelledException {
+    Patch patch = createPatch();
+    PatchAction action = patch.getActions().get(0);
+    assertThat(action).isInstanceOf(DeleteAction.class);
+    assertThat(action.getPath()).isEqualTo("bin/idea.bat");
+    patch.getActions().add(1, new CreateAction(patch, "bin/IDEA.bat")); // simulates rename "idea.bat" -> "IDEA.bat"
+    return patch;
   }
 
   private static List<PatchAction> sortActions(List<PatchAction> actions) {
