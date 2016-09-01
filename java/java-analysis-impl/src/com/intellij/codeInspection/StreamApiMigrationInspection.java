@@ -587,16 +587,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   }
 
   private static PsiIfStatement extractIfStatement(PsiStatement body) {
-    PsiIfStatement ifStmt = null;
-    if (body instanceof PsiIfStatement) {
-      ifStmt = (PsiIfStatement)body;
-    }
-    else if (body instanceof PsiBlockStatement) {
-      final PsiStatement[] statements = ((PsiBlockStatement)body).getCodeBlock().getStatements();
-      if (statements.length == 1 && statements[0] instanceof PsiIfStatement) {
-        ifStmt = (PsiIfStatement)statements[0];
-      }
-    }
+    PsiIfStatement ifStmt = getStatementOfClass(body, PsiIfStatement.class);
     if (ifStmt != null && ifStmt.getElseBranch() == null && ifStmt.getCondition() != null) {
       final PsiStatement thenBranch = ifStmt.getThenBranch();
       if (thenBranch != null) {
@@ -606,22 +597,13 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     }
     return null;
   }
-  
+
   private static PsiMethodCallExpression extractAddCall(PsiStatement body, PsiIfStatement ifStatement) {
     if (ifStatement != null) {
       final PsiStatement thenBranch = ifStatement.getThenBranch();
       return extractAddCall(thenBranch, null);
     }
-    PsiExpressionStatement stmt = null;
-    if (body instanceof PsiBlockStatement) {
-      final PsiStatement[] statements = ((PsiBlockStatement)body).getCodeBlock().getStatements();
-      if (statements.length == 1 && statements[0] instanceof PsiExpressionStatement) {
-        stmt = (PsiExpressionStatement)statements[0];
-      }
-    }
-    else if (body instanceof PsiExpressionStatement) {
-      stmt = (PsiExpressionStatement)body;
-    }
+    PsiExpressionStatement stmt = getStatementOfClass(body, PsiExpressionStatement.class);
 
     if (stmt != null) {
       final PsiExpression expression = stmt.getExpression();
@@ -630,5 +612,25 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       }
     }
     return null;
+  }
+
+  /**
+   * Casts given statement to the wanted class unwrapping braces if necessary.
+   *
+   * @param body statement
+   * @param wantedClass wanted class (should not be {@link PsiBlockStatement})
+   * @param <T> resulting type
+   * @return supplied body statement cast to wanted class or inner statement if it's code block,
+   * which contains single statement of wanted class. Otherwise returns null.
+   */
+  @Nullable
+  private static <T extends PsiStatement> T getStatementOfClass(PsiStatement body, @NotNull Class<T> wantedClass) {
+    PsiStatement stmt = body;
+    while (stmt instanceof PsiBlockStatement) {
+      PsiStatement[] statements = ((PsiBlockStatement)body).getCodeBlock().getStatements();
+      if(statements.length != 1) return null;
+      stmt = statements[0];
+    }
+    return wantedClass.isInstance(stmt) ? wantedClass.cast(stmt) : null;
   }
 }
