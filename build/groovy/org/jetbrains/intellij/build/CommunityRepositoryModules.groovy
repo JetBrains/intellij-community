@@ -177,6 +177,7 @@ class CommunityRepositoryModules {
     plugin("course-creator-python"),
     plugin("ipnb"),
     plugin("IntelliLang-python"),
-    plugin("python-rest")
+    plugin("python-rest"),
+    plugin("python-terminal")
   ]
 }
