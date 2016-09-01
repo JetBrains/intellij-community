@@ -26,6 +26,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.UI;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -87,17 +88,7 @@ class CommitPanel extends JBPanel {
     myDataPanel = new DataPanel(myLogData.getProject());
     myBranchesPanel = new BranchesPanel();
 
-    JBPanel rootPanel = new JBPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0)) {
-      @Override
-      public Color getBackground() {
-        return getCommitDetailsBackground();
-      }
-    };
-    rootPanel.setOpaque(false);
-    rootPanel.setBorder(JBUI.Borders.emptyRight(5));
-    rootPanel.add(myRootPanel);
-
-    add(rootPanel);
+    add(myRootPanel);
     add(myDataPanel);
     add(myReferencesPanel);
     add(myBranchesPanel);
@@ -582,6 +573,7 @@ class CommitPanel extends JBPanel {
   }
 
   private static class RootPanel extends JPanel {
+    private static final int RIGHT_BORDER = 5;
     @NotNull private final TextLabelPainter myLabelPainter;
     @NotNull private String myText = "";
     @NotNull private Color myColor = getCommitDetailsBackground();
@@ -620,7 +612,22 @@ class CommitPanel extends JBPanel {
     @Override
     protected void paintComponent(Graphics g) {
       if (!myText.isEmpty()) {
-        myLabelPainter.paint((Graphics2D)g, myText, 0, 0, myColor);
+        Dimension painterSize = myLabelPainter.calculateSize(myText, getFontMetrics(getLabelFont()));
+        JBScrollPane scrollPane = UIUtil.getParentOfType(JBScrollPane.class, this);
+        int width;
+        if (scrollPane == null) {
+          width = getWidth();
+        }
+        else {
+          Rectangle rect = scrollPane.getViewport().getViewRect();
+          JScrollBar verticalScrollBar = scrollPane.getVerticalScrollBar();
+          width = rect.x + rect.width;
+          if (verticalScrollBar.isVisible()) {
+            width -= verticalScrollBar.getWidth();
+          }
+        }
+        getWidth();
+        myLabelPainter.paint((Graphics2D)g, myText, width - painterSize.width - JBUI.scale(RIGHT_BORDER), 0, myColor);
       }
     }
 
@@ -630,9 +637,15 @@ class CommitPanel extends JBPanel {
     }
 
     @Override
+    public Dimension getMinimumSize() {
+      return getPreferredSize();
+    }
+
+    @Override
     public Dimension getPreferredSize() {
       if (myText.isEmpty()) return new JBDimension(0, TOP_BORDER);
-      return myLabelPainter.calculateSize(myText, getFontMetrics(getLabelFont()));
+      Dimension size = myLabelPainter.calculateSize(myText, getFontMetrics(getLabelFont()));
+      return new Dimension(size.width + JBUI.scale(RIGHT_BORDER), size.height);
     }
 
     @Override
