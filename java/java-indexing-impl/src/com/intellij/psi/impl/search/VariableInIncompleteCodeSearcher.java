@@ -64,7 +64,7 @@ public class VariableInIncompleteCodeSearcher extends QueryExecutorBase<PsiRefer
 
     PsiSearchHelper.SERVICE.getInstance(p.getProject()).processElementsWithWord((element, offsetInElement) -> {
       for (PsiElement child = element.findElementAt(offsetInElement); child != null; child = child.getParent()) {
-        if (!name.equals(child.getText())) {
+        if (!child.textMatches(name)) {
           break;
         }
         if (child instanceof PsiJavaCodeReferenceElement) {

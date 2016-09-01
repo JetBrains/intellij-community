@@ -390,7 +390,9 @@ class ContractInferenceInterpreter {
 
   static int resolveParameter(@Nullable PsiExpression expr, PsiMethod method) {
     if (expr instanceof PsiReferenceExpression && !((PsiReferenceExpression)expr).isQualified()) {
-      String name = expr.getText();
+      String name = ((PsiReferenceExpression)expr).getReferenceName();
+      if (name == null) return -1;
+
       PsiParameter[] parameters = method.getParameterList().getParameters();
       for (int i = 0; i < parameters.length; i++) {
         if (name.equals(parameters[i].getName())) {

@@ -22,7 +22,6 @@ import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
@@ -30,8 +29,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * @author cdr
@@ -60,13 +57,8 @@ public class EditInspectionToolsSettingsInSuppressedPlaceIntention implements In
       for (InspectionExtensionsFactory factory : Extensions.getExtensions(InspectionExtensionsFactory.EP_NAME)) {
         final String suppressedIds = factory.getSuppressedInspectionIdsIn(element);
         if (suppressedIds != null) {
-          String text = element.getText();
-          List<String> ids = StringUtil.split(suppressedIds, ",");
-          for (String id : ids) {
-            int i = text.indexOf(id);
-            if (i == -1) continue;
-            int idOffset = element.getTextRange().getStartOffset() + i;
-            if (TextRange.from(idOffset, id.length()).contains(offset)) {
+          for (String id : StringUtil.split(suppressedIds, ",")) {
+            if (isCaretOnSuppressedId(file, offset, id)) {
               return id;
             }
           }
@@ -75,6 +67,12 @@ public class EditInspectionToolsSettingsInSuppressedPlaceIntention implements In
       element = element.getParent();
     }
     return null;
+  }
+
+  private static boolean isCaretOnSuppressedId(PsiFile file, int caretOffset, String suppressedId) {
+    CharSequence fileText = file.getViewProvider().getContents();
+    CharSequence vicinity = fileText.subSequence(caretOffset - suppressedId.length(), caretOffset + suppressedId.length());
+    return StringUtil.indexOf(vicinity, suppressedId) >= 0;
   }
 
   @Override
