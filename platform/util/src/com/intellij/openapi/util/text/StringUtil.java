@@ -3155,13 +3155,13 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Nullable
-  public static LineSeparator getLineSeparatorAt(@NotNull CharSequence text, int startIndex) {
-    if (startIndex < 0 || startIndex >= text.length()) {
+  public static LineSeparator getLineSeparatorAt(@NotNull CharSequence text, int index) {
+    if (index < 0 || index >= text.length()) {
       return null;
     }
-    char ch = text.charAt(startIndex);
+    char ch = text.charAt(index);
     if (ch == '\r') {
-      return startIndex + 1 < text.length() && text.charAt(startIndex + 1) == '\n' ? LineSeparator.CRLF : LineSeparator.CR;
+      return index + 1 < text.length() && text.charAt(index + 1) == '\n' ? LineSeparator.CRLF : LineSeparator.CR;
     }
     return ch == '\n' ? LineSeparator.LF : null;
   }
