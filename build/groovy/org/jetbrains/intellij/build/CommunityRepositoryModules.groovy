@@ -149,9 +149,7 @@ class CommunityRepositoryModules {
       withOptionalModule("tasks-java")
       doNotCreateSeparateJarForLocalizableResources()
     },
-    plugin("terminal") {
-      withResource("lib/jediterm.in", "lib")
-    },
+    plugin("terminal"),
     plugin("editorconfig"),
     plugin("coverage"),
     plugin("yaml"),
