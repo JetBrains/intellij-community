@@ -429,7 +429,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
           }
         }
       }));
-    }, ModalityState.any());
+    }, ModalityState.defaultModalityState());
     return projectRef.get();
   }
 
