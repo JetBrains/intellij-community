@@ -73,7 +73,7 @@ class CodeStyleTest {
             var extra = parentElement!!.getChild(tagName)
             if (extra == null) {
               extra = Element(tagName)
-              parentElement!!.addContent(extra)
+              parentElement.addContent(extra)
             }
             
             val option = Element("option")
