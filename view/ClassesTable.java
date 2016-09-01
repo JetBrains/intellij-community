@@ -7,6 +7,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
@@ -21,7 +22,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.memory.component.InstancesTracker;
-import org.jetbrains.debugger.memory.event.InstancesTrackerListener;
 import org.jetbrains.debugger.memory.tracking.TrackerForNewInstances;
 import org.jetbrains.debugger.memory.tracking.TrackingType;
 import org.jetbrains.debugger.memory.utils.AbstractTableColumnDescriptor;
@@ -75,19 +75,6 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
     getEmptyText().setText(EMPTY_TABLE_CONTENT);
 
-    InstancesTracker tracker = InstancesTracker.getInstance(myDebugSession.getProject());
-    tracker.addTrackerListener(new InstancesTrackerListener() {
-      @Override
-      public void classChanged(@NotNull String name, @NotNull TrackingType type) {
-        getRowSorter().allRowsChanged();
-      }
-
-      @Override
-      public void classRemoved(@NotNull String name) {
-        getRowSorter().allRowsChanged();
-      }
-    }, this);
-
     TableColumn classesColumn = getColumnModel().getColumn(DiffViewTableModel.CLASSNAME_COLUMN_INDEX);
     TableColumn countColumn = getColumnModel().getColumn(DiffViewTableModel.COUNT_COLUMN_INDEX);
     TableColumn diffColumn = getColumnModel().getColumn(DiffViewTableModel.DIFF_COLUMN_INDEX);
@@ -139,6 +126,17 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     if (selectedRow != -1) {
       int ix = convertRowIndexToModel(selectedRow);
       return myElems.get(ix);
+    }
+
+    return null;
+  }
+
+  @Nullable
+  ReferenceType getClassByName(@NotNull String name) {
+    for(ReferenceType ref : myElems) {
+      if(name.equals(ref.name())) {
+        return ref;
+      }
     }
 
     return null;
@@ -211,7 +209,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
       ReferenceType selectedClass = getSelectedClass();
       if (selectedClass != null) {
         TrackerForNewInstances strategy = myParent.getStrategy(selectedClass);
-        if (strategy != null) {
+        if (strategy != null && strategy.isReady()) {
           List<ObjectReference> newInstances = strategy.getNewInstances();
           return (InstancesProvider) limit -> newInstances;
         }
@@ -359,7 +357,10 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
       TrackingType trackingType = getTrackingType(row);
       if (!isSelected && trackingType != null) {
-        setBackground(UIUtil.toAlpha(trackingType.color(), 20));
+        JBColor color = myParent.isTrackingActive(myElems.get(convertRowIndexToModel(row)))
+            ? trackingType.color()
+            : TrackingType.inactiveColor();
+        setBackground(UIUtil.toAlpha(color, 20));
       }
 
       long val = (long) value;
@@ -390,7 +391,10 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
       String presentation = value == null ? "null" : ((ReferenceType) value).name();
       TrackingType trackingType = getTrackingType(row);
       if (trackingType != null && !isSelected) {
-        setBackground(UIUtil.toAlpha(trackingType.color(), 20));
+        JBColor color = myParent.isTrackingActive(myElems.get(convertRowIndexToModel(row)))
+            ? trackingType.color()
+            : TrackingType.inactiveColor();
+        setBackground(UIUtil.toAlpha(color, 20));
       }
 
       append(" ");

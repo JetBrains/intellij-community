@@ -4,6 +4,7 @@ import com.intellij.debugger.engine.SuspendContextImpl;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,9 +13,10 @@ import java.util.List;
 public abstract class InstanceTrackingStrategy implements TrackerForNewInstances {
   @NotNull
   private List<ObjectReference> myNewInstances = new ArrayList<>();
+  private boolean myIsReady = false;
 
   public static InstanceTrackingStrategy create(@NotNull ReferenceType referenceType,
-                                                @NotNull SuspendContextImpl suspendContext,
+                                                @Nullable SuspendContextImpl suspendContext,
                                                 @NotNull TrackingType type,
                                                 @NotNull List<ObjectReference> init) {
     switch (type) {
@@ -36,6 +38,12 @@ public abstract class InstanceTrackingStrategy implements TrackerForNewInstances
 
   public final void update(@NotNull SuspendContextImpl suspendContext, @NotNull List<ObjectReference> references) {
     myNewInstances = updateImpl(suspendContext, references);
+    myIsReady = true;
+  }
+
+  @Override
+  public boolean isReady() {
+    return myIsReady;
   }
 
   @NotNull

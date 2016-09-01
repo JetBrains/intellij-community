@@ -12,12 +12,16 @@ import java.util.stream.Collectors;
 class HashBasedTracking extends InstanceTrackingStrategy {
   private final ReferenceType myClassType;
   private Set<Integer> myHashesSet;
+  private MyState myState = MyState.WAIT_HASHES;
 
-  HashBasedTracking(@NotNull SuspendContextImpl suspendContext,
+  HashBasedTracking(@Nullable SuspendContextImpl suspendContext,
                     @NotNull ReferenceType classType,
                     @NotNull List<ObjectReference> initialInstances) {
     myClassType = classType;
-    myHashesSet = toSetOfHashes(evalHashCodes(suspendContext, initialInstances));
+    if(suspendContext != null) {
+      myHashesSet = toSetOfHashes(evalHashCodes(suspendContext, initialInstances));
+      myState = myState.next();
+    }
   }
 
   @NotNull
@@ -35,7 +39,13 @@ class HashBasedTracking extends InstanceTrackingStrategy {
     }
 
     myHashesSet = toSetOfHashes(ref2hash);
+    myState = myState.next();
     return newInstances;
+  }
+
+  @Override
+  public boolean isReady() {
+    return myState == MyState.READY;
   }
 
   @NotNull
@@ -88,5 +98,27 @@ class HashBasedTracking extends InstanceTrackingStrategy {
         .filter(method -> method.argumentTypeNames().isEmpty())
         .findFirst()
         .orElseGet(null);
+  }
+
+  // WAIT_HASHES -> WAIT_UPDATE -> READY
+  enum MyState {
+    WAIT_HASHES {
+      @Override
+      public MyState next() {
+        return WAIT_UPDATE;
+      }
+    }, WAIT_UPDATE {
+      @Override
+      public MyState next() {
+        return READY;
+      }
+    }, READY {
+      @Override
+      public MyState next() {
+        return this;
+      }
+    };
+
+    public abstract MyState next();
   }
 }

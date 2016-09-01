@@ -4,7 +4,8 @@ import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 
 public enum TrackingType {
-  IDENTITY("Id Based Tracking", JBColor.yellow),
+
+  IDENTITY("Id Based Tracking",JBColor.yellow),
   HASH("Hash Based Tracking", JBColor.yellow),
   RETAIN("Retaining Reference Object Tracking", JBColor.yellow),
   CREATION("Track Constructors", JBColor.orange);
@@ -26,4 +27,6 @@ public enum TrackingType {
   public String description() {
     return myDescription;
   }
+
+  public static JBColor inactiveColor() { return JBColor.GRAY; }
 }
