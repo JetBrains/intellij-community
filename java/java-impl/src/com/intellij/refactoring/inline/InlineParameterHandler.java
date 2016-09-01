@@ -25,6 +25,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -87,36 +88,41 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
     final List<PsiReference> occurrences = Collections.synchronizedList(new ArrayList<PsiReference>());
     final Collection<PsiFile> containingFiles = Collections.synchronizedSet(new HashSet<PsiFile>());
     containingFiles.add(psiParameter.getContainingFile());
-    boolean result = ReferencesSearch.search(method).forEach(psiReference -> {
-      PsiElement element = psiReference.getElement();
-      final PsiElement parent = element.getParent();
-      if (parent instanceof PsiCallExpression) {
-        final PsiCallExpression methodCall = (PsiCallExpression)parent;
-        occurrences.add(psiReference);
-        containingFiles.add(element.getContainingFile());
-        final PsiExpression[] expressions = methodCall.getArgumentList().getExpressions();
-        if (expressions.length <= index) return false;
-        PsiExpression argument = expressions[index];
-        if (!refInitializer.isNull()) {
-          return argument != null
-                 && PsiEquivalenceUtil.areElementsEquivalent(refInitializer.get(), argument)
-                 && PsiEquivalenceUtil.areElementsEquivalent(refMethodCall.get(), methodCall);
-        }
-        if (InlineToAnonymousConstructorProcessor.isConstant(argument) || getReferencedFinalField(argument) != null) {
-          if (refConstantInitializer.isNull()) {
-            refConstantInitializer.set(argument);
+    boolean[] result = new boolean[1];
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      result[0] = ReferencesSearch.search(method).forEach(psiReference -> {
+        PsiElement element = psiReference.getElement();
+        final PsiElement parent = element.getParent();
+        if (parent instanceof PsiCallExpression) {
+          final PsiCallExpression methodCall = (PsiCallExpression)parent;
+          occurrences.add(psiReference);
+          containingFiles.add(element.getContainingFile());
+          final PsiExpression[] expressions = methodCall.getArgumentList().getExpressions();
+          if (expressions.length <= index) return false;
+          PsiExpression argument = expressions[index];
+          if (!refInitializer.isNull()) {
+            return argument != null
+                   && PsiEquivalenceUtil.areElementsEquivalent(refInitializer.get(), argument)
+                   && PsiEquivalenceUtil.areElementsEquivalent(refMethodCall.get(), methodCall);
           }
-          else if (!isSameConstant(argument, refConstantInitializer.get())) {
-            return false;
+          if (InlineToAnonymousConstructorProcessor.isConstant(argument) || getReferencedFinalField(argument) != null) {
+            if (refConstantInitializer.isNull()) {
+              refConstantInitializer.set(argument);
+            }
+            else if (!isSameConstant(argument, refConstantInitializer.get())) {
+              return false;
+            }
+          } else if (!isRecursiveReferencedParameter(argument, psiParameter)) {
+            if (!refConstantInitializer.isNull()) return false;
+            refInitializer.set(argument);
+            refMethodCall.set(methodCall);
           }
-        } else if (!isRecursiveReferencedParameter(argument, psiParameter)) {
-          if (!refConstantInitializer.isNull()) return false;
-          refInitializer.set(argument);
-          refMethodCall.set(methodCall);
         }
-      }
-      return true;
-    });
+        return true;
+      });
+    }, "Searching for Method Usages", true, project)) {
+      return;
+    }
     final PsiReference reference = TargetElementUtil.findReference(editor);
     final PsiReferenceExpression refExpr = reference instanceof PsiReferenceExpression ? ((PsiReferenceExpression)reference) : null;
     final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(refExpr, PsiCodeBlock.class);
@@ -153,7 +159,7 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
         .showErrorHint(project, editor, "Method has no usages", RefactoringBundle.message("inline.parameter.refactoring"), null);
       return;
     }
-    if (!result) {
+    if (!result[0]) {
       CommonRefactoringUtil.showErrorHint(project, editor, "Cannot find constant initializer for parameter", RefactoringBundle.message("inline.parameter.refactoring"), null);
       return;
     }
@@ -277,6 +283,10 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
     if (method.findSuperMethods().length > 0 ||
         OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY).length > 0) {
       return RefactoringBundle.message("inline.parameter.error.hierarchy");
+    }
+
+    if (!method.getManager().isInProject(method)) {
+      return "Inline is not supported for non-project methods";
     }
     return null;
   }
