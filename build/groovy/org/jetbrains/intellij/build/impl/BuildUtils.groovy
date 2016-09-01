@@ -18,9 +18,10 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileStatic
+import org.apache.tools.ant.BuildException
 import org.apache.tools.ant.Main
 import org.apache.tools.ant.Project
-import org.codehaus.gant.GantBinding
+import org.codehaus.groovy.tools.RootLoader
 
 /**
  * @author nik
@@ -28,13 +29,29 @@ import org.codehaus.gant.GantBinding
 @CompileStatic
 class BuildUtils {
   static void addToClassPath(String path, AntBuilder ant) {
-    def classLoader = (GroovyClassLoader)BuildUtils.class.classLoader
+    addToClassLoaderClassPath(path, ant, BuildUtils.class.classLoader)
+  }
+
+  static void addToJpsClassPath(String path, AntBuilder ant) {
+    //we need to add path to classloader of BuilderService to ensure that classes from that path will be returned by JpsServiceManager.getExtensions
+    addToClassLoaderClassPath(path, ant, Class.forName("org.jetbrains.jps.incremental.BuilderService").classLoader)
+  }
+
+  private static void addToClassLoaderClassPath(String path, AntBuilder ant, ClassLoader classLoader) {
     if (new File(path).exists()) {
+      if (classLoader instanceof GroovyClassLoader) {
+        classLoader.addClasspath(path)
+      }
+      else if (classLoader instanceof RootLoader) {
+        classLoader.addURL(new File(path).toURI().toURL())
+      }
+      else {
+        throw new BuildException("Cannot add to classpath: non-groovy classloader $classLoader")
+      }
       ant.project.log("'$path' added to classpath", Project.MSG_INFO)
-      classLoader.addClasspath(path)
     }
     else {
-      ant.project.log("Cannot add to classpath: $path doesn't exist", Project.MSG_WARN)
+      throw new BuildException("Cannot add to classpath: $path doesn't exist")
     }
   }
 
