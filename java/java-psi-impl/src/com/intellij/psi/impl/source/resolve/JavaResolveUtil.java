@@ -24,11 +24,17 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.DummyHolderFactory;
+import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.java.PsiExpressionListImpl;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -269,5 +275,22 @@ public class JavaResolveUtil {
     ResolveResult[] results = ResolveCache.getInstance(project).resolveWithCaching(ref, resolver, needToPreventRecursion, incompleteCode,
                                                                                    containingFile);
     return results.length == 0 ? JavaResolveResult.EMPTY_ARRAY : (JavaResolveResult[])results;
+  }
+
+  /**
+   * @return the constructor (or a class if there are none)
+   * which the "{@code super();}" no-args call resolves to if inserted in the {@code place} (typically it would be inserted in the sub class constructor)
+   * No code modifications happen in this method; it's used for resolving multiple overloaded constructors.
+   */
+  public static PsiElement resolveImaginarySuperCallInThisPlace(@NotNull PsiMember place,
+                                                                @NotNull Project project,
+                                                                @NotNull PsiClass superClassWhichTheSuperCallMustResolveTo) {
+    PsiExpressionListImpl expressionList = new PsiExpressionListImpl();
+    final DummyHolder result = DummyHolderFactory.createHolder(PsiManager.getInstance(project), place);
+    final FileElement holder = result.getTreeElement();
+    holder.rawAddChildren((TreeElement)expressionList.getNode());
+
+    return PsiResolveHelper.SERVICE.getInstance(project)
+      .resolveConstructor(PsiTypesUtil.getClassType(superClassWhichTheSuperCallMustResolveTo), expressionList, place).getElement();
   }
 }
