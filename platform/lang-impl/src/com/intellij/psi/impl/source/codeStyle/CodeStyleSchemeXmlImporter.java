@@ -72,9 +72,9 @@ public class CodeStyleSchemeXmlImporter extends CodeStyleSettingsLoader implemen
 
   private CodeStyleScheme readSchemeFromDom(@NotNull Element rootElement, @NotNull CodeStyleScheme scheme)
     throws SchemeImportException {
-    CodeStyleSettings defaultSettings = new CodeStyleSettings();
-    scheme.getCodeStyleSettings().setParentSettings(defaultSettings);
-    loadSettings(rootElement, scheme.getCodeStyleSettings());
+    CodeStyleSettings newSettings = new CodeStyleSettings();
+    loadSettings(rootElement, newSettings);
+    ((CodeStyleSchemeImpl)scheme).setCodeStyleSettings(newSettings);
     return scheme;
   }
 

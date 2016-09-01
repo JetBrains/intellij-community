@@ -103,7 +103,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
 
       @Override
       public void schemeChanged(final CodeStyleScheme scheme) {
-        ensurePanel(scheme).reset();
+        ensurePanel(scheme).reset(scheme.getCodeStyleSettings());
       }
     });
 
@@ -211,7 +211,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
     String name = scheme.getName();
     if (!mySettingsPanels.containsKey(name)) {
       NewCodeStyleSettingsPanel panel = myFactory.createPanel(scheme);
-      panel.reset();
+      panel.reset(scheme.getCodeStyleSettings());
       panel.setModel(myModel);
       CodeStyleAbstractPanel settingsPanel = panel.getSelectedPanel();
       if (settingsPanel instanceof TabbedLanguageCodeStylePanel) {
