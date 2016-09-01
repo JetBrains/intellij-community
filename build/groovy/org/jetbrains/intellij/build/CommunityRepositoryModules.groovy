@@ -150,7 +150,7 @@ class CommunityRepositoryModules {
       doNotCreateSeparateJarForLocalizableResources()
     },
     plugin("terminal") {
-      withResource("lib/jediterm.in", "lib")
+      withResource("lib/jediterm-sh.in", "lib")
     },
     plugin("editorconfig"),
     plugin("coverage"),
