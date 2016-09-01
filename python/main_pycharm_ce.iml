@@ -21,5 +21,6 @@
     <orderEntry type="module" module-name="ShortcutPromoter" />
     <orderEntry type="module" module-name="ipnb" />
     <orderEntry type="module" module-name="settings-repository" />
+    <orderEntry type="module" module-name="python-terminal" />
   </component>
 </module>

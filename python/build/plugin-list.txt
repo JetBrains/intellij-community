@@ -6,6 +6,7 @@ hg4idea
 tasks-core
 github
 terminal
+python-terminal
 IntelliLang
 IntelliLang-xml
 IntelliLang-python

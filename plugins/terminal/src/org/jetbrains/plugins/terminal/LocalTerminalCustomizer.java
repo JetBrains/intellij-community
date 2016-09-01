@@ -22,11 +22,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-public interface LocalTerminalCustomizer {
-  ExtensionPointName<LocalTerminalCustomizer> EP_NAME = ExtensionPointName.create("org.jetbrains.plugins.terminal.localTerminalCustomizer");
+public abstract class LocalTerminalCustomizer {
+  public static ExtensionPointName<LocalTerminalCustomizer> EP_NAME = ExtensionPointName.create("org.jetbrains.plugins.terminal.localTerminalCustomizer");
 
-  void setupEnvironment(@NotNull Project project, @NotNull Map<String, String> envs);
+  public String[] customizeCommandAndEnvironment(Project project, String[] command, Map<String, String> envs) {
+    return command;
+  }
 
   @Nullable
-  String getDefaultFolder();
+  protected String getDefaultFolder() {
+    return null;
+  }
+
 }
