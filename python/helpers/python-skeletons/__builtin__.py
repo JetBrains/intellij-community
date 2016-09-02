@@ -1,7 +1,7 @@
 """Skeletons for Python 2 built-in symbols."""
 
-from __future__ import unicode_literals
 
+from __future__ import unicode_literals
 import sys
 
 
