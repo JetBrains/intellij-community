@@ -145,7 +145,7 @@ public class FSRecords implements Forceable {
       setParent(id, parentId);
     }
     catch (Throwable e) {
-      throw DbConnection.handleError(e);
+      DbConnection.handleError(e);
     }
     finally {
       w.unlock();
@@ -531,7 +531,7 @@ public class FSRecords implements Forceable {
       return integer == null ? enumeratedId:  integer.intValue();
     }
 
-    private static RuntimeException handleError(final Throwable e) {
+    private static void handleError(@NotNull Throwable e) throws RuntimeException, Error {
       if (!ourIsDisposed) {
         // No need to forcibly mark VFS corrupted if it is already shut down
         if (!myCorrupted && w.tryLock()) { // avoid deadlock if r lock is occupied by current thread
@@ -542,7 +542,9 @@ public class FSRecords implements Forceable {
         }
       }
 
-      return new RuntimeException(e);
+      if (e instanceof Error) throw (Error)e;
+      if (e instanceof RuntimeException) throw (RuntimeException)e;
+      throw new RuntimeException(e);
     }
 
     private static class AttrPageAwareCapacityAllocationPolicy extends CapacityAllocationPolicy {
@@ -614,11 +616,12 @@ public class FSRecords implements Forceable {
       }
     }
     catch (Throwable e) {
-      throw DbConnection.handleError(e);
+      DbConnection.handleError(e);
     }
     finally {
       w.unlock();
     }
+    return -1;
   }
 
   private static int length() {
@@ -645,7 +648,7 @@ public class FSRecords implements Forceable {
       }
     }
     catch (Throwable e) {
-      throw DbConnection.handleError(e);
+      DbConnection.handleError(e);
     }
     finally {
       w.unlock();
@@ -667,7 +670,7 @@ public class FSRecords implements Forceable {
       addToFreeRecordsList(id);
     }
     catch (Throwable e) {
-      throw DbConnection.handleError(e);
+      DbConnection.handleError(e);
     }
     finally {
       w.unlock();
@@ -692,7 +695,7 @@ public class FSRecords implements Forceable {
       addToFreeRecordsList(id);
     }
     catch (Throwable e) {
-      throw DbConnection.handleError(e);
+      DbConnection.handleError(e);
     }
     finally {
       w.unlock();
@@ -763,7 +766,8 @@ public class FSRecords implements Forceable {
       }
     }
     catch (Throwable e) {
-      throw DbConnection.handleError(e);
+      DbConnection.handleError(e);
+      return null;
     }
   }
 
@@ -840,12 +844,14 @@ public class FSRecords implements Forceable {
       }
 
       return id;
-    } catch (Throwable e) {
-      throw DbConnection.handleError(e);
+    }
+    catch (Throwable e) {
+      DbConnection.handleError(e);
     }
     finally {
       w.unlock();
     }
+    return -1;
   }
 
   public static void deleteRootRecord(int id) {
@@ -889,8 +895,9 @@ public class FSRecords implements Forceable {
       finally {
         output.close();
       }
-    } catch (Throwable e) {
-      throw DbConnection.handleError(e);
+    }
+    catch (Throwable e) {
+      DbConnection.handleError(e);
     }
     finally {
       w.unlock();
@@ -918,7 +925,8 @@ public class FSRecords implements Forceable {
       }
     }
     catch (Throwable e) {
-      throw DbConnection.handleError(e);
+      DbConnection.handleError(e);
+      return null;
     }
   }
 
@@ -965,7 +973,8 @@ public class FSRecords implements Forceable {
       }
     }
     catch (Throwable e) {
-      throw DbConnection.handleError(e);
+      DbConnection.handleError(e);
+      return null;
     }
   }
 
@@ -979,8 +988,9 @@ public class FSRecords implements Forceable {
       }
     }
     catch (Throwable e) {
-      throw DbConnection.handleError(e);
+      DbConnection.handleError(e);
     }
+    return false;
   }
 
   public static void updateList(int id, @NotNull int[] children) {
@@ -1005,7 +1015,7 @@ public class FSRecords implements Forceable {
       record.close();
     }
     catch (Throwable e) {
-      throw DbConnection.handleError(e);
+      DbConnection.handleError(e);
     }
     finally {
       w.unlock();
@@ -1061,8 +1071,9 @@ public class FSRecords implements Forceable {
       }
     }
     catch (Throwable e) {
-      throw DbConnection.handleError(e);
+      DbConnection.handleError(e);
     }
+    return -1;
   }
 
   // returns id, parent(id), parent(parent(id)), ...  (already cached id or rootId)
@@ -1086,7 +1097,7 @@ public class FSRecords implements Forceable {
       } while (parentId != 0);
     }
     catch (Throwable e) {
-      throw DbConnection.handleError(e);
+      DbConnection.handleError(e);
     }
     finally {
       r.unlock();
@@ -1106,7 +1117,7 @@ public class FSRecords implements Forceable {
       putRecordInt(id, PARENT_OFFSET, parent);
     }
     catch (Throwable e) {
-      throw DbConnection.handleError(e);
+      DbConnection.handleError(e);
     }
     finally {
       w.unlock();
@@ -1124,8 +1135,9 @@ public class FSRecords implements Forceable {
       }
     }
     catch (Throwable e) {
-      throw DbConnection.handleError(e);
+      DbConnection.handleError(e);
     }
+    return -1;
   }
 
   public static int getNameId(String name) {
@@ -1139,8 +1151,9 @@ public class FSRecords implements Forceable {
       }
     }
     catch (Throwable e) {
-      throw DbConnection.handleError(e);
+      DbConnection.handleError(e);
     }
+    return -1;
   }
 
   public static String getName(int id) {
@@ -1159,7 +1172,8 @@ public class FSRecords implements Forceable {
       }
     }
     catch (Throwable e) {
-      throw DbConnection.handleError(e);
+      DbConnection.handleError(e);
+      return "";
     }
   }
 
@@ -1174,8 +1188,9 @@ public class FSRecords implements Forceable {
       }
     }
     catch (Throwable e) {
-      throw DbConnection.handleError(e);
+      DbConnection.handleError(e);
     }
+    return null;
   }
 
   public static void setName(int id, @NotNull String name) {
@@ -1185,7 +1200,7 @@ public class FSRecords implements Forceable {
       putRecordInt(id, NAME_OFFSET, getNames().enumerate(name));
     }
     catch (Throwable e) {
-      throw DbConnection.handleError(e);
+      DbConnection.handleError(e);
     }
     finally {
       w.unlock();
@@ -1211,7 +1226,7 @@ public class FSRecords implements Forceable {
       putRecordInt(id, FLAGS_OFFSET, flags);
     }
     catch (Throwable e) {
-      throw DbConnection.handleError(e);
+      DbConnection.handleError(e);
     }
     finally {
       w.unlock();
@@ -1235,7 +1250,7 @@ public class FSRecords implements Forceable {
       getRecords().putLong(getOffset(id, LENGTH_OFFSET), len);
     }
     catch (Throwable e) {
-      throw DbConnection.handleError(e);
+      DbConnection.handleError(e);
     }
     finally {
       w.unlock();
@@ -1259,7 +1274,7 @@ public class FSRecords implements Forceable {
       getRecords().putLong(getOffset(id, TIMESTAMP_OFFSET), value);
     }
     catch (Throwable e) {
-      throw DbConnection.handleError(e);
+      DbConnection.handleError(e);
     }
     finally {
       w.unlock();
@@ -1325,8 +1340,9 @@ public class FSRecords implements Forceable {
       return doReadContentById(page);
     }
     catch (Throwable e) {
-      throw DbConnection.handleError(e);
+      DbConnection.handleError(e);
     }
+    return null;
   }
 
   @Nullable
@@ -1335,8 +1351,9 @@ public class FSRecords implements Forceable {
       return doReadContentById(contentId);
     }
     catch (Throwable e) {
-      throw DbConnection.handleError(e);
+      DbConnection.handleError(e);
     }
+    return null;
   }
 
   private static DataInputStream doReadContentById(int contentId) throws IOException {
@@ -1375,8 +1392,9 @@ public class FSRecords implements Forceable {
       }
     }
     catch (Throwable e) {
-      throw DbConnection.handleError(e);
+      DbConnection.handleError(e);
     }
+    return null;
   }
 
   // should be called under r or w lock
@@ -1529,11 +1547,12 @@ public class FSRecords implements Forceable {
       return record;
     }
     catch (Throwable e) {
-      throw DbConnection.handleError(e);
+      DbConnection.handleError(e);
     }
     finally {
       w.unlock();
     }
+    return -1;
   }
 
   public static void releaseContent(int contentId) {
@@ -1547,8 +1566,9 @@ public class FSRecords implements Forceable {
       }
     }
     catch (Throwable e) {
-      throw DbConnection.handleError(e);
-    } finally {
+      DbConnection.handleError(e);
+    }
+    finally {
       w.unlock();
     }
   }
@@ -1564,8 +1584,9 @@ public class FSRecords implements Forceable {
       }
     }
     catch (Throwable e) {
-      throw DbConnection.handleError(e);
+      DbConnection.handleError(e);
     }
+    return -1;
   }
 
   @NotNull
@@ -1578,8 +1599,9 @@ public class FSRecords implements Forceable {
   public static void writeContent(int fileId, ByteSequence bytes, boolean readOnly) throws IOException {
     try {
       new ContentOutputStream(fileId, readOnly).writeBytes(bytes);
-    } catch (Throwable e) {
-      throw DbConnection.handleError(e);
+    }
+    catch (Throwable e) {
+      DbConnection.handleError(e);
     }
   }
 
@@ -1601,10 +1623,12 @@ public class FSRecords implements Forceable {
       return recordId;
     }
     catch (IOException e) {
-      throw DbConnection.handleError(e);
-    } finally {
+      DbConnection.handleError(e);
+    }
+    finally {
       w.unlock();
     }
+    return -1;
   }
 
   @NotNull
@@ -1640,7 +1664,7 @@ public class FSRecords implements Forceable {
         writeBytes(new ByteSequence(_out.getInternalBuffer(), 0, _out.size()));
       }
       catch (Throwable e) {
-        throw DbConnection.handleError(e);
+        DbConnection.handleError(e);
       }
     }
 
@@ -1821,7 +1845,7 @@ public class FSRecords implements Forceable {
         }
       }
       catch (Throwable e) {
-        throw DbConnection.handleError(e);
+        DbConnection.handleError(e);
       }
     }
 
@@ -1917,7 +1941,7 @@ public class FSRecords implements Forceable {
       DbConnection.closeFiles();
     }
     catch (Throwable e) {
-      throw DbConnection.handleError(e);
+      DbConnection.handleError(e);
     }
     finally {
       ourIsDisposed = true;
@@ -1997,7 +2021,7 @@ public class FSRecords implements Forceable {
         checkAttributesSanity(attributeRecordId, usedAttributeRecordIds, validAttributeIds);
       }
       catch (IOException ex) {
-        throw DbConnection.handleError(ex);
+        DbConnection.handleError(ex);
       }
     }
   }
@@ -2039,8 +2063,8 @@ public class FSRecords implements Forceable {
     }
   }
 
-  public static RuntimeException handleError(Throwable e) {
-    return DbConnection.handleError(e);
+  public static void handleError(Throwable e) throws RuntimeException, Error {
+    DbConnection.handleError(e);
   }
 
   /*
