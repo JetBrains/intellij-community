@@ -34,7 +34,6 @@ import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
-import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.EventDispatcher;
@@ -55,11 +54,14 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   boolean myIsInUpdate;
 
+  final RangeMarkerTree<CaretImpl.PositionMarker> myPositionMarkerTree;
   final RangeMarkerTree<CaretImpl.SelectionMarker> mySelectionMarkerTree;
 
   private final LinkedList<CaretImpl> myCarets = new LinkedList<>();
   private CaretImpl myCurrentCaret; // active caret in the context of 'runForEachCaret' call
   private boolean myPerformCaretMergingAfterCurrentOperation;
+
+  int myDocumentUpdateCounter;
 
   public CaretModelImpl(EditorImpl editor) {
     myEditor = editor;
@@ -73,45 +75,39 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
         }
       }
     }, this);
-    myCarets.add(new CaretImpl(myEditor));
 
+    myPositionMarkerTree = new RangeMarkerTree<>(myEditor.getDocument());
     mySelectionMarkerTree = new RangeMarkerTree<>(myEditor.getDocument());
   }
 
+  void initCarets() {
+    myCarets.add(new CaretImpl(myEditor));
+  }
+
   void onBulkDocumentUpdateStarted() {
-    for (CaretImpl caret : myCarets) {
-      caret.onBulkDocumentUpdateStarted();
-    }
   }
 
   void onBulkDocumentUpdateFinished() {
-    doWithCaretMerging(() -> {
-      for (CaretImpl caret : myCarets) {
-        caret.onBulkDocumentUpdateFinished();
-      }
-    });
+    doWithCaretMerging(() -> {}); // do caret merging if it's not scheduled for later
   }
 
   @Override
   public void documentChanged(final DocumentEvent e) {
     myIsInUpdate = false;
+    myDocumentUpdateCounter++;
     if (!myEditor.getDocument().isInBulkUpdate()) {
-      doWithCaretMerging(() -> {
-        for (CaretImpl caret : myCarets) {
-          caret.afterDocumentChange((DocumentEventImpl)e);
-        }
-      });
+      doWithCaretMerging(() -> {}); // do caret merging if it's not scheduled for later
     }
   }
 
   @Override
   public void beforeDocumentChange(DocumentEvent e) {
-    if (!myEditor.getDocument().isInBulkUpdate()) {
+    myIsInUpdate = true;
+    if (!myEditor.getDocument().isInBulkUpdate() && e.isWholeTextReplaced()) {
       for (CaretImpl caret : myCarets) {
-        caret.beforeDocumentChange(e);
+        caret.updateCachedStateIfNeeded(); // logical position will be needed to restore caret position via diff
       }
     }
-    myIsInUpdate = true;
   }
 
   @Override
@@ -546,6 +542,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   @Override
   public String dumpState() {
     return "[in update: " + myIsInUpdate +
+           ", update counter: " + myDocumentUpdateCounter +
            ", perform caret merging: " + myPerformCaretMergingAfterCurrentOperation +
            ", current caret: " + myCurrentCaret +
            ", all carets: " + ContainerUtil.map(myCarets, CaretImpl::dumpState) + "]";
