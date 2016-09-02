@@ -221,7 +221,8 @@ class DistributionJARsBuilder {
         }
         def patchedPluginXmlDir = "$buildContext.paths.temp/patched-plugin-xml/$plugin.mainModule"
         ant.copy(file: pluginXmlPath, todir: "$patchedPluginXmlDir/META-INF")
-        setPluginVersionAndSince("$patchedPluginXmlDir/META-INF/plugin.xml", buildContext.buildNumber)
+        setPluginVersionAndSince("$patchedPluginXmlDir/META-INF/plugin.xml", buildContext.buildNumber,
+                                 productLayout.prepareCustomPluginRepositoryForPublishedPlugins)
         layoutBuilder.patchModuleOutput(plugin.mainModule, patchedPluginXmlDir)
       }
     }
@@ -232,11 +233,16 @@ class DistributionJARsBuilder {
     def pluginsToPublishDir = "$buildContext.paths.temp/plugins-to-publish"
     def pluginsToPublish = getPluginsByModules(productLayout.pluginModulesToPublish)
     buildPlugins(layoutBuilder, pluginsToPublish, pluginsToPublishDir)
+    def nonBundledPluginsArtifacts = "$buildContext.paths.artifacts/plugins"
     pluginsToPublish.each { plugin ->
       def directory = plugin.directoryName
-      ant.zip(destfile: "$buildContext.paths.artifacts/plugins/$directory-${buildContext.buildNumber}.zip") {
+      String suffix = productLayout.prepareCustomPluginRepositoryForPublishedPlugins ? "" : "-${buildContext.buildNumber}"
+      ant.zip(destfile: "$nonBundledPluginsArtifacts/$directory${suffix}.zip") {
         zipfileset(dir: "$pluginsToPublishDir/$directory", prefix: directory)
       }
+    }
+    if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
+      new PluginRepositoryXmlGenerator(buildContext).generate(pluginsToPublish, nonBundledPluginsArtifacts)
     }
   }
 
@@ -271,6 +277,7 @@ class DistributionJARsBuilder {
                   ant.patternset(refid: resourceExcluded)
                 }
                 layout.moduleExcludes.get(moduleName)?.each {
+                  //noinspection GrUnresolvedAccess
                   ant.exclude(name: "$it/**")
                 }
               }
@@ -285,11 +292,15 @@ class DistributionJARsBuilder {
         def modulesWithResources = moduleJars.values().findAll { layout.packLocalizableResourcesInCommonJar(it) }
         if (!modulesWithResources.empty) {
           jar("resources_en.jar", true) {
-            modulesWithResources.each {
-              modulePatches([it]) {
+            modulesWithResources.each { moduleName ->
+              modulePatches([moduleName]) {
                 ant.patternset(refid: resourcesIncluded)
               }
-              module(it) {
+              module(moduleName) {
+                layout.moduleExcludes.get(moduleName)?.each {
+                  //noinspection GrUnresolvedAccess
+                  ant.exclude(name: "$it/**")
+                }
                 ant.patternset(refid: resourcesIncluded)
               }
             }
@@ -339,28 +350,37 @@ class DistributionJARsBuilder {
     new LayoutBuilder(buildContext.ant, buildContext.project, COMPRESS_JARS)
   }
 
-  private void setPluginVersionAndSince(String pluginXmlPath, String buildNumber) {
+  private void setPluginVersionAndSince(String pluginXmlPath, String buildNumber, boolean setExactNumberInUntilBuild) {
     buildContext.ant.replaceregexp(file: pluginXmlPath,
-                      match: "<version>[\\d.]*</version>",
-                      replace: "<version>${buildNumber}</version>")
+                                   match: "<version>[\\d.]*</version>",
+                                   replace: "<version>${buildNumber}</version>")
     def sinceBuild = buildNumber.matches(/\d+\.\d+\.\d+/) ? buildNumber.substring(0, buildNumber.lastIndexOf('.')) : buildNumber;
     def dotIndex = buildNumber.indexOf('.')
-    def untilBuild = dotIndex > 0 ? Integer.parseInt(buildNumber.substring(0, dotIndex)) + ".*" : buildNumber
+    def untilBuild
+    if (setExactNumberInUntilBuild) {
+      untilBuild = buildNumber
+    }
+    else {
+      untilBuild = dotIndex > 0 ? Integer.parseInt(buildNumber.substring(0, dotIndex)) + ".*" : buildNumber
+    }
     buildContext.ant.replaceregexp(file: pluginXmlPath,
-                      match: "<idea-version\\s*since-build=\"\\d+\\.\\d+\"\\s*until-build=\"\\d+\\.\\d+\"",
-                      replace: "<idea-version since-build=\"${sinceBuild}\" until-build=\"${untilBuild}\"")
+                                   match: "<idea-version\\s*since-build=\"\\d+\\.\\d+\"\\s*until-build=\"\\d+\\.\\d+\"",
+                                   replace: "<idea-version since-build=\"${sinceBuild}\" until-build=\"${untilBuild}\"")
     buildContext.ant.replaceregexp(file: pluginXmlPath,
                                    match: "<idea-version\\s*since-build=\"\\d+\\.\\d+\"",
                                    replace: "<idea-version since-build=\"${sinceBuild}\"")
     buildContext.ant.replaceregexp(file: pluginXmlPath,
-                      match: "<change-notes>\\s*<\\!\\[CDATA\\[\\s*Plugin version: \\\$\\{version\\}",
-                      replace: "<change-notes>\n<![CDATA[\nPlugin version: ${buildNumber}")
+                                   match: "<change-notes>\\s*<\\!\\[CDATA\\[\\s*Plugin version: \\\$\\{version\\}",
+                                   replace: "<change-notes>\n<![CDATA[\nPlugin version: ${buildNumber}")
     def file = new File(pluginXmlPath)
     def text = file.text
+    def anchor = text.contains("</id>") ? "</id>" : "</name>"
     if (!text.contains("<version>")) {
-      def anchor = text.contains("</id>") ? "</id>" : "</name>"
-      file.text = text.replace(anchor,
-                               "${anchor}\n  <version>${buildNumber}</version>\n  <idea-version since-build=\"${sinceBuild}\" until-build=\"${untilBuild}\"/>\n")
+      file.text = text.replace(anchor, "${anchor}\n  <version>${buildNumber}</version>")
+      text = file.text
+    }
+    if (!text.contains("<idea-version since-build")) {
+      file.text = text.replace(anchor, "${anchor}\n  <idea-version since-build=\"${sinceBuild}\" until-build=\"${untilBuild}\"/>")
     }
   }
 

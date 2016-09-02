@@ -184,7 +184,7 @@ idea.fatal.error.notification=disabled
     def targetFile = new File(buildContext.paths.temp, sourceFile.name)
     def date = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE)
     BuildUtils.copyAndPatchFile(sourceFile.path, targetFile.path,
-                                ["BUILD_NUMBER": buildContext.fullBuildNumber, "BUILD_DATE": date])
+                                ["BUILD_NUMBER": buildContext.fullBuildNumber, "BUILD_DATE": date, "BUILD": buildContext.buildNumber])
     return targetFile
   }
 
