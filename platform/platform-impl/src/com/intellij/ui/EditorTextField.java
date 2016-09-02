@@ -96,7 +96,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   private int myPreferredWidth = -1;
   private int myCaretPosition = -1;
   private final List<EditorSettingsProvider> mySettingsProviders = new ArrayList<>();
-  private final Disposable myDisposable = Disposer.newDisposable("ETF dispose");
+  private Disposable myDisposable;
 
   public EditorTextField() {
     this("");
@@ -325,6 +325,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
   @Override
   public void addNotify() {
+    myDisposable = Disposer.newDisposable("ETF dispose");
     Disposer.register(myDisposable, this::releaseEditorLater);
     if (myProject != null) {
       ProjectManagerListener listener = new ProjectManagerListener() {
