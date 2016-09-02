@@ -55,7 +55,7 @@ public class DistributionFactoryExt extends DistributionFactory {
    */
   public Distribution getWrappedDistribution(File propertiesFile) {
     //noinspection UseOfSystemOutOrSystemErr
-    WrapperExecutor wrapper = WrapperExecutor.forWrapperPropertiesFile(propertiesFile);
+    WrapperExecutor wrapper = WrapperExecutor.forWrapperPropertiesFile(propertiesFile, System.out);
     if (wrapper.getDistribution() != null) {
       return new ZippedDistribution(wrapper.getConfiguration(), myExecutorFactory);
     }
@@ -74,6 +74,7 @@ public class DistributionFactoryExt extends DistributionFactory {
       this.progressLoggerFactory = progressLoggerFactory;
     }
 
+    @Override
     public void download(URI address, File destination) throws Exception {
       ProgressLogger progressLogger = progressLoggerFactory.newOperation(DistributionFactory.class);
       progressLogger.setDescription(String.format("Download %s", address));
@@ -97,10 +98,12 @@ public class DistributionFactoryExt extends DistributionFactory {
       this.locationDisplayName = locationDisplayName;
     }
 
+    @Override
     public String getDisplayName() {
       return displayName;
     }
 
+    @Override
     public ClassPath getToolingImplementationClasspath(ProgressLoggerFactory progressLoggerFactory,
                                                        File userHomeDir,
                                                        BuildCancellationToken cancellationToken) {
@@ -148,13 +151,16 @@ public class DistributionFactoryExt extends DistributionFactory {
       this.executorFactory = executorFactory;
     }
 
+    @Override
     public String getDisplayName() {
       return String.format("Gradle distribution '%s'", wrapperConfiguration.getDistribution());
     }
 
+    @Override
     public ClassPath getToolingImplementationClasspath(final ProgressLoggerFactory progressLoggerFactory, final File userHomeDir, BuildCancellationToken cancellationToken) {
       if (installedDistribution == null) {
         Callable<File> installDistroTask = new Callable<File>() {
+          @Override
           public File call() throws Exception {
             File installDir;
             try {
@@ -178,6 +184,7 @@ public class DistributionFactoryExt extends DistributionFactory {
           executor = executorFactory.create();
           final Future<File> installDirFuture = executor.submit(installDistroTask);
           cancellationToken.addCallback(new Runnable() {
+            @Override
             public void run() {
               // TODO(radim): better to close the connection too to allow quick finish of the task
               installDirFuture.cancel(true);
