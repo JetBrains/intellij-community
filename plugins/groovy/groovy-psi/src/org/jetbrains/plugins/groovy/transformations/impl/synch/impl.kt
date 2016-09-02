@@ -32,8 +32,6 @@ internal val PATTERN: ElementPattern<out GrLiteral> = GroovyPatterns.stringLiter
     StandardPatterns.string().equalTo(ANNO_FQN), DEFAULT_REFERENCED_METHOD_NAME
 )
 
-fun <T> Sequence<T>.isNotEmpty() = none().not()
-
 fun getImplicitLockUsages(field: GrField): Sequence<PsiAnnotation> {
   val static = when (field.name) {
     LOCK_NAME -> false
