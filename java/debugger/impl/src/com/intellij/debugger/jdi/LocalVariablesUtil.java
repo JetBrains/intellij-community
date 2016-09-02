@@ -321,11 +321,11 @@ public class LocalVariablesUtil {
 
   @NotNull
   private static MultiMap<Integer, String> calcNames(@NotNull final StackFrameContext context, final int firstLocalsSlot) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<MultiMap<Integer, String>>() {
-      @Override
-      public MultiMap<Integer, String> compute() {
-        SourcePosition position = ContextUtil.getSourcePosition(context);
-        if (position != null) {
+    SourcePosition position = ContextUtil.getSourcePosition(context);
+    if (position != null) {
+      return ApplicationManager.getApplication().runReadAction(new Computable<MultiMap<Integer, String>>() {
+        @Override
+        public MultiMap<Integer, String> compute() {
           PsiElement element = position.getElementAt();
           PsiElement method = DebuggerUtilsEx.getContainingMethod(element);
           if (method != null) {
@@ -346,10 +346,11 @@ public class LocalVariablesUtil {
             }
             return res;
           }
+          return MultiMap.empty();
         }
-        return MultiMap.empty();
-      }
-    });
+      });
+    }
+    return MultiMap.empty();
   }
 
   /**

@@ -50,7 +50,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiCompiledElement;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElementFinder;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -580,8 +579,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
         }
       }
 
-      SourcePosition position = PsiDocumentManager.getInstance(getProject()).commitAndRunReadAction(
-        () -> ContextUtil.getSourcePosition(positionContext));
+      SourcePosition position = ContextUtil.getSourcePosition(positionContext);
 
       if (position != null) {
         final List<Pair<Breakpoint, com.sun.jdi.event.Event>> eventDescriptors = DebuggerUtilsEx.getEventDescriptors(suspendContext);

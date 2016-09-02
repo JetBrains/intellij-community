@@ -17,6 +17,7 @@ package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.EvaluatingComputable;
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.JVMNameUtil;
@@ -85,17 +86,16 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
 
     try {
       // invoke base evaluator on call code
-      final Project project = ApplicationManager.getApplication().runReadAction((Computable<Project>)myPsiContext::getProject);
+      Project project = ApplicationManager.getApplication().runReadAction((Computable<Project>)myPsiContext::getProject);
+      SourcePosition position = ContextUtil.getSourcePosition(evaluationContext);
       ExpressionEvaluator evaluator =
         DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<ExpressionEvaluator>() {
           @Override
           public ExpressionEvaluator compute() throws EvaluateException {
-            final TextWithImports callCode = getCallCode();
+            TextWithImports callCode = getCallCode();
             PsiElement copyContext = myData.getAnchor();
-            final CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(callCode, copyContext);
-            return factory.getEvaluatorBuilder().
-              build(factory.createCodeFragment(callCode, copyContext, project),
-                    ContextUtil.getSourcePosition(evaluationContext));
+            CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(callCode, copyContext);
+            return factory.getEvaluatorBuilder().build(factory.createCodeFragment(callCode, copyContext, project), position);
           }
         });
       ((EvaluationContextImpl)evaluationContext).setClassLoader(classLoader);
