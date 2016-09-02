@@ -1,6 +1,7 @@
 package org.jetbrains.debugger.memory.tracking;
 
 import com.intellij.debugger.DebuggerManager;
+import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -59,7 +60,8 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
         new LineBreakpointState<>());
 
     MyConstructorBreakpoints breakpoint = new MyConstructorBreakpoints(project, bpn);
-    breakpoint.createRequestForPreparedClass(myDebugProcess, ref);
+    myDebugProcess.getRequestsManager().callbackOnPrepareClasses(breakpoint, myReference.name());
+
     Disposer.register(this, breakpoint);
   }
 
@@ -93,6 +95,11 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
 
     MyConstructorBreakpoints(Project project, XBreakpoint xBreakpoint) {
       super(project, xBreakpoint);
+    }
+
+    @Override
+    public void processClassPrepare(DebugProcess debugProcess, ReferenceType classType) {
+      createRequestForPreparedClass(myDebugProcess, classType);
     }
 
     @Override

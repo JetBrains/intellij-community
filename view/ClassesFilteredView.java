@@ -1,9 +1,9 @@
 package org.jetbrains.debugger.memory.view;
 
 import com.intellij.debugger.DebuggerManager;
-import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -56,7 +56,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
 
   private final Project myProject;
   private final XDebugSession myDebugSession;
-  private final DebugProcess myDebugProcess;
+  private final DebugProcessImpl myDebugProcess;
   private final SingleAlarmWithMutableDelay mySingleAlarm;
 
   private final SearchTextField myFilterTextField = new SearchTextField(false);
@@ -73,15 +73,15 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
 
     myProject = debugSession.getProject();
     myDebugSession = debugSession;
-    myDebugProcess = DebuggerManager.getInstance(myProject)
+    myDebugProcess = (DebugProcessImpl) DebuggerManager.getInstance(myProject)
         .getDebugProcess(myDebugSession.getDebugProcess().getProcessHandler());
     myInstancesTracker = InstancesTracker.getInstance(myProject);
-    myInstancesTracker.addTrackerListener(new InstancesTrackerListener() {
+    InstancesTrackerListener instancesTrackerListener = new InstancesTrackerListener() {
       @Override
       public void classChanged(@NotNull String name, @NotNull TrackingType type) {
         ReferenceType ref = myTable.getClassByName(name);
         if (ref != null) {
-          ((DebuggerManagerThreadImpl) myDebugProcess.getManagerThread())
+          myDebugProcess.getManagerThread()
               .schedule(new LowestPriorityCommand(getSuspendContext()) {
                 @Override
                 public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
@@ -96,7 +96,24 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
         myTrackedClasses.keySet().removeIf(referenceType -> name.equals(referenceType.name()));
         myTable.getRowSorter().allRowsChanged();
       }
-    }, this);
+    };
+
+    myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+      @Override
+      protected void action() throws Exception {
+        List<String> constructorTrackerClasses = myInstancesTracker.getClassesByTrackingType(TrackingType.CREATION);
+        myInstancesTracker.addTrackerListener(instancesTrackerListener, ClassesFilteredView.this);
+        for (String className : constructorTrackerClasses) {
+          List<ReferenceType> classes = myDebugProcess.getVirtualMachineProxy().classesByName(className);
+          if (classes.isEmpty()) {
+            // TODO: track class preparation
+          } else {
+            // TODO: foreach add breakpoint
+          }
+        }
+      }
+    });
+
     MemoryViewManagerState memoryViewManagerState = MemoryViewManager.getInstance().getState();
 
     myTable = new ClassesTable(myDebugSession, memoryViewManagerState.isShowWithDiffOnly,
@@ -166,7 +183,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
       if (myLastSuspendContext != null) {
         SwingUtilities.invokeLater(() -> {
           myTable.setBusy(true);
-          ((DebuggerManagerThreadImpl) myDebugProcess.getManagerThread())
+          myDebugProcess.getManagerThread()
               .schedule(new MyUpdateClassesCommand(myLastSuspendContext));
         });
       }

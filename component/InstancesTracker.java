@@ -11,8 +11,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.memory.event.InstancesTrackerListener;
 import org.jetbrains.debugger.memory.tracking.TrackingType;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @State(name = "InstancesTracker", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class InstancesTracker extends AbstractProjectComponent
@@ -38,9 +40,17 @@ public class InstancesTracker extends AbstractProjectComponent
     return myState.classes.getOrDefault(className, null);
   }
 
+  @NotNull
+  public List<String> getClassesByTrackingType(@NotNull TrackingType type) {
+    return myState.classes.entrySet().stream()
+        .filter(entry -> entry.getValue().equals(type))
+        .map(Map.Entry::getKey)
+        .collect(Collectors.toList());
+  }
+
   public void add(@NotNull ReferenceType ref, @NotNull TrackingType type) {
     String name = ref.name();
-    if(type.equals(myState.classes.getOrDefault(name, null))) {
+    if (type.equals(myState.classes.getOrDefault(name, null))) {
       return;
     }
 
@@ -51,7 +61,7 @@ public class InstancesTracker extends AbstractProjectComponent
   public boolean remove(@NotNull ReferenceType ref) {
     String name = ref.name();
     TrackingType removed = myState.classes.remove(name);
-    if(removed != null) {
+    if (removed != null) {
       myDispatcher.getMulticaster().classRemoved(name);
       return true;
     }
