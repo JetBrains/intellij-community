@@ -391,20 +391,25 @@ public class ControlFlowUtil {
    *
    * Example:
    * <pre>
-   * Status status = STARTED;
-   * try {
-   *   status = PREPARING;
-   *   doPrepare(); // may throw exception
-   *   status = WORKING;
-   *   doWork(); // may throw exception
-   *   status = FINISHED;
-   * } catch (Exception e) {
-   *    // the last written value is visible here as a side effect of the exception thrown
-   *    LOG.error("Failed when " + status, e);
-   * }
-   * // If there weren't 'catch' the status here would always be FINISHED, the other written values wouldn't be visible
-   * if (status == FINISHED) LOG.info("Finished");
+   * { // --- start of theOuterBlock ---
+   *   Status status = STARTED;
+   *   try { // --- start of theTryBlock ---
+   *     status = PREPARING;
+   *     doPrepare(); // may throw exception
+   *     status = WORKING;
+   *     doWork(); // may throw exception
+   *     status = FINISHED;
+   *   } // --- end of theTryBlock ---
+   *   catch (Exception e) {
+   *      LOG.error("Failed when " + status, e); // can get PREPARING or WORKING here
+   *   }
+   *   if (status == FINISHED) LOG.info("Finished"); // can get PREPARING or WORKING here in the case of exception
+   * } // --- end of theOuterBlock ---
    * </pre>
+   * In the example above <code>hasObservableThrowExitPoints(theTryBlock) == true</code>,
+   * because the resulting value of the "status" variable depends on the exceptions being thrown.
+   * In the same example <code>hasObservableThrowExitPoints(theOuterBlock) == false</code>,
+   * because no outgoing variables here depend on the exceptions being thrown.
    */
   public static boolean hasObservableThrowExitPoints(final @NotNull ControlFlow flow,
                                                      final int flowStart,
@@ -460,7 +465,7 @@ public class ControlFlowUtil {
                                                                        Map<PsiVariable, IntArrayList> visibleReadOffsets) {
         final Map<PsiVariable, Set<PsiElement>> afterWrite = new THashMap<PsiVariable, Set<PsiElement>>();
         for (PsiVariable variable : visibleReadOffsets.keySet()) {
-          final Function<Integer, BitSet> calculator = getReachableInstructionsCalculator(flow, flowStart, flowEnd);
+          final Function<Integer, BitSet> calculator = getReachableInstructionsCalculator();
           final BitSet collectedOffsets = new BitSet(flowEnd);
           for (final int writeOffset : writeOffsets.get(variable).toArray()) {
             LOG.assertTrue(writeOffset >= flowStart, "writeOffset");
@@ -517,15 +522,38 @@ public class ControlFlowUtil {
 
       private boolean isAnyReadOffsetReachableFrom(IntArrayList readOffsets, IntArrayList fromOffsets) {
         if (readOffsets != null && !readOffsets.isEmpty()) {
+          final int[] readOffsetsArray = readOffsets.toArray();
           for (int j = 0; j < fromOffsets.size(); j++) {
             int fromOffset = fromOffsets.get(j);
-            if (areInstructionsReachable(flow, readOffsets.toArray(), fromOffset)) {
+            if (areInstructionsReachable(flow, readOffsetsArray, fromOffset)) {
               LOG.debug("reachableFromOffset:", fromOffset);
               return true;
             }
           }
         }
         return false;
+      }
+
+      private Function<Integer, BitSet> getReachableInstructionsCalculator() {
+        final ControlFlowGraph graph = new ControlFlowGraph(flow.getSize()) {
+          @Override
+          void addArc(int offset, int nextOffset) {
+            nextOffset = promoteThroughGotoChain(flow, nextOffset);
+            if (nextOffset >= flowStart && nextOffset < flowEnd) {
+              super.addArc(offset, nextOffset);
+            }
+          }
+        };
+        graph.buildFrom(flow);
+
+        return new Function<Integer, BitSet>() {
+          @Override
+          public BitSet fun(Integer startOffset) {
+            BitSet visitedOffsets = new BitSet(flowEnd);
+            graph.depthFirstSearch(startOffset, visitedOffsets);
+            return visitedOffsets;
+          }
+        };
       }
     }
 
@@ -1853,6 +1881,10 @@ public class ControlFlowUtil {
       return s.toString();
     }
 
+    boolean depthFirstSearch(final int startOffset) {
+      return depthFirstSearch(startOffset, new BitSet(size()));
+    }
+
     boolean depthFirstSearch(final int startOffset, final BitSet visitedOffsets) {
       // traverse the graph starting with the startOffset
       IntStack walkThroughStack = new IntStack(Math.max(size() / 2, 2));
@@ -1899,31 +1931,7 @@ public class ControlFlowUtil {
       }
     };
     graph.buildFrom(flow);
-    return graph.depthFirstSearch(startOffset, new BitSet(flow.getSize()));
-  }
-
-  private static Function<Integer, BitSet> getReachableInstructionsCalculator(@NotNull final ControlFlow flow,
-                                                                              final int flowStart,
-                                                                              final int flowEnd) {
-    final ControlFlowGraph graph = new ControlFlowGraph(flow.getSize()) {
-      @Override
-      void addArc(int offset, int nextOffset) {
-        nextOffset = promoteThroughGotoChain(flow, nextOffset);
-        if (nextOffset >= flowStart && nextOffset < flowEnd) {
-          super.addArc(offset, nextOffset);
-        }
-      }
-    };
-    graph.buildFrom(flow);
-
-    return new Function<Integer, BitSet>() {
-      @Override
-      public BitSet fun(Integer startOffset) {
-        BitSet visitedOffsets = new BitSet(flowEnd);
-        graph.depthFirstSearch(startOffset, visitedOffsets);
-        return visitedOffsets;
-      }
-    };
+    return graph.depthFirstSearch(startOffset);
   }
 
   public static boolean isVariableAssignedInLoop(@NotNull PsiReferenceExpression expression, PsiElement resolved) {
