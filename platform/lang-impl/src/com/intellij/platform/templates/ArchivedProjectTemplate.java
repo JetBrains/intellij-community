@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.platform.ProjectTemplate;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
@@ -34,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -109,6 +109,9 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
   @Override
   public ValidationInfo validateSettings() {
     return null;
+  }
+
+  public void handleUnzippedDirectories(File dir) throws IOException {
   }
 
   public static abstract class StreamProcessor<T> {
