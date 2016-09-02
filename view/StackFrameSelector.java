@@ -1,13 +1,10 @@
 package org.jetbrains.debugger.memory.view;
 
-import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.execution.filters.OpenFileHyperlinkInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.DoubleClickListener;
@@ -24,15 +21,15 @@ import java.util.List;
 public class StackFrameSelector extends DialogWrapper {
   private final Project myProject;
   private final List<StackFrameDescriptor> myStackFrame;
-  private final Editor myEditor;
+  private final GlobalSearchScope mySearchScope;
 
   public StackFrameSelector(@NotNull Project project,
                             @NotNull List<StackFrameDescriptor> stack,
-                            @NotNull Editor editor) {
+                            @NotNull GlobalSearchScope searchScope) {
     super(project, false);
-    myStackFrame = stack;
     myProject = project;
-    myEditor = editor;
+    myStackFrame = stack;
+    mySearchScope = searchScope;
     setModal(false);
     init();
   }
@@ -69,14 +66,14 @@ public class StackFrameSelector extends DialogWrapper {
       protected boolean onDoubleClick(MouseEvent event) {
         StackFrameDescriptor selectedValue = (StackFrameDescriptor) frameList.getSelectedValue();
         if (selectedValue != null) {
-          PsiClass psiClass = DebuggerUtils.findClass(selectedValue.path(), myProject, GlobalSearchScope.allScope(myProject));
-          if (psiClass != null) {
-            NavigationUtil.openFileWithPsiElement(psiClass, true, false);
-            myEditor.getCaretModel().removeSecondaryCarets();
-            myEditor.getCaretModel().moveToLogicalPosition(new LogicalPosition(selectedValue.line() - 1, 0, false));
-            myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
-            myEditor.getSelectionModel().removeSelection();
-            IdeFocusManager.getGlobalInstance().requestFocus(myEditor.getContentComponent(), true);
+          PsiClass psiClass = DebuggerUtils.findClass(selectedValue.path(), myProject, mySearchScope);
+          if(psiClass != null) {
+            ApplicationManager.getApplication().runReadAction(() -> {
+              OpenFileHyperlinkInfo info =
+                  new OpenFileHyperlinkInfo(myProject,
+                      psiClass.getContainingFile().getVirtualFile(), selectedValue.line() - 1);
+              info.navigate(myProject);
+            });
           }
         }
         return false;

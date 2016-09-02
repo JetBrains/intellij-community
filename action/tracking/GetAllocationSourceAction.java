@@ -1,9 +1,9 @@
 package org.jetbrains.debugger.memory.action.tracking;
 
+import com.intellij.debugger.DebuggerManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -27,9 +27,13 @@ public class GetAllocationSourceAction extends DebuggerTreeAction {
   protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
     Project project = e.getProject();
     List<StackFrameDescriptor> stack = getStack(e);
-    Editor editor = project == null ? null : FileEditorManager.getInstance(project).getSelectedTextEditor();
-    if(project != null && stack != null && editor != null) {
-      new StackFrameSelector(project, stack, editor).show();
+    if(project != null && stack != null) {
+      XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
+      if(session != null) {
+        GlobalSearchScope searchScope = DebuggerManager.getInstance(project)
+            .getDebugProcess(session.getDebugProcess().getProcessHandler()).getSearchScope();
+        new StackFrameSelector(project, stack, searchScope).show();
+      }
     }
   }
 
