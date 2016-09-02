@@ -17,7 +17,6 @@ package com.jetbrains.python.vp;
 
 import com.google.common.base.Preconditions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +43,7 @@ class ViewHandler<C> implements InvocationHandler {
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     Preconditions.checkState(realView != null, "Real view not set");
     Invoker invoker = new Invoker(realView, method, args);
-    ApplicationManager.getApplication().invokeAndWait(invoker, ModalityState.defaultModalityState());
+    ApplicationManager.getApplication().invokeAndWait(invoker);
     if (invoker.exception != null) {
       throw invoker.exception;
     }
