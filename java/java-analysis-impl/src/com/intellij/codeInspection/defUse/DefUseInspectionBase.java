@@ -54,6 +54,14 @@ public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
       public void visitClassInitializer(PsiClassInitializer initializer) {
         checkCodeBlock(initializer.getBody(), holder, isOnTheFly);
       }
+
+      @Override
+      public void visitLambdaExpression(PsiLambdaExpression expression) {
+        PsiElement body = expression.getBody();
+        if (body instanceof PsiCodeBlock) {
+          checkCodeBlock((PsiCodeBlock)body, holder, isOnTheFly);
+        }
+      }
     };
   }
 
