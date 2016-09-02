@@ -135,6 +135,8 @@ public class PatchTest extends PatchTestCase {
 
   @Test
   public void testValidatingCaseOnlyRenameWithConflict() throws Exception {
+    assertThat(Runner.isCaseSensitiveFs()).isEqualTo(SystemInfo.isFileSystemCaseSensitive);
+
     Patch patch = createCaseOnlyRenamePatch();
     FileUtil.writeToFile(new File(myOlderDir, "bin/IDEA.bat"), FileUtil.loadFileBytes(new File(myOlderDir, "bin/idea.bat")));
 
