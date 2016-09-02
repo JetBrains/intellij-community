@@ -16,7 +16,6 @@
 package com.intellij.testFramework
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.annotations.TestOnly
@@ -35,7 +34,7 @@ class EdtTestUtil {
 fun runInEdtAndWait(runnable: () -> Unit) {
   val application = ApplicationManager.getApplication()
   if (application is ApplicationImpl) {
-    application.invokeAndWait(runnable, ModalityState.defaultModalityState())
+    application.invokeAndWait(runnable)
     return
   }
 
