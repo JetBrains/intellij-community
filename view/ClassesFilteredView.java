@@ -213,14 +213,19 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
                           @Nullable SuspendContextImpl suspendContext) {
     LOG.assertTrue(DebuggerManager.getInstance(myProject).isDebuggerManagerThread());
     if (type == TrackingType.CREATION) {
-      myConstructorTrackedClasses.put(ref,
-          new ConstructorInstancesTracker(ref, myDebugSession));
+      ConstructorInstancesTracker old = myConstructorTrackedClasses.getOrDefault(ref, null);
+      if (old != null) {
+        Disposer.dispose(old);
+      }
+
+      ConstructorInstancesTracker tracker = new ConstructorInstancesTracker(ref, myDebugSession);
+      Disposer.register(ClassesFilteredView.this, tracker);
+      myConstructorTrackedClasses.put(ref, tracker);
     } else {
       List<ObjectReference> instances = ref.instances(0);
       myTrackedClasses.put(ref, InstanceTrackingStrategy.create(ref, suspendContext, type, instances));
     }
   }
-
 
   private void handleClassSelection(@Nullable ReferenceType ref) {
     if (ref != null && myDebugSession.isSuspended()) {

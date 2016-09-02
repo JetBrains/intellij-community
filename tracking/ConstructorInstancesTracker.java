@@ -4,6 +4,7 @@ import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
@@ -11,6 +12,7 @@ import com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
@@ -22,7 +24,6 @@ import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.BreakpointRequest;
-import com.sun.jdi.request.EventRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.memory.component.CreationPositionTracker;
@@ -37,7 +38,6 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
   private final XDebugSession myDebugSession;
   private final CreationPositionTracker myPositionTracker;
   private final DebugProcessImpl myDebugProcess;
-  private final MyConstructorBreakpoints myBreakpoint;
   @Nullable
   private HashSet<ObjectReference> myNewObjects = null;
   @NotNull
@@ -58,8 +58,9 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
         new JavaLineBreakpointProperties(),
         new LineBreakpointState<>());
 
-    myBreakpoint= new MyConstructorBreakpoints(project, bpn);
-    myBreakpoint.createRequestForPreparedClass(myDebugProcess, ref);
+    MyConstructorBreakpoints breakpoint = new MyConstructorBreakpoints(project, bpn);
+    breakpoint.createRequestForPreparedClass(myDebugProcess, ref);
+    Disposer.register(this, breakpoint);
   }
 
   public void obsolete() {
@@ -85,12 +86,10 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
 
   @Override
   public void dispose() {
-    myBreakpoint.dispose();
   }
 
   private final class MyConstructorBreakpoints extends LineBreakpoint<JavaLineBreakpointProperties>
       implements Disposable {
-    private final List<BreakpointRequest> myRequests = new ArrayList<>();
 
     MyConstructorBreakpoints(Project project, XBreakpoint xBreakpoint) {
       super(project, xBreakpoint);
@@ -102,7 +101,6 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
         Location loc = cons.location();
         BreakpointRequest breakpointRequest = debugProcess.getRequestsManager().createBreakpointRequest(this, loc);
         breakpointRequest.enable();
-        myRequests.add(breakpointRequest);
       }
     }
 
@@ -112,9 +110,12 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
 
     @Override
     public void dispose() {
-      myRequests.forEach(EventRequest::disable);
-      myRequests.clear();
-      myDebugProcess.getRequestsManager().deleteRequest(this);
+      myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+        @Override
+        protected void action() throws Exception {
+          myDebugProcess.getRequestsManager().deleteRequest(MyConstructorBreakpoints.this);
+        }
+      });
     }
 
     @Override
@@ -133,7 +134,8 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
               List<StackFrameDescriptor> stackFrameDescriptors = stack.stream().map(frame -> {
                 try {
                   Location loc = frame.location();
-                  return new StackFrameDescriptor(loc.declaringType().name(), frame.getIndexFromBottom(), loc.lineNumber());
+                  return new StackFrameDescriptor(loc.declaringType().name(),
+                      frame.getIndexFromBottom(), loc.lineNumber());
                 } catch (EvaluateException e) {
                   return null;
                 }
