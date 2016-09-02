@@ -27,11 +27,12 @@ import com.google.wireless.android.sdk.stats.AndroidStudioStats.AndroidStudioEve
 import com.google.wireless.android.sdk.stats.AndroidStudioStats.UIActionStats;
 import com.google.wireless.android.sdk.stats.AndroidStudioStats.UIActionStats.InvocationKind;
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.errorreport.crash.CrashReport;
+import com.intellij.errorreport.crash.GoogleCrash;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.StatisticsUploadAssistant;
-import com.intellij.internal.statistic.analytics.AnalyticsUploader;
 import com.intellij.internal.statistic.analytics.StudioCrashDetection;
 import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -56,6 +57,7 @@ import javax.swing.event.HyperlinkEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -162,13 +164,10 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
     }
   }
 
-  public static void trackCrashes(@NotNull Iterable<String> descriptions) {
-    long crashCount = 0;
-    for (String description : descriptions) {
-      AnalyticsUploader.trackCrash(description);
-      ++crashCount;
-    }
-    trackExceptionsAndActivity(0, 0, 0, 0, crashCount);
+  public static void trackCrashes(@NotNull List<String> descriptions) {
+    CrashReport report = CrashReport.Builder.createForCrashes(descriptions).build();
+    GoogleCrash.getInstance().submit(report);
+    trackExceptionsAndActivity(0, 0, 0, 0, descriptions.size());
   }
 
   public static void trackExceptionsAndActivity(final long activityCount,
