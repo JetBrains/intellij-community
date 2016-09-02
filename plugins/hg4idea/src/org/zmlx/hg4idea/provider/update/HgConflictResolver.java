@@ -13,7 +13,6 @@
 package org.zmlx.hg4idea.provider.update;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -72,7 +71,7 @@ public final class HgConflictResolver {
       public void run() {
         AbstractVcsHelper.getInstance(myProject).showMergeDialog(conflicts, vcs.getMergeProvider());
       }
-    }, ModalityState.defaultModalityState());
+    });
   }
 
   private void updateUpdatedFiles(@NotNull File file, boolean unresolved) {

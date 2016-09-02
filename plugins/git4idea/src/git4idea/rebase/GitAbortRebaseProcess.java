@@ -18,7 +18,6 @@ package git4idea.rebase;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -83,12 +82,7 @@ class GitAbortRebaseProcess {
     LOG.info("Abort rebase. " + (myRepositoryToAbort == null ? "Nothing to abort" : getShortRepositoryName(myRepositoryToAbort)) +
               ". Roots to rollback: " + DvcsUtil.joinShortNames(myRepositoriesToRollback.keySet()));
     final Ref<AbortChoice> ref = Ref.create();
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        ref.set(confirmAbort());
-      }
-    }, ModalityState.defaultModalityState());
+    ApplicationManager.getApplication().invokeAndWait(() -> ref.set(confirmAbort()));
 
     LOG.info("User choice: " + ref.get());
     if (ref.get() == AbortChoice.ROLLBACK_AND_ABORT) {

@@ -253,11 +253,7 @@ public class HgVFSListener extends VcsVFSListener {
           }
           else {
             final AtomicReference<Collection<FilePath>> filePaths = new AtomicReference<>();
-            ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-                @Override public void run() {
-                  filePaths.set(selectFilePathsToDelete(filesToConfirmDeletion));
-                }
-              }, indicator.getModalityState());
+            ApplicationManager.getApplication().invokeAndWait(() -> filePaths.set(selectFilePathsToDelete(filesToConfirmDeletion)));
             if (filePaths.get() != null) {
               filesToDelete.addAll(filePaths.get());
             }

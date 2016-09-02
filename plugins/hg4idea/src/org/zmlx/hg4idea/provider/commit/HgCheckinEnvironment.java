@@ -15,7 +15,6 @@ package org.zmlx.hg4idea.provider.commit;
 import com.intellij.dvcs.AmendComponent;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -210,7 +209,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
         );
       }
     };
-    ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.defaultModalityState());
+    ApplicationManager.getApplication().invokeAndWait(runnable);
     return choice[0] == Messages.OK;
   }
 

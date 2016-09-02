@@ -23,7 +23,6 @@ import com.intellij.ide.CopyProvider;
 import com.intellij.ide.actions.RefreshAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -486,7 +485,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       mySplitter.repaint();
 
       myRefresherI.run(true, canUseLastRevisionCheck);
-    }, ModalityState.defaultModalityState());
+    });
   }
 
   @NotNull

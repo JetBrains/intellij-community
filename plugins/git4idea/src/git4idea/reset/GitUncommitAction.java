@@ -229,7 +229,7 @@ public class GitUncommitAction extends DumbAwareAction {
     Ref<VcsFullCommitDetails> details = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       details.set(data.getCommitDetailsGetter().getCommitDataIfAvailable(data.getCommitIndex(hash, root)));
-    }, ModalityState.defaultModalityState());
+    });
     if (details.isNull() || details.get() instanceof LoadingDetails) return null;
     return details.get();
   }
