@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.engine;
 
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -70,10 +71,11 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
     String name = method.name();
     if (!myTargetMethodName.equals(name)) {
       if (LambdaMethodFilter.isLambdaName(name)) {
+        SourcePosition position = process.getPositionManager().getSourcePosition(location);
         lambdaMatched = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
           @Override
           public Boolean compute() {
-            PsiElement psiMethod = DebuggerUtilsEx.getContainingMethod(process.getPositionManager().getSourcePosition(location));
+            PsiElement psiMethod = DebuggerUtilsEx.getContainingMethod(position);
             if (psiMethod instanceof PsiLambdaExpression) {
               PsiType type = ((PsiLambdaExpression)psiMethod).getFunctionalInterfaceType();
               PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(type);

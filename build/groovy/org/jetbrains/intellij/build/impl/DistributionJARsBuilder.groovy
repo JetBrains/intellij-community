@@ -352,10 +352,10 @@ class DistributionJARsBuilder {
     def untilBuild = dotIndex > 0 ? Integer.parseInt(buildNumber.substring(0, dotIndex)) + ".*" : buildNumber
     buildContext.ant.replaceregexp(file: pluginXmlPath,
                       match: "<idea-version\\s*since-build=\"\\d+\\.\\d+\"\\s*until-build=\"\\d+\\.\\d+\"",
-                      replace: "<idea-version since-build=\"${buildNumber}\" until-build=\"${untilBuild}\"")
+                      replace: "<idea-version since-build=\"${sinceBuild}\" until-build=\"${untilBuild}\"")
     buildContext.ant.replaceregexp(file: pluginXmlPath,
                                    match: "<idea-version\\s*since-build=\"\\d+\\.\\d+\"",
-                                   replace: "<idea-version since-build=\"${buildNumber}\"")
+                                   replace: "<idea-version since-build=\"${sinceBuild}\"")
     buildContext.ant.replaceregexp(file: pluginXmlPath,
                       match: "<change-notes>\\s*<\\!\\[CDATA\\[\\s*Plugin version: \\\$\\{version\\}",
                       replace: "<change-notes>\n<![CDATA[\nPlugin version: ${buildNumber}")

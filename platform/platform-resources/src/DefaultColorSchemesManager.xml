@@ -1024,6 +1024,31 @@
             <option name="EFFECT_TYPE" value="0"/>
           </value>
         </option>
+        <option name="RAINBOW_COLOR0">
+          <value>
+            <option name="FOREGROUND" value="9b3b6a" />
+          </value>
+        </option>
+        <option name="RAINBOW_COLOR1">
+          <value>
+            <option name="FOREGROUND" value="114d77" />
+          </value>
+        </option>
+        <option name="RAINBOW_COLOR2">
+          <value>
+            <option name="FOREGROUND" value="bc8650" />
+          </value>
+        </option>
+        <option name="RAINBOW_COLOR3">
+          <value>
+            <option name="FOREGROUND" value="005910" />
+          </value>
+        </option>
+        <option name="RAINBOW_COLOR4">
+          <value>
+            <option name="FOREGROUND" value="bc5150" />
+          </value>
+        </option>
     </attributes>
 
   </scheme>
@@ -2084,6 +2109,31 @@
         <value>
           <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
           <option name="FONT_TYPE" value="1" />
+        </value>
+      </option>
+      <option name="RAINBOW_COLOR0">
+        <value>
+          <option name="FOREGROUND" value="529d52" />
+        </value>
+      </option>
+      <option name="RAINBOW_COLOR1">
+        <value>
+          <option name="FOREGROUND" value="be7070" />
+        </value>
+      </option>
+      <option name="RAINBOW_COLOR2">
+        <value>
+          <option name="FOREGROUND" value="3d7676" />
+        </value>
+      </option>
+      <option name="RAINBOW_COLOR3">
+        <value>
+          <option name="FOREGROUND" value="be9970" />
+        </value>
+      </option>
+      <option name="RAINBOW_COLOR4">
+        <value>
+          <option name="FOREGROUND" value="9d527c" />
         </value>
       </option>
     </attributes>

@@ -25,8 +25,10 @@ import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.execution.filters.LineNumbersMapping;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ThreeState;
@@ -91,11 +93,12 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
     SourcePosition res = mySourcePositionCache.get(location);
     if (checkCacheEntry(res, location)) return res;
 
-    return iterate(positionManager -> {
-      SourcePosition res1 = positionManager.getSourcePosition(location);
-      mySourcePositionCache.put(location, res1);
-      return res1;
-    }, null, null);
+    return ApplicationManager.getApplication().runReadAction((Computable<SourcePosition>)() ->
+      iterate(positionManager -> {
+        SourcePosition res1 = positionManager.getSourcePosition(location);
+        mySourcePositionCache.put(location, res1);
+        return res1;
+      }, null, null));
   }
 
   private static boolean checkCacheEntry(SourcePosition position, Location location) {

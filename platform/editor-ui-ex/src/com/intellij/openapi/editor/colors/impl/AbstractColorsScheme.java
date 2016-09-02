@@ -830,4 +830,10 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   }
   
   public boolean isReadOnly() { return  false; }
+
+  @NotNull
+  @Override
+  public Properties getMetaProperties() {
+    return myMetaInfo;
+  }
 }

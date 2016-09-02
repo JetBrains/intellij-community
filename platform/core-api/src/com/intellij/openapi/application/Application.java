@@ -262,6 +262,11 @@ public interface Application extends ComponentManager {
   void invokeAndWait(@NotNull Runnable runnable, @NotNull ModalityState modalityState) throws ProcessCanceledException;
 
   /**
+   * Same as {@link #invokeAndWait(Runnable, ModalityState)}, using {@link ModalityState#defaultModalityState()}.
+   */
+  void invokeAndWait(@NotNull Runnable runnable) throws ProcessCanceledException;
+
+  /**
    * Returns current modality state corresponding to the currently opened modal dialogs. Can only be invoked on AWT thread.
    *
    * @return the current modality state.

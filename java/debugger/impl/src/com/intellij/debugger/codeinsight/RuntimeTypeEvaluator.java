@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.debugger.codeinsight;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.EvaluatingComputable;
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -66,11 +67,11 @@ public abstract class RuntimeTypeEvaluator extends EditorEvaluationCommand<PsiTy
 
   @Nullable
   protected PsiType evaluate(final EvaluationContextImpl evaluationContext) throws EvaluateException {
-    final Project project = evaluationContext.getProject();
-
+    Project project = evaluationContext.getProject();
+    SourcePosition position = ContextUtil.getSourcePosition(evaluationContext);
     ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<ExpressionEvaluator>() {
       public ExpressionEvaluator compute() throws EvaluateException {
-        return EvaluatorBuilderImpl.getInstance().build(myElement, ContextUtil.getSourcePosition(evaluationContext));
+        return EvaluatorBuilderImpl.getInstance().build(myElement, position);
       }
     });
 

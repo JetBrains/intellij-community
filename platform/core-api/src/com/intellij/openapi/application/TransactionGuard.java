@@ -62,13 +62,23 @@ import org.jetbrains.annotations.Nullable;
  *
  * Q: I've got <b>"Write access is allowed from model transactions only"</b>
  *    or <b>"Cannot run synchronous submitTransactionAndWait"</b> exception, what do I do?<br/>
- * A: You're likely inside an "invokeLater" or "invokeLaterIfNeeded"-like call. If this code is showing a dialog that requires model consistency during its lifetime,
+ * A: You're likely inside an "invokeLater" or "invokeAndWait"-like call.
+ * <ul>
+ * <li/> If this code is showing a dialog that requires model consistency during its lifetime,
  * consider replacing invokeLater with {@link #submitTransaction(Disposable, Runnable)} or
  * {@link #submitTransaction(Disposable, TransactionId, Runnable)}.<br/>
- * If you're inside an "invokeAndWaitIfNeeded" call, use {@link #submitTransactionAndWait(Runnable)}.<br/>
- * Otherwise, use {@link Application#invokeLater(Runnable, ModalityState)}
+ * <li/> Consider simplifying the code. For example, if the outer code is known to be run on EDT, "invokeLater(AndWait)IfNeeded" call can be removed. If it's in a pooled thread, the "IfNeeded" part can be removed. "invokeAndWaitIfNeeded" can be safely unwrapped, if already on EDT.
+ * <li/> Consider making the code synchronous. "invokeLater" from EDT rarely makes sense and can often be replaced with synchronous execution (which will likely be inside a user activity: a write-safe context).
+ * <li/> If you get the assertion from synchronous document commit or VFS refresh, consider making them asynchronous. For documents, use {@link com.intellij.psi.PsiDocumentManager#performLaterWhenAllCommitted(Runnable)}.
+ * You can also try to get rid of them at all, by making your code work only with VFS and PSI and assuming
+ * they're refreshed/committed often enough by some other code.
+ * <li/> If you still have "invokeAndWaitIfNeeded" call with model-changing activity inside, replace it with {@link #submitTransactionAndWait(Runnable)} or {@link Application#invokeAndWait}.
+ * You might still get assertions after that, that would mean that some caller down the stack is also using "invokeLater"-like call and needs to be fixed as well.
+ * <li/> If you still absolutely need "invokeLater" use {@link Application#invokeLater} (or GuiUtils for "invokeLaterIfNeeded"),
  * and pass a modality state that appeared in a write-safe context (e.g. a background progress started in an action).
  * Most likely {@link ModalityState#defaultModalityState()} will do.
+ * Don't forget to check inside the "later" runnable that it's still actual, that the model haven't been changed by someone else since its scheduling.
+ * </ul>
  * <p/>
  *
  * Q: What's the difference between transactions and read/write actions and commands ({@link com.intellij.openapi.command.CommandProcessor})?<br/>

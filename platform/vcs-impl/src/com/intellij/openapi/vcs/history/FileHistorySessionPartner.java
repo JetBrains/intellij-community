@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -69,8 +68,7 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
       // TODO: Logic should be revised to just append some revisions to history panel instead of creating and showing new history session
       mySession.getRevisionList().addAll(vcsFileRevisions);
       VcsHistorySession copy = mySession.copyWithCachedRevision();
-      ApplicationManager.getApplication().invokeAndWait(() -> ensureHistoryPanelCreated().getHistoryPanelRefresh().consume(copy),
-                                                        ModalityState.defaultModalityState());
+      ApplicationManager.getApplication().invokeAndWait(() -> ensureHistoryPanelCreated().getHistoryPanelRefresh().consume(copy));
     };
     myBuffer = new BufferedListConsumer<VcsFileRevision>(5, sessionRefresher, 1000) {
       @Override
@@ -129,7 +127,7 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
       else if (session != null && !session.getRevisionList().isEmpty()){
         myFileHistoryPanel.getHistoryPanelRefresh().consume(copy);
       }
-    }, ModalityState.defaultModalityState());
+    });
   }
 
   @NotNull
@@ -184,7 +182,7 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
         return;
       }
       ensureHistoryPanelCreated().getHistoryPanelRefresh().finished();
-    }, ModalityState.defaultModalityState());
+    });
   }
 
   @Override
@@ -195,6 +193,6 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
         return;
       }
       ensureHistoryPanelCreated().scheduleRefresh(false);
-    }, ModalityState.defaultModalityState());
+    });
   }
 }

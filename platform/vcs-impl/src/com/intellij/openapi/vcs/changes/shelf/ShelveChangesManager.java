@@ -20,7 +20,6 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.components.PathMacroManager;
@@ -607,7 +606,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
           }
         }
       }
-    }, ModalityState.defaultModalityState());
+    });
   }
 
   private static List<TextFilePatch> loadTextPatches(final Project project,

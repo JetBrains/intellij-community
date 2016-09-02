@@ -17,7 +17,6 @@ package git4idea.rebase;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -166,7 +165,7 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
         }
         isSuccess.set(false);
       }
-    }, ModalityState.defaultModalityState());
+    });
     return (isSuccess.isNull() || !isSuccess.get().booleanValue()) ? GitRebaseEditorMain.ERROR_EXIT_CODE : 0;
   }
 

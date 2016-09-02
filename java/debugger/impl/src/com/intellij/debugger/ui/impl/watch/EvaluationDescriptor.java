@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import com.intellij.debugger.engine.evaluation.expression.Modifier;
 import com.intellij.debugger.engine.evaluation.expression.UnsupportedExpressionException;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -75,25 +74,22 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
   public final Value calcValue(final EvaluationContextImpl evaluationContext) throws EvaluateException {
     try {
       final EvaluationContextImpl thisEvaluationContext = getEvaluationContext(evaluationContext);
+      SourcePosition position = ContextUtil.getSourcePosition(evaluationContext);
+      PsiElement psiContext = ContextUtil.getContextElement(evaluationContext, position);
 
       ExpressionEvaluator evaluator = null;
       try {
         evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, new EvaluatingComputable<ExpressionEvaluator>() {
           public ExpressionEvaluator compute() throws EvaluateException {
-            final PsiElement psiContext = PositionUtil.getContextElement(evaluationContext);
-            return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(getEvaluationText(), psiContext).getEvaluatorBuilder()
-              .build(getEvaluationCode(thisEvaluationContext), ContextUtil.getSourcePosition(thisEvaluationContext));
+            return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(getEvaluationText(), psiContext).getEvaluatorBuilder().
+              build(getEvaluationCode(thisEvaluationContext), position);
           }
         });
       }
       catch (UnsupportedExpressionException ex) {
-        if (Registry.is("debugger.compiling.evaluator")) {
+        if (Registry.is("debugger.compiling.evaluator") && psiContext != null) {
           evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, new EvaluatingComputable<ExpressionEvaluator>() {
             public ExpressionEvaluator compute() throws EvaluateException {
-              final PsiElement psiContext = PositionUtil.getContextElement(evaluationContext);
-              if (psiContext == null) {
-                return null;
-              }
               PsiFile psiFile = psiContext.getContainingFile();
               PsiCodeFragment fragment = createCodeFragment(psiContext);
               try {

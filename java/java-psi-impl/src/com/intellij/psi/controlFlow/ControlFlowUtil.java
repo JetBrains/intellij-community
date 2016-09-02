@@ -384,90 +384,115 @@ public class ControlFlowUtil {
   }
 
   /**
-   * Detect throw instructions which might affect observable control flow via side effects with local variables
+   * Detect throw instructions which might affect observable control flow via side effects with local variables.
+   *
    * The side effect of exception thrown occurs when a local variable is written in the try block, and then accessed
    * in the finally section or in/after a catch section.
+   *
+   * Example:
+   * <pre>
+   * { // --- start of theOuterBlock ---
+   *   Status status = STARTED;
+   *   try { // --- start of theTryBlock ---
+   *     status = PREPARING;
+   *     doPrepare(); // may throw exception
+   *     status = WORKING;
+   *     doWork(); // may throw exception
+   *     status = FINISHED;
+   *   } // --- end of theTryBlock ---
+   *   catch (Exception e) {
+   *      LOG.error("Failed when " + status, e); // can get PREPARING or WORKING here
+   *   }
+   *   if (status == FINISHED) LOG.info("Finished"); // can get PREPARING or WORKING here in the case of exception
+   * } // --- end of theOuterBlock ---
+   * </pre>
+   * In the example above <code>hasObservableThrowExitPoints(theTryBlock) == true</code>,
+   * because the resulting value of the "status" variable depends on the exceptions being thrown.
+   * In the same example <code>hasObservableThrowExitPoints(theOuterBlock) == false</code>,
+   * because no outgoing variables here depend on the exceptions being thrown.
    */
-  public static boolean hasObservableThrowExitPoints(@NotNull ControlFlow flow,
-                                                     int flowStart,
-                                                     int flowEnd,
+  public static boolean hasObservableThrowExitPoints(final @NotNull ControlFlow flow,
+                                                     final int flowStart,
+                                                     final int flowEnd,
                                                      @NotNull PsiElement[] elements,
                                                      @NotNull PsiElement enclosingCodeFragment) {
     final List<Instruction> instructions = flow.getInstructions();
-    final Map<PsiVariable, IntArrayList> writeOffsets = new THashMap<PsiVariable, IntArrayList>();
-    for (int i = flowStart; i < flowEnd; i++) {
-      Instruction instruction = instructions.get(i);
-      if (instruction instanceof WriteVariableInstruction) {
-        final PsiVariable variable = ((WriteVariableInstruction)instruction).variable;
-        if (variable instanceof PsiLocalVariable || variable instanceof PsiParameter) {
-          IntArrayList offsets = writeOffsets.get(variable);
-          if (offsets == null) writeOffsets.put(variable, offsets = new IntArrayList());
-          offsets.add(i);
+    class Worker {
+      @NotNull
+      private Map<PsiVariable, IntArrayList> getWritesOffsets() {
+        final Map<PsiVariable, IntArrayList> writeOffsets = new THashMap<PsiVariable, IntArrayList>();
+        for (int i = flowStart; i < flowEnd; i++) {
+          Instruction instruction = instructions.get(i);
+          if (instruction instanceof WriteVariableInstruction) {
+            final PsiVariable variable = ((WriteVariableInstruction)instruction).variable;
+            if (variable instanceof PsiLocalVariable || variable instanceof PsiParameter) {
+              IntArrayList offsets = writeOffsets.get(variable);
+              if (offsets == null) writeOffsets.put(variable, offsets = new IntArrayList());
+              offsets.add(i);
+            }
+          }
         }
+        LOG.debug("writeOffsets:", writeOffsets);
+        return writeOffsets;
       }
-    }
-    if (writeOffsets.isEmpty()) return false;
-    LOG.debug("minWriteOffsets:", writeOffsets);
 
-    final PsiElement commonParent = elements.length != 1 ? PsiTreeUtil.findCommonParent(elements) : elements[0].getParent();
-    final List<PsiTryStatement> tryStatements = collectTryStatementStack(commonParent, enclosingCodeFragment);
-    if (tryStatements.isEmpty()) return false;
-    final PsiCodeBlock tryBlock = tryStatements.get(0).getTryBlock();
-    if (tryBlock == null) return false;
-
-    final Map<PsiVariable, IntArrayList> visibleReadOffsets = new THashMap<PsiVariable, IntArrayList>();
-    for (PsiVariable variable : writeOffsets.keySet()) {
-      if (!PsiTreeUtil.isAncestor(tryBlock, variable, true)) {
-        visibleReadOffsets.put(variable, new IntArrayList());
-      }
-    }
-    if (visibleReadOffsets.isEmpty()) return false;
-
-    for (int i = 0; i < instructions.size(); i++) {
-      final Instruction instruction = instructions.get(i);
-      if (instruction instanceof ReadVariableInstruction) {
-        final PsiVariable variable = ((ReadVariableInstruction)instruction).variable;
-        final IntArrayList readOffsets = visibleReadOffsets.get(variable);
-        if (readOffsets != null) {
-          readOffsets.add(i);
+      @NotNull
+      private Map<PsiVariable, IntArrayList> getVisibleReadsOffsets(Map<PsiVariable, IntArrayList> writeOffsets, PsiCodeBlock tryBlock) {
+        final Map<PsiVariable, IntArrayList> visibleReadOffsets = new THashMap<PsiVariable, IntArrayList>();
+        for (PsiVariable variable : writeOffsets.keySet()) {
+          if (!PsiTreeUtil.isAncestor(tryBlock, variable, true)) {
+            visibleReadOffsets.put(variable, new IntArrayList());
+          }
         }
-      }
-    }
-    if (visibleReadOffsets.isEmpty()) return false;
-    LOG.debug("visibleReadOffsets:", visibleReadOffsets);
+        if (visibleReadOffsets.isEmpty()) return visibleReadOffsets;
 
-    final Map<PsiVariable, Set<PsiElement>> afterWrite = new THashMap<PsiVariable, Set<PsiElement>>();
-    for (PsiVariable variable : visibleReadOffsets.keySet()) {
-      final Function<Integer, BitSet> calculator = getReachableInstructionsCalculator(flow, flowStart, flowEnd);
-      final BitSet collectedOffsets = new BitSet(flowEnd);
-      for (final int writeOffset : writeOffsets.get(variable).toArray()) {
-        LOG.assertTrue(writeOffset >= flowStart, "writeOffset");
-        final BitSet reachableOffsets = calculator.fun(writeOffset);
-        collectedOffsets.or(reachableOffsets);
-      }
-      Set<PsiElement> throwSources = afterWrite.get(variable);
-      if (throwSources == null) afterWrite.put(variable, throwSources = new THashSet<PsiElement>());
-      for (int i = flowStart; i < flowEnd; i++) {
-        if (collectedOffsets.get(i)) {
-          throwSources.add(flow.getElement(i));
+        for (int i = 0; i < instructions.size(); i++) {
+          final Instruction instruction = instructions.get(i);
+          if (instruction instanceof ReadVariableInstruction) {
+            final PsiVariable variable = ((ReadVariableInstruction)instruction).variable;
+            final IntArrayList readOffsets = visibleReadOffsets.get(variable);
+            if (readOffsets != null) {
+              readOffsets.add(i);
+            }
+          }
         }
+        LOG.debug("visibleReadOffsets:", visibleReadOffsets);
+        return visibleReadOffsets;
       }
-      final List<PsiElement> subordinates = new ArrayList<PsiElement>();
-      for (PsiElement element : throwSources) {
-        if (throwSources.contains(element.getParent())) {
-          subordinates.add(element);
+
+      @NotNull
+      private Map<PsiVariable, Set<PsiElement>> getReachableAfterWrite(Map<PsiVariable, IntArrayList> writeOffsets,
+                                                                       Map<PsiVariable, IntArrayList> visibleReadOffsets) {
+        final Map<PsiVariable, Set<PsiElement>> afterWrite = new THashMap<PsiVariable, Set<PsiElement>>();
+        for (PsiVariable variable : visibleReadOffsets.keySet()) {
+          final Function<Integer, BitSet> calculator = getReachableInstructionsCalculator();
+          final BitSet collectedOffsets = new BitSet(flowEnd);
+          for (final int writeOffset : writeOffsets.get(variable).toArray()) {
+            LOG.assertTrue(writeOffset >= flowStart, "writeOffset");
+            final BitSet reachableOffsets = calculator.fun(writeOffset);
+            collectedOffsets.or(reachableOffsets);
+          }
+          Set<PsiElement> throwSources = afterWrite.get(variable);
+          if (throwSources == null) afterWrite.put(variable, throwSources = new THashSet<PsiElement>());
+          for (int i = flowStart; i < flowEnd; i++) {
+            if (collectedOffsets.get(i)) {
+              throwSources.add(flow.getElement(i));
+            }
+          }
+          final List<PsiElement> subordinates = new ArrayList<PsiElement>();
+          for (PsiElement element : throwSources) {
+            if (throwSources.contains(element.getParent())) {
+              subordinates.add(element);
+            }
+          }
+          throwSources.removeAll(subordinates);
         }
+        LOG.debug("afterWrite:", afterWrite);
+        return afterWrite;
       }
-      throwSources.removeAll(subordinates);
-    }
-    LOG.debug("afterWrite:", afterWrite);
 
-    for (Map.Entry<PsiVariable, Set<PsiElement>> entry : afterWrite.entrySet()) {
-      final PsiVariable variable = entry.getKey();
-      final PsiElement[] psiElements = entry.getValue().toArray(PsiElement.EMPTY_ARRAY);
-      final List<PsiClassType> thrownExceptions = ExceptionUtil.getThrownExceptions(psiElements);
-
-      if (!thrownExceptions.isEmpty()) {
+      @NotNull
+      private IntArrayList getCatchOrFinallyOffsets(List<PsiTryStatement> tryStatements, List<PsiClassType> thrownExceptions) {
         final IntArrayList catchOrFinallyOffsets = new IntArrayList();
         for (PsiTryStatement tryStatement : tryStatements) {
           final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
@@ -482,7 +507,7 @@ public class ControlFlowUtil {
             final PsiParameter parameter = catchSection.getParameter();
             if (catchBlock != null && parameter != null) {
               for (PsiClassType throwType : thrownExceptions) {
-                if (ControlFlowUtil.isCaughtExceptionType(throwType, parameter.getType())) {
+                if (isCaughtExceptionType(throwType, parameter.getType())) {
                   int offset = flow.getStartOffset(catchBlock);
                   if (offset >= 0) {
                     catchOrFinallyOffsets.add(offset - 1); // -1 is an adjustment for catch block initialization
@@ -492,17 +517,71 @@ public class ControlFlowUtil {
             }
           }
         }
-        if (!catchOrFinallyOffsets.isEmpty()) {
-          final IntArrayList readOffsets = visibleReadOffsets.get(variable);
-          if (readOffsets != null && !readOffsets.isEmpty()) {
-            for (int j = 0; j < catchOrFinallyOffsets.size(); j++) {
-              int catchOrFinallyOffset = catchOrFinallyOffsets.get(j);
-              if (ControlFlowUtil.areInstructionsReachable(flow, readOffsets.toArray(), catchOrFinallyOffset)) {
-                LOG.debug("catchOrFinallyOffset:", catchOrFinallyOffset);
-                return true;
-              }
+        return catchOrFinallyOffsets;
+      }
+
+      private boolean isAnyReadOffsetReachableFrom(IntArrayList readOffsets, IntArrayList fromOffsets) {
+        if (readOffsets != null && !readOffsets.isEmpty()) {
+          final int[] readOffsetsArray = readOffsets.toArray();
+          for (int j = 0; j < fromOffsets.size(); j++) {
+            int fromOffset = fromOffsets.get(j);
+            if (areInstructionsReachable(flow, readOffsetsArray, fromOffset)) {
+              LOG.debug("reachableFromOffset:", fromOffset);
+              return true;
             }
           }
+        }
+        return false;
+      }
+
+      private Function<Integer, BitSet> getReachableInstructionsCalculator() {
+        final ControlFlowGraph graph = new ControlFlowGraph(flow.getSize()) {
+          @Override
+          void addArc(int offset, int nextOffset) {
+            nextOffset = promoteThroughGotoChain(flow, nextOffset);
+            if (nextOffset >= flowStart && nextOffset < flowEnd) {
+              super.addArc(offset, nextOffset);
+            }
+          }
+        };
+        graph.buildFrom(flow);
+
+        return new Function<Integer, BitSet>() {
+          @Override
+          public BitSet fun(Integer startOffset) {
+            BitSet visitedOffsets = new BitSet(flowEnd);
+            graph.depthFirstSearch(startOffset, visitedOffsets);
+            return visitedOffsets;
+          }
+        };
+      }
+    }
+
+    final Worker worker = new Worker();
+    final Map<PsiVariable, IntArrayList> writeOffsets = worker.getWritesOffsets();
+    if (writeOffsets.isEmpty()) return false;
+
+    final PsiElement commonParent = elements.length != 1 ? PsiTreeUtil.findCommonParent(elements) : elements[0].getParent();
+    final List<PsiTryStatement> tryStatements = collectTryStatementStack(commonParent, enclosingCodeFragment);
+    if (tryStatements.isEmpty()) return false;
+    final PsiCodeBlock tryBlock = tryStatements.get(0).getTryBlock();
+    if (tryBlock == null) return false;
+
+    final Map<PsiVariable, IntArrayList> visibleReadOffsets = worker.getVisibleReadsOffsets(writeOffsets, tryBlock);
+    if (visibleReadOffsets.isEmpty()) return false;
+
+    final Map<PsiVariable, Set<PsiElement>> afterWrite = worker.getReachableAfterWrite(writeOffsets, visibleReadOffsets);
+    if (afterWrite.isEmpty()) return false;
+
+    for (Map.Entry<PsiVariable, Set<PsiElement>> entry : afterWrite.entrySet()) {
+      final PsiVariable variable = entry.getKey();
+      final PsiElement[] psiElements = entry.getValue().toArray(PsiElement.EMPTY_ARRAY);
+      final List<PsiClassType> thrownExceptions = ExceptionUtil.getThrownExceptions(psiElements);
+
+      if (!thrownExceptions.isEmpty()) {
+        final IntArrayList catchOrFinallyOffsets = worker.getCatchOrFinallyOffsets(tryStatements, thrownExceptions);
+        if (worker.isAnyReadOffsetReachableFrom(visibleReadOffsets.get(variable), catchOrFinallyOffsets)) {
+          return true;
         }
       }
     }
@@ -1802,6 +1881,10 @@ public class ControlFlowUtil {
       return s.toString();
     }
 
+    boolean depthFirstSearch(final int startOffset) {
+      return depthFirstSearch(startOffset, new BitSet(size()));
+    }
+
     boolean depthFirstSearch(final int startOffset, final BitSet visitedOffsets) {
       // traverse the graph starting with the startOffset
       IntStack walkThroughStack = new IntStack(Math.max(size() / 2, 2));
@@ -1848,31 +1931,7 @@ public class ControlFlowUtil {
       }
     };
     graph.buildFrom(flow);
-    return graph.depthFirstSearch(startOffset, new BitSet(flow.getSize()));
-  }
-
-  private static Function<Integer, BitSet> getReachableInstructionsCalculator(@NotNull final ControlFlow flow,
-                                                                              final int flowStart,
-                                                                              final int flowEnd) {
-    final ControlFlowGraph graph = new ControlFlowGraph(flow.getSize()) {
-      @Override
-      void addArc(int offset, int nextOffset) {
-        nextOffset = promoteThroughGotoChain(flow, nextOffset);
-        if (nextOffset >= flowStart && nextOffset < flowEnd) {
-          super.addArc(offset, nextOffset);
-        }
-      }
-    };
-    graph.buildFrom(flow);
-
-    return new Function<Integer, BitSet>() {
-      @Override
-      public BitSet fun(Integer startOffset) {
-        BitSet visitedOffsets = new BitSet(flowEnd);
-        graph.depthFirstSearch(startOffset, visitedOffsets);
-        return visitedOffsets;
-      }
-    };
+    return graph.depthFirstSearch(startOffset);
   }
 
   public static boolean isVariableAssignedInLoop(@NotNull PsiReferenceExpression expression, PsiElement resolved) {

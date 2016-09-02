@@ -87,24 +87,20 @@ public class RequestHint {
     try {
       frameCount = stepThread.frameCount();
 
-      position = ApplicationManager.getApplication().runReadAction(new Computable<SourcePosition>() {
-        public SourcePosition compute() {
-          return ContextUtil.getSourcePosition(new StackFrameContext() {
-            public StackFrameProxy getFrameProxy() {
-              try {
-                return stepThread.frame(0);
-              }
-              catch (EvaluateException e) {
-                LOG.debug(e);
-                return null;
-              }
-            }
+      position = ContextUtil.getSourcePosition(new StackFrameContext() {
+        public StackFrameProxy getFrameProxy() {
+          try {
+            return stepThread.frame(0);
+          }
+          catch (EvaluateException e) {
+            LOG.debug(e);
+            return null;
+          }
+        }
 
-            @NotNull
-            public DebugProcess getDebugProcess() {
-              return suspendContext.getDebugProcess();
-            }
-          });
+        @NotNull
+        public DebugProcess getDebugProcess() {
+          return suspendContext.getDebugProcess();
         }
       });
     }
@@ -208,19 +204,19 @@ public class RequestHint {
       }
 
       if ((myDepth == StepRequest.STEP_OVER || myDepth == StepRequest.STEP_INTO) && myPosition != null) {
-        final Integer resultDepth = ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
-          public Integer compute() {
-            final SourcePosition locationPosition = ContextUtil.getSourcePosition(context);
-            if (locationPosition != null) {
+        SourcePosition locationPosition = ContextUtil.getSourcePosition(context);
+        if (locationPosition != null) {
+          Integer resultDepth = ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
+            public Integer compute() {
               if (myPosition.getFile().equals(locationPosition.getFile()) && isTheSameFrame(context) && !mySteppedOut) {
                 return isOnTheSameLine(locationPosition) ? myDepth : STOP;
               }
+              return null;
             }
-            return null;
+          });
+          if (resultDepth != null) {
+            return resultDepth.intValue();
           }
-        });
-        if (resultDepth != null) {
-          return resultDepth.intValue();
         }
       }
 
@@ -241,7 +237,7 @@ public class RequestHint {
         if(settings.SKIP_GETTERS) {
           boolean isGetter = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>(){
             public Boolean compute() {
-              PsiElement contextElement = PositionUtil.getContextElement(context);
+              PsiElement contextElement = ContextUtil.getContextElement(context);
               return contextElement != null && DebuggerUtils.isInsideSimpleGetter(contextElement);
             }
           }).booleanValue();

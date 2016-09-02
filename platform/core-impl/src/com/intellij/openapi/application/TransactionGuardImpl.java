@@ -235,10 +235,9 @@ public class TransactionGuardImpl extends TransactionGuard {
     if (areAssertionsEnabled() && !myWritingAllowed) {
       String message = "Write access is allowed from write-safe contexts only. " +
                        "Please ensure you're using invokeLater/invokeAndWait with a correct modality state (not \"any\"). " +
-                       "See TransactionGuard documentation for details";
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        message += "; current modality=" + ModalityState.current() + "; known modalities=" + myWriteSafeModalities;
-      }
+                       "See TransactionGuard documentation for details." +
+                       "\n  current modality=" + ModalityState.current() +
+                       "\n  known modalities=" + myWriteSafeModalities;
       // please assign exceptions here to Peter
       LOG.error(message);
     }
