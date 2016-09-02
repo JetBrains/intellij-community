@@ -35,6 +35,7 @@ import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -210,16 +211,17 @@ public class XFramesView extends XDebugView {
     XStackFrame currentStackFrame = session.getCurrentStackFrame();
     XSuspendContext suspendContext = session.getSuspendContext();
 
-    myLaterInvocator.offer(() -> {
-      if (event == SessionEvent.FRAME_CHANGED) {
-        if (currentStackFrame != null) {
-          myFramesList.setSelectedValue(currentStackFrame, true);
-          mySelectedFrameIndex = myFramesList.getSelectedIndex();
-          myExecutionStacksWithSelection.put(mySelectedStack, mySelectedFrameIndex);
-        }
-        return;
+    if (event == SessionEvent.FRAME_CHANGED) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+      if (currentStackFrame != null) {
+        myFramesList.setSelectedValue(currentStackFrame, true);
+        mySelectedFrameIndex = myFramesList.getSelectedIndex();
+        myExecutionStacksWithSelection.put(mySelectedStack, mySelectedFrameIndex);
       }
+      return;
+    }
 
+    DebuggerUIUtil.invokeLater(() -> {
       if (event != SessionEvent.SETTINGS_CHANGED) {
         mySelectedFrameIndex = 0;
         mySelectedStack = null;
