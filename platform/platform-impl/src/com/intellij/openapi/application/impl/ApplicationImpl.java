@@ -648,6 +648,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
+  public void invokeAndWait(@NotNull Runnable runnable) throws ProcessCanceledException {
+    invokeAndWait(runnable, ModalityState.defaultModalityState());
+  }
+
+  @Override
   @NotNull
   public ModalityState getCurrentModalityState() {
     return LaterInvocator.getCurrentModalityState();
