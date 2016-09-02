@@ -67,6 +67,8 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -1738,10 +1740,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void testRainbow(@NotNull String fileName, @NotNull String text, boolean isRainbowOn, boolean withColor) {
-    RegistryValue registryValue = Registry.get("editor.rainbow.identifiers");
-    final boolean rainbowColors = registryValue.asBoolean();
+    final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+    final boolean isRainbowOnInScheme = RainbowHighlighter.isRainbowEnabled(globalScheme, null);
     try {
-      registryValue.setValue(isRainbowOn);
+      RainbowHighlighter.setRainbowEnabled(globalScheme, null, isRainbowOn);
       configureByText(fileName, text.replaceAll("<" + RAINBOW + "(\\scolor=\'[^\']*\')?>", "").replace("</" + RAINBOW + ">", ""));
 
       Assert.assertEquals(text, getHighlightingDescription(ContainerUtil.filter(doHighlighting(),
@@ -1749,7 +1751,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                                            withColor));
     }
     finally {
-      registryValue.setValue(rainbowColors);
+      RainbowHighlighter.setRainbowEnabled(globalScheme, null, isRainbowOnInScheme);
     }
   }
 
