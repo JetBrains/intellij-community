@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Main.java</file>
+    <line>6</line>
+    <description>Method is never used.</description>
+  </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>1</line>
+    <description>Class has one instantiation but it is not reachable from entry points.</description>
+  </problem>
+</problems>
+

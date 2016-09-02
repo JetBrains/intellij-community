@@ -150,11 +150,14 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     if (!getIgnoredRefElements().contains(refEntity) && filter.accepts((RefJavaElement)refEntity)) {
       refEntity = getRefManager().getRefinedElement(refEntity);
       if (!refEntity.isValid()) return;
+      RefJavaElement refElement = (RefJavaElement)refEntity;
+      if (!compareVisibilities(refElement, getTool().getSharedLocalInspectionTool())) return;
+      if (getTool().isEntryPoint(refElement)) return;
+
       Element element = refEntity.getRefManager().export(refEntity, parentNode, -1);
       if (element == null) return;
       @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
 
-      final RefElement refElement = (RefElement)refEntity;
       final HighlightSeverity severity = getSeverity(refElement);
       final String attributeKey =
         getTextAttributeKey(refElement.getRefManager().getProject(), severity, ProblemHighlightType.LIKE_UNUSED_SYMBOL);

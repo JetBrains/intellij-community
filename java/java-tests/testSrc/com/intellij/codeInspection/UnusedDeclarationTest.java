@@ -26,25 +26,7 @@ import com.intellij.testFramework.InspectionTestCase;
 /**
  * @author max
  */
-public class UnusedDeclarationTest extends InspectionTestCase {
-  private UnusedDeclarationInspection myTool;
-  private GlobalInspectionToolWrapper myToolWrapper;
-
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection";
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myToolWrapper = getUnusedDeclarationWrapper();
-    myTool = (UnusedDeclarationInspection)myToolWrapper.getTool();
-  }
-
-  private void doTest() {
-    doTest("deadCode/" + getTestName(true), myToolWrapper);
-  }
+public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
 
   public void testSCR6067() {
     myTool.ADD_NONJAVA_TO_ENTRIES = false;

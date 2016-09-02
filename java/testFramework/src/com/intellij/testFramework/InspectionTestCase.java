@@ -176,6 +176,11 @@ public abstract class InspectionTestCase extends PsiTestCase {
     if (ext_src != null) {
       PsiTestUtil.addSourceRoot(myModule, ext_src);
     }
+
+    VirtualFile test_src = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(testDir + "/test_src"));
+    if (test_src != null) {
+      PsiTestUtil.addSourceRoot(myModule, test_src, true);
+    }
   }
 
   @Override
