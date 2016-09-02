@@ -188,7 +188,13 @@ public class IdeaTextPatchBuilder {
     }
 
     public byte[] getContentAsBytes() throws VcsException {
-      throw new IllegalStateException();
+      if (myRevision instanceof ByteBackedContentRevision) {
+        return ((ByteBackedContentRevision)myRevision).getContentAsBytes();
+      }
+
+      String textContent = getContentAsString();
+      if (textContent == null) return null;
+      return textContent.getBytes(getCharset());
     }
 
     public String getRevisionNumber() {
