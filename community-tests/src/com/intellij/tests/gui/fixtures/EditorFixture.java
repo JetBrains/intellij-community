@@ -95,7 +95,14 @@ public class EditorFixture {
     FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
     VirtualFile[] selectedFiles = manager.getSelectedFiles();
     if (selectedFiles.length > 0) {
-      return selectedFiles[0];
+
+      // we should be sure that EditorComponent is already showing
+      VirtualFile selectedFile = selectedFiles[0];
+      if (manager.getEditors(selectedFile).length == 0) return null;
+      else {
+        FileEditor editor = manager.getEditors(selectedFile)[0];
+        return editor.getComponent().isShowing() ? selectedFile : null;
+      }
     }
 
     return null;
@@ -415,6 +422,14 @@ public class EditorFixture {
       }
     });
 
+    //wait when TextEditor ContentComponent will showing
+    pause(new Condition("Waiting for showing focused textEditor") {
+      @Override
+      public boolean test() {
+        return editor.getContentComponent().isShowing();
+      }
+    }, SHORT_TIMEOUT);
+
     if (editor != null) {
       JComponent contentComponent = editor.getContentComponent();
       new ComponentDriver(robot).focusAndWaitForFocusGain(contentComponent);
@@ -674,7 +689,9 @@ public class EditorFixture {
         return execute(new GuiQuery<Boolean>() {
           @Override
           protected Boolean executeInEDT() throws Throwable {
-            return file.equals(getCurrentFile());
+            FileEditor[] editors = FileEditorManager.getInstance(myFrame.getProject()).getEditors(file);
+            if (editors.length == 0) return false;
+            return editors[0].getComponent().isShowing();
           }
         });
       }

@@ -17,6 +17,7 @@ package com.intellij.tests.gui.test
 
 import com.intellij.dvcs.ui.CloneDvcsDialog
 import com.intellij.dvcs.ui.DvcsBundle
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.tests.gui.BelongsToTestGroups
@@ -62,13 +63,22 @@ class GitGuiTest : GuiTestCase() {
     with (dialog1) {
       GuiTests.findAndClickButton(this, "Next")
       val textField = GuiTests.findTextField(myRobot, "Project name:").click()
+//      textField.setText("test-project")
       GuiTests.findAndClickButton(this, "Next")
       GuiTests.findAndClickButton(this, "Next")
+      GuiTests.findAndClickButton(this, "Next") //libraries
+      GuiTests.findAndClickButton(this, "Next") //module dependencies
+      GuiTests.findAndClickButton(this, "Next") //select sdk
+      MessagesFixture.findByTitle(myRobot, this.target(), IdeBundle.message("title.no.jdk.specified")).clickOk()
       GuiTests.findAndClickButton(this, "Finish")
     }
     val ideFrame = findIdeFrame()
+    ideFrame.waitForBackgroundTasksToFinish()
+
     val projectView = ideFrame.projectView
-    val paneFixture = projectView.selectProjectPane()
+    val testJavaPath = "src/Test.java"
+    val editor = ideFrame.editor
+    editor.open(testJavaPath)
 
     ToolWindowFixture.showToolwindowStripes(myRobot)
 

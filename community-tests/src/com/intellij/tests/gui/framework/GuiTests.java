@@ -169,6 +169,10 @@ public final class GuiTests {
   public static String getSystemJdk() {
     String jdkHome = getSystemPropertyOrEnvironmentVariable(JDK_HOME_FOR_TESTS);
     if (isNullOrEmpty(jdkHome) || !checkForJdk(jdkHome)) {
+      //than use bundled JDK
+      jdkHome = getBundledJdLocation();
+    }
+    if (isNullOrEmpty(jdkHome) || !checkForJdk(jdkHome)) {
       fail("Please specify the path to a valid JDK using system property " + JDK_HOME_FOR_TESTS);
     }
     return jdkHome;
