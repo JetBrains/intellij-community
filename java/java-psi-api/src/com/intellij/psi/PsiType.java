@@ -128,7 +128,9 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable {
    * todo[r.sh] merge with getPresentableText()
    */
   @NotNull
-  public abstract String getInternalCanonicalText();
+  public String getInternalCanonicalText() {
+    return getCanonicalText();
+  }
 
   /**
    * Checks if the type is currently valid.

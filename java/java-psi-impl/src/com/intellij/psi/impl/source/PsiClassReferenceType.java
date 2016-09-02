@@ -206,7 +206,7 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
   @NotNull
   @Override
   public String getInternalCanonicalText() {
-    return getText(true);
+    return getCanonicalText(true);
   }
 
   private String getText(boolean annotated) {
