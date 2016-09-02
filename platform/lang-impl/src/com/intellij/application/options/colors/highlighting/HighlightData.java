@@ -92,4 +92,8 @@ public final class HighlightData {
   public String getHighlightType() {
     return myHighlightType.getExternalName();
   }
+
+  public TextAttributesKey getHighlightKey() {
+    return myHighlightType;
+  }
 }

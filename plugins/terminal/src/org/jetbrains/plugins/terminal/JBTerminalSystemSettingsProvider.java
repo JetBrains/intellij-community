@@ -489,6 +489,12 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
     public void setConsoleLineSpacing(float lineSpacing) {
       getGlobal().setConsoleLineSpacing(lineSpacing);
     }
+
+    @NotNull
+    @Override
+    public Properties getMetaProperties() {
+      return myGlobalScheme.getMetaProperties();
+    }
   }
 
   public void addListener(TerminalSettingsListener listener) {

@@ -172,14 +172,11 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
     }
   }
 
-  private void changeToScheme() {
-    updateDescription(false);
-  }
-
+  @Deprecated
   public boolean updateDescription(boolean modified) {
     EditorColorsScheme scheme = myOptions.getSelectedScheme();
 
-    if (modified && (ColorAndFontOptions.isReadOnly(scheme) || ColorSettingsUtil.isSharedScheme(scheme))) {
+    if (modified && ColorAndFontOptions.isReadOnly(scheme)) {
       return false;
     }
 
@@ -200,8 +197,6 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
 
       mySchemeComboBox.setSelectedItem(selectedSchemeBackup);
       setListLoaded(true);
-
-      changeToScheme();
 
       myDispatcher.getMulticaster().schemeChanged(this);
     }

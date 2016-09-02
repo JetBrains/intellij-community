@@ -27,18 +27,12 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.editor.colors.ColorKey;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.impl.*;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SchemeManager;
-import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.colors.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -58,6 +52,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -77,6 +72,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
   private Map<String, MyColorScheme> mySchemes;
   private MyColorScheme mySelectedScheme;
+
   public static final String FILE_STATUS_GROUP = ApplicationBundle.message("title.file.status");
   public static final String SCOPES_GROUP = ApplicationBundle.message("title.scope.based");
 
@@ -94,6 +90,16 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   private boolean myDisposeCompleted = false;
   private final Disposable myDisposable = Disposer.newDisposable();
 
+  private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
+
+  public void addListener(@NotNull ColorAndFontSettingsListener listener) {
+    myDispatcher.addListener(listener);
+  }
+
+  public void stateChanged() {
+    myDispatcher.getMulticaster().settingsChanged();
+  }
+
   @Override
   public boolean isModified() {
     boolean listModified = isSchemeListModified();
@@ -106,7 +112,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     return listModified;
   }
 
-  private boolean isSchemeListModified(){
+  private boolean isSchemeListModified() {
     if (mySomeSchemesDeleted) return true;
 
     if (!mySelectedScheme.getName().equals(EditorColorsManager.getInstance().getGlobalScheme().getName())) return true;
@@ -508,7 +514,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     scheme.setDescriptors(descriptions.toArray(new EditorSchemeAttributeDescriptor[descriptions.size()]));
   }
 
-  private static void initPluggedDescriptions(@NotNull List<EditorSchemeAttributeDescriptor> descriptions, @NotNull MyColorScheme scheme) {
+  private static void initPluggedDescriptions(@NotNull List<EditorSchemeAttributeDescriptor> descriptions,
+                                              @NotNull MyColorScheme scheme) {
     ColorSettingsPage[] pages = ColorSettingsPages.getInstance().getRegisteredPages();
     for (ColorSettingsPage page : pages) {
       initDescriptions(page, descriptions, scheme);
@@ -523,8 +530,27 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
                                        @NotNull MyColorScheme scheme) {
     String group = provider.getDisplayName();
     List<AttributesDescriptor> attributeDescriptors = ColorSettingsUtil.getAllAttributeDescriptors(provider);
+    //todo: single point configuration?
+    if (provider instanceof RainbowColorSettingsPage) {
+      descriptions.add(new RainbowAttributeDescriptor(((RainbowColorSettingsPage)provider).getLanguage(),
+                                                      group,
+                                                      ApplicationBundle.message("rainbow.option.panel.display.name"),
+                                                      scheme,
+                                                      scheme.myRainbowState));
+    }
     for (AttributesDescriptor descriptor : attributeDescriptors) {
       addSchemedDescription(descriptions, descriptor.getDisplayName(), group, descriptor.getKey(), scheme, null, null);
+    //  if (provider instanceof RainbowColorSettingsPage
+    //      && ((RainbowColorSettingsPage)provider).isRainbowType(descriptor.getKey())) {
+    //    //todo: joined sub-descriptor?
+    //    descriptions.add(new RainbowAttributeDescriptor(group,
+    //                                                    descriptor.getDisplayName()
+    //                                                    + EditorSchemeAttributeDescriptorWithPath.NAME_SEPARATOR
+    //                                                    + ApplicationBundle.message("rainbow.option.panel.display.name"),
+    //                                                    scheme,
+    //                                                    scheme.getInitRainbowState(),
+    //                                                    scheme.getCurrentRainbowState()));
+    //  }
     }
 
     ColorDescriptor[] colorDescriptors = provider.getColorDescriptors();
@@ -984,6 +1010,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     private EditorSchemeAttributeDescriptor[] myDescriptors;
     private String                            myName;
     private boolean myIsNew = false;
+    private RainbowColorsInSchemeState myRainbowState;
 
     private MyColorScheme(@NotNull EditorColorsScheme parentScheme) {
       super(parentScheme);
@@ -996,6 +1023,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
       setQuickDocFontSize(parentScheme.getQuickDocFontSize());
       myName = parentScheme.getName();
+
+      //noinspection UseOfPropertiesAsHashtable
+      getMetaProperties().putAll(parentScheme.getMetaProperties());
+      myRainbowState = new RainbowColorsInSchemeState(this, parentScheme);
+
       initFonts();
     }
 

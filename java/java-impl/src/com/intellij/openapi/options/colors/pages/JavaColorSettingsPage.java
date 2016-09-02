@@ -16,8 +16,12 @@
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.application.options.colors.InspectionColorSettingsPage;
+import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.ide.highlighter.JavaFileHighlighter;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
+import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -25,18 +29,18 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
-import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.options.colors.RainbowColorSettingsPage;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashMap;
 import java.util.Map;
 
-public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColorSettingsPage, DisplayPrioritySortable {
+public class JavaColorSettingsPage implements RainbowColorSettingsPage, InspectionColorSettingsPage, DisplayPrioritySortable {
   private static final AttributesDescriptor[] ourDescriptors = {
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.keyword"), JavaHighlightingColors.KEYWORD),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.number"), JavaHighlightingColors.NUMBER),
@@ -89,7 +93,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.annotation.attribute.name"), JavaHighlightingColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES)
   };
 
-  @NonNls private static final Map<String, TextAttributesKey> ourTags = new HashMap<>();
+  @NonNls private static final Map<String, TextAttributesKey> ourTags = RainbowHighlighter.createRainbowHLM();
   static {
     ourTags.put("field", JavaHighlightingColors.INSTANCE_FIELD_ATTRIBUTES);
     ourTags.put("unusedField", CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
@@ -175,11 +179,22 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
       "  public static int <static>staticField</static> = 0;\n" +
       "  public final int <instanceFinalField>instanceFinalField</instanceFinalField> = 0;\n" +
       "\n" +
-      "  public <constructorDeclaration>SomeClass</constructorDeclaration>(<interface>AnInterface</interface> <param>param</param>, int[] <reassignedParameter>reassignedParam</reassignedParameter>) {\n" +
+      "  /**\n" +
+      "   * " + ApplicationBundle.message("rainbow.option.panel.display.name") + ":\n" +
+      "   * " + RainbowHighlighter.generatePaletteExample() + "\n" +
+      "   * @param <javadocTagValue>param1</javadocTagValue>\n" +
+      "   * @param <javadocTagValue>reassignedParam</javadocTagValue>\n" +
+      "   * @param <javadocTagValue>param2</javadocTagValue>\n" +
+      "   * @param <javadocTagValue>param3</javadocTagValue>\n" +
+      "   */\n" +
+      "  public <constructorDeclaration>SomeClass</constructorDeclaration>(<interface>AnInterface</interface> <param>param1</param>, int[] <reassignedParameter>reassignedParam</reassignedParameter>,\n" +
+      "                  int <param>param2</param>\n" +
+      "                  int <param>param3</param>) {\n" +
+      "    int <reassignedLocalVar>reassignedValue</reassignedLocalVar> = this.<warning>staticField</warning> + <param>param2</param> + <param>param3</param>;\n" +
+      "    long <localVar>localVar1</localVar>, <localVar>localVar2</localVar>, <localVar>localVar3</localVar>, <localVar>localVar4</localVar>;\n" +
       "    <error>int <localVar>localVar</localVar> = \"IntelliJ\"</error>; // Error, incompatible types\n" +
       "    <class>System</class>.<static>out</static>.<methodCall>println</methodCall>(<field>anotherString</field> + <inherited_method>toString</inherited_method>() + <localVar>localVar</localVar>);\n" +
       "    long <localVar>time</localVar> = <class>Date</class>.<static_method><deprecated>parse</deprecated></static_method>(\"1.2.3\"); // Method is deprecated\n" +
-      "    int <reassignedLocalVar>reassignedValue</reassignedLocalVar> = this.<warning>staticField</warning>; \n" +
       "    <reassignedLocalVar>reassignedValue</reassignedLocalVar> ++; \n" +
       "    <field>field</field>.<abstract_method>run</abstract_method>(); \n" +
       "    new <anonymousClass>SomeClass</anonymousClass>() {\n" +
@@ -190,7 +205,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
       "    <reassignedParameter>reassignedParam</reassignedParameter> = new <constructorCall>ArrayList</constructorCall><<class>String</class>>().toArray(new int[0]);\n" +
       "  }\n" +
       "}\n" +
-      "enum <enum>AnEnum</enum> { <static_final>CONST1</static_final>, <static_final>CONST2</static_final> }\n"+
+      "enum <enum>AnEnum</enum> { <static_final>CONST1</static_final>, <static_final>CONST2</static_final> }\n" +
       "interface <interface>AnInterface</interface> {\n" +
       "  int <static_final>CONSTANT</static_final> = 2;\n" +
       "  void <methodDeclaration>method</methodDeclaration>();\n" +
@@ -207,5 +222,20 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
   @Override
   public DisplayPriority getPriority() {
     return DisplayPriority.KEY_LANGUAGE_SETTINGS;
+  }
+
+  @Override
+  public boolean isRainbowType(TextAttributesKey type) {
+    return JavaHighlightingColors.LOCAL_VARIABLE_ATTRIBUTES.equals(type)
+        || JavaHighlightingColors.REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES.equals(type)
+        || JavaHighlightingColors.PARAMETER_ATTRIBUTES.equals(type)
+        || JavaHighlightingColors.REASSIGNED_PARAMETER_ATTRIBUTES.equals(type)
+        || JavaHighlightingColors.DOC_COMMENT_TAG_VALUE.equals(type);
+  }
+
+  @Nullable
+  @Override
+  public Language getLanguage() {
+    return JavaLanguage.INSTANCE;
   }
 }
