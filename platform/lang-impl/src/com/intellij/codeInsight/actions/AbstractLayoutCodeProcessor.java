@@ -59,7 +59,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
@@ -534,7 +533,7 @@ public abstract class AbstractLayoutCodeProcessor {
         ProgressIndicatorProvider.checkCanceled();
         FutureTask<Boolean> writeTask = writeTaskRef.get();
         
-        ApplicationManager.getApplication().invokeAndWait(() -> WriteCommandAction.runWriteCommandAction(myProject, myCommandName, null, writeTask), ModalityState.defaultModalityState());
+        ApplicationManager.getApplication().invokeAndWait(() -> WriteCommandAction.runWriteCommandAction(myProject, myCommandName, null, writeTask));
 
         checkStop(writeTask, file);
       });

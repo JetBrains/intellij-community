@@ -161,6 +161,6 @@ public class ModuleRootModificationUtil {
 
   private static void doWriteAction(final Runnable action) {
     final Application application = ApplicationManager.getApplication();
-    application.invokeAndWait(() -> application.runWriteAction(action), application.getDefaultModalityState());
+    application.invokeAndWait(() -> application.runWriteAction(action));
   }
 }

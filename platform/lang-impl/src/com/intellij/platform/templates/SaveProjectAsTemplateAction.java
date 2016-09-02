@@ -135,8 +135,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
 
     final Map<String, String> parameters = computeParameters(project, replaceParameters);
     indicator.setText("Saving project...");
-    ApplicationManager.getApplication().invokeAndWait(() -> WriteAction.run(project::save),
-                                                      indicator.getModalityState());
+    ApplicationManager.getApplication().invokeAndWait(() -> WriteAction.run(project::save));
     indicator.setText("Processing project files...");
     ZipOutputStream stream = null;
     try {
@@ -205,7 +204,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
         catch (IOException e) {
           LOG.error(e);
         }
-      }), indicator.getModalityState());
+      }));
     }
   }
 

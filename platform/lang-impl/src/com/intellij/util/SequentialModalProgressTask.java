@@ -97,7 +97,7 @@ public class SequentialModalProgressTask extends Task.Modal {
           task.stop();
           throw e;
         }
-      }, indicator.getModalityState());
+      });
     }
   }
 

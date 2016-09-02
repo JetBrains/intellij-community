@@ -52,7 +52,7 @@ fun <T> invokeAndWaitIfNeed(runnable: () -> T): T {
   }
   else {
     var result: T? = null
-    app.invokeAndWait({ result = runnable() }, ModalityState.defaultModalityState())
+    app.invokeAndWait { result = runnable() }
     return result as T
   }
 }
