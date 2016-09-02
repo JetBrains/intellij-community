@@ -88,7 +88,7 @@ public class GoogleCrashTest {
 
   @Test
   public void checkServerReceivesPostedData() throws Exception {
-    String reportId = "deadcafe";
+    String expectedReportId = "deadcafe";
     Map<String,String> attributes = Maps.newConcurrentHashMap();
 
     myTestServer.setResponseSupplier(httpRequest -> {
@@ -114,16 +114,16 @@ public class GoogleCrashTest {
 
       return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
                                          HttpResponseStatus.OK,
-                                         Unpooled.wrappedBuffer(reportId.getBytes(Charsets.UTF_8)));
+                                         Unpooled.wrappedBuffer(expectedReportId.getBytes(Charsets.UTF_8)));
     });
 
     CrashReport report = CrashReport.Builder.createForException(ourIndexNotReadyException)
       .setProduct("AndroidStudioTestProduct")
       .setVersion("1.2.3.4")
       .build();
-    CompletableFuture<String> submit = myReporter.submit(report);
+    CompletableFuture<String> reportId = myReporter.submit(report);
 
-    assertEquals(reportId, submit.get());
+    assertEquals(expectedReportId, reportId.get());
 
     // assert that the server get the expected data
     assertEquals("AndroidStudioTestProduct", attributes.get(GoogleCrash.KEY_PRODUCT_ID));
@@ -132,6 +132,22 @@ public class GoogleCrashTest {
     // Note: the exception message should have been elided
     assertEquals("com.intellij.openapi.project.IndexNotReadyException: <elided>\n" + STACK_TRACE,
                  attributes.get(GoogleCrash.KEY_EXCEPTION_INFO));
+
+    List<String> descriptions = Arrays.asList("2.3.0.0\n1.8.0_73-b02",
+                                              "2.3.0.1\n1.8.0_73-b02");
+    report = CrashReport.Builder.createForCrashes(descriptions)
+      .setProduct("AndroidStudioTestProduct")
+      .setVersion("1.2.3.4")
+      .build();
+
+    attributes.clear();
+
+    reportId = myReporter.submit(report);
+    assertEquals(expectedReportId, reportId.get());
+
+    // check that the crash count and descriptions made through
+    assertEquals(descriptions.size(), Integer.parseInt(attributes.get("numCrashes")));
+    assertEquals("2.3.0.0\n1.8.0_73-b02\n\n2.3.0.1\n1.8.0_73-b02", attributes.get("crashDesc"));
   }
 
   @Test(expected = ExecutionException.class)

@@ -15,13 +15,18 @@
  */
 package com.intellij.errorreport.crash;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
-import com.intellij.internal.statistic.analytics.AnalyticsUploader;
 import com.intellij.util.ExceptionUtil;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CrashReport {
+import java.util.List;
+
+import static com.intellij.errorreport.crash.GoogleCrash.KEY_EXCEPTION_INFO;
+
+public abstract class CrashReport {
   private static final String PRODUCT_ANDROID_STUDIO = "AndroidStudio"; // must stay in sync with backend registration
 
   /** {@link Throwable} classes with messages expected to be useful for debugging and not to contain PII. */
@@ -31,46 +36,121 @@ public class CrashReport {
     ClassNotFoundException.class
   );
 
+  public enum Type {
+    Crash,
+    Exception,
+  }
+
   @NotNull public final String productId;
   @Nullable public final String version;
-  @NotNull public final String exceptionInfo;
+  @NotNull private final Type myType;
 
-  private CrashReport(@NotNull String productId, @Nullable String version, @NotNull String exceptionInfo) {
+  private CrashReport(@NotNull String productId, @Nullable String version, @NotNull Type type) {
     this.productId = productId;
     this.version = version;
-    this.exceptionInfo = exceptionInfo;
+    myType = type;
+  }
+
+  public void serialize(@NotNull MultipartEntityBuilder builder) {
+    builder.addTextBody("type", myType.toString());
+    serializeTo(builder);
+  }
+
+  protected abstract void serializeTo(@NotNull MultipartEntityBuilder builder);
+
+  private static class ExceptionReport extends CrashReport {
+    @NotNull private final String myExceptionInfo;
+
+    private ExceptionReport(@NotNull String productId, @Nullable String version, @NotNull String exceptionInfo) {
+      super(productId, version, Type.Exception);
+      myExceptionInfo = exceptionInfo;
+    }
+
+    @Override
+    protected void serializeTo(@NotNull MultipartEntityBuilder builder) {
+      builder.addTextBody(KEY_EXCEPTION_INFO, myExceptionInfo);
+    }
+  }
+
+  private static class StudioCrashReport extends CrashReport {
+    private final List<String> myDescriptions;
+
+    private StudioCrashReport(@NotNull String productId, @Nullable String version, @NotNull List<String> descriptions) {
+      super(productId, version, Type.Crash);
+      myDescriptions = descriptions;
+    }
+
+    @Override
+    protected void serializeTo(@NotNull MultipartEntityBuilder builder) {
+      builder.addTextBody("numCrashes", Integer.toString(myDescriptions.size()));
+      builder.addTextBody("crashDesc", Joiner.on("\n\n").join(myDescriptions));
+    }
   }
 
   public static class Builder {
     private String myProductId = PRODUCT_ANDROID_STUDIO;
     private String myVersion;
+    private Type myType = Type.Exception;
     private String myExceptionInfo = "<unknown>";
+    private List<String> myCrashDescriptions;
 
     private Builder() {
     }
 
-    public Builder setThrowable(@NotNull Throwable t) {
-      //noinspection ThrowableResultOfMethodCallIgnored
-      myExceptionInfo = getDescription(getRootCause(t));
-      return this;
-    }
-
+    @NotNull
     public Builder setProduct(@NotNull String productId) {
       myProductId = productId;
       return this;
     }
 
+    @NotNull
     public Builder setVersion(@NotNull String version) {
       myVersion = version;
       return this;
     }
 
-    public CrashReport build() {
-      return new CrashReport(myProductId, myVersion, myExceptionInfo);
+    @NotNull
+    private Builder setType(@NotNull Type type) {
+      myType = type;
+      return this;
     }
 
+    @NotNull
+    private Builder setThrowable(@NotNull Throwable t) {
+      //noinspection ThrowableResultOfMethodCallIgnored
+      myExceptionInfo = getDescription(getRootCause(t));
+      return this;
+    }
+
+    @NotNull
+    private Builder setDescriptions(@NotNull List<String> descriptions) {
+      myCrashDescriptions = descriptions;
+      return this;
+    }
+
+    @NotNull
+    public CrashReport build() {
+      switch (myType) {
+        case Crash:
+          return new StudioCrashReport(myProductId, myVersion, myCrashDescriptions);
+        default:
+        case Exception:
+          return new ExceptionReport(myProductId, myVersion, myExceptionInfo);
+      }
+    }
+
+    @NotNull
     public static Builder createForException(@NotNull Throwable t) {
-      return new Builder().setThrowable(t);
+      return new Builder()
+        .setType(Type.Exception)
+        .setThrowable(t);
+    }
+
+    @NotNull
+    public static Builder createForCrashes(@NotNull List<String> descriptions) {
+      return new Builder()
+        .setType(Type.Crash)
+        .setDescriptions(descriptions);
     }
   }
 

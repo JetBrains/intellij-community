@@ -22,7 +22,6 @@ import com.intellij.errorreport.crash.GoogleCrash;
 import com.intellij.ide.SystemHealthMonitor;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.internal.statistic.analytics.AnalyticsUploader;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;

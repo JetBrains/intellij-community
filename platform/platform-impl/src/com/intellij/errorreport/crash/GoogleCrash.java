@@ -143,12 +143,15 @@ public class GoogleCrash {
     // key names recognized by crash
     builder.addTextBody(KEY_PRODUCT_ID, report.productId);
     builder.addTextBody(KEY_VERSION, strictVersion);
-    builder.addTextBody(KEY_EXCEPTION_INFO, report.exceptionInfo);
+
     if (ANONYMIZED_UID != null) {
       builder.addTextBody("guid", ANONYMIZED_UID);
     }
     RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
     builder.addTextBody("ptime", Long.toString(runtimeMXBean.getUptime()));
+
+    // add report specific data
+    report.serialize(builder);
 
     // product specific key value pairs
     builder.addTextBody("fullVersion", applicationInfo == null ? "0.0.0.0" : applicationInfo.getFullVersion());
