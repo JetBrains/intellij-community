@@ -585,7 +585,7 @@ public class FSRecords implements Forceable {
   }
 
   // todo: Address  / capacity store in records table, size store with payload
-  static int createRecord() {
+  public static int createRecord() {
     w.lock();
     try {
       DbConnection.markDirty();
