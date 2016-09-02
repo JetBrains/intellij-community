@@ -120,6 +120,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
     });
   }
 
+  private boolean myDisposed;
   /**
    * Disposes all resources allocated be the TextEditorComponent. It disposes all created
    * editors, unregisters listeners. The behaviour of the splitter after disposing is
@@ -134,14 +135,19 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
     myConnection.disconnect();
 
     myFile.getFileSystem().removeVirtualFileListener(myVirtualFileListener);
+    myDisposed = true;
     //myFocusWatcher.deinstall(this);
     //removePropertyChangeListener(mySplitterPropertyChangeListener);
 
     //super.dispose();
   }
 
+  public boolean isDisposed() {
+    return myDisposed;
+  }
+
   /**
-   * Should be invoked when the corresponding <code>TextEditorImpl</code>
+   * Should be invoked when the corresponding {@code TextEditorImpl}
    * is selected. Updates the status bar.
    */
   void selectNotify(){
@@ -153,7 +159,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
   }
 
   /**
-   * @return most recently used editor. This method never returns <code>null</code>.
+   * @return most recently used editor. This method never returns {@code null}.
    */
   @NotNull
   Editor getEditor(){
@@ -199,14 +205,14 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
    * Updates "modified" property and fires event if necessary
    */
   void updateModifiedProperty(){
-    Boolean oldModified=Boolean.valueOf(myModified);
+    Boolean oldModified= myModified;
     myModified = isModifiedImpl();
-    myTextEditor.firePropertyChange(FileEditor.PROP_MODIFIED, oldModified, Boolean.valueOf(myModified));
+    myTextEditor.firePropertyChange(FileEditor.PROP_MODIFIED, oldModified, myModified);
   }
 
   /**
-   * Name <code>isValid</code> is in use in <code>java.awt.Component</code>
-   * so we change the name of method to <code>isEditorValid</code>
+   * Name {@code isValid} is in use in {@code java.awt.Component}
+   * so we change the name of method to {@code isEditorValid}
    *
    * @return whether the editor is valid or not
    */
@@ -222,9 +228,9 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
   }
 
   private void updateValidProperty(){
-    Boolean oldValid = Boolean.valueOf(myValid);
+    Boolean oldValid = myValid;
     myValid = isEditorValidImpl();
-    myTextEditor.firePropertyChange(FileEditor.PROP_VALID, oldValid, Boolean.valueOf(myValid));
+    myTextEditor.firePropertyChange(FileEditor.PROP_VALID, oldValid, myValid);
   }
 
   /**
