@@ -225,7 +225,7 @@ public class StepikConnectorGet {
     course.setCourseType(info.getType().startsWith("pycharm") ? info.getType() : "stepik");
 
     //    what for?
-    course.setLanguage(courseType.substring(PYCHARM_PREFIX.length() + 1));
+//    course.setLanguage(courseType.substring(PYCHARM_PREFIX.length() + 1));
     try {
       for (Integer section : info.sections) {
         switch (course.getCourseType()) {

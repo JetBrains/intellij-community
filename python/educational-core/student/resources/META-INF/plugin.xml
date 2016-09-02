@@ -2,12 +2,12 @@
 <idea-plugin version="2">
   <id>com.jetbrains.edu.interactivelearning</id>
   <name>Educational plugin core (unstable)</name>
-  <version>2.0.4</version>
+  <version>2.0.7</version>
   <idea-version since-build="141.0"/>
   <description><![CDATA[
       Educational plugin core for students. 
       ]]></description>
-  <vendor>JetBrains</vendor>
+  <vendor email="petr.bogdanov@stepik.org" url="http://www.stepik.org">Stepik.org</vendor>
 
   <change-notes><![CDATA[
 

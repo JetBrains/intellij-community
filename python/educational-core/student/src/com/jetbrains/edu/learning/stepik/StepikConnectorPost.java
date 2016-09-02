@@ -71,8 +71,8 @@ public class StepikConnectorPost {
     final StatusLine statusLine = response.getStatusLine();
     final HttpEntity responseEntity = response.getEntity();
     final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
-    if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
-      throw new IOException("Stepik returned non 200 status code " + responseString);
+    if (statusLine.getStatusCode() / 100 != 2) {
+      throw new IOException("Stepik returned "+ statusLine.getStatusCode() +" status code " + responseString);
     }
     return true;
   }
@@ -86,8 +86,8 @@ public class StepikConnectorPost {
     final StatusLine statusLine = response.getStatusLine();
     final HttpEntity responseEntity = response.getEntity();
     final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
-    if (statusLine.getStatusCode() != HttpStatus.SC_CREATED) {
-      throw new IOException("Stepik returned non " + HttpStatus.SC_CREATED + " status code " + responseString);
+    if (statusLine.getStatusCode() / 100 != 2) {
+      throw new IOException("Stepik returned " + statusLine.getStatusCode() + " status code " + responseString);
     }
     //LOG.info("request "+requestBody);
     //LOG.info("response "+responseString);
@@ -102,8 +102,8 @@ public class StepikConnectorPost {
     final StatusLine statusLine = response.getStatusLine();
     final HttpEntity responseEntity = response.getEntity();
     final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
-    if (statusLine.getStatusCode() != HttpStatus.SC_CREATED) {
-      throw new IOException("Stepik returned non " + HttpStatus.SC_CREATED + " status code " + responseString);
+    if (statusLine.getStatusCode() / 100 != 2) {
+      throw new IOException("Stepik returned " + statusLine.getStatusCode() + " status code " + responseString);
     }
     //LOG.info("request "+requestBody);
     //LOG.info("response "+responseString);
@@ -529,13 +529,10 @@ public class StepikConnectorPost {
     String requestBody = GSON.toJson(metric);
     LOG.info(requestBody.toString());
     try {
-//      postToStepikVoid(EduStepikNames.METRICS, StepikWrappers.MetricsWrapper.class, requestBody);
-//      return;
-      throw new IOException();
+      postToStepikVoid(EduStepikNames.METRICS, StepikWrappers.MetricsWrapper.class, requestBody);
     }
     catch (IOException e) {
       LOG.warn("Can't post a metric\n" + e.toString());
-      return;
     }
   }
 
