@@ -19,9 +19,8 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.util.EnvironmentUtil
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
+import com.jetbrains.python.run.PyVirtualEnvReader
+import com.jetbrains.python.run.findActivateScript
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
 import java.io.File
 
@@ -81,21 +80,3 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
   }
 }
 
-class PyVirtualEnvReader(virtualEnvSdkPath: String) : EnvironmentUtil.ShellEnvReader() {
-  val activate = findActivateScript(virtualEnvSdkPath, shell)
-
-  override fun getShellProcessCommand(): MutableList<String>? {
-
-    return if (activate != null) mutableListOf(shell, "--rcfile", activate, "-i")
-    else super.getShellProcessCommand()
-  }
-
-}
-
-private fun findActivateScript(path: String?, shellPath: String): String? {
-  val shellName = File(shellPath).name
-  val activate = if (shellName == "fish" || shellName == "csh") File(File(path).parentFile, "activate." + shellName)
-  else File(File(path).parentFile, "activate")
-
-  return if (activate.exists()) activate.absolutePath else null
-}
