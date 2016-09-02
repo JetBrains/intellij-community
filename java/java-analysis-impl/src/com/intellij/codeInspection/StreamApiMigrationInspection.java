@@ -101,51 +101,62 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           if (iteratedValue != null && body != null) {
             final PsiType iteratedValueType = iteratedValue.getType();
             final PsiClass iteratorClass = PsiUtil.resolveClassInClassTypeOnly(iteratedValueType);
-            final PsiClass collectionClass = JavaPsiFacade.getInstance(body.getProject()).findClass(CommonClassNames.JAVA_UTIL_COLLECTION, statement.getResolveScope());
-            if (collectionClass != null && InheritanceUtil.isInheritorOrSelf(iteratorClass, collectionClass, true)) {
-              try {
-                final ControlFlow controlFlow = ControlFlowFactory.getInstance(holder.getProject())
-                  .getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
-                int startOffset = controlFlow.getStartOffset(body);
-                int endOffset = controlFlow.getEndOffset(body);
-                final Collection<PsiStatement> exitPoints = ControlFlowUtil
-                  .findExitPointsAndStatements(controlFlow, startOffset, endOffset, new IntArrayList(), PsiContinueStatement.class,
-                                               PsiBreakStatement.class, PsiReturnStatement.class, PsiThrowStatement.class);
-                if (exitPoints.isEmpty()) {
-  
-                  final List<PsiVariable> usedVariables = ControlFlowUtil.getUsedVariables(controlFlow, startOffset, endOffset);
-                  for (PsiVariable variable : usedVariables) {
-                    if (!HighlightControlFlowUtil.isEffectivelyFinal(variable, body, null)) {
-                      return;
-                    }
+            PsiClass collectionClass = null;
+            final boolean isArray;
+            if(iteratedValueType instanceof PsiArrayType) {
+              // Do not handle primitive types now
+              if(((PsiArrayType)iteratedValueType).getComponentType() instanceof PsiPrimitiveType) return;
+              isArray = true;
+            } else {
+              collectionClass = JavaPsiFacade.getInstance(body.getProject()).findClass(CommonClassNames.JAVA_UTIL_COLLECTION, statement.getResolveScope());
+              if (collectionClass != null && InheritanceUtil.isInheritorOrSelf(iteratorClass, collectionClass, true)) {
+                isArray = false;
+              } else return;
+            }
+            try {
+              final ControlFlow controlFlow = ControlFlowFactory.getInstance(holder.getProject())
+                .getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+              int startOffset = controlFlow.getStartOffset(body);
+              int endOffset = controlFlow.getEndOffset(body);
+              final Collection<PsiStatement> exitPoints = ControlFlowUtil
+                .findExitPointsAndStatements(controlFlow, startOffset, endOffset, new IntArrayList(), PsiContinueStatement.class,
+                                             PsiBreakStatement.class, PsiReturnStatement.class, PsiThrowStatement.class);
+              if (exitPoints.isEmpty()) {
+
+                final List<PsiVariable> usedVariables = ControlFlowUtil.getUsedVariables(controlFlow, startOffset, endOffset);
+                for (PsiVariable variable : usedVariables) {
+                  if (!HighlightControlFlowUtil.isEffectivelyFinal(variable, body, null)) {
+                    return;
                   }
+                }
 
-                  if (ExceptionUtil.getThrownCheckedExceptions(new PsiElement[] {body}).isEmpty()) {
-                    TerminalBlock tb = TerminalBlock.from(statement.getIterationParameter(), body);
-                    List<Operation> operations = tb.extractOperations();
+                if (ExceptionUtil.getThrownCheckedExceptions(new PsiElement[]{body}).isEmpty()) {
+                  TerminalBlock tb = TerminalBlock.from(statement.getIterationParameter(), body);
+                  List<Operation> operations = tb.extractOperations();
 
-                    if (!isRawSubstitution(iteratedValueType, collectionClass) && isCollectCall(tb, operations)) {
-                      boolean addAll = operations.isEmpty() && isAddAllCall(tb);
-                      holder.registerProblem(iteratedValue, "Can be replaced with " + (addAll ? "addAll call" : "collect call"),
-                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, 
-                                             addAll ? new ReplaceWithAddAllFix() : new ReplaceWithCollectFix());
+                  if ((isArray || !isRawSubstitution(iteratedValueType, collectionClass)) && isCollectCall(tb, operations)) {
+                    boolean addAll = operations.isEmpty() && isAddAllCall(tb);
+                    holder.registerProblem(iteratedValue, "Can be replaced with " + (addAll ? "addAll call" : "collect call"),
+                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                           addAll ? new ReplaceWithAddAllFix() : new ReplaceWithCollectFix());
+                  }
+                  // do not replace for(T e : arr) {} with Arrays.stream(arr).forEach(e -> {}) even if flag is set
+                  else if (!operations.isEmpty() ||
+                           (!isArray && (REPLACE_TRIVIAL_FOREACH || !isTrivial(body, statement.getIterationParameter())))) {
+                    final List<LocalQuickFix> fixes = new ArrayList<>();
+                    fixes.add(new ReplaceWithForeachCallFix("forEach"));
+                    if (!operations.isEmpty()) {
+                      //for .stream()
+                      fixes.add(new ReplaceWithForeachCallFix("forEachOrdered"));
                     }
-                    else if (REPLACE_TRIVIAL_FOREACH || !operations.isEmpty() || !isTrivial(body, statement.getIterationParameter())) {
-                      final List<LocalQuickFix> fixes = new ArrayList<>();
-                      fixes.add(new ReplaceWithForeachCallFix("forEach"));
-                      if (!operations.isEmpty()) {
-                        //for .stream() 
-                        fixes.add(new ReplaceWithForeachCallFix("forEachOrdered"));
-                      }
-                      holder.registerProblem(iteratedValue, "Can be replaced with foreach call",
-                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                             fixes.toArray(new LocalQuickFix[fixes.size()]));
-                    }
+                    holder.registerProblem(iteratedValue, "Can be replaced with foreach call",
+                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                           fixes.toArray(new LocalQuickFix[fixes.size()]));
                   }
                 }
               }
-              catch (AnalysisCanceledException ignored) {
-              }
+            }
+            catch (AnalysisCanceledException ignored) {
             }
           }
         }
@@ -273,8 +284,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     return ContainerUtil.find(method.getThrowsList().getReferencedTypes(), type -> !ExceptionUtil.isUncheckedException(type)) != null;
   }
 
-  private static boolean isIdentityMapping(PsiVariable parameter, PsiExpression mapperCall) {
-    return mapperCall instanceof PsiReferenceExpression && ((PsiReferenceExpression)mapperCall).resolve() == parameter;
+  private static boolean isIdentityMapping(PsiVariable variable, PsiExpression mapperCall) {
+    return mapperCall instanceof PsiReferenceExpression && ((PsiReferenceExpression)mapperCall).resolve() == variable;
   }
 
   private static class ReplaceWithForeachCallFix implements LocalQuickFix {
@@ -311,11 +322,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           TerminalBlock tb = TerminalBlock.from(parameter, body);
           List<String> intermediateOps = tb.extractOperationReplacements(elementFactory);
 
-          StringBuilder buffer = new StringBuilder(getIteratedValueText(iteratedValue));
-          if (!intermediateOps.isEmpty()) {
-            buffer.append(".stream()");
-            intermediateOps.forEach(buffer::append);
-          }
+          StringBuilder buffer = generateStream(iteratedValue, intermediateOps);
           PsiElement block = tb.convertToElement(elementFactory);
 
           buffer.append(".").append(myForEachMethodName).append("(");
@@ -342,13 +349,13 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       }
     }
 
-    private static String createForEachFunctionalExpressionText(Project project, PsiElement block, PsiVariable parameter) {
+    private static String createForEachFunctionalExpressionText(Project project, PsiElement block, PsiVariable variable) {
       final PsiCallExpression callExpression = LambdaCanBeMethodReferenceInspection.extractMethodCallFromBlock(block);
       if (callExpression != null) {
-        final PsiClassType functionalType = createDefaultConsumerType(project, parameter);
+        final PsiClassType functionalType = createDefaultConsumerType(project, variable);
         String methodReferenceText = null;
-        if(parameter instanceof PsiParameter) {
-          final PsiParameter[] parameters = {(PsiParameter)parameter};
+        if(variable instanceof PsiParameter) {
+          final PsiParameter[] parameters = {(PsiParameter)variable};
           methodReferenceText =
             LambdaCanBeMethodReferenceInspection.convertToMethodReference(block, parameters, functionalType, null);
         }
@@ -356,7 +363,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           return methodReferenceText;
         }
       }
-      return parameter.getName() + " -> " + wrapInBlock(block);
+      return variable.getName() + " -> " + wrapInBlock(block);
     }
 
     private static String wrapInBlock(PsiElement block) {
@@ -414,6 +421,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         PsiStatement body = foreachStatement.getBody();
         final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
         if (body != null && iteratedValue != null) {
+          final PsiType iteratedValueType = iteratedValue.getType();
           final PsiParameter parameter = foreachStatement.getIterationParameter();
           TerminalBlock tb = TerminalBlock.from(parameter, body);
           List<String> intermediateOps = tb.extractOperationReplacements(elementFactory);
@@ -425,15 +433,15 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
             restoreComments(foreachStatement, body);
             final PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
             final String qualifierText = qualifierExpression != null ? qualifierExpression.getText() : "";
-            final String callText = StringUtil.getQualifiedName(qualifierText, "addAll(" + getIteratedValueText(iteratedValue) + ");");
+            final String collectionText = iteratedValueType instanceof PsiArrayType ? "java.util.Arrays.asList("+iteratedValue.getText()+")" :
+                                          getIteratedValueText(iteratedValue);
+            final String callText = StringUtil.getQualifiedName(qualifierText, "addAll(" + collectionText + ");");
             PsiElement result = foreachStatement.replace(elementFactory.createStatementFromText(callText, foreachStatement));
             reformatWhenNeeded(project, result);
             return;
           }
-          final StringBuilder builder = new StringBuilder(getIteratedValueText(iteratedValue) + ".stream()");
-
-          intermediateOps.forEach(builder::append);
-          builder.append(createMapperFunctionalExpressionText(tb.getVariable(), methodCallExpression.getArgumentList().getExpressions()[0]));
+          intermediateOps.add(createMapperFunctionalExpressionText(tb.getVariable(), methodCallExpression.getArgumentList().getExpressions()[0]));
+          final StringBuilder builder = generateStream(iteratedValue, intermediateOps);
 
           builder.append(".collect(java.util.stream.Collectors.");
           PsiElement result = null;
@@ -650,6 +658,9 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           final PsiType iteratedValueType = iteratedValue.getType();
           Operation op = null;
           if(iteratedValueType instanceof PsiArrayType) {
+            // do not handle flatMapToPrimitive
+            if (((PsiArrayType)iteratedValueType).getComponentType() instanceof PsiPrimitiveType)
+              return null;
             op = new ArrayFlatMapOp(iteratedValue, myVariable);
           } else {
             final PsiClass iteratorClass = PsiUtil.resolveClassInClassTypeOnly(iteratedValueType);
@@ -680,15 +691,18 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
             PsiElement element = elements[0];
             if(element instanceof PsiLocalVariable) {
               PsiLocalVariable declaredVar = (PsiLocalVariable)element;
-              PsiExpression initializer = declaredVar.getInitializer();
-              if (initializer != null &&
-                  ReferencesSearch.search(myVariable, new LocalSearchScope(Arrays.copyOfRange(myStatements, myFrom + 1, myTo)))
-                    .findFirst() == null) {
-                MapOp op = new MapOp(initializer, myVariable);
-                myVariable = declaredVar;
-                myFrom++;
-                flatten();
-                return op;
+              // do not handle mapToPrimitive
+              if(!(declaredVar.getType() instanceof PsiPrimitiveType)) {
+                PsiExpression initializer = declaredVar.getInitializer();
+                if (initializer != null &&
+                    ReferencesSearch.search(myVariable, new LocalSearchScope(Arrays.copyOfRange(myStatements, myFrom + 1, myTo)))
+                      .findFirst() == null) {
+                  MapOp op = new MapOp(initializer, myVariable);
+                  myVariable = declaredVar;
+                  myFrom++;
+                  flatten();
+                  return op;
+                }
               }
             }
           }
@@ -754,12 +768,12 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     }
   }
 
-  private static String compoundLambdaOrMethodReference(PsiVariable parameter,
+  private static String compoundLambdaOrMethodReference(PsiVariable variable,
                                                         PsiExpression expression,
                                                         String samQualifiedName,
                                                         PsiType[] samParamTypes) {
     String result = "";
-    final Project project = parameter.getProject();
+    final Project project = variable.getProject();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiClass functionClass = psiFacade.findClass(samQualifiedName, GlobalSearchScope.allScope(project));
     for (int i = 0; i < samParamTypes.length; i++) {
@@ -769,15 +783,15 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     }
     final PsiClassType functionalInterfaceType = functionClass != null ? psiFacade.getElementFactory().createType(functionClass, samParamTypes) : null;
     String methodReferenceText = null;
-    if(parameter instanceof PsiParameter) {
-      final PsiParameter[] parameters = {(PsiParameter)parameter};
+    if(variable instanceof PsiParameter) {
+      final PsiParameter[] parameters = {(PsiParameter)variable};
       methodReferenceText = LambdaCanBeMethodReferenceInspection.convertToMethodReference(expression, parameters, functionalInterfaceType, null);
     }
     if (methodReferenceText != null) {
       LOG.assertTrue(functionalInterfaceType != null);
       result += "(" + functionalInterfaceType.getCanonicalText() + ")" + methodReferenceText;
     } else {
-      result += parameter.getName() + " -> " + expression.getText();
+      result += variable.getName() + " -> " + expression.getText();
     }
     return result;
   }
@@ -801,6 +815,23 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     for (PsiElement comment : PsiTreeUtil.findChildrenOfType(body, PsiComment.class)) {
       parent.addBefore(comment, foreachStatement);
     }
+  }
+
+  @NotNull
+  private static StringBuilder generateStream(PsiExpression iteratedValue, List<String> intermediateOps) {
+    StringBuilder buffer = new StringBuilder();
+    final PsiType iteratedValueType = iteratedValue.getType();
+    if (iteratedValueType instanceof PsiArrayType) {
+      buffer.append("java.util.Arrays.stream(").append(iteratedValue.getText()).append(")");
+    }
+    else {
+      buffer.append(getIteratedValueText(iteratedValue));
+      if (!intermediateOps.isEmpty()) {
+        buffer.append(".stream()");
+      }
+    }
+    intermediateOps.forEach(buffer::append);
+    return buffer;
   }
 
   private static String getIteratedValueText(PsiExpression iteratedValue) {
