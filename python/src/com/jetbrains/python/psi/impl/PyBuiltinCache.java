@@ -171,22 +171,17 @@ public class PyBuiltinCache {
   @NotNull
   private static List<PyType> getSequenceElementTypes(@NotNull PySequenceExpression sequence, @NotNull TypeEvalContext context) {
     final PyExpression[] elements = sequence.getElements();
+    PyType elemType;
+
     if (elements.length == 0 || elements.length > 10 /* performance */) {
-      return Collections.singletonList(null);
+      elemType = PyUtil.getCollectionTypeByModifications(sequence, context);
+      return Collections.singletonList(elemType);
     }
-    final PyType firstElementType = context.getType(elements[0]);
-    if (firstElementType == null) {
-      return Collections.singletonList(null);
-    }
-    for (int i = 1; i < elements.length; i++) {
-      final PyType elementType = context.getType(elements[i]);
-      if (elementType == null || !elementType.equals(firstElementType)) {
-        return Collections.singletonList(null);
-      }
-    }
+
+    elemType = context.getType(elements[0]);
     if (sequence instanceof PyDictLiteralExpression) {
-      if (firstElementType instanceof PyTupleType) {
-        final PyTupleType tupleType = (PyTupleType)firstElementType;
+      if (elemType instanceof PyTupleType) {
+        final PyTupleType tupleType = (PyTupleType)elemType;
         if (tupleType.getElementCount() == 2) {
           return Arrays.asList(tupleType.getElementType(0), tupleType.getElementType(1));
         }
@@ -194,7 +189,15 @@ public class PyBuiltinCache {
       return Arrays.asList(null, null);
     }
     else {
-      return Collections.singletonList(firstElementType);
+      for (PyExpression element : elements) {
+        final PyType elementType = context.getType(element);
+        elemType = PyUnionType.union(elemType, elementType);
+      }
+      final PyType modifiedCollectionType = PyUtil.getCollectionTypeByModifications(sequence, context);
+      if (modifiedCollectionType != null) {
+        elemType = PyUnionType.union(elemType, modifiedCollectionType);
+      }
+      return Collections.singletonList(elemType);
     }
   }
 
