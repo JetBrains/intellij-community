@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,10 +55,7 @@ public class GitCheckAttrParser {
         continue;
       }
 
-      if (myAttributes.get(file) == null) {
-        myAttributes.put(file, new ArrayList<>());
-      }
-      myAttributes.get(file).add(attr);
+      myAttributes.computeIfAbsent(file, f -> new ArrayList<>()).add(attr);
     }
   }
 
