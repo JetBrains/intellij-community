@@ -174,7 +174,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
    * @param parent parent component which is used to calculate heavy weight window ancestor.
    *               <code>parent</code> cannot be <code>null</code> and must be showing.
    */
-  protected DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper, @NotNull Component parent, boolean canBeParent) {
+  protected DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper, @NotNull Component parent, final boolean canBeParent) {
     myWrapper = wrapper;
 
     myWindowManager = null;
@@ -183,11 +183,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       myWindowManager = (WindowManagerEx)WindowManager.getInstance();
     }
 
-    Window owner = OwnerOptional.fromComponent(parent).get();
-    if (!owner.isShowing()) {
-      throw new IllegalArgumentException("owner must be showing: " + owner);
-    }
-    createDialog(owner, canBeParent);
+    OwnerOptional.fromComponent(parent).ifWindow(window -> {
+      createDialog(window, canBeParent);
+    });
   }
 
   public DialogWrapperPeerImpl(@NotNull final DialogWrapper wrapper,final Window owner, final boolean canBeParent,
