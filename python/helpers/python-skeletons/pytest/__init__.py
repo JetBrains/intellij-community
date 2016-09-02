@@ -76,11 +76,11 @@ class mark:
         value.
 
         Optionally specify a reason for better reporting.
-        
-        Evaluation happens within the module global context. 
+
+        Evaluation happens within the module global context.
         Example: ``skipif('sys.platform == "win32"')`` skips the test if
         we are on the win32 platform.
-        
+
         see http://pytest.org/latest/skipping.html
         """
 
@@ -88,15 +88,15 @@ class mark:
     def xfail(condition=None, reason=None, raises=None, run=True, strict=False):
         """mark the the test function as an expected failure if eval(condition)
         has a True value.
-        
+
         Optionally specify a reason for better reporting and run=False if
         you don't even want to execute the test function.
-        
+
         See http://pytest.org/latest/skipping.html
         """
 
     @staticmethod
-    def parametrize(argnames, argvalues): 
+    def parametrize(argnames, argvalues, indirect=False, ids=None, scope=None):
         """call a test function multiple times passing in different arguments
         in turn.
 
@@ -104,6 +104,25 @@ class mark:
         :param argvalues: generally needs to be a list of values if argnames
         specifies only one name or a list of tuples of values if
         argnames specifies multiple names.
+
+        :param indirect: The list of argnames or boolean. A list of arguments'
+        names (subset of argnames). If True the list contains all names from the
+        argnames. Each argvalue corresponding to an argname in this list will be
+        passed as request.param to its respective argname fixture function so
+        that it can perform more expensive setups during the setup phase of a
+        test rather than at collection time.
+
+        :param ids: list of string ids, or a callable. If strings, each is
+        corresponding to the argvalues so that they are part of the test id. If
+        callable, it should take one argument (a single argvalue) and return a
+        string or return None. If None, the automatically generated id for that
+        argument will be used. If no ids are provided they will be generated
+        automatically from the argvalues.
+
+        :param scope: if specified it denotes the scope of the parameters. The
+        scope is used for grouping tests by parameter instances. It will also
+        override any fixture-function defined scope, allowing to set a dynamic
+        scope using test context or configuration.
 
         Example: @parametrize('arg1', [1,2]) would lead to two calls of the
         decorated test function, one with arg1=1 and another with arg1=2.
@@ -113,14 +132,14 @@ class mark:
         """
 
     @staticmethod
-    def usefixtures(*fixturenames): 
-        """mark tests as needing all of the specified fixtures. 
-        
+    def usefixtures(*fixturenames):
+        """mark tests as needing all of the specified fixtures.
+
         see http://pytest.org/latest/fixture.html#usefixtures
         """
 
     @staticmethod
-    def tryfirst(f): 
+    def tryfirst(f):
         """mark a hook implementation function such that the plugin machinery
         will try to call it first/as early as possible.
         """
@@ -133,8 +152,8 @@ class mark:
 
     @staticmethod
     def hookwrapper(f):
-        """A hook wrapper is a generator function which yields exactly once. 
-        When pytest invokes hooks it first executes hook wrappers and passes 
+        """A hook wrapper is a generator function which yields exactly once.
+        When pytest invokes hooks it first executes hook wrappers and passes
         the same arguments as to the regular hooks.
         """
 
