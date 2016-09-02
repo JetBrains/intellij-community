@@ -2378,7 +2378,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
       final WindowInfoImpl info = getInfo(source.getToolWindow().getId());
       InternalDecorator another = null;
-      if (info.isFloating()) {
+      if (info.isFloating() || info.isWindowed()) {
         final Window owner = SwingUtilities.getWindowAncestor(source);
         if (owner != null) {
           info.setFloatingBounds(owner.getBounds());
