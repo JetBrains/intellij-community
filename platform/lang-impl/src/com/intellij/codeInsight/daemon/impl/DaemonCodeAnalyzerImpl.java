@@ -48,6 +48,8 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -351,7 +353,19 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
     Map<FileEditor, HighlightingPass[]> map = new HashMap<>();
     for (TextEditor textEditor : textEditors) {
+      if (textEditor instanceof TextEditorImpl) {
+        try {
+          ((TextEditorImpl)textEditor).waitForLoaded(10, TimeUnit.SECONDS);
+        }
+        catch (TimeoutException e) {
+          throw new RuntimeException(textEditor + " has not completed loading in 10 seconds");
+        }
+      }
       TextEditorBackgroundHighlighter highlighter = (TextEditorBackgroundHighlighter)textEditor.getBackgroundHighlighter();
+      if (highlighter == null) {
+        Editor editor = textEditor.getEditor();
+        throw new RuntimeException("Null highlighter from " + textEditor + "; loaded: " + AsyncEditorLoader.isEditorLoaded(editor));
+      }
       final List<TextEditorHighlightingPass> passes = highlighter.getPasses(toIgnore);
       HighlightingPass[] array = passes.toArray(new HighlightingPass[passes.size()]);
       assert array.length != 0 : "Highlighting is disabled for the file " + file;

@@ -112,53 +112,9 @@ public class IdeaTextPatchBuilder {
     final StaticPathDescription description = new StaticPathDescription(fp.isDirectory(),
                                                                         ts == null ? fp.getIOFile().lastModified() : ts, fp.getPath());
     if (cr instanceof BinaryContentRevision) {
-      return new AirContentRevision() {
-        public boolean isBinary() {
-          return true;
-        }
-        public String getContentAsString() {
-          throw new IllegalStateException();
-        }
-        public byte[] getContentAsBytes() throws VcsException {
-          return ((BinaryContentRevision) cr).getBinaryContent();
-        }
-        public String getRevisionNumber() {
-          return ts != null ? null : cr.getRevisionNumber().asString();
-        }
-        @NotNull
-        public PathDescription getPath() {
-          return description;
-        }
-
-        @Override
-        public Charset getCharset() {
-          return null;
-        }
-      };
+      return new BinaryAirContentRevision((BinaryContentRevision)cr, description, ts);
     } else {
-      return new AirContentRevision() {
-        public boolean isBinary() {
-          return false;
-        }
-        public String getContentAsString() throws VcsException {
-          return cr.getContent();
-        }
-        public byte[] getContentAsBytes() throws VcsException {
-          throw new IllegalStateException();
-        }
-        public String getRevisionNumber() {
-          return ts != null ? null : cr.getRevisionNumber().asString();
-        }
-        @NotNull
-        public PathDescription getPath() {
-          return description;
-        }
-
-        @Override
-        public Charset getCharset() {
-          return fp.getCharset();
-        }
-      };
+      return new TextAirContentRevision(cr, description, ts);
     }
   }
 
@@ -168,5 +124,91 @@ public class IdeaTextPatchBuilder {
     final Date date = provider.getRevisionDate(cr.getRevisionNumber(), cr.getFile());
     final Long ts = date == null ? null : date.getTime();
     return convertRevisionToAir(cr, ts);
+  }
+
+  private static class BinaryAirContentRevision implements AirContentRevision {
+    @NotNull private final BinaryContentRevision myRevision;
+    @NotNull private final StaticPathDescription myDescription;
+    @Nullable private final Long myTimestamp;
+
+    public BinaryAirContentRevision(@NotNull BinaryContentRevision revision,
+                                    @NotNull StaticPathDescription description,
+                                    @Nullable Long timestamp) {
+      myRevision = revision;
+      myDescription = description;
+      myTimestamp = timestamp;
+    }
+
+    public boolean isBinary() {
+      return true;
+    }
+
+    public String getContentAsString() {
+      throw new IllegalStateException();
+    }
+
+    public byte[] getContentAsBytes() throws VcsException {
+      return myRevision.getBinaryContent();
+    }
+
+    public String getRevisionNumber() {
+      return myTimestamp != null ? null : myRevision.getRevisionNumber().asString();
+    }
+
+    @NotNull
+    public PathDescription getPath() {
+      return myDescription;
+    }
+
+    @Override
+    public Charset getCharset() {
+      return null;
+    }
+  }
+
+  private static class TextAirContentRevision implements AirContentRevision {
+    @NotNull private final ContentRevision myRevision;
+    @NotNull private final StaticPathDescription myDescription;
+    @Nullable private final Long myTimestamp;
+
+    public TextAirContentRevision(@NotNull ContentRevision revision,
+                                  @NotNull StaticPathDescription description,
+                                  @Nullable Long timestamp) {
+      myRevision = revision;
+      myDescription = description;
+      myTimestamp = timestamp;
+    }
+
+    public boolean isBinary() {
+      return false;
+    }
+
+    public String getContentAsString() throws VcsException {
+      return myRevision.getContent();
+    }
+
+    public byte[] getContentAsBytes() throws VcsException {
+      if (myRevision instanceof ByteBackedContentRevision) {
+        return ((ByteBackedContentRevision)myRevision).getContentAsBytes();
+      }
+
+      String textContent = getContentAsString();
+      if (textContent == null) return null;
+      return textContent.getBytes(getCharset());
+    }
+
+    public String getRevisionNumber() {
+      return myTimestamp != null ? null : myRevision.getRevisionNumber().asString();
+    }
+
+    @NotNull
+    public PathDescription getPath() {
+      return myDescription;
+    }
+
+    @Override
+    public Charset getCharset() {
+      return myRevision.getFile().getCharset();
+    }
   }
 }

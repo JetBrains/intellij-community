@@ -379,17 +379,21 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
             try {
               Element rootElement = JDOMUtil.load(VfsUtilCore.virtualToIoFile(file));
               profile = importInspectionProfile(rootElement, myApplicationProfileManager, getProject(), wholePanel);
-              if (getProfilePanel(profile) != null) {
+              final SingleInspectionProfilePanel existed = getProfilePanel(profile);
+              if (existed != null) {
                 if (Messages.showOkCancelDialog(wholePanel, "Profile with name \'" +
                                                             profile.getName() +
                                                             "\' already exists. Do you want to overwrite it?", "Warning",
                                                 Messages.getInformationIcon()) != Messages.OK) {
                   return;
                 }
+                myProfiles.getProfilesComboBox().removeProfile((InspectionProfileImpl)existed.getProfile());
+                myPanels.remove(existed);
               }
               final ModifiableModel model = profile.getModifiableModel();
               model.setModified(true);
               addProfile((InspectionProfileImpl)model);
+              selectProfile(model);
 
               //TODO myDeletedProfiles ? really need this
               myDeletedProfiles.remove(profile);
@@ -625,7 +629,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
         return panel;
       }
     }
-    throw new AssertionError();
+    return null;
   }
 
   @Override

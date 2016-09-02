@@ -5,6 +5,7 @@
   <vendor>JetBrains</vendor>
 
   <depends>com.intellij.modules.python</depends>
+  <depends>org.jetbrains.plugins.terminal</depends>
 
   <xi:include href="/META-INF/python-terminal-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
