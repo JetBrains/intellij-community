@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -518,11 +519,15 @@ public class GitLogProvider implements VcsLogProvider {
     return currentBranchName;
   }
 
+  @SuppressWarnings("unchecked")
   @Nullable
   @Override
   public <T> T getPropertyValue(VcsLogProperties.VcsLogProperty<T> property) {
     if (property == VcsLogProperties.LIGHTWEIGHT_BRANCHES) {
       return (T)Boolean.TRUE;
+    }
+    else if (property == VcsLogProperties.SUPPORTS_INDEXING) {
+      return (T)Boolean.valueOf(Registry.is("vcs.log.index.git"));
     }
     return null;
   }

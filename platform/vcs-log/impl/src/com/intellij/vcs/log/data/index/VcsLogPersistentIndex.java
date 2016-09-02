@@ -86,7 +86,13 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     myProject = project;
     myProviders = providers;
     myFatalErrorsConsumer = fatalErrorsConsumer;
-    myRoots = providers.keySet();
+    myRoots = ContainerUtil.newLinkedHashSet();
+
+    for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
+      if (VcsLogProperties.get(entry.getValue(), VcsLogProperties.SUPPORTS_INDEXING)) {
+        myRoots.add(entry.getKey());
+      }
+    }
 
     myUserRegistry = (VcsUserRegistryImpl)ServiceManager.getService(myProject, VcsUserRegistry.class);
 
@@ -194,12 +200,12 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
   @Override
   public synchronized boolean isIndexed(@NotNull VirtualFile root) {
-    return !myCommitsToIndex.containsKey(root) && myNumberOfTasks.get(root).get() == 0;
+    return myRoots.contains(root) && (!myCommitsToIndex.containsKey(root) && myNumberOfTasks.get(root).get() == 0);
   }
 
   @Override
   public synchronized void markForIndexing(int index, @NotNull VirtualFile root) {
-    if (isIndexed(index)) return;
+    if (isIndexed(index) || !myRoots.contains(root)) return;
     TIntHashSet set = myCommitsToIndex.get(root);
     if (set == null) {
       set = new TIntHashSet();
