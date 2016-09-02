@@ -73,6 +73,10 @@ public class OwnerOptional {
       }
     }
 
+    while (owner != null && !owner.isShowing()) {
+      owner = owner.getOwner();
+    }
+
     return new OwnerOptional(owner);
   }
 
@@ -86,6 +90,13 @@ public class OwnerOptional {
   public OwnerOptional ifNull(Consumer<Frame> consumer) {
     if (myPermanentOwner == null) {
       consumer.consume(null);
+    }
+    return this;
+  }
+
+  public OwnerOptional ifWindow(Consumer<Window> consumer) {
+    if (myPermanentOwner != null) {
+      consumer.consume(myPermanentOwner);
     }
     return this;
   }

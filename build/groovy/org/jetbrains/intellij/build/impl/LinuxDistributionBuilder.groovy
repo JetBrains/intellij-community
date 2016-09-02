@@ -60,7 +60,9 @@ class LinuxDistributionBuilder {
     unixVMOptions()
     unixReadme()
     customizer.copyAdditionalFiles(buildContext, unixDistPath)
-    buildTarGz(null)
+    if (customizer.buildTarGzWithoutBundledJre) {
+      buildTarGz(null)
+    }
     def jreDirectoryPath = buildContext.bundledJreManager.extractLinuxJre()
     if (jreDirectoryPath != null) {
       buildTarGz(jreDirectoryPath)
