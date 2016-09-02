@@ -129,10 +129,6 @@ class DistributionJARsBuilder {
         withModule("coverage-common", productLayout.mainJarName)
       }
 
-      ["linux", "macosx", "win"].each {
-        withResource("lib/libpty/$it", "lib/libpty/$it")
-      }
-
       projectLibrariesUsedByPlugins.each {
         if (!productLayout.projectLibrariesToUnpackIntoMainJar.contains(it.name)) {
           withProjectLibrary(it.name)
