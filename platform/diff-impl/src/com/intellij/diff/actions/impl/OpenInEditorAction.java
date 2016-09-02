@@ -57,7 +57,8 @@ public class OpenInEditorAction extends EditSourceAction implements DumbAware {
       return;
     }
 
-    if (e.getData(CommonDataKeys.NAVIGATABLE) == null) {
+    Navigatable navigatable = e.getData(CommonDataKeys.NAVIGATABLE);
+    if (navigatable == null || !navigatable.canNavigate()) {
       e.getPresentation().setVisible(true);
       e.getPresentation().setEnabled(false);
       return;
