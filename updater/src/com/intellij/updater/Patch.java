@@ -62,7 +62,7 @@ public class Patch {
   }
 
   private List<PatchAction> calculateActions(PatchSpec spec, UpdaterUI ui) throws IOException, OperationCancelledException {
-    Runner.logger.info("Calculating difference...");
+    Runner.logger().info("Calculating difference...");
     ui.startProcess("Calculating difference...");
     ui.checkCancelled();
 
@@ -101,7 +101,7 @@ public class Patch {
       }
     }
 
-    Runner.logger.info("Preparing actions...");
+    Runner.logger().info("Preparing actions...");
     ui.startProcess("Preparing actions...");
     ui.checkCancelled();
 
@@ -276,7 +276,7 @@ public class Patch {
     List<ValidationResult> results = new ArrayList<>();
 
     Set<String> deletedPaths = new HashSet<>();
-    Runner.logger.info("Validating installation...");
+    Runner.logger().info("Validating installation...");
     forEach(myActions, "Validating installation...", ui, true, action -> {
       ValidationResult result = action.validate(toDir);
 

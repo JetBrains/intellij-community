@@ -30,10 +30,14 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 public class Runner {
-  public static Logger logger = null;
   private static final String PATCH_FILE_NAME = "patch-file.zip";
 
+  private static Logger logger = null;
   private static boolean ourCaseSensitiveFs;
+
+  public static Logger logger() {
+    return logger;
+  }
 
   public static boolean isCaseSensitiveFs() {
     return ourCaseSensitiveFs;
@@ -91,7 +95,7 @@ public class Runner {
       checkCaseSensitivity(destFolder);
 
       initLogger();
-      logger.info("destFolder: " + destFolder + ", case-sensitive: " + ourCaseSensitiveFs);
+      logger().info("destFolder: " + destFolder + ", case-sensitive: " + ourCaseSensitiveFs);
 
       if ("install".equals(args[0])) {
         install(jarFile, destFolder);
@@ -169,7 +173,7 @@ public class Runner {
   }
 
   public static void printStackTrace(Throwable e){
-    logger.error(e.getMessage(), e);
+    logger().error(e.getMessage(), e);
   }
 
   public static String getArgument(String[] args, String name) {
@@ -236,7 +240,7 @@ public class Runner {
       File tempPatchFile = Utils.createTempFile();
       PatchFileCreator.create(spec, tempPatchFile, ui);
 
-      logger.info("Packing JAR file: " + spec.getPatchFile() );
+      logger().info("Packing JAR file: " + spec.getPatchFile() );
       ui.startProcess("Packing JAR file '" + spec.getPatchFile() + "'...");
 
       try (ZipOutputWrapper out = new ZipOutputWrapper(new FileOutputStream(spec.getPatchFile()));
@@ -256,7 +260,7 @@ public class Runner {
   }
 
   private static void cleanup(UpdaterUI ui) throws IOException {
-    logger.info("Cleaning up...");
+    logger().info("Cleaning up...");
     ui.startProcess("Cleaning up...");
     ui.setProgressIndeterminate();
     Utils.cleanup();
@@ -264,13 +268,13 @@ public class Runner {
 
   private static void install(String jarFile, String destFolder) throws Exception {
     new SwingUpdaterUI(ui -> {
-      logger.info("Installing patch to the " + destFolder);
+      logger().info("Installing patch to the " + destFolder);
       return doInstall(jarFile, ui, destFolder);
     });
   }
 
   private static void apply(String jarFile, String destFolder) throws Exception {
-     logger.info("Applying patch to the " + destFolder);
+     logger().info("Applying patch to the " + destFolder);
      doInstall(jarFile, new ConsoleUpdaterUI(), destFolder);
   }
 
@@ -279,7 +283,7 @@ public class Runner {
       try {
         File patchFile = Utils.createTempFile();
 
-        logger.info("Extracting patch file...");
+        logger().info("Extracting patch file...");
         ui.startProcess("Extracting patch file...");
         ui.setProgressIndeterminate();
         try (ZipFile zipFile = new ZipFile(jarFile);
