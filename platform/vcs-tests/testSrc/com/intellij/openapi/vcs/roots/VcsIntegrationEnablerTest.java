@@ -152,7 +152,7 @@ public class VcsIntegrationEnablerTest extends VcsRootPlatformTest {
     return FileUtil.toSystemDependentName(VcsTestUtil.toAbsolute(root, myProject));
   }
 
-  private static class TestIntegrationEnabler extends VcsIntegrationEnabler<MockAbstractVcs> {
+  private static class TestIntegrationEnabler extends VcsIntegrationEnabler {
 
     protected TestIntegrationEnabler(@NotNull MockAbstractVcs vcs) {
       super(vcs);
@@ -161,7 +161,7 @@ public class VcsIntegrationEnablerTest extends VcsRootPlatformTest {
     @Override
     protected boolean initOrNotifyError(@NotNull final VirtualFile projectDir) {
       File file = new File(projectDir.getPath(), ".mock");
-      VcsNotifier.getInstance(myVcs.getProject()).notifySuccess("Created mock repository in " + projectDir.getPresentableUrl());
+      VcsNotifier.getInstance(myProject).notifySuccess("Created mock repository in " + projectDir.getPresentableUrl());
       myFilesToDelete.add(file);
       return file.mkdir();
     }

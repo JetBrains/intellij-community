@@ -29,12 +29,12 @@ import java.util.*;
 import static com.intellij.openapi.util.text.StringUtil.pluralize;
 import static java.util.stream.Collectors.toList;
 
-public abstract class VcsIntegrationEnabler<Vcs extends AbstractVcs> {
+public abstract class VcsIntegrationEnabler {
 
   @NotNull protected final Project myProject;
-  @NotNull protected final Vcs myVcs;
+  @NotNull private final AbstractVcs myVcs;
 
-  protected VcsIntegrationEnabler(@NotNull Vcs vcs) {
+  protected VcsIntegrationEnabler(@NotNull AbstractVcs vcs) {
     myProject = vcs.getProject();
     myVcs = vcs;
   }
