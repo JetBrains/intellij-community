@@ -42,7 +42,7 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
     var restartApplication = false
     var updateResult: UpdateResult? = null
     icsManager.runInAutoCommitDisabledMode {
-      UIUtil.invokeAndWaitIfNeeded(Runnable { ApplicationManager.getApplication()!!.saveSettings() })
+      ApplicationManager.getApplication()!!.saveSettings()
       try {
         writeAndDeleteProhibited = true
         runModalTask(icsMessage("task.sync.title"), project) { indicator ->
