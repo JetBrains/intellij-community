@@ -188,8 +188,8 @@ public class UIUtil {
     drawLine(g, startX, bottomY, endX, bottomY, null, color);
   }
 
-  private static final GrayFilter DEFAULT_GRAY_FILTER = new GrayFilter(true, 50);
-  private static final GrayFilter DARCULA_GRAY_FILTER = new GrayFilter(true, 30);
+  private static final GrayFilter DEFAULT_GRAY_FILTER = new GrayFilter(true, 70);
+  private static final GrayFilter DARCULA_GRAY_FILTER = new GrayFilter(true, 20);
 
   public static GrayFilter getGrayFilter() {
     return isUnderDarcula() ? DARCULA_GRAY_FILTER : DEFAULT_GRAY_FILTER;
