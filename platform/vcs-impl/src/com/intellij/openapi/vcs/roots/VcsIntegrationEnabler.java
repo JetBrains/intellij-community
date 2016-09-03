@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.roots;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,7 +24,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -113,18 +111,7 @@ public abstract class VcsIntegrationEnabler<VcsT extends AbstractVcs> {
     vcsManager.setDirectoryMappings(mappings);
   }
 
-  protected static void refreshVcsDir(@NotNull final VirtualFile projectDir, @NotNull final String vcsDirName) {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            LocalFileSystem.getInstance().refreshAndFindFileByPath(projectDir.getPath() + "/" + vcsDirName);
-          }
-        });
-      }
-    });
+  protected static void refreshVcsDir(@NotNull VirtualFile projectDir, @NotNull String vcsDirName) {
+    LocalFileSystem.getInstance().refreshAndFindFileByPath(projectDir.getPath() + "/" + vcsDirName);
   }
-
 }
