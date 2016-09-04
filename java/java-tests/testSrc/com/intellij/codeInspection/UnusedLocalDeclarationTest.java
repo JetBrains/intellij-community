@@ -15,30 +15,16 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.JavaTestUtil;
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
-import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
-import com.intellij.testFramework.InspectionTestCase;
-
-public abstract class AbstractUnusedDeclarationTest extends InspectionTestCase {
-  protected UnusedDeclarationInspection myTool;
-  protected GlobalInspectionToolWrapper myToolWrapper;
+public class UnusedLocalDeclarationTest extends AbstractUnusedDeclarationTest {
 
   @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection";
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myToolWrapper = getUnusedDeclarationWrapper();
-    myTool = (UnusedDeclarationInspection)myToolWrapper.getTool();
-  }
-
   protected void doTest() {
-    myTool.getSharedLocalInspectionTool().LOCAL_VARIABLE = false;
     myTool.getSharedLocalInspectionTool().PARAMETER = false;
     doTest("deadCode/" + getTestName(true), myToolWrapper);
   }
+
+  public void testLocalVariables() {
+    doTest();
+  }
+
 }

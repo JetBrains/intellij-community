@@ -188,6 +188,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       descriptionElement.addContent(buf.toString());
       element.addContent(descriptionElement);
     }
+    super.exportResults(parentNode, refEntity, excludedDescriptions);
   }
 
   @Override

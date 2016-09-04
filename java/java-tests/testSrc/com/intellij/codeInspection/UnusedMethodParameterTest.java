@@ -21,7 +21,9 @@ public class UnusedMethodParameterTest extends InspectionTestCase {
   }
 
   private void doTest() throws Exception {
-    doTest("unusedMethodParameter/" + getTestName(true), new UnusedDeclarationInspection());
+    UnusedDeclarationInspection declarationInspection = new UnusedDeclarationInspection();
+    declarationInspection.getSharedLocalInspectionTool().LOCAL_VARIABLE = false;
+    doTest("unusedMethodParameter/" + getTestName(true), declarationInspection);
   }
 
   public void testFieldInAnonymousClass() throws Exception {

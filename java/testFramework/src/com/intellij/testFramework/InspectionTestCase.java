@@ -66,6 +66,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
     ep.presentation = UnusedDeclarationPresentation.class.getName();
     ep.implementationClass = UnusedDeclarationInspection.class.getName();
     ep.shortName = UnusedDeclarationInspectionBase.SHORT_NAME;
+    ep.displayName = UnusedDeclarationInspectionBase.DISPLAY_NAME;
     return new GlobalInspectionToolWrapper(ep);
   }
 
