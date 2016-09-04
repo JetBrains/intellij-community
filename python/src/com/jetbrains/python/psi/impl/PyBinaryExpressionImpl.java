@@ -149,7 +149,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
           final Map<PyGenericType, PyType> substitutions = new HashMap<>();
           final PyType parameterType = context.getType(parameter);
           final PyType argumentType = context.getType(argument);
-          if (!PyTypeChecker.match(parameterType, argumentType, context, substitutions)) {
+          if (!PyTypeChecker.match(parameterType, argumentType, context, substitutions, false)) {
             matched = false;
           }
         }

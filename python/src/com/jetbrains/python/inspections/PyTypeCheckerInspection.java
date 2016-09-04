@@ -19,14 +19,20 @@ import com.google.common.collect.Sets;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.inspections.quickfix.PyMakeFunctionReturnTypeQuickFix;
@@ -36,6 +42,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 
 /**
@@ -43,7 +50,22 @@ import java.util.*;
  */
 public class PyTypeCheckerInspection extends PyInspection {
   private static final Logger LOG = Logger.getInstance(PyTypeCheckerInspection.class.getName());
-  private static Key<Long> TIME_KEY = Key.create("PyTypeCheckerInspection.StartTime");
+  private static final Key<Long> TIME_KEY = Key.create("PyTypeCheckerInspection.StartTime");
+
+  public boolean noImplicitAny = false;
+  @SuppressWarnings("unused") public boolean deprecateStr = false;
+  public boolean deprecateStrLiterals = false;
+  public boolean strictNativeStrings = false;
+
+  @Override
+  public JComponent createOptionsPanel() {
+    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox("No implicit Any", "noImplicitAny");
+    panel.addCheckbox("No str in type hints", "deprecateStr");
+    panel.addCheckbox("No native str literals", "deprecateStrLiterals");
+    panel.addCheckbox("Strict str checking", "strictNativeStrings");
+    return panel;
+  }
 
   @NotNull
   @Override
@@ -54,9 +76,88 @@ public class PyTypeCheckerInspection extends PyInspection {
     return new Visitor(holder, session);
   }
 
-  public static class Visitor extends PyInspectionVisitor {
+  public class Visitor extends PyInspectionVisitor {
     public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
       super(holder, session);
+    }
+
+    @Override
+    public void visitPyElement(PyElement node) {
+      gradualByting(node);
+    }
+
+    public void gradualByting(@NotNull PyElement node) {
+      final PyTypedElement typedElement = PyUtil.as(node, PyTypedElement.class);
+      if (typedElement != null) {
+        final PyType type = myTypeEvalContext.getType(typedElement);
+        final LanguageLevel level = LanguageLevel.forElement(node);
+        if (level.isOlderThan(LanguageLevel.PYTHON30)) {
+          final String typeName = PythonDocumentationProvider.getTypeName(type, myTypeEvalContext);
+          final PyTypeCommentOwner typeCommentOwner = PyUtil.as(node, PyTypeCommentOwner.class);
+          final String typeCommentAnnotation = typeCommentOwner != null ? typeCommentOwner.getTypeCommentAnnotation() : null;
+
+          if (noImplicitAny) {
+            final String msg = String.format("Implicit type 'Any' (inferred type '%s')", typeName);
+            if (type == null || type instanceof PyUnionType && ((PyUnionType)type).isWeak() || type instanceof PyStructuralType) {
+              if (typeCommentAnnotation == null) {
+                final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(node);
+                //final ProblemHighlightType highlightType =
+                //  (node instanceof PyTargetExpression && ((PyTargetExpression)node).getQualifier() == null &&
+                //   PyUtil.as(scopeOwner, PyFile.class) == null) ?
+                //  ProblemHighlightType.GENERIC_ERROR : ProblemHighlightType.GENERIC_ERROR;
+                final PyNamedParameter namedParameter = PyUtil.as(node, PyNamedParameter.class);
+                final boolean insideLambda = namedParameter != null && PsiTreeUtil.getParentOfType(node, PyLambdaExpression.class) != null;
+                final boolean isNamedElement = node instanceof PsiNamedElement;
+                final PyReferenceExpression referenceExpr = PyUtil.as(node, PyReferenceExpression.class);
+                final Scope scope = scopeOwner != null ? ControlFlowCache.getScope(scopeOwner) : null;
+                final boolean localVariableUsage = referenceExpr != null &&
+                                  !referenceExpr.isQualified() &&
+                                  scope != null &&
+                                  scope.containsDeclaration(referenceExpr.getReferencedName());
+                if (!insideLambda && !localVariableUsage) {
+                  registerProblem(node, msg, isNamedElement ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING : ProblemHighlightType.WEAK_WARNING);
+                }
+              }
+              //registerProblem(node, "Unknown type", ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+            }
+            //else if (PyTypeChecker.isUnknown(type)) {
+            //  registerProblem(node, String.format("Uncertain type: '%s'", typeName), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+            //}
+          }
+          //if (deprecateStr) {
+          //  final PyClassType classType = PyUtil.as(type, PyClassType.class);
+          //  if (classType != null) {
+          //    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(node);
+          //    final PyClass pyClass = classType.getPyClass();
+          //    final PyClassType strType = builtinCache.getStrType();
+          //    if (strType != null) {
+          //      final PyClass strClass = strType.getPyClass();
+          //      if (pyClass.equals(strClass)) {
+          //        final PyStringLiteralExpression stringLiteral = PyUtil.as(node, PyStringLiteralExpression.class);
+          //        if (stringLiteral != null) {
+          //          return;
+          //        }
+          //        registerProblem(node, "Deprecated type 'str', use 'bytes' / 'Text' / 'NativeStr' instead", ProblemHighlightType.LIKE_DEPRECATED);
+          //      }
+          //    }
+          //  }
+          //}
+          if (deprecateStr) {
+            if (typeCommentAnnotation != null) {
+              final PsiComment comment = typeCommentOwner.getTypeComment();
+              if (typeCommentAnnotation.contains("str")) {
+                registerProblem(comment, String.format("Type '%s' contains deprecated 'str'", typeName), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+              }
+            }
+          }
+          if (deprecateStrLiterals) {
+            final PyStringLiteralExpression stringLiteralExpr = PyUtil.as(node, PyStringLiteralExpression.class);
+            if ("str".equals(typeName) && stringLiteralExpr != null && !stringLiteralExpr.isDocString()) {
+              registerProblem(node, "Deprecated native 'str' literal", ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+            }
+          }
+        }
+      }
     }
 
     // TODO: Visit decorators with arguments
@@ -100,7 +201,7 @@ public class PyTypeCheckerInspection extends PyInspection {
           final PyExpression returnExpr = node.getExpression();
           final PyType actual = returnExpr != null ? myTypeEvalContext.getType(returnExpr) : PyNoneType.INSTANCE;
           final PyType expected = myTypeEvalContext.getReturnType(function);
-          if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
+          if (!PyTypeChecker.match(expected, actual, myTypeEvalContext, strictNativeStrings)) {
             final String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
             final String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
             PyMakeFunctionReturnTypeQuickFix localQuickFix = new PyMakeFunctionReturnTypeQuickFix(function, actualName, myTypeEvalContext);
@@ -115,6 +216,7 @@ public class PyTypeCheckerInspection extends PyInspection {
 
     @Override
     public void visitPyFunction(PyFunction node) {
+      gradualByting(node);
       final PyAnnotation annotation = node.getAnnotation();
       final String typeCommentAnnotation = node.getTypeCommentAnnotation();
       if (annotation != null || typeCommentAnnotation != null) {
@@ -134,7 +236,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       }
     }
 
-    private static class ReturnVisitor extends PyRecursiveElementVisitor {
+    private class ReturnVisitor extends PyRecursiveElementVisitor {
       private final PyFunction myFunction;
       private boolean myHasReturns = false;
 
@@ -144,6 +246,13 @@ public class PyTypeCheckerInspection extends PyInspection {
 
       @Override
       public void visitPyReturnStatement(PyReturnStatement node) {
+        if (ScopeUtil.getScopeOwner(node) == myFunction) {
+          myHasReturns = true;
+        }
+      }
+
+      @Override
+      public void visitPyYieldExpression(PyYieldExpression node) {
         if (ScopeUtil.getScopeOwner(node) == myFunction) {
           myHasReturns = true;
         }
@@ -199,12 +308,12 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     @Nullable
-    private static Pair<String, ProblemHighlightType> checkTypes(@Nullable PyType expected,
+    private Pair<String, ProblemHighlightType> checkTypes(@Nullable PyType expected,
                                                                  @Nullable PyType actual,
                                                                  @NotNull TypeEvalContext context,
                                                                  @NotNull Map<PyGenericType, PyType> substitutions) {
       if (actual != null && expected != null) {
-        if (!PyTypeChecker.match(expected, actual, context, substitutions)) {
+        if (!PyTypeChecker.match(expected, actual, context, substitutions, strictNativeStrings)) {
           final String expectedName = PythonDocumentationProvider.getTypeName(expected, context);
           String quotedExpectedName = String.format("'%s'", expectedName);
           final boolean hasGenerics = PyTypeChecker.hasGenerics(expected, context);

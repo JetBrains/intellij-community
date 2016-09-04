@@ -103,11 +103,11 @@ public class PyAugmentAssignmentInspection extends PyInspection {
     }
 
     private boolean isString(PyType type, PyBuiltinCache cache, LanguageLevel level) {
-      return PyTypeChecker.match(cache.getStringType(level), type, myTypeEvalContext);
+      return PyTypeChecker.match(cache.getStringType(level), type, myTypeEvalContext, false);
     }
 
     private boolean isNumeric(PyType type, PyBuiltinCache cache) {
-      return PyTypeChecker.match(cache.getComplexType(), type, myTypeEvalContext);
+      return PyTypeChecker.match(cache.getComplexType(), type, myTypeEvalContext, false);
     }
   }
 }

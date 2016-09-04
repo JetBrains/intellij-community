@@ -112,7 +112,7 @@ public class PyDocstringTypesInspection extends PyInspection {
     private boolean match(PsiElement anchor, String dynamicTypeName, String specifiedTypeName) {
       final PyType dynamicType = PyTypeParser.getTypeByName(anchor, dynamicTypeName);
       final PyType specifiedType = PyTypeParser.getTypeByName(anchor, specifiedTypeName);
-      return PyTypeChecker.match(specifiedType, dynamicType, myTypeEvalContext);
+      return PyTypeChecker.match(specifiedType, dynamicType, myTypeEvalContext, false);
     }
   }
 

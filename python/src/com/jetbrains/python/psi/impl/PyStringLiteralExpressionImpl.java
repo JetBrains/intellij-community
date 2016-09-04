@@ -315,7 +315,15 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
         }
       }
     }
-    return PyBuiltinCache.getInstance(this).getBytesType(LanguageLevel.forElement(this));
+    // XXX: Proof of concept
+    if (nodes.size() > 0) {
+      final ASTNode node = getStringNodes().get(0);
+      final PyUtil.StringNodeInfo nodeInfo = new PyUtil.StringNodeInfo(node);
+      if (nodeInfo.isBytes()) {
+        return PyBuiltinCache.getInstance(this).getBytesType(LanguageLevel.forElement(this));
+      }
+    }
+    return PyBuiltinCache.getInstance(this).getStrType();
   }
 
   @NotNull

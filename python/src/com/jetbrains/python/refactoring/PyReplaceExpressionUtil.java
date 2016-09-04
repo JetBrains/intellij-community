@@ -21,7 +21,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.Function;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.inspections.PyStringFormatParser;
@@ -156,8 +155,8 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
         final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(oldExpression);
         final PyType tupleType = builtinCache.getTupleType();
         final PyType mappingType = PyTypeParser.getTypeByName(null, "collections.Mapping");
-        if (!PyTypeChecker.match(tupleType, valueType, context) ||
-            (mappingType != null && !PyTypeChecker.match(mappingType, valueType, context))) {
+        if (!PyTypeChecker.match(tupleType, valueType, context, false) ||
+            (mappingType != null && !PyTypeChecker.match(mappingType, valueType, context, false))) {
           return replaceSubstringWithSingleValueFormatting(oldExpression, textRange, prefix, suffix, formatValue, newText, substitutions);
         }
       }

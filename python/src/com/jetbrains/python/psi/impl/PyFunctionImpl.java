@@ -293,7 +293,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         final PyClassType returnClassType = (PyClassType)returnType;
         if (returnClassType.getPyClass() == getContainingClass()) {
           final PyType receiverType = context.getType(receiver);
-          if (receiverType instanceof PyClassType && PyTypeChecker.match(returnType, receiverType, context)) {
+          if (receiverType instanceof PyClassType && PyTypeChecker.match(returnType, receiverType, context, false)) {
             return returnClassType.isDefinition() ? receiverType : ((PyClassType)receiverType).toInstance();
           }
         }

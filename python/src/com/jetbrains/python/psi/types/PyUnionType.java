@@ -177,7 +177,7 @@ public class PyUnionType implements PyType {
         }
       }
       else {
-        if (!PyTypeChecker.match(type, m, context)) {
+        if (!PyTypeChecker.match(type, m, context, false)) {
           members.add(m);
         }
       }

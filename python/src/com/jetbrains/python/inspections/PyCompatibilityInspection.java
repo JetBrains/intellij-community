@@ -318,7 +318,7 @@ public class PyCompatibilityInspection extends PyInspection {
           if (qualifier != null) {
             final PyType type = context.getType(qualifier);
             final PyClassType dictType = PyBuiltinCache.getInstance(node).getDictType();
-            if (PyTypeChecker.match(dictType, type, context)) {
+            if (PyTypeChecker.match(dictType, type, context, false)) {
               registerProblem(node, "dict.iterkeys(), dict.iteritems() and dict.itervalues() methods are not available in py3");
             }
           }

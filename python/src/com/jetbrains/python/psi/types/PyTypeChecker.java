@@ -36,8 +36,8 @@ public class PyTypeChecker {
   private PyTypeChecker() {
   }
 
-  public static boolean match(@Nullable PyType expected, @Nullable PyType actual, @NotNull TypeEvalContext context) {
-    return match(expected, actual, context, null, true);
+  public static boolean match(@Nullable PyType expected, @Nullable PyType actual, @NotNull TypeEvalContext context, boolean strictNativeStr) {
+    return match(expected, actual, context, null, true, strictNativeStr);
   }
 
   /**
@@ -49,21 +49,22 @@ public class PyTypeChecker {
    * @param actual        type to be matched against expected
    * @param context
    * @param substitutions
+   * @param strictNativeStr
    * @return
    */
   public static boolean match(@Nullable PyType expected, @Nullable PyType actual, @NotNull TypeEvalContext context,
-                              @Nullable Map<PyGenericType, PyType> substitutions) {
-    return match(expected, actual, context, substitutions, true);
+                              @Nullable Map<PyGenericType, PyType> substitutions, boolean strictNativeStr) {
+    return match(expected, actual, context, substitutions, true, strictNativeStr);
   }
 
   private static boolean match(@Nullable PyType expected, @Nullable PyType actual, @NotNull TypeEvalContext context,
-                               @Nullable Map<PyGenericType, PyType> substitutions, boolean recursive) {
+                               @Nullable Map<PyGenericType, PyType> substitutions, boolean recursive, boolean strictNativeStr) {
     // TODO: subscriptable types?, module types?, etc.
     if (expected instanceof PyGenericType && substitutions != null) {
       final PyGenericType generic = (PyGenericType)expected;
       final PyType subst = substitutions.get(generic);
       final PyType bound = generic.getBound();
-      if (!match(bound, actual, context, substitutions, recursive)) {
+      if (!match(bound, actual, context, substitutions, recursive, strictNativeStr)) {
         return false;
       }
       else if (subst != null) {
@@ -71,7 +72,7 @@ public class PyTypeChecker {
           return true;
         }
         else if (recursive) {
-          return match(subst, actual, context, substitutions, false);
+          return match(subst, actual, context, substitutions, false, strictNativeStr);
         }
         else {
           return false;
@@ -99,7 +100,7 @@ public class PyTypeChecker {
     }
     if (actual instanceof PyUnionType) {
       for (PyType m : ((PyUnionType)actual).getMembers()) {
-        if (match(expected, m, context, substitutions, recursive)) {
+        if (match(expected, m, context, substitutions, recursive, strictNativeStr)) {
           return true;
         }
       }
@@ -107,7 +108,7 @@ public class PyTypeChecker {
     }
     if (expected instanceof PyUnionType) {
       for (PyType t : ((PyUnionType)expected).getMembers()) {
-        if (match(t, actual, context, substitutions, recursive)) {
+        if (match(t, actual, context, substitutions, recursive, strictNativeStr)) {
           return true;
         }
       }
@@ -117,7 +118,7 @@ public class PyTypeChecker {
       final PyClass superClass = ((PyClassType)expected).getPyClass();
       final PyClass subClass = ((PyClassType)actual).getPyClass();
       if (expected instanceof PyCollectionType && actual instanceof PyCollectionType) {
-        if (!matchClasses(superClass, subClass, context)) {
+        if (!matchClasses(superClass, subClass, context, strictNativeStr)) {
           return false;
         }
         // TODO: Match generic parameters based on the correspondence between the generic parameters of subClass and its base classes
@@ -125,7 +126,7 @@ public class PyTypeChecker {
         final List<PyType> subElementTypes = ((PyCollectionType)actual).getElementTypes(context);
         for (int i = 0; i < subElementTypes.size(); i++) {
           final PyType superElementType = i < superElementTypes.size() ? superElementTypes.get(i) : null;
-          if (!match(superElementType, subElementTypes.get(i), context, substitutions, recursive)) {
+          if (!match(superElementType, subElementTypes.get(i), context, substitutions, recursive, strictNativeStr)) {
             return false;
           }
         }
@@ -140,7 +141,7 @@ public class PyTypeChecker {
           }
           else {
             for (int i = 0; i < superTupleType.getElementCount(); i++) {
-              if (!match(superTupleType.getElementType(i), subTupleType.getElementType(i), context, substitutions, recursive)) {
+              if (!match(superTupleType.getElementType(i), subTupleType.getElementType(i), context, substitutions, recursive, strictNativeStr)) {
                 return false;
               }
             }
@@ -150,7 +151,7 @@ public class PyTypeChecker {
         else if (superTupleType.isHomogeneous() && !subTupleType.isHomogeneous()) {
           final PyType expectedElementType = superTupleType.getElementType(0);
           for (int i = 0; i < subTupleType.getElementCount(); i++) {
-            if (!match(expectedElementType, subTupleType.getElementType(i), context)) {
+            if (!match(expectedElementType, subTupleType.getElementType(i), context, strictNativeStr)) {
               return false;
             }
           }
@@ -160,10 +161,10 @@ public class PyTypeChecker {
           return false;
         }
         else {
-          return match(superTupleType.getElementType(0), subTupleType.getElementType(0), context);
+          return match(superTupleType.getElementType(0), subTupleType.getElementType(0), context, strictNativeStr);
         }
       }
-      else if (matchClasses(superClass, subClass, context)) {
+      else if (matchClasses(superClass, subClass, context, strictNativeStr)) {
         return true;
       }
       else if (((PyClassType)actual).isDefinition() && PyNames.CALLABLE.equals(expected.getName())) {
@@ -214,12 +215,12 @@ public class PyTypeChecker {
             final PyCallableParameter expectedParam = expectedParameters.get(i);
             final PyCallableParameter actualParam = actualParameters.get(i);
             // TODO: Check named and star params, not only positional ones
-            if (!match(expectedParam.getType(context), actualParam.getType(context), context, substitutions, recursive)) {
+            if (!match(expectedParam.getType(context), actualParam.getType(context), context, substitutions, recursive, strictNativeStr)) {
               return false;
             }
           }
         }
-        if (!match(expectedCallable.getReturnType(context), actualCallable.getReturnType(context), context, substitutions, recursive)) {
+        if (!match(expectedCallable.getReturnType(context), actualCallable.getReturnType(context), context, substitutions, recursive, strictNativeStr)) {
           return false;
         }
         return true;
@@ -390,7 +391,7 @@ public class PyTypeChecker {
       }
       final PyType argType = context.getType(entry.getKey());
       final PyType paramType = context.getType(p);
-      if (!match(paramType, argType, context, substitutions)) {
+      if (!match(paramType, argType, context, substitutions, false)) {
         return null;
       }
     }
@@ -420,7 +421,7 @@ public class PyTypeChecker {
           if (initType instanceof PyCallableType) {
             final PyType initReturnType = ((PyCallableType)initType).getReturnType(context);
             if (initReturnType != null) {
-              match(initReturnType, qualifierType, context, substitutions);
+              match(initReturnType, qualifierType, context, substitutions, false);
             }
           }
         }
@@ -429,7 +430,10 @@ public class PyTypeChecker {
     return substitutions;
   }
 
-  private static boolean matchClasses(@Nullable PyClass superClass, @Nullable PyClass subClass, @NotNull TypeEvalContext context) {
+  private static boolean matchClasses(@Nullable PyClass superClass,
+                                      @Nullable PyClass subClass,
+                                      @NotNull TypeEvalContext context,
+                                      boolean strictNativeStr) {
     if (superClass == null ||
         subClass == null ||
         subClass.isSubclass(superClass, context) ||
@@ -438,6 +442,20 @@ public class PyTypeChecker {
       return true;
     }
     else {
+      // XXX: Proof of concept
+      if (!strictNativeStr) {
+        final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(superClass);
+        final PyClass strClass = builtinCache.getClass("str");
+        final PyClass bytesClass = builtinCache.getClass("bytes");
+        final PyClass unicodeClass = builtinCache.getClass("unicode");
+        if (superClass.equals(strClass) && (subClass.equals(bytesClass) || subClass.equals(unicodeClass)) ||
+            subClass.equals(strClass) && (superClass.equals(bytesClass) || superClass.equals(unicodeClass))) {
+          return true;
+        }
+        //if (superClass.equals(strClass) && (subClass.equals(bytesClass) || subClass.equals(unicodeClass))) {
+        //  return true;
+        //}
+      }
       final String superName = superClass.getName();
       return superName != null && superName.equals(subClass.getName());
     }

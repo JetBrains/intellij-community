@@ -190,8 +190,8 @@ public class PyStringFormatInspection extends PyInspection {
           final PyType stringType = PyBuiltinCache.getInstance(rightExpression).getStringType(LanguageLevel.forElement(rightExpression));
           final PyType listType = PyBuiltinCache.getInstance(rightExpression).getListType();
 
-          if (type == null || PyTypeChecker.match(listType, type, myTypeEvalContext)
-              || PyTypeChecker.match(stringType, type, myTypeEvalContext)) {
+          if (type == null || PyTypeChecker.match(listType, type, myTypeEvalContext, false)
+              || PyTypeChecker.match(stringType, type, myTypeEvalContext, false)) {
             checkTypeCompatible(problemTarget, builtinCache.getStrType(),
                                 PyTypeParser.getTypeByName(problemTarget, s));
             return 1;
@@ -346,7 +346,7 @@ public class PyStringFormatInspection extends PyInspection {
         if (expected != null && "str".equals(expected.getName())) {
           return;
         }
-        if (actual != null && !PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
+        if (actual != null && !PyTypeChecker.match(expected, actual, myTypeEvalContext, false)) {
           registerProblem(problemTarget, PyBundle.message("INSP.unexpected.type.$0", actual.getName()));
         }
       }
@@ -404,7 +404,7 @@ public class PyStringFormatInspection extends PyInspection {
         final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(expr);
         final PyClassType bytesType = builtinCache.getBytesType(LanguageLevel.forElement(expr));
         final PyType actualType = context.getType(expr);
-        return bytesType != null && actualType != null && PyTypeChecker.match(bytesType, actualType, context);
+        return bytesType != null && actualType != null && PyTypeChecker.match(bytesType, actualType, context, false);
       }
 
       private void inspectWidth(@NotNull final PyStringLiteralExpression formatExpression, String width) {

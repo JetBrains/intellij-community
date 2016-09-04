@@ -258,7 +258,7 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
     final TypeEvalContext context = TypeEvalContext.userInitiated(file.getProject(), file);
     final PyType rhsType = context.getType(rhs);
     String prefix = "";
-    if (PyTypeChecker.match(PyBuiltinCache.getInstance(rhs).getObjectType("unicode"), rhsType, context)) {
+    if (PyTypeChecker.match(PyBuiltinCache.getInstance(rhs).getObjectType("unicode"), rhsType, context, false)) {
       prefix = "u";
     }
     final PyStringLiteralExpression leftExpression = (PyStringLiteralExpression)element.getLeftExpression();

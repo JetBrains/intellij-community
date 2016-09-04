@@ -27,10 +27,12 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.ModuleLibraryOrderEntryImpl;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.psi.types.*;
@@ -57,12 +59,9 @@ public class PyBuiltinCache {
    */
   @NotNull private final Map<String, PyClassTypeImpl> myTypeCache = new HashMap<>();
 
-  @Nullable private PyFile myBuiltinsFile;
-  @Nullable private PyFile myExceptionsFile;
+  @Nullable final private PyFile myBuiltinsFile;
+  @Nullable final private PyFile myExceptionsFile;
   private long myModStamp = -1;
-
-  public PyBuiltinCache() {
-  }
 
   public PyBuiltinCache(@Nullable final PyFile builtins, @Nullable PyFile exceptions) {
     myBuiltinsFile = builtins;
@@ -126,7 +125,16 @@ public class PyBuiltinCache {
 
   @Nullable
   public static PyFile getBuiltinsForSdk(@NotNull Project project, @NotNull Sdk sdk) {
-    return getSkeletonFile(project, sdk, PythonSdkType.getBuiltinsFileName(sdk));
+    final LanguageLevel level = PythonSdkType.getLanguageLevelForSdk(sdk);
+    if (level.isOlderThan(LanguageLevel.PYTHON30)) {
+      // XXX: Proof of concept, don't commit!
+      final String path = PythonHelpersLocator.getHelperPath("typeshed/__builtin__.pyi");
+      final VirtualFile file = StandardFileSystems.local().findFileByPath(path);
+      return file != null ? PyUtil.as(PsiManager.getInstance(project).findFile(file), PyFile.class) : null;
+    }
+    else {
+      return getSkeletonFile(project, sdk, PythonSdkType.getBuiltinsFileName(sdk));
+    }
   }
 
   @Nullable
@@ -309,12 +317,8 @@ public class PyBuiltinCache {
 
   @Nullable
   public PyClassType getBytesType(LanguageLevel level) {
-    if (level.isPy3K()) {
-      return getObjectType("bytes");
-    }
-    else {
-      return getObjectType("str");
-    }
+    // XXX: Proof of concept
+    return getObjectType("bytes");
   }
 
   @Nullable
@@ -333,7 +337,7 @@ public class PyBuiltinCache {
       return getObjectType("str");
     }
     else {
-      return getStrOrUnicodeType();
+      return getBytesOrUnicodeType();
     }
   }
 
@@ -343,12 +347,13 @@ public class PyBuiltinCache {
       return getObjectType("bytes");
     }
     else {
-      return getStrOrUnicodeType();
+      // XXX: Proof of concept
+      return getStrType();
     }
   }
 
-  private PyType getStrOrUnicodeType() {
-    return PyUnionType.union(getObjectType("str"), getObjectType("unicode"));
+  private PyType getBytesOrUnicodeType() {
+    return PyUnionType.union(getObjectType("bytes"), getObjectType("unicode"));
   }
 
   @Nullable

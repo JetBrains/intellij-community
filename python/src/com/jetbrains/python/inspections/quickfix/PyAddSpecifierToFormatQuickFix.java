@@ -92,11 +92,11 @@ public class PyAddSpecifierToFormatQuickFix implements LocalQuickFix {
         if (conversionType == '\u0000') {
           final int insertOffset = offset + chunk.getStartIndex() + shift;
           if (insertOffset > leftExpression.getTextRange().getEndOffset()) return;
-          if (PyTypeChecker.match(strType, type, context)) {
+          if (PyTypeChecker.match(strType, type, context, false)) {
             document.insertString(insertOffset, "s");
             shift += 1;
           }
-          if (PyTypeChecker.match(intType, type, context) || PyTypeChecker.match(floatType, type, context)) {
+          if (PyTypeChecker.match(intType, type, context, false) || PyTypeChecker.match(floatType, type, context, false)) {
             document.insertString(insertOffset, "d");
             shift += 1;
           }

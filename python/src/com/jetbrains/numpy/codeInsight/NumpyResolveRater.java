@@ -30,7 +30,7 @@ public class NumpyResolveRater extends PyResolveResultRaterBase {
   public int getMemberRate(PsiElement member, PyType type, TypeEvalContext context) {
     if (member instanceof PsiNamedElement) {
       final PyType ndArray = PyTypeParser.getTypeByName(member, NumpyDocStringTypeProvider.NDARRAY);
-      if (PyTypeChecker.match(ndArray, type, context) &&
+      if (PyTypeChecker.match(ndArray, type, context, false) &&
           PyNames.isRightOperatorName(((PsiNamedElement)member).getName())) {
         return 100;
       }

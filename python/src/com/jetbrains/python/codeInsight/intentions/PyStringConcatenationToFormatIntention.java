@@ -84,7 +84,7 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
         continue;
       final PyType type = TypeEvalContext.codeAnalysis(file.getProject(), file).getType(expression);
       final boolean isStringReference = PyTypeChecker.match(cache.getStringType(LanguageLevel.forElement(expression)),
-                                                            type, TypeEvalContext.codeAnalysis(file.getProject(), file)) && type != null;
+                                                            type, TypeEvalContext.codeAnalysis(file.getProject(), file), false) && type != null;
       if (!isStringReference) {
         return false;
       }
