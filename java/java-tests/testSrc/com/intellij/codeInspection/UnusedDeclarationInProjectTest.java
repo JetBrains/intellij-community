@@ -37,6 +37,16 @@ public class UnusedDeclarationInProjectTest extends AbstractUnusedDeclarationTes
     }
   }
 
+  public void testInstantiatedInTestOnlyStatic() throws Exception {
+    myTool.setTestEntryPoints(false);
+    try {
+      doTest();
+    }
+    finally {
+      myTool.setTestEntryPoints(true);
+    }
+  }
+
   public void testIgnoreUnusedFields() throws Exception {
     myTool.getSharedLocalInspectionTool().FIELD = false;
     try {

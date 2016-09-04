@@ -122,6 +122,11 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       final int problemCount = super.getElementProblemCount(refElement);
       if (problemCount > - 1) return problemCount;
       if (!((RefElementImpl)refElement).hasSuspiciousCallers() || ((RefJavaElementImpl)refElement).isSuspiciousRecursive()) return 1;
+
+      for (RefElement element : refElement.getInReferences()) {
+        if (((UnusedDeclarationInspectionBase)myTool).isEntryPoint(element)) return 1;
+      }
+
       return 0;
     }
   }
