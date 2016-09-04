@@ -80,7 +80,7 @@ class Test {
 
   private def configure(String text) {
     myFixture.configureByText("a.java", text)
-    CodeFoldingManagerImpl.getInstance(getProject()).buildInitialFoldings(myFixture.editor);
+    CodeFoldingManagerImpl.getInstance(getProject()).buildInitialFoldings(myFixture.editor)
     def foldingModel = myFixture.editor.foldingModel as FoldingModelEx
     foldingModel.rebuild()
     myFixture.doHighlighting()

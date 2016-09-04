@@ -24,7 +24,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 class GroovyFoldingTest extends LightCodeInsightFixtureTestCase {
   private String configure(String text) {
     myFixture.configureByText('____________a_______________.groovy', text)
-    CodeFoldingManagerImpl.getInstance(getProject()).buildInitialFoldings(myFixture.editor);
+    CodeFoldingManagerImpl.getInstance(getProject()).buildInitialFoldings(myFixture.editor)
     myFixture.doHighlighting()
     return text
   }

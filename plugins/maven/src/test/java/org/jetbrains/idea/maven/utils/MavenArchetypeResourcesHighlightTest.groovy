@@ -28,17 +28,17 @@ class MavenArchetypeResourcesHighlightTest extends LightCodeInsightFixtureTestCa
 import \${package};
 class A {
 }
-""");
-    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
-    myFixture.checkHighlighting();
+""")
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile())
+    myFixture.checkHighlighting()
 
     file = myFixture.addFileToProject("src/main/resources/B.java", """
 import <error>\$</error><error><error>{</error>package};</error>
 class B {
 }
-""");
-    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
-    myFixture.checkHighlighting();
+""")
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile())
+    myFixture.checkHighlighting()
   }
 
 }

@@ -35,7 +35,7 @@ abstract class GroovyCompletionTestBase extends LightCodeInsightFixtureTestCase 
   }
 
   protected void checkResult() {
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy", true);
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy", true)
   }
 
   protected void doCompletionTest(String before = null, String after = null, String type = "", CompletionType ct) {

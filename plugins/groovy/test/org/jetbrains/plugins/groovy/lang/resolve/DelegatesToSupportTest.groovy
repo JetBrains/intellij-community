@@ -29,7 +29,7 @@ class DelegatesToSupportTest extends LightGroovyTestCase {
 
   @Override
   void setUp() throws Exception {
-    super.setUp();
+    super.setUp()
     fixture.enableInspections(GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection)
   }
 

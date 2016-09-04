@@ -39,15 +39,15 @@ class Foo {
     myFixture.testStructureView(new Consumer<StructureViewComponent>() {
       @Override
       void consume(StructureViewComponent component) {
-        component.setActionActive(InheritedMembersNodeProvider.ID, false);
+        component.setActionActive(InheritedMembersNodeProvider.ID, false)
         assertTreeEqual(component.getTree(), """-a.groovy
  -Foo
   Foo(int, int)
   foo(int, int): Object
   prop: int
-""");
+""")
       }
-    });
+    })
   }
 
   void testInheritedSynthetic() {
@@ -64,7 +64,7 @@ class Bar extends Foo {
     myFixture.testStructureView(new Consumer<StructureViewComponent>() {
       @Override
       void consume(StructureViewComponent component) {
-        component.setActionActive(InheritedMembersNodeProvider.ID, true);
+        component.setActionActive(InheritedMembersNodeProvider.ID, true)
         assertTreeEqual(component.getTree(), """-a.groovy
  -Foo
   Foo(int, int)
@@ -96,9 +96,9 @@ class Bar extends Foo {
   wait(): void
   finalize(): void
   prop: int
-""");
+""")
       }
-    });
+    })
 
   }
 
@@ -114,14 +114,14 @@ class Foo {
     myFixture.testStructureView(new Consumer<StructureViewComponent>() {
       @Override
       void consume(StructureViewComponent component) {
-        component.setActionActive(InheritedMembersNodeProvider.ID, false);
+        component.setActionActive(InheritedMembersNodeProvider.ID, false)
         assertTreeEqual(component.getTree(), """-a.groovy
  -Foo
   foo(): void
   prop: int
-""");
+""")
       }
-    });
+    })
 
   }
 

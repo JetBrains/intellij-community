@@ -41,18 +41,18 @@ class NavigateDelegatedClsMethodsTest extends LightGroovyTestCase {
     void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       super.configureModule(module, model, contentEntry)
 
-      final Library.ModifiableModel gebModel = model.moduleLibraryTable.createLibrary("Geb").modifiableModel;
-      final VirtualFile gebJar = JarFileSystem.instance.refreshAndFindFileByPath(absoluteTestDataPath + 'mockGeb/geb-core-0.7.1.jar!/');
-      assert gebJar != null;
-      gebModel.addRoot(gebJar, OrderRootType.CLASSES);
-      final VirtualFile gebSource = JarFileSystem.instance.refreshAndFindFileByPath(absoluteTestDataPath + 'mockGeb/geb-core-0.7.1-sources.jar!/');
-      assert gebSource != null;
-      gebModel.addRoot(gebSource, OrderRootType.SOURCES);
+      final Library.ModifiableModel gebModel = model.moduleLibraryTable.createLibrary("Geb").modifiableModel
+      final VirtualFile gebJar = JarFileSystem.instance.refreshAndFindFileByPath(absoluteTestDataPath + 'mockGeb/geb-core-0.7.1.jar!/')
+      assert gebJar != null
+      gebModel.addRoot(gebJar, OrderRootType.CLASSES)
+      final VirtualFile gebSource = JarFileSystem.instance.refreshAndFindFileByPath(absoluteTestDataPath + 'mockGeb/geb-core-0.7.1-sources.jar!/')
+      assert gebSource != null
+      gebModel.addRoot(gebSource, OrderRootType.SOURCES)
 
-      gebModel.commit();
+      gebModel.commit()
 
     }
-  };
+  }
 
   void testNavigationInGroovy() {
     myFixture.with {

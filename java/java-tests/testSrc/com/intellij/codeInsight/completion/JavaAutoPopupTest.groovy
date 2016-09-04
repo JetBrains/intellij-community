@@ -611,7 +611,7 @@ public interface Test {
     void duringCompletion(@NotNull CompletionInitializationContext cxt) {
       Thread.sleep 500
       ProgressManager.checkCanceled()
-      cxt.replacementOffset--;
+      cxt.replacementOffset--
     }
   }
 
@@ -738,7 +738,7 @@ public interface Test {
       }
     <caret>""")
     runInEdtAndWait {
-      int primaryCaretOffset = myFixture.editor.document.text.indexOf("ter   x");
+      int primaryCaretOffset = myFixture.editor.document.text.indexOf("ter   x")
       myFixture.editor.caretModel.addCaret(myFixture.editor.offsetToVisualPosition(primaryCaretOffset))
     }
 
@@ -1069,7 +1069,7 @@ class Foo {
   }
 
   void testCompletionWhenLiveTemplateAreNotSufficient() {
-    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable())
     myFixture.configureByText("a.java", """
 class Foo {
     {
@@ -1121,14 +1121,14 @@ class Foo {
     PsiClass cls = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
           @Override
           PsiClass compute() {
-            return ((PsiJavaFile)myFixture.file).getClasses()[0];
+            return ((PsiJavaFile)myFixture.file).getClasses()[0]
           }
-    });
+    })
 
     PsiMethod[] methods = ApplicationManager.getApplication().runReadAction(new Computable<PsiMethod[]>() {
               @Override
               PsiMethod[] compute() {
-                return cls.methods;
+                return cls.methods
               }
         })
     def foo = methods[0]
@@ -1179,7 +1179,7 @@ class Foo {
           getLookup().list.cellRenderer.getListCellRendererComponent(getLookup().list, it, 0, false, false)
         }
       }
-    });
+    })
     assert myFixture.lookupElementStrings.containsAll(['private', 'protected'])
   }
 
@@ -1212,10 +1212,10 @@ public class Test {
   }
 
   void testMoreRecentExactMatchesTemplateFirst() {
-    TemplateManager manager = TemplateManager.getInstance(getProject());
-    Template template = manager.createTemplate("itar", "myGroup", null);
-    JavaCodeContextType contextType = ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.Statement);
-    ((TemplateImpl)template).templateContext.setEnabled(contextType, true);
+    TemplateManager manager = TemplateManager.getInstance(getProject())
+    Template template = manager.createTemplate("itar", "myGroup", null)
+    JavaCodeContextType contextType = ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.Statement)
+    ((TemplateImpl)template).templateContext.setEnabled(contextType, true)
     CodeInsightTestUtil.addTemplate(template, testRootDisposable)
     
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, testRootDisposable)
@@ -1269,23 +1269,23 @@ public class Test {
   }
 
   private FileEditor openEditorForUndo() {
-    FileEditor editor;
+    FileEditor editor
     runInEdtAndWait { editor = FileEditorManager.getInstance(project).openFile(myFixture.file.virtualFile, false)[0] }
     def manager = (UndoManagerImpl) UndoManager.getInstance(project)
     def old = manager.editorProvider
     manager.editorProvider = new CurrentEditorProvider() {
       @Override
       FileEditor getCurrentEditor() {
-        return editor;
+        return editor
       }
-    };
+    }
     disposeOnTearDown ({ manager.editorProvider = old } as Disposable)
     return editor
   }
 
   void testAutopopupTypingUndo() {
     myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
-    def editor = openEditorForUndo();
+    def editor = openEditorForUndo()
     type 'aioobeeee'
     runInEdtAndWait { UndoManager.getInstance(project).undo(editor) }
     assert !myFixture.editor.document.text.contains('aioo')
@@ -1402,7 +1402,7 @@ class Foo extends Abcdefg <caret>'''
   }
 
   void testSoutvTemplate() {
-    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable())
     myFixture.configureByText 'a.java', 'class Foo {{ <caret> }}'
     type 'soutv\tgetcl.'
     myFixture.checkResult '''\
@@ -1515,7 +1515,7 @@ class Foo {
   }
 
   void testReplaceTypedPrefixPart() {
-    ((StatisticsManagerImpl)StatisticsManager.getInstance()).enableStatistics(getTestRootDisposable());
+    ((StatisticsManagerImpl)StatisticsManager.getInstance()).enableStatistics(getTestRootDisposable())
     myFixture.configureByText 'a.java', 'class Foo{ { <caret> }}'
     for (i in 0..StatisticsManager.OBLIVION_THRESHOLD) {
       type 'System.out.printl\n\n'
@@ -1588,7 +1588,7 @@ class ListConfigKey {
   }
 
   void testPreselectMostRelevantInTheMiddleAlpha() {
-    UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = true;
+    UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = true
     CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
 
     myFixture.configureByText 'a.java', '''
@@ -1649,15 +1649,15 @@ class Foo {
   }
 
   void "test no name autopopup in live template"() {
-    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable())
     myFixture.configureByText 'a.java', '''class F {
   String nameContainingIdentifier;
 <caret>
 }'''
 
-    final TemplateManager manager = TemplateManager.getInstance(getProject());
-    final Template template = manager.createTemplate("m", "user", 'void foo(String $V1$) {}');
-    template.addVariable("V1", "", '"s"', true);
+    final TemplateManager manager = TemplateManager.getInstance(getProject())
+    final Template template = manager.createTemplate("m", "user", 'void foo(String $V1$) {}')
+    template.addVariable("V1", "", '"s"', true)
 
     runInEdtAndWait {
       CommandProcessor.instance.executeCommand project, {manager.startTemplate(myFixture.editor, template)}, null, null
@@ -1727,11 +1727,11 @@ class Cls {
   }
 
   void "test live template without description"() {
-    final TemplateManager manager = TemplateManager.getInstance(getProject());
-    final Template template = manager.createTemplate("tpl", "user", null);
+    final TemplateManager manager = TemplateManager.getInstance(getProject())
+    final Template template = manager.createTemplate("tpl", "user", null)
     final JavaCodeContextType contextType =
-      ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.Statement);
-    ((TemplateImpl)template).getTemplateContext().setEnabled(contextType, true);
+      ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.Statement)
+    ((TemplateImpl)template).getTemplateContext().setEnabled(contextType, true)
     CodeInsightTestUtil.addTemplate(template, testRootDisposable)
     
     myFixture.configureByText 'a.java', '''

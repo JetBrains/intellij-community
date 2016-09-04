@@ -36,15 +36,15 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  */
 class GroovyGenerateMembersTest extends LightCodeInsightFixtureTestCase {
   void testConstructorAtOffset() {
-    doConstructorTest();
+    doConstructorTest()
   }
 
   void testConstructorAtEnd() {
-    doConstructorTest();
+    doConstructorTest()
   }
 
   void testLonelyConstructor() {
-    doConstructorTest();
+    doConstructorTest()
   }
 
   void testConstructorInJavaInheritor() {
@@ -380,7 +380,7 @@ class GrImportStatementStub {
           protected ClassMember[] chooseMembers(ClassMember[] members, boolean allowEmptySelection, boolean copyJavadocCheckbox, Project project, Editor editor) {
             return members
           }
-        }.invoke(project, myFixture.editor, myFixture.file);
+        }.invoke(project, myFixture.editor, myFixture.file)
         UIUtil.dispatchAllInvocationEvents()
         PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
       }
@@ -395,7 +395,7 @@ class GrImportStatementStub {
           protected ClassMember[] chooseMembers(ClassMember[] members, boolean allowEmptySelection, boolean copyJavadocCheckbox, Project project, Editor editor) {
             return members
           }
-        }.invoke(project, myFixture.editor, myFixture.file);
+        }.invoke(project, myFixture.editor, myFixture.file)
         PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
       }
     }.execute()
@@ -406,14 +406,14 @@ class GrImportStatementStub {
       myFixture.configureByText('_a.groovy', before)
     }
     else {
-      myFixture.configureByFile(getTestName(false) + ".groovy");
+      myFixture.configureByFile(getTestName(false) + ".groovy")
     }
-    generateConstructor();
+    generateConstructor()
     if (after != null) {
       myFixture.checkResult(after)
     }
     else {
-      myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+      myFixture.checkResultByFile(getTestName(false) + "_after.groovy")
     }
   }
 
@@ -423,7 +423,7 @@ class GrImportStatementStub {
       handler = new GenerateConstructorHandler() {
         @Override
         protected ClassMember[] chooseMembers(ClassMember[] members, boolean allowEmptySelection, boolean copyJavadocCheckbox, Project project, Editor editor) {
-          return members;
+          return members
         }
       }
     }
@@ -440,7 +440,7 @@ class GrImportStatementStub {
 
     return new WriteCommandAction(project, new PsiFile[0]) {
       protected void run(@NotNull Result result) throws Throwable {
-        handler.invoke(project, myFixture.editor, myFixture.file);
+        handler.invoke(project, myFixture.editor, myFixture.file)
         PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
       }
     }.execute()

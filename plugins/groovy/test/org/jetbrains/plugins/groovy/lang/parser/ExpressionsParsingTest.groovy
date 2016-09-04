@@ -21,7 +21,7 @@ package org.jetbrains.plugins.groovy.lang.parser
 class ExpressionsParsingTest extends GroovyParsingTestCase {
   @Override
   String getBasePath() {
-    return super.basePath + "expressions";
+    return super.basePath + "expressions"
   }
 
   void testarguments$carg1() throws Throwable { doTest(); }

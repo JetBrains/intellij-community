@@ -41,7 +41,7 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void "test concurrent switching with checkCanceled"() {
-    def N = Math.max(2, (int)(Runtime.runtime.availableProcessors()));
+    def N = Math.max(2, (int)(Runtime.runtime.availableProcessors()))
     for (iteration in 1..200) {
       def name = "Foo" + iteration
 //      if (iteration % 10 == 0) println "Finding $name"
@@ -75,7 +75,7 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
         })
       }
 
-      for(future in futuresToWait) future.get();
+      for(future in futuresToWait) future.get()
     }
   }
 
@@ -88,7 +88,7 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void "test cancellable and non-cancellable progress"() {
-    def N = Math.max(2, (int)(Runtime.runtime.availableProcessors()));
+    def N = Math.max(2, (int)(Runtime.runtime.availableProcessors()))
     PsiFileImpl file = (PsiFileImpl) myFixture.addFileToProject("Foo.java", "class Foo {" + ("public void foo() {}\n") * 1000 + "}")
     assert myFixture.findClass("Foo").node
 
@@ -122,15 +122,15 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
             sameStartCondition.await()
             assert myFixture.findClass("Foo").node
           }
-        });
+        })
       }
 
-      for(future in futuresToWait) future.get();
+      for(future in futuresToWait) future.get()
     }
   }
 
   void "test forceUpdateAffectsReadOfDataForUnsavedDocuments"() {
-    def N = Math.max(2, (int)(Runtime.runtime.availableProcessors()));
+    def N = Math.max(2, (int)(Runtime.runtime.availableProcessors()))
     PsiFileImpl file = (PsiFileImpl) myFixture.addFileToProject("Foo.java", "class Foo {" + ("public void foo() {}\n") * 1000 + "}")
     assert myFixture.findClass("Foo").node
 
@@ -164,10 +164,10 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
             sameStartCondition.await()
             assert myFixture.findClass("Foo" + i).node
           }
-        });
+        })
       }
 
-      for(future in futuresToWait) future.get();
+      for(future in futuresToWait) future.get()
     }
   }
 }

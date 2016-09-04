@@ -30,14 +30,14 @@ class CodeBlockGenerationTest extends LightGroovyTestCase {
 
   private void doTest() {
     final String testName = getTestName(true)
-    final PsiFile file = myFixture.configureByFile(testName + '.groovy');
+    final PsiFile file = myFixture.configureByFile(testName + '.groovy')
     assertInstanceOf file, GroovyFile
 
     GrTopStatement[] statements = file.topStatements
     final StringBuilder builder = new StringBuilder()
-    def generator = new CodeBlockGenerator(builder, new ExpressionContext(project));
+    def generator = new CodeBlockGenerator(builder, new ExpressionContext(project))
     for (def statement : statements) {
-      statement.accept(generator);
+      statement.accept(generator)
       builder.append('\n')
     }
 

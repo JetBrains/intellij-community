@@ -31,13 +31,13 @@ class GroovyResolveFileWithContextTest extends LightCodeInsightFixtureTestCase {
       .createGroovyFile("class DummyClass {" +
                         " String sss1 = null;" +
                         "}" +
-                        "", false, null);
+                        "", false, null)
 
     GroovyFile file = GroovyPsiElementFactory.getInstance(project)
       .createGroovyFile("""
 String sss2;
 def x = sss1 + sss2;
-""", false, null);
+""", false, null)
 
     file.setContext(context.lastChild)
 
@@ -47,7 +47,7 @@ def x = sss1 + sss2;
 
   private static void checkResolved(PsiFile file, String referenceText) {
     int idx = file.text.lastIndexOf(referenceText)
-    assert idx > 0;
+    assert idx > 0
     def e = file.findElementAt(idx)
 
     while (e != null && !(e instanceof GrReferenceExpression)) {

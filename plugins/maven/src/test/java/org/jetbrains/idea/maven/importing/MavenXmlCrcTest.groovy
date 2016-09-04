@@ -32,7 +32,7 @@ class MavenXmlCrcTest extends TestCase {
 <project a="a"
          b="b"   >
 </project>
-""");
+""")
 
     same("""
 <project>
@@ -53,7 +53,7 @@ class MavenXmlCrcTest extends TestCase {
       <!-- comment -->
 </project>
 """
-    );
+    )
 
     different("""
 <project>
@@ -186,17 +186,17 @@ class MavenXmlCrcTest extends TestCase {
   }
 
   private static void same(@Language("XML") String xml1, @Language("XML") String xml2) {
-    int crc1 = crc(xml1);
-    int crc2 = crc(xml2);
+    int crc1 = crc(xml1)
+    int crc2 = crc(xml2)
 
-    assert crc1 == crc2;
+    assert crc1 == crc2
   }
 
   private static void different(@Language("XML") String xml1, @Language("XML") String xml2) {
-    int crc1 = crc(xml1);
-    int crc2 = crc(xml2);
+    int crc1 = crc(xml1)
+    int crc2 = crc(xml2)
 
-    assert crc1 != crc2;
+    assert crc1 != crc2
   }
 
 

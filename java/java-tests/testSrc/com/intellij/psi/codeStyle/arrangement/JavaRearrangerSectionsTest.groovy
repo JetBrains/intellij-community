@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -507,7 +507,7 @@ public class SuperTest {
         section("//publicS", "//publicE", rule(PUBLIC, METHOD)),
         section("//privateS", "//privateE", rule(PRIVATE, METHOD))
       ]
-    );
+    )
   }
 
   void "test two fields section comments in a row"() {
@@ -541,7 +541,7 @@ public class SuperTest {
         section("//privateFieldStart", "//privateFieldEnd", rule(PRIVATE, FIELD)),
         rule(METHOD)
       ]
-    );
+    )
   }
 
   void "test no additional sections added"() {

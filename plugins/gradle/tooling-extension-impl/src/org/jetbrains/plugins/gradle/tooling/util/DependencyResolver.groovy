@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,9 @@ import org.jetbrains.plugins.gradle.model.ExternalDependency
  * @since 8/19/2015
  */
 interface DependencyResolver {
-  Collection<ExternalDependency> resolveDependencies(@Nullable String configurationName);
+  Collection<ExternalDependency> resolveDependencies(@Nullable String configurationName)
 
-  Collection<ExternalDependency> resolveDependencies(@Nullable Configuration configuration);
+  Collection<ExternalDependency> resolveDependencies(@Nullable Configuration configuration)
 
-  Collection<ExternalDependency> resolveDependencies(@NotNull SourceSet sourceSet);
+  Collection<ExternalDependency> resolveDependencies(@NotNull SourceSet sourceSet)
 }

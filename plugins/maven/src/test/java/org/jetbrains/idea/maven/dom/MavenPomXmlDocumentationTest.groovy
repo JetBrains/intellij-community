@@ -32,7 +32,7 @@ class MavenPomXmlDocumentationTest extends MavenDomTestCase {
 <scm>
   <connection<caret>></connection>
 </scm>"""
-    );
+    )
 
     def expectedText = """Tag name:&nbsp;<b>connection</b><br>Description  :&nbsp;The source control management system URL
                   that describes the repository and how to connect to the
@@ -41,10 +41,10 @@ class MavenPomXmlDocumentationTest extends MavenDomTestCase {
                   and <a href="http://maven.apache.org/scm/scms-overview.html">list of supported SCMs</a>.
                   This connection is read-only.<br>Version  :&nbsp;4.0.0"""
 
-    PsiElement originalElement = getElementAtCaret(myProjectPom);
-    PsiElement targetElement = DocumentationManager.getInstance(myProject).findTargetElement(getEditor(), getTestPsiFile(), originalElement);
+    PsiElement originalElement = getElementAtCaret(myProjectPom)
+    PsiElement targetElement = DocumentationManager.getInstance(myProject).findTargetElement(getEditor(), getTestPsiFile(), originalElement)
 
-    DocumentationProvider provider = DocumentationManager.getProviderFromElement(targetElement);
+    DocumentationProvider provider = DocumentationManager.getProviderFromElement(targetElement)
 
     assert expectedText.replaceAll(" +", " ") == provider.generateDoc(targetElement, originalElement).replaceAll(" +", " ")
   }

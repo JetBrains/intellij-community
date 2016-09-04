@@ -253,8 +253,8 @@ class A {
 
     final Collection<GrAnonymousClassDefinition> classes = StubIndex.getElements(
       GrAnonymousClassIndex.KEY, "Runnable", getProject(), GlobalSearchScope.allScope(project), GrAnonymousClassDefinition
-    );
-    assert classes.size() == 1;
+    )
+    assert classes.size() == 1
 
     def definition = classes.first()
     assert (definition as GrAnonymousClassDefinitionImpl).stub

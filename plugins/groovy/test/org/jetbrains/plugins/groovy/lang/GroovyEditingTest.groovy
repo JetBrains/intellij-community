@@ -19,7 +19,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.util.TestUtils
@@ -35,16 +35,16 @@ class GroovyEditingTest extends LightCodeInsightFixtureTestCase {
       myFixture.configureByText(getTestName(false) + '.groovy', before)
     }
     else {
-      myFixture.configureByFile(getTestName(false) + ".groovy");
+      myFixture.configureByFile(getTestName(false) + ".groovy")
     }
 
-    myFixture.type(chars);
+    myFixture.type(chars)
 
     if (after != null) {
       myFixture.checkResult(after)
     }
     else {
-      myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+      myFixture.checkResultByFile(getTestName(false) + "_after.groovy")
     }
   }
 
@@ -250,18 +250,18 @@ class A {}
 
   void testKeepMultilineStringTrailingSpaces() throws Throwable {
     myFixture.configureByFile(getTestName(false) + '.groovy')
-    EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
-    String stripSpaces = editorSettings.getStripTrailingSpaces();
+    EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance()
+    String stripSpaces = editorSettings.getStripTrailingSpaces()
     try {
-      editorSettings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
-      Document doc = getEditor().getDocument();
-      EditorTestUtil.performTypingAction(getEditor(), (char)' ');
-      PsiDocumentManager.getInstance(getProject()).commitDocument(doc);
-      FileDocumentManager.getInstance().saveDocument(doc);
+      editorSettings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE)
+      Document doc = getEditor().getDocument()
+      EditorTestUtil.performTypingAction(getEditor(), (char)' ')
+      PsiDocumentManager.getInstance(getProject()).commitDocument(doc)
+      FileDocumentManager.getInstance().saveDocument(doc)
     }
     finally {
-      editorSettings.setStripTrailingSpaces(stripSpaces);
+      editorSettings.setStripTrailingSpaces(stripSpaces)
     }
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy")
   }
 }

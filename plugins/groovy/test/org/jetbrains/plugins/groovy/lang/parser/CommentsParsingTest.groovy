@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.parser;
+package org.jetbrains.plugins.groovy.lang.parser
 
 /**
  * @author peter
@@ -21,7 +21,7 @@ package org.jetbrains.plugins.groovy.lang.parser;
 class CommentsParsingTest extends GroovyParsingTestCase {
   @Override
   String getBasePath() {
-    super.basePath + "comments";
+    super.basePath + "comments"
   }
 
   void testBrown() throws Throwable { doTest(); }

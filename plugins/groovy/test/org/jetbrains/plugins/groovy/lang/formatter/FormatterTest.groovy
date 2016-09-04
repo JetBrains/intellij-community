@@ -47,7 +47,7 @@ class FormatterTest extends GroovyFormatterTestCase {
   void testBlockExpr1() throws Throwable {
     //groovySettings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE = false
     groovySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false
-    doTest();
+    doTest()
   }
 
   void testClass1() throws Throwable { doTest(); }
@@ -176,7 +176,7 @@ class FormatterTest extends GroovyFormatterTestCase {
 
   void testClosureAfterLineComment() throws Throwable {
     groovySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false
-    doTest();
+    doTest()
   }
 
   void testAnnotationOnSeparateLine() throws Throwable { doTest(); }
@@ -188,8 +188,8 @@ class FormatterTest extends GroovyFormatterTestCase {
   void testSpockTableWithComments() throws Throwable { doTest() }
 
   void testElseIfs() throws Throwable {
-    groovySettings.SPECIAL_ELSE_IF_TREATMENT = false;
-    doTest();
+    groovySettings.SPECIAL_ELSE_IF_TREATMENT = false
+    doTest()
   }
 
   void testElseIfsSpecial() throws Throwable { doTest(); }
@@ -201,8 +201,8 @@ class FormatterTest extends GroovyFormatterTestCase {
   void testPreserveGroovydoc() throws Throwable { doTest(); }
 
   void testCaseInSwitch() throws Throwable {
-    groovySettings.INDENT_CASE_FROM_SWITCH = false;
-    doTest();
+    groovySettings.INDENT_CASE_FROM_SWITCH = false
+    doTest()
   }
 
   void testCaseInSwitchIndented() throws Throwable { doTest(); }
@@ -210,37 +210,37 @@ class FormatterTest extends GroovyFormatterTestCase {
   void testStuffAfterLineComments() throws Throwable { doTest(); }
 
   void testAnonymousInCall() throws Throwable {
-    groovySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-    doTest();
+    groovySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
+    doTest()
   }
 
   void _testLabelIndent() throws Throwable {
-    groovySettings.indentOptions.LABEL_INDENT_SIZE = -2;
-    doTest();
+    groovySettings.indentOptions.LABEL_INDENT_SIZE = -2
+    doTest()
   }
 
   void _testLabelIndentAbsolute() throws Throwable {
-    groovySettings.indentOptions.LABEL_INDENT_ABSOLUTE = true;
-    groovySettings.indentOptions.LABEL_INDENT_SIZE = 1;
-    doTest();
+    groovySettings.indentOptions.LABEL_INDENT_ABSOLUTE = true
+    groovySettings.indentOptions.LABEL_INDENT_SIZE = 1
+    doTest()
   }
 
   void testClosureParametersAligned() throws Throwable {
-    groovySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-    doTest();
+    groovySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
+    doTest()
   }
 
   void testAlignClosureBraceWithCall() throws Throwable { doTest(); }
 
   void testFlyingGeese() throws Throwable {
-    myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class).USE_FLYING_GEESE_BRACES = true;
-    doTest();
+    myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class).USE_FLYING_GEESE_BRACES = true
+    doTest()
   }
 
   void testSpaceAfterTypeCast() throws Throwable {
-    groovySettings.SPACE_AFTER_TYPE_CAST = false;
-    groovySettings.SPACE_WITHIN_CAST_PARENTHESES = true;
-    doTest();
+    groovySettings.SPACE_AFTER_TYPE_CAST = false
+    groovySettings.SPACE_WITHIN_CAST_PARENTHESES = true
+    doTest()
   }
 
   void testChainCallWithClosures() throws Throwable { doTest(); }
@@ -264,48 +264,48 @@ class FormatterTest extends GroovyFormatterTestCase {
   void testMethodSemicolons() throws Throwable { doTest(); }
 
   void testNoFlyingGeese() throws Throwable {
-    myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class).SPACE_IN_NAMED_ARGUMENT = false;
-    myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class).USE_FLYING_GEESE_BRACES = false;
-    doTest();
+    myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class).SPACE_IN_NAMED_ARGUMENT = false
+    myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class).USE_FLYING_GEESE_BRACES = false
+    doTest()
   }
 
   void testAlignChainedCalls() throws Throwable {
-    groovySettings.ALIGN_MULTILINE_CHAINED_METHODS = true;
-    doTest();
+    groovySettings.ALIGN_MULTILINE_CHAINED_METHODS = true
+    doTest()
   }
 
   void testAlignBinaries() throws Throwable {
-    groovySettings.ALIGN_MULTILINE_BINARY_OPERATION = true;
-    doTest();
+    groovySettings.ALIGN_MULTILINE_BINARY_OPERATION = true
+    doTest()
   }
 
   void testAlignTernaries() throws Throwable {
-    groovySettings.ALIGN_MULTILINE_TERNARY_OPERATION = true;
-    doTest();
+    groovySettings.ALIGN_MULTILINE_TERNARY_OPERATION = true
+    doTest()
   }
 
   void testAlignAssignments() throws Throwable {
-    groovySettings.ALIGN_MULTILINE_ASSIGNMENT = true;
-    doTest();
+    groovySettings.ALIGN_MULTILINE_ASSIGNMENT = true
+    doTest()
   }
 
   void doTest() {
-    def (String before, String after) = TestUtils.readInput(testDataPath + getTestName(true) + ".test");
-    checkFormatting(before, StringUtil.trimEnd(after, "\n"));
+    def (String before, String after) = TestUtils.readInput(testDataPath + getTestName(true) + ".test")
+    checkFormatting(before, StringUtil.trimEnd(after, "\n"))
   }
 
   void testJavadocLink() throws Throwable {
     // Check that no unnecessary white spaces are introduced for the javadoc link element.
     // Check IDEA-57573 for more details.
-    doTest();
+    doTest()
   }
 
   void testFieldInColumnsAlignment() {
-    groovySettings.ALIGN_GROUP_FIELD_DECLARATIONS = true;
-    groovySettings.FIELD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
-    groovySettings.VARIABLE_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    groovySettings.ALIGN_GROUP_FIELD_DECLARATIONS = true
+    groovySettings.FIELD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP
+    groovySettings.VARIABLE_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP
 
-    doTest();
+    doTest()
   }
 
   void testGeese1() { doGeeseTest(); }
@@ -327,15 +327,15 @@ class FormatterTest extends GroovyFormatterTestCase {
   void testMapInArgumentList() { doTest(); }
 
   void testMapInArgList2() {
-    myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class).ALIGN_NAMED_ARGS_IN_MAP = true;
-    doTest();
+    myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class).ALIGN_NAMED_ARGS_IN_MAP = true
+    doTest()
   }
 
   void testForceBraces() {
-    groovySettings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE;
-    groovySettings.FOR_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE;
-    groovySettings.WHILE_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE;
-    doTest();
+    groovySettings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE
+    groovySettings.FOR_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE
+    groovySettings.WHILE_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE
+    doTest()
   }
 
   void testNonIndentAfterClosureQualifier() { doTest() }

@@ -34,25 +34,25 @@ class XmlLiveTemplateTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected void setUp() throws Exception {
-    super.setUp();
-    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+    super.setUp()
+    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable())
   }
 
   @Override
   protected void tearDown() throws Exception {
     if (state != null) {
-      state.gotoEnd();
+      state.gotoEnd()
     }
-    super.tearDown();
+    super.tearDown()
   }
 
   void "test tag template in xml"() {
-    final TemplateManager manager = TemplateManager.getInstance(getProject());
-    final Template template = manager.createTemplate("frm", "user", '$VAR$');
+    final TemplateManager manager = TemplateManager.getInstance(getProject())
+    final Template template = manager.createTemplate("frm", "user", '$VAR$')
     template.addVariable('VAR', new EmptyNode(), new ConstantNode("<"), true)
     
     myFixture.configureByText 'a.xml', '<tag><caret></tag>'
-    manager.startTemplate(myFixture.getEditor(), template);
+    manager.startTemplate(myFixture.getEditor(), template)
     myFixture.checkResult '<tag><selection><</selection><caret></tag>'
   }
 
@@ -65,20 +65,20 @@ class XmlLiveTemplateTest extends LightCodeInsightFixtureTestCase {
   }
 
   void testAvailabilityCDATA() {
-    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("CD", "html/xml");
-    assertTrue(isApplicable("<foo><caret> </foo>", template));
-    assertFalse(isApplicable("<foo bar=\"<caret>\"></foo>", template));
+    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("CD", "html/xml")
+    assertTrue(isApplicable("<foo><caret> </foo>", template))
+    assertFalse(isApplicable("<foo bar=\"<caret>\"></foo>", template))
   }
 
   void testAvailabilityT() {
-    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("T", "html/xml");
-    assertTrue(isApplicable("<foo><caret> </foo>", template));
-    assertFalse(isApplicable("<foo bar=\"<caret>\"></foo>", template));
+    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("T", "html/xml")
+    assertTrue(isApplicable("<foo><caret> </foo>", template))
+    assertFalse(isApplicable("<foo bar=\"<caret>\"></foo>", template))
   }
 
   private boolean isApplicable(String text, TemplateImpl inst) throws IOException {
-    myFixture.configureByText(XmlFileType.INSTANCE, text);
-    return TemplateManagerImpl.isApplicable(myFixture.getFile(), myFixture.getEditor().getCaretModel().getOffset(), inst);
+    myFixture.configureByText(XmlFileType.INSTANCE, text)
+    return TemplateManagerImpl.isApplicable(myFixture.getFile(), myFixture.getEditor().getCaretModel().getOffset(), inst)
   }
 
 

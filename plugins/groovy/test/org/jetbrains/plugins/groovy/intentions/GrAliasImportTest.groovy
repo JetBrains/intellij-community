@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.intentions;
+package org.jetbrains.plugins.groovy.intentions
 
 /**
  * @author Max Medvedev
  */
 class GrAliasImportTest extends GrIntentionTestCase {
   GrAliasImportTest() {
-    super(GroovyIntentionsBundle.message("gr.alias.import.intention.name"));
+    super(GroovyIntentionsBundle.message("gr.alias.import.intention.name"))
   }
 
   void testSimple() {
@@ -37,7 +37,7 @@ fo<caret>o()
 import static Foo.foo as aliased
 
 aliased()
-''');
+''')
   }
 
   void testOverriden() {
@@ -57,7 +57,7 @@ import static Foo.foo as aliased
 
 aliased()
 aliased(2)
-''');
+''')
   }
 
   void testOnDemand() {
@@ -75,7 +75,7 @@ import static Foo.*
 import static Foo.foo as aliased
 
 aliased()
-''');
+''')
   }
 
   void testSimpleOnImportStatement() {
@@ -92,7 +92,7 @@ foo()
 import static Foo.foo as aliased
 
 aliased()
-''');
+''')
   }
 
   void testProperty() {

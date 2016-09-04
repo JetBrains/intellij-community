@@ -63,11 +63,11 @@ import org.jetbrains.plugins.groovy.util.Slow
 @CompileStatic
 abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase implements CompilerMethods {
 
-  protected CompilerTester myCompilerTester;
+  protected CompilerTester myCompilerTester
 
   @Override
   Project getProject() {
-    return super.getProject();
+    return super.getProject()
   }
 
   @Override
@@ -77,48 +77,48 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
 
   @Override
   protected void setUp() throws Exception {
-    super.setUp();
-    myCompilerTester = new CompilerTester(myModule);
+    super.setUp()
+    myCompilerTester = new CompilerTester(myModule)
   }
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
-    moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_6);
-    moduleBuilder.addJdk(IdeaTestUtil.getMockJdk17Path().getPath());
-    super.tuneFixture(moduleBuilder);
+    moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_6)
+    moduleBuilder.addJdk(IdeaTestUtil.getMockJdk17Path().getPath())
+    super.tuneFixture(moduleBuilder)
   }
 
   @Override
   protected void runTest() throws Throwable {
-    if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return;
+    if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return
 
-    super.runTest();
+    super.runTest()
   }
 
   protected static void addGroovyLibrary(final Module to) {
-    File jar = GroovyFacetUtil.getBundledGroovyJar();
-    PsiTestUtil.addLibrary(to, "groovy", jar.getParent(), jar.getName());
+    File jar = GroovyFacetUtil.getBundledGroovyJar()
+    PsiTestUtil.addLibrary(to, "groovy", jar.getParent(), jar.getName())
   }
 
   @Override
   protected void tearDown() throws Exception {
-    final File systemRoot = BuildManager.getInstance().getBuildSystemDirectory();
+    final File systemRoot = BuildManager.getInstance().getBuildSystemDirectory()
     try {
       UIUtil.invokeAndWaitIfNeeded {
         try {
-          myCompilerTester.tearDown();
-          myCompilerTester = null;
+          myCompilerTester.tearDown()
+          myCompilerTester = null
         }
         catch (Exception e) {
-          throw new RuntimeException(e);
+          throw new RuntimeException(e)
         }
         finally {
-          super.tearDown();
+          super.tearDown()
         }
       }
     }
     finally {
-      FileUtil.delete(systemRoot);
+      FileUtil.delete(systemRoot)
     }
   }
 
@@ -126,105 +126,105 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
     new WriteCommandAction(getProject()) {
       @Override
       protected void run(@NotNull Result result) throws Throwable {
-        final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
-        final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-        final ContentEntry entry = rootModel.getContentEntries()[0];
-        entry.removeSourceFolder(entry.getSourceFolders()[0]);
-        entry.addSourceFolder(myFixture.getTempDirFixture().findOrCreateDir("src"), false);
-        entry.addSourceFolder(myFixture.getTempDirFixture().findOrCreateDir("tests"), true);
-        rootModel.commit();
+        final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule)
+        final ModifiableRootModel rootModel = rootManager.getModifiableModel()
+        final ContentEntry entry = rootModel.getContentEntries()[0]
+        entry.removeSourceFolder(entry.getSourceFolders()[0])
+        entry.addSourceFolder(myFixture.getTempDirFixture().findOrCreateDir("src"), false)
+        entry.addSourceFolder(myFixture.getTempDirFixture().findOrCreateDir("tests"), true)
+        rootModel.commit()
       }
-    }.execute();
+    }.execute()
   }
 
   protected Module addDependentModule() {
-    Module module = addModule("dependent", true);
-    ModuleRootModificationUtil.addDependency(module, myModule);
-    return module;
+    Module module = addModule("dependent", true)
+    ModuleRootModificationUtil.addDependency(module, myModule)
+    return module
   }
 
   protected Module addModule(final String name, final boolean withSource) {
     return new WriteCommandAction<Module>(getProject()) {
       @Override
       protected void run(@NotNull Result<Module> result) throws Throwable {
-        final VirtualFile depRoot = myFixture.getTempDirFixture().findOrCreateDir(name);
+        final VirtualFile depRoot = myFixture.getTempDirFixture().findOrCreateDir(name)
 
-        final ModifiableModuleModel moduleModel = ModuleManager.getInstance(getProject()).getModifiableModel();
-        String moduleName = moduleModel.newModule(depRoot.getPath() + "/" + name + ".iml", StdModuleTypes.JAVA.getId()).getName();
-        moduleModel.commit();
+        final ModifiableModuleModel moduleModel = ModuleManager.getInstance(getProject()).getModifiableModel()
+        String moduleName = moduleModel.newModule(depRoot.getPath() + "/" + name + ".iml", StdModuleTypes.JAVA.getId()).getName()
+        moduleModel.commit()
 
-        final Module dep = ModuleManager.getInstance(getProject()).findModuleByName(moduleName);
-        ModuleRootModificationUtil.setModuleSdk(dep, ModuleRootManager.getInstance(myModule).getSdk());
+        final Module dep = ModuleManager.getInstance(getProject()).findModuleByName(moduleName)
+        ModuleRootModificationUtil.setModuleSdk(dep, ModuleRootManager.getInstance(myModule).getSdk())
         if (withSource) {
-          PsiTestUtil.addSourceRoot(dep, depRoot);
+          PsiTestUtil.addSourceRoot(dep, depRoot)
         } else {
-          PsiTestUtil.addContentRoot(dep, depRoot);
+          PsiTestUtil.addContentRoot(dep, depRoot)
         }
-        IdeaTestUtil.setModuleLanguageLevel(dep, LanguageLevelModuleExtensionImpl.getInstance(myModule).getLanguageLevel());
+        IdeaTestUtil.setModuleLanguageLevel(dep, LanguageLevelModuleExtensionImpl.getInstance(myModule).getLanguageLevel())
 
-        result.setResult(dep);
+        result.setResult(dep)
       }
-    }.execute().getResultObject();
+    }.execute().getResultObject()
   }
 
   protected void deleteClassFile(final String className) throws IOException {
-    myCompilerTester.deleteClassFile(className);
+    myCompilerTester.deleteClassFile(className)
   }
 
   @Nullable
   protected VirtualFile findClassFile(String className) {
-    return findClassFile(className, myModule);
+    return findClassFile(className, myModule)
   }
 
   @Nullable
   protected VirtualFile findClassFile(String className, Module module) {
-    return myCompilerTester.findClassFile(className, module);
+    return myCompilerTester.findClassFile(className, module)
   }
 
   protected void touch(VirtualFile file) throws IOException {
-    myCompilerTester.touch(file);
+    myCompilerTester.touch(file)
   }
 
   protected void setFileText(final PsiFile file, final String barText) throws IOException {
-    myCompilerTester.setFileText(file, barText);
+    myCompilerTester.setFileText(file, barText)
   }
 
   protected void setFileName(final PsiFile bar, final String name) {
-    myCompilerTester.setFileName(bar, name);
+    myCompilerTester.setFileName(bar, name)
   }
 
   protected List<CompilerMessage> make() {
-    return myCompilerTester.make();
+    return myCompilerTester.make()
   }
 
   protected List<CompilerMessage> rebuild() {
-    return myCompilerTester.rebuild();
+    return myCompilerTester.rebuild()
   }
 
   protected List<CompilerMessage> compileModule(final Module module) {
-    return myCompilerTester.compileModule(module);
+    return myCompilerTester.compileModule(module)
   }
 
   protected List<CompilerMessage> compileFiles(final VirtualFile... files) {
-    return myCompilerTester.compileFiles(files);
+    return myCompilerTester.compileFiles(files)
   }
 
   protected void assertOutput(String className, String output) throws ExecutionException {
-    assertOutput(className, output, myModule);
+    assertOutput(className, output, myModule)
   }
 
   protected void assertOutput(String className, String expected, final Module module) throws ExecutionException {
-    final StringBuffer sb = new StringBuffer();
+    final StringBuffer sb = new StringBuffer()
     ProcessHandler process = runProcess(className, module, DefaultRunExecutor.class, new ProcessAdapter() {
       @Override
       void onTextAvailable(ProcessEvent event, Key outputType) {
         if (ProcessOutputTypes.SYSTEM != outputType) {
-          sb.append(event.getText());
+          sb.append(event.getText())
         }
       }
-    }, ProgramRunner.PROGRAM_RUNNER_EP.findExtension(DefaultJavaProgramRunner.class));
-    process.waitFor();
-    assertEquals(expected.trim(), StringUtil.convertLineSeparators(sb.toString().trim()));
+    }, ProgramRunner.PROGRAM_RUNNER_EP.findExtension(DefaultJavaProgramRunner.class))
+    process.waitFor()
+    assertEquals(expected.trim(), StringUtil.convertLineSeparators(sb.toString().trim()))
   }
 
   protected ProcessHandler runProcess(String className,
@@ -232,23 +232,23 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
                                       final Class<? extends Executor> executorClass,
                                       final ProcessListener listener,
                                       final ProgramRunner runner) throws ExecutionException {
-    final ApplicationConfiguration configuration = createApplicationConfiguration(className, module);
-    return runConfiguration(executorClass, listener, configuration, runner);
+    final ApplicationConfiguration configuration = createApplicationConfiguration(className, module)
+    return runConfiguration(executorClass, listener, configuration, runner)
   }
 
   protected ApplicationConfiguration createApplicationConfiguration(String className, Module module) {
     final ApplicationConfiguration configuration =
-      new ApplicationConfiguration("app", getProject(), ApplicationConfigurationType.getInstance());
-    configuration.setModule(module);
-    configuration.setMainClassName(className);
-    return configuration;
+      new ApplicationConfiguration("app", getProject(), ApplicationConfigurationType.getInstance())
+    configuration.setModule(module)
+    configuration.setMainClassName(className)
+    return configuration
   }
 
   protected GroovyScriptRunConfiguration createScriptConfiguration(String scriptPath, Module module) {
     final GroovyScriptRunConfiguration configuration =
-      new GroovyScriptRunConfiguration("app", getProject(), GroovyScriptRunConfigurationType.getInstance().getConfigurationFactories()[0]);
-    configuration.setModule(module);
-    configuration.setScriptPath(scriptPath);
-    return configuration;
+      new GroovyScriptRunConfiguration("app", getProject(), GroovyScriptRunConfigurationType.getInstance().getConfigurationFactories()[0])
+    configuration.setModule(module)
+    configuration.setScriptPath(scriptPath)
+    return configuration
   }
 }

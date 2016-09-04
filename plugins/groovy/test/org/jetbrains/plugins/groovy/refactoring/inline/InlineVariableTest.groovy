@@ -97,78 +97,78 @@ class InlineVariableTest extends LightCodeInsightFixtureTestCase {
   void testImplicitCast2() { doTest() }
 
   protected void doFieldTest() {
-    InlineMethodTest.doInlineTest(myFixture, testDataPath + getTestName(true) + ".test", new GroovyInlineHandler());
+    InlineMethodTest.doInlineTest(myFixture, testDataPath + getTestName(true) + ".test", new GroovyInlineHandler())
   }
 
   private void doTest()  {
-    doTest(false);
+    doTest(false)
   }
 
   private void doTest(final boolean inlineDef) {
-    final List<String> data = TestUtils.readInput(testDataPath + getTestName(true) + ".test");
-    String fileText = data.get(0);
+    final List<String> data = TestUtils.readInput(testDataPath + getTestName(true) + ".test")
+    String fileText = data.get(0)
 
-    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, fileText);
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, fileText)
 
-    final Editor editor = myFixture.editor;
-    final PsiFile file = myFixture.file;
-    setIndentationToNode(file.node);
+    final Editor editor = myFixture.editor
+    final PsiFile file = myFixture.file
+    setIndentationToNode(file.node)
 
-    int startOffset = editor.selectionModel.selectionStart;
-    int endOffset = editor.selectionModel.selectionEnd;
-    editor.caretModel.moveToOffset(endOffset);
+    int startOffset = editor.selectionModel.selectionStart
+    int endOffset = editor.selectionModel.selectionEnd
+    editor.caretModel.moveToOffset(endOffset)
 
     GroovyPsiElement selectedArea =
-      PsiImplUtil.findElementInRange(file, startOffset, endOffset, GrReferenceExpression.class);
+      PsiImplUtil.findElementInRange(file, startOffset, endOffset, GrReferenceExpression.class)
     if (selectedArea == null) {
-      PsiElement identifier = PsiImplUtil.findElementInRange(file, startOffset, endOffset, PsiElement.class);
+      PsiElement identifier = PsiImplUtil.findElementInRange(file, startOffset, endOffset, PsiElement.class)
       if (identifier != null) {
-        assertTrue("Selected area doesn't point to var", identifier.parent instanceof GrVariable);
-        selectedArea = (GroovyPsiElement)identifier.parent;
+        assertTrue("Selected area doesn't point to var", identifier.parent instanceof GrVariable)
+        selectedArea = (GroovyPsiElement)identifier.parent
       }
     }
-    assertNotNull("Selected area reference points to nothing", selectedArea);
-    PsiElement element = selectedArea instanceof GrExpression ? selectedArea.reference.resolve() : selectedArea;
-    assertNotNull("Cannot resolve selected reference expression", element);
+    assertNotNull("Selected area reference points to nothing", selectedArea)
+    PsiElement element = selectedArea instanceof GrExpression ? selectedArea.reference.resolve() : selectedArea
+    assertNotNull("Cannot resolve selected reference expression", element)
 
     try {
       if (!inlineDef) {
-        performInline(project, editor);
+        performInline(project, editor)
       }
       else {
-        performDefInline(project, editor);
+        performDefInline(project, editor)
       }
-      editor.selectionModel.removeSelection();
-      myFixture.checkResult(data.get(1), true);
+      editor.selectionModel.removeSelection()
+      myFixture.checkResult(data.get(1), true)
     }
     catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
-      assertEquals(data.get(1), "FAIL: " + e.message);
+      assertEquals(data.get(1), "FAIL: " + e.message)
     }
   }
 
   static void performInline(Project project, Editor editor) {
     PsiElement element = TargetElementUtil.findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED |
-                                                                         TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
-    assertInstanceOf(element, GrVariable);
+                                                                         TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED)
+    assertInstanceOf(element, GrVariable)
 
-    GroovyInlineLocalHandler.invoke(project, editor, element as GrVariable);
+    GroovyInlineLocalHandler.invoke(project, editor, element as GrVariable)
   }
 
   static void performDefInline(Project project, Editor editor) {
-    PsiReference reference = TargetElementUtil.findReference(editor);
-    assertTrue(reference instanceof PsiReferenceExpression);
-    final PsiElement local = reference.resolve();
-    assertTrue(local instanceof PsiLocalVariable);
+    PsiReference reference = TargetElementUtil.findReference(editor)
+    assertTrue(reference instanceof PsiReferenceExpression)
+    final PsiElement local = reference.resolve()
+    assertTrue(local instanceof PsiLocalVariable)
 
-    GroovyInlineLocalHandler.invoke(project, editor, (GrVariable)local);
+    GroovyInlineLocalHandler.invoke(project, editor, (GrVariable)local)
   }
 
   private static void setIndentationToNode(ASTNode element){
     if (element instanceof TreeElement) {
-      CodeEditUtil.setOldIndentation(((TreeElement)element), 0);
+      CodeEditUtil.setOldIndentation(((TreeElement)element), 0)
     }
     for (ASTNode node : element.getChildren(null)) {
-      setIndentationToNode(node);
+      setIndentationToNode(node)
     }
   }
 

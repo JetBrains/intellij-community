@@ -122,7 +122,7 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
   <module>module4</module>
 </modules>
 
-""";
+"""
 
     def compilerConfiguration = ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject))
 
@@ -154,7 +154,7 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
     </plugin>
   </plugins>
 </build>
-""";
+"""
 
     def compilerConfiguration = ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject))
 
@@ -186,7 +186,7 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
     </plugin>
   </plugins>
 </build>
-""";
+"""
 
     def compilerConfiguration = ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject))
 
@@ -244,7 +244,7 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
             </plugin>
   </plugins>
 </build>
-""";
+"""
 
     def compilerConfiguration = ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject))
 
@@ -302,7 +302,7 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
             </plugin>
   </plugins>
 </build>
-""";
+"""
 
     def compilerConfiguration = ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject))
 

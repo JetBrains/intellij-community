@@ -34,7 +34,7 @@ class Groovy23HighlightingTest extends GrHighlightingTestBase {
   @Override
   @NotNull
   protected LightProjectDescriptor getProjectDescriptor() {
-    return GroovyLightProjectDescriptor.GROOVY_2_3;
+    return GroovyLightProjectDescriptor.GROOVY_2_3
   }
 
   void testSam1() {

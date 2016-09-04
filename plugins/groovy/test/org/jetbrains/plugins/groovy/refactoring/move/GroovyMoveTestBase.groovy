@@ -29,21 +29,21 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
  */
 abstract class GroovyMoveTestBase extends JavaCodeInsightFixtureTestCase {
   protected void doTest(String destination, String... names) {
-    String root = PathManager.homePath.replace(File.separatorChar, '/' as char) + basePath + getTestName(true);
+    String root = PathManager.homePath.replace(File.separatorChar, '/' as char) + basePath + getTestName(true)
 
-    String rootBefore = "$root/before";
-    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.mockJdk17);
-    ArrayList<File> filesToDelete = new ArrayList<File>();
-    VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myFixture.project, myModule, rootBefore, filesToDelete);
+    String rootBefore = "$root/before"
+    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.mockJdk17)
+    ArrayList<File> filesToDelete = new ArrayList<File>()
+    VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myFixture.project, myModule, rootBefore, filesToDelete)
     def localFileSystem = LocalFileSystem.instance
     localFileSystem.refresh(false)
     if (!perform(rootDir, destination, names)) return
 
-    String rootAfter = "$root/after";
-    VirtualFile rootDir2 = localFileSystem.findFileByPath(rootAfter.replace(File.separatorChar, '/' as char));
-    PostprocessReformattingAspect.getInstance(myFixture.project).doPostponedFormatting();
+    String rootAfter = "$root/after"
+    VirtualFile rootDir2 = localFileSystem.findFileByPath(rootAfter.replace(File.separatorChar, '/' as char))
+    PostprocessReformattingAspect.getInstance(myFixture.project).doPostponedFormatting()
     localFileSystem.refresh(false)
-    PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir);
+    PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir)
   }
 
   abstract boolean perform(VirtualFile root, String moveTo, String... names)

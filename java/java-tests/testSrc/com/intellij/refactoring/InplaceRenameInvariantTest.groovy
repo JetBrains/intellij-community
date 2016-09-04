@@ -104,8 +104,8 @@ class InplaceRenameInvariantTest extends LightCodeInsightTestCase {
     TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(project)
     def oldPreselectSetting = myEditor.settings.preselectRename
     try {
-      TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
-      myEditor.settings.preselectRename = preselect;
+      TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable())
+      myEditor.settings.preselectRename = preselect
       int offset = myEditor.caretModel.offset
       final PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.getInstance().getAllAccepted())
 
@@ -114,7 +114,7 @@ class InplaceRenameInvariantTest extends LightCodeInsightTestCase {
       MemberInplaceRenameHandler handler = new MemberInplaceRenameHandler()
 
 
-      handler.doRename(element, editor, null);
+      handler.doRename(element, editor, null)
       
       if (checkTyping){
         type '1'

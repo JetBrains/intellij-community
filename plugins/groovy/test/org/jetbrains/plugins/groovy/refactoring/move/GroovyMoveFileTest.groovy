@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.refactoring.move;
+package org.jetbrains.plugins.groovy.refactoring.move
 
 
 import com.intellij.openapi.vfs.VirtualFile
@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 class GroovyMoveFileTest extends GroovyMoveTestBase {
   @Override
   protected String getBasePath() {
-    return "${TestUtils.testDataPath}refactoring/move/moveFile/";
+    return "${TestUtils.testDataPath}refactoring/move/moveFile/"
   }
 
   void testMoveJavaGroovyText() {

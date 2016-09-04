@@ -61,21 +61,21 @@ private static getWorldType(stepFile) {
 
   private void doTest(final String text, final String... usages) {
     myFixture.configureByText('_.groovy', text)
-    HighlightUsagesHandlerBase<PsiElement> handler = HighlightUsagesHandler.createCustomHandler(myFixture.editor, myFixture.file);
-    assertNotNull(handler);
-    List<PsiElement> targets = handler.targets;
-    assertEquals(1, targets.size());
-    assertEquals("return", targets.get(0).getText());
+    HighlightUsagesHandlerBase<PsiElement> handler = HighlightUsagesHandler.createCustomHandler(myFixture.editor, myFixture.file)
+    assertNotNull(handler)
+    List<PsiElement> targets = handler.targets
+    assertEquals(1, targets.size())
+    assertEquals("return", targets.get(0).getText())
 
-    handler.computeUsages(targets);
-    List<TextRange> readUsages = handler.readUsages;
-    assertEquals(usages.length, readUsages.size());
+    handler.computeUsages(targets)
+    List<TextRange> readUsages = handler.readUsages
+    assertEquals(usages.length, readUsages.size())
 
     final List<String> textUsages = readUsages.collect { fileTextOfRange(it) }
     assertSameElements(Arrays.asList(usages), textUsages)
   }
 
   protected String fileTextOfRange(TextRange textRange) {
-    return myFixture.file.text.substring(textRange.startOffset, textRange.endOffset);
+    return myFixture.file.text.substring(textRange.startOffset, textRange.endOffset)
   }
 }

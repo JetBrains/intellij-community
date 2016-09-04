@@ -66,10 +66,10 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
     if ("testUndoToFileContentForUnsavedCommittedDocument".equals(getName())) {
-      super.invokeTestRunnable(runnable);
+      super.invokeTestRunnable(runnable)
     }
     else {
-      WriteCommandAction.runWriteCommandAction(getProject(), runnable);
+      WriteCommandAction.runWriteCommandAction(getProject(), runnable)
     }
   }
 
@@ -78,42 +78,42 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     try {
       // build index
-      index.update("com/ppp/a.java", "a b c d", null);
-      index.update("com/ppp/b.java", "a b g h", null);
-      index.update("com/ppp/c.java", "a z f", null);
-      index.update("com/ppp/d.java", "a a u y z", null);
-      index.update("com/ppp/e.java", "a n chj e c d", null);
+      index.update("com/ppp/a.java", "a b c d", null)
+      index.update("com/ppp/b.java", "a b g h", null)
+      index.update("com/ppp/c.java", "a z f", null)
+      index.update("com/ppp/d.java", "a a u y z", null)
+      index.update("com/ppp/e.java", "a n chj e c d", null)
 
-      assertDataEquals(index.getFilesByWord("a"), "com/ppp/a.java", "com/ppp/b.java", "com/ppp/c.java", "com/ppp/d.java", "com/ppp/e.java");
-      assertDataEquals(index.getFilesByWord("b"), "com/ppp/a.java", "com/ppp/b.java");
-      assertDataEquals(index.getFilesByWord("c"), "com/ppp/a.java", "com/ppp/e.java");
-      assertDataEquals(index.getFilesByWord("d"), "com/ppp/a.java", "com/ppp/e.java");
-      assertDataEquals(index.getFilesByWord("g"), "com/ppp/b.java");
-      assertDataEquals(index.getFilesByWord("h"), "com/ppp/b.java");
-      assertDataEquals(index.getFilesByWord("z"), "com/ppp/c.java", "com/ppp/d.java");
-      assertDataEquals(index.getFilesByWord("f"), "com/ppp/c.java");
-      assertDataEquals(index.getFilesByWord("u"), "com/ppp/d.java");
-      assertDataEquals(index.getFilesByWord("y"), "com/ppp/d.java");
-      assertDataEquals(index.getFilesByWord("n"), "com/ppp/e.java");
-      assertDataEquals(index.getFilesByWord("chj"), "com/ppp/e.java");
-      assertDataEquals(index.getFilesByWord("e"), "com/ppp/e.java");
+      assertDataEquals(index.getFilesByWord("a"), "com/ppp/a.java", "com/ppp/b.java", "com/ppp/c.java", "com/ppp/d.java", "com/ppp/e.java")
+      assertDataEquals(index.getFilesByWord("b"), "com/ppp/a.java", "com/ppp/b.java")
+      assertDataEquals(index.getFilesByWord("c"), "com/ppp/a.java", "com/ppp/e.java")
+      assertDataEquals(index.getFilesByWord("d"), "com/ppp/a.java", "com/ppp/e.java")
+      assertDataEquals(index.getFilesByWord("g"), "com/ppp/b.java")
+      assertDataEquals(index.getFilesByWord("h"), "com/ppp/b.java")
+      assertDataEquals(index.getFilesByWord("z"), "com/ppp/c.java", "com/ppp/d.java")
+      assertDataEquals(index.getFilesByWord("f"), "com/ppp/c.java")
+      assertDataEquals(index.getFilesByWord("u"), "com/ppp/d.java")
+      assertDataEquals(index.getFilesByWord("y"), "com/ppp/d.java")
+      assertDataEquals(index.getFilesByWord("n"), "com/ppp/e.java")
+      assertDataEquals(index.getFilesByWord("chj"), "com/ppp/e.java")
+      assertDataEquals(index.getFilesByWord("e"), "com/ppp/e.java")
 
       // update index
-      index.update("com/ppp/d.java", "a u y z", "a a u y z");
-      assertDataEquals(index.getFilesByWord("a"), "com/ppp/a.java", "com/ppp/b.java", "com/ppp/c.java", "com/ppp/d.java", "com/ppp/e.java");
-      index.update("com/ppp/d.java", "u y z", "a u y z");
-      assertDataEquals(index.getFilesByWord("a"), "com/ppp/a.java", "com/ppp/b.java", "com/ppp/c.java", "com/ppp/e.java");
-      index.update("com/ppp/d.java", "a a a u y z", "u y z");
-      assertDataEquals(index.getFilesByWord("a"), "com/ppp/a.java", "com/ppp/b.java", "com/ppp/c.java", "com/ppp/d.java", "com/ppp/e.java");
+      index.update("com/ppp/d.java", "a u y z", "a a u y z")
+      assertDataEquals(index.getFilesByWord("a"), "com/ppp/a.java", "com/ppp/b.java", "com/ppp/c.java", "com/ppp/d.java", "com/ppp/e.java")
+      index.update("com/ppp/d.java", "u y z", "a u y z")
+      assertDataEquals(index.getFilesByWord("a"), "com/ppp/a.java", "com/ppp/b.java", "com/ppp/c.java", "com/ppp/e.java")
+      index.update("com/ppp/d.java", "a a a u y z", "u y z")
+      assertDataEquals(index.getFilesByWord("a"), "com/ppp/a.java", "com/ppp/b.java", "com/ppp/c.java", "com/ppp/d.java", "com/ppp/e.java")
 
-      index.update("com/ppp/e.java", "a n chj e c d z", "a n chj e c d");
-      assertDataEquals(index.getFilesByWord("z"), "com/ppp/c.java", "com/ppp/d.java", "com/ppp/e.java");
+      index.update("com/ppp/e.java", "a n chj e c d z", "a n chj e c d")
+      assertDataEquals(index.getFilesByWord("z"), "com/ppp/c.java", "com/ppp/d.java", "com/ppp/e.java")
 
-      index.update("com/ppp/b.java", null, "a b g h");
-      assertDataEquals(index.getFilesByWord("a"), "com/ppp/a.java", "com/ppp/c.java", "com/ppp/d.java", "com/ppp/e.java");
-      assertDataEquals(index.getFilesByWord("b"), "com/ppp/a.java");
-      assertDataEquals(index.getFilesByWord("g"));
-      assertDataEquals(index.getFilesByWord("h"));
+      index.update("com/ppp/b.java", null, "a b g h")
+      assertDataEquals(index.getFilesByWord("a"), "com/ppp/a.java", "com/ppp/c.java", "com/ppp/d.java", "com/ppp/e.java")
+      assertDataEquals(index.getFilesByWord("b"), "com/ppp/a.java")
+      assertDataEquals(index.getFilesByWord("g"))
+      assertDataEquals(index.getFilesByWord("h"))
     }
     finally {
       index.dispose()
@@ -140,169 +140,169 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private static StringIndex createIndex(String testName, EnumeratorStringDescriptor keyDescriptor) {
-    final File storageFile = FileUtil.createTempFile("index_test", "storage");
-    final File metaIndexFile = FileUtil.createTempFile("index_test_inputs", "storage");
-    PersistentHashMap<Integer, Collection<String>>  index = createMetaIndex(metaIndexFile);
-    final MapIndexStorage indexStorage = new MapIndexStorage(storageFile, keyDescriptor, new EnumeratorStringDescriptor(), 16 * 1024);
-    return new StringIndex(testName, indexStorage, index);
+    final File storageFile = FileUtil.createTempFile("index_test", "storage")
+    final File metaIndexFile = FileUtil.createTempFile("index_test_inputs", "storage")
+    PersistentHashMap<Integer, Collection<String>>  index = createMetaIndex(metaIndexFile)
+    final MapIndexStorage indexStorage = new MapIndexStorage(storageFile, keyDescriptor, new EnumeratorStringDescriptor(), 16 * 1024)
+    return new StringIndex(testName, indexStorage, index)
   }
   
   private static PersistentHashMap<Integer, Collection<String>> createMetaIndex(File metaIndexFile) throws IOException {
     return new PersistentHashMap<Integer, Collection<String>>(metaIndexFile, new EnumeratorIntegerDescriptor(), new DataExternalizer<Collection<String>>() {
       @Override
       void save(@NotNull DataOutput out, Collection<String> value) throws IOException {
-        DataInputOutputUtil.writeINT(out, value.size());
+        DataInputOutputUtil.writeINT(out, value.size())
         for (String key : value) {
-          out.writeUTF(key);
+          out.writeUTF(key)
         }
       }
 
       @Override
       Collection<String> read(@NotNull DataInput _in) throws IOException {
-        final int size = DataInputOutputUtil.readINT(_in);
-        final List<String> list = new ArrayList<String>();
+        final int size = DataInputOutputUtil.readINT(_in)
+        final List<String> list = new ArrayList<String>()
         for (int idx = 0; idx < size; idx++) {
-          list.add(_in.readUTF());
+          list.add(_in.readUTF())
         }
-        return list;
+        return list
       }
-    });
+    })
   }
 
   private static <T> void assertDataEquals(List<T> actual, T... expected) {
-    assertSameElements(actual, expected);
+    assertSameElements(actual, expected)
   }
 
   void testCollectedPsiWithChangedDocument() throws IOException {
-    final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile();
+    final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile()
 
-    assertNotNull(findClass("Foo"));
-    PsiFile psiFile = getPsiManager().findFile(vFile);
-    assertNotNull(psiFile);
+    assertNotNull(findClass("Foo"))
+    PsiFile psiFile = getPsiManager().findFile(vFile)
+    assertNotNull(psiFile)
 
-    Document document = FileDocumentManager.getInstance().getDocument(vFile);
-    document.deleteString(0, document.getTextLength());
-    assertNotNull(findClass("Foo"));
+    Document document = FileDocumentManager.getInstance().getDocument(vFile)
+    document.deleteString(0, document.getTextLength())
+    assertNotNull(findClass("Foo"))
 
-    PsiClass foo = findClass("Foo");
-    assertNotNull(foo);
-    assertTrue(foo.isValid());
-    assertEquals("class Foo {}", foo.getText());
-    assertTrue(foo.isValid());
+    PsiClass foo = findClass("Foo")
+    assertNotNull(foo)
+    assertTrue(foo.isValid())
+    assertEquals("class Foo {}", foo.getText())
+    assertTrue(foo.isValid())
 
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    assertNull(findClass("Foo"));
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
+    assertNull(findClass("Foo"))
   }
 
   void testCollectedPsiWithDocumentChangedCommittedAndChangedAgain() throws IOException {
-    final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile();
+    final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile()
 
-    assertNotNull(findClass("Foo"));
-    PsiFile psiFile = getPsiManager().findFile(vFile);
-    assertNotNull(psiFile);
+    assertNotNull(findClass("Foo"))
+    PsiFile psiFile = getPsiManager().findFile(vFile)
+    assertNotNull(psiFile)
 
-    Document document = FileDocumentManager.getInstance().getDocument(vFile);
-    document.deleteString(0, document.getTextLength());
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    document.insertString(0, " ");
+    Document document = FileDocumentManager.getInstance().getDocument(vFile)
+    document.deleteString(0, document.getTextLength())
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
+    document.insertString(0, " ")
 
-    PsiClass foo = findClass("Foo");
-    assertNull(foo);
+    PsiClass foo = findClass("Foo")
+    assertNull(foo)
   }
 
   private PsiClass findClass(String name) {
-    return JavaPsiFacade.getInstance(getProject()).findClass(name, GlobalSearchScope.allScope(getProject()));
+    return JavaPsiFacade.getInstance(getProject()).findClass(name, GlobalSearchScope.allScope(getProject()))
   }
 
   void testSavedUncommittedDocument() throws IOException {
-    final VirtualFile vFile = myFixture.addFileToProject("Foo.java", "").getVirtualFile();
+    final VirtualFile vFile = myFixture.addFileToProject("Foo.java", "").getVirtualFile()
 
-    assertNull(findClass("Foo"));
-    PsiFile psiFile = getPsiManager().findFile(vFile);
-    assertNotNull(psiFile);
+    assertNull(findClass("Foo"))
+    PsiFile psiFile = getPsiManager().findFile(vFile)
+    assertNotNull(psiFile)
 
-    long count = getPsiManager().getModificationTracker().getModificationCount();
+    long count = getPsiManager().getModificationTracker().getModificationCount()
 
-    Document document = FileDocumentManager.getInstance().getDocument(vFile);
-    document.insertString(0, "class Foo {}");
-    FileDocumentManager.getInstance().saveDocument(document);
+    Document document = FileDocumentManager.getInstance().getDocument(vFile)
+    document.insertString(0, "class Foo {}")
+    FileDocumentManager.getInstance().saveDocument(document)
 
-    assertTrue(count == getPsiManager().getModificationTracker().getModificationCount());
-    assertNull(findClass("Foo"));
+    assertTrue(count == getPsiManager().getModificationTracker().getModificationCount())
+    assertNull(findClass("Foo"))
 
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    assertNotNull(findClass("Foo"));
-    assertNotNull(findClass("Foo").getText());
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
+    assertNotNull(findClass("Foo"))
+    assertNotNull(findClass("Foo").getText())
     // if Foo exists now, mod count should be different
-    assertTrue(count != getPsiManager().getModificationTracker().getModificationCount());
+    assertTrue(count != getPsiManager().getModificationTracker().getModificationCount())
   }
 
   void testSkipUnknownFileTypes() throws IOException {
-    final VirtualFile vFile = myFixture.addFileToProject("Foo.test", "Foo").getVirtualFile();
-    assertEquals(PlainTextFileType.INSTANCE, vFile.getFileType());
-    final PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(getProject());
-    assertOneElement(helper.findFilesWithPlainTextWords("Foo"));
+    final VirtualFile vFile = myFixture.addFileToProject("Foo.test", "Foo").getVirtualFile()
+    assertEquals(PlainTextFileType.INSTANCE, vFile.getFileType())
+    final PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(getProject())
+    assertOneElement(helper.findFilesWithPlainTextWords("Foo"))
 
-    final Document document = FileDocumentManager.getInstance().getDocument(vFile);
+    final Document document = FileDocumentManager.getInstance().getDocument(vFile)
     //todo should file type be changed silently without events?
     //assertEquals(UnknownFileType.INSTANCE, vFile.getFileType());
 
-    final PsiFile file = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
-    assertInstanceOf(file, PsiPlainTextFile.class);
-    assertEquals("Foo", file.getText());
+    final PsiFile file = PsiDocumentManager.getInstance(getProject()).getPsiFile(document)
+    assertInstanceOf(file, PsiPlainTextFile.class)
+    assertEquals("Foo", file.getText())
 
-    assertOneElement(helper.findFilesWithPlainTextWords("Foo"));
+    assertOneElement(helper.findFilesWithPlainTextWords("Foo"))
 
     WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
       @Override
       void run() {
-        document.insertString(0, " ");
-        assertEquals("Foo", file.getText());
-        assertOneElement(helper.findFilesWithPlainTextWords("Foo"));
+        document.insertString(0, " ")
+        assertEquals("Foo", file.getText())
+        assertOneElement(helper.findFilesWithPlainTextWords("Foo"))
 
-        FileDocumentManager.getInstance().saveDocument(document);
-        assertEquals("Foo", file.getText());
-        assertOneElement(helper.findFilesWithPlainTextWords("Foo"));
+        FileDocumentManager.getInstance().saveDocument(document)
+        assertEquals("Foo", file.getText())
+        assertOneElement(helper.findFilesWithPlainTextWords("Foo"))
 
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-        assertEquals(" Foo", file.getText());
-        assertOneElement(helper.findFilesWithPlainTextWords("Foo"));
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
+        assertEquals(" Foo", file.getText())
+        assertOneElement(helper.findFilesWithPlainTextWords("Foo"))
       }
-    });
+    })
   }
 
   void testUndoToFileContentForUnsavedCommittedDocument() throws IOException {
-    final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile();
-    ((VirtualFileSystemEntry)vFile).setModificationStamp(0); // as unchanged file
+    final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile()
+    ((VirtualFileSystemEntry)vFile).setModificationStamp(0) // as unchanged file
 
-    final Document document = FileDocumentManager.getInstance().getDocument(vFile);
-    assertTrue(document != null);
-    assert document.getModificationStamp() == 0;
-    assertNotNull(findClass("Foo"));
+    final Document document = FileDocumentManager.getInstance().getDocument(vFile)
+    assertTrue(document != null)
+    assert document.getModificationStamp() == 0
+    assertNotNull(findClass("Foo"))
 
     WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
       @Override
       void run() {
-        document.insertString(0, "import Bar;\n");
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-        assertNotNull(findClass("Foo"));
+        document.insertString(0, "import Bar;\n")
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
+        assertNotNull(findClass("Foo"))
       }
-    });
+    })
 
-    final UndoManager undoManager = UndoManager.getInstance(getProject());
-    final FileEditor selectedEditor = FileEditorManager.getInstance(getProject()).openFile(vFile, false)[0];
+    final UndoManager undoManager = UndoManager.getInstance(getProject())
+    final FileEditor selectedEditor = FileEditorManager.getInstance(getProject()).openFile(vFile, false)[0]
     ((UndoManagerImpl)undoManager).setEditorProvider(new CurrentEditorProvider() {
       @Override
       FileEditor getCurrentEditor() {
-        return selectedEditor;
+        return selectedEditor
       }
-    });
+    })
 
-    assertTrue(undoManager.isUndoAvailable(selectedEditor));
-    FileDocumentManager.getInstance().saveDocument(document);
-    undoManager.undo(selectedEditor);
+    assertTrue(undoManager.isUndoAvailable(selectedEditor))
+    FileDocumentManager.getInstance().saveDocument(document)
+    undoManager.undo(selectedEditor)
 
-    assertNotNull(findClass("Foo"));
+    assertNotNull(findClass("Foo"))
   }
 
   void "test rename unsaved file"() {
@@ -386,7 +386,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assert PsiDocumentManager.getInstance(project).uncommittedDocuments
 
     FileDocumentManager.instance.saveAllDocuments()
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
 
     //noinspection GroovyUnusedAssignment
     psiFile = null
@@ -401,18 +401,18 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void "test rename file invalidates indices in right order"() throws IOException {
-    GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
+    GlobalSearchScope scope = GlobalSearchScope.allScope(getProject())
 
     for(def i = 0; i < 100; ++i) {
-      final VirtualFile file = myFixture.addFileToProject("foo/Foo" + i + ".java", "package foo; class Foo" + i + " {}").getVirtualFile();
-      assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("foo.Foo" + i, scope));
-      file.rename(this, "Bar" + i + ".java");
-      assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("foo.Foo" + i, scope));
+      final VirtualFile file = myFixture.addFileToProject("foo/Foo" + i + ".java", "package foo; class Foo" + i + " {}").getVirtualFile()
+      assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("foo.Foo" + i, scope))
+      file.rename(this, "Bar" + i + ".java")
+      assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("foo.Foo" + i, scope))
     }
   }
 
   void "test no index stamp update when no change"() throws IOException {
-    final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile();
+    final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile()
     def stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(IdIndex.NAME, project)
 
     VfsUtil.saveText(vFile, "Foo class")
@@ -421,19 +421,19 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     VfsUtil.saveText(vFile, "class Foo2 {}")
     assertTrue(stamp != ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(IdIndex.NAME, project))
 
-    final Document document = FileDocumentManager.getInstance().getDocument(vFile);
+    final Document document = FileDocumentManager.getInstance().getDocument(vFile)
     document.setText("Foo2 class")
     stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(IdIndex.NAME, project)
     document.setText("class Foo2")
     assertTrue(stamp == ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(IdIndex.NAME, project))
 
-    document.setText("Foo3 class");
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    document.setText("Foo3 class")
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
     assertTrue(stamp != ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(IdIndex.NAME, project))
   }
 
   void "test no stub index stamp update when no change"() throws IOException {
-    final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile();
+    final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile()
     def stamp = ((StubIndexImpl)StubIndex.instance).getIndexModificationStamp(JavaStubIndexKeys.CLASS_SHORT_NAMES, project)
 
     VfsUtil.saveText(vFile, "class Foo { int foo; }")
@@ -442,41 +442,41 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     VfsUtil.saveText(vFile, "class Foo2 { }")
     assertTrue(stamp != ((StubIndexImpl)StubIndex.instance).getIndexModificationStamp(JavaStubIndexKeys.CLASS_SHORT_NAMES, project))
 
-    final Document document = FileDocumentManager.getInstance().getDocument(vFile);
+    final Document document = FileDocumentManager.getInstance().getDocument(vFile)
     document.setText("class Foo3 {}")
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
     stamp = ((StubIndexImpl)StubIndex.instance).getIndexModificationStamp(JavaStubIndexKeys.CLASS_SHORT_NAMES, project)
 
     document.setText("class Foo3 { int foo; }")
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
     assertTrue(stamp == ((StubIndexImpl)StubIndex.instance).getIndexModificationStamp(JavaStubIndexKeys.CLASS_SHORT_NAMES, project))
 
     document.setText("class Foo2 { }")
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
     assertTrue(stamp != ((StubIndexImpl)StubIndex.instance).getIndexModificationStamp(JavaStubIndexKeys.CLASS_SHORT_NAMES, project))
   }
 
   void "test do not collect stub tree while holding stub elements"() throws IOException {
-    final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile();
+    final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile()
 
-    PsiFileWithStubSupport psiFile = getPsiManager().findFile(vFile) as PsiFileWithStubSupport;
-    assertNotNull(psiFile);
+    PsiFileWithStubSupport psiFile = getPsiManager().findFile(vFile) as PsiFileWithStubSupport
+    assertNotNull(psiFile)
 
     def clazz = findClass("Foo")
     assertNotNull(clazz)
     def stubTreeHash = psiFile.getStubTree().hashCode()
 
-    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    PlatformTestUtil.tryGcSoftlyReachableObjects()
     def stubTree = psiFile.getStubTree()
     assertNotNull(stubTree)
     assertEquals(stubTreeHash, stubTree.hashCode())
   }
 
   void "test report using index from other index"() throws IOException {
-    def vfile = myFixture.addClass("class Foo { void bar() {} }").getContainingFile().getVirtualFile();
+    def vfile = myFixture.addClass("class Foo { void bar() {} }").getContainingFile().getVirtualFile()
     def scope = GlobalSearchScope.allScope(project)
-    def foundClass = [false];
-    def foundMethod = [false];
+    def foundClass = [false]
+    def foundMethod = [false]
 
     try {
       StubIndex.instance.processElements(JavaStubIndexKeys.CLASS_SHORT_NAMES, "Foo", project, scope,
@@ -490,22 +490,22 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
                                                                                 new Processor<PsiMethod>() {
                                                                                   @Override
                                                                                   boolean process(PsiMethod method) {
-                                                                                    foundMethod[0] = true;
-                                                                                    return true;
+                                                                                    foundMethod[0] = true
+                                                                                    return true
                                                                                   }
-                                                                                });
-                                             return true;
+                                                                                })
+                                             return true
                                            }
-                                         });
+                                         })
     } catch (e) {
-      if (!(e instanceof RuntimeException)) throw e;
+      if (!(e instanceof RuntimeException)) throw e
     }
 
     assertTrue(foundClass[0])
     assertTrue(!foundMethod[0])
 
-    def foundId = [false];
-    def foundStub = [false];
+    def foundId = [false]
+    def foundStub = [false]
 
     try {
       FileBasedIndex.instance.
@@ -525,12 +525,12 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
                 }
               },
               scope
-            );
+            )
             return true
           }
         }, scope)
     } catch (e) {
-      if (!(e instanceof RuntimeException)) throw e;
+      if (!(e instanceof RuntimeException)) throw e
     }
 
     assertTrue(foundId[0])
@@ -538,15 +538,15 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void testNullProjectScope() throws Throwable {
-    final GlobalSearchScope allScope = new EverythingGlobalScope(null);
+    final GlobalSearchScope allScope = new EverythingGlobalScope(null)
     // create file to be indexed
-    final VirtualFile testFile = myFixture.addFileToProject("test.txt", "test").getVirtualFile();
+    final VirtualFile testFile = myFixture.addFileToProject("test.txt", "test").getVirtualFile()
     assertNoException(new IllegalArgumentExceptionCase() {
       @Override
       void tryClosure() throws IllegalArgumentException {
         //force to index new file with null project scope
-        FileBasedIndex.getInstance().ensureUpToDate(IdIndex.NAME, null, allScope);
+        FileBasedIndex.getInstance().ensureUpToDate(IdIndex.NAME, null, allScope)
       }
-    });
+    })
   }
 }

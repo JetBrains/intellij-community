@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.intentions
 
-import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author Max Medvedev

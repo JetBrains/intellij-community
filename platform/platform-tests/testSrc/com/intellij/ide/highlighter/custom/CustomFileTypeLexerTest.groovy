@@ -35,7 +35,7 @@ class CustomFileTypeLexerTest extends TestCase {
 
   private static void doTest(SyntaxTable table, @NonNls String text, @Nullable String expected) {
     def lexer = new CustomFileTypeLexer(table)
-    doTest(lexer, text, expected);
+    doTest(lexer, text, expected)
   }
 
   private static void doTest(Lexer lexer, String text, String expected) {
@@ -43,23 +43,23 @@ class CustomFileTypeLexerTest extends TestCase {
   }
 
   private static SyntaxTable createGenericTable() {
-    SyntaxTable table = new SyntaxTable();
+    SyntaxTable table = new SyntaxTable()
 
     table.lineComment = ';'
     table.lineCommentOnlyAtStart = true
 
-    table.addKeyword1("if");
-    table.addKeyword1("then");
-    table.addKeyword2("return");
-    table.addKeyword1("length");
+    table.addKeyword1("if")
+    table.addKeyword1("then")
+    table.addKeyword2("return")
+    table.addKeyword1("length")
 
-    return table;
+    return table
 
   }
 
   void testSpacesInsideKeywords() {
     def table = createGenericTable()
-    table.addKeyword1("sysvar ");
+    table.addKeyword1("sysvar ")
     doTest table, 'if length(if_variable)then return 1 sysvar  ', '''\
 KEYWORD_1 ('if')
 WHITESPACE (' ')
@@ -159,59 +159,59 @@ PUNCTUATION (';')
   }
 
   private static SyntaxTable createJavaSyntaxTable() {
-    SyntaxTable table = new SyntaxTable();
+    SyntaxTable table = new SyntaxTable()
 
-    table.setLineComment("//");
-    table.setStartComment("/*");
-    table.setEndComment("*/");
+    table.setLineComment("//")
+    table.setStartComment("/*")
+    table.setEndComment("*/")
 
-    table.setHexPrefix("0x");
-    table.setNumPostfixChars("cfdle");
+    table.setHexPrefix("0x")
+    table.setNumPostfixChars("cfdle")
 
-    table.addKeyword1("package");
-    table.addKeyword1("import");
-    table.addKeyword1("this");
-    table.addKeyword1("super");
-    table.addKeyword1("public");
-    table.addKeyword1("private");
-    table.addKeyword1("protected");
-    table.addKeyword1("null");
-    table.addKeyword1("if");
-    table.addKeyword1("else");
-    table.addKeyword1("throws");
-    table.addKeyword1("switch");
-    table.addKeyword1("case");
-    table.addKeyword1("break");
-    table.addKeyword1("default");
-    table.addKeyword1("continue");
-    table.addKeyword1("goto");
-    table.addKeyword1("boolean");
-    table.addKeyword1("true");
-    table.addKeyword1("false");
-    table.addKeyword1("final");
-    table.addKeyword1("class");
-    table.addKeyword1("static");
-    table.addKeyword1("final");
-    table.addKeyword1("void");
-    table.addKeyword1("int");
-    table.addKeyword1("while");
-    table.addKeyword1("new");
-    table.addKeyword1("for");
-    table.addKeyword1("byte");
-    table.addKeyword1("float");
-    table.addKeyword1("double");
-    table.addKeyword1("short");
-    table.addKeyword1("extends");
-    table.addKeyword1("implements");
-    table.addKeyword1("interface");
-    table.addKeyword1("abstract");
-    table.addKeyword1("char");
-    table.addKeyword1("try");
-    table.addKeyword1("catch");
-    table.addKeyword1("finally");
-    table.addKeyword1("synchronized");
+    table.addKeyword1("package")
+    table.addKeyword1("import")
+    table.addKeyword1("this")
+    table.addKeyword1("super")
+    table.addKeyword1("public")
+    table.addKeyword1("private")
+    table.addKeyword1("protected")
+    table.addKeyword1("null")
+    table.addKeyword1("if")
+    table.addKeyword1("else")
+    table.addKeyword1("throws")
+    table.addKeyword1("switch")
+    table.addKeyword1("case")
+    table.addKeyword1("break")
+    table.addKeyword1("default")
+    table.addKeyword1("continue")
+    table.addKeyword1("goto")
+    table.addKeyword1("boolean")
+    table.addKeyword1("true")
+    table.addKeyword1("false")
+    table.addKeyword1("final")
+    table.addKeyword1("class")
+    table.addKeyword1("static")
+    table.addKeyword1("final")
+    table.addKeyword1("void")
+    table.addKeyword1("int")
+    table.addKeyword1("while")
+    table.addKeyword1("new")
+    table.addKeyword1("for")
+    table.addKeyword1("byte")
+    table.addKeyword1("float")
+    table.addKeyword1("double")
+    table.addKeyword1("short")
+    table.addKeyword1("extends")
+    table.addKeyword1("implements")
+    table.addKeyword1("interface")
+    table.addKeyword1("abstract")
+    table.addKeyword1("char")
+    table.addKeyword1("try")
+    table.addKeyword1("catch")
+    table.addKeyword1("finally")
+    table.addKeyword1("synchronized")
 
-    return table;
+    return table
   }
 
   void testParseSampleCode() {
@@ -279,27 +279,27 @@ MULTI_LINE_COMMENT ('/* a\\n *bc */')
   }
 
   void testParseSampleCodeFromTo() {
-    String sampleCode = "  int n=123;\n  float z=1;";
+    String sampleCode = "  int n=123;\n  float z=1;"
     def lexer = new CustomFileTypeLexer(createJavaSyntaxTable())
-    lexer.start(sampleCode, 5, 5);
-    assertEquals(lexer.getTokenType(), null);
-    lexer.start(sampleCode, 5, 6);
-    lexer.getTokenType();
-    assertEquals(5, lexer.getTokenStart());
-    assertEquals(6, lexer.getTokenEnd());
-    assertEquals(6, lexer.getBufferEnd());
+    lexer.start(sampleCode, 5, 5)
+    assertEquals(lexer.getTokenType(), null)
+    lexer.start(sampleCode, 5, 6)
+    lexer.getTokenType()
+    assertEquals(5, lexer.getTokenStart())
+    assertEquals(6, lexer.getTokenEnd())
+    assertEquals(6, lexer.getBufferEnd())
   }
 
   private static SyntaxTable createPropTable() {
-    SyntaxTable table = new SyntaxTable();
+    SyntaxTable table = new SyntaxTable()
 
-    table.setLineComment("#");
-    table.setIgnoreCase(true);
+    table.setLineComment("#")
+    table.setIgnoreCase(true)
 
-    table.addKeyword1("value");
-    table.addKeyword2("Value");
-    table.setNumPostfixChars("LGH");
-    return table;
+    table.addKeyword1("value")
+    table.addKeyword2("Value")
+    table.setNumPostfixChars("LGH")
+    return table
   }
 
   void testSimple() {

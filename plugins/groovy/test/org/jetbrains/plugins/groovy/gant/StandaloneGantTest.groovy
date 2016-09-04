@@ -35,34 +35,34 @@ class StandaloneGantTest extends LightCodeInsightFixtureTestCase {
   public static final DefaultLightProjectDescriptor GROOVY_17_PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
     void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("GROOVY").getModifiableModel();
-      final VirtualFile groovyJar = JarFileSystem.getInstance().refreshAndFindFileByPath(TestUtils.getMockGroovy1_7LibraryName() + "!/");
-      modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
-      modifiableModel.commit();
+      final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("GROOVY").getModifiableModel()
+      final VirtualFile groovyJar = JarFileSystem.getInstance().refreshAndFindFileByPath(TestUtils.getMockGroovy1_7LibraryName() + "!/")
+      modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES)
+      modifiableModel.commit()
     }
-  };
+  }
 
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return GROOVY_17_PROJECT_DESCRIPTOR;
+    return GROOVY_17_PROJECT_DESCRIPTOR
   }
 
   @Override
   protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "gant/completion";
+    return TestUtils.getTestDataPath() + "gant/completion"
   }
 
   @Override protected void setUp() {
-    super.setUp();
-    final SdkHomeBean state = new SdkHomeBean();
-    state.SDK_HOME = FileUtil.toSystemIndependentName("${TestUtils.absoluteTestDataPath}mockGantLib");
+    super.setUp()
+    final SdkHomeBean state = new SdkHomeBean()
+    state.SDK_HOME = FileUtil.toSystemIndependentName("${TestUtils.absoluteTestDataPath}mockGantLib")
     GantSettings.getInstance(getProject()).loadState state
   }
 
   @Override protected void tearDown() {
     GantSettings.getInstance(getProject()).loadState new SdkHomeBean()
-    super.tearDown();
+    super.tearDown()
   }
 
   void checkVariants(String text, String... items) {

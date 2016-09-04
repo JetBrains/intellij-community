@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.unscramble;
+package com.intellij.unscramble
 
-import junit.framework.TestCase;
-import org.jetbrains.annotations.NonNls;
+import junit.framework.TestCase
+import org.jetbrains.annotations.NonNls
 
 /**
  * @author cdr
@@ -38,7 +38,7 @@ javax.faces.FacesException: Error calling action method of component with id _id
 Caused by: javax.faces.el.EvaluationException: Exception while invoking expression #{_loginAction.login}
         at org.apache.myfaces.el.MethodBindingImpl.invoke(MethodBindingImpl.java:153)
         at org.apache.myfaces.application.ActionListenerImpl.processAction(ActionListenerImpl.java:63)"""
-           );
+           )
   }
 
   void testThreadNames() {
@@ -76,7 +76,7 @@ Background process" prio=6 tid=0x21193b88 nid=0x11ea4 waiting on condition [0x22
         at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:470)
         at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:674)
         at java.lang.Thread.run(Thread.java:595)'''
-           );
+           )
   }
 
   void testLocked() {
@@ -96,7 +96,7 @@ exer.java:39)
         at com.intellij.lang.jsp.JspFileViewProviderImpl.getKnownTaglibPrefixes(JspFileViewProviderImpl.java:89)
         - locked <0x04cc0768> (a java.lang.Object)
         at com.intellij.psi.impl.source.parsing.jsp.JspLexer.doInitOriginal(JspLexer.java:39)
-        at com.intellij.psi.impl.source.parsing.jsp.JspLexer.start(JspLexer.java:49)""");
+        at com.intellij.psi.impl.source.parsing.jsp.JspLexer.start(JspLexer.java:49)""")
   }
 
   void testAtSplit() {
@@ -112,7 +112,7 @@ com.intellij.openapi.util.objectTree.ObjectTree.getNodeFor(ObjectTree
            """\
 java.lang.Throwable
 at com.intellij.openapi.util.objectTree.ObjectNode.<init>(ObjectNode.java:31)
-at com.intellij.openapi.util.objectTree.ObjectTree.getNodeFor(ObjectTree.java:79)""");
+at com.intellij.openapi.util.objectTree.ObjectTree.getNodeFor(ObjectTree.java:79)""")
   }
 
   void testSplitMergedLines() {
@@ -145,7 +145,7 @@ at org.apache.velocity.runtime.parser.node.SimpleNode.render(SimpleNode.java:230
 at org.apache.velocity.runtime.directive.VelocimacroProxy.render(VelocimacroProxy.java:172)
 at org.apache.velocity.runtime.parser.node.ASTDirective.render(ASTDirective.java:114)
 at org.apache.velocity.runtime.parser.node.SimpleNode.render(SimpleNode.java:230)
-at org.apache.velocity.Template.merge(Template.java:256)""");
+at org.apache.velocity.Template.merge(Template.java:256)""")
   }
 
   void testWithoutAt() {
@@ -160,7 +160,7 @@ at org.apache.velocity.Template.merge(Template.java:256)""");
  java.util.concurrent.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1407)
  java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:289)
  java.util.concurrent.ForkJoinTask.doInvoke(ForkJoinTask.java:400)
- java.util.concurrent.ForkJoinTask.invokeAll(ForkJoinTask.java:837)''');
+ java.util.concurrent.ForkJoinTask.invokeAll(ForkJoinTask.java:837)''')
   }
 
   void "test do not merge words"() {
@@ -199,7 +199,7 @@ nid=0x898 runnable [0x4424f000]
   }
 
   private static void doTest(@NonNls String stackTrace, @NonNls String expected) {
-    String normalized = UnscrambleDialog.normalizeText(stackTrace);
-    assertEquals(expected, normalized);
+    String normalized = UnscrambleDialog.normalizeText(stackTrace)
+    assertEquals(expected, normalized)
   }
 }

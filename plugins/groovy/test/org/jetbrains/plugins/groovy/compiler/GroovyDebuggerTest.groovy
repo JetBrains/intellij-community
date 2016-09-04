@@ -39,7 +39,7 @@ import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
  */
 @CompileStatic
 class GroovyDebuggerTest extends GroovyCompilerTestCase implements DebuggerMethods {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.compiler.GroovyDebuggerTest");
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.compiler.GroovyDebuggerTest")
 
   @Override
   Logger getLogger() { LOG }
@@ -47,7 +47,7 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase implements DebuggerMetho
   @Override
   protected void setUp() {
     super.setUp()
-    addGroovyLibrary(myModule);
+    addGroovyLibrary(myModule)
     enableDebugLogging()
   }
 
@@ -60,12 +60,12 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase implements DebuggerMetho
     TestLoggerFactory.enableDebugLogging(testRootDisposable,
                                          "#com.intellij.debugger.engine.DebugProcessImpl",
                                          "#com.intellij.debugger.engine.DebugProcessEvents",
-                                         "#org.jetbrains.plugins.groovy.compiler.GroovyDebuggerTest");
-    LOG.info(getTestStartedLogMessage());
+                                         "#org.jetbrains.plugins.groovy.compiler.GroovyDebuggerTest")
+    LOG.info(getTestStartedLogMessage())
   }
 
   private String getTestStartedLogMessage() {
-    return "Starting " + getClass().getName() + "." + getTestName(false);
+    return "Starting " + getClass().getName() + "." + getTestName(false)
   }
 
   @Override
@@ -74,7 +74,7 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase implements DebuggerMetho
       super.runTest()
     }
     catch (Throwable e) {
-      TestLoggerFactory.dumpLogToStdout(getTestStartedLogMessage());
+      TestLoggerFactory.dumpLogToStdout(getTestStartedLogMessage())
       throw e
     }
   }
@@ -93,7 +93,7 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase implements DebuggerMetho
 
   void testVariableInScript() {
     def file = myFixture.addFileToProject("Foo.groovy", """def a = 2
-a""");
+a""")
     addBreakpoint 'Foo.groovy', 1
     runDebugger file, {
       waitForBreakpoint()
@@ -110,7 +110,7 @@ Closure c = {
   a    //3
 }
 c()
-a++""");
+a++""")
     addBreakpoint 'Foo.groovy', 3
     runDebugger file, {
       waitForBreakpoint()

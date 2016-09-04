@@ -41,128 +41,128 @@ class ResolvePropertyTest extends GroovyResolveTestCase {
   final String basePath = TestUtils.testDataPath + "resolve/property/"
 
   void testParameter1() throws Exception {
-    doTest("parameter1/A.groovy");
+    doTest("parameter1/A.groovy")
   }
 
   void testClosureParameter1() throws Exception {
-    doTest("closureParameter1/A.groovy");
+    doTest("closureParameter1/A.groovy")
   }
 
   void testClosureOwner() throws Exception {
-    PsiReference ref = configureByFile("closureOwner/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertInstanceOf(resolved, PsiVariable);
-    assertEquals((resolved as PsiVariable).type.canonicalText, "W");
+    PsiReference ref = configureByFile("closureOwner/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertInstanceOf(resolved, PsiVariable)
+    assertEquals((resolved as PsiVariable).type.canonicalText, "W")
   }
 
   void testLocal1() throws Exception {
-    doTest("local1/A.groovy");
+    doTest("local1/A.groovy")
   }
 
   void testField1() throws Exception {
-    doTest("field1/A.groovy");
+    doTest("field1/A.groovy")
   }
 
   void testField2() throws Exception {
-    doTest("field2/A.groovy");
+    doTest("field2/A.groovy")
   }
 
   void testForVariable1() throws Exception {
-    doTest("forVariable1/ForVariable.groovy");
+    doTest("forVariable1/ForVariable.groovy")
   }
 
   void testArrayLength() throws Exception {
-    doTest("arrayLength/A.groovy");
+    doTest("arrayLength/A.groovy")
   }
 
   void testFromGetter() throws Exception {
-    PsiReference ref = configureByFile("fromGetter/A.groovy");
-    assertTrue(ref.resolve() instanceof GrAccessorMethod);
+    PsiReference ref = configureByFile("fromGetter/A.groovy")
+    assertTrue(ref.resolve() instanceof GrAccessorMethod)
   }
 
   void testFromGetter2() throws Exception {
-    PsiReference ref = configureByFile("fromGetter2/A.groovy");
-    assertTrue(ref.resolve() instanceof GrAccessorMethod);
+    PsiReference ref = configureByFile("fromGetter2/A.groovy")
+    assertTrue(ref.resolve() instanceof GrAccessorMethod)
   }
 
   void testFromSetter2() throws Exception {
-    PsiReference ref = configureByFile("fromSetter2/A.groovy");
-    assertTrue(ref.resolve() instanceof GrAccessorMethod);
+    PsiReference ref = configureByFile("fromSetter2/A.groovy")
+    assertTrue(ref.resolve() instanceof GrAccessorMethod)
   }
 
   void testFromSetter() throws Exception {
-    PsiReference ref = configureByFile("fromSetter/A.groovy");
-    assertTrue(ref.resolve() instanceof GrAccessorMethod);
+    PsiReference ref = configureByFile("fromSetter/A.groovy")
+    assertTrue(ref.resolve() instanceof GrAccessorMethod)
   }
 
   void _testForVariable2() throws Exception {
-    doTest("forVariable2/ForVariable.groovy");
+    doTest("forVariable2/ForVariable.groovy")
   }
 
   void testCatchParameter() throws Exception {
-    doTest("catchParameter/CatchParameter.groovy");
+    doTest("catchParameter/CatchParameter.groovy")
   }
 
   void testCaseClause() throws Exception {
-    doTest("caseClause/CaseClause.groovy");
+    doTest("caseClause/CaseClause.groovy")
   }
 
   void testGrvy104() throws Exception {
-    doTest("grvy104/Test.groovy");
+    doTest("grvy104/Test.groovy")
   }
 
   void testGrvy270() throws Exception {
-    PsiReference ref = configureByFile("grvy270/Test.groovy");
-    assertNull(ref.resolve());
+    PsiReference ref = configureByFile("grvy270/Test.groovy")
+    assertNull(ref.resolve())
   }
 
   void testGrvy1483() throws Exception {
-    PsiReference ref = configureByFile("grvy1483/Test.groovy");
-    assertNotNull(ref.resolve());
+    PsiReference ref = configureByFile("grvy1483/Test.groovy")
+    assertNotNull(ref.resolve())
   }
 
   void testField3() throws Exception {
-    GrReferenceElement ref = (GrReferenceElement)configureByFile("field3/A.groovy").element;
-    GroovyResolveResult resolveResult = ref.advancedResolve();
-    assertTrue(resolveResult.element instanceof GrField);
-    assertFalse(resolveResult.validResult);
+    GrReferenceElement ref = (GrReferenceElement)configureByFile("field3/A.groovy").element
+    GroovyResolveResult resolveResult = ref.advancedResolve()
+    assertTrue(resolveResult.element instanceof GrField)
+    assertFalse(resolveResult.validResult)
   }
 
   void testToGetter() throws Exception {
-    GrReferenceElement ref = (GrReferenceElement)configureByFile("toGetter/A.groovy").element;
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof GrMethod);
-    assertTrue(PropertyUtil.isSimplePropertyGetter((PsiMethod)resolved));
+    GrReferenceElement ref = (GrReferenceElement)configureByFile("toGetter/A.groovy").element
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof GrMethod)
+    assertTrue(PropertyUtil.isSimplePropertyGetter((PsiMethod)resolved))
   }
 
   void testToSetter() throws Exception {
-    GrReferenceElement ref = (GrReferenceElement)configureByFile("toSetter/A.groovy").element;
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof GrMethod);
-    assertTrue(PropertyUtil.isSimplePropertySetter((PsiMethod)resolved));
+    GrReferenceElement ref = (GrReferenceElement)configureByFile("toSetter/A.groovy").element
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof GrMethod)
+    assertTrue(PropertyUtil.isSimplePropertySetter((PsiMethod)resolved))
   }
 
   void testUndefinedVar1() throws Exception {
-    PsiReference ref = configureByFile("undefinedVar1/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertInstanceOf(resolved, GrBindingVariable);
+    PsiReference ref = configureByFile("undefinedVar1/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertInstanceOf(resolved, GrBindingVariable)
   }
 
   void testRecursive1() throws Exception {
-    PsiReference ref = configureByFile("recursive1/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof GrField);
+    PsiReference ref = configureByFile("recursive1/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof GrField)
   }
 
   void testRecursive2() throws Exception {
-    PsiReference ref = configureByFile("recursive2/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof GrMethod);
-    assertEquals(CommonClassNames.JAVA_LANG_OBJECT, ((GrMethod)resolved).returnType.canonicalText);
+    PsiReference ref = configureByFile("recursive2/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof GrMethod)
+    assertEquals(CommonClassNames.JAVA_LANG_OBJECT, ((GrMethod)resolved).returnType.canonicalText)
   }
 
   void testUndefinedVar2() throws Exception {
-    doUndefinedVarTest("undefinedVar2/A.groovy");
+    doUndefinedVarTest("undefinedVar2/A.groovy")
   }
 
   void testUndefinedVar3() {
@@ -173,71 +173,71 @@ c = a<caret>a
   }
 
   void testDefinedVar1() throws Exception {
-    doTest("definedVar1/A.groovy");
+    doTest("definedVar1/A.groovy")
   }
 
   void testOperatorOverload() throws Exception {
-    doTest("operatorOverload/A.groovy");
+    doTest("operatorOverload/A.groovy")
   }
 
   void testEnumConstant() throws Exception {
-    PsiReference ref = configureByFile("enumConstant/A.groovy");
-    assertTrue(ref.resolve() instanceof GrEnumConstant);
+    PsiReference ref = configureByFile("enumConstant/A.groovy")
+    assertTrue(ref.resolve() instanceof GrEnumConstant)
   }
 
   void testStackOverflow() throws Exception {
-    doTest("stackOverflow/A.groovy");
+    doTest("stackOverflow/A.groovy")
   }
 
   void testFromDifferentCaseClause() throws Exception {
-    PsiReference ref = configureByFile("fromDifferentCaseClause/A.groovy");
-    assertNull(ref.resolve());
+    PsiReference ref = configureByFile("fromDifferentCaseClause/A.groovy")
+    assertNull(ref.resolve())
   }
 
   void testNotSettingProperty() throws Exception {
-    PsiReference ref = configureByFile("notSettingProperty/A.groovy");
-    assertNull(ref.resolve());
+    PsiReference ref = configureByFile("notSettingProperty/A.groovy")
+    assertNull(ref.resolve())
   }
 
   void testGrvy633() throws Exception {
-    PsiReference ref = configureByFile("grvy633/A.groovy");
-    assertNull(ref.resolve());
+    PsiReference ref = configureByFile("grvy633/A.groovy")
+    assertNull(ref.resolve())
   }
 
   void testGrvy575() throws Exception {
-    doTest("grvy575/A.groovy");
+    doTest("grvy575/A.groovy")
   }
 
   void testGrvy747() throws Exception {
-    PsiReference ref = configureByFile("grvy747/A.groovy");
-    assertTrue(ref.resolve() instanceof GrField);
+    PsiReference ref = configureByFile("grvy747/A.groovy")
+    assertTrue(ref.resolve() instanceof GrField)
   }
 
   void testClosureCall() throws Exception {
-    PsiReference ref = configureByFile("closureCall/ClosureCall.groovy");
-    assertTrue(ref.resolve() instanceof GrVariable);
+    PsiReference ref = configureByFile("closureCall/ClosureCall.groovy")
+    assertTrue(ref.resolve() instanceof GrVariable)
   }
 
   void testUnderscoredField() throws Exception {
-    PsiReference ref = configureByFile("underscoredField/UnderscoredField.groovy");
-    final GrField field = assertInstanceOf(ref.resolve(), GrField.class);
-    assertFalse(ref.isReferenceTo(field.getters[0]));
-    assertTrue(ref.isReferenceTo(field));
+    PsiReference ref = configureByFile("underscoredField/UnderscoredField.groovy")
+    final GrField field = assertInstanceOf(ref.resolve(), GrField.class)
+    assertFalse(ref.isReferenceTo(field.getters[0]))
+    assertTrue(ref.isReferenceTo(field))
   }
 
   void testPropertyWithoutField1() throws Exception {
-    PsiReference ref = configureByFile("propertyWithoutField1/PropertyWithoutField1.groovy");
-    assertInstanceOf(ref.resolve(), GrMethod.class);
+    PsiReference ref = configureByFile("propertyWithoutField1/PropertyWithoutField1.groovy")
+    assertInstanceOf(ref.resolve(), GrMethod.class)
   }
 
   void testPropertyWithoutField2() throws Exception {
-    PsiReference ref = configureByFile("propertyWithoutField2/PropertyWithoutField2.groovy");
-    assertInstanceOf(ref.resolve(), GrMethod.class);
+    PsiReference ref = configureByFile("propertyWithoutField2/PropertyWithoutField2.groovy")
+    assertInstanceOf(ref.resolve(), GrMethod.class)
   }
 
   void testFieldAssignedInTheSameMethod() throws Exception {
-    PsiReference ref = configureByFile("fieldAssignedInTheSameMethod/FieldAssignedInTheSameMethod.groovy");
-    assertInstanceOf(ref.resolve(), GrField.class);
+    PsiReference ref = configureByFile("fieldAssignedInTheSameMethod/FieldAssignedInTheSameMethod.groovy")
+    assertInstanceOf(ref.resolve(), GrField.class)
   }
 
   void testPrivateFieldAssignment() throws Throwable {
@@ -268,7 +268,7 @@ c = a<caret>a
   }
 
   void testIDEADEV40403() {
-    myFixture.configureByFile("IDEADEV40403/A.groovy");
+    myFixture.configureByFile("IDEADEV40403/A.groovy")
     def reference = findReference()
     def resolved = reference.resolve()
     def clazz = assertInstanceOf(resolved, PsiMethod).containingClass
@@ -276,7 +276,7 @@ c = a<caret>a
   }
 
   void testBooleanGetterPropertyAccess() {
-    myFixture.configureByText("a.groovy", "print([].em<caret>pty)");
+    myFixture.configureByText("a.groovy", "print([].em<caret>pty)")
     def ref = findReference()
     def resolved = ref.resolve()
     assertInstanceOf resolved, PsiMethod
@@ -314,15 +314,15 @@ print ba<caret>r
   }
 
   private void doTest(String fileName) throws Exception {
-    PsiReference ref = configureByFile(fileName);
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof GrVariable);
+    PsiReference ref = configureByFile(fileName)
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof GrVariable)
   }
 
   private void doUndefinedVarTest(String fileName) throws Exception {
-    PsiReference ref = configureByFile(fileName);
-    PsiElement resolved = ref.resolve();
-    assertInstanceOf(resolved, GrBindingVariable);
+    PsiReference ref = configureByFile(fileName)
+    PsiElement resolved = ref.resolve()
+    assertInstanceOf(resolved, GrBindingVariable)
   }
 
   void testBooleanProperty() throws Exception {
@@ -330,9 +330,9 @@ print ba<caret>r
     boolean getFoo(){return true}
  boolean isFoo(){return false}
  }
- print new A().f<caret>oo""");
+ print new A().f<caret>oo""")
     def ref = findReference()
-    def resolved = ref.resolve();
+    def resolved = ref.resolve()
     assertNotNull resolved
     assert ((PsiMethod)resolved).name == "getFoo"
   }
@@ -341,9 +341,9 @@ print ba<caret>r
     myFixture.configureByText("Abc.groovy", """class A{
     boolean foo
  }
- print new A().f<caret>oo""");
+ print new A().f<caret>oo""")
     def ref = findReference()
-    def resolved = ref.resolve();
+    def resolved = ref.resolve()
     assert ((PsiMethod)resolved).name == "getFoo"
   }
 
@@ -364,7 +364,7 @@ print ba<caret>r
   }
 }""")
     def ref = findReference()
-    def resolved = ref.resolve();
+    def resolved = ref.resolve()
     assertInstanceOf resolved, GrField
     assertTrue((resolved as GrField).modifierList.hasExplicitVisibilityModifiers())
   }
@@ -380,7 +380,7 @@ print ba<caret>r
 }
 print new Foo().fo<caret>o""")
     def ref = findReference()
-    def resolved = ref.resolve();
+    def resolved = ref.resolve()
     assertInstanceOf resolved, GrAccessorMethod.class
   }
 
@@ -398,7 +398,7 @@ class Foo extends Bar {
 }
 print new Foo().fo<caret>o""")
     def ref = findReference()
-    def resolved = ref.resolve();
+    def resolved = ref.resolve()
     assertInstanceOf resolved, GrAccessorMethod.class
   }
 
@@ -416,7 +416,7 @@ class Foo extends Bar {
 }
 print new Foo().foo""")
     def ref = findReference()
-    def resolved = ref.resolve();
+    def resolved = ref.resolve()
     assertInstanceOf resolved, GrField
     assertTrue((resolved as GrField).modifierList.hasExplicitVisibilityModifiers())
   }
@@ -435,7 +435,7 @@ class Foo extends Bar {
 }
 print new Foo().fo<caret>o""")
     def ref = findReference()
-    def resolved = ref.resolve();
+    def resolved = ref.resolve()
     assertInstanceOf resolved, GrAccessorMethod.class
   }
 
@@ -453,7 +453,7 @@ class Foo extends Bar {
 }
 print new Foo().foo""")
     def ref = findReference()
-    def resolved = ref.resolve();
+    def resolved = ref.resolve()
     assertInstanceOf resolved, GrField
     assertTrue(!(resolved as GrField).modifierList.hasExplicitVisibilityModifiers())
   }

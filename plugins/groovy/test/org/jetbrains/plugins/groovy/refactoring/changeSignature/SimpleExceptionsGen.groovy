@@ -20,17 +20,17 @@ import com.intellij.refactoring.changeSignature.ThrownExceptionInfo
 * @author Max Medvedev
 */
 class SimpleExceptionsGen implements ChangeSignatureTestCase.GenExceptions {
-  private final List<ThrownExceptionInfo> myInfos;
+  private final List<ThrownExceptionInfo> myInfos
 
   SimpleExceptionsGen(List<ThrownExceptionInfo> infos) {
-    myInfos = infos;
+    myInfos = infos
   }
 
   @Override
   ThrownExceptionInfo[] genExceptions(PsiMethod method) {
     for (ThrownExceptionInfo info : myInfos) {
-      info.updateFromMethod(method);
+      info.updateFromMethod(method)
     }
-    return myInfos;
+    return myInfos
   }
 }

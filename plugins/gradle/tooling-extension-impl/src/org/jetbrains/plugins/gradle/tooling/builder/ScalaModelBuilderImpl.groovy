@@ -37,7 +37,7 @@ import org.jetbrains.plugins.gradle.tooling.internal.scala.ScalaModelImpl
  */
 class ScalaModelBuilderImpl implements ModelBuilderService {
 
-  private static final String COMPILE_SCALA_TASK = "compileScala";
+  private static final String COMPILE_SCALA_TASK = "compileScala"
 
   @Override
   boolean canBuild(String modelName) {

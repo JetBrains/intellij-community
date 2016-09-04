@@ -27,17 +27,17 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 class GroovyUnwrapTest extends LightCodeInsightFixtureTestCase {
 
   private void assertUnwrapped(String codeBefore, String expectedCodeAfter) {
-    myFixture.configureByText("A.groovy", codeBefore);
+    myFixture.configureByText("A.groovy", codeBefore)
 
     UnwrapHandler h = new UnwrapHandler() {
       @Override
       protected void selectOption(List<AnAction> options, Editor editor, PsiFile file) {
-        if (options.isEmpty()) return;
-        options.get(0).actionPerformed(null);
+        if (options.isEmpty()) return
+        options.get(0).actionPerformed(null)
       }
-    };
+    }
 
-    h.invoke(project, myFixture.editor, myFixture.file);
+    h.invoke(project, myFixture.editor, myFixture.file)
 
     myFixture.checkResult(expectedCodeAfter)
   }
@@ -61,7 +61,7 @@ b=1;""")
 for(int i = 0; i < 10; i++) {
     Sys<caret>tem.gc();
 }
-""", "Sys<caret>tem.gc();");
+""", "Sys<caret>tem.gc();")
   }
 
   void testBraces() throws Exception {
@@ -69,12 +69,12 @@ for(int i = 0; i < 10; i++) {
 <caret>{
   def x = 1
 }
-""", "def x = 1");
+""", "def x = 1")
   }
 
   void testUnwrapParameterUnderArgumentList() throws Exception {
     assertUnwrapped("xxx(1, yyy(<caret>1), 2)",
-                    "xxx(1, <caret>1, 2)");
+                    "xxx(1, <caret>1, 2)")
   }
 
   void testTryWithCatches() throws Exception {
@@ -86,37 +86,37 @@ for(int i = 0; i < 10; i++) {
                     "    int k;\n" +
                     "}",
 
-                    "int i;");
+                    "int i;")
   }
 
   void testConditionalThat() throws Exception {
     assertUnwrapped("xxx(f ? <caret>'1' : '2');\n",
-                    "xxx('1');\n");
+                    "xxx('1');\n")
   }
 
   void testConditionalElse() throws Exception {
     assertUnwrapped("xxx(f ? '1' : '2' +<caret> 3);\n",
-                    "xxx('2' +<caret> 3);\n");
+                    "xxx('2' +<caret> 3);\n")
   }
 
   void testConditionalFromParameterList2() throws Exception {
     assertUnwrapped("xxx(11, f ? '1' : '2' +<caret> 3, 12);\n",
-                    "xxx(11, '2' +<caret> 3, 12);\n");
+                    "xxx(11, '2' +<caret> 3, 12);\n")
   }
 
   void testConditionalCond1() throws Exception {
     assertUnwrapped("f <caret>? \"1\" : \"2\" + 3",
-                    "\"1\"");
+                    "\"1\"")
   }
 
   void testConditionalCond2() throws Exception {
     assertUnwrapped("<caret>f ? \"1\" : \"2\" + 3",
-                    "\"1\"");
+                    "\"1\"")
   }
 
   void testConditionalUnwrapUnderAssigmentExpression() throws Exception {
     assertUnwrapped("String s = f ? \"1<caret>\" : \"2\";\n",
-                    "String s = \"1\";\n");
+                    "String s = \"1\";\n")
   }
 
 }

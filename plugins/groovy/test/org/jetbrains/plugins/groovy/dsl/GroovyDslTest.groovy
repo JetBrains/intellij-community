@@ -39,7 +39,7 @@ class GroovyDslTest extends LightCodeInsightFixtureTestCase {
   private static LightProjectDescriptor descriptor = new DefaultLightProjectDescriptor() {
     @Override
     void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      PsiTestUtil.addLibrary(module, model, "GROOVY", TestUtils.getMockGroovyLibraryHome(), TestUtils.GROOVY_JAR);
+      PsiTestUtil.addLibrary(module, model, "GROOVY", TestUtils.getMockGroovyLibraryHome(), TestUtils.GROOVY_JAR)
     }
   }
 
@@ -61,7 +61,7 @@ class GroovyDslTest extends LightCodeInsightFixtureTestCase {
   }
 
   private def addGdsl(String text) {
-    final PsiFile file = myFixture.addFileToProject(getTestName(false) + "Enhancer.gdsl", text);
+    final PsiFile file = myFixture.addFileToProject(getTestName(false) + "Enhancer.gdsl", text)
     GroovyDslFileIndex.activate(file.virtualFile)
   }
 

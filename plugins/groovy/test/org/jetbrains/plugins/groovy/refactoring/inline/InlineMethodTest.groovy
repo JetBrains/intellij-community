@@ -42,7 +42,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  */
 class InlineMethodTest extends LightCodeInsightFixtureTestCase {
 
-  final String basePath = TestUtils.testDataPath + "groovy/refactoring/inlineMethod/";
+  final String basePath = TestUtils.testDataPath + "groovy/refactoring/inlineMethod/"
 
   void testAbstr1() throws Throwable { doTest(); }
 
@@ -186,34 +186,34 @@ class InlineMethodTest extends LightCodeInsightFixtureTestCase {
   void testSuperCall() { doTest() }
 
   protected void doTest() {
-    doTest(new GroovyInlineHandler());
+    doTest(new GroovyInlineHandler())
   }
 
   protected void doTest(InlineHandler handler) {
-    doInlineTest(myFixture, testDataPath + getTestName(true) + ".test", handler);
+    doInlineTest(myFixture, testDataPath + getTestName(true) + ".test", handler)
   }
 
   static void doInlineTest(final JavaCodeInsightTestFixture fixture,
                            final String testFile,
                            InlineHandler inlineHandler) {
-    final List<String> data = TestUtils.readInput(testFile);
-    String fileText = data.get(0);
+    final List<String> data = TestUtils.readInput(testFile)
+    String fileText = data.get(0)
 
-    fixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, fileText);
+    fixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, fileText)
 
-    final PsiFile file = fixture.file;
-    final Editor editor = fixture.editor;
-    indentationToNode = file.node;
-    int startOffset = editor.selectionModel.selectionStart;
-    int endOffset = editor.selectionModel.selectionEnd;
-    editor.caretModel.moveToOffset(endOffset);
+    final PsiFile file = fixture.file
+    final Editor editor = fixture.editor
+    indentationToNode = file.node
+    int startOffset = editor.selectionModel.selectionStart
+    int endOffset = editor.selectionModel.selectionEnd
+    editor.caretModel.moveToOffset(endOffset)
 
-    GroovyPsiElement selectedArea = PsiImplUtil.findElementInRange(file, startOffset, endOffset, GrReferenceExpression.class);
+    GroovyPsiElement selectedArea = PsiImplUtil.findElementInRange(file, startOffset, endOffset, GrReferenceExpression.class)
     if (selectedArea == null) {
-      PsiElement identifier = PsiImplUtil.findElementInRange(file, startOffset, endOffset, PsiElement.class);
+      PsiElement identifier = PsiImplUtil.findElementInRange(file, startOffset, endOffset, PsiElement.class)
       if (identifier != null) {
         if (identifier.parent instanceof GrVariable) {
-          selectedArea = (GroovyPsiElement)identifier.parent;
+          selectedArea = (GroovyPsiElement)identifier.parent
         }
         else if (identifier instanceof GrMethod) {
           selectedArea = identifier
@@ -223,26 +223,26 @@ class InlineMethodTest extends LightCodeInsightFixtureTestCase {
         }
       }
     }
-    Assert.assertNotNull("Selected area reference points to nothing", selectedArea);
-    PsiElement element = selectedArea instanceof GrExpression ? selectedArea.reference.resolve() : selectedArea;
-    Assert.assertNotNull("Cannot resolve selected reference expression", element);
+    Assert.assertNotNull("Selected area reference points to nothing", selectedArea)
+    PsiElement element = selectedArea instanceof GrExpression ? selectedArea.reference.resolve() : selectedArea
+    Assert.assertNotNull("Cannot resolve selected reference expression", element)
 
     try {
-      GenericInlineHandler.invoke(element, editor, inlineHandler);
-      editor.selectionModel.removeSelection();
-      fixture.checkResult(data.get(1), true);
+      GenericInlineHandler.invoke(element, editor, inlineHandler)
+      editor.selectionModel.removeSelection()
+      fixture.checkResult(data.get(1), true)
     }
     catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
-      assertEquals(data.get(1), "FAIL: " + e.message);
+      assertEquals(data.get(1), "FAIL: " + e.message)
     }
   }
 
   private static void setIndentationToNode(ASTNode element){
     if (element instanceof TreeElement) {
-      CodeEditUtil.setOldIndentation(((TreeElement) element), 0);
+      CodeEditUtil.setOldIndentation(((TreeElement) element), 0)
     }
     for (ASTNode node : element.getChildren(null)) {
-      indentationToNode = node;
+      indentationToNode = node
     }
   }
 
