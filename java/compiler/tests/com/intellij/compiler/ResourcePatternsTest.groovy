@@ -1,4 +1,4 @@
-package com.intellij.compiler;
+package com.intellij.compiler
 
 
 import com.intellij.openapi.module.Module
