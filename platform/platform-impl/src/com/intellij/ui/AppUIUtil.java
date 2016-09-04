@@ -291,7 +291,7 @@ public class AppUIUtil {
           System.exit(Main.PRIVACY_POLICY_REJECTION);
         }
         else {
-          ((ApplicationImpl)application).exit(true, true, false, false);
+          ((ApplicationImpl)application).exit(true, true, false);
         }
       }
     };

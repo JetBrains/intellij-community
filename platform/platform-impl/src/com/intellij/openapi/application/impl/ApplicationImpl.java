@@ -113,6 +113,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Nullable
   private Splash mySplash;
   private boolean myDoNotSave;
+  private volatile boolean myExitInProgress;
   private volatile boolean myDisposeInProgress;
 
   private final Disposable myLastDisposable = Disposer.newDisposable(); // will be disposed last
@@ -706,7 +707,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void exit(boolean force, final boolean exitConfirmed) {
-    exit(false, exitConfirmed, true, false);
+    exit(false, exitConfirmed, false);
   }
 
   @Override
@@ -715,8 +716,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  public void restart(final boolean exitConfirmed) {
-    exit(false, exitConfirmed, true, true);
+  public void restart(boolean exitConfirmed) {
+    exit(false, exitConfirmed, true);
   }
 
   /**
@@ -728,66 +729,58 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
    *  Note: there are possible scenarios when we get a quit notification at a moment when another
    *  quit message is shown. In that case, showing multiple messages sounds contra-intuitive as well
    */
-  private static volatile boolean exiting;
-
-  public void exit(final boolean force, final boolean exitConfirmed, final boolean allowListenersToCancel, final boolean restart) {
-    if (!force && exiting) {
-      return;
+  public void exit(boolean force, boolean exitConfirmed, boolean restart) {
+    if (!force) {
+      if (myExitInProgress) return;
+      if (!exitConfirmed && getDefaultModalityState() != ModalityState.NON_MODAL) return;
     }
 
-    exiting = true;
-    try {
-      if (!force && !exitConfirmed && getDefaultModalityState() != ModalityState.NON_MODAL) {
-        return;
-      }
-
-      Runnable runnable = () -> {
-        if (!force && !confirmExitIfNeeded(exitConfirmed)) {
-          saveAll();
-          return;
-        }
-
-        getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appClosing();
-        myDisposeInProgress = true;
-        doExit(allowListenersToCancel, restart);
-        myDisposeInProgress = false;
-      };
-
-      if (isDispatchThread()) {
-        runnable.run();
-      }
-      else {
-        invokeLater(runnable, ModalityState.NON_MODAL);
-      }
+    myExitInProgress = true;
+    if (isDispatchThread()) {
+      doExit(force, exitConfirmed, restart);
     }
-    finally {
-      exiting = false;
+    else {
+      invokeLater(() -> doExit(force, exitConfirmed, restart), ModalityState.NON_MODAL);
     }
   }
 
-  private boolean doExit(boolean allowListenersToCancel, boolean restart) {
-    saveSettings();
-
-    if (allowListenersToCancel && !canExit()) {
-      return false;
-    }
-
-    final boolean success = disposeSelf(allowListenersToCancel);
-    if (!success || isUnitTestMode()) {
-      return false;
-    }
-
-    int exitCode = 0;
-    if (restart && Restarter.isSupported()) {
-      try {
-        exitCode = Restarter.scheduleRestart();
+  private void doExit(boolean force, boolean exitConfirmed, boolean restart) {
+    try {
+      if (!force && !confirmExitIfNeeded(exitConfirmed)) {
+        saveAll();
+        return;
       }
-      catch (IOException e) {
-        LOG.warn("Cannot restart", e);
+
+      getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appClosing();
+
+      myDisposeInProgress = true;
+
+      saveSettings();
+
+      if (!force && !canExit()) {
+        return;
       }
+
+      boolean success = disposeSelf(!force);
+      if (!success || isUnitTestMode()) {
+        return;
+      }
+
+      int exitCode = 0;
+      if (restart && Restarter.isSupported()) {
+        try {
+          exitCode = Restarter.scheduleRestart();
+        }
+        catch (IOException e) {
+          LOG.warn("Cannot restart", e);
+        }
+      }
+      System.exit(exitCode);
     }
-    System.exit(exitCode);
-    return true;
+    finally {
+      myDisposeInProgress = false;
+      myExitInProgress = false;
+    }
   }
 
   private static boolean confirmExitIfNeeded(boolean exitConfirmed) {
@@ -1362,4 +1355,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myDispatcher.getListeners().removeAll(listeners);
     Disposer.register(disposable, () -> myDispatcher.getListeners().addAll(listeners));
   }
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated duplicate parameters; use {@link #exit(boolean, boolean, boolean)} instead (to be removed in IDEA 17) */
+  @SuppressWarnings("unused")
+  public void exit(boolean force, boolean exitConfirmed, boolean allowListenersToCancel, boolean restart) {
+    exit(force, exitConfirmed, restart);
+  }
+  //</editor-fold>
 }

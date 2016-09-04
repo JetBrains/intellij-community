@@ -145,9 +145,12 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
         app.invokeAndWait({
           catchAndLog {
             val updateResult = updater.merge()
-            if (!onAppExit && !app.isDisposeInProgress && updateResult != null && updateStoragesFromStreamProvider(app.stateStore as ComponentStoreImpl, updateResult, app.messageBus)) {
+            if (!onAppExit &&
+                !app.isDisposeInProgress &&
+                updateResult != null &&
+                updateStoragesFromStreamProvider(app.stateStore as ComponentStoreImpl, updateResult, app.messageBus)) {
               // force to avoid saveAll & confirmation
-              app.exit(true, true, true, true)
+              app.exit(true, true, true)
             }
           }
         }, ModalityState.NON_MODAL)
@@ -164,8 +167,7 @@ inline internal fun catchAndLog(asWarning: Boolean = false, runnable: () -> Unit
   try {
     runnable()
   }
-  catch (e: ProcessCanceledException) {
-  }
+  catch (e: ProcessCanceledException) { }
   catch (e: Throwable) {
     if (asWarning || e is AuthenticationException || e is NoRemoteRepositoryException) {
       LOG.warn(e)

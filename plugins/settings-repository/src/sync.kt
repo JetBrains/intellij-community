@@ -133,7 +133,7 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
 
     if (restartApplication) {
       // force to avoid saveAll & confirmation
-      (ApplicationManager.getApplication() as ApplicationImpl).exit(true, true, true, true)
+      (ApplicationManager.getApplication() as ApplicationImpl).exit(true, true, true)
     }
     else if (exception != null) {
       throw exception!!
