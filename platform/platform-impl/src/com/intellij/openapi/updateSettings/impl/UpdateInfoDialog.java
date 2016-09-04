@@ -15,16 +15,21 @@
  */
 package com.intellij.openapi.updateSettings.impl;
 
-import com.intellij.CommonBundle;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
@@ -38,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
@@ -175,24 +181,39 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   }
 
   private void downloadPatchAndRestart() {
-    try {
-      UpdateChecker.installPlatformUpdate(myPatch, myNewBuild.getNumber(), myForceHttps);
+    boolean updatePlugins =
+      !ContainerUtil.isEmpty(myUpdatedPlugins) && new PluginUpdateInfoDialog(getContentPanel(), myUpdatedPlugins).showAndGet();
 
-      if (myUpdatedPlugins != null && !myUpdatedPlugins.isEmpty()) {
-        new PluginUpdateInfoDialog(getContentPanel(), myUpdatedPlugins).show();
-      }
+    new Task.Modal(null, IdeBundle.message("update.notifications.title"), true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          UpdateInstaller.installPlatformUpdate(myPatch, myNewBuild.getNumber(), myForceHttps, indicator);
+        }
+        catch (Exception e) {
+          Logger.getInstance(UpdateChecker.class).warn(e);
 
-      restart();
-    }
-    catch (Exception e) {
-      Logger.getInstance(UpdateChecker.class).warn(e);
-      if (Messages.showOkCancelDialog(IdeBundle.message("update.downloading.patch.error", e.getMessage()),
-                                      IdeBundle.message("updates.error.connection.title"),
-                                      IdeBundle.message("updates.download.page.button"), CommonBundle.message("button.cancel"),
-                                      Messages.getErrorIcon()) == Messages.OK) {
-        openDownloadPage();
+          String title = IdeBundle.message("updates.error.connection.title");
+          String message = IdeBundle.message("update.downloading.patch.error", e.getMessage());
+          UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.ERROR, new NotificationListener.Adapter() {
+            @Override
+            protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+              openDownloadPage();
+            }
+          });
+
+          return;
+        }
+
+        if (updatePlugins) {
+          UpdateChecker.saveDisabledToUpdatePlugins();
+          UpdateInstaller.installPluginUpdates(myUpdatedPlugins, indicator);
+        }
+
+        ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+        app.invokeLater(() -> app.restart(true));
       }
-    }
+    }.queue();
   }
 
   private void openDownloadPage() {
