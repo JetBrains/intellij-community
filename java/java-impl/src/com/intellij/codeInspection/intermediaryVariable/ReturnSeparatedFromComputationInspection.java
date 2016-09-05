@@ -134,7 +134,7 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
     }
 
     Mover mover = new Mover(flow, context.refactoredStatement, context.returnedVariable);
-    mover.moveTo(context.refactoredStatement);
+    mover.moveTo(context.refactoredStatement, true);
     return !mover.isEmpty();
   }
 
@@ -144,7 +144,7 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
       ControlFlow flow = createControlFlow(context);
       if (flow != null) {
         Mover mover = new Mover(flow, context.refactoredStatement, context.returnedVariable);
-        boolean removeReturn = mover.moveTo(context.refactoredStatement);
+        boolean removeReturn = mover.moveTo(context.refactoredStatement, true);
         if (!mover.isEmpty()) {
           applyChanges(mover, context, removeReturn);
         }
@@ -153,20 +153,89 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
   }
 
   private static void applyChanges(@NotNull Mover mover, @NotNull ReturnContext context, boolean removeReturn) {
-    mover.insertAfter.forEach(e -> e.getParent().addAfter(context.returnStatement, e));
-    mover.insertBefore.forEach(e -> e.getParent().addBefore(context.returnStatement, e));
+    PsiReturnStatement returnStatement = (PsiReturnStatement)context.returnStatement.copy();
+    if (removeReturn) {
+      removeReturn(context);
+    }
+    else {
+      //inlineReturnedValue(mover, context);
+    }
+    mover.insertAfter.forEach(e -> e.getParent().addAfter(returnStatement, e));
+    mover.insertBefore.forEach(e -> e.getParent().addBefore(returnStatement, e));
     mover.replaceInline.forEach(e -> {
-      if (e instanceof PsiBreakStatement) e.replace(context.returnStatement);
-      if (e instanceof PsiAssignmentExpression) inlineAssignment((PsiAssignmentExpression)e, context.returnStatement);
+      if (e instanceof PsiBreakStatement) e.replace(returnStatement);
+      if (e instanceof PsiAssignmentExpression) inlineAssignment((PsiAssignmentExpression)e, returnStatement);
     });
     mover.removeCompletely.forEach(PsiElement::delete);
+  }
 
-    if (removeReturn) {
-      Set<PsiElement> skippedEmptyStatements = new THashSet<>();
-      getPrevNonEmptyStatement(context.returnStatement, skippedEmptyStatements);
-      skippedEmptyStatements.forEach(PsiElement::delete);
-      context.returnStatement.delete();
+  private static void removeReturn(@NotNull ReturnContext context) {
+    Set<PsiElement> skippedEmptyStatements = new THashSet<>();
+    getPrevNonEmptyStatement(context.returnStatement, skippedEmptyStatements);
+    skippedEmptyStatements.forEach(PsiElement::delete);
+    context.returnStatement.delete();
+  }
+
+  private static void inlineReturnedValue(Mover mover, ReturnContext context) {
+    List<Instruction> instructions = mover.flow.getInstructions();
+    PsiAssignmentExpression assignment = null;
+    for (int i = 0; i < instructions.size(); i++) {
+      Instruction instruction = instructions.get(i);
+      if (instruction instanceof WriteVariableInstruction && ((WriteVariableInstruction)instruction).variable == mover.resultVariable) {
+        PsiElement element = mover.flow.getElement(i);
+        PsiElement parent = element.getParent();
+        if (element instanceof PsiAssignmentExpression && parent instanceof PsiExpressionStatement) {
+          if (!mover.replaceInline.contains(element)) {
+            if (assignment != null) {
+              return;
+            }
+            assignment = (PsiAssignmentExpression)element;
+          }
+        }
+        else if (!(getNearestEnclosingStatement(element) instanceof PsiDeclarationStatement)) {
+          return;
+        }
+      }
     }
+
+    PsiExpression localInitializer = context.returnedVariable instanceof PsiLocalVariable ?
+                                     context.returnedVariable.getInitializer() : null;
+    if (assignment != null && localInitializer == null) {
+      PsiExpression rExpression = assignment.getRExpression();
+      replaceReturnedValue(rExpression, context.returnStatement, mover.flow);
+    }
+    else if (assignment == null && localInitializer != null) {
+      replaceReturnedValue(localInitializer, context.returnStatement, mover.flow);
+    }
+  }
+
+  private static void replaceReturnedValue(PsiExpression newReturnValue, PsiReturnStatement returnStatement, ControlFlow flow) {
+    PsiExpression returnValue = returnStatement.getReturnValue();
+    if (returnValue != null &&
+        (ExpressionUtils.computeConstantExpression(newReturnValue) != null || isUnchangedReferenceToLocal(newReturnValue, flow))) {
+      returnValue.replace(newReturnValue);
+    }
+  }
+
+  private static boolean isUnchangedReferenceToLocal(PsiExpression expression, ControlFlow flow) {
+    if (expression instanceof PsiReferenceExpression) {
+      PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
+      if (!referenceExpression.isQualified()) {
+        PsiElement resolved = referenceExpression.resolve();
+        if (resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter) {
+          if (((PsiVariable)resolved).hasModifierProperty(PsiModifier.FINAL)) {
+            return true;
+          }
+          for (Instruction instruction : flow.getInstructions()) {
+            if (instruction instanceof WriteVariableInstruction && ((WriteVariableInstruction)instruction).variable == resolved) {
+              return false;
+            }
+          }
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private static void inlineAssignment(PsiAssignmentExpression assignmentExpression, PsiReturnStatement returnStatement) {
@@ -206,9 +275,9 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
      * Returns true if the targetStatement will always exit via return/throw/etc after the transformation,
      * so if the next statement is a return or a break it can be removed safely.
      */
-    boolean moveTo(PsiStatement targetStatement) {
+    boolean moveTo(PsiStatement targetStatement, boolean returnAtTheEnd) {
       if (targetStatement instanceof PsiBlockStatement) {
-        return moveToBlock((PsiBlockStatement)targetStatement);
+        return moveToBlock((PsiBlockStatement)targetStatement, returnAtTheEnd);
       }
       if (targetStatement instanceof PsiIfStatement) {
         return moveToIf((PsiIfStatement)targetStatement);
@@ -226,111 +295,118 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
         return moveToForeach((PsiForeachStatement)targetStatement);
       }
       if (targetStatement instanceof PsiTryStatement) {
-        return moveToTry(((PsiTryStatement)targetStatement));
+        return moveToTry((PsiTryStatement)targetStatement);
       }
       if (targetStatement instanceof PsiLabeledStatement) {
-        return moveToLabeled(((PsiLabeledStatement)targetStatement));
+        return moveToLabeled((PsiLabeledStatement)targetStatement, returnAtTheEnd);
       }
       if (targetStatement instanceof PsiExpressionStatement) {
-        return inlineExpression(((PsiExpressionStatement)targetStatement));
+        return inlineExpression((PsiExpressionStatement)targetStatement);
       }
-      return false;
-    }
-
-    private boolean moveToBlock(PsiBlockStatement targetStatement) {
-      return moveToBlock(targetStatement.getCodeBlock());
-    }
-
-    private boolean moveToBlock(@NotNull PsiCodeBlock codeBlock) {
-      PsiJavaToken rBrace = codeBlock.getRBrace();
-      if (rBrace != null) {
-        PsiStatement lastNonEmptyStatement = getPrevNonEmptyStatement(rBrace, removeCompletely);
-        if (lastNonEmptyStatement == null || !moveTo(lastNonEmptyStatement)) {
-          insertBefore.add(rBrace);
-        }
+      if (targetStatement instanceof PsiThrowStatement) {
         return true;
       }
       return false;
     }
 
-    private boolean moveToIf(PsiIfStatement targetStatement) {
-      PsiStatement thenBranch = targetStatement.getThenBranch();
-      PsiStatement elseBranch = targetStatement.getElseBranch();
-
-      boolean thenPart = thenBranch != null && moveTo(thenBranch);
-      boolean elsePart = elseBranch != null && moveTo(elseBranch);
-      return thenPart && elsePart;
+    private boolean moveToBlock(@NotNull PsiBlockStatement targetStatement, boolean returnAtTheEnd) {
+      return moveToBlockBody(targetStatement.getCodeBlock(), returnAtTheEnd);
     }
 
-    private boolean moveToFor(PsiForStatement targetStatement) {
-      moveToBreaks(targetStatement);
-      return isAlwaysTrue(targetStatement.getCondition(), true);
-    }
-
-    private boolean moveToDoWhile(PsiDoWhileStatement targetStatement) {
-      moveToBreaks(targetStatement);
-      return isAlwaysTrue(targetStatement.getCondition(), false);
-    }
-
-    private boolean moveToWhile(PsiWhileStatement targetStatement) {
-      moveToBreaks(targetStatement);
-      return isAlwaysTrue(targetStatement.getCondition(), false);
-    }
-    private boolean moveToForeach(PsiForeachStatement targetStatement) {
-      moveToBreaks(targetStatement);
+    private boolean moveToBlockBody(@NotNull PsiCodeBlock codeBlock, boolean returnAtTheEnd) {
+      PsiJavaToken rBrace = codeBlock.getRBrace();
+      if (rBrace != null) {
+        PsiStatement lastNonEmptyStatement = getPrevNonEmptyStatement(rBrace, removeCompletely);
+        if (lastNonEmptyStatement == null || lastNonEmptyStatement instanceof PsiReturnStatement) {
+          return false;
+        }
+        if (moveTo(lastNonEmptyStatement, returnAtTheEnd)) {
+          return true;
+        }
+        if (returnAtTheEnd) {
+          insertBefore.add(rBrace);
+          return true;
+        }
+      }
       return false;
     }
 
-    private boolean moveToTry(PsiTryStatement targetStatement) {
+    private boolean moveToIf(@NotNull PsiIfStatement targetStatement) {
+      PsiStatement thenBranch = targetStatement.getThenBranch();
+      PsiStatement elseBranch = targetStatement.getElseBranch();
+
+      boolean thenPart = thenBranch != null && moveTo(thenBranch, false);
+      boolean elsePart = elseBranch != null && moveTo(elseBranch, false);
+      return thenPart && elsePart;
+    }
+
+    private boolean moveToFor(@NotNull PsiForStatement targetStatement) {
+      moveToBreaks(targetStatement, false);
+      return isAlwaysTrue(targetStatement.getCondition(), true);
+    }
+
+    private boolean moveToDoWhile(@NotNull PsiDoWhileStatement targetStatement) {
+      moveToBreaks(targetStatement, false);
+      return isAlwaysTrue(targetStatement.getCondition(), false);
+    }
+
+    private boolean moveToWhile(@NotNull PsiWhileStatement targetStatement) {
+      moveToBreaks(targetStatement, false);
+      return isAlwaysTrue(targetStatement.getCondition(), false);
+    }
+
+    private boolean moveToForeach(@NotNull PsiForeachStatement targetStatement) {
+      moveToBreaks(targetStatement, false);
+      return false;
+    }
+
+    private boolean moveToTry(@NotNull PsiTryStatement targetStatement) {
       PsiCodeBlock tryBlock = targetStatement.getTryBlock();
       if (tryBlock == null) {
         return false;
       }
+      boolean result = true;
       PsiCodeBlock finallyBlock = targetStatement.getFinallyBlock();
-      if (finallyBlock != null && ControlFlowUtils.codeBlockMayCompleteNormally(finallyBlock) && writesVariable(finallyBlock)) {
-        return false;
+      if (finallyBlock != null && writesVariable(finallyBlock)) {
+        result = false;
       }
       PsiCatchSection[] catchSections = targetStatement.getCatchSections();
       for (PsiCatchSection catchSection : catchSections) {
         PsiCodeBlock catchBlock = catchSection.getCatchBlock();
-        if (catchBlock != null && ControlFlowUtils.codeBlockMayCompleteNormally(catchBlock) && writesVariable(finallyBlock)) {
-          return false;
+        if (catchBlock == null || !moveToBlockBody(catchBlock, false)) {
+          result = false;
         }
       }
-      return moveToBlock(tryBlock);
+      return moveToBlockBody(tryBlock, false) && result;
     }
 
-    private boolean moveToLabeled(PsiLabeledStatement targetStatement) {
+    private boolean moveToLabeled(@NotNull PsiLabeledStatement targetStatement, boolean returnAtTheEnd) {
       PsiStatement statement = targetStatement.getStatement();
       if (statement == null) {
         return false;
       }
-      moveToBreaks(statement);
-      return moveTo(statement);
+      moveToBreaks(statement, false);
+      return moveTo(statement, returnAtTheEnd);
     }
 
-    private boolean inlineExpression(PsiExpressionStatement statement) {
+    private boolean inlineExpression(@NotNull PsiExpressionStatement statement) {
       PsiExpression expression = statement.getExpression();
       if (expression instanceof PsiAssignmentExpression) {
         PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
         PsiExpression lExpression = assignmentExpression.getLExpression();
-        if (lExpression instanceof PsiReferenceExpression) {
-          PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lExpression;
-          if (!referenceExpression.isQualified() && referenceExpression.resolve() == resultVariable) {
-            if (assignmentExpression.getOperationTokenType() == JavaTokenType.EQ) {
-              replaceInline.add(assignmentExpression);
-              return true;
-            }
-          }
+        if (assignmentExpression.getOperationTokenType() == JavaTokenType.EQ && isReferenceTo(lExpression, resultVariable)) {
+          replaceInline.add(assignmentExpression);
+          return true;
         }
       }
       return false;
     }
 
-    private void moveToBreaks(Set<PsiBreakStatement> breaks) {
+    private void moveToBreaks(@NotNull PsiStatement targetStatement, boolean returnAtTheEnd) {
+      Set<PsiBreakStatement> breaks = getBreaks(targetStatement);
       for (PsiBreakStatement breakStatement : breaks) {
         PsiStatement prevNonEmptyStatement = getPrevNonEmptyStatement(breakStatement, removeCompletely);
-        if (prevNonEmptyStatement == null || !moveTo(prevNonEmptyStatement)) {
+        if (prevNonEmptyStatement == null || !moveTo(prevNonEmptyStatement, returnAtTheEnd)) {
           replaceInline.add(breakStatement);
         }
         else {
@@ -339,12 +415,7 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
       }
     }
 
-    private void moveToBreaks(PsiStatement targetStatement) {
-      Set<PsiBreakStatement> breaks = getBreaks(targetStatement);
-      moveToBreaks(breaks);
-    }
-
-    private boolean writesVariable(PsiElement element) {
+    private boolean writesVariable(@NotNull PsiElement element) {
       int startOffset = flow.getStartOffset(element);
       int endOffset = flow.getEndOffset(element);
       if (startOffset < 0 || endOffset < 0) {
@@ -365,7 +436,7 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
       return ExpressionUtils.computeConstantExpression(condition) == Boolean.TRUE;
     }
 
-    private Set<PsiBreakStatement> getBreaks(PsiStatement targetStatement) {
+    private Set<PsiBreakStatement> getBreaks(@NotNull PsiStatement targetStatement) {
       if (breakStatements == null) {
         breakStatements = new THashMap<>();
         List<Instruction> instructions = flow.getInstructions();
@@ -384,14 +455,18 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
       return breaks != null ? breaks : Collections.emptySet();
     }
 
-    @Nullable
-    private static PsiStatement getNearestEnclosingStatement(PsiElement element) {
-      return element instanceof PsiStatement ? (PsiStatement)element : PsiTreeUtil.getParentOfType(element, PsiStatement.class);
+    private static boolean isReferenceTo(PsiExpression expression, PsiVariable variable) {
+      if (expression instanceof PsiReferenceExpression) {
+        PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
+        if (!referenceExpression.isQualified() && referenceExpression.resolve() == variable) {
+          return true;
+        }
+      }
+      return false;
     }
-
   }
 
-  private static PsiStatement getPrevNonEmptyStatement(PsiElement psiElement, Set<PsiElement> skippedEmptyStatements) {
+  private static PsiStatement getPrevNonEmptyStatement(@NotNull PsiElement psiElement, @NotNull Set<PsiElement> skippedEmptyStatements) {
     PsiStatement prevStatement = PsiTreeUtil.getPrevSiblingOfType(psiElement, PsiStatement.class);
     List<PsiStatement> skipped = new ArrayList<>();
     while (prevStatement instanceof PsiEmptyStatement) {
@@ -402,6 +477,11 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
       skippedEmptyStatements.addAll(skipped);
     }
     return prevStatement;
+  }
+
+  @Nullable
+  private static PsiStatement getNearestEnclosingStatement(@NotNull PsiElement element) {
+    return element instanceof PsiStatement ? (PsiStatement)element : PsiTreeUtil.getParentOfType(element, PsiStatement.class);
   }
 
   private static void registerProblem(@NotNull ProblemsHolder holder,

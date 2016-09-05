@@ -1,9 +1,8 @@
 // "Move 'return' to computation of the value of 'n'" "true"
 class T {
-    int f(boolean b) {
-        int n = 0;
+    int f(boolean b, int d) {
+        int n = d;
         if (b) return 1;
-        else System.out.println("no");
-        return 0;
+        return d;
     }
 }
