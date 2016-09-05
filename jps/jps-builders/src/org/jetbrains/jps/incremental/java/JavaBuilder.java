@@ -193,7 +193,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       });
 
       if (!filesToCompile.isEmpty() || dirtyFilesHolder.hasRemovedFiles()) {
-        // at the moment, there is no incrementality for module-info files, so they should be recompiled on every change
+        // at the moment, there is no incremental compilation for module-info files, so they should be rebuilt on every change
         for (JpsModule module : chunk.getModules()) {
           for (JpsModuleSourceRoot root : module.getSourceRoots()) {
             File descriptor = new File(JpsPathUtil.urlToOsPath(root.getUrl()), MODULE_INFO_FILE);
