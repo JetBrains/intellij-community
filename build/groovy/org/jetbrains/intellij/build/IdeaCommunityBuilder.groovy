@@ -61,7 +61,6 @@ class IdeaCommunityBuilder {
 
     layoutAll(true)
     tasks.buildUpdaterJar()
-    tasks.zipProjectSources()
   }
 
   LayoutInfo layoutAll(boolean buildJps = false) {
