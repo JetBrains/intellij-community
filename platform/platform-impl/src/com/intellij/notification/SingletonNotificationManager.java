@@ -13,81 +13,63 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.notification;
+package com.intellij.notification
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ToolWindowManager;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.ToolWindowManager
 
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicReference
 
-public final class SingletonNotificationManager {
-  private final AtomicReference<Notification> notification = new AtomicReference<>();
+class SingletonNotificationManager(private val group: NotificationGroup, private val type: NotificationType, private val listener: NotificationListener?) {
+  private val notification = AtomicReference<Notification>()
 
-  private final NotificationGroup group;
-  private final NotificationType type;
-  @Nullable
-  private final NotificationListener listener;
+  private var expiredListener: Runnable? = null
 
-  private Runnable expiredListener;
-
-  public SingletonNotificationManager(@NotNull NotificationGroup group, @NotNull NotificationType type, @Nullable NotificationListener listener) {
-    this.group = group;
-    this.type = type;
-    this.listener = listener;
+  @JvmOverloads fun notify(title: String, content: String, project: Project? = null): Boolean {
+    return notify(title, content, listener, project)
   }
 
-  public boolean notify(@NotNull String title, @NotNull String content) {
-    return notify(title, content, null);
+  fun notify(content: String, project: Project?): Boolean {
+    return notify("", content, listener, project)
   }
 
-  public boolean notify(@NotNull String title, @NotNull String content, @Nullable Project project) {
-    return notify(title, content, listener, project);
-  }
-
-  public boolean notify(@NotNull String content, @Nullable Project project) {
-    return notify("", content, listener, project);
-  }
-
-  public boolean notify(@NotNull String title,
-                        @NotNull String content,
-                        @Nullable NotificationListener listener,
-                        @Nullable Project project) {
-    Notification oldNotification = notification.get();
+  fun notify(title: String,
+             content: String,
+             listener: NotificationListener?,
+             project: Project?): Boolean {
+    val oldNotification = notification.get()
     // !oldNotification.isExpired() is not enough - notification could be closed, but not expired
     if (oldNotification != null) {
-      if (!oldNotification.isExpired() && (oldNotification.getBalloon() != null ||
-                                           (project != null &&
-                                            group.getDisplayType() == NotificationDisplayType.TOOL_WINDOW &&
-                                            ToolWindowManager.getInstance(project).getToolWindowBalloon(group.getToolWindowId()) != null))) {
-        return false;
+      if (!oldNotification.isExpired && (oldNotification.balloon != null || project != null &&
+          group.displayType == NotificationDisplayType.TOOL_WINDOW &&
+          ToolWindowManager.getInstance(project).getToolWindowBalloon(group.toolWindowId) != null)) {
+        return false
       }
-      oldNotification.whenExpired(null);
-      oldNotification.expire();
+      oldNotification.whenExpired(null)
+      oldNotification.expire()
     }
 
     if (expiredListener == null) {
-      expiredListener = () -> {
-        Notification currentNotification = notification.get();
-        if (currentNotification != null && currentNotification.isExpired()) {
-          notification.compareAndSet(currentNotification, null);
+      expiredListener = Runnable {
+        val currentNotification = notification.get()
+        if (currentNotification != null && currentNotification.isExpired) {
+          notification.compareAndSet(currentNotification, null)
         }
-      };
+      }
     }
 
-    Notification newNotification = group.createNotification(title, content, type, listener);
-    newNotification.whenExpired(expiredListener);
-    notification.set(newNotification);
-    newNotification.notify(project);
-    return true;
+    val newNotification = group.createNotification(title, content, type, listener)
+    newNotification.whenExpired(expiredListener)
+    notification.set(newNotification)
+    newNotification.notify(project)
+    return true
   }
 
-  public void clear() {
-    Notification oldNotification = notification.getAndSet(null);
+  fun clear() {
+    val oldNotification = notification.getAndSet(null)
     if (oldNotification != null) {
-      oldNotification.whenExpired(null);
-      oldNotification.expire();
+      oldNotification.whenExpired(null)
+      oldNotification.expire()
     }
   }
 }
