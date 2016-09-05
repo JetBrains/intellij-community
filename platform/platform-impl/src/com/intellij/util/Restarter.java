@@ -112,10 +112,10 @@ public class Restarter {
     Kernel32 kernel32 = (Kernel32)Native.loadLibrary("kernel32", Kernel32.class);
     Shell32 shell32 = (Shell32)Native.loadLibrary("shell32", Shell32.class);
 
-    final int pid = kernel32.GetCurrentProcessId();
-    final IntByReference argc = new IntByReference();
+    int pid = kernel32.GetCurrentProcessId();
+    IntByReference argc = new IntByReference();
     Pointer argv_ptr = shell32.CommandLineToArgvW(kernel32.GetCommandLineW(), argc);
-    final String[] argv = getRestartArgv(argv_ptr.getWideStringArray(0, argc.getValue()));
+    String[] argv = getRestartArgv(argv_ptr.getWideStringArray(0, argc.getValue()));
     kernel32.LocalFree(argv_ptr);
 
     // See https://blogs.msdn.microsoft.com/oldnewthing/20060515-07/?p=31203
@@ -149,7 +149,7 @@ public class Restarter {
     int p = homePath.indexOf(".app");
     if (p < 0) throw new IOException("Application bundle not found: " + homePath);
 
-    final String bundlePath = homePath.substring(0, p + 4);
+    String bundlePath = homePath.substring(0, p + 4);
     doScheduleRestart(new File(PathManager.getBinPath(), "restarter"), commands -> {
       Collections.addAll(commands, bundlePath);
       Collections.addAll(commands, beforeRestart);
