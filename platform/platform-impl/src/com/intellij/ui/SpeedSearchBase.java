@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,6 +121,14 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }.registerCustomShortcutSet(CustomShortcutSet.fromString(SystemInfo.isMac ? "meta BACK_SPACE" : "control BACK_SPACE"), myComponent);
 
     installSupplyTo(component);
+  }
+
+  @Nullable
+  public JTextField getSearchField() {
+    if (mySearchPopup != null) {
+      return mySearchPopup.mySearchField;
+    }
+    return null;
   }
 
   public static boolean hasActiveSpeedSearch(JComponent component) {

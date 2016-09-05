@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.textarea.TextComponentEditorImpl;
+import com.intellij.openapi.project.Project;
+import com.intellij.ui.SpeedSearchBase;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.text.JTextComponent;
 
 /**
@@ -45,9 +49,19 @@ public abstract class TextComponentEditorAction extends EditorAction {
   public static Editor getEditorFromContext(@NotNull DataContext dataContext) {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor != null) return editor;
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final Object data = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     if (data instanceof JTextComponent) {
-      return new TextComponentEditorImpl(CommonDataKeys.PROJECT.getData(dataContext), (JTextComponent) data);
+      return new TextComponentEditorImpl(project, (JTextComponent) data);
+    }
+    if (data instanceof JComponent) {
+      final SpeedSearchSupply supply = SpeedSearchSupply.getSupply((JComponent)data);
+      if (supply instanceof SpeedSearchBase) {
+        final JTextField field = ((SpeedSearchBase)supply).getSearchField();
+        if (field != null) {
+          return new TextComponentEditorImpl(project, field);
+        }
+      }
     }
     return null;
   }
