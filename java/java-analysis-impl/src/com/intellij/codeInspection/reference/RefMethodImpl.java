@@ -285,8 +285,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     if (method == null) return;
     PsiCodeBlock body = method.getBody();
     final RefJavaUtil refUtil = RefJavaUtil.getInstance();
-    refUtil.addReferences(method, this, body);
-    refUtil.addReferences(method, this, method.getModifierList());
+    refUtil.addReferences(method, this, method);
     checkForSuperCall(method);
     setOnlyCallsSuper(refUtil.isMethodOnlyCallsSuper(method));
 
