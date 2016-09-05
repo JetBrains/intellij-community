@@ -15,6 +15,7 @@
  */
 package org.intellij.plugins.intelliLang.inject.java;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.patterns.ElementPattern;
@@ -68,6 +69,10 @@ public class InjectionCache {
   @NotNull
   private Set<String> collectMethodNamesWithLanguage(String annotationClassName) {
     GlobalSearchScope allScope = GlobalSearchScope.allScope(myProject);
+
+    // todo remove once Kotlin support becomes fast enough (https://youtrack.jetbrains.com/issue/KT-13734)
+    allScope = GlobalSearchScope.getScopeRestrictedByFileTypes(allScope, JavaFileType.INSTANCE);
+
     Set<String> result = new THashSet<>();
     ArrayList<PsiClass> annoClasses = ContainerUtil.newArrayList(JavaPsiFacade.getInstance(myProject).findClasses(annotationClassName, allScope));
     for (int cursor = 0; cursor < annoClasses.size(); cursor++) {
