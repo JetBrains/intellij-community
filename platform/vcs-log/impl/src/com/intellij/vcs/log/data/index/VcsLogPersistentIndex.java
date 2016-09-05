@@ -43,6 +43,7 @@ import com.intellij.util.io.PersistentMap;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.InMemoryMap;
 import com.intellij.vcs.log.data.TroveUtil;
+import com.intellij.vcs.log.data.VcsLogStorageImpl;
 import com.intellij.vcs.log.data.VcsUserRegistryImpl;
 import com.intellij.vcs.log.ui.filter.VcsLogUserFilterImpl;
 import com.intellij.vcs.log.util.PersistentUtil;
@@ -60,6 +61,7 @@ import java.util.stream.IntStream;
 public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogPersistentIndex.class);
   private static final int BATCH_SIZE = 1000;
+  private static final int VERSION = 0;
 
   @NotNull private final Project myProject;
   @NotNull private final Consumer<Exception> myFatalErrorsConsumer;
@@ -108,6 +110,10 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     }
 
     Disposer.register(disposableParent, this);
+  }
+
+  public static int getVersion() {
+    return VcsLogStorageImpl.VERSION + VERSION;
   }
 
   @Nullable

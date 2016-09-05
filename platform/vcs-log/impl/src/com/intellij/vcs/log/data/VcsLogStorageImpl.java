@@ -52,7 +52,7 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   @NotNull private static final String REFS_STORAGE = "refs";
   @NotNull public static final VcsLogStorage EMPTY = new EmptyLogStorage();
 
-  private static final int VERSION = 5;
+  public static final int VERSION = 5;
   @NotNull private static final String ROOT_STORAGE_KIND = "roots";
   private static final int ROOTS_STORAGE_VERSION = 0;
 

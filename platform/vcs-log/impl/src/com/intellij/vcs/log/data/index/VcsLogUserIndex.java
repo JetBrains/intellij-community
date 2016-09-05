@@ -34,13 +34,13 @@ import java.util.Set;
 
 public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void> {
   private static final Logger LOG = Logger.getInstance(VcsLogUserIndex.class);
-  private static final int VERSION = 0;
   @NotNull private final VcsUserRegistryImpl myUserRegistry;
 
   public VcsLogUserIndex(@NotNull String logId,
                          @NotNull VcsUserRegistryImpl userRegistry,
                          @NotNull Disposable disposableParent) throws IOException {
-    super(logId, "users", VERSION, new UserIndexer(userRegistry), ScalarIndexExtension.VOID_DATA_EXTERNALIZER, disposableParent);
+    super(logId, "users", VcsLogPersistentIndex.getVersion(), new UserIndexer(userRegistry), ScalarIndexExtension.VOID_DATA_EXTERNALIZER,
+          disposableParent);
     myUserRegistry = userRegistry;
   }
 

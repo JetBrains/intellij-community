@@ -44,7 +44,6 @@ import java.util.stream.Collectors;
 public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
   private static final Logger LOG = Logger.getInstance(VcsLogPathsIndex.class);
   private static final String NAME = "paths";
-  private static final int VERSION = 0;
   private static final int VALUE = 239;
 
   @NotNull private final PersistentHashMap<Integer, Integer> myEmptyCommits;
@@ -53,11 +52,13 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
   public VcsLogPathsIndex(@NotNull String logId,
                           @NotNull Set<VirtualFile> roots,
                           @NotNull Disposable disposableParent) throws IOException {
-    super(logId, NAME, VERSION, new PathsIndexer(
-            PersistentUtil.createPersistentEnumerator(EnumeratorStringDescriptor.INSTANCE, "index-paths-ids", logId, VERSION), roots),
+    super(logId, NAME, VcsLogPersistentIndex.getVersion(), new PathsIndexer(
+            PersistentUtil.createPersistentEnumerator(EnumeratorStringDescriptor.INSTANCE, "index-paths-ids", logId,
+                                                      VcsLogPersistentIndex.getVersion()), roots),
           new NullableIntKeyDescriptor(), disposableParent);
 
-    myEmptyCommits = PersistentUtil.createPersistentHashMap(EnumeratorIntegerDescriptor.INSTANCE, "index-no-" + NAME, logId, VERSION);
+    myEmptyCommits = PersistentUtil.createPersistentHashMap(EnumeratorIntegerDescriptor.INSTANCE, "index-no-" + NAME, logId,
+                                                            VcsLogPersistentIndex.getVersion());
     myPathsIndexer = (PathsIndexer)myIndexer;
   }
 

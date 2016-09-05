@@ -37,17 +37,18 @@ import java.util.Set;
 
 public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void> {
   private static final Logger LOG = Logger.getInstance(VcsLogMessagesTrigramIndex.class);
-  private static final int VERSION = 0;
   private static final String TRIGRAMS = "trigrams";
   private static final int VALUE = 239;
 
   @NotNull private final PersistentHashMap<Integer, Integer> myNoTrigramsCommits;
 
   public VcsLogMessagesTrigramIndex(@NotNull String logId, @NotNull Disposable disposableParent) throws IOException {
-    super(logId, TRIGRAMS, VERSION, new TrigramMessageIndexer(), ScalarIndexExtension.VOID_DATA_EXTERNALIZER, disposableParent);
+    super(logId, TRIGRAMS, VcsLogPersistentIndex.getVersion(), new TrigramMessageIndexer(), ScalarIndexExtension.VOID_DATA_EXTERNALIZER,
+          disposableParent);
 
     myNoTrigramsCommits =
-      PersistentUtil.createPersistentHashMap(EnumeratorIntegerDescriptor.INSTANCE, "index-no-" + TRIGRAMS, logId, VERSION);
+      PersistentUtil.createPersistentHashMap(EnumeratorIntegerDescriptor.INSTANCE, "index-no-" + TRIGRAMS, logId,
+                                             VcsLogPersistentIndex.getVersion());
   }
 
   @Nullable
