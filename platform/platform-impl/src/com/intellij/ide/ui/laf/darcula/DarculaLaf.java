@@ -59,6 +59,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class DarculaLaf extends BasicLookAndFeel {
+  private static final Object SYSTEM = new Object();
   public static final String NAME = "Darcula";
   BasicLookAndFeel base;
   private static Disposable myDisposable;
@@ -348,7 +349,13 @@ public class DarculaLaf extends BasicLookAndFeel {
       final String prefix = getPrefix() + ".";
       for (String key : properties.stringPropertyNames()) {
         if (key.startsWith(prefix)) {
-          darculaGlobalSettings.put(key.substring(prefix.length()), parseValue(key, properties.getProperty(key)));
+          Object value = parseValue(key, properties.getProperty(key));
+          String darculaKey = key.substring(prefix.length());
+          if (value == SYSTEM) {
+            darculaGlobalSettings.remove(darculaKey);
+          } else {
+            darculaGlobalSettings.put(darculaKey, value);
+          }
         }
       }
 
@@ -373,6 +380,10 @@ public class DarculaLaf extends BasicLookAndFeel {
   protected Object parseValue(String key, @NotNull String value) {
     if ("null".equals(value)) {
       return null;
+    }
+
+    if ("system".equals(value)) {
+      return SYSTEM;
     }
 
     if (key.endsWith("Insets")) {

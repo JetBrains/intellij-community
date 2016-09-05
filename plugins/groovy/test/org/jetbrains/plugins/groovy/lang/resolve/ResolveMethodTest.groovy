@@ -44,218 +44,218 @@ class ResolveMethodTest extends GroovyResolveTestCase {
   final String basePath = TestUtils.testDataPath + "resolve/method/"
 
   void testStaticImport3() {
-    PsiReference ref = configureByFile("staticImport3/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
-    assertEquals(((GrMethod)resolved).parameters.length, 1);
-    assertEquals(((GrMethod)resolved).name, "isShrimp");
+    PsiReference ref = configureByFile("staticImport3/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof PsiMethod)
+    assertEquals(((GrMethod)resolved).parameters.length, 1)
+    assertEquals(((GrMethod)resolved).name, "isShrimp")
   }
 
   void testStaticImport() {
-    PsiReference ref = configureByFile("staticImport/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
+    PsiReference ref = configureByFile("staticImport/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof PsiMethod)
   }
 
   void _testImportStaticReverse() {
-    PsiReference ref = configureByFile(getTestName(true) + "/" + getTestName(false) + ".groovy");
-    assertNotNull(ref.resolve());
+    PsiReference ref = configureByFile(getTestName(true) + "/" + getTestName(false) + ".groovy")
+    assertNotNull(ref.resolve())
   }
 
 
   void testSimple() {
-    PsiReference ref = configureByFile("simple/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof GrMethod);
-    assertEquals(((GrMethod)resolved).parameters.length, 1);
+    PsiReference ref = configureByFile("simple/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof GrMethod)
+    assertEquals(((GrMethod)resolved).parameters.length, 1)
   }
 
   void testVarargs() {
-    PsiReference ref = configureByFile("varargs/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof GrMethod);
-    assertEquals(((GrMethod)resolved).parameters.length, 1);
+    PsiReference ref = configureByFile("varargs/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof GrMethod)
+    assertEquals(((GrMethod)resolved).parameters.length, 1)
   }
 
   void testByName() {
-    PsiReference ref = configureByFile("byName/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof GrMethod);
+    PsiReference ref = configureByFile("byName/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof GrMethod)
   }
 
   void testByName1() {
-    PsiReference ref = configureByFile("byName1/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof GrMethod);
-    assertEquals(((GrMethod)resolved).parameters.length, 2);
+    PsiReference ref = configureByFile("byName1/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof GrMethod)
+    assertEquals(((GrMethod)resolved).parameters.length, 2)
   }
 
   void testByNameVarargs() {
-    PsiReference ref = configureByFile("byNameVarargs/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof GrMethod);
-    assertEquals(((GrMethod)resolved).parameters.length, 1);
+    PsiReference ref = configureByFile("byNameVarargs/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof GrMethod)
+    assertEquals(((GrMethod)resolved).parameters.length, 1)
   }
 
   void testParametersNumber() {
-    PsiReference ref = configureByFile("parametersNumber/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof GrMethod);
-    assertEquals(((GrMethod)resolved).parameters.length, 2);
+    PsiReference ref = configureByFile("parametersNumber/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof GrMethod)
+    assertEquals(((GrMethod)resolved).parameters.length, 2)
   }
 
   void testFilterBase() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("filterBase/A.groovy").element;
-    assertNotNull(ref.resolve());
-    assertEquals(1, ref.multiResolve(false).length);
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("filterBase/A.groovy").element
+    assertNotNull(ref.resolve())
+    assertEquals(1, ref.multiResolve(false).length)
   }
 
   void testTwoCandidates() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("twoCandidates/A.groovy").element;
-    assertNull(ref.resolve());
-    assertEquals(2, ref.multiResolve(false).length);
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("twoCandidates/A.groovy").element
+    assertNull(ref.resolve())
+    assertEquals(2, ref.multiResolve(false).length)
   }
 
   void testDefaultMethod1() {
-    PsiReference ref = configureByFile("defaultMethod1/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof GrGdkMethod);
+    PsiReference ref = configureByFile("defaultMethod1/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof GrGdkMethod)
   }
 
   void testDefaultStaticMethod() {
-    PsiReference ref = configureByFile("defaultStaticMethod/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof GrGdkMethod);
-    assertTrue(((GrGdkMethodImpl) resolved).hasModifierProperty(PsiModifier.STATIC));
+    PsiReference ref = configureByFile("defaultStaticMethod/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof GrGdkMethod)
+    assertTrue(((GrGdkMethodImpl) resolved).hasModifierProperty(PsiModifier.STATIC))
   }
 
   void testPrimitiveSubtyping() {
-    PsiReference ref = configureByFile("primitiveSubtyping/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof GrGdkMethod);
-    assertTrue(((GrGdkMethodImpl) resolved).hasModifierProperty(PsiModifier.STATIC));
+    PsiReference ref = configureByFile("primitiveSubtyping/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof GrGdkMethod)
+    assertTrue(((GrGdkMethodImpl) resolved).hasModifierProperty(PsiModifier.STATIC))
   }
 
   void testDefaultMethod2() {
-    PsiReference ref = configureByFile("defaultMethod2/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
-    assertTrue(resolved instanceof GrGdkMethod);
+    PsiReference ref = configureByFile("defaultMethod2/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof PsiMethod)
+    assertTrue(resolved instanceof GrGdkMethod)
   }
 
   void testGrvy111() {
-    PsiReference ref = configureByFile("grvy111/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
-    assertTrue(resolved instanceof GrGdkMethod);
-    assertEquals(0, ((PsiMethod)resolved).parameterList.parametersCount);
-    assertTrue(((PsiMethod) resolved).hasModifierProperty(PsiModifier.PUBLIC));
+    PsiReference ref = configureByFile("grvy111/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof PsiMethod)
+    assertTrue(resolved instanceof GrGdkMethod)
+    assertEquals(0, ((PsiMethod)resolved).parameterList.parametersCount)
+    assertTrue(((PsiMethod) resolved).hasModifierProperty(PsiModifier.PUBLIC))
   }
 
   void testScriptMethod() {
-    PsiReference ref = configureByFile("scriptMethod/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
-    assertEquals("groovy.lang.Script", ((PsiMethod)resolved).containingClass.qualifiedName);
+    PsiReference ref = configureByFile("scriptMethod/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof PsiMethod)
+    assertEquals("groovy.lang.Script", ((PsiMethod)resolved).containingClass.qualifiedName)
   }
 
   void testArrayDefault() {
-    PsiReference ref = configureByFile("arrayDefault/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
-    assertTrue(resolved instanceof GrGdkMethod);
+    PsiReference ref = configureByFile("arrayDefault/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof PsiMethod)
+    assertTrue(resolved instanceof GrGdkMethod)
   }
 
   void testArrayDefault1() {
-    PsiReference ref = configureByFile("arrayDefault1/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
-    assertTrue(resolved instanceof GrGdkMethod);
+    PsiReference ref = configureByFile("arrayDefault1/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof PsiMethod)
+    assertTrue(resolved instanceof GrGdkMethod)
   }
 
   void testSpreadOperator() {
-    PsiReference ref = configureByFile("spreadOperator/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
-    GrMethodCallExpression methodCall = (GrMethodCallExpression)ref.element.parent;
-    PsiType type = methodCall.type;
-    assertTrue(type instanceof PsiClassType);
-    PsiClass clazz = ((PsiClassType) type).resolve();
-    assertNotNull(clazz);
-    assertEquals("java.util.ArrayList", clazz.qualifiedName);
+    PsiReference ref = configureByFile("spreadOperator/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof PsiMethod)
+    GrMethodCallExpression methodCall = (GrMethodCallExpression)ref.element.parent
+    PsiType type = methodCall.type
+    assertTrue(type instanceof PsiClassType)
+    PsiClass clazz = ((PsiClassType) type).resolve()
+    assertNotNull(clazz)
+    assertEquals("java.util.ArrayList", clazz.qualifiedName)
   }
 
 
   void testSwingBuilderMethod() {
-    PsiReference ref = configureByFile("swingBuilderMethod/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
-    assertFalse(resolved.physical);
+    PsiReference ref = configureByFile("swingBuilderMethod/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof PsiMethod)
+    assertFalse(resolved.physical)
   }
 
   void testSwingProperty() {
-    PsiReference ref = configureByFile("swingProperty/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
-    assertTrue(PropertyUtil.isSimplePropertySetter((PsiMethod) resolved));
-    assertEquals("javax.swing.JComponent", ((PsiMethod)resolved).containingClass.qualifiedName);
+    PsiReference ref = configureByFile("swingProperty/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof PsiMethod)
+    assertTrue(PropertyUtil.isSimplePropertySetter((PsiMethod) resolved))
+    assertEquals("javax.swing.JComponent", ((PsiMethod)resolved).containingClass.qualifiedName)
   }
 
   void testLangClass() {
-    PsiReference ref = configureByFile("langClass/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
-    assertEquals("java.lang.Class", ((PsiMethod)resolved).containingClass.qualifiedName);
+    PsiReference ref = configureByFile("langClass/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof PsiMethod)
+    assertEquals("java.lang.Class", ((PsiMethod)resolved).containingClass.qualifiedName)
   }
 
   void testComplexOverload() {
-    PsiReference ref = configureByFile("complexOverload/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
+    PsiReference ref = configureByFile("complexOverload/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof PsiMethod)
   }
 
   //test we don't resolve to field in case explicit getter is present
   void testFromGetter() {
-    PsiReference ref = configureByFile("fromGetter/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
+    PsiReference ref = configureByFile("fromGetter/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof PsiMethod)
   }
 
   void testOverload1() {
-    PsiReference ref = configureByFile("overload1/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
-    assertEquals("java.io.Serializable", ((PsiMethod)resolved).parameterList.parameters[0].type.canonicalText);
+    PsiReference ref = configureByFile("overload1/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof PsiMethod)
+    assertEquals("java.io.Serializable", ((PsiMethod)resolved).parameterList.parameters[0].type.canonicalText)
   }
 
   void testConstructor() {
-    PsiReference ref = configureByFile("constructor/A.groovy");
-    PsiMethod resolved = ((GrNewExpression)ref.element.parent).resolveMethod();
-    assertNotNull(resolved);
-    assertTrue(resolved.constructor);
+    PsiReference ref = configureByFile("constructor/A.groovy")
+    PsiMethod resolved = ((GrNewExpression)ref.element.parent).resolveMethod()
+    assertNotNull(resolved)
+    assertTrue(resolved.constructor)
   }
 
   void testConstructor1() {
-    PsiReference ref = configureByFile("constructor1/A.groovy");
-    PsiMethod method = ((GrNewExpression)ref.element.parent).resolveMethod();
-    assertNotNull(method);
-    assertTrue(method.constructor);
-    assertEquals(0, method.parameterList.parameters.length);
+    PsiReference ref = configureByFile("constructor1/A.groovy")
+    PsiMethod method = ((GrNewExpression)ref.element.parent).resolveMethod()
+    assertNotNull(method)
+    assertTrue(method.constructor)
+    assertEquals(0, method.parameterList.parameters.length)
   }
 
   void testConstructor2() {
-    PsiReference ref = configureByFile("constructor2/A.groovy");
-    PsiMethod method = ((GrNewExpression)ref.element.parent).resolveMethod();
-    assertNull(method);
+    PsiReference ref = configureByFile("constructor2/A.groovy")
+    PsiMethod method = ((GrNewExpression)ref.element.parent).resolveMethod()
+    assertNull(method)
   }
 
   //grvy-101
   void testConstructor3() {
-    PsiReference ref = configureByFile("constructor3/A.groovy");
-    PsiMethod method = ((GrNewExpression)ref.element.parent).resolveMethod();
-    assertNotNull(method);
-    assertTrue(method.constructor);
-    assertEquals(0, method.parameterList.parameters.length);
+    PsiReference ref = configureByFile("constructor3/A.groovy")
+    PsiMethod method = ((GrNewExpression)ref.element.parent).resolveMethod()
+    assertNotNull(method)
+    assertTrue(method.constructor)
+    assertEquals(0, method.parameterList.parameters.length)
   }
 
   void testWrongConstructor() {
@@ -303,256 +303,256 @@ class ResolveMethodTest extends GroovyResolveTestCase {
   }
 
   void testPartiallyDeclaredType() {
-    PsiReference ref = configureByFile("partiallyDeclaredType/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
+    PsiReference ref = configureByFile("partiallyDeclaredType/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof PsiMethod)
   }
 
   void testGeneric1() {
-    PsiReference ref = configureByFile("generic1/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
+    PsiReference ref = configureByFile("generic1/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof PsiMethod)
   }
 
   void testNotAField() {
-    PsiReference ref = configureByFile("notAField/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
+    PsiReference ref = configureByFile("notAField/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof PsiMethod)
   }
 
   void testEscapedReferenceExpression() {
-    PsiReference ref = configureByFile("escapedReferenceExpression/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
+    PsiReference ref = configureByFile("escapedReferenceExpression/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof PsiMethod)
   }
 
   void testListOfClasses() {
-    PsiReference ref = configureByFile("listOfClasses/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertInstanceOf(resolved, PsiMethod.class);
+    PsiReference ref = configureByFile("listOfClasses/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertInstanceOf(resolved, PsiMethod.class)
   }
 
   void testEmptyVsMap() {
-    PsiReference ref = configureByFile("emptyVsMap/A.groovy");
-    PsiMethod resolved = ((GrNewExpression)ref.element.parent).resolveMethod();
-    assertNotNull(resolved);
-    assertEquals(0, resolved.parameterList.parametersCount);
+    PsiReference ref = configureByFile("emptyVsMap/A.groovy")
+    PsiMethod resolved = ((GrNewExpression)ref.element.parent).resolveMethod()
+    assertNotNull(resolved)
+    assertEquals(0, resolved.parameterList.parametersCount)
   }
 
   void testPrivateScriptMethod() {
-    PsiReference ref = configureByFile("A.groovy");
-    assertNotNull(ref.resolve());
+    PsiReference ref = configureByFile("A.groovy")
+    assertNotNull(ref.resolve())
   }
 
   void testAliasedConstructor() {
-    PsiReference ref = configureByFile("aliasedConstructor/A.groovy");
-    PsiMethod resolved = ((GrNewExpression)ref.element.parent).resolveMethod();
-    assertNotNull(resolved);
-    assertEquals("JFrame", resolved.name);
+    PsiReference ref = configureByFile("aliasedConstructor/A.groovy")
+    PsiMethod resolved = ((GrNewExpression)ref.element.parent).resolveMethod()
+    assertNotNull(resolved)
+    assertEquals("JFrame", resolved.name)
   }
 
 
   void testFixedVsVarargs1() {
-    PsiReference ref = configureByFile("fixedVsVarargs1/A.groovy");
-    PsiMethod resolved = ((GrNewExpression)ref.element.parent).resolveMethod();
-    assertNotNull(resolved);
-    final GrParameter[] parameters = ((GrMethod)resolved).parameters;
-    assertEquals(parameters.length, 1);
-    assertEquals(parameters[0].type.canonicalText, "int");
+    PsiReference ref = configureByFile("fixedVsVarargs1/A.groovy")
+    PsiMethod resolved = ((GrNewExpression)ref.element.parent).resolveMethod()
+    assertNotNull(resolved)
+    final GrParameter[] parameters = ((GrMethod)resolved).parameters
+    assertEquals(parameters.length, 1)
+    assertEquals(parameters[0].type.canonicalText, "int")
   }
 
   void testFixedVsVarargs2() {
-    PsiReference ref = configureByFile("fixedVsVarargs2/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
-    final PsiParameter[] parameters = ((PsiMethod)resolved).parameterList.parameters;
-    assertEquals(parameters.length, 2);
-    assertEquals(parameters[0].type.canonicalText, "java.lang.Class");
+    PsiReference ref = configureByFile("fixedVsVarargs2/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof PsiMethod)
+    final PsiParameter[] parameters = ((PsiMethod)resolved).parameterList.parameters
+    assertEquals(parameters.length, 2)
+    assertEquals(parameters[0].type.canonicalText, "java.lang.Class")
   }
 
   void testReassigned1() {
-    PsiReference ref = configureByFile("reassigned1/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof GrMethod);
-    final GrParameter[] parameters = ((GrMethod)resolved).parameters;
-    assertEquals(parameters.length, 1);
-    assertEquals(parameters[0].type.canonicalText, "java.lang.String");
+    PsiReference ref = configureByFile("reassigned1/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof GrMethod)
+    final GrParameter[] parameters = ((GrMethod)resolved).parameters
+    assertEquals(parameters.length, 1)
+    assertEquals(parameters[0].type.canonicalText, "java.lang.String")
   }
 
   void testReassigned2() {
-    PsiReference ref = configureByFile("reassigned2/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof GrMethod);
-    final GrParameter[] parameters = ((GrMethod)resolved).parameters;
-    assertEquals(parameters.length, 1);
-    assertEquals(parameters[0].type.canonicalText, "int");
+    PsiReference ref = configureByFile("reassigned2/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof GrMethod)
+    final GrParameter[] parameters = ((GrMethod)resolved).parameters
+    assertEquals(parameters.length, 1)
+    assertEquals(parameters[0].type.canonicalText, "int")
   }
 
   void testGenerics1() {
-    PsiReference ref = configureByFile("generics1/A.groovy");
-    assertNotNull(ref.resolve());
+    PsiReference ref = configureByFile("generics1/A.groovy")
+    assertNotNull(ref.resolve())
   }
 
   void testGenericOverriding() {
-    PsiReference ref = configureByFile("genericOverriding/A.groovy");
-    assertNotNull(ref.resolve());
+    PsiReference ref = configureByFile("genericOverriding/A.groovy")
+    assertNotNull(ref.resolve())
   }
 
   void testUseOperator() {
-    PsiReference ref = configureByFile("useOperator/A.groovy");
-    final PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof GrGdkMethod);
+    PsiReference ref = configureByFile("useOperator/A.groovy")
+    final PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof GrGdkMethod)
   }
 
   void testClosureMethodInsideClosure() {
-    PsiReference ref = configureByFile("closureMethodInsideClosure/A.groovy");
-    final PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
+    PsiReference ref = configureByFile("closureMethodInsideClosure/A.groovy")
+    final PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof PsiMethod)
   }
 
   void testScriptMethodInsideClosure() {
-    PsiReference ref = configureByFile("scriptMethodInsideClosure/A.groovy");
-    final PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
+    PsiReference ref = configureByFile("scriptMethodInsideClosure/A.groovy")
+    final PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof PsiMethod)
   }
 
   void testExplicitGetter() {
-    PsiReference ref = configureByFile("explicitGetter/A.groovy");
-    final PsiElement resolved = ref.resolve();
-    assertNotNull(resolved);
-    assertFalse(resolved instanceof GrAccessorMethod);
+    PsiReference ref = configureByFile("explicitGetter/A.groovy")
+    final PsiElement resolved = ref.resolve()
+    assertNotNull(resolved)
+    assertFalse(resolved instanceof GrAccessorMethod)
 
   }
 
   void testGroovyAndJavaSamePackage() {
-    PsiReference ref = configureByFile("groovyAndJavaSamePackage/p/Ha.groovy");
-    assertTrue(ref.resolve() instanceof PsiMethod);
+    PsiReference ref = configureByFile("groovyAndJavaSamePackage/p/Ha.groovy")
+    assertTrue(ref.resolve() instanceof PsiMethod)
   }
 
   void testUnboxBigDecimal() {
-    myFixture.addClass("package java.math; public class BigDecimal {}");
-    PsiReference ref = configureByFile("unboxBigDecimal/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
-    assertEquals(PsiType.DOUBLE, ((PsiMethod)resolved).returnType);
+    myFixture.addClass("package java.math; public class BigDecimal {}")
+    PsiReference ref = configureByFile("unboxBigDecimal/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof PsiMethod)
+    assertEquals(PsiType.DOUBLE, ((PsiMethod)resolved).returnType)
   }
 
   void testGrvy1157() {
-    PsiReference ref = configureByFile("grvy1157/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
+    PsiReference ref = configureByFile("grvy1157/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof PsiMethod)
   }
 
   void testGrvy1173() {
-    PsiReference ref = configureByFile("grvy1173/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
+    PsiReference ref = configureByFile("grvy1173/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof PsiMethod)
   }
 
   void testGrvy1173_a() {
-    PsiReference ref = configureByFile("grvy1173_a/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
+    PsiReference ref = configureByFile("grvy1173_a/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof PsiMethod)
   }
 
   void testGrvy1218() {
-    PsiReference ref = configureByFile("grvy1218/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
+    PsiReference ref = configureByFile("grvy1218/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof PsiMethod)
   }
 
   void testMethodPointer1() {
-    PsiReference ref = configureByFile("A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
+    PsiReference ref = configureByFile("A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof PsiMethod)
   }
 
   void testMethodPointer2() {
-    PsiReference ref = configureByFile("methodPointer2/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
+    PsiReference ref = configureByFile("methodPointer2/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof PsiMethod)
   }
 
   void testMethodCallTypeFromMultiResolve() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("methodCallTypeFromMultiResolve/A.groovy").element;
-    assertNull(ref.resolve());
-    assertTrue(((GrMethodCallExpression)ref.parent).type.equalsToText("java.lang.String"));
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("methodCallTypeFromMultiResolve/A.groovy").element
+    assertNull(ref.resolve())
+    assertTrue(((GrMethodCallExpression)ref.parent).type.equalsToText("java.lang.String"))
   }
 
   void testDefaultOverloaded() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("defaultOverloaded/A.groovy").element;
-    assertNotNull(ref.resolve());
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("defaultOverloaded/A.groovy").element
+    assertNotNull(ref.resolve())
   }
 
   void testDefaultOverloaded2() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("defaultOverloaded2/A.groovy").element;
-    assertNotNull(ref.resolve());
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("defaultOverloaded2/A.groovy").element
+    assertNotNull(ref.resolve())
   }
 
   void testDefaultOverloaded3() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("defaultOverloaded3/A.groovy").element;
-    assertNotNull(ref.resolve());
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("defaultOverloaded3/A.groovy").element
+    assertNotNull(ref.resolve())
   }
 
   void testMultipleAssignment1() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("multipleAssignment1/A.groovy").element;
-    assertNotNull(ref.resolve());
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("multipleAssignment1/A.groovy").element
+    assertNotNull(ref.resolve())
   }
 
   void testMultipleAssignment2() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("multipleAssignment2/A.groovy").element;
-    assertNotNull(ref.resolve());
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("multipleAssignment2/A.groovy").element
+    assertNotNull(ref.resolve())
   }
 
   void testMultipleAssignment3() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("multipleAssignment3/A.groovy").element;
-    assertNotNull(ref.resolve());
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("multipleAssignment3/A.groovy").element
+    assertNotNull(ref.resolve())
   }
 
   void testClosureIntersect() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("closureIntersect/A.groovy").element;
-    assertNotNull(ref.resolve());
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("closureIntersect/A.groovy").element
+    assertNotNull(ref.resolve())
   }
 
   void testClosureCallCurry() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("closureCallCurry/A.groovy").element;
-    assertNotNull(ref.resolve());
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("closureCallCurry/A.groovy").element
+    assertNotNull(ref.resolve())
   }
 
   void testSuperFromGString() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("superFromGString/SuperFromGString.groovy").element;
-    assertNotNull(ref.resolve());
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("superFromGString/SuperFromGString.groovy").element
+    assertNotNull(ref.resolve())
   }
 
   void testNominalTypeIsBetterThanNull() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("nominalTypeIsBetterThanNull/A.groovy").element;
-    final PsiType type = assertInstanceOf(ref.resolve(), GrMethod.class).inferredReturnType;
-    assertNotNull(type);
-    assertTrue(type.equalsToText(CommonClassNames.JAVA_LANG_STRING));
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("nominalTypeIsBetterThanNull/A.groovy").element
+    final PsiType type = assertInstanceOf(ref.resolve(), GrMethod.class).inferredReturnType
+    assertNotNull(type)
+    assertTrue(type.equalsToText(CommonClassNames.JAVA_LANG_STRING))
   }
 
   void testQualifiedSuperMethod() {
-    PsiReference ref = configureByFile("qualifiedSuperMethod/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof GrMethod);
-    assertEquals("SuperClass", ((GrMethod)resolved).containingClass.name);
+    PsiReference ref = configureByFile("qualifiedSuperMethod/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof GrMethod)
+    assertEquals("SuperClass", ((GrMethod)resolved).containingClass.name)
   }
 
   void testQualifiedThisMethod() {
-    PsiReference ref = configureByFile("qualifiedThisMethod/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof GrMethod);
-    assertEquals("OuterClass", ((GrMethod)resolved).containingClass.name);
+    PsiReference ref = configureByFile("qualifiedThisMethod/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof GrMethod)
+    assertEquals("OuterClass", ((GrMethod)resolved).containingClass.name)
   }
 
   void testPrintMethodInAnonymousClass1() {
-    PsiReference ref = configureByFile("printMethodInAnonymousClass1/A.groovy");
-    assertInstanceOf(ref.resolve(), GrGdkMethod.class);
+    PsiReference ref = configureByFile("printMethodInAnonymousClass1/A.groovy")
+    assertInstanceOf(ref.resolve(), GrGdkMethod.class)
   }
 
   void testPrintMethodInAnonymousClass2() {
-    PsiReference ref = configureByFile("printMethodInAnonymousClass2/B.groovy");
-    assertInstanceOf(ref.resolve(), GrGdkMethod.class);
+    PsiReference ref = configureByFile("printMethodInAnonymousClass2/B.groovy")
+    assertInstanceOf(ref.resolve(), GrGdkMethod.class)
   }
 
   void testSubstituteWhenDisambiguating() {
@@ -571,64 +571,64 @@ class Zoo {
   }
 
   void testFooMethodInAnonymousClass() {
-    PsiReference ref = configureByFile("fooMethodInAnonymousClass/A.groovy");
-    final PsiElement resolved = ref.resolve();
-    assertInstanceOf(resolved, PsiMethod.class);
-    assertEquals("A", ((PsiMethod)resolved).containingClass.name);
+    PsiReference ref = configureByFile("fooMethodInAnonymousClass/A.groovy")
+    final PsiElement resolved = ref.resolve()
+    assertInstanceOf(resolved, PsiMethod.class)
+    assertEquals("A", ((PsiMethod)resolved).containingClass.name)
   }
 
   void testOptionalParameters1() {
-    PsiReference ref = configureByFile("optionalParameters1/A.groovy");
-    final PsiElement resolved = ref.resolve();
-    assertInstanceOf(resolved, PsiMethod.class);
+    PsiReference ref = configureByFile("optionalParameters1/A.groovy")
+    final PsiElement resolved = ref.resolve()
+    assertInstanceOf(resolved, PsiMethod.class)
   }
 
   void testOptionalParameters2() {
-    PsiReference ref = configureByFile("optionalParameters2/A.groovy");
-    final PsiElement resolved = ref.resolve();
-    assertInstanceOf(resolved, PsiMethod.class);
+    PsiReference ref = configureByFile("optionalParameters2/A.groovy")
+    final PsiElement resolved = ref.resolve()
+    assertInstanceOf(resolved, PsiMethod.class)
   }
 
   void testOptionalParameters3() {
-    PsiReference ref = configureByFile("optionalParameters3/A.groovy");
-    final PsiElement resolved = ref.resolve();
-    assertInstanceOf(resolved, PsiMethod.class);
+    PsiReference ref = configureByFile("optionalParameters3/A.groovy")
+    final PsiElement resolved = ref.resolve()
+    assertInstanceOf(resolved, PsiMethod.class)
   }
 
   void testOptionalParameters4() {
-    PsiReference ref = configureByFile("optionalParameters4/A.groovy");
-    final PsiElement resolved = ref.resolve();
-    assertInstanceOf(resolved, PsiMethod.class);
+    PsiReference ref = configureByFile("optionalParameters4/A.groovy")
+    final PsiElement resolved = ref.resolve()
+    assertInstanceOf(resolved, PsiMethod.class)
   }
 
   void testNotInitializedVariable() {
-    PsiReference ref = configureByFile("notInitializedVariable/A.groovy");
-    final PsiElement resolved = ref.resolve();
-    assertInstanceOf(resolved, PsiMethod.class);
+    PsiReference ref = configureByFile("notInitializedVariable/A.groovy")
+    final PsiElement resolved = ref.resolve()
+    assertInstanceOf(resolved, PsiMethod.class)
   }
 
   void testMethodVsField() {
-    final PsiReference ref = configureByFile("methodVsField/A.groovy");
-    final PsiElement element = ref.resolve();
-    assertInstanceOf(element, PsiMethod.class);
+    final PsiReference ref = configureByFile("methodVsField/A.groovy")
+    final PsiElement element = ref.resolve()
+    assertInstanceOf(element, PsiMethod.class)
   }
 
   void testLocalVariableVsGetter() {
-    final PsiReference ref = configureByFile("localVariableVsGetter/A.groovy");
-    final PsiElement element = ref.resolve();
-    assertInstanceOf(element, GrVariable.class);
+    final PsiReference ref = configureByFile("localVariableVsGetter/A.groovy")
+    final PsiElement element = ref.resolve()
+    assertInstanceOf(element, GrVariable.class)
   }
 
   void testInvokeMethodViaThisInStaticContext() {
-    final PsiReference ref = configureByFile("invokeMethodViaThisInStaticContext/A.groovy");
-    final PsiElement element = ref.resolve();
+    final PsiReference ref = configureByFile("invokeMethodViaThisInStaticContext/A.groovy")
+    final PsiElement element = ref.resolve()
     assertEquals "Class", assertInstanceOf(element, PsiMethod).containingClass.name
   }
 
   void testInvokeMethodViaClassInStaticContext() {
-    final PsiReference ref = configureByFile("invokeMethodViaClassInStaticContext/A.groovy");
-    final PsiElement element = ref.resolve();
-    assertInstanceOf(element, PsiMethod.class);
+    final PsiReference ref = configureByFile("invokeMethodViaClassInStaticContext/A.groovy")
+    final PsiElement element = ref.resolve()
+    assertInstanceOf(element, PsiMethod.class)
     assertEquals "Foo", assertInstanceOf(element, PsiMethod).containingClass.name
   }
 
@@ -639,7 +639,7 @@ class Zoo {
   }
 
   void testMethodVsLocalVariable() {
-    PsiReference ref = configureByFile("methodVsLocalVariable/A.groovy");
+    PsiReference ref = configureByFile("methodVsLocalVariable/A.groovy")
     def resolved = ref.resolve()
     assertInstanceOf resolved, GrVariable
   }
@@ -696,7 +696,7 @@ class Zoo {
     myFixture.configureByText("a.groovy",
                               "Map<File,String> map = [:]\n" +
                               "println map.ge<caret>t('', '')"
-    );
+    )
     def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
     assertInstanceOf ref.resolve(), GrGdkMethod
   }
@@ -706,20 +706,20 @@ class Zoo {
 class Foo {
   static def foo()
 }"""
-    PsiReference ref = configureByFile("staticImportInSamePackage/A.groovy", "A.groovy");
+    PsiReference ref = configureByFile("staticImportInSamePackage/A.groovy", "A.groovy")
     assertNotNull(ref.resolve())
   }
 
   void testStringRefExpr1() {
-    assertNotNull(resolve("a.groovy"));
+    assertNotNull(resolve("a.groovy"))
   }
 
   void testStringRefExpr2() {
-    assertNotNull(resolve("a.groovy"));
+    assertNotNull(resolve("a.groovy"))
   }
 
   void testStringRefExpr3() {
-    assertNotNull(resolve("a.groovy"));
+    assertNotNull(resolve("a.groovy"))
   }
 
   void testNestedWith() {

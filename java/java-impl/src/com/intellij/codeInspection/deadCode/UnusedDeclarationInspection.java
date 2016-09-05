@@ -18,18 +18,23 @@ package com.intellij.codeInspection.deadCode;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
-import com.intellij.codeInspection.reference.EntryPoint;
-import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.reference.RefMethod;
-import com.intellij.codeInspection.reference.RefVisitor;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.Tools;
+import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.ui.components.JBTabbedPane;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -38,6 +43,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.*;
+import java.util.List;
 
 public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase {
   private final UnusedParametersInspection myUnusedParameters = new UnusedParametersInspection();
@@ -76,6 +83,12 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
       });
     }
     super.runInspection(scope, manager, globalContext, problemDescriptionsProcessor);
+  }
+
+  @Nullable
+  @Override
+  public RefGraphAnnotator getAnnotator(@NotNull RefManager refManager) {
+    return new UnusedVariablesGraphAnnotator(InspectionManager.getInstance(refManager.getProject()), refManager);
   }
 
   @Override
@@ -217,5 +230,92 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
       add(btnPanel, gc);
     }
 
+  }
+
+  private class UnusedVariablesGraphAnnotator extends RefGraphAnnotator {
+    private final InspectionManager myInspectionManager;
+    private GlobalInspectionContextImpl myContext;
+    private Map<String, Tools> myTools;
+
+    public UnusedVariablesGraphAnnotator(InspectionManager inspectionManager, RefManager refManager) {
+      myInspectionManager = inspectionManager;
+      myContext = (GlobalInspectionContextImpl)((RefManagerImpl)refManager).getContext();
+      myTools = myContext.getTools();
+    }
+
+    @Override
+    public void onReferencesBuild(RefElement refElement) {
+      if (refElement instanceof RefClass) {
+        PsiClass aClass = ((RefClass)refElement).getElement();
+        if (aClass != null) {
+          for (PsiClassInitializer initializer : aClass.getInitializers()) {
+            findUnusedVariables(initializer.getBody(), refElement, aClass);
+          }
+        }
+      }
+      else if (refElement instanceof RefMethod) {
+        PsiElement element = refElement.getElement();
+        if (element instanceof PsiMethod) {
+          PsiCodeBlock body = ((PsiMethod)element).getBody();
+          if (body != null) {
+            findUnusedVariables(body, refElement, element);
+          }
+        }
+      }
+    }
+
+    private void findUnusedVariables(PsiCodeBlock body, RefElement refElement, PsiElement element) {
+      Tools tools = myTools.get(getShortName());
+      if (tools.isEnabled(element)) {
+        InspectionToolWrapper toolWrapper = tools.getInspectionTool(element);
+        InspectionToolPresentation presentation = myContext.getPresentation(toolWrapper);
+        if (((UnusedDeclarationInspection)toolWrapper.getTool()).getSharedLocalInspectionTool().LOCAL_VARIABLE) {
+          List<CommonProblemDescriptor> descriptors = new ArrayList<>();
+
+          final Set<PsiVariable> usedVariables = new THashSet<>();
+          List<DefUseUtil.Info> unusedDefs = DefUseUtil.getUnusedDefs(body, usedVariables);
+
+          if (unusedDefs != null && !unusedDefs.isEmpty()) {
+
+            for (DefUseUtil.Info info : unusedDefs) {
+              PsiElement parent = info.getContext();
+              PsiVariable psiVariable = info.getVariable();
+
+              if (parent instanceof PsiDeclarationStatement || parent instanceof PsiResourceVariable) {
+                if (!info.isRead()) {
+                  descriptors.add(createProblemDescriptor(psiVariable));
+                }
+              }
+            }
+
+          }
+          body.accept(new JavaRecursiveElementWalkingVisitor() {
+            @Override
+            public void visitClass(PsiClass aClass) { }
+
+            @Override
+            public void visitLambdaExpression(PsiLambdaExpression expression) {} //todo
+
+            @Override
+            public void visitLocalVariable(PsiLocalVariable variable) {
+              if (!usedVariables.contains(variable) && variable.getInitializer() == null) {
+                descriptors.add(createProblemDescriptor(variable));
+              }
+            }
+          });
+          if (!descriptors.isEmpty()) {
+            presentation.addProblemElement(refElement, descriptors.toArray(CommonProblemDescriptor.EMPTY_ARRAY));
+          }
+        }
+      }
+    }
+
+    private ProblemDescriptor createProblemDescriptor(PsiVariable psiVariable) {
+      PsiElement toHighlight = ObjectUtils.notNull(psiVariable.getNameIdentifier(), psiVariable);
+      return myInspectionManager.createProblemDescriptor(
+        toHighlight,
+        InspectionsBundle.message("inspection.unused.assignment.problem.descriptor1", "<code>#ref</code> #loc"), (LocalQuickFix)null,
+        ProblemHighlightType.LIKE_UNUSED_SYMBOL, false);
+    }
   }
 }

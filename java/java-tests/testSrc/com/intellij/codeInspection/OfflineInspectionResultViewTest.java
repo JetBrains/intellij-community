@@ -22,8 +22,8 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.actions.ViewOfflineResultsAction;
-import com.intellij.codeInspection.defUse.DefUseInspection;
-import com.intellij.codeInspection.defUse.DefUseInspectionBase;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.offlineViewer.OfflineProblemDescriptorNode;
@@ -54,26 +54,26 @@ import java.util.Set;
 
 public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
   private InspectionResultsView myView;
-  private LocalInspectionToolWrapper myUnusedToolWrapper;
+  private GlobalInspectionToolWrapper myUnusedToolWrapper;
   private LocalInspectionToolWrapper myDataFlowToolWrapper;
 
-  private static String varMessage(String name) {
-    return InspectionsBundle.message("inspection.unused.assignment.problem.descriptor1", "'" + name + "'");
+  private static String varMessage() {
+    return "Problem detected by global inspection 'Unused declaration'";
   }
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
-    HighlightDisplayKey key = HighlightDisplayKey.find(DefUseInspectionBase.SHORT_NAME);
+    HighlightDisplayKey key = HighlightDisplayKey.find(UnusedDeclarationInspectionBase.SHORT_NAME);
     if (key == null) {
-      HighlightDisplayKey.register(DefUseInspectionBase.SHORT_NAME);
+      HighlightDisplayKey.register(UnusedDeclarationInspectionBase.SHORT_NAME);
     }
 
     final InspectionProfileImpl profile = new InspectionProfileImpl("test") {
       @Override
       public boolean isToolEnabled(@Nullable final HighlightDisplayKey key, PsiElement element) {
-        return key != null && Comparing.strEqual(key.toString(), DefUseInspectionBase.SHORT_NAME);
+        return key != null && Comparing.strEqual(key.toString(), UnusedDeclarationInspectionBase.SHORT_NAME);
       }
 
       @Override
@@ -94,18 +94,18 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
 
           @Override
           public boolean isToolEnabled(@Nullable HighlightDisplayKey key, PsiElement element) {
-            return key != null && Comparing.strEqual(key.toString(), DefUseInspectionBase.SHORT_NAME);
+            return key != null && Comparing.strEqual(key.toString(), UnusedDeclarationInspectionBase.SHORT_NAME);
           }
         };
       }
     };
 
     myView = ViewOfflineResultsAction.showOfflineView(getProject(), parse(), profile, "");
-    myUnusedToolWrapper = new LocalInspectionToolWrapper(new DefUseInspection());
+    myUnusedToolWrapper = new GlobalInspectionToolWrapper(new UnusedDeclarationInspection());
     myDataFlowToolWrapper = new LocalInspectionToolWrapper(new EqualsWithItselfInspection());
 
     final Map<String, Tools> tools = myView.getGlobalInspectionContext().getTools();
-    for (LocalInspectionToolWrapper tool : ContainerUtil.ar(myUnusedToolWrapper, myDataFlowToolWrapper)) {
+    for (InspectionToolWrapper tool : ContainerUtil.ar(myUnusedToolWrapper, myDataFlowToolWrapper)) {
       profile.addTool(getProject(), tool, new THashMap<>());
       tools.put(tool.getShortName(), new ToolsImpl(tool, tool.getDefaultLevel(), true));
       tool.initialize(myView.getGlobalInspectionContext());
@@ -151,6 +151,25 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     InspectionTree tree = updateTree();
     TreeUtil.expandAll(tree);
     PlatformTestUtil.assertTreeEqual(tree, "-" + getProject() + "\n" +
+                                           " -Declaration redundancy\n" +
+                                           "  -" + myUnusedToolWrapper + "\n"
+                                           + "   -" + getModule().toString() + "\n"
+                                           + "    -<default>\n"
+                                           + "     -Test\n"
+                                           + "      -foo()\n"
+                                           + "       " + varMessage() + "\n"
+                                           + "      -main(String[])\n"
+                                           + "       " + varMessage() + "\n"
+                                           + "      -f()\n"
+                                           + "       -D\n"
+                                           + "        -b()\n"
+                                           + "         " + varMessage() + "\n"
+                                           + "         -anonymous (java.lang.Runnable)\n"
+                                           + "          -run()\n"
+                                           + "           " + varMessage() + "\n"
+                                           + "      -ff()\n"
+                                           + "       " + varMessage() + "\n"
+                                           + "       " + varMessage() + "\n" +
                                            " -Probable bugs\n" +
                                            "  -" + myDataFlowToolWrapper + "\n" +
                                            "   -Module: 'testOfflineWithInvalid'\n" +
@@ -160,25 +179,8 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                            "       'equals()' called on itself\n" +
                                            "     -null\n" +
                                            "      Identical qualifier and argument to <code>equals()</code> call\n"
-                                           + "  -" + myUnusedToolWrapper + "\n"
-                                           + "   -" + getModule().toString() + "\n"
-                                           + "    -<default>\n"
-                                           + "     -Test\n"
-                                           + "      -foo()\n"
-                                           + "       " + varMessage("j") + "\n"
-                                           + "      -main(String[])\n"
-                                           + "       " + varMessage("test") + "\n"
-                                           + "      -f()\n"
-                                           + "       -D\n"
-                                           + "        -b()\n"
-                                           + "         " + varMessage("r") + "\n"
-                                           + "         -anonymous (java.lang.Runnable)\n"
-                                           + "          -run()\n"
-                                           + "           " + varMessage("i") + "\n"
-                                           + "      -ff()\n"
-                                           + "       " + varMessage("d") + "\n"
-                                           + "       " + varMessage("a") + "\n");
-    tree.setSelectionRow(8);
+                                          );
+    tree.setSelectionRow(27);
     final OfflineProblemDescriptorNode node =
       (OfflineProblemDescriptorNode)tree.getSelectionModel().getSelectionPath().getLastPathComponent();
     assertFalse(node.isValid());
@@ -189,6 +191,25 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     InspectionTree tree = updateTree();
     TreeUtil.expandAll(tree);
     PlatformTestUtil.assertTreeEqual(tree, "-" + getProject() + "\n" +
+                                           " -Declaration redundancy\n"
+                                           + "  -" + myUnusedToolWrapper + "\n"
+                                           + "   -" + getModule().toString() + "\n"
+                                           + "    -<default>\n"
+                                           + "     -Test\n"
+                                           + "      -foo()\n"
+                                           + "       " + varMessage() + "\n"
+                                           + "      -main(String[])\n"
+                                           + "       " + varMessage() + "\n"
+                                           + "      -f()\n"
+                                           + "       -D\n"
+                                           + "        -b()\n"
+                                           + "         " + varMessage() + "\n"
+                                           + "         -anonymous (java.lang.Runnable)\n"
+                                           + "          -run()\n"
+                                           + "           " + varMessage() + "\n"
+                                           + "      -ff()\n"
+                                           + "       " + varMessage() + "\n"
+                                           + "       " + varMessage() + "\n" +
                                            " -Probable bugs\n" +
                                            "  -" + myDataFlowToolWrapper + "\n" +
                                            "   -Module: 'testOfflineView'\n" +
@@ -199,43 +220,36 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                            "     -Test2\n" +
                                            "      -m123()\n" +
                                            "       'equals()' called on itself\n"
-                                           + "  -" + myUnusedToolWrapper + "\n"
-                                           + "   -" + getModule().toString() + "\n"
-                                           + "    -<default>\n"
-                                           + "     -Test\n"
-                                           + "      -foo()\n"
-                                           + "       " + varMessage("j") + "\n"
-                                           + "      -main(String[])\n"
-                                           + "       " + varMessage("test") + "\n"
-                                           + "      -f()\n"
-                                           + "       -D\n"
-                                           + "        -b()\n"
-                                           + "         " + varMessage("r") + "\n"
-                                           + "         -anonymous (java.lang.Runnable)\n"
-                                           + "          -run()\n"
-                                           + "           " + varMessage("i") + "\n"
-                                           + "      -ff()\n"
-                                           + "       " + varMessage("d") + "\n"
-                                           + "       " + varMessage("a") + "\n");
-                                     myView.getGlobalInspectionContext().getUIOptions().SHOW_STRUCTURE = false;
+                                         );
+    myView.getGlobalInspectionContext().getUIOptions().SHOW_STRUCTURE = false;
     tree = updateTree();
     PlatformTestUtil.assertTreeEqual(tree, "-" + getProject() + "\n"
+                                           + " -Declaration redundancy\n"
+                                           + "  -" + myUnusedToolWrapper + "\n"
+                                           + "   -Test\n"
+                                           + "    -foo()\n"
+                                           + "     " + varMessage() + "\n"
+                                           + "    -main(String[])\n"
+                                           + "     " + varMessage() + "\n"
+                                           + "    -f()\n"
+                                           + "     -D\n"
+                                           + "      -b()\n"
+                                           + "       " + varMessage() + "\n"
+                                           + "       -anonymous (java.lang.Runnable)\n"
+                                           + "        -run()\n"
+                                           + "         " + varMessage() + "\n"
+                                           + "    -ff()\n"
+                                           + "     " + varMessage() + "\n"
+                                           + "     " + varMessage() + "\n"
                                            + " -Probable bugs\n"
                                            + "  -" + myDataFlowToolWrapper + "\n" +
                                            "   -Test\n" +
                                            "    'equals()' called on itself\n" +
                                            "   -Test2\n" +
                                            "    'equals()' called on itself\n"
-                                           + "  -" + myUnusedToolWrapper + "\n"
-                                           + "   -Test\n"
-                                           + "    " + varMessage("j") + "\n"
-                                           + "    " + varMessage("test") + "\n"
-                                           + "    " + varMessage("r") + "\n"
-                                           + "    " + varMessage("i") + "\n"
-                                           + "    " + varMessage("d") + "\n"
-                                           + "    " + varMessage("a") + "\n");
-    TreeUtil.selectFirstNode(tree);
-    final InspectionTreeNode root = (InspectionTreeNode)tree.getLastSelectedPathComponent();
+                                         );
+    TreeUtil.selectNode(tree, tree.getRoot());
+    final InspectionTreeNode root = tree.getRoot();
     root.excludeElement(myView.getExcludedManager());
     TreeUtil.traverse(root, new TreeUtil.Traverse() {
       @Override
@@ -250,20 +264,30 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     myView.getGlobalInspectionContext().getUIOptions().FILTER_RESOLVED_ITEMS = false;
     tree = updateTree();
     PlatformTestUtil.assertTreeEqual(tree, "-" + getProject() + "\n"
+                                           + " -Declaration redundancy\n"
+                                           + "  -" + myUnusedToolWrapper + "\n"
+                                           + "   -Test\n"
+                                           + "    -foo()\n"
+                                           + "     " + varMessage() + "\n"
+                                           + "    -main(String[])\n"
+                                           + "     " + varMessage() + "\n"
+                                           + "    -f()\n"
+                                           + "     -D\n"
+                                           + "      -b()\n"
+                                           + "       " + varMessage() + "\n"
+                                           + "       -anonymous (java.lang.Runnable)\n"
+                                           + "        -run()\n"
+                                           + "         " + varMessage() + "\n"
+                                           + "    -ff()\n"
+                                           + "     " + varMessage() + "\n"
+                                           + "     " + varMessage() + "\n"
                                            + " -Probable bugs\n"
                                            + "  -" + myDataFlowToolWrapper + "\n" +
                                            "   -Test\n" +
                                            "    'equals()' called on itself\n" +
                                            "   -Test2\n" +
                                            "    'equals()' called on itself\n"
-                                           + "  -" + myUnusedToolWrapper + "\n"
-                                           + "   -Test\n"
-                                           + "    " + varMessage("j") + "\n"
-                                           + "    " + varMessage("test") + "\n"
-                                           + "    " + varMessage("r") + "\n"
-                                           + "    " + varMessage("i") + "\n"
-                                           + "    " + varMessage("d") + "\n"
-                                           + "    " + varMessage("a") + "\n");
+                                          );
   }
 
   private InspectionTree updateTree() {

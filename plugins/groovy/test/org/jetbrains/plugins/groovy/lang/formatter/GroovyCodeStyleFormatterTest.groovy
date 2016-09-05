@@ -30,9 +30,9 @@ import java.util.regex.Pattern
  * @author peter
  */
 class GroovyCodeStyleFormatterTest extends GroovyFormatterTestCase {
-  private static final String OPTION_START = "<option>";
-  private static final String OPTION_END = "</option>";
-  private static final Pattern PATTERN = ~"$OPTION_START(\\w+=(true|false+|\\d|\\w+))$OPTION_END\n";
+  private static final String OPTION_START = "<option>"
+  private static final String OPTION_END = "</option>"
+  private static final Pattern PATTERN = ~"$OPTION_START(\\w+=(true|false+|\\d|\\w+))$OPTION_END\n"
 
   final String basePath = TestUtils.testDataPath + "groovy/codeStyle/"
 
@@ -55,7 +55,7 @@ class GroovyCodeStyleFormatterTest extends GroovyFormatterTestCase {
   static List parseOption(String input) {
     final Matcher matcher = PATTERN.matcher(input)
     if (!matcher.find()) return [null, null, null]
-    final String[] strings = matcher.group(1).split("=");
+    final String[] strings = matcher.group(1).split("=")
     return [strings[0], strings[1], matcher.end()]
   }
 

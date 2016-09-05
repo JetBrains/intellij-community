@@ -90,8 +90,8 @@ class WarModelBuilderImpl implements ModelBuilderService {
           warModel.classpath = warTask.classpath.files
         }
         catch (Exception ignore) {
-          ErrorMessageBuilder builderError = getErrorMessageBuilder(project, ignore);
-          project.getLogger().error(builderError.build());
+          ErrorMessageBuilder builderError = getErrorMessageBuilder(project, ignore)
+          project.getLogger().error(builderError.build())
         }
 
         warModel.webResources = webResources

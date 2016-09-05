@@ -72,20 +72,20 @@ class MavenDomAnnotatorTest extends MavenDomTestCase {
   }
 
   protected void checkGutters(PsiFile file, String ... expectedProperties) {
-    myFixture.configureFromExistingVirtualFile(file.virtualFile);
+    myFixture.configureFromExistingVirtualFile(file.virtualFile)
 
-    String text = file.getText();
+    String text = file.getText()
 
-    Set<String> actualProperties = new HashSet<String>();
+    Set<String> actualProperties = new HashSet<String>()
 
     for (com.intellij.codeInsight.daemon.impl.HighlightInfo h : myFixture.doHighlighting()) {
       if (h.getGutterIconRenderer() != null) {
-        String s = text.substring(h.getStartOffset(), h.getEndOffset());
-        actualProperties.add(s);
+        String s = text.substring(h.getStartOffset(), h.getEndOffset())
+        actualProperties.add(s)
       }
     }
 
-    assertEquals(ContainerUtil.newHashSet(expectedProperties), actualProperties);
+    assertEquals(ContainerUtil.newHashSet(expectedProperties), actualProperties)
   }
 
 }

@@ -131,9 +131,9 @@ if (a) <caret>print 2
 
 
   private void doTest(String before, String after) {
-    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, before);
-    performAction(IdeActions.ACTION_EDITOR_JOIN_LINES);
-    myFixture.checkResult(after);
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, before)
+    performAction(IdeActions.ACTION_EDITOR_JOIN_LINES)
+    myFixture.checkResult(after)
 
   }
 }

@@ -353,12 +353,9 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       final PsiCallExpression callExpression = LambdaCanBeMethodReferenceInspection.extractMethodCallFromBlock(block);
       if (callExpression != null) {
         final PsiClassType functionalType = createDefaultConsumerType(project, variable);
-        String methodReferenceText = null;
-        if(variable instanceof PsiParameter) {
-          final PsiParameter[] parameters = {(PsiParameter)variable};
-          methodReferenceText =
-            LambdaCanBeMethodReferenceInspection.convertToMethodReference(block, parameters, functionalType, null);
-        }
+        final PsiVariable[] parameters = {variable};
+        String methodReferenceText =
+          LambdaCanBeMethodReferenceInspection.convertToMethodReference(block, parameters, functionalType, null);
         if (methodReferenceText != null) {
           return methodReferenceText;
         }
@@ -597,26 +594,21 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   static class TerminalBlock {
     private PsiVariable myVariable;
     private PsiStatement[] myStatements;
-    private int myFrom, myTo;
 
-    private TerminalBlock(PsiVariable variable, PsiStatement[] statements, int from, int to) {
+    private TerminalBlock(PsiVariable variable, PsiStatement[] statements) {
       myVariable = variable;
       myStatements = statements;
-      myFrom = from;
-      myTo = to;
       flatten();
     }
 
     private void flatten() {
-      while(myTo - myFrom == 1 && myStatements[myFrom] instanceof PsiBlockStatement) {
-        myStatements = ((PsiBlockStatement)myStatements[myFrom]).getCodeBlock().getStatements();
-        myFrom = 0;
-        myTo = myStatements.length;
+      while(myStatements.length == 1 && myStatements[0] instanceof PsiBlockStatement) {
+        myStatements = ((PsiBlockStatement)myStatements[0]).getCodeBlock().getStatements();
       }
     }
 
     PsiStatement getSingleStatement() {
-      return myTo - myFrom == 1 ? myStatements[myFrom] : null;
+      return myStatements.length == 1 ? myStatements[0] : null;
     }
 
     /**
@@ -673,17 +665,14 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           }
           if(op != null && ReferencesSearch.search(myVariable, new LocalSearchScope(body)).findFirst() == null) {
             myVariable = foreachStatement.getIterationParameter();
-            myStatements = new PsiStatement[] {body};
-            myFrom = 0;
-            myTo = 1;
-            flatten();
+            replaceWith(body);
             return op;
           }
         }
       }
       // extract map
-      if(myTo > myFrom+1) {
-        PsiStatement first = myStatements[myFrom];
+      if(myStatements.length > 1) {
+        PsiStatement first = myStatements[0];
         if(first instanceof PsiDeclarationStatement) {
           PsiDeclarationStatement decl = (PsiDeclarationStatement)first;
           PsiElement[] elements = decl.getDeclaredElements();
@@ -694,12 +683,13 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
               // do not handle mapToPrimitive
               if(!(declaredVar.getType() instanceof PsiPrimitiveType)) {
                 PsiExpression initializer = declaredVar.getInitializer();
+                PsiStatement[] leftOver = Arrays.copyOfRange(myStatements, 1, myStatements.length);
                 if (initializer != null &&
-                    ReferencesSearch.search(myVariable, new LocalSearchScope(Arrays.copyOfRange(myStatements, myFrom + 1, myTo)))
+                    ReferencesSearch.search(myVariable, new LocalSearchScope(leftOver))
                       .findFirst() == null) {
                   MapOp op = new MapOp(initializer, myVariable);
                   myVariable = declaredVar;
-                  myFrom++;
+                  myStatements = leftOver;
                   flatten();
                   return op;
                 }
@@ -723,8 +713,6 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
     private void replaceWith(PsiStatement statement) {
       myStatements = new PsiStatement[] {statement};
-      myFrom = 0;
-      myTo = 1;
       flatten();
     }
 
@@ -734,8 +722,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
     @Contract("_, _ -> !null")
     static TerminalBlock from(PsiVariable variable, PsiStatement statement) {
-      PsiStatement[] statements = {statement};
-      return new TerminalBlock(variable, statements, 0, 1);
+      return new TerminalBlock(variable, new PsiStatement[] {statement});
     }
 
     @NotNull
@@ -757,12 +744,12 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
      * @return the PsiElement
      */
     public PsiElement convertToElement(PsiElementFactory factory) {
-      if (myTo - myFrom == 1) {
-        return myStatements[myFrom];
+      if (myStatements.length == 1) {
+        return myStatements[0];
       }
       PsiCodeBlock block = factory.createCodeBlock();
-      for (int i = myFrom; i < myTo; i++) {
-        block.add(myStatements[i]);
+      for (PsiStatement statement : myStatements) {
+        block.add(statement);
       }
       return block;
     }
@@ -782,11 +769,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       }
     }
     final PsiClassType functionalInterfaceType = functionClass != null ? psiFacade.getElementFactory().createType(functionClass, samParamTypes) : null;
-    String methodReferenceText = null;
-    if(variable instanceof PsiParameter) {
-      final PsiParameter[] parameters = {(PsiParameter)variable};
-      methodReferenceText = LambdaCanBeMethodReferenceInspection.convertToMethodReference(expression, parameters, functionalInterfaceType, null);
-    }
+    final PsiVariable[] parameters = {variable};
+    String methodReferenceText = LambdaCanBeMethodReferenceInspection.convertToMethodReference(expression, parameters, functionalInterfaceType, null);
     if (methodReferenceText != null) {
       LOG.assertTrue(functionalInterfaceType != null);
       result += "(" + functionalInterfaceType.getCanonicalText() + ")" + methodReferenceText;

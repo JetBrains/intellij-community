@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.surroundWith;
+package org.jetbrains.plugins.groovy.lang.surroundWith
 
-import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * User: Dmitry.Krasilschikov
@@ -27,7 +27,7 @@ class SurroundStatementsTest extends SurroundTestCase {
 
   @Override
   protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "groovy/surround/statements/";
+    return TestUtils.getTestDataPath() + "groovy/surround/statements/"
   }
 
   void testClosure1() throws Exception { doTest(new SurrounderByClosure()); }

@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -27,6 +28,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.GuiUtils;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
@@ -348,7 +350,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
         }
       };
       processHandler.setShouldDestroyProcessRecursively(true);
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
+      GuiUtils.invokeLaterIfNeeded(new Runnable() {
         @Override
         public void run() {
           new RunContentExecutor(myProject, processHandler)
@@ -375,7 +377,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
             .withHelpId("reference.manage.py")
             .run();
         }
-      });
+      }, ModalityState.defaultModalityState());
       int countAttempt = 0;
       while (!serverStarted[0] && countAttempt < MAX_ATTEMPTS) {
         countAttempt += 1;

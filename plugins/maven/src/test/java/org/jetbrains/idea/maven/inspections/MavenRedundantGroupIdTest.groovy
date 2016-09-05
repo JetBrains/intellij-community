@@ -88,7 +88,7 @@ class MavenRedundantGroupIdTest extends MavenDomTestCase {
 """)
 
     myFixture.configureFromExistingVirtualFile(myProjectPom)
-    myFixture.doHighlighting();
+    myFixture.doHighlighting()
 
     for (IntentionAction intention : myFixture.getAvailableIntentions()) {
       if (intention.getText().startsWith("Remove ") && intention.getText().contains("<groupId>")) {
@@ -98,7 +98,7 @@ class MavenRedundantGroupIdTest extends MavenDomTestCase {
     }
 
     //doPostponedFormatting(myProject)
-    PostprocessReformattingAspect.getInstance(myProject).doPostponedFormatting();
+    PostprocessReformattingAspect.getInstance(myProject).doPostponedFormatting()
 
     myFixture.checkResult(createPomXml("""
     <artifactId>childA</artifactId>

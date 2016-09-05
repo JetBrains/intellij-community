@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,7 +102,7 @@ print 2
   private void doTest(@NotNull String before, @NotNull String after, final AnAction action) {
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, before)
     final DataContext dataContext = DataManager.instance.dataContextFromFocus.result
-    action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", dataContext));
+    action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", dataContext))
     myFixture.checkResult(after)
   }
 }

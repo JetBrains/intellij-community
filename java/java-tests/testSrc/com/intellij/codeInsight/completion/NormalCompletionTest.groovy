@@ -36,43 +36,43 @@ import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
 class NormalCompletionTest extends LightFixtureCompletionTestCase {
   @Override
   protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/normal/";
+    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/normal/"
   }
 
   void testSimple() throws Exception {
-    configureByFile("Simple.java");
-    assertStringItems("_local1", "_local2", "_field", "_method", "_baseField", "_baseMethod");
+    configureByFile("Simple.java")
+    assertStringItems("_local1", "_local2", "_field", "_method", "_baseField", "_baseMethod")
   }
 
   void testCastToPrimitive1() throws Exception {
-    configureByFile("CastToPrimitive1.java");
+    configureByFile("CastToPrimitive1.java")
 
     for (final LookupElement item : myItems) {
-      if (item.getLookupString().equals("int")) return;
+      if (item.getLookupString().equals("int")) return
     }
-    assertTrue(false);
+    assertTrue(false)
   }
 
   void testCastToPrimitive2() throws Exception {
-    configureByFile("CastToPrimitive2.java");
+    configureByFile("CastToPrimitive2.java")
 
     for (final LookupElement item : myItems) {
-      if (item.getLookupString().equals("int")) return;
+      if (item.getLookupString().equals("int")) return
     }
-    assertTrue(false);
+    assertTrue(false)
   }
 
   void testCastToPrimitive3() throws Exception {
-    configureByFile("CastToPrimitive3.java");
+    configureByFile("CastToPrimitive3.java")
 
     for (final LookupElement item : myItems) {
-      if (item.getLookupString().equals("int")) return;
+      if (item.getLookupString().equals("int")) return
     }
-    assertTrue(false);
+    assertTrue(false)
   }
 
   void testWriteInInvokeLater() throws Exception {
-    configureByFile("WriteInInvokeLater.java");
+    configureByFile("WriteInInvokeLater.java")
   }
 
   void testQualifiedNew1() throws Exception {
@@ -158,50 +158,50 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   void testPreferLongerNamesOption() throws Exception {
-    configureByFile("PreferLongerNamesOption.java");
+    configureByFile("PreferLongerNamesOption.java")
 
-    assertEquals(3, myItems.length);
-    assertEquals("abcdEfghIjk", myItems[0].getLookupString());
-    assertEquals("efghIjk", myItems[1].getLookupString());
-    assertEquals("ijk", myItems[2].getLookupString());
+    assertEquals(3, myItems.length)
+    assertEquals("abcdEfghIjk", myItems[0].getLookupString())
+    assertEquals("efghIjk", myItems[1].getLookupString())
+    assertEquals("ijk", myItems[2].getLookupString())
 
-    LookupManager.getInstance(getProject()).hideActiveLookup();
+    LookupManager.getInstance(getProject()).hideActiveLookup()
 
-    CodeStyleSettingsManager.getSettings(getProject()).PREFER_LONGER_NAMES = false;
+    CodeStyleSettingsManager.getSettings(getProject()).PREFER_LONGER_NAMES = false
     try{
-      configureByFile("PreferLongerNamesOption.java");
+      configureByFile("PreferLongerNamesOption.java")
 
-      assertEquals(3, myItems.length);
-      assertEquals("ijk", myItems[0].getLookupString());
-      assertEquals("efghIjk", myItems[1].getLookupString());
-      assertEquals("abcdEfghIjk", myItems[2].getLookupString());
+      assertEquals(3, myItems.length)
+      assertEquals("ijk", myItems[0].getLookupString())
+      assertEquals("efghIjk", myItems[1].getLookupString())
+      assertEquals("abcdEfghIjk", myItems[2].getLookupString())
     }
     finally{
-      CodeStyleSettingsManager.getSettings(getProject()).PREFER_LONGER_NAMES = true;
+      CodeStyleSettingsManager.getSettings(getProject()).PREFER_LONGER_NAMES = true
     }
   }
 
   void testSCR7208() throws Exception {
-    configureByFile("SCR7208.java");
+    configureByFile("SCR7208.java")
   }
 
   void testProtectedFromSuper() throws Exception {
-    configureByFile("ProtectedFromSuper.java");
-    Arrays.sort(myItems);
-    assertTrue("Exception not found", Arrays.binarySearch(myItems, "xxx") > 0);
+    configureByFile("ProtectedFromSuper.java")
+    Arrays.sort(myItems)
+    assertTrue("Exception not found", Arrays.binarySearch(myItems, "xxx") > 0)
   }
 
   void testBeforeInitialization() throws Exception {
-    configureByFile("BeforeInitialization.java");
-    assertNotNull(myItems);
-    assertTrue(myItems.length > 0);
+    configureByFile("BeforeInitialization.java")
+    assertNotNull(myItems)
+    assertTrue(myItems.length > 0)
   }
 
   void testProtectedFromSuper2() throws Exception {
 
-    configureByFile("ProtectedFromSuper.java");
-    Arrays.sort(myItems);
-    assertTrue("Exception not found", Arrays.binarySearch(myItems, "xxx") > 0);
+    configureByFile("ProtectedFromSuper.java")
+    Arrays.sort(myItems)
+    assertTrue("Exception not found", Arrays.binarySearch(myItems, "xxx") > 0)
   }
 
   void testClassLiteralInArrayAnnoInitializer() throws Throwable { doTest(); }
@@ -209,8 +209,8 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
   void testClassLiteralInArrayAnnoInitializer2() throws Throwable { doTest(); }
 
   void testReferenceParameters() throws Exception {
-    configureByFile("ReferenceParameters.java");
-    assertNotNull(myItems);
+    configureByFile("ReferenceParameters.java")
+    assertNotNull(myItems)
     myFixture.assertPreferredCompletionItems 0, 'AAAA', 'AAAB'
   }
 
@@ -223,18 +223,18 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   void testConstructorName1() throws Exception {
     CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false
-    configure();
+    configure()
     assert 'ABCDE' in myFixture.lookupElementStrings
   }
 
   void testConstructorName2() throws Exception {
     CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false
-    configure();
+    configure()
     assert 'ABCDE' in myFixture.lookupElementStrings
   }
 
   void testObjectsInThrowsBlock() throws Exception {
-    configureByFile("InThrowsCompletion.java");
+    configureByFile("InThrowsCompletion.java")
     assert "C" == myFixture.lookupElementStrings[0]
     assert "B" in myFixture.lookupElementStrings
   }
@@ -254,41 +254,41 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   void testAfterInstanceof() throws Exception {
-    configureByFile("AfterInstanceof.java");
+    configureByFile("AfterInstanceof.java")
     assert "A" in myFixture.lookupElementStrings
   }
 
   void testAfterCast1() throws Exception {
-    configureByFile("AfterCast1.java");
+    configureByFile("AfterCast1.java")
 
-    assertNotNull(myItems);
-    assertEquals(2, myItems.length);
+    assertNotNull(myItems)
+    assertEquals(2, myItems.length)
   }
 
   void testAfterCast2() throws Exception {
-    configureByFile("AfterCast2.java");
-    checkResultByFile("AfterCast2-result.java");
+    configureByFile("AfterCast2.java")
+    checkResultByFile("AfterCast2-result.java")
   }
 
   void testMethodCallForTwoLevelSelection() throws Exception {
-    configureByFile("MethodLookup.java");
-    assertEquals(2, myItems.length);
+    configureByFile("MethodLookup.java")
+    assertEquals(2, myItems.length)
   }
 
   void testMethodCallBeforeAnotherStatementWithParen() throws Exception {
-    configureByFile("MethodLookup2.java");
-    checkResultByFile("MethodLookup2_After.java");
+    configureByFile("MethodLookup2.java")
+    checkResultByFile("MethodLookup2_After.java")
   }
 
   void testMethodCallBeforeAnotherStatementWithParen2() throws Exception {
-    codeStyleSettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
-    configureByFile("MethodLookup2.java");
-    checkResultByFile("MethodLookup2_After2.java");
+    codeStyleSettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = true
+    configureByFile("MethodLookup2.java")
+    checkResultByFile("MethodLookup2_After2.java")
   }
 
   void testSwitchEnumLabel() throws Exception {
-    configureByFile("SwitchEnumLabel.java");
-    assertEquals(3, myItems.length);
+    configureByFile("SwitchEnumLabel.java")
+    assertEquals(3, myItems.length)
   }
 
   void testSwitchCaseWithEnumConstant() { doTest() }
@@ -296,118 +296,118 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
   void testSecondSwitchCaseWithEnumConstant() { doTest() }
 
   void testMethodInAnnotation() throws Exception {
-    configureByFile("Annotation.java");
-    checkResultByFile("Annotation_after.java");
+    configureByFile("Annotation.java")
+    checkResultByFile("Annotation_after.java")
   }
 
   void testMethodInAnnotation2() throws Exception {
-    configureByFile("Annotation2.java");
-    checkResultByFile("Annotation2_after.java");
+    configureByFile("Annotation2.java")
+    checkResultByFile("Annotation2_after.java")
   }
 
   void testMethodInAnnotation3() throws Exception {
-    configureByFile("Annotation3.java");
-    checkResultByFile("Annotation3_after.java");
+    configureByFile("Annotation3.java")
+    checkResultByFile("Annotation3_after.java")
   }
 
   void testMethodInAnnotation5() throws Exception {
-    configureByFile("Annotation5.java");
-    checkResultByFile("Annotation5_after.java");
+    configureByFile("Annotation5.java")
+    checkResultByFile("Annotation5_after.java")
   }
 
   void testMethodInAnnotation7() throws Exception {
-    configureByFile("Annotation7.java");
-    selectItem(myItems[0]);
-    checkResultByFile("Annotation7_after.java");
+    configureByFile("Annotation7.java")
+    selectItem(myItems[0])
+    checkResultByFile("Annotation7_after.java")
   }
 
   void testEnumInAnnotation() throws Exception {
-    configureByFile("Annotation4.java");
-    checkResultByFile("Annotation4_after.java");
+    configureByFile("Annotation4.java")
+    checkResultByFile("Annotation4_after.java")
   }
 
   void testSecondAttribute() throws Exception {
-    configureByFile("Annotation6.java");
-    checkResultByFile("Annotation6_after.java");
+    configureByFile("Annotation6.java")
+    checkResultByFile("Annotation6_after.java")
   }
 
   void testIDEADEV6408() throws Exception {
-    configureByFile("IDEADEV6408.java");
+    configureByFile("IDEADEV6408.java")
     assertFirstStringItems "boolean", "byte"
   }
 
   void testMethodWithLeftParTailType() throws Exception {
-    configureByFile("MethodWithLeftParTailType.java");
-    type('(');
-    checkResultByFile("MethodWithLeftParTailType_after.java");
+    configureByFile("MethodWithLeftParTailType.java")
+    type('(')
+    checkResultByFile("MethodWithLeftParTailType_after.java")
 
-    configureByFile("MethodWithLeftParTailType2.java");
-    type('(');
-    checkResultByFile("MethodWithLeftParTailType2_after.java");
+    configureByFile("MethodWithLeftParTailType2.java")
+    type('(')
+    checkResultByFile("MethodWithLeftParTailType2_after.java")
   }
 
   void testSuperErasure() throws Exception {
-    configureByFile("SuperErasure.java");
-    checkResultByFile("SuperErasure_after.java");
+    configureByFile("SuperErasure.java")
+    checkResultByFile("SuperErasure_after.java")
   }
 
   void testMethodWithLeftParTailTypeNoPairBrace() throws Exception {
-    final boolean old = CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET;
-    CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = false;
+    final boolean old = CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET
+    CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = false
 
     try {
-      configureByFile(getTestName(false) + ".java");
-      type('(');
+      configureByFile(getTestName(false) + ".java")
+      type('(')
       checkResult()
     }
     finally {
-      CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = old;
+      CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = old
     }
   }
 
   void testMethodWithLeftParTailTypeNoPairBrace2() throws Exception {
-    final boolean old = CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET;
-    CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = false;
+    final boolean old = CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET
+    CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = false
 
     try {
       //no tail type should work the normal way
-      configureByFile("MethodWithLeftParTailTypeNoPairBrace.java");
-      selectItem(myItems[0]);
-      checkResultByFile("MethodWithLeftParTailTypeNoPairBrace_after2.java");
+      configureByFile("MethodWithLeftParTailTypeNoPairBrace.java")
+      selectItem(myItems[0])
+      checkResultByFile("MethodWithLeftParTailTypeNoPairBrace_after2.java")
     }
     finally {
-      CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = old;
+      CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = old
     }
   }
 
   void testMethodNoPairBrace() throws Exception {
-    final boolean old = CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET;
-    CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = false;
+    final boolean old = CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET
+    CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = false
 
     try {
       doTest '\n'
     }
     finally {
-      CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = old;
+      CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = old
     }
   }
 
   void testExcessSpaceInTypeCast() throws Throwable {
    configure()
-   selectItem(myItems[0]);
+   selectItem(myItems[0])
    checkResult()
   }
 
   void testFieldType() { doTest(); }
 
   void testPackageInAnnoParam() throws Throwable {
-    doTest();
+    doTest()
   }
 
   void testAnonymousTypeParameter() throws Throwable { doTest(); }
 
   void testClassLiteralInAnnoParam() throws Throwable {
-    doTest();
+    doTest()
   }
 
   void testNoForceBraces() {
@@ -455,7 +455,7 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   void testAtUnderClass() throws Throwable {
-    doTest('\n');
+    doTest('\n')
   }
 
   void testLocalClassName() throws Throwable { doTest(); }
@@ -510,17 +510,17 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
   void testMethodParenthesesSpaces() throws Throwable {
     codeStyleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES = true
     codeStyleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true
-    doTest();
+    doTest()
   }
 
   void testMethodParenthesesSpacesArgs() throws Throwable {
     codeStyleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES = true
     codeStyleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true
-    doTest();
+    doTest()
   }
 
   void testAtUnderClassNoModifiers() throws Throwable {
-    doTest();
+    doTest()
   }
 
   void testBreakInIfCondition() throws Throwable { doTest(); }
@@ -572,12 +572,12 @@ public class ListUtils {
   void testLastExpressionInFor() throws Throwable { doTest(); }
 
   void testOnlyKeywordsInsideSwitch() throws Throwable {
-    configureByFile(getTestName(false) + ".java");
-    assertStringItems("case", "default");
+    configureByFile(getTestName(false) + ".java")
+    assertStringItems("case", "default")
   }
 
   void testBooleanLiterals() throws Throwable {
-    doTest('\n');
+    doTest('\n')
   }
 
   void testDoubleBooleanInParameter() throws Throwable {
@@ -591,65 +591,65 @@ public class ListUtils {
   }
 
   void testNotOnlyKeywordsInsideSwitch() throws Throwable {
-    doTest();
+    doTest()
   }
 
   void testChainedCallOnNextLine() throws Throwable {
-    configureByFile(getTestName(false) + ".java");
-    selectItem(myItems[0]);
+    configureByFile(getTestName(false) + ".java")
+    selectItem(myItems[0])
     checkResult()
   }
 
   void testFinishWithDot() throws Throwable {
-    configureByFile(getTestName(false) + ".java");
-    type('.');
+    configureByFile(getTestName(false) + ".java")
+    type('.')
     checkResult()
   }
 
   void testEnclosingThis() throws Throwable { doTest(); }
 
   void testSeamlessConstant() throws Throwable {
-    configureByFile(getTestName(false) + ".java");
-    selectItem(myItems[0]);
+    configureByFile(getTestName(false) + ".java")
+    selectItem(myItems[0])
     checkResult()
   }
 
   void testDefaultAnnoParam() throws Throwable { doTest(); }
 
   void testSpaceAfterLookupString() throws Throwable {
-    configureByFile(getTestName(false) + ".java");
-    type(' ');
-    assertNull(getLookup());
+    configureByFile(getTestName(false) + ".java")
+    type(' ')
+    assertNull(getLookup())
     checkResult()
   }
 
   void testNoSpaceInParensWithoutParams() throws Throwable {
-    codeStyleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true;
+    codeStyleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true
     try {
-      doTest();
+      doTest()
     }
     finally {
-      codeStyleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = false;
+      codeStyleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = false
     }
   }
 
   void testTwoSpacesInParensWithParams() throws Throwable {
-    codeStyleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true;
-    doTest();
+    codeStyleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true
+    doTest()
   }
 
   void testQualifierAsPackage() throws Throwable {
-    configureByFile(getTestName(false) + ".java");
-    selectItem(myItems[0]);
+    configureByFile(getTestName(false) + ".java")
+    selectItem(myItems[0])
     checkResult()
   }
 
   void testQualifierAsPackage2() throws Throwable {
-    doTest();
+    doTest()
   }
 
   void testQualifierAsPackage3() throws Throwable {
-    doTest();
+    doTest()
   }
 
   void testPreselectEditorSelection() {
@@ -666,7 +666,7 @@ public class ListUtils {
   void testMembersInStaticImports() { doTest() }
 
   void testPackageNamedVariableBeforeAssignment() throws Throwable {
-    doTest();
+    doTest()
   }
 
   void testInnerEnumConstant() throws Throwable { doTest('\n'); }
@@ -677,29 +677,29 @@ public class ListUtils {
   }
 
   void testMethodReturnType() throws Throwable {
-    doTest();
+    doTest()
   }
 
   void testMethodReturnTypeNoSpace() throws Throwable {
-    configureByFile(getTestName(false) + ".java");
-    selectItem(myItems[0]);
+    configureByFile(getTestName(false) + ".java")
+    selectItem(myItems[0])
     checkResult()
   }
 
   void testEnumWithoutConstants() throws Throwable {
-    doTest();
+    doTest()
   }
 
   void testDoWhileMethodCall() throws Throwable {
-    doTest();
+    doTest()
   }
 
   void testSecondTypeParameterExtends() throws Throwable {
-    doTest();
+    doTest()
   }
 
   void testGetterWithExistingNonEmptyParameterList() throws Throwable {
-    doTest();
+    doTest()
   }
 
   void testNothingAfterNumericLiteral() throws Throwable { doAntiTest(); }
@@ -727,15 +727,15 @@ public class ListUtils {
   }
 
   void testSelectNoParameterSignature() throws Throwable {
-    configureByFile(getTestName(false) + ".java");
-    final int parametersCount = ((PsiMethod)getLookup().getCurrentItem().getObject()).getParameterList().getParametersCount();
-    assertEquals(0, parametersCount);
+    configureByFile(getTestName(false) + ".java")
+    final int parametersCount = ((PsiMethod)getLookup().getCurrentItem().getObject()).getParameterList().getParametersCount()
+    assertEquals(0, parametersCount)
     type '\n'
     checkResult()
   }
 
   void testCompletionInsideClassLiteral() throws Throwable {
-    configureByFile(getTestName(false) + ".java");
+    configureByFile(getTestName(false) + ".java")
     type('\n')
     checkResult()
   }
@@ -747,39 +747,39 @@ public class ListUtils {
   void testBreakInSwitch() throws Throwable { doTest() }
 
   void testSuperInConstructor() throws Throwable {
-    doTest();
+    doTest()
   }
 
   void testSuperInConstructorWithParams() throws Throwable {
-    doTest();
+    doTest()
   }
 
   void testSuperInMethod() throws Throwable {
-    doTest();
+    doTest()
   }
 
   void testSecondMethodParameterName() throws Throwable {
-    doTest();
+    doTest()
   }
 
   void testAnnotationAsUsualObject() throws Throwable {
-    doTest();
+    doTest()
   }
 
   void testAnnotationAsUsualObjectFromJavadoc() throws Throwable {
-    doTest();
+    doTest()
   }
 
   void testAnnotationAsUsualObjectInsideClass() throws Throwable {
-    doTest();
+    doTest()
   }
 
   void testAnnotationOnNothingParens() throws Throwable {
-    doTest();
+    doTest()
   }
 
   void testMultiResolveQualifier() throws Throwable {
-    doTest();
+    doTest()
   }
 
   void testSecondMethodParameter() throws Throwable { doTest(); }
@@ -789,8 +789,8 @@ public class ListUtils {
   void testUnboxedConstantsInCase() throws Throwable { doTest(); }
 
   void testAnnotationWithoutValueMethod() throws Throwable {
-    configureByFile(getTestName(false) + ".java");
-    assertStringItems("bar", "foo");
+    configureByFile(getTestName(false) + ".java")
+    assertStringItems("bar", "foo")
   }
 
   void testAddExplicitValueInAnnotation() throws Throwable {
@@ -801,14 +801,14 @@ public class ListUtils {
   }
 
   void testUnnecessaryMethodMerging() throws Throwable {
-    configureByFile(getTestName(false) + ".java");
-    assertStringItems("fofoo", "fofoo");
+    configureByFile(getTestName(false) + ".java")
+    assertStringItems("fofoo", "fofoo")
   }
 
   void testMethodMergingMinimalTail() { doTest() }
 
   void testAnnotationQualifiedName() throws Throwable {
-    doTest();
+    doTest()
   }
 
   void testClassNameGenerics() throws Throwable {
@@ -831,16 +831,16 @@ public class ListUtils {
   void testClassNameWithInstanceInner() throws Throwable { doTest('\n') }
 
   void testDoubleFalse() throws Throwable {
-    configureByFile(getTestName(false) + ".java");
-    assertFirstStringItems("false", "fefefef", "float", "finalize");
+    configureByFile(getTestName(false) + ".java")
+    assertFirstStringItems("false", "fefefef", "float", "finalize")
   }
 
   void testSameNamedVariableInNestedClasses() throws Throwable {
-    doTest();
+    doTest()
   }
 
   void testHonorUnderscoreInPrefix() throws Throwable {
-    doTest();
+    doTest()
   }
 
   void testNoSemicolonAfterExistingParenthesesEspeciallyIfItsACast() throws Throwable { doTest(); }
@@ -855,14 +855,14 @@ public class ListUtils {
     configure()
     myFixture.complete(CompletionType.BASIC, 2)
     myFixture.type('\n')
-    checkResult();
+    checkResult()
   }
 
   void testCaseTailType() throws Throwable { doTest(); }
 
   def doPrimitiveTypeTest() {
     configure()
-    checkResultByFile(getTestName(false) + ".java");
+    checkResultByFile(getTestName(false) + ".java")
     assertTrue 'boolean' in myFixture.lookupElementStrings
   }
 
@@ -910,42 +910,42 @@ public class ListUtils {
 
   void testSuggestInaccessibleOnSecondInvocation() throws Throwable {
     configure()
-    assertStringItems("_bar", "_goo");
-    complete();
-    assertStringItems("_bar", "_goo", "_foo");
-    getLookup().setCurrentItem(getLookup().getItems().get(2));
+    assertStringItems("_bar", "_goo")
+    complete()
+    assertStringItems("_bar", "_goo", "_foo")
+    getLookup().setCurrentItem(getLookup().getItems().get(2))
     selectItem(lookup.items[2], Lookup.NORMAL_SELECT_CHAR)
     checkResult()
   }
 
   void testNoCommonPrefixInsideIdentifier() throws Throwable {
-    final String path = getTestName(false) + ".java";
-    configureByFile(path);
-    checkResultByFile(path);
-    assertStringItems("fai1", "fai2");
+    final String path = getTestName(false) + ".java"
+    configureByFile(path)
+    checkResultByFile(path)
+    assertStringItems("fai1", "fai2")
   }
 
   void testProtectedInaccessibleOnSecondInvocation() throws Throwable {
-    myFixture.configureByFile(getTestName(false) + ".java");
-    myFixture.complete(CompletionType.BASIC, 2);
+    myFixture.configureByFile(getTestName(false) + ".java")
+    myFixture.complete(CompletionType.BASIC, 2)
     myFixture.type('\n')
     checkResult()
   }
 
   void testPropertyReferencePrefix() throws Throwable {
-    myFixture.addFileToProject("test.properties", "foo.bar=Foo! Bar!").getVirtualFile();
+    myFixture.addFileToProject("test.properties", "foo.bar=Foo! Bar!").getVirtualFile()
     doAntiTest()
   }
 
   private void doTest() throws Exception {
     configure()
-    checkResult();
+    checkResult()
   }
 
   private void doTest(String finishChar) throws Exception {
     configure()
     type finishChar
-    checkResult();
+    checkResult()
   }
 
   void testSecondAnonymousClassParameter() { doTest(); }
@@ -969,8 +969,8 @@ public class ListUtils {
 
   void testWildcardsInLookup() throws Exception {
     configure()
-    assertNotNull(getLookup());
-    type('*fz');
+    assertNotNull(getLookup())
+    type('*fz')
     assert !lookup
   }
 
@@ -1141,15 +1141,15 @@ public class ListUtils {
 
   void testRightShift() throws Throwable {
     configure()
-    assertStringItems("myField1", "myField2");
+    assertStringItems("myField1", "myField2")
   }
 
   void testAfterCommonPrefix() throws Throwable {
     configure()
     type 'eq'
-    assertFirstStringItems("equals", "equalsIgnoreCase");
+    assertFirstStringItems("equals", "equalsIgnoreCase")
     complete()
-    assertFirstStringItems("equals", "equalsIgnoreCase");
+    assertFirstStringItems("equals", "equalsIgnoreCase")
     type '('
     checkResult()
   }
@@ -1444,7 +1444,7 @@ class XInternalError {}
   void testOverwriteGenericsAfterNew() { doTest('\n') }
 
   private CommonCodeStyleSettings getCodeStyleSettings() {
-    return CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    return CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE)
   }
 
   void testCompatibleInterfacesCast() {
@@ -1594,12 +1594,12 @@ class Bar {
   }
 
   void testProtectedFieldInAnotherPackage() {
-    myFixture.addClass("package foo; public class Super { protected String myString; }");
+    myFixture.addClass("package foo; public class Super { protected String myString; }")
     doTest()
   }
 
   void testUnimportedStaticInnerClass() {
-    myFixture.addClass("package foo; public class Super { public static class Inner {} }");
+    myFixture.addClass("package foo; public class Super { public static class Inner {} }")
     doTest()
   }
 
@@ -1608,15 +1608,15 @@ class Bar {
   void testNoStaticDuplicatesFromExpectedMemberFactories() {
     configure()
     myFixture.complete(CompletionType.BASIC, 2)
-    myFixture.assertPreferredCompletionItems(0, "xcreateZoo", "xcreateElephant");
+    myFixture.assertPreferredCompletionItems(0, "xcreateZoo", "xcreateElephant")
   }
 
   void testNoInaccessibleCompiledElements() {
     configure()
     myFixture.complete(CompletionType.BASIC, 2)
-    checkResultByFile(getTestName(false) + ".java");
-    assertEmpty(myItems);
-    assertNull(getLookup());
+    checkResultByFile(getTestName(false) + ".java")
+    assertEmpty(myItems)
+    assertNull(getLookup())
   }
 
   void "test code cleanup during completion generation"() {

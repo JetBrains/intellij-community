@@ -63,8 +63,8 @@ abstract class AbstractExternalSystemTest extends UsefulTestCase {
     testFixture.setUp()
     project = testFixture.project
 
-    projectDir = new File(tmpDir, getTestName(false));
-    projectDir.mkdirs();
+    projectDir = new File(tmpDir, getTestName(false))
+    projectDir.mkdirs()
     
     externalSystemManager = new TestExternalSystemManager(project)
     def area = Extensions.getArea(null)
@@ -89,23 +89,23 @@ abstract class AbstractExternalSystemTest extends UsefulTestCase {
       UIUtil.invokeAndWaitIfNeeded {
         try {
           externalSystemManagerEP.unregisterExtension(externalSystemManager)
-          testFixture.tearDown();
-          testFixture = null;
+          testFixture.tearDown()
+          testFixture = null
         }
         catch (Exception e) {
-          throw new RuntimeException(e);
+          throw new RuntimeException(e)
         }
       }
 
       if (!FileUtil.delete(projectDir) && projectDir.exists()) {
-        System.err.println("Cannot delete " + projectDir);
+        System.err.println("Cannot delete " + projectDir)
         //printDirectoryContent(myDir);
-        projectDir.deleteOnExit();
+        projectDir.deleteOnExit()
       }
     }
     finally {
-      super.tearDown();
-      resetClassFields(getClass());
+      super.tearDown()
+      resetClassFields(getClass())
     }
   }
 
@@ -115,20 +115,20 @@ abstract class AbstractExternalSystemTest extends UsefulTestCase {
     }
 
     for (Field field : aClass.declaredFields) {
-      final int modifiers = field.modifiers;
+      final int modifiers = field.modifiers
       if ((modifiers & Modifier.FINAL) == 0 && (modifiers & Modifier.STATIC) == 0 && !field.getType().isPrimitive()) {
-        field.setAccessible(true);
+        field.setAccessible(true)
         try {
-          field.set(this, null);
+          field.set(this, null)
         }
         catch (IllegalAccessException e) {
-          e.printStackTrace();
+          e.printStackTrace()
         }
       }
     }
 
     if (aClass != AbstractExternalSystemTest.class) {
-      resetClassFields(aClass.getSuperclass());
+      resetClassFields(aClass.getSuperclass())
     }
   }
 

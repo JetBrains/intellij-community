@@ -34,7 +34,7 @@ class Foo {
 """)
     myFixture.configureFromExistingVirtualFile(fooClass.containingFile.virtualFile)
 
-    new RenameProcessor(getProject(), psiManager.findDirectory(srcRoot), "newName", true, true).run();
+    new RenameProcessor(getProject(), psiManager.findDirectory(srcRoot), "newName", true, true).run()
 
     assert srcRoot.path.endsWith("newName")
     myFixture.checkResult """

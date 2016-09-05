@@ -189,7 +189,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     ApplicationManager.getApplication().invokeLater(() -> {
       myCurrentScope = scope;
       launchInspections(scope);
-    }, ApplicationManager.getApplication().getDisposed());
+    }, myProject.getDisposed());
   }
 
 

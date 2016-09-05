@@ -66,6 +66,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
     ep.presentation = UnusedDeclarationPresentation.class.getName();
     ep.implementationClass = UnusedDeclarationInspection.class.getName();
     ep.shortName = UnusedDeclarationInspectionBase.SHORT_NAME;
+    ep.displayName = UnusedDeclarationInspectionBase.DISPLAY_NAME;
     return new GlobalInspectionToolWrapper(ep);
   }
 
@@ -175,6 +176,11 @@ public abstract class InspectionTestCase extends PsiTestCase {
     ext_src = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(testDir + "/ext_src"));
     if (ext_src != null) {
       PsiTestUtil.addSourceRoot(myModule, ext_src);
+    }
+
+    VirtualFile test_src = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(testDir + "/test_src"));
+    if (test_src != null) {
+      PsiTestUtil.addSourceRoot(myModule, test_src, true);
     }
   }
 

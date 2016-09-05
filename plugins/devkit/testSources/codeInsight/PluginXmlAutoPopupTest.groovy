@@ -23,7 +23,7 @@ import com.intellij.codeInsight.completion.CompletionAutoPopupTestCase
 class PluginXmlAutoPopupTest extends CompletionAutoPopupTestCase {
 
   void "test autopopup for class references"() {
-    myFixture.addClass("public class FooFooFooFooFoo { }");
+    myFixture.addClass("public class FooFooFooFooFoo { }")
     myFixture.configureByText 'plugin.xml', '''
 <idea-plugin>
   <extensionPoints>

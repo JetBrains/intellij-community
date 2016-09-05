@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.util;
+package com.intellij.openapi.util
 
-import junit.framework.TestCase;
+import junit.framework.TestCase
 
 /**
  * @author peter
  */
 class RecursionManagerTest extends TestCase {
-  private final RecursionGuard myGuard = RecursionManager.createGuard("RecursionManagerTest");
+  private final RecursionGuard myGuard = RecursionManager.createGuard("RecursionManagerTest")
   
   def prevent(Object key, boolean memoize = true, Closure c) {
     myGuard.doPreventingRecursion(key, memoize, c as Computable)

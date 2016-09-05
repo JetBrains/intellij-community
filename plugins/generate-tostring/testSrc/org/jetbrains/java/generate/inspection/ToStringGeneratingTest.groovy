@@ -101,7 +101,7 @@ public class Foobar  {
 
   @NotNull
   private static TemplateResource findDefaultTemplate() {
-    Collection<TemplateResource> templates = ToStringTemplatesManager.getInstance().getAllTemplates();
+    Collection<TemplateResource> templates = ToStringTemplatesManager.getInstance().getAllTemplates()
     def template = templates.find { it.fileName == "String concat (+)" }
     assert template != null
     template

@@ -48,6 +48,10 @@ class LinuxDistributionBuilder {
         }
       }
     }
+    buildContext.ant.copy(todir: "$unixDistPath/lib/libpty/linux") {
+      fileset(dir: "$buildContext.paths.communityHome/lib/libpty/linux")
+    }
+
     buildContext.ant.copy(file: ideaProperties.path, todir: "$unixDistPath/bin")
     //todo[nik] converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
     // for real installers we need to checkout all text files with 'lf' separators anyway

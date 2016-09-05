@@ -81,9 +81,9 @@ class StubAstSwitchTest extends LightCodeInsightFixtureTestCase {
     CountDownLatch latch = new CountDownLatch(count)
     for (c in classList) {
       ApplicationManager.application.executeOnPooledThread {
-        Thread.yield();
+        Thread.yield()
         ApplicationManager.application.runReadAction {
-          c.text;
+          c.text
         }
         latch.countDown()
       }
@@ -210,7 +210,7 @@ class B {
     StubElement hardRefToStub = file.greenStub
     assert hardRefToStub
 
-    GCUtil.tryGcSoftlyReachableObjects();
+    GCUtil.tryGcSoftlyReachableObjects()
     assert !file.treeElement
     assert hardRefToStub.is(file.greenStub)
 

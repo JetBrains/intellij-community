@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight;
+package com.intellij.codeInsight
 
 
 import com.intellij.openapi.actionSystem.IdeActions
@@ -33,9 +33,9 @@ xxx<caret>
   }
 
   private void doTest(String before, @NonNls String ext, String after) {
-    myFixture.configureByText("a." + ext, before);
+    myFixture.configureByText("a." + ext, before)
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DUPLICATE)
-    myFixture.checkResult(after);
+    myFixture.checkResult(after)
   }
 
   void testSelectName() {

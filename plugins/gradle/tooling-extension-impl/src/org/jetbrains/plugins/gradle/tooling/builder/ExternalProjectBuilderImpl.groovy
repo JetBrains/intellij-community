@@ -98,22 +98,22 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
   }
 
   static void addArtifactsData(final Project project, DefaultExternalProject externalProject) {
-    final List<File> artifacts = new ArrayList<File>();
+    final List<File> artifacts = new ArrayList<File>()
     for (Task task : project.getTasks()) {
       if (task instanceof Jar) {
-        Jar jar = (Jar)task;
-        artifacts.add(jar.getArchivePath());
+        Jar jar = (Jar)task
+        artifacts.add(jar.getArchivePath())
       }
     }
-    externalProject.setArtifacts(artifacts);
+    externalProject.setArtifacts(artifacts)
 
-    def configurationsByName = project.getConfigurations().getAsMap();
-    Map<String, Set<File>> artifactsByConfiguration = new HashMap<String, Set<File>>();
+    def configurationsByName = project.getConfigurations().getAsMap()
+    Map<String, Set<File>> artifactsByConfiguration = new HashMap<String, Set<File>>()
     for (Map.Entry<String, Configuration> configurationEntry : configurationsByName.entrySet()) {
-      Set<File> files = configurationEntry.getValue().getAllArtifacts().getFiles().getFiles();
-      artifactsByConfiguration.put(configurationEntry.getKey(), files);
+      Set<File> files = configurationEntry.getValue().getAllArtifacts().getFiles().getFiles()
+      artifactsByConfiguration.put(configurationEntry.getKey(), files)
     }
-    externalProject.setArtifactsByConfiguration(artifactsByConfiguration);
+    externalProject.setArtifactsByConfiguration(artifactsByConfiguration)
   }
 
   static Map<String, ExternalPlugin> getPlugins(Project project) {
@@ -154,7 +154,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
   }
 
   private Map<String, ExternalSourceSet> getSourceSets(Project project, boolean isPreview, boolean resolveSourceSetDependencies) {
-    final IdeaPlugin ideaPlugin = project.getPlugins().findPlugin(IdeaPlugin.class);
+    final IdeaPlugin ideaPlugin = project.getPlugins().findPlugin(IdeaPlugin.class)
     def ideaPluginModule = ideaPlugin?.model?.module
     boolean inheritOutputDirs = ideaPluginModule?.inheritOutputDirs ?: false
     def ideaOutDir = ideaPluginModule?.outputDir
@@ -182,12 +182,12 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     //noinspection GrUnresolvedAccess
     if(project.hasProperty('sourceCompatibility') && project.sourceCompatibility instanceof JavaVersion) {
       //noinspection GrUnresolvedAccess
-      projectSourceCompatibility = project.sourceCompatibility.name;
+      projectSourceCompatibility = project.sourceCompatibility.name
     }
     //noinspection GrUnresolvedAccess
     if(project.hasProperty('targetCompatibility') && project.targetCompatibility instanceof JavaVersion) {
       //noinspection GrUnresolvedAccess
-      projectTargetCompatibility = project.targetCompatibility.name;
+      projectTargetCompatibility = project.targetCompatibility.name
     }
 
     def result = [:] as Map<String, ExternalSourceSet>
@@ -242,7 +242,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
       ExternalSourceDirectorySet javaDirectorySet = new DefaultExternalSourceDirectorySet()
       javaDirectorySet.name = sourceSet.allJava.name
       javaDirectorySet.srcDirs = sourceSet.allJava.srcDirs
-      javaDirectorySet.gradleOutputDir = chooseNotNull(sourceSet.output.classesDir, project.buildDir);
+      javaDirectorySet.gradleOutputDir = chooseNotNull(sourceSet.output.classesDir, project.buildDir)
       javaDirectorySet.inheritedCompilerOutput = inheritOutputDirs
 //      javaDirectorySet.excludes = javaExcludes + sourceSet.java.excludes;
 //      javaDirectorySet.includes = javaIncludes + sourceSet.java.includes;
@@ -271,8 +271,8 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
           javaDirectorySet.outputDir = ideaTestOutDir
           resourcesDirectorySet.outputDir = ideaTestOutDir
         }
-        resourcesDirectorySet.excludes = testResourcesExcludes + sourceSet.resources.excludes;
-        resourcesDirectorySet.includes = testResourcesIncludes + sourceSet.resources.includes;
+        resourcesDirectorySet.excludes = testResourcesExcludes + sourceSet.resources.excludes
+        resourcesDirectorySet.includes = testResourcesIncludes + sourceSet.resources.includes
         resourcesDirectorySet.filters = testFilterReaders
         sources.put(ExternalSystemSourceType.TEST, javaDirectorySet)
         sources.put(ExternalSystemSourceType.TEST_RESOURCE, resourcesDirectorySet)
@@ -285,8 +285,8 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
           javaDirectorySet.outputDir = ideaOutDir
           resourcesDirectorySet.outputDir = ideaOutDir
         }
-        resourcesDirectorySet.excludes = resourcesExcludes + sourceSet.resources.excludes;
-        resourcesDirectorySet.includes = resourcesIncludes + sourceSet.resources.includes;
+        resourcesDirectorySet.excludes = resourcesExcludes + sourceSet.resources.excludes
+        resourcesDirectorySet.includes = resourcesIncludes + sourceSet.resources.includes
         resourcesDirectorySet.filters = filterReaders
         sources.put(ExternalSystemSourceType.SOURCE, javaDirectorySet)
         sources.put(ExternalSystemSourceType.RESOURCE, resourcesDirectorySet)
@@ -473,10 +473,10 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
                 def props = action?.val$properties
                 if (props) {
                   if ('org.apache.tools.ant.filters.ExpandProperties' == filterType && props['project']) {
-                    if (props['project']) filter.propertiesAsJsonMap = new GsonBuilder().create().toJson(props['project'].properties);
+                    if (props['project']) filter.propertiesAsJsonMap = new GsonBuilder().create().toJson(props['project'].properties)
                   }
                   else {
-                    filter.propertiesAsJsonMap = new GsonBuilder().create().toJson(props);
+                    filter.propertiesAsJsonMap = new GsonBuilder().create().toJson(props)
                   }
                 }
               }
@@ -491,7 +491,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
                 String replacement = action?.transformer?.replacement
                 def filter = [filterType: 'RenamingCopyFilter'] as DefaultExternalFilter
                 if(pattern && replacement){
-                  filter.propertiesAsJsonMap = new GsonBuilder().create().toJson([pattern: pattern, replacement: replacement]);
+                  filter.propertiesAsJsonMap = new GsonBuilder().create().toJson([pattern: pattern, replacement: replacement])
                   filterReaders << filter
                 }
               }

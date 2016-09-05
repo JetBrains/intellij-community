@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.bugs;
+package com.siyeh.ig.bugs
 
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.intellij.codeInspection.LocalInspectionTool
+import com.siyeh.ig.LightInspectionTestCase
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
 class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
 
   @Override
   protected LocalInspectionTool getInspection() {
-    return new IgnoreResultOfCallInspection();
+    return new IgnoreResultOfCallInspection()
   }
 
   @Override
@@ -81,7 +81,7 @@ class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
            "    /*Result of 'Test.lookAtMe()' is ignored*/lookAtMe/**/(); // Bad!  This line should produce a warning.\n" +
            "    ignoreMe(); // OK.  This line should *not* produce a warning.\n" +
            "  }\n" +
-           "}");
+           "}")
   }
 
   void testObjectMethods() {
@@ -89,7 +89,7 @@ class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
            "  void foo(Object o, String s) {\n" +
            "    o./*Result of 'Object.equals()' is ignored*/equals/**/(s);\n" +
            "  }\n" +
-           "}\n");
+           "}\n")
   }
 
   void testMatcher() {
@@ -100,7 +100,7 @@ class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
            "    matcher./*Result of 'Matcher.find()' is ignored*/find/**/();\n" +
            "    matcher.notify();\n" +
            "  }\n" +
-           "}\n");
+           "}\n")
   }
 
   void testReader() {
@@ -123,7 +123,7 @@ class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
            "  void b() {" +
            "    /*Result of 'A.a()' is ignored*/a/**/();" +
            "  }" +
-           "}");
+           "}")
   }
 
   void testRandomGetter() {
@@ -148,7 +148,7 @@ class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
            "  void b() {" +
            "    /*Result of 'A.a()' is ignored*/a/**/();" +
            "  }" +
-           "}");
+           "}")
   }
 
   void testJSR305Annotation3() {
@@ -163,7 +163,7 @@ class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
            "      /*Result of 'A.a()' is ignored*/a/**/();" +
            "    }" +
            "  }" +
-           "}");
+           "}")
   }
 
   void testPureMethod() {

@@ -198,19 +198,19 @@ class FooSpec extends spock.lang.Specification {
 
 
   void checkCompletionStatic(PsiFile file, String... expectedVariants) {
-    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile())
 
-    LookupElement[] lookupElements = myFixture.completeBasic();
+    LookupElement[] lookupElements = myFixture.completeBasic()
 
-    assertNotNull(lookupElements);
+    assertNotNull(lookupElements)
 
-    Set<String> missedVariants = ContainerUtil.newHashSet(expectedVariants);
+    Set<String> missedVariants = ContainerUtil.newHashSet(expectedVariants)
 
     for (LookupElement lookupElement : lookupElements) {
-      missedVariants.remove(lookupElement.getLookupString());
+      missedVariants.remove(lookupElement.getLookupString())
     }
 
-    assertEmpty("Some completion variants are missed", missedVariants);
+    assertEmpty("Some completion variants are missed", missedVariants)
   }
 
   void testVariable_resolved() {

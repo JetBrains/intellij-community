@@ -39,7 +39,7 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
     "        p {" +
     "            margin: 5px 0;" +
     "        }" +
-    "    </style>";
+    "    </style>"
 
   void testConstructorDoc() {
     configure """\

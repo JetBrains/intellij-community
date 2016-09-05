@@ -26,48 +26,48 @@ import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnr
 class GroovyHighlightingTest extends GrHighlightingTestBase {
 
   void testDuplicateClosurePrivateVariable() {
-    doTest();
+    doTest()
   }
 
   void testClosureRedefiningVariable() {
-    doTest();
+    doTest()
   }
 
   void testCircularInheritance() {
-    doTest();
+    doTest()
   }
 
   void testEmptyTupleType() {
-    doTest();
+    doTest()
   }
 
   void testMapDeclaration() {
-    doTest();
+    doTest()
   }
 
   void testShouldNotImplementGroovyObjectMethods() {
-    addGroovyObject();
-    myFixture.addFileToProject("Foo.groovy", "class Foo {}");
-    myFixture.testHighlighting(false, false, false, getTestName(false) + ".java");
+    addGroovyObject()
+    myFixture.addFileToProject("Foo.groovy", "class Foo {}")
+    myFixture.testHighlighting(false, false, false, getTestName(false) + ".java")
   }
 
   void testJavaClassImplementingGroovyInterface() {
-    addGroovyObject();
-    myFixture.addFileToProject("Foo.groovy", "interface Foo {}");
-    myFixture.testHighlighting(false, false, false, getTestName(false) + ".java");
+    addGroovyObject()
+    myFixture.addFileToProject("Foo.groovy", "interface Foo {}")
+    myFixture.testHighlighting(false, false, false, getTestName(false) + ".java")
   }
 
   void testDuplicateFields() {
-    doTest();
+    doTest()
   }
 
   void testNoDuplicationThroughClosureBorder() {
-    myFixture.addClass("package groovy.lang; public interface Closure {}");
-    doTest();
+    myFixture.addClass("package groovy.lang; public interface Closure {}")
+    doTest()
   }
 
   void testRecursiveMethodTypeInference() {
-    doTest();
+    doTest()
   }
 
   void testSuperClassNotExists() {
@@ -97,8 +97,8 @@ class GroovyHighlightingTest extends GrHighlightingTestBase {
   void testLocalVariableInStaticContext() { doTest(); }
 
   void testModifiersInPackageAndImportStatements() {
-    myFixture.copyFileToProject(getTestName(false) + ".groovy", "x/" + getTestName(false) + ".groovy");
-    myFixture.testHighlighting(true, false, false, "x/" + getTestName(false) + ".groovy");
+    myFixture.copyFileToProject(getTestName(false) + ".groovy", "x/" + getTestName(false) + ".groovy")
+    myFixture.testHighlighting(true, false, false, "x/" + getTestName(false) + ".groovy")
   }
 
   void testBreakOutside() { doTest(); }
@@ -106,13 +106,13 @@ class GroovyHighlightingTest extends GrHighlightingTestBase {
   void testUndefinedLabel() { doTest(); }
 
   void testNestedMethods() {
-    doTest();
+    doTest()
   }
 
   void testRawOverriddenMethod() { doTest(); }
 
   void testFQNJavaClassesUsages() {
-    doTest();
+    doTest()
   }
 
   void testGstringAssignableToString() { doTest(); }
@@ -142,8 +142,8 @@ class A {
   void testEmptyTupleAssignability() { doTest(); }
 
   void testGrDefFieldsArePrivateInJavaCode() {
-    myFixture.configureByText("X.groovy", "public class X{def x=5}");
-    myFixture.testHighlighting(true, false, false, getTestName(false) + ".java");
+    myFixture.configureByText("X.groovy", "public class X{def x=5}")
+    myFixture.testHighlighting(true, false, false, getTestName(false) + ".java")
   }
 
   void testSuperConstructorInvocation() { doTest(); }
@@ -185,21 +185,21 @@ class A {
   void testWrongAnnotation() { doTest(); }
 
   void testAmbiguousMethods() {
-    myFixture.copyFileToProject(getTestName(false) + ".java");
-    doTest();
+    myFixture.copyFileToProject(getTestName(false) + ".java")
+    doTest()
   }
 
   void testGroovyEnumInJavaFile() {
-    myFixture.copyFileToProject(getTestName(false) + ".groovy");
-    myFixture.testHighlighting(true, false, false, getTestName(false) + ".java");
+    myFixture.copyFileToProject(getTestName(false) + ".groovy")
+    myFixture.testHighlighting(true, false, false, getTestName(false) + ".java")
   }
 
   void testSOFInDelegate() {
-    doTest();
+    doTest()
   }
 
   void testMethodImplementedByDelegate() {
-    doTest();
+    doTest()
   }
 
   //public void _testTestMarkupStubs() {
@@ -211,26 +211,26 @@ class A {
                               "List<? extends String> la = []; la.get(1); " +
                               "List<? super String> lb = []; lb.get(1); " +
                               "List<?> lc = []; lc.get(1); "
-    );
-    myFixture.checkHighlighting(true, false, false);
+    )
+    myFixture.checkHighlighting(true, false, false)
   }
 
   void testDuplicatedNamedArgs() { doTest(); }
 
   void testConstructorWithAllParametersOptional() {
-    doTest();
+    doTest()
   }
 
   void testTupleConstructorAttributes() {
-    doTest(new GroovyAssignabilityCheckInspection());
+    doTest(new GroovyAssignabilityCheckInspection())
   }
 
   void testDelegatedMethodIsImplemented() {
-    doTest();
+    doTest()
   }
 
   void testEnumImplementsAllGroovyObjectMethods() {
-    doTest();
+    doTest()
   }
 
   //public void _testBuilderMembersAreNotUnresolved() {
@@ -238,7 +238,7 @@ class A {
   //}
 
   void testRecursiveConstructors() {
-    doTest();
+    doTest()
   }
 
   void testImmutableConstructorFromJava() {
@@ -377,7 +377,7 @@ public class CorrectImplementor implements ActionListener {
   }
 
   void testReassignedHighlighting() {
-    myFixture.testHighlighting(true, true, true, getTestName(false) + ".groovy");
+    myFixture.testHighlighting(true, true, true, getTestName(false) + ".groovy")
   }
 
   void testInstanceOf() {
@@ -545,7 +545,7 @@ def foo
   }
 
   void testReturnTypeInStaticallyCompiledMethod() {
-    addCompileStatic();
+    addCompileStatic()
     testHighlighting('''\
 import groovy.transform.CompileStatic
 @CompileStatic

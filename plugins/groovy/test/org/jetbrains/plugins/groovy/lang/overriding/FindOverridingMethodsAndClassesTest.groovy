@@ -67,6 +67,6 @@ class FindOverridingMethodsAndClassesTest extends LightCodeInsightFixtureTestCas
   void "test find java functional expression passed into a groovy method"() {
     myFixture.addFileToProject("a.groovy", "interface I { void foo(); }; class C { static void bar(I i) {}}")
     myFixture.addFileToProject("a.java", "class D {{  C.bar(() -> {}); }")
-    assertSize(1, FunctionalExpressionSearch.search(myFixture.findClass("I")).findAll());
+    assertSize(1, FunctionalExpressionSearch.search(myFixture.findClass("I")).findAll())
   }
 }
