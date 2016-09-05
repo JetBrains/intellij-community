@@ -85,7 +85,7 @@ class CompletionAutoPopupTester {
       }
       Thread.sleep(10)
     }
-    UsefulTestCase.fail("Too long completion: " + CompletionServiceImpl.phaseRaw)
+    UsefulTestCase.fail("Too long completion: " + CompletionServiceImpl.completionPhase)
   }
 
   final static AtomicInteger cnt = new AtomicInteger()
