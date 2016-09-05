@@ -138,6 +138,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+          close(OK_EXIT_CODE);
           downloadPatchAndRestart();
         }
       });
@@ -191,7 +192,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
           command = UpdateInstaller.installPlatformUpdate(myPatch, myNewBuild.getNumber(), myForceHttps, indicator);
         }
         catch (Exception e) {
-          Logger.getInstance(UpdateChecker.class).warn(e);
+          Logger.getInstance(UpdateInstaller.class).warn(e);
 
           String title = IdeBundle.message("updates.error.connection.title");
           String message = IdeBundle.message("update.downloading.patch.error", e.getMessage());
@@ -200,7 +201,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
             protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
               openDownloadPage();
             }
-          });
+          }).notify(null);
 
           return;
         }
