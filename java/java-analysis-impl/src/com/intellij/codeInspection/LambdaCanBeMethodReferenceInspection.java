@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,7 +94,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
   
   @Nullable
   public static String convertToMethodReference(@Nullable final PsiElement body,
-                                                final PsiParameter[] parameters,
+                                                final PsiVariable[] parameters,
                                                 final PsiType functionalInterfaceType,
                                                 @Nullable PsiElement context) {
     final PsiCallExpression toConvertCall = canBeMethodReferenceProblem(body, parameters, functionalInterfaceType, context);
@@ -104,14 +104,14 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
 
   @Nullable
   public static PsiCallExpression canBeMethodReferenceProblem(@Nullable final PsiElement body,
-                                                              final PsiParameter[] parameters,
+                                                              final PsiVariable[] parameters,
                                                               final PsiType functionalInterfaceType) {
     return canBeMethodReferenceProblem(body, parameters, functionalInterfaceType, null);
   }
 
   @Nullable
   public static PsiCallExpression canBeMethodReferenceProblem(@Nullable final PsiElement body,
-                                                              final PsiParameter[] parameters,
+                                                              final PsiVariable[] parameters,
                                                               PsiType functionalInterfaceType, 
                                                               @Nullable PsiElement context) {
     final PsiCallExpression callExpression = extractMethodCallFromBlock(body);
@@ -181,7 +181,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
     return null;
   }
 
-  private static boolean isSimpleCall(final PsiParameter[] parameters, PsiCallExpression callExpression, PsiMethod psiMethod) {
+  private static boolean isSimpleCall(final PsiVariable[] parameters, PsiCallExpression callExpression, PsiMethod psiMethod) {
     final PsiExpressionList argumentList = callExpression.getArgumentList();
     if (argumentList == null) {
       return false;
@@ -240,7 +240,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
     return resolvesToParameter(qualifier, parameters[0]);
   }
 
-  private static boolean resolvesToParameter(PsiExpression expression, PsiParameter parameter) {
+  private static boolean resolvesToParameter(PsiExpression expression, PsiVariable parameter) {
     return expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).resolve() == parameter;
   }
 
@@ -280,7 +280,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
   }
 
   @Nullable
-  private static PsiMethod getNonAmbiguousReceiver(PsiParameter[] parameters, @NotNull PsiMethod psiMethod) {
+  private static PsiMethod getNonAmbiguousReceiver(PsiVariable[] parameters, @NotNull PsiMethod psiMethod) {
     String methodName = psiMethod.getName();
     PsiClass containingClass = psiMethod.getContainingClass();
     if (containingClass == null) return null;
@@ -304,7 +304,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
     return psiMethod;
   }
 
-  private static boolean isPairedNoReceiver(PsiParameter[] parameters,
+  private static boolean isPairedNoReceiver(PsiVariable[] parameters,
                                             PsiType receiverType,
                                             PsiMethod method) {
     final PsiParameter[] nonReceiverCandidateParams = method.getParameterList().getParameters();
@@ -316,7 +316,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
   @Nullable
   public static String createMethodReferenceText(final PsiElement element,
                                                  final PsiType functionalInterfaceType,
-                                                 final PsiParameter[] parameters) {
+                                                 final PsiVariable[] parameters) {
     if (element instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
 
@@ -382,7 +382,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
   @Nullable
   private static String getQualifierTextByMethodCall(final PsiMethodCallExpression methodCall,
                                                      final PsiType functionalInterfaceType,
-                                                     final PsiParameter[] parameters,
+                                                     final PsiVariable[] parameters,
                                                      final PsiMethod psiMethod, 
                                                      final PsiSubstitutor substitutor) {
 
@@ -427,7 +427,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
   }
 
   @Nullable
-  private static String composeReceiverQualifierText(PsiParameter[] parameters,
+  private static String composeReceiverQualifierText(PsiVariable[] parameters,
                                                      PsiMethod psiMethod,
                                                      PsiClass containingClass,
                                                      @NotNull PsiExpression qualifierExpression) {
