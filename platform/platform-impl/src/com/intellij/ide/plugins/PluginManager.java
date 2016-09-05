@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,9 +56,9 @@ import java.util.List;
  * @author mike
  */
 public class PluginManager extends PluginManagerCore {
-  @NonNls public static final String INSTALLED_TXT = "installed.txt";
+  public static final String INSTALLED_TXT = "installed.txt";
 
-  public static long startupStart;
+  @SuppressWarnings("StaticNonFinalField") public static long startupStart;
 
   /**
    * Called via reflection
