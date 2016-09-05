@@ -95,7 +95,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       checkFunctionReturnType(node, node.getExpression());
     }
 
-    private void checkFunctionReturnType(PsiElement node, PyExpression returnExpr) {
+    private void checkFunctionReturnType(@NotNull PsiElement node, @Nullable PyExpression returnExpr) {
       final ScopeOwner owner = ScopeUtil.getScopeOwner(node);
       if (owner instanceof PyFunction) {
         final PyFunction function = (PyFunction)owner;
