@@ -6,6 +6,6 @@ class T {
             n = 1;
             System.out.println();
         }
-        return n;
+        re<caret>turn n;
     }
 }

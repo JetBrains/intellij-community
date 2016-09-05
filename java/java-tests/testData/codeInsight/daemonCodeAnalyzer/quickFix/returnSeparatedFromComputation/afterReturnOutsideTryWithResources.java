@@ -1,4 +1,4 @@
-// "Move 'return' to computation of the value of 'n'" "true"
+// "Move 'return' to computation of the value of 's'" "true"
 import java.io.*;
 
 class T {

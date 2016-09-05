@@ -6,6 +6,6 @@ class T {
             if (b) n = 1;
         }
         else n = 2;
-        re<before>turn n;
+        re<caret>turn n;
     }
 }
