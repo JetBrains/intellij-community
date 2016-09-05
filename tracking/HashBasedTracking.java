@@ -2,15 +2,20 @@ package org.jetbrains.debugger.memory.tracking;
 
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
+import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 class HashBasedTracking extends InstanceTrackingStrategy {
+  private static final Logger LOG = Logger.getInstance(HashBasedTracking.class);
+
   private final ReferenceType myClassType;
+  private MyHashCodeMethodWrapper myHashCodeWrapper;
   private Set<Integer> myHashesSet;
   private MyState myState = MyState.WAIT_HASHES;
 
@@ -18,7 +23,7 @@ class HashBasedTracking extends InstanceTrackingStrategy {
                     @NotNull ReferenceType classType,
                     @NotNull List<ObjectReference> initialInstances) {
     myClassType = classType;
-    if(suspendContext != null) {
+    if (suspendContext != null) {
       myHashesSet = toSetOfHashes(evalHashCodes(suspendContext, initialInstances));
       myState = myState.next();
     }
@@ -31,9 +36,9 @@ class HashBasedTracking extends InstanceTrackingStrategy {
     Map<ObjectReference, Optional<Integer>> ref2hash = evalHashCodes(suspendContext, references);
     List<ObjectReference> newInstances = new ArrayList<>();
 
-    for(ObjectReference ref : references) {
+    for (ObjectReference ref : references) {
       Optional<Integer> hash = ref2hash.get(ref);
-      if(hash.isPresent() && !myHashesSet.contains(hash.get())) {
+      if (hash.isPresent() && !myState.equals(MyState.WAIT_HASHES) && !myHashesSet.contains(hash.get())) {
         newInstances.add(ref);
       }
     }
@@ -51,32 +56,36 @@ class HashBasedTracking extends InstanceTrackingStrategy {
   @NotNull
   private Map<ObjectReference, Optional<Integer>> evalHashCodes(@NotNull SuspendContextImpl suspendContext,
                                                                 @NotNull List<ObjectReference> references) {
-    Method hashCodeMethod = getHashCodeMethod(myClassType);
+    MyHashCodeMethodWrapper hashCodeCaller = getHashCodeMethod(myClassType);
     Map<ObjectReference, Optional<Integer>> result = new HashMap<>();
     ThreadReferenceProxy threadProxy = suspendContext.getThread();
     ThreadReference thread = threadProxy != null ? threadProxy.getThreadReference() : null;
-    if(thread == null || hashCodeMethod == null) {
+    if (thread == null || hashCodeCaller == null) {
+      LOG.warn(thread == null ? "Thread is null" : "hashCode not found");
       return result;
     }
 
+    long start = System.nanoTime();
     for (ObjectReference ref : references) {
       Optional<Integer> hash = Optional.empty();
       try {
-        if(!ref.isCollected()) {
+        if (!ref.isCollected()) {
           ref.disableCollection();
-          if(!ref.isCollected()) {
-            Value value = ref.invokeMethod(thread, hashCodeMethod, Collections.emptyList(),
-                ObjectReference.INVOKE_NONVIRTUAL);
-            hash = Optional.of(((IntegerValue)value).value());
+          if (!ref.isCollected()) {
+            hash = hashCodeCaller.eval(ref, suspendContext, thread);
           }
           ref.enableCollection();
         }
       } catch (InvalidTypeException | ClassNotLoadedException |
-          IncompatibleThreadStateException | InvocationException ignored) {
+          IncompatibleThreadStateException | InvocationException e) {
+        LOG.warn("Hash code evaluation failed", e);
       }
 
       result.put(ref, hash);
     }
+
+    long duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
+    LOG.info(String.format("Hash code evaluation: %d ms. Count = %d", duration, references.size()));
 
     return result;
   }
@@ -89,15 +98,38 @@ class HashBasedTracking extends InstanceTrackingStrategy {
   }
 
   @Nullable
-  private Method getHashCodeMethod(@Nullable ReferenceType referenceType) {
-    if (referenceType == null) {
-      return null;
+  private MyHashCodeMethodWrapper getHashCodeMethod(@NotNull ReferenceType referenceType) {
+    if (myHashCodeWrapper != null) {
+      return myHashCodeWrapper;
     }
 
-    return referenceType.methodsByName("hashCode").stream()
-        .filter(method -> method.argumentTypeNames().isEmpty())
-        .findFirst()
-        .orElseGet(null);
+    final List<ReferenceType> referenceTypes = referenceType.virtualMachine().classesByName("java.util.Objects");
+    if (!referenceTypes.isEmpty()) {
+      ClassType objectsClass = (ClassType) referenceTypes.get(0);
+      Method hashCodeFromObjects = objectsClass.methodsByName("hashCode").stream()
+          .filter(method -> method.argumentTypeNames().size() == 1
+              && "java.lang.Object".equals(method.argumentTypeNames().get(0)))
+          .findFirst()
+          .orElse(null);
+
+      myHashCodeWrapper = (ref, suspendContext, thread) -> {
+        final Value value = objectsClass.invokeMethod(thread, hashCodeFromObjects,
+            Collections.singletonList(ref), ClassType.INVOKE_SINGLE_THREADED);
+        return Optional.of(((IntegerValue) value).value());
+      };
+    } else {
+      final Method hashCode = referenceType.methodsByName("hashCode").stream()
+          .filter(method -> method.argumentTypeNames().isEmpty())
+          .findFirst()
+          .orElse(null);
+
+      myHashCodeWrapper = hashCode == null ? null : (ref, suspendContext, thread) -> {
+        final Value value = ref.invokeMethod(thread, hashCode, Collections.emptyList(), ClassType.INVOKE_SINGLE_THREADED);
+        return Optional.of(((IntegerValue) value).value());
+      };
+    }
+
+    return myHashCodeWrapper;
   }
 
   // WAIT_HASHES -> WAIT_UPDATE -> READY
@@ -120,5 +152,11 @@ class HashBasedTracking extends InstanceTrackingStrategy {
     };
 
     public abstract MyState next();
+  }
+
+  private interface MyHashCodeMethodWrapper {
+    Optional<Integer> eval(@NotNull ObjectReference ref, @NotNull SuspendContextImpl suspendContext,
+                           @NotNull ThreadReference thread) throws InvocationException, InvalidTypeException,
+        ClassNotLoadedException, IncompatibleThreadStateException;
   }
 }
