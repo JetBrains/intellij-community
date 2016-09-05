@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
@@ -52,14 +53,28 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
   public VcsLogPathsIndex(@NotNull String logId,
                           @NotNull Set<VirtualFile> roots,
                           @NotNull Disposable disposableParent) throws IOException {
-    super(logId, NAME, VcsLogPersistentIndex.getVersion(), new PathsIndexer(
-            PersistentUtil.createPersistentEnumerator(EnumeratorStringDescriptor.INSTANCE, "index-paths-ids", logId,
-                                                      VcsLogPersistentIndex.getVersion()), roots),
+    super(logId, NAME, VcsLogPersistentIndex.getVersion(), new PathsIndexer(createPathsEnumerator(logId), roots),
           new NullableIntKeyDescriptor(), disposableParent);
 
     myEmptyCommits = PersistentUtil.createPersistentHashMap(EnumeratorIntegerDescriptor.INSTANCE, "index-no-" + NAME, logId,
                                                             VcsLogPersistentIndex.getVersion());
     myPathsIndexer = (PathsIndexer)myIndexer;
+  }
+
+  @NotNull
+  private static PersistentEnumeratorBase<String> createPathsEnumerator(@NotNull String logId) throws IOException {
+    int version = VcsLogPersistentIndex.getVersion();
+    final File storageFile = PersistentUtil.getStorageFile("index-paths-ids", logId, version);
+
+    PersistentBTreeEnumerator<String> enumerator = IOUtil.openCleanOrResetBroken(
+      () -> new PersistentBTreeEnumerator<>(storageFile, EnumeratorStringDescriptor.INSTANCE, Page.PAGE_SIZE, null, version),
+      () -> {
+        IOUtil.deleteAllFilesStartingWith(getStorageFile(INDEX + NAME, logId, version));
+        IOUtil.deleteAllFilesStartingWith(getStorageFile(INDEX_INPUTS + NAME, logId, version));
+        IOUtil.deleteAllFilesStartingWith(storageFile);
+      });
+    if (enumerator == null) throw new IOException("Can not create enumerator " + NAME + " for " + logId);
+    return enumerator;
   }
 
   @Override
@@ -132,6 +147,12 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
     catch (IOException e) {
       LOG.warn(e);
     }
+  }
+
+  @Override
+  public void markCorrupted() {
+    super.markCorrupted();
+    myEmptyCommits.markCorrupted();
   }
 
   private static class PathsIndexer implements DataIndexer<Integer, Integer, VcsFullCommitDetails> {

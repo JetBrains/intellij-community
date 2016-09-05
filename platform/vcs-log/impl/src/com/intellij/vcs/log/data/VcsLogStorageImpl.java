@@ -29,6 +29,7 @@ import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentEnumeratorBase;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.impl.FatalErrorConsumer;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsRefImpl;
 import com.intellij.vcs.log.util.PersistentUtil;
@@ -60,12 +61,12 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
   @NotNull private final PersistentEnumeratorBase<CommitId> myCommitIdEnumerator;
   @NotNull private final PersistentEnumeratorBase<VcsRef> myRefsEnumerator;
-  @NotNull private final Consumer<Exception> myExceptionReporter;
+  @NotNull private final FatalErrorConsumer myExceptionReporter;
   private volatile boolean myDisposed = false;
 
   public VcsLogStorageImpl(@NotNull Project project,
                            @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
-                           @NotNull Consumer<Exception> exceptionReporter,
+                           @NotNull FatalErrorConsumer exceptionReporter,
                            @NotNull Disposable parent) throws IOException {
     myExceptionReporter = exceptionReporter;
 
@@ -100,7 +101,7 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
       return getOrPut(hash, root);
     }
     catch (IOException e) {
-      myExceptionReporter.consume(e);
+      myExceptionReporter.consume(this, e);
     }
     return NO_INDEX;
   }
@@ -112,12 +113,12 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     try {
       CommitId commitId = doGetCommitId(commitIndex);
       if (commitId == null) {
-        myExceptionReporter.consume(new RuntimeException("Unknown commit index: " + commitIndex));
+        myExceptionReporter.consume(this, new RuntimeException("Unknown commit index: " + commitIndex));
       }
       return commitId;
     }
     catch (IOException e) {
-      myExceptionReporter.consume(e);
+      myExceptionReporter.consume(this, e);
     }
     return null;
   }
@@ -141,7 +142,7 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
       return hashRef.get();
     }
     catch (IOException e) {
-      myExceptionReporter.consume(e);
+      myExceptionReporter.consume(this, e);
       return null;
     }
   }
@@ -153,7 +154,7 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
       return myRefsEnumerator.enumerate(ref);
     }
     catch (IOException e) {
-      myExceptionReporter.consume(e);
+      myExceptionReporter.consume(this, e);
     }
     return NO_INDEX;
   }
@@ -166,7 +167,7 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
       return myRefsEnumerator.valueOf(refIndex);
     }
     catch (IOException e) {
-      myExceptionReporter.consume(e);
+      myExceptionReporter.consume(this, e);
       return null;
     }
   }

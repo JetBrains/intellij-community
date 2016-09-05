@@ -269,6 +269,9 @@ class VisiblePackBuilderTest {
     override fun filter(detailsFilters: MutableList<VcsLogDetailsFilter>): MutableSet<Int> {
       throw UnsupportedOperationException()
     }
+
+    override fun markCorrupted() {
+    }
   }
 }
 

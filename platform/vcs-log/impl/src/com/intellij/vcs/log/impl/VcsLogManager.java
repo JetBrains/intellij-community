@@ -33,6 +33,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
+import com.intellij.vcs.log.VcsLogStorage;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogFiltererImpl;
 import com.intellij.vcs.log.data.VcsLogTabsProperties;
@@ -201,15 +202,15 @@ public class VcsLogManager implements Disposable {
     disposeLog();
   }
 
-  private class MyFatalErrorsConsumer implements Consumer<Exception> {
+  private class MyFatalErrorsConsumer implements FatalErrorConsumer {
     private boolean myIsBroken = false;
 
     @Override
-    public void consume(@NotNull final Exception e) {
+    public void consume(@Nullable Object source, @NotNull final Exception e) {
       ApplicationManager.getApplication().invokeLater(() -> {
         if (!myIsBroken) {
           myIsBroken = true;
-          processErrorFirstTime(e);
+          processErrorFirstTime(source, e);
         }
         else {
           LOG.debug(e);
@@ -217,7 +218,7 @@ public class VcsLogManager implements Disposable {
       });
     }
 
-    protected void processErrorFirstTime(@NotNull Exception e) {
+    protected void processErrorFirstTime(@Nullable Object source, @NotNull Exception e) {
       if (myRecreateMainLogHandler != null) {
         String message = "Fatal error, VCS Log recreated: " + e.getMessage();
         if (isLogVisible()) {
@@ -231,6 +232,9 @@ public class VcsLogManager implements Disposable {
       }
       else {
         LOG.error(e);
+      }
+      if (source instanceof VcsLogStorage) {
+        myLogData.getIndex().markCorrupted();
       }
     }
   }

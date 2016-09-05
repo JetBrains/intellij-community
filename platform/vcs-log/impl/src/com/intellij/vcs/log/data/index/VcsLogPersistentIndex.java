@@ -32,7 +32,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
@@ -45,6 +44,7 @@ import com.intellij.vcs.log.data.InMemoryMap;
 import com.intellij.vcs.log.data.TroveUtil;
 import com.intellij.vcs.log.data.VcsLogStorageImpl;
 import com.intellij.vcs.log.data.VcsUserRegistryImpl;
+import com.intellij.vcs.log.impl.FatalErrorConsumer;
 import com.intellij.vcs.log.ui.filter.VcsLogUserFilterImpl;
 import com.intellij.vcs.log.util.PersistentUtil;
 import gnu.trove.TIntHashSet;
@@ -55,7 +55,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.stream.IntStream;
 
 public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
@@ -64,7 +63,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   private static final int VERSION = 0;
 
   @NotNull private final Project myProject;
-  @NotNull private final Consumer<Exception> myFatalErrorsConsumer;
+  @NotNull private final FatalErrorConsumer myFatalErrorsConsumer;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myProviders;
   @NotNull private final VcsLogStorage myHashMap;
   @NotNull private final VcsUserRegistryImpl myUserRegistry;
@@ -82,7 +81,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   public VcsLogPersistentIndex(@NotNull Project project,
                                @NotNull VcsLogStorage hashMap,
                                @NotNull Map<VirtualFile, VcsLogProvider> providers,
-                               @NotNull Consumer<Exception> fatalErrorsConsumer,
+                               @NotNull FatalErrorConsumer fatalErrorsConsumer,
                                @NotNull Disposable disposableParent) {
     myHashMap = hashMap;
     myProject = project;
@@ -122,7 +121,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       return computable.compute();
     }
     catch (IOException e) {
-      myFatalErrorsConsumer.consume(e);
+      myFatalErrorsConsumer.consume(this, e);
     }
     return null;
   }
@@ -135,7 +134,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       return PersistentUtil.createPersistentHashMap(descriptor, kind, logId, version);
     }
     catch (IOException e) {
-      myFatalErrorsConsumer.consume(e);
+      myFatalErrorsConsumer.consume(this, e);
       return new InMemoryMap<>();
     }
   }
@@ -174,7 +173,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       }
     }
     catch (IOException e) {
-      myFatalErrorsConsumer.consume(e);
+      myFatalErrorsConsumer.consume(this, e);
     }
   }
 
@@ -186,8 +185,15 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       if (myPathsIndex != null) myPathsIndex.flush();
     }
     catch (StorageException e) {
-      myFatalErrorsConsumer.consume(e);
+      myFatalErrorsConsumer.consume(this, e);
     }
+  }
+
+  public void markCorrupted() {
+    if (myMessagesIndex instanceof PersistentHashMap) ((PersistentHashMap)myMessagesIndex).markCorrupted();
+    if (myTrigramIndex != null) myTrigramIndex.markCorrupted();
+    if (myUserIndex != null) myUserIndex.markCorrupted();
+    if (myPathsIndex != null) myPathsIndex.markCorrupted();
   }
 
   @Override
@@ -199,7 +205,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
              (myTrigramIndex == null || myTrigramIndex.isIndexed(commit));
     }
     catch (IOException e) {
-      myFatalErrorsConsumer.consume(e);
+      myFatalErrorsConsumer.consume(this, e);
     }
     return false;
   }
@@ -234,7 +240,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
           }
         }
         catch (IOException e) {
-          myFatalErrorsConsumer.consume(e);
+          myFatalErrorsConsumer.consume(this, e);
           return false;
         }
         return true;
@@ -247,7 +253,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       }
     }
     catch (IOException e) {
-      myFatalErrorsConsumer.consume(e);
+      myFatalErrorsConsumer.consume(this, e);
     }
 
     return result;
@@ -260,7 +266,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         return myUserIndex.getCommitsForUsers(users);
       }
       catch (IOException | StorageException e) {
-        myFatalErrorsConsumer.consume(e);
+        myFatalErrorsConsumer.consume(this, e);
       }
     }
     return new TIntHashSet();
@@ -273,7 +279,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         return myPathsIndex.getCommitsForPaths(paths);
       }
       catch (IOException | StorageException e) {
-        myFatalErrorsConsumer.consume(e);
+        myFatalErrorsConsumer.consume(this, e);
       }
     }
     return new TIntHashSet();
@@ -298,7 +304,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
                 }
               }
               catch (IOException e) {
-                myFatalErrorsConsumer.consume(e);
+                myFatalErrorsConsumer.consume(this, e);
                 return false;
               }
 
@@ -309,7 +315,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         }
       }
       catch (StorageException e) {
-        myFatalErrorsConsumer.consume(e);
+        myFatalErrorsConsumer.consume(this, e);
       }
     }
 

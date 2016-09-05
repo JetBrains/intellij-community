@@ -93,6 +93,12 @@ public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void> {
     }
   }
 
+  @Override
+  public void markCorrupted() {
+    super.markCorrupted();
+    myNoTrigramsCommits.markCorrupted();
+  }
+
   public static class TrigramMessageIndexer implements DataIndexer<Integer, Void, VcsFullCommitDetails> {
     @NotNull
     @Override
