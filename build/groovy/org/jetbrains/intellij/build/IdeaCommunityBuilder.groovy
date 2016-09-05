@@ -18,10 +18,9 @@
 
 package org.jetbrains.intellij.build
 
+import com.intellij.openapi.util.io.FileUtil
 import org.codehaus.gant.GantBinding
-import org.jetbrains.intellij.build.impl.BuildUtils
 import org.jetbrains.jps.gant.LayoutInfo
-
 /**
  * @author nik
  */
@@ -66,7 +65,7 @@ class IdeaCommunityBuilder {
   LayoutInfo layoutAll(boolean buildJps = false) {
     def layouts = binding["includeFile"]("$buildContext.paths.communityHome/build/scripts/layouts.gant")
     LayoutInfo info = layouts.layoutFull(buildContext)
-
+    FileUtil.delete(new File(buildContext.paths.distAll, "lib/libpty"))//todo[nik] this is temporary workaround until IDEA fully migrates to the new scheme
     buildContext.messages.block("Build intellij-core") {
       String coreArtifactDir = "$buildContext.paths.artifacts/core"
       buildContext.ant.mkdir(dir: coreArtifactDir)
