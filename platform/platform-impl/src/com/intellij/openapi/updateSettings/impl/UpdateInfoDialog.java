@@ -31,12 +31,15 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import org.apache.http.client.utils.URIBuilder;
@@ -52,6 +55,8 @@ import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.Pair.pair;
 
@@ -130,14 +135,16 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   protected Action[] createActions() {
     List<Action> actions = ContainerUtil.newArrayList();
 
-    if (myPatch != null && ApplicationManager.getApplication().isRestartCapable()) {
-      actions.add(new AbstractAction(IdeBundle.message("updates.download.and.restart.button")) {
+    if (myPatch != null) {
+      boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
+      actions.add(new AbstractAction(IdeBundle.message(canRestart ? "updates.download.and.restart.button" : "updates.apply.manually.button")) {
         {
           setEnabled(!myWriteProtected);
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
+          close(OK_EXIT_CODE);
           downloadPatchAndRestart();
         }
       });
@@ -191,7 +198,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
           command = UpdateInstaller.installPlatformUpdate(myPatch, myNewBuild.getNumber(), myForceHttps, indicator);
         }
         catch (Exception e) {
-          Logger.getInstance(UpdateChecker.class).warn(e);
+          Logger.getInstance(UpdateInstaller.class).warn(e);
 
           String title = IdeBundle.message("updates.error.connection.title");
           String message = IdeBundle.message("update.downloading.patch.error", e.getMessage());
@@ -200,7 +207,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
             protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
               openDownloadPage();
             }
-          });
+          }).notify(null);
 
           return;
         }
@@ -212,7 +219,12 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
         }
 
         ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-        app.invokeLater(() -> ((ApplicationImpl)app).exit(false, true, true, command));
+        if (ApplicationManager.getApplication().isRestartCapable()) {
+          app.invokeLater(() -> ((ApplicationImpl)app).exit(false, true, true, command));
+        }
+        else {
+          showPatchInstructions(command);
+        }
       }
     }.queue();
   }
@@ -221,6 +233,23 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     String url = myUpdatedChannel.getHomePageUrl();
     assert url != null : "channel: " + myUpdatedChannel.getId();
     BrowserUtil.browse(augmentUrl(url));
+  }
+
+  private static void showPatchInstructions(String[] command) {
+    String product = ApplicationNamesInfo.getInstance().getLowercaseProductName();
+    String version = ApplicationInfo.getInstance().getFullVersion();
+    File file = new File(SystemProperties.getUserHome(), product + "-" + version + "-patch.txt");
+    try {
+      String text = Stream.of(command).map(s -> s.indexOf(' ') > 0 ? '"' + s + '"' : s).collect(Collectors.joining(" "));
+      FileUtil.writeToFile(file, text);
+    }
+    catch (Exception e) {
+      Logger.getInstance(UpdateInstaller.class).error(e);
+      return;
+    }
+
+    String title = IdeBundle.message("update.notifications.title"), message = IdeBundle.message("update.apply.manually.message", file);
+    ApplicationManager.getApplication().invokeLater(() -> Messages.showInfoMessage(message, title));
   }
 
   private static class ButtonAction extends AbstractAction {

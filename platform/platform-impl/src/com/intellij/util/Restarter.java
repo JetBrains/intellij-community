@@ -92,8 +92,7 @@ public class Restarter {
     }
 
     File restarter = new File(restartDir, "restarter.sh");
-    BufferedWriter output = new BufferedWriter(new FileWriter(restarter));
-    try {
+    try (BufferedWriter output = new BufferedWriter(new FileWriter(restarter))) {
       output.write("#!/bin/sh\n");
       for (int i = 0; i < beforeRestart.length; i++) {
         output.write(beforeRestart[i]);
@@ -102,16 +101,13 @@ public class Restarter {
       }
       output.write('\n');
     }
-    finally {
-      output.close();
-    }
 
     if (!restarter.setExecutable(true, true)) {
       throw new IOException("Cannot make file executable: " + restarter);
     }
   }
 
-  private static void restartOnWindows(@NotNull final String... beforeRestart) throws IOException {
+  private static void restartOnWindows(@NotNull String... beforeRestart) throws IOException {
     Kernel32 kernel32 = (Kernel32)Native.loadLibrary("kernel32", Kernel32.class);
     Shell32 shell32 = (Shell32)Native.loadLibrary("shell32", Shell32.class);
 
@@ -121,14 +117,11 @@ public class Restarter {
     final String[] argv = getRestartArgv(argv_ptr.getWideStringArray(0, argc.getValue()));
     kernel32.LocalFree(argv_ptr);
 
-    doScheduleRestart(new File(PathManager.getBinPath(), "restarter.exe"), new Consumer<List<String>>() {
-      @Override
-      public void consume(List<String> commands) {
-        Collections.addAll(commands, String.valueOf(pid), String.valueOf(beforeRestart.length));
-        Collections.addAll(commands, beforeRestart);
-        Collections.addAll(commands, String.valueOf(argv.length));
-        Collections.addAll(commands, argv);
-      }
+    doScheduleRestart(new File(PathManager.getBinPath(), "restarter.exe"), commands -> {
+      Collections.addAll(commands, String.valueOf(pid), String.valueOf(beforeRestart.length));
+      Collections.addAll(commands, beforeRestart);
+      Collections.addAll(commands, String.valueOf(argv.length));
+      Collections.addAll(commands, argv);
     });
 
     // Since the process ID is passed through the command line, we want to make sure that we don't exit before the "restarter"
@@ -137,18 +130,15 @@ public class Restarter {
     TimeoutUtil.sleep(500);
   }
 
-  private static void restartOnMac(@NotNull final String... beforeRestart) throws IOException {
+  private static void restartOnMac(@NotNull String... beforeRestart) throws IOException {
     String homePath = PathManager.getHomePath();
     int p = homePath.indexOf(".app");
     if (p < 0) throw new IOException("Application bundle not found: " + homePath);
 
     final String bundlePath = homePath.substring(0, p + 4);
-    doScheduleRestart(new File(PathManager.getBinPath(), "restarter"), new Consumer<List<String>>() {
-      @Override
-      public void consume(List<String> commands) {
-        Collections.addAll(commands, bundlePath);
-        Collections.addAll(commands, beforeRestart);
-      }
+    doScheduleRestart(new File(PathManager.getBinPath(), "restarter"), commands -> {
+      Collections.addAll(commands, bundlePath);
+      Collections.addAll(commands, beforeRestart);
     });
   }
 
@@ -171,7 +161,7 @@ public class Restarter {
   }
 
   private static void doScheduleRestart(File restarterFile, Consumer<List<String>> argumentsBuilder) throws IOException {
-    List<String> commands = new ArrayList<String>();
+    List<String> commands = new ArrayList<>();
     commands.add(createTempExecutable(restarterFile).getPath());
     argumentsBuilder.consume(commands);
     Runtime.getRuntime().exec(ArrayUtil.toStringArray(commands));
