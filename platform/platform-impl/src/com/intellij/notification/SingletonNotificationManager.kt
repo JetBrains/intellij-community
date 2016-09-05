@@ -23,20 +23,21 @@ import java.util.concurrent.atomic.AtomicReference
 class SingletonNotificationManager(private val group: NotificationGroup, private val type: NotificationType, private val listener: NotificationListener?) {
   private val notification = AtomicReference<Notification>()
 
-  private var expiredListener: Runnable? = null
-
-  @JvmOverloads fun notify(title: String, content: String, project: Project? = null): Boolean {
-    return notify(title, content, listener, project)
+  private val expiredListener by lazy {
+    Runnable {
+      val currentNotification = notification.get()
+      if (currentNotification != null && currentNotification.isExpired) {
+        notification.compareAndSet(currentNotification, null)
+      }
+    }
   }
 
   fun notify(content: String, project: Project?): Boolean {
-    return notify("", content, listener, project)
+    return notify("", content, project, listener)
   }
 
-  fun notify(title: String,
-             content: String,
-             listener: NotificationListener?,
-             project: Project?): Boolean {
+  @JvmOverloads
+  fun notify(title: String, content: String, project: Project? = null, listener: NotificationListener? = null): Boolean {
     val oldNotification = notification.get()
     // !oldNotification.isExpired() is not enough - notification could be closed, but not expired
     if (oldNotification != null) {
@@ -49,15 +50,6 @@ class SingletonNotificationManager(private val group: NotificationGroup, private
       oldNotification.expire()
     }
 
-    if (expiredListener == null) {
-      expiredListener = Runnable {
-        val currentNotification = notification.get()
-        if (currentNotification != null && currentNotification.isExpired) {
-          notification.compareAndSet(currentNotification, null)
-        }
-      }
-    }
-
     val newNotification = group.createNotification(title, content, type, listener)
     newNotification.whenExpired(expiredListener)
     notification.set(newNotification)
@@ -66,10 +58,9 @@ class SingletonNotificationManager(private val group: NotificationGroup, private
   }
 
   fun clear() {
-    val oldNotification = notification.getAndSet(null)
-    if (oldNotification != null) {
-      oldNotification.whenExpired(null)
-      oldNotification.expire()
+    notification.getAndSet(null)?.let {
+      it.whenExpired(null)
+      it.expire()
     }
   }
 }
