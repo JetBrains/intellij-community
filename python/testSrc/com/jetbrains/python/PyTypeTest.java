@@ -1119,7 +1119,7 @@ public class PyTypeTest extends PyTestCase {
            "    expr.append(1)"
     );
 
-    doTest("List[str]",
+    doTest("List[Union[Union[str, int], Any]]",
            "expr = [3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4]\n" +
            "expr.append('a')"
     );

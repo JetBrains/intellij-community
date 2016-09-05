@@ -173,8 +173,14 @@ public class PyBuiltinCache {
     final PyExpression[] elements = sequence.getElements();
     PyType elemType;
 
-    if (elements.length == 0 || elements.length > 10 /* performance */) {
+    if (elements.length == 0) {
       elemType = PyUtil.getCollectionTypeByModifications(sequence, context);
+      return Collections.singletonList(elemType);
+    }
+    else if (elements.length > 10 /* performance */) {
+      elemType = PyUtil.getCollectionTypeByModifications(sequence, context);
+      elemType = PyUnionType.union(elemType, context.getType(elements[0]));
+      elemType = PyUnionType.union(elemType, null);
       return Collections.singletonList(elemType);
     }
 
