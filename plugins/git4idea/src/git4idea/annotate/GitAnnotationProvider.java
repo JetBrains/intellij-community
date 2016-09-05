@@ -197,8 +197,9 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
       (revisions) -> {
         if (revisions == null) return;
         ApplicationManager.getApplication().invokeLater(() -> {
+          GitFileAnnotation newFileAnnotation = new GitFileAnnotation(fileAnnotation);
           fileAnnotation.setRevisions(revisions);
-          fileAnnotation.reload();
+          fileAnnotation.reload(newFileAnnotation);
         });
       },
       ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS

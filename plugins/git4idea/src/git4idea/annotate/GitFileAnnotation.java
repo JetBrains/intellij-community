@@ -87,6 +87,10 @@ public class GitFileAnnotation extends FileAnnotation {
     myLines = lines;
   }
 
+  public GitFileAnnotation(@NotNull GitFileAnnotation annotation) {
+    this(annotation.getProject(), annotation.getFile(), annotation.getCurrentRevision(), annotation.getLines());
+  }
+
   @Override
   public void dispose() {
   }
