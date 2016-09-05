@@ -15,58 +15,43 @@
  */
 package com.intellij.diagnostic;
 
-import com.intellij.openapi.components.NamedComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.Base64;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.credentialStore.CredentialAttributes;
+import com.intellij.credentialStore.Credentials;
+import com.intellij.ide.passwordSafe.PasswordSafe;
+import com.intellij.openapi.components.*;
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nullable;
 
-public class ErrorReportConfigurable implements JDOMExternalizable, NamedComponent {
-  public String ITN_LOGIN = "";
-  public String ITN_PASSWORD_CRYPT = "";
-  public boolean KEEP_ITN_PASSWORD = false;
+import java.util.Base64;
 
-  public String EMAIL = "";
+@State(name = "ErrorReportConfigurable", storages = @Storage(value = "other.xml", deprecated = true, roamingType = RoamingType.DISABLED))
+class ErrorReportConfigurable implements PersistentStateComponent<ErrorReportConfigurable.State> {
+  public static final String SERVICE_NAME = "IntelliJ Platform — JetBrains Account";
+
+  static class State {
+    public String ITN_LOGIN;
+    public String ITN_PASSWORD_CRYPT;
+  }
 
   public static ErrorReportConfigurable getInstance() {
     return ServiceManager.getService(ErrorReportConfigurable.class);
   }
 
+  @Nullable
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-    if (!KEEP_ITN_PASSWORD) {
-      ITN_PASSWORD_CRYPT = "";
+  public State getState() {
+    return new State();
+  }
+
+  @Override
+  public void loadState(State state) {
+    if (!StringUtil.isEmpty(state.ITN_LOGIN) || !StringUtil.isEmpty(state.ITN_PASSWORD_CRYPT)) {
+      PasswordSafe.getInstance().set(new CredentialAttributes(SERVICE_NAME, state.ITN_LOGIN), new Credentials(state.ITN_LOGIN, Base64.getDecoder().decode(state.ITN_PASSWORD_CRYPT)));
     }
   }
 
-  @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-    String itnPassword = ITN_PASSWORD_CRYPT;
-    if (!KEEP_ITN_PASSWORD) {
-      ITN_PASSWORD_CRYPT = "";
-    }
-    DefaultJDOMExternalizer.writeExternal(this, element);
-
-    ITN_PASSWORD_CRYPT = itnPassword;
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "ErrorReportConfigurable";
-  }
-
-  public String getPlainItnPassword() {
-    return new String(Base64.decode(getInstance().ITN_PASSWORD_CRYPT), CharsetToolkit.UTF8_CHARSET);
-  }
-
-  public void setPlainItnPassword(String password) {
-    ITN_PASSWORD_CRYPT = Base64.encode(password.getBytes(CharsetToolkit.UTF8_CHARSET));
+  @Nullable
+  public static Credentials getCredentials() {
+    return PasswordSafe.getInstance().get(new CredentialAttributes(SERVICE_NAME));
   }
 }

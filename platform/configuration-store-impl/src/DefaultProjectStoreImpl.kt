@@ -53,7 +53,7 @@ internal class DefaultProjectStoreImpl(override val project: ProjectImpl, privat
 
     override fun createSaveSession(states: StateMap) = object : FileBasedStorage.FileSaveSession(states, this) {
       override fun saveLocally(element: Element?) {
-        super.saveLocally(Element("application").addContent(Element("component").setAttribute("name", "ProjectManager").addContent(element)))
+        super.saveLocally(element?.let { Element("application").addContent(Element("component").setAttribute("name", "ProjectManager").addContent(it))})
       }
     }
   }

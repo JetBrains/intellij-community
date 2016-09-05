@@ -17,6 +17,8 @@ package com.intellij.diagnostic;
 
 import com.intellij.CommonBundle;
 import com.intellij.ExtensionPoints;
+import com.intellij.credentialStore.CredentialAttributesKt;
+import com.intellij.credentialStore.Credentials;
 import com.intellij.diagnostic.errordialog.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -52,7 +54,6 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.HeaderlessTabbedPane;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
@@ -71,6 +72,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
@@ -80,7 +82,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private static final Logger LOG = Logger.getInstance(IdeErrorsDialog.class.getName());
   private final boolean myInternalMode;
   @NonNls private static final String ACTIVE_TAB_OPTION = IdeErrorsDialog.class.getName() + "activeTab";
-  public static DataKey<String> CURRENT_TRACE_KEY = DataKey.create("current_stack_trace_key");
+  public static final DataKey<String> CURRENT_TRACE_KEY = DataKey.create("current_stack_trace_key");
   public static final int COMPONENTS_WIDTH = 670;
   public static Collection<Developer> ourDevelopersList = Collections.emptyList();
 
@@ -287,7 +289,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       }
     };
     if (!myInternalMode) {
-      myDetailsTabForm = new DetailsTabForm(null, myInternalMode);
+      myDetailsTabForm = new DetailsTabForm(null, false);
       myCommentsTabForm = new CommentsTabForm();
       myCommentsTabForm.addCommentsListener(commentsListener);
       myTabs.addTab(DiagnosticBundle.message("error.comments.tab.title"), myCommentsTabForm.getContentPane());
@@ -298,7 +300,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       if (analyzePlatformAction != null) {
         myAnalyzeAction = new AnalyzeAction(analyzePlatformAction);
       }
-      myDetailsTabForm = new DetailsTabForm(myAnalyzeAction, myInternalMode);
+      myDetailsTabForm = new DetailsTabForm(myAnalyzeAction, true);
       myDetailsTabForm.setCommentsAreaVisible(true);
       myDetailsTabForm.addCommentsListener(commentsListener);
     }
@@ -465,15 +467,16 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private void updateCredentialsPane(AbstractMessage message) {
     if (message != null) {
-      final ErrorReportSubmitter submitter = getSubmitter(message.getThrowable());
+      ErrorReportSubmitter submitter = getSubmitter(message.getThrowable());
       if (submitter instanceof ITNReporter) {
         myCredentialsPanel.setVisible(true);
-        String userName = ErrorReportConfigurable.getInstance().ITN_LOGIN;
-        if (StringUtil.isEmpty(userName)) {
-          myCredentialsLabel.setHtmlText(DiagnosticBundle.message("diagnostic.error.report.submit.error.anonymously"));
+        Credentials credentials = ErrorReportConfigurable.getCredentials();
+        if (CredentialAttributesKt.isFulfilled(credentials)) {
+          assert credentials != null;
+          myCredentialsLabel.setHtmlText(DiagnosticBundle.message("diagnostic.error.report.submit.report.as", credentials.getUserName()));
         }
         else {
-          myCredentialsLabel.setHtmlText(DiagnosticBundle.message("diagnostic.error.report.submit.report.as", userName));
+          myCredentialsLabel.setHtmlText(DiagnosticBundle.message("diagnostic.error.report.submit.error.anonymously"));
         }
         return;
       }
@@ -647,7 +650,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
       myDetailsTabForm.setAssigneeId(message == null ? null : message.getAssigneeId());
 
-      List<Attachment> attachments = message != null ? message.getAllAttachments() : Collections.<Attachment>emptyList();
+      List<Attachment> attachments = message != null ? message.getAllAttachments() : Collections.emptyList();
       if (!attachments.isEmpty()) {
         if (myTabs.indexOfComponent(myAttachmentsTabForm.getContentPane()) == -1) {
           myTabs.addTab(DiagnosticBundle.message("error.attachments.tab.title"), myAttachmentsTabForm.getContentPane());
@@ -672,7 +675,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       return throwable.getMessage();
     }
     else {
-      return new StringBuffer().append(message.getMessage()).append("\n").append(message.getThrowableText()).toString();
+      return message.getMessage() + "\n" + message.getThrowableText();
     }
   }
 
@@ -767,8 +770,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
           }
         }
 
-        if (PluginManager.isPluginClass(className)) {
-          return PluginManager.getPluginByClassName(className);
+        if (PluginManagerCore.isPluginClass(className)) {
+          return PluginManagerCore.getPluginByClassName(className);
         }
       }
     }
@@ -777,8 +780,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       if (t.getMessage() != null) {
         String className = t.getMessage();
 
-        if (PluginManager.isPluginClass(className)) {
-          return PluginManager.getPluginByClassName(className);
+        if (PluginManagerCore.isPluginClass(className)) {
+          return PluginManagerCore.getPluginByClassName(className);
         }
       }
     }
@@ -791,8 +794,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         pos = s.lastIndexOf('.');
         if (pos >= 0) {
           s = s.substring(0, pos);
-          if (PluginManager.isPluginClass(s)) {
-            return PluginManager.getPluginByClassName(s);
+          if (PluginManagerCore.isPluginClass(s)) {
+            return PluginManagerCore.getPluginByClassName(s);
           }
         }
       }
@@ -800,8 +803,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     else if (t instanceof ExtensionException) {
       String className = ((ExtensionException)t).getExtensionClass().getName();
-      if (PluginManager.isPluginClass(className)) {
-        return PluginManager.getPluginByClassName(className);
+      if (PluginManagerCore.isPluginClass(className)) {
+        return PluginManagerCore.getPluginByClassName(className);
       }
     }
 
@@ -1016,8 +1019,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private static String md5(String buffer, @NonNls String key) throws NoSuchAlgorithmException {
     MessageDigest md5 = MessageDigest.getInstance("MD5");
-    md5.update(buffer.getBytes());
-    byte[] code = md5.digest(key.getBytes());
+    md5.update(buffer.getBytes(StandardCharsets.UTF_8));
+    byte[] code = md5.digest(key.getBytes(StandardCharsets.UTF_8));
     BigInteger bi = new BigInteger(code).abs();
     return bi.abs().toString(16);
   }

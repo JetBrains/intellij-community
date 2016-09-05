@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicReference
 /**
  * requestor is deprecated. Never use it in new code.
  */
-data class CredentialAttributes(val serviceName: String, val userName: String? = null, val requestor: Class<*>? = null) {
+data class CredentialAttributes @JvmOverloads constructor(val serviceName: String, val userName: String? = null, val requestor: Class<*>? = null) {
 }
 
 // user cannot be empty, but password can be
@@ -37,6 +37,8 @@ class Credentials(user: String?, val password: OneTimeString? = null) {
   constructor(user: String?, password: String?) : this(user, password?.let(::OneTimeString))
 
   constructor(user: String?, password: CharArray?) : this(user, password?.let { OneTimeString(it) })
+
+  constructor(user: String?, password: ByteArray?) : this(user, password?.let { OneTimeString(password) })
 
   val userName = user.nullize()
 

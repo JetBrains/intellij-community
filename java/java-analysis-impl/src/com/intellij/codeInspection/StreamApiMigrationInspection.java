@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * User: anna
@@ -123,17 +124,22 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                                              PsiBreakStatement.class, PsiReturnStatement.class, PsiThrowStatement.class);
               if (exitPoints.isEmpty()) {
 
-                final List<PsiVariable> usedVariables = ControlFlowUtil.getUsedVariables(controlFlow, startOffset, endOffset);
-                for (PsiVariable variable : usedVariables) {
-                  if (!HighlightControlFlowUtil.isEffectivelyFinal(variable, body, null)) {
-                    return;
-                  }
-                }
-
                 if (ExceptionUtil.getThrownCheckedExceptions(new PsiElement[]{body}).isEmpty()) {
                   TerminalBlock tb = TerminalBlock.from(statement.getIterationParameter(), body);
                   List<Operation> operations = tb.extractOperations();
 
+                  final List<PsiVariable> nonFinalVariables = ControlFlowUtil.getUsedVariables(controlFlow, startOffset, endOffset)
+                    .stream().filter(variable -> !HighlightControlFlowUtil.isEffectivelyFinal(variable, body, null))
+                    .collect(Collectors.toList());
+
+                  if(getCounter(statement, tb, operations, nonFinalVariables) != null) {
+                    holder.registerProblem(iteratedValue, "Can be replaced with count() call",
+                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                           new ReplaceWithCountFix());
+                  }
+                  if(!nonFinalVariables.isEmpty()) {
+                    return;
+                  }
                   if ((isArray || !isRawSubstitution(iteratedValueType, collectionClass)) && isCollectCall(tb, operations)) {
                     boolean addAll = operations.isEmpty() && isAddAllCall(tb);
                     holder.registerProblem(iteratedValue, "Can be replaced with " + (addAll ? "addAll call" : "collect call"),
@@ -167,6 +173,43 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           .isRawSubstitutor(collectionClass, TypeConversionUtil.getSuperClassSubstitutor(collectionClass, (PsiClassType)iteratedValueType));
       }
     };
+  }
+
+  private static PsiExpression extractIncrementedExpression(PsiStatement statement) {
+    if(!(statement instanceof PsiExpressionStatement)) return null;
+    PsiExpression expression = ((PsiExpressionStatement)statement).getExpression();
+    PsiExpression operand;
+    if(expression instanceof PsiPostfixExpression) {
+      if(!JavaTokenType.PLUSPLUS.equals(((PsiPostfixExpression)expression).getOperationTokenType())) return null;
+      operand = ((PsiPostfixExpression)expression).getOperand();
+    } else if(expression instanceof PsiPrefixExpression) {
+      if(!JavaTokenType.PLUSPLUS.equals(((PsiPrefixExpression)expression).getOperationTokenType())) return null;
+      operand = ((PsiPrefixExpression)expression).getOperand();
+    } else return null; // TODO: support i = i+1;
+    return operand;
+  }
+
+  @Nullable
+  private static PsiLocalVariable getCounter(PsiForeachStatement foreachStatement,
+                                             TerminalBlock tb,
+                                             List<Operation> operations,
+                                             List<PsiVariable> variables) {
+    // have only one non-final variable
+    if(variables.size() != 1) return null;
+
+    // have single expression which is either ++x or x++
+    PsiExpression operand = extractIncrementedExpression(tb.getSingleStatement());
+    if(!(operand instanceof PsiReferenceExpression)) return null;
+    PsiElement element = ((PsiReferenceExpression)operand).resolve();
+
+    // the referred variable is the same as non-final variable
+    if(!(element instanceof PsiLocalVariable) || !variables.contains(element)) return null;
+
+    // the referred variable is not used in intermediate operations
+    for(Operation operation : operations) {
+      if(ReferencesSearch.search(element, new LocalSearchScope(operation.getExpression())).findFirst() != null) return null;
+    }
+    return (PsiLocalVariable)element;
   }
 
   private static boolean isAddAllCall(TerminalBlock tb) {
@@ -286,6 +329,12 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
   private static boolean isIdentityMapping(PsiVariable variable, PsiExpression mapperCall) {
     return mapperCall instanceof PsiReferenceExpression && ((PsiReferenceExpression)mapperCall).resolve() == variable;
+  }
+
+  private static void reformatWhenNeeded(@NotNull Project project, PsiElement result) {
+    if (result != null) {
+      CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(result));
+    }
   }
 
   private static class ReplaceWithForeachCallFix implements LocalQuickFix {
@@ -476,12 +525,6 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       }
     }
 
-    private static void reformatWhenNeeded(@NotNull Project project, PsiElement result) {
-      if (result != null) {
-        CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(result));
-      }
-    }
-
     private static String createInitializerReplacementText(PsiType varType, PsiExpression initializer) {
       final PsiType initializerType = initializer.getType();
       final PsiClassType rawType = initializerType instanceof PsiClassType ? ((PsiClassType)initializerType).rawType() : null;
@@ -509,6 +552,65 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         return new MapOp(expression, variable).createReplacement(null);
       }
       return "";
+    }
+
+  }
+
+  private static class ReplaceWithCountFix implements LocalQuickFix {
+
+    @NotNull
+    @Override
+    public String getName() {
+      return getFamilyName();
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Replace with count()";
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiForeachStatement foreachStatement = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiForeachStatement.class);
+      if (foreachStatement != null) {
+        if (!FileModificationService.getInstance().preparePsiElementForWrite(foreachStatement)) return;
+        final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+        PsiStatement body = foreachStatement.getBody();
+        final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
+        if (body != null && iteratedValue != null) {
+          final PsiParameter parameter = foreachStatement.getIterationParameter();
+          TerminalBlock tb = TerminalBlock.from(parameter, body);
+          List<String> intermediateOps = tb.extractOperationReplacements(elementFactory);
+          PsiExpression operand = extractIncrementedExpression(tb.getSingleStatement());
+          if(!(operand instanceof PsiReferenceExpression)) return;
+          PsiElement element = ((PsiReferenceExpression)operand).resolve();
+          if(!(element instanceof PsiLocalVariable)) return;
+          PsiLocalVariable var = (PsiLocalVariable)element;
+          final StringBuilder builder = generateStream(iteratedValue, intermediateOps);
+          builder.append(".count()");
+          PsiElement declaration = var.getParent();
+          if(declaration instanceof PsiDeclarationStatement) {
+            PsiElement[] elements = ((PsiDeclarationStatement)declaration).getDeclaredElements();
+            if(elements[elements.length-1] == var && foreachStatement.equals(
+              PsiTreeUtil.skipSiblingsForward(declaration, PsiWhiteSpace.class, PsiComment.class))) {
+              PsiExpression initializer = var.getInitializer();
+              if(initializer != null && initializer.getText().equals("0")) {
+                String typeStr = var.getType().getCanonicalText();
+                String replacement = (typeStr.equals("long") ? "" : "(" + typeStr + ") ") + builder;
+                initializer.replace(elementFactory.createExpressionFromText(replacement, foreachStatement));
+                simplifyRedundantCast(var);
+                foreachStatement.delete();
+                reformatWhenNeeded(project, var);
+                return;
+              }
+            }
+          }
+          PsiElement result = foreachStatement.replace(elementFactory.createStatementFromText(var.getName()+"+="+builder+";", foreachStatement));
+          simplifyRedundantCast(result);
+          reformatWhenNeeded(project, result);
+        }
+      }
     }
 
   }
