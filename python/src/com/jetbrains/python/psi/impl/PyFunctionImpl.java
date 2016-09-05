@@ -34,6 +34,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.JBIterable;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -636,15 +637,18 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     else if (PyNames.STATICMETHOD.equals(deconame)) {
       return STATICMETHOD;
     }
+
     // implicit staticmethod __new__
     final PyClass cls = getContainingClass();
     if (cls != null && PyNames.NEW.equals(getName()) && cls.isNewStyleClass(null)) {
       return STATICMETHOD;
     }
-    //
-    if (getStub() != null) {
-      return getWrappersFromStub();
+
+    final PyFunctionStub stub = getStub();
+    if (stub != null) {
+      return getModifierFromStub(stub);
     }
+
     final String funcName = getName();
     if (funcName != null) {
       PyAssignmentStatement currentAssignment = PsiTreeUtil.getNextSiblingOfType(this, PyAssignmentStatement.class);
@@ -671,6 +675,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         currentAssignment = PsiTreeUtil.getNextSiblingOfType(currentAssignment, PyAssignmentStatement.class);
       }
     }
+
     return null;
   }
 
@@ -696,25 +701,36 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   }
 
   @Nullable
-  private Modifier getWrappersFromStub() {
-    final StubElement parentStub = getStub().getParentStub();
-    final List childrenStubs = parentStub.getChildrenStubs();
-    int index = childrenStubs.indexOf(getStub());
-    if (index >= 0 && index < childrenStubs.size() - 1) {
-      StubElement nextStub = (StubElement)childrenStubs.get(index + 1);
-      if (nextStub instanceof PyTargetExpressionStub) {
-        final PyTargetExpressionStub targetExpressionStub = (PyTargetExpressionStub)nextStub;
-        if (targetExpressionStub.getInitializerType() == PyTargetExpressionStub.InitializerType.CallExpression) {
-          final QualifiedName qualifiedName = targetExpressionStub.getInitializer();
-          if (QualifiedName.fromComponents(PyNames.CLASSMETHOD).equals(qualifiedName)) {
-            return CLASSMETHOD;
+  private static Modifier getModifierFromStub(@NotNull PyFunctionStub stub) {
+    final Optional<List<StubElement>> siblingsStubsOptional = Optional
+      .of(stub)
+      .map(StubElement::getParentStub)
+      .map(StubElement::getChildrenStubs);
+
+    if (siblingsStubsOptional.isPresent()) {
+      return JBIterable
+        .from(siblingsStubsOptional.get())
+        .skipWhile(siblingStub -> !stub.equals(siblingStub))
+        .transform(nextSiblingStub -> as(nextSiblingStub, PyTargetExpressionStub.class))
+        .filter(Objects::nonNull)
+        .filter(nextSiblingStub -> nextSiblingStub.getInitializerType() == PyTargetExpressionStub.InitializerType.CallExpression)
+        .transform(PyTargetExpressionStub::getInitializer)
+        .transform(
+          initializerName -> {
+            if (initializerName.matches(PyNames.CLASSMETHOD)) {
+              return CLASSMETHOD;
+            }
+            else if (initializerName.matches(PyNames.STATICMETHOD)) {
+              return STATICMETHOD;
+            }
+            else {
+              return null;
+            }
           }
-          if (QualifiedName.fromComponents(PyNames.STATICMETHOD).equals(qualifiedName)) {
-            return STATICMETHOD;
-          }
-        }
-      }
+        )
+        .find(Objects::nonNull);
     }
+
     return null;
   }
 
