@@ -137,7 +137,19 @@ public class GitFileAnnotation extends FileAnnotation {
   @Override
   public String getToolTip(int lineNumber) {
     LineInfo lineInfo = getLineInfo(lineNumber);
-    return lineInfo != null ? lineInfo.getTooltip() : null;
+    if (lineInfo == null) return null;
+
+    GitRevisionNumber revisionNumber = lineInfo.getRevisionNumber();
+
+    VcsFileRevision fileRevision = null;
+    if (myRevisions != null && myRevisionMap != null &&
+        myRevisionMap.contains(revisionNumber)) {
+      fileRevision = myRevisions.get(myRevisionMap.get(revisionNumber));
+    }
+
+    String commitMessage = fileRevision != null ? fileRevision.getCommitMessage() : lineInfo.getSubject();
+    return GitBundle.message("annotation.tool.tip", revisionNumber.asString(), lineInfo.getAuthor(),
+                             DateFormatUtil.formatDateTime(lineInfo.getDate()), commitMessage);
   }
 
   @Nullable
@@ -252,9 +264,8 @@ public class GitFileAnnotation extends FileAnnotation {
     }
 
     @NotNull
-    public String getTooltip() {
-      return GitBundle.message("annotation.tool.tip", myRevision.asString(), myAuthor.getName(),
-                               DateFormatUtil.formatDateTime(myDate), mySubject);
+    public String getSubject() {
+      return mySubject;
     }
   }
 
