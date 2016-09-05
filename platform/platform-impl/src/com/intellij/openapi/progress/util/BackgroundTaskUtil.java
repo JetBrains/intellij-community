@@ -24,7 +24,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
@@ -39,7 +38,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class BackgroundTaskUtil {
   private static final Logger LOG = Logger.getInstance(BackgroundTaskUtil.class);
-  private static final Runnable TOO_SLOW_OPERATION = new EmptyRunnable();
 
   /*
    * Executor to perform <possibly> long operations on pooled thread
@@ -73,9 +71,6 @@ public class BackgroundTaskUtil {
     ModalityState modality = ModalityState.current();
     ProgressIndicator indicator = new EmptyProgressIndicator(modality);
 
-    Semaphore semaphore = new Semaphore(0);
-    AtomicReference<Runnable> resultRef = new AtomicReference<>();
-
     if (forceEDT) {
       try {
         Runnable callback = backgroundTask.fun(indicator);
@@ -88,30 +83,22 @@ public class BackgroundTaskUtil {
       }
     }
     else {
+      Helper<Runnable> helper = new Helper<>();
+
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         ProgressManager.getInstance().executeProcessUnderProgress(() -> {
           Runnable callback = backgroundTask.fun(indicator);
 
-          if (indicator.isCanceled()) {
-            semaphore.release();
-            return;
+          if (!helper.setResult(callback)) {
+            ApplicationManager.getApplication().invokeLater(() -> {
+              finish(callback, indicator);
+            }, modality);
           }
-
-          if (!resultRef.compareAndSet(null, callback)) {
-            ApplicationManager.getApplication().invokeLater(() -> finish(callback, indicator), modality);
-          }
-          semaphore.release();
         }, indicator);
       });
 
-      try {
-        semaphore.tryAcquire(waitMillis, TimeUnit.MILLISECONDS);
-      }
-      catch (InterruptedException ignore) {
-      }
-      if (!resultRef.compareAndSet(null, TOO_SLOW_OPERATION)) {
-        // update presentation in the same thread to reduce blinking, caused by 'invokeLater' and fast background operation
-        finish(resultRef.get(), indicator);
+      if (helper.await(waitMillis)) {
+        finish(helper.getResult(), indicator);
       }
       else {
         if (onSlowAction != null) onSlowAction.run();
@@ -185,5 +172,43 @@ public class BackgroundTaskUtil {
     });
 
     return indicator;
+  }
+
+
+  private static class Helper<T> {
+    private static final Object INITIAL_STATE = new Object();
+    private static final Object SLOW_OPERATION_STATE = new Object();
+
+    private final Semaphore mySemaphore = new Semaphore(0);
+    private final AtomicReference<Object> myResultRef = new AtomicReference<>(INITIAL_STATE);
+
+    /**
+     * @return true if computation was fast, and callback should be handled by other thread
+     */
+    public boolean setResult(T result) {
+      boolean isFast = myResultRef.compareAndSet(INITIAL_STATE, result);
+      mySemaphore.release();
+      return isFast;
+    }
+
+    /**
+     * @return true if computation was fast, and callback should be handled by current thread
+     */
+    public boolean await(int waitMillis) {
+      try {
+        mySemaphore.tryAcquire(waitMillis, TimeUnit.MILLISECONDS);
+      }
+      catch (InterruptedException ignore) {
+      }
+
+      return !myResultRef.compareAndSet(INITIAL_STATE, SLOW_OPERATION_STATE);
+    }
+
+    public T getResult() {
+      Object result = myResultRef.get();
+      assert result != INITIAL_STATE && result != SLOW_OPERATION_STATE;
+      //noinspection unchecked
+      return (T)result;
+    }
   }
 }
