@@ -111,7 +111,8 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
     return null;
   }
 
-  public void handleUnzippedDirectories(File dir) throws IOException {
+  public void handleUnzippedDirectories(File dir, List<File> filesToRefresh) throws IOException {
+    filesToRefresh.add(dir);
   }
 
   public static abstract class StreamProcessor<T> {
