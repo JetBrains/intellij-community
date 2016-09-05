@@ -776,7 +776,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           exitCode = Restarter.scheduleRestart(beforeRestart);
         }
         catch (IOException e) {
-          LOG.warn("Cannot restart", e);
+          LOG.error("Cannot restart", e);
         }
       }
       System.exit(exitCode);
