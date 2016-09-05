@@ -51,6 +51,10 @@ class WindowsDistributionBuilder {
         }
       }
     }
+    buildContext.ant.copy(todir: "$winDistPath/lib/libpty/win") {
+      fileset(dir: "$buildContext.paths.communityHome/lib/libpty/win")
+    }
+
     buildContext.ant.copy(file: ideaProperties.path, todir: "$winDistPath/bin")
     buildContext.ant.fixcrlf(file: "$winDistPath/bin/idea.properties", eol: "dos")
 
@@ -70,7 +74,10 @@ class WindowsDistributionBuilder {
 
     def arch = customizer.bundledJreArchitecture
     def jreDirectoryPath = arch != null ? buildContext.bundledJreManager.extractWinJre(arch) : null
-    buildWinZip(jreDirectoryPath, buildContext.productProperties.buildCrossPlatformDistribution ? ".win" : "")
+    if (customizer.buildZipArchive) {
+      buildWinZip(jreDirectoryPath, buildContext.productProperties.buildCrossPlatformDistribution ? ".win" : "")
+    }
+
     if (arch != null && customizer.buildZipWithBundledOracleJre) {
       String oracleJrePath = buildContext.bundledJreManager.extractOracleWinJre(arch)
       if (oracleJrePath != null) {

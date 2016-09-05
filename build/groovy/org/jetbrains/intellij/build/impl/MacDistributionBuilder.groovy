@@ -96,6 +96,9 @@ class MacDistributionBuilder {
         }
       }
     }
+    buildContext.ant.copy(todir: "$target/lib/libpty/macosx") {
+      fileset(dir: "$buildContext.paths.communityHome/lib/libpty/macosx")
+    }
 
     buildContext.ant.copy(todir: target) {
       fileset(dir: "$buildContext.paths.communityHome/build/conf/mac/Contents")

@@ -104,6 +104,12 @@ class ProductModulesLayout {
   List<String> licenseFilesToBuildSearchableOptions = []
 
   /**
+   * If {@code true} a special xml descriptor in custom plugin repository format will be generated for {@link #pluginModulesToPublish} plugins.
+   * This descriptor and the plugin *.zip files need to be uploaded to the URL specified in 'plugins@builtin-url' attribute in *ApplicationInfo.xml file.
+   */
+  boolean prepareCustomPluginRepositoryForPublishedPlugins = false
+
+  /**
    * @param allPlugins descriptions of layout of all plugins which may be included into the product
    * @return list of all modules which output is included into the plugin's JARs
    */
