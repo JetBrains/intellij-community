@@ -16,6 +16,8 @@
 package com.intellij.diagnostic;
 
 import com.intellij.CommonBundle;
+import com.intellij.credentialStore.CredentialAttributesKt;
+import com.intellij.credentialStore.Credentials;
 import com.intellij.errorreport.bean.ErrorBean;
 import com.intellij.errorreport.error.InternalEAPException;
 import com.intellij.errorreport.error.NoSuchEAPUserException;
@@ -28,7 +30,6 @@ import com.intellij.idea.IdeaLogger;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
@@ -77,15 +78,13 @@ public class ITNReporter extends ErrorReportSubmitter {
                                   final Consumer<SubmittedReportInfo> callback,
                                   final ErrorBean errorBean,
                                   final String description) {
-    final DataContext dataContext = DataManager.getInstance().getDataContext(parentComponent);
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-
-    ErrorReportConfigurable settings = ErrorReportConfigurable.getInstance();
-    if (!settings.KEEP_ITN_PASSWORD && !StringUtil.isEmpty(settings.ITN_LOGIN) && StringUtil.isEmpty(settings.getPlainItnPassword())) {
-      JetBrainsAccountDialog dlg = new JetBrainsAccountDialog(parentComponent);
-      if (!dlg.showAndGet()) {
+    Credentials credentials = ErrorReportConfigurable.getCredentials();
+    if (!CredentialAttributesKt.isFulfilled(credentials)) {
+      if (!new JetBrainsAccountDialog(parentComponent).showAndGet()) {
         return false;
       }
+
+      credentials = ErrorReportConfigurable.getCredentials();
     }
 
     errorBean.setDescription(description);
@@ -95,17 +94,7 @@ public class ITNReporter extends ErrorReportSubmitter {
       errorBean.setPreviousException(previousExceptionThreadId);
     }
 
-    Throwable t = event.getThrowable();
-    if (t != null) {
-      final PluginId pluginId = IdeErrorsDialog.findPluginId(t);
-      if (pluginId != null) {
-        final IdeaPluginDescriptor ideaPluginDescriptor = PluginManager.getPlugin(pluginId);
-        if (ideaPluginDescriptor != null && (!ideaPluginDescriptor.isBundled() || ideaPluginDescriptor.allowBundledUpdate())) {
-          errorBean.setPluginName(ideaPluginDescriptor.getName());
-          errorBean.setPluginVersion(ideaPluginDescriptor.getVersion());
-        }
-      }
-    }
+    setPluginInfo(event, errorBean);
 
     Object data = event.getData();
     if (data instanceof AbstractMessage) {
@@ -113,13 +102,14 @@ public class ITNReporter extends ErrorReportSubmitter {
       errorBean.setAttachments(((AbstractMessage)data).getIncludedAttachments());
     }
 
-    String login = settings.ITN_LOGIN;
-    String password = settings.getPlainItnPassword();
+    String login = credentials == null ? null : credentials.getUserName();
+    String password = credentials == null ? null : credentials.getPasswordAsString();
     if (StringUtil.isEmptyOrSpaces(login) && StringUtil.isEmptyOrSpaces(password)) {
       login = "idea_anonymous";
       password = "guest";
     }
 
+    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent));
     ITNProxy.sendError(project, login, password, errorBean, threadId -> {
       updatePreviousThreadId(threadId);
       String url = ITNProxy.getBrowseUrl(threadId);
@@ -173,6 +163,20 @@ public class ITNReporter extends ErrorReportSubmitter {
       });
     });
     return true;
+  }
+
+  public static void setPluginInfo(IdeaLoggingEvent event, ErrorBean errorBean) {
+    Throwable t = event.getThrowable();
+    if (t != null) {
+      final PluginId pluginId = IdeErrorsDialog.findPluginId(t);
+      if (pluginId != null) {
+        final IdeaPluginDescriptor ideaPluginDescriptor = PluginManager.getPlugin(pluginId);
+        if (ideaPluginDescriptor != null && (!ideaPluginDescriptor.isBundled() || ideaPluginDescriptor.allowBundledUpdate())) {
+          errorBean.setPluginName(ideaPluginDescriptor.getName());
+          errorBean.setPluginVersion(ideaPluginDescriptor.getVersion());
+        }
+      }
+    }
   }
 
   private static void updatePreviousThreadId(Integer threadId) {

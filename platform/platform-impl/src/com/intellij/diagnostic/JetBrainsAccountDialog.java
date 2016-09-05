@@ -15,9 +15,13 @@
  */
 package com.intellij.diagnostic;
 
+import com.intellij.credentialStore.CredentialAttributes;
+import com.intellij.credentialStore.Credentials;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ClickListener;
 import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.NotNull;
@@ -28,20 +32,8 @@ import java.awt.event.MouseEvent;
 
 public class JetBrainsAccountDialog extends DialogWrapper {
   private JTextField myItnLoginTextField;
-  private JPasswordField myItnPasswordTextField;
-  private JCheckBox myRememberITNPasswordCheckBox;
-
-  public void storeInfo() {
-    ErrorReportConfigurable.getInstance().ITN_LOGIN = myItnLoginTextField.getText();
-    ErrorReportConfigurable.getInstance().setPlainItnPassword(new String(myItnPasswordTextField.getPassword()));
-    ErrorReportConfigurable.getInstance().KEEP_ITN_PASSWORD = myRememberITNPasswordCheckBox.isSelected();
-  }
-
-  public void loadInfo() {
-    myItnLoginTextField.setText(ErrorReportConfigurable.getInstance().ITN_LOGIN);
-    myItnPasswordTextField.setText(ErrorReportConfigurable.getInstance().getPlainItnPassword());
-    myRememberITNPasswordCheckBox.setSelected(ErrorReportConfigurable.getInstance().KEEP_ITN_PASSWORD);
-  }
+  private JPasswordField myPasswordText;
+  private JCheckBox myRememberCheckBox;
 
   public JetBrainsAccountDialog(Component parent) throws HeadlessException {
     super(parent, false);
@@ -82,7 +74,13 @@ public class JetBrainsAccountDialog extends DialogWrapper {
 
     mySendingSettingsLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-    loadInfo();
+    Credentials credentials = ErrorReportConfigurable.getCredentials();
+    String userName = credentials == null ? null : credentials.getUserName();
+    myItnLoginTextField.setText(userName);
+    String password = credentials == null ? null : credentials.getPasswordAsString();
+    myPasswordText.setText(password);
+    // if no user name - never stored and so, defaults to remember. if user name set, but no password, so, previously was stored without password
+    myRememberCheckBox.setSelected(StringUtil.isEmpty(userName) || !StringUtil.isEmpty(password));
 
     new ClickListener() {
       @Override
@@ -98,7 +96,11 @@ public class JetBrainsAccountDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    storeInfo();
+    String userName = myItnLoginTextField.getText();
+    if (!StringUtil.isEmpty(userName)) {
+      PasswordSafe.getInstance().set(new CredentialAttributes(ErrorReportConfigurable.SERVICE_NAME, userName),
+                                     new Credentials(userName, myRememberCheckBox.isSelected() ? myPasswordText.getPassword() : null));
+    }
     super.doOKAction();
   }
 
