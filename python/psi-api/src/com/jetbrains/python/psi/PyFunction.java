@@ -54,6 +54,9 @@ public interface PyFunction extends PsiNamedElement, StubBasedPsiElement<PyFunct
   PyType getReturnStatementType(TypeEvalContext typeEvalContext);
 
   @Nullable
+  PyType getGeneratorType(TypeEvalContext typeEvalContext);
+
+  @Nullable
   PyType getReturnTypeFromDocString();
 
   /**

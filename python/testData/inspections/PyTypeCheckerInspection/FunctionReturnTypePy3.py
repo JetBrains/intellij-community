@@ -42,3 +42,10 @@ def j(x) -> <warning descr="Expected to return 'Union[int, str]', got no return"
 def k() -> None:
     if True:
         pass
+
+def l() -> __generator[int, Any, str]:
+    for i in range(10):
+        yield i
+
+def m() -> __generator[int, Any, None]:
+    yield from l()

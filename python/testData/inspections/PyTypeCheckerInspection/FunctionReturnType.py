@@ -53,3 +53,8 @@ def k():
     # type: () -> None
     if True:
         pass
+
+def l():
+    # type: () -> __generator[int, Any, None]
+    for i in range(10):
+        yield i
