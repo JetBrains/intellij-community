@@ -26,12 +26,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
-public class VcsLogProgress {
+public class VcsLogProgress implements Disposable {
   @NotNull private final Object myLock = new Object();
   @NotNull private final List<ProgressListener> myListeners = ContainerUtil.newArrayList();
-  private int myRunningTasksCount = 0;
+  @NotNull private Set<ProgressIndicator> myRunningTasks = ContainerUtil.newHashSet();
 
   @NotNull
   public ProgressIndicator createProgressIndicator() {
@@ -59,21 +60,21 @@ public class VcsLogProgress {
 
   public boolean isRunning() {
     synchronized (myLock) {
-      return myRunningTasksCount > 0;
+      return !myRunningTasks.isEmpty();
     }
   }
 
-  private void started() {
+  private void started(@NotNull ProgressIndicator indicator) {
     synchronized (myLock) {
-      myRunningTasksCount++;
-      if (myRunningTasksCount == 1) fireNotification(ProgressListener::progressStarted);
+      myRunningTasks.add(indicator);
+      if (myRunningTasks.size() == 1) fireNotification(ProgressListener::progressStarted);
     }
   }
 
-  private void stopped() {
+  private void stopped(@NotNull ProgressIndicator indicator) {
     synchronized (myLock) {
-      myRunningTasksCount--;
-      if (myRunningTasksCount == 0) fireNotification(ProgressListener::progressStopped);
+      myRunningTasks.remove(indicator);
+      if (myRunningTasks.isEmpty()) fireNotification(ProgressListener::progressStopped);
     }
   }
 
@@ -84,17 +85,26 @@ public class VcsLogProgress {
     }
   }
 
+  @Override
+  public void dispose() {
+    synchronized (myLock) {
+      for (ProgressIndicator indicator : myRunningTasks) {
+        indicator.cancel();
+      }
+    }
+  }
+
   private class VcsLogProgressIndicator extends AbstractProgressIndicatorBase {
     @Override
     public synchronized void start() {
       super.start();
-      started();
+      started(this);
     }
 
     @Override
     public synchronized void stop() {
       super.stop();
-      stopped();
+      stopped(this);
     }
   }
 
