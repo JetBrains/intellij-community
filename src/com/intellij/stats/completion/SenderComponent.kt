@@ -9,16 +9,16 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.stats.completion.experiment.StatusInfoProvider
 import com.intellij.util.Alarm
 import com.intellij.util.Time
-import org.apache.commons.codec.binary.Base64InputStream
+import org.apache.commons.codec.binary.Base64OutputStream
 import org.apache.http.client.fluent.Form
 import org.apache.http.client.fluent.Request
 import org.apache.http.entity.ContentType
 import org.apache.http.message.BasicHeader
 import org.apache.http.util.EntityUtils
+import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.FileInputStream
 import java.io.IOException
-import java.util.zip.GZIPInputStream
+import java.util.zip.GZIPOutputStream
 import javax.swing.SwingUtilities
 
 fun assertNotEDT() {
@@ -120,8 +120,8 @@ class SimpleRequestService: RequestService() {
 
     override fun postZipped(url: String, file: File): ResponseData? {
         try {
-            val base64GzipStream = Base64InputStream(GZIPInputStream(FileInputStream(file)))
-            val request = Request.Post(url).bodyStream(base64GzipStream)
+            val zippedArray = getZippedContent(file)
+            val request = Request.Post(url).bodyByteArray(zippedArray)
             request.addHeader(BasicHeader(HttpHeaders.CONTENT_ENCODING, "gzip"))
             val response = request.execute()
             val httpResponse = response.returnResponse()
@@ -131,6 +131,11 @@ class SimpleRequestService: RequestService() {
             LOG.debug(e)
             return null
         }
+    }
+
+    private fun getZippedContent(file: File): ByteArray {
+        val fileText = file.readText()
+        return GzipBase64Compressor.compress(fileText)
     }
 
     override fun post(url: String, file: File): ResponseData? {
@@ -163,7 +168,16 @@ class SimpleRequestService: RequestService() {
 
 
 data class ResponseData(val code: Int, val text: String = "") {
-    
     fun isOK() = code >= 200 && code < 300
-    
+}
+
+
+object GzipBase64Compressor {
+    fun compress(text: String): ByteArray {
+        val outputStream = ByteArrayOutputStream()
+        val base64Stream = GZIPOutputStream(Base64OutputStream(outputStream))
+        base64Stream.write(text.toByteArray())
+        base64Stream.close()
+        return outputStream.toByteArray()   
+    }
 }
