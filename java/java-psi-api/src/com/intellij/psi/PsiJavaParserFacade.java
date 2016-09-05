@@ -249,6 +249,5 @@ public interface PsiJavaParserFacade {
   PsiJavaModule createModuleFromText(@NotNull String text);
 
   /** @deprecated use {@link PsiType#annotate(TypeAnnotationProvider)} (to be removed in IDEA 18) */
-  @SuppressWarnings("unused")
   PsiType createPrimitiveType(@NotNull String text, @NotNull PsiAnnotation[] annotations) throws IncorrectOperationException;
 }

@@ -120,7 +120,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
    * @deprecated 
    * use {@link JDOMUtil#internElement(Element, StringInterner)}
    */
-  @SuppressWarnings("unused")
   @Deprecated
   public static void internJDOMElement(@NotNull Element rootElement) {
   }

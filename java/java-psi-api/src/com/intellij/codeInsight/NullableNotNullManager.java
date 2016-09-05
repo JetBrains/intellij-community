@@ -168,13 +168,11 @@ public abstract class NullableNotNullManager implements PersistentStateComponent
   }
 
   /** @deprecated use {@link #copyNotNullAnnotation(PsiModifierListOwner, PsiModifierListOwner)} (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
   public PsiAnnotation copyNotNullAnnotation(PsiModifierListOwner owner) {
     return copyAnnotation(owner, getNotNullAnnotation(owner, false));
   }
 
   /** @deprecated use {@link #copyNullableOrNotNullAnnotation(PsiModifierListOwner, PsiModifierListOwner)} (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
   public PsiAnnotation copyNullableAnnotation(PsiModifierListOwner owner) {
     return copyAnnotation(owner, getNullableAnnotation(owner, false));
   }

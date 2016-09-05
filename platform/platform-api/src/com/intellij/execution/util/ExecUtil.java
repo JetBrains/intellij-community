@@ -292,33 +292,28 @@ public class ExecUtil {
   // deprecated stuff
 
   /** @deprecated use {@code new GeneralCommandLine(command).createProcess().waitFor()} (to be removed in IDEA 16) */
-  @SuppressWarnings("unused")
   public static int execAndGetResult(String... command) throws ExecutionException, InterruptedException {
     assert command != null && command.length > 0;
     return new GeneralCommandLine(command).createProcess().waitFor();
   }
 
   /** @deprecated use {@code new GeneralCommandLine(command).createProcess().waitFor()} (to be removed in IDEA 16) */
-  @SuppressWarnings("unused")
   public static int execAndGetResult(@NotNull List<String> command) throws ExecutionException, InterruptedException {
     return new GeneralCommandLine(command).createProcess().waitFor();
   }
 
   /** @deprecated use {@link #execAndGetOutput(GeneralCommandLine)} instead (to be removed in IDEA 16) */
-  @SuppressWarnings("unused")
   public static ProcessOutput execAndGetOutput(@NotNull List<String> command, @Nullable String workDir) throws ExecutionException {
     GeneralCommandLine commandLine = new GeneralCommandLine(command).withWorkDirectory(workDir);
     return new CapturingProcessHandler(commandLine).runProcess();
   }
 
   /** @deprecated use {@link #execAndReadLine(GeneralCommandLine)} instead (to be removed in IDEA 16) */
-  @SuppressWarnings("unused")
   public static String execAndReadLine(String... command) {
     return execAndReadLine(new GeneralCommandLine(command));
   }
 
   /** @deprecated use {@link #execAndReadLine(GeneralCommandLine)} instead (to be removed in IDEA 16) */
-  @SuppressWarnings("unused")
   public static String execAndReadLine(@Nullable Charset charset, String... command) {
     GeneralCommandLine commandLine = new GeneralCommandLine(command);
     if (charset != null) commandLine = commandLine.withCharset(charset);

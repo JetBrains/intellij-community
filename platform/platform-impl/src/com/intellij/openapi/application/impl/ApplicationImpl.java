@@ -1362,7 +1362,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated duplicate parameters; use {@link #exit(boolean, boolean, boolean)} instead (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
   public void exit(boolean force, boolean exitConfirmed, boolean allowListenersToCancel, boolean restart) {
     exit(force, exitConfirmed, restart);
   }

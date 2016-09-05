@@ -38,7 +38,6 @@ import java.nio.charset.Charset;
  *
  * @deprecated Use {@link LocalFilePath} instead. To remove in IDEA 16.
  */
-@SuppressWarnings("unused")
 @Deprecated
 public class FilePathImpl implements FilePath {
   @NotNull private final String myPath;

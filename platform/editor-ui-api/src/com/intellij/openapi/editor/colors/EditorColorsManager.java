@@ -31,7 +31,6 @@ public abstract class EditorColorsManager {
 
   public abstract void addColorsScheme(@NotNull EditorColorsScheme scheme);
 
-  @SuppressWarnings("unused")
   @Deprecated
   public abstract void removeAllSchemes();
 

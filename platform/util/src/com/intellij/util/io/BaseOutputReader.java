@@ -210,19 +210,16 @@ public abstract class BaseOutputReader extends BaseDataReader {
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link #BaseOutputReader(InputStream, Charset, Options)} (to be removed in IDEA 2018.1) */
-  @SuppressWarnings("unused")
   public BaseOutputReader(@NotNull InputStream inputStream, @Nullable Charset charset, @Nullable SleepingPolicy policy) {
     this(inputStream, charset, Options.withPolicy(policy));
   }
 
   /** @deprecated use {@link #BaseOutputReader(Reader, Options)} (to be removed in IDEA 2018.1) */
-  @SuppressWarnings("unused")
   public BaseOutputReader(@NotNull Reader reader, @Nullable SleepingPolicy policy) {
     this(reader, Options.withPolicy(policy));
   }
 
   /** @deprecated use {@link #BaseOutputReader(Reader, Options)} (to be removed in IDEA 2018.1) */
-  @SuppressWarnings("unused")
   protected void onBufferExhaustion() { }
   //</editor-fold>
 }

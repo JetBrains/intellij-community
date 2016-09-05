@@ -756,13 +756,11 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   /** @deprecated use {@link PlatformTestUtil#lowercaseFirstLetter(String, boolean)} (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
   public static String lowercaseFirstLetter(String name, boolean lowercaseFirstLetter) {
     return PlatformTestUtil.lowercaseFirstLetter(name, lowercaseFirstLetter);
   }
 
   /** @deprecated use {@link PlatformTestUtil#isAllUppercaseName(String)} (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
   public static boolean isAllUppercaseName(String name) {
     return PlatformTestUtil.isAllUppercaseName(name);
   }

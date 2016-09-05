@@ -88,8 +88,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -1885,7 +1883,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
   }
 
-  @SuppressWarnings("unused")
   @NotNull
   @TestOnly
   @Deprecated

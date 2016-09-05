@@ -109,7 +109,6 @@ public abstract class XDebugProcess {
   /**
    * @deprecated Use {@link #startForceStepInto(XSuspendContext)} instead
    */
-  @SuppressWarnings("unused")
   @Deprecated
   public void startForceStepInto(){
     //noinspection deprecation

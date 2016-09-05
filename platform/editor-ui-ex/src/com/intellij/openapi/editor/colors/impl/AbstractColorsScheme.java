@@ -428,7 +428,6 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   }
 
   @Deprecated
-  @SuppressWarnings("unused")
   public static final Map<String, Color> DEFAULT_ERROR_STRIPE_COLOR = new THashMap<>();
 
   @SuppressWarnings("UseJBColor")

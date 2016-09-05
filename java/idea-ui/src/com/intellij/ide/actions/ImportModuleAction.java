@@ -144,7 +144,6 @@ public class ImportModuleAction extends AnAction {
   }
 
   /** @deprecated to be removed in IDEA 16 */
-  @SuppressWarnings("unused")
   public static String getFileChooserDescription(@Nullable final Project project) {
     return getFileChooserDescription(getProviders(project));
   }

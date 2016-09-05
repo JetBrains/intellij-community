@@ -138,7 +138,6 @@ public class PyTypeTest extends PyTestCase {
 
   // TODO: uncomment when we have a mock SDK for Python 3.x
   // PY-1427
-  @SuppressWarnings("unused")
   public void _testBytesLiteral() {  // PY-1427
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
     try {

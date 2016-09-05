@@ -1194,7 +1194,6 @@ public class FileUtil extends FileUtilRt {
   }
 
   /** @deprecated use {@link #sanitizeFileName(String, boolean)} (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
   public static String sanitizeName(@NotNull String name) {
     return sanitizeFileName(name, false);
   }
