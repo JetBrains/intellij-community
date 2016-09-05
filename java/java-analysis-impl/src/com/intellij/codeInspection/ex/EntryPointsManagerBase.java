@@ -590,7 +590,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     }
 
     private static Pattern createRegexp(final String pattern) {
-      final String replace = pattern.replace("*", ".*").replace(".", "\\.");
+      final String replace = pattern.replace(".", "\\.").replace("*", ".*");
       try {
         return Pattern.compile(replace);
       }

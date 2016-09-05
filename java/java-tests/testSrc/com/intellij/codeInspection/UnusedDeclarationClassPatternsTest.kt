@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInspection;
+package com.intellij.codeInspection
 
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
 import com.intellij.codeInspection.ex.EntryPointsManagerBase
@@ -27,12 +27,48 @@ class UnusedDeclarationClassPatternsTest : LightCodeInsightFixtureTestCase() {
     val unusedDeclarationInspection = UnusedDeclarationInspection(true)
     myFixture.enableInspections(unusedDeclarationInspection)
     val classPattern = EntryPointsManagerBase.ClassPattern()
-    classPattern.hierarchically = true;
+    classPattern.hierarchically = true
     classPattern.pattern = "java.lang.Runnable"
     val patterns = EntryPointsManagerBase.getInstance(project).patterns
     try {
       patterns.add(classPattern)
       myFixture.configureByText("C.java", "public abstract class C implements Runnable {}")
+      myFixture.checkHighlighting()
+    }
+    finally {
+      patterns.remove(classPattern)
+      myFixture.disableInspections(unusedDeclarationInspection)
+    }
+  }
+
+  fun testMethodPattern() {
+    val unusedDeclarationInspection = UnusedDeclarationInspection(true)
+    myFixture.enableInspections(unusedDeclarationInspection)
+    val classPattern = EntryPointsManagerBase.ClassPattern()
+    classPattern.pattern = "C"
+    classPattern.method = "*"
+    val patterns = EntryPointsManagerBase.getInstance(project).patterns
+    try {
+      patterns.add(classPattern)
+      myFixture.configureByText("C.java", "public abstract class C { void foo() {} public static void main(String[] args) {}}")
+      myFixture.checkHighlighting()
+    }
+    finally {
+      patterns.remove(classPattern)
+      myFixture.disableInspections(unusedDeclarationInspection)
+    }
+  }
+
+  fun testMethodPattern1() {
+    val unusedDeclarationInspection = UnusedDeclarationInspection(true)
+    myFixture.enableInspections(unusedDeclarationInspection)
+    val classPattern = EntryPointsManagerBase.ClassPattern()
+    classPattern.pattern = "C"
+    classPattern.method = "foo*"
+    val patterns = EntryPointsManagerBase.getInstance(project).patterns
+    try {
+      patterns.add(classPattern)
+      myFixture.configureByText("C.java", "public abstract class C { void fooBar() {} public static void main(String[] args) {}}")
       myFixture.checkHighlighting()
     }
     finally {
