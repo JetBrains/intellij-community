@@ -730,6 +730,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
    *  quit message is shown. In that case, showing multiple messages sounds contra-intuitive as well
    */
   public void exit(boolean force, boolean exitConfirmed, boolean restart) {
+    exit(force, exitConfirmed, restart, ArrayUtil.EMPTY_STRING_ARRAY);
+  }
+
+  public void exit(boolean force, boolean exitConfirmed, boolean restart, @NotNull String[] beforeRestart) {
     if (!force) {
       if (myExitInProgress) return;
       if (!exitConfirmed && getDefaultModalityState() != ModalityState.NON_MODAL) return;
@@ -737,14 +741,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     myExitInProgress = true;
     if (isDispatchThread()) {
-      doExit(force, exitConfirmed, restart);
+      doExit(force, exitConfirmed, restart, beforeRestart);
     }
     else {
-      invokeLater(() -> doExit(force, exitConfirmed, restart), ModalityState.NON_MODAL);
+      invokeLater(() -> doExit(force, exitConfirmed, restart, beforeRestart), ModalityState.NON_MODAL);
     }
   }
 
-  private void doExit(boolean force, boolean exitConfirmed, boolean restart) {
+  private void doExit(boolean force, boolean exitConfirmed, boolean restart, String[] beforeRestart) {
     try {
       if (!force && !confirmExitIfNeeded(exitConfirmed)) {
         saveAll();
@@ -769,7 +773,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       int exitCode = 0;
       if (restart && Restarter.isSupported()) {
         try {
-          exitCode = Restarter.scheduleRestart();
+          exitCode = Restarter.scheduleRestart(beforeRestart);
         }
         catch (IOException e) {
           LOG.warn("Cannot restart", e);

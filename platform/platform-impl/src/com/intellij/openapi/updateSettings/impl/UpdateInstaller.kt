@@ -17,17 +17,20 @@ package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.PlatformUtils
+import com.intellij.util.ArrayUtil
+import com.intellij.util.Restarter
 import com.intellij.util.io.HttpRequests
 import java.io.File
 import java.io.IOException
 import java.net.URL
-import java.util.*
+import javax.swing.UIManager
 
 object UpdateInstaller {
   private val patchesUrl: String
@@ -35,36 +38,22 @@ object UpdateInstaller {
 
   @JvmStatic
   @Throws(IOException::class)
-  fun installPlatformUpdate(patch: PatchInfo, toBuild: BuildNumber, forceHttps: Boolean, indicator: ProgressIndicator) {
-    indicator.text = IdeBundle.message("update.downloading.patch.progress.title")
+  fun installPlatformUpdate(patch: PatchInfo, toBuild: BuildNumber, forceHttps: Boolean, indicator: ProgressIndicator): Array<String> {
+    indicator.text = IdeBundle.message("update.downloading.patch.progress")
 
-    val productCode = ApplicationInfo.getInstance().build.productCode
-    val fromBuildNumber = patch.fromBuild.asStringWithoutProductCode()
-    val toBuildNumber = toBuild.asStringWithoutProductCode()
+    val product = ApplicationInfo.getInstance().build.productCode
+    val from = patch.fromBuild.asStringWithoutProductCode()
+    val to = toBuild.asStringWithoutProductCode()
+    val jdk = if (System.getProperty("idea.java.redist", "").lastIndexOf("NoJavaDistribution") >= 0) "-no-jdk" else ""
+    val patchName = "${product}-${from}-${to}-patch${jdk}-${patch.osSuffix}.jar"
 
-    var bundledJdk = ""
-    val jdkRedist = System.getProperty("idea.java.redist")
-    if (jdkRedist != null && jdkRedist.lastIndexOf("NoJavaDistribution") >= 0) {
-      bundledJdk = "-no-jdk"
-    }
+    val baseUrl = patchesUrl
+    val url = URL(URL(if (baseUrl.endsWith('/')) baseUrl else baseUrl + '/'), patchName)
+    val patchFile = File(getTempDir(), "patch.jar")
+    HttpRequests.request(url.toString()).gzip(false).forceHttps(forceHttps).saveToFile(patchFile, indicator)
 
-    val osSuffix = "-" + patch.osSuffix
-
-    val fileName = "$productCode-$fromBuildNumber-$toBuildNumber-patch$bundledJdk$osSuffix.jar"
-
-    var baseUrl = patchesUrl
-    if (!baseUrl.endsWith('/')) baseUrl += '/'
-
-    val url = URL(URL(baseUrl), fileName).toString()
-    val tempFile = HttpRequests.request(url)
-        .gzip(false)
-        .forceHttps(forceHttps)
-        .connect { request -> request.saveToFile(FileUtil.createTempFile("ij.platform.", ".patch", true), indicator) }
-
-    val patchFileName = ("jetbrains.patch.jar." + PlatformUtils.getPlatformPrefix()).toLowerCase(Locale.ENGLISH)
-    val patchFile = File(FileUtil.getTempDirectory(), patchFileName)
-    FileUtil.copy(tempFile, patchFile)
-    FileUtil.delete(tempFile)
+    indicator.text = IdeBundle.message("update.preparing.patch.progress")
+    return preparePatchCommand(patchFile)
   }
 
   @JvmStatic
@@ -91,4 +80,67 @@ object UpdateInstaller {
 
     return installed
   }
+
+  @JvmStatic
+  fun cleanupPatch() {
+    val tempDir = getTempDir()
+    if (tempDir.exists()) FileUtil.delete(tempDir)
+  }
+
+  private fun preparePatchCommand(patchFile: File): Array<String> {
+    val log4j = findLib("log4j.jar")
+    val jna = findLib("jna.jar")
+    val jnaUtils = findLib("jna-platform.jar")
+
+    val tempDir = getTempDir()
+    if (!(tempDir.exists() || tempDir.mkdirs())) {
+      throw IOException("Cannot create temp directory: $tempDir")
+    }
+
+    val log4jCopy = log4j.copyTo(File(tempDir, log4j.name), true)
+    val jnaCopy = jna.copyTo(File(tempDir, jna.name), true)
+    val jnaUtilsCopy = jnaUtils.copyTo(File(tempDir, jnaUtils.name), true)
+
+    var java = System.getProperty("java.home")
+    if (FileUtil.isAncestor(PathManager.getHomePath(), java, true)) {
+      val javaCopy = File(tempDir, "jre")
+      File(java).copyRecursively(javaCopy, true)
+      java = javaCopy.path
+    }
+
+    val args = arrayListOf<String>()
+
+    if (SystemInfo.isWindows) {
+      val launcher = File(PathManager.getBinPath(), "VistaLauncher.exe")
+      if (launcher.canExecute()) {
+        args += Restarter.createTempExecutable(launcher).path
+      }
+    }
+
+    args += File(java, if (SystemInfo.isWindows) "bin\\java.exe" else "bin/java").path
+    args += "-Xmx750m"
+    args += "-cp"
+    args += arrayOf(patchFile.path, log4jCopy.path, jnaCopy.path, jnaUtilsCopy.path).joinToString(File.pathSeparator)
+
+    args += "-Djna.nosys=true"
+    args += "-Djna.boot.library.path="
+    args += "-Djna.debug_load=true"
+    args += "-Djna.debug_load.jna=true"
+    args += "-Djava.io.tmpdir=${tempDir.path}"
+    args += "-Didea.updater.log=${PathManager.getLogPath()}"
+    args += "-Dswing.defaultlaf=${UIManager.getSystemLookAndFeelClassName()}"
+
+    args += "com.intellij.updater.Runner"
+    args += "install"
+    args += PathManager.getHomePath()
+
+    return ArrayUtil.toStringArray(args)
+  }
+
+  private fun findLib(libName: String): File {
+    val libFile = File(PathManager.getLibPath(), libName)
+    return if (libFile.exists()) libFile else throw IOException("Missing: ${libFile}")
+  }
+
+  private fun getTempDir() = File(PathManager.getTempPath(), "patch-update")
 }

@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -129,10 +130,8 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   protected Action[] createActions() {
     List<Action> actions = ContainerUtil.newArrayList();
 
-    if (myPatch != null) {
-      boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
-      String button = IdeBundle.message(canRestart ? "updates.download.and.restart.button" : "updates.download.and.install.button");
-      actions.add(new AbstractAction(button) {
+    if (myPatch != null && ApplicationManager.getApplication().isRestartCapable()) {
+      actions.add(new AbstractAction(IdeBundle.message("updates.download.and.restart.button")) {
         {
           setEnabled(!myWriteProtected);
         }
@@ -187,8 +186,9 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     new Task.Modal(null, IdeBundle.message("update.notifications.title"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
+        String[] command;
         try {
-          UpdateInstaller.installPlatformUpdate(myPatch, myNewBuild.getNumber(), myForceHttps, indicator);
+          command = UpdateInstaller.installPlatformUpdate(myPatch, myNewBuild.getNumber(), myForceHttps, indicator);
         }
         catch (Exception e) {
           Logger.getInstance(UpdateChecker.class).warn(e);
@@ -206,12 +206,13 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
         }
 
         if (updatePlugins) {
+          indicator.setText(IdeBundle.message("update.downloading.plugins.progress"));
           UpdateChecker.saveDisabledToUpdatePlugins();
           UpdateInstaller.installPluginUpdates(myUpdatedPlugins, indicator);
         }
 
         ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-        app.invokeLater(() -> app.restart(true));
+        app.invokeLater(() -> ((ApplicationImpl)app).exit(false, true, true, command));
       }
     }.queue();
   }
