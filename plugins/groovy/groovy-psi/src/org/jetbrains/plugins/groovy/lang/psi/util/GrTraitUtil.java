@@ -27,6 +27,7 @@ import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -42,7 +43,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex.TraitFieldDescriptor;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitMethodsFileIndex;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 import static com.intellij.psi.PsiModifier.ABSTRACT;
 import static org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags.*;
@@ -74,13 +77,7 @@ public class GrTraitUtil {
   public static List<PsiClass> getSelfTypeClasses(@NotNull PsiClass trait) {
     return CachedValuesManager.getCachedValue(trait, () -> {
       List<PsiClass> result = ContainerUtil.newArrayList();
-      Queue<PsiClass> queue = new ArrayDeque<>();
-      Set<PsiClass> visited = ContainerUtil.newHashSet();
-      queue.offer(trait);
-      while (!queue.isEmpty()) {
-        PsiClass clazz = queue.poll();
-        if (!visited.add(clazz)) continue;
-        ContainerUtil.addAll(queue, clazz.getSupers());
+      InheritanceUtil.processSupers(trait, true, clazz -> {
         if (isTrait(clazz)) {
           PsiAnnotation annotation = AnnotationUtil.findAnnotation(clazz, "groovy.transform.SelfType");
           if (annotation != null) {
@@ -89,7 +86,8 @@ public class GrTraitUtil {
             );
           }
         }
-      }
+        return true;
+      });
       return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     });
   }
