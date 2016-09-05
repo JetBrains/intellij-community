@@ -201,7 +201,15 @@ private fun save(states: StateMap, rootElementName: String?, newLiveStates: Map<
 
   val rootElement = if (rootElementName == null) null else Element(rootElementName)
   for (componentName in states.keys()) {
-    val element = states.getElement(componentName, newLiveStates) ?: continue
+    val element: Element
+    try {
+      element = states.getElement(componentName, newLiveStates) ?: continue
+    }
+    catch (e: Exception) {
+      LOG.error("Cannot save \"$componentName\" data", e)
+      continue
+    }
+
     // name attribute should be first
     val elementAttributes = element.attributes
     if (elementAttributes.isEmpty()) {
