@@ -3,6 +3,6 @@ class T {
     int f(boolean b, int d) {
         int n = d;
         if (b) return 1;
-        return d;
+        return n;
     }
 }

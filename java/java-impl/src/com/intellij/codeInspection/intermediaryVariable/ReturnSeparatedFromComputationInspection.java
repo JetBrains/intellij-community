@@ -22,7 +22,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -295,7 +294,7 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
         return moveToForeach((PsiForeachStatement)targetStatement);
       }
       if (targetStatement instanceof PsiTryStatement) {
-        return moveToTry((PsiTryStatement)targetStatement);
+        return moveToTry((PsiTryStatement)targetStatement, returnAtTheEnd);
       }
       if (targetStatement instanceof PsiLabeledStatement) {
         return moveToLabeled((PsiLabeledStatement)targetStatement, returnAtTheEnd);
@@ -303,7 +302,7 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
       if (targetStatement instanceof PsiExpressionStatement) {
         return inlineExpression((PsiExpressionStatement)targetStatement);
       }
-      if (targetStatement instanceof PsiThrowStatement) {
+      if (targetStatement instanceof PsiThrowStatement || targetStatement instanceof PsiReturnStatement) {
         return true;
       }
       return false;
@@ -317,7 +316,7 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
       PsiJavaToken rBrace = codeBlock.getRBrace();
       if (rBrace != null) {
         PsiStatement lastNonEmptyStatement = getPrevNonEmptyStatement(rBrace, removeCompletely);
-        if (lastNonEmptyStatement == null || lastNonEmptyStatement instanceof PsiReturnStatement) {
+        if (lastNonEmptyStatement == null) {
           return false;
         }
         if (moveTo(lastNonEmptyStatement, returnAtTheEnd)) {
@@ -360,24 +359,24 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
       return false;
     }
 
-    private boolean moveToTry(@NotNull PsiTryStatement targetStatement) {
+    private boolean moveToTry(@NotNull PsiTryStatement targetStatement, boolean returnAtTheEnd) {
       PsiCodeBlock tryBlock = targetStatement.getTryBlock();
       if (tryBlock == null) {
         return false;
       }
-      boolean result = true;
       PsiCodeBlock finallyBlock = targetStatement.getFinallyBlock();
-      if (finallyBlock != null && writesVariable(finallyBlock)) {
-        result = false;
+      if (finallyBlock != null && usesVariable(finallyBlock)) {
+        return false;
       }
+      boolean allCatchesReturn = true;
       PsiCatchSection[] catchSections = targetStatement.getCatchSections();
       for (PsiCatchSection catchSection : catchSections) {
         PsiCodeBlock catchBlock = catchSection.getCatchBlock();
         if (catchBlock == null || !moveToBlockBody(catchBlock, false)) {
-          result = false;
+          allCatchesReturn = false;
         }
       }
-      return moveToBlockBody(tryBlock, false) && result;
+      return moveToBlockBody(tryBlock, returnAtTheEnd && allCatchesReturn) && allCatchesReturn;
     }
 
     private boolean moveToLabeled(@NotNull PsiLabeledStatement targetStatement, boolean returnAtTheEnd) {
@@ -415,20 +414,13 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
       }
     }
 
-    private boolean writesVariable(@NotNull PsiElement element) {
+    private boolean usesVariable(@NotNull PsiElement element) {
       int startOffset = flow.getStartOffset(element);
       int endOffset = flow.getEndOffset(element);
       if (startOffset < 0 || endOffset < 0) {
         return true;
       }
-      List<Instruction> instructions = flow.getInstructions();
-      for (int i = startOffset; i < endOffset; i++) {
-        Instruction instruction = instructions.get(i);
-        if (instruction instanceof WriteVariableInstruction && ((WriteVariableInstruction)instruction).variable == resultVariable) {
-          return true;
-        }
-      }
-      return false;
+      return ControlFlowUtil.isVariableUsed(flow, startOffset, endOffset, resultVariable);
     }
 
     private static boolean isAlwaysTrue(@Nullable PsiExpression condition, boolean nullIsTrue) {

@@ -8,7 +8,7 @@ class T {
                 return s;
             }
         }
-        return "";
+        return r;
     }
 
     boolean hasNext() {

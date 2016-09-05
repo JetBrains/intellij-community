@@ -4,6 +4,6 @@ class T {
         int n = 0;
         if (b) return 1;
         else System.out.println("no");
-        return 0;
+        return n;
     }
 }

@@ -7,6 +7,6 @@ class T {
                 return i;
             }
         }
-        return -1;
+        return n;
     }
 }
