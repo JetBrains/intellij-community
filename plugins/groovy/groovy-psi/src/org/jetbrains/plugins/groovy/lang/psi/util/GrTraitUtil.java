@@ -27,6 +27,7 @@ import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.Contract;
@@ -34,15 +35,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex.TraitFieldDescriptor;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitMethodsFileIndex;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.psi.PsiModifier.ABSTRACT;
 import static org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags.*;
@@ -69,6 +69,29 @@ public class GrTraitUtil {
 
   public static boolean isMethodAbstract(@NotNull PsiMethod method) {
     return method.getModifierList().hasExplicitModifier(ABSTRACT) || isInterface(method.getContainingClass());
+  }
+
+  public static List<PsiClass> getSelfTypeClasses(@NotNull PsiClass trait) {
+    return CachedValuesManager.getCachedValue(trait, () -> {
+      List<PsiClass> result = ContainerUtil.newArrayList();
+      Queue<PsiClass> queue = new ArrayDeque<>();
+      Set<PsiClass> visited = ContainerUtil.newHashSet();
+      queue.offer(trait);
+      while (!queue.isEmpty()) {
+        PsiClass clazz = queue.poll();
+        if (!visited.add(clazz)) continue;
+        ContainerUtil.addAll(queue, clazz.getSupers());
+        if (isTrait(clazz)) {
+          PsiAnnotation annotation = AnnotationUtil.findAnnotation(clazz, "groovy.transform.SelfType");
+          if (annotation != null) {
+            result.addAll(
+              GrAnnotationUtil.getClassArrayValue(annotation, "value")
+            );
+          }
+        }
+      }
+      return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+    });
   }
 
   @NotNull
