@@ -27,10 +27,7 @@ import org.jetbrains.debugger.memory.component.MemoryViewManager;
 import org.jetbrains.debugger.memory.component.MemoryViewManagerState;
 import org.jetbrains.debugger.memory.event.InstancesTrackerListener;
 import org.jetbrains.debugger.memory.event.MemoryViewManagerListener;
-import org.jetbrains.debugger.memory.tracking.ConstructorInstancesTracker;
-import org.jetbrains.debugger.memory.tracking.InstanceTrackingStrategy;
-import org.jetbrains.debugger.memory.tracking.TrackerForNewInstances;
-import org.jetbrains.debugger.memory.tracking.TrackingType;
+import org.jetbrains.debugger.memory.tracking.*;
 import org.jetbrains.debugger.memory.utils.AndroidUtil;
 import org.jetbrains.debugger.memory.utils.KeyboardUtils;
 import org.jetbrains.debugger.memory.utils.LowestPriorityCommand;
@@ -100,17 +97,31 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
 
     myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
       @Override
+      public Priority getPriority() {
+        return Priority.LOWEST;
+      }
+
+      @Override
       protected void action() throws Exception {
-        List<String> constructorTrackerClasses = myInstancesTracker.getClassesByTrackingType(TrackingType.CREATION);
-        myInstancesTracker.addTrackerListener(instancesTrackerListener, ClassesFilteredView.this);
-        for (String className : constructorTrackerClasses) {
+        for(Map.Entry<String, TrackingType> entry : myInstancesTracker.getTrackedClasses().entrySet()) {
+          TrackingType type = entry.getValue();
+          String className = entry.getKey();
           List<ReferenceType> classes = myDebugProcess.getVirtualMachineProxy().classesByName(className);
           if (classes.isEmpty()) {
-            // TODO: track class preparation
+            new ClassPreparedListener(className, myDebugSession) {
+              @Override
+              public void onClassPrepared(@NotNull ReferenceType referenceType) {
+                trackClass(referenceType, type, getSuspendContext());
+              }
+            };
           } else {
-            // TODO: foreach add breakpoint
+            for(ReferenceType ref : classes) {
+              trackClass(ref, type, getSuspendContext());
+            }
           }
         }
+
+        myInstancesTracker.addTrackerListener(instancesTrackerListener, ClassesFilteredView.this);
       }
     });
 
@@ -292,13 +303,6 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
 
       for (Map.Entry<ReferenceType, InstanceTrackingStrategy> entry : myTrackedClasses.entrySet()) {
         entry.getValue().update(suspendContext, entry.getKey().instances(0));
-      }
-
-      for (ReferenceType ref : classes) {
-        TrackingType type = myInstancesTracker.getTrackingType(ref.name());
-        if (type != null && !myTrackedClasses.containsKey(ref) && !myConstructorTrackedClasses.containsKey(ref)) {
-          trackClass(ref, type, suspendContext);
-        }
       }
 
       if (classes.isEmpty()) {

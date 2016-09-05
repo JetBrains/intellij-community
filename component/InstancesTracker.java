@@ -4,6 +4,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +39,11 @@ public class InstancesTracker extends AbstractProjectComponent
   @Nullable
   public TrackingType getTrackingType(@NotNull String className) {
     return myState.classes.getOrDefault(className, null);
+  }
+
+  @NotNull
+  public Map<String, TrackingType> getTrackedClasses() {
+    return new HashMap<>(myState.classes);
   }
 
   @NotNull
