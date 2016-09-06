@@ -143,16 +143,19 @@ public class SaveProjectAsTemplateAction extends AnAction {
       stream = new ZipOutputStream(new FileOutputStream(zipFile));
 
       final VirtualFile dir = getDirectoryToSave(project, moduleToSave);
-      writeFile(LocalArchivedTemplate.DESCRIPTION_PATH, description, project, dir, stream, true, indicator);
-      if (replaceParameters) {
-        String text = getInputFieldsText(parameters);
-        writeFile(LocalArchivedTemplate.TEMPLATE_DESCRIPTOR, text, project, dir, stream, false, indicator);
-      }
 
       List<LocalArchivedTemplate.RootDescription> roots = collectStructure(project, moduleToSave);
+      LocalArchivedTemplate.RootDescription basePathRoot = findOrAddBaseRoot(roots, dir);
+
+      writeFile(LocalArchivedTemplate.DESCRIPTION_PATH, description, project, basePathRoot.myRelativePath, stream, true, indicator);
+      if (replaceParameters) {
+        String text = getInputFieldsText(parameters);
+        writeFile(LocalArchivedTemplate.TEMPLATE_DESCRIPTOR, text, project, basePathRoot.myRelativePath, stream, false, indicator);
+      }
 
       String metaDescription = getTemplateMetaText(shouldEscape, roots);
-      writeFile(LocalArchivedTemplate.META_TEMPLATE_DESCRIPTOR_PATH, metaDescription, project, dir, stream, true, indicator);
+      writeFile(LocalArchivedTemplate.META_TEMPLATE_DESCRIPTOR_PATH, metaDescription, project, basePathRoot.myRelativePath, stream, true,
+                indicator);
 
       FileIndex index = moduleToSave == null
                         ? ProjectRootManager.getInstance(project).getFileIndex()
@@ -176,6 +179,17 @@ public class SaveProjectAsTemplateAction extends AnAction {
     }
   }
 
+  private static LocalArchivedTemplate.RootDescription findOrAddBaseRoot(List<LocalArchivedTemplate.RootDescription> roots, VirtualFile dirToSave) {
+    for (LocalArchivedTemplate.RootDescription root : roots) {
+      if(root.myRelativePath.isEmpty()){
+        return root;
+      }
+    }
+    LocalArchivedTemplate.RootDescription root = new LocalArchivedTemplate.RootDescription(dirToSave, "", roots.size());
+    roots.add(root);
+    return root;
+  }
+
   static String getFileHeaderTemplateName() {
     if (PlatformUtils.isIntelliJ()) {
       return FileTemplateBase.getQualifiedName(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME, "java");
@@ -189,10 +203,10 @@ public class SaveProjectAsTemplateAction extends AnAction {
 
   private static void writeFile(String path,
                                 final String text,
-                                Project project, VirtualFile dir, ZipOutputStream stream, boolean overwrite, ProgressIndicator indicator) throws IOException {
+                                Project project, String prefix, ZipOutputStream stream, boolean overwrite, ProgressIndicator indicator) throws IOException {
     final VirtualFile descriptionFile = getDescriptionFile(project, path);
     if (descriptionFile == null) {
-      stream.putNextEntry(new ZipEntry(dir.getName() + "/" + path));
+      stream.putNextEntry(new ZipEntry(prefix + "/" + path));
       stream.write(text.getBytes());
       stream.closeEntry();
     }

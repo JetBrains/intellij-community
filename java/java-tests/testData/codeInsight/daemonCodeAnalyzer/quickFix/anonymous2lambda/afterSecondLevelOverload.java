@@ -7,12 +7,7 @@ abstract class LambdaConvert {
   public abstract <T> T query(Function<Double, T> rse);
 
   public void with() {
-    add(query(new Function<Do<caret>uble, String>() {
-      @Override
-      public String apply(Double resultSet) {
-        return "";
-      }
-    }));
+    add(query((Function<Double, String>) resultSet -> ""));
   }
 
   public void add(String s) {}

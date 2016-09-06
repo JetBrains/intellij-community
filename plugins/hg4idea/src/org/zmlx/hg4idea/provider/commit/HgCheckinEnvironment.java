@@ -313,12 +313,12 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   /**
    * Commit options for hg
    */
-  private class HgCommitAdditionalComponent implements RefreshableOnComponent {
+  public class HgCommitAdditionalComponent implements RefreshableOnComponent {
     @NotNull private final JPanel myPanel;
     @NotNull private final AmendComponent myAmend;
     @NotNull private final JCheckBox myCommitSubrepos;
 
-    public HgCommitAdditionalComponent(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
+    HgCommitAdditionalComponent(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
       HgVcs vcs = assertNotNull(HgVcs.getInstance(myProject));
 
       myAmend = new MyAmendComponent(project, getRepositoryManager(project), panel, "Amend Commit (QRefresh)");
@@ -353,7 +353,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
 
     @Override
     public void saveState() {
-      myNextCommitAmend = myAmend.isAmend();
+      myNextCommitAmend = isAmend();
       myShouldCommitSubrepos = myCommitSubrepos.isSelected();
     }
 
@@ -366,6 +366,10 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     @Override
     public JComponent getComponent() {
       return myPanel;
+    }
+
+    public boolean isAmend() {
+      return myAmend.isAmend();
     }
 
     private class MyAmendComponent extends AmendComponent {

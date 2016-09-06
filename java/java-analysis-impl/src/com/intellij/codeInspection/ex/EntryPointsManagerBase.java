@@ -219,9 +219,22 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
         for (ClassPattern pattern : myPatterns) {
           final RefEntity refClass = manager.getReference(RefJavaManager.CLASS, pattern.pattern);
           if (refClass != null) {
-            for (RefMethod constructor : ((RefClass)refClass).getConstructors()) {
-              ((RefMethodImpl)constructor).setEntry(true);
-              ((RefMethodImpl)constructor).setPermanentEntry(true);
+            if (pattern.method.isEmpty()) {
+              for (RefMethod constructor : ((RefClass)refClass).getConstructors()) {
+                ((RefMethodImpl)constructor).setEntry(true);
+                ((RefMethodImpl)constructor).setPermanentEntry(true);
+              }
+            }
+            else {
+              List<RefEntity> children = refClass.getChildren();
+              if (children != null) {
+                for (RefEntity entity : children) {
+                  if (entity instanceof RefMethodImpl && entity.getName().startsWith(pattern.method + "(")) {
+                    ((RefMethodImpl)entity).setEntry(true);
+                    ((RefMethodImpl)entity).setPermanentEntry(true);
+                  }
+                }
+              }
             }
           }
         }
@@ -241,9 +254,14 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   public void addEntryPoint(@NotNull RefElement newEntryPoint, boolean isPersistent) {
     if (!newEntryPoint.isValid()) return;
     if (isPersistent) {
-      if (newEntryPoint instanceof RefImplicitConstructor || newEntryPoint instanceof RefClass) {
+      if (newEntryPoint instanceof RefClass || newEntryPoint instanceof RefMethod) {
         final ClassPattern classPattern = new ClassPattern();
-        classPattern.pattern = new SmartRefElementPointerImpl(newEntryPoint, true).getFQName();
+        RefClass refClass = newEntryPoint instanceof RefMethod ? ((RefMethod)newEntryPoint).getOwnerClass()
+                                                               : (RefClass)newEntryPoint;
+        classPattern.pattern = new SmartRefElementPointerImpl(refClass, true).getFQName();
+        if (newEntryPoint instanceof RefMethod && !(newEntryPoint instanceof RefImplicitConstructor)) {
+          classPattern.method = newEntryPoint.getName();
+        }
         getPatterns().add(classPattern);
 
         final EntryPointsManager entryPointsManager = getInstance(newEntryPoint.getRefManager().getProject());
