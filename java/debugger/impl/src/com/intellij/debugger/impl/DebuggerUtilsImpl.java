@@ -264,6 +264,14 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
       if (ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> res.set(action.compute()))) {
         return res.get();
       }
+      try {
+        //noinspection BusyWait
+        Thread.sleep(50);
+      }
+      catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        return null;
+      }
     }
   }
 }
