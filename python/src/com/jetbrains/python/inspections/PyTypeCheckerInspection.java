@@ -92,47 +92,26 @@ public class PyTypeCheckerInspection extends PyInspection {
 
     @Override
     public void visitPyYieldExpression(PyYieldExpression node) {
-      checkFunctionReturnType(node, node.getExpression());
-    }
-
-    private void checkFunctionReturnType(@NotNull PsiElement node, @Nullable PyExpression returnExpr) {
       final ScopeOwner owner = ScopeUtil.getScopeOwner(node);
+      final PyExpression yieldExpr = node.getExpression();
       if (owner instanceof PyFunction) {
         final PyFunction function = (PyFunction)owner;
         final PyAnnotation annotation = function.getAnnotation();
         final PsiElement typeComment = function.getTypeComment();
         if (annotation != null || typeComment != null) {
-          final PyType expected = myTypeEvalContext.getReturnType(function);
-          final PyType actual;
-          if (node instanceof PyYieldExpression) {
-            actual = function.getGeneratorType(myTypeEvalContext);
-            if (expected instanceof PyCollectionType && actual instanceof PyCollectionType) {
-              final List<PyType> expectedElements = ((PyCollectionType)expected).getElementTypes(myTypeEvalContext);
-              final List<PyType> actualElements = ((PyCollectionType)actual).getElementTypes(myTypeEvalContext);
-              if (!expectedElements.isEmpty() && !actualElements.isEmpty()) {
-                final PyType expectedElem = expectedElements.get(0);
-                final PyType actualElem = actualElements.get(0);
-                if (!PyTypeChecker.match(expectedElem, actualElem, myTypeEvalContext)) {
-                  final String expectedName = PythonDocumentationProvider.getTypeName(expectedElem, myTypeEvalContext);
-                  final String actualName = PythonDocumentationProvider.getTypeName(actualElem, myTypeEvalContext);
-                  registerProblem(((PyYieldExpression)node).getExpression(),
-                                  String.format("Expected to yield '%s', got '%s' instead", expectedName, actualName));
-                }
-              }
+          PyType expected = myTypeEvalContext.getReturnType(function);
+          final PyType actual = yieldExpr != null ? myTypeEvalContext.getType(yieldExpr) : PyNoneType.INSTANCE;
+          final String name = expected != null ? expected.getName() : null;
+          if (expected != null && PyNames.GENERATOR.equals(name) && expected instanceof PyCollectionType) {
+            List<PyType> elemTypes = ((PyCollectionType)expected).getElementTypes(myTypeEvalContext);
+            if (!elemTypes.isEmpty()) {
+              expected = elemTypes.get(0);
             }
-          }
-          else {
-            actual = returnExpr != null ? myTypeEvalContext.getType(returnExpr) : PyNoneType.INSTANCE;
             if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
               final String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
               final String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
-              final PyMakeFunctionReturnTypeQuickFix localQuickFix =
-                new PyMakeFunctionReturnTypeQuickFix(function, actualName, myTypeEvalContext);
-              final PyMakeFunctionReturnTypeQuickFix globalQuickFix =
-                new PyMakeFunctionReturnTypeQuickFix(function, null, myTypeEvalContext);
-              registerProblem(returnExpr != null ? returnExpr : node,
-                              String.format("Expected type '%s', got '%s' instead", expectedName, actualName),
-                              localQuickFix, globalQuickFix);
+              registerProblem(yieldExpr != null ? yieldExpr : node,
+                              String.format("Expected to yield '%s', got '%s' instead", expectedName, actualName));
             }
           }
         }
@@ -141,39 +120,64 @@ public class PyTypeCheckerInspection extends PyInspection {
 
     @Override
     public void visitPyReturnStatement(PyReturnStatement node) {
-      checkFunctionReturnType(node, node.getExpression());
+      final ScopeOwner owner = ScopeUtil.getScopeOwner(node);
+      final PyExpression returnExpr = node.getExpression();
+      if (owner instanceof PyFunction) {
+        final PyFunction function = (PyFunction)owner;
+        final PyAnnotation annotation = function.getAnnotation();
+        final PsiElement typeComment = function.getTypeComment();
+        if (annotation != null || typeComment != null) {
+          PyType expected = myTypeEvalContext.getReturnType(function);
+          final PyType actual = returnExpr != null ? myTypeEvalContext.getType(returnExpr) : PyNoneType.INSTANCE;
+          final String name = expected != null ? expected.getName() : null;
+          if (expected != null && PyNames.GENERATOR.equals(name) && expected instanceof PyCollectionType) {
+            List<PyType> elemTypes = ((PyCollectionType)expected).getElementTypes(myTypeEvalContext);
+            if (elemTypes.size() == 3) {
+              expected = elemTypes.get(2);
+            }
+          }
+          if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
+            final String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
+            final String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
+            final PyMakeFunctionReturnTypeQuickFix localQuickFix =
+              new PyMakeFunctionReturnTypeQuickFix(function, actualName, myTypeEvalContext);
+            final PyMakeFunctionReturnTypeQuickFix globalQuickFix =
+              new PyMakeFunctionReturnTypeQuickFix(function, null, myTypeEvalContext);
+            registerProblem(returnExpr != null ? returnExpr : node,
+                            String.format("Expected type '%s', got '%s' instead", expectedName, actualName),
+                            localQuickFix, globalQuickFix);
+          }
+
+        }
+      }
     }
 
     @Override
     public void visitPyFunction(PyFunction node) {
       final PyAnnotation annotation = node.getAnnotation();
-      final String typeCommentAnnotation = node.getTypeCommentAnnotation();
-      if (annotation != null || typeCommentAnnotation != null) {
+      final PsiElement typeComment = node.getTypeComment();
+      if (annotation != null || typeComment != null) {
         if (!PyUtil.isEmptyFunction(node)) {
           final PyType expected = myTypeEvalContext.getReturnType(node);
           final PyStatementList statements = node.getStatementList();
-          ReturnVisitor visitor = new ReturnVisitor(node);
+          ReturnVisitor visitor = new ReturnVisitor(node, myTypeEvalContext);
           statements.accept(visitor);
-          if (!visitor.myHasReturns && !visitor.myReturnsGenerator) {
-            final String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
-            if (expected != null && !(expected instanceof PyNoneType)) {
-              registerProblem(annotation != null ? annotation.getValue() : node.getTypeComment(),
-                              String.format("Expected to return '%s', got no return", expectedName));
+          if (!visitor.myHasReturns) {
+            if (!visitor.myReturnsGenerator) {
+              final String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
+              if (expected != null && !(expected instanceof PyNoneType)) {
+                registerProblem(annotation != null ? annotation.getValue() : typeComment,
+                                String.format("Expected to return '%s', got no return", expectedName));
+              }
             }
-          }
-          else if (visitor.myReturnsGenerator && visitor.myHasReturns) {
-            final PyType actual = node.getGeneratorType(myTypeEvalContext);
-            if (expected instanceof PyCollectionType && actual instanceof PyCollectionType) {
-              final List<PyType> expectedElemTypes = ((PyCollectionType)expected).getElementTypes(myTypeEvalContext);
-              final List<PyType> actualElemTypes = ((PyCollectionType)actual).getElementTypes(myTypeEvalContext);
-              if (expectedElemTypes.size() == 3 && actualElemTypes.size() == 3) {
-                final PyType expectedReturnType = expectedElemTypes.get(2);
-                final PyType actualReturnType = actualElemTypes.get(2);
-                if (!PyTypeChecker.match(expectedReturnType, actualReturnType, myTypeEvalContext)) {
-                  final String expectedName = PythonDocumentationProvider.getTypeName(expectedReturnType, myTypeEvalContext);
-                  final String actualName = PythonDocumentationProvider.getTypeName(actualReturnType, myTypeEvalContext);
-                  registerProblem(annotation != null ? annotation.getValue() : node.getTypeComment(),
-                                  String.format("Expected to return '%s', got '%s' instead", expectedName, actualName));
+            else {
+              if (expected instanceof PyCollectionType && annotation != null /* Python 3 check*/) {
+                final List<PyType> elemTypes = ((PyCollectionType)expected).getElementTypes(myTypeEvalContext);
+                if (elemTypes.size() == 3) {
+                  final PyType expectedToReturn = elemTypes.get(2);
+                  if (!(expectedToReturn instanceof PyNoneType)) {
+                    registerProblem(annotation, String.format("Expected to return '%s', got no return", expectedToReturn));
+                  }
                 }
               }
             }
@@ -184,17 +188,31 @@ public class PyTypeCheckerInspection extends PyInspection {
 
     private static class ReturnVisitor extends PyRecursiveElementVisitor {
       private final PyFunction myFunction;
+      private final TypeEvalContext myTypeEvalContext;
       private boolean myHasReturns = false;
       private boolean myReturnsGenerator = false;
+      private PyType myReturnType = null;
+      private PyType myYieldType = null;
 
-      public ReturnVisitor(PyFunction function) {
+      public ReturnVisitor(PyFunction function, TypeEvalContext context) {
         myFunction = function;
+        myTypeEvalContext = context;
       }
 
       @Override
       public void visitPyReturnStatement(PyReturnStatement node) {
         if (ScopeUtil.getScopeOwner(node) == myFunction) {
           myHasReturns = true;
+          final PyExpression returnExpr = node.getExpression();
+          if (returnExpr != null) {
+            PyType returnType = myTypeEvalContext.getType(returnExpr);
+            if (myReturnType != null) {
+              myReturnType = PyUnionType.union(myReturnType, returnType);
+            }
+            else {
+              myReturnType = returnType;
+            }
+          }
         }
       }
 
@@ -202,6 +220,14 @@ public class PyTypeCheckerInspection extends PyInspection {
       public void visitPyYieldExpression(PyYieldExpression node) {
         if (ScopeUtil.getScopeOwner(node) == myFunction) {
           myReturnsGenerator = true;
+          final PyExpression yieldExpr = node.getExpression();
+          PyType type = yieldExpr != null ? myTypeEvalContext.getType(yieldExpr) : null;
+          if (node.isDelegating() && type instanceof PyCollectionType) {
+            final PyCollectionType collectionType = (PyCollectionType)type;
+            final List<PyType> elementTypes = collectionType.getElementTypes(myTypeEvalContext);
+            type = elementTypes.size() == 0 ? null : elementTypes.get(0);
+          }
+          myYieldType = myYieldType != null ? PyUnionType.union(myYieldType, type) : type;
         }
       }
     }

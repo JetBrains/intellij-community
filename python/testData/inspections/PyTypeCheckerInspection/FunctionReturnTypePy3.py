@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Generator
 
 def a(x: List[int]) -> List[str]:
     return <warning descr="Expected type 'List[str]', got 'List[List[int]]' instead">[x]</warning>
@@ -43,9 +43,12 @@ def k() -> None:
     if True:
         pass
 
-def l() -> __generator[int, Any, str]:
+def l() -> Generator[int, Any, None]:
     for i in range(10):
         yield i
 
-def m() -> __generator[int, Any, None]:
-    yield from l()
+def m() -> Generator[Optional[float], float, str]:
+    res = yield
+    while res:
+        res = yield round(res)
+    return 'OK'

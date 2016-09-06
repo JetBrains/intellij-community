@@ -1,4 +1,4 @@
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Generator
 
 def a(x):
     # type: (List[int]) -> List[str]
@@ -55,6 +55,12 @@ def k():
         pass
 
 def l():
-    # type: () -> __generator[int, Any, None]
+    # type: () -> Generator[int, Any, None]
     for i in range(10):
         yield i
+
+def m():
+    # type: () -> Generator[float, float, str]:
+    res = yield
+    while res:
+        res = yield round(res)
