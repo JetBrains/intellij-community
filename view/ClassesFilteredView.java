@@ -53,7 +53,6 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
   private static final String EMPTY_TABLE_CONTENT_WHEN_RUNNED = "The application is running";
   private static final String EMPTY_TABLE_CONTENT_WHEN_SUSPENDED = "Nothing to show";
 
-
   private final Project myProject;
   private final XDebugSession myDebugSession;
   private final DebugProcessImpl myDebugProcess;
@@ -132,6 +131,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
 
     myTable = new ClassesTable(myDebugSession, memoryViewManagerState.isShowWithDiffOnly,
         memoryViewManagerState.isShowWithInstancesOnly, this);
+    myTable.getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_RUNNED);
     Disposer.register(this, myTable);
 
     myTable.addKeyListener(new KeyAdapter() {
@@ -195,7 +195,10 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
       @Override
       public void sessionResumed() {
         myConstructorTrackedClasses.values().forEach(ConstructorInstancesTracker::obsolete);
-        SwingUtilities.invokeLater(myTable::hideContent);
+        SwingUtilities.invokeLater(() -> {
+          myTable.getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_RUNNED);
+          myTable.hideContent();
+        });
         mySingleAlarm.cancelAllRequests();
       }
 
