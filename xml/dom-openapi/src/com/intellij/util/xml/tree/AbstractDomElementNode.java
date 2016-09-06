@@ -73,7 +73,7 @@ abstract public class AbstractDomElementNode extends SimpleNode {
 
     Optional<Class> parent = hiders.keySet().stream()
       .filter(klass -> klass.isAssignableFrom(aClass)).min(INHERITORS_COMPARATOR);
-    return parent.map(hiders::get).orElse(false);
+    return parent.map(hiders::get).orElse(Boolean.FALSE).booleanValue();
 
   }
 
