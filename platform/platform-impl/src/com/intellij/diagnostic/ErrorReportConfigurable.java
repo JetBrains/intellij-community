@@ -13,45 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diagnostic;
+package com.intellij.diagnostic
 
-import com.intellij.credentialStore.CredentialAttributes;
-import com.intellij.credentialStore.Credentials;
-import com.intellij.ide.passwordSafe.PasswordSafe;
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.credentialStore.CredentialAttributes
+import com.intellij.credentialStore.Credentials
+import com.intellij.ide.passwordSafe.PasswordSafe
+import com.intellij.openapi.components.*
+import com.intellij.util.decodeBase64
 
-import java.util.Base64;
+@State(name = "ErrorReportConfigurable", storages = arrayOf(Storage(value = "other.xml", deprecated = true, roamingType = RoamingType.DISABLED)))
+internal class ErrorReportConfigurable : PersistentStateComponent<OldState> {
+  override fun getState() = OldState()
 
-@State(name = "ErrorReportConfigurable", storages = @Storage(value = "other.xml", deprecated = true, roamingType = RoamingType.DISABLED))
-class ErrorReportConfigurable implements PersistentStateComponent<ErrorReportConfigurable.State> {
-  public static final String SERVICE_NAME = "IntelliJ Platform — JetBrains Account";
-
-  static class State {
-    public String ITN_LOGIN;
-    public String ITN_PASSWORD_CRYPT;
-  }
-
-  public static ErrorReportConfigurable getInstance() {
-    return ServiceManager.getService(ErrorReportConfigurable.class);
-  }
-
-  @Nullable
-  @Override
-  public State getState() {
-    return new State();
-  }
-
-  @Override
-  public void loadState(State state) {
-    if (!StringUtil.isEmpty(state.ITN_LOGIN) || !StringUtil.isEmpty(state.ITN_PASSWORD_CRYPT)) {
-      PasswordSafe.getInstance().set(new CredentialAttributes(SERVICE_NAME, state.ITN_LOGIN), new Credentials(state.ITN_LOGIN, Base64.getDecoder().decode(state.ITN_PASSWORD_CRYPT)));
+  override fun loadState(state: OldState) {
+    if (!state.ITN_LOGIN.isNullOrEmpty() || !state.ITN_PASSWORD_CRYPT.isNullOrEmpty()) {
+      PasswordSafe.getInstance().set(CredentialAttributes(SERVICE_NAME, state.ITN_LOGIN), Credentials(state.ITN_LOGIN, state.ITN_PASSWORD_CRYPT!!.decodeBase64()))
     }
   }
 
-  @Nullable
-  public static Credentials getCredentials() {
-    return PasswordSafe.getInstance().get(new CredentialAttributes(SERVICE_NAME));
+  companion object {
+    @JvmStatic
+    val SERVICE_NAME = "IntelliJ Platform — JetBrains Account"
+
+    val instance: ErrorReportConfigurable
+      get() = ServiceManager.getService(ErrorReportConfigurable::class.java)
+
+    @JvmStatic
+    val credentials: Credentials?
+      get() = PasswordSafe.getInstance().get(CredentialAttributes(SERVICE_NAME))
   }
+}
+
+internal class OldState {
+  var ITN_LOGIN: String? = null
+  var ITN_PASSWORD_CRYPT: String? = null
 }
