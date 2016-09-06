@@ -28,10 +28,10 @@ class IdeaCommunityBuilder {
   private final GantBinding binding
   private final BuildContext buildContext
 
-  IdeaCommunityBuilder(String home, String outputRootPath, GantBinding binding, BuildOptions options = new BuildOptions()) {
+  IdeaCommunityBuilder(String home, GantBinding binding, BuildOptions options = new BuildOptions()) {
     this.binding = binding
     buildContext = BuildContext.createContext(binding.ant, binding.projectBuilder, binding.project, binding.global, home, home,
-                                              "$outputRootPath/release", new IdeaCommunityProperties(home), ProprietaryBuildTools.DUMMY,
+                                              new IdeaCommunityProperties(home), ProprietaryBuildTools.DUMMY,
                                               options)
   }
 

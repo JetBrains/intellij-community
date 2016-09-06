@@ -35,36 +35,35 @@ import org.jetbrains.jps.util.JpsPathUtil
 class BuildContextImpl extends BuildContext {
   private final JpsGlobal global
 
-//todo[nik] construct buildOutputRoot automatically based on product name
   static BuildContextImpl create(AntBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
-                                 String communityHome, String projectHome, String buildOutputRoot, ProductProperties productProperties,
+                                 String communityHome, String projectHome, ProductProperties productProperties,
                                  ProprietaryBuildTools proprietaryBuildTools, BuildOptions options) {
     BuildMessages messages = BuildMessagesImpl.create(projectBuilder, ant.project)
+    communityHome = toCanonicalPath(communityHome)
+    projectHome = toCanonicalPath(projectHome)
+    def jdk8Home = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", "$projectHome/build/jdk/1.8", "JDK_18_x64"))
 
-    def jdk8Home = JdkUtils.computeJdkHome(messages, "jdk8Home", "$projectHome/build/jdk/1.8", "JDK_18_x64")
-    BuildPathsImpl paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, jdk8Home)
-
-    WindowsDistributionCustomizer windowsDistributionCustomizer = productProperties.createWindowsCustomizer(paths.projectHome)
-    LinuxDistributionCustomizer linuxDistributionCustomizer = productProperties.createLinuxCustomizer(paths.projectHome)
-    MacDistributionCustomizer macDistributionCustomizer = productProperties.createMacCustomizer(paths.projectHome)
+    WindowsDistributionCustomizer windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHome)
+    LinuxDistributionCustomizer linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHome)
+    MacDistributionCustomizer macDistributionCustomizer = productProperties.createMacCustomizer(projectHome)
 
     if (project.modules.isEmpty()) {
-      loadProject(paths, project, global, messages)
+      loadProject(communityHome, projectHome, jdk8Home, project, global, messages)
     }
     else {
       //todo[nik] currently we need this to build IDEA CE from IDEA UI build scripts. It would be better to create a separate JpsProject instance instead
       messages.info("Skipping loading project because it's already loaded")
     }
 
-    def context = new BuildContextImpl(ant, messages, paths, project, global, projectBuilder, productProperties,
+    def context = new BuildContextImpl(ant, messages, communityHome, projectHome, jdk8Home, project, global, projectBuilder, productProperties,
                                        windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
                                        proprietaryBuildTools, options)
     context.prepareForBuild()
     return context
   }
 
-  private BuildContextImpl(AntBuilder ant, BuildMessages messages, BuildPaths paths, JpsProject project, JpsGlobal global,
-                           JpsGantProjectBuilder projectBuilder, ProductProperties productProperties,
+  private BuildContextImpl(AntBuilder ant, BuildMessages messages, String communityHome, String projectHome, String jdk8Home,
+                           JpsProject project, JpsGlobal global, JpsGantProjectBuilder projectBuilder, ProductProperties productProperties,
                            WindowsDistributionCustomizer windowsDistributionCustomizer,
                            LinuxDistributionCustomizer linuxDistributionCustomizer,
                            MacDistributionCustomizer macDistributionCustomizer,
@@ -72,22 +71,21 @@ class BuildContextImpl extends BuildContext {
                            BuildOptions options) {
     this.ant = ant
     this.messages = messages
-    this.paths = paths
     this.project = project
     this.global = global
     this.projectBuilder = projectBuilder
     this.productProperties = productProperties
     this.proprietaryBuildTools = proprietaryBuildTools
-    bundledJreManager = new BundledJreManager(this, paths.buildOutputRoot)
     this.options = options
-
-    bundledJreManager = new BundledJreManager(this, paths.buildOutputRoot)
     this.windowsDistributionCustomizer = windowsDistributionCustomizer
     this.linuxDistributionCustomizer = linuxDistributionCustomizer
     this.macDistributionCustomizer = macDistributionCustomizer
 
     def appInfoFile = findApplicationInfoInSources()
     applicationInfo = new ApplicationInfoProperties(appInfoFile.absolutePath)
+    String buildOutputRoot = options.outputRootPath ?: "$projectHome/out/${productProperties.outputDirectoryName(applicationInfo)}"
+    paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, jdk8Home)
+    bundledJreManager = new BundledJreManager(this, paths.buildOutputRoot)
 
     buildNumber = options.buildNumber ?: readSnapshotBuildNumber()
     fullBuildNumber = "$productProperties.productCode-$buildNumber"
@@ -96,16 +94,16 @@ class BuildContextImpl extends BuildContext {
     bootClassPathJarNames = ["bootstrap.jar", "extensions.jar", "util.jar", "jdom.jar", "log4j.jar", "trove4j.jar", "jna.jar"]
   }
 
-  private static void loadProject(BuildPaths paths, JpsProject project, JpsGlobal global, BuildMessages messages) {
-    def projectHome = paths.projectHome
-    def bundledKotlinPath = "$paths.communityHome/build/kotlinc"
+  private static void loadProject(String communityHome, String projectHome, String jdkHome, JpsProject project, JpsGlobal global,
+                                  BuildMessages messages) {
+    def bundledKotlinPath = "$communityHome/build/kotlinc"
     if (!new File(bundledKotlinPath, "lib/kotlin-runtime.jar").exists()) {
       messages.error("Could not find Kotlin runtime at $bundledKotlinPath/lib/kotlin-runtime.jar: run download_kotlin.gant script to download Kotlin JARs")
     }
     JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(global).addPathVariable("KOTLIN_BUNDLED", bundledKotlinPath)
 
     JdkUtils.defineJdk(global, "IDEA jdk", JdkUtils.computeJdkHome(messages, "jdkHome", "$projectHome/build/jdk/1.6", "JDK_16_x64"))
-    JdkUtils.defineJdk(global, "1.8", paths.jdkHome)
+    JdkUtils.defineJdk(global, "1.8", jdkHome)
 
     def pathVariables = JpsModelSerializationDataService.computeAllPathVariables(global)
     JpsProjectLoader.loadProject(project, pathVariables, projectHome)
@@ -256,27 +254,25 @@ class BuildContextImpl extends BuildContext {
   BuildContext forkForParallelTask(String taskName) {
     def ant = new AntBuilder(ant.project)
     def messages = messages.forkForParallelTask(taskName)
-    def child = new BuildContextImpl(ant, messages, paths, project, global, projectBuilder, productProperties,
+    def child = new BuildContextImpl(ant, messages, paths.communityHome, paths.projectHome, paths.jdkHome, project, global, projectBuilder, productProperties,
                                      windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
                                      proprietaryBuildTools, options)
+    child.paths.artifacts = paths.artifacts
     child.bundledJreManager.baseDirectoryForJre = bundledJreManager.baseDirectoryForJre
     return child
   }
 
   @Override
-  BuildContext createCopyForProduct(ProductProperties productProperties, String buildOutputRoot, String projectHomeForCustomizers) {
-    def pathsCopy = new BuildPathsImpl(paths.communityHome, paths.projectHome, buildOutputRoot, paths.jdkHome)
-    pathsCopy.artifacts = paths.artifacts
-
+  BuildContext createCopyForProduct(ProductProperties productProperties, String projectHomeForCustomizers) {
     WindowsDistributionCustomizer windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeForCustomizers)
     LinuxDistributionCustomizer linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeForCustomizers)
     MacDistributionCustomizer macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeForCustomizers)
 
     def options = new BuildOptions()
     options.useCompiledClassesFromProjectOutput = true
-    def copy = new BuildContextImpl(ant, messages, pathsCopy, project, global, projectBuilder, productProperties,
-                                    windowsDistributionCustomizer,
-                                    linuxDistributionCustomizer, macDistributionCustomizer, proprietaryBuildTools, options)
+    def copy = new BuildContextImpl(ant, messages, paths.communityHome, paths.projectHome, paths.jdkHome, project, global, projectBuilder, productProperties,
+                                    windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer, proprietaryBuildTools, options)
+    copy.paths.artifacts = paths.artifacts
     copy.bundledJreManager.baseDirectoryForJre = bundledJreManager.baseDirectoryForJre
     copy.prepareForBuild()
     return copy
@@ -338,20 +334,21 @@ class BuildContextImpl extends BuildContext {
     }
     messages.artifactBuild(relativePath)
   }
-}
-
-class BuildPathsImpl extends BuildPaths {
-  BuildPathsImpl(String communityHome, String projectHome, String buildOutputRoot, String jdkHome) {
-    this.communityHome = toCanonicalPath(communityHome)
-    this.projectHome = toCanonicalPath(projectHome)
-    this.buildOutputRoot = toCanonicalPath(buildOutputRoot)
-    this.jdkHome = toCanonicalPath(jdkHome)
-    artifacts = "${this.buildOutputRoot}/artifacts"
-    distAll = "${this.buildOutputRoot}/dist.all"
-    temp = "${this.buildOutputRoot}/temp"
-  }
 
   private static String toCanonicalPath(String communityHome) {
     FileUtil.toSystemIndependentName(new File(communityHome).canonicalPath)
   }
+}
+
+class BuildPathsImpl extends BuildPaths {
+  BuildPathsImpl(String communityHome, String projectHome, String buildOutputRoot, String jdkHome) {
+    this.communityHome = communityHome
+    this.projectHome = projectHome
+    this.buildOutputRoot = buildOutputRoot
+    this.jdkHome = jdkHome
+    artifacts = "$buildOutputRoot/artifacts"
+    distAll = "$buildOutputRoot/dist.all"
+    temp = "$buildOutputRoot/temp"
+  }
+
 }

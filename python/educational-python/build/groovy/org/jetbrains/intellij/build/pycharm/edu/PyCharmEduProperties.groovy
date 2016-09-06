@@ -98,4 +98,9 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
       }
     }
   }
+
+  @Override
+  String environmentVariableBaseName(ApplicationInfoProperties applicationInfo) {
+    "pycharm-edu"
+  }
 }

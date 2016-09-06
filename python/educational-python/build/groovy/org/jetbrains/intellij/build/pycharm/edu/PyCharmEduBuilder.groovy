@@ -20,7 +20,7 @@ class PyCharmEduBuilder {
 
   def build() {
     def buildContext = BuildContext.createContext(binding.ant, binding.projectBuilder, binding.project, binding.global,
-                                                  "$home/community", home, "$home/out/pycharmEDU", new PyCharmEduProperties(home),
+                                                  "$home/community", home, new PyCharmEduProperties(home),
                                                   JetBrainsBuildTools.create("$home/build/lib/jet-sign.jar"))
     def buildTasks = BuildTasks.create(buildContext)
     buildTasks.compileModulesAndBuildDistributions()

@@ -95,10 +95,10 @@ abstract class BuildContext {
   abstract boolean shouldBuildDistributionForOS(String os)
 
   public static BuildContext createContext(AntBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
-                                           String communityHome, String projectHome, String buildOutputRoot, ProductProperties productProperties,
+                                           String communityHome, String projectHome, ProductProperties productProperties,
                                            ProprietaryBuildTools proprietaryBuildTools = ProprietaryBuildTools.DUMMY,
                                            BuildOptions options = new BuildOptions()) {
-    return BuildContextImpl.create(ant, projectBuilder, project, global, communityHome, projectHome, buildOutputRoot, productProperties,
+    return BuildContextImpl.create(ant, projectBuilder, project, global, communityHome, projectHome, productProperties,
                                    proprietaryBuildTools, options)
   }
 
@@ -109,7 +109,7 @@ abstract class BuildContext {
    */
   abstract BuildContext forkForParallelTask(String taskName)
 
-  abstract BuildContext createCopyForProduct(ProductProperties productProperties, String buildOutputRoot, String projectHomeForCustomizers)
+  abstract BuildContext createCopyForProduct(ProductProperties productProperties, String projectHomeForCustomizers)
 }
 
 /**

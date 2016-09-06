@@ -33,7 +33,7 @@ class PyCharmCommunityBuilder {
 
   def build() {
     def buildContext = BuildContext.createContext(binding.ant, binding.projectBuilder, binding.project, binding.global,
-                                                  home, home, "$home/out/pycharmCE", new PyCharmCommunityProperties(home))
+                                                  home, home, new PyCharmCommunityProperties(home))
     def buildTasks = BuildTasks.create(buildContext)
     buildTasks.compileModulesAndBuildDistributions()
   }

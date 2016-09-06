@@ -81,4 +81,10 @@ class BuildOptions {
    * get the actual build number in build scripts.
    */
   String buildNumber = System.getProperty("build.number")
+
+  /**
+   * By default build process produces temporary and resulting files under projectHome/out/productName directory, use this property to
+   * change the output directory.
+   */
+  String outputRootPath = System.getProperty("intellij.build.output.root")
 }
