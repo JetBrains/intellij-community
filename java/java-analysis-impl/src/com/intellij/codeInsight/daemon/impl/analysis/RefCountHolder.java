@@ -218,7 +218,7 @@ class RefCountHolder {
     }
     if (!array.isEmpty() && !isParameterUsedRecursively(element, array)) {
       for (PsiReference reference : array) {
-        if (reference.resolve() == element) return true;
+        if (reference.isReferenceTo(element)) return true;
       }
     }
 
