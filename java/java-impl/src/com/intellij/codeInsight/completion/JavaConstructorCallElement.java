@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -94,7 +95,7 @@ public class JavaConstructorCallElement extends JavaMethodCallElement {
       PsiMethod[] constructors = psiClass.getConstructors();
       if (constructors.length > 0) {
         return JBIterable.of(constructors).
-          filter(JavaCompletionUtil::isConstructorCompletable).
+          filter(c -> JavaResolveUtil.isAccessible(c, psiClass, c.getModifierList(), position, null, null)).
           map(c -> new JavaConstructorCallElement(classItem, c, type)).
           toList();
       }
