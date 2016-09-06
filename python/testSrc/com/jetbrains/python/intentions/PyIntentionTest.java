@@ -228,6 +228,7 @@ public class  PyIntentionTest extends PyTestCase {
     doTest(PyBundle.message("INTN.convert.variadic.param"));
   }
 
+  // PY-20254
   public void testConvertVariadicParamEmptySubscription() {
     doNegativeTest(PyBundle.message("INTN.convert.variadic.param"));
   }
