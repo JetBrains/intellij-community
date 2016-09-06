@@ -2011,4 +2011,14 @@ def foo = new <error descr="Cannot resolve symbol 'Rrrrrrrr'">Rrrrrrrr</error>()
   void testLocalVariableModifiers() { doTest() }
 
   void testFieldModifiers() { doTest() }
+
+  void "test allow and do not highlight 'trait', 'as', 'def', 'in' within package"() {
+    myFixture.addClass '''\
+package a.b.c.trait.d.as.e.def.f.in.g;
+public class Foo {} 
+'''
+    testHighlighting '''\
+<info>import</info> a.b.c.trait.d.as.e.def.f.in.g.*
+''', false, true
+  }
 }
