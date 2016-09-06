@@ -58,7 +58,7 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
       final PsiCodeBlock returnScope = (PsiCodeBlock)returnParent;
       final PsiStatement[] statements = returnScope.getStatements();
       if (statements.length != 0 && statements[statements.length - 1] == returnStatement) {
-        PsiStatement refactoredStatement = getPrevNonEmptyStatement(returnStatement, new THashSet<>());
+        PsiStatement refactoredStatement = getPrevNonEmptyStatement(returnStatement, null);
         if (refactoredStatement != null) {
           final PsiExpression returnValue = returnStatement.getReturnValue();
           if (returnValue instanceof PsiReferenceExpression) {
@@ -82,7 +82,7 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
     if (variable instanceof PsiLocalVariable) {
       final PsiElement variableScope = RefactoringUtil.getVariableScope((PsiLocalVariable)variable);
       if (variableScope instanceof PsiCodeBlock) {
-        return ((PsiCodeBlock)variableScope);
+        return (PsiCodeBlock)variableScope;
       }
     }
     else if (variable instanceof PsiParameter) {
@@ -99,6 +99,44 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
       }
     }
     return null;
+  }
+
+  /**
+   * Detect the case like the following:
+   * <pre>
+   *         int result = size;
+   *         result = 31 * result + width;
+   *         result = 31 * result + height;
+   *         return result;
+   * </pre>
+   */
+  private static boolean hasChainedAssignmentsInScope(@NotNull ControlFlow flow, @NotNull PsiVariable variable,
+                                                      @NotNull PsiReturnStatement returnStatement,
+                                                      @NotNull PsiCodeBlock variableScope) {
+    for (PsiStatement statement = getPrevNonEmptyStatement(returnStatement, null);
+         statement != null;
+         statement = getPrevNonEmptyStatement(statement, null)) {
+      if (statement instanceof PsiExpressionStatement) {
+        PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
+        PsiExpression expression = expressionStatement.getExpression();
+        if (expression instanceof PsiAssignmentExpression) {
+          PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
+          if (isVariableUsed(flow, assignmentExpression.getLExpression(), variable) &&
+              isVariableUsed(flow, assignmentExpression.getRExpression(), variable)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  private static boolean isVariableUsed(@NotNull ControlFlow flow, @Nullable PsiElement element, @NotNull PsiVariable variable) {
+    if (element == null) return false;
+    int startOffset = flow.getStartOffset(element);
+    int endOffset = flow.getEndOffset(element);
+    if (startOffset < 0 || endOffset < 0) return true;
+    return ControlFlowUtil.isVariableUsed(flow, startOffset, endOffset, variable);
   }
 
   private static boolean isApplicable(@NotNull ReturnContext context) {
@@ -125,6 +163,10 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
     final int returnStartOffset = flow.getStartOffset(context.returnStatement);
     final int returnEndOffset = flow.getEndOffset(context.returnStatement);
     if (returnStartOffset < 0 || returnEndOffset < 0) return false;
+
+    if (hasChainedAssignmentsInScope(flow, context.returnedVariable, context.returnStatement, context.variableScope)) {
+      return false;
+    }
 
     if (context.returnScope != context.variableScope &&
         ControlFlowUtil.hasObservableThrowExitPoints(flow, flowStart, flowEnd,
@@ -172,68 +214,6 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
     getPrevNonEmptyStatement(context.returnStatement, skippedEmptyStatements);
     skippedEmptyStatements.forEach(PsiElement::delete);
     context.returnStatement.delete();
-  }
-
-  private static void inlineReturnedValue(Mover mover, ReturnContext context) {
-    List<Instruction> instructions = mover.flow.getInstructions();
-    PsiAssignmentExpression assignment = null;
-    for (int i = 0; i < instructions.size(); i++) {
-      Instruction instruction = instructions.get(i);
-      if (instruction instanceof WriteVariableInstruction && ((WriteVariableInstruction)instruction).variable == mover.resultVariable) {
-        PsiElement element = mover.flow.getElement(i);
-        PsiElement parent = element.getParent();
-        if (element instanceof PsiAssignmentExpression && parent instanceof PsiExpressionStatement) {
-          if (!mover.replaceInline.contains(element)) {
-            if (assignment != null) {
-              return;
-            }
-            assignment = (PsiAssignmentExpression)element;
-          }
-        }
-        else if (!(getNearestEnclosingStatement(element) instanceof PsiDeclarationStatement)) {
-          return;
-        }
-      }
-    }
-
-    PsiExpression localInitializer = context.returnedVariable instanceof PsiLocalVariable ?
-                                     context.returnedVariable.getInitializer() : null;
-    if (assignment != null && localInitializer == null) {
-      PsiExpression rExpression = assignment.getRExpression();
-      replaceReturnedValue(rExpression, context.returnStatement, mover.flow);
-    }
-    else if (assignment == null && localInitializer != null) {
-      replaceReturnedValue(localInitializer, context.returnStatement, mover.flow);
-    }
-  }
-
-  private static void replaceReturnedValue(PsiExpression newReturnValue, PsiReturnStatement returnStatement, ControlFlow flow) {
-    PsiExpression returnValue = returnStatement.getReturnValue();
-    if (returnValue != null &&
-        (ExpressionUtils.computeConstantExpression(newReturnValue) != null || isUnchangedReferenceToLocal(newReturnValue, flow))) {
-      returnValue.replace(newReturnValue);
-    }
-  }
-
-  private static boolean isUnchangedReferenceToLocal(PsiExpression expression, ControlFlow flow) {
-    if (expression instanceof PsiReferenceExpression) {
-      PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
-      if (!referenceExpression.isQualified()) {
-        PsiElement resolved = referenceExpression.resolve();
-        if (resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter) {
-          if (((PsiVariable)resolved).hasModifierProperty(PsiModifier.FINAL)) {
-            return true;
-          }
-          for (Instruction instruction : flow.getInstructions()) {
-            if (instruction instanceof WriteVariableInstruction && ((WriteVariableInstruction)instruction).variable == resolved) {
-              return false;
-            }
-          }
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   private static void inlineAssignment(PsiAssignmentExpression assignmentExpression, PsiReturnStatement returnStatement) {
@@ -374,7 +354,7 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
         return false;
       }
       PsiCodeBlock finallyBlock = targetStatement.getFinallyBlock();
-      if (finallyBlock != null && usesVariable(finallyBlock)) {
+      if (finallyBlock != null && isVariableUsed(flow, finallyBlock, resultVariable)) {
         return false;
       }
       boolean allCatchesReturn = true;
@@ -423,15 +403,6 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
       }
     }
 
-    private boolean usesVariable(@NotNull PsiElement element) {
-      int startOffset = flow.getStartOffset(element);
-      int endOffset = flow.getEndOffset(element);
-      if (startOffset < 0 || endOffset < 0) {
-        return true;
-      }
-      return ControlFlowUtil.isVariableUsed(flow, startOffset, endOffset, resultVariable);
-    }
-
     private static boolean isAlwaysTrue(@Nullable PsiExpression condition, boolean nullIsTrue) {
       if(condition == null) return nullIsTrue;
       return ExpressionUtils.computeConstantExpression(condition) == Boolean.TRUE;
@@ -467,7 +438,7 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
     }
   }
 
-  private static PsiStatement getPrevNonEmptyStatement(@NotNull PsiElement psiElement, @NotNull Set<PsiElement> skippedEmptyStatements) {
+  private static PsiStatement getPrevNonEmptyStatement(@NotNull PsiElement psiElement, @Nullable Set<PsiElement> skippedEmptyStatements) {
     if (!(psiElement.getParent() instanceof PsiCodeBlock)) {
       return null;
     }
@@ -477,14 +448,14 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
       skipped.add(prevStatement);
       prevStatement = PsiTreeUtil.getPrevSiblingOfType(prevStatement, PsiStatement.class);
     }
-    if (prevStatement != null) {
+    if (prevStatement != null && skippedEmptyStatements != null) {
       skippedEmptyStatements.addAll(skipped);
     }
     return prevStatement;
   }
 
   @Nullable
-  private static PsiStatement getNearestEnclosingStatement(@NotNull PsiElement element) {
+  private static PsiStatement getNearestEnclosingStatement(@Nullable PsiElement element) {
     return element instanceof PsiStatement ? (PsiStatement)element : PsiTreeUtil.getParentOfType(element, PsiStatement.class);
   }
 
@@ -492,17 +463,17 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
                                       @NotNull PsiReturnStatement returnStatement,
                                       @NotNull PsiVariable variable) {
     String name = variable.getName();
-    holder.registerProblem(returnStatement, InspectionsBundle.message("inspection.return.separated.from.computation.descriptor", name),
-                           new VariableFix(name, variable instanceof PsiParameter));
+    PsiElement returnElement = returnStatement.getFirstChild();
+    holder.registerProblem(returnElement instanceof PsiKeyword ? returnElement : returnStatement,
+                           InspectionsBundle.message("inspection.return.separated.from.computation.descriptor", name),
+                           new VariableFix(name));
   }
 
   private static class VariableFix implements LocalQuickFix {
     private String myName;
-    private boolean myIsParameter;
 
-    public VariableFix(String name, boolean isParameter) {
+    public VariableFix(String name) {
       myName = name;
-      myIsParameter = isParameter;
     }
 
     @Nls
@@ -521,7 +492,7 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
+      PsiElement element = getNearestEnclosingStatement(descriptor.getPsiElement());
       if (element instanceof PsiReturnStatement) {
         doApply(((PsiReturnStatement)element));
       }

@@ -128,6 +128,10 @@ public class ReturnSeparatedFromComputationTest extends LightCodeInsightFixtureT
     doTest();
   }
 
+  public void testHashCode() {
+    doTest();
+  }
+
 
   private void doTest() {
     myFixture.enableInspections(new ReturnSeparatedFromComputationInspection());

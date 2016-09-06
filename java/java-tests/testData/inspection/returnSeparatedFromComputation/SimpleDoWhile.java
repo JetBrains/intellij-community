@@ -12,7 +12,7 @@ class T {
       i = j + 1;
     }
     while (i >= 0);
-    <warning descr="Return separated from computation of value of 'r'">return r;</warning>
+    <warning descr="Return separated from computation of value of 'r'">return</warning> r;
   }
 
   boolean hasNext() {

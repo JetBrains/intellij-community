@@ -11,7 +11,7 @@ class T {
                 }
             }
         }
-        <warning descr="Return separated from computation of value of 's'">return s;</warning>
+        <warning descr="Return separated from computation of value of 's'">return</warning> s;
     }
     private static BufferedReader open() throws FileNotFoundException {
         return null;

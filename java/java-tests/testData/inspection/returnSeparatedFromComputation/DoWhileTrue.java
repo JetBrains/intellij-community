@@ -9,7 +9,7 @@ class T {
         break;
       }
     } while (true);
-    <warning descr="Return separated from computation of value of 'r'">return r;</warning>
+    <warning descr="Return separated from computation of value of 'r'">return</warning> r;
   }
 
   boolean hasNext() {

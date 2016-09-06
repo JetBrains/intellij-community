@@ -6,7 +6,7 @@ class T {
     try (BufferedReader r = open()) {
       s = r.readLine();
     }
-    <warning descr="Return separated from computation of value of 's'">return s;</warning>
+    <warning descr="Return separated from computation of value of 's'">return</warning> s;
   }
 
   private static BufferedReader open() throws FileNotFoundException {

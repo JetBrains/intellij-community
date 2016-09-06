@@ -5,6 +5,6 @@ class T {
       n = 1;
       System.out.println();
     }
-    <warning descr="Return separated from computation of value of 'n'">return n;</warning>
+    <warning descr="Return separated from computation of value of 'n'">return</warning> n;
   }
 }

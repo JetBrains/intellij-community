@@ -6,6 +6,6 @@ class T {
       n = i;
       if (a[0] == 0) break myLabel;
     }
-    <warning descr="Return separated from computation of value of 'n'">return n;</warning>
+    <warning descr="Return separated from computation of value of 'n'">return</warning> n;
   }
 }

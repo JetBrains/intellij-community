@@ -7,6 +7,6 @@ class T {
       if (b) break myLabel;
       n = 2;
     }
-    <warning descr="Return separated from computation of value of 'n'">return n;</warning>
+    <warning descr="Return separated from computation of value of 'n'">return</warning> n;
   }
 }
