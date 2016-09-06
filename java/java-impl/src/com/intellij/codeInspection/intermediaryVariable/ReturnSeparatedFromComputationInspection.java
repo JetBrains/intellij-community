@@ -132,7 +132,7 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
       return false;
     }
 
-    Mover mover = new Mover(flow, context.refactoredStatement, context.returnedVariable);
+    Mover mover = new Mover(flow, context.refactoredStatement, context.returnedVariable, true);
     mover.moveTo(context.refactoredStatement, true);
     return !mover.isEmpty();
   }
@@ -142,7 +142,7 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
     if (context != null) {
       ControlFlow flow = createControlFlow(context);
       if (flow != null) {
-        Mover mover = new Mover(flow, context.refactoredStatement, context.returnedVariable);
+        Mover mover = new Mover(flow, context.refactoredStatement, context.returnedVariable, false);
         boolean removeReturn = mover.moveTo(context.refactoredStatement, true);
         if (!mover.isEmpty()) {
           applyChanges(mover, context, removeReturn);
@@ -159,7 +159,6 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
     else {
       //inlineReturnedValue(mover, context);
     }
-    mover.insertAfter.forEach(e -> e.getParent().addAfter(returnStatement, e));
     mover.insertBefore.forEach(e -> e.getParent().addBefore(returnStatement, e));
     mover.replaceInline.forEach(e -> {
       if (e instanceof PsiBreakStatement) e.replace(returnStatement);
@@ -253,21 +252,25 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
     final ControlFlow flow;
     final PsiStatement enclosingStatement;
     final PsiVariable resultVariable;
+    final boolean checkingApplicability;
     final Set<PsiElement> insertBefore = new THashSet<>();
-    final Set<PsiElement> insertAfter = new THashSet<>();
     final Set<PsiElement> replaceInline = new THashSet<>();
-    final Set<PsiElement> removeCompletely = new THashSet<>();
 
+    final Set<PsiElement> removeCompletely = new THashSet<>();
     private Map<PsiStatement, Set<PsiBreakStatement>> breakStatements;
 
-    private Mover(@NotNull ControlFlow flow, @NotNull PsiStatement enclosingStatement, @NotNull PsiVariable resultVariable) {
+    private Mover(@NotNull ControlFlow flow,
+                  @NotNull PsiStatement enclosingStatement,
+                  @NotNull PsiVariable resultVariable,
+                  boolean checkingApplicability) {
       this.flow = flow;
       this.enclosingStatement = enclosingStatement;
       this.resultVariable = resultVariable;
+      this.checkingApplicability = checkingApplicability;
     }
 
     boolean isEmpty() {
-      return insertBefore.isEmpty() && insertAfter.isEmpty() && replaceInline.isEmpty();
+      return insertBefore.isEmpty() && replaceInline.isEmpty();
     }
 
     /**
@@ -275,6 +278,9 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
      * so if the next statement is a return or a break it can be removed safely.
      */
     boolean moveTo(PsiStatement targetStatement, boolean returnAtTheEnd) {
+      if (checkingApplicability && !isEmpty()) {
+        return false; // optimization
+      }
       if (targetStatement instanceof PsiBlockStatement) {
         return moveToBlock((PsiBlockStatement)targetStatement, returnAtTheEnd);
       }
@@ -302,7 +308,10 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
       if (targetStatement instanceof PsiExpressionStatement) {
         return inlineExpression((PsiExpressionStatement)targetStatement);
       }
-      if (targetStatement instanceof PsiThrowStatement || targetStatement instanceof PsiReturnStatement) {
+      if (targetStatement instanceof PsiThrowStatement ||
+          targetStatement instanceof PsiReturnStatement ||
+          targetStatement instanceof PsiBreakStatement ||
+          targetStatement instanceof PsiContinueStatement) {
         return true;
       }
       return false;
@@ -459,6 +468,9 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
   }
 
   private static PsiStatement getPrevNonEmptyStatement(@NotNull PsiElement psiElement, @NotNull Set<PsiElement> skippedEmptyStatements) {
+    if (!(psiElement.getParent() instanceof PsiCodeBlock)) {
+      return null;
+    }
     PsiStatement prevStatement = PsiTreeUtil.getPrevSiblingOfType(psiElement, PsiStatement.class);
     List<PsiStatement> skipped = new ArrayList<>();
     while (prevStatement instanceof PsiEmptyStatement) {

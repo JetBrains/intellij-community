@@ -5,16 +5,15 @@ class T {
         int t = a;
         while (t != null) {
             if (t == 1) {
-                n = 10;
+                return 10;
             }
             else if (t == 2) {
-                n = 20;
+                return 20;
             }
             else {
                 t = t + 1;
                 continue;
             }
-            break;
         }
         return n;
     }
