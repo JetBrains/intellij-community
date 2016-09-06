@@ -35,7 +35,10 @@ import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by Max Medvedev on 22/03/14
@@ -70,13 +73,13 @@ public class InjectionCache {
   private Set<String> collectMethodNamesWithLanguage(String annotationClassName) {
     GlobalSearchScope allScope = GlobalSearchScope.allScope(myProject);
 
-    // todo remove once Kotlin support becomes fast enough (https://youtrack.jetbrains.com/issue/KT-13734)
-    allScope = GlobalSearchScope.getScopeRestrictedByFileTypes(allScope, JavaFileType.INSTANCE);
+    // todo use allScope once Kotlin support becomes fast enough (https://youtrack.jetbrains.com/issue/KT-13734)
+    GlobalSearchScope usageScope = GlobalSearchScope.getScopeRestrictedByFileTypes(allScope, JavaFileType.INSTANCE);
 
     Set<String> result = new THashSet<>();
     ArrayList<PsiClass> annoClasses = ContainerUtil.newArrayList(JavaPsiFacade.getInstance(myProject).findClasses(annotationClassName, allScope));
     for (int cursor = 0; cursor < annoClasses.size(); cursor++) {
-      AnnotatedElementsSearch.searchElements(annoClasses.get(cursor), allScope, PsiClass.class, PsiParameter.class, PsiMethod.class).forEach(element -> {
+      AnnotatedElementsSearch.searchElements(annoClasses.get(cursor), usageScope, PsiClass.class, PsiParameter.class, PsiMethod.class).forEach(element -> {
         if (element instanceof PsiParameter) {
           final PsiElement scope = ((PsiParameter)element).getDeclarationScope();
           if (scope instanceof PsiMethod) {
