@@ -9,7 +9,7 @@ public class Main {
       if(element != null) {
         for(String str : element) {
           if(str.startsWith("xyz")) {
-            count++;
+            ++count;
           }
         }
       }

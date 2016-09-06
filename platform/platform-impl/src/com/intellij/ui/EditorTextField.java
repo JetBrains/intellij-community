@@ -220,7 +220,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
       boolean isFocused = isFocusOwner();
       EditorEx newEditor = createEditor();
-      releaseEditor();
+      releaseEditor(myEditor);
       myEditor = newEditor;
       add(myEditor.getComponent(), BorderLayout.CENTER);
 
@@ -331,7 +331,8 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       ProjectManagerListener listener = new ProjectManagerListener() {
         @Override
         public void projectClosing(Project project) {
-          releaseEditor();
+          releaseEditor(myEditor);
+          myEditor = null;
         }
       };
       ProjectManager.getInstance().addProjectManagerListener(myProject, listener);
@@ -374,11 +375,8 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     Disposer.dispose(myDisposable);
   }
 
-  private void releaseEditor() {
-    if (myEditor == null) return;
-
-    final Editor editor = myEditor;
-    myEditor = null;
+  private void releaseEditor(Editor editor) {
+    if (editor == null) return;
 
     // todo IMHO this should be removed completely
     if (myProject != null && !myProject.isDisposed() && myIsViewer) {
@@ -403,7 +401,9 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     // removeNotify(), so we need to let swing complete its removeNotify() chain
     // and only then execute another removal from the hierarchy. Otherwise
     // swing goes nuts because of nested removals and indices get corrupted
-    SwingUtilities.invokeLater(this::releaseEditor);
+    EditorEx editor = myEditor;
+    SwingUtilities.invokeLater(() -> releaseEditor(editor));
+    myEditor = null;
   }
 
   @Override
@@ -581,7 +581,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       setViewerEnabled(enabled);
       EditorEx editor = myEditor;
       if (editor != null) {
-        releaseEditor();
+        releaseEditor(editor);
         initEditor();
         revalidate();
       }
@@ -654,7 +654,8 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     }
 
     if (toReleaseEditor) {
-      releaseEditor();
+      releaseEditor(myEditor);
+      myEditor = null;
       myPassivePreferredSize = size;
     }
 

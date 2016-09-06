@@ -17,6 +17,8 @@ package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil
 import com.intellij.codeInspection.InspectionProfileEntry
+import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
@@ -24,7 +26,10 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilit
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod
 
 /**
  * Created by Max Medvedev on 17/02/14
@@ -156,6 +161,44 @@ trait A {
     def definition = fixture.findClass('B') as GrTypeDefinition
     def map = OverrideImplementExploreUtil.getMapToOverrideImplement(definition, true)
     assert map.size() == 1 // need to implement only foo(a, b, c)
+  }
+
+  void 'test trait with middle interface'() {
+    testHighlighting '''\
+trait T<E> {
+    E foo() { null }
+}
+
+interface I<G> extends T<G> {}
+
+class C implements I<String> {}
+
+new C().fo<caret>o()
+'''
+    def element = file.findElementAt(fixture.editor.caretModel.offset)
+    def call = PsiTreeUtil.getParentOfType(element, GrMethodCallExpression)
+    assert call.type.equalsToText("java.lang.String")
+  }
+
+  void 'test trait order'() {
+    fixture.configureByText '_.groovy','''\
+trait T1 {
+    def foo() { 1 }
+}
+trait T2 {
+    def foo() { 2 }
+}
+interface I1 extends T1 {}
+interface I2 extends T2 {}
+interface I3 extends I1, I2 {}
+class TT implements I3 {}
+new TT().fo<caret>o()
+'''
+    def resolved = fixture.file.findReferenceAt(fixture.editor.caretModel.offset).resolve()
+    assert resolved instanceof GrTraitMethod
+    def original = resolved.prototype
+    assert original instanceof GrMethod
+    assert original.containingClass.name == 'T2'
   }
 
   void 'test non-static inner class in trait not allowed'() {

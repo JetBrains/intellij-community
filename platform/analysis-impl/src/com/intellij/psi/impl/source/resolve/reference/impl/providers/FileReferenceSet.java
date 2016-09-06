@@ -361,7 +361,7 @@ public class FileReferenceSet {
   }
 
   @NotNull
-  protected final Collection<PsiFileSystemItem> getContextByFileSystemItem(@NotNull PsiFileSystemItem file) {
+  protected Collection<PsiFileSystemItem> getContextByFileSystemItem(@NotNull PsiFileSystemItem file) {
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile != null) {
       final FileReferenceHelper[] helpers = FileReferenceHelperRegistrar.getHelpers();
@@ -378,15 +378,18 @@ public class FileReferenceSet {
       if (!list.isEmpty()) {
         return list;
       }
-      final VirtualFile parent = virtualFile.getParent();
-      if (parent != null) {
-        final PsiDirectory directory = file.getManager().findDirectory(parent);
-        if (directory != null) {
-          return Collections.singleton(directory);
-        }
-      }
+      return getParentDirectoryContext();
     }
     return Collections.emptyList();
+  }
+
+  @NotNull
+  protected Collection<PsiFileSystemItem> getParentDirectoryContext() {
+    PsiFile file = getContainingFile();
+    VirtualFile virtualFile = file == null ? null : file.getOriginalFile().getVirtualFile();
+    final VirtualFile parent = virtualFile == null ? null : virtualFile.getParent();
+    final PsiDirectory directory = parent == null ? null :file.getManager().findDirectory(parent);
+    return directory != null ? Collections.singleton(directory) : Collections.emptyList();
   }
 
   public String getPathString() {

@@ -18,7 +18,6 @@ package com.intellij.configurationStore
 import com.intellij.idea.Bombed
 import com.intellij.openapi.components.MainConfigurationStateSplitter
 import com.intellij.openapi.components.StateStorage
-import com.intellij.openapi.components.impl.stores.StateStorageBase
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
@@ -39,7 +38,7 @@ private fun StateStorage.ExternalizationSession.save() {
 }
 
 private fun StateStorageBase<*>.setStateAndSave(componentName: String, state: String?) {
-  var externalizationSession = startExternalization()!!
+  val externalizationSession = startExternalization()!!
   externalizationSession.setState(null, componentName, if (state == null) Element("state") else loadElement(state))
   externalizationSession.save()
 }

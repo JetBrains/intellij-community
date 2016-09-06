@@ -34,7 +34,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -284,7 +286,12 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
 
     }
     if (myBracketsCount > 0) {
-      presentation.setTailText(StringUtil.repeat("[]", myBracketsCount) + StringUtil.notNullize(presentation.getTailText()), true);
+      List<LookupElementPresentation.TextFragment> tail = new ArrayList<>(presentation.getTailFragments());
+      presentation.clearTail();
+      presentation.appendTailText(StringUtil.repeat("[]", myBracketsCount), false);
+      for (LookupElementPresentation.TextFragment fragment : tail) {
+        presentation.appendTailText(fragment.text, fragment.isGrayed());
+      }
     }
   }
 

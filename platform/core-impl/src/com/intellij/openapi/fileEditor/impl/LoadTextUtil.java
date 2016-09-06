@@ -15,18 +15,11 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.fileTypes.BinaryFileDecompiler;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.CharsetUtil;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
@@ -343,8 +336,6 @@ public final class LoadTextUtil {
     return CharsetUtil.extractCharsetFromFileContent(project, virtualFile, virtualFile.getFileType(), text);
   }
 
-  private static boolean ourDecompileProgressStarted;
-
   @NotNull
   public static CharSequence loadText(@NotNull final VirtualFile file) {
     if (file instanceof LightVirtualFile) {
@@ -359,32 +350,7 @@ public final class LoadTextUtil {
     if (fileType.isBinary()) {
       final BinaryFileDecompiler decompiler = BinaryFileTypeDecompilers.INSTANCE.forFileType(fileType);
       if (decompiler != null) {
-        CharSequence text;
-
-        Application app = ApplicationManager.getApplication();
-        if (app != null && app.isDispatchThread() && !app.isWriteAccessAllowed() && !ourDecompileProgressStarted) {
-          ourDecompileProgressStarted = true;
-          try {
-            text = ProgressManager.getInstance().run(new Task.WithResult<CharSequence, RuntimeException>(null, "Decompiling " + file.getName(), true) {
-              @Override
-              protected CharSequence compute(@NotNull ProgressIndicator indicator) {
-                return ApplicationUtil.runWithCheckCanceled(new Computable<CharSequence>() {
-                  @Override
-                  public CharSequence compute() {
-                    return decompiler.decompile(file);
-                  }
-                }, indicator);
-              }
-            });
-          }
-          finally {
-            ourDecompileProgressStarted = false;
-          }
-        }
-        else {
-          text = decompiler.decompile(file);
-        }
-
+        CharSequence text = decompiler.decompile(file);
         StringUtil.assertValidSeparators(text);
         return text;
       }

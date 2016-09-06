@@ -416,6 +416,18 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     checkAnnotationCollector(myHolder, typeDefinition);
 
     checkSameNameMethodsWithDifferentAccessModifiers(myHolder, typeDefinition.getCodeMethods());
+    checkInheritorOfSelfTypes(myHolder, typeDefinition);
+  }
+
+  private static void checkInheritorOfSelfTypes(AnnotationHolder holder, GrTypeDefinition definition) {
+    if (!(definition instanceof GrClassDefinition)) return;
+    List<PsiClass> selfTypeClasses = GrTraitUtil.getSelfTypeClasses(definition);
+    for (PsiClass selfClass : selfTypeClasses) {
+      if (InheritanceUtil.isInheritorOrSelf(definition, selfClass, true)) continue;
+      String message = GroovyBundle.message("selfType.class.does.not.inherit", definition.getQualifiedName(), selfClass.getQualifiedName());
+      holder.createErrorAnnotation(GrHighlightUtil.getClassHeaderTextRange(definition), message);
+      break;
+    }
   }
 
   private static void checkSameNameMethodsWithDifferentAccessModifiers(AnnotationHolder holder, GrMethod[] methods) {

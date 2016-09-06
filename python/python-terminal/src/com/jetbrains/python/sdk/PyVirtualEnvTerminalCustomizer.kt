@@ -36,7 +36,7 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
                                               envs: MutableMap<String, String>): Array<out String> {
     val sdk: Sdk? = findSdk(project)
 
-    if (sdk != null && PythonSdkType.isVirtualEnv(sdk) && SystemInfo.isUnix) {
+    if (sdk != null && PythonSdkType.isVirtualEnv(sdk)) {
       // in case of virtualenv sdk on unix we activate virtualenv
       val path = sdk.homePath
 

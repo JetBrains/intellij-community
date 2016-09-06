@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -580,6 +580,11 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
       }
       if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)){
          return myList.getSelectedValues();
+      }
+      if (PlatformDataKeys.SPEED_SEARCH_COMPONENT.is(dataId)) {
+        if (mySpeedSearchPatternField != null && mySpeedSearchPatternField.isVisible()) {
+          return mySpeedSearchPatternField;
+        }
       }
       return null;
     }

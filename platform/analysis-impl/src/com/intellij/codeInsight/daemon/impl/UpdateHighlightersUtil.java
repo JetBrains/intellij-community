@@ -439,28 +439,24 @@ public class UpdateHighlightersUtil {
     assertMarkupConsistent(markup, project);
 
     final int start = e.getOffset() - 1;
-    final int end = start + Math.max(e.getOldLength(), e.getNewLength());
+    final int end = start + e.getOldLength();
 
     final List<HighlightInfo> toRemove = new ArrayList<>();
     DaemonCodeAnalyzerEx.processHighlights(document, project, null, start, end, info -> {
+      if (!info.needUpdateOnTyping()) return true;
+
       RangeHighlighter highlighter = info.highlighter;
-      boolean remove = false;
-      if (info.needUpdateOnTyping()) {
-        int highlighterStart = highlighter.getStartOffset();
-        int highlighterEnd = highlighter.getEndOffset();
-        if (info.isAfterEndOfLine()) {
-          if (highlighterStart < document.getTextLength()) {
-            highlighterStart += 1;
-          }
-          if (highlighterEnd < document.getTextLength()) {
-            highlighterEnd += 1;
-          }
+      int highlighterStart = highlighter.getStartOffset();
+      int highlighterEnd = highlighter.getEndOffset();
+      if (info.isAfterEndOfLine()) {
+        if (highlighterStart < document.getTextLength()) {
+          highlighterStart += 1;
         }
-        if (!highlighter.isValid() || start < highlighterEnd && highlighterStart <= end) {
-          remove = true;
+        if (highlighterEnd < document.getTextLength()) {
+          highlighterEnd += 1;
         }
       }
-      if (remove) {
+      if (!highlighter.isValid() || start < highlighterEnd && highlighterStart <= end) {
         toRemove.add(info);
       }
       return true;

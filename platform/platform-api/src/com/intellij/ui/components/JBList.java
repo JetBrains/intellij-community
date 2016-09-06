@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.ui.components;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
@@ -44,7 +43,7 @@ import java.util.Collection;
  * @author Anton Makeev
  * @author Konstantin Bulenkov
  */
-public class JBList extends JList implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>{
+public class JBList<E> extends JList<E> implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>{
   @NotNull private StatusText myEmptyText;
   @NotNull private ExpandableItemsHandler<Integer> myExpandableItemsHandler;
 
@@ -75,7 +74,7 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
     return model;
   }
 
-  public JBList(@NotNull Collection items) {
+  public JBList(@NotNull Collection<E> items) {
     this(ArrayUtil.toObjectArray(items));
   }
 
@@ -265,7 +264,7 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
   }
 
   @Override
-  public void setCellRenderer(final ListCellRenderer cellRenderer) {
+  public void setCellRenderer(@NotNull ListCellRenderer<? super E> cellRenderer) {
     // myExpandableItemsHandler may not yeb be initialized
     //noinspection ConstantConditions
     if (myExpandableItemsHandler == null) {

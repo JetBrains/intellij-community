@@ -15,10 +15,10 @@
  */
 package com.intellij.xdebugger.impl.settings;
 
-import com.intellij.layout.LayoutKt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.layout.LayoutKt;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import org.jetbrains.annotations.NotNull;

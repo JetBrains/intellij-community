@@ -37,8 +37,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
@@ -46,11 +50,18 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
+import java.util.Set;
+
 public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTypeDefinition> implements DumbAware {
+
+  private final static Set<? extends JpsModuleSourceRootType<?>> ROOT_TYPES = ContainerUtil.newHashSet(
+    JavaSourceRootType.SOURCE, JavaSourceRootType.TEST_SOURCE,
+    JavaResourceRootType.RESOURCE, JavaResourceRootType.RESOURCE
+  );
 
   public NewGroovyClassAction() {
     super(GroovyBundle.message("newclass.menu.action.text"), GroovyBundle.message("newclass.menu.action.description"),
-          JetgroovyIcons.Groovy.Class, true);
+          JetgroovyIcons.Groovy.Class, ROOT_TYPES);
   }
 
   @Override
@@ -127,5 +138,4 @@ public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTy
     final String description = fromTemplate.getFileType().getDescription();
     throw new IncorrectOperationException(GroovyBundle.message("groovy.file.extension.is.not.mapped.to.groovy.file.type", description));
   }
-
 }

@@ -190,4 +190,8 @@ public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
     LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
     doTest();
   }
+
+  public void testClassUsedInMethodParameter() throws Exception {
+    doTest();
+  }
 }

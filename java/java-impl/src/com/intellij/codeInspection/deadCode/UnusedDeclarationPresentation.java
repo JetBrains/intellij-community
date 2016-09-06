@@ -157,7 +157,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       if (!refEntity.isValid()) return;
       RefJavaElement refElement = (RefJavaElement)refEntity;
       if (!compareVisibilities(refElement, getTool().getSharedLocalInspectionTool())) return;
-      if (getTool().isEntryPoint(refElement)) return;
+      if (skipEntryPoints(refElement)) return;
 
       Element element = refEntity.getRefManager().export(refEntity, parentNode, -1);
       if (element == null) return;
@@ -204,13 +204,8 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     if (showFixes) {
       final TreePath[] paths = tree.getSelectionPaths();
       if (paths != null) {
-        int count = 0;
-        for (TreePath path : paths) {
-          final Object component = path.getLastPathComponent();
-          if (component instanceof ProblemDescriptionNode) {
-            count++;
-          }
-        }
+        long count = Arrays.stream(paths).map(TreePath::getLastPathComponent)
+          .filter(component -> component instanceof ProblemDescriptionNode).count();
         if (count > 0) {
           final QuickFixAction[] fixes = super.getQuickFixes(refElements, tree);
           if (fixes != null) {
@@ -460,12 +455,16 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
         RefJavaElement refElement = (RefJavaElement)refEntity;
         if (!compareVisibilities(refElement, localInspectionTool)) return;
         if (!(getContext().getUIOptions().FILTER_RESOLVED_ITEMS && getIgnoredRefElements().contains(refElement)) && refElement.isValid() && getFilter().accepts(refElement)) {
-          if (getTool().isEntryPoint(refElement)) return;
+          if (skipEntryPoints(refElement)) return;
           registerContentEntry(refEntity, RefJavaUtil.getInstance().getPackageName(refEntity));
         }
       }
     });
     updateProblemElements();
+  }
+
+  protected boolean skipEntryPoints(RefJavaElement refElement) {
+    return getTool().isEntryPoint(refElement);
   }
 
   @PsiModifier.ModifierConstant

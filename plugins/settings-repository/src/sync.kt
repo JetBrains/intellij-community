@@ -18,7 +18,6 @@ package org.jetbrains.settingsRepository
 import com.intellij.configurationStore.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
-import com.intellij.openapi.application.runBatchUpdate
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.options.SchemeManagerFactory
@@ -144,7 +143,7 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
 
 internal fun updateStoragesFromStreamProvider(store: ComponentStoreImpl, updateResult: UpdateResult, messageBus: MessageBus, reloadAllSchemes: Boolean = false): Boolean {
   val changedComponentNames = LinkedHashSet<String>()
-  val (changed, deleted) = (store.storageManager as StateStorageManagerImpl).getCachedFileStorages(updateResult.changed, updateResult.deleted, { toIdeaPath(it) })
+  val (changed, deleted) = (store.storageManager as StateStorageManagerImpl).getCachedFileStorages(updateResult.changed, updateResult.deleted, ::toIdeaPath)
 
   val schemeManagersToReload = SmartList<SchemeManagerImpl<*, *>>()
   (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase).process {

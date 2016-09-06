@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
@@ -52,15 +53,26 @@ public abstract class TextComponentEditorAction extends EditorAction {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final Object data = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     if (data instanceof JTextComponent) {
-      return new TextComponentEditorImpl(project, (JTextComponent) data);
+      return new TextComponentEditorImpl(project, (JTextComponent)data);
     }
     if (data instanceof JComponent) {
-      final SpeedSearchSupply supply = SpeedSearchSupply.getSupply((JComponent)data);
-      if (supply instanceof SpeedSearchBase) {
-        final JTextField field = ((SpeedSearchBase)supply).getSearchField();
-        if (field != null) {
-          return new TextComponentEditorImpl(project, field);
-        }
+      final JTextField field = findActiveSpeedSearchTextField((JComponent)data);
+      if (field != null) {
+        return new TextComponentEditorImpl(project, field);
+      }
+    }
+    return null;
+  }
+
+  private static JTextField findActiveSpeedSearchTextField(JComponent c) {
+    final SpeedSearchSupply supply = SpeedSearchSupply.getSupply(c);
+    if (supply instanceof SpeedSearchBase) {
+      return ((SpeedSearchBase)supply).getSearchField();
+    }
+    if (c instanceof DataProvider) {
+      final Object component = PlatformDataKeys.SPEED_SEARCH_COMPONENT.getData((DataProvider)c);
+      if (component instanceof JTextField) {
+        return (JTextField)component;
       }
     }
     return null;

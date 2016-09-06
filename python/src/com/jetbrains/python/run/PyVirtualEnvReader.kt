@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.run
 
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.EnvironmentUtil
 import java.io.File
 
@@ -26,17 +28,49 @@ import java.io.File
 class PyVirtualEnvReader(virtualEnvSdkPath: String) : EnvironmentUtil.ShellEnvReader() {
   val activate = findActivateScript(virtualEnvSdkPath, shell)
 
-  override fun getShellProcessCommand(): MutableList<String>? {
+  override fun readShellEnv(): MutableMap<String, String> {
+    if (SystemInfo.isUnix) {
+      return super.readShellEnv()
+    }
+    else {
+      return readVirtualEnvOnWindows();
+    }
+  }
 
-    return if (activate != null) mutableListOf(shell, "--rcfile", activate, "-i")
+  private fun readVirtualEnvOnWindows(): MutableMap<String, String> {
+    val activateFile = FileUtil.createTempFile("pycharm-virualenv-activate.", ".bat", false)
+    val envFile = FileUtil.createTempFile("pycharm-virualenv-envs.", ".tmp", false)
+    try {
+      FileUtil.copy(File(activate), activateFile);
+      FileUtil.appendToFile(activateFile, "\n\nset")
+      val command = listOf<String>(activateFile.path, ">", envFile.absolutePath)
+
+      return runProcessAndReadEnvs(command, envFile, "\r\n")
+    }
+    finally {
+      FileUtil.delete(activateFile)
+      FileUtil.delete(envFile)
+    }
+
+  }
+
+  override fun getShellProcessCommand(): MutableList<String>? {
+    val shellPath = shell
+
+    if (shellPath == null || !File(shellPath).canExecute()) {
+      throw Exception("shell:" + shellPath)
+    }
+
+    return if (activate != null) mutableListOf(shellPath, "--rcfile", activate, "-i")
     else super.getShellProcessCommand()
   }
 
 }
 
-fun findActivateScript(path: String?, shellPath: String): String? {
-  val shellName = File(shellPath).name
-  val activate = if (shellName == "fish" || shellName == "csh") File(File(path).parentFile, "activate." + shellName)
+fun findActivateScript(path: String?, shellPath: String?): String? {
+  val shellName = if (shellPath != null) File(shellPath).name else null
+  val activate = if (SystemInfo.isWindows) File(File(path).parentFile, "activate.bat")
+  else if (shellName == "fish" || shellName == "csh") File(File(path).parentFile, "activate." + shellName)
   else File(File(path).parentFile, "activate")
 
   return if (activate.exists()) activate.absolutePath else null

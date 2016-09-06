@@ -135,11 +135,6 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
   }
 
   public static boolean hasForbiddenRefsInsideBody(PsiMethod method, PsiAnonymousClass aClass) {
-    final PsiType inferredType = getInferredType(aClass, method);
-    if (inferredType == null) {
-      return true;
-    }
-
     final ForbiddenRefsChecker checker = new ForbiddenRefsChecker(method, aClass);
     final PsiCodeBlock body = method.getBody();
     LOG.assertTrue(body != null);
@@ -172,7 +167,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
         ((PsiLambdaExpression)lambda).getBody().replace(method.getBody());
         final PsiType interfaceType;
         if (copyCall.resolveMethod() == null) {
-          interfaceType = null;
+          return PsiType.NULL;
         }
         else {
           interfaceType = ((PsiLambdaExpression)lambda).getFunctionalInterfaceType();
@@ -206,16 +201,22 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
       if (interfaceMethod != null && (acceptParameterizedFunctionTypes || !interfaceMethod.hasTypeParameters())) {
         final PsiMethod[] methods = aClass.getMethods();
-        if (methods.length == 1 && 
-            aClass.getFields().length == 0 && 
-            aClass.getInnerClasses().length == 0 && 
+        if (methods.length == 1 &&
+            aClass.getFields().length == 0 &&
+            aClass.getInnerClasses().length == 0 &&
             aClass.getInitializers().length == 0) {
           final PsiMethod method = methods[0];
-          return method.getBody() != null &&
-                 method.getDocComment() == null &&
-                 !hasForbiddenRefsInsideBody(method, aClass) &&
-                 !hasRuntimeAnnotations(method, ignoredRuntimeAnnotations) &&
-                 !method.hasModifierProperty(PsiModifier.SYNCHRONIZED);
+          if (method.getBody() != null &&
+              method.getDocComment() == null &&
+              !hasRuntimeAnnotations(method, ignoredRuntimeAnnotations) &&
+              !method.hasModifierProperty(PsiModifier.SYNCHRONIZED) &&
+              !hasForbiddenRefsInsideBody(method, aClass)) {
+            final PsiType inferredType = getInferredType(aClass, method);
+            if (inferredType == null) {
+              return false;
+            }
+            return true;
+          }
         }
       }
     }

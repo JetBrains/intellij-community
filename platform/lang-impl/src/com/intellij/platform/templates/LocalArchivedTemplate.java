@@ -195,8 +195,9 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
   }
 
   @Override
-  public void handleUnzippedDirectories(File dir) throws IOException {
+  public void handleUnzippedDirectories(File dir, List<File> filesToRefresh) throws IOException {
     if (myModuleDescriptions == null) {
+      filesToRefresh.add(dir);
       return;
     }
 
@@ -207,6 +208,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
       target.mkdirs();
       FileUtil.copyDir(root, target);
       FileUtil.delete(root);
+      filesToRefresh.add(target);
     }
   }
 

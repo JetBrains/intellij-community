@@ -848,6 +848,30 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEmpty(highlightErrors());
   }
 
+  public void testLocallyUsedFieldHighlighting() {
+    configureByText(JavaFileType.INSTANCE, "class A {\n" +
+                                           "    String cons;\n" +
+                                           "    void foo() {\n" +
+                                           "        String local = null;\n" +
+                                           "        <selection>cons</selection>.substring(1);" +
+                                           "    }\n" +
+                                           "    public static void main(String[] args) {\n" +
+                                           "        new A().foo();\n" +
+                                           "    }" +
+                                           "}");
+    enableInspectionTool(new UnusedDeclarationInspection(true));
+
+    List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
+    assertSize(1, infos);
+    assertEquals("Variable 'local' is never used", infos.get(0).getDescription());
+
+    type("local");
+
+    infos = doHighlighting(HighlightSeverity.WARNING);
+    assertSize(1, infos);
+    assertEquals("Field 'cons' is never used", infos.get(0).getDescription());
+  }
+
   public void testOverrideMethodsHighlightingPersistWhenTypeInsideMethodBody() throws Throwable {
     configureByText(JavaFileType.INSTANCE, "package x; \n" +
                                            "class ClassA {\n" +

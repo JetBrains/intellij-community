@@ -254,13 +254,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
   
   public static int getEnabledNumber(ClassFilter[] classFilters) {
-    int res = 0;
-    for (ClassFilter filter : classFilters) {
-      if (filter.isEnabled()) {
-        res++;
-      }
-    }
-    return res;
+    return (int)Arrays.stream(classFilters).filter(ClassFilter::isEnabled).count();
   }
 
   public static ClassFilter[] readFilters(List<Element> children) throws InvalidDataException {
