@@ -147,6 +147,9 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
       myFilteringPattern = pattern;
       myMatcher = NameUtil.buildMatcher("*" + pattern).build();
       getRowSorter().allRowsChanged();
+      if(getSelectedClass() == null && getRowCount() > 0) {
+        getSelectionModel().setSelectionInterval(0, 0);
+      }
     }
   }
 

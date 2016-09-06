@@ -69,7 +69,7 @@ public class InstancesWindow extends DialogWrapper {
   private static final int DEFAULT_WINDOW_HEIGHT = 400;
   private static final int FILTERING_BUTTON_ADDITIONAL_WIDTH = 30;
   private static final int BORDER_LAYOUT_DEFAULT_GAP = 5;
-  private static final int DEFAULT_INSTANCES_COUNT = 0; // All
+  private static final int DEFAULT_INSTANCES_LIMIT = 500000; // All
 
   private final Project myProject;
   private final XDebugSession myDebugSession;
@@ -252,21 +252,23 @@ public class InstancesWindow extends DialogWrapper {
           myIsAndroidVM = AndroidUtil.isAndroidVM(debugProcess.getVirtualMachineProxy().getVirtualMachine());
           int limit = myIsAndroidVM
               ? AndroidUtil.ANDROID_INSTANCES_LIMIT
-              : DEFAULT_INSTANCES_COUNT;
-          List<ObjectReference> instances = myInstancesProvider.getInstances(limit);
+              : DEFAULT_INSTANCES_LIMIT;
+          List<ObjectReference> instances = myInstancesProvider.getInstances(limit + 1);
 
           EvaluationContextImpl evaluationContext = debugProcess
               .getDebuggerContext().createEvaluationContext();
 
-          if (myIsAndroidVM && instances.size() == AndroidUtil.ANDROID_INSTANCES_LIMIT) {
-            addWarningMessage("Not all instances will be shown (android restriction)");
+          if (instances.size() > limit) {
+            addWarningMessage(String.format("Not all instances will be loaded (only %d)", limit));
+            instances = instances.subList(0, limit);
           }
 
+          final int progressSize = instances.size();
           if (evaluationContext != null) {
             synchronized (myFilteringTaskLock) {
               myFilteringTask = new MyFilteringWorker(instances, evaluationContext, createEvaluator());
               SwingUtilities.invokeLater(() -> {
-                myProgress.start(instances.size());
+                myProgress.start(progressSize);
                 myFilteringTask.execute();
               });
             }
