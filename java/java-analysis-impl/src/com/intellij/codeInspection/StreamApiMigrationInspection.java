@@ -495,18 +495,24 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
             final PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
             if (qualifierExpression instanceof PsiReferenceExpression) {
               final PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
-              if (resolve instanceof PsiVariable) {
-                if (resolve instanceof PsiLocalVariable && foreachStatement.equals(PsiTreeUtil.skipSiblingsForward(resolve.getParent(), PsiWhiteSpace.class, PsiComment.class))) {
-                  final PsiExpression initializer = ((PsiVariable)resolve).getInitializer();
-                  if (initializer instanceof PsiNewExpression) {
-                    final PsiExpressionList argumentList = ((PsiNewExpression)initializer).getArgumentList();
-                    if (argumentList != null && argumentList.getExpressions().length == 0) {
-                      restoreComments(foreachStatement, body);
-                      final String callText = builder.toString() + createInitializerReplacementText(((PsiVariable)resolve).getType(), initializer) + ")";
-                      result = initializer.replace(elementFactory.createExpressionFromText(callText, null));
-                      simplifyRedundantCast(result);
-                      foreachStatement.delete();
-                      return;
+              if (resolve instanceof PsiLocalVariable) {
+                PsiLocalVariable var = (PsiLocalVariable)resolve;
+                PsiElement declaration = var.getParent();
+                if (declaration instanceof PsiDeclarationStatement) {
+                  PsiElement[] elements = ((PsiDeclarationStatement)declaration).getDeclaredElements();
+                  if (elements[elements.length - 1] == resolve &&
+                      foreachStatement.equals(PsiTreeUtil.skipSiblingsForward(declaration, PsiWhiteSpace.class, PsiComment.class))) {
+                    final PsiExpression initializer = var.getInitializer();
+                    if (initializer instanceof PsiNewExpression) {
+                      final PsiExpressionList argumentList = ((PsiNewExpression)initializer).getArgumentList();
+                      if (argumentList != null && argumentList.getExpressions().length == 0) {
+                        restoreComments(foreachStatement, body);
+                        final String callText = builder.toString() + createInitializerReplacementText(var.getType(), initializer) + ")";
+                        result = initializer.replace(elementFactory.createExpressionFromText(callText, null));
+                        simplifyRedundantCast(result);
+                        foreachStatement.delete();
+                        return;
+                      }
                     }
                   }
                 }
