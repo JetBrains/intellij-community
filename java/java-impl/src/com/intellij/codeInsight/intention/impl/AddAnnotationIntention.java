@@ -49,7 +49,7 @@ public abstract class AddAnnotationIntention extends BaseIntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final PsiModifierListOwner owner = AddAnnotationPsiFix.getContainer(file, editor.getCaretModel().getOffset());
     if (owner == null ||
-        owner.getManager().isInProject(owner) && !CodeStyleSettingsManager.getSettings(project).USE_EXTERNAL_ANNOTATIONS) {
+        !(owner.getManager().isInProject(owner) || CodeStyleSettingsManager.getSettings(project).USE_EXTERNAL_ANNOTATIONS)) {
       return false;
     }
     Pair<String, String[]> annotations = getAnnotations(project);
