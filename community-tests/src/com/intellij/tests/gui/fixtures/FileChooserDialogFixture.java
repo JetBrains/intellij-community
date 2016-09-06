@@ -97,7 +97,7 @@ public class FileChooserDialogFixture extends IdeaDialogFixture<FileChooserDialo
   }
 
   private void sleepWithTimeBomb() {
-    //TODO: WTF?!!
+    //TODO: why this bombed?
     assert System.currentTimeMillis() < 1452600000000L;  // 2016-01-12 12:00
     try {
       Thread.sleep(5000);
