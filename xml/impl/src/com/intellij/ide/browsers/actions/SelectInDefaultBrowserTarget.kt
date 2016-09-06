@@ -16,7 +16,7 @@
 package com.intellij.ide.browsers.actions
 
 import com.intellij.ide.SelectInContext
-import com.intellij.ide.SelectInTargetBase
+import com.intellij.ide.SelectInTarget
 import com.intellij.ide.StandardTargetWeights
 import com.intellij.ide.browsers.createOpenInBrowserRequest
 import com.intellij.ide.browsers.impl.WebBrowserServiceImpl
@@ -29,7 +29,7 @@ import com.intellij.xml.util.HtmlUtil
 
 private val LOG = Logger.getInstance(SelectInDefaultBrowserTarget::class.java)
 
-internal class SelectInDefaultBrowserTarget : SelectInTargetBase() {
+internal class SelectInDefaultBrowserTarget : SelectInTarget {
   override fun canSelect(context: SelectInContext): Boolean {
     val selectorInFile = context.selectorInFile as? PsiElement ?: return false
     val request = createOpenInBrowserRequest(selectorInFile) ?: return false
