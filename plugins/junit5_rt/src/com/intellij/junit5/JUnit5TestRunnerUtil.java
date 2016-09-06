@@ -15,9 +15,9 @@
  */
 package com.intellij.junit5;
 
-import com.intellij.rt.execution.junit.JUnitStarter;
+import org.junit.platform.engine.DiscoverySelector;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
-import org.junit.platform.engine.discovery.PackageSelector;
+import org.junit.platform.engine.discovery.MethodSelector;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 
@@ -25,9 +25,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class JUnit5TestRunnerUtil {
 
@@ -37,7 +35,6 @@ public class JUnit5TestRunnerUtil {
     }
 
     final LauncherDiscoveryRequestBuilder builder = LauncherDiscoveryRequestBuilder.request();
-    final List<String> lines = new ArrayList<>();
 
 
     if (suiteClassNames.length == 1 && suiteClassNames[0].charAt(0) == '@') {
@@ -52,11 +49,12 @@ public class JUnit5TestRunnerUtil {
           final String categoryName = reader.readLine();
           String line;
 
+          List<DiscoverySelector> selectors = new ArrayList<>();
           while ((line = reader.readLine()) != null) {
-            lines.add(line);
+            selectors.add(createSelector(line));
           }
           packageNameRef[0] = packageName.length() == 0 ? "<default package>" : packageName;
-          return builder.selectors(DiscoverySelectors.selectPackage(packageName)).build();
+          return builder.selectors(selectors).build();
         }
         finally {
           reader.close();
@@ -68,11 +66,18 @@ public class JUnit5TestRunnerUtil {
       }
     }
     else {
-      Collections.addAll(lines, suiteClassNames);
+        return builder.selectors(createSelector(suiteClassNames[0])).build();
     }
 
-    final List<String> mappedLines = lines.stream().map(line -> line.replaceFirst(",", "#")).collect(Collectors.toList());
-    return builder.selectors(DiscoverySelectors.selectNames(mappedLines)).build();
+    return null;
   }
 
+  protected static DiscoverySelector createSelector(String line) {
+    if (line.contains(",")) {
+      return DiscoverySelectors.selectMethod(line.replaceFirst(",", "#"));
+    }
+    else {
+      return DiscoverySelectors.selectClass(line);
+    }
+  }
 }
