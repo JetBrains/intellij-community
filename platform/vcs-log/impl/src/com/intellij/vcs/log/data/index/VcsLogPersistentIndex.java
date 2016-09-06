@@ -101,8 +101,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
     myMessagesIndex = createMap(EnumeratorStringDescriptor.INSTANCE, "messages", logId, 0);
     myTrigramIndex = createIndex(() -> new VcsLogMessagesTrigramIndex(logId, this));
-    myUserIndex = createIndex(() -> new VcsLogUserIndex(logId, myUserRegistry, this));
-    myPathsIndex = createIndex(() -> new VcsLogPathsIndex(logId, myRoots, this));
+    myUserIndex = createIndex(() -> new VcsLogUserIndex(logId, myUserRegistry, fatalErrorsConsumer, this));
+    myPathsIndex = createIndex(() -> new VcsLogPathsIndex(logId, myRoots, fatalErrorsConsumer, this));
 
     for (VirtualFile root : myRoots) {
       myNumberOfTasks.put(root, new AtomicInteger());

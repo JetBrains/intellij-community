@@ -21,12 +21,14 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.impl.FatalErrorConsumer;
 import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
 import com.intellij.vcs.log.util.PersistentUtil;
 import gnu.trove.THashMap;
@@ -52,6 +54,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
 
   public VcsLogPathsIndex(@NotNull String logId,
                           @NotNull Set<VirtualFile> roots,
+                          @NotNull FatalErrorConsumer fatalErrorConsumer,
                           @NotNull Disposable disposableParent) throws IOException {
     super(logId, NAME, VcsLogPersistentIndex.getVersion(), new PathsIndexer(createPathsEnumerator(logId), roots),
           new NullableIntKeyDescriptor(), disposableParent);
@@ -59,6 +62,10 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
     myEmptyCommits = PersistentUtil.createPersistentHashMap(EnumeratorIntegerDescriptor.INSTANCE, "index-no-" + NAME, logId,
                                                             VcsLogPersistentIndex.getVersion());
     myPathsIndexer = (PathsIndexer)myIndexer;
+    myPathsIndexer.setFatalErrorConsumer(e -> {
+      fatalErrorConsumer.consume(this, e);
+      markCorrupted();
+    });
   }
 
   @NotNull
@@ -158,10 +165,15 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
   private static class PathsIndexer implements DataIndexer<Integer, Integer, VcsFullCommitDetails> {
     @NotNull private final PersistentEnumeratorBase<String> myPathsEnumerator;
     @NotNull private final Set<String> myRoots;
+    @NotNull private Consumer<Exception> myFatalErrorConsumer = LOG::error;
 
     private PathsIndexer(@NotNull PersistentEnumeratorBase<String> enumerator, @NotNull Set<VirtualFile> roots) {
       myPathsEnumerator = enumerator;
       myRoots = roots.stream().map(VirtualFile::getPath).collect(Collectors.toSet());
+    }
+
+    public void setFatalErrorConsumer(@NotNull Consumer<Exception> fatalErrorConsumer) {
+      myFatalErrorConsumer = fatalErrorConsumer;
     }
 
     @NotNull
@@ -193,7 +205,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
           result.put(myPathsEnumerator.enumerate(changedPath), null);
         }
         catch (IOException e) {
-          LOG.error(e);
+          myFatalErrorConsumer.consume(e);
         }
       });
       moves.forEach(renamedPaths -> {
@@ -205,7 +217,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
           result.put(afterId, beforeId);
         }
         catch (IOException e) {
-          LOG.error(e);
+          myFatalErrorConsumer.consume(e);
         }
       });
 

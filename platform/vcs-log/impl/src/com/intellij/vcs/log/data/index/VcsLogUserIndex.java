@@ -17,6 +17,7 @@ package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.ScalarIndexExtension;
@@ -24,6 +25,7 @@ import com.intellij.util.indexing.StorageException;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.data.VcsUserRegistryImpl;
+import com.intellij.vcs.log.impl.FatalErrorConsumer;
 import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -38,10 +40,15 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void> {
 
   public VcsLogUserIndex(@NotNull String logId,
                          @NotNull VcsUserRegistryImpl userRegistry,
+                         @NotNull FatalErrorConsumer consumer,
                          @NotNull Disposable disposableParent) throws IOException {
     super(logId, "users", VcsLogPersistentIndex.getVersion(), new UserIndexer(userRegistry), ScalarIndexExtension.VOID_DATA_EXTERNALIZER,
           disposableParent);
     myUserRegistry = userRegistry;
+    ((UserIndexer)myIndexer).setFatalErrorConsumer(e -> {
+      consumer.consume(this, e);
+      markCorrupted();
+    });
   }
 
   public TIntHashSet getCommitsForUsers(@NotNull Set<VcsUser> users) throws IOException, StorageException {
@@ -54,6 +61,7 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void> {
 
   private static class UserIndexer implements DataIndexer<Integer, Void, VcsFullCommitDetails> {
     @NotNull private final VcsUserRegistryImpl myRegistry;
+    @NotNull private Consumer<Exception> myFatalErrorConsumer = LOG::error;
 
     public UserIndexer(@NotNull VcsUserRegistryImpl registry) {
       myRegistry = registry;
@@ -68,10 +76,14 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void> {
         result.put(myRegistry.getUserId(inputData.getAuthor()), null);
       }
       catch (IOException e) {
-        LOG.error(e);
+        myFatalErrorConsumer.consume(e);
       }
 
       return result;
+    }
+
+    public void setFatalErrorConsumer(@NotNull Consumer<Exception> fatalErrorConsumer) {
+      myFatalErrorConsumer = fatalErrorConsumer;
     }
   }
 }
