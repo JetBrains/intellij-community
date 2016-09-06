@@ -66,7 +66,7 @@ public class BackgroundTaskUtil {
   @CalledInAwt
   public static ProgressIndicator executeAndTryWait(@NotNull Function<ProgressIndicator, /*@NotNull*/ Runnable> backgroundTask,
                                                     @Nullable Runnable onSlowAction,
-                                                    int waitMillis) {
+                                                    long waitMillis) {
     return executeAndTryWait(backgroundTask, onSlowAction, waitMillis, false);
   }
 
@@ -74,7 +74,7 @@ public class BackgroundTaskUtil {
   @CalledInAwt
   public static ProgressIndicator executeAndTryWait(@NotNull Function<ProgressIndicator, /*@NotNull*/ Runnable> backgroundTask,
                                                     @Nullable Runnable onSlowAction,
-                                                    int waitMillis,
+                                                    long waitMillis,
                                                     boolean forceEDT) {
     ModalityState modality = ModalityState.current();
 
@@ -131,7 +131,7 @@ public class BackgroundTaskUtil {
   @Nullable
   @CalledInAwt
   public static <T> T tryComputeFast(@NotNull Function<ProgressIndicator, T> backgroundTask,
-                                     int waitMillis) {
+                                     long waitMillis) {
     Pair<T, ProgressIndicator> pair = computeInBackgroundAndTryWait(
       backgroundTask,
       (result, indicator) -> {
@@ -150,7 +150,7 @@ public class BackgroundTaskUtil {
   @CalledInAny
   public static <T> T computeInBackgroundAndTryWait(@NotNull Computable<T> computable,
                                                     @NotNull Consumer<T> asyncCallback,
-                                                    int waitMillis) {
+                                                    long waitMillis) {
     Pair<T, ProgressIndicator> pair = computeInBackgroundAndTryWait(
       indicator -> computable.compute(),
       (result, indicator) -> asyncCallback.consume(result),
@@ -173,7 +173,7 @@ public class BackgroundTaskUtil {
   public static <T> Pair<T, ProgressIndicator> computeInBackgroundAndTryWait(@NotNull Function<ProgressIndicator, T> task,
                                                                              @NotNull PairConsumer<T, ProgressIndicator> asyncCallback,
                                                                              @NotNull ModalityState modality,
-                                                                             int waitMillis) {
+                                                                             long waitMillis) {
     ProgressIndicator indicator = new EmptyProgressIndicator(modality);
 
     Helper<T> helper = new Helper<>();
@@ -266,7 +266,7 @@ public class BackgroundTaskUtil {
     /**
      * @return true if computation was fast, and callback should be handled by current thread
      */
-    public boolean await(int waitMillis) {
+    public boolean await(long waitMillis) {
       try {
         mySemaphore.tryAcquire(waitMillis, TimeUnit.MILLISECONDS);
       }
