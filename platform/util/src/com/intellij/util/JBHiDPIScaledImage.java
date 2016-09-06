@@ -37,10 +37,7 @@ public class JBHiDPIScaledImage extends BufferedImage {
    * @param type type of the created image
    */
   public JBHiDPIScaledImage(int width, int height, int type) {
-    super(2 * width, 2 * height, type);
-    myImage = null;
-    myWidth = width;
-    myHeight = height;
+    this(new BufferedImage(width * 2, height * 2, type), width, height, type);
   }
 
   /**
@@ -84,11 +81,10 @@ public class JBHiDPIScaledImage extends BufferedImage {
 
   @Override
   public Graphics2D createGraphics() {
-    assert myImage == null : "graphics should only be created for the image used for drawing";
-    Graphics2D g = super.createGraphics();
-    if (myImage == null) {
-      return new HiDPIScaledGraphics(g);
+    assert myImage instanceof BufferedImage : "graphics should only be created for the image used for drawing";
+    if (myImage instanceof BufferedImage) {
+      return new HiDPIScaledGraphics(((BufferedImage)myImage).createGraphics());
     }
-    return g;
+    return super.createGraphics();
   }
 }
