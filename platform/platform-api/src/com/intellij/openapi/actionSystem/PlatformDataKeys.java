@@ -62,6 +62,7 @@ public class PlatformDataKeys extends CommonDataKeys {
    * Returns java.awt.Component currently in focus, DataContext should be retrieved for
    */
   public static final DataKey<Component> CONTEXT_COMPONENT = DataKey.create("contextComponent");
+  public static final DataKey<Point> CONTEXT_POINT = DataKey.create("contextPoint");
   public static final DataKey<CopyProvider> COPY_PROVIDER = DataKey.create("copyProvider");
   public static final DataKey<CutProvider> CUT_PROVIDER = DataKey.create("cutProvider");
   public static final DataKey<PasteProvider> PASTE_PROVIDER = DataKey.create("pasteProvider");

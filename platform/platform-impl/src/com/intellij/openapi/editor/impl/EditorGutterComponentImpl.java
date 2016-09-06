@@ -25,6 +25,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.ide.IdeEventQueue;
@@ -110,7 +111,7 @@ import java.util.List;
  *   <li>Folding area</li>
  *</ul>
  */
-class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener, DataProvider {
+class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener, DataProviderEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorGutterComponentImpl");
   private static final int START_ICON_AREA_WIDTH = JBUI.scale(17);
   private static final int FREE_PAINTERS_LEFT_AREA_WIDTH = JBUI.scale(8);
@@ -581,7 +582,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NonNls String dataId, @Nullable Point point) {
     if (myEditor.isDisposed()) return null;
 
     if (EditorGutter.KEY.is(dataId)) {
@@ -589,6 +590,14 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
     else if (CommonDataKeys.EDITOR.is(dataId)) {
       return myEditor;
+    }
+    else if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+      if (point != null) {
+        GutterMark renderer = getGutterRenderer(point);
+        if (renderer instanceof LineMarkerInfo.LineMarkerGutterIconRenderer) {
+          return ((LineMarkerInfo.LineMarkerGutterIconRenderer)renderer).getLineMarkerInfo().getElement();
+        }
+      }
     }
     return null;
   }

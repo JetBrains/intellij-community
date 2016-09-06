@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,11 @@ public abstract class DataManager {
    * @exception IllegalArgumentException if point <code>(x, y)</code> is not inside
    * component's bounds
    */
-  public abstract DataContext getDataContext(@NotNull Component component, int x, int y);
+  public DataContext getDataContext(@NotNull Component component, int x, int y) {
+    return getDataContext(component, new Point(x, y));
+  }
+
+  public abstract DataContext getDataContext(@NotNull Component component, @Nullable Point p);
 
   /**
    * @param dataContext should be instance of {@link com.intellij.openapi.util.UserDataHolder}

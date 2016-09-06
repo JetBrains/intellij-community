@@ -62,23 +62,32 @@ public class DataManagerImpl extends DataManager {
   }
 
   @Nullable
-  private Object getData(@NotNull String dataId, final Component focusedComponent) {
+  private Object getData(@NotNull String dataId, final Component focusedComponent, @Nullable Point point) {
     for (Component c = focusedComponent; c != null; c = c.getParent()) {
       final DataProvider dataProvider = getDataProviderEx(c);
       if (dataProvider == null) continue;
-      Object data = getDataFromProvider(dataProvider, dataId, null);
+      Object data = getDataFromProvider(dataProvider, dataId, null, point);
       if (data != null) return data;
     }
     return null;
   }
 
   @Nullable
-  private Object getDataFromProvider(@NotNull final DataProvider provider, @NotNull String dataId, @Nullable Set<String> alreadyComputedIds) {
+  private Object getDataFromProvider(@NotNull final DataProvider provider,
+                                     @NotNull String dataId,
+                                     @Nullable Set<String> alreadyComputedIds,
+                                     @Nullable Point point) {
     if (alreadyComputedIds != null && alreadyComputedIds.contains(dataId)) {
       return null;
     }
     try {
-      Object data = provider.getData(dataId);
+      Object data;
+      if (point != null && provider instanceof DataProviderEx) {
+        data = ((DataProviderEx)provider).getData(dataId, point);
+      }
+      else {
+        data = provider.getData(dataId);
+      }
       if (data != null) return validated(data, dataId, provider);
 
       GetDataRule dataRule = getDataRule(dataId);
@@ -88,7 +97,7 @@ public class DataManagerImpl extends DataManager {
         data = dataRule.getData(new DataProvider() {
           @Override
           public Object getData(String dataId) {
-            return getDataFromProvider(provider, dataId, ids);
+            return getDataFromProvider(provider, dataId, ids, point);
           }
         });
 
@@ -114,7 +123,7 @@ public class DataManagerImpl extends DataManager {
     else if (component instanceof JComponent) {
       dataProvider = getDataProvider((JComponent)component);
     }
-    
+
     return dataProvider;
   }
 
@@ -180,20 +189,22 @@ public class DataManagerImpl extends DataManager {
   }
 
   @Override
-  public DataContext getDataContext(@NotNull Component component, int x, int y) {
-    if (x < 0 || x >= component.getWidth() || y < 0 || y >= component.getHeight()) {
-      throw new IllegalArgumentException("wrong point: x=" + x + "; y=" + y);
+  public DataContext getDataContext(@NotNull Component component, @Nullable Point point) {
+    if (point != null) {
+      if (point.x < 0 || point.x >= component.getWidth() || point.y < 0 || point.y >= component.getHeight()) {
+        throw new IllegalArgumentException("wrong point: x=" + point.x + "; y=" + point.y);
+      }
     }
 
     // Point inside JTabbedPane has special meaning. If point is inside tab bounds then
     // we construct DataContext by the component which corresponds to the (x, y) tab.
     if (component instanceof JTabbedPane) {
       JTabbedPane tabbedPane = (JTabbedPane)component;
-      int index = tabbedPane.getUI().tabForCoordinate(tabbedPane, x, y);
+      int index = tabbedPane.getUI().tabForCoordinate(tabbedPane, point.x, point.y);
       return getDataContext(index != -1 ? tabbedPane.getComponentAt(index) : tabbedPane);
     }
     else {
-      return getDataContext(component);
+      return new MyDataContext(component, point);
     }
   }
 
@@ -319,7 +330,7 @@ public class DataManagerImpl extends DataManager {
   private static class NullResult {
     public static final NullResult INSTANCE = new NullResult();
   }
-  
+
   private static final Set<String> ourSafeKeys = new HashSet<>(Arrays.asList(
     CommonDataKeys.PROJECT.getName(),
     CommonDataKeys.EDITOR.getName(),
@@ -334,12 +345,18 @@ public class DataManagerImpl extends DataManager {
     // the weak reference. For example, Swing often remembers menu items
     // that have DataContext as a field.
     private final Reference<Component> myRef;
+    private final Point myPoint;
     private Map<Key, Object> myUserData;
     private final Map<String, Object> myCachedData = new WeakValueHashMap<>();
 
     public MyDataContext(final Component component) {
+      this(component, null);
+    }
+
+    public MyDataContext(final Component component, @Nullable Point point) {
       myEventCount = -1;
       myRef = component == null ? null : new WeakReference<>(component);
+      myPoint = point;
     }
 
     public void setEventCount(int eventCount, Object caller) {
@@ -372,7 +389,10 @@ public class DataManagerImpl extends DataManager {
     }
 
     @Nullable
-    private Object doGetData(@NotNull String dataId) {
+    protected Object doGetData(@NotNull String dataId) {
+      if (PlatformDataKeys.CONTEXT_POINT.is(dataId)) {
+        return myPoint;
+      }
       Component component = SoftReference.dereference(myRef);
       if (PlatformDataKeys.IS_MODAL_CONTEXT.is(dataId)) {
         if (component == null) {
@@ -386,11 +406,12 @@ public class DataManagerImpl extends DataManager {
       if (PlatformDataKeys.MODALITY_STATE.is(dataId)) {
         return component != null ? ModalityState.stateForComponent(component) : ModalityState.NON_MODAL;
       }
+      Object data = ((DataManagerImpl)DataManager.getInstance()).getData(dataId, component, myPoint);
       if (CommonDataKeys.EDITOR.is(dataId)) {
-        Editor editor = (Editor)((DataManagerImpl)DataManager.getInstance()).getData(dataId, component);
+        Editor editor = (Editor)data;
         return validateEditor(editor);
       }
-      return ((DataManagerImpl)DataManager.getInstance()).getData(dataId, component);
+      return data;
     }
 
     @NonNls
