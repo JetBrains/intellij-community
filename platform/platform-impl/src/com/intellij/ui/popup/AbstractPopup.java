@@ -156,7 +156,7 @@ public class AbstractPopup implements JBPopup {
     }
   };
 
-  private JTextField mySpeedSearchPatternField;
+  protected JTextField mySpeedSearchPatternField;
   private boolean myNativePopup;
   private boolean myMayBeParent;
   private AbstractPopup.SpeedSearchKeyListener mySearchKeyListener;

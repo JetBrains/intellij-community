@@ -25,15 +25,16 @@ import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.execution.filters.LineNumbersMapping;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.frame.XStackFrame;
-import com.sun.jdi.*;
+import com.sun.jdi.Location;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.VMDisconnectedException;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,6 +71,10 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
   }
 
   private <T> T iterate(Processor<T> processor, T defaultValue, SourcePosition position) {
+    return iterate(processor, defaultValue, position, true);
+  }
+
+  private <T> T iterate(Processor<T> processor, T defaultValue, SourcePosition position, boolean ignorePCE) {
     for (PositionManager positionManager : myPositionManagers) {
       if (position != null) {
         Set<? extends FileType> types = positionManager.getAcceptedFileTypes();
@@ -78,7 +83,10 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
         }
       }
       try {
-        return DebuggerUtilsImpl.suppressExceptions(() -> processor.process(positionManager), defaultValue, NoDataException.class);
+        if (!ignorePCE) {
+          ProgressManager.checkCanceled();
+        }
+        return DebuggerUtilsImpl.suppressExceptions(() -> processor.process(positionManager), defaultValue, ignorePCE, NoDataException.class);
       }
       catch (NoDataException ignored) {
       }
@@ -93,12 +101,12 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
     SourcePosition res = mySourcePositionCache.get(location);
     if (checkCacheEntry(res, location)) return res;
 
-    return ApplicationManager.getApplication().runReadAction((Computable<SourcePosition>)() ->
-      iterate(positionManager -> {
+    return DebuggerUtilsImpl.runInReadActionWithWriteActionPriorityWithRetries(
+      () -> iterate(positionManager -> {
         SourcePosition res1 = positionManager.getSourcePosition(location);
         mySourcePositionCache.put(location, res1);
         return res1;
-      }, null, null));
+      }, null, null, false));
   }
 
   private static boolean checkCacheEntry(SourcePosition position, Location location) {

@@ -221,7 +221,7 @@ public class XFramesView extends XDebugView {
       return;
     }
 
-    DebuggerUIUtil.invokeLater(() -> {
+    myLaterInvocator.offer(() -> {
       if (event != SessionEvent.SETTINGS_CHANGED) {
         mySelectedFrameIndex = 0;
         mySelectedStack = null;

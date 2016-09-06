@@ -67,6 +67,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.zip.ZipInputStream;
@@ -267,6 +268,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
       }
       ExceptionConsumer consumer = new ExceptionConsumer();
 
+      List<File> filesToRefresh = new ArrayList<>();
       myTemplate.processStream(new ArchivedProjectTemplate.StreamProcessor<Void>() {
         @Override
         public Void consume(@NotNull ZipInputStream stream) throws IOException {
@@ -283,7 +285,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
             }
           }, true);
 
-          myTemplate.handleUnzippedDirectories(dir);
+          myTemplate.handleUnzippedDirectories(dir, filesToRefresh);
 
           return null;
         }
@@ -301,11 +303,16 @@ public class TemplateModuleBuilder extends ModuleBuilder {
           throw new IOException("Can't rename " + from + " to " + to);
         }
       }
-      VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
-      if (virtualFile == null) {
-        throw new IOException("Can't find " + dir);
+
+      RefreshQueue refreshQueue = RefreshQueue.getInstance();
+      LOG.assertTrue(!filesToRefresh.isEmpty());
+      for (File file : filesToRefresh) {
+        VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+        if (virtualFile == null) {
+          throw new IOException("Can't find " + file);
+        }
+        refreshQueue.refresh(false, true, null, virtualFile);
       }
-      RefreshQueue.getInstance().refresh(false, true, null, virtualFile);
 
       consumer.reportFailures();
     }

@@ -565,7 +565,7 @@ public class JavaCompletionUtil {
     return methods.length == 0 || Arrays.stream(methods).anyMatch(JavaCompletionUtil::isConstructorCompletable);
   }
 
-  static boolean isConstructorCompletable(@NotNull PsiMethod constructor) {
+  private static boolean isConstructorCompletable(@NotNull PsiMethod constructor) {
     return !(constructor instanceof PsiCompiledElement) || !constructor.hasModifierProperty(PsiModifier.PRIVATE);
   }
 

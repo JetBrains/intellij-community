@@ -66,7 +66,7 @@ internal class DefaultProjectStoreImpl(override val project: ProjectImpl, privat
 
     override fun getStateStorage(storageSpec: Storage) = storage
 
-    override fun startExternalization() = storage.startExternalization()?.let { MyExternalizationSession(it) }
+    override fun startExternalization() = storage.startExternalization()?.let(::MyExternalizationSession)
 
     override fun expandMacros(file: String) = throw UnsupportedOperationException()
 

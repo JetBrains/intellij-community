@@ -21,6 +21,8 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
+import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -173,30 +175,39 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
   }
 
   private void loadFileHistoryInBackground(@NotNull GitFileAnnotation fileAnnotation) {
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      try {
-        VirtualFile file = fileAnnotation.getFile();
-        FilePath filePath = VcsUtil.getFilePath(file);
-        VcsRevisionNumber currentRevision = fileAnnotation.getCurrentRevision();
+    List<VcsFileRevision> fileRevisions = BackgroundTaskUtil.computeInBackgroundAndTryWait(
+      () -> {
+        try {
+          VirtualFile file = fileAnnotation.getFile();
+          FilePath filePath = VcsUtil.getFilePath(file);
+          VcsRevisionNumber currentRevision = fileAnnotation.getCurrentRevision();
 
-        List<VcsFileRevision> revisions;
-        if (file.isInLocalFileSystem() || currentRevision == null) {
-          revisions = loadFileHistory(filePath);
+          if (file.isInLocalFileSystem() || currentRevision == null) {
+            return loadFileHistory(filePath);
+          }
+          else {
+            return GitHistoryUtils.history(myProject, filePath, null, currentRevision);
+          }
         }
-        else {
-          revisions = GitHistoryUtils.history(myProject, filePath, null, currentRevision);
+        catch (VcsException e) {
+          LOG.error(e);
+          return null;
         }
-
+      },
+      (revisions) -> {
         if (revisions == null) return;
         ApplicationManager.getApplication().invokeLater(() -> {
+          GitFileAnnotation newFileAnnotation = new GitFileAnnotation(fileAnnotation);
           fileAnnotation.setRevisions(revisions);
-          fileAnnotation.reload();
+          fileAnnotation.reload(newFileAnnotation);
         });
-      }
-      catch (VcsException e) {
-        LOG.error(e);
-      }
-    });
+      },
+      ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
+    );
+
+    if (fileRevisions != null) {
+      fileAnnotation.setRevisions(fileRevisions);
+    }
   }
 
   @Nullable

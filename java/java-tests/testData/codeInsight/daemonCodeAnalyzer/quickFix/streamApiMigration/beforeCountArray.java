@@ -6,7 +6,7 @@ public class Main {
     for(String str : a<caret>rray) {
       String trimmed = str.trim();
       if(trimmed.length() > 10) {
-        longStrings++;
+        longStrings = longStrings + 1;
       }
     }
     return longStrings;

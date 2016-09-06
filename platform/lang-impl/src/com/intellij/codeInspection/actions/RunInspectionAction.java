@@ -46,7 +46,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.TitledSeparator;
+import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -152,7 +156,15 @@ public class RunInspectionAction extends GotoActionBase {
           additionPanel.add(fileFilter);
           myUpdatedSettingsToolWrapper = copyToolWithSettings(toolWrapper);//new InheritOptionsForToolPanel(toolWrapper.getShortName(), project);
           additionPanel.add(new TitledSeparator(IdeBundle.message("goto.inspection.action.choose.inherit.settings.from")));
-          additionPanel.add(myUpdatedSettingsToolWrapper.getTool().createOptionsPanel());
+          JComponent optionsPanel = myUpdatedSettingsToolWrapper.getTool().createOptionsPanel();
+          LOGGER.assertTrue(optionsPanel != null);
+          if (UIUtil.hasScrollPane(optionsPanel)) {
+            additionPanel.add(optionsPanel);
+          }
+          else {
+            additionPanel.add(ScrollPaneFactory.createScrollPane(optionsPanel, SideBorder.NONE));
+          }
+          additionPanel.setPreferredSize(new JBDimension(-1, 400));
           return additionPanel;
         } else {
           return fileFilter;

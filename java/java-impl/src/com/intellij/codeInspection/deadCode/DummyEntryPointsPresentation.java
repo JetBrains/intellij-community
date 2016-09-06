@@ -106,6 +106,11 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
   }
 
   @Override
+  protected boolean skipEntryPoints(RefJavaElement refElement) {
+    return false;
+  }
+
+  @Override
   @NotNull
   public DeadHTMLComposer getComposer() {
     return new DeadHTMLComposer(this);

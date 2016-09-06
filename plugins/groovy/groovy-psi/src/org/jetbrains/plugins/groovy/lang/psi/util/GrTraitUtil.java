@@ -27,6 +27,8 @@ import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.Contract;
@@ -34,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex;
@@ -69,6 +72,24 @@ public class GrTraitUtil {
 
   public static boolean isMethodAbstract(@NotNull PsiMethod method) {
     return method.getModifierList().hasExplicitModifier(ABSTRACT) || isInterface(method.getContainingClass());
+  }
+
+  public static List<PsiClass> getSelfTypeClasses(@NotNull PsiClass trait) {
+    return CachedValuesManager.getCachedValue(trait, () -> {
+      List<PsiClass> result = ContainerUtil.newArrayList();
+      InheritanceUtil.processSupers(trait, true, clazz -> {
+        if (isTrait(clazz)) {
+          PsiAnnotation annotation = AnnotationUtil.findAnnotation(clazz, "groovy.transform.SelfType");
+          if (annotation != null) {
+            result.addAll(
+              GrAnnotationUtil.getClassArrayValue(annotation, "value")
+            );
+          }
+        }
+        return true;
+      });
+      return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+    });
   }
 
   @NotNull

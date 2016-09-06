@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.WString;
+import com.sun.jna.platform.win32.WinDef;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.win32.StdCallLibrary;
 import org.jetbrains.annotations.NotNull;
@@ -111,11 +112,24 @@ public class Restarter {
     Kernel32 kernel32 = (Kernel32)Native.loadLibrary("kernel32", Kernel32.class);
     Shell32 shell32 = (Shell32)Native.loadLibrary("shell32", Shell32.class);
 
-    final int pid = kernel32.GetCurrentProcessId();
-    final IntByReference argc = new IntByReference();
+    int pid = kernel32.GetCurrentProcessId();
+    IntByReference argc = new IntByReference();
     Pointer argv_ptr = shell32.CommandLineToArgvW(kernel32.GetCommandLineW(), argc);
-    final String[] argv = getRestartArgv(argv_ptr.getWideStringArray(0, argc.getValue()));
+    String[] argv = getRestartArgv(argv_ptr.getWideStringArray(0, argc.getValue()));
     kernel32.LocalFree(argv_ptr);
+
+    // See https://blogs.msdn.microsoft.com/oldnewthing/20060515-07/?p=31203
+    // argv[0] as the program name is only a convention, i.e. there is no guarantee
+    // the name is the full path to the executable.
+    //
+    // See https://msdn.microsoft.com/en-us/library/windows/desktop/ms683197(v=vs.85).aspx
+    // To retrieve the full path to the executable, use "GetModuleFileName(NULL, ...)".
+    //
+    // Note: We use 32,767 as buffer size to avoid limiting ourselves to MAX_PATH (260).
+    char[] buffer = new char[32767];
+    if (kernel32.GetModuleFileNameW(null, buffer, new WinDef.DWORD(buffer.length)).intValue() > 0) {
+      argv[0] = Native.toString(buffer);
+    }
 
     doScheduleRestart(new File(PathManager.getBinPath(), "restarter.exe"), commands -> {
       Collections.addAll(commands, String.valueOf(pid), String.valueOf(beforeRestart.length));
@@ -135,7 +149,7 @@ public class Restarter {
     int p = homePath.indexOf(".app");
     if (p < 0) throw new IOException("Application bundle not found: " + homePath);
 
-    final String bundlePath = homePath.substring(0, p + 4);
+    String bundlePath = homePath.substring(0, p + 4);
     doScheduleRestart(new File(PathManager.getBinPath(), "restarter"), commands -> {
       Collections.addAll(commands, bundlePath);
       Collections.addAll(commands, beforeRestart);
@@ -192,6 +206,8 @@ public class Restarter {
     WString GetCommandLineW();
 
     Pointer LocalFree(Pointer pointer);
+
+    WinDef.DWORD GetModuleFileNameW(WinDef.HMODULE hModule, char[] lpFilename, WinDef.DWORD nSize);
   }
 
   private interface Shell32 extends StdCallLibrary {

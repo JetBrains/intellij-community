@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.components.impl.stores
+package com.intellij.configurationStore
 
 import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.components.impl.stores.BatchUpdateListener
+import com.intellij.openapi.components.impl.stores.DefaultStateSerializer
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.util.messages.MessageBus
 import org.jdom.Element
 import java.util.concurrent.atomic.AtomicReference
 
@@ -78,5 +81,16 @@ abstract class StateStorageBase<T : Any> : StateStorage {
   protected fun checkIsSavingDisabled(): Boolean {
     LOG.debug { "Saving disabled for ${toString()}" }
     return mySavingDisabled
+  }
+}
+
+inline fun <T> runBatchUpdate(messageBus: MessageBus, runnable: () -> T): T {
+  val publisher = messageBus.syncPublisher(BatchUpdateListener.TOPIC)
+  publisher.onBatchUpdateStarted()
+  try {
+    return runnable()
+  }
+  finally {
+    publisher.onBatchUpdateFinished()
   }
 }
