@@ -138,7 +138,7 @@ fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, renderer: (T,
       .setCancelOnWindowDeactivation(false)
       .setItemChoosenCallback {
         @Suppress("UNCHECKED_CAST")
-        val value = list.selectedValue as T
+        val value = list.selectedValue
         if (value == null) {
           result.setError("No target to inspect")
         }

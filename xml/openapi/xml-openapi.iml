@@ -11,6 +11,7 @@
     <orderEntry type="module" module-name="xml-psi-api" exported="" />
     <orderEntry type="module" module-name="xml-analysis-api" exported="" />
     <orderEntry type="module" module-name="xml-structure-view-api" exported="" />
+    <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
   </component>
   <component name="copyright">
     <Base>
@@ -18,4 +19,3 @@
     </Base>
   </component>
 </module>
-
