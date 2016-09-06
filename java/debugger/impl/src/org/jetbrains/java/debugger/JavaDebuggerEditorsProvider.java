@@ -58,12 +58,17 @@ public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase {
 
   @NotNull
   @Override
+  public Collection<Language> getSupportedLanguages(@Nullable PsiElement context) {
+    return DebuggerUtilsEx.getCodeFragmentFactories(context).stream()
+      .map(factory -> factory.getFileType().getLanguage())
+      .collect(Collectors.toList());
+  }
+
+  @NotNull
+  @Override
   public Collection<Language> getSupportedLanguages(@NotNull Project project, @Nullable XSourcePosition sourcePosition) {
     if (sourcePosition != null) {
-      PsiElement context = getContextElement(sourcePosition.getFile(), sourcePosition.getOffset(), project);
-      return DebuggerUtilsEx.getCodeFragmentFactories(context).stream()
-        .map(factory -> factory.getFileType().getLanguage())
-        .collect(Collectors.toList());
+      return getSupportedLanguages(getContextElement(sourcePosition.getFile(), sourcePosition.getOffset(), project));
     }
     return Collections.emptyList();
   }

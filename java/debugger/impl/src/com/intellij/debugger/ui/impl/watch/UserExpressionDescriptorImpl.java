@@ -32,8 +32,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaCodeFragment;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.sun.jdi.Type;
 import org.jetbrains.annotations.Nullable;
@@ -69,7 +69,7 @@ public class UserExpressionDescriptorImpl extends EvaluationDescriptor implement
   }
 
   protected PsiCodeFragment getEvaluationCode(final StackFrameContext context) throws EvaluateException {
-    Pair<PsiClass, PsiType> psiClassAndType = DebuggerUtilsImpl.getPsiClassAndType(myTypeName, myProject);
+    Pair<PsiElement, PsiType> psiClassAndType = DebuggerUtilsImpl.getPsiClassAndType(myTypeName, myProject);
     if (psiClassAndType.first == null) {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.type.name", myTypeName));
     }

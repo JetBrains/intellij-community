@@ -177,46 +177,52 @@ public class EnvironmentUtil {
 
         LOG.info("loading shell env: " + StringUtil.join(command, " "));
 
-        ProcessBuilder builder = new ProcessBuilder(command).redirectErrorStream(true);
-        builder.environment().put(DISABLE_OMZ_AUTO_UPDATE, "true");
-        Process process = builder.start();
-        StreamGobbler gobbler = new StreamGobbler(process.getInputStream());
-        int rv = waitAndTerminateAfter(process, SHELL_ENV_READING_TIMEOUT);
-        gobbler.stop();
-
-        String lines = FileUtil.loadFile(envFile);
-        if (rv != 0 || lines.isEmpty()) {
-          throw new Exception("rv:" + rv + " text:" + lines.length() + " out:" + StringUtil.trimEnd(gobbler.getText(), '\n'));
-        }
-        return parseEnv(lines);
+        return runProcessAndReadEnvs(command, envFile, "\0");
       }
       finally {
         FileUtil.delete(envFile);
       }
     }
 
+    @NotNull
+    protected static Map<String, String> runProcessAndReadEnvs(@NotNull List<String> command, @NotNull File envFile, String lineSeparator) throws Exception {
+      ProcessBuilder builder = new ProcessBuilder(command).redirectErrorStream(true);
+      builder.environment().put(DISABLE_OMZ_AUTO_UPDATE, "true");
+      Process process = builder.start();
+      StreamGobbler gobbler = new StreamGobbler(process.getInputStream());
+      int rv = waitAndTerminateAfter(process, SHELL_ENV_READING_TIMEOUT);
+      gobbler.stop();
+
+      String lines = FileUtil.loadFile(envFile);
+      if (rv != 0 || lines.isEmpty()) {
+        throw new Exception("rv:" + rv + " text:" + lines.length() + " out:" + StringUtil.trimEnd(gobbler.getText(), '\n'));
+      }
+      return parseEnv(lines, lineSeparator);
+    }
+
     protected List<String> getShellProcessCommand() throws Exception {
       String shell = getShell();
+
+      if (shell == null || !new File(shell).canExecute()) {
+        throw new Exception("shell:" + shell);
+      }
 
       return new ArrayList<String>(Arrays.asList(shell, "-l", "-i"));
     }
 
-    @NotNull
+    @Nullable
     protected String getShell() throws Exception {
-      String shell = System.getenv("SHELL");
-      if (shell == null || !new File(shell).canExecute()) {
-        throw new Exception("shell:" + shell);
-      }
-      return shell;
+      return System.getenv("SHELL");
     }
   }
 
-  private static Map<String, String> parseEnv(String text) throws Exception {
+  @NotNull
+  private static Map<String, String> parseEnv(String text, String lineSeparator) throws Exception {
     Set<String> toIgnore = new HashSet<String>(Arrays.asList("_", "PWD", "SHLVL", DISABLE_OMZ_AUTO_UPDATE));
     Map<String, String> env = System.getenv();
     Map<String, String> newEnv = new HashMap<String, String>();
 
-    String[] lines = text.split("\0");
+    String[] lines = text.split(lineSeparator);
     for (String line : lines) {
       int pos = line.indexOf('=');
       if (pos <= 0) {
@@ -318,7 +324,7 @@ public class EnvironmentUtil {
   @TestOnly
   static Map<String, String> testParser(@NotNull String lines) {
     try {
-      return parseEnv(lines);
+      return parseEnv(lines, "\0");
     }
     catch (Exception e) {
       throw new RuntimeException(e);

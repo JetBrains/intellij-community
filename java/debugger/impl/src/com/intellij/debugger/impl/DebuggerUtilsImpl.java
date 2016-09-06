@@ -148,8 +148,8 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   }
 
   @NotNull
-  public static Pair<PsiClass, PsiType> getPsiClassAndType(@Nullable String className, Project project) {
-    PsiClass contextClass = null;
+  public static Pair<PsiElement, PsiType> getPsiClassAndType(@Nullable String className, Project project) {
+    PsiElement contextClass = null;
     PsiType contextType = null;
     if (!StringUtil.isEmpty(className)) {
       PsiPrimitiveType primitiveType = PsiJavaParserFacadeImpl.getPrimitiveType(className);
@@ -160,10 +160,10 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
       else {
         contextClass = findClass(className, project, GlobalSearchScope.allScope(project));
         if (contextClass != null) {
-          contextClass = (PsiClass)contextClass.getNavigationElement();
+          contextClass = contextClass.getNavigationElement();
         }
         if (contextClass instanceof PsiCompiledElement) {
-          contextClass = (PsiClass)((PsiCompiledElement)contextClass).getMirror();
+          contextClass = ((PsiCompiledElement)contextClass).getMirror();
         }
         contextType = getType(className, project);
       }
