@@ -80,7 +80,7 @@ public class MessageBusImpl implements MessageBus {
   private final Disposable myConnectionDisposable;
 
   public MessageBusImpl(@NotNull Object owner, @NotNull MessageBus parentBus) {
-    myOwner = owner.toString() + " of " + owner.getClass();
+    myOwner = owner + " of " + owner.getClass();
     myConnectionDisposable = Disposer.newDisposable(myOwner);
     myParentBus = (MessageBusImpl)parentBus;
     myParentBus.onChildBusCreated(this);
@@ -89,7 +89,7 @@ public class MessageBusImpl implements MessageBus {
   }
 
   private MessageBusImpl(Object owner) {
-    myOwner = owner.toString() + " of " + owner.getClass();
+    myOwner = owner + " of " + owner.getClass();
     myConnectionDisposable = Disposer.newDisposable(myOwner);
     myOrderRef.set(Collections.<Integer>emptyList());
   }
@@ -102,6 +102,10 @@ public class MessageBusImpl implements MessageBus {
   @NotNull
   private RootBus getRootBus() {
     return myParentBus != null ? myParentBus.getRootBus() : asRoot();
+  }
+
+  private MessageBusImpl rootBus() { // return MessageBusImpl instead of RootBus to save one cast when accessing MessageBusImpl's private members
+    return getRootBus();
   }
 
   private RootBus asRoot() {
@@ -169,7 +173,7 @@ public class MessageBusImpl implements MessageBus {
     }
     childBus.myOrderRef.set(childOrder);
     myChildBuses.add(childBus);
-    getRootBus().clearSubscriberCache();
+    rootBus().clearSubscriberCache();
   }
 
   private void onChildBusDisposed(final MessageBusImpl childBus) {
@@ -177,7 +181,7 @@ public class MessageBusImpl implements MessageBus {
     myChildOrders.remove(childBus.myOrderRef.get());
     Map<MessageBusImpl, Integer> map = getRootBus().myWaitingBuses.get();
     if (map != null) map.remove(childBus);
-    getRootBus().clearSubscriberCache();
+    rootBus().clearSubscriberCache();
     LOG.assertTrue(removed);
   }
 
@@ -193,7 +197,7 @@ public class MessageBusImpl implements MessageBus {
     @NonNls
     @Override
     public String toString() {
-      return "{ DJob connection:" + connection.toString() + "; message: " + message + " }";
+      return "{ DJob connection:" + connection + "; message: " + message + " }";
     }
   }
 
@@ -214,7 +218,7 @@ public class MessageBusImpl implements MessageBus {
 
   @Override
   @NotNull
-  @SuppressWarnings({"unchecked"})
+  @SuppressWarnings("unchecked")
   public <L> L syncPublisher(@NotNull final Topic<L> topic) {
     checkNotDisposed();
     L publisher = (L)mySyncPublishers.get(topic);
@@ -235,7 +239,7 @@ public class MessageBusImpl implements MessageBus {
 
   @Override
   @NotNull
-  @SuppressWarnings({"unchecked"})
+  @SuppressWarnings("unchecked")
   public <L> L asyncPublisher(@NotNull final Topic<L> topic) {
     checkNotDisposed();
     L publisher = (L)myAsyncPublishers.get(topic);
@@ -379,7 +383,7 @@ public class MessageBusImpl implements MessageBus {
     while (true);
   }
 
-  void notifyOnSubscription(final MessageBusConnectionImpl connection, final Topic topic) {
+  void notifyOnSubscription(@NotNull MessageBusConnectionImpl connection, @NotNull Topic topic) {
     checkNotDisposed();
     List<MessageBusConnectionImpl> topicSubscribers = mySubscribers.get(topic);
     if (topicSubscribers == null) {
@@ -388,10 +392,10 @@ public class MessageBusImpl implements MessageBus {
     }
 
     topicSubscribers.add(connection);
-    getRootBus().clearSubscriberCache();
+    rootBus().clearSubscriberCache();
   }
 
-  void clearSubscriberCache() {
+  private void clearSubscriberCache() {
     mySubscriberCache.clear();
     for (MessageBusImpl bus : myChildBuses) {
       bus.clearSubscriberCache();
@@ -403,7 +407,7 @@ public class MessageBusImpl implements MessageBus {
       topicSubscribers.remove(connection);
     }
     if (myDisposed) return;
-    getRootBus().clearSubscriberCache();
+    rootBus().clearSubscriberCache();
 
     final Iterator<DeliveryJob> i = myMessageQueue.get().iterator();
     while (i.hasNext()) {
