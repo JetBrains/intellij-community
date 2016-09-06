@@ -1,15 +1,16 @@
 package org.jetbrains.debugger.memory.utils;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class StackFrameDescriptor {
   private final String myFilePath;
-  private int myFrameLevel;
-  private int myLineNumber;
+  private final String myMethodName;
+  private final int myLineNumber;
 
-  public StackFrameDescriptor(@NotNull String path, int frameLevel, int line) {
+  public StackFrameDescriptor(@NotNull String path, @NotNull String methodName, int line) {
     myFilePath = path.replace('\\', '.');
-    myFrameLevel = frameLevel;
+    myMethodName = methodName;
     myLineNumber = line;
   }
 
@@ -18,12 +19,22 @@ public class StackFrameDescriptor {
     return myFilePath;
   }
 
-  public int line() {
-    return myLineNumber;
+  @NotNull
+  public String methodName() {
+    return myMethodName;
   }
 
-  @Override
-  public String toString() {
-    return String.format("%d. %s:%d", myFrameLevel, myFilePath, myLineNumber);
+  @NotNull
+  public String className() {
+    return StringUtil.getShortName(myFilePath);
+  }
+
+  @NotNull
+  public String packageName() {
+    return StringUtil.getPackageName(myFilePath);
+  }
+
+  public int line() {
+    return myLineNumber;
   }
 }

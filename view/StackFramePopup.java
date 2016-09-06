@@ -10,6 +10,8 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.debugger.memory.utils.KeyboardUtils;
@@ -53,6 +55,15 @@ public class StackFramePopup {
       @Override
       public Object getElementAt(int index) {
         return myStackFrame.get(index);
+      }
+    });
+
+    frameList.setCellRenderer(new ColoredListCellRenderer<StackFrameDescriptor>() {
+      @Override
+      protected void customizeCellRenderer(@NotNull JList<? extends StackFrameDescriptor> list,
+                                           StackFrameDescriptor value, int index, boolean isSelected, boolean hasFocus) {
+        append(String.format("%s:%d, %s", value.methodName(), value.line(), value.className()));
+        append(String.format(" (%s)", value.packageName()), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
       }
     });
 

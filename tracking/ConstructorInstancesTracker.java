@@ -135,8 +135,9 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
               List<StackFrameDescriptor> stackFrameDescriptors = stack.stream().map(frame -> {
                 try {
                   Location loc = frame.location();
-                  return new StackFrameDescriptor(loc.declaringType().name(),
-                      frame.getIndexFromBottom(), loc.lineNumber());
+                  String typeName = loc.declaringType().name();
+                  String methodName = loc.method().name();
+                  return new StackFrameDescriptor(typeName, methodName, loc.lineNumber());
                 } catch (EvaluateException e) {
                   return null;
                 }
