@@ -163,19 +163,17 @@ private fun submit(event: IdeaLoggingEvent, parentComponent: Component, callback
       else if (showYesNoDialog(parentComponent, project, msg, ReportMessages.ERROR_REPORT, Messages.getErrorIcon()) != Messages.YES) {
         callback.consume(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
       }
-      else {
-        if (e is NoSuchEAPUserException) {
-          val dialog: JetBrainsAccountDialog
-          if (parentComponent.isShowing) {
-            dialog = JetBrainsAccountDialog(parentComponent)
-          }
-          else {
-            dialog = JetBrainsAccountDialog(project!!)
-          }
-          dialog.show()
+      else if (e is NoSuchEAPUserException) {
+        val dialog: JetBrainsAccountDialog
+        if (parentComponent.isShowing) {
+          dialog = JetBrainsAccountDialog(parentComponent)
         }
-        ApplicationManager.getApplication().invokeLater { submit(event, parentComponent, callback, errorBean, description) }
+        else {
+          dialog = JetBrainsAccountDialog(project!!)
+        }
+        dialog.show()
       }
+      ApplicationManager.getApplication().invokeLater { submit(event, parentComponent, callback, errorBean, description) }
     }
   }
   return true
