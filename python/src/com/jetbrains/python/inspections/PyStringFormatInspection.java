@@ -83,6 +83,7 @@ public class PyStringFormatInspection extends PyInspection {
         .put('G', "float")
         .put('c', "str")
         .put('r', "str")
+        .put('a', "str")
         .put('s', "str")
         .put('b', "bytes")
         .build();
@@ -402,7 +403,8 @@ public class PyStringFormatInspection extends PyInspection {
                 return;
               }
             }
-            if (PERCENT_FORMAT_CONVERSIONS.containsKey(conversionType)) {
+            final LanguageLevel languageLevel = LanguageLevel.forElement(formatExpression);
+            if (PERCENT_FORMAT_CONVERSIONS.containsKey(conversionType) && !(!languageLevel.isPy3K() && conversionType == 'a')) {
               myFormatSpec.put(mappingKey, PERCENT_FORMAT_CONVERSIONS.get(conversionType));
               continue;
             }

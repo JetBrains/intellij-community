@@ -16,6 +16,7 @@
 package com.jetbrains.python.inspections;
 
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 
 /**
  * @author vlan
@@ -186,6 +187,16 @@ public class PyStringFormatInspectionTest extends PyTestCase {
   
   public void testPercentStringCallArgument() {
     doTest();
+  }
+  
+  // PY-20599
+  public void testPy3kAsciiFormatSpecifier() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, new Runnable() {
+      @Override
+      public void run() {
+        doTest();        
+      }
+    });
   }
   
   private void doTest() {

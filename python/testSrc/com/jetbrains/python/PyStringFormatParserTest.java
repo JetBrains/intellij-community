@@ -552,4 +552,11 @@ public class PyStringFormatParserTest extends TestCase {
     assertEquals("a", chunk.getMappingKeyElementIndex());
     assertEquals('d', chunk.getConversionType());
   }
+  
+  public void testAsciiFormatSpecifierOldStyleFormat() {
+    final List<FormatStringChunk> chunks = parsePercentFormat("%a");
+    assertEquals(1, chunks.size());
+    final PercentSubstitutionChunk chunk = (PercentSubstitutionChunk)chunks.get(0);
+    assertEquals('a', chunk.getConversionType());
+  }
 }
