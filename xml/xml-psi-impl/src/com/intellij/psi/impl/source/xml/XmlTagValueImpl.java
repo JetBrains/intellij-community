@@ -57,10 +57,10 @@ public class XmlTagValueImpl implements XmlTagValue{
   public XmlText[] getTextElements() {
     XmlText[] textElements = myTextElements;
     if(textElements != null) return textElements;
-    myTextElements = Arrays.stream(myElements)
+    textElements = Arrays.stream(myElements)
       .filter(element -> element instanceof XmlText)
       .map(element -> (XmlText)element).toArray(XmlText[]::new);
-    return myTextElements;
+    return myTextElements = textElements.length == 0 ? XmlText.EMPTY_ARRAY : textElements;
   }
 
   @Override
