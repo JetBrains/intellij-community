@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.memory.action.DebuggerTreeAction;
 import org.jetbrains.debugger.memory.component.CreationPositionTracker;
 import org.jetbrains.debugger.memory.utils.StackFrameDescriptor;
-import org.jetbrains.debugger.memory.view.StackFrameSelector;
+import org.jetbrains.debugger.memory.view.StackFramePopup;
 
 import java.util.List;
 
@@ -32,7 +32,7 @@ public class GetAllocationSourceAction extends DebuggerTreeAction {
       if(session != null) {
         GlobalSearchScope searchScope = DebuggerManager.getInstance(project)
             .getDebugProcess(session.getDebugProcess().getProcessHandler()).getSearchScope();
-        new StackFrameSelector(project, stack, searchScope).show();
+        new StackFramePopup(project, stack, searchScope).show();
       }
     }
   }

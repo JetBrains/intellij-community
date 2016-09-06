@@ -33,7 +33,8 @@ public class CreationPositionTracker extends AbstractProjectComponent {
     return stack != null ? Collections.unmodifiableList(stack) : null;
   }
 
-  public void addStack(@NotNull XDebugSession session, @NotNull ObjectReference ref, @NotNull List<StackFrameDescriptor> stack) {
+  public void addStack(@NotNull XDebugSession session, @NotNull ObjectReference ref,
+                       @NotNull List<StackFrameDescriptor> stack) {
     if (!mySession2Reference2Stack.containsKey(session)) {
       mySession2Reference2Stack.put(session, new ConcurrentHashMap<>());
       session.addSessionListener(new XDebugSessionListener() {
