@@ -98,11 +98,11 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
 
     @Override
     protected void createRequestForPreparedClass(DebugProcessImpl debugProcess, ReferenceType classType) {
-      for (Method cons : classType.methodsByName("<init>")) {
+      classType.methods().stream().filter(Method::isConstructor).forEach(cons ->  {
         Location loc = cons.location();
         BreakpointRequest breakpointRequest = debugProcess.getRequestsManager().createBreakpointRequest(this, loc);
         breakpointRequest.enable();
-      }
+      });
     }
 
     @Override
