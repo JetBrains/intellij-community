@@ -767,8 +767,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       final Project project = getSession().getProject();
       if (document != null) {
         if (file.getFileType() == PythonFileType.INSTANCE) {
-          PsiElement psiElement = XDebuggerUtil.getInstance().findContextElement(file, breakpoint.getSourcePosition().getOffset(),
-                                                                                 project, false);
+          PsiElement psiElement = XDebuggerUtil.getInstance().
+            findContextElement(file, document.getLineStartOffset(breakpoint.getSourcePosition().getLine()), project, false);
           PyFunction function = PsiTreeUtil.getParentOfType(psiElement, PyFunction.class);
           if (function != null) {
             return function.getName();

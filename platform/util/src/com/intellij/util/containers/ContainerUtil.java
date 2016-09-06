@@ -767,11 +767,17 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   public static <K, V> Map<K, V> newMapFromValues(@NotNull Iterator<V> values, @NotNull Convertor<V, K> keyConvertor) {
     Map<K, V> map = newHashMap();
+    fillMapWithValues(map, values, keyConvertor);
+    return map;
+  }
+
+  public static <K, V> void fillMapWithValues(@NotNull Map<K, V> map,
+                                              @NotNull Iterator<V> values,
+                                              @NotNull Convertor<V, K> keyConvertor) {
     while (values.hasNext()) {
       V value = values.next();
       map.put(keyConvertor.convert(value), value);
     }
-    return map;
   }
 
   @NotNull
@@ -1530,7 +1536,7 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @NotNull
   @Contract(pure=true)
-  public static <T> List<T> intersection(@NotNull Collection<? extends T> collection1, @NotNull Collection<? extends T> collection2) {
+  public static <T> Collection<T> intersection(@NotNull Collection<? extends T> collection1, @NotNull Collection<? extends T> collection2) {
     List<T> result = new ArrayList<T>();
     for (T t : collection1) {
       if (collection2.contains(t)) {

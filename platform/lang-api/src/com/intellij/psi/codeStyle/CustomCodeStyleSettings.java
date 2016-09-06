@@ -23,6 +23,9 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * @author peter
  */
@@ -42,6 +45,14 @@ public abstract class CustomCodeStyleSettings implements Cloneable {
   @NonNls @NotNull
   public final String getTagName() {
     return myTagName;
+  }
+
+  /**
+   * in case settings save additional top-level tags, list the list of them to prevent serializer to treat such tag as unknown settings.
+   */
+  @NotNull
+  public List<String> getKnownTagNames() {
+    return Collections.singletonList(getTagName());
   }
 
   public void readExternal(Element parentElement) throws InvalidDataException {

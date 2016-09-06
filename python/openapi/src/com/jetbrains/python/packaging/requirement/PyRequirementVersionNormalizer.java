@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.math.BigInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -174,7 +175,7 @@ public final class PyRequirementVersionNormalizer {
 
   @NotNull
   private static String normalizeNumber(@NotNull String number) {
-    return Integer.valueOf(number).toString();
+    return new BigInteger(number).toString();
   }
 
   @NotNull

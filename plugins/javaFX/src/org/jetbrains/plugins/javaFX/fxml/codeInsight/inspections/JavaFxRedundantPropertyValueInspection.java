@@ -2,6 +2,7 @@ package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
 import com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix;
 import com.intellij.codeInsight.daemon.impl.analysis.RemoveTagIntentionFix;
+import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
@@ -42,14 +43,10 @@ public class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspe
 
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new XmlElementVisitor() {
-      @Override
-      public void visitXmlFile(XmlFile file) {
-        if (!JavaFxFileTypeFactory.isFxml(file)) return;
-        super.visitXmlFile(file);
-      }
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+    if (!JavaFxFileTypeFactory.isFxml(session.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
 
+    return new XmlElementVisitor() {
       @Override
       public void visitXmlAttribute(XmlAttribute attribute) {
         super.visitXmlAttribute(attribute);

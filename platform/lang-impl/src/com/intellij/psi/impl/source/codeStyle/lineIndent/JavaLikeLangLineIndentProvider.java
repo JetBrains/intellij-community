@@ -101,7 +101,7 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
           .before()
           .beforeOptional(Semicolon)
           .beforeOptional(Whitespace)
-          .isAt(BlockClosingBrace))) {
+          .isAt(BlockClosingBrace) && position.before().isAt(Whitespace) && position.isAtMultiline())) {
         return myFactory.createIndentCalculator(getBlockIndentType(project, language), IndentCalculator.LINE_BEFORE);
       }
       else if (getPosition(editor, offset).matchesRule(
@@ -110,7 +110,7 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
         return myFactory.createIndentCalculator(CONTINUATION, IndentCalculator.LINE_BEFORE);
       }
       else if (getPosition(editor, offset).matchesRule(
-        position -> position.before().isAt(BlockOpeningBrace)
+        position -> position.before().isAt(BlockOpeningBrace) && position.beforeOptional(Whitespace).isAt(RightParenthesis)
       )) {
         return myFactory.createIndentCalculator(getIndentTypeInBlock(project, language), this::getBlockStatementStartOffset);
       }

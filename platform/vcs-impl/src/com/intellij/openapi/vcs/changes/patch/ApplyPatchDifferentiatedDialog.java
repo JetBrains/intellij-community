@@ -222,6 +222,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     init();
 
     if (patchFile != null && patchFile.isValid()) {
+      patchFile.refresh(false, false);
       init(patchFile);
     }
     else if (patches != null) {
@@ -380,7 +381,6 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   @Nullable
   private static PatchReader loadPatches(@NotNull VirtualFile patchFile) {
     PatchReader reader;
-    patchFile.refresh(false, false);
     try {
       reader = ApplicationManager.getApplication().runReadAction(new ThrowableComputable<PatchReader, IOException>() {
         @Override

@@ -72,10 +72,9 @@ public abstract class TemplatesService {
                                                                                    DJANGO,
                                                                                    MAKO,
                                                                                   JINJA2,
-                                                                                  WEB2PY,
-                                                                                  CHAMELEON);
+                                                                                  WEB2PY);
 
-  public static List<String> ALL_TEMPLATE_BINDINGS = ContainerUtil.immutableList("django-mako", "django-jinja", "django-chameleon",
+  public static List<String> ALL_TEMPLATE_BINDINGS = ContainerUtil.immutableList("django-mako", "django-jinja",
                                                                                   "flask-mako", "pyramid_jinja2");
 
   @Nullable

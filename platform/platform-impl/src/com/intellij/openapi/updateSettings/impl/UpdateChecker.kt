@@ -56,7 +56,6 @@ import org.apache.http.client.utils.URIBuilder
 import org.jdom.JDOMException
 import java.io.File
 import java.io.IOException
-import java.net.URISyntaxException
 import java.net.URL
 import java.util.*
 
@@ -191,10 +190,8 @@ object UpdateChecker {
             }
           }
     }
-    catch (e: URISyntaxException) {
-      return CheckForUpdateResult(UpdateStrategy.State.CONNECTION_ERROR, e)
-    }
-    catch (e: IOException) {
+    catch (e: Exception) {
+      LOG.info(e)
       return CheckForUpdateResult(UpdateStrategy.State.CONNECTION_ERROR, e)
     }
 

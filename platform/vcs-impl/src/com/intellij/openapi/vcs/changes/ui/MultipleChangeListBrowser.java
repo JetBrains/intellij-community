@@ -50,6 +50,8 @@ import java.awt.event.ItemListener;
 import java.util.*;
 import java.util.List;
 
+import static java.util.stream.Collectors.toList;
+
 public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
 
   @NotNull private final ChangeListChooser myChangeListChooser;
@@ -183,7 +185,9 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
   @Override
   @NotNull
   public List<Change> getCurrentIncludedChanges() {
-    return filterBySelectedChangeList(findChanges(myViewer.getIncludedChanges()));
+    Collection<Object> includedObjects = myViewer.getIncludedChanges();
+
+    return mySelectedChangeList.getChanges().stream().filter(includedObjects::contains).collect(toList());
   }
 
   @NotNull
@@ -292,11 +296,6 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
   @NotNull
   public Set<AbstractVcs> getAffectedVcses() {
     return ChangesUtil.getAffectedVcses(myAllChanges, myProject);
-  }
-
-  @NotNull
-  private List<Change> filterBySelectedChangeList(@NotNull Collection<Change> changes) {
-    return ContainerUtil.<Change>intersection(changes, mySelectedChangeList.getChanges());
   }
 
   @Override

@@ -61,7 +61,8 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.*;
+import com.intellij.util.containers.HashSet;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -609,16 +610,18 @@ public class PyUtil {
   @NotNull
   public static PsiElement resolveToTheTop(@NotNull final PsiElement elementToResolve) {
     PsiElement currentElement = elementToResolve;
+    final Set<PsiElement> checkedElements = new HashSet<>(); // To prevent PY-20553
     while (true) {
       final PsiReference reference = currentElement.getReference();
       if (reference == null) {
         break;
       }
       final PsiElement resolve = reference.resolve();
-      if ((resolve == null) || resolve.equals(currentElement) || !inSameFile(resolve, currentElement)) {
+      if ((resolve == null) ||  checkedElements.contains(resolve) || resolve.equals(currentElement) || !inSameFile(resolve, currentElement)) {
         break;
       }
       currentElement = resolve;
+      checkedElements.add(resolve);
     }
     return currentElement;
   }

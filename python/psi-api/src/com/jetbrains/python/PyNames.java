@@ -188,6 +188,7 @@ public class PyNames {
 
   public static final String TUPLE = "tuple";
   public static final String SET = "set";
+  public static final String SLICE = "slice";
 
   public static final String KEYS = "keys";
   public static final String EXTEND = "extend";

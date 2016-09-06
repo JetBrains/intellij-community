@@ -139,8 +139,6 @@ public class CreateVirtualEnvDialog extends AbstractCreateVirtualEnvDialog {
     myMainPanel.add(myMakeAvailableToAllProjectsCheckbox, c);
     button.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final PySdkService sdkService = PySdkService.getInstance();
-
         final PythonSdkType sdkType = PythonSdkType.getInstance();
         final FileChooserDescriptor descriptor = sdkType.getHomeChooserDescriptor();
 
@@ -152,7 +150,6 @@ public class CreateVirtualEnvDialog extends AbstractCreateVirtualEnvDialog {
           if (sdk == null) return;
           if (!allSdks.contains(sdk)) {
             allSdks.add(sdk);
-            sdkService.addSdk(sdk);
           }
           updateSdkList(allSdks, sdk);
         };

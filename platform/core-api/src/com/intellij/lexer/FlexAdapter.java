@@ -39,6 +39,8 @@ public class FlexAdapter extends LexerBase {
   private int myBufferEnd;
   private int myState;
 
+  private boolean myFailed;
+
   public FlexAdapter(@NotNull FlexLexer flex) {
     myFlex = flex;
   }
@@ -100,18 +102,19 @@ public class FlexAdapter extends LexerBase {
   protected void locateToken() {
     if (myTokenType != null) return;
 
+    myTokenStart = myTokenEnd;
+    if (myFailed) return;
+
     try {
-      myTokenStart = myTokenEnd;
       myState = myFlex.yystate();
-      if (myTokenStart < myBufferEnd) {
-        myTokenType = myFlex.advance();
-        myTokenEnd = myFlex.getTokenEnd();
-      }
+      myTokenType = myFlex.advance();
+      myTokenEnd = myFlex.getTokenEnd();
     }
     catch (ProcessCanceledException e) {
       throw e;
     }
     catch (Throwable e) {
+      myFailed = true;
       myTokenType = TokenType.BAD_CHARACTER;
       myTokenEnd = myBufferEnd;
       LOG.warn(myFlex.getClass().getName(), e);

@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
+import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.psi.*;
@@ -19,14 +20,10 @@ import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyTagDescriptor
 public class JavaFxColorRgbInspection extends XmlSuppressableInspectionTool {
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new XmlElementVisitor() {
-      @Override
-      public void visitXmlFile(XmlFile file) {
-        if (!JavaFxFileTypeFactory.isFxml(file)) return;
-        super.visitXmlFile(file);
-      }
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+    if (!JavaFxFileTypeFactory.isFxml(session.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
 
+    return new XmlElementVisitor() {
       @Override
       public void visitXmlAttribute(XmlAttribute attribute) {
         super.visitXmlAttribute(attribute);
