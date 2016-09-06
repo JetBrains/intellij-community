@@ -46,7 +46,6 @@ class IdeaCommunityBuilder {
 
   void buildDistJars() {
     def tasks = BuildTasks.create(buildContext)
-    tasks.cleanOutput()
     compileModules()
     tasks.buildSearchableOptions("resources-en", ["community-main"], [])
     layoutAll()
@@ -54,7 +53,6 @@ class IdeaCommunityBuilder {
 
   void buildDistributions() {
     def tasks = BuildTasks.create(buildContext)
-    tasks.cleanOutput()
     compileModules()
     tasks.buildSearchableOptions("resources-en", ["community-main"], [])
 

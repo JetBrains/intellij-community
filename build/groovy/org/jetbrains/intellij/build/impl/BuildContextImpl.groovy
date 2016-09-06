@@ -34,7 +34,6 @@ import org.jetbrains.jps.util.JpsPathUtil
 @CompileStatic
 class BuildContextImpl extends BuildContext {
   private final JpsGlobal global
-  final List<String> outputDirectoriesToKeep
 
 //todo[nik] construct buildOutputRoot automatically based on product name
   static BuildContextImpl create(AntBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
@@ -49,25 +48,28 @@ class BuildContextImpl extends BuildContext {
     LinuxDistributionCustomizer linuxDistributionCustomizer = productProperties.createLinuxCustomizer(paths.projectHome)
     MacDistributionCustomizer macDistributionCustomizer = productProperties.createMacCustomizer(paths.projectHome)
 
-    List<String> outputDirectoriesToKeep = []
     if (project.modules.isEmpty()) {
-      outputDirectoriesToKeep = loadProject(paths, ant, project, global, projectBuilder, messages, options)
+      loadProject(paths, project, global, messages)
     }
     else {
       //todo[nik] currently we need this to build IDEA CE from IDEA UI build scripts. It would be better to create a separate JpsProject instance instead
       messages.info("Skipping loading project because it's already loaded")
     }
 
-    return new BuildContextImpl(ant, messages, paths, project, global, projectBuilder, productProperties,
-                                windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
-                                proprietaryBuildTools, options, outputDirectoriesToKeep)
+    def context = new BuildContextImpl(ant, messages, paths, project, global, projectBuilder, productProperties,
+                                       windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
+                                       proprietaryBuildTools, options)
+    context.prepareForBuild()
+    return context
   }
 
-  BuildContextImpl(AntBuilder ant, BuildMessages messages, BuildPaths paths, JpsProject project, JpsGlobal global,
-                   JpsGantProjectBuilder projectBuilder, ProductProperties productProperties,
-                   WindowsDistributionCustomizer windowsDistributionCustomizer, LinuxDistributionCustomizer linuxDistributionCustomizer,
-                   MacDistributionCustomizer macDistributionCustomizer,
-                   ProprietaryBuildTools proprietaryBuildTools, BuildOptions options, List<String> outputDirectoriesToKeep) {
+  private BuildContextImpl(AntBuilder ant, BuildMessages messages, BuildPaths paths, JpsProject project, JpsGlobal global,
+                           JpsGantProjectBuilder projectBuilder, ProductProperties productProperties,
+                           WindowsDistributionCustomizer windowsDistributionCustomizer,
+                           LinuxDistributionCustomizer linuxDistributionCustomizer,
+                           MacDistributionCustomizer macDistributionCustomizer,
+                           ProprietaryBuildTools proprietaryBuildTools,
+                           BuildOptions options) {
     this.ant = ant
     this.messages = messages
     this.paths = paths
@@ -78,7 +80,6 @@ class BuildContextImpl extends BuildContext {
     this.proprietaryBuildTools = proprietaryBuildTools
     bundledJreManager = new BundledJreManager(this, paths.buildOutputRoot)
     this.options = options
-    this.outputDirectoriesToKeep = outputDirectoriesToKeep
 
     bundledJreManager = new BundledJreManager(this, paths.buildOutputRoot)
     this.windowsDistributionCustomizer = windowsDistributionCustomizer
@@ -95,8 +96,7 @@ class BuildContextImpl extends BuildContext {
     bootClassPathJarNames = ["bootstrap.jar", "extensions.jar", "util.jar", "jdom.jar", "log4j.jar", "trove4j.jar", "jna.jar"]
   }
 
-  private static List<String> loadProject(BuildPaths paths, AntBuilder ant, JpsProject project, JpsGlobal global, JpsGantProjectBuilder projectBuilder,
-                                          BuildMessages messages, BuildOptions options) {
+  private static void loadProject(BuildPaths paths, JpsProject project, JpsGlobal global, BuildMessages messages) {
     def projectHome = paths.projectHome
     def bundledKotlinPath = "$paths.communityHome/build/kotlinc"
     if (!new File(bundledKotlinPath, "lib/kotlin-runtime.jar").exists()) {
@@ -107,21 +107,23 @@ class BuildContextImpl extends BuildContext {
     JdkUtils.defineJdk(global, "IDEA jdk", JdkUtils.computeJdkHome(messages, "jdkHome", "$projectHome/build/jdk/1.6", "JDK_16_x64"))
     JdkUtils.defineJdk(global, "1.8", paths.jdkHome)
 
-    checkOptions(options, messages)
+    def pathVariables = JpsModelSerializationDataService.computeAllPathVariables(global)
+    JpsProjectLoader.loadProject(project, pathVariables, projectHome)
+    messages.info("Loaded project $projectHome: ${project.modules.size()} modules, ${project.libraryCollection.libraries.size()} libraries")
+  }
+
+  private void prepareForBuild() {
+    checkCompilationOptions()
     projectBuilder.buildIncrementally = options.incrementalCompilation
     def dataDirName = options.incrementalCompilation ? ".jps-build-data-incremental" : ".jps-build-data"
     projectBuilder.dataStorageRoot = new File(paths.buildOutputRoot, dataDirName)
     def logDir = new File(paths.buildOutputRoot, "log")
+    FileUtil.delete(logDir)
     projectBuilder.setupAdditionalLogging(new File("$logDir/compilation.log"), System.getProperty("intellij.build.debug.logging.categories", ""))
-
-    def pathVariables = JpsModelSerializationDataService.computeAllPathVariables(global)
-    JpsProjectLoader.loadProject(project, pathVariables, projectHome)
-    projectBuilder.exportModuleOutputProperties()
-    messages.info("Loaded project $projectHome: ${project.modules.size()} modules, ${project.libraryCollection.libraries.size()} libraries")
 
     def classesDirName = "classes"
     def classesOutput = "$paths.buildOutputRoot/$classesDirName"
-    List<String> outputDirectoriesToKeep = []
+    List<String> outputDirectoriesToKeep = ["log"]
     if (options.pathToCompiledClassesArchive != null) {
       unpackCompiledClasses(messages, ant, classesOutput, options)
       outputDirectoriesToKeep.add(classesDirName)
@@ -141,7 +143,23 @@ class BuildContextImpl extends BuildContext {
     }
 
     suppressWarnings(project)
-    return outputDirectoriesToKeep
+    projectBuilder.exportModuleOutputProperties()
+    cleanOutput(outputDirectoriesToKeep)
+  }
+
+  void cleanOutput(List<String> outputDirectoriesToKeep) {
+    messages.block("Clean output") {
+      def outputPath = paths.buildOutputRoot
+      messages.progress("Cleaning output directory $outputPath")
+      new File(outputPath).listFiles()?.each { File file ->
+        if (outputDirectoriesToKeep.contains(file.name)) {
+          messages.info("Skipped cleaning for $file.absolutePath")
+        }
+        else {
+          FileUtil.delete(file)
+        }
+      }
+    }
   }
 
   @CompileDynamic
@@ -152,7 +170,7 @@ class BuildContextImpl extends BuildContext {
     }
   }
 
-  private static void checkOptions(BuildOptions options, BuildMessages messages) {
+  private void checkCompilationOptions() {
     if (options.useCompiledClassesFromProjectOutput && options.incrementalCompilation) {
       messages.warning("'${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' is specified, so 'incremental compilation' option will be ignored")
       options.incrementalCompilation = false
@@ -240,7 +258,7 @@ class BuildContextImpl extends BuildContext {
     def messages = messages.forkForParallelTask(taskName)
     def child = new BuildContextImpl(ant, messages, paths, project, global, projectBuilder, productProperties,
                                      windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
-                                     proprietaryBuildTools, options, outputDirectoriesToKeep)
+                                     proprietaryBuildTools, options)
     child.bundledJreManager.baseDirectoryForJre = bundledJreManager.baseDirectoryForJre
     return child
   }
@@ -256,9 +274,11 @@ class BuildContextImpl extends BuildContext {
 
     def options = new BuildOptions()
     options.useCompiledClassesFromProjectOutput = true
-    def copy = new BuildContextImpl(ant, messages, pathsCopy, project, global, projectBuilder, productProperties, windowsDistributionCustomizer,
-                                    linuxDistributionCustomizer, macDistributionCustomizer, proprietaryBuildTools, options, outputDirectoriesToKeep)
+    def copy = new BuildContextImpl(ant, messages, pathsCopy, project, global, projectBuilder, productProperties,
+                                    windowsDistributionCustomizer,
+                                    linuxDistributionCustomizer, macDistributionCustomizer, proprietaryBuildTools, options)
     copy.bundledJreManager.baseDirectoryForJre = bundledJreManager.baseDirectoryForJre
+    copy.prepareForBuild()
     return copy
   }
 

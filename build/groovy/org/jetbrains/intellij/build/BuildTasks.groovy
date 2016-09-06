@@ -61,8 +61,6 @@ abstract class BuildTasks {
    */
   abstract void compileModulesAndBuildDistributions()
 
-  abstract void cleanOutput()
-
   abstract void compileProjectAndTests(List<String> includingTestsInModules)
 
   abstract void compileModules(List<String> moduleNames, List<String> includingTestsInModules = [])

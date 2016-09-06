@@ -269,7 +269,6 @@ idea.fatal.error.notification=disabled
   void compileModulesAndBuildDistributions() {
     checkProductProperties()
     checkProductLayout()
-    cleanOutput()
     def distributionJARsBuilder = new DistributionJARsBuilder(buildContext)
     def pluginModules = buildContext.productProperties.productLayout.getIncludedPluginModules(buildContext.productProperties.allPlugins)
     compileModules(pluginModules + distributionJARsBuilder.getPlatformModules())
@@ -356,21 +355,6 @@ idea.fatal.error.notification=disabled
     }
   }
 
-  @Override
-  void cleanOutput() {
-    buildContext.messages.block("Clean output") {
-      def outputPath = buildContext.paths.buildOutputRoot
-      buildContext.messages.progress("Cleaning output directory $outputPath")
-      new File(outputPath).listFiles()?.each {
-        if (buildContext instanceof BuildContextImpl && buildContext.outputDirectoriesToKeep.contains(it.name)) {
-          buildContext.messages.info("Skipped cleaning for $it.absolutePath")
-        }
-        else {
-          FileUtil.delete(it)
-        }
-      }
-    }
-  }
 
   @Override
   void compileProjectAndTests(List<String> includingTestsInModules = []) {
