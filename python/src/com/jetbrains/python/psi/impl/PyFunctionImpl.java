@@ -211,18 +211,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Nullable
   @Override
-  public PyType getGeneratorType(@NotNull TypeEvalContext context) {
-    final Ref<? extends PyType> yieldTypeRef = getYieldStatementType(context);
-    if (yieldTypeRef != null) {
-      return yieldTypeRef.get();
-    }
-    else {
-      return null;
-    }
-  }
-
-  @Nullable
-  @Override
   public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
     for (PyTypeProvider typeProvider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
       final Ref<PyType> typeRef = typeProvider.getCallType(this, callSite, context);
