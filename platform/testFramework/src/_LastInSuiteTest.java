@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.testFramework.LeakHunter;
@@ -81,6 +80,17 @@ public class _LastInSuiteTest extends TestCase {
       captureMemorySnapshot();
       throw e;
     }
+    try {
+      Disposer.assertIsEmpty(true);
+    }
+    catch (AssertionError e) {
+      captureMemorySnapshot();
+      throw e;
+    }
+    catch (Exception e) {
+      captureMemorySnapshot();
+      throw e;
+    }
     else {
       final Application application = ApplicationManager.getApplication();
 
@@ -91,6 +101,7 @@ public class _LastInSuiteTest extends TestCase {
           ((ApplicationImpl)application).exit(true, true, false, false);
         }
       }, ModalityState.any());
+      ShutDownTracker.getInstance().waitFor(100, TimeUnit.SECONDS);
     }
   }
 
