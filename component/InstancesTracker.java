@@ -12,10 +12,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.memory.event.InstancesTrackerListener;
 import org.jetbrains.debugger.memory.tracking.TrackingType;
 
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 @State(name = "InstancesTracker", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class InstancesTracker extends AbstractProjectComponent
@@ -44,14 +42,6 @@ public class InstancesTracker extends AbstractProjectComponent
   @NotNull
   public Map<String, TrackingType> getTrackedClasses() {
     return new HashMap<>(myState.classes);
-  }
-
-  @NotNull
-  public List<String> getClassesByTrackingType(@NotNull TrackingType type) {
-    return myState.classes.entrySet().stream()
-        .filter(entry -> entry.getValue().equals(type))
-        .map(Map.Entry::getKey)
-        .collect(Collectors.toList());
   }
 
   public void add(@NotNull ReferenceType ref, @NotNull TrackingType type) {

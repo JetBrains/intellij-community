@@ -13,6 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
+import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.debugger.memory.utils.KeyboardUtils;
 import org.jetbrains.debugger.memory.utils.StackFrameDescriptor;
@@ -63,7 +64,10 @@ public class StackFramePopup {
       protected void customizeCellRenderer(@NotNull JList<? extends StackFrameDescriptor> list,
                                            StackFrameDescriptor value, int index, boolean isSelected, boolean hasFocus) {
         append(String.format("%s:%d, %s", value.methodName(), value.line(), value.className()));
-        append(String.format(" (%s)", value.packageName()), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
+        String packageName = value.packageName();
+        if(!StringUtils.isEmpty(packageName)) {
+          append(String.format(" (%s)", value.packageName()), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
+        }
       }
     });
 
