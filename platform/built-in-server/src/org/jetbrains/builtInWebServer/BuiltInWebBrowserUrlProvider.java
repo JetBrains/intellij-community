@@ -13,117 +13,97 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.builtInWebServer;
+package org.jetbrains.builtInWebServer
 
-import com.intellij.ide.browsers.OpenInBrowserRequest;
-import com.intellij.ide.browsers.WebBrowserService;
-import com.intellij.ide.browsers.WebBrowserUrlProvider;
-import com.intellij.lang.Language;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.SmartList;
-import com.intellij.util.Url;
-import com.intellij.util.Urls;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ide.BuiltInServerManager;
+import com.intellij.ide.browsers.OpenInBrowserRequest
+import com.intellij.ide.browsers.WebBrowserService
+import com.intellij.ide.browsers.WebBrowserUrlProvider
+import com.intellij.lang.Language
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.impl.http.HttpVirtualFile
+import com.intellij.testFramework.LightVirtualFile
+import com.intellij.util.SmartList
+import com.intellij.util.Url
+import com.intellij.util.Urls
+import org.jetbrains.ide.BuiltInServerManager
 
-import java.util.Collections;
-import java.util.List;
-
-public class BuiltInWebBrowserUrlProvider extends WebBrowserUrlProvider implements DumbAware {
-  @NotNull
-  public static List<Url> getUrls(@NotNull VirtualFile file, @NotNull Project project, @Nullable String currentAuthority) {
-    return getUrls(file, project, currentAuthority, true);
-  }
-  
-  @NotNull
-  public static List<Url> getUrls(@NotNull VirtualFile file, @NotNull Project project, @Nullable String currentAuthority, boolean appendAccessToken) {
-    if (currentAuthority != null && !compareAuthority(currentAuthority)) {
-      return Collections.emptyList();
-    }
-
-    PathInfo info = WebServerPathToFileManager.getInstance(project).getPathInfo(file);
-    if (info == null) {
-      return Collections.emptyList();
-    }
-
-    int effectiveBuiltInServerPort = BuiltInServerOptions.getInstance().getEffectiveBuiltInServerPort();
-    String path = info.getPath();
-
-    String authority = currentAuthority == null ? "localhost:" + effectiveBuiltInServerPort : currentAuthority;
-    String query = appendAccessToken ? "?" + BuiltInWebServerKt.TOKEN_PARAM_NAME + "=" + BuiltInWebServerKt.acquireToken() : "";
-    List<Url> urls = new SmartList<>(Urls.newHttpUrl(authority, '/' + project.getName() + '/' + path, query));
-
-    String path2 = info.getRootLessPathIfPossible();
-    if (path2 != null) {
-      urls.add(Urls.newHttpUrl(authority, '/' + project.getName() + '/' + path2, query));
-    }
-
-    int defaultPort = BuiltInServerManager.getInstance().getPort();
-    if (currentAuthority == null && defaultPort != effectiveBuiltInServerPort) {
-      String defaultAuthority = "localhost:" + defaultPort;
-      urls.add(Urls.newHttpUrl(defaultAuthority, '/' + project.getName() + '/' + path, query));
-      if (path2 != null) {
-        urls.add(Urls.newHttpUrl(defaultAuthority, '/' + project.getName() + '/' + path2, query));
-      }
-    }
-    
-    return urls;
-  }
-
-  public static boolean compareAuthority(@Nullable String currentAuthority) {
-    if (StringUtil.isEmpty(currentAuthority)) {
-      return false;
-    }
-
-    int portIndex = currentAuthority.indexOf(':');
-    if (portIndex < 0) {
-      return false;
-    }
-
-    String host = currentAuthority.substring(0, portIndex);
-    if (!BuiltInWebServerKt.isOwnHostName(host)) {
-      return false;
-    }
-
-    int port = StringUtil.parseInt(currentAuthority.substring(portIndex + 1), -1);
-    return port == BuiltInServerOptions.getInstance().getEffectiveBuiltInServerPort() ||
-           port == BuiltInServerManager.getInstance().getPort();
-  }
-
-  @Override
-  public boolean canHandleElement(@NotNull OpenInBrowserRequest request) {
-    if (request.getVirtualFile() instanceof HttpVirtualFile) {
-      return true;
+open class BuiltInWebBrowserUrlProvider : WebBrowserUrlProvider(), DumbAware {
+  override fun canHandleElement(request: OpenInBrowserRequest): Boolean {
+    if (request.virtualFile is HttpVirtualFile) {
+      return true
     }
 
     // we must use base language because we serve file - not part of file, but the whole file
     // handlebars, for example, contains HTML and HBS psi trees, so, regardless of context, we should not handle such file
-    FileViewProvider viewProvider = request.getFile().getViewProvider();
-    return viewProvider.isPhysical() &&
-           !(request.getVirtualFile() instanceof LightVirtualFile) &&
-           isMyLanguage(viewProvider.getBaseLanguage());
+    val viewProvider = request.file.viewProvider
+    return viewProvider.isPhysical && request.virtualFile !is LightVirtualFile && isMyLanguage(viewProvider.baseLanguage)
   }
 
-  protected boolean isMyLanguage(@NotNull Language language) {
-    return WebBrowserService.isHtmlOrXmlFile(language);
-  }
+  protected open fun isMyLanguage(language: Language) = WebBrowserService.isHtmlOrXmlFile(language)
 
-  @Nullable
-  @Override
-  protected Url getUrl(@NotNull OpenInBrowserRequest request, @NotNull VirtualFile file) throws BrowserException {
-    if (file instanceof HttpVirtualFile) {
-      return Urls.newFromVirtualFile(file);
+  override fun getUrl(request: OpenInBrowserRequest, file: VirtualFile): Url? {
+    if (file is HttpVirtualFile) {
+      return Urls.newFromVirtualFile(file)
     }
     else {
-      return ContainerUtil.getFirstItem(getUrls(file, request.getProject(), null, request.isAppendAccessToken()));
+      return getBuiltInServerUrls(file, request.project, null, request.isAppendAccessToken).firstOrNull()
     }
   }
+}
+
+@JvmOverloads
+fun getBuiltInServerUrls(file: VirtualFile,
+                                       project: Project,
+                                       currentAuthority: String?,
+                                       appendAccessToken: Boolean = true): List<Url> {
+  if (currentAuthority != null && !compareAuthority(currentAuthority)) {
+    return emptyList()
+  }
+
+  val info = WebServerPathToFileManager.getInstance(project).getPathInfo(file) ?: return emptyList()
+
+  val effectiveBuiltInServerPort = BuiltInServerOptions.getInstance().effectiveBuiltInServerPort
+  val path = info.path
+
+  val authority = currentAuthority ?: "localhost:$effectiveBuiltInServerPort"
+  val query = if (appendAccessToken) "?$TOKEN_PARAM_NAME=${acquireToken()}" else ""
+  val urls = SmartList(Urls.newHttpUrl(authority, "/${project.name}/$path", query))
+
+  val path2 = info.rootLessPathIfPossible
+  if (path2 != null) {
+    urls.add(Urls.newHttpUrl(authority, '/' + project.name + '/' + path2, query))
+  }
+
+  val defaultPort = BuiltInServerManager.getInstance().port
+  if (currentAuthority == null && defaultPort != effectiveBuiltInServerPort) {
+    val defaultAuthority = "localhost:$defaultPort"
+    urls.add(Urls.newHttpUrl(defaultAuthority, "/${project.name}/$path", query))
+    if (path2 != null) {
+      urls.add(Urls.newHttpUrl(defaultAuthority, "/${project.name}/$path2", query))
+    }
+  }
+
+  return urls
+}
+
+fun compareAuthority(currentAuthority: String?): Boolean {
+  if (currentAuthority.isNullOrEmpty()) {
+    return false
+  }
+
+  val portIndex = currentAuthority!!.indexOf(':')
+  if (portIndex < 0) {
+    return false
+  }
+
+  val host = currentAuthority.substring(0, portIndex)
+  if (!isOwnHostName(host)) {
+    return false
+  }
+
+  val port = StringUtil.parseInt(currentAuthority.substring(portIndex + 1), -1)
+  return port == BuiltInServerOptions.getInstance().effectiveBuiltInServerPort || port == BuiltInServerManager.getInstance().port
 }
