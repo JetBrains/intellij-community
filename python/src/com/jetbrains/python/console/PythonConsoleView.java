@@ -118,6 +118,12 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     myExecuteActionHandler = consoleExecuteActionHandler;
   }
 
+  public void setConsoleEnabled(boolean flag) {
+    if (myExecuteActionHandler != null) {
+      myExecuteActionHandler.setEnabled(flag);
+    }
+  }
+
   public void showStartMessageForFirstExecution(String startCommand) {
     if (myFirstRun && myExecuteActionHandler != null) {
       setPrompt("");

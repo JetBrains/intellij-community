@@ -962,6 +962,7 @@ class PyDB:
             traceback.print_exc()
 
         pydev_imports.execfile(file, globals, locals)  # execute the script
+        return globals
 
     def exiting(self):
         sys.stdout.flush()
