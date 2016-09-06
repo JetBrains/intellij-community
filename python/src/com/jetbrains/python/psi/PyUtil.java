@@ -1857,6 +1857,9 @@ public class PyUtil {
     if (stmt instanceof PyPassStatement || stmt instanceof PyRaiseStatement) {
       return true;
     }
+    if (stmt instanceof PyExpressionStatement && ((PyExpressionStatement)stmt).getExpression() instanceof PyNoneLiteralExpression) {
+      return true; // ellipsis
+    }
     if (stmt instanceof PyReturnStatement && ((PyReturnStatement)stmt).getExpression() == null) {
       return true;
     }

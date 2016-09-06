@@ -42,3 +42,6 @@ def j(x) -> <warning descr="Expected to return 'Union[int, str]', got no return"
 def k() -> None:
     if True:
         pass
+
+def l() -> str:
+    ...
