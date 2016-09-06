@@ -2039,6 +2039,12 @@ class set(object):
         """
         return False
 
+    def __iter__(self):
+        """
+        :rtype: collections.Iterator[T]
+        """
+        pass
+
 
 class frozenset(object):
     """frozenset object."""

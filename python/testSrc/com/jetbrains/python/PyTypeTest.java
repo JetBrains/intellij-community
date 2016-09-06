@@ -1102,6 +1102,14 @@ public class PyTypeTest extends PyTestCase {
            TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile()));
   }
 
+  // PY-20063
+  public void testIteratedSetElement() {
+    doTest("int",
+           "xs = {1}\n" +
+           "for expr in xs:\n" +
+           "    print(expr)");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
