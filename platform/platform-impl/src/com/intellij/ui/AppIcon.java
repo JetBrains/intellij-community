@@ -338,7 +338,7 @@ public abstract class AppIcon {
       BufferedImage current = UIUtil.createImage(appImage.getWidth(), appImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
       Graphics2D g = current.createGraphics();
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      g.drawImage(appImage, null, null);
+      UIUtil.drawImage(g, appImage, 0, 0, null);
       return new AppImage(current, g);
     }
 
