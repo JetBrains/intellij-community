@@ -38,6 +38,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -53,6 +54,7 @@ import com.sun.jdi.Value;
 import com.sun.jdi.connect.spi.TransportService;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
@@ -146,26 +148,28 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   }
 
   @NotNull
-  public static Pair<PsiClass, PsiType> getPsiClassAndType(String className, Project project) {
-    PsiClass contextClass;
-    PsiType contextType;
-    PsiPrimitiveType primitiveType = PsiJavaParserFacadeImpl.getPrimitiveType(className);
-    if (primitiveType != null) {
-      contextClass = JavaPsiFacade.getInstance(project).findClass(primitiveType.getBoxedTypeName(), GlobalSearchScope.allScope(project));
-      contextType = primitiveType;
-    }
-    else {
-      contextClass = findClass(className, project, GlobalSearchScope.allScope(project));
+  public static Pair<PsiClass, PsiType> getPsiClassAndType(@Nullable String className, Project project) {
+    PsiClass contextClass = null;
+    PsiType contextType = null;
+    if (!StringUtil.isEmpty(className)) {
+      PsiPrimitiveType primitiveType = PsiJavaParserFacadeImpl.getPrimitiveType(className);
+      if (primitiveType != null) {
+        contextClass = JavaPsiFacade.getInstance(project).findClass(primitiveType.getBoxedTypeName(), GlobalSearchScope.allScope(project));
+        contextType = primitiveType;
+      }
+      else {
+        contextClass = findClass(className, project, GlobalSearchScope.allScope(project));
+        if (contextClass != null) {
+          contextClass = (PsiClass)contextClass.getNavigationElement();
+        }
+        if (contextClass instanceof PsiCompiledElement) {
+          contextClass = (PsiClass)((PsiCompiledElement)contextClass).getMirror();
+        }
+        contextType = getType(className, project);
+      }
       if (contextClass != null) {
-        contextClass = (PsiClass)contextClass.getNavigationElement();
+        contextClass.putUserData(PSI_TYPE_KEY, contextType);
       }
-      if (contextClass instanceof PsiCompiledElement) {
-        contextClass = (PsiClass)((PsiCompiledElement)contextClass).getMirror();
-      }
-      contextType = getType(className, project);
-    }
-    if (contextClass != null) {
-      contextClass.putUserData(PSI_TYPE_KEY, contextType);
     }
     return Pair.create(contextClass, contextType);
   }
