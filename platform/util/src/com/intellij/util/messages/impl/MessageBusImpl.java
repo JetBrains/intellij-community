@@ -383,7 +383,7 @@ public class MessageBusImpl implements MessageBus {
     while (true);
   }
 
-  void notifyOnSubscription(@NotNull MessageBusConnectionImpl connection, @NotNull Topic topic) {
+  void notifyOnSubscription(@NotNull MessageBusConnectionImpl connection, @NotNull Topic<?> topic) {
     checkNotDisposed();
     List<MessageBusConnectionImpl> topicSubscribers = mySubscribers.get(topic);
     if (topicSubscribers == null) {
