@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,7 @@ public class ConfigurationContext {
   private final Module myModule;
   private final RunConfiguration myRuntimeConfiguration;
   private final Component myContextComponent;
+  private final Point myContextPoint;
 
   public static Key<ConfigurationContext> SHARED_CONTEXT = Key.create("SHARED_CONTEXT");
   private List<RuntimeConfigurationProducer> myPreferredProducers;
@@ -86,6 +87,7 @@ public class ConfigurationContext {
   private ConfigurationContext(final DataContext dataContext) {
     myRuntimeConfiguration = RunConfiguration.DATA_KEY.getData(dataContext);
     myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+    myContextPoint = PlatformDataKeys.CONTEXT_POINT.getData(dataContext);
     myModule = LangDataKeys.MODULE.getData(dataContext);
     @SuppressWarnings({"unchecked"})
     final Location<PsiElement> location = (Location<PsiElement>)Location.DATA_KEY.getData(dataContext);
@@ -98,7 +100,8 @@ public class ConfigurationContext {
       myLocation = null;
       return;
     }
-    final PsiElement element = getSelectedPsiElement(dataContext, project);
+    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
+    if (element == null) element = getSelectedPsiElement(dataContext, project);
     if (element == null) {
       myLocation = null;
       return;
@@ -111,6 +114,7 @@ public class ConfigurationContext {
     myLocation = new PsiLocation<>(element.getProject(), myModule, element);
     myRuntimeConfiguration = null;
     myContextComponent = null;
+    myContextPoint = null;
   }
 
   /**
@@ -259,7 +263,7 @@ public class ConfigurationContext {
   }
 
   public DataContext getDataContext() {
-    return DataManager.getInstance().getDataContext(myContextComponent);
+    return DataManager.getInstance().getDataContext(myContextComponent, myContextPoint);
   }
 
   /**

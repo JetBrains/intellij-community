@@ -58,9 +58,7 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
         actionGroup = new DefaultActionGroup();
       }
       infos.add(info);
-      for (AnAction action : info.actions) {
-        actionGroup.add(new LineMarkerActionWrapper(element, action));
-      }
+      actionGroup.addAll(info.actions);
       actionGroup.add(new Separator());
     }
     if (icon == null) return null;
