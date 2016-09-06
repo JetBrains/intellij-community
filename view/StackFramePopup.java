@@ -15,12 +15,9 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.debugger.memory.utils.KeyboardUtils;
 import org.jetbrains.debugger.memory.utils.StackFrameDescriptor;
 
 import javax.swing.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.util.List;
 
 public class StackFramePopup {
@@ -38,11 +35,14 @@ public class StackFramePopup {
 
   public void show() {
     JBList list = createStackList();
+
     JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
         .setTitle("Select stack frame")
         .setAutoSelectIfEmpty(true)
         .setResizable(false)
+        .setItemChoosenCallback(() -> navigateToSelectedFrame(list, true))
         .createPopup();
+
     popup.showInFocusCenter();
   }
 
@@ -65,17 +65,8 @@ public class StackFramePopup {
                                            StackFrameDescriptor value, int index, boolean isSelected, boolean hasFocus) {
         append(String.format("%s:%d, %s", value.methodName(), value.line(), value.className()));
         String packageName = value.packageName();
-        if(!StringUtils.isEmpty(packageName)) {
+        if (!StringUtils.isEmpty(packageName)) {
           append(String.format(" (%s)", value.packageName()), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
-        }
-      }
-    });
-
-    frameList.addKeyListener(new KeyAdapter() {
-      @Override
-      public void keyReleased(KeyEvent e) {
-        if (KeyboardUtils.isEnterKey(e.getKeyCode())) {
-          navigateToSelectedFrame(frameList, true);
         }
       }
     });
