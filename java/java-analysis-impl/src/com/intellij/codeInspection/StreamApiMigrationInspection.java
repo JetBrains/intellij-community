@@ -175,18 +175,39 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     };
   }
 
+  private static boolean isLiteral(PsiElement element, Object value) {
+    return element instanceof PsiLiteralExpression && value.equals(((PsiLiteralExpression)element).getValue());
+  }
+
   private static PsiExpression extractIncrementedExpression(PsiStatement statement) {
     if(!(statement instanceof PsiExpressionStatement)) return null;
     PsiExpression expression = ((PsiExpressionStatement)statement).getExpression();
-    PsiExpression operand;
     if(expression instanceof PsiPostfixExpression) {
-      if(!JavaTokenType.PLUSPLUS.equals(((PsiPostfixExpression)expression).getOperationTokenType())) return null;
-      operand = ((PsiPostfixExpression)expression).getOperand();
+      if(JavaTokenType.PLUSPLUS.equals(((PsiPostfixExpression)expression).getOperationTokenType())) {
+        return ((PsiPostfixExpression)expression).getOperand();
+      }
     } else if(expression instanceof PsiPrefixExpression) {
-      if(!JavaTokenType.PLUSPLUS.equals(((PsiPrefixExpression)expression).getOperationTokenType())) return null;
-      operand = ((PsiPrefixExpression)expression).getOperand();
-    } else return null; // TODO: support i = i+1;
-    return operand;
+      if(JavaTokenType.PLUSPLUS.equals(((PsiPrefixExpression)expression).getOperationTokenType())) {
+        return ((PsiPrefixExpression)expression).getOperand();
+      }
+    } else if(expression instanceof PsiAssignmentExpression) {
+      PsiAssignmentExpression assignment = (PsiAssignmentExpression)expression;
+      if(JavaTokenType.PLUSEQ.equals(assignment.getOperationTokenType())) {
+        if (isLiteral(assignment.getRExpression(), 1)) {
+          return assignment.getLExpression();
+        }
+      } else if(JavaTokenType.EQ.equals(assignment.getOperationTokenType())) {
+        if (assignment.getRExpression() instanceof PsiBinaryExpression) {
+          PsiBinaryExpression binOp = (PsiBinaryExpression)assignment.getRExpression();
+          if(JavaTokenType.PLUS.equals(binOp.getOperationTokenType()) && binOp.getROperand() != null && (
+            isLiteral(binOp.getROperand(), 1) && binOp.getLOperand().getText().equals(assignment.getLExpression().getText()) ||
+            isLiteral(binOp.getLOperand(), 1) && binOp.getROperand().getText().equals(assignment.getLExpression().getText()))) {
+            return assignment.getLExpression();
+          }
+        }
+      }
+    }
+    return null;
   }
 
   @Nullable
