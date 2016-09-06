@@ -301,6 +301,10 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON36, true, false);
   }
 
+  public void testFStringLiterals() {
+    doTest();
+  }
+
   // ---
   private void doTest(final LanguageLevel languageLevel, final boolean checkWarnings, final boolean checkInfos) {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
