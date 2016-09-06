@@ -47,13 +47,19 @@ public class PyABCUtil {
       return hasMethod(subClass, PyNames.HASH, inherited, context);
     }
     final boolean hasIter = hasMethod(subClass, PyNames.ITER, inherited, context);
+    final boolean hasNext = hasMethod(subClass, PyNames.NEXT, inherited, context) ||
+                            hasMethod(subClass, PyNames.DUNDER_NEXT, inherited, context);
+    final boolean hasSend = hasMethod(subClass, PyNames.SEND, inherited, context) ||
+                            hasMethod(subClass, PyNames.DUNDER_SEND, inherited, context);
     final boolean hasGetItem = hasMethod(subClass, PyNames.GETITEM, inherited, context);
     if (PyNames.ITERABLE.equals(superClassName)) {
       return hasIter || hasGetItem;
     }
+    if (PyNames.GENERATOR.equals(superClassName)) {
+      return hasIter && hasNext && hasSend;
+    }
     if (PyNames.ITERATOR.equals(superClassName)) {
-      return (hasIter && (hasMethod(subClass, PyNames.NEXT, inherited, context) || hasMethod(subClass,
-                                                                                          PyNames.DUNDER_NEXT, inherited, context))) || hasGetItem;
+      return (hasIter && hasNext) || hasGetItem;
     }
     final boolean isSized = hasMethod(subClass, PyNames.LEN, inherited, context);
     if (PyNames.SIZED.equals(superClassName)) {

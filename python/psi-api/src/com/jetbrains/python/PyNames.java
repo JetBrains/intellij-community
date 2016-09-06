@@ -135,6 +135,7 @@ public class PyNames {
   public static final String HASHABLE = "Hashable";
   public static final String ITERABLE = "Iterable";
   public static final String ITERATOR = "Iterator";
+  public static final String GENERATOR = "Generator";
   public static final String SIZED = "Sized";
   public static final String CALLABLE = "Callable";
   public static final String SEQUENCE = "Sequence";
@@ -156,6 +157,8 @@ public class PyNames {
   public static final String ITER = "__iter__";
   public static final String NEXT = "next";
   public static final String DUNDER_NEXT = "__next__";
+  public static final String SEND = "send";
+  public static final String DUNDER_SEND = "__send__";
   public static final String LEN = "__len__";
   public static final String CALL = "__call__";
   public static final String GETITEM = "__getitem__";
