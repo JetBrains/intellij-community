@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -507,9 +507,13 @@ public class ActionsTreeUtil {
       if (filter == null) return true;
       if (action == null) return false;
       final String insensitiveFilter = filter.toLowerCase();
-      for (String text : new String[]{action.getTemplatePresentation().getText(),
-                                      action.getTemplatePresentation().getDescription(),
-                                      action instanceof ActionStub ? ((ActionStub)action).getId() : ActionManager.getInstance().getId(action)}) {
+      ArrayList<String> options = new ArrayList<>();
+      options.add(action.getTemplatePresentation().getText());
+      options.add(action.getTemplatePresentation().getDescription());
+      options.add(action instanceof ActionStub ? ((ActionStub)action).getId() : ActionManager.getInstance().getId(action));
+      options.addAll(AbbreviationManager.getInstance().getAbbreviations(ActionManager.getInstance().getId(action)));
+
+      for (String text : options) {
         if (text != null) {
           final String lowerText = text.toLowerCase();
 
