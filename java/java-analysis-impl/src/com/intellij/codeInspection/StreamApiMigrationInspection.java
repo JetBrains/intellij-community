@@ -531,12 +531,12 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       final PsiClassType rawVarType = varType instanceof PsiClassType ? ((PsiClassType)varType).rawType() : null;
       if (rawType != null && rawVarType != null &&
           rawType.equalsToText(CommonClassNames.JAVA_UTIL_ARRAY_LIST) &&
-          rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_LIST)) {
+          (rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_LIST) || rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_COLLECTION))) {
         return "toList()";
       }
       else if (rawType != null && rawVarType != null &&
                rawType.equalsToText(CommonClassNames.JAVA_UTIL_HASH_SET) &&
-               rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_SET)) {
+               (rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_SET) || rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_COLLECTION))) {
         return "toSet()";
       }
       else if (rawType != null) {
