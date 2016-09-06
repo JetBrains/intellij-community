@@ -17,13 +17,13 @@ package org.jetbrains.settingsRepository
 
 import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.OneTimeString
-import com.intellij.layout.*
-import com.intellij.layout.CCFlags.*
-import com.intellij.layout.LCFlags.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.ui.dialog
 import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.layout.*
+import com.intellij.ui.layout.CCFlags.*
+import com.intellij.ui.layout.LCFlags.*
 import com.intellij.util.PathUtilRt
 import com.intellij.util.nullize
 import com.intellij.util.trimMiddle

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.layout
+package com.intellij.ui.layout
 
 import com.intellij.BundleBase
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase

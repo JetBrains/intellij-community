@@ -19,12 +19,12 @@ import com.intellij.configurationStore.ComponentStoreImpl
 import com.intellij.configurationStore.SchemeManagerFactoryBase
 import com.intellij.configurationStore.StateStorageManagerImpl
 import com.intellij.configurationStore.reloadAppStore
-import com.intellij.layout.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.progress.runModalTask
+import com.intellij.ui.layout.*
 import com.intellij.util.ui.ComboBoxModelEditor
 import com.intellij.util.ui.ListItemEditor
 import java.util.*

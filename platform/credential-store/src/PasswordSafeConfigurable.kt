@@ -18,12 +18,12 @@ package com.intellij.credentialStore
 import com.intellij.credentialStore.PasswordSafeSettings.ProviderType
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl
-import com.intellij.layout.*
-import com.intellij.layout.CCFlags.*
-import com.intellij.layout.LCFlags.*
 import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.ui.Messages
+import com.intellij.ui.layout.*
+import com.intellij.ui.layout.CCFlags.*
+import com.intellij.ui.layout.LCFlags.*
 
 class PasswordSafeConfigurable(private val settings: PasswordSafeSettings) : ConfigurableBase<PasswordSafeConfigurableUi, PasswordSafeSettings>("application.passwordSafe", "Passwords", "reference.ide.settings.password.safe") {
   override fun getSettings() = settings
