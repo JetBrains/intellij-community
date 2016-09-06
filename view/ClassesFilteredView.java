@@ -50,13 +50,16 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
   private static final Logger LOG = Logger.getInstance(ClassesFilteredView.class);
   private final static double DELAY_BEFORE_INSTANCES_QUERY_COEFFICIENT = 0.5;
   private final static int DEFAULT_BATCH_SIZE = Integer.MAX_VALUE;
+  private static final String EMPTY_TABLE_CONTENT_WHEN_RUNNED = "The application is running";
+  private static final String EMPTY_TABLE_CONTENT_WHEN_SUSPENDED = "Nothing to show";
+
 
   private final Project myProject;
   private final XDebugSession myDebugSession;
   private final DebugProcessImpl myDebugProcess;
   private final SingleAlarmWithMutableDelay mySingleAlarm;
 
-  private final SearchTextField myFilterTextField = new SearchTextField(false);
+  private final SearchTextField myFilterTextField = new FilterTextField();
   private final ClassesTable myTable;
   private final InstancesTracker myInstancesTracker;
   private final Map<ReferenceType, InstanceTrackingStrategy> myTrackedClasses = new ConcurrentHashMap<>();
@@ -137,11 +140,39 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
         int keyCode = e.getKeyCode();
         if (KeyboardUtils.isEnterKey(keyCode)) {
           handleClassSelection(myTable.getSelectedClass());
-        } else if (!KeyboardUtils.isArrowKey(keyCode) && KeyboardUtils.isCharacter(keyCode)) {
-          SwingUtilities.invokeLater(myFilterTextField::requestFocusInWindow);
+        } else if (KeyboardUtils.isCharacter(keyCode) || KeyboardUtils.isBackSpace(keyCode)) {
           String text = myFilterTextField.getText();
-          myFilterTextField.setText(text + KeyEvent.getKeyText(keyCode).toLowerCase());
+          String newText = KeyboardUtils.isBackSpace(keyCode)
+              ? text.substring(0, text.length() - 1)
+              : text + e.getKeyChar();
+          myFilterTextField.setText(newText);
+          FocusManager.getCurrentManager().focusNextComponent(myFilterTextField);
         }
+      }
+    });
+
+    myFilterTextField.addKeyboardListener(new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        dispatch(e);
+      }
+
+      @Override
+      public void keyReleased(KeyEvent e) {
+        dispatch(e);
+      }
+
+      private void dispatch(KeyEvent e) {
+        if (KeyboardUtils.isUpDownKey(e.getKeyCode()) || KeyboardUtils.isEnterKey(e.getKeyCode())) {
+          myTable.dispatchEvent(e);
+        }
+      }
+    });
+
+    myFilterTextField.addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        myTable.setFilterPattern(myFilterTextField.getText());
       }
     });
 
@@ -175,19 +206,13 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
 
       @Override
       public void sessionPaused() {
+        SwingUtilities.invokeLater(() -> myTable.getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_SUSPENDED));
         if (myNeedReloadClasses) {
           myConstructorTrackedClasses.values().forEach(ConstructorInstancesTracker::commitTracked);
           updateClassesAndCounts();
         }
       }
     }, this);
-
-    myFilterTextField.addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(DocumentEvent e) {
-        myTable.setFilterPattern(myFilterTextField.getText());
-      }
-    });
 
     mySingleAlarm = new SingleAlarmWithMutableDelay(() -> {
       myLastSuspendContext = getSuspendContext();
@@ -317,7 +342,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
       List<long[]> chunks = new SmartList<>();
       int size = classes.size();
       for (int begin = 0, end = Math.min(batchSize, size);
-           begin != size && contextIsValid();
+           begin != size && isContextValid();
            begin = end, end = Math.min(end + batchSize, size)) {
         List<ReferenceType> batch = classes.subList(begin, end);
 
@@ -331,18 +356,33 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
         LOG.info(String.format("Instances query time = %d ms. Count = %d", delay, batch.size()));
       }
 
-      final long[] counts = chunks.size() == 1 ? chunks.get(0) : IntStream.range(0, chunks.size()).boxed()
-          .flatMapToLong(integer -> Arrays.stream(chunks.get(integer)))
-          .toArray();
+      if(isContextValid()) {
+        final long[] counts = chunks.size() == 1 ? chunks.get(0) : IntStream.range(0, chunks.size()).boxed()
+            .flatMapToLong(integer -> Arrays.stream(chunks.get(integer)))
+            .toArray();
+        SwingUtilities.invokeLater(() -> myTable.setClassesAndUpdateCounts(classes, counts));
+      }
 
-      SwingUtilities.invokeLater(() -> {
-        myTable.setClassesAndUpdateCounts(classes, counts);
-        myTable.setBusy(false);
-      });
+      SwingUtilities.invokeLater(() -> myTable.setBusy(false));
     }
 
-    private boolean contextIsValid() {
+    private boolean isContextValid() {
       return ClassesFilteredView.this.getSuspendContext() == getSuspendContext();
+    }
+  }
+
+  private class FilterTextField extends SearchTextField {
+    FilterTextField() {
+      super(false);
+    }
+
+    @Override
+    protected void showPopup() {
+    }
+
+    @Override
+    protected boolean hasIconsOutsideOfTextField() {
+      return false;
     }
   }
 }

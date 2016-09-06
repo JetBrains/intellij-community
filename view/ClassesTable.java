@@ -45,8 +45,6 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   private static final int DIFF_COLUMN_MIN_WIDTH = 80;
   private static final int DIFF_COLUMN_MAX_WIDTH = 100;
 
-  private static final String EMPTY_TABLE_CONTENT = "The application is running";
-
   private final DiffViewTableModel myModel = new DiffViewTableModel();
   private final UnknownDiffValue myUnknownValue = new UnknownDiffValue();
   private final XDebugSession myDebugSession;
@@ -72,8 +70,6 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     myOnlyWithInstances = onlyWithInstances;
     myInstancesTracker = InstancesTracker.getInstance(myDebugSession.getProject());
     myParent = parent;
-
-    getEmptyText().setText(EMPTY_TABLE_CONTENT);
 
     TableColumn classesColumn = getColumnModel().getColumn(DiffViewTableModel.CLASSNAME_COLUMN_INDEX);
     TableColumn countColumn = getColumnModel().getColumn(DiffViewTableModel.COUNT_COLUMN_INDEX);
@@ -172,11 +168,15 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     assert classes.size() == counts.length;
     ReferenceType selectedClass = myModel.getSelectedClassBeforeHided();
     int newSelectedIndex = classes.indexOf(selectedClass);
+    boolean isInitialized = !myElems.isEmpty();
     myElems = Collections.unmodifiableList(new ArrayList<>(classes));
 
     for (int i = 0, size = classes.size(); i < size; i++) {
       ReferenceType ref = classes.get(i);
-      myCounts.put(ref, myCounts.getOrDefault(ref, myUnknownValue).update(counts[i]));
+      DiffValue oldValue = isInitialized && !myCounts.containsKey(ref)
+          ? new DiffValue(0, 0)
+          : myCounts.getOrDefault(ref, myUnknownValue);
+      myCounts.put(ref, oldValue.update(counts[i]));
     }
 
     showContent();
