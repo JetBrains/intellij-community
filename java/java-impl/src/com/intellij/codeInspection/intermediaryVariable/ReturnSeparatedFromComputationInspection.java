@@ -18,7 +18,9 @@ package com.intellij.codeInspection.intermediaryVariable;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -194,26 +196,26 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
   }
 
   private static void applyChanges(@NotNull Mover mover, @NotNull ReturnContext context, boolean removeReturn) {
-    PsiReturnStatement returnStatement = (PsiReturnStatement)context.returnStatement.copy();
+    mover.insertBefore.forEach(e -> e.getParent().addBefore(context.returnStatement, e));
+    mover.replaceInline.forEach(e -> {
+      if (e instanceof PsiBreakStatement) {
+        replaceStatementKeepComments((PsiBreakStatement)e, context.returnStatement);
+      }
+      else if (e instanceof PsiAssignmentExpression) {
+        inlineAssignment((PsiAssignmentExpression)e, context.returnStatement);
+      }
+    });
+    mover.removeCompletely.forEach(e -> removeElementKeepComment(e));
     if (removeReturn) {
       removeReturn(context);
     }
-    else {
-      //inlineReturnedValue(mover, context);
-    }
-    mover.insertBefore.forEach(e -> e.getParent().addBefore(returnStatement, e));
-    mover.replaceInline.forEach(e -> {
-      if (e instanceof PsiBreakStatement) e.replace(returnStatement);
-      if (e instanceof PsiAssignmentExpression) inlineAssignment((PsiAssignmentExpression)e, returnStatement);
-    });
-    mover.removeCompletely.forEach(PsiElement::delete);
   }
 
   private static void removeReturn(@NotNull ReturnContext context) {
     Set<PsiElement> skippedEmptyStatements = new THashSet<>();
     getPrevNonEmptyStatement(context.returnStatement, skippedEmptyStatements);
     skippedEmptyStatements.forEach(PsiElement::delete);
-    context.returnStatement.delete();
+    removeElementKeepComment(context.returnStatement);
   }
 
   private static void inlineAssignment(PsiAssignmentExpression assignmentExpression, PsiReturnStatement returnStatement) {
@@ -222,9 +224,52 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
     PsiReturnStatement returnStatementCopy = (PsiReturnStatement)returnStatement.copy();
     PsiExpression rExpression = assignmentExpression.getRExpression();
     PsiExpression returnValue = returnStatementCopy.getReturnValue();
-    if (rExpression != null && returnValue!=null) {
+    if (rExpression != null && returnValue != null) {
       returnValue.replace(rExpression);
-      assignmentParent.replace(returnStatementCopy);
+      replaceStatementKeepComments((PsiExpressionStatement)assignmentParent, returnStatementCopy);
+    }
+  }
+
+  private static void replaceStatementKeepComments(PsiStatement replacedStatement, PsiReturnStatement returnStatement) {
+    List<PsiComment> keptComments = new ArrayList<>();
+    for (PsiElement element = replacedStatement.getFirstChild(); element != null; element = element.getNextSibling()) {
+      if (element instanceof PsiComment) {
+        keptComments.add((PsiComment)element);
+      }
+    }
+    if (!keptComments.isEmpty()) {
+      returnStatement = (PsiReturnStatement)returnStatement.copy();
+      PsiElement lastReturnChild = returnStatement.getLastChild();
+      Project project = returnStatement.getProject();
+      PsiParserFacade parserFacade = PsiParserFacade.SERVICE.getInstance(project);
+      PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+      if (lastReturnChild instanceof PsiComment && ((PsiComment)lastReturnChild).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
+        String commentText = StringUtil.trimStart(lastReturnChild.getText(), "//");
+        PsiComment inlineComment = elementFactory.createCommentFromText("/* " + commentText + " */", returnStatement);
+        lastReturnChild = lastReturnChild.replace(inlineComment);
+      }
+      for (PsiComment comment : keptComments) {
+        lastReturnChild = returnStatement.addAfter(parserFacade.createWhiteSpaceFromText(" "), lastReturnChild);
+        lastReturnChild = returnStatement.addAfter(comment, lastReturnChild);
+      }
+      CodeStyleManager.getInstance(project).reformat(returnStatement, true);
+    }
+    replacedStatement.replace(returnStatement);
+  }
+
+  private static void removeElementKeepComment(PsiElement element) {
+    PsiComment comment = null;
+    for (PsiElement child = element.getLastChild(); child != null; child = child.getPrevSibling()) {
+      if (child instanceof PsiComment) {
+        comment = (PsiComment)child;
+        break;
+      }
+    }
+    if (comment != null) {
+      element.replace(comment);
+    }
+    else {
+      element.delete();
     }
   }
 
@@ -278,6 +323,9 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
       }
       if (targetStatement instanceof PsiForeachStatement) {
         return moveToForeach((PsiForeachStatement)targetStatement);
+      }
+      if (targetStatement instanceof PsiSwitchStatement) {
+        return moveToSwitch((PsiSwitchStatement)targetStatement, returnAtTheEnd);
       }
       if (targetStatement instanceof PsiTryStatement) {
         return moveToTry((PsiTryStatement)targetStatement, returnAtTheEnd);
@@ -346,6 +394,12 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
     private boolean moveToForeach(@NotNull PsiForeachStatement targetStatement) {
       moveToBreaks(targetStatement, false);
       return false;
+    }
+
+    private boolean moveToSwitch(PsiSwitchStatement targetStatement, boolean returnAtTheEnd) {
+      moveToBreaks(targetStatement, false);
+      PsiCodeBlock body = targetStatement.getBody();
+      return body != null && moveToBlockBody(body, returnAtTheEnd);
     }
 
     private boolean moveToTry(@NotNull PsiTryStatement targetStatement, boolean returnAtTheEnd) {
