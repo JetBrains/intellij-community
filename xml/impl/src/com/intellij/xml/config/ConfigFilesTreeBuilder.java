@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,12 +136,9 @@ public class ConfigFilesTreeBuilder {
     return fileType.getName() + " context files" ;
   }
 
-  private boolean hasNonEmptyGroups(MultiMap<FileType, PsiFile> filesByType) {
-    byte nonEmptyGroups = 0;
-    for (Map.Entry<FileType, Collection<PsiFile>> entry : filesByType.entrySet()) {
-      Collection<PsiFile> files = entry.getValue();
-      if (files != null && files.size() > 0) nonEmptyGroups++;
-    }
+  private static boolean hasNonEmptyGroups(MultiMap<FileType, PsiFile> filesByType) {
+    long nonEmptyGroups = filesByType.entrySet().stream().map(Map.Entry::getValue)
+      .filter(files -> files != null && !files.isEmpty()).limit(2).count();
     return nonEmptyGroups > 1;
   }
 

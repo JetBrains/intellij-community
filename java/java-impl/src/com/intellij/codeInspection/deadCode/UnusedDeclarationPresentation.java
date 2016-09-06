@@ -204,13 +204,8 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     if (showFixes) {
       final TreePath[] paths = tree.getSelectionPaths();
       if (paths != null) {
-        int count = 0;
-        for (TreePath path : paths) {
-          final Object component = path.getLastPathComponent();
-          if (component instanceof ProblemDescriptionNode) {
-            count++;
-          }
-        }
+        long count = Arrays.stream(paths).map(TreePath::getLastPathComponent)
+          .filter(component -> component instanceof ProblemDescriptionNode).count();
         if (count > 0) {
           final QuickFixAction[] fixes = super.getQuickFixes(refElements, tree);
           if (fixes != null) {
