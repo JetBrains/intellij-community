@@ -35,10 +35,9 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.JDOMExternalizerUtil;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -227,16 +226,21 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   }
 
   public static <T, E extends Exception> T suppressExceptions(SupplierThrowing<T, E> supplier, T defaultValue) throws E {
-    return suppressExceptions(supplier, defaultValue, null);
+    return suppressExceptions(supplier, defaultValue, true, null);
   }
 
   public static <T, E extends Exception> T suppressExceptions(SupplierThrowing<T, E> supplier,
                                                               T defaultValue,
+                                                              boolean ignorePCE,
                                                               Class<E> rethrow) throws E {
     try {
       return supplier.get();
     }
-    catch (ProcessCanceledException ignored) {}
+    catch (ProcessCanceledException e) {
+      if (!ignorePCE) {
+        throw e;
+      }
+    }
     catch (VMDisconnectedException | ObjectCollectedException e) {throw e;}
     catch (InternalException e) {LOG.info(e);}
     catch (Exception | AssertionError e) {
@@ -250,4 +254,12 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     return defaultValue;
   }
 
+  public static <T> T runInReadActionWithWriteActionPriorityWithRetries(@NotNull Computable<T> action) {
+    Ref<T> res = Ref.create();
+    while (true) {
+      if (ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> res.set(action.compute()))) {
+        return res.get();
+      }
+    }
+  }
 }
