@@ -13,74 +13,68 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.browsers.actions;
+package com.intellij.ide.browsers.actions
 
-import com.intellij.ide.GeneralSettings;
-import com.intellij.ide.browsers.*;
-import com.intellij.internal.statistic.UsageTrigger;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.xml.util.HtmlUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.GeneralSettings
+import com.intellij.ide.browsers.BrowserLauncherAppless
+import com.intellij.ide.browsers.DefaultBrowserPolicy
+import com.intellij.ide.browsers.WebBrowser
+import com.intellij.ide.browsers.WebBrowserManager
+import com.intellij.internal.statistic.UsageTrigger
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.xml.util.HtmlUtil
 
-public class OpenFileInDefaultBrowserAction extends DumbAwareAction {
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    Presentation presentation = e.getPresentation();
+class OpenFileInDefaultBrowserAction : DumbAwareAction() {
+  override fun update(e: AnActionEvent) {
+    val result = BaseOpenInBrowserAction.doUpdate(e) ?: return
 
-    OpenInBrowserRequest result = BaseOpenInBrowserAction.doUpdate(e);
-    if (result == null) {
-      return;
+    var description = templatePresentation.description
+    if (HtmlUtil.isHtmlFile(result.file)) {
+      description += " (hold Shift to open URL of local file)"
     }
 
-    String description = getTemplatePresentation().getDescription();
-    if (HtmlUtil.isHtmlFile(result.getFile())) {
-      description += " (hold Shift to open URL of local file)";
+    val presentation = e.presentation
+    presentation.text = templatePresentation.text
+    presentation.description = description
+
+    findUsingBrowser()?.let {
+      presentation.icon = it.icon
     }
 
-    presentation.setText(getTemplatePresentation().getText());
-    presentation.setDescription(description);
-
-    WebBrowser browser = findUsingBrowser();
-    if (browser != null) {
-      presentation.setIcon(browser.getIcon());
-    }
-
-    if (ActionPlaces.isPopupPlace(e.getPlace())) {
-      presentation.setVisible(presentation.isEnabled());
+    if (ActionPlaces.isPopupPlace(e.place)) {
+      presentation.isVisible = presentation.isEnabled
     }
   }
 
-  @Nullable
-  public static WebBrowser findUsingBrowser() {
-    WebBrowserManager browserManager = WebBrowserManager.getInstance();
-    DefaultBrowserPolicy defaultBrowserPolicy = browserManager.getDefaultBrowserPolicy();
-    if (defaultBrowserPolicy == DefaultBrowserPolicy.FIRST || (defaultBrowserPolicy == DefaultBrowserPolicy.SYSTEM && !BrowserLauncherAppless.canUseSystemDefaultBrowserPolicy())) {
-      return browserManager.getFirstActiveBrowser();
-    }
-    else if (defaultBrowserPolicy == DefaultBrowserPolicy.ALTERNATIVE) {
-      String path = GeneralSettings.getInstance().getBrowserPath();
-      if (!StringUtil.isEmpty(path)) {
-        WebBrowser browser = browserManager.findBrowserById(path);
-        if (browser == null) {
-          for (WebBrowser item : browserManager.getActiveBrowsers()) {
-            if (path.equals(item.getPath())) {
-              return item;
-            }
+  override fun actionPerformed(e: AnActionEvent) {
+    UsageTrigger.trigger("OpenInBrowser.default")
+    BaseOpenInBrowserAction.open(e, findUsingBrowser())
+  }
+}
+
+fun findUsingBrowser(): WebBrowser? {
+  val browserManager = WebBrowserManager.getInstance()
+  val defaultBrowserPolicy = browserManager.defaultBrowserPolicy
+  if (defaultBrowserPolicy == DefaultBrowserPolicy.FIRST || defaultBrowserPolicy == DefaultBrowserPolicy.SYSTEM && !BrowserLauncherAppless.canUseSystemDefaultBrowserPolicy()) {
+    return browserManager.firstActiveBrowser
+  }
+  else if (defaultBrowserPolicy == DefaultBrowserPolicy.ALTERNATIVE) {
+    val path = GeneralSettings.getInstance().browserPath
+    if (!path.isNullOrBlank()) {
+      val browser = browserManager.findBrowserById(path)
+      if (browser == null) {
+        for (item in browserManager.activeBrowsers) {
+          if (path == item.path) {
+            return item
           }
         }
       }
+      else {
+        return browser
+      }
     }
-    return null;
   }
-
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    UsageTrigger.trigger("OpenInBrowser.default");
-    BaseOpenInBrowserAction.open(e, findUsingBrowser());
-  }
+  return null
 }

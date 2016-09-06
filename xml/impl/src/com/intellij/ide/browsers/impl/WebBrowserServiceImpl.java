@@ -13,103 +13,89 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.browsers.impl;
+package com.intellij.ide.browsers.impl
 
-import com.intellij.ide.browsers.OpenInBrowserRequest;
-import com.intellij.ide.browsers.WebBrowserService;
-import com.intellij.ide.browsers.WebBrowserUrlProvider;
-import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.Url;
-import com.intellij.util.Urls;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xml.util.HtmlUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.browsers.OpenInBrowserRequest
+import com.intellij.ide.browsers.WebBrowserService
+import com.intellij.ide.browsers.WebBrowserUrlProvider
+import com.intellij.ide.browsers.createOpenInBrowserRequest
+import com.intellij.lang.xml.XMLLanguage
+import com.intellij.openapi.project.DumbService
+import com.intellij.psi.PsiElement
+import com.intellij.testFramework.LightVirtualFile
+import com.intellij.util.Url
+import com.intellij.util.Urls
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.xml.util.HtmlUtil
 
-import java.util.Collection;
-import java.util.Collections;
+class WebBrowserServiceImpl : WebBrowserService() {
+  companion object {
+    fun getProvider(request: OpenInBrowserRequest): WebBrowserUrlProvider? {
+      val dumbService = DumbService.getInstance(request.project)
+      for (urlProvider in WebBrowserUrlProvider.EP_NAME.extensions) {
+        if ((!dumbService.isDumb || DumbService.isDumbAware(urlProvider)) && urlProvider.canHandleElement(request)) {
+          return urlProvider
+        }
+      }
+      return null
+    }
 
-public class WebBrowserServiceImpl extends WebBrowserService {
-  @NotNull
-  @Override
-  public Collection<Url> getUrlsToOpen(@NotNull OpenInBrowserRequest request, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException {
-    boolean isHtmlOrXml = isHtmlOrXmlFile(request.getFile().getViewProvider().getBaseLanguage());
+    fun getDebuggableUrls(context: PsiElement?): Collection<Url> {
+      try {
+        val request = if (context == null) null else createOpenInBrowserRequest(context)
+        if (request == null || request.file.viewProvider.baseLanguage === XMLLanguage.INSTANCE) {
+          return emptyList()
+        }
+        else {
+          // it is client responsibility to set token
+          request.isAppendAccessToken = false
+          return getUrls(getProvider(request), request)
+        }
+      }
+      catch (ignored: WebBrowserUrlProvider.BrowserException) {
+        return emptyList()
+      }
+    }
+
+    @JvmStatic
+    fun getDebuggableUrl(context: PsiElement?) = ContainerUtil.getFirstItem(getDebuggableUrls(context))
+  }
+
+  override fun getUrlsToOpen(request: OpenInBrowserRequest, preferLocalUrl: Boolean): Collection<Url> {
+    val isHtmlOrXml = WebBrowserService.isHtmlOrXmlFile(request.file.viewProvider.baseLanguage)
     if (!preferLocalUrl || !isHtmlOrXml) {
-      DumbService dumbService = DumbService.getInstance(request.getProject());
-      for (WebBrowserUrlProvider urlProvider : WebBrowserUrlProvider.EP_NAME.getExtensions()) {
-        if ((!dumbService.isDumb() || DumbService.isDumbAware(urlProvider)) && urlProvider.canHandleElement(request)) {
-          Collection<Url> urls = getUrls(urlProvider, request);
+      val dumbService = DumbService.getInstance(request.project)
+      for (urlProvider in WebBrowserUrlProvider.EP_NAME.extensions) {
+        if ((!dumbService.isDumb || DumbService.isDumbAware(urlProvider)) && urlProvider.canHandleElement(request)) {
+          val urls = getUrls(urlProvider, request)
           if (!urls.isEmpty()) {
-            return urls;
+            return urls
           }
         }
       }
 
       if (!isHtmlOrXml) {
-        return Collections.emptyList();
+        return emptyList()
       }
     }
 
-    VirtualFile file = request.getVirtualFile();
-    return file instanceof LightVirtualFile || !request.getFile().getViewProvider().isPhysical()
-           ? Collections.<Url>emptyList()
-           : Collections.singletonList(Urls.newFromVirtualFile(file));
+    val file = if (!request.file.viewProvider.isPhysical) null else request.virtualFile
+    return if (file is LightVirtualFile || file == null) emptyList() else listOf(Urls.newFromVirtualFile(file))
   }
+}
 
-  @NotNull
-  private static Collection<Url> getUrls(@Nullable WebBrowserUrlProvider provider, @NotNull OpenInBrowserRequest request) throws WebBrowserUrlProvider.BrowserException {
-    if (provider != null) {
-      if (request.getResult() != null) {
-        return request.getResult();
-      }
+private fun getUrls(provider: WebBrowserUrlProvider?, request: OpenInBrowserRequest): Collection<Url> {
+  if (provider != null) {
+    request.result?.let { return it }
 
-      try {
-        return provider.getUrls(request);
-      }
-      catch (WebBrowserUrlProvider.BrowserException e) {
-        if (!HtmlUtil.isHtmlFile(request.getFile())) {
-          throw e;
-        }
-      }
-    }
-    return Collections.emptyList();
-  }
-
-  @Nullable
-  public static WebBrowserUrlProvider getProvider(@NotNull OpenInBrowserRequest request) {
-    DumbService dumbService = DumbService.getInstance(request.getProject());
-    for (WebBrowserUrlProvider urlProvider : WebBrowserUrlProvider.EP_NAME.getExtensions()) {
-      if ((!dumbService.isDumb() || DumbService.isDumbAware(urlProvider)) && urlProvider.canHandleElement(request)) {
-        return urlProvider;
-      }
-    }
-    return null;
-  }
-
-  @NotNull
-  public static Collection<Url> getDebuggableUrls(@Nullable PsiElement context) {
     try {
-      OpenInBrowserRequest request = context == null ? null : OpenInBrowserRequest.create(context);
-      if (request == null || request.getFile().getViewProvider().getBaseLanguage() == XMLLanguage.INSTANCE) {
-        return Collections.<Url>emptyList();
-      }
-      else {
-        // it is client responsibility to set token
-        request.setAppendAccessToken(false);
-        return getUrls(getProvider(request), request);
+      return provider.getUrls(request)
+    }
+    catch (e: WebBrowserUrlProvider.BrowserException) {
+      if (!HtmlUtil.isHtmlFile(request.file)) {
+        throw e
       }
     }
-    catch (WebBrowserUrlProvider.BrowserException ignored) {
-      return Collections.emptyList();
-    }
   }
-
-  @Nullable
-  public static Url getDebuggableUrl(@Nullable PsiElement context) {
-    return ContainerUtil.getFirstItem(getDebuggableUrls(context));
-  }
+  return emptyList()
 }

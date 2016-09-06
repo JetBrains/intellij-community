@@ -13,88 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.browsers;
+package com.intellij.ide.browsers
 
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.util.Url;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.util.Url
 
-import java.util.Collection;
+abstract class OpenInBrowserRequest() {
+  var result: Collection<Url>? = null
 
-public abstract class OpenInBrowserRequest {
-  private Collection<Url> result;
-  protected PsiFile file;
-  
-  private boolean appendAccessToken = true;
+  var isAppendAccessToken = true
 
-  public OpenInBrowserRequest(@NotNull PsiFile file) {
-    this.file = file;
-  }
+  val virtualFile: VirtualFile?
+    get() = file.virtualFile
 
-  public OpenInBrowserRequest() {
-  }
+  val project: Project
+    get() = file.project
 
-  @Nullable
-  public static OpenInBrowserRequest create(@NotNull final PsiElement element) {
-    PsiFile psiFile;
-    AccessToken token = ReadAction.start();
-    try {
-      psiFile = element.isValid() ? element.getContainingFile() : null;
-      if (psiFile == null || psiFile.getVirtualFile() == null) {
-        return null;
-      }
-    }
-    finally {
-      token.finish();
-    }
+  abstract val file: PsiFile
+  abstract val element: PsiElement
+}
 
-    return new OpenInBrowserRequest(psiFile) {
-      @NotNull
-      @Override
-      public PsiElement getElement() {
-        return element;
-      }
-    };
-  }
+fun createOpenInBrowserRequest(element: PsiElement): OpenInBrowserRequest? {
+  val psiFile = runReadAction { if (element.isValid) element.containingFile?.let { if (it.virtualFile == null) null else it } else null } ?: return null
+  return object : OpenInBrowserRequest() {
+    override val file = psiFile
 
-  @NotNull
-  public PsiFile getFile() {
-    return file;
-  }
-
-  @NotNull
-  public VirtualFile getVirtualFile() {
-    return file.getVirtualFile();
-  }
-
-  @NotNull
-  public Project getProject() {
-    return file.getProject();
-  }
-
-  @NotNull
-  public abstract PsiElement getElement();
-
-  public void setResult(@NotNull Collection<Url> result) {
-    this.result = result;
-  }
-
-  @Nullable
-  public Collection<Url> getResult() {
-    return result;
-  }
-
-  public boolean isAppendAccessToken() {
-    return appendAccessToken;
-  }
-
-  public void setAppendAccessToken(boolean value) {
-    this.appendAccessToken = value;
+    override val element = element
   }
 }
