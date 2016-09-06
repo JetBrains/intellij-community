@@ -15,6 +15,8 @@
  */
 package com.intellij.util;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
@@ -24,16 +26,33 @@ import java.awt.image.ImageObserver;
 */
 public class JBHiDPIScaledImage extends BufferedImage {
   private final Image myImage;
-  private int myWidth;  // == myImage.width / scale
-  private int myHeight; // == myImage.height / scale
+  private final int myWidth;
+  private final int myHeight;
 
+  /**
+   * Creates a HiDPI-aware BufferedImage to draw on.
+   *
+   * @param width width in a user space coordinates
+   * @param height height in a user space coordinates
+   * @param type type of the created image
+   */
   public JBHiDPIScaledImage(int width, int height, int type) {
-    this(null, 2 * width, 2 * height, type);
+    super(2 * width, 2 * height, type);
+    myImage = null;
+    myWidth = width;
+    myHeight = height;
   }
 
-  public JBHiDPIScaledImage(Image image, int width, int height, int type) {
-    // In case there's a delegate image, create a dummy wrapper image of 1x1 size
-    super(image != null ? 1 : width, image != null ? 1 : height, type);
+  /**
+   * Creates a HiDPI-aware BufferedImage wrapping a delegate Image.
+   *
+   * @param image the delegate image of size in a device space coordinates to wrap
+   * @param width width in a user space coordinates
+   * @param height height in a user space coordinates
+   * @param type type of the created image
+   */
+  public JBHiDPIScaledImage(@NotNull Image image, int width, int height, int type) {
+    super(1, 1, type); // give the wrapper a minimal 1x1 size to save space
     myImage = image;
     myWidth = width;
     myHeight = height;
@@ -45,29 +64,30 @@ public class JBHiDPIScaledImage extends BufferedImage {
 
   @Override
   public int getWidth() {
-    return myImage != null ? myWidth : super.getWidth();
+    return myWidth;
   }
 
   @Override
   public int getHeight() {
-    return myImage != null ? myHeight : super.getHeight();
+    return myHeight;
   }
 
   @Override
   public int getWidth(ImageObserver observer) {
-    return myImage != null ? myWidth : super.getWidth(observer);
+    return myWidth;
   }
 
   @Override
   public int getHeight(ImageObserver observer) {
-    return myImage != null ? myHeight : super.getHeight(observer);
+    return myHeight;
   }
 
   @Override
   public Graphics2D createGraphics() {
+    assert myImage == null : "graphics should only be created for the image used for drawing";
     Graphics2D g = super.createGraphics();
     if (myImage == null) {
-      return new HiDPIScaledGraphics(g, this);
+      return new HiDPIScaledGraphics(g);
     }
     return g;
   }
