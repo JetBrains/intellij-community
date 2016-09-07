@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.ide.dnd.DnDSupport;
+import com.intellij.ide.dnd.DnDTarget;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.ui.UIBundle;
@@ -448,6 +450,10 @@ class TabContentLayout extends ContentLayout {
     }
     myTabs.add(event.getIndex(), tab);
     myContent2Tabs.put(content, tab);
+    if (content instanceof DnDTarget) {
+      DnDTarget target = (DnDTarget)content;
+      DnDSupport.createBuilder(tab).setDropHandler(target).setTargetChecker(target).install();
+    }
     
     myCached.clear();
   }

@@ -21,6 +21,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.actions.EditSourceAction;
+import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.actionSystem.*;
@@ -30,6 +31,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -40,9 +42,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CommitContext;
+import com.intellij.openapi.vcs.changes.DnDTargetContentAdapter;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
+import com.intellij.openapi.vcs.changes.ui.ChangeListDragBean;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -51,7 +55,6 @@ import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -198,7 +201,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     else {
       if (myContent == null) {
         JPanel rootPanel = createRootPanel();
-        myContent = ContentFactory.SERVICE.getInstance().createContent(rootPanel, VcsBundle.message("shelf.tab"), false);
+        myContent = new MyShelfContent(rootPanel, VcsBundle.message("shelf.tab"), false);
         myContent.setCloseable(false);
         myContentManager.addContent(myContent);
       }
@@ -647,6 +650,32 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
     public boolean canDeleteElement(@NotNull DataContext dataContext) {
       return !getShelvedLists(dataContext).isEmpty();
+    }
+  }
+
+  public class MyShelfContent extends DnDTargetContentAdapter {
+    private MyShelfContent(JPanel panel, String displayName, boolean isLockable) {
+      super(panel, displayName, isLockable);
+    }
+
+    @Override
+    public void drop(DnDEvent event) {
+      Object attachedObject = event.getAttachedObject();
+      if (attachedObject instanceof ChangeListDragBean) {
+        FileDocumentManager.getInstance().saveAllDocuments();
+        List<Change> changes = Arrays.asList(((ChangeListDragBean)attachedObject).getChanges());
+        myShelveChangesManager.shelveSilentlyUnderProgress(changes);
+      }
+    }
+
+    @Override
+    public boolean update(DnDEvent event) {
+      Object attachedObject = event.getAttachedObject();
+      if (attachedObject instanceof ChangeListDragBean) {
+        event.setDropPossible(((ChangeListDragBean)attachedObject).getChanges().length > 0);
+        return false;
+      }
+      return true;
     }
   }
 }

@@ -34,6 +34,8 @@ import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -60,9 +62,8 @@ import com.intellij.vcsUtil.FilesProgress;
 import org.jdom.Element;
 import org.jdom.Parent;
 import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.*;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -633,6 +634,38 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
                                                                                                            (!onlyMarkedToDelete ||
                                                                                                             list.isMarkedToDelete()));
     clearShelvedLists(toDelete);
+  }
+
+  @CalledInAwt
+  void shelveSilentlyUnderProgress(@NotNull List<Change> changes) {
+    final boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> shelveChangesInSeparatedLists(changes)),
+      VcsBundle.getString("shelve.changes.progress.title"), true, myProject);
+
+    if (completed) {
+      VcsNotifier.getInstance(myProject).notifySuccess("Changes shelved successfully");
+    }
+  }
+
+  public void shelveChangesInSeparatedLists(@NotNull Collection<Change> changes) {
+    List<String> failedChangeLists = ContainerUtil.newArrayList();
+    List<LocalChangeList> changeListsCopy = ChangeListManager.getInstance(myProject).getChangeListsCopy();
+    for (LocalChangeList list : changeListsCopy) {
+      Collection<Change> changesForChangelist = ContainerUtil.intersection(list.getChanges(), changes);
+      if (changesForChangelist.isEmpty()) continue;
+      try {
+        shelveChanges(changesForChangelist, list.getName(), true);
+      }
+      catch (Exception e) {
+        LOG.warn(e);
+        failedChangeLists.add(list.getName());
+      }
+    }
+    if (!failedChangeLists.isEmpty()) {
+      VcsNotifier.getInstance(myProject).notifyError("Shelf Failed", String
+        .format("Shelving changes for %s [%s] failed", StringUtil.pluralize("changelist", failedChangeLists.size()),
+                StringUtil.join(failedChangeLists, ",")));
+    }
   }
 
   private class BinaryPatchApplier implements CustomBinaryPatchApplier<ShelvedBinaryFilePatch> {

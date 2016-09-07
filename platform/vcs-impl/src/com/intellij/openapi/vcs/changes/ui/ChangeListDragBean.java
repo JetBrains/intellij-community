@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * @author yole
 */
-class ChangeListDragBean {
+public class ChangeListDragBean {
   private final JComponent mySourceComponent;
   private final Change[] myChanges;
   private final List<VirtualFile> myUnversionedFiles;
