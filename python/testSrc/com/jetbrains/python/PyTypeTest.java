@@ -1135,10 +1135,9 @@ public class PyTypeTest extends PyTestCase {
            "expr.extend([1, 'a', None])"
     );
 
-    doTest("Set[Union[int, bool]]",
-           "expr = {1, 2, 3}\n" +
-           "expr.extend([True])"
-    );
+    doTest("List[int]",
+           "expr = []\n" +
+           "expr.index(42)");
   }
 
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {

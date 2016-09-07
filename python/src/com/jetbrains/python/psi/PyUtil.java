@@ -2064,7 +2064,9 @@ public class PyUtil {
 
     private static final Set<String> SEQUENCE_MODIFICATION_METHODS = ImmutableSet.of(
       "append",
-      "extend"
+      "extend",
+      "insert",
+      "index"
     );
 
     public CollectionTypeVisitor(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
@@ -2085,6 +2087,9 @@ public class PyUtil {
             PyExpression[] arguments = node.getArguments();
             if (arguments.length == 1 && arguments[0] != null) {
               myModifications.add(Pair.create(funcName, myTypeEvalContext.getType(arguments[0])));
+            }
+            if (arguments.length == 2) { // insert(pos, item)
+              myModifications.add(Pair.create(funcName, myTypeEvalContext.getType(arguments[1])));
             }
           }
         }

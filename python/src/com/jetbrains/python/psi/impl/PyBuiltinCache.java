@@ -171,14 +171,15 @@ public class PyBuiltinCache {
   @NotNull
   private static List<PyType> getSequenceElementTypes(@NotNull PySequenceExpression sequence, @NotNull TypeEvalContext context) {
     final PyExpression[] elements = sequence.getElements();
-    PyType elemType;
+    PyType elemType = null;
 
-    if (elements.length == 0) {
+    if (sequence instanceof PyListLiteralExpression) {
       elemType = PyUtil.getCollectionTypeByModifications(sequence, context);
+    }
+    if (elements.length == 0) {
       return Collections.singletonList(elemType);
     }
     else if (elements.length > 10 /* performance */) {
-      elemType = PyUtil.getCollectionTypeByModifications(sequence, context);
       elemType = PyUnionType.union(elemType, context.getType(elements[0]));
       elemType = PyUnionType.union(elemType, null);
       return Collections.singletonList(elemType);
@@ -199,7 +200,7 @@ public class PyBuiltinCache {
         final PyType elementType = context.getType(element);
         elemType = PyUnionType.union(elemType, elementType);
       }
-      final PyType modifiedCollectionType = PyUtil.getCollectionTypeByModifications(sequence, context);
+      final PyType modifiedCollectionType = (sequence instanceof PyListLiteralExpression) ? PyUtil.getCollectionTypeByModifications(sequence, context) : null;
       if (modifiedCollectionType != null) {
         elemType = PyUnionType.union(elemType, modifiedCollectionType);
       }
