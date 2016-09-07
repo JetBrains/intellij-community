@@ -20,6 +20,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.ComponentsKt;
 import com.intellij.ui.layout.LayoutKt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -96,6 +97,6 @@ class EnterPasswordComponent {
       note = "The passwords will be stored in IDE configuration files with weak protection<br>(" + subNote + ").";
     }
 
-    myPromptLabel = LayoutKt.htmlComponent("Master password is required to convert saved passwords.<br>" + note, UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
+    myPromptLabel = ComponentsKt.htmlComponent("Master password is required to convert saved passwords.<br>" + note, UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
   }
 }

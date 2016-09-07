@@ -15,10 +15,18 @@
  */
 package com.intellij.openapi.ui
 
+import com.intellij.openapi.project.Project
+import java.awt.Component
 import javax.swing.JComponent
 
-fun dialog(title: String, centerPanel: JComponent, resizable: Boolean = true, preferedFocusComponent: JComponent? = null, okActionEnabled: Boolean = true): DialogBuilder {
-  val builder = DialogBuilder()
+fun dialog(title: String,
+           centerPanel: JComponent,
+           resizable: Boolean = true,
+           preferedFocusComponent: JComponent? = null,
+           okActionEnabled: Boolean = true,
+           project: Project? = null,
+           parent: Component? = null): DialogBuilder {
+  val builder = if (parent == null) DialogBuilder(project) else DialogBuilder(parent)
   builder
       .title(title)
       .centerPanel(centerPanel)

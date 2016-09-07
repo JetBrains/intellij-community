@@ -79,7 +79,7 @@
           <text resource-bundle="messages/DiagnosticBundle" key="diagnostic.error.report.proxy.setup"/>
         </properties>
       </component>
-      <component id="cd549" class="javax.swing.JLabel">
+      <component id="cd549" class="javax.swing.JLabel" binding="eee">
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>

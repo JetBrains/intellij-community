@@ -16,18 +16,17 @@
 package com.intellij.ui.layout
 
 import com.intellij.BundleBase
-import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
-import com.intellij.ui.*
+import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
-import com.intellij.util.ui.SwingHelper
+import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.UIUtil.getCssFontDeclaration
-import com.intellij.util.ui.UIUtil.getLabelForeground
 import net.miginfocom.layout.*
 import net.miginfocom.swing.MigLayout
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Component
+import java.awt.Font
+import java.awt.LayoutManager
 import java.awt.event.ActionEvent
-import java.util.regex.Pattern
 import javax.swing.*
 
 // http://www.migcalendar.com/miglayout/mavensite/docs/cheatsheet.pdf
@@ -119,6 +118,10 @@ fun JPanel.label(text: String, vararg constraints: CCFlags, componentStyle: UIUt
     cc().vertical.gapAfter = gapToBoundSize(gapBottom, false)
   }
   add(label, _cc)
+}
+
+fun JPanel.link(text: String, action: () -> Unit) {
+  add(LinkLabel.create(text, action))
 }
 
 private fun gapToBoundSize(value: Int, isHorizontal: Boolean): BoundSize {
@@ -215,45 +218,4 @@ fun CC.apply(flags: Array<out CCFlags>): CC {
     }
   }
   return this
-}
-
-private val HREF_PATTERN = Pattern.compile("<a(?:\\s+href\\s*=\\s*[\"']([^\"']*)[\"'])?\\s*>([^<]*)</a>")
-private val LINK_TEXT_ATTRIBUTES = SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, JBColor.blue)
-private val SMALL_TEXT_ATTRIBUTES = SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, null)
-
-fun noteComponent(note: String): SimpleColoredComponent {
-  val noteComponent = SimpleColoredComponent()
-
-  val matcher = HREF_PATTERN.matcher(note)
-  var prev = 0
-  if (matcher.find()) {
-    do {
-      if (matcher.start() != prev) {
-        noteComponent.append(note.substring(prev, matcher.start()), SMALL_TEXT_ATTRIBUTES)
-      }
-      noteComponent.append(matcher.group(2), LINK_TEXT_ATTRIBUTES, SimpleColoredComponent.BrowserLauncherTag(matcher.group(1)))
-      prev = matcher.end()
-    }
-    while (matcher.find())
-
-    LinkMouseListenerBase.installSingleTagOn(noteComponent)
-  }
-
-  if (prev < note.length) {
-    noteComponent.append(note.substring(prev), SMALL_TEXT_ATTRIBUTES)
-  }
-
-  return noteComponent
-}
-
-@JvmOverloads
-fun htmlComponent(text: String = "", font: Font = UIUtil.getLabelFont(), background: Color? = null, foreground: Color? = null, lineWrap: Boolean = false): JEditorPane {
-  val pane = SwingHelper.createHtmlViewer(lineWrap, font, background, foreground)
-  if (!text.isNullOrEmpty()) {
-    pane.text = "<html><head>${getCssFontDeclaration(font, getLabelForeground(), null, null)}</head><body>$text</body></html>"
-  }
-  pane.border = null
-  pane.disabledTextColor = UIUtil.getLabelDisabledForeground()
-  pane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
-  return pane
 }

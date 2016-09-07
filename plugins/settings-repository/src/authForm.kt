@@ -24,6 +24,7 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.layout.*
 import com.intellij.ui.layout.CCFlags.*
 import com.intellij.ui.layout.LCFlags.*
+import com.intellij.ui.noteComponent
 import com.intellij.util.PathUtilRt
 import com.intellij.util.nullize
 import com.intellij.util.trimMiddle

@@ -98,7 +98,7 @@ private fun submit(event: IdeaLoggingEvent, parentComponent: Component, callback
   var credentials = ErrorReportConfigurable.getCredentials()
   // ask password only if user name was specified
   if (credentials?.userName != null && credentials?.password.isNullOrEmpty()) {
-    if (!JetBrainsAccountDialog(parentComponent).showAndGet()) {
+    if (!showJetBrainsAccountDialog(parentComponent).showAndGet()) {
       return false
     }
 
@@ -145,16 +145,12 @@ private fun submit(event: IdeaLoggingEvent, parentComponent: Component, callback
   }) { e ->
     Logger.getInstance(ITNReporter::class.java).info("reporting failed: " + e)
     ApplicationManager.getApplication().invokeLater {
-      val msg: String
-      if (e is NoSuchEAPUserException) {
-        msg = DiagnosticBundle.message("error.report.authentication.failed")
+      val msg = when (e) {
+        is NoSuchEAPUserException -> DiagnosticBundle.message("error.report.authentication.failed")
+        is InternalEAPException -> DiagnosticBundle.message("error.report.posting.failed", e.message)
+        else -> DiagnosticBundle.message("error.report.sending.failure")
       }
-      else if (e is InternalEAPException) {
-        msg = DiagnosticBundle.message("error.report.posting.failed", e.message)
-      }
-      else {
-        msg = DiagnosticBundle.message("error.report.sending.failure")
-      }
+
       if (e is UpdateAvailableException) {
         val message = DiagnosticBundle.message("error.report.new.eap.build.message", e.message)
         showMessageDialog(parentComponent, project, message, CommonBundle.getWarningTitle(), Messages.getWarningIcon())
@@ -164,14 +160,7 @@ private fun submit(event: IdeaLoggingEvent, parentComponent: Component, callback
         callback.consume(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
       }
       else if (e is NoSuchEAPUserException) {
-        val dialog: JetBrainsAccountDialog
-        if (parentComponent.isShowing) {
-          dialog = JetBrainsAccountDialog(parentComponent)
-        }
-        else {
-          dialog = JetBrainsAccountDialog(project!!)
-        }
-        dialog.show()
+        showJetBrainsAccountDialog(parentComponent, project).show()
       }
       ApplicationManager.getApplication().invokeLater { submit(event, parentComponent, callback, errorBean, description) }
     }

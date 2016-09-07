@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,30 +19,39 @@ import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.passwordSafe.PasswordSafe
+import com.intellij.layout.*
+import com.intellij.layout.LCFlags.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.dialog
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ClickListener
 import com.intellij.util.net.HttpConfigurable
-
-import javax.swing.*
-import java.awt.*
+import java.awt.Component
+import java.awt.Cursor
 import java.awt.event.MouseEvent
+import javax.swing.*
 
-class JetBrainsAccountDialog : DialogWrapper {
+fun showJetBrainsAccountDialog(parent: Component, project: Project? = null): DialogBuilder {
+  val panel = panel(fillX) {
+    label(DiagnosticBundle.message("diagnostic.error.report.description"))
+    link(DiagnosticBundle.message("diagnostic.error.report.proxy.setup")) {
+      HttpConfigurable.editConfigurable(this)
+    }
+  }
+
+  return dialog(
+      title = DiagnosticBundle.message("error.report.title"),
+      centerPanel = panel,
+      project = project,
+      parent = if (parent.isShowing) parent else null)
+}
+
+class JetBrainsAccountDialog : DialogWrapper(null) {
   private val myItnLoginTextField: JTextField? = null
   private val myPasswordText: JPasswordField? = null
   private val myRememberCheckBox: JCheckBox? = null
-
-  @Throws(HeadlessException::class)
-  constructor(parent: Component) : super(parent, false) {
-    init()
-  }
-
-  @Throws(HeadlessException::class)
-  constructor(project: Project) : super(project, false) {
-    init()
-  }
 
   var myMainPanel: JPanel? = null
   var mySendingSettingsLabel: JLabel? = null
@@ -57,7 +66,6 @@ class JetBrainsAccountDialog : DialogWrapper {
   }
 
   override fun init() {
-    title = ReportMessages.ERROR_REPORT
     contentPane.add(myMainPanel)
 
     object : ClickListener() {
