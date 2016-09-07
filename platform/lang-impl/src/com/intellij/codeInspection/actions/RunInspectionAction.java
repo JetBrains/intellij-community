@@ -164,7 +164,6 @@ public class RunInspectionAction extends GotoActionBase {
           else {
             additionPanel.add(ScrollPaneFactory.createScrollPane(optionsPanel, SideBorder.NONE));
           }
-          additionPanel.setPreferredSize(new JBDimension(-1, 400));
           return additionPanel;
         } else {
           return fileFilter;
