@@ -264,7 +264,7 @@ libraryLicense(name: "MigLayout", libraryName: "miglayout-swing", version: "3.7.
 libraryLicense(name: "minlog", libraryName: "minlog-1.2.jar", version: "1.2", license: "BSD", url: "https://github.com/EsotericSoftware/minlog", licenseUrl: "http://opensource.org/licenses/BSD-3-Clause")
 libraryLicense(name: "NanoXML", version: "2.2.3", license: "zlib/libpng", url: "http://mvnrepository.com/artifact/be.cyberelf.nanoxml/nanoxml/2.2.3", licenseUrl: "http://www.opensource.org/licenses/zlib-license.html")
 libraryLicense(name: "nekohtml", libraryName: "nekohtml", version: "1.9.14", license: "Apache 2.0", url: "http://nekohtml.sourceforge.net/", licenseUrl: "http://apache.org/licenses/LICENSE-2.0.txt")
-libraryLicense(name: "Netty", libraryName: "Netty", version: "4.1.0.Beta3", license: "Apache 2.0", url: "http://netty.io", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
+libraryLicense(name: "Netty", libraryName: "Netty", version: "4.1.0.CR7", license: "Apache 2.0", url: "http://netty.io", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
 libraryLicense(name: "Objenesis", libraryName: "objenesis-1.2.jar", version: "1.2", license: "Apache 2.0", url: "http://objenesis.org/", licenseUrl: "http://apache.org/licenses/LICENSE-2.0")
 libraryLicense(name: "pep8.py", attachedTo: "python-helpers", version: "1.6.2", license: "MIT", url: "http://pep8.readthedocs.org/")
 libraryLicense(name: "PicoContainer", libraryName: "picocontainer", version: "1.2", license: "BSD", url: "https://github.com/codehaus/picocontainer", licenseUrl: "https://opensource.org/licenses/bsd-license.php")
