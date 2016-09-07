@@ -74,10 +74,7 @@ public class StepikConnectorInit {
   }
 
   @Deprecated
-  //use setHeaders(HttpRequestBase), it sets accessToken
   static void setHeaders(@NotNull final HttpRequestBase request, String contentType) {
-    //request.addHeader(new BasicHeader("referer", stepikUrl));
-    //request.addHeader(new BasicHeader("X-CSRFToken", ourCSRFToken));
     request.addHeader(new BasicHeader("content-type", contentType));
   }
 

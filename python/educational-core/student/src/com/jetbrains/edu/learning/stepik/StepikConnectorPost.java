@@ -55,14 +55,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-// Using postToStepik via ourClient garant authorization
 public class StepikConnectorPost {
   private static final Logger LOG = Logger.getInstance(StepikConnectorPost.class.getName());
   static final private Gson GSON =
     new GsonBuilder().registerTypeAdapter(TaskFile.class, new StudySerializationUtils.Json.StepikTaskFileAdapter())
       .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
 
-  // TODO All methods must be rewrite by this, else NPE from ourClient
+  // TODO All methods must be rewrite as it
   static boolean postToStepik(String link, AbstractHttpEntity entity) throws IOException {
     final HttpPost request = new HttpPost(EduStepikNames.STEPIK_API_URL + link);
     request.setEntity(entity);
