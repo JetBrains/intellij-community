@@ -30,7 +30,7 @@ import java.io.StringWriter;
 
 public class Main {
   public static final int NO_GRAPHICS = 1;
-  public static final int UNSUPPORTED_JAVA_VERSION = 2;
+  //public static final int UPDATE_FAILED = 2;
   public static final int STARTUP_EXCEPTION = 3;
   public static final int JDK_CHECK_FAILED = 4;
   public static final int DIR_CHECK_FAILED = 5;
@@ -38,7 +38,8 @@ public class Main {
   public static final int LICENSE_ERROR = 7;
   public static final int PLUGIN_ERROR = 8;
   public static final int OUT_OF_MEMORY = 9;
-  public static final int PRIVACY_POLICY_REJECTION = 10;
+  public static final int UNSUPPORTED_JAVA_VERSION = 10;
+  public static final int PRIVACY_POLICY_REJECTION = 11;
 
   private static final String AWT_HEADLESS = "java.awt.headless";
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
