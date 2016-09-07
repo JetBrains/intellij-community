@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 
-public class TextLabelPainter {
+public class RectanglePainter {
   protected static final int TEXT_PADDING_X = JBUI.scale(5);
   public static final int TOP_TEXT_PADDING = JBUI.scale(2);
   public static final int BOTTOM_TEXT_PADDING = JBUI.scale(1);
@@ -34,7 +34,7 @@ public class TextLabelPainter {
 
   private final boolean mySquare;
 
-  public TextLabelPainter(boolean square) {
+  public RectanglePainter(boolean square) {
     mySquare = square;
   }
 

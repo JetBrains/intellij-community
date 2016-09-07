@@ -25,12 +25,12 @@ import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 
-public class TagIcon implements Icon {
+public class LabelIcon implements Icon {
   private final int mySize;
   @NotNull private final Color[] myColors;
   @NotNull private final Color myBgColor;
 
-  public TagIcon(int size, @NotNull Color bgColor, @NotNull Color... colors) {
+  public LabelIcon(int size, @NotNull Color bgColor, @NotNull Color... colors) {
     mySize = size;
     myBgColor = bgColor;
     myColors = colors;

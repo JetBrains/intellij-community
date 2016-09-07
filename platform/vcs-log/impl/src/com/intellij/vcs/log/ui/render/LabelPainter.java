@@ -54,7 +54,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class TagLabelPainter implements ReferencePainter {
+public class LabelPainter implements ReferencePainter {
   public static final int TOP_TEXT_PADDING = JBUI.scale(2);
   public static final int BOTTOM_TEXT_PADDING = JBUI.scale(1);
   public static final int GRADIENT_WIDTH = JBUI.scale(50);
@@ -66,7 +66,7 @@ public class TagLabelPainter implements ReferencePainter {
   private static final String SEPARATOR = "/";
 
   @NotNull
-  private List<Pair<String, TagIcon>> myLabels = ContainerUtil.newArrayList();
+  private List<Pair<String, LabelIcon>> myLabels = ContainerUtil.newArrayList();
   private int myHeight = JBUI.scale(22);
   private int myWidth = 0;
   @NotNull
@@ -92,20 +92,20 @@ public class TagLabelPainter implements ReferencePainter {
     for (RefGroup group : manager.groupForTable(references)) {
       if (group.isExpanded()) {
         for (VcsRef ref : group.getRefs()) {
-          TagIcon tagIcon = new TagIcon(myHeight, myBackground, ref.getType().getBackgroundColor());
+          LabelIcon labelIcon = new LabelIcon(myHeight, myBackground, ref.getType().getBackgroundColor());
           String text = shortenRefName(ref.getName());
 
-          myLabels.add(Pair.create(text, tagIcon));
-          myWidth += tagIcon.getIconWidth() + metrics.stringWidth(text) + MIDDLE_PADDING;
+          myLabels.add(Pair.create(text, labelIcon));
+          myWidth += labelIcon.getIconWidth() + metrics.stringWidth(text) + MIDDLE_PADDING;
         }
       }
       else {
 
-        TagIcon tagIcon = new TagIcon(myHeight, myBackground, getGroupColors(group));
+        LabelIcon labelIcon = new LabelIcon(myHeight, myBackground, getGroupColors(group));
         String text = shortenRefName(group.getName());
 
-        myLabels.add(Pair.create(text, tagIcon));
-        myWidth += tagIcon.getIconWidth() + metrics.stringWidth(text) + MIDDLE_PADDING;
+        myLabels.add(Pair.create(text, labelIcon));
+        myWidth += labelIcon.getIconWidth() + metrics.stringWidth(text) + MIDDLE_PADDING;
       }
     }
   }
@@ -159,8 +159,8 @@ public class TagLabelPainter implements ReferencePainter {
     g2.setColor(myBackground);
     g2.fillRect(x, y, myWidth - GRADIENT_WIDTH, height);
 
-    for (Pair<String, TagIcon> label : myLabels) {
-      TagIcon icon = label.second;
+    for (Pair<String, LabelIcon> label : myLabels) {
+      LabelIcon icon = label.second;
       String text = label.first;
 
       icon.paintIcon(null, g2, x, y + (height - icon.getIconHeight()) / 2);

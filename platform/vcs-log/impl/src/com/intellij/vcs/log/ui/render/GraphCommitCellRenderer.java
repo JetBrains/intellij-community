@@ -36,7 +36,7 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
   @NotNull private final VcsLogGraphTable myGraphTable;
   @NotNull private final IssueLinkRenderer myIssueLinkRenderer;
   @NotNull private final ReferencePainter myTextLabelPainter =
-    isRedesignedLabels() ? new TagLabelPainter() : new RectangleReferencePainter();
+    isRedesignedLabels() ? new LabelPainter() : new RectangleReferencePainter();
 
   @Nullable private PaintInfo myGraphImage;
   @NotNull private Font myFont;
@@ -49,7 +49,7 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
     myPainter = painter;
     myGraphTable = table;
     myIssueLinkRenderer = new IssueLinkRenderer(myLogData.getProject(), this);
-    myFont = TextLabelPainter.getFont();
+    myFont = RectanglePainter.getFont();
     myHeight = calculateHeight();
   }
 
@@ -61,7 +61,7 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
   }
 
   public int getPreferredHeight() {
-    Font font = TextLabelPainter.getFont();
+    Font font = RectanglePainter.getFont();
     if (myFont != font) {
       myFont = font;
       myHeight = calculateHeight();

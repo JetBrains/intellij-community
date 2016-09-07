@@ -38,6 +38,6 @@ public interface ReferencePainter {
   boolean isLeftAligned();
 
   default Font getReferenceFont() {
-    return TextLabelPainter.getFont();
+    return RectanglePainter.getFont();
   }
 }

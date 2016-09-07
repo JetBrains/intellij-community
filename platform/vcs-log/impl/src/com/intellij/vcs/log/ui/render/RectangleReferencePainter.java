@@ -42,7 +42,7 @@ public class RectangleReferencePainter implements ReferencePainter {
   private int myHeight = JBUI.scale(22);
   private int myWidth = 0;
 
-  private final TextLabelPainter myLabelPainter = new TextLabelPainter(false) {
+  private final RectanglePainter myLabelPainter = new RectanglePainter(false) {
     @Override
     protected Font getLabelFont() {
       return getReferenceFont();
@@ -56,7 +56,7 @@ public class RectangleReferencePainter implements ReferencePainter {
                                @NotNull Color background,
                                @NotNull Color foreground) {
     FontMetrics metrics = component.getFontMetrics(getReferenceFont());
-    myHeight = metrics.getHeight() + TextLabelPainter.TOP_TEXT_PADDING + TextLabelPainter.BOTTOM_TEXT_PADDING;
+    myHeight = metrics.getHeight() + RectanglePainter.TOP_TEXT_PADDING + RectanglePainter.BOTTOM_TEXT_PADDING;
     myWidth = 2 * PaintParameters.LABEL_PADDING;
 
     myLabels = ContainerUtil.newArrayList();

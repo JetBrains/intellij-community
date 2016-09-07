@@ -40,8 +40,8 @@ import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.ui.render.RectangleReferencePainter;
-import com.intellij.vcs.log.ui.render.TagIcon;
-import com.intellij.vcs.log.ui.render.TextLabelPainter;
+import com.intellij.vcs.log.ui.render.LabelIcon;
+import com.intellij.vcs.log.ui.render.RectanglePainter;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -500,7 +500,7 @@ class CommitPanel extends JBPanel {
             Icon icon = null;
             if (index == 0) {
               Color color = type.getBackgroundColor();
-              icon = new TagIcon(height, getBackground(),
+              icon = new LabelIcon(height, getBackground(),
                                  typeAndRefs.getValue().size() > 1 ? new Color[]{color, color} : new Color[]{color});
             }
             JBLabel label =
@@ -544,12 +544,12 @@ class CommitPanel extends JBPanel {
   }
 
   private static class ReferencePanel extends JPanel {
-    @NotNull private final TextLabelPainter myLabelPainter;
+    @NotNull private final RectanglePainter myLabelPainter;
     @NotNull private final VcsRef myReference;
 
     private ReferencePanel(@NotNull VcsRef reference) {
       myReference = reference;
-      myLabelPainter = new TextLabelPainter(false);
+      myLabelPainter = new RectanglePainter(false);
       setOpaque(false);
     }
 
@@ -562,7 +562,7 @@ class CommitPanel extends JBPanel {
 
     @Override
     public Dimension getPreferredSize() {
-      Dimension dimension = myLabelPainter.calculateSize(myReference.getName(), getFontMetrics(TextLabelPainter.getFont()));
+      Dimension dimension = myLabelPainter.calculateSize(myReference.getName(), getFontMetrics(RectanglePainter.getFont()));
       return new Dimension(dimension.width, dimension.height + JBUI.scale(ReferencesPanel.PADDING));
     }
 
@@ -574,12 +574,12 @@ class CommitPanel extends JBPanel {
 
   private static class RootPanel extends JPanel {
     private static final int RIGHT_BORDER = 5;
-    @NotNull private final TextLabelPainter myLabelPainter;
+    @NotNull private final RectanglePainter myLabelPainter;
     @NotNull private String myText = "";
     @NotNull private Color myColor = getCommitDetailsBackground();
 
     RootPanel() {
-      myLabelPainter = new TextLabelPainter(true) {
+      myLabelPainter = new RectanglePainter(true) {
         @Override
         protected Font getLabelFont() {
           return RootPanel.getLabelFont();
