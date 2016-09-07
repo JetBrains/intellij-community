@@ -19,6 +19,7 @@ package com.intellij.ui;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 
+import javax.swing.event.MouseInputListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -28,7 +29,7 @@ import static java.awt.Cursor.*;
 /**
  * @author Sergey Malenkov
  */
-abstract class WindowMouseListener extends MouseAdapter {
+abstract class WindowMouseListener extends MouseAdapter implements MouseInputListener {
   private final Component myContent;
   @JdkConstants.CursorType int myType;
   private Point myLocation;
