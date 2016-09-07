@@ -372,7 +372,9 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   @Override
   public void removeNotify() {
     super.removeNotify();
-    Disposer.dispose(myDisposable);
+    if (myDisposable != null) {
+      Disposer.dispose(myDisposable);
+    }
   }
 
   private void releaseEditor(Editor editor) {
