@@ -16,6 +16,7 @@
 package com.intellij.diagnostic
 
 import com.intellij.CommonBundle
+import com.intellij.credentialStore.hasOnlyUserName
 import com.intellij.errorreport.bean.ErrorBean
 import com.intellij.errorreport.error.InternalEAPException
 import com.intellij.errorreport.error.NoSuchEAPUserException
@@ -97,7 +98,7 @@ private fun showYesNoDialog(parentComponent: Component, project: Project?, messa
 private fun submit(event: IdeaLoggingEvent, parentComponent: Component, callback: Consumer<SubmittedReportInfo>, errorBean: ErrorBean, description: String?): Boolean {
   var credentials = ErrorReportConfigurable.getCredentials()
   // ask password only if user name was specified
-  if (credentials?.userName != null && credentials?.password.isNullOrEmpty()) {
+  if (credentials.hasOnlyUserName()) {
     if (!showJetBrainsAccountDialog(parentComponent).showAndGet()) {
       return false
     }

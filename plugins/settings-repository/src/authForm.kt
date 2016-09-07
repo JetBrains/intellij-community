@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.dialog
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.layout.*
 import com.intellij.ui.layout.CCFlags.*
+import com.intellij.ui.layout.CCFlags.wrap
 import com.intellij.ui.layout.LCFlags.*
 import com.intellij.ui.noteComponent
 import com.intellij.util.PathUtilRt
@@ -68,7 +69,6 @@ fun showAuthenticationForm(credentials: Credentials?, uri: String, host: String?
 
     val authenticationForm = dialog(
         title = "Settings Repository",
-        resizable = false,
         centerPanel = centerPanel,
         preferedFocusComponent = if (userField.parent == null) passwordField else userField,
         okActionEnabled = false)

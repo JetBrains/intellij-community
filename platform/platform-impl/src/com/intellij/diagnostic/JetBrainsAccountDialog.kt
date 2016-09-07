@@ -15,97 +15,58 @@
  */
 package com.intellij.diagnostic
 
+import com.intellij.CommonBundle
 import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
-import com.intellij.ide.BrowserUtil
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogBuilder
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.dialog
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.ClickListener
+import com.intellij.openapi.ui.ex.MultiLineLabel
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.layout.*
+import com.intellij.ui.layout.CCFlags.*
 import com.intellij.ui.layout.LCFlags.*
 import com.intellij.util.net.HttpConfigurable
 import java.awt.Component
-import java.awt.Cursor
-import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.swing.JPasswordField
+import javax.swing.JTextField
 
+@JvmOverloads
 fun showJetBrainsAccountDialog(parent: Component, project: Project? = null): DialogBuilder {
+  val credentials = ErrorReportConfigurable.getCredentials()
+  val userField = JTextField(credentials?.userName)
+  val passwordField = JPasswordField(credentials?.password?.toString())
+
+  // if no user name - never stored and so, defaults to remember. if user name set, but no password, so, previously was stored without password
+  val rememberCheckBox = JBCheckBox(CommonBundle.message("checkbox.remember.password"), credentials?.userName == null || !credentials?.password.isNullOrEmpty())
+
   val panel = panel(fillX) {
-    label(DiagnosticBundle.message("diagnostic.error.report.description"))
-    link(DiagnosticBundle.message("diagnostic.error.report.proxy.setup")) {
+    MultiLineLabel(DiagnosticBundle.message("diagnostic.error.report.description"))(span, wrap)
+    link(DiagnosticBundle.message("diagnostic.error.report.proxy.setup"), span, wrap) {
       HttpConfigurable.editConfigurable(this)
     }
+
+    label("Username:")
+    userField(grow, wrap)
+
+    label("Password:")
+    passwordField(grow, wrap)
+
+    rememberCheckBox(span, wrap)
+
+    link("Create or manage your JetBrains Account", "https://account.jetbrains.com", span, wrap)
   }
 
   return dialog(
       title = DiagnosticBundle.message("error.report.title"),
       centerPanel = panel,
+      preferedFocusComponent = if (credentials?.userName == null) userField else passwordField,
       project = project,
-      parent = if (parent.isShowing) parent else null)
-}
-
-class JetBrainsAccountDialog : DialogWrapper(null) {
-  private val myItnLoginTextField: JTextField? = null
-  private val myPasswordText: JPasswordField? = null
-  private val myRememberCheckBox: JCheckBox? = null
-
-  var myMainPanel: JPanel? = null
-  var mySendingSettingsLabel: JLabel? = null
-  private val myCreateAccountLabel: JLabel? = null
-
-  override fun getDimensionServiceKey(): String? {
-    return "#com.intellij.diagnostic.AbstractSendErrorDialog"
-  }
-
-  override fun getPreferredFocusedComponent(): JComponent? {
-    return myItnLoginTextField
-  }
-
-  override fun init() {
-    contentPane.add(myMainPanel)
-
-    object : ClickListener() {
-      override fun onClick(e: MouseEvent, clickCount: Int): Boolean {
-        HttpConfigurable.editConfigurable(myMainPanel)
-        return true
-      }
-    }.installOn(mySendingSettingsLabel!!)
-
-    mySendingSettingsLabel!!.cursor = Cursor(Cursor.HAND_CURSOR)
-
-    val credentials = ErrorReportConfigurable.getCredentials()
-    val userName = credentials?.userName
-    myItnLoginTextField!!.text = userName
-    val password = credentials?.getPasswordAsString()
-    myPasswordText!!.text = password
-    // if no user name - never stored and so, defaults to remember. if user name set, but no password, so, previously was stored without password
-    myRememberCheckBox!!.isSelected = StringUtil.isEmpty(userName) || !StringUtil.isEmpty(password)
-
-    object : ClickListener() {
-      override fun onClick(e: MouseEvent, clickCount: Int): Boolean {
-        BrowserUtil.browse("http://account.jetbrains.com")
-        return true
-      }
-    }.installOn(myCreateAccountLabel!!)
-    myCreateAccountLabel.cursor = Cursor(Cursor.HAND_CURSOR)
-
-    super.init()
-  }
-
-  override fun doOKAction() {
-    val userName = myItnLoginTextField!!.text
-    if (!StringUtil.isEmpty(userName)) {
-      PasswordSafe.getInstance().set(CredentialAttributes(ErrorReportConfigurable.SERVICE_NAME, userName),
-          Credentials(userName, if (myRememberCheckBox!!.isSelected) myPasswordText!!.password else null))
+      parent = if (parent.isShowing) parent else null) {
+    val userName = userField.text
+    if (!userName.isNullOrBlank()) {
+      PasswordSafe.getInstance().set(CredentialAttributes(ErrorReportConfigurable.SERVICE_NAME, userName), Credentials(userName, if (rememberCheckBox.isSelected) passwordField.password else null))
     }
-    super.doOKAction()
-  }
-
-  override fun createCenterPanel(): JComponent? {
-    return myMainPanel
   }
 }

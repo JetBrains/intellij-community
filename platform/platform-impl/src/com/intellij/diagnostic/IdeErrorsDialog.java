@@ -347,7 +347,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       @Override
       public void hyperlinkUpdate(HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          JetBrainsAccountDialogKt.showJetBrainsAccountDialog(getRootPane(), null).show();
+          JetBrainsAccountDialogKt.showJetBrainsAccountDialog(getRootPane()).show();
           updateCredentialsPane(getSelectedMessage());
         }
       }

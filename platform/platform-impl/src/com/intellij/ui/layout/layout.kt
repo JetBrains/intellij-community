@@ -16,6 +16,7 @@
 package com.intellij.ui.layout
 
 import com.intellij.BundleBase
+import com.intellij.ide.BrowserUtil
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
@@ -28,44 +29,6 @@ import java.awt.Font
 import java.awt.LayoutManager
 import java.awt.event.ActionEvent
 import javax.swing.*
-
-// http://www.migcalendar.com/miglayout/mavensite/docs/cheatsheet.pdf
-
-enum class LCFlags {
-  /**
-   * Puts the layout in a flow-only mode.
-   * All components in the flow direction will be put in the same cell and will thus not be aligned with component in other rows/columns.
-   * For normal horizontal flow this is the same as to say that all component will be put in the first and only column.
-   */
-  noGrid,
-
-  /**
-   * Puts the layout in vertical flow mode. This means that the next cell is normally below and the next component will be put there instead of to the right. Default is horizontal flow.
-   */
-  flowY,
-
-  /**
-   * Claims all available space in the container for the columns and/or rows.
-   * At least one component need to have a "grow" constraint for it to fill the container.
-   * The space will be divided equal, though honoring "growPriority".
-   * If no columns/rows has "grow" set the grow weight of the components in the rows/columns will migrate to that row/column.
-   */
-  fill, fillX, fillY
-}
-
-enum class CCFlags {
-  /**
-   * Wrap to the next line/column **after** the component that this constraint belongs to.
-   */
-  wrap,
-
-  /**
-   * Span cells in both x and y.
-   */
-  span,
-
-  grow, push, pushY, pushX, right, skip
-}
 
 inline fun panel(vararg layoutConstraints: LCFlags, init: Panel.() -> Unit): JPanel {
   val panel = Panel(MigLayout(c().apply(layoutConstraints)))
@@ -87,7 +50,15 @@ fun JPanel.titledPanel(title: String, wrappedComponent: Component, vararg constr
   add(panel, *constraints)
 }
 
-fun JPanel.label(text: String, vararg constraints: CCFlags, componentStyle: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null, bold: Boolean = false, gapLeft: Int = 0, gapBottom: Int = 0, gapAfter: Int = 0) {
+fun JPanel.label(text: String,
+                 vararg constraints: CCFlags,
+                 componentStyle: UIUtil.ComponentStyle? = null,
+                 fontColor: UIUtil.FontColor? = null,
+                 bold: Boolean = false,
+                 gapLeft: Int = 0,
+                 gapBottom: Int = 0,
+                 gapAfter: Int = 0,
+                 split: Int = -1) {
   val finalText = BundleBase.replaceMnemonicAmpersand(text)
   val label = if (componentStyle == null && fontColor == null) {
     JLabel(finalText)
@@ -117,11 +88,18 @@ fun JPanel.label(text: String, vararg constraints: CCFlags, componentStyle: UIUt
   if (gapBottom != 0) {
     cc().vertical.gapAfter = gapToBoundSize(gapBottom, false)
   }
+  if (split != -1) {
+    cc().split = split
+  }
   add(label, _cc)
 }
 
-fun JPanel.link(text: String, action: () -> Unit) {
-  add(LinkLabel.create(text, action))
+fun JPanel.link(text: String, vararg constraints: CCFlags, action: () -> Unit) {
+  add(LinkLabel.create(text, action), constraints.create())
+}
+
+fun JPanel.link(text: String, url: String, vararg constraints: CCFlags) {
+  add(LinkLabel.create(text, { BrowserUtil.browse(url) }), constraints.create())
 }
 
 private fun gapToBoundSize(value: Int, isHorizontal: Boolean): BoundSize {
@@ -197,6 +175,10 @@ fun LC.apply(flags: Array<out LCFlags>): LC {
       LCFlags.fill -> fill()
       LCFlags.fillX -> isFillX = true
       LCFlags.fillY -> isFillY = true
+
+      LCFlags.lcWrap -> wrapAfter = 0
+
+      LCFlags.debug -> debug()
     }
   }
   return this
@@ -214,6 +196,11 @@ fun CC.apply(flags: Array<out CCFlags>): CC {
       CCFlags.pushY -> pushY()
 
       CCFlags.span -> span()
+      CCFlags.spanX -> spanX()
+      CCFlags.spanY -> spanY()
+
+      CCFlags.split -> split()
+
       CCFlags.skip -> skip()
     }
   }
