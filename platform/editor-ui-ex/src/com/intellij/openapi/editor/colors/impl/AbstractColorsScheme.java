@@ -394,7 +394,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   private void readMetaInfo(@NotNull Element metaInfoElement) {
     myMetaInfo.clear();
     for (Element e: metaInfoElement.getChildren()) {
-      if (META_INFO_ELEMENT.equals(e.getName())) {
+      if (PROPERTY_ELEMENT.equals(e.getName())) {
         String propertyName = e.getAttributeValue(PROPERTY_NAME_ATTR);
         if (propertyName != null) {
           myMetaInfo.setProperty(propertyName, e.getText());
