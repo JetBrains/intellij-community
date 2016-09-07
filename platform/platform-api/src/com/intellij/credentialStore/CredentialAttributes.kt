@@ -54,7 +54,8 @@ class Credentials(user: String?, val password: OneTimeString? = null) {
 
 fun CredentialAttributes(requestor: Class<*>, userName: String?) = CredentialAttributes(requestor.name, userName, requestor)
 
-fun Credentials?.isFulfilled() = this != null && userName != null && password != null
+fun Credentials?.isFulfilled() = this != null && userName != null && !password.isNullOrEmpty()
+fun Credentials?.hasOnlyUserName() = this != null && userName != null && password.isNullOrEmpty()
 
 fun Credentials?.isEmpty() = this == null || (userName == null && password == null)
 

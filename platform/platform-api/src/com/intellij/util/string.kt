@@ -16,7 +16,10 @@
 package com.intellij.util
 
 import com.intellij.openapi.util.text.StringUtil
+import java.util.Base64
 
 fun String?.nullize(nullizeSpaces: Boolean = false): String? = StringUtil.nullize(this, nullizeSpaces)
 
 fun String.trimMiddle(maxLength: Int): String? = StringUtil.trimMiddle(this, maxLength)
+
+fun String.decodeBase64(): ByteArray = Base64.getDecoder().decode(this)
