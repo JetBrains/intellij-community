@@ -27,7 +27,7 @@ import com.intellij.util.Function
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.delete
 import com.intellij.util.exists
-import com.intellij.util.nullize
+import com.intellij.util.text.nullize
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.table.TableModelEditor
 import gnu.trove.THashSet

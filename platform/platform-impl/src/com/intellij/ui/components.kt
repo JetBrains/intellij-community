@@ -24,8 +24,9 @@ import java.util.regex.Pattern
 import javax.swing.JEditorPane
 
 private val HREF_PATTERN = Pattern.compile("<a(?:\\s+href\\s*=\\s*[\"']([^\"']*)[\"'])?\\s*>([^<]*)</a>")
-private val LINK_TEXT_ATTRIBUTES = SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, JBColor.blue)
-private val SMALL_TEXT_ATTRIBUTES = SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, null)
+
+private val LINK_TEXT_ATTRIBUTES: SimpleTextAttributes
+  get() = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UI.getColor("link.foreground"))
 
 fun noteComponent(note: String): SimpleColoredComponent {
   val noteComponent = SimpleColoredComponent()
@@ -35,7 +36,7 @@ fun noteComponent(note: String): SimpleColoredComponent {
   if (matcher.find()) {
     do {
       if (matcher.start() != prev) {
-        noteComponent.append(note.substring(prev, matcher.start()), SMALL_TEXT_ATTRIBUTES)
+        noteComponent.append(note.substring(prev, matcher.start()))
       }
       noteComponent.append(matcher.group(2), LINK_TEXT_ATTRIBUTES, SimpleColoredComponent.BrowserLauncherTag(matcher.group(1)))
       prev = matcher.end()
@@ -46,7 +47,7 @@ fun noteComponent(note: String): SimpleColoredComponent {
   }
 
   if (prev < note.length) {
-    noteComponent.append(note.substring(prev), SMALL_TEXT_ATTRIBUTES)
+    noteComponent.append(note.substring(prev))
   }
 
   return noteComponent

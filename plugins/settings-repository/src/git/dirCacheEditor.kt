@@ -19,6 +19,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.deleteWithParentsIfEmpty
 import com.intellij.util.exists
+import com.intellij.util.io.toByteArray
 import org.eclipse.jgit.dircache.BaseDirCacheEditor
 import org.eclipse.jgit.dircache.DirCache
 import org.eclipse.jgit.dircache.DirCacheEntry
@@ -26,7 +27,6 @@ import org.eclipse.jgit.internal.JGitText
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.FileMode
 import org.eclipse.jgit.lib.Repository
-import org.jetbrains.io.toByteArray
 import java.io.File
 import java.io.FileInputStream
 import java.text.MessageFormat

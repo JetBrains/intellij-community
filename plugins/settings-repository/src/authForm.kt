@@ -23,12 +23,10 @@ import com.intellij.openapi.ui.dialog
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.layout.*
 import com.intellij.ui.layout.CCFlags.*
-import com.intellij.ui.layout.CCFlags.wrap
 import com.intellij.ui.layout.LCFlags.*
-import com.intellij.ui.noteComponent
 import com.intellij.util.PathUtilRt
-import com.intellij.util.nullize
-import com.intellij.util.trimMiddle
+import com.intellij.util.text.nullize
+import com.intellij.util.text.trimMiddle
 import javax.swing.JPasswordField
 import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
@@ -64,7 +62,7 @@ fun showAuthenticationForm(credentials: Credentials?, uri: String, host: String?
       label(if (sshKeyFile == null && isGitHub) "Token:" else "Password:")
       passwordField(grow, wrap)
 
-      note?.let { noteComponent(it)(skip) }
+      note?.let { note(it, skip) }
     }
 
     val authenticationForm = dialog(

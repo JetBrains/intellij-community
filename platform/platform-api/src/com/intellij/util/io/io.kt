@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.io
+package com.intellij.util.io
 
 import com.intellij.util.text.CharArrayCharSequence
 import java.io.InputStreamReader
+import java.net.URLEncoder
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.util.*
@@ -68,3 +69,7 @@ fun ByteBuffer.toByteArray(): ByteArray {
   get(bytes)
   return bytes
 }
+
+fun String.encodeUrlQueryParameter() = URLEncoder.encode(this, Charsets.UTF_8.name())!!
+
+fun String.decodeBase64(): ByteArray = Base64.getDecoder().decode(this)

@@ -23,7 +23,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ArrayUtil
-import com.intellij.util.nullize
+import com.intellij.util.text.nullize
 import org.jetbrains.settingsRepository.actions.NOTIFICATION_GROUP
 import java.awt.Container
 import java.awt.event.ActionEvent

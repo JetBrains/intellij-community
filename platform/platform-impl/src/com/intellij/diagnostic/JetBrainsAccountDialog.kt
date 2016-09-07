@@ -18,16 +18,16 @@ package com.intellij.diagnostic
 import com.intellij.CommonBundle
 import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
+import com.intellij.ide.BrowserUtil
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.dialog
-import com.intellij.openapi.ui.ex.MultiLineLabel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.layout.*
 import com.intellij.ui.layout.CCFlags.*
 import com.intellij.ui.layout.LCFlags.*
-import com.intellij.util.net.HttpConfigurable
+import com.intellij.util.io.encodeUrlQueryParameter
 import java.awt.Component
 import javax.swing.JPasswordField
 import javax.swing.JTextField
@@ -42,20 +42,18 @@ fun showJetBrainsAccountDialog(parent: Component, project: Project? = null): Dia
   val rememberCheckBox = JBCheckBox(CommonBundle.message("checkbox.remember.password"), credentials?.userName == null || !credentials?.password.isNullOrEmpty())
 
   val panel = panel(fillX) {
-    MultiLineLabel(DiagnosticBundle.message("diagnostic.error.report.description"))(span, wrap)
-    link(DiagnosticBundle.message("diagnostic.error.report.proxy.setup"), span, wrap) {
-      HttpConfigurable.editConfigurable(this)
-    }
-
+    label("Login to JetBrains Account to get notified when the submitted\nexceptions are fixed.", span, wrap)
     label("Username:")
     userField(grow, wrap)
 
     label("Password:")
     passwordField(grow, wrap)
+    rememberCheckBox(skip, split, grow)
+    link("Forgot password?", wrap, right) {
+      BrowserUtil.browse("https://account.jetbrains.com/forgot-password?username=${userField.text.trim().encodeUrlQueryParameter()}")
+    }
 
-    rememberCheckBox(span, wrap)
-
-    link("Create or manage your JetBrains Account", "https://account.jetbrains.com", span, wrap)
+    note("""Do not have an account? <a href="https://account.jetbrains.com/login">Sign Up</a>""", span, wrap)
   }
 
   return dialog(
