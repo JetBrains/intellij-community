@@ -72,7 +72,18 @@ public class CreateAction extends PatchAction {
         if (link) {
           ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
           Utils.copyStream(in, bytesOut);
-          Runtime.getRuntime().exec("ln -s " + bytesOut.toString() + " " + toFile.getAbsolutePath());
+          Process proc = Runtime.getRuntime().exec(new String[] {"ln", "-s", bytesOut.toString(), toFile.getAbsolutePath()});
+          BufferedReader errorReader = new BufferedReader(new InputStreamReader(proc.getErrorStream()));
+          try {
+            String error = errorReader.readLine();
+            if (error != null && !error.isEmpty()) {
+              throw new IOException(error);
+            }
+          }
+          finally {
+            errorReader.close();
+          }
+
         }
         else {
           Utils.copyStreamToFile(in, toFile);
