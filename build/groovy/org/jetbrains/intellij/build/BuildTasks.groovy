@@ -67,7 +67,7 @@ abstract class BuildTasks {
 
   abstract void buildUpdaterJar()
 
-  public static BuildTasks create(BuildContext context) {
+  static BuildTasks create(BuildContext context) {
     return new BuildTasksImpl(context)
   }
 }

@@ -15,7 +15,6 @@
  */
 package org.jetbrains.intellij.build
 
-import groovy.transform.Canonical
 import groovy.transform.CompileStatic
 import groovy.transform.Immutable
 

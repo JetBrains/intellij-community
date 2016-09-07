@@ -94,7 +94,7 @@ abstract class BuildContext {
 
   abstract boolean shouldBuildDistributionForOS(String os)
 
-  public static BuildContext createContext(AntBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
+  static BuildContext createContext(AntBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
                                            String communityHome, String projectHome, ProductProperties productProperties,
                                            ProprietaryBuildTools proprietaryBuildTools = ProprietaryBuildTools.DUMMY,
                                            BuildOptions options = new BuildOptions()) {
@@ -164,7 +164,7 @@ interface BuildMessages {
   void error(String message, Throwable cause)
 
   void progress(String message)
-  public <V> V block(String blockName, Closure<V> body)
+  def <V> V block(String blockName, Closure<V> body)
 
   void artifactBuild(String relativeArtifactPath)
 

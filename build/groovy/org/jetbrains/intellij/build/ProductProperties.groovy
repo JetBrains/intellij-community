@@ -22,7 +22,7 @@ import org.jetbrains.intellij.build.impl.PluginLayout
  * @author nik
  */
 @CompileStatic
-public abstract class ProductProperties {
+abstract class ProductProperties {
   /**
    * Base name for script files (*.bat, *.sh, *.exe), usually a shortened product name in lower case (e.g. 'idea' for IntelliJ IDEA, 'datagrip' for DataGrip)
    */
