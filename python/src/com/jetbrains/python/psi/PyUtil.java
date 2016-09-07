@@ -1858,7 +1858,10 @@ public class PyUtil {
       return true;
     }
     if (stmt instanceof PyExpressionStatement && ((PyExpressionStatement)stmt).getExpression() instanceof PyNoneLiteralExpression) {
-      return true; // ellipsis
+      PyExpression expr = ((PyExpressionStatement)stmt).getExpression();
+      if (((PyNoneLiteralExpression)expr).isEllipsis()) {
+        return true;
+      }
     }
     if (stmt instanceof PyReturnStatement && ((PyReturnStatement)stmt).getExpression() == null) {
       return true;
