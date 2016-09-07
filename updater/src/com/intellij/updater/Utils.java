@@ -15,26 +15,19 @@ public class Utils {
     return fileName.endsWith(".zip") || fileName.endsWith(".jar");
   }
 
-  public static File getTempFile(String path) throws IOException {
-    int index = 0;
-    File myTempFile = new File(path + ".tmp." + index++);
-    while (myTempFile.exists()) {
-      myTempFile = new File(path + ".tmp." + index++);
-    }
-    if (myTempFile.setWritable(true, false)) throw new IOException("Cannot set write permissions for dir: " + myTempFile);
-    return myTempFile;
-  }
-
   @SuppressWarnings({"SSBasedInspection"})
   public static File createTempFile() throws IOException {
     if (myTempDir == null) {
       long requiredFreeSpace = 1000000000;
-      myTempDir = getTempFile(Runner.getDir(requiredFreeSpace) + "/idea.updater.files");
+      // Create a (regular) file using the createTempFile api. This is used as a marker to indicate the existence of the
+      // corresponding directory, since there's no atomic API that guarantees creation of new directories.
+      File tempFileBase = File.createTempFile("idea.updater.files", "marker", new File(Runner.getDir(requiredFreeSpace)));
+      myTempDir = new File(tempFileBase.getPath().replaceAll("marker$", ""));
       delete(myTempDir);
       myTempDir.mkdirs();
       Runner.logger.info("created temp file: " + myTempDir.getPath());
     }
-    return getTempFile(myTempDir + "/temp");
+    return File.createTempFile("temp", null, myTempDir);
   }
 
   public static File createTempDir() throws IOException {
