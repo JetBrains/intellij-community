@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ex.EntryPointsManagerBase
 import com.intellij.codeInspection.ex.InspectionManagerEx
 import com.intellij.codeInspection.reference.RefClass
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import junit.framework.TestCase
 
 class UnusedDeclarationClassPatternsTest : LightCodeInsightFixtureTestCase() {
 
@@ -110,6 +111,35 @@ class UnusedDeclarationClassPatternsTest : LightCodeInsightFixtureTestCase() {
       for (constructor in (refClass as RefClass).constructors) {
         entryPointsManager.removeEntryPoint(constructor)
       }
+
+      assertEmpty(patterns)
+      assertEmpty(entryPointsManager.entryPoints)
+    }
+    finally {
+      context.cleanup()
+    }
+  }
+
+  fun testAddRemoveMethodEntryPoint() {
+    val aClass = myFixture.addClass("public class Foo {void foo(){}}")
+    val entryPointsManager = EntryPointsManagerBase.getInstance(project)
+    val context = (InspectionManager.getInstance(project) as InspectionManagerEx).createNewGlobalContext(false)
+    try {
+      val refMethod = context.refManager.getReference(aClass.methods[0])
+      assertNotNull(refMethod)
+      val refClass = context.refManager.getReference(aClass)
+      assertNotNull(refClass)
+      val patterns = entryPointsManager.patterns
+      assertEmpty(patterns)
+
+      entryPointsManager.addEntryPoint(refMethod!!, true)
+      assertSize(1, patterns)
+      val classPattern = patterns.iterator().next()
+      assertEquals("Foo", classPattern.pattern)
+      assertEquals("foo", classPattern.method)
+      assertEmpty(entryPointsManager.entryPoints)
+
+      entryPointsManager.removeEntryPoint(refMethod)
 
       assertEmpty(patterns)
       assertEmpty(entryPointsManager.entryPoints)

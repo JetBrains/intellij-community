@@ -255,21 +255,23 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     if (!newEntryPoint.isValid()) return;
     if (isPersistent) {
       if (newEntryPoint instanceof RefClass || newEntryPoint instanceof RefMethod) {
-        final ClassPattern classPattern = new ClassPattern();
         RefClass refClass = newEntryPoint instanceof RefMethod ? ((RefMethod)newEntryPoint).getOwnerClass()
                                                                : (RefClass)newEntryPoint;
-        classPattern.pattern = new SmartRefElementPointerImpl(refClass, true).getFQName();
-        if (newEntryPoint instanceof RefMethod && !(newEntryPoint instanceof RefImplicitConstructor)) {
-          classPattern.method = newEntryPoint.getName();
-        }
-        getPatterns().add(classPattern);
+        if (!refClass.isAnonymous()) {
+          final ClassPattern classPattern = new ClassPattern();
+          classPattern.pattern = new SmartRefElementPointerImpl(refClass, true).getFQName();
+          if (newEntryPoint instanceof RefMethod && !(newEntryPoint instanceof RefImplicitConstructor)) {
+            classPattern.method = getMethodName(newEntryPoint);
+          }
+          getPatterns().add(classPattern);
 
-        final EntryPointsManager entryPointsManager = getInstance(newEntryPoint.getRefManager().getProject());
-        if (this != entryPointsManager) {
-          entryPointsManager.addEntryPoint(newEntryPoint, true);
-        }
+          final EntryPointsManager entryPointsManager = getInstance(newEntryPoint.getRefManager().getProject());
+          if (this != entryPointsManager) {
+            entryPointsManager.addEntryPoint(newEntryPoint, true);
+          }
 
-        return;
+          return;
+        }
       }
     }
 
@@ -313,6 +315,12 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     }
   }
 
+  private static String getMethodName(@NotNull RefElement newEntryPoint) {
+    String methodSignature = newEntryPoint.getName();
+    int indexOf = methodSignature.indexOf("(");
+    return indexOf > 0 ? methodSignature.substring(0, indexOf) : methodSignature;
+  }
+
   @Override
   public void removeEntryPoint(@NotNull RefElement anEntryPoint) {
     myTemporaryEntryPoints.remove(anEntryPoint);
@@ -340,13 +348,24 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
       }
     }
 
-    if (anEntryPoint instanceof RefMethod && ((RefMethod)anEntryPoint).isConstructor() || anEntryPoint instanceof RefClass) {
+    if (anEntryPoint instanceof RefMethod || anEntryPoint instanceof RefClass) {
       final RefClass aClass = anEntryPoint instanceof RefClass ? (RefClass)anEntryPoint : ((RefMethod)anEntryPoint).getOwnerClass();
       final String qualifiedName = aClass.getQualifiedName();
       for (Iterator<ClassPattern> iterator = getPatterns().iterator(); iterator.hasNext(); ) {
-        if (Comparing.equal(iterator.next().pattern, qualifiedName)) {
-          //todo if inheritance or pattern?
-          iterator.remove();
+        ClassPattern classPattern = iterator.next();
+        if (Comparing.equal(classPattern.pattern, qualifiedName)) {
+          if (anEntryPoint instanceof RefMethod && ((RefMethod)anEntryPoint).isConstructor() || anEntryPoint instanceof RefClass) {
+            if (classPattern.method.isEmpty()) {
+              //todo if inheritance or pattern?
+              iterator.remove();
+            }
+          }
+          else {
+            String methodName = getMethodName(anEntryPoint);
+            if (methodName.equals(classPattern.method)) {
+              iterator.remove();
+            }
+          }
         }
       }
     }
