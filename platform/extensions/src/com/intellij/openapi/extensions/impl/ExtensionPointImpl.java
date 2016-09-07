@@ -114,10 +114,13 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
     if (LoadingOrder.ANY == order) {
       int index = getLoadedAdaptersSize();
-      if (index > 0) {
+      while (index > 0) {
         ExtensionComponentAdapter lastAdapter = myLoadedAdapters.get(index - 1);
         if (lastAdapter.getOrder() == LoadingOrder.LAST) {
           index--;
+        }
+        else {
+          break;
         }
       }
       registerExtension(extension, adapter, index, true);
@@ -208,67 +211,77 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     }
   }
 
+  private boolean processingAdaptersNow; // guarded by this
   @Nullable("null means empty")
   private T[] processAdapters() {
+    if (processingAdaptersNow) {
+      throw new IllegalStateException("Recursive processAdapters() detected. You must have called 'getExtensions()' from within your extension constructor - don't. Either pass extension via constructor parameter or call getExtensions() later.");
+    }
     int totalSize = getExtensionAdaptersSize() + getLoadedAdaptersSize();
     if (totalSize == 0) {
       return null;
     }
 
-    Class<T> extensionClass = getExtensionClass();
-    @SuppressWarnings("unchecked") T[] result = (T[])Array.newInstance(extensionClass, totalSize);
-    List<ExtensionComponentAdapter> adapters = ContainerUtil.newArrayListWithCapacity(totalSize);
-    if (myExtensionAdapters != null) {
-      adapters.addAll(myExtensionAdapters);
-    }
-    if (myLoadedAdapters != null) {
-      adapters.addAll(myLoadedAdapters);
-    }
-    LoadingOrder.sort(adapters);
-    myExtensionAdapters = new LinkedHashSet<ExtensionComponentAdapter>(adapters);
+    processingAdaptersNow = true;
+    try {
+      Class<T> extensionClass = getExtensionClass();
+      @SuppressWarnings("unchecked") T[] result = (T[])Array.newInstance(extensionClass, totalSize);
+      List<ExtensionComponentAdapter> adapters = ContainerUtil.newArrayListWithCapacity(totalSize);
+      if (myExtensionAdapters != null) {
+        adapters.addAll(myExtensionAdapters);
+      }
+      if (myLoadedAdapters != null) {
+        adapters.addAll(myLoadedAdapters);
+      }
+      LoadingOrder.sort(adapters);
+      myExtensionAdapters = new LinkedHashSet<ExtensionComponentAdapter>(adapters);
 
-    Set<ExtensionComponentAdapter> loaded = ContainerUtil.newHashOrEmptySet(myLoadedAdapters);
+      Set<ExtensionComponentAdapter> loaded = ContainerUtil.newHashOrEmptySet(myLoadedAdapters);
 
-    myLoadedAdapters = null;
-    boolean errorHappened = false;
-    for (int i = 0; i < adapters.size(); i++) {
-      ExtensionComponentAdapter adapter = adapters.get(i);
-      try {
-        @SuppressWarnings("unchecked") T extension = (T)adapter.getExtension();
-        if (extension == null) {
-          errorHappened = true;
-          LOG.error("null extension in: " + adapter + ";\ngetExtensionClass(): " + getExtensionClass() + ";\n" );
+      myLoadedAdapters = null;
+      boolean errorHappened = false;
+      for (int i = 0; i < adapters.size(); i++) {
+        ExtensionComponentAdapter adapter = adapters.get(i);
+        try {
+          @SuppressWarnings("unchecked") T extension = (T)adapter.getExtension();
+          if (extension == null) {
+            errorHappened = true;
+            LOG.error("null extension in: " + adapter + ";\ngetExtensionClass(): " + getExtensionClass() + ";\n" );
+          }
+          if (i > 0 && extension == result[i - 1]) {
+            errorHappened = true;
+            LOG.error("Duplicate extension found: " + extension + "; " +
+                      " Adapter:      " + adapter + ";\n" +
+                      " Prev adapter: " + adapters.get(i-1) + ";\n" +
+                      " getExtensionClass(): " + getExtensionClass() + ";\n" +
+                      " result:" + Arrays.asList(result));
+          }
+          if (!extensionClass.isInstance(extension)) {
+            errorHappened = true;
+            myOwner.error("Extension " + (extension == null ? null : extension.getClass()) + " does not implement " + extensionClass + ". It came from " + adapter);
+            continue;
+          }
+          result[i] = extension;
+          registerExtension(extension, adapter, getLoadedAdaptersSize(), !loaded.contains(adapter));
         }
-        if (i > 0 && extension == result[i - 1]) {
-          errorHappened = true;
-          LOG.error("Duplicate extension found: " + extension + "; " +
-                    " Adapter:      " + adapter + ";\n" +
-                    " Prev adapter: " + adapters.get(i-1) + ";\n" +
-                    " getExtensionClass(): " + getExtensionClass() + ";\n" +
-                    " result:" + Arrays.asList(result));
+        catch (ProcessCanceledException e) {
+          throw e;
         }
-        if (!extensionClass.isInstance(extension)) {
+        catch (Exception e) {
           errorHappened = true;
-          myOwner.error("Extension " + (extension == null ? null : extension.getClass()) + " does not implement " + extensionClass + ". It came from " + adapter);
-          continue;
+          LOG.error(e);
         }
-        result[i] = extension;
-        registerExtension(extension, adapter, getLoadedAdaptersSize(), !loaded.contains(adapter));
+        myExtensionAdapters.remove(adapter);
       }
-      catch (ProcessCanceledException e) {
-        throw e;
+      myExtensionAdapters = null;
+      if (errorHappened) {
+        result = ContainerUtil.findAllAsArray(result, Condition.NOT_NULL);
       }
-      catch (Exception e) {
-        errorHappened = true;
-        LOG.error(e);
-      }
-      myExtensionAdapters.remove(adapter);
+      return result;
     }
-    myExtensionAdapters = null;
-    if (errorHappened) {
-      result = ContainerUtil.findAllAsArray(result, Condition.NOT_NULL);
+    finally {
+      processingAdaptersNow = false;
     }
-    return result;
   }
 
   private int getExtensionAdaptersSize() {
