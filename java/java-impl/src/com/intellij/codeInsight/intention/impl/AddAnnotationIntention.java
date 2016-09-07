@@ -24,13 +24,13 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.ExternalAnnotationsManagerImpl;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,9 +48,7 @@ public abstract class AddAnnotationIntention extends BaseIntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final PsiModifierListOwner owner = AddAnnotationPsiFix.getContainer(file, editor.getCaretModel().getOffset());
-    if (owner == null ||
-        !owner.isPhysical() ||
-        owner.getManager().isInProject(owner) && !CodeStyleSettingsManager.getSettings(project).USE_EXTERNAL_ANNOTATIONS) {
+    if (owner == null || !ExternalAnnotationsManagerImpl.areExternalAnnotationsApplicable(owner)) {
       return false;
     }
     Pair<String, String[]> annotations = getAnnotations(project);

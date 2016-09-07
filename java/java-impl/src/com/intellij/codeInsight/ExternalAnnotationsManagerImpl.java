@@ -683,6 +683,12 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     LogMessageEx.error(LOG, message, file.getText());
   }
 
+  public static boolean areExternalAnnotationsApplicable(@NotNull PsiModifierListOwner owner) {
+    if (!owner.isPhysical()) return false;
+    if (!owner.getManager().isInProject(owner)) return true;
+    return CodeStyleSettingsManager.getSettings(owner.getProject()).USE_EXTERNAL_ANNOTATIONS;
+  }
+
   private static class MyExternalPromptDialog extends OptionsMessageDialog {
     private final Project myProject;
     private static final String ADD_IN_CODE = ProjectBundle.message("external.annotations.in.code.option");
