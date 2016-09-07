@@ -177,7 +177,8 @@ public abstract class AppIcon {
 
         int width = appImage.getWidth(null);
         int height = appImage.getHeight(null);
-        BufferedImage img = UIUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        // Note, appImage is retina-unaware, retrieved in device coordinate space.
+        BufferedImage img = UIUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB, false);
         Graphics2D g2d = img.createGraphics();
         g2d.drawImage(appImage, null, null);
         myAppImage = img;
@@ -335,7 +336,8 @@ public abstract class AppIcon {
     private AppImage createAppImage() {
       BufferedImage appImage = getAppImage();
       assert appImage != null;
-      BufferedImage current = UIUtil.createImage(appImage.getWidth(), appImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
+      // Note, appImage is retina-unaware, retrieved in device coordinate space.
+      BufferedImage current = UIUtil.createImage(appImage.getWidth(), appImage.getHeight(), BufferedImage.TYPE_INT_ARGB, false);
       Graphics2D g = current.createGraphics();
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       UIUtil.drawImage(g, appImage, 0, 0, null);

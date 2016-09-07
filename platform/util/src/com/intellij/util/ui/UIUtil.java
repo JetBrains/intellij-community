@@ -1779,15 +1779,49 @@ public class UIUtil {
     }
   }
 
+  /**
+   * Creates a HiDPI-aware BufferedImage
+   *
+   * @param width the width in user coordinate space
+   * @param height the height in user coordinate space
+   * @param type the type of the image
+   *
+   * @return a HiDPI-aware image
+   */
   @NotNull
   public static BufferedImage createImage(int width, int height, int type) {
-    if (isRetina()) {
+    return createImage(width, height, type, true);
+  }
+
+  /**
+   * Creates a HiDPI-aware or plain BufferedImage
+   *
+   * @param width the width in user or device coordinate space
+   * @param height the height in user or device coordinate space
+   * @param type the type of the image
+   * @param hidpiAware whether the image should be HiDPI-aware
+   *
+   * @return a HiDPI-aware or plain image
+   */
+  @NotNull
+  public static BufferedImage createImage(int width, int height, int type, boolean hidpiAware) {
+    if (hidpiAware && isRetina()) {
       return RetinaImage.create(width, height, type);
     }
     //noinspection UndesirableClassUsage
     return new BufferedImage(width, height, type);
   }
 
+  /**
+   * Creates a BufferedImage with HiDPI-awareness matching the graphics.
+   *
+   * @param g the graphics to match
+   * @param width the width in user coordinate space
+   * @param height the height in user coordinate space
+   * @param type the type of the image
+   *
+   * @return an image matching the graphics
+   */
   @NotNull
   public static BufferedImage createImageForGraphics(Graphics2D g, int width, int height, int type) {
     if (isRetina(g)) {
