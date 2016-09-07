@@ -56,7 +56,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   @NotNull private final JBLoadingPanel myChangesLoadingPane;
   @NotNull private final VcsLogGraphTable myGraphTable;
-  @NotNull private final BranchesPanel myBranchesPanel;
   @NotNull private final DetailsPanel myDetailsPanel;
   @NotNull private final Splitter myDetailsSplitter;
   @NotNull private final JComponent myToolbar;
@@ -81,17 +80,25 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     // initialize components
     myGraphTable = new VcsLogGraphTable(ui, logData, initialDataPack);
-    myBranchesPanel = new BranchesPanel(logData, ui, initialDataPack.getRefs());
-    setBranchesPanelVisible(uiProperties.isShowBranchesPanel());
     myDetailsPanel = new DetailsPanel(logData, ui.getColorManager(), this);
 
-    myChangesBrowser = new RepositoryChangesBrowser(project, null, Collections.<Change>emptyList(), null);
+    myChangesBrowser = new RepositoryChangesBrowser(project, null, Collections.emptyList(), null) {
+      @Override
+      protected void buildToolBar(DefaultActionGroup toolBarGroup) {
+        super.buildToolBar(toolBarGroup);
+        toolBarGroup.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_SHOW_DETAILS_ACTION));
+      }
+    };
     myChangesBrowser.getViewerScrollPane().setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), getGraphTable());
     myChangesBrowser.getEditSourceAction().registerCustomShortcutSet(CommonShortcuts.getEditSource(), getGraphTable());
     myChangesBrowser.getViewer().setEmptyText("");
     myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     myChangesLoadingPane.add(myChangesBrowser);
+
+    myDetailsSplitter = new OnePixelSplitter(true, "vcs.log.details.splitter.proportion", 0.7f);
+    myDetailsSplitter.setFirstComponent(myChangesLoadingPane);
+    setupDetailsSplitter(uiProperties.isShowDetails());
 
     myGraphTable.getSelectionModel().addListSelectionListener(new CommitSelectionListenerForDiff());
     myDetailsPanel.installCommitSelectionListener(myGraphTable);
@@ -100,12 +107,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myTextFilter = myFilterUi.createTextFilter();
     myToolbar = createActionsToolbar();
 
-    myDetailsSplitter = new OnePixelSplitter(true, "vcs.log.details.splitter.proportion", 0.7f);
-    myDetailsSplitter.setFirstComponent(setupScrolledGraph());
-    setupDetailsSplitter(uiProperties.isShowDetails());
-
     ProgressStripe progressStripe =
-      new ProgressStripe(myDetailsSplitter, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
+      new ProgressStripe(setupScrolledGraph(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
         @Override
         public void updateUI() {
           super.updateUI();
@@ -127,14 +130,13 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     JComponent toolbars = new JPanel(new BorderLayout());
     toolbars.add(myToolbar, BorderLayout.NORTH);
-    toolbars.add(myBranchesPanel.getMainComponent(), BorderLayout.CENTER);
     JComponent toolbarsAndTable = new JPanel(new BorderLayout());
     toolbarsAndTable.add(toolbars, BorderLayout.NORTH);
     toolbarsAndTable.add(progressStripe, BorderLayout.CENTER);
 
     myChangesBrowserSplitter = new OnePixelSplitter(false, "vcs.log.changes.splitter.proportion", 0.7f);
     myChangesBrowserSplitter.setFirstComponent(toolbarsAndTable);
-    myChangesBrowserSplitter.setSecondComponent(myChangesLoadingPane);
+    myChangesBrowserSplitter.setSecondComponent(myDetailsSplitter);
 
     setLayout(new BorderLayout());
     add(myChangesBrowserSplitter);
@@ -155,7 +157,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   public void updateDataPack(@NotNull VisiblePack dataPack, boolean permGraphChanged) {
     myFilterUi.updateDataPack(dataPack);
     myGraphTable.updateDataPack(dataPack, permGraphChanged);
-    myBranchesPanel.updateDataPack(dataPack, permGraphChanged);
   }
 
   private void updateWhenDetailsAreLoaded() {
@@ -240,10 +241,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     return this;
   }
 
-  public void setBranchesPanelVisible(boolean visible) {
-    myBranchesPanel.setBranchPanelVisible(visible);
-  }
-
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
@@ -303,10 +300,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   public boolean areGraphActionsEnabled() {
     return myGraphTable.getRowCount() > 0;
-  }
-
-  public void onFiltersChange(@NotNull VcsLogFilterCollection filters) {
-    myBranchesPanel.onFiltersChange(filters);
   }
 
   @NotNull

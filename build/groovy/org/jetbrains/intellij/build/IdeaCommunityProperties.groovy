@@ -104,4 +104,7 @@ class IdeaCommunityProperties extends ProductProperties {
 
   @Override
   String baseArtifactName(ApplicationInfoProperties applicationInfo, String buildNumber) { "ideaIC-$buildNumber" }
+
+  @Override
+  String outputDirectoryName(ApplicationInfoProperties applicationInfo) { "idea-ce" }
 }

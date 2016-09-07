@@ -15,16 +15,13 @@
  */
 package com.jetbrains.python;
 
-import com.intellij.codeInsight.generation.actions.CommentByLineCommentAction;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -124,10 +121,7 @@ public class PyEditingTest extends PyTestCase {
   public void testUncommentWithSpace() throws Exception {   // PY-980
     myFixture.configureByFile("/editing/uncommentWithSpace.before.py");
     myFixture.getEditor().getCaretModel().moveToLogicalPosition(new LogicalPosition(0, 1));
-    CommandProcessor.getInstance().executeCommand(myFixture.getProject(), () -> {
-      CommentByLineCommentAction action = new CommentByLineCommentAction();
-      action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", DataManager.getInstance().getDataContext()));
-    }, "", null);
+    PlatformTestUtil.invokeNamedAction(IdeActions.ACTION_COMMENT_LINE);
     myFixture.checkResultByFile("/editing/uncommentWithSpace.after.py", true);
   }
 

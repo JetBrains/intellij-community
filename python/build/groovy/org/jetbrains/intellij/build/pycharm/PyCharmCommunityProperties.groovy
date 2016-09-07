@@ -112,4 +112,9 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
       }
     }
   }
+
+  @Override
+  String outputDirectoryName(ApplicationInfoProperties applicationInfo) {
+    "pycharm-ce"
+  }
 }

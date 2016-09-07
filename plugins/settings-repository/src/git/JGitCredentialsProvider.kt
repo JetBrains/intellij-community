@@ -22,7 +22,7 @@ import com.intellij.credentialStore.isFulfilled
 import com.intellij.credentialStore.macOs.isMacOsCredentialStoreSupported
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
-import com.intellij.util.nullize
+import com.intellij.util.text.nullize
 import com.intellij.util.ui.UIUtil
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.transport.CredentialItem

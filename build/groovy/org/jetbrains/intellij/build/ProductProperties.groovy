@@ -22,7 +22,7 @@ import org.jetbrains.intellij.build.impl.PluginLayout
  * @author nik
  */
 @CompileStatic
-public abstract class ProductProperties {
+abstract class ProductProperties {
   /**
    * Base name for script files (*.bat, *.sh, *.exe), usually a shortened product name in lower case (e.g. 'idea' for IntelliJ IDEA, 'datagrip' for DataGrip)
    */
@@ -168,4 +168,11 @@ public abstract class ProductProperties {
    */
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {
   }
+
+  /**
+   * Override this method if the product has several editions to ensure that their artifacts won't be mixed up.
+   * @return name of sub-directory under projectHome/out where build artifacts will be placed, must be unique among all products built from
+   * the same sources
+   */
+  String outputDirectoryName(ApplicationInfoProperties applicationInfo) { applicationInfo.productName.toLowerCase() }
 }

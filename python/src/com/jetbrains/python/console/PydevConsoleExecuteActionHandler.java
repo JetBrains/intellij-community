@@ -57,7 +57,7 @@ public class PydevConsoleExecuteActionHandler extends ProcessBackedConsoleExecut
   private final ConsoleCommunication myConsoleCommunication;
   private boolean myEnabled = false;
 
-  private int myIpythonInputPromptCount = 1;
+  private int myIpythonInputPromptCount = 0;
 
   public PydevConsoleExecuteActionHandler(LanguageConsoleView consoleView,
                                           ProcessHandler processHandler,

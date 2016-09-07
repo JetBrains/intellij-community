@@ -830,7 +830,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return WriteCommandAction.runWriteCommandAction(getProject(), new Computable<Boolean>() {
       @Override
       public Boolean compute() {
-        action.update(event);
+        action.beforeActionPerformedUpdate(event);
 
         if (!event.getPresentation().isEnabled()) {
           return false;

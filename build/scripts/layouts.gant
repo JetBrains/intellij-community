@@ -27,7 +27,7 @@ target('default': "Developers update") {
   String projectHome = isDefined("devIdeaHome") ? devIdeaHome : home
   def options = new BuildOptions()
   options.useCompiledClassesFromProjectOutput = true
-  def context = BuildContext.createContext(ant, projectBuilder, project, global, home, projectHome, "$home/out/release-ce", new IdeaCommunityProperties(home),
+  def context = BuildContext.createContext(ant, projectBuilder, project, global, home, projectHome, new IdeaCommunityProperties(home),
                                            ProprietaryBuildTools.DUMMY, options)
   context.paths.distAll = deploy
   layoutFull(context)

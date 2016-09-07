@@ -112,7 +112,7 @@ class BuildMessagesImpl implements BuildMessages {
   }
 
   @Override
-  public <V> V block(String blockName, Closure<V> body) {
+  <V> V block(String blockName, Closure<V> body) {
     try {
       processMessage(new LogMessage(LogMessage.Kind.BLOCK_STARTED, blockName))
       return body()

@@ -19,7 +19,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.EncryptionSupport
 import com.intellij.util.generateAesKey
-import org.jetbrains.io.toByteArray
+import com.intellij.util.io.toByteArray
 import java.nio.CharBuffer
 import java.security.MessageDigest
 import java.util.*

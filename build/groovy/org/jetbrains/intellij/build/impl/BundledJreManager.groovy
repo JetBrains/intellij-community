@@ -38,7 +38,7 @@ class BundledJreManager {
    * Extract JRE for Linux distribution of the product
    * @return path to the directory containing 'jre' subdirectory with extracted JRE
    */
-  public String extractLinuxJre() {
+  String extractLinuxJre() {
     return extractJre("linux")
   }
 
@@ -46,7 +46,7 @@ class BundledJreManager {
    * Extract JRE for Windows distribution of the product
    * @return path to the directory containing 'jre' subdirectory with extracted JRE
    */
-  public String extractWinJre(JvmArchitecture arch) {
+  String extractWinJre(JvmArchitecture arch) {
     return extractJre("win", arch)
   }
 
@@ -54,14 +54,14 @@ class BundledJreManager {
    * Extract Oracle JRE for Windows distribution of the product
    * @return path to the directory containing 'jre' subdirectory with extracted JRE
    */
-  public String extractOracleWinJre(JvmArchitecture arch) {
+  String extractOracleWinJre(JvmArchitecture arch) {
     return extractJre("win", arch, JreVendor.Oracle)
   }
 
   /**
    * Return path to a .tar.gz archive containing distribution of JRE for Mac OS which will be bundled with the product
    */
-  public String findMacJreArchive() {
+  String findMacJreArchive() {
     return findJreArchive("mac")?.absolutePath
   }
 

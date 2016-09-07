@@ -454,6 +454,21 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
     assert myFixture.lookupElementStrings == ['method']
   }
 
+  void testExcludeWildcards() {
+    JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, "foo.Outer.*1*")
+    myFixture.addClass '''
+package foo; 
+public class Outer { 
+  public static void method1() {} 
+  public static void method2() {} 
+  public static void method12() {} 
+  public static void method42() {} 
+}'''
+    myFixture.configureByText 'a.java', 'class C {{ foo.Outer.m<caret> }}'
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ['method2', 'method42']
+  }
+
   void testAtUnderClass() throws Throwable {
     doTest('\n')
   }

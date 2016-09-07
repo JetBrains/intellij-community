@@ -19,7 +19,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
-import org.jetbrains.io.readCharSequence
+import com.intellij.util.io.readCharSequence
 import java.io.File
 import java.io.IOException
 import java.io.InputStream

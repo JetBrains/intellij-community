@@ -17,13 +17,9 @@ package org.jetbrains.plugins.groovy
 
 import com.intellij.codeInsight.generation.actions.CommentByBlockCommentAction
 import com.intellij.codeInsight.generation.actions.CommentByLineCommentAction
-import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.util.TestUtils
-
 /**
  * @author Max Medvedev
  */
@@ -101,8 +97,7 @@ print 2
 
   private void doTest(@NotNull String before, @NotNull String after, final AnAction action) {
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, before)
-    final DataContext dataContext = DataManager.instance.dataContextFromFocus.result
-    action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", dataContext))
+    myFixture.testAction(action)
     myFixture.checkResult(after)
   }
 }

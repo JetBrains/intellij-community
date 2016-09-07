@@ -18,13 +18,12 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
+import com.intellij.lang.parser.GeneratedParserUtilBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -114,10 +113,23 @@ public class FlipCommaIntention implements IntentionAction {
     return element != null && element.getText().equals(",");
   }
 
+  @NotNull
+  private static JBIterable<PsiElement> getSiblings(PsiElement element, boolean fwd) {
+    SyntaxTraverser.ApiEx<PsiElement> api = fwd ? SyntaxTraverser.psiApi() : SyntaxTraverser.psiApiReversed();
+    JBIterable<PsiElement> flatSiblings = JBIterable.generate(element, api::next).skip(1);
+    return SyntaxTraverser.syntaxTraverser(api)
+      .withRoots(flatSiblings)
+      .expandAndSkip(e -> api.typeOf(e) == GeneratedParserUtilBase.DUMMY_BLOCK)
+      .traverse();
+  }
+
+  private static boolean isFlippable(PsiElement e) {
+    if (e instanceof PsiWhiteSpace || e instanceof PsiComment) return false;
+    return StringUtil.isNotEmpty(e.getText());
+  }
+
   @Nullable
   private static PsiElement smartAdvance(PsiElement element, boolean fwd) {
-    Class[] skipTypes = {PsiWhiteSpace.class, PsiComment.class};
-    return fwd ? PsiTreeUtil.skipSiblingsForward(element, skipTypes)
-               : PsiTreeUtil.skipSiblingsBackward(element, skipTypes);
+    return getSiblings(element, fwd).filter(e -> isFlippable(e)).first();
   }
 }

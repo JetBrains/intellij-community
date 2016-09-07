@@ -269,7 +269,6 @@ idea.fatal.error.notification=disabled
   void compileModulesAndBuildDistributions() {
     checkProductProperties()
     checkProductLayout()
-    cleanOutput()
     def distributionJARsBuilder = new DistributionJARsBuilder(buildContext)
     def pluginModules = buildContext.productProperties.productLayout.getIncludedPluginModules(buildContext.productProperties.allPlugins)
     compileModules(pluginModules + distributionJARsBuilder.getPlatformModules())
@@ -328,14 +327,14 @@ idea.fatal.error.notification=disabled
   private void checkModules(Collection<String> modules, String fieldName) {
     def unknownModules = modules.findAll {buildContext.findModule(it) == null}
     if (!unknownModules.empty) {
-      buildContext.messages.error("The following modules from $fieldName aren't found in the project.")
+      buildContext.messages.error("The following modules from $fieldName aren't found in the project: $unknownModules")
     }
   }
 
   private void checkProjectLibraries(Collection<String> names, String fieldName) {
     def unknownLibraries = names.findAll {buildContext.project.libraryCollection.findLibrary(it) == null}
     if (!unknownLibraries.empty) {
-      buildContext.messages.error("The following libraries from $fieldName aren't found in the project.")
+      buildContext.messages.error("The following libraries from $fieldName aren't found in the project: $unknownLibraries")
     }
   }
 
@@ -356,21 +355,6 @@ idea.fatal.error.notification=disabled
     }
   }
 
-  @Override
-  void cleanOutput() {
-    buildContext.messages.block("Clean output") {
-      def outputPath = buildContext.paths.buildOutputRoot
-      buildContext.messages.progress("Cleaning output directory $outputPath")
-      new File(outputPath).listFiles()?.each {
-        if (buildContext instanceof BuildContextImpl && buildContext.outputDirectoriesToKeep.contains(it.name)) {
-          buildContext.messages.info("Skipped cleaning for $it.absolutePath")
-        }
-        else {
-          FileUtil.delete(it)
-        }
-      }
-    }
-  }
 
   @Override
   void compileProjectAndTests(List<String> includingTestsInModules = []) {

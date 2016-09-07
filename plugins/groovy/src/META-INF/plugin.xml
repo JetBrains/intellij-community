@@ -1618,6 +1618,7 @@
     <breadcrumbsInfoProvider implementation="org.jetbrains.plugins.groovy.editor.GroovyBreadcrumbsInfoProvider"/>
     <stripTrailingSpacesFilterFactory implementation="org.jetbrains.plugins.groovy.editor.GroovyStripTrailingSpacesFilterFactory"/>
     <generateAccessorProvider implementation="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateAccessorProvider"/>
+    <consoleFilterProvider implementation="org.jetbrains.plugins.groovy.execution.filters.GrCompilationErrorsFilterProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">

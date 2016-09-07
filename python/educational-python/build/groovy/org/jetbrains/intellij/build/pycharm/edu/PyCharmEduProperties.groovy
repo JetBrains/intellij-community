@@ -9,11 +9,14 @@ import org.jetbrains.intellij.build.pycharm.PyCharmWindowsDistributionCustomizer
  * @author nik
  */
 class PyCharmEduProperties extends PyCharmPropertiesBase {
+  private final String pythonCommunityPath
+
   PyCharmEduProperties(String home) {
+    pythonCommunityPath = new File(home, "community/python").exists() ? "$home/community/python" : "$home/python"
     productCode = "PE"
     platformPrefix = "PyCharmEdu"
     applicationInfoModule = "educational-python"
-    brandingResourcePaths = ["$home/community/python/educational-python/resources"]
+    brandingResourcePaths = ["$pythonCommunityPath/educational-python/resources"]
 
     productLayout.mainModule = "main_pycharm_edu"
     productLayout.platformApiModules = CommunityRepositoryModules.PLATFORM_API_MODULES + ["dom-openapi"]
@@ -21,7 +24,7 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
       "dom-impl", "python-community", "python-community-ide-resources",
       "python-ide-community", "python-community-configure", "educational-python", "python-openapi", "python-psi-api", "platform-main"
     ]
-    productLayout.bundledPluginModules = new File("$home/community/python/educational-python/build/plugin-list.txt").readLines()
+    productLayout.bundledPluginModules = new File("$pythonCommunityPath/educational-python/build/plugin-list.txt").readLines()
   }
 
   @Override
@@ -48,10 +51,10 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
     return new PyCharmWindowsDistributionCustomizer() {
       {
         buildZipWithBundledOracleJre = true
-        installerImagesPath = "$projectHome/community/python/educational-python/build/resources"
+        installerImagesPath = "$pythonCommunityPath/educational-python/build/resources"
         customNsiConfigurationFiles = [
-          "$projectHome/community/python/educational-python/build/desktop.ini",
-          "$projectHome/community/python/educational-python/build/customInstallActions.nsi"
+          "$pythonCommunityPath/educational-python/build/desktop.ini",
+          "$pythonCommunityPath/educational-python/build/customInstallActions.nsi"
         ]
       }
 
@@ -63,7 +66,8 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
       @Override
       void copyAdditionalFiles(BuildContext context, String targetDirectory) {
         super.copyAdditionalFiles(context, targetDirectory)
-        context.ant.copy(file: "$context.paths.projectHome/python/help/pycharm-eduhelp.jar", todir: "$targetDirectory/help", failonerror: false)
+        context.ant.copy(file: "$context.paths.projectHome/help/pycharm-eduhelp.jar", todir: "$targetDirectory/help",
+                         failonerror: false, quiet: true)
       }
     }
   }
@@ -72,7 +76,7 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
   LinuxDistributionCustomizer createLinuxCustomizer(String projectHome) {
     return new LinuxDistributionCustomizer() {
       {
-        iconPngPath = "$projectHome/community/python/resources/PyCharmCore128.png"
+        iconPngPath = "$pythonCommunityPath/resources/PyCharmCore128.png"
       }
 
       @Override
@@ -82,7 +86,8 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
 
       @Override
       void copyAdditionalFiles(BuildContext context, String targetDirectory) {
-        context.ant.copy(file: "$context.paths.projectHome/python/help/pycharm-eduhelp.jar", todir: "$targetDirectory/help", failonerror: false)
+        context.ant.copy(file: "$context.paths.projectHome/help/pycharm-eduhelp.jar", todir: "$targetDirectory/help",
+                         failonerror: false, quiet: true)
       }
     }
   }
@@ -91,11 +96,16 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
   MacDistributionCustomizer createMacCustomizer(String projectHome) {
     return new PyCharmMacDistributionCustomizer() {
       {
-        icnsPath = "$projectHome/community/python/educational-python/resources/PyCharmEdu.icns"
+        icnsPath = "$pythonCommunityPath/educational-python/resources/PyCharmEdu.icns"
         bundleIdentifier = "com.jetbrains.pycharm"
         helpId = "PE"
-        dmgImagePath = "$projectHome/community/python/educational-python/build/DMG_background.png"
+        dmgImagePath = "$pythonCommunityPath/educational-python/build/DMG_background.png"
       }
     }
+  }
+
+  @Override
+  String outputDirectoryName(ApplicationInfoProperties applicationInfo) {
+    "pycharm-edu"
   }
 }

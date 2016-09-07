@@ -244,13 +244,19 @@ public class TestVcsLogProvider implements VcsLogProvider {
 
     @NotNull
     @Override
-    public List<RefGroup> group(Collection<VcsRef> refs) {
+    public List<RefGroup> groupForBranchFilter(@NotNull Collection<VcsRef> refs) {
       return ContainerUtil.map(refs, new Function<VcsRef, RefGroup>() {
         @Override
         public RefGroup fun(VcsRef ref) {
           return new SingletonRefGroup(ref);
         }
       });
+    }
+
+    @NotNull
+    @Override
+    public List<RefGroup> groupForTable(@NotNull Collection<VcsRef> refs) {
+      return groupForBranchFilter(refs);
     }
 
     @Override
@@ -293,6 +299,5 @@ public class TestVcsLogProvider implements VcsLogProvider {
       myBlocked = false;
       release();
     }
-
   }
 }

@@ -42,13 +42,13 @@ class MacDmgBuilder {
     this.remoteDir = remoteDir
   }
 
-  public static void signBinaryFiles(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties,
+  static void signBinaryFiles(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties,
                                      String macDistPath) {
     def dmgBuilder = createInstance(buildContext, customizer, macHostProperties)
     dmgBuilder.doSignBinaryFiles(macDistPath)
   }
 
-  public static void signAndBuildDmg(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties, String macZipPath) {
+  static void signAndBuildDmg(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties, String macZipPath) {
     MacDmgBuilder dmgBuilder = createInstance(buildContext, customizer, macHostProperties)
     def jreArchivePath = buildContext.bundledJreManager.findMacJreArchive()
     if (jreArchivePath != null) {

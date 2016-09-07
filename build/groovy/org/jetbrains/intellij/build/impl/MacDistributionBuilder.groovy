@@ -37,7 +37,7 @@ class MacDistributionBuilder {
     macDistPath = "$buildContext.paths.buildOutputRoot/dist.mac"
   }
 
-  public layoutMac(File ideaPropertiesFile) {
+  void layoutMac(File ideaPropertiesFile) {
     buildContext.messages.progress("Building distributions for Mac OS")
     def docTypes = (customizer.associateIpr ? """
       <dict>

@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel;
 import com.intellij.openapi.ui.OnePixelDivider;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.ui.IdeBorderFactory;
@@ -33,10 +34,10 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -88,7 +89,14 @@ class DetailsPanel extends JPanel implements EditorColorsListener {
       @Override
       public Dimension getPreferredSize() {
         Dimension preferredSize = super.getPreferredSize();
-        return new Dimension(preferredSize.width, Math.max(preferredSize.height, myScrollPane.getViewport().getHeight()));
+        int height = Math.max(preferredSize.height, myScrollPane.getViewport().getHeight());
+        JBScrollPane scrollPane = UIUtil.getParentOfType(JBScrollPane.class, this);
+        if (scrollPane == null || getScrollableTracksViewportWidth()) {
+          return new Dimension(preferredSize.width, height);
+        }
+        else {
+          return new Dimension(Math.max(preferredSize.width, scrollPane.getViewport().getWidth()), height);
+        }
       }
 
       @Override
@@ -112,7 +120,7 @@ class DetailsPanel extends JPanel implements EditorColorsListener {
         return StringUtil.isNotEmpty(getText());
       }
     };
-    myMainContentPanel.setLayout(new BoxLayout(myMainContentPanel, BoxLayout.Y_AXIS));
+    myMainContentPanel.setLayout(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
 
     myMainContentPanel.setOpaque(false);
     myScrollPane.setViewportView(myMainContentPanel);
@@ -181,11 +189,7 @@ class DetailsPanel extends JPanel implements EditorColorsListener {
       myMainContentPanel.add(new SeparatorComponent(0, OnePixelDivider.BACKGROUND, null));
       JBLabel label = new JBLabel("(showing " + MAX_ROWS + " of " + selectionLength + " selected commits)");
       label.setFont(VcsHistoryUtil.getCommitDetailsFont());
-      label.setBorder(JBUI.Borders.empty(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2,
-                                         myColorManager.isMultipleRoots()
-                                         ? VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH +
-                                           VcsLogGraphTable.ROOT_INDICATOR_COLORED_WIDTH
-                                         : VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2, CommitPanel.BOTTOM_BORDER, 0));
+      label.setBorder(CommitPanel.getDetailsBorder());
       myMainContentPanel.add(label);
     }
 

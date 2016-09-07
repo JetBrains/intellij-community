@@ -193,6 +193,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testRememberLocalTransientFieldState() { doTest(); }
   public void testFinalFieldDuringInitialization() { doTest(); }
   public void testFinalFieldDuringSuperInitialization() { doTest(); }
+  public void testFinalFieldInCallBeforeInitialization() { doTest(); }
   public void testFinalFieldInConstructorAnonymous() { doTest(); }
 
   public void testFinalFieldNotDuringInitialization() {

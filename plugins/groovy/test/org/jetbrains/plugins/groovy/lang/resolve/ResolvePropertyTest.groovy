@@ -1551,4 +1551,22 @@ new A().fo<caret>o = ""
 ''', GrMethod)
     assert method.parameterList.parameters.first().type.canonicalText == 'java.lang.String'
   }
+
+  void 'test on demand static import'() {
+    fixture.with {
+      addClass '''
+package somepackage;
+public class Holder {
+  public static Object getStuff() { return new Object(); }
+}
+'''
+      def method = resolveByText('''\
+import static somepackage.Holder.*
+class Foo {
+  static field = stu<caret>ff
+}
+''', PsiMethod)
+      assert method.name == 'getStuff'
+    }
+  }
 }

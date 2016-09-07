@@ -137,7 +137,7 @@ public class AbstractPopup implements JBPopup {
 
     @Override
     public void update() {
-      mySpeedSearchPatternField.setBackground(new JTextField().getBackground());
+      mySpeedSearchPatternField.getTextEditor().setBackground(UIUtil.getTextFieldBackground());
       onSpeedSearchPatternChanged();
       mySpeedSearchPatternField.setText(getFilter());
       if (isHoldingFilter() && !searchFieldShown) {
@@ -152,11 +152,11 @@ public class AbstractPopup implements JBPopup {
 
     @Override
     public void noHits() {
-      mySpeedSearchPatternField.setBackground(LightColors.RED);
+      mySpeedSearchPatternField.getTextEditor().setBackground(LightColors.RED);
     }
   };
 
-  protected JTextField mySpeedSearchPatternField;
+  protected SearchTextField mySpeedSearchPatternField;
   private boolean myNativePopup;
   private boolean myMayBeParent;
   private AbstractPopup.SpeedSearchKeyListener mySearchKeyListener;
@@ -1126,8 +1126,8 @@ public class AbstractPopup implements JBPopup {
     };
     Disposer.register(this, focusWatcher);
 
-    mySpeedSearchPatternField = new JTextField();
-    mySpeedSearchPatternField.setFocusable(false);
+    mySpeedSearchPatternField = new SearchTextField(false);
+    mySpeedSearchPatternField.getTextEditor().setFocusable(false);
     if (SystemInfo.isMac) {
       RelativeFont.TINY.install(mySpeedSearchPatternField);
     }
