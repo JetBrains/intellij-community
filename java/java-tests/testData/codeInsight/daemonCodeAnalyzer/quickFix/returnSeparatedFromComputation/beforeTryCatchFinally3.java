@@ -1,4 +1,4 @@
-// "Move 'return' to computation of the value of 'n'" "false"
+// "Move 'return' closer to computation of the value of 'n'" "false"
 import java.io.*;
 
 class T {

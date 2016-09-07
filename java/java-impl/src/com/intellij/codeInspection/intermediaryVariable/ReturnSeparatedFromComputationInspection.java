@@ -112,10 +112,10 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
    *         return result;
    * </pre>
    */
-  private static boolean hasChainedAssignmentsInScope(@NotNull ControlFlow flow, @NotNull PsiVariable variable,
-                                                      @NotNull PsiReturnStatement returnStatement,
-                                                      @NotNull PsiCodeBlock variableScope) {
-    for (PsiStatement statement = getPrevNonEmptyStatement(returnStatement, null);
+  private static boolean hasChainedAssignmentsInScope(@NotNull ControlFlow flow,
+                                                      @NotNull PsiVariable variable,
+                                                      @NotNull PsiStatement lastStatementInScope) {
+    for (PsiStatement statement = getPrevNonEmptyStatement(lastStatementInScope, null);
          statement != null;
          statement = getPrevNonEmptyStatement(statement, null)) {
       if (statement instanceof PsiExpressionStatement) {
@@ -166,7 +166,7 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
     final int returnEndOffset = flow.getEndOffset(context.returnStatement);
     if (returnStartOffset < 0 || returnEndOffset < 0) return false;
 
-    if (hasChainedAssignmentsInScope(flow, context.returnedVariable, context.returnStatement, context.variableScope)) {
+    if (hasChainedAssignmentsInScope(flow, context.returnedVariable, context.returnStatement)) {
       return false;
     }
 
@@ -325,7 +325,7 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
         return moveToForeach((PsiForeachStatement)targetStatement);
       }
       if (targetStatement instanceof PsiSwitchStatement) {
-        return moveToSwitch((PsiSwitchStatement)targetStatement, returnAtTheEnd);
+        return moveToSwitch((PsiSwitchStatement)targetStatement);
       }
       if (targetStatement instanceof PsiTryStatement) {
         return moveToTry((PsiTryStatement)targetStatement, returnAtTheEnd);
@@ -353,7 +353,7 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
       PsiJavaToken rBrace = codeBlock.getRBrace();
       if (rBrace != null) {
         PsiStatement lastNonEmptyStatement = getPrevNonEmptyStatement(rBrace, removeCompletely);
-        if (lastNonEmptyStatement == null) {
+        if (lastNonEmptyStatement == null || hasChainedAssignmentsInScope(flow, resultVariable, lastNonEmptyStatement)) {
           return false;
         }
         if (moveTo(lastNonEmptyStatement, returnAtTheEnd)) {
@@ -396,10 +396,10 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
       return false;
     }
 
-    private boolean moveToSwitch(PsiSwitchStatement targetStatement, boolean returnAtTheEnd) {
+    private boolean moveToSwitch(@NotNull PsiSwitchStatement targetStatement) {
       moveToBreaks(targetStatement, false);
       PsiCodeBlock body = targetStatement.getBody();
-      return body != null && moveToBlockBody(body, returnAtTheEnd);
+      return body != null && moveToBlockBody(body, false) && hasDefaultSwitchLabel(body);
     }
 
     private boolean moveToTry(@NotNull PsiTryStatement targetStatement, boolean returnAtTheEnd) {
@@ -457,6 +457,15 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
       }
     }
 
+    private static boolean hasDefaultSwitchLabel(@NotNull PsiCodeBlock switchBody) {
+      for (PsiStatement statement : switchBody.getStatements()) {
+        if (statement instanceof PsiSwitchLabelStatement && ((PsiSwitchLabelStatement)statement).isDefaultCase()) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     private static boolean isAlwaysTrue(@Nullable PsiExpression condition, boolean nullIsTrue) {
       if(condition == null) return nullIsTrue;
       return ExpressionUtils.computeConstantExpression(condition) == Boolean.TRUE;
@@ -492,8 +501,9 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
     }
   }
 
-  private static PsiStatement getPrevNonEmptyStatement(@NotNull PsiElement psiElement, @Nullable Set<PsiElement> skippedEmptyStatements) {
-    if (!(psiElement.getParent() instanceof PsiCodeBlock)) {
+  @Nullable
+  private static PsiStatement getPrevNonEmptyStatement(@Nullable PsiElement psiElement, @Nullable Set<PsiElement> skippedEmptyStatements) {
+    if (psiElement == null || !(psiElement.getParent() instanceof PsiCodeBlock)) {
       return null;
     }
     PsiStatement prevStatement = PsiTreeUtil.getPrevSiblingOfType(psiElement, PsiStatement.class);

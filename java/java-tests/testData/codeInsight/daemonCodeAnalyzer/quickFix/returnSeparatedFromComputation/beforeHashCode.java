@@ -1,4 +1,4 @@
-// "Move 'return' to computation of the value of 'result'" "false"
+// "Move 'return' closer to computation of the value of 'result'" "false"
 class T {
     int size;
     int width;

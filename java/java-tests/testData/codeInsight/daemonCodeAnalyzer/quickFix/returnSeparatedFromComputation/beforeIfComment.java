@@ -1,4 +1,4 @@
-// "Move 'return' to computation of the value of 's'" "true"
+// "Move 'return' closer to computation of the value of 's'" "true"
 class T {
     int f(String a) {
         String s = a;
