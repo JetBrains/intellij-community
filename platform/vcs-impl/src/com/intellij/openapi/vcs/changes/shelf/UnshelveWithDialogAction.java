@@ -16,7 +16,7 @@
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -49,23 +49,25 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChangeList;
+import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager.getBinaryShelveChanges;
+import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager.getShelveChanges;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
 public class UnshelveWithDialogAction extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
-    final ShelvedChangeList[] changeLists = e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY);
-    if (project == null || changeLists == null || changeLists.length == 0) return;
+    final Project project = ObjectUtils.assertNotNull(getEventProject(e));
+    DataContext dataContext = e.getDataContext();
+    final List<ShelvedChangeList> changeLists = ShelvedChangesViewManager.getShelvedLists(dataContext);
+    if (changeLists.isEmpty()) return;
 
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    if (changeLists.length > 1) {
-      unshelveMultipleShelveChangeLists(e.getData(ShelvedChangesViewManager.SHELVED_CHANGE_KEY), project, changeLists,
-                                        e.getData(ShelvedChangesViewManager.SHELVED_BINARY_FILE_KEY));
+    if (changeLists.size() > 1) {
+      unshelveMultipleShelveChangeLists(project, changeLists, getBinaryShelveChanges(dataContext), getShelveChanges(dataContext));
     }
     else {
-      ShelvedChangeList changeList = changeLists[0];
+      ShelvedChangeList changeList = changeLists.get(0);
       final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(changeList.PATH));
       if (virtualFile == null) {
         VcsBalloonProblemNotifier.showOverChangesView(project, "Can not find path file", MessageType.ERROR);
@@ -80,11 +82,11 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
     }
   }
 
-  private static void unshelveMultipleShelveChangeLists(@Nullable List<ShelvedChange> changes,
-                                                        @NotNull final Project project,
-                                                        @NotNull final ShelvedChangeList[] changeLists,
-                                                        @Nullable List<ShelvedBinaryFile> binaryFiles) {
-    String suggestedName = changeLists[0].DESCRIPTION;
+  private static void unshelveMultipleShelveChangeLists(@NotNull final Project project,
+                                                        @NotNull final List<ShelvedChangeList> changeLists,
+                                                        @NotNull List<ShelvedBinaryFile> binaryFiles,
+                                                        @NotNull List<ShelvedChange> changes) {
+    String suggestedName = changeLists.get(0).DESCRIPTION;
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     final ChangeListChooser chooser =
       new ChangeListChooser(project, changeListManager.getChangeListsCopy(), changeListManager.getDefaultChangeList(),
@@ -97,16 +99,12 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
       };
 
     if (!chooser.showAndGet()) return;
-
-    //todo accept empty collections as a nullable to avoid ugly checks and reassignments
-    final List<ShelvedBinaryFile> finalBinaryFiles = binaryFiles == null || binaryFiles.isEmpty() ? null : binaryFiles;
-    final List<ShelvedChange> finalChanges = changes == null || changes.isEmpty() ? null : changes;
     final ShelveChangesManager shelveChangesManager = ShelveChangesManager.getInstance(project);
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Unshelve Changes", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         for (ShelvedChangeList changeList : changeLists) {
-          shelveChangesManager.unshelveChangeList(changeList, finalChanges, finalBinaryFiles, chooser.getSelectedList(), true);
+          shelveChangesManager.unshelveChangeList(changeList, changes, binaryFiles, chooser.getSelectedList(), true);
         }
       }
     });
@@ -118,9 +116,7 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
 
   @Override
   public void update(AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
-    final ShelvedChangeList[] changes = e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY);
-    e.getPresentation().setEnabled(project != null && changes != null);
+    e.getPresentation().setEnabled(getEventProject(e) != null && !ShelvedChangesViewManager.getShelvedLists(e.getDataContext()).isEmpty());
   }
 
   private static class MyUnshelveDialog extends ApplyPatchDifferentiatedDialog {

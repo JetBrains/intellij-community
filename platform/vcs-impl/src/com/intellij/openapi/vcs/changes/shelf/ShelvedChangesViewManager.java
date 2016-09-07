@@ -412,6 +412,31 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     }
   }
 
+  @NotNull
+  public static List<ShelvedChangeList> getShelvedLists(@NotNull final DataContext dataContext) {
+    final ShelvedChangeList[] shelved = SHELVED_CHANGELIST_KEY.getData(dataContext);
+    final ShelvedChangeList[] recycled = SHELVED_RECYCLED_CHANGELIST_KEY.getData(dataContext);
+    if (shelved == null && recycled == null) return Collections.emptyList();
+    List<ShelvedChangeList> shelvedChangeLists = ContainerUtil.newArrayList();
+    if (shelved != null) {
+      ContainerUtil.addAll(shelvedChangeLists, shelved);
+    }
+    if (recycled != null) {
+      ContainerUtil.addAll(shelvedChangeLists, recycled);
+    }
+    return shelvedChangeLists;
+  }
+
+  @NotNull
+  public static List<ShelvedChange> getShelveChanges(@NotNull final DataContext dataContext) {
+    return notNullize(dataContext.getData(SHELVED_CHANGE_KEY));
+  }
+
+  @NotNull
+  public static List<ShelvedBinaryFile> getBinaryShelveChanges(@NotNull final DataContext dataContext) {
+    return notNullize(dataContext.getData(SHELVED_BINARY_FILE_KEY));
+  }
+
   private final static class ShelvedFilePatchComparator implements Comparator<Object> {
     private final static ShelvedFilePatchComparator ourInstance = new ShelvedFilePatchComparator();
 
@@ -523,13 +548,11 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       if (project == null) return;
 
       List<ShelvedChangeList> shelvedListsToDelete = TreeUtil.collectSelectedObjectsOfType(myTree, ShelvedChangeList.class);
-      ArrayList<ShelvedChangeList> shelvedListsFromChanges = ContainerUtil.newArrayList(getLists(dataContext));
+      ArrayList<ShelvedChangeList> shelvedListsFromChanges = ContainerUtil.newArrayList(getShelvedLists(dataContext));
       // filter changes
       shelvedListsFromChanges.removeAll(shelvedListsToDelete);
-      List<ShelvedChange> changesToDelete =
-        getChangesNotInLists(shelvedListsToDelete, notNullize(SHELVED_CHANGE_KEY.getData(dataContext)));
-      List<ShelvedBinaryFile> binariesToDelete =
-        getBinariesNotInLists(shelvedListsToDelete, notNullize(SHELVED_BINARY_FILE_KEY.getData(dataContext)));
+      List<ShelvedChange> changesToDelete = getChangesNotInLists(shelvedListsToDelete, getShelveChanges(dataContext));
+      List<ShelvedBinaryFile> binariesToDelete = getBinariesNotInLists(shelvedListsToDelete, getBinaryShelveChanges(dataContext));
 
       int changeListSize = shelvedListsToDelete.size();
       int fileListSize = binariesToDelete.size() + changesToDelete.size();
@@ -623,22 +646,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     }
 
     public boolean canDeleteElement(@NotNull DataContext dataContext) {
-      return !getLists(dataContext).isEmpty();
-    }
-
-    @NotNull
-    private List<ShelvedChangeList> getLists(@NotNull final DataContext dataContext) {
-      final ShelvedChangeList[] shelved = SHELVED_CHANGELIST_KEY.getData(dataContext);
-      final ShelvedChangeList[] recycled = SHELVED_RECYCLED_CHANGELIST_KEY.getData(dataContext);
-      if (shelved == null && recycled == null) return Collections.emptyList();
-      List<ShelvedChangeList> shelvedChangeLists = ContainerUtil.newArrayList();
-      if (shelved != null) {
-        ContainerUtil.addAll(shelvedChangeLists, shelved);
-      }
-      if (recycled != null) {
-        ContainerUtil.addAll(shelvedChangeLists, recycled);
-      }
-      return shelvedChangeLists;
+      return !getShelvedLists(dataContext).isEmpty();
     }
   }
 }
