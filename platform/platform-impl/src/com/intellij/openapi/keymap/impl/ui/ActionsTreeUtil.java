@@ -510,8 +510,11 @@ public class ActionsTreeUtil {
       ArrayList<String> options = new ArrayList<>();
       options.add(action.getTemplatePresentation().getText());
       options.add(action.getTemplatePresentation().getDescription());
-      options.add(action instanceof ActionStub ? ((ActionStub)action).getId() : ActionManager.getInstance().getId(action));
-      options.addAll(AbbreviationManager.getInstance().getAbbreviations(ActionManager.getInstance().getId(action)));
+      String id = action instanceof ActionStub ? ((ActionStub)action).getId() : ActionManager.getInstance().getId(action);
+      if (id != null) {
+        options.add(id);
+        options.addAll(AbbreviationManager.getInstance().getAbbreviations(id));
+      }
 
       for (String text : options) {
         if (text != null) {
