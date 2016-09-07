@@ -19,6 +19,7 @@ import com.intellij.junit4.ExpectedPatterns;
 import com.intellij.rt.execution.junit.ComparisonFailureData;
 import com.intellij.rt.execution.junit.MapSerializerUtil;
 import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.engine.support.descriptor.JavaClassSource;
 import org.junit.platform.engine.support.descriptor.JavaMethodSource;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
@@ -224,16 +225,23 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   }
 
   static String getClassName(TestIdentifier description) {
-    Optional<JavaMethodSource> javaSource = getJavaSource(description);
-    return javaSource.map(source -> source.getJavaClass().getName()).orElse(null);
+    return description.getSource().map(source -> {
+      if (source instanceof JavaMethodSource) {
+        return ((JavaMethodSource)source).getJavaClass().getName();
+      }
+      if (source instanceof JavaClassSource) {
+        return ((JavaClassSource)source).getJavaClass().getName();
+      }
+      return null;
+    }).orElse(null);
   }
 
   static String getMethodName(TestIdentifier testIdentifier) {
-    return getJavaSource(testIdentifier).map(JavaMethodSource::getJavaMethodName).orElse(null);
+    return testIdentifier.getSource().map((source) -> {
+      if (source instanceof JavaMethodSource) {
+        return ((JavaMethodSource)source).getJavaMethodName();
+      }
+      return null;
+    }).orElse(null);
   }
-
-  private static Optional<JavaMethodSource> getJavaSource(TestIdentifier testIdentifier) {
-    return testIdentifier.getSource().filter(JavaMethodSource.class::isInstance).map(JavaMethodSource.class::cast);
-  }
-  
 }
