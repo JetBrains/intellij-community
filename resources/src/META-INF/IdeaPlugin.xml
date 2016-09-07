@@ -649,7 +649,7 @@
                      implementationClass="com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ReturnSeparatedFromComputation" bundle="messages.InspectionsBundle"
                      key="inspection.return.separated.from.computation.name" groupKey="group.names.code.style.issues"
-                     enabledByDefault="true" level="WARNING"
+                     enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.intermediaryVariable.ReturnSeparatedFromComputationInspection"/>
 
     <localInspection groupPath="Java" language="JAVA" shortName="JavaDoc" bundle="messages.InspectionsBundle" key="inspection.javadoc.display.name"

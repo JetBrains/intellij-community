@@ -563,8 +563,7 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
                                       @NotNull PsiReturnStatement returnStatement,
                                       @NotNull PsiVariable variable) {
     String name = variable.getName();
-    PsiElement returnElement = returnStatement.getFirstChild();
-    holder.registerProblem(returnElement instanceof PsiKeyword ? returnElement : returnStatement,
+    holder.registerProblem(returnStatement,
                            InspectionsBundle.message("inspection.return.separated.from.computation.descriptor", name),
                            new VariableFix(name));
   }
@@ -592,7 +591,7 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = getNearestEnclosingStatement(descriptor.getPsiElement());
+      PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiReturnStatement) {
         doApply(((PsiReturnStatement)element));
       }

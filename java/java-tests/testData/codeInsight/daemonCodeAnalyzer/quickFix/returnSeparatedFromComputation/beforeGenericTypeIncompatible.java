@@ -1,3 +1,4 @@
+// "Move 'return' closer to computation of the value of 'raw'" "false"
 import java.util.*;
 
 class T {
@@ -6,7 +7,7 @@ class T {
     if (b) {
       raw = g();
     }
-    return raw;
+    re<caret>turn raw;
   }
 
   List<String> g() {
