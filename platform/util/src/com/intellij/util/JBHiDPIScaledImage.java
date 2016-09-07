@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
+import java.awt.image.WritableRaster;
 
 /**
 * @author Konstantin Bulenkov
@@ -81,10 +82,19 @@ public class JBHiDPIScaledImage extends BufferedImage {
 
   @Override
   public Graphics2D createGraphics() {
-    assert myImage instanceof BufferedImage : "graphics should only be created for the image used for drawing";
+    assert myImage instanceof BufferedImage : "the delegate image is not BufferedImage";
     if (myImage instanceof BufferedImage) {
       return new HiDPIScaledGraphics(((BufferedImage)myImage).createGraphics());
     }
     return super.createGraphics();
+  }
+
+  @Override
+  public WritableRaster getRaster() {
+    assert myImage instanceof BufferedImage : "the delegate image is not BufferedImage";
+    if (myImage instanceof BufferedImage) {
+      return ((BufferedImage)myImage).getRaster();
+    }
+    return super.getRaster();
   }
 }
