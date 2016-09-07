@@ -87,7 +87,6 @@
       <reference ref="Vcs.Log.QuickSettings"/>
       <reference ref="Vcs.Log.ShowDetailsAction"/>
       <reference ref="Vcs.Log.ShowRootsColumnAction"/>
-      <reference ref="Vcs.Log.ShowBranchesPanelAction"/>
       <separator/>
       <reference ref="Vcs.Log.Refresh"/>
       <reference ref="Vcs.Log.OpenAnotherTab"/>
