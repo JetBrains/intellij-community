@@ -17,6 +17,7 @@ package org.jetbrains.io
 
 import com.intellij.util.text.CharArrayCharSequence
 import java.io.InputStreamReader
+import java.net.URLEncoder
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.util.*
@@ -68,3 +69,5 @@ fun ByteBuffer.toByteArray(): ByteArray {
   get(bytes)
   return bytes
 }
+
+fun String.encodeUrlQueryParameter() = URLEncoder.encode(this, Charsets.UTF_8.name())
