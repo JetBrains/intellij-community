@@ -108,9 +108,14 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
       baseController = new BekBaseController(this, myBekIntMap.get());
     }
 
-    LinearGraphController controller;
+    // TODO this code is unclear and obviously needs some refactoring
+    // I'll leave it for later to reorganize, and add some duplication for now, in order just to fix stuff
+    CascadeController controller;
     if (matchingCommits != null) {
       controller = new FilteredController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(matchingCommits));
+      if (visibleHeads != null) {
+        controller = new BranchFilterController(controller, this, myPermanentCommitsInfo.convertToNodeIds(visibleHeads, true));
+      }
     }
     else if (sortType == SortType.LinearBek) {
       if (visibleHeads != null) {
