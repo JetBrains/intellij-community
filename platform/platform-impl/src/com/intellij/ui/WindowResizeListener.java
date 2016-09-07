@@ -41,6 +41,16 @@ public class WindowResizeListener extends WindowMouseListener {
 
   @Override
   int getCursorType(Component view, Point location) {
+    if (view instanceof Dialog) {
+      Dialog dialog = (Dialog)view;
+      if (!dialog.isResizable()) return CUSTOM_CURSOR;
+    }
+    else if (view instanceof Frame) {
+      Frame frame = (Frame)view;
+      if (!frame.isResizable()) return CUSTOM_CURSOR;
+      if (isStateSet(frame, Frame.MAXIMIZED_BOTH)) return CUSTOM_CURSOR;
+      if (isStateSet(frame, Frame.ICONIFIED)) return CUSTOM_CURSOR;
+    }
     Component parent = view instanceof Window ? null : view.getParent();
     if (parent != null) {
       convertPointFromScreen(location, parent);
@@ -65,6 +75,17 @@ public class WindowResizeListener extends WindowMouseListener {
       return DEFAULT_CURSOR;
     }
     if (myBorder != null) {
+      if (view instanceof Frame) {
+        Frame frame = (Frame)view;
+        if (isStateSet(frame, Frame.MAXIMIZED_HORIZ)) {
+          left = Integer.MAX_VALUE;
+          right = Integer.MAX_VALUE;
+        }
+        if (isStateSet(frame, Frame.MAXIMIZED_VERT)) {
+          top = Integer.MAX_VALUE;
+          bottom = Integer.MAX_VALUE;
+        }
+      }
       if (top < myBorder.top) {
         if (left < myBorder.left) {
           return NW_RESIZE_CURSOR;
@@ -95,6 +116,11 @@ public class WindowResizeListener extends WindowMouseListener {
 
   @Override
   void updateBounds(Rectangle bounds, Component view, int dx, int dy) {
+    if (myType == DEFAULT_CURSOR && view instanceof Frame) {
+      Frame frame = (Frame)view;
+      if (isStateSet(frame, Frame.MAXIMIZED_HORIZ)) dx = 0;
+      if (isStateSet(frame, Frame.MAXIMIZED_VERT)) dy = 0;
+    }
     Dimension minimum = view.getMinimumSize();
     if (myType == NE_RESIZE_CURSOR || myType == E_RESIZE_CURSOR || myType == SE_RESIZE_CURSOR || myType == DEFAULT_CURSOR) {
       bounds.width += fixMinSize(dx, bounds.width, minimum.width);
@@ -116,5 +142,9 @@ public class WindowResizeListener extends WindowMouseListener {
 
   private static int fixMinSize(int delta, int value, int min) {
     return delta + value < min ? min - value : delta;
+  }
+
+  private static boolean isStateSet(Frame frame, int mask) {
+    return mask == (mask & frame.getExtendedState());
   }
 }
