@@ -95,7 +95,7 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate {
           // check for template language like JSP
           if (provider instanceof MultiplePsiFilesPerDocumentFileViewProvider) {
             PsiElement element1 = SingleRootFileViewProvider.findElementAt(file, offset - 1);
-            if (element1 != null && element1.getText().startsWith("</")) {
+            if (element1 != null) {
               // case of top-level jsp tag
               XmlTag tag1 = PsiTreeUtil.getParentOfType(element1, XmlTag.class);
               if (shouldReplace(tag, tag1, offset)) {

@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +42,7 @@ public abstract class FileAnnotation {
   @NotNull private final Project myProject;
 
   private Runnable myCloser;
-  private Runnable myReloader;
+  private Consumer<FileAnnotation> myReloader;
 
   protected FileAnnotation(@NotNull Project project) {
     myProject = project;
@@ -180,10 +181,14 @@ public abstract class FileAnnotation {
   }
 
   /**
-   * Notify that annotation information has changed, and UI should be updated.
+   * Notify that annotation information has changed, and should be updated.
+   * If `this` is visible, hide it and show new one instead.
+   * If `this` is not visible, do nothing.
+   *
+   * @param newFileAnnotation annotations to be shown
    */
-  public final void reload() {
-    if (myReloader != null) myReloader.run();
+  public final void reload(@NotNull FileAnnotation newFileAnnotation) {
+    if (myReloader != null) myReloader.consume(newFileAnnotation);
   }
 
   /**
@@ -196,7 +201,7 @@ public abstract class FileAnnotation {
   /**
    * @see #reload()
    */
-  public final void setReloader(@Nullable Runnable reloader) {
+  public final void setReloader(@Nullable Consumer<FileAnnotation> reloader) {
     myReloader = reloader;
   }
 

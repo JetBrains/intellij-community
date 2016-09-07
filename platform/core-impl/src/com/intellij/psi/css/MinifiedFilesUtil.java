@@ -86,6 +86,11 @@ public class MinifiedFilesUtil {
       }
 
       int tokenLength = lexer.getTokenEnd() - lexer.getTokenStart();
+      if (isNewLine(lexer, tokenLength) && commentTokens.contains(lastTokenType) && !noWSRequireAfterTokenSet.contains(lastTokenType)) {
+        // do not count new line after line comment token since it's required and it's part of comment
+        continue;
+      }
+
       offsetIgnoringComments += tokenLength;
       if (!stringLiteralElements.contains(tokenType)) {
         offsetIgnoringCommentsAndStrings += tokenLength;
@@ -103,7 +108,7 @@ public class MinifiedFilesUtil {
           }
         }
 
-        if (tokenLength == 1 && StringUtil.equals(lastTokenText, "\n") && StringUtil.equals(lexer.getTokenText(), "\n") ||
+        if (isNewLine(lexer, tokenLength) && StringUtil.equals(lastTokenText, "\n") ||
             tokenLength > 0 && noWSRequireAfterTokenSet.contains(lastTokenType)) {
           unneededWhitespaceCount++;
           lastWhiteSpaceWasHandled = true;
@@ -131,6 +136,10 @@ public class MinifiedFilesUtil {
 
     return offsetIgnoringComments >= MIN_SIZE &&
            (unneededWhitespaceCount + 0.0d) / offsetIgnoringCommentsAndStrings < MAX_UNNEEDED_OFFSET_PERCENTAGE;
+  }
+
+  private static boolean isNewLine(@NotNull Lexer lexer, int tokenLength) {
+    return tokenLength == 1 && StringUtil.equals(lexer.getTokenText(), "\n");
   }
 
   public static boolean isMinified(@NotNull CharSequence fileContent, @NotNull ParserDefinition parserDefinition) {

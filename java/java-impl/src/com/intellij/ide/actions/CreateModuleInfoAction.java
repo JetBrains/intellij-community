@@ -53,7 +53,7 @@ public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
     DataContext ctx = e.getDataContext();
     boolean available = Optional.ofNullable(LangDataKeys.IDE_VIEW.getData(ctx))
       .map(view -> getTargetDirectory(ctx, view))
-      .filter(dir -> PsiUtil.isLanguageLevel9OrHigher(dir) && JavaDirectoryService.getInstance().isSourceRoot(dir))
+      .filter(dir -> JavaDirectoryService.getInstance().isSourceRoot(dir) && PsiUtil.isLanguageLevel9OrHigher(dir))
       .map(ModuleUtilCore::findModuleForPsiElement)
       .map(module -> FilenameIndex.getVirtualFilesByName(module.getProject(), MODULE_INFO_FILE, new ModulesScope(module)).isEmpty())
       .orElse(false);

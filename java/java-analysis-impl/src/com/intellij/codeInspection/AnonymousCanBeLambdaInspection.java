@@ -142,6 +142,44 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
     return checker.hasForbiddenRefs();
   }
 
+  private static PsiType getInferredType(PsiAnonymousClass aClass, PsiMethod method) {
+    final PsiExpression expression = (PsiExpression)aClass.getParent();
+    final PsiType psiType = PsiTypesUtil.getExpectedTypeByParent(expression);
+    if (psiType != null) {
+      return psiType;
+    }
+
+    PsiExpression topExpr = expression;
+    while (topExpr.getParent() instanceof PsiParenthesizedExpression) {
+      topExpr = (PsiExpression)topExpr.getParent();
+    }
+
+    final PsiCall call = LambdaUtil.treeWalkUp(topExpr);
+    if (call != null && call.resolveMethod() != null) {
+      final int offsetInTopCall = aClass.getTextRange().getStartOffset() - call.getTextRange().getStartOffset();
+      PsiCall copyCall = LambdaUtil.copyTopLevelCall(call);
+      if (copyCall == null) return null;
+      final PsiAnonymousClass classArg = PsiTreeUtil.getParentOfType(copyCall.findElementAt(offsetInTopCall), PsiAnonymousClass.class);
+      if (classArg != null) {
+        PsiExpression lambda = JavaPsiFacade.getElementFactory(aClass.getProject())
+          .createExpressionFromText(ReplaceWithLambdaFix.composeLambdaText(method), expression);
+        lambda = (PsiExpression)classArg.getParent().replace(lambda);
+        ((PsiLambdaExpression)lambda).getBody().replace(method.getBody());
+        final PsiType interfaceType;
+        if (copyCall.resolveMethod() == null) {
+          return PsiType.NULL;
+        }
+        else {
+          interfaceType = ((PsiLambdaExpression)lambda).getFunctionalInterfaceType();
+        }
+
+        return interfaceType;
+      }
+    }
+
+    return PsiType.NULL;
+  }
+
   public static boolean canBeConvertedToLambda(PsiAnonymousClass aClass,
                                                boolean acceptParameterizedFunctionTypes,
                                                @NotNull Set<String> ignoredRuntimeAnnotations) {
@@ -163,16 +201,22 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
       if (interfaceMethod != null && (acceptParameterizedFunctionTypes || !interfaceMethod.hasTypeParameters())) {
         final PsiMethod[] methods = aClass.getMethods();
-        if (methods.length == 1 && 
-            aClass.getFields().length == 0 && 
-            aClass.getInnerClasses().length == 0 && 
+        if (methods.length == 1 &&
+            aClass.getFields().length == 0 &&
+            aClass.getInnerClasses().length == 0 &&
             aClass.getInitializers().length == 0) {
           final PsiMethod method = methods[0];
-          return method.getBody() != null &&
-                 method.getDocComment() == null &&
-                 !hasRuntimeAnnotations(method, ignoredRuntimeAnnotations) &&
-                 !method.hasModifierProperty(PsiModifier.SYNCHRONIZED) &&
-                 !hasForbiddenRefsInsideBody(method, aClass);
+          if (method.getBody() != null &&
+              method.getDocComment() == null &&
+              !hasRuntimeAnnotations(method, ignoredRuntimeAnnotations) &&
+              !method.hasModifierProperty(PsiModifier.SYNCHRONIZED) &&
+              !hasForbiddenRefsInsideBody(method, aClass)) {
+            final PsiType inferredType = getInferredType(aClass, method);
+            if (inferredType == null) {
+              return false;
+            }
+            return true;
+          }
         }
       }
     }

@@ -67,7 +67,7 @@ public abstract class CachedEvaluator {
   protected Cache initEvaluatorAndChildrenExpression(final Project project) {
     final Cache cache = new Cache();
     try {
-      Pair<PsiClass, PsiType> psiClassAndType = DebuggerUtilsImpl.getPsiClassAndType(getClassName(), project);
+      Pair<PsiElement, PsiType> psiClassAndType = DebuggerUtilsImpl.getPsiClassAndType(getClassName(), project);
       if (psiClassAndType.first == null) {
         throw EvaluateExceptionUtil.CANNOT_FIND_SOURCE_CLASS;
       }

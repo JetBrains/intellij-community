@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide;
+package com.jetbrains.python.sdk.flavors;
 
-public abstract class SelectInTargetBase implements SelectInTarget {
-  @Override
-  public String getToolWindowId() {
-    return null;
-  }
+import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.Nullable;
 
-  @Override
-  public String getMinorViewId() {
-    return null;
-  }
+/**
+ * @author traff
+ */
+public interface PythonFlavorProvider {
+  ExtensionPointName<PythonFlavorProvider> EP_NAME = ExtensionPointName.create("Pythonid.pythonFlavorProvider");
 
-  @Override
-  public float getWeight() {
-    return 0;
-  }
+  @Nullable
+  PythonSdkFlavor getFlavor(boolean platformIndependent);
 }

@@ -36,6 +36,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.ClickListener;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
@@ -108,7 +109,7 @@ public abstract class XDebuggerEditorBase {
 
   private ListPopup createLanguagePopup() {
     DefaultActionGroup actions = new DefaultActionGroup();
-    for (final Language language : getEditorsProvider().getSupportedLanguages(myProject, mySourcePosition)) {
+    for (Language language : getSupportedLanguages()) {
       //noinspection ConstantConditions
       actions.add(new AnAction(language.getDisplayName(), null, language.getAssociatedFileType().getIcon()) {
         @Override
@@ -124,6 +125,17 @@ public abstract class XDebuggerEditorBase {
     return JBPopupFactory.getInstance().createActionGroupPopup("Choose Language", actions, dataContext,
                                                                JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
                                                                false);
+  }
+
+  @NotNull
+  private Collection<Language> getSupportedLanguages() {
+    XDebuggerEditorsProvider editorsProvider = getEditorsProvider();
+    if (myContext != null && editorsProvider instanceof XDebuggerEditorsProviderBase) {
+      return ((XDebuggerEditorsProviderBase)editorsProvider).getSupportedLanguages(myContext);
+    }
+    else {
+      return editorsProvider.getSupportedLanguages(myProject, mySourcePosition);
+    }
   }
 
   protected JPanel decorate(JComponent component, boolean multiline, boolean showEditor) {
@@ -182,7 +194,10 @@ public abstract class XDebuggerEditorBase {
     }
     Language language = text.getLanguage();
     if (language == null) {
-      if (mySourcePosition != null) {
+      if (myContext != null) {
+        language = myContext.getLanguage();
+      }
+      if (language == null && mySourcePosition != null) {
         language = LanguageUtil.getFileLanguage(mySourcePosition.getFile());
       }
       if (language == null) {
@@ -191,7 +206,7 @@ public abstract class XDebuggerEditorBase {
       text = new XExpressionImpl(text.getExpression(), language, text.getCustomInfo(), text.getMode());
     }
 
-    Collection<Language> languages = getEditorsProvider().getSupportedLanguages(myProject, mySourcePosition);
+    Collection<Language> languages = getSupportedLanguages();
     boolean many = languages.size() > 1;
 
     if (language != null) {
@@ -201,7 +216,9 @@ public abstract class XDebuggerEditorBase {
     //myChooseFactory.setEnabled(many && languages.contains(language));
 
     if (language != null && language.getAssociatedFileType() != null) {
-      Icon icon = language.getAssociatedFileType().getIcon();
+      LayeredIcon icon = new LayeredIcon(2);
+      icon.setIcon(language.getAssociatedFileType().getIcon(), 0);
+      icon.setIcon(AllIcons.General.Dropdown, 1, 3, 0);
       myChooseFactory.setIcon(icon);
       myChooseFactory.setDisabledIcon(IconLoader.getDisabledIcon(icon));
     }

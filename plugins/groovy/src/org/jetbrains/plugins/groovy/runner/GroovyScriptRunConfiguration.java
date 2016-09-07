@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyRunnerPsiUtil;
 
 import java.util.ArrayList;
@@ -257,6 +256,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     return null;
   }
 
+  @SuppressWarnings("Duplicates")
   @Nullable
   private static String getPathByElement(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
@@ -310,10 +310,10 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     }
     if (toRun instanceof GrTypeDefinition) {
       if (!GroovyRunnerPsiUtil.canBeRunByGroovy(toRun)) {
-        throw new RuntimeConfigurationWarning(GroovyBundle.message("class.can't be executed"));
+        throw new RuntimeConfigurationWarning(GroovyBundle.message("class.cannot.be.executed"));
       }
     }
-    else if (!(toRun instanceof GroovyScriptClass)) {
+    else {
       throw new RuntimeConfigurationWarning(GroovyBundle.message("script.file.is.not.groovy.file"));
     }
   }
