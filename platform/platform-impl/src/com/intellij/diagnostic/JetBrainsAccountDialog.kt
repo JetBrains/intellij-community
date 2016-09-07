@@ -27,7 +27,7 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.layout.*
 import com.intellij.ui.layout.CCFlags.*
 import com.intellij.ui.layout.LCFlags.*
-import org.jetbrains.io.encodeUrlQueryParameter
+import com.intellij.util.io.encodeUrlQueryParameter
 import java.awt.Component
 import javax.swing.JPasswordField
 import javax.swing.JTextField
