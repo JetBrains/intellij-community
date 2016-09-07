@@ -1674,12 +1674,14 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     private void scrollFromFile(@NotNull PsiFile file, @Nullable Editor editor) {
-      final MySelectInContext selectInContext = new MySelectInContext(file, editor);
+      PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> {
+        final MySelectInContext selectInContext = new MySelectInContext(file, editor);
 
-      final SelectInTarget target = mySelectInTargets.get(getCurrentViewId());
-      if (target != null && target.canSelect(selectInContext)) {
-        target.selectIn(selectInContext, false);
-      }
+        final SelectInTarget target = mySelectInTargets.get(getCurrentViewId());
+        if (target != null && target.canSelect(selectInContext)) {
+          target.selectIn(selectInContext, false);
+        }
+      });
     }
 
     @Override
@@ -1735,7 +1737,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         PsiElement e = null;
         if (myEditor != null) {
           final int offset = myEditor.getCaretModel().getOffset();
-          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+          if (PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments()) {
+            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+          }
           e = getPsiFile().findElementAt(offset);
         }
         if (e == null) {

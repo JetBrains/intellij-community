@@ -20,6 +20,8 @@ import com.intellij.ide.impl.ProjectPaneSelectInTarget;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
@@ -32,6 +34,15 @@ public class SelectInProjectViewAction extends DumbAwareAction {
     if (context != null) {
       target.selectIn(context, true);
     }
+  }
+
+  @Override
+  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    if (project != null) {
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
+    }
+    super.beforeActionPerformedUpdate(e);
   }
 
   @Override
