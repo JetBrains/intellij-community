@@ -50,7 +50,7 @@ import java.util.function.Function;
  * @author cdr
  */
 public class UnusedPropertyInspection extends PropertySuppressableInspectionBase implements ResourceBundleEditorInspection {
-  private final static Logger LOG = Logger.getInstance(UnusedPropertyInspection.class);
+  private static final Logger LOG = Logger.getInstance(UnusedPropertyInspection.class);
 
   @Override
   @NotNull
@@ -147,20 +147,21 @@ public class UnusedPropertyInspection extends PropertySuppressableInspectionBase
       if (name == null) return true;
     }
 
-    if (mayHaveUsages(property, original, name, helper.getOwnUseScope(), helper, isOnTheFly)) return true;
+    PsiSearchHelper searchHelper = helper.getSearchHelper();
+    if (mayHaveUsages(property, name, searchHelper, helper.getOwnUseScope(), isOnTheFly, original)) return true;
 
     final GlobalSearchScope widerScope = getWidestUseScope(property.getKey(), property.getProject(), helper.getModule());
-    if (widerScope != null && mayHaveUsages(property, original, name, widerScope, helper, isOnTheFly)) return true;
+    if (widerScope != null && mayHaveUsages(property, name, searchHelper, widerScope, isOnTheFly, original)) return true;
     return false;
   }
 
-  private static boolean mayHaveUsages(Property property,
-                                       ProgressIndicator original,
-                                       String name,
-                                       GlobalSearchScope searchScope,
-                                       @NotNull UnusedPropertiesSearchHelper helper,
-                                       boolean onTheFly) {
-    PsiSearchHelper.SearchCostResult cheapEnough = helper.getSearchHelper().isCheapEnoughToSearch(name, searchScope, null, original);
+  private static boolean mayHaveUsages(@NotNull PsiElement property,
+                                       @NotNull String name,
+                                       @NotNull PsiSearchHelper psiSearchHelper,
+                                       @NotNull GlobalSearchScope searchScope,
+                                       boolean onTheFly,
+                                       @Nullable ProgressIndicator indicator) {
+    PsiSearchHelper.SearchCostResult cheapEnough = psiSearchHelper.isCheapEnoughToSearch(name, searchScope, null, indicator);
     if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) return false;
     if (onTheFly && cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return true;
 
@@ -168,17 +169,16 @@ public class UnusedPropertyInspection extends PropertySuppressableInspectionBase
   }
 
   private static class UnusedPropertiesSearchHelper {
-
     private final GlobalSearchScope myOwnUseScope;
     private final Module myModule;
     private final PropertySearcher mySearcher;
     private final PsiSearchHelper mySearchHelper;
 
-    public UnusedPropertiesSearchHelper(Module module) {
+    UnusedPropertiesSearchHelper(Module module) {
       myOwnUseScope = GlobalSearchScope.moduleWithDependentsScope(module);
       myModule = module;
       mySearcher = (PropertySearcher)ContainerUtil.find(Extensions.getExtensions("com.intellij.referencesSearch"),
-                                                        new FilteringIterator.InstanceOf<PropertySearcher>(PropertySearcher.class));
+                                                        new FilteringIterator.InstanceOf<>(PropertySearcher.class));
       mySearchHelper = PsiSearchHelper.SERVICE.getInstance(module.getProject());
     }
 
@@ -186,7 +186,7 @@ public class UnusedPropertyInspection extends PropertySuppressableInspectionBase
       return myModule;
     }
 
-    public GlobalSearchScope getOwnUseScope() {
+    GlobalSearchScope getOwnUseScope() {
       return myOwnUseScope;
     }
 
@@ -194,7 +194,7 @@ public class UnusedPropertyInspection extends PropertySuppressableInspectionBase
       return mySearcher;
     }
 
-    public PsiSearchHelper getSearchHelper() {
+    PsiSearchHelper getSearchHelper() {
       return mySearchHelper;
     }
   }
