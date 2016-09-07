@@ -204,16 +204,16 @@ public class PsiTreeUtil {
   }
 
   @Nullable
+  @Contract("null, _ -> null")
   public static <T extends PsiElement> T findChildOfType(@Nullable final PsiElement element, @NotNull final Class<T> aClass) {
-    //noinspection unchecked
     return findChildOfAnyType(element, true, aClass);
   }
 
   @Nullable
+  @Contract("null, _, _ -> null")
   public static <T extends PsiElement> T findChildOfType(@Nullable final PsiElement element,
                                                          @NotNull final Class<T> aClass,
                                                          final boolean strict) {
-    //noinspection unchecked
     return findChildOfAnyType(element, strict, aClass);
   }
 
