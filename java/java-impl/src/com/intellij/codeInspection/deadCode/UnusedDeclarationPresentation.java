@@ -192,7 +192,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @Override
-  public QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements, InspectionTree tree) {
+  public QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements, @Nullable InspectionTree tree) {
     boolean showFixes = false;
     for (RefEntity element : refElements) {
       if (!getIgnoredRefElements().contains(element) && element.isValid()) {
@@ -202,7 +202,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     }
 
     if (showFixes) {
-      final TreePath[] paths = tree.getSelectionPaths();
+      final TreePath[] paths = tree != null ? tree.getSelectionPaths() : null;
       if (paths != null) {
         long count = Arrays.stream(paths).map(TreePath::getLastPathComponent)
           .filter(component -> component instanceof ProblemDescriptionNode).count();
