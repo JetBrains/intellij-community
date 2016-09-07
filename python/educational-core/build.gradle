@@ -37,8 +37,7 @@ subprojects {
     version ideaVersion
     updateSinceUntilBuild Boolean.valueOf(updateBuildNumber)
     downloadSources Boolean.valueOf(downloadIdeaSources)
-//    sandboxDirectory = new File(rootProject.projectDir, "gradleBuild/idea-sandbox")
-    sandboxDirectory = new File("/home/user/.IntelliJIdea2016.2/system/plugins-sandbox")
+    sandboxDirectory = new File(rootProject.projectDir, "gradleBuild/idea-sandbox")
   }
 
   processResources {

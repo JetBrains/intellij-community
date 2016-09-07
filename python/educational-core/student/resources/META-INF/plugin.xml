@@ -7,7 +7,7 @@
   <description><![CDATA[
       Educational plugin core for students. 
       ]]></description>
-  <vendor email="petr.bogdanov@stepik.org" url="http://www.stepik.org">Stepik.org</vendor>
+  <vendor>JetBrains</vendor>
 
   <change-notes><![CDATA[
 
