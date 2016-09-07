@@ -131,6 +131,10 @@ public class ProtocolParser {
     return threadingEvent;
   }
 
+  public static boolean parseInputCommand(String payload) throws PyDebuggerException {
+    return payload.equals("True");
+  }
+
   public static String parseSourceContent(String payload) throws PyDebuggerException {
     return payload;
   }

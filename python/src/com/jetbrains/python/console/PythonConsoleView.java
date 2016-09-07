@@ -142,6 +142,13 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     }
   }
 
+  public void inputReceived() {
+    // If user's input was entered while debug console was turned off, we shouldn't wait for it anymore
+    if (myExecuteActionHandler != null) {
+      myExecuteActionHandler.inputReceived();
+    }
+  }
+
   @Override
   public void requestFocus() {
     IdeFocusManager.findInstance().requestFocus(getConsoleEditor().getContentComponent(), true);

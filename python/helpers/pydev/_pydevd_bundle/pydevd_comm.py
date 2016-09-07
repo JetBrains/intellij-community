@@ -792,9 +792,9 @@ class NetCommandFactory:
         except:
             return self.make_error_message(0, get_exception_traceback_str())
 
-    def make_input_requested_message(self):
+    def make_input_requested_message(self, started):
         try:
-            return NetCommand(CMD_INPUT_REQUESTED, 0, '')
+            return NetCommand(CMD_INPUT_REQUESTED, 0, started)
         except:
             return self.make_error_message(0, get_exception_traceback_str())
 
