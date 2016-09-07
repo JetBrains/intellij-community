@@ -8,8 +8,8 @@ class T {
         if (a != 0) {
             n = a;
             n = 31 * x + n;
-            n = 31 * y + n;
+            return 31 * y + n;
         }
-        re<caret>turn n;
+        return n;
     }
 }

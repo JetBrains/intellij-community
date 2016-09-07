@@ -383,8 +383,7 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
       PsiJavaToken rBrace = codeBlock.getRBrace();
       if (rBrace != null) {
         PsiStatement lastNonEmptyStatement = getPrevNonEmptyStatement(rBrace, removeCompletely);
-        if (lastNonEmptyStatement == null ||
-            isIfBranch(codeBlock) && hasChainedAssignmentsInScope(flow, resultVariable, lastNonEmptyStatement)) {
+        if (lastNonEmptyStatement == null) {
           return false;
         }
         if (moveTo(lastNonEmptyStatement, returnAtTheEnd)) {
@@ -506,11 +505,6 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
     private static boolean isAlwaysTrue(@Nullable PsiExpression condition, boolean nullIsTrue) {
       if(condition == null) return nullIsTrue;
       return ExpressionUtils.computeConstantExpression(condition) == Boolean.TRUE;
-    }
-
-    private static boolean isIfBranch(@NotNull PsiCodeBlock codeBlock) {
-      final PsiElement parent = codeBlock.getParent();
-      return parent instanceof PsiBlockStatement && parent.getParent() instanceof PsiIfStatement;
     }
 
     private Set<PsiBreakStatement> getBreaks(@NotNull PsiStatement targetStatement) {
