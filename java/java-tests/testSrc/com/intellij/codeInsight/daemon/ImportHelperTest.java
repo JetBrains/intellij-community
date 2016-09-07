@@ -20,9 +20,9 @@ import com.intellij.codeInsight.daemon.impl.DaemonListeners;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
-import com.intellij.codeInsight.generation.actions.CommentByBlockCommentAction;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -306,8 +306,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
 
       assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
 
-      CommentByBlockCommentAction action = new CommentByBlockCommentAction();
-      action.actionPerformedImpl(getProject(), getEditor());
+      EditorTestUtil.executeAction(getEditor(), IdeActions.ACTION_COMMENT_BLOCK);
 
       assertEmpty(highlightErrors());
 

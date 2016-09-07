@@ -436,7 +436,7 @@ public class PlatformTestUtil {
     final Presentation presentation = new Presentation();
     @SuppressWarnings("deprecation") final DataContext context = DataManager.getInstance().getDataContext();
     final AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", context);
-    action.update(event);
+    action.beforeActionPerformedUpdate(event);
     Assert.assertTrue(presentation.isEnabled());
     action.actionPerformed(event);
   }
