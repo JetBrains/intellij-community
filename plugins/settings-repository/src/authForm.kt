@@ -25,8 +25,8 @@ import com.intellij.ui.layout.*
 import com.intellij.ui.layout.CCFlags.*
 import com.intellij.ui.layout.LCFlags.*
 import com.intellij.util.PathUtilRt
-import com.intellij.util.nullize
-import com.intellij.util.trimMiddle
+import com.intellij.util.text.nullize
+import com.intellij.util.text.trimMiddle
 import javax.swing.JPasswordField
 import javax.swing.JTextField
 import javax.swing.event.DocumentEvent

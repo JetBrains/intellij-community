@@ -19,7 +19,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.io.toByteArray
-import com.intellij.util.nullize
+import com.intellij.util.text.nullize
 import com.intellij.util.text.CharArrayCharSequence
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
