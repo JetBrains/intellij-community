@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
@@ -527,6 +528,13 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     else {
       myPointers.get(listener).checkConsistency();
     }
+  }
+
+  @Override
+  public long getModificationCount() {
+    // depend on PersistentFS.getInstance().getStructureModificationCount() because com.intellij.openapi.vfs.impl.FilePointerPartNode.update is
+    // depend on its own modcount because we need to change both before and after VFS changes
+    return super.getModificationCount() + PersistentFS.getInstance().getStructureModificationCount();
   }
 
   private static class DelegatingDisposable implements Disposable {

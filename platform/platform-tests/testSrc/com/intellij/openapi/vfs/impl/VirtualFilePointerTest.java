@@ -23,7 +23,11 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -791,5 +795,46 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     createChildDirectory(root, "dir1");
     assertEquals(dir2, p1.getFile());
     assertEquals(dir2, p2.getFile());
+  }
+
+  public void testVirtualPointersMustBeAlreadyUpToDateInVFSChangeListeners() throws IOException {
+    File tempDirectory = createTempDirectory();
+    final VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory);
+
+    VirtualFile dir1 = createChildDirectory(root, "dir1");
+    VirtualFile file = createChildData(dir1, "x.txt");
+    setFileText(file, "xxxxxx");
+
+    PsiTestUtil.addLibrary(getModule(), dir1.getPath());
+
+    VirtualFileAdapter listener = new VirtualFileAdapter() {
+      @Override
+      public void fileDeleted(@NotNull VirtualFileEvent event) {
+        ProjectRootManager.getInstance(getProject()).getFileIndex().getModuleForFile(dir1);
+      }
+    };
+    LocalFileSystem.getInstance().addVirtualFileListener(listener);
+    Disposer.register(disposable, () -> LocalFileSystem.getInstance().removeVirtualFileListener(listener));
+
+    assertTrue(FileUtil.delete(new File(dir1.getPath())));
+    System.out.println("deleted "+dir1);
+
+    try {
+      while (root.findChild("dir1") != null) {
+        UIUtil.dispatchAllInvocationEvents();
+        LocalFileSystem.getInstance().refresh(false);
+      }
+    }
+    finally {
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        Library library = LibraryUtil.findLibrary(getModule(), "dir1");
+        LibraryTable.ModifiableModel model = library.getTable().getModifiableModel();
+        model.removeLibrary(library);
+        model.commit();
+      });
+
+
+      PsiTestUtil.removeAllRoots(getModule(), null);
+    }
   }
 }
