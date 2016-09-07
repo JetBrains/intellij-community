@@ -60,20 +60,48 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
       final PsiCodeBlock returnScope = (PsiCodeBlock)returnParent;
       final PsiStatement[] statements = returnScope.getStatements();
       if (statements.length != 0 && statements[statements.length - 1] == returnStatement) {
-        PsiStatement refactoredStatement = getPrevNonEmptyStatement(returnStatement, null);
-        if (refactoredStatement != null) {
-          final PsiExpression returnValue = returnStatement.getReturnValue();
-          if (returnValue instanceof PsiReferenceExpression) {
-            final PsiElement resolved = ((PsiReferenceExpression)returnValue).resolve();
-            if (resolved instanceof PsiVariable) {
-              final PsiVariable returnedVariable = (PsiVariable)resolved;
-              final PsiCodeBlock variableScope = getVariableScopeBlock(returnedVariable);
-              if (variableScope != null) {
-                return new ReturnContext(returnStatement, returnScope, refactoredStatement, returnedVariable, variableScope);
+        final PsiType returnType = getReturnType(returnScope);
+        if (returnType != null) {
+          PsiStatement refactoredStatement = getPrevNonEmptyStatement(returnStatement, null);
+          if (refactoredStatement != null) {
+            final PsiExpression returnValue = returnStatement.getReturnValue();
+            if (returnValue instanceof PsiReferenceExpression) {
+              final PsiElement resolved = ((PsiReferenceExpression)returnValue).resolve();
+              if (resolved instanceof PsiVariable) {
+                final PsiVariable returnedVariable = (PsiVariable)resolved;
+                final PsiCodeBlock variableScope = getVariableScopeBlock(returnedVariable);
+                if (variableScope != null) {
+                  return new ReturnContext(returnStatement, returnScope, returnType, refactoredStatement, returnedVariable, variableScope);
+                }
               }
             }
           }
         }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiType getReturnType(PsiCodeBlock returnScope) {
+    NavigatablePsiElement returnFrom = PsiTreeUtil.getNonStrictParentOfType(returnScope, PsiMethod.class, PsiLambdaExpression.class);
+    if (returnFrom instanceof PsiMethod) {
+      return ((PsiMethod)returnFrom).getReturnType();
+    }
+    if (returnFrom instanceof PsiLambdaExpression) {
+      return getNonParametrizedReturnType((PsiLambdaExpression)returnFrom);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiType getNonParametrizedReturnType(PsiLambdaExpression lambdaExpression) {
+    final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(lambdaExpression.getFunctionalInterfaceType());
+    if (interfaceMethod != null) {
+      final PsiType returnType = interfaceMethod.getReturnType();
+      if (returnType instanceof PsiPrimitiveType ||
+          returnType instanceof PsiClassType && ((PsiClassType)returnType).getParameterCount() == 0) {
+        return returnType;
       }
     }
     return null;
@@ -176,7 +204,7 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
       return false;
     }
 
-    Mover mover = new Mover(flow, context.refactoredStatement, context.returnedVariable, true);
+    Mover mover = new Mover(flow, context.refactoredStatement, context.returnedVariable, context.returnType, true);
     mover.moveTo(context.refactoredStatement, true);
     return !mover.isEmpty();
   }
@@ -186,7 +214,7 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
     if (context != null) {
       ControlFlow flow = createControlFlow(context);
       if (flow != null) {
-        Mover mover = new Mover(flow, context.refactoredStatement, context.returnedVariable, false);
+        Mover mover = new Mover(flow, context.refactoredStatement, context.returnedVariable, context.returnType, false);
         boolean removeReturn = mover.moveTo(context.refactoredStatement, true);
         if (!mover.isEmpty()) {
           applyChanges(mover, context, removeReturn);
@@ -277,6 +305,7 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
     final ControlFlow flow;
     final PsiStatement enclosingStatement;
     final PsiVariable resultVariable;
+    final PsiType returnType;
     final boolean checkingApplicability;
     final Set<PsiElement> insertBefore = new THashSet<>();
     final Set<PsiElement> replaceInline = new THashSet<>();
@@ -287,10 +316,11 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
     private Mover(@NotNull ControlFlow flow,
                   @NotNull PsiStatement enclosingStatement,
                   @NotNull PsiVariable resultVariable,
-                  boolean checkingApplicability) {
+                  PsiType returnType, boolean checkingApplicability) {
       this.flow = flow;
       this.enclosingStatement = enclosingStatement;
       this.resultVariable = resultVariable;
+      this.returnType = returnType;
       this.checkingApplicability = checkingApplicability;
     }
 
@@ -437,8 +467,14 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
         PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
         PsiExpression lExpression = assignmentExpression.getLExpression();
         if (assignmentExpression.getOperationTokenType() == JavaTokenType.EQ && isReferenceTo(lExpression, resultVariable)) {
-          replaceInline.add(assignmentExpression);
-          return true;
+          PsiExpression rExpression = assignmentExpression.getRExpression();
+          if (rExpression != null) {
+            PsiType rExpressionType = rExpression.getType();
+            if (rExpressionType != null && returnType.isAssignableFrom(rExpressionType)) {
+              replaceInline.add(assignmentExpression);
+              return true;
+            }
+          }
         }
       }
       return false;
@@ -564,20 +600,23 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
   }
 
   private static class ReturnContext {
-    private final PsiReturnStatement returnStatement;
-    private final PsiCodeBlock returnScope;
-    private final PsiStatement refactoredStatement;
-    private final PsiVariable returnedVariable;
-    private final PsiCodeBlock variableScope;
+    final PsiReturnStatement returnStatement;
+    final PsiCodeBlock returnScope;
+    final PsiType returnType;
+    final PsiStatement refactoredStatement;
+    final PsiVariable returnedVariable;
+    final PsiCodeBlock variableScope;
 
     private ReturnContext(@NotNull PsiReturnStatement returnStatement,
                           @NotNull PsiCodeBlock returnScope,
+                          @NotNull PsiType returnType,
                           @NotNull PsiStatement refactoredStatement,
                           @NotNull PsiVariable returnedVariable,
                           @NotNull PsiCodeBlock variableScope) {
 
       this.returnStatement = returnStatement;
       this.returnScope = returnScope;
+      this.returnType = returnType;
       this.refactoredStatement = refactoredStatement;
       this.returnedVariable = returnedVariable;
       this.variableScope = variableScope;

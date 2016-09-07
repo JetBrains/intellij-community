@@ -132,6 +132,14 @@ public class ReturnSeparatedFromComputationTest extends LightCodeInsightFixtureT
     doTest();
   }
 
+  public void testGenericTypeCompatible() {
+    doTest();
+  }
+
+  public void testGenericTypeIncompatible() {
+    doTest();
+  }
+
 
   private void doTest() {
     myFixture.enableInspections(new ReturnSeparatedFromComputationInspection());

@@ -1,6 +1,6 @@
 // "Move 'return' closer to computation of the value of 's'" "true"
 class T {
-    int f(String a) {
+    String f(String a) {
         String s = a;
         if (s == null) {
             s = ""; // end of line
