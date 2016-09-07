@@ -18,8 +18,10 @@ package org.jetbrains.plugins.groovy.lang.resolve
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiType
+import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 
+@CompileStatic
 class StaticCompileTypeInferenceTest extends TypeInferenceTestBase {
 
   void testExplicitFieldType() {
@@ -66,5 +68,18 @@ class Foo {
     final PsiType type = ref.type
     assertTrue(type instanceof PsiClassType)
     assertTrue(type.canonicalText == CommonClassNames.JAVA_LANG_OBJECT)
+  }
+
+  void 'test variable type'() {
+    final GrReferenceExpression ref = configureByText('''\
+@groovy.transform.CompileStatic
+class Foo {
+  def foo() {
+    List<Object> ll = ["a"]
+    l<caret>l
+  }
+}
+''').element as GrReferenceExpression
+    assert ref.type.canonicalText == 'java.util.List<java.lang.Object>'
   }
 }
