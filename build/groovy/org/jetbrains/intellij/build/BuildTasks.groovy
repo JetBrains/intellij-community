@@ -15,8 +15,13 @@
  */
 package org.jetbrains.intellij.build
 
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import org.codehaus.gant.GantBinding
 import org.jetbrains.intellij.build.impl.BuildTasksImpl
+import org.jetbrains.intellij.build.impl.BuildUtils
+import org.jetbrains.jps.gant.JpsGantTool
+import org.jetbrains.jps.idea.IdeaProjectLoader
 
 /**
  * @author nik
@@ -69,5 +74,27 @@ abstract class BuildTasks {
 
   static BuildTasks create(BuildContext context) {
     return new BuildTasksImpl(context)
+  }
+
+  /**
+   * Produces distributions for all operating systems. This method must be invoked from a gant script.
+   * @param productPropertiesClassName qualified name of a Groovy class which extends {@link ProductProperties} and describes the product.
+   * The class must have single constructor with single {@code projectHome} parameter of type {@code String}.
+   * @param groovyRootRelativePaths paths to root folders containing {@code productPropertiesClassName} and required classes, relative to project home
+   * @param communityHomeRelativePath path to a directory containing sources from idea/community Git repository relative to project home
+   */
+  @CompileDynamic
+  static void buildProduct(String productPropertiesClassName, List<String> groovyRootRelativePaths, String communityHomeRelativePath, Script gantScript,
+                           ProprietaryBuildTools proprietaryBuildTools = ProprietaryBuildTools.DUMMY) {
+    String projectHome = IdeaProjectLoader.guessHome(gantScript)
+    GantBinding binding = (GantBinding)gantScript.binding
+    groovyRootRelativePaths.each {
+      BuildUtils.addToClassPath("$projectHome/$it", binding.ant)
+    }
+    binding.includeTool << JpsGantTool
+    ProductProperties productProperties = (ProductProperties) Class.forName(productPropertiesClassName).constructors[0].newInstance(projectHome)
+    def context = BuildContext.createContext(binding.ant, binding.projectBuilder, binding.project, binding.global,
+                                             "$projectHome/$communityHomeRelativePath", projectHome, productProperties, proprietaryBuildTools)
+    create(context).compileModulesAndBuildDistributions()
   }
 }
