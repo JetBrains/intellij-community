@@ -23,6 +23,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
@@ -75,7 +76,7 @@ public abstract class CodeInsightAction extends AnAction {
   public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project != null) {
-      getEditor(e.getDataContext(), project, false); // ensure documents are committed
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
     }
     super.beforeActionPerformedUpdate(e);
   }

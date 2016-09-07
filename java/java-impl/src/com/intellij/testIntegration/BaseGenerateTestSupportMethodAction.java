@@ -39,7 +39,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,8 +113,6 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
   @Override
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (file instanceof PsiCompiledElement) return false;
-
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     PsiClass targetClass = getTargetClass(editor, file);
     return targetClass != null && isValidForClass(targetClass);
