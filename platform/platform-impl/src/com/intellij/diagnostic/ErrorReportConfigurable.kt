@@ -19,7 +19,7 @@ import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.components.*
-import com.intellij.util.decodeBase64
+import com.intellij.util.io.decodeBase64
 
 @State(name = "ErrorReportConfigurable", storages = arrayOf(Storage(value = "other.xml", deprecated = true, roamingType = RoamingType.DISABLED)))
 internal class ErrorReportConfigurable : PersistentStateComponent<OldState> {
