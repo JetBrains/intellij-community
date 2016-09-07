@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -103,10 +105,14 @@ public class JavaLanguageLevelPusher implements FilePropertyPusher<LanguageLevel
     oStream.close();
 
     for (VirtualFile child : fileOrDir.getChildren()) {
-      if (!child.isDirectory() && StdFileTypes.JAVA.equals(child.getFileType())) {
+      if (!child.isDirectory() && isJavaLike(child.getFileType())) {
         PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(child);
       }
     }
+  }
+
+  private static boolean isJavaLike(FileType type) {
+    return type instanceof LanguageFileType && ((LanguageFileType)type).getLanguage().isKindOf(JavaLanguage.INSTANCE);
   }
 
   @Override
