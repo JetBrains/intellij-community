@@ -441,19 +441,23 @@ public class SMTestProxy extends AbstractTestProxy {
 
   public void setTestFailed(@NotNull String localizedMessage, @Nullable String stackTrace, boolean testError) {
     setStacktraceIfNotSet(stackTrace);
+    TestFailedState failedState = new TestFailedState(localizedMessage, stackTrace);
     if (myState instanceof TestComparisionFailedState) {
       CompoundTestFailedState states = new CompoundTestFailedState(localizedMessage, stackTrace);
       states.addFailure((TestFailedState)myState);
-      final TestFailedState failedState = new TestFailedState(localizedMessage, stackTrace);
       states.addFailure(failedState);
       fireOnNewPrintable(failedState);
       myState = states;
+    }
+    else if (myState instanceof CompoundTestFailedState) {
+      ((CompoundTestFailedState)myState).addFailure(failedState);
+      fireOnNewPrintable(failedState);
     }
     else if (myState instanceof TestFailedState) {
       ((TestFailedState)myState).addError(localizedMessage, stackTrace, myPrinter);
     }
     else {
-      myState = testError ? new TestErrorState(localizedMessage, stackTrace) : new TestFailedState(localizedMessage, stackTrace);
+      myState = testError ? new TestErrorState(localizedMessage, stackTrace) : failedState;
       fireOnNewPrintable(myState);
     }
   }
