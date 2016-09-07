@@ -64,6 +64,9 @@ public class LeakHunter {
       if (!visited.add(System.identityHashCode(root))) continue;
       if (MOCKING_SUPPORT_CLASSES.contains(root.getClass().getName())) continue;
 
+      // Android Studio: ignore ProxyUtil and its proxy cache from the traversal.
+      if (root instanceof Class && "com.android.tools.idea.gradle.util.ProxyUtil".equals(((Class)root).getName())) continue;
+
       DebugReflectionUtil.processStronglyReferencedValues(root, new PairProcessor<Object, Field>() {
         @Override
         public boolean process(Object value, Field field) {
