@@ -19,14 +19,14 @@ import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.passwordSafe.PasswordSafe
-import com.intellij.layout.*
-import com.intellij.layout.LCFlags.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.dialog
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ClickListener
+import com.intellij.ui.layout.*
+import com.intellij.ui.layout.LCFlags.*
 import com.intellij.util.net.HttpConfigurable
 import java.awt.Component
 import java.awt.Cursor
