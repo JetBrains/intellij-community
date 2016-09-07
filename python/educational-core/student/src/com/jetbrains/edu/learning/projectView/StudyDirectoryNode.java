@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.jetbrains.edu.learning.StudyTaskManager;
@@ -146,7 +147,10 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
       TaskFile taskFile = null;
       VirtualFile virtualFile =  null;
       for (PsiElement child : myValue.getChildren()) {
-        VirtualFile childFile = child.getContainingFile().getVirtualFile();
+        PsiFile contatingFile = child.getContainingFile();
+        //TODO fix step don't open by double click
+        if (contatingFile == null) break;
+        VirtualFile childFile = contatingFile.getVirtualFile();
         taskFile = StudyUtils.getTaskFile(myProject, childFile);
         if (taskFile != null) {
           virtualFile = childFile;

@@ -20,8 +20,8 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.BooleanFunction;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
-import com.jetbrains.edu.learning.stepic.CourseInfo;
-import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.stepik.CourseInfo;
+import com.jetbrains.edu.learning.stepik.StepicConnectorPost;
 import com.jetbrains.edu.learning.ui.StudyNewProjectPanel;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
@@ -169,7 +169,7 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator imp
       if (course.isAdaptive() && !enrolledCoursesIds.contains(course.getId())) {
         ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
           ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
-          return StudyUtils.execCancelable(() -> EduStepicConnector.enrollToCourse(course.getId()));
+          return StudyUtils.execCancelable(() -> StepicConnectorPost.enrollToCourse(course.getId()));
         }, "Creating Course", true, ProjectManager.getInstance().getDefaultProject());
 
       }

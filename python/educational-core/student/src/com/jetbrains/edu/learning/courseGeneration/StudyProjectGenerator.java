@@ -34,10 +34,9 @@ import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
-import com.jetbrains.edu.learning.stepic.CourseInfo;
-import com.jetbrains.edu.learning.stepic.EduStepicConnector;
-import com.jetbrains.edu.learning.stepic.StepicConnectorGet;
-import com.jetbrains.edu.learning.stepic.StepicUser;
+import com.jetbrains.edu.learning.stepik.CourseInfo;
+import com.jetbrains.edu.learning.stepik.StepikConnectorGet;
+import com.jetbrains.edu.learning.stepik.StepikUser;
 import org.apache.commons.codec.binary.Base64;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,10 +54,10 @@ public class StudyProjectGenerator {
   private static final Logger LOG = Logger.getInstance(StudyProjectGenerator.class.getName());
   private static final String COURSE_NAME_ATTRIBUTE = "name";
   private static final String COURSE_DESCRIPTION = "description";
-  private static final String CACHE_NAME = "courseNames.txt";
+  protected static final String CACHE_NAME = "courseNames.txt";
   private final List<SettingsListener> myListeners = ContainerUtil.newArrayList();
-  @Nullable public StepicUser myUser;
-  private List<CourseInfo> myCourses = new ArrayList<>();
+  @Nullable public StepikUser myUser;
+  protected List<CourseInfo> myCourses = new ArrayList<>();
   private List<Integer> myEnrolledCoursesIds = new ArrayList<>();
   protected CourseInfo mySelectedCourseInfo;
 
@@ -109,25 +108,25 @@ public class StudyProjectGenerator {
   @Nullable
   protected Course getCourse(@NotNull final Project project) {
 
-//    final File courseFile = new File(new File(OUR_COURSES_DIR, mySelectedCourseInfo.getName()), EduNames.COURSE_META_FILE);
-//    if (courseFile.exists()) {
-      //return readCourseFromCache(courseFile, false);
-//    }
-//    else if (myUser != null) {
-//      final File adaptiveCourseFile = new File(new File(OUR_COURSES_DIR, ADAPTIVE_COURSE_PREFIX +
-//                                                                         mySelectedCourseInfo.getName() + "_" +
-//                                                                         myUser.getEmail()), EduNames.COURSE_META_FILE);
-//      if (adaptiveCourseFile.exists()) {
-        //return readCourseFromCache(adaptiveCourseFile, true);
-//      }
-//    }
+    final File courseFile = new File(new File(OUR_COURSES_DIR, mySelectedCourseInfo.getName()), EduNames.COURSE_META_FILE);
+    if (courseFile.exists()) {
+      return readCourseFromCache(courseFile, false);
+    }
+    else if (myUser != null) {
+      final File adaptiveCourseFile = new File(new File(OUR_COURSES_DIR, ADAPTIVE_COURSE_PREFIX +
+                                                                         mySelectedCourseInfo.getName() + "_" +
+                                                                         myUser.getEmail()), EduNames.COURSE_META_FILE);
+      if (adaptiveCourseFile.exists()) {
+        return readCourseFromCache(adaptiveCourseFile, true);
+      }
+    }
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<Course, RuntimeException>() {
       @Override
       public Course compute() throws RuntimeException {
         ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
         return execCancelable(() -> {
 
-          final Course course = StepicConnectorGet.getCourse(project, mySelectedCourseInfo);
+          final Course course = StepikConnectorGet.getCourse(project, mySelectedCourseInfo);
           if (course != null) {
             flushCourse(project, course);
             course.initCourse(false);
@@ -139,11 +138,12 @@ public class StudyProjectGenerator {
   }
 
   @Nullable
-  private static Course readCourseFromCache(@NotNull File courseFile, boolean isAdaptive) {
+  protected static Course readCourseFromCache(@NotNull File courseFile, boolean isAdaptive) {
     Reader reader = null;
     try {
       reader = new InputStreamReader(new FileInputStream(courseFile), "UTF-8");
-      Gson gson = new GsonBuilder().registerTypeAdapter(Course.class, new StudySerializationUtils.Json.CourseTypeAdapter(courseFile)).create();
+      Gson gson =
+        new GsonBuilder().registerTypeAdapter(Course.class, new StudySerializationUtils.Json.CourseTypeAdapter(courseFile)).create();
       final Course course = gson.fromJson(reader, Course.class);
       course.initCourse(isAdaptive);
       return course;
@@ -372,7 +372,7 @@ public class StudyProjectGenerator {
       myCourses = getCoursesFromCache();
     }
     if (force || myCourses.isEmpty()) {
-      myCourses = execCancelable(EduStepicConnector::getCourses);
+      myCourses = execCancelable(StepikConnectorGet::getCourses);
       flushCache(myCourses);
     }
     if (myCourses.isEmpty()) {
@@ -381,7 +381,7 @@ public class StudyProjectGenerator {
     return myCourses;
   }
 
- @NotNull
+  @NotNull
   public List<CourseInfo> getCoursesUnderProgress(boolean force, @NotNull final String progressTitle, @NotNull final Project project) {
     try {
       return ProgressManager.getInstance()
@@ -540,13 +540,13 @@ public class StudyProjectGenerator {
         courseInfo.setName(courseName);
         courseInfo.setDescription(courseDescription);
         courseInfo.setType("pycharm " + language);
-        final ArrayList<StepicUser> authors = new ArrayList<>();
+        final ArrayList<StepikUser> authors = new ArrayList<>();
         for (JsonElement author : courseAuthors) {
           final JsonObject authorAsJsonObject = author.getAsJsonObject();
-          final StepicUser stepicUser = new StepicUser();
-          stepicUser.setFirstName(authorAsJsonObject.get("first_name").getAsString());
-          stepicUser.setLastName(authorAsJsonObject.get("last_name").getAsString());
-          authors.add(stepicUser);
+          final StepikUser stepikUser = new StepikUser();
+          stepikUser.setFirstName(authorAsJsonObject.get("first_name").getAsString());
+          stepikUser.setLastName(authorAsJsonObject.get("last_name").getAsString());
+          authors.add(stepikUser);
         }
         courseInfo.setAuthors(authors);
       }

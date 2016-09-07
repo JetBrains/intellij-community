@@ -25,9 +25,10 @@ public class Task implements StudyItem {
 
   // index is visible to user number of task from 1 to task number
   private int myIndex;
+  private int position;
   private StudyStatus myStatus = StudyStatus.Unchecked;
 
-  @Expose private int myStepicId;
+  @Expose private int myStepikId;
 
   @Expose
   @SerializedName("task_files")
@@ -200,12 +201,12 @@ public class Task implements StudyItem {
     return result;
   }
 
-  public void setStepicId(int stepicId) {
-    myStepicId = stepicId;
+  public void setStepikId(int stepikId) {
+    myStepikId = stepikId;
   }
 
-  public int getStepicId() {
-    return myStepicId;
+  public int getStepikId() {
+    return myStepikId;
   }
 
   public StudyStatus getStatus() {
@@ -219,5 +220,13 @@ public class Task implements StudyItem {
         placeholder.setStatus(status);
       }
     }
+  }
+
+  public int getPosition() {
+    return position;
+  }
+
+  public void setPosition(int position) {
+    this.position = position;
   }
 }

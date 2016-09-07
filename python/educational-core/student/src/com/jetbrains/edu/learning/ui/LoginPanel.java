@@ -3,8 +3,8 @@ package com.jetbrains.edu.learning.ui;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBLabel;
-import com.jetbrains.edu.learning.stepic.EduStepicNames;
-import com.jetbrains.edu.learning.stepic.LoginDialog;
+import com.jetbrains.edu.learning.stepik.EduStepikNames;
+import com.jetbrains.edu.learning.stepik.LoginDialog;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -34,7 +34,7 @@ public class LoginPanel {
     mySignUpLabel.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
-        BrowserUtil.browse(EduStepicNames.STEPIC_SIGN_IN_LINK);
+        BrowserUtil.browse(EduStepikNames.STEPIK_SIGN_IN_LINK);
       }
 
       @Override

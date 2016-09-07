@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.edu.learning.stepic;
+package com.jetbrains.edu.learning.stepik;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -33,16 +33,16 @@ import javax.swing.text.PlainDocument;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
-public class StepicStudyOptions implements StudyOptionsProvider {
+public class StepikStudyOptions implements StudyOptionsProvider {
   private static final String DEFAULT_PASSWORD_TEXT = "************";
-  private static final Logger LOG = Logger.getInstance(StepicStudyOptions.class);
+  private static final Logger LOG = Logger.getInstance(StepikStudyOptions.class);
   private JTextField myLoginTextField;
   private JPasswordField myPasswordField;
   private JPanel myPane;
 
   private boolean myCredentialsModified;
 
-  public StepicStudyOptions() {
+  public StepikStudyOptions() {
     myPasswordField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
@@ -107,7 +107,7 @@ public class StepicStudyOptions implements StudyOptionsProvider {
   public void reset() {
     Project project = StudyUtils.getStudyProject();
     if (project != null) {
-      final StepicUser user = StudyTaskManager.getInstance(project).getUser();
+      final StepikUser user = StudyTaskManager.getInstance(project).getUser();
       if (user != null) {
         setLogin(user.getEmail());
         setPassword(DEFAULT_PASSWORD_TEXT);
@@ -129,11 +129,11 @@ public class StepicStudyOptions implements StudyOptionsProvider {
     if (myCredentialsModified) {
       final Project project = StudyUtils.getStudyProject();
       if (project != null) {
-        final StepicUser user = StudyTaskManager.getInstance(project).getUser();
+        final StepikUser user = StudyTaskManager.getInstance(project).getUser();
         user.setEmail(getLogin());
         user.setPassword(getPassword());
         if (!StringUtil.isEmptyOrSpaces(getLogin()) && !StringUtil.isEmptyOrSpaces(getPassword())) {
-          EduStepicConnector.login(getLogin(), getPassword());
+          StepikConnectorLogin.minorLogin(new StepikUser(getLogin(), getPassword()));
         }
       }
       else {

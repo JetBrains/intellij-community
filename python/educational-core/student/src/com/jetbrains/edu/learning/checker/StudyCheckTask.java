@@ -22,9 +22,9 @@ import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.Task;
-import com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector;
-import com.jetbrains.edu.learning.stepic.EduStepicConnector;
-import com.jetbrains.edu.learning.stepic.StepicUser;
+import com.jetbrains.edu.learning.stepik.EduAdaptiveStepikConnector;
+import com.jetbrains.edu.learning.stepik.StepikConnectorPost;
+import com.jetbrains.edu.learning.stepik.StepikUser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,7 +100,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
       runAfterTaskCheckedActions();
       final Course course = StudyTaskManager.getInstance(myProject).getCourse();
       if (course != null && EduNames.STUDY.equals(course.getCourseMode())) {
-        postAttemptToStepic(testsOutput);
+        postAttemptToStepik(testsOutput);
       }
     }
   }
@@ -131,12 +131,12 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
     final StudyTestsOutputParser.TestsOutput testOutput = getTestOutput(indicator);
     if (testOutput != null) {
       if (testOutput.isSuccess()) {
-        final Pair<Boolean, String> pair = EduAdaptiveStepicConnector.checkTask(myProject, myTask);
+        final Pair<Boolean, String> pair = EduAdaptiveStepikConnector.checkTask(myProject, myTask);
         if (pair != null && !(!pair.getFirst() && pair.getSecond().isEmpty())) {
           if (pair.getFirst()) {
             onTaskSolved("Congratulations! Remote tests passed.");
             if (myStatusBeforeCheck != StudyStatus.Solved) {
-              EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, 2);
+              EduAdaptiveStepikConnector.addNextRecommendedTask(myProject, 2);
             }
           }
           else {
@@ -209,12 +209,12 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
     }
   }
 
-  protected void postAttemptToStepic(@NotNull StudyTestsOutputParser.TestsOutput testsOutput) {
+  protected void postAttemptToStepik(@NotNull StudyTestsOutputParser.TestsOutput testsOutput) {
     final StudyTaskManager studySettings = StudyTaskManager.getInstance(myProject);
-    final StepicUser user = studySettings.getUser();
+    final StepikUser user = studySettings.getUser();
     if (user == null) return;
     final String login = user.getEmail();
     final String password = StringUtil.isEmptyOrSpaces(login) ? "" : user.getPassword();
-    EduStepicConnector.postAttempt(myTask, testsOutput.isSuccess(), login, password);
+    StepikConnectorPost.postAttempt(myTask, testsOutput.isSuccess(), login, password);
   }
 }

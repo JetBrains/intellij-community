@@ -76,7 +76,7 @@ abstract public class StudyTaskNavigationAction extends StudyActionWithShortcut 
     }
   }
 
-  private static void updateProjectView(@NotNull Project project, VirtualFile shouldBeActive) {
+  protected static void updateProjectView(@NotNull Project project, VirtualFile shouldBeActive) {
     JTree tree = ProjectView.getInstance(project).getCurrentProjectViewPane().getTree();
     if (shouldBeActive != null) {
       ProjectView.getInstance(project).selectCB(shouldBeActive, shouldBeActive, false).doWhenDone(() -> {
@@ -132,7 +132,7 @@ abstract public class StudyTaskNavigationAction extends StudyActionWithShortcut 
   }
 
   @Nullable
-  private static VirtualFile getFirstTaskFile(@NotNull final VirtualFile taskDir, @NotNull final Project project) {
+  protected static VirtualFile getFirstTaskFile(@NotNull final VirtualFile taskDir, @NotNull final Project project) {
     for (VirtualFile virtualFile : taskDir.getChildren()) {
       if (StudyUtils.getTaskFile(project, virtualFile) != null) {
         return virtualFile;

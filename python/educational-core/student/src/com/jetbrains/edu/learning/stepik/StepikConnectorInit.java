@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.edu.learning.stepic;
+package com.jetbrains.edu.learning.stepik;
 
 import com.intellij.openapi.diagnostic.Logger;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -33,8 +33,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 
-public class StepicConnectorInit {
-  private static final Logger LOG = Logger.getInstance(StepicConnectorInit.class.getName());
+public class StepikConnectorInit {
+  private static final Logger LOG = Logger.getInstance(StepikConnectorInit.class.getName());
   private static CloseableHttpClient ourClient;
 
   public static void initializeClient() {
@@ -76,7 +76,7 @@ public class StepicConnectorInit {
   @Deprecated
   //use setHeaders(HttpRequestBase), it sets accessToken
   static void setHeaders(@NotNull final HttpRequestBase request, String contentType) {
-    //request.addHeader(new BasicHeader("referer", stepicUrl));
+    //request.addHeader(new BasicHeader("referer", stepikUrl));
     //request.addHeader(new BasicHeader("X-CSRFToken", ourCSRFToken));
     request.addHeader(new BasicHeader("content-type", contentType));
   }

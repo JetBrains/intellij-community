@@ -1,4 +1,4 @@
-package com.jetbrains.edu.learning.stepic;
+package com.jetbrains.edu.learning.stepik;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -21,7 +21,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 
-public class StepicAdaptiveReactionsPanel extends JPanel {
+public class StepikAdaptiveReactionsPanel extends JPanel {
   private final ReactionButtonPanel myHardPanel;
   private final ReactionButtonPanel myBoringPanel;
   private final Project myProject;
@@ -33,7 +33,7 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
   private static final String HARD_LABEL_TOOLTIP = "Click To Get An Easier Task";
   private static final String BORING_LABEL_TOOLTIP = "Click To Get A More Challenging Task";
 
-  public StepicAdaptiveReactionsPanel(@NotNull final Project project) {
+  public StepikAdaptiveReactionsPanel(@NotNull final Project project) {
     myProject = project;
     setLayout(new GridBagLayout());
     setBackground(UIUtil.getTextFieldBackground());
@@ -87,7 +87,7 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
         final com.jetbrains.edu.learning.courseFormat.Task task = StudyUtils.getTaskFromSelectedEditor(myProject);
         final boolean isEnabled = task != null && task.getStatus() != StudyStatus.Solved;
-        StepicAdaptiveReactionsPanel.this.setEnabledRecursive(isEnabled);
+        StepikAdaptiveReactionsPanel.this.setEnabledRecursive(isEnabled);
       }
     };
     myProject.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, editorManagerListener);
@@ -117,7 +117,7 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
       setLayout(new GridBagLayout());
       setBorder(BorderFactory.createEtchedBorder());
       add(myButtonPanel);
-      addMouseListener(() -> EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, reaction));
+      addMouseListener(() -> EduAdaptiveStepikConnector.addNextRecommendedTask(myProject, reaction));
     }
 
     private void addMouseListener(@NotNull Runnable onClickAction) {
@@ -156,13 +156,13 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
                                                                       "Loading Next Recommendation") {
               @Override
               public void run(@NotNull ProgressIndicator indicator) {
-                StepicAdaptiveReactionsPanel.this.setEnabledRecursive(false);
+                StepikAdaptiveReactionsPanel.this.setEnabledRecursive(false);
                 myClickAction.run();
               }
 
               @Override
               public void onFinished() {
-                StepicAdaptiveReactionsPanel.this.setEnabledRecursive(true);
+                StepikAdaptiveReactionsPanel.this.setEnabledRecursive(true);
               }
             });
           }

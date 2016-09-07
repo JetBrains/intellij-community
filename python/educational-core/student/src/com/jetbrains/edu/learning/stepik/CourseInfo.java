@@ -1,4 +1,4 @@
-package com.jetbrains.edu.learning.stepic;
+package com.jetbrains.edu.learning.stepik;
 
 import com.google.gson.annotations.SerializedName;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +21,7 @@ public class CourseInfo {
   List<Integer> sections;
   List<Integer> instructors = new ArrayList<Integer>();
 
-  List<StepicUser> myAuthors = new ArrayList<>();
+  List<StepikUser> myAuthors = new ArrayList<>();
   @SerializedName("summary") private String myDescription;
   @SerializedName("course_format") private String myType;
   //= "pycharm Python"; //course type in format "pycharm <language>"
@@ -32,7 +32,7 @@ public class CourseInfo {
   }
 
   @NotNull
-  public List<StepicUser> getAuthors() {
+  public List<StepikUser> getAuthors() {
     return myAuthors;
   }
 
@@ -79,16 +79,16 @@ public class CourseInfo {
     myName = name;
   }
 
-  public void setAuthors(List<StepicUser> authors) {
+  public void setAuthors(List<StepikUser> authors) {
     myAuthors = authors;
-    for (StepicUser author : authors) {
+    for (StepikUser author : authors) {
       if (author.getId() > 0) {
         instructors.add(author.getId());
       }
     }
   }
 
-  public void addAuthor(StepicUser author) {
+  public void addAuthor(StepikUser author) {
     if (myAuthors == null) {
       myAuthors = new ArrayList<>();
     }

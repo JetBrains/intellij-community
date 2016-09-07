@@ -14,7 +14,7 @@ import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.learning.courseFormat.*;
-import com.jetbrains.edu.learning.stepic.StepicUser;
+import com.jetbrains.edu.learning.stepik.StepikUser;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
@@ -22,10 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Implementation of class which contains all the information
@@ -36,16 +33,22 @@ import java.util.Map;
 public class StudyTaskManager implements PersistentStateComponent<Element>, DumbAware {
   private static final Logger LOG = Logger.getInstance(StudyTaskManager.class);
   public static final int CURRENT_VERSION = 3;
-  private StepicUser myUser = new StepicUser();
+  private StepikUser myUser = new StepikUser();
   private Course myCourse;
   public int VERSION = 3;
 
   public Map<Task, List<UserTest>> myUserTests = new HashMap<>();
+  //public Map<Task, LangSetting> langManager = new HashMap<>();
+  //public Map<Task, String> currentLang = new HashMap<>();
+  //public Map<Task, Set<String>> supportedLang = new HashMap<>();
+  private LangManager langManager = new LangManager();
   public List<String> myInvisibleFiles = new ArrayList<>();
 
   public boolean myShouldUseJavaFx = StudyUtils.hasJavaFx();
   private StudyToolWindow.StudyToolWindowMode myToolWindowMode = StudyToolWindow.StudyToolWindowMode.TEXT;
   private boolean myTurnEditingMode = false;
+
+  private String defaultLang;
 
   @Transient private final Project myProject;
 
@@ -195,11 +198,79 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   }
 
   @NotNull
-  public StepicUser getUser() {
+  public StepikUser getUser() {
     return myUser;
   }
 
-  public void setUser(@NotNull final StepicUser user) {
+  public void setUser(@NotNull final StepikUser user) {
     myUser = user;
   }
+
+  //public Map<Task, LangSetting> getLangManager() {
+  //  return langManager;
+  //}
+  //
+  //public void setLangManager(Map<Task, LangSetting> langManager) {
+  //  this.langManager = langManager;
+  //}
+  //
+  //public LangSetting getLang(Task task){
+  //  return langManager.get(task);
+  //}
+  //
+  //public void setLang(Task task, LangSetting lang){
+  //  langManager.put(task, lang);
+  //}
+
+  public void setDefaultLang(String defaultLang) {
+    this.defaultLang = defaultLang;
+  }
+
+  public String getDefaultLang() {
+    return defaultLang;
+  }
+
+
+  //public Map<Task, String> getCurrentLang() {
+  //  return currentLang;
+  //}
+  //
+  //public void setCurrentLang(Map<Task, String> currentLang) {
+  //  this.currentLang = currentLang;
+  //}
+  //
+  //public Map<Task, Set<String>> getSupportedLang() {
+  //  return supportedLang;
+  //}
+  //
+  //public void setSupportedLang(Map<Task, Set<String>> supportedLang) {
+  //  this.supportedLang = supportedLang;
+  //}
+  //
+  //public void putCurrentLang(Task task, String lang){
+  //  currentLang.put(task, lang);
+  //}
+  //
+  //public String getCurrentLang(Task task) {
+  //  return currentLang.get(task);
+  //}
+  //
+  //public void putSupportedLang(Task task, Set<String> supportLangs){
+  //  this.supportedLang.put(task, supportLangs);
+  //}
+  //
+  //public Set<String> getSupportedLang(Task task) {
+  //  return supportedLang.get(task);
+  //}
+
+
+  public LangManager getLangManager() {
+    return langManager;
+  }
+
+  public void setLangManager(LangManager langManager) {
+    this.langManager = langManager;
+  }
 }
+
+

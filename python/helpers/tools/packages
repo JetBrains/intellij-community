@@ -1437,7 +1437,7 @@ botscout django-botscout
 pins ExplorerHAT 
 djcastor django-castor 
 zxcvbn zxcvbn-dutch 
-stepic Steganocrypto 
+stepic Steganocrypto
 product Satchmo 
 docutils_textile rst2textile 
 DDPClient python-ddp 

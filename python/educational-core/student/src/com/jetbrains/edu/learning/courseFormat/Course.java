@@ -6,7 +6,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.learning.stepic.StepicUser;
+import com.jetbrains.edu.learning.stepik.StepikUser;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -14,7 +14,7 @@ import java.util.List;
 
 public class Course {
   @Expose private List<Lesson> lessons = new ArrayList<Lesson>();
-  @Expose private List<StepicUser> authors = new ArrayList<StepicUser>();
+  @Expose private List<StepikUser> authors = new ArrayList<StepikUser>();
   @Expose private String description;
   @Expose private String name;
   private String myCourseDirectory = "";
@@ -70,20 +70,20 @@ public class Course {
   }
 
   @NotNull
-  public List<StepicUser> getAuthors() {
+  public List<StepikUser> getAuthors() {
     return authors;
   }
 
-  public static String getAuthorsString(@NotNull List<StepicUser> authors) {
-    return StringUtil.join(authors, StepicUser::getName, ", ");
+  public static String getAuthorsString(@NotNull List<StepikUser> authors) {
+    return StringUtil.join(authors, StepikUser::getName, ", ");
   }
 
   public void setAuthors(String[] authors) {
-    this.authors = new ArrayList<StepicUser>();
+    this.authors = new ArrayList<StepikUser>();
     for (String name : authors) {
       final List<String> pair = StringUtil.split(name, " ");
       if (!pair.isEmpty())
-        this.authors.add(new StepicUser(pair.get(0), pair.size() > 1 ? pair.get(1) : ""));
+        this.authors.add(new StepikUser(pair.get(0), pair.size() > 1 ? pair.get(1) : ""));
     }
   }
 
@@ -131,7 +131,7 @@ public class Course {
     myLanguage = language;
   }
 
-  public void setAuthors(List<StepicUser> authors) {
+  public void setAuthors(List<StepikUser> authors) {
     this.authors = authors;
   }
 

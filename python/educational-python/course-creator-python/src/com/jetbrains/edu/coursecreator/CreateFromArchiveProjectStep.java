@@ -10,7 +10,7 @@ import com.jetbrains.edu.learning.PyStudyDirectoryProjectGenerator;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
-import com.jetbrains.edu.learning.stepic.CourseInfo;
+import com.jetbrains.edu.learning.stepik.CourseInfo;
 import com.jetbrains.python.newProject.actions.PyCharmNewProjectStep;
 import org.jetbrains.annotations.NotNull;
 

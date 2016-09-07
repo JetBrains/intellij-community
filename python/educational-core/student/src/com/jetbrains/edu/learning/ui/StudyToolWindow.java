@@ -36,7 +36,7 @@ import com.intellij.util.ui.JBUI;
 import com.jetbrains.edu.learning.*;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
-import com.jetbrains.edu.learning.stepic.StepicAdaptiveReactionsPanel;
+import com.jetbrains.edu.learning.stepik.StepikAdaptiveReactionsPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -64,7 +64,10 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
 
   public void init(@NotNull final Project project, final boolean isToolwindow) {
     String taskText = StudyUtils.getTaskText(project);
-    if (taskText == null) return;
+    if (taskText == null){
+      LOG.warn("task text is empty");
+      return;
+    }
 
     final DefaultActionGroup group = getActionGroup(project);
     setActionToolbar(group);
@@ -72,7 +75,7 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     final JPanel panel = new JPanel(new BorderLayout());
     final Course course = StudyTaskManager.getInstance(project).getCourse();
     if (isToolwindow && course != null && course.isAdaptive()) {
-      panel.add(new StepicAdaptiveReactionsPanel(project), BorderLayout.NORTH);
+      panel.add(new StepikAdaptiveReactionsPanel(project), BorderLayout.NORTH);
     }
     
     JComponent taskInfoPanel = createTaskInfoPanel(project);

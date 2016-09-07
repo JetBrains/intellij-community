@@ -1,4 +1,4 @@
-package com.jetbrains.edu.learning.stepic;
+package com.jetbrains.edu.learning.stepik;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -7,11 +7,11 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.Nullable;
 
-@State(name = "StepicUpdateSettings", storages = @Storage("other.xml"))
-public class StepicUpdateSettings implements PersistentStateComponent<StepicUpdateSettings> {
+@State(name = "StepikUpdateSettings", storages = @Storage("other.xml"))
+public class StepikUpdateSettings implements PersistentStateComponent<StepikUpdateSettings> {
   public long LAST_TIME_CHECKED = 0;
 
-  public StepicUpdateSettings() {
+  public StepikUpdateSettings() {
 
   }
 
@@ -25,16 +25,16 @@ public class StepicUpdateSettings implements PersistentStateComponent<StepicUpda
 
   @Nullable
   @Override
-  public StepicUpdateSettings getState() {
+  public StepikUpdateSettings getState() {
     return this;
   }
 
   @Override
-  public void loadState(StepicUpdateSettings state) {
+  public void loadState(StepikUpdateSettings state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 
-  public static StepicUpdateSettings getInstance() {
-    return ServiceManager.getService(StepicUpdateSettings.class);
+  public static StepikUpdateSettings getInstance() {
+    return ServiceManager.getService(StepikUpdateSettings.class);
   }
 }

@@ -20,7 +20,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.jetbrains.edu.learning.PyStudyDirectoryProjectGenerator;
-import com.jetbrains.edu.learning.stepic.CourseInfo;
+import com.jetbrains.edu.learning.stepik.CourseInfo;
 import com.jetbrains.python.newProject.actions.PythonGenerateProjectCallback;
 import com.jetbrains.python.newProject.actions.ProjectSpecificSettingsStep;
 import icons.InteractiveLearningPythonIcons;
