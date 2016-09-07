@@ -79,7 +79,7 @@ public class GitRefManager implements VcsLogRefManager {
 
   @NotNull
   @Override
-  public List<RefGroup> groupForBranchPopup(@NotNull Collection<VcsRef> refs) {
+  public List<RefGroup> groupForBranchFilter(@NotNull Collection<VcsRef> refs) {
     List<RefGroup> simpleGroups = ContainerUtil.newArrayList();
     List<VcsRef> localBranches = ContainerUtil.newArrayList();
     List<VcsRef> trackedBranches = ContainerUtil.newArrayList();

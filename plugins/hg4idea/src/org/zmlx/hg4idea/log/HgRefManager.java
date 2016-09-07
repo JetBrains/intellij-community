@@ -100,7 +100,7 @@ public class HgRefManager implements VcsLogRefManager {
 
   @NotNull
   @Override
-  public List<RefGroup> groupForBranchPopup(@NotNull Collection<VcsRef> refs) {
+  public List<RefGroup> groupForBranchFilter(@NotNull Collection<VcsRef> refs) {
     return ContainerUtil.map(sort(refs), new Function<VcsRef, RefGroup>() {
       @Override
       public RefGroup fun(final VcsRef ref) {
