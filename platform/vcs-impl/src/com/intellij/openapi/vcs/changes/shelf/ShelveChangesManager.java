@@ -34,6 +34,7 @@ import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -71,6 +72,8 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+
+import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChangeList;
 
 public class ShelveChangesManager extends AbstractProjectComponent implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager");
@@ -666,6 +669,42 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
         .format("Shelving changes for %s [%s] failed", StringUtil.pluralize("changelist", failedChangeLists.size()),
                 StringUtil.join(failedChangeLists, ",")));
     }
+  }
+
+
+  public void unshelveChangesToSeparatedChangelists(@NotNull final Project project,
+                                                    @NotNull final List<ShelvedChangeList> selectedChangeLists,
+                                                    @NotNull final List<ShelvedChange> selectedChanges,
+                                                    @NotNull final List<ShelvedBinaryFile> selectedBinaryChanges,
+                                                    @Nullable final LocalChangeList forcePredefinedOneChangelist) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, VcsBundle.getString("unshelve.changes.progress.title"), true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        for (ShelvedChangeList changeList : selectedChangeLists) {
+          List<ShelvedChange> changesForChangelist =
+            ContainerUtil.newArrayList(ContainerUtil.intersection(changeList.getChanges(myProject), selectedChanges));
+          List<ShelvedBinaryFile> binariesForChangelist =
+            ContainerUtil.newArrayList(ContainerUtil.intersection(changeList.getBinaryFiles(), selectedBinaryChanges));
+          boolean shouldUnshelveAllList = changesForChangelist.isEmpty() && binariesForChangelist.isEmpty();
+          unshelveChangeList(changeList, shouldUnshelveAllList ? null : changesForChangelist,
+                             shouldUnshelveAllList ? null : binariesForChangelist,
+                             forcePredefinedOneChangelist != null ? forcePredefinedOneChangelist : getChangeListUnshelveTo(changeList),
+                             true);
+        }
+      }
+    });
+  }
+
+  @NotNull
+  private LocalChangeList getChangeListUnshelveTo(@NotNull ShelvedChangeList list) {
+    String changeListName = list.DESCRIPTION;
+    ChangeListManager manager = ChangeListManager.getInstance(myProject);
+    LocalChangeList localChangeList = manager.findChangeList(changeListName);
+    if (localChangeList != null) return localChangeList;
+    if (list.isMarkedToDelete()) {
+      localChangeList = getPredefinedChangeList(changeListName, manager);
+    }
+    return localChangeList != null ? localChangeList : manager.addChangeList(changeListName, "");
   }
 
   private class BinaryPatchApplier implements CustomBinaryPatchApplier<ShelvedBinaryFilePatch> {

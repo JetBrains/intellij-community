@@ -18,9 +18,6 @@ package com.intellij.openapi.vcs.changes.shelf;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -99,15 +96,8 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
       };
 
     if (!chooser.showAndGet()) return;
-    final ShelveChangesManager shelveChangesManager = ShelveChangesManager.getInstance(project);
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Unshelve Changes", true) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        for (ShelvedChangeList changeList : changeLists) {
-          shelveChangesManager.unshelveChangeList(changeList, changes, binaryFiles, chooser.getSelectedList(), true);
-        }
-      }
-    });
+    ShelveChangesManager.getInstance(project).unshelveChangesToSeparatedChangelists(project, changeLists, changes, binaryFiles,
+                                                                                    chooser.getSelectedList());
   }
 
   private static boolean hasNotAllSelectedChanges(@NotNull Project project, @NotNull ShelvedChangeList list, @Nullable Change[] changes) {

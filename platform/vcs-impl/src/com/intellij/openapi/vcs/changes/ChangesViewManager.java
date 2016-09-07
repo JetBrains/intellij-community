@@ -22,6 +22,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.actions.ContextHelpAction;
+import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -29,6 +30,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -41,15 +43,12 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
-import com.intellij.openapi.vcs.changes.ui.ChangesDnDSupport;
-import com.intellij.openapi.vcs.changes.ui.ChangesListView;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
-import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
+import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
+import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.ui.JBUI;
@@ -148,7 +147,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
       }
     });
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-    myContent = ContentFactory.SERVICE.getInstance().createContent(createChangeViewComponent(), ChangesViewContentManager.LOCAL_CHANGES, false);
+    myContent = new MyChangeViewContent(createChangeViewComponent(), ChangesViewContentManager.LOCAL_CHANGES, false);
     myContent.setCloseable(false);
     myContentManager.addContent(myContent);
 
@@ -558,6 +557,35 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
         TreePath path = TreeUtil.getPathFromRoot(node);
         TreeUtil.selectPath(myView, path, false);
       }
+    }
+  }
+
+  private class MyChangeViewContent extends DnDTargetContentAdapter {
+    private MyChangeViewContent(JComponent component, String displayName, boolean isLockable) {
+      super(component, displayName, isLockable);
+    }
+
+    @Override
+    public void drop(DnDEvent event) {
+      Object attachedObject = event.getAttachedObject();
+      if (attachedObject instanceof ShelvedChangeListDragBean) {
+        FileDocumentManager.getInstance().saveAllDocuments();
+        ShelvedChangeListDragBean shelvedBean = (ShelvedChangeListDragBean)attachedObject;
+        ShelveChangesManager.getInstance(myProject)
+          .unshelveChangesToSeparatedChangelists(myProject, shelvedBean.getShelvedChangelists(), shelvedBean.getChanges(),
+                                                 shelvedBean.getBinaryFiles(), null);
+      }
+    }
+
+    @Override
+    public boolean update(DnDEvent event) {
+      Object attachedObject = event.getAttachedObject();
+      if (attachedObject instanceof ShelvedChangeListDragBean) {
+        ShelvedChangeListDragBean shelveBean = (ShelvedChangeListDragBean)attachedObject;
+        event.setDropPossible(!shelveBean.getShelvedChangelists().isEmpty());
+        return false;
+      }
+      return true;
     }
   }
 }

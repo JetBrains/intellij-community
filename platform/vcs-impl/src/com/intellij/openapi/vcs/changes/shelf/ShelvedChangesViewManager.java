@@ -21,7 +21,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.actions.EditSourceAction;
-import com.intellij.ide.dnd.DnDEvent;
+import com.intellij.ide.dnd.*;
+import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.actionSystem.*;
@@ -48,6 +49,7 @@ import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
 import com.intellij.openapi.vcs.changes.ui.ChangeListDragBean;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
+import com.intellij.openapi.vcs.changes.ui.ShelvedChangeListDragBean;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -127,6 +129,8 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     myTree.setShowsRootHandles(true);
     myTree.setCellRenderer(new ShelfTreeCellRenderer(project, myMoveRenameInfo));
     new TreeLinkMouseListener(new ShelfTreeCellRenderer(project, myMoveRenameInfo)).installOn(myTree);
+    DnDSupport.createBuilder(myTree).disableAsTarget().setImageProvider(this::createDraggedImage).setBeanProvider(this::createDragStartBean)
+      .install();
 
     final AnAction showDiffAction = ActionManager.getInstance().getAction("ShelvedChanges.Diff");
     showDiffAction.registerCustomShortcutSet(showDiffAction.getShortcutSet(), myTree);
@@ -677,5 +681,21 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       }
       return true;
     }
+  }
+
+  @Nullable
+  private DnDDragStartBean createDragStartBean(@NotNull DnDActionInfo info) {
+    if (info.isMove()) {
+      DataContext dc = DataManager.getInstance().getDataContext(myTree);
+      return new DnDDragStartBean(new ShelvedChangeListDragBean(getShelveChanges(dc), getBinaryShelveChanges(dc), getShelvedLists(dc)));
+    }
+    return null;
+  }
+
+  @NotNull
+  private DnDImage createDraggedImage(@NotNull DnDActionInfo info) {
+    String imageText = "Unshelve changes";
+    Image image = DnDAwareTree.getDragImage(myTree, imageText, null).getFirst();
+    return new DnDImage(image, new Point(-image.getWidth(null), -image.getHeight(null)));
   }
 }
