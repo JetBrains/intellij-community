@@ -212,7 +212,7 @@ class MacDistributionBuilder {
       buildContext.ant.move(file: "$target/MacOS/idea", tofile: "$target/MacOS/$executable")
     }
 
-    buildContext.ant.replace(file: "$target/bin/inspect.sh") {
+    buildContext.ant.replace(dir: "$target/bin", includes: "inspect.sh,format.sh") {
       replacefilter(token: "@@product_full@@", value: fullName)
       replacefilter(token: "@@script_name@@", value: executable)
     }
