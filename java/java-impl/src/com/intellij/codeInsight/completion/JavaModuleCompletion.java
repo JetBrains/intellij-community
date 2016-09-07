@@ -39,7 +39,7 @@ import static com.intellij.codeInsight.completion.JavaKeywordCompletion.createKe
 
 class JavaModuleCompletion {
   static boolean isModuleFile(@NotNull PsiFile file) {
-    return PsiUtil.isLanguageLevel9OrHigher(file) && PsiJavaModule.MODULE_INFO_FILE.equals(file.getName());
+    return PsiJavaModule.MODULE_INFO_FILE.equals(file.getName()) && PsiUtil.isLanguageLevel9OrHigher(file);
   }
 
   static void addVariants(@NotNull PsiElement position, @NotNull CompletionResultSet resultSet) {
