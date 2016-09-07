@@ -38,8 +38,6 @@ import java.util.Arrays;
 public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalInspectionTool {
   private static final String FOR_EACH_METHOD = "forEach";
   private static final String FOR_EACH_ORDERED_METHOD = "forEachOrdered";
-  private static final String COUNT_METHOD = "count";
-  private static final String SIZE_METHOD = "size";
   private static final String STREAM_METHOD = "stream";
   private static final String EMPTY_METHOD = "empty";
   private static final String AS_LIST_METHOD = "asList";
@@ -154,9 +152,6 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
           else if (isCallOf(method, CommonClassNames.JAVA_UTIL_STREAM_STREAM, FOR_EACH_ORDERED_METHOD, 1)) {
             name = FOR_EACH_ORDERED_METHOD;
           }
-          else if (isCallOf(method, CommonClassNames.JAVA_UTIL_STREAM_STREAM, COUNT_METHOD, 0)) {
-            name = COUNT_METHOD;
-          }
           else {
             return;
           }
@@ -164,13 +159,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
           if (qualifierCall == null) return;
           final PsiMethod qualifier = qualifierCall.resolveMethod();
           if (isCallOf(qualifier, CommonClassNames.JAVA_UTIL_COLLECTION, STREAM_METHOD, 0)) {
-            final ReplaceStreamMethodFix fix;
-            if (COUNT_METHOD.equals(name)) {
-              fix = new StreamCountFix();
-            }
-            else {
-              fix = new ReplaceStreamMethodFix(name, FOR_EACH_METHOD, true);
-            }
+            final ReplaceStreamMethodFix fix = new ReplaceStreamMethodFix(name, FOR_EACH_METHOD, true);
             holder.registerProblem(methodCall, getCallChainRange(methodCall, qualifierCall), fix.getMessage(), fix);
           }
         }
@@ -199,7 +188,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
   }
 
   @Nullable
-  private static PsiMethodCallExpression getQualifierMethodCall(PsiMethodCallExpression methodCall) {
+  static PsiMethodCallExpression getQualifierMethodCall(PsiMethodCallExpression methodCall) {
     final PsiExpression qualifierExpression = methodCall.getMethodExpression().getQualifierExpression();
     if (qualifierExpression instanceof PsiMethodCallExpression) {
       return (PsiMethodCallExpression)qualifierExpression;
@@ -208,8 +197,8 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
   }
 
   @NotNull
-  protected TextRange getCallChainRange(@NotNull PsiMethodCallExpression expression,
-                                        @NotNull PsiMethodCallExpression qualifierExpression) {
+  protected static TextRange getCallChainRange(@NotNull PsiMethodCallExpression expression,
+                                               @NotNull PsiMethodCallExpression qualifierExpression) {
     final PsiReferenceExpression qualifierMethodExpression = qualifierExpression.getMethodExpression();
     final PsiElement qualifierNameElement = qualifierMethodExpression.getReferenceNameElement();
     final int startOffset = (qualifierNameElement != null ? qualifierNameElement : qualifierMethodExpression).getTextOffset();
@@ -371,7 +360,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     }
   }
 
-  private static class ReplaceStreamMethodFix extends CallChainFixBase {
+  static class ReplaceStreamMethodFix extends CallChainFixBase {
     private final String myStreamMethod;
     private final String myCollectionMethod;
     private final boolean myChangeSemantics;
@@ -411,29 +400,6 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
             PsiIdentifier collectionMethod = JavaPsiFacade.getElementFactory(project).createIdentifier(myCollectionMethod);
             nameElement.replace(collectionMethod);
           }
-        }
-      }
-    }
-  }
-
-  private static class StreamCountFix extends ReplaceStreamMethodFix {
-    public StreamCountFix() {
-      super(COUNT_METHOD, SIZE_METHOD, false);
-    }
-
-    @Override
-    protected void replaceMethodCall(@NotNull PsiMethodCallExpression methodCall,
-                                     @NotNull PsiMethodCallExpression qualifierCall,
-                                     @Nullable PsiExpression qualifierExpression) {
-      super.replaceMethodCall(methodCall, qualifierCall, qualifierExpression);
-      PsiElement parent = methodCall.getParent();
-      if(parent != null && !(parent instanceof PsiExpressionStatement)) {
-        Project project = methodCall.getProject();
-        PsiExpression expression =
-          JavaPsiFacade.getElementFactory(project).createExpressionFromText("(long) " + methodCall.getText(), methodCall);
-        PsiElement replacement = methodCall.replace(expression);
-        if (replacement instanceof PsiTypeCastExpression && RedundantCastUtil.isCastRedundant((PsiTypeCastExpression)replacement)) {
-          RedundantCastUtil.removeCast((PsiTypeCastExpression)replacement);
         }
       }
     }
