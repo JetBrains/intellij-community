@@ -43,7 +43,7 @@ def k() -> None:
     if True:
         pass
 
-def l() -> Generator[int, Any, None]:
+def l() -> Generator[int, str, None]:
     for i in range(10):
         yield i
 
@@ -52,3 +52,10 @@ def m() -> Generator[Optional[float], float, str]:
     while res:
         res = yield round(res)
     return 'OK'
+
+def n() -> <warning descr="Expected to return 'int', got no return">Generator[float, int, int]</warning>:
+    for i in [1, 2, 3]:
+        yield i
+
+def o() -> <warning descr="Expected Iterable[int]">int</warning>:
+    yield 42

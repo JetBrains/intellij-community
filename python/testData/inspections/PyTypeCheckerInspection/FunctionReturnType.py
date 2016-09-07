@@ -1,4 +1,4 @@
-from typing import Optional, List, Union, Generator
+from typing import Optional, List, Union, Iterator
 
 def a(x):
     # type: (List[int]) -> List[str]
@@ -55,12 +55,16 @@ def k():
         pass
 
 def l():
-    # type: () -> Generator[int, Any, None]
+    # type: () -> Iterator[int]
     for i in range(10):
         yield i
 
 def m():
-    # type: () -> Generator[float, float, str]:
+    # type: () -> Iterator[Optional[float]]
     res = yield
     while res:
         res = yield round(res)
+
+def o():
+    <warning descr="Expected Iterable[int]"># type: () -> int</warning>
+    yield 42

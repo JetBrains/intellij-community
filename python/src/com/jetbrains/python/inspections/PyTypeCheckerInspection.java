@@ -102,7 +102,8 @@ public class PyTypeCheckerInspection extends PyInspection {
           PyType expected = myTypeEvalContext.getReturnType(function);
           final PyType actual = yieldExpr != null ? myTypeEvalContext.getType(yieldExpr) : PyNoneType.INSTANCE;
           final String name = expected != null ? expected.getName() : null;
-          if (expected != null && PyNames.GENERATOR.equals(name) && expected instanceof PyCollectionType) {
+          final boolean expectedIsIterable = PyNames.GENERATOR.equals(name) || PyNames.ITERATOR.equals(name) || PyNames.ITERABLE.equals(name);
+          if (expected != null && expectedIsIterable && expected instanceof PyCollectionType) {
             List<PyType> elemTypes = ((PyCollectionType)expected).getElementTypes(myTypeEvalContext);
             if (!elemTypes.isEmpty()) {
               expected = elemTypes.get(0);
@@ -158,27 +159,85 @@ public class PyTypeCheckerInspection extends PyInspection {
       final PsiElement typeComment = node.getTypeComment();
       if (annotation != null || typeComment != null) {
         if (!PyUtil.isEmptyFunction(node)) {
-          final PyType expected = myTypeEvalContext.getReturnType(node);
+          PyType expected = myTypeEvalContext.getReturnType(node);
           final PyStatementList statements = node.getStatementList();
           ReturnVisitor visitor = new ReturnVisitor(node, myTypeEvalContext);
           statements.accept(visitor);
-          if (!visitor.myHasReturns) {
-            if (!visitor.myReturnsGenerator) {
+
+          if (visitor.myReturnsGenerator) {
+            if (visitor.myHasReturns) {
+              final PyType yieldType = visitor.myYieldType;
+              final PyType returnType = visitor.myReturnType;
+              final String name = expected != null ? expected.getName() : null;
+              if (expected != null && PyNames.GENERATOR.equals(name) && expected instanceof PyCollectionType) {
+                List<PyType> elemTypes = ((PyCollectionType)expected).getElementTypes(myTypeEvalContext);
+                if (elemTypes.size() == 3) {
+                  final PyType expectedToYield = elemTypes.get(0);
+                  final PyType expectedToReturn = elemTypes.get(2);
+                  final boolean yieldMatches = PyTypeChecker.match(expectedToYield, yieldType, myTypeEvalContext);
+                  final boolean returnMatches = PyTypeChecker.match(expectedToReturn, returnType, myTypeEvalContext);
+                  if (!yieldMatches) {
+                    if (!returnMatches) {
+                      registerProblem(annotation != null ? annotation.getValue() : typeComment,
+                                      "Yield and return expression types do not match the annotated type");
+                    }
+                    else {
+                      registerProblem(annotation != null ? annotation.getValue() : typeComment,
+                                      "Yield expression type does not match the annotated type");
+                    }
+                  }
+                  else {
+                    if (!returnMatches) {
+                      registerProblem(annotation != null ? annotation.getValue() : typeComment,
+                                      "Return expression type does not match the annotated type");
+                    }
+                  }
+                }
+              }
+              else {
+                final String yieldName = PythonDocumentationProvider.getTypeName(yieldType, myTypeEvalContext);
+                final String returnName = PythonDocumentationProvider.getTypeName(returnType, myTypeEvalContext);
+                registerProblem(annotation != null ? annotation.getValue() : typeComment,
+                                String.format("Expected type Generator[%s, Any, %s]", yieldName, returnName));
+              }
+            }
+            else { // there is a yield expression, but no return
+              final PyType yieldType = visitor.myYieldType;
+              final String name = expected != null ? expected.getName() : null;
+              final boolean expectedIsIterable = PyNames.GENERATOR.equals(name) || PyNames.ITERATOR.equals(name) || PyNames.ITERABLE.equals(name);
+              if (expected != null && expectedIsIterable && expected instanceof PyCollectionType) {
+                List<PyType> elemTypes = ((PyCollectionType)expected).getElementTypes(myTypeEvalContext);
+                if (elemTypes.size() == 3) {
+                  final PyType expectedToReturn = elemTypes.get(2);
+                  if (!(expectedToReturn instanceof PyNoneType)) {
+                    final String expectedToReturnName = PythonDocumentationProvider.getTypeName(expectedToReturn, myTypeEvalContext);
+                    registerProblem(annotation != null ? annotation.getValue() : typeComment,
+                                    String.format("Expected to return '%s', got no return", expectedToReturnName));
+                  }
+                }
+                if (!elemTypes.isEmpty()) {
+                  final PyType expectedToYield = elemTypes.get(0);
+                  if (!PyTypeChecker.match(expectedToYield, yieldType, myTypeEvalContext)) {
+                    final String yieldName = PythonDocumentationProvider.getTypeName(yieldType, myTypeEvalContext);
+                    final String expectedToYieldName = PythonDocumentationProvider.getTypeName(expectedToYield, myTypeEvalContext);
+                    registerProblem(annotation != null ? annotation.getValue() : typeComment,
+                                    String.format("Expected to yield '%s', got '%s' instead", yieldName, expectedToYieldName));
+                  }
+                }
+              }
+              else if (!expectedIsIterable) {
+                final String yieldTypeName = PythonDocumentationProvider.getTypeName(yieldType, myTypeEvalContext);
+                registerProblem(annotation != null ? annotation.getValue() : typeComment,
+                                String.format("Expected Iterable[%s]", yieldTypeName));
+              }
+            }
+          }
+          else { // it isn't a generator function
+            if (!visitor.myHasReturns) {
               final String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
               if (expected != null && !(expected instanceof PyNoneType)) {
                 registerProblem(annotation != null ? annotation.getValue() : typeComment,
                                 String.format("Expected to return '%s', got no return", expectedName));
-              }
-            }
-            else {
-              if (expected instanceof PyCollectionType && annotation != null /* Python 3 check*/) {
-                final List<PyType> elemTypes = ((PyCollectionType)expected).getElementTypes(myTypeEvalContext);
-                if (elemTypes.size() == 3) {
-                  final PyType expectedToReturn = elemTypes.get(2);
-                  if (!(expectedToReturn instanceof PyNoneType)) {
-                    registerProblem(annotation, String.format("Expected to return '%s', got no return", expectedToReturn));
-                  }
-                }
               }
             }
           }
