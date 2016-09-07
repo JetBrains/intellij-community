@@ -148,12 +148,12 @@ public class StepikConnectorPost {
 
   // TODO realise
   public static void postAttempt(@NotNull final Task task) {
-    if (task.getStepikId() <= 0) {
+    if (task.getStepId() <= 0) {
       return;
     }
 
     final HttpPost attemptRequest = new HttpPost(EduStepikNames.STEPIK_API_URL + EduStepikNames.ATTEMPTS);
-    String attemptRequestBody = new Gson().toJson(new StepikWrappers.AttemptWrapper(task.getStepikId()));
+    String attemptRequestBody = new Gson().toJson(new StepikWrappers.AttemptWrapper(task.getStepId()));
     attemptRequest.setEntity(new StringEntity(attemptRequestBody, ContentType.APPLICATION_JSON));
 
     try {
@@ -212,7 +212,7 @@ public class StepikConnectorPost {
   // used by StudyCheckTask
   @Deprecated
   public static void postAttempt(@NotNull final Task task, boolean passed, @Nullable String login, @Nullable String password) {
-    //if (task.getStepikId() <= 0) {
+    //if (task.getStepId() <= 0) {
     //  return;
     //}
     //if (ourClient == null) {
@@ -226,7 +226,7 @@ public class StepikConnectorPost {
 
     final HttpPost attemptRequest = new HttpPost(EduStepikNames.STEPIK_API_URL + EduStepikNames.ATTEMPTS);
     //setHeaders(attemptRequest, "application/json");
-    String attemptRequestBody = new Gson().toJson(new StepikWrappers.AttemptWrapper(task.getStepikId()));
+    String attemptRequestBody = new Gson().toJson(new StepikWrappers.AttemptWrapper(task.getStepId()));
     attemptRequest.setEntity(new StringEntity(attemptRequestBody, ContentType.APPLICATION_JSON));
 
     try {

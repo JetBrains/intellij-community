@@ -36,7 +36,7 @@ public class LangManager  {
   }
 
   public LangSetting getLangSetting(Task task){
-    return getLangSetting(task.getStepikId());
+    return getLangSetting(task.getStepId());
   }
 
   public LangSetting getLangSetting(int stepId){
@@ -44,7 +44,7 @@ public class LangManager  {
   }
 
   public void setLangSetting(Task task, LangSetting langSetting){
-    setLangSetting(task.getStepikId(), langSetting);
+    setLangSetting(task.getStepId(), langSetting);
   }
 
   public void setLangSetting(int stepId, LangSetting langSetting){

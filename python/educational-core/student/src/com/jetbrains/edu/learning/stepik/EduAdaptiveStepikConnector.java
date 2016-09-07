@@ -222,7 +222,7 @@ public class EduAdaptiveStepikConnector {
           final Task unsolvedTask = adaptive.getTaskList().get(adaptive.getTaskList().size() - 1);
           if (reaction == 0 || reaction == -1) {
             unsolvedTask.setName(task.getName());
-            unsolvedTask.setStepikId(task.getStepikId());
+            unsolvedTask.setStepId(task.getStepId());
             unsolvedTask.setText(task.getText());
             unsolvedTask.getTestsText().clear();
             unsolvedTask.setStatus(StudyStatus.Unchecked);
@@ -331,7 +331,7 @@ public class EduAdaptiveStepikConnector {
                                       @NotNull final StepikWrappers.Step step, @NotNull String name) {
     final Task task = new Task();
     task.setName(name);
-    task.setStepikId(lessonID);
+    task.setStepId(lessonID);
     task.setText(step.text);
     task.setStatus(StudyStatus.Unchecked);
     if (step.options.samples != null) {
@@ -520,7 +520,7 @@ public class EduAdaptiveStepikConnector {
   }
 
   private static int getAttemptId(@NotNull final Project project, @NotNull Task task) throws IOException {
-    final StepikWrappers.AttemptToPostWrapper attemptWrapper = new StepikWrappers.AttemptToPostWrapper(task.getStepikId());
+    final StepikWrappers.AttemptToPostWrapper attemptWrapper = new StepikWrappers.AttemptToPostWrapper(task.getStepId());
 
     final HttpPost post = new HttpPost(EduStepikNames.STEPIK_API_URL + EduStepikNames.ATTEMPTS);
     post.setEntity(new StringEntity(new Gson().toJson(attemptWrapper)));

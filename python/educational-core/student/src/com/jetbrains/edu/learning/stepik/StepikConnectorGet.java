@@ -316,7 +316,7 @@ public class StepikConnectorGet {
     for (StepikWrappers.StepSource stepSource : stepContainer.steps) {
       if (supported(stepSource.block.name)) {
         final Task task = new Task();
-        task.setStepikId(stepSource.id);
+        task.setStepId(stepSource.id);
         task.setPosition(stepSource.position);
 
         switch (stepSource.block.name) {

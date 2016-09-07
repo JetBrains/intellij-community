@@ -450,7 +450,7 @@ public class EduStepikConnector {
     for (StepikWrappers.Step step : steps) {
       if (supported(step.name)) {
         final Task task = new Task();
-        task.setStepikId(stepikIds.get(i++));
+        task.setStepId(stepikIds.get(i++));
 
         switch (step.name) {
           case (CODE_PREFIX):
@@ -485,7 +485,7 @@ public class EduStepikConnector {
   }
 
   private static void createCodeTask(Task task, StepikWrappers.Step step) {
-    task.setName("step" + task.getStepikId());
+    task.setName("step" + task.getStepId());
     if (step.options.samples != null) {
       final StringBuilder builder = new StringBuilder();
       for (List<String> sample : step.options.samples) {
@@ -541,7 +541,7 @@ public class EduStepikConnector {
   //TODO rewrite with postToStepik
   // use StepikConnectorPost.postAttempt(Task)
   public static void postAttempt(@NotNull final Task task, boolean passed, @Nullable String login, @Nullable String password) {
-    if (task.getStepikId() <= 0) {
+    if (task.getStepId() <= 0) {
       return;
     }
     if (ourClient == null) {
@@ -555,7 +555,7 @@ public class EduStepikConnector {
 
     final HttpPost attemptRequest = new HttpPost(EduStepikNames.STEPIK_API_URL + EduStepikNames.ATTEMPTS);
     setHeaders(attemptRequest, "application/json");
-    String attemptRequestBody = new Gson().toJson(new StepikWrappers.AttemptWrapper(task.getStepikId()));
+    String attemptRequestBody = new Gson().toJson(new StepikWrappers.AttemptWrapper(task.getStepId()));
     attemptRequest.setEntity(new StringEntity(attemptRequestBody, ContentType.APPLICATION_JSON));
 
     try {

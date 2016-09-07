@@ -28,7 +28,7 @@ public class Task implements StudyItem {
   private int position;
   private StudyStatus myStatus = StudyStatus.Unchecked;
 
-  @Expose private int myStepikId;
+  @Expose private int stepId;
 
   @Expose
   @SerializedName("task_files")
@@ -201,12 +201,12 @@ public class Task implements StudyItem {
     return result;
   }
 
-  public void setStepikId(int stepikId) {
-    myStepikId = stepikId;
+  public void setStepId(int stepId) {
+    this.stepId = stepId;
   }
 
-  public int getStepikId() {
-    return myStepikId;
+  public int getStepId() {
+    return stepId;
   }
 
   public StudyStatus getStatus() {

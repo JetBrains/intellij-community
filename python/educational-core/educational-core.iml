@@ -11,6 +11,5 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="http-client" level="project" />
-    <orderEntry type="library" name="Ant" level="project" />
   </component>
 </module>

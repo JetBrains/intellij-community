@@ -148,7 +148,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
       VirtualFile virtualFile =  null;
       for (PsiElement child : myValue.getChildren()) {
         PsiFile contatingFile = child.getContainingFile();
-        //TODO fix step don't open by double click
+        //TODO fix. Step don't open by double click
         if (contatingFile == null) break;
         VirtualFile childFile = contatingFile.getVirtualFile();
         taskFile = StudyUtils.getTaskFile(myProject, childFile);

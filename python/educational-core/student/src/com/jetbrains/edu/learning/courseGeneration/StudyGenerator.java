@@ -59,7 +59,6 @@ public class StudyGenerator {
       TaskFile taskFileContent = taskFile.getValue();
       taskFileContent.setIndex(i);
       i++;
-      LOG.warn("Create taskFile");
       createTaskFile(taskDir, newResourceRoot, taskFile.getKey());
     }
     File[] filesInTask = newResourceRoot.listFiles();
@@ -94,7 +93,6 @@ public class StudyGenerator {
     for (int i = 1; i <= taskList.size(); i++) {
       Task task = taskList.get(i - 1);
       task.setIndex(i);
-      LOG.warn("Create Task");
       createTask(task, lessonDir, new File(resourceRoot, lessonDir.getName()), project);
     }
   }
@@ -113,7 +111,6 @@ public class StudyGenerator {
       for (int i = 1; i <= lessons.size(); i++) {
         Lesson lesson = lessons.get(i - 1);
         lesson.setIndex(i);
-        LOG.warn("Create lesson");
         createLesson(lesson, baseDir, resourceRoot, project);
       }
       baseDir.createChildDirectory(project, EduNames.SANDBOX_DIR);

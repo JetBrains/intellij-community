@@ -38,9 +38,6 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   public int VERSION = 3;
 
   public Map<Task, List<UserTest>> myUserTests = new HashMap<>();
-  //public Map<Task, LangSetting> langManager = new HashMap<>();
-  //public Map<Task, String> currentLang = new HashMap<>();
-  //public Map<Task, Set<String>> supportedLang = new HashMap<>();
   private LangManager langManager = new LangManager();
   public List<String> myInvisibleFiles = new ArrayList<>();
 
@@ -206,22 +203,6 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
     myUser = user;
   }
 
-  //public Map<Task, LangSetting> getLangManager() {
-  //  return langManager;
-  //}
-  //
-  //public void setLangManager(Map<Task, LangSetting> langManager) {
-  //  this.langManager = langManager;
-  //}
-  //
-  //public LangSetting getLang(Task task){
-  //  return langManager.get(task);
-  //}
-  //
-  //public void setLang(Task task, LangSetting lang){
-  //  langManager.put(task, lang);
-  //}
-
   public void setDefaultLang(String defaultLang) {
     this.defaultLang = defaultLang;
   }
@@ -229,40 +210,6 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   public String getDefaultLang() {
     return defaultLang;
   }
-
-
-  //public Map<Task, String> getCurrentLang() {
-  //  return currentLang;
-  //}
-  //
-  //public void setCurrentLang(Map<Task, String> currentLang) {
-  //  this.currentLang = currentLang;
-  //}
-  //
-  //public Map<Task, Set<String>> getSupportedLang() {
-  //  return supportedLang;
-  //}
-  //
-  //public void setSupportedLang(Map<Task, Set<String>> supportedLang) {
-  //  this.supportedLang = supportedLang;
-  //}
-  //
-  //public void putCurrentLang(Task task, String lang){
-  //  currentLang.put(task, lang);
-  //}
-  //
-  //public String getCurrentLang(Task task) {
-  //  return currentLang.get(task);
-  //}
-  //
-  //public void putSupportedLang(Task task, Set<String> supportLangs){
-  //  this.supportedLang.put(task, supportLangs);
-  //}
-  //
-  //public Set<String> getSupportedLang(Task task) {
-  //  return supportedLang.get(task);
-  //}
-
 
   public LangManager getLangManager() {
     return langManager;

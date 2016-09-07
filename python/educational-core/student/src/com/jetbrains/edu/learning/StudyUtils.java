@@ -579,7 +579,7 @@ public class StudyUtils {
       LOG.info("return default project");
       return ProjectManager.getInstance().getDefaultProject();
     }
-    LOG.info("return normal project");
+    LOG.info("return regular project");
     return studyProject;
   }
 
