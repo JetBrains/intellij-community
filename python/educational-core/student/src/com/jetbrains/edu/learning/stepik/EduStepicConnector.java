@@ -9,14 +9,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.net.ssl.CertificateManager;
 import com.jetbrains.edu.learning.StudySerializationUtils;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduNames;
@@ -30,7 +29,7 @@ import org.apache.http.*;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.entity.AbstractHttpEntity;
+import org.apache.http.cookie.Cookie;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
@@ -57,56 +56,28 @@ import java.security.cert.X509Certificate;
 import java.util.*;
 
 @Deprecated
-public class EduStepikConnector {
-  private static final Logger LOG = Logger.getInstance(EduStepikConnector.class.getName());
+public class EduStepicConnector {
+  private static final Logger LOG = Logger.getInstance(EduStepicConnector.class.getName());
   private static final String stepikUrl = "https://stepik.org/";
   private static String ourCSRFToken = "";
-  private static String accessToken = "";
   private static CloseableHttpClient ourClient;
-  private static final String CLIENT_ID = "hUCWcq3hZHCmz0DKrDtwOWITLcYutzot7p4n59vU";
 
   //this prefix indicates that course can be opened by educational plugin
   public static final String PYCHARM_PREFIX = "pycharm";
-  public static final String CODE_PREFIX = "code";
-  public static final String PYTHON27 = "python27";
-  public static final String PYTHON3 = "python3";
   private static BasicCookieStore ourCookieStore;
 
-  static final private Gson GSON =
-    new GsonBuilder().registerTypeAdapter(TaskFile.class, new StudySerializationUtils.Json.StepikTaskFileAdapter())
-      .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
-
-  private EduStepikConnector() {
+  private EduStepicConnector() {
   }
 
-  // TODO : merge. look at comments
   public static StepikUser login(@NotNull final String username, @NotNull final String password) {
     initializeClient();
-    StepikWrappers.TokenInfo tokenInfo = postCredentials(username, password);
-    if (tokenInfo == null) {
-      return null;
-    }
-    accessToken = tokenInfo.accessToken;
-    initializeClient();
-    final StepikWrappers.AuthorWrapper stepikUserWrapper = getCurrentUser();
-    if (stepikUserWrapper != null && stepikUserWrapper.users.size() == 1) {
-      StepikUser user = stepikUserWrapper.users.get(0);
-      user.setupTokenInfo(tokenInfo);
-      user.setEmail(username);
-      user.setPassword(password);
-      return user;
+    if (postCredentials(username, password)) {
+      final StepikWrappers.AuthorWrapper stepikUserWrapper = getCurrentUser();
+      if (stepikUserWrapper != null && stepikUserWrapper.users.size() == 1) {
+        return stepikUserWrapper.users.get(0);
+      }
     }
     return null;
-  }
-
-  public static StepikUser testLogin(@NotNull final String username, @NotNull final String password) {
-    CloseableHttpClient tmp = ourClient;
-    String tmpToken = accessToken;
-    resetClient();
-    StepikUser user = login(username, password);
-    ourClient = tmp;
-    accessToken = tmpToken;
-    return user;
   }
 
   @NotNull
@@ -143,8 +114,7 @@ public class EduStepikConnector {
   public static boolean createUser(@NotNull final String user, @NotNull final String password) {
     final HttpPost userRequest = new HttpPost(EduStepikNames.STEPIK_API_URL + EduStepikNames.USERS);
     initializeClient();
-    //setHeaders(userRequest, "application/json");
-    setHeaders(userRequest);
+    setHeaders(userRequest, "application/json");
     String requestBody = new Gson().toJson(new StepikWrappers.UserWrapper(user, password));
     userRequest.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
 
@@ -166,65 +136,91 @@ public class EduStepikConnector {
 
   public static void initializeClient() {
     if (ourClient == null) {
-      HttpClientBuilder builder = HttpClients
-        .custom()
-        .setMaxConnPerRoute(100000)
-        .setConnectionReuseStrategy(DefaultConnectionReuseStrategy.INSTANCE);
+      final HttpGet request = new HttpGet(EduStepikNames.STEPIK_URL);
+      request.addHeader(new BasicHeader("referer", EduStepikNames.STEPIK_URL));
+      request.addHeader(new BasicHeader("content-type", EduStepikNames.CONTENT_TYPE_APPL_JSON));
 
-      HttpConfigurable instance = HttpConfigurable.getInstance();
-      if (instance.USE_HTTP_PROXY) {
-        HttpHost host = new HttpHost(instance.PROXY_HOST, instance.PROXY_PORT);
-        builder.setProxy(host);
-      }
+
+      HttpClientBuilder builder =
+        HttpClients.custom().setSslcontext(CertificateManager.getInstance().getSslContext()).setMaxConnPerRoute(100000).
+          setConnectionReuseStrategy(DefaultConnectionReuseStrategy.INSTANCE);
+      ourCookieStore = new BasicCookieStore();
 
       try {
         // Create a trust manager that does not validate certificate for this connection
-        TrustManager[] trustAllCerts = getTrustAllCerts();
+        TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
+          public X509Certificate[] getAcceptedIssuers() {
+            return null;
+          }
+
+          public void checkClientTrusted(X509Certificate[] certs, String authType) {
+          }
+
+          public void checkServerTrusted(X509Certificate[] certs, String authType) {
+          }
+        }};
         SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(null, trustAllCerts, new SecureRandom());
-        ourClient = builder.setSslcontext(sslContext).build();
+        ourClient = builder.setDefaultCookieStore(ourCookieStore).setSslcontext(sslContext).build();
+
+        ourClient.execute(request);
+        saveCSRFToken();
       }
-      catch (NoSuchAlgorithmException | KeyManagementException e) {
+      catch (IOException e) {
+        LOG.error(e.getMessage());
+      }
+      catch (NoSuchAlgorithmException e) {
+        LOG.error(e.getMessage());
+      }
+      catch (KeyManagementException e) {
         LOG.error(e.getMessage());
       }
     }
   }
 
-  public static void resetClient() {
-    accessToken = "";
-    ourClient = null;
+  private static void saveCSRFToken() {
+    if (ourCookieStore == null) return;
+    final List<Cookie> cookies = ourCookieStore.getCookies();
+    for (Cookie cookie : cookies) {
+      if (cookie.getName().equals("csrftoken")) {
+        ourCSRFToken = cookie.getValue();
+      }
+    }
   }
 
-  private static StepikWrappers.TokenInfo postCredentials(String user, String password) {
-    //String url = EduStepikNames.STEPIK_URL + EduStepikNames.LOGIN;
-    String url = EduStepikNames.TOKEN_URL;
+  private static boolean postCredentials(String user, String password) {
+    String url = EduStepikNames.STEPIK_URL + EduStepikNames.LOGIN;
     final HttpPost request = new HttpPost(url);
-    List<NameValuePair> nvps = new ArrayList<NameValuePair>();
-    nvps.add(new BasicNameValuePair("grant_type", "password"));
-    nvps.add(new BasicNameValuePair("client_id", CLIENT_ID));
-    nvps.add(new BasicNameValuePair("username", user));
+    List <NameValuePair> nvps = new ArrayList <NameValuePair>();
+    nvps.add(new BasicNameValuePair("csrfmiddlewaretoken", ourCSRFToken));
+    nvps.add(new BasicNameValuePair("login", user));
+    nvps.add(new BasicNameValuePair("next", "/"));
     nvps.add(new BasicNameValuePair("password", password));
+    nvps.add(new BasicNameValuePair("remember", "on"));
 
     request.setEntity(new UrlEncodedFormEntity(nvps, Consts.UTF_8));
 
+    setHeaders(request, "application/x-www-form-urlencoded");
+
     try {
       final CloseableHttpResponse response = ourClient.execute(request);
-      final StatusLine statusLine = response.getStatusLine();
-      final HttpEntity responseEntity = response.getEntity();
-      final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
-      if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
-        return GSON.fromJson(responseString, StepikWrappers.TokenInfo.class);
-      }
-      else {
-        LOG.warn("Failed to login: " + statusLine.getStatusCode() + statusLine.getReasonPhrase());
-        LOG.info("Failed to login " + responseString);
-        throw new IOException("Stepik returned non 200 status code " + responseString);
+      saveCSRFToken();
+      final StatusLine line = response.getStatusLine();
+      if (line.getStatusCode() != HttpStatus.SC_MOVED_TEMPORARILY) {
+        final HttpEntity responseEntity = response.getEntity();
+        final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
+        LOG.warn("Failed to login: " + line.getStatusCode() + line.getReasonPhrase());
+        LOG.debug("Failed to login " + responseString);
+        ourClient = null;
+        return false;
       }
     }
     catch (IOException e) {
       LOG.warn(e.getMessage());
-      return null;
+      ourClient = null;
+      return false;
     }
+    return true;
   }
 
   static <T> T getFromStepik(String link, final Class<T> container) throws IOException {
@@ -232,8 +228,7 @@ public class EduStepikConnector {
     if (ourClient == null) {
       initializeClient();
     }
-    //    setHeaders(request, EduStepikNames.CONTENT_TYPE_APPL_JSON);
-    setHeaders(request);
+    setHeaders(request, EduStepikNames.CONTENT_TYPE_APPL_JSON);
 
     final CloseableHttpResponse response = ourClient.execute(request);
     final StatusLine statusLine = response.getStatusLine();
@@ -242,25 +237,8 @@ public class EduStepikConnector {
     if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
       throw new IOException("Stepik returned non 200 status code " + responseString);
     }
-    return GSON.fromJson(responseString, container);
-  }
-
-  static boolean postToStepik(String link, AbstractHttpEntity entity) throws IOException {
-    final HttpPost request = new HttpPost(EduStepikNames.STEPIK_API_URL + link);
-    request.setEntity(entity);
-    if (ourClient == null) {
-      initializeClient();
-    }
-    setHeaders(request);
-
-    final CloseableHttpResponse response = ourClient.execute(request);
-    final StatusLine statusLine = response.getStatusLine();
-    final HttpEntity responseEntity = response.getEntity();
-    final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
-    if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
-      throw new IOException("Stepik returned non 200 status code " + responseString);
-    }
-    return true;
+    Gson gson = new GsonBuilder().registerTypeAdapter(TaskFile.class, new StudySerializationUtils.Json.StepikTaskFileAdapter()).setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+    return gson.fromJson(responseString, container);
   }
 
   @NotNull
@@ -273,13 +251,20 @@ public class EduStepikConnector {
   }
 
   public static boolean enrollToCourse(final int courseId) {
-
-    final StepikWrappers.EnrollmentWrapper enrollment = new StepikWrappers.EnrollmentWrapper(String.valueOf(courseId));
+    HttpPost post = new HttpPost(EduStepikNames.STEPIK_API_URL + EduStepikNames.ENROLLMENTS);
     try {
-      return postToStepik(EduStepikNames.ENROLLMENTS, new StringEntity(new GsonBuilder().create().toJson(enrollment)));
+      final StepikWrappers.EnrollmentWrapper enrollment = new StepikWrappers.EnrollmentWrapper(String.valueOf(courseId));
+      post.setEntity(new StringEntity(new GsonBuilder().create().toJson(enrollment)));
+      setHeaders(post, EduStepikNames.CONTENT_TYPE_APPL_JSON);
+      if (ourClient == null) {
+        initializeClient();
+      }
+      CloseableHttpResponse response = ourClient.execute(post);
+      StatusLine line = response.getStatusLine();
+      return line.getStatusCode() == HttpStatus.SC_CREATED;
     }
     catch (IOException e) {
-      LOG.warn("EnrollToCourse error\n" + e.getMessage());
+      LOG.warn(e.getMessage());
     }
     return false;
   }
@@ -300,18 +285,6 @@ public class EduStepikConnector {
     return Collections.singletonList(CourseInfo.INVALID_COURSE);
   }
 
-  @NotNull
-  public static CourseInfo getDefaultCourse() {
-    CourseInfo courseInfo = null;
-    try {
-      courseInfo = getFromStepik(EduStepikNames.COURSES + "/217", StepikWrappers.CoursesContainer.class).courses.get(0);
-    }
-    catch (IOException e) {
-      e.printStackTrace();
-    }
-    return courseInfo;
-  }
-
   private static boolean addCoursesFromStepik(List<CourseInfo> result, int pageNumber) throws IOException {
     final String url = pageNumber == 0 ? EduStepikNames.COURSES : EduStepikNames.COURSES_FROM_PAGE + String.valueOf(pageNumber);
     final StepikWrappers.CoursesContainer coursesContainer = getFromStepik(url, StepikWrappers.CoursesContainer.class);
@@ -323,8 +296,7 @@ public class EduStepikConnector {
       // TODO: should adaptive course be of PyCharmType ?
       if (info.isAdaptive() || (typeLanguage.size() == 2 && PYCHARM_PREFIX.equals(typeLanguage.get(0)))) {
         for (Integer instructor : info.instructors) {
-          final StepikUser author =
-            getFromStepik(EduStepikNames.USERS + "/" + String.valueOf(instructor), StepikWrappers.AuthorWrapper.class).users.get(0);
+          final StepikUser author = getFromStepik(EduStepikNames.USERS + "/" + String.valueOf(instructor), StepikWrappers.AuthorWrapper.class).users.get(0);
           info.addAuthor(author);
         }
 
@@ -338,138 +310,73 @@ public class EduStepikConnector {
   }
 
   public static Course getCourse(@NotNull final Project project, @NotNull final CourseInfo info) {
-    Course course = new Course();
+    final Course course = new Course();
     course.setAuthors(info.getAuthors());
     course.setDescription(info.getDescription());
     course.setAdaptive(info.isAdaptive());
     course.setId(info.id);
     course.setUpToDate(true);  // TODO: get from stepik
 
-    if (course.isAdaptive()) {
-      course = getAdaptiveCourse(project, course, info);
-    }
-    else {
-      course = getRegularCourse(project, course, info);
-    }
-    return course;
-  }
-
-  private static Course getRegularCourse(@NotNull final Project project, Course course, @NotNull final CourseInfo info) {
-    String courseType = info.getType();
-    course.setName(info.getName());
-    course.setCourseType(info.getType().startsWith("pycharm") ? info.getType() : "stepik");
-
-    //    what for?
-    course.setLanguage(courseType.substring(PYCHARM_PREFIX.length() + 1));
-    try {
-      for (Integer section : info.sections) {
-        switch (course.getCourseType()){
-          case ("stepik") : course.addLessons(getLessons2(section));
-            break;
-          default:
-            course.addLessons(getLessons(section));
+    if (!course.isAdaptive()) {
+      String courseType = info.getType();
+      course.setName(info.getName());
+      course.setLanguage(courseType.substring(PYCHARM_PREFIX.length() + 1));
+      try {
+        for (Integer section : info.sections) {
+          course.addLessons(getLessons(section));
         }
+        return course;
       }
-      return course;
-    }
-    catch (IOException e) {
-      LOG.error("IOException " + e.getMessage());
-      return null;
-    }
-  }
-
-  private static Course getAdaptiveCourse(@NotNull final Project project, Course course, @NotNull final CourseInfo info) {
-    final Lesson lesson = new Lesson();
-    course.setName(info.getName());
-    //TODO: more specific name?
-    lesson.setName("Adaptive");
-    course.addLesson(lesson);
-    final Task recommendation = EduAdaptiveStepikConnector.getNextRecommendation(project, course);
-    if (recommendation != null) {
-      lesson.addTask(recommendation);
-      return course;
+      catch (IOException e) {
+        LOG.error("IOException " + e.getMessage());
+      }
     }
     else {
-      return null;
+      final Lesson lesson = new Lesson();
+      course.setName(info.getName());
+      //TODO: more specific name?
+      lesson.setName("Adaptive");
+      course.addLesson(lesson);
+      final Task recommendation = EduAdaptiveStepikConnector.getNextRecommendation(project, course);
+      if (recommendation != null) {
+        lesson.addTask(recommendation);
+        return course;
+      }
+      else {
+        return null;
+      }
     }
+    return null;
   }
 
   public static List<Lesson> getLessons(int sectionId) throws IOException {
     final StepikWrappers.SectionContainer
       sectionContainer = getFromStepik(EduStepikNames.SECTIONS + String.valueOf(sectionId), StepikWrappers.SectionContainer.class);
     List<Integer> unitIds = sectionContainer.sections.get(0).units;
-
-    StepikWrappers.UnitContainer
-      unitContainer = getFromStepik(EduStepikNames.UNITS + "/" + getIdQuery(unitIds), StepikWrappers.UnitContainer.class);
-    List<Integer> lessonsIds = new ArrayList<>();
-    unitContainer.units.forEach(x -> lessonsIds.add(x.lesson));
-    StepikWrappers.LessonContainer
-      lessonContainer = getFromStepik(EduStepikNames.LESSONS + getIdQuery(lessonsIds), StepikWrappers.LessonContainer.class);
-
     final List<Lesson> lessons = new ArrayList<Lesson>();
-    for (Lesson lesson : lessonContainer.lessons) {
-      createTasks(lesson, lesson.steps);
-      if (!lesson.taskList.isEmpty()) {
-        lessons.add(lesson);
+    for (Integer unitId : unitIds) {
+      StepikWrappers.UnitContainer
+        unit = getFromStepik(EduStepikNames.UNITS + "/" + String.valueOf(unitId), StepikWrappers.UnitContainer.class);
+      int lessonID = unit.units.get(0).lesson;
+      StepikWrappers.LessonContainer
+        lesson = getFromStepik(EduStepikNames.LESSONS + String.valueOf(lessonID), StepikWrappers.LessonContainer.class);
+      Lesson realLesson = lesson.lessons.get(0);
+      realLesson.taskList = new ArrayList<Task>();
+      for (Integer s : realLesson.steps) {
+        createTask(realLesson, s);
       }
+      if (!realLesson.taskList.isEmpty())
+        lessons.add(realLesson);
     }
 
     return lessons;
   }
 
-  public static List<Lesson> getLessons2(int sectionId) throws IOException {
-    final StepikWrappers.SectionContainer
-            sectionContainer = getFromStepik(EduStepikNames.SECTIONS + String.valueOf(sectionId), StepikWrappers.SectionContainer.class);
-    List<Integer> unitIds = sectionContainer.sections.get(0).units;
-
-    StepikWrappers.UnitContainer
-            unitContainer = getFromStepik(EduStepikNames.UNITS + "/" + getIdQuery(unitIds), StepikWrappers.UnitContainer.class);
-    List<Integer> lessonsIds = new ArrayList<>();
-    unitContainer.units.forEach(x -> lessonsIds.add(x.lesson));
-    StepikWrappers.LessonContainer
-            lessonContainer = getFromStepik(EduStepikNames.LESSONS + getIdQuery(lessonsIds), StepikWrappers.LessonContainer.class);
-
-    String sectionName = sectionContainer.sections.get(0).title;
-    final List<Lesson> lessons = new ArrayList<Lesson>();
-    for (Lesson lesson : lessonContainer.lessons) {
-      lesson.setName(sectionName + EduNames.SEPARATOR + lesson.getName());
-//      LOG.info("set lesson name " + lesson.getName());
-      createTasks(lesson, lesson.steps);
-      if (!lesson.taskList.isEmpty()) {
-        lessons.add(lesson);
-      }
-    }
-    return lessons;
-  }
-
-  private static void createTasks(Lesson lesson, List<Integer> stepikIds) throws IOException {
-    final StepikWrappers.StepContainer stepContainer = getSteps(stepikIds);
-    List<StepikWrappers.Step> steps = new ArrayList<>();
-    stepContainer.steps.forEach(x -> steps.add(x.block));
-    int i = 0;
-    for (StepikWrappers.Step step : steps) {
-      if (supported(step.name)) {
-        final Task task = new Task();
-        task.setStepId(stepikIds.get(i++));
-
-        switch (step.name) {
-          case (CODE_PREFIX):
-            createCodeTask(task, step);
-            break;
-          case (PYCHARM_PREFIX):
-            createPyCharmTask(task, step);
-            break;
-        }
-        lesson.taskList.add(task);
-      }
-    }
-  }
-
-  private static boolean supported(String name) {
-    return CODE_PREFIX.equals(name) || PYCHARM_PREFIX.equals(name);
-  }
-
-  private static void createPyCharmTask(Task task, StepikWrappers.Step step) {
+  private static void createTask(Lesson lesson, Integer stepikId) throws IOException {
+    final StepikWrappers.Step step = getStep(stepikId);
+    if (!step.name.equals(PYCHARM_PREFIX)) return;
+    final Task task = new Task();
+    task.setStepId(stepikId);
     task.setName(step.options != null ? step.options.title : PYCHARM_PREFIX);
     task.setText(step.text);
     for (StepikWrappers.TestFileWrapper wrapper : step.options.test) {
@@ -482,49 +389,11 @@ public class EduStepikConnector {
         task.taskFiles.put(taskFile.name, taskFile);
       }
     }
-  }
-
-  private static void createCodeTask(Task task, StepikWrappers.Step step) {
-    task.setName("step" + task.getStepId());
-    if (step.options.samples != null) {
-      final StringBuilder builder = new StringBuilder();
-      for (List<String> sample : step.options.samples) {
-        if (sample.size() == 2) {
-          builder.append("<b>Sample Input:</b><br>");
-          builder.append(StringUtil.replace(sample.get(0), "\n", "<br>"));
-          builder.append("<br>");
-          builder.append("<b>Sample Output:</b><br>");
-          builder.append(StringUtil.replace(sample.get(1), "\n", "<br>"));
-          builder.append("<br><br>");
-        }
-      }
-      task.setText(step.text + "<br>" + builder.toString());
-    }
-
-    if (step.options.executionMemoryLimit != null && step.options.executionTimeLimit != null) {
-      String builder = "<b>Memory limit</b>: " +
-                       step.options.executionMemoryLimit + " Mb" +
-                       "<br>" +
-                       "<b>Time limit</b>: " +
-                       step.options.executionTimeLimit + "s" +
-                       "<br><br>";
-      task.setText(task.getText() + builder);
-    }
-
-    final TaskFile taskFile = new TaskFile();
-    taskFile.name = "Main.java";
-    //final String templateForTask = getCodeTemplateForTask();
-    final String templateForTask = step.options.codeTemplates.getTemplateForLanguage("java");
-    taskFile.text = templateForTask == null ? "# write your answer here \n" : templateForTask;
-    task.taskFiles.put(taskFile.name, taskFile);
+    lesson.taskList.add(task);
   }
 
   public static StepikWrappers.Step getStep(Integer step) throws IOException {
     return getFromStepik(EduStepikNames.STEPS + "/" + String.valueOf(step), StepikWrappers.StepContainer.class).steps.get(0).block;
-  }
-
-  public static StepikWrappers.StepContainer getSteps(List<Integer> steps) throws IOException {
-    return getFromStepik(EduStepikNames.STEPS + "/" + getIdQuery(steps), StepikWrappers.StepContainer.class);
   }
 
 
@@ -538,8 +407,6 @@ public class EduStepikConnector {
     return logged[0];
   }
 
-  //TODO rewrite with postToStepik
-  // use StepikConnectorPost.postAttempt(Task)
   public static void postAttempt(@NotNull final Task task, boolean passed, @Nullable String login, @Nullable String password) {
     if (task.getStepId() <= 0) {
       return;
@@ -566,8 +433,7 @@ public class EduStepikConnector {
       if (statusLine.getStatusCode() != HttpStatus.SC_CREATED) {
         LOG.error("Failed to make attempt " + attemptResponseString);
       }
-      final StepikWrappers.AttemptWrapper.Attempt attempt =
-        new Gson().fromJson(attemptResponseString, StepikWrappers.AttemptContainer.class).attempts.get(0);
+      final StepikWrappers.AttemptWrapper.Attempt attempt = new Gson().fromJson(attemptResponseString, StepikWrappers.AttemptContainer.class).attempts.get(0);
 
       final Map<String, TaskFile> taskFiles = task.getTaskFiles();
       final ArrayList<StepikWrappers.SolutionFile> files = new ArrayList<StepikWrappers.SolutionFile>();
@@ -581,10 +447,7 @@ public class EduStepikConnector {
     }
   }
 
-  //TODO rewrite with postToStepik
-  private static void postSubmission(boolean passed,
-                                     StepikWrappers.AttemptWrapper.Attempt attempt,
-                                     ArrayList<StepikWrappers.SolutionFile> files) throws IOException {
+  private static void postSubmission(boolean passed, StepikWrappers.AttemptWrapper.Attempt attempt, ArrayList<StepikWrappers.SolutionFile> files) throws IOException {
     final HttpPost request = new HttpPost(EduStepikNames.STEPIK_API_URL + EduStepikNames.SUBMISSIONS);
     setHeaders(request, EduStepikNames.CONTENT_TYPE_APPL_JSON);
 
@@ -612,11 +475,7 @@ public class EduStepikConnector {
     });
   }
 
-  //TODO rewrite with postToStepik
-  private static void postCourse(final Project project,
-                                 @NotNull Course course,
-                                 boolean relogin,
-                                 @NotNull final ProgressIndicator indicator) {
+  private static void postCourse(final Project project, @NotNull Course course, boolean relogin, @NotNull final ProgressIndicator indicator) {
     indicator.setText("Uploading course to " + stepikUrl);
     final HttpPost request = new HttpPost(EduStepikNames.STEPIK_API_URL + "courses");
     if (ourClient == null || !relogin) {
@@ -661,16 +520,11 @@ public class EduStepikConnector {
     }
   }
 
-  public static boolean login(@NotNull final Project project) {
-    StepikUser user = StudyTaskManager.getInstance(project).getUser();
-    final String login = user.getEmail();
+  private static boolean login(@NotNull final Project project) {
+    final StepikUser user = StudyTaskManager.getInstance(project).getUser();
+    final String login =  user.getEmail();
     if (StringUtil.isEmptyOrSpaces(login)) {
-        if ( (user = StudyTaskManager.getInstance(ProjectManager.getInstance().getDefaultProject()).getUser()) == null) {
-          return showLoginDialog();
-        }
-        else {
-          StudyTaskManager.getInstance(project).setUser(user);
-        }
+      return showLoginDialog();
     }
     else {
       if (login(login, user.getPassword()) == null) {
@@ -893,50 +747,9 @@ public class EduStepikConnector {
     });
   }
 
-
-  @Deprecated
-  //use setHeaders(HttpRequestBase), it sets accessToken
   static void setHeaders(@NotNull final HttpRequestBase request, String contentType) {
     request.addHeader(new BasicHeader("referer", stepikUrl));
     request.addHeader(new BasicHeader("X-CSRFToken", ourCSRFToken));
     request.addHeader(new BasicHeader("content-type", contentType));
-  }
-
-  public static void setHeaders(@NotNull final HttpRequestBase request) {
-    if (!accessToken.isEmpty()) {
-//      LOG.info("setup default headers");
-      request.addHeader(new BasicHeader("Authorization", "Bearer " + accessToken));
-      request.addHeader(new BasicHeader("content-type", EduStepikNames.CONTENT_TYPE_APPL_JSON));
-    }
-    else {
-      LOG.warn("access_token is empty");
-    }
-  }
-
-  public static String getIdQuery(List<Integer> list) {
-    StringBuilder sb = new StringBuilder();
-    sb.append("?");
-    for (Integer id : list) {
-      sb.append("ids[]=" + id + "&");
-    }
-    return sb.toString();
-  }
-
-  public static TrustManager[] getTrustAllCerts() {
-    return new TrustManager[]{new X509TrustManager() {
-      public X509Certificate[] getAcceptedIssuers() {
-        return null;
-      }
-
-      public void checkClientTrusted(X509Certificate[] certs, String authType) {
-      }
-
-      public void checkServerTrusted(X509Certificate[] certs, String authType) {
-      }
-    }};
-  }
-
-  public static void setAccessToken(String accessToken2) {
-    accessToken = accessToken2;
   }
 }
