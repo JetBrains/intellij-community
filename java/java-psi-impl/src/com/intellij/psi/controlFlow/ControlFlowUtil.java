@@ -238,6 +238,26 @@ public class ControlFlowUtil {
     return array;
   }
 
+  public static boolean isVariableUsed(ControlFlow flow, int start, int end, PsiVariable variable) {
+    List<Instruction> instructions = flow.getInstructions();
+    LOG.assertTrue(start >= 0, "flow start");
+    LOG.assertTrue(end <= instructions.size(), "flow end");
+    for (int i = start; i < end; i++) {
+      Instruction instruction = instructions.get(i);
+      if (instruction instanceof ReadVariableInstruction) {
+        if (((ReadVariableInstruction)instruction).variable == variable) {
+          return true;
+        }
+      }
+      else if (instruction instanceof WriteVariableInstruction) {
+        if (((WriteVariableInstruction)instruction).variable == variable) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   public static List<PsiVariable> getInputVariables(ControlFlow flow, int start, int end) {
     List<PsiVariable> usedVariables = getUsedVariables(flow, start, end);
     ArrayList<PsiVariable> array = new ArrayList<PsiVariable>(usedVariables.size());
