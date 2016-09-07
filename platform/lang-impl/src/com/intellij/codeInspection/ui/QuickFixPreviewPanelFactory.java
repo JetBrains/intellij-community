@@ -82,7 +82,7 @@ public class QuickFixPreviewPanelFactory {
       setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
       boolean hasComponents = false;
 
-      final int actualProblemCount = myView.getTree().getSelectedDescriptors().length;
+      final int actualProblemCount = myView.getTree().getContext().getPresentation(myWrapper).getProblemsCount(myView.getTree());
       if (actualProblemCount > 1 || (actualProblemCount == 1 && problemCount > 1)) {
         add(getLabel(actualProblemCount));
         hasComponents = true;

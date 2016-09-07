@@ -684,4 +684,9 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     SingleInspectionProfilePanel.readHTML(htmlView, SingleInspectionProfilePanel.toHTML(htmlView, text, false));
     return ScrollPaneFactory.createScrollPane(htmlView, true);
   }
+
+  @Override
+  public int getProblemsCount(InspectionTree tree) {
+    return 0;
+  }
 }
