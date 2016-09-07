@@ -201,16 +201,18 @@ public class JavaStackFrame extends XStackFrame {
         children.add(JavaValue.create(returnValueDescriptor, evaluationContext, myNodeManager));
       }
       // add context exceptions
+      Set<ObjectReference> exceptions = new HashSet<>();
       for (Pair<Breakpoint, Event> pair : DebuggerUtilsEx.getEventDescriptors(debuggerContext.getSuspendContext())) {
-        final Event debugEvent = pair.getSecond();
+        Event debugEvent = pair.getSecond();
         if (debugEvent instanceof ExceptionEvent) {
-          final ObjectReference exception = ((ExceptionEvent)debugEvent).exception();
+          ObjectReference exception = ((ExceptionEvent)debugEvent).exception();
           if (exception != null) {
-            final ValueDescriptorImpl exceptionDescriptor = myNodeManager.getThrownExceptionObjectDescriptor(myDescriptor, exception);
-            children.add(JavaValue.create(exceptionDescriptor, evaluationContext, myNodeManager));
+            exceptions.add(exception);
           }
         }
       }
+      exceptions.forEach(e -> children.add(
+        JavaValue.create(myNodeManager.getThrownExceptionObjectDescriptor(myDescriptor, e), evaluationContext, myNodeManager)));
 
       try {
         buildVariables(debuggerContext, evaluationContext, debugProcess, children, thisObjectReference, location);
