@@ -186,22 +186,20 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
   }
 
   private static boolean isApplicable(@NotNull ControlFlow flow, @NotNull ReturnContext context) {
-    final int flowStart = flow.getStartOffset(context.returnScope);
-    final int flowEnd = flow.getEndOffset(context.returnScope);
-    if (flowStart < 0 || flowEnd < 0) return false;
-
-    final int returnStartOffset = flow.getStartOffset(context.returnStatement);
-    final int returnEndOffset = flow.getEndOffset(context.returnStatement);
-    if (returnStartOffset < 0 || returnEndOffset < 0) return false;
-
     if (hasChainedAssignmentsInScope(flow, context.returnedVariable, context.returnStatement)) {
       return false;
     }
-
-    if (context.returnScope != context.variableScope &&
-        ControlFlowUtil.hasObservableThrowExitPoints(flow, flowStart, flowEnd,
-                                                     new PsiElement[]{context.refactoredStatement}, context.variableScope)) {
-      return false;
+    if (context.returnScope != context.variableScope) {
+      if (ControlFlowUtil.isVariableReadInFinally(flow, context.returnScope, context.variableScope, context.returnedVariable)) {
+        return false;
+      }
+      final int flowStart = flow.getStartOffset(context.returnScope);
+      final int flowEnd = flow.getEndOffset(context.returnScope);
+      if (flowStart < 0 || flowEnd < 0) return false;
+      if (ControlFlowUtil.hasObservableThrowExitPoints(flow, flowStart, flowEnd,
+                                                       new PsiElement[]{context.refactoredStatement}, context.variableScope)) {
+        return false;
+      }
     }
 
     Mover mover = new Mover(flow, context.refactoredStatement, context.returnedVariable, context.returnType, true);

@@ -258,6 +258,37 @@ public class ControlFlowUtil {
     return false;
   }
 
+  public static boolean isVariableReadInFinally(@NotNull ControlFlow flow,
+                                                @Nullable PsiElement startElement,
+                                                @NotNull PsiElement enclosingCodeFragment,
+                                                @NotNull PsiVariable variable) {
+    for (PsiElement element = startElement; element != null && element != enclosingCodeFragment; element = element.getParent()) {
+      if (element instanceof PsiCodeBlock) {
+        final PsiElement parent = element.getParent();
+        if (parent instanceof PsiTryStatement) {
+          final PsiTryStatement tryStatement = (PsiTryStatement)parent;
+          if (tryStatement.getTryBlock() == element) {
+            final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
+            if (finallyBlock != null) {
+              final List<Instruction> instructions = flow.getInstructions();
+              final int startOffset = flow.getStartOffset(finallyBlock);
+              final int endOffset = flow.getEndOffset(finallyBlock);
+              LOG.assertTrue(startOffset >= 0, "flow start");
+              LOG.assertTrue(endOffset <= instructions.size(), "flow end");
+              for (int i = startOffset; i < endOffset; i++) {
+                final Instruction instruction = instructions.get(i);
+                if (instruction instanceof ReadVariableInstruction && ((ReadVariableInstruction)instruction).variable == variable) {
+                  return true;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+
   public static List<PsiVariable> getInputVariables(ControlFlow flow, int start, int end) {
     List<PsiVariable> usedVariables = getUsedVariables(flow, start, end);
     ArrayList<PsiVariable> array = new ArrayList<PsiVariable>(usedVariables.size());
