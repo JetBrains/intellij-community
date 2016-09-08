@@ -364,6 +364,32 @@ public class JBScrollPane extends JScrollPane {
     public boolean canBePreprocessed(MouseEvent e) {
       return JBScrollPane.canBePreprocessed(e, this);
     }
+
+    @Override
+    public int getUnitIncrement() {
+      return fixUnitIncrement(super.getUnitIncrement());
+    }
+
+    @Override
+    public int getUnitIncrement(int direction) {
+      return fixUnitIncrement(super.getUnitIncrement(direction));
+    }
+
+    // increases default unit increment for non-scrollable components to provide fast scrolling
+    private int fixUnitIncrement(int increment) {
+      if (increment != 1) return increment;
+
+      JViewport viewport = getViewport();
+      if (viewport == null) return increment;
+
+      Component view = viewport.getView();
+      if (view == null) return increment;
+      if (view instanceof Scrollable) {
+        return increment;
+      }
+      Font font = view.getFont();
+      return font == null ? increment : font.getSize();
+    }
   }
 
 

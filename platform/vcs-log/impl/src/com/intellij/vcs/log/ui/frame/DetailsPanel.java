@@ -71,8 +71,6 @@ class DetailsPanel extends JPanel implements EditorColorsListener {
     myColorManager = colorManager;
 
     myScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    myScrollPane.getVerticalScrollBar().setUnitIncrement(JBUI.scale(10));
-    myScrollPane.getHorizontalScrollBar().setUnitIncrement(JBUI.scale(10));
     myMainContentPanel = new ScrollablePanel() {
       @Override
       public boolean getScrollableTracksViewportWidth() {

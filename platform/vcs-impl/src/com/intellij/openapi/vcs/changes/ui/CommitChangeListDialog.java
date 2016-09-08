@@ -1009,7 +1009,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     JPanel mainPanel;
     if (myAdditionalOptionsPanel != null) {
       JScrollPane optionsPane = ScrollPaneFactory.createScrollPane(myAdditionalOptionsPanel, true);
-      optionsPane.getVerticalScrollBar().setUnitIncrement(10);
       if (!Registry.is("ide.scroll.new.layout")) {
         optionsPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         optionsPane.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
