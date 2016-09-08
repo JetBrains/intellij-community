@@ -20,6 +20,7 @@ import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.RegexpFilter
 import com.intellij.execution.filters.RegexpFilter.FILE_PATH_MACROS
 import com.intellij.execution.filters.RegexpFilter.LINE_MACROS
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
@@ -28,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_
 class GrCompilationErrorsFilterProvider : ConsoleFilterProvider {
 
   override fun getDefaultFilters(project: Project): Array<Filter> {
-    JavaPsiFacade.getInstance(project).findClass(GROOVY_OBJECT, GlobalSearchScope.allScope(project)) ?: return Filter.EMPTY_ARRAY
+    runReadAction { JavaPsiFacade.getInstance(project).findClass(GROOVY_OBJECT, GlobalSearchScope.allScope(project)) } ?: return Filter.EMPTY_ARRAY
     return arrayOf(RegexpFilter(project, "${FILE_PATH_MACROS}: ${LINE_MACROS}.*"))
   }
 }
