@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,9 +83,10 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalI
         if (AnonymousCanBeLambdaInspection.canBeConvertedToLambda(aClass, true, reportNotAnnotatedInterfaces, Collections.emptySet())) {
           final PsiMethod method = aClass.getMethods()[0];
           final PsiCodeBlock body = method.getBody();
-          final PsiCallExpression callExpression =
+          final PsiExpression methodRefCandidate =
             LambdaCanBeMethodReferenceInspection.canBeMethodReferenceProblem(body, method.getParameterList().getParameters(), aClass.getBaseClassType(), aClass.getParent());
-          if (callExpression != null) {
+          if (methodRefCandidate instanceof PsiCallExpression) {
+            final PsiCallExpression callExpression = (PsiCallExpression)methodRefCandidate;
             final PsiMethod resolveMethod = callExpression.resolveMethod();
             if (resolveMethod != method &&
                 !AnonymousCanBeLambdaInspection.functionalInterfaceMethodReferenced(resolveMethod, aClass, callExpression)) {

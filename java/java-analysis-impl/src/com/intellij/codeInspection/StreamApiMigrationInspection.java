@@ -398,14 +398,14 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
   private static boolean isTrivial(PsiStatement body, PsiParameter parameter) {
     //method reference
-    final PsiCallExpression callExpression = LambdaCanBeMethodReferenceInspection
+    final PsiExpression candidate = LambdaCanBeMethodReferenceInspection
       .canBeMethodReferenceProblem(body instanceof PsiBlockStatement ? ((PsiBlockStatement)body).getCodeBlock() : body,
                                    new PsiParameter[]{parameter}, 
                                    createDefaultConsumerType(parameter.getProject(), parameter));
-    if (callExpression == null) {
+    if (!(candidate instanceof PsiCallExpression)) {
       return true;
     }
-    final PsiMethod method = callExpression.resolveMethod();
+    final PsiMethod method = ((PsiCallExpression)candidate).resolveMethod();
     return method != null && isThrowsCompatible(method);
   }
 
@@ -598,8 +598,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     }
 
     private static String createForEachFunctionalExpressionText(Project project, PsiElement block, PsiVariable variable) {
-      final PsiCallExpression callExpression = LambdaCanBeMethodReferenceInspection.extractMethodCallFromBlock(block);
-      if (callExpression != null) {
+      final PsiExpression methodRefCandidate = LambdaCanBeMethodReferenceInspection.extractMethodReferenceCandidateExpression(block);
+      if (methodRefCandidate != null) {
         final PsiClassType functionalType = createDefaultConsumerType(project, variable);
         final PsiVariable[] parameters = {variable};
         String methodReferenceText =
