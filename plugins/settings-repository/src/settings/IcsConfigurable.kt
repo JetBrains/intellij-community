@@ -60,6 +60,6 @@ internal class IcsConfigurableUi : ConfigurableUi<IcsSettings>, Disposable {
     editors.get(0).component()
     autoSync()
     hint("Use VCS -> Sync Settings to sync when you want")
-    titledPanel("Read-only Sources", editors.get(1).component, grow, push)
+    panel("Read-only Sources", editors.get(1).component, grow, push)
   }
 }

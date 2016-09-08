@@ -26,29 +26,12 @@ import com.intellij.util.ui.UIUtil.ComponentStyle
 import net.miginfocom.layout.BoundSize
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.UnitValue
-import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Font
 import java.awt.event.ActionEvent
 import javax.swing.*
 
 inline fun panel(vararg layoutConstraints: LCFlags, title: String? = null, init: Panel.() -> Unit) = createPanel(title, layoutConstraints, init)
-
-inline fun Panel.panel(title: String, layoutConstraints: Array<out LCFlags> = emptyArray(), vararg constraints: CCFlags, init: Panel.() -> Unit) {
-  add(createPanel(title, layoutConstraints, init), constraints.create())
-}
-
-fun titledPanel(title: String): JPanel {
-  val panel = JPanel(BorderLayout())
-  setTitledBorder(title, panel)
-  return panel
-}
-
-fun JPanel.titledPanel(title: String, wrappedComponent: Component, vararg constraints: CCFlags) {
-  val panel = titledPanel(title)
-  panel.add(wrappedComponent)
-  add(panel, constraints.create())
-}
 
 fun JPanel.label(text: String,
                  vararg constraints: CCFlags,
@@ -74,6 +57,64 @@ fun JPanel.label(text: String,
   }
 
   add(label, createComponentConstraints(constraints, gapLeft = gapLeft, gapBottom = gapBottom, gapAfter = gapAfter, split = split))
+}
+
+fun JPanel.link(text: String, vararg constraints: CCFlags, style: ComponentStyle? = null, action: () -> Unit) {
+  val result = LinkLabel.create(text, action)
+  style?.let { UIUtil.applyStyle(it, result) }
+  add(result, constraints.create())
+}
+
+fun JPanel.link(text: String, url: String, vararg constraints: CCFlags, style: ComponentStyle? = null) {
+  val result = LinkLabel.create(text, { BrowserUtil.browse(url) })
+  style?.let { UIUtil.applyStyle(it, result) }
+  add(result, constraints.create())
+}
+
+fun JPanel.hint(text: String, vararg constraints: CCFlags) {
+  label(text, style = ComponentStyle.SMALL, fontColor = UIUtil.FontColor.BRIGHTER, constraints = *constraints, gapLeft = 3 * GAP)
+}
+
+/**
+ * Hyperlinks are supported (`<a href=""></a>`), new lines and <br> are not supported.
+ */
+fun JPanel.note(text: String, vararg constraints: CCFlags) {
+  add(noteComponent(text), createComponentConstraints(constraints, gapTop = GAP))
+}
+
+fun JPanel.radioButton(text: String, vararg constraints: CCFlags) {
+  add(RadioButton(text), constraints.create())
+}
+
+fun JPanel.buttonGroup(vararg buttons: AbstractButton) {
+  val group = ButtonGroup()
+  buttons.forEach {
+    group.add(it)
+    add(it)
+  }
+}
+
+fun JPanel.button(text: String, vararg constraints: CCFlags, actionListener: (event: ActionEvent) -> Unit) {
+  val button = JButton(BundleBase.replaceMnemonicAmpersand(text))
+  button.addActionListener(actionListener)
+  add(button, constraints.create())
+}
+
+inline fun Panel.panel(title: String, layoutConstraints: Array<out LCFlags> = emptyArray(), vararg constraints: CCFlags, init: Panel.() -> Unit) {
+  add(createPanel(title, layoutConstraints, init), constraints.create())
+}
+
+fun JPanel.panel(title: String, wrappedComponent: Component, vararg constraints: CCFlags) {
+  val panel = TitledPanel(title)
+  panel.add(wrappedComponent)
+  add(panel, constraints.create())
+}
+
+fun RadioButton(text: String) = JRadioButton(BundleBase.replaceMnemonicAmpersand(text))
+
+private fun gapToBoundSize(value: Int, isHorizontal: Boolean): BoundSize {
+  val unitValue = UnitValue(value.toFloat(), "", isHorizontal, UnitValue.STATIC, null)
+  return BoundSize(unitValue, unitValue, null, false, null)
 }
 
 private fun createComponentConstraints(constraints: Array<out CCFlags>,
@@ -108,56 +149,4 @@ private fun createComponentConstraints(constraints: Array<out CCFlags>,
     cc().split = split
   }
   return _cc
-}
-
-fun JPanel.link(text: String, vararg constraints: CCFlags, style: ComponentStyle? = null, action: () -> Unit) {
-  val result = LinkLabel.create(text, action)
-  style?.let { UIUtil.applyStyle(it, result) }
-  add(result, constraints.create())
-}
-
-fun JPanel.link(text: String, url: String, vararg constraints: CCFlags, style: ComponentStyle? = null) {
-  val result = LinkLabel.create(text, { BrowserUtil.browse(url) })
-  style?.let { UIUtil.applyStyle(it, result) }
-  add(result, constraints.create())
-}
-
-private fun gapToBoundSize(value: Int, isHorizontal: Boolean): BoundSize {
-  val unitValue = UnitValue(value.toFloat(), "", isHorizontal, UnitValue.STATIC, null)
-  return BoundSize(unitValue, unitValue, null, false, null)
-}
-
-fun JPanel.hint(text: String, vararg constraints: CCFlags) {
-  label(text, style = ComponentStyle.SMALL, fontColor = UIUtil.FontColor.BRIGHTER, constraints = *constraints, gapLeft = 3 * GAP)
-}
-
-/**
- * Hyperlinks are supported (`<a href=""></a>`), new lines and <br> are not supported.
- */
-fun JPanel.note(text: String, vararg constraints: CCFlags) {
-  add(noteComponent(text), createComponentConstraints(constraints, gapTop = GAP))
-}
-
-fun RadioButton(text: String) = JRadioButton(BundleBase.replaceMnemonicAmpersand(text))
-
-fun JPanel.radioButton(text: String, vararg constraints: CCFlags) {
-  add(RadioButton(BundleBase.replaceMnemonicAmpersand(text)), constraints.create())
-}
-
-fun JPanel.buttonGroup(vararg buttons: AbstractButton) {
-  val group = ButtonGroup()
-  buttons.forEach {
-    group.add(it)
-    add(it)
-  }
-}
-
-fun JPanel.button(text: String, vararg constraints: CCFlags, actionListener: (event: ActionEvent) -> Unit) {
-  val button = JButton(BundleBase.replaceMnemonicAmpersand(text))
-  button.addActionListener(actionListener)
-  add(button, constraints.create())
-}
-
-fun JPanel.add(component: Component, vararg constraints: CCFlags) {
-  add(component, constraints.create())
 }

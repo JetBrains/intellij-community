@@ -18,12 +18,13 @@ package com.intellij.xdebugger.impl.settings;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.layout.LayoutKt;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+
+import static com.intellij.ui.layout.LayoutImplKt.TitledPanel;
 
 public class DataViewsConfigurableUi {
   public static final String DEBUGGER_VALUE_TOOLTIP_AUTO_SHOW_KEY = "debugger.valueTooltipAutoShow";
@@ -84,6 +85,6 @@ public class DataViewsConfigurableUi {
   }
 
   private void createUIComponents() {
-    myEditorSettingsPanel = LayoutKt.titledPanel("Editor");
+    myEditorSettingsPanel = TitledPanel("Editor");
   }
 }

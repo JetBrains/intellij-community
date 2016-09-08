@@ -20,6 +20,7 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.ConstraintParser
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.LayoutManager
 import javax.swing.JPanel
@@ -115,4 +116,14 @@ fun LC.apply(flags: Array<out LCFlags>): LC {
     }
   }
   return this
+}
+
+fun JPanel.add(component: Component, vararg constraints: CCFlags) {
+  add(component, constraints.create())
+}
+
+fun TitledPanel(title: String): JPanel {
+  val panel = JPanel(BorderLayout())
+  setTitledBorder(title, panel)
+  return panel
 }
