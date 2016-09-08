@@ -672,11 +672,11 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   }
 
 
-  public void unshelveChangesToSeparatedChangelists(@NotNull final Project project,
-                                                    @NotNull final List<ShelvedChangeList> selectedChangeLists,
-                                                    @NotNull final List<ShelvedChange> selectedChanges,
-                                                    @NotNull final List<ShelvedBinaryFile> selectedBinaryChanges,
-                                                    @Nullable final LocalChangeList forcePredefinedOneChangelist) {
+  public void unshelveSilentlyAsynchronously(@NotNull final Project project,
+                                             @NotNull final List<ShelvedChangeList> selectedChangeLists,
+                                             @NotNull final List<ShelvedChange> selectedChanges,
+                                             @NotNull final List<ShelvedBinaryFile> selectedBinaryChanges,
+                                             @Nullable final LocalChangeList forcePredefinedOneChangelist) {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, VcsBundle.getString("unshelve.changes.progress.title"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {

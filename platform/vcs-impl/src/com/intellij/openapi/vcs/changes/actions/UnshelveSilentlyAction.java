@@ -34,8 +34,8 @@ public class UnshelveSilentlyAction extends AnAction implements DumbAware {
     FileDocumentManager.getInstance().saveAllDocuments();
     DataContext dataContext = e.getDataContext();
     ShelveChangesManager.getInstance(project).
-      unshelveChangesToSeparatedChangelists(project, getShelvedLists(dataContext), getShelveChanges(dataContext),
-                                            getBinaryShelveChanges(dataContext), null);
+      unshelveSilentlyAsynchronously(project, getShelvedLists(dataContext), getShelveChanges(dataContext),
+                                     getBinaryShelveChanges(dataContext), null);
   }
 
   @Override

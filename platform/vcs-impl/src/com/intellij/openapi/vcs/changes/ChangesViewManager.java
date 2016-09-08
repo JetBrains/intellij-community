@@ -572,8 +572,8 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
         FileDocumentManager.getInstance().saveAllDocuments();
         ShelvedChangeListDragBean shelvedBean = (ShelvedChangeListDragBean)attachedObject;
         ShelveChangesManager.getInstance(myProject)
-          .unshelveChangesToSeparatedChangelists(myProject, shelvedBean.getShelvedChangelists(), shelvedBean.getChanges(),
-                                                 shelvedBean.getBinaryFiles(), null);
+          .unshelveSilentlyAsynchronously(myProject, shelvedBean.getShelvedChangelists(), shelvedBean.getChanges(),
+                                          shelvedBean.getBinaryFiles(), null);
       }
     }
 

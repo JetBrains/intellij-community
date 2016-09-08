@@ -96,8 +96,8 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
       };
 
     if (!chooser.showAndGet()) return;
-    ShelveChangesManager.getInstance(project).unshelveChangesToSeparatedChangelists(project, changeLists, changes, binaryFiles,
-                                                                                    chooser.getSelectedList());
+    ShelveChangesManager.getInstance(project).unshelveSilentlyAsynchronously(project, changeLists, changes, binaryFiles,
+                                                                             chooser.getSelectedList());
   }
 
   private static boolean hasNotAllSelectedChanges(@NotNull Project project, @NotNull ShelvedChangeList list, @Nullable Change[] changes) {
