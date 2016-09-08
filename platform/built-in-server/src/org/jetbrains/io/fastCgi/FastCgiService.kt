@@ -19,6 +19,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.Consumer
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.io.addChannelListener
+import com.intellij.util.io.handler
 import io.netty.bootstrap.Bootstrap
 import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel

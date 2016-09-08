@@ -16,18 +16,199 @@
 package com.intellij.util.io
 
 import com.google.common.net.InetAddresses
+import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.Conditions
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.net.NetUtils
+import io.netty.bootstrap.Bootstrap
+import io.netty.bootstrap.BootstrapUtil
+import io.netty.bootstrap.ServerBootstrap
 import io.netty.buffer.ByteBuf
-import io.netty.channel.Channel
+import io.netty.channel.*
+import io.netty.channel.nio.NioEventLoopGroup
+import io.netty.channel.oio.OioEventLoopGroup
+import io.netty.channel.socket.nio.NioServerSocketChannel
+import io.netty.channel.socket.oio.OioServerSocketChannel
+import io.netty.channel.socket.oio.OioSocketChannel
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpMethod
 import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.ssl.SslHandler
+import io.netty.util.concurrent.GenericFutureListener
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.ide.PooledThreadExecutor
+import org.jetbrains.io.NettyUtil
 import java.io.IOException
 import java.net.InetAddress
+import java.net.InetSocketAddress
 import java.net.NetworkInterface
+import java.net.Socket
+import java.util.concurrent.TimeUnit
+
+// used in Go
+fun oioClientBootstrap(): Bootstrap {
+  val bootstrap = Bootstrap().group(OioEventLoopGroup(1, PooledThreadExecutor.INSTANCE)).channel(OioSocketChannel::class.java)
+  bootstrap.option(ChannelOption.TCP_NODELAY, true).option(ChannelOption.SO_KEEPALIVE, true)
+  return bootstrap
+}
+
+inline fun Bootstrap.handler(crossinline task: (Channel) -> Unit): Bootstrap {
+  handler(object : ChannelInitializer<Channel>() {
+    override fun initChannel(channel: Channel) {
+      task(channel)
+    }
+  })
+  return this
+}
+
+fun serverBootstrap(group: EventLoopGroup): ServerBootstrap {
+  val bootstrap = ServerBootstrap()
+    .group(group)
+    .channel(if (group is NioEventLoopGroup) NioServerSocketChannel::class.java else OioServerSocketChannel::class.java)
+  bootstrap.childOption(ChannelOption.TCP_NODELAY, true).childOption(ChannelOption.SO_KEEPALIVE, true)
+  return bootstrap
+}
+
+inline fun ChannelFuture.addChannelListener(crossinline listener: (future: ChannelFuture) -> Unit) {
+  addListener(GenericFutureListener<ChannelFuture> { listener(it) })
+}
+
+// if NIO, so, it is shared and we must not shutdown it
+fun EventLoop.shutdownIfOio() {
+  if (this is OioEventLoopGroup) {
+    @Suppress("USELESS_CAST")
+    (this as OioEventLoopGroup).shutdownGracefully(1L, 2L, TimeUnit.NANOSECONDS)
+  }
+}
+
+// Event loop will be shut downed only if OIO
+fun Channel.closeAndShutdownEventLoop() {
+  val eventLoop = eventLoop()
+  try {
+    close().awaitUninterruptibly()
+  }
+  finally {
+    eventLoop.shutdownIfOio()
+  }
+}
+
+@JvmOverloads
+fun Bootstrap.connect(remoteAddress: InetSocketAddress, promise: AsyncPromise<*>? = null, maxAttemptCount: Int = NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT, stopCondition: Condition<Void>? = null): Channel? {
+  try {
+    return doConnect(this, remoteAddress, promise, maxAttemptCount, stopCondition ?: Conditions.alwaysFalse<Void>())
+  }
+  catch (e: Throwable) {
+    promise?.setError(e)
+    return null
+  }
+}
+
+private fun doConnect(bootstrap: Bootstrap,
+                       remoteAddress: InetSocketAddress,
+                       promise: AsyncPromise<*>?,
+                       maxAttemptCount: Int,
+                       stopCondition: Condition<Void>): Channel? {
+  var attemptCount = 0
+  if (bootstrap.config().group() is NioEventLoopGroup) {
+    return connectNio(bootstrap, remoteAddress, promise, maxAttemptCount, stopCondition, attemptCount)
+  }
+
+  bootstrap.validate()
+
+  val socket: Socket
+  while (true) {
+    try {
+      //noinspection IOResourceOpenedButNotSafelyClosed,SocketOpenedButNotSafelyClosed
+      socket = Socket(remoteAddress.address, remoteAddress.port)
+      break
+    }
+    catch (e: IOException) {
+      if (stopCondition.value(null) || promise != null && promise.state != Promise.State.PENDING) {
+        return null
+      }
+      else if (maxAttemptCount == -1) {
+        if (sleep(promise, 300)) {
+          return null
+        }
+        attemptCount++
+      }
+      else if (++attemptCount < maxAttemptCount) {
+        if (sleep(promise, attemptCount * NettyUtil.MIN_START_TIME)) {
+          return null
+        }
+      }
+      else {
+        promise?.setError(e)
+        return null
+      }
+    }
+
+  }
+
+  val channel = OioSocketChannel(socket)
+  BootstrapUtil.initAndRegister(channel, bootstrap).sync()
+  return channel
+}
+
+private fun connectNio(bootstrap: Bootstrap,
+                       remoteAddress: InetSocketAddress,
+                       promise: AsyncPromise<*>?,
+                       maxAttemptCount: Int,
+                       stopCondition: Condition<Void>,
+                       _attemptCount: Int): Channel? {
+  var attemptCount = _attemptCount
+  while (true) {
+    val future = bootstrap.connect(remoteAddress).awaitUninterruptibly()
+    if (future.isSuccess) {
+      if (!future.channel().isOpen) {
+        continue
+      }
+      return future.channel()
+    }
+    else if (stopCondition.value(null) || promise != null && promise.state == Promise.State.REJECTED) {
+      return null
+    }
+    else if (maxAttemptCount == -1) {
+      if (sleep(promise, 300)) {
+        return null
+      }
+      attemptCount++
+    }
+    else if (++attemptCount < maxAttemptCount) {
+      if (sleep(promise, attemptCount * NettyUtil.MIN_START_TIME)) {
+        return null
+      }
+    }
+    else {
+      @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
+      val cause = future.cause()
+      if (promise != null) {
+        if (cause == null) {
+          promise.setError("Cannot connect: unknown error")
+        }
+        else {
+          promise.setError(cause)
+        }
+      }
+      return null
+    }
+  }
+}
+
+private fun sleep(promise: AsyncPromise<*>?, time: Int): Boolean {
+  try {
+    //noinspection BusyWait
+    Thread.sleep(time.toLong())
+  }
+  catch (ignored: InterruptedException) {
+    promise?.setError("Interrupted")
+    return true
+  }
+
+  return false
+}
 
 val Channel.uriScheme: String
   get() = if (pipeline().get(SslHandler::class.java) == null) "http" else "https"

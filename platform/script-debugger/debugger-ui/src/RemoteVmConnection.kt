@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Condition
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.components.JBList
+import com.intellij.util.io.connect
 import com.intellij.util.io.socketConnection.ConnectionStatus
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.ChannelFuture
@@ -31,7 +32,6 @@ import org.jetbrains.concurrency.rejectedPromise
 import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.debugger.Vm
 import org.jetbrains.io.NettyUtil
-import org.jetbrains.io.connect
 import org.jetbrains.rpc.LOG
 import java.net.ConnectException
 import java.net.InetSocketAddress

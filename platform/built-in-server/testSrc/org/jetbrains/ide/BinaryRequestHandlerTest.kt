@@ -2,6 +2,7 @@ package org.jetbrains.ide
 
 import com.intellij.testFramework.ProjectRule
 import com.intellij.util.concurrency.Semaphore
+import com.intellij.util.io.handler
 import com.intellij.util.net.loopbackSocketAddress
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
@@ -11,7 +12,10 @@ import io.netty.util.CharsetUtil
 import junit.framework.TestCase
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
-import org.jetbrains.io.*
+import org.jetbrains.io.ChannelExceptionHandler
+import org.jetbrains.io.Decoder
+import org.jetbrains.io.MessageDecoder
+import org.jetbrains.io.oioClientBootstrap
 import org.junit.ClassRule
 import org.junit.Test
 import java.util.*
