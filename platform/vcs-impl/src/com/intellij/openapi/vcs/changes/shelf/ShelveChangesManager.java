@@ -640,7 +640,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   }
 
   @CalledInAwt
-  void shelveSilentlyUnderProgress(@NotNull List<Change> changes) {
+  public void shelveSilentlyUnderProgress(@NotNull List<Change> changes) {
     final boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
       () -> DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> shelveChangesInSeparatedLists(changes)),
       VcsBundle.getString("shelve.changes.progress.title"), true, myProject);
