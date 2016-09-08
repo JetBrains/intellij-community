@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
@@ -89,7 +90,7 @@ public class ModuleRootModificationUtil {
       entry.setScope(scope);
       entry.setExported(exported);
 
-      WriteAction.run(libraryModel::commit);
+      ApplicationManager.getApplication().invokeAndWait(() -> WriteAction.run(model::commit));
     });
   }
 
@@ -133,7 +134,7 @@ public class ModuleRootModificationUtil {
     ModifiableRootModel model = ReadAction.compute(() -> ModuleRootManager.getInstance(module).getModifiableModel());
     try {
       task.consume(model);
-      WriteAction.run(model::commit);
+      ApplicationManager.getApplication().invokeAndWait(() -> WriteAction.run(model::commit));
     }
     catch (RuntimeException | Error e) {
       model.dispose();
