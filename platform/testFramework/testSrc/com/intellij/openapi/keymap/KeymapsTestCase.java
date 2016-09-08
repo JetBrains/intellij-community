@@ -107,6 +107,8 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control alt R",            "org.jetbrains.plugins.ruby.tasks.rake.actions.RakeTasksPopupAction", "Django.RunManageTaskAction"},
     { "control alt UP",           "PreviousOccurence", "Console.TableResult.PreviousPage"},
     { "control alt N",            "Inline", "Console.TableResult.SetNull"},
+    { "ctrl alt H",               "CallHierarchy", "ChangesView.ShelveSilently"},
+    { "ctrl alt U",               "ShowUmlDiagramPopup", "ChangesView.UnshelveSilently"}, 
     { "control MINUS",            "CollapseAll", "CollapseRegion"},
     { "control PERIOD",           "EditorChooseLookupItemDot", "CollapseSelection"},
     { "shift DELETE",             "$Cut", "Maven.Uml.Exclude"},
