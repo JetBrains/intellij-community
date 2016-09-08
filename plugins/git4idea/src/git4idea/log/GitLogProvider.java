@@ -159,7 +159,7 @@ public class GitLogProvider implements VcsLogProvider {
                                                  @Nullable final Set<String> currentTagNames,
                                                  @Nullable final DetailedLogData commitsFromTags) {
     StopWatch sw = StopWatch.start("validating data in " + root.getName());
-    final Set<Hash> refs = ContainerUtil.map2Set(allRefs, ref -> ref.getCommitHash());
+    final Set<Hash> refs = ContainerUtil.map2Set(allRefs, VcsRef::getCommitHash);
 
     PermanentGraphImpl.newInstance(sortedCommits, new GraphColorManager<Hash>() {
       @Override
@@ -236,7 +236,7 @@ public class GitLogProvider implements VcsLogProvider {
       GraphCommit<Hash> commit = commits.get(i);
       sb.append(
         String
-          .format("%s -> %s\n", commit.getId().toShortString(), StringUtil.join(commit.getParents(), hash -> hash.toShortString(), ", ")));
+          .format("%s -> %s\n", commit.getId().toShortString(), StringUtil.join(commit.getParents(), Hash::toShortString, ", ")));
     }
     return sb.toString();
   }
@@ -480,8 +480,8 @@ public class GitLogProvider implements VcsLogProvider {
     }
 
     List<TimedVcsCommit> commits = ContainerUtil.newArrayList();
-    GitHistoryUtils.readCommits(myProject, root, filterParameters, EmptyConsumer.<VcsUser>getInstance(),
-                                EmptyConsumer.<VcsRef>getInstance(), new CollectConsumer<>(commits));
+    GitHistoryUtils.readCommits(myProject, root, filterParameters, EmptyConsumer.getInstance(),
+                                EmptyConsumer.getInstance(), new CollectConsumer<>(commits));
     return commits;
   }
 
