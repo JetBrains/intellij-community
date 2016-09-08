@@ -19,6 +19,7 @@ import com.google.common.collect.Lists;
 import com.intellij.diagnostic.AbstractMessage;
 import com.intellij.diagnostic.MessagePool;
 import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.PrivacyPolicy;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,6 +31,12 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkModificator;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SwitchBootJdkAction;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -42,12 +49,13 @@ import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.ListPopupModel;
 import com.intellij.util.JdkBundle;
 import com.intellij.util.ui.EdtInvocationManager;
-import org.fest.swing.core.*;
+import org.fest.swing.core.BasicRobot;
+import org.fest.swing.core.ComponentFinder;
+import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.Robot;
 import org.fest.swing.edt.GuiActionRunner;
 import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.edt.GuiTask;
-import org.fest.swing.exception.ComponentLookupException;
 import org.fest.swing.exception.WaitTimedOutError;
 import org.fest.swing.fixture.ContainerFixture;
 import org.fest.swing.fixture.DialogFixture;
@@ -80,6 +88,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static com.google.common.base.Joiner.on;
 import static com.google.common.io.Files.createTempDir;
 import static com.intellij.openapi.projectRoots.JdkUtil.checkForJdk;
+import static com.intellij.openapi.util.io.FileUtil.pathsEqual;
 import static com.intellij.openapi.util.io.FileUtil.toCanonicalPath;
 import static com.intellij.openapi.util.io.FileUtilRt.toSystemDependentName;
 import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
@@ -186,29 +195,59 @@ public final class GuiTests {
       jdkHome = getBundledJdLocation();
     }
     final File jdkPath = new File(jdkHome);
-    //TODO: set IDE SDK
 
-    //execute(new GuiTask() {
-    //  @Override
-    //  protected void executeInEDT() throws Throwable {
-    //    File currentJdkPath = IdeSdks.getJdkPath();
-    //    if (!filesEqual(androidSdkPath, currentAndroidSdkPath) || !filesEqual(jdkPath, currentJdkPath)) {
-    //      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-    //        @Override
-    //        public void run() {
-    //          System.out.println(String.format("Setting Android SDK: '%1$s'", androidSdkPath.getPath()));
-    //          IdeSdks.setAndroidSdkPath(androidSdkPath, null);
-    //
-    //          System.out.println(String.format("Setting JDK: '%1$s'", jdkPath.getPath()));
-    //          IdeSdks.setJdkPath(jdkPath);
-    //
-    //          System.out.println();
-    //        }
-    //      });
-    //    }
-    //  }
-    //});
+    execute(new GuiTask() {
+      @Override
+      protected void executeInEDT() throws Throwable {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              LOG.info(String.format("Setting JDK: '%1$s'", jdkPath.getPath()));
+              setJdkPath(jdkPath);
+            }
+          });
+        }
+    });
 
+  }
+
+  public static void setJdkPath(@NotNull File path) {
+    if (JavaSdk.checkForJdk(path)) {
+      ApplicationManager.getApplication().assertWriteAccessAllowed();
+      Sdk chosenJdk = null;
+
+      for (Sdk jdk : ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance())) {
+        if (pathsEqual(jdk.getHomePath(), path.getPath())) {
+          chosenJdk = jdk;
+          break;
+        }
+      }
+
+      if (chosenJdk == null) {
+        if (path.isDirectory()) {
+
+          JavaSdk javaSdk = JavaSdk.getInstance();
+
+          String jdk_name = "JDK";
+          final Sdk newJdk = javaSdk.createJdk(jdk_name, path.toString(), false);
+          final Sdk foundJdk = ProjectJdkTable.getInstance().findJdk(newJdk.getName(), newJdk.getSdkType().getName());
+          if (foundJdk == null) {
+            ApplicationManager.getApplication().runWriteAction(() -> {
+              ProjectJdkTable.getInstance().addJdk(newJdk);
+            });
+          }
+
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            SdkModificator modificator = newJdk.getSdkModificator();
+            JavaSdkImpl.attachJdkAnnotations(modificator);
+            modificator.commitChanges();
+          });
+        }
+        else {
+          throw new IllegalStateException("The resolved path '" + path.getPath() + "' was not found");
+        }
+      }
+    }
   }
 
   @Nullable
@@ -316,29 +355,12 @@ public final class GuiTests {
   private static void acceptAgreementIfNeeded(Robot robot) {
     final String policyAgreement = "Privacy Policy Agreement";
 
-    try {
-      pause(new Condition("Waiting for " + policyAgreement + " dialog") {
-        @Override
-        public boolean test() {
-          try {
-            robot.finder().find(new GenericTypeMatcher<JDialog>(JDialog.class) {
-              @Override
-              protected boolean isMatching(@NotNull JDialog dialog) {
-                if (dialog.getTitle() == null) return false;
-                return dialog.getTitle().contains(policyAgreement) && dialog.isShowing();
-              }
-            });
-          } catch (ComponentLookupException e) {
-            return false;
-          }
-          return true;
-        }
-      }, MINUTE_TIMEOUT);
-    } catch (WaitTimedOutError timedOutError) {
-      LOG.info(policyAgreement + " dialog wasn't found. Skipped to next step");
+    Pair<PrivacyPolicy.Version, String> policy = PrivacyPolicy.getContent();
+    boolean showPrivacyPolicyAgreement = !PrivacyPolicy.isVersionAccepted(policy.getFirst());
+    if (!showPrivacyPolicyAgreement) {
+      LOG.info(policyAgreement + " dialog should be skipped on this system.");
       return;
     }
-
 
     try {
       final DialogFixture
@@ -371,7 +393,7 @@ public final class GuiTests {
       });
     }
     catch (WaitTimedOutError we) {
-      System.out.println("Timed out waiting for \"" + policyAgreement + "\" JDialog. Continue...");
+      LOG.warn("Timed out waiting for \"" + policyAgreement + "\" JDialog. Continue...");
     }
   }
 
@@ -384,7 +406,7 @@ public final class GuiTests {
       completeInstallationDialog.button("OK").click();
     }
     catch (WaitTimedOutError we) {
-      System.out.println("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
+      LOG.warn("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
     }
   }
 

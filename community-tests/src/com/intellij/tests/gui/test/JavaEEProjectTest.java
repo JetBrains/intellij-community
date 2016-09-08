@@ -54,7 +54,8 @@ public class JavaEEProjectTest extends GuiTestCase {
     String projectName = "smoke-test-project-" + dateFormat.format(date);
 
 
-    findWelcomeFrame().createNewProject();
+    WelcomeFrameFixture welcomeFrame = findWelcomeFrame();
+    welcomeFrame.createNewProject();
     NewProjectWizardFixture newProjectWizard = findNewProjectWizard();
 
     setupJdk(newProjectWizard);
@@ -63,9 +64,7 @@ public class JavaEEProjectTest extends GuiTestCase {
     newProjectWizard.
       selectProjectType("Java").
       selectFramework("JavaEE Persistence");
-
     newProjectWizard.clickNext();
-
     newProjectWizard.setProjectName(projectName);
     final File locationInFileSystem = newProjectWizard.getLocationInFileSystem();
     newProjectWizard.clickFinish();

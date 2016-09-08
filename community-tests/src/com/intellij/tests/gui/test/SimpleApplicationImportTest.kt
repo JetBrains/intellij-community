@@ -19,7 +19,6 @@ import com.intellij.tests.gui.BelongsToTestGroups
 import com.intellij.tests.gui.framework.GuiTestCase
 import com.intellij.tests.gui.framework.IdeGuiTest
 import com.intellij.tests.gui.framework.TestGroup
-import org.junit.Ignore
 import org.junit.Test
 
 /**
@@ -28,7 +27,6 @@ import org.junit.Test
 @BelongsToTestGroups(TestGroup.PROJECT)
 class SimpleApplicationImportTest: GuiTestCase() {
 
-  @Ignore
   @Test @IdeGuiTest
   fun testSimpleApplication(){
     val app = importSimpleApplication()

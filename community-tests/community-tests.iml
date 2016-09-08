@@ -46,5 +46,6 @@
     <orderEntry type="module" module-name="main_idea_tests" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="library" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="java-impl" />
   </component>
 </module>
