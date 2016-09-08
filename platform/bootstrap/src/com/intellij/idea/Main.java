@@ -51,9 +51,11 @@ public class Main {
   public static final int OUT_OF_MEMORY = 9;
   public static final int UNSUPPORTED_JAVA_VERSION = 10;
   public static final int PRIVACY_POLICY_REJECTION = 11;
+  public static final String PATCHER_MAIN = "com.intellij.updater.Runner";
 
   private static final String AWT_HEADLESS = "java.awt.headless";
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
+  private static final String PATCHER_MAIN_PROPERTY = "idea.patcher.main";
   private static final String[] NO_ARGS = {};
 
   private static boolean isHeadless;
@@ -90,7 +92,11 @@ public class Main {
 
     if (args.length == 0 || (args.length == 1 && "nosplash".equals(args[0]))) {
       try {
-        installPatch();
+        String patcherMain = System.getProperty(PATCHER_MAIN_PROPERTY);
+        if (patcherMain == null || patcherMain.isEmpty()) {
+          patcherMain = PATCHER_MAIN;
+        }
+        installPatch(patcherMain);
       }
       catch (Throwable t) {
         // If we could not apply the patch, notify the user and indicate a workaround, then continue the
@@ -219,16 +225,16 @@ public class Main {
     return javaHome + "/bin/java";
   }
 
-  private static void installPatch() throws Exception {
+  private static void installPatch(String patcherMain) throws Exception {
     String platform = System.getProperty(PLATFORM_PREFIX_PROPERTY, "idea");
     String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase(Locale.US);
     String tempDir = System.getProperty("java.io.tmpdir");
     File patch = new File(tempDir, patchFileName);
 
-    installPatch(platform, patchFileName, tempDir, patch, PathManager.getHomePath());
+    installPatch(platform, patchFileName, tempDir, patch, PathManager.getHomePath(), patcherMain);
   }
 
-  public static void installPatch(String platform, String patchFileName, String tempDir, File patch, String installDir) throws Exception {
+  public static void installPatch(String platform, String patchFileName, String tempDir, File patch, String installDir, String patcherMain) throws Exception {
     // always delete previous patch copy
     String userName = System.getProperty("user.name");
     File patchCopy = new File(tempDir, patchFileName + "_copy_" + userName);
@@ -278,7 +284,7 @@ public class Main {
                          "-Djava.io.tmpdir=" + tempDir,
                          "-Didea.updater.log=" + PathManager.getLogPath(),
                          "-Dswing.defaultlaf=" + UIManager.getSystemLookAndFeelClassName(),
-                         "com.intellij.updater.Runner",
+                         patcherMain,
                          "install",
                          installDir);
 

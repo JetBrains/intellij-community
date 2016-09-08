@@ -313,7 +313,7 @@ public class Runner {
     return false;
   }
 
-  private static String resolveJarFile() throws IOException {
+  public static String resolveJarFile() throws IOException {
     URL url = Runner.class.getResource("");
     if (url == null) throw new IOException("Cannot resolve JAR file path");
     if (!"jar".equals(url.getProtocol())) throw new IOException("Patch file is not a JAR file");

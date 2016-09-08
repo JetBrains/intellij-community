@@ -14,7 +14,7 @@ public class ConsolePatcher {
 
   public static void main(String[] args) throws Exception {
     String jarFile = Runner.getArgument(args, "jar");
-
+    jarFile = jarFile == null ? Runner.resolveJarFile() : jarFile;
     if (args.length >= 2 && "install".equals(args[0])) {
       String destFolder = args[1];
       UpdaterUI ui = new ConsoleUpdaterUI();
