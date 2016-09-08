@@ -123,7 +123,6 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
       int index = openPos + 1; // from quote to first in-string char
       StringBuilder out = new StringBuilder(text.subSequence(0, openPos+1));
       if (!hasPrefix) out.insert(0, prefix);
-      int position_count = 0;
       Matcher scanner = FORMAT_PATTERN.matcher(text);
       while (scanner.find(index)) {
         // store previous non-format part
@@ -147,10 +146,6 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
             out.append(f_key);
             usesNamedFormat = true;
           }
-          else {
-            out.append(position_count);
-            position_count += 1;
-          }
           if ("r".equals(f_conversion)) out.append("!r");
           // don't convert %s -> !s, for %s is the normal way to output the default representation
           out.append(":");
@@ -172,8 +167,12 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
           }
           if ("i".equals(f_conversion) || "u".equals(f_conversion)) out.append("d");
           else if ("r".equals(f_conversion)) out.append("s"); // we want our raw string as a string
-          else out.append(f_conversion);
-          //
+          else if (!"s".equals(f_conversion)) out.append(f_conversion);
+
+          final int lastIndexOf = out.lastIndexOf(":");
+          if (lastIndexOf == out.length() - 1) {
+            out.deleteCharAt(lastIndexOf);
+          }
           out.append("}");
         }
         index = scanner.end();
