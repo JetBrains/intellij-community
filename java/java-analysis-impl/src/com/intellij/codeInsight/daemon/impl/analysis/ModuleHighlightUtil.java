@@ -19,10 +19,7 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.GoToSymbolFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.MoveFileFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -194,7 +191,8 @@ public class ModuleHighlightUtil {
       assert ref != null : refElement.getParent();
       PsiElement target = ref.resolve();
       if (!(target instanceof PsiJavaModule)) {
-        String message = JavaErrorMessages.message("module.not.found", refElement.getReferenceText());
+        boolean missing = ref.multiResolve(true).length == 0;
+        String message = JavaErrorMessages.message(missing ? "module.not.found" : "module.not.on.path", refElement.getReferenceText());
         return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refElement).description(message).create();
       }
       else if (target == container) {

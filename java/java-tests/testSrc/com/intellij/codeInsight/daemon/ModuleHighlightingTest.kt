@@ -17,12 +17,11 @@ package com.intellij.codeInsight.daemon
 
 import com.intellij.psi.PsiJavaModule
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor
-import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
-import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2
-import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MAIN
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor
+import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
+import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 
 class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
@@ -31,6 +30,7 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
     addFile("module-info.java", "module M2 { }", M2)
+    addFile("module-info.java", "module M3 { }", M3)
   }
 
   override fun tearDown() {
@@ -86,6 +86,7 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
           requires <error descr="Module not found: M.missing">M.missing</error>;
           requires <error descr="Cyclic dependence: M1">M1</error>;
           requires <error descr="Cyclic dependence: M1, M2">M2</error>;
+          requires <error descr="Module is not in dependencies: M3">M3</error>;
         }""".trimIndent(), true)
   }
 

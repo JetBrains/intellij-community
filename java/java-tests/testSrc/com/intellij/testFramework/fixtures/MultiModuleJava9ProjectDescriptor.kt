@@ -32,12 +32,13 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightPlatformTestCase
 
 /**
- * Dependencies: 'main' -> 'm2'
+ * Dependencies: 'main' -> 'm2', 'm3'
  */
 object MultiModuleJava9ProjectDescriptor  : DefaultLightProjectDescriptor() {
   enum class ModuleDescriptor(internal val moduleName: String, internal val rootName: String) {
     MAIN(TEST_MODULE_NAME, "/not_used/"),
-    M2("${TEST_MODULE_NAME}_m2", "src_m2");
+    M2("${TEST_MODULE_NAME}_m2", "src_m2"),
+    M3("${TEST_MODULE_NAME}_m3", "src_m3");
 
     fun root(): VirtualFile =
         if (this == MAIN) LightPlatformTestCase.getSourceRoot() else TempFileSystem.getInstance().findFileByPath("/$rootName")!!
@@ -51,6 +52,7 @@ object MultiModuleJava9ProjectDescriptor  : DefaultLightProjectDescriptor() {
       val main = ModuleManager.getInstance(project).findModuleByName(TEST_MODULE_NAME)!!
       val m2 = makeModule(project, ModuleDescriptor.M2)
       ModuleRootModificationUtil.addDependency(main, m2)
+      makeModule(project, ModuleDescriptor.M3)
     }
   }
 
