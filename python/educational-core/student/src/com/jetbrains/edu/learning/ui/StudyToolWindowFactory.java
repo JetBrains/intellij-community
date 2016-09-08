@@ -40,7 +40,7 @@ public class StudyToolWindowFactory implements ToolWindowFactory, DumbAware {
       Disposer.register(project, studyToolWindow);
     }
     else {
-      LOG.warn("do not create TW");
+      LOG.warn("Tool window did not create");
     }
   }
 }
