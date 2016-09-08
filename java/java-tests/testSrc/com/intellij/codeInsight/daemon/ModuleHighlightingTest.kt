@@ -16,15 +16,27 @@
 package com.intellij.codeInsight.daemon
 
 import com.intellij.psi.PsiJavaModule
-import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.MultiModuleJava9ProjectDescriptor
+import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor
+import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
+import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2
+import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MAIN
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 
 class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor = MultiModuleJava9ProjectDescriptor
+
+  override fun setUp() {
+    super.setUp()
+    addFile("module-info.java", "module M2 { }", M2)
+  }
+
+  override fun tearDown() {
+    MultiModuleJava9ProjectDescriptor.cleanupSourceRoots()
+    super.tearDown()
+  }
 
   fun testWrongFileName() {
     myFixture.configureByText("M.java", """/* ... */ <error descr="Module declaration should be in a file named 'module-info.java'">module M</error> { }""")
@@ -68,6 +80,7 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
   }
 
   fun testRequires() {
+    addFile("module-info.java", "module M2 { requires M1 }", M2)
     doTest("""
         module M1 {
           requires <error descr="Module not found: M.missing">M.missing</error>;
@@ -119,7 +132,7 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
   }
 
   //<editor-fold desc="Helpers.">
-  private fun addFile(path: String, text: String) = VfsTestUtil.createFile(LightPlatformTestCase.getSourceRoot(), path, text)
+  private fun addFile(path: String, text: String, module: ModuleDescriptor = MAIN) = VfsTestUtil.createFile(module.root(), path, text)
 
   private fun doTest(text: String, filter: Boolean = false) {
     myFixture.configureByText("module-info.java", text)
