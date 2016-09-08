@@ -24,7 +24,7 @@ import com.intellij.ide.RecentProjectsManager;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -473,7 +473,7 @@ public final class GuiTests {
   @NotNull
   public static File getTestProjectsRootDirPath() {
 
-    String testDataPath = PathManagerEx.getTestDataPath(PathManagerEx.TestDataLookupStrategy.ULTIMATE);
+    String testDataPath = PathManager.getHomePath() + "/community/community-tests/testData";
     assertNotNull(testDataPath);
     assertThat(testDataPath).isNotEmpty();
     testDataPath = toCanonicalPath(toSystemDependentName(testDataPath));
