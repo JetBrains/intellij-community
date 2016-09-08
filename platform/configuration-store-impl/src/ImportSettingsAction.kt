@@ -30,7 +30,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.getParentPath
-import com.intellij.util.systemIndependentPath
+import com.intellij.util.io.systemIndependentPath
 import gnu.trove.THashSet
 import java.io.File
 import java.io.IOException

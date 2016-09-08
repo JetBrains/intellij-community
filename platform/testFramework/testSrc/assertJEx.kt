@@ -17,9 +17,9 @@
 package com.intellij.testFramework
 
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.util.io.readText
+import com.intellij.util.io.size
 import com.intellij.util.isEmpty
-import com.intellij.util.readText
-import com.intellij.util.size
 import org.assertj.core.api.AbstractAssert
 import org.assertj.core.api.PathAssert
 import org.assertj.core.internal.Objects

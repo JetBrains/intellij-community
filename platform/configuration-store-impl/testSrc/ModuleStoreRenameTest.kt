@@ -15,7 +15,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.*
 import com.intellij.util.Function
 import com.intellij.util.SmartList
-import com.intellij.util.systemIndependentPath
+import com.intellij.util.io.systemIndependentPath
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Rule

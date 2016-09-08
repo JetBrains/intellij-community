@@ -25,8 +25,8 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.DocumentAdapter
 import com.intellij.util.Function
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.delete
-import com.intellij.util.exists
+import com.intellij.util.io.delete
+import com.intellij.util.io.exists
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.table.TableModelEditor

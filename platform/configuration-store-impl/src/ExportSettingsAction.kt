@@ -42,9 +42,11 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.CharsetToolkit
-import com.intellij.util.*
+import com.intellij.util.PairProcessor
+import com.intellij.util.PlatformUtils
+import com.intellij.util.ReflectionUtil
 import com.intellij.util.containers.putValue
-import com.intellij.util.io.ZipUtil
+import com.intellij.util.io.*
 import gnu.trove.THashMap
 import gnu.trove.THashSet
 import java.io.IOException

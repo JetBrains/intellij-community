@@ -23,8 +23,13 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.util.*
+import com.intellij.util.SmartList
+import com.intellij.util.io.createDirectories
+import com.intellij.util.io.directoryStreamIfExists
+import com.intellij.util.io.write
 import com.intellij.util.lang.CompoundRuntimeException
+import com.intellij.util.loadElement
+import com.intellij.util.toByteArray
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.serialize

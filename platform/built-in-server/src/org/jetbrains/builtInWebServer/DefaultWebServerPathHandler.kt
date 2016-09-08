@@ -25,7 +25,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VFileProperty
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtilRt
-import com.intellij.util.isDirectory
+import com.intellij.util.io.isDirectory
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest

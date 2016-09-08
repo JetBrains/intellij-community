@@ -25,10 +25,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.stateStore
 import com.intellij.util.containers.forEachGuaranteed
-import com.intellij.util.directoryStreamIfExists
-import com.intellij.util.isFile
-import com.intellij.util.readBytes
-import com.intellij.util.systemIndependentPath
+import com.intellij.util.io.directoryStreamIfExists
+import com.intellij.util.io.isFile
+import com.intellij.util.io.readBytes
+import com.intellij.util.io.systemIndependentPath
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path

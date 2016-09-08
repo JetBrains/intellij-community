@@ -18,9 +18,9 @@ package org.jetbrains.settingsRepository
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
-import com.intellij.util.exists
 import com.intellij.util.io.URLUtil
-import com.intellij.util.isDirectory
+import com.intellij.util.io.exists
+import com.intellij.util.io.isDirectory
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.transport.URIish
 import org.jetbrains.settingsRepository.git.createBareRepository

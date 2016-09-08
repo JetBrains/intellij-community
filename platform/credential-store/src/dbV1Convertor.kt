@@ -26,7 +26,7 @@ import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.exists
+import com.intellij.util.io.exists
 import gnu.trove.THashMap
 import java.nio.file.Paths
 import java.util.function.Function

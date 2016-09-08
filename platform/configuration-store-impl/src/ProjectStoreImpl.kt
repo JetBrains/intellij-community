@@ -41,9 +41,11 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.*
+import com.intellij.util.PathUtilRt
+import com.intellij.util.SmartList
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.containers.isNullOrEmpty
+import com.intellij.util.io.*
 import com.intellij.util.lang.CompoundRuntimeException
 import org.jdom.Element
 import java.io.File

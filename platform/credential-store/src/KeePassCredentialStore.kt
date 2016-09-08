@@ -24,9 +24,9 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.setOwnerPermissions
 import com.intellij.util.EncryptionSupport
-import com.intellij.util.delete
-import com.intellij.util.readBytes
-import com.intellij.util.writeSafe
+import com.intellij.util.io.delete
+import com.intellij.util.io.readBytes
+import com.intellij.util.io.writeSafe
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths

@@ -17,8 +17,8 @@ package org.jetbrains.jgit.dirCache
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.deleteWithParentsIfEmpty
-import com.intellij.util.exists
+import com.intellij.util.io.deleteWithParentsIfEmpty
+import com.intellij.util.io.exists
 import com.intellij.util.io.toByteArray
 import org.eclipse.jgit.dircache.BaseDirCacheEditor
 import org.eclipse.jgit.dircache.DirCache

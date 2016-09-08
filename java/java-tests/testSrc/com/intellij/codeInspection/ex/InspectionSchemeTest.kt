@@ -20,8 +20,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testFramework.InMemoryFsRule
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.runInInitMode
-import com.intellij.util.readText
-import com.intellij.util.write
+import com.intellij.util.io.readText
+import com.intellij.util.io.write
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Rule

@@ -20,7 +20,8 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.*
+import com.intellij.util.SmartList
+import com.intellij.util.io.*
 import com.intellij.util.text.nullize
 import org.eclipse.jgit.api.AddCommand
 import org.eclipse.jgit.api.errors.NoHeadException

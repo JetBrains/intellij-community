@@ -22,7 +22,12 @@ import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.*
+import com.intellij.util.PathUtilRt
+import com.intellij.util.SmartList
+import com.intellij.util.Time
+import com.intellij.util.io.delete
+import com.intellij.util.io.exists
+import com.intellij.util.io.write
 import java.nio.file.Path
 
 private val DEFAULT_COMMIT_DELAY = 10 * Time.MINUTE
