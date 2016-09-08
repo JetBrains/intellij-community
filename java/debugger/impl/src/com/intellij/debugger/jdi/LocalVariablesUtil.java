@@ -484,11 +484,7 @@ public class LocalVariablesUtil {
   }
 
   private static int getParametersStackSize(PsiElement method) {
-    int startSlot = 0;
-    for (PsiParameter parameter : DebuggerUtilsEx.getParameters(method)) {
-      startSlot += getTypeSlotSize(parameter.getType());
-    }
-    return startSlot;
+    return Arrays.stream(DebuggerUtilsEx.getParameters(method)).mapToInt(parameter -> getTypeSlotSize(parameter.getType())).sum();
   }
 
   private static int getTypeSlotSize(PsiType varType) {
@@ -503,11 +499,7 @@ public class LocalVariablesUtil {
   }
 
   private static int getFirstLocalsSlot(com.sun.jdi.Method method) {
-    int firstLocalVariableSlot = getFirstArgsSlot(method);
-    for (String type : method.argumentTypeNames()) {
-      firstLocalVariableSlot += getTypeSlotSize(type);
-    }
-    return firstLocalVariableSlot;
+    return getFirstArgsSlot(method) + method.argumentTypeNames().stream().mapToInt(LocalVariablesUtil::getTypeSlotSize).sum();
   }
 
   private static int getTypeSlotSize(String name) {
