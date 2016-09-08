@@ -13,68 +13,52 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.netty.buffer;
+package io.netty.buffer
 
-import com.intellij.util.text.CharArrayCharSequence;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.io.NettyKt;
+import com.intellij.util.io.writeUtf8
+import com.intellij.util.text.CharArrayCharSequence
+import java.io.InputStream
+import java.io.Writer
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Writer;
-
-public final class ByteBufUtf8Writer extends Writer {
-  private final ByteBuf buffer;
-
-  public ByteBufUtf8Writer(@NotNull ByteBuf buffer) {
-    this.buffer = buffer;
+class ByteBufUtf8Writer(private val buffer: ByteBuf) : Writer() {
+  fun write(inputStream: InputStream, length: Int) {
+    buffer.writeBytes(inputStream, length)
   }
 
-  public void write(@NotNull InputStream inputStream, int length) throws IOException {
-    buffer.writeBytes(inputStream, length);
+  fun ensureWritable(minWritableBytes: Int) {
+    buffer.ensureWritable(minWritableBytes)
   }
 
-  public void ensureWritable(int minWritableBytes) {
-    buffer.ensureWritable(minWritableBytes);
+  override fun write(chars: CharArray, off: Int, len: Int) {
+    buffer.writeUtf8(CharArrayCharSequence(chars, off, off + len))
   }
 
-  @Override
-  public void write(char[] chars, int off, int len) {
-    NettyKt.writeUtf8(buffer, new CharArrayCharSequence(chars, off, off + len));
+  override fun write(str: String) {
+    buffer.writeUtf8(str)
   }
 
-  @Override
-  public void write(String str) {
-    NettyKt.writeUtf8(buffer, str);
+  override fun write(str: String, off: Int, len: Int) {
+    ByteBufUtilEx.writeUtf8(buffer, str, off, off + len)
   }
 
-  @Override
-  public void write(String str, int off, int len) {
-    ByteBufUtilEx.writeUtf8(buffer, str, off, off + len);
-  }
-
-  @Override
-  public Writer append(CharSequence csq) {
+  override fun append(csq: CharSequence?): Writer {
     if (csq == null) {
-      ByteBufUtil.writeAscii(buffer, "null");
+      ByteBufUtil.writeAscii(buffer, "null")
     }
     else {
-      NettyKt.writeUtf8(buffer, csq);
+      buffer.writeUtf8(csq)
     }
-    return this;
+    return this
   }
 
-  @Override
-  public Writer append(CharSequence csq, int start, int end) {
-    ByteBufUtilEx.writeUtf8(buffer, csq, start, end);
-    return this;
+  override fun append(csq: CharSequence?, start: Int, end: Int): Writer {
+    ByteBufUtilEx.writeUtf8(buffer, csq, start, end)
+    return this
   }
 
-  @Override
-  public void flush() {
+  override fun flush() {
   }
 
-  @Override
-  public void close() {
+  override fun close() {
   }
 }

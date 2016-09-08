@@ -13,54 +13,57 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.ide;
+package org.jetbrains.ide
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.QueryStringDecoder;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.io.NettyKt;
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.util.io.host
+import com.intellij.util.io.isLocalOrigin
+import com.intellij.util.io.parseAndCheckIsLocalHost
+import io.netty.channel.ChannelHandlerContext
+import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.HttpMethod
+import io.netty.handler.codec.http.HttpRequest
+import io.netty.handler.codec.http.QueryStringDecoder
+import java.io.IOException
 
-import java.io.IOException;
+abstract class HttpRequestHandler {
+  companion object {
+    // Your handler will be instantiated on first user request
+    val EP_NAME = ExtensionPointName.create<HttpRequestHandler>("com.intellij.httpRequestHandler")!!
 
-public abstract class HttpRequestHandler {
-  // Your handler will be instantiated on first user request
-  public static final ExtensionPointName<HttpRequestHandler> EP_NAME = ExtensionPointName.create("com.intellij.httpRequestHandler");
-
-  protected static boolean checkPrefix(@NotNull String uri, @NotNull String prefix) {
-    if (uri.length() > prefix.length() && uri.charAt(0) == '/' && uri.regionMatches(true, 1, prefix, 0, prefix.length())) {
-      if ((uri.length() - prefix.length()) == 1) {
-        return true;
+    @JvmStatic
+    protected fun checkPrefix(uri: String, prefix: String): Boolean {
+      if (uri.length > prefix.length && uri[0] == '/' && uri.regionMatches(1, prefix, 0, prefix.length, ignoreCase = true)) {
+        if (uri.length - prefix.length == 1) {
+          return true
+        }
+        else {
+          val c = uri.get(prefix.length + 1)
+          return c == '/' || c == '?'
+        }
       }
-      else {
-        char c = uri.charAt(prefix.length() + 1);
-        return c == '/' || c == '?';
-      }
+      return false
     }
-    return false;
   }
 
   /**
-   * Write request from browser without Origin will be always blocked regardles of your implementation.
+   * Write request from browser without Origin will be always blocked regardless of your implementation.
    */
   @SuppressWarnings("SpellCheckingInspection")
-  public boolean isAccessible(@NotNull HttpRequest request) {
-    String host = NettyKt.getHost(request);
-    // If attacker.com DNS rebound to 127.0.0.1 and user open site directly — no Origin or Referer headers.
+  open fun isAccessible(request: HttpRequest): Boolean {
+    val host = request.host
+    // If attacker.com DNS rebound to 127.0.0.1 and user open site directly — no Origin or Referrer headers.
     // So we should check Host header.
-    return host != null && NettyKt.isLocalOrigin(request) && NettyKt.parseAndCheckIsLocalHost("http://" + host);
+    return host != null && request.isLocalOrigin() && parseAndCheckIsLocalHost("http://$host")
   }
 
-  public boolean isSupported(@NotNull FullHttpRequest request) {
-    return request.method() == HttpMethod.GET || request.method() == HttpMethod.HEAD;
+  open fun isSupported(request: FullHttpRequest): Boolean {
+    return request.method() === HttpMethod.GET || request.method() === HttpMethod.HEAD
   }
 
   /**
    * @return true if processed successfully, false to pass processing to other handlers.
    */
-  public abstract boolean process(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context)
-    throws IOException;
+  @Throws(IOException::class)
+  abstract fun process(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Boolean
 }
