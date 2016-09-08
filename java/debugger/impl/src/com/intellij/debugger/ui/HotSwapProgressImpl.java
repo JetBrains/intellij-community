@@ -23,6 +23,7 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -45,6 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class HotSwapProgressImpl extends HotSwapProgress{
   static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("HotSwap", ToolWindowId.DEBUG);
@@ -53,7 +55,7 @@ public class HotSwapProgressImpl extends HotSwapProgress{
   private final ProgressWindow myProgressWindow;
   private String myTitle = DebuggerBundle.message("progress.hot.swap.title");
   private final MergingUpdateQueue myUpdateQueue;
-  private XDebugSession mySessionToRestartOnFail;
+  private XDebugSession mySession;
 
   public HotSwapProgressImpl(Project project) {
     super(project);
@@ -79,48 +81,64 @@ public class HotSwapProgressImpl extends HotSwapProgress{
   public void finished() {
     super.finished();
 
-    final List<String> errors = getMessages(MessageCategory.ERROR);
-    final List<String> warnings = getMessages(MessageCategory.WARNING);
+    List<String> errors = getMessages(MessageCategory.ERROR);
+    List<String> warnings = getMessages(MessageCategory.WARNING);
+
     if (!errors.isEmpty()) {
-      String message = DebuggerBundle.message("status.hot.swap.completed.with.errors");
-      if (mySessionToRestartOnFail != null) {
-        message += " " + DebuggerBundle.message("status.hot.swap.completed.with.errors.restart");
-      }
-      NOTIFICATION_GROUP.createNotification(message, buildMessage(errors), NotificationType.ERROR,
-                                            (notification, event) -> {
-                                              if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && mySessionToRestartOnFail != null) {
-                                                notification.expire();
-                                                ExecutionEnvironment environment = ((XDebugSessionImpl)mySessionToRestartOnFail).getExecutionEnvironment();
-                                                if (environment != null) {
-                                                  ExecutionUtil.restart(environment);
-                                                }
-                                              }
-                                            }
-      ).setImportant(false).notify(getProject());
+      notifyUser(DebuggerBundle.message("status.hot.swap.completed.with.errors"), buildMessage(errors, true), NotificationType.ERROR);
     }
     else if (!warnings.isEmpty()){
-      NOTIFICATION_GROUP.createNotification(DebuggerBundle.message("status.hot.swap.completed.with.warnings"),
-                                            buildMessage(warnings), NotificationType.WARNING, null).notify(getProject());
+      notifyUser(DebuggerBundle.message("status.hot.swap.completed.with.warnings"), buildMessage(warnings, true), NotificationType.WARNING);
     }
     else if (!myMessages.isEmpty()){
       List<String> messages = new ArrayList<>();
       for (int category : myMessages.keys()) {
         messages.addAll(getMessages(category));
       }
-      NOTIFICATION_GROUP.createNotification(buildMessage(messages), NotificationType.INFORMATION).notify(getProject());
+      notifyUser("", buildMessage(messages, false), NotificationType.INFORMATION);
     }
   }
 
-  public void setSessionToRestartOnFail(@NotNull DebuggerSession sessionToRestartOnFail) {
-    mySessionToRestartOnFail = sessionToRestartOnFail.getXDebugSession();
+  private void notifyUser(String title, String message, NotificationType type) {
+    NotificationListener notificationListener = null;
+    if (mySession != null) {
+      notificationListener = (notification, event) -> {
+        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && mySession != null) {
+          notification.expire();
+          switch (event.getDescription()) {
+            case "stop":
+              mySession.stop();
+              break;
+            case "restart":
+              ExecutionEnvironment environment = ((XDebugSessionImpl)mySession).getExecutionEnvironment();
+              if (environment != null) {
+                ExecutionUtil.restart(environment);
+              }
+              break;
+          }
+        }
+      };
+    }
+    NOTIFICATION_GROUP.createNotification(title, message, type, notificationListener).setImportant(false).notify(getProject());
+  }
+
+  public void setSession(@NotNull DebuggerSession session) {
+    mySession = session.getXDebugSession();
   }
 
   private List<String> getMessages(int category) {
     return ContainerUtil.notNullize(myMessages.get(category));
   }
-    
-  private static String buildMessage(List<String> messages) {
-    return StringUtil.trimEnd(StringUtil.join(messages, " \n").trim(), ";");
+
+  private String buildMessage(List<String> messages, boolean withRestart) {
+    StringBuilder res = new StringBuilder(messages.stream().map(m -> StringUtil.trimEnd(m, ';')).collect(Collectors.joining("\n")));
+    if (mySession != null) {
+      res.append("\n").append(DebuggerBundle.message("status.hot.swap.completed.stop"));
+      if (withRestart) {
+        res.append("&nbsp;&nbsp;&nbsp;&nbsp;").append(DebuggerBundle.message("status.hot.swap.completed.restart"));
+      }
+    }
+    return res.toString();
   }
   
   public void addMessage(DebuggerSession session, final int type, final String text) {
