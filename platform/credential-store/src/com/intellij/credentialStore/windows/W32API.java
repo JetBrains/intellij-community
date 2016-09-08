@@ -10,7 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.  
  */
-package com.intellij.ide.passwordSafe.impl.providers.masterKey.windows;
+package com.intellij.credentialStore.windows;
 
 import com.sun.jna.*;
 import com.sun.jna.ptr.ByReference;

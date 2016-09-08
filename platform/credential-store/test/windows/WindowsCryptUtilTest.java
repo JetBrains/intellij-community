@@ -15,7 +15,6 @@
  */
 package com.intellij.credentialStore.windows;
 
-import com.intellij.ide.passwordSafe.impl.providers.masterKey.windows.WindowsCryptUtils;
 import com.intellij.openapi.util.SystemInfo;
 import org.junit.Assert;
 import org.junit.Test;
