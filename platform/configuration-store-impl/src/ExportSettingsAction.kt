@@ -13,15 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.actions
+package com.intellij.configurationStore
 
 import com.intellij.AbstractBundle
 import com.intellij.CommonBundle
-import com.intellij.configurationStore.ROOT_CONFIG
-import com.intellij.configurationStore.SchemeManagerFactoryBase
-import com.intellij.configurationStore.path
-import com.intellij.configurationStore.sortByDeprecated
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.actions.ImportSettingsFilenameFilter
+import com.intellij.ide.actions.ShowFilePathAction
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
@@ -34,7 +32,6 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.ServiceManagerImpl
 import com.intellij.openapi.components.impl.stores.StateStorageManager
 import com.intellij.openapi.components.impl.stores.StoreUtil
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.options.SchemeManagerFactory
@@ -63,9 +60,9 @@ private class ExportSettingsAction : AnAction(), DumbAware {
     ApplicationManager.getApplication().saveSettings()
 
     val dialog = ChooseComponentsToExportDialog(getExportableComponentsMap(true, true), true,
-      IdeBundle.message("title.select.components.to.export"),
-      IdeBundle.message(
-        "prompt.please.check.all.components.to.export"))
+                                                IdeBundle.message("title.select.components.to.export"),
+                                                IdeBundle.message(
+                                                                                    "prompt.please.check.all.components.to.export"))
     if (!dialog.showAndGet()) {
       return
     }
@@ -83,14 +80,14 @@ private class ExportSettingsAction : AnAction(), DumbAware {
     val saveFile = dialog.exportFile
     try {
       if (saveFile.exists() && Messages.showOkCancelDialog(
-        IdeBundle.message("prompt.overwrite.settings.file", saveFile.toString()),
-        IdeBundle.message("title.file.already.exists"), Messages.getWarningIcon()) != Messages.OK) {
+          IdeBundle.message("prompt.overwrite.settings.file", saveFile.toString()),
+          IdeBundle.message("title.file.already.exists"), Messages.getWarningIcon()) != Messages.OK) {
         return
       }
 
       exportSettings(exportFiles, saveFile.outputStream(), FileUtilRt.toSystemIndependentName(PathManager.getConfigPath()))
-      ShowFilePathAction.showDialog(AnAction.getEventProject(e), IdeBundle.message("message.settings.exported.successfully"),
-        IdeBundle.message("title.export.successful"), saveFile.toFile(), null)
+      ShowFilePathAction.showDialog(getEventProject(e), IdeBundle.message("message.settings.exported.successfully"),
+                                    IdeBundle.message("title.export.successful"), saveFile.toFile(), null)
     }
     catch (e1: IOException) {
       Messages.showErrorDialog(IdeBundle.message("error.writing.settings", e1.toString()), IdeBundle.message("title.error.writing.file"))
@@ -131,8 +128,6 @@ private class MyZipOutputStream(out: OutputStream) : ZipOutputStream(out) {
 }
 
 data class ExportableItem(val files: List<Path>, val presentableName: String, val roamingType: RoamingType = RoamingType.DEFAULT)
-
-private val LOG = Logger.getInstance(ExportSettingsAction::class.java)
 
 private fun exportInstalledPlugins(zipOut: MyZipOutputStream) {
   val plugins = ArrayList<String>()

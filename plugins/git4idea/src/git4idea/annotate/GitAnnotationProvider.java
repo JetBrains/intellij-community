@@ -198,7 +198,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
         if (revisions == null) return;
         ApplicationManager.getApplication().invokeLater(() -> {
           GitFileAnnotation newFileAnnotation = new GitFileAnnotation(fileAnnotation);
-          fileAnnotation.setRevisions(revisions);
+          newFileAnnotation.setRevisions(revisions);
           fileAnnotation.reload(newFileAnnotation);
         });
       },

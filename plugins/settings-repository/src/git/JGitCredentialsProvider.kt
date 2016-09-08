@@ -19,7 +19,7 @@ import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.isFulfilled
-import com.intellij.credentialStore.macOs.isMacOsCredentialStoreSupported
+import com.intellij.credentialStore.isMacOsCredentialStoreSupported
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.text.nullize

@@ -15,12 +15,12 @@
  */
 package org.jetbrains.debugger
 
+import com.intellij.util.io.addChannelListener
+import com.intellij.util.io.shutdownIfOio
 import io.netty.channel.Channel
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
-import org.jetbrains.io.addChannelListener
-import org.jetbrains.io.shutdownIfOio
 import org.jetbrains.jsonProtocol.Request
 import org.jetbrains.rpc.CONNECTION_CLOSED_MESSAGE
 import org.jetbrains.rpc.LOG

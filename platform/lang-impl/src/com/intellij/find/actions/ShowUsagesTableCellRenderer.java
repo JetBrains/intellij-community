@@ -105,7 +105,8 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
     panel.setBackground(panelBackground);
     panel.setForeground(panelForeground);
 
-    boolean isEnabled = !myUsageView.isOriginUsage(usage);
+    // greying the current usage you originated your "find usages" from is turned off by @nik orders
+    boolean isEnabled = true;//!myUsageView.isOriginUsage(usage);
     if (!isEnabled) {
       fg = UIUtil.getLabelDisabledForeground();
     }

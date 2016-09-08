@@ -36,7 +36,7 @@ import java.nio.charset.Charset;
 /**
  * It is kept for compatibility reasons: some plugins still refer this obsolete class.
  *
- * @deprecated Use {@link LocalFilePath} instead. To remove in IDEA 16.
+ * @deprecated Use {@link LocalFilePath} instead.
  */
 @Deprecated
 public class FilePathImpl implements FilePath {
@@ -47,6 +47,11 @@ public class FilePathImpl implements FilePath {
     myPath = FileUtil.toCanonicalPath(path);
     myIsDirectory = isDirectory;
   }
+
+  /**
+   * @deprecated Use {@link LocalFilePath}.
+   */
+  @Deprecated
   public FilePathImpl(@NotNull VirtualFile file) {
     this(file.getPath(), file.isDirectory());
   }

@@ -29,14 +29,14 @@ String out = new File(out).getCanonicalPath()
 target(compile: "Compile project") {
   def options = new BuildOptions()
   options.outputRootPath = out
-  new IdeaCommunityBuilder(home, out, binding, options).compileModules()
+  new IdeaCommunityBuilder(home, binding, options).compileModules()
 }
 
 target('default': 'The default target') {
   def options = new BuildOptions()
   options.outputRootPath = out
   options.buildNumber = null //we cannot provide consistent build number for IDEA Community if it's built separately so use *.SNAPSHOT number to avoid confusion
-  new IdeaCommunityBuilder(home, out, binding, options).buildDistributions()
+  new IdeaCommunityBuilder(home, binding, options).buildDistributions()
 }
 
 //todo[nik] do we really need this target? update.xml calls layout.gant directly
@@ -44,5 +44,5 @@ target('build-dist-jars' : 'Target to build jars from locally compiled classes')
   def options = new BuildOptions()
   options.outputRootPath = out
   options.useCompiledClassesFromProjectOutput = true
-  new IdeaCommunityBuilder(home, out, binding, options).buildDistJars()
+  new IdeaCommunityBuilder(home, binding, options).buildDistJars()
 }

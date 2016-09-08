@@ -34,10 +34,6 @@ import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.lib.RepositoryState
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.transport.*
-import org.jetbrains.jgit.dirCache.AddLoadedFile
-import org.jetbrains.jgit.dirCache.DeleteDirectory
-import org.jetbrains.jgit.dirCache.deletePath
-import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.settingsRepository.*
 import org.jetbrains.settingsRepository.RepositoryManager.Updater
 import java.io.IOException

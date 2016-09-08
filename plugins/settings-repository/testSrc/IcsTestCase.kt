@@ -19,10 +19,10 @@ import com.intellij.testFramework.InMemoryFsRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.io.writeChild
 import org.eclipse.jgit.lib.Repository
-import org.jetbrains.jgit.dirCache.AddLoadedFile
-import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.settingsRepository.IcsManager
+import org.jetbrains.settingsRepository.git.AddLoadedFile
 import org.jetbrains.settingsRepository.git.createGitRepository
+import org.jetbrains.settingsRepository.git.edit
 import org.junit.Rule
 import java.nio.file.FileSystem
 import java.nio.file.Path

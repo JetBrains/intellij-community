@@ -23,8 +23,6 @@ import com.intellij.openapi.project.PossiblyDumbAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
 /**
  * Interface which should be implemented in order to draw icons in the gutter area and handle events
  * for them. Gutter icons are drawn to the left of the folding area and can be used, for example,
@@ -33,23 +31,12 @@ import javax.swing.*;
  * Daemon code analyzer checks newly arrived gutter icon renderer against the old one and if they are equal, does not redraw the icon.
  * So it is highly advisable to override hashCode()/equals() methods to avoid icon flickering when old gutter renderer gets replaced with the new.<p/>
  *
- * During indexing, methods are only invoked for renderers implementing {@link com.intellij.openapi.project.DumbAware}.
+ * During indexing, methods are only invoked for renderers implementing {@link DumbAware}.
  *
  * @author max
  * @see RangeHighlighter#setGutterIconRenderer(GutterIconRenderer)
  */
 public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAware {
-
-
-  /**
-   * Returns the icon drawn in the gutter.
-   *
-   * @return the gutter icon.
-   */
-  @Override
-  @NotNull
-  public abstract Icon getIcon();
-
   /**
    * Returns the action group actions from which are used to fill the context menu
    * displayed when the icon is right-clicked.

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.jgit.dirCache
+package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -32,7 +32,7 @@ import java.io.FileInputStream
 import java.text.MessageFormat
 import java.util.*
 
-private val EDIT_CMP = Comparator<org.jetbrains.jgit.dirCache.PathEdit> { o1, o2 ->
+private val EDIT_CMP = Comparator<PathEdit> { o1, o2 ->
   val a = o1.path
   val b = o2.path
   DirCache.cmp(a, a.size, b, b.size)
@@ -166,7 +166,8 @@ class AddFile(private val pathString: String) : PathEditBase(encodePath(pathStri
   }
 }
 
-class AddLoadedFile(path: String, private val content: ByteArray, private val size: Int = content.size, private val lastModified: Long = System.currentTimeMillis()) : PathEditBase(encodePath(path)) {
+class AddLoadedFile(path: String, private val content: ByteArray, private val size: Int = content.size, private val lastModified: Long = System.currentTimeMillis()) : PathEditBase(
+    encodePath(path)) {
   override fun apply(entry: DirCacheEntry, repository: Repository) {
     entry.fileMode = FileMode.REGULAR_FILE
     entry.length = size
@@ -189,7 +190,8 @@ class DeleteFile(path: ByteArray) : PathEditBase(path) {
   override fun apply(entry: DirCacheEntry, repository: Repository) = throw UnsupportedOperationException(JGitText.get().noApplyInDelete)
 }
 
-class DeleteDirectory(entryPath: String) : PathEditBase(encodePath(if (entryPath.endsWith('/') || entryPath.isEmpty()) entryPath else "$entryPath/")) {
+class DeleteDirectory(entryPath: String) : PathEditBase(
+    encodePath(if (entryPath.endsWith('/') || entryPath.isEmpty()) entryPath else "$entryPath/")) {
   override fun apply(entry: DirCacheEntry, repository: Repository) = throw UnsupportedOperationException(JGitText.get().noApplyInDelete)
 }
 

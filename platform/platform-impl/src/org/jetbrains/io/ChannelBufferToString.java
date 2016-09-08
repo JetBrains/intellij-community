@@ -20,11 +20,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
+import static com.intellij.util.io.NettyKt.readUtf8;
+
 @SuppressWarnings("unused")
 @Deprecated
 public final class ChannelBufferToString {
   @NotNull
   public static CharSequence readChars(@NotNull ByteBuf buffer) throws IOException {
-    return NettyKt.readUtf8(buffer);
+    return readUtf8(buffer);
   }
 }

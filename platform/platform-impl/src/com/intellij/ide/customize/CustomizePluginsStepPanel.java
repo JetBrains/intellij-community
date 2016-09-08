@@ -146,7 +146,6 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
   static JBScrollPane createScrollPane(JPanel gridPanel) {
     JBScrollPane scrollPane =
       new JBScrollPane(gridPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    scrollPane.getVerticalScrollBar().setUnitIncrement(10);
     scrollPane.setBorder(JBUI.Borders.empty()); // to disallow resetting border on LaF change
     return scrollPane;
   }
