@@ -368,7 +368,6 @@ public class GitHistoryUtils {
         return;
       }
     }
-
   }
 
   private static GitLineHandler getLogHandler(Project project,
@@ -503,45 +502,14 @@ public class GitHistoryUtils {
     });
   }
 
-  public static void readAllFullDetails(@NotNull Project project,
-                                        @NotNull VirtualFile root,
-                                        @NotNull Consumer<VcsFullCommitDetails> commitConsumer) throws VcsException {
-    final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
-    if (factory == null) {
-      return;
-    }
-
-    GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
-    GitLogParser.GitLogOption[] options = {HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL,
-      PARENTS, SUBJECT, BODY, RAW_BODY};
-    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS, options);
-    h.setStdoutSuppressed(true);
-    h.addParameters(parser.getPretty(), "--encoding=UTF-8");
-    h.addParameters("-M", /*find and report renames*/
-                    "--name-status",
-                    "-c" /*single diff for merge commits, only showing files that were modified from both parents*/);
-    h.addParameters(LOG_ALL);
-    h.endOptions();
-
-    AtomicReference<Throwable> parseError = new AtomicReference<>(null);
-    Consumer<StringBuilder> recordConsumer = builder -> {
-      try {
-        GitLogRecord record = parser.parseOneRecord(builder.toString());
-        if (record != null) {
-          commitConsumer.consume(createCommit(project, root, record, factory));
-        }
-      }
-      catch (ProcessCanceledException ignored) {
-      }
-      catch (Throwable t) {
-        if (parseError.compareAndSet(null, t)) {
-          LOG.error("Could not parse \" " + builder.toString() + "\"", t);
-        }
-      }
-    };
+  private static void processHandlerOutputByLine(@NotNull GitLineHandler handler,
+                                                 @NotNull Consumer<StringBuilder> recordConsumer,
+                                                 int bufferSize)
+    throws VcsException {
     final StringBuilder buffer = new StringBuilder();
     final Ref<VcsException> ex = new Ref<>();
-    h.addLineListener(new GitLineHandlerListener() {
+    final AtomicInteger records = new AtomicInteger();
+    handler.addLineListener(new GitLineHandlerListener() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
         try {
@@ -559,8 +527,10 @@ public class GitHistoryUtils {
           }
 
           if (tail != null) {
-            recordConsumer.consume(buffer);
-            buffer.setLength(0);
+            if (records.incrementAndGet() > bufferSize) {
+              recordConsumer.consume(buffer);
+              buffer.setLength(0);
+            }
             buffer.append(tail);
           }
         }
@@ -584,10 +554,53 @@ public class GitHistoryUtils {
         ex.set(new VcsException(exception));
       }
     });
-    h.runInCurrentThread(null);
+    handler.runInCurrentThread(null);
     if (!ex.isNull()) {
+      if (ex.get().getCause() instanceof ProcessCanceledException) {
+        throw (ProcessCanceledException)ex.get().getCause();
+      }
       throw ex.get();
     }
+  }
+
+  public static void readAllFullDetails(@NotNull Project project,
+                                        @NotNull VirtualFile root,
+                                        @NotNull Consumer<VcsFullCommitDetails> commitConsumer) throws VcsException {
+    final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
+    if (factory == null) {
+      return;
+    }
+
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
+    GitLogParser.GitLogOption[] options = {HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL,
+      PARENTS, SUBJECT, BODY, RAW_BODY};
+    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS, options);
+    h.setStdoutSuppressed(true);
+    h.addParameters(parser.getPretty(), "--encoding=UTF-8");
+    h.addParameters("-M", /*find and report renames*/
+                    "--name-status",
+                    "-c" /*single diff for merge commits, only showing files that were modified from both parents*/);
+    h.addParameters(LOG_ALL);
+    h.endOptions();
+
+    Ref<Throwable> parseError = new Ref<>();
+    Consumer<StringBuilder> recordConsumer = builder -> {
+      try {
+        GitLogRecord record = parser.parseOneRecord(builder.toString());
+        if (record != null) {
+          commitConsumer.consume(createCommit(project, root, record, factory));
+        }
+      }
+      catch (ProcessCanceledException ignored) {
+      }
+      catch (Throwable t) {
+        if (parseError.get() == null) {
+          parseError.set(t);
+          LOG.error("Could not parse \" " + builder.toString() + "\"", t);
+        }
+      }
+    };
+    processHandlerOutputByLine(h, recordConsumer, 0);
   }
 
   public static void readCommits(@NotNull final Project project,
@@ -601,7 +614,6 @@ public class GitHistoryUtils {
       return;
     }
 
-    final int COMMIT_BUFFER = 1000;
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     final GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, COMMIT_TIME,
                                                  AUTHOR_NAME, AUTHOR_EMAIL, REF_NAMES);
@@ -611,66 +623,13 @@ public class GitHistoryUtils {
     h.addParameters(parameters);
     h.endOptions();
 
-    final StringBuilder record = new StringBuilder();
-    final AtomicInteger records = new AtomicInteger();
-    final Ref<VcsException> ex = new Ref<>();
-    h.addLineListener(new GitLineHandlerListener() {
-      @Override
-      public void onLineAvailable(String line, Key outputType) {
-        try {
-          int recordEnd = line.indexOf(GitLogParser.RECORD_END);
-          String afterParseRemainder;
-          if (recordEnd == line.length() - 1) { // ends with
-            record.append(line);
-            afterParseRemainder = "";
-          }
-          else if (recordEnd == -1) { // record doesn't end on this line => just appending, no parsing
-            record.append(line);
-            afterParseRemainder = null;
-          }
-          else { // record ends in the middle of this line
-            record.append(line.substring(0, recordEnd + 1));
-            afterParseRemainder = line.substring(recordEnd + 1);
-          }
-          if (afterParseRemainder != null && records.incrementAndGet() > COMMIT_BUFFER) { // null means can't parse now
-            List<TimedVcsCommit> commits = parseCommit(parser, record, userConsumer, refConsumer, factory, root);
-            for (TimedVcsCommit commit : commits) {
-              commitConsumer.consume(commit);
-            }
-            record.setLength(0);
-            record.append(afterParseRemainder);
-          }
-        }
-        catch (Exception e) {
-          ex.set(new VcsException(e));
-        }
+    final int COMMIT_BUFFER = 1000;
+    processHandlerOutputByLine(h, buffer -> {
+      List<TimedVcsCommit> commits = parseCommit(parser, buffer, userConsumer, refConsumer, factory, root);
+      for (TimedVcsCommit commit : commits) {
+        commitConsumer.consume(commit);
       }
-
-      @Override
-      public void processTerminated(int exitCode) {
-        try {
-          List<TimedVcsCommit> commits = parseCommit(parser, record, userConsumer, refConsumer, factory, root);
-          for (TimedVcsCommit commit : commits) {
-            commitConsumer.consume(commit);
-          }
-        }
-        catch (Exception e) {
-          ex.set(new VcsException(e));
-        }
-      }
-
-      @Override
-      public void startFailed(Throwable exception) {
-        ex.set(new VcsException(exception));
-      }
-    });
-    h.runInCurrentThread(null);
-    if (!ex.isNull()) {
-      if (ex.get().getCause() instanceof ProcessCanceledException) {
-        throw (ProcessCanceledException)ex.get().getCause();
-      }
-      throw ex.get();
-    }
+    }, COMMIT_BUFFER);
   }
 
   @NotNull
