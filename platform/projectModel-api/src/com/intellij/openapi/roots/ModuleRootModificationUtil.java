@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,12 @@
  */
 package com.intellij.openapi.roots;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -36,37 +35,44 @@ import java.util.List;
  * @author nik
  */
 public class ModuleRootModificationUtil {
-  public static void addContentRoot(@NotNull Module module, final @NotNull String path) {
+  public static void addContentRoot(@NotNull Module module, @NotNull String path) {
     updateModel(module, model -> model.addContentEntry(VfsUtilCore.pathToUrl(path)));
   }
 
-  public static void addModuleLibrary(@NotNull Module module, @Nullable String libName, @NotNull List<String> classesRoots, @NotNull List<String> sourceRoots) {
+  public static void addModuleLibrary(@NotNull Module module,
+                                      @Nullable String libName,
+                                      @NotNull List<String> classesRoots,
+                                      @NotNull List<String> sourceRoots) {
     addModuleLibrary(module, libName, classesRoots, sourceRoots, DependencyScope.COMPILE);
   }
 
-  public static void addModuleLibrary(@NotNull Module module, @Nullable String libName,
+  public static void addModuleLibrary(@NotNull Module module,
+                                      @Nullable String libName,
                                       @NotNull List<String> classesRoots,
                                       @NotNull List<String> sourceRoots,
                                       @NotNull DependencyScope scope) {
-    addModuleLibrary(module, libName, classesRoots, sourceRoots, Collections.<String>emptyList(), scope);
+    addModuleLibrary(module, libName, classesRoots, sourceRoots, Collections.emptyList(), scope);
   }
 
-  public static void addModuleLibrary(@NotNull Module module, @Nullable String libName,
+  public static void addModuleLibrary(@NotNull Module module,
+                                      @Nullable String libName,
                                       @NotNull List<String> classesRoots,
                                       @NotNull List<String> sourceRoots,
                                       @NotNull List<String> excludedRoots,
                                       @NotNull DependencyScope scope) {
     addModuleLibrary(module, libName, classesRoots, sourceRoots, excludedRoots, scope, false);
   }
-  public static void addModuleLibrary(final @NotNull Module module, final @Nullable String libName,
-                                      final @NotNull List<String> classesRoots,
-                                      final @NotNull List<String> sourceRoots,
-                                      final @NotNull List<String> excludedRoots,
-                                      final @NotNull DependencyScope scope,
-                                      final boolean exported) {
+
+  public static void addModuleLibrary(@NotNull Module module,
+                                      @Nullable String libName,
+                                      @NotNull List<String> classesRoots,
+                                      @NotNull List<String> sourceRoots,
+                                      @NotNull List<String> excludedRoots,
+                                      @NotNull DependencyScope scope,
+                                      boolean exported) {
     updateModel(module, model -> {
-      final LibraryEx library = (LibraryEx)model.getModuleLibraryTable().createLibrary(libName);
-      final LibraryEx.ModifiableModelEx libraryModel = library.getModifiableModel();
+      LibraryEx library = (LibraryEx)model.getModuleLibraryTable().createLibrary(libName);
+      LibraryEx.ModifiableModelEx libraryModel = library.getModifiableModel();
 
       for (String root : classesRoots) {
         libraryModel.addRoot(root, OrderRootType.CLASSES);
@@ -83,19 +89,19 @@ public class ModuleRootModificationUtil {
       entry.setScope(scope);
       entry.setExported(exported);
 
-      doWriteAction(() -> libraryModel.commit());
+      WriteAction.run(libraryModel::commit);
     });
   }
 
   public static void addModuleLibrary(@NotNull Module module, @NotNull String classesRootUrl) {
-    addModuleLibrary(module, null, Collections.singletonList(classesRootUrl), Collections.<String>emptyList());
+    addModuleLibrary(module, null, Collections.singletonList(classesRootUrl), Collections.emptyList());
   }
 
   public static void addDependency(@NotNull Module module, @NotNull Library library) {
     addDependency(module, library, DependencyScope.COMPILE, false);
   }
 
-  public static void addDependency(@NotNull Module module, final @NotNull Library library, final @NotNull DependencyScope scope, final boolean exported) {
+  public static void addDependency(@NotNull Module module, @NotNull Library library, @NotNull DependencyScope scope, boolean exported) {
     updateModel(module, model -> {
       LibraryOrderEntry entry = model.addLibraryEntry(library);
       entry.setExported(exported);
@@ -103,7 +109,7 @@ public class ModuleRootModificationUtil {
     });
   }
 
-  public static void setModuleSdk(@NotNull Module module, @Nullable final Sdk sdk) {
+  public static void setModuleSdk(@NotNull Module module, @Nullable Sdk sdk) {
     updateModel(module, model -> model.setSdk(sdk));
   }
 
@@ -111,11 +117,11 @@ public class ModuleRootModificationUtil {
     updateModel(module, model -> model.inheritSdk());
   }
 
-  public static void addDependency(final @NotNull Module from, final @NotNull Module to) {
+  public static void addDependency(@NotNull Module from, @NotNull Module to) {
     addDependency(from, to, DependencyScope.COMPILE, false);
   }
 
-  public static void addDependency(@NotNull Module from, @NotNull final Module to, @NotNull final DependencyScope scope, final boolean exported) {
+  public static void addDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope, boolean exported) {
     updateModel(from, model -> {
       ModuleOrderEntry entry = model.addModuleOrderEntry(to);
       entry.setScope(scope);
@@ -123,16 +129,11 @@ public class ModuleRootModificationUtil {
     });
   }
 
-  public static void updateModel(@NotNull final Module module, @NotNull Consumer<ModifiableRootModel> task) {
-    final ModifiableRootModel model = ApplicationManager.getApplication().runReadAction(new Computable<ModifiableRootModel>() {
-      @Override
-      public ModifiableRootModel compute() {
-        return ModuleRootManager.getInstance(module).getModifiableModel();
-      }
-    });
+  public static void updateModel(@NotNull Module module, @NotNull Consumer<ModifiableRootModel> task) {
+    ModifiableRootModel model = ReadAction.compute(() -> ModuleRootManager.getInstance(module).getModifiableModel());
     try {
       task.consume(model);
-      doWriteAction(model::commit);
+      WriteAction.run(model::commit);
     }
     catch (RuntimeException | Error e) {
       model.dispose();
@@ -141,11 +142,11 @@ public class ModuleRootModificationUtil {
   }
 
   public static void updateExcludedFolders(@NotNull Module module,
-                                           @NotNull final VirtualFile contentRoot,
-                                           @NotNull final Collection<String> urlsToUnExclude,
-                                           @NotNull final Collection<String> urlsToExclude) {
+                                           @NotNull VirtualFile contentRoot,
+                                           @NotNull Collection<String> urlsToUnExclude,
+                                           @NotNull Collection<String> urlsToExclude) {
     updateModel(module, modifiableModel -> {
-      for (final ContentEntry contentEntry : modifiableModel.getContentEntries()) {
+      for (ContentEntry contentEntry : modifiableModel.getContentEntries()) {
         if (contentRoot.equals(contentEntry.getFile())) {
           for (String url : urlsToUnExclude) {
             contentEntry.removeExcludeFolder(url);
@@ -157,10 +158,5 @@ public class ModuleRootModificationUtil {
         }
       }
     });
-  }
-
-  private static void doWriteAction(final Runnable action) {
-    final Application application = ApplicationManager.getApplication();
-    application.invokeAndWait(() -> application.runWriteAction(action));
   }
 }
