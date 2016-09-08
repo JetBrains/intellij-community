@@ -615,9 +615,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       ));
     }
     Sdk projectSdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
-    if (getSession().getAlternativeJre() == null && !versionMatch(projectSdk, version)) {
+    if (getSession().getAlternativeJre() == null && !versionMatch(projectSdk, version, false)) {
       for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
-        if (versionMatch(sdk, version)) {
+        if (versionMatch(sdk, version, true)) {
           XDebugSessionImpl.NOTIFICATION_GROUP.createNotification(
             DebuggerBundle.message("message.remote.jre.version.mismatch",
                                    version,
@@ -631,8 +631,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  private static boolean versionMatch(@Nullable Sdk sdk, String version) {
-    if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
+  private static boolean versionMatch(@Nullable Sdk sdk, String version, boolean onlyJdk) {
+    if (sdk != null && (!onlyJdk || sdk.getSdkType() instanceof JavaSdk)) {
       String versionString = sdk.getVersionString();
       return versionString != null && versionString.contains(version);
     }
