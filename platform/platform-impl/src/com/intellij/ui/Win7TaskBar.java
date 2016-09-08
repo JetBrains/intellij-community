@@ -15,10 +15,10 @@
  */
 package com.intellij.ui;
 
-import com.intellij.jna.DisposableMemory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.util.io.jna.DisposableMemory;
 import com.sun.jna.Function;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;

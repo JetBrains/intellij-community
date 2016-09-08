@@ -1,7 +1,7 @@
 package com.intellij.credentialStore.linux
 
 import com.intellij.credentialStore.*
-import com.intellij.jna.DisposableMemory
+import com.intellij.util.io.jna.DisposableMemory
 import com.sun.jna.Library
 import com.sun.jna.Native
 import com.sun.jna.Pointer
