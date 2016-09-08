@@ -67,7 +67,7 @@ interface RepositoryService {
         .yesNo(icsMessage("init.dialog.title"), icsMessage("init.dialog.message", file))
         .yesText("Create")
         .project(project)
-        .`is`()) {
+        .isYes) {
       try {
         createBareRepository(file)
         return true

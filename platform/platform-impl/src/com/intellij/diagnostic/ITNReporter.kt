@@ -34,6 +34,7 @@ import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.SubmittedReportInfo
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.Consumer
 import com.intellij.xml.util.XmlStringUtil
@@ -85,16 +86,6 @@ private fun showMessageDialog(parentComponent: Component, project: Project?, mes
   }
 }
 
-@Messages.YesNoResult
-private fun showYesNoDialog(parentComponent: Component, project: Project?, message: String, title: String, icon: Icon): Int {
-  if (parentComponent.isShowing) {
-    return Messages.showYesNoDialog(parentComponent, message, title, icon)
-  }
-  else {
-    return Messages.showYesNoDialog(project, message, title, icon)
-  }
-}
-
 private fun submit(event: IdeaLoggingEvent, parentComponent: Component, callback: Consumer<SubmittedReportInfo>, errorBean: ErrorBean, description: String?): Boolean {
   var credentials = ErrorReportConfigurable.getCredentials()
   // ask password only if user name was specified
@@ -131,9 +122,8 @@ private fun submit(event: IdeaLoggingEvent, parentComponent: Component, callback
   val project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent))
   ITNProxy.sendError(project, login, password, errorBean, { threadId ->
     updatePreviousThreadId(threadId)
-    val url = ITNProxy.getBrowseUrl(threadId!!)
     val linkText = threadId.toString()
-    val reportInfo = SubmittedReportInfo(url, linkText, SubmittedReportInfo.SubmissionStatus.NEW_ISSUE)
+    val reportInfo = SubmittedReportInfo(ITNProxy.getBrowseUrl(threadId), linkText, SubmittedReportInfo.SubmissionStatus.NEW_ISSUE)
     callback.consume(reportInfo)
     ApplicationManager.getApplication().invokeLater {
       val text = StringBuilder()
@@ -156,14 +146,18 @@ private fun submit(event: IdeaLoggingEvent, parentComponent: Component, callback
         val message = DiagnosticBundle.message("error.report.new.eap.build.message", e.message)
         showMessageDialog(parentComponent, project, message, CommonBundle.getWarningTitle(), Messages.getWarningIcon())
         callback.consume(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
+        return@invokeLater
       }
-      else if (showYesNoDialog(parentComponent, project, msg, ReportMessages.ERROR_REPORT, Messages.getErrorIcon()) != Messages.YES) {
+
+      if (!MessageDialogBuilder.yesNo(ReportMessages.ERROR_REPORT, msg).project(project).isYes) {
         callback.consume(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
       }
-      else if (e is NoSuchEAPUserException) {
-        showJetBrainsAccountDialog(parentComponent, project).show()
+      else {
+        if (e is NoSuchEAPUserException) {
+          showJetBrainsAccountDialog(parentComponent, project).show()
+        }
+        ApplicationManager.getApplication().invokeLater { submit(event, parentComponent, callback, errorBean, description) }
       }
-      ApplicationManager.getApplication().invokeLater { submit(event, parentComponent, callback, errorBean, description) }
     }
   }
   return true
