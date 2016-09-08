@@ -15,9 +15,6 @@
  */
 package com.intellij.credentialStore
 
-import com.intellij.credentialStore.linux.SecretCredentialStore
-import com.intellij.credentialStore.macOs.KeyChainCredentialStore
-import com.intellij.credentialStore.macOs.isMacOsCredentialStoreSupported
 import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType

@@ -1,6 +1,5 @@
-package com.intellij.credentialStore.linux
+package com.intellij.credentialStore
 
-import com.intellij.credentialStore.*
 import com.intellij.util.io.jna.DisposableMemory
 import com.sun.jna.Library
 import com.sun.jna.Native
@@ -121,7 +120,7 @@ private interface SecretLibrary : Library {
 }
 
 @Suppress("unused")
-class GErrorStruct : Structure() {
+internal class GErrorStruct : Structure() {
   @JvmField
   var domain = 0
   @JvmField

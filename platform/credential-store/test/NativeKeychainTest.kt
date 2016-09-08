@@ -1,7 +1,5 @@
-package com.intellij.credentialStore.linux
+package com.intellij.credentialStore
 
-import com.intellij.credentialStore.*
-import com.intellij.credentialStore.macOs.KeyChainCredentialStore
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.UsefulTestCase
 import org.assertj.core.api.Assertions.assertThat

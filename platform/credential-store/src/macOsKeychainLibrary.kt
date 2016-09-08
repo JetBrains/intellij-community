@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.credentialStore.macOs
+package com.intellij.credentialStore
 
-import com.intellij.credentialStore.*
 import com.intellij.openapi.util.SystemInfo
 import com.sun.jna.*
 import com.sun.jna.ptr.IntByReference

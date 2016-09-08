@@ -13,12 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.settingsRepository.test
+package com.intellij.credentialStore
 
-import com.intellij.credentialStore.CredentialSerializeTest
-import com.intellij.credentialStore.FileCredentialStoreTest
-import com.intellij.credentialStore.MasterPasswordMigrationTest
-import com.intellij.credentialStore.linux.NativeKeychainTest
 import org.junit.runner.RunWith
 import org.junit.runners.Suite
 

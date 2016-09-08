@@ -15,13 +15,11 @@
  */
 package com.intellij.credentialStore;
 
-import com.intellij.credentialStore.macOs.MacOsKeychainLibraryKt;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ComponentsKt;
-import com.intellij.ui.layout.LayoutKt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
