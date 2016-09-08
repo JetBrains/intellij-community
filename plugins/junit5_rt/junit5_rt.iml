@@ -12,7 +12,7 @@
     <orderEntry type="module" module-name="java-runtime" />
     <orderEntry type="library" name="junit5_rt" level="project" />
     <orderEntry type="library" name="opentest4j" level="project" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="TEST">
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/junit-jupiter-api-5.0.0-M2.jar!/" />
