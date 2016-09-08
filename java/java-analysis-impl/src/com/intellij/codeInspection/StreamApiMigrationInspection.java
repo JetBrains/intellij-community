@@ -35,6 +35,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntArrayList;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -113,19 +114,20 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
               } else return;
             }
             try {
-              final ControlFlow controlFlow = ControlFlowFactory.getInstance(holder.getProject())
-                .getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
-              int startOffset = controlFlow.getStartOffset(body);
-              int endOffset = controlFlow.getEndOffset(body);
-              final Collection<PsiStatement> exitPoints = ControlFlowUtil
-                .findExitPointsAndStatements(controlFlow, startOffset, endOffset, new IntArrayList(), PsiContinueStatement.class,
-                                             PsiBreakStatement.class, PsiReturnStatement.class, PsiThrowStatement.class);
-              if (exitPoints.isEmpty()) {
+              if (ExceptionUtil.getThrownCheckedExceptions(new PsiElement[]{body}).isEmpty()) {
+                TerminalBlock tb = TerminalBlock.from(statement.getIterationParameter(), body);
+                List<Operation> operations = tb.extractOperations();
 
-                if (ExceptionUtil.getThrownCheckedExceptions(new PsiElement[]{body}).isEmpty()) {
-                  TerminalBlock tb = TerminalBlock.from(statement.getIterationParameter(), body);
-                  List<Operation> operations = tb.extractOperations();
+                final ControlFlow controlFlow = ControlFlowFactory.getInstance(holder.getProject())
+                  .getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+                final Collection<PsiStatement> exitPoints = ControlFlowUtil
+                  .findExitPointsAndStatements(controlFlow, tb.getStartOffset(controlFlow), tb.getEndOffset(controlFlow),
+                                               new IntArrayList(), PsiContinueStatement.class,
+                                               PsiBreakStatement.class, PsiReturnStatement.class, PsiThrowStatement.class);
+                if (exitPoints.isEmpty()) {
 
+                  int startOffset = controlFlow.getStartOffset(body);
+                  int endOffset = controlFlow.getEndOffset(body);
                   final List<PsiVariable> nonFinalVariables = ControlFlowUtil.getUsedVariables(controlFlow, startOffset, endOffset)
                     .stream().filter(variable -> !HighlightControlFlowUtil.isEffectivelyFinal(variable, body, null))
                     .collect(Collectors.toList());
@@ -859,14 +861,51 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   }
 
   static class FilterOp extends Operation {
+    private final boolean myNegated;
 
-    FilterOp(PsiExpression condition, PsiVariable variable) {
+    FilterOp(PsiExpression condition, PsiVariable variable, boolean negated) {
       super(condition, variable);
+      myNegated = negated;
+    }
+
+    @Contract("null -> false")
+    private static boolean isFloating(PsiExpression operand) {
+      if(operand == null) return false;
+      PsiType type = operand.getType();
+      return type instanceof PsiPrimitiveType && (type.equalsToText("double") || type.equalsToText("float"));
+    }
+
+    private static PsiExpression negate(PsiExpression expression, PsiElementFactory factory) {
+      if (expression instanceof PsiPrefixExpression &&
+          JavaTokenType.EXCL.equals(((PsiPrefixExpression)expression).getOperationTokenType())) {
+        return PsiUtil.skipParenthesizedExprDown(((PsiPrefixExpression)expression).getOperand());
+      }
+      if (expression instanceof PsiBinaryExpression) {
+        PsiBinaryExpression binOp = (PsiBinaryExpression)expression;
+        if(JavaTokenType.EQEQ.equals(binOp.getOperationTokenType()) || JavaTokenType.NE.equals(binOp.getOperationTokenType())) {
+          PsiExpression left = binOp.getLOperand();
+          PsiExpression right = binOp.getROperand();
+          // for float/double types == and != are not strictly opposite (NaNs are treated specially)
+          if (right != null && !isFloating(left) && !isFloating(right)) {
+            return factory.createExpressionFromText(
+              left.getText() + (JavaTokenType.EQEQ.equals(binOp.getOperationTokenType()) ? "!=" : "==") + right.getText(), expression);
+          }
+        }
+      }
+      String expString;
+      if (ParenthesesUtils.getPrecedence(expression) > ParenthesesUtils.PREFIX_PRECEDENCE) {
+        expString = "!(" + expression.getText() + ')';
+      }
+      else {
+        expString = '!' + expression.getText();
+      }
+      return factory.createExpressionFromText(expString, expression);
     }
 
     @Override
     public String createReplacement(PsiElementFactory factory) {
-      return ".filter(" + compoundLambdaOrMethodReference(myVariable, myExpression,
+      PsiExpression expression = myNegated ? negate(myExpression, factory) : myExpression;
+      return ".filter(" + compoundLambdaOrMethodReference(myVariable, expression,
                                                           "java.util.function.Predicate",
                                                           new PsiType[] {myVariable.getType()}) + ")";
     }
@@ -933,6 +972,14 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       }
     }
 
+    int getStartOffset(ControlFlow cf) {
+      return cf.getStartOffset(myStatements[0]);
+    }
+
+    int getEndOffset(ControlFlow cf) {
+      return cf.getEndOffset(myStatements[myStatements.length-1]);
+    }
+
     PsiStatement getSingleStatement() {
       return myStatements.length == 1 ? myStatements[0] : null;
     }
@@ -967,10 +1014,9 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       // extract filter
       if(getSingleStatement() instanceof PsiIfStatement) {
         PsiIfStatement ifStatement = (PsiIfStatement)getSingleStatement();
-        if(ifStatement.getElseBranch() != null || ifStatement.getCondition() == null)
-          return null;
+        if(ifStatement.getElseBranch() != null || ifStatement.getCondition() == null) return null;
         replaceWith(ifStatement.getThenBranch());
-        return new FilterOp(ifStatement.getCondition(), myVariable);
+        return new FilterOp(ifStatement.getCondition(), myVariable, false);
       }
       // extract flatMap
       if(getSingleStatement() instanceof PsiForeachStatement) {
@@ -1001,9 +1047,9 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           }
         }
       }
-      // extract map
       if(myStatements.length > 1) {
         PsiStatement first = myStatements[0];
+        // extract map
         if(first instanceof PsiDeclarationStatement) {
           PsiDeclarationStatement decl = (PsiDeclarationStatement)first;
           PsiElement[] elements = decl.getDeclaredElements();
@@ -1027,6 +1073,21 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
               }
             }
           }
+        }
+        // extract filter with negation
+        if(first instanceof PsiIfStatement) {
+          PsiIfStatement ifStatement = (PsiIfStatement)first;
+          if(ifStatement.getElseBranch() != null || ifStatement.getCondition() == null) return null;
+          PsiStatement branch = ifStatement.getThenBranch();
+          if(branch instanceof PsiBlockStatement) {
+            PsiStatement[] statements = ((PsiBlockStatement)branch).getCodeBlock().getStatements();
+            if(statements.length == 1)
+              branch = statements[0];
+          }
+          if(!(branch instanceof PsiContinueStatement)) return null;
+          myStatements = Arrays.copyOfRange(myStatements, 1, myStatements.length);
+          flatten();
+          return new FilterOp(ifStatement.getCondition(), myVariable, true);
         }
       }
       return null;
