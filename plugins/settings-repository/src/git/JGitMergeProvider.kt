@@ -23,8 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ui.ColumnInfo
 import org.eclipse.jgit.lib.Repository
-import org.jetbrains.jgit.dirCache.deletePath
-import org.jetbrains.jgit.dirCache.writePath
 import org.jetbrains.settingsRepository.RepositoryVirtualFile
 import java.nio.CharBuffer
 import java.util.*

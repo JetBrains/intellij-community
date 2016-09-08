@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressIndicator
 import org.eclipse.jgit.api.MergeResult
 import org.eclipse.jgit.merge.MergeStrategy
-import org.jetbrains.jgit.dirCache.deleteAllFiles
 import org.jetbrains.settingsRepository.LOG
 import org.jetbrains.settingsRepository.MutableUpdateResult
 import org.jetbrains.settingsRepository.UpdateResult
