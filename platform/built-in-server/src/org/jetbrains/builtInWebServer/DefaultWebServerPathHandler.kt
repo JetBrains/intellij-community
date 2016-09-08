@@ -25,13 +25,14 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VFileProperty
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtilRt
-import com.intellij.util.io.isDirectory
+import com.intellij.util.io.*
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.codec.http.HttpResponseStatus
-import org.jetbrains.io.*
+import org.jetbrains.io.orInSafeMode
+import org.jetbrains.io.send
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.regex.Pattern

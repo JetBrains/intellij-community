@@ -1,4 +1,4 @@
-package org.jetbrains.io
+package com.intellij.util.io
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test

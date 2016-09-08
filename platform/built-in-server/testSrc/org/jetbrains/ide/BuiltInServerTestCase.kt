@@ -23,10 +23,10 @@ internal abstract class BuiltInServerTestCase {
   protected val manager = TestManager(projectRule, tempDirManager)
 
   private val ruleChain = RuleChain(
-    tempDirManager,
-    Timeout(60, TimeUnit.SECONDS),
-    manager,
-    DisposeModulesRule(projectRule))
+      tempDirManager,
+      Timeout(60, TimeUnit.SECONDS),
+      manager,
+      DisposeModulesRule(projectRule))
   @Rule fun getChain() = ruleChain
 
   protected open val urlPathPrefix = ""

@@ -1,4 +1,4 @@
-package org.jetbrains.io
+package com.intellij.util.io
 
 import io.netty.buffer.Unpooled
 import org.assertj.core.api.Assertions.assertThat
