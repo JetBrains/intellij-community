@@ -26,6 +26,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.UIUtil;
 import org.apache.sanselan.ImageWriteException;
 import org.apache.sanselan.common.BinaryConstants;
@@ -174,14 +175,7 @@ public abstract class AppIcon {
         Image appImage = (Image)getAppMethod("getDockIconImage").invoke(app);
 
         if (appImage == null) return null;
-
-        int width = appImage.getWidth(null);
-        int height = appImage.getHeight(null);
-        // Note, appImage is retina-unaware, retrieved in device coordinate space.
-        BufferedImage img = UIUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB, false);
-        Graphics2D g2d = img.createGraphics();
-        g2d.drawImage(appImage, null, null);
-        myAppImage = img;
+        myAppImage = ImageUtil.toBufferedImage(appImage);
       }
       catch (NoSuchMethodException e) {
         return null;
@@ -336,8 +330,8 @@ public abstract class AppIcon {
     private AppImage createAppImage() {
       BufferedImage appImage = getAppImage();
       assert appImage != null;
-      // Note, appImage is retina-unaware, retrieved in device coordinate space.
-      BufferedImage current = UIUtil.createImage(appImage.getWidth(), appImage.getHeight(), BufferedImage.TYPE_INT_ARGB, false);
+      @SuppressWarnings("UndesirableClassUsage")
+      BufferedImage current = new BufferedImage(appImage.getWidth(), appImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
       Graphics2D g = current.createGraphics();
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       UIUtil.drawImage(g, appImage, 0, 0, null);
