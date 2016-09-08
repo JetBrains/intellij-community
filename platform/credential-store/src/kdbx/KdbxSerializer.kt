@@ -17,8 +17,6 @@ package com.intellij.credentialStore.kdbx
 
 import com.google.common.io.LittleEndianDataInputStream
 import com.google.common.io.LittleEndianDataOutputStream
-import org.linguafranca.hashedblock.HashedBlockInputStream
-import org.linguafranca.hashedblock.HashedBlockOutputStream
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.ByteBuffer
@@ -120,26 +118,14 @@ private object HeaderType {
   internal val INNER_RANDOM_STREAM_ID: Byte = 10
 }
 
-/**
- * Read two lots of 4 bytes and verify that they satisfy the signature of a
- * kdbx file;
-
- * @param ledis an input stream
- * @return true if it looks like this is a kdbx file
- */
-private fun verifyMagicNumber(ledis: LittleEndianDataInputStream): Boolean {
-  val sig1 = ledis.readInt()
-  val sig2 = ledis.readInt()
+private fun verifyMagicNumber(input: LittleEndianDataInputStream): Boolean {
+  val sig1 = input.readInt()
+  val sig2 = input.readInt()
   return sig1 == SIG1 && sig2 == SIG2
 }
 
-/**
- * Read 4 bytes and make sure they conform to expectations of file version
- * @param ledis an input stream
- * @return true if it looks like we understand this file version
- */
-private fun verifyFileVersion(ledis: LittleEndianDataInputStream): Boolean {
-  return ledis.readInt() and FILE_VERSION_CRITICAL_MASK <= FILE_VERSION_32 and FILE_VERSION_CRITICAL_MASK
+private fun verifyFileVersion(input: LittleEndianDataInputStream): Boolean {
+  return input.readInt() and FILE_VERSION_CRITICAL_MASK <= FILE_VERSION_32 and FILE_VERSION_CRITICAL_MASK
 }
 
 /**
@@ -154,40 +140,40 @@ internal fun readKdbxHeader(kdbxHeader: KdbxHeader, inputStream: InputStream): K
   // we do not close this stream, otherwise we lose our place in the underlying stream
   val digestInputStream = DigestInputStream(inputStream, digest)
   // we do not close this stream, otherwise we lose our place in the underlying stream
-  val ledis = LittleEndianDataInputStream(digestInputStream)
+  val input = LittleEndianDataInputStream(digestInputStream)
 
-  if (!verifyMagicNumber(ledis)) {
+  if (!verifyMagicNumber(input)) {
     throw IllegalStateException("Magic number did not match")
   }
 
-  if (!verifyFileVersion(ledis)) {
+  if (!verifyFileVersion(input)) {
     throw IllegalStateException("File version did not match")
   }
 
   while (true) {
-    val headerType = ledis.readByte()
+    val headerType = input.readByte()
     if (headerType == HeaderType.END) {
       break
     }
 
     when (headerType) {
-      HeaderType.COMMENT -> getByteArray(ledis)
-      HeaderType.CIPHER_ID -> kdbxHeader.setCipherUuid(getByteArray(ledis))
-      HeaderType.COMPRESSION_FLAGS -> kdbxHeader.setCompressionFlags(getInt(ledis))
-      HeaderType.MASTER_SEED -> kdbxHeader.masterSeed = getByteArray(ledis)
-      HeaderType.TRANSFORM_SEED -> kdbxHeader.transformSeed = getByteArray(ledis)
-      HeaderType.TRANSFORM_ROUNDS -> kdbxHeader.transformRounds = getLong(ledis)
-      HeaderType.ENCRYPTION_IV -> kdbxHeader.encryptionIv = getByteArray(ledis)
-      HeaderType.PROTECTED_STREAM_KEY -> kdbxHeader.protectedStreamKey = getByteArray(ledis)
-      HeaderType.STREAM_START_BYTES -> kdbxHeader.streamStartBytes = getByteArray(ledis)
-      HeaderType.INNER_RANDOM_STREAM_ID -> kdbxHeader.setInnerRandomStreamId(getInt(ledis))
+      HeaderType.COMMENT -> getByteArray(input)
+      HeaderType.CIPHER_ID -> kdbxHeader.setCipherUuid(getByteArray(input))
+      HeaderType.COMPRESSION_FLAGS -> kdbxHeader.setCompressionFlags(getInt(input))
+      HeaderType.MASTER_SEED -> kdbxHeader.masterSeed = getByteArray(input)
+      HeaderType.TRANSFORM_SEED -> kdbxHeader.transformSeed = getByteArray(input)
+      HeaderType.TRANSFORM_ROUNDS -> kdbxHeader.transformRounds = getLong(input)
+      HeaderType.ENCRYPTION_IV -> kdbxHeader.encryptionIv = getByteArray(input)
+      HeaderType.PROTECTED_STREAM_KEY -> kdbxHeader.protectedStreamKey = getByteArray(input)
+      HeaderType.STREAM_START_BYTES -> kdbxHeader.streamStartBytes = getByteArray(input)
+      HeaderType.INNER_RANDOM_STREAM_ID -> kdbxHeader.setInnerRandomStreamId(getInt(input))
 
       else -> throw IllegalStateException("Unknown File Header")
     }
   }
 
   // consume length etc. following END flag
-  getByteArray(ledis)
+  getByteArray(input)
 
   kdbxHeader.headerHash = digest.digest()
   return kdbxHeader
@@ -257,24 +243,24 @@ internal fun writeKdbxHeader(kdbxHeader: KdbxHeader, outputStream: OutputStream)
   kdbxHeader.headerHash = digestOutputStream.messageDigest.digest()
 }
 
-private fun getInt(ledis: LittleEndianDataInputStream): Int {
-  val fieldLength = ledis.readShort()
+private fun getInt(input: LittleEndianDataInputStream): Int {
+  val fieldLength = input.readShort()
   if (fieldLength.toInt() != 4) {
     throw IllegalStateException("Int required but length was $fieldLength")
   }
-  return ledis.readInt()
+  return input.readInt()
 }
 
-private fun getLong(ledis: LittleEndianDataInputStream): Long {
-  val fieldLength = ledis.readShort()
+private fun getLong(input: LittleEndianDataInputStream): Long {
+  val fieldLength = input.readShort()
   if (fieldLength.toInt() != 8) {
     throw IllegalStateException("Long required but length was $fieldLength")
   }
-  return ledis.readLong()
+  return input.readLong()
 }
 
-private fun getByteArray(ledis: LittleEndianDataInputStream): ByteArray {
-  val value = ByteArray(ledis.readShort().toInt())
-  ledis.readFully(value)
+private fun getByteArray(input: LittleEndianDataInputStream): ByteArray {
+  val value = ByteArray(input.readShort().toInt())
+  input.readFully(value)
   return value
 }

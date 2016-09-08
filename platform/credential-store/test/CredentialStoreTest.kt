@@ -8,7 +8,7 @@ import java.util.*
 
 private const val TEST_SERVICE_NAME = "IntelliJ Platform Test"
 
-internal class NativeKeychainTest {
+internal class CredentialStoreTest {
   @Test
   fun linux() {
     if (!SystemInfo.isLinux || UsefulTestCase.IS_UNDER_TEAMCITY) {

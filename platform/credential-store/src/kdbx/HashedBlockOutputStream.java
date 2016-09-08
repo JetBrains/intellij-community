@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package org.linguafranca.hashedblock;
+package com.intellij.credentialStore.kdbx;
 
-import com.intellij.credentialStore.kdbx.KdbxHeaderKt;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
