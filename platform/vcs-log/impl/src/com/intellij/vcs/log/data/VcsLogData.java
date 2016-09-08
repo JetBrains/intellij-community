@@ -46,6 +46,11 @@ import java.util.Set;
 
 public class VcsLogData implements Disposable, VcsLogDataProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogData.class);
+  private static final Consumer<Exception> FAILING_EXCEPTION_HANDLER = e -> {
+    if (!(e instanceof ProcessCanceledException)) {
+      LOG.error(e);
+    }
+  };
   public static final int RECENT_COMMITS_COUNT = Registry.intValue("vcs.log.recent.commits.count");
 
   @NotNull private final Project myProject;
@@ -91,13 +96,8 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     myDetailsGetter = new CommitDetailsGetter(myHashMap, logProviders, this);
     myIndex = new VcsLogPersistentIndex(myProject, myHashMap, logProviders, myFatalErrorsConsumer, this);
 
-    myRefresher =
-      new VcsLogRefresherImpl(myProject, myHashMap, myLogProviders, myUserRegistry, myIndex, myTopCommitsDetailsCache,
-                              this::fireDataPackChangeEvent, e -> {
-        if (!(e instanceof ProcessCanceledException)) {
-          LOG.error(e);
-        }
-      }, RECENT_COMMITS_COUNT, this);
+    myRefresher = new VcsLogRefresherImpl(myProject, myHashMap, myLogProviders, myUserRegistry, myIndex, myTopCommitsDetailsCache,
+                                          this::fireDataPackChangeEvent, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT, this);
 
     myContainingBranchesGetter = new ContainingBranchesGetter(this, this);
   }
