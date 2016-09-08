@@ -28,6 +28,7 @@ import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
@@ -123,8 +124,8 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
   @Override
   public JComponent createOptionsPanel() {
     JTabbedPane tabs = new JBTabbedPane(SwingConstants.TOP);
-    tabs.add("Members to report", myLocalInspectionBase.createOptionsPanel());
-    tabs.add("Entry points", new OptionsPanel());
+    tabs.add("Members to report", ScrollPaneFactory.createScrollPane(myLocalInspectionBase.createOptionsPanel(), true));
+    tabs.add("Entry points", ScrollPaneFactory.createScrollPane(new OptionsPanel(), true));
     return tabs;
   }
 
