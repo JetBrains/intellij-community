@@ -53,7 +53,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -614,10 +614,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         DebuggerBundle.message("warning.jdk140.unstable"), DebuggerBundle.message("title.jdk140.unstable"), Messages.getWarningIcon()
       ));
     }
-    Sdk projectSdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
-    if (getSession().getAlternativeJre() == null && !versionMatch(projectSdk, version, false)) {
-      for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
-        if (versionMatch(sdk, version, true)) {
+    if (getSession().getAlternativeJre() == null) {
+      Sdk projectSdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
+      if ((projectSdk == null || projectSdk.getSdkType() instanceof JavaSdkType) && !versionMatch(projectSdk, version)) {
+        Arrays.stream(ProjectJdkTable.getInstance().getAllJdks())
+          .filter(sdk -> versionMatch(sdk, version))
+          .findFirst().ifPresent(sdk -> {
           XDebugSessionImpl.NOTIFICATION_GROUP.createNotification(
             DebuggerBundle.message("message.remote.jre.version.mismatch",
                                    version,
@@ -625,14 +627,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                    sdk.getName())
             , MessageType.INFO).notify(myProject);
           getSession().setAlternativeJre(sdk);
-          break;
-        }
+        });
       }
     }
   }
 
-  private static boolean versionMatch(@Nullable Sdk sdk, String version, boolean onlyJdk) {
-    if (sdk != null && (!onlyJdk || sdk.getSdkType() instanceof JavaSdk)) {
+  private static boolean versionMatch(@Nullable Sdk sdk, String version) {
+    if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
       String versionString = sdk.getVersionString();
       return versionString != null && versionString.contains(version);
     }
