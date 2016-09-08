@@ -145,9 +145,21 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                   }
                   if ((isArray || !isRawSubstitution(iteratedValueType, collectionClass)) && isCollectCall(tb, operations)) {
                     boolean addAll = operations.isEmpty() && isAddAllCall(tb);
-                    holder.registerProblem(iteratedValue, "Can be replaced with " + (addAll ? "addAll call" : "collect call"),
+                    String methodName;
+                    if(addAll) {
+                      methodName = "addAll";
+                    } else {
+                      PsiMethodCallExpression methodCallExpression = tb.getSingleMethodCall();
+                      if(methodCallExpression != null && extractReplaceableCollectionInitializer(
+                        methodCallExpression.getMethodExpression().getQualifierExpression(), statement) != null) {
+                        methodName = "collect";
+                      } else {
+                        methodName = "forEach";
+                      }
+                    }
+                    holder.registerProblem(iteratedValue, "Can be replaced with " + methodName + " call",
                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                           addAll ? new ReplaceWithAddAllFix() : new ReplaceWithCollectFix());
+                                           new ReplaceWithCollectFix(methodName));
                   }
                   // do not replace for(T e : arr) {} with Arrays.stream(arr).forEach(e -> {}) even if flag is set
                   else if (!operations.isEmpty() ||
@@ -628,28 +640,37 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     return consumerClass != null ? psiFacade.getElementFactory().createType(consumerClass, variable.getType()) : null;
   }
 
-  private static class ReplaceWithCollectFix extends ReplaceWithCollectAbstractFix {
-    @Override
-    protected String getMethodName() {
-      return "collect";
+  @Contract("null, _ -> null")
+  static PsiExpression extractReplaceableCollectionInitializer(PsiExpression qualifierExpression, PsiStatement foreachStatement) {
+    if (qualifierExpression instanceof PsiReferenceExpression) {
+      final PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
+      if (resolve instanceof PsiLocalVariable) {
+        PsiLocalVariable var = (PsiLocalVariable)resolve;
+        if (isDeclarationJustBefore(var, foreachStatement)) {
+          final PsiExpression initializer = var.getInitializer();
+          if (initializer instanceof PsiNewExpression) {
+            final PsiExpressionList argumentList = ((PsiNewExpression)initializer).getArgumentList();
+            if (argumentList != null && argumentList.getExpressions().length == 0) {
+              return initializer;
+            }
+          }
+        }
+      }
     }
+    return null;
   }
 
-  private static class ReplaceWithAddAllFix extends ReplaceWithCollectAbstractFix {
-    @Override
-    protected String getMethodName() {
-      return "addAll";
+  private static class ReplaceWithCollectFix extends MigrateToStreamFix {
+    final String myMethodName;
+
+    protected ReplaceWithCollectFix(String methodName) {
+      myMethodName = methodName;
     }
-  }
-
-  private abstract static class ReplaceWithCollectAbstractFix extends MigrateToStreamFix {
-
-    protected abstract String getMethodName();
 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with " + getMethodName();
+      return "Replace with " + myMethodName;
     }
 
     @Override
@@ -682,29 +703,19 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         .add(createMapperFunctionalExpressionText(tb.getVariable(), methodCallExpression.getArgumentList().getExpressions()[0]));
       final StringBuilder builder = generateStream(iteratedValue, intermediateOps);
 
-      builder.append(".collect(java.util.stream.Collectors.");
       final PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
-      if (qualifierExpression instanceof PsiReferenceExpression) {
-        final PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
-        if (resolve instanceof PsiLocalVariable) {
-          PsiLocalVariable var = (PsiLocalVariable)resolve;
-          if (isDeclarationJustBefore(var, foreachStatement)) {
-            final PsiExpression initializer = var.getInitializer();
-            if (initializer instanceof PsiNewExpression) {
-              final PsiExpressionList argumentList = ((PsiNewExpression)initializer).getArgumentList();
-              if (argumentList != null && argumentList.getExpressions().length == 0) {
-                final String callText = builder.toString() + createInitializerReplacementText(var.getType(), initializer) + ")";
-                PsiElement result = initializer.replace(elementFactory.createExpressionFromText(callText, null));
-                simplifyAndFormat(project, result);
-                foreachStatement.delete();
-                return;
-              }
-            }
-          }
-        }
+      final PsiExpression initializer = extractReplaceableCollectionInitializer(qualifierExpression, foreachStatement);
+      if(initializer != null) {
+        String callText = builder.append(".collect(java.util.stream.Collectors.")
+          .append(createInitializerReplacementText(qualifierExpression.getType(), initializer))
+          .append(")").toString();
+        PsiElement result = initializer.replace(elementFactory.createExpressionFromText(callText, null));
+        simplifyAndFormat(project, result);
+        foreachStatement.delete();
+        return;
       }
-      final String qualifierText = qualifierExpression != null ? qualifierExpression.getText() : "";
-      final String callText = StringUtil.getQualifiedName(qualifierText, "addAll(" + builder.toString() + "toList()));");
+      final String qualifierText = qualifierExpression != null ? qualifierExpression.getText() : "this";
+      final String callText = builder.append(".forEach(").append(qualifierText).append("::add);").toString();
       PsiElement result = foreachStatement.replace(elementFactory.createStatementFromText(callText, foreachStatement));
       simplifyAndFormat(project, result);
     }
