@@ -45,6 +45,7 @@ import com.intellij.vcs.log.data.TroveUtil;
 import com.intellij.vcs.log.data.VcsLogStorageImpl;
 import com.intellij.vcs.log.data.VcsUserRegistryImpl;
 import com.intellij.vcs.log.impl.FatalErrorConsumer;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.filter.VcsLogUserFilterImpl;
 import com.intellij.vcs.log.util.PersistentUtil;
 import gnu.trove.TIntHashSet;
@@ -326,11 +327,12 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   public boolean canFilter(@NotNull List<VcsLogDetailsFilter> filters) {
     if (filters.isEmpty()) return false;
     for (VcsLogDetailsFilter filter : filters) {
-      if (!((filter instanceof VcsLogTextFilter && myTrigramIndex != null) ||
-            (filter instanceof VcsLogUserFilterImpl && myUserIndex != null) ||
-            (filter instanceof VcsLogStructureFilter && myPathsIndex != null))) {
-        return false;
+      if (filter instanceof VcsLogTextFilter && myTrigramIndex != null && !VcsLogUtil.isRegexp(((VcsLogTextFilter)filter).getText()) ||
+          filter instanceof VcsLogUserFilterImpl && myUserIndex != null ||
+          filter instanceof VcsLogStructureFilter && myPathsIndex != null) {
+        continue;
       }
+      return false;
     }
     return true;
   }
