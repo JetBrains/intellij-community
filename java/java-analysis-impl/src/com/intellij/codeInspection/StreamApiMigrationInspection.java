@@ -801,7 +801,6 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       PsiElement element = ((PsiReferenceExpression)operand).resolve();
       if (!(element instanceof PsiLocalVariable)) return;
       PsiLocalVariable var = (PsiLocalVariable)element;
-      final StringBuilder builder = generateStream(iteratedValue, intermediateOps);
 
       PsiExpression addend = extractAddend(assignment);
       if (addend == null) return;
@@ -819,10 +818,11 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       else {
         typeName = "Int";
       }
-      builder.append(".mapTo").append(typeName).append('(');
-      builder.append(compoundLambdaOrMethodReference(tb.getVariable(), addend, "java.util.function.To" + typeName + "Function",
-                                                     new PsiType[]{tb.getVariable().getType()}));
-      builder.append(").sum()");
+      intermediateOps.add(".mapTo" + typeName + "(" +
+                          compoundLambdaOrMethodReference(tb.getVariable(), addend, "java.util.function.To" + typeName + "Function",
+                                                     new PsiType[]{tb.getVariable().getType()})+")");
+      final StringBuilder builder = generateStream(iteratedValue, intermediateOps);
+      builder.append(".sum()");
       replaceWithNumericAddition(project, foreachStatement, var, builder, typeName.toLowerCase(Locale.ENGLISH));
     }
   }
