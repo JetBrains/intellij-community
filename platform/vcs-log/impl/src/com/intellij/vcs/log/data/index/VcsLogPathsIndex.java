@@ -18,6 +18,8 @@ package com.intellij.vcs.log.data.index;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,6 +29,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
+import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.impl.FatalErrorConsumer;
 import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
@@ -42,7 +45,8 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
+
+import static com.intellij.util.containers.ContainerUtil.newTroveSet;
 
 public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
   private static final Logger LOG = Logger.getInstance(VcsLogPathsIndex.class);
@@ -74,7 +78,9 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
     final File storageFile = PersistentUtil.getStorageFile("index-paths-ids", logId, version);
 
     PersistentBTreeEnumerator<String> enumerator = IOUtil.openCleanOrResetBroken(
-      () -> new PersistentBTreeEnumerator<>(storageFile, EnumeratorStringDescriptor.INSTANCE, Page.PAGE_SIZE, null, version),
+      () -> new PersistentBTreeEnumerator<>(storageFile, SystemInfo.isFileSystemCaseSensitive ? EnumeratorStringDescriptor.INSTANCE
+                                                                                              : new ToLowerCaseStringDescriptor(),
+                                            Page.PAGE_SIZE, null, version),
       () -> {
         IOUtil.deleteAllFilesStartingWith(getStorageFile(INDEX + NAME, logId, version));
         IOUtil.deleteAllFilesStartingWith(getStorageFile(INDEX_INPUTS + NAME, logId, version));
@@ -169,7 +175,10 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
 
     private PathsIndexer(@NotNull PersistentEnumeratorBase<String> enumerator, @NotNull Set<VirtualFile> roots) {
       myPathsEnumerator = enumerator;
-      myRoots = roots.stream().map(VirtualFile::getPath).collect(Collectors.toSet());
+      myRoots = newTroveSet(FileUtil.PATH_HASHING_STRATEGY);
+      for (VirtualFile root : roots) {
+        myRoots.add(root.getPath());
+      }
     }
 
     public void setFatalErrorConsumer(@NotNull Consumer<Exception> fatalErrorConsumer) {
@@ -262,6 +271,28 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
         return in.readInt();
       }
       return null;
+    }
+  }
+
+  private static class ToLowerCaseStringDescriptor implements KeyDescriptor<String> {
+    @Override
+    public int getHashCode(String value) {
+      return CaseInsensitiveStringHashingStrategy.INSTANCE.hashCode();
+    }
+
+    @Override
+    public boolean isEqual(String val1, String val2) {
+      return CaseInsensitiveStringHashingStrategy.INSTANCE.equals(val1, val2);
+    }
+
+    @Override
+    public void save(@NotNull DataOutput out, String value) throws IOException {
+      IOUtil.writeUTF(out, value.toLowerCase());
+    }
+
+    @Override
+    public String read(@NotNull DataInput in) throws IOException {
+      return IOUtil.readUTF(in);
     }
   }
 }
