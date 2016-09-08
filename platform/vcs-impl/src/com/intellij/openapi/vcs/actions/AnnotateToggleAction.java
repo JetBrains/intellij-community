@@ -104,7 +104,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
 
     fileAnnotation.setReloader(newFileAnnotation -> {
       if (editor.getGutter().isAnnotationsShown()) {
-        assert Comparing.equal(currentFile, newFileAnnotation.getFile());
+        assert Comparing.equal(fileAnnotation.getFile(), newFileAnnotation.getFile());
         doAnnotate(editor, project, currentFile, newFileAnnotation, vcs, upToDateLineNumberProvider);
       }
     });
