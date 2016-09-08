@@ -220,7 +220,7 @@ internal class SchemeManagerTest {
     val dir = tempDirManager.newPath()
     var schemeManager = createSchemeManager(dir)
     val converter: (Element) -> TestScheme = { XmlSerializer.deserialize(it, TestScheme::class.java)!! }
-    val bundledPath = "/bundledSchemes/default"
+    val bundledPath = "/com/intellij/configurationStore/bundledSchemes/default"
     schemeManager.loadBundledScheme(bundledPath, this, converter)
     val customScheme = TestScheme("default")
     assertThat(schemeManager.allSchemes).containsOnly(customScheme)
