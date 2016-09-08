@@ -102,12 +102,6 @@ abstract class ProductProperties {
   ProductModulesLayout productLayout = new ProductModulesLayout()
 
   /**
-   * Describes layout of all plugins which may be included into the product. The actual list of the plugins need to be bundled with the product
-   * is specified by {@link ProductModulesLayout#bundledPluginModules}.
-   */
-  List<PluginLayout> allPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS
-
-  /**
    * If {@code true} cross-platform ZIP archive containing binaries for all OS will be built
    */
   boolean buildCrossPlatformDistribution = false

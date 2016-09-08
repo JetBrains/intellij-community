@@ -85,6 +85,8 @@ abstract class BuildContext {
 
   abstract JpsModule findModule(String name)
 
+  abstract File findFileInModuleSources(String moduleName, String relativePath)
+
   abstract void signExeFile(String path)
 
   /**

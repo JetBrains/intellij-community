@@ -92,13 +92,9 @@ class CommunityRepositoryModules {
   ]
 
   /**
-   * Specifies layout for all plugins which sources are located in 'community' and 'contrib' repositories
+   * Specifies non-trivial layout for all plugins which sources are located in 'community' and 'contrib' repositories
    */
   static List<PluginLayout> COMMUNITY_REPOSITORY_PLUGINS = [
-    plugin("copyright"),
-    plugin("java-i18n"),
-    plugin("hg4idea"),
-    plugin("github"),
     plugin("ant") {
       mainJarName = "antIntegration.jar"
       withModule("ant-jps-plugin")
@@ -143,10 +139,6 @@ class CommunityRepositoryModules {
       withOptionalModule("tasks-java")
       doNotCreateSeparateJarForLocalizableResources()
     },
-    plugin("terminal"),
-    plugin("editorconfig"),
-    plugin("coverage"),
-    plugin("yaml"),
     plugin("xslt-debugger") {
       withModule("xslt-debugger-engine")
       withModule("xslt-debugger-engine-impl", "rt/xslt-debugger-engine-impl.jar")
@@ -160,18 +152,9 @@ class CommunityRepositoryModules {
       excludeFromModule("xslt-debugger-engine-impl", "serializer.jar")
       excludeFromModule("xslt-debugger-engine-impl", "xalan.jar")
     },
-    plugin("settings-repository"),
-    plugin("rest"),
-    plugin("student"),
     plugin("student-python") {
       withResource("resources/courses", "lib/courses")
       excludeFromModule("student-python", "courses")
-    },
-    plugin("course-creator"),
-    plugin("course-creator-python"),
-    plugin("ipnb"),
-    plugin("IntelliLang-python"),
-    plugin("python-rest"),
-    plugin("python-terminal")
+    }
   ]
 }

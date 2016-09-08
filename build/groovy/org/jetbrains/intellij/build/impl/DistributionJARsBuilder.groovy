@@ -78,7 +78,7 @@ class DistributionJARsBuilder {
       }
     }
 
-    Set<String> allProductDependencies = (productLayout.getIncludedPluginModules(buildContext.productProperties.allPlugins) + productLayout.includedPlatformModules).collectMany(new LinkedHashSet<String>()) {
+    Set<String> allProductDependencies = (productLayout.includedPluginModules + productLayout.includedPlatformModules).collectMany(new LinkedHashSet<String>()) {
       JpsJavaExtensionService.dependencies(buildContext.findRequiredModule(it)).productionOnly().getModules().collect {it.name}
     }
 
@@ -232,8 +232,10 @@ class DistributionJARsBuilder {
   }
 
   private List<PluginLayout> getPluginsByModules(Collection<String> modules) {
-    def modulesToInclude = modules as Set<String>
-    buildContext.productProperties.allPlugins.findAll { modulesToInclude.contains(it.mainModule) }
+    def allNonTrivialPlugins = buildContext.productProperties.productLayout.allNonTrivialPlugins
+    def allOptionalModules = allNonTrivialPlugins.collectMany {it.optionalModules}
+    def nonTrivialPlugins = allNonTrivialPlugins.groupBy { it.mainModule }
+    (modules - allOptionalModules).collect { nonTrivialPlugins[it]?.first() ?: PluginLayout.plugin(it) }
   }
 
   private void buildPlugins(LayoutBuilder layoutBuilder, List<PluginLayout> pluginsToInclude, String targetDirectory) {

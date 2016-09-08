@@ -270,8 +270,7 @@ idea.fatal.error.notification=disabled
     checkProductProperties()
     checkProductLayout()
     def distributionJARsBuilder = new DistributionJARsBuilder(buildContext)
-    def pluginModules = buildContext.productProperties.productLayout.getIncludedPluginModules(buildContext.productProperties.allPlugins)
-    compileModules(pluginModules + distributionJARsBuilder.getPlatformModules())
+    compileModules(buildContext.productProperties.productLayout.includedPluginModules + distributionJARsBuilder.platformModules)
     buildContext.messages.block("Build platform and plugin JARs") {
       distributionJARsBuilder.buildJARs()
     }
@@ -307,17 +306,17 @@ idea.fatal.error.notification=disabled
 
   private void checkProductLayout() {
     ProductModulesLayout layout = buildContext.productProperties.productLayout
-    List<PluginLayout> allPlugins = buildContext.productProperties.allPlugins
-    def allPluginModules = allPlugins.collectMany { [it.mainModule] + it.optionalModules } as Set<String>
+    List<PluginLayout> nonTrivialPlugins = layout.allNonTrivialPlugins
+    def optionalModules = nonTrivialPlugins.collectMany { it.optionalModules } as Set<String>
     checkPaths(layout.licenseFilesToBuildSearchableOptions, "productProperties.productLayout.licenseFilesToBuildSearchableOptions")
-    checkPluginModules(layout.bundledPluginModules, "bundledPluginModules", allPluginModules)
-    checkPluginModules(layout.pluginModulesToPublish, "pluginModulesToPublish", allPluginModules)
+    checkPluginModules(layout.bundledPluginModules, "productProperties.productLayout.bundledPluginModules", optionalModules)
+    checkPluginModules(layout.pluginModulesToPublish, "productProperties.productLayout.pluginModulesToPublish", optionalModules)
 
     checkModules(layout.platformApiModules, "productProperties.productLayout.platformApiModules")
     checkModules(layout.platformImplementationModules, "productProperties.productLayout.platformImplementationModules")
     checkModules(layout.additionalPlatformJars.values(), "productProperties.productLayout.additionalPlatformJars")
     checkProjectLibraries(layout.projectLibrariesToUnpackIntoMainJar, "productProperties.productLayout.projectLibrariesToUnpackIntoMainJar")
-    allPlugins.findAll {layout.enabledPluginModules.contains(it.mainModule)}.each { plugin ->
+    nonTrivialPlugins.findAll {layout.enabledPluginModules.contains(it.mainModule)}.each { plugin ->
       checkModules(plugin.moduleJars.values(), "'$plugin.mainModule' plugin")
       checkModules(plugin.moduleExcludes.keySet(), "'$plugin.mainModule' plugin")
       checkProjectLibraries(plugin.includedProjectLibraries, "'$plugin.mainModule' plugin")
@@ -338,12 +337,13 @@ idea.fatal.error.notification=disabled
     }
   }
 
-  private void checkPluginModules(List<String> pluginModules, String fieldName, Set<String> allPluginModules) {
-    def unknownBundledPluginModules = pluginModules.findAll { !allPluginModules.contains(it) }
+  private void checkPluginModules(List<String> pluginModules, String fieldName, Set<String> optionalModules) {
+    checkModules(pluginModules, fieldName)
+    def unknownBundledPluginModules = pluginModules.findAll { !optionalModules.contains(it) && buildContext.findFileInModuleSources(it, "META-INF/plugin.xml") == null }
     if (!unknownBundledPluginModules.empty) {
       buildContext.messages.error(
-        "The following modules from productProperties.productLayout.$fieldName aren't found in the registered plugins: $unknownBundledPluginModules. " +
-        "Make sure that the plugin layouts are specified in productProperties.productLayout.allPlugins and you refer to either main plugin module or an optional module."
+        "The following modules from $fieldName don't contain META-INF/plugin.xml file and aren't specified as optional plugin modules " +
+        "in productProperties.productLayout.allNonTrivialPlugins: $unknownBundledPluginModules. "
       )
     }
   }

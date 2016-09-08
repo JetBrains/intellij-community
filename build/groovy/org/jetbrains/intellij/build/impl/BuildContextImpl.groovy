@@ -15,13 +15,17 @@
  */
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.gant.JpsGantProjectBuilder
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsProject
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
+import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
@@ -221,6 +225,23 @@ class BuildContextImpl extends BuildContext {
 
   JpsModule findModule(String name) {
     project.modules.find { it.name == name }
+  }
+
+  @Override
+  File findFileInModuleSources(String moduleName, String relativePath) {
+    getSourceRootsWithPrefixes(findRequiredModule(moduleName)).collect {
+      new File(it.first, "$it.second$relativePath")
+    }.find {it.exists()}
+  }
+
+  @SuppressWarnings(["GrUnresolvedAccess", "GroovyInArgumentCheck"])
+  @CompileDynamic
+  private static List<Pair<File, String>> getSourceRootsWithPrefixes(JpsModule module) {
+    module.sourceRoots.findAll { it.rootType in JavaModuleSourceRootTypes.PRODUCTION }.collect {
+      String prefix = it.properties instanceof JavaSourceRootProperties ? it.properties.packagePrefix.replace(".", "/") : it.properties.relativeOutputPath
+      if (!prefix.endsWith("/")) prefix += "/"
+      Pair.create(it.file, StringUtil.trimStart(prefix, "/"))
+    }
   }
 
   @Override
