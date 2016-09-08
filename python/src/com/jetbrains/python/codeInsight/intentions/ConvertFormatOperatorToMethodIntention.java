@@ -45,6 +45,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.jetbrains.python.psi.PyUtil.guessLanguageLevel;
 import static com.jetbrains.python.psi.PyUtil.sure;
 
 /**
@@ -257,7 +258,8 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
     final TypeEvalContext context = TypeEvalContext.userInitiated(file.getProject(), file);
     final PyType rhsType = context.getType(rhs);
     String prefix = "";
-    if (PyTypeChecker.match(PyBuiltinCache.getInstance(rhs).getObjectType("unicode"), rhsType, context)) {
+    final LanguageLevel languageLevel = guessLanguageLevel(project);
+    if (!languageLevel.isPy3K() && PyTypeChecker.match(PyBuiltinCache.getInstance(rhs).getObjectType("unicode"), rhsType, context)) {
       prefix = "u";
     }
     final PyStringLiteralExpression leftExpression = (PyStringLiteralExpression)element.getLeftExpression();
