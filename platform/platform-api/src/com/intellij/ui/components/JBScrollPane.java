@@ -385,7 +385,8 @@ public class JBScrollPane extends JScrollPane {
       Component view = viewport.getView();
       if (view == null) return increment;
       if (view instanceof Scrollable) {
-        return increment;
+        if (Adjustable.VERTICAL == getOrientation()) return increment;
+        if (view instanceof JTable) return increment;
       }
       Font font = view.getFont();
       return font == null ? increment : font.getSize();
