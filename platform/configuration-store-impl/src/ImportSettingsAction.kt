@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.actions
+package com.intellij.configurationStore
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.actions.ImportSettingsFilenameFilter
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.openapi.actionSystem.AnAction
@@ -51,12 +52,12 @@ private class ImportSettingsAction : AnAction(), DumbAware {
         }
         catch (e1: ZipException) {
           Messages.showErrorDialog(
-            IdeBundle.message("error.reading.settings.file", presentableFileName(saveFile), e1.message, promptLocationMessage()),
-            IdeBundle.message("title.invalid.file"))
+              IdeBundle.message("error.reading.settings.file", presentableFileName(saveFile), e1.message, promptLocationMessage()),
+              IdeBundle.message("title.invalid.file"))
         }
         catch (e1: IOException) {
           Messages.showErrorDialog(IdeBundle.message("error.reading.settings.file.2", presentableFileName(saveFile), e1.message),
-            IdeBundle.message("title.error.reading.file"))
+                                   IdeBundle.message("title.error.reading.file"))
         }
       }
   }
@@ -64,22 +65,23 @@ private class ImportSettingsAction : AnAction(), DumbAware {
   private fun doImport(saveFile: File) {
     if (!saveFile.exists()) {
       Messages.showErrorDialog(IdeBundle.message("error.cannot.find.file", presentableFileName(saveFile)),
-        IdeBundle.message("title.file.not.found"))
+                               IdeBundle.message("title.file.not.found"))
       return
     }
 
     val relativePaths = getPaths(saveFile.inputStream())
     if (!relativePaths.contains(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER)) {
       Messages.showErrorDialog(
-        IdeBundle.message("error.file.contains.no.settings.to.import", presentableFileName(saveFile), promptLocationMessage()),
-        IdeBundle.message("title.invalid.file"))
+          IdeBundle.message("error.file.contains.no.settings.to.import", presentableFileName(saveFile), promptLocationMessage()),
+          IdeBundle.message("title.invalid.file"))
       return
     }
 
     val configPath = FileUtil.toSystemIndependentName(PathManager.getConfigPath())
-    val dialog = ChooseComponentsToExportDialog(getExportableComponentsMap(false, true, onlyPaths = relativePaths), false,
-      IdeBundle.message("title.select.components.to.import"),
-      IdeBundle.message("prompt.check.components.to.import"))
+    val dialog = ChooseComponentsToExportDialog(
+        getExportableComponentsMap(false, true, onlyPaths = relativePaths), false,
+        IdeBundle.message("title.select.components.to.import"),
+        IdeBundle.message("prompt.check.components.to.import"))
     if (!dialog.showAndGet()) {
       return
     }
@@ -98,9 +100,9 @@ private class ImportSettingsAction : AnAction(), DumbAware {
     else
       "message.settings.imported.successfully"
     if (Messages.showOkCancelDialog(IdeBundle.message(key,
-      ApplicationNamesInfo.getInstance().productName,
-      ApplicationNamesInfo.getInstance().fullProductName),
-      IdeBundle.message("title.restart.needed"), Messages.getQuestionIcon()) == Messages.OK) {
+                                                      ApplicationNamesInfo.getInstance().productName,
+                                                      ApplicationNamesInfo.getInstance().fullProductName),
+                                    IdeBundle.message("title.restart.needed"), Messages.getQuestionIcon()) == Messages.OK) {
       (ApplicationManager.getApplication() as ApplicationEx).restart(true)
     }
   }

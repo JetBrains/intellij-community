@@ -249,8 +249,8 @@
           </group>
           <separator/>
           <group id="ExportImportGroup">
-            <action id="ImportSettings" class="com.intellij.ide.actions.ImportSettingsAction"/>
-            <action id="ExportSettings" class="com.intellij.ide.actions.ExportSettingsAction"/>
+            <action id="ImportSettings" class="com.intellij.configurationStore.ImportSettingsAction"/>
+            <action id="ExportSettings" class="com.intellij.configurationStore.ExportSettingsAction"/>
           </group>
         </group>
         <separator/>
@@ -615,8 +615,8 @@
       <action id="WelcomeScreen.Settings" class="com.intellij.ide.actions.ShowSettingsAction" icon="AllIcons.General.Configure"/>
       <action id="WelcomeScreen.Plugins" class="com.intellij.ide.actions.ShowPluginManagerAction" icon="AllIcons.General.PluginManager"/>
 
-      <action id="WelcomeScreen.Configure.Import" class="com.intellij.ide.actions.ImportSettingsAction" icon="AllIcons.General.ImportSettings"/>
-      <action id="WelcomeScreen.Configure.Export" class="com.intellij.ide.actions.ExportSettingsAction" icon="AllIcons.General.ExportSettings"/>
+      <action id="WelcomeScreen.Configure.Import" class="com.intellij.configurationStore.ImportSettingsAction" icon="AllIcons.General.ImportSettings"/>
+      <action id="WelcomeScreen.Configure.Export" class="com.intellij.configurationStore.ExportSettingsAction" icon="AllIcons.General.ExportSettings"/>
 
       <action id="WelcomeScreen.Configure.DesktopEntry" class="com.intellij.ide.actions.CreateDesktopEntryAction"
               icon="AllIcons.Welcome.CreateDesktopEntry"/>

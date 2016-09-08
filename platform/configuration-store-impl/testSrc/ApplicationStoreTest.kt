@@ -15,10 +15,6 @@
  */
 package com.intellij.configurationStore
 
-import com.intellij.ide.actions.ExportableItem
-import com.intellij.ide.actions.exportSettings
-import com.intellij.ide.actions.getExportableComponentsMap
-import com.intellij.ide.actions.getPaths
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
