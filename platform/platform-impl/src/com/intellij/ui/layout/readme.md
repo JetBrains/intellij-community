@@ -24,10 +24,10 @@ There are two ways to add child components:
   JTextField(credentials?.userName)(grow, wrap)
   ```
    
-   
+Example:
 ```kotlin
 val panel = panel(fillX) {
-  label("Login to JetBrains Account to get notified when the submitted\nexceptions are fixed.", span, wrap)
+  label("Login to get notified when the submitted\nexceptions are fixed.", span, wrap)
   label("Username:")
   userField(grow, wrap)
 
