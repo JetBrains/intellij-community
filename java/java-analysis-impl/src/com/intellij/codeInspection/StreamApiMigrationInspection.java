@@ -120,6 +120,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                 TerminalBlock tb = TerminalBlock.from(statement.getIterationParameter(), body);
                 List<Operation> operations = tb.extractOperations();
 
+                if(tb.isEmpty()) return;
+
                 final ControlFlow controlFlow = ControlFlowFactory.getInstance(holder.getProject())
                   .getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
                 final Collection<PsiStatement> exitPoints = ControlFlowUtil
@@ -174,7 +176,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                       //for .stream()
                       fixes.add(new ReplaceWithForeachCallFix("forEachOrdered"));
                     }
-                    holder.registerProblem(iteratedValue, "Can be replaced with foreach call",
+                    holder.registerProblem(iteratedValue, "Can be replaced with forEach call",
                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                            fixes.toArray(new LocalQuickFix[fixes.size()]));
                   }
@@ -705,7 +707,6 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       }
       intermediateOps
         .add(createMapperFunctionalExpressionText(tb.getVariable(), methodCallExpression.getArgumentList().getExpressions()[0]));
-      PsiType itemType = methodCallExpression.getArgumentList().getExpressionTypes()[0];
       final StringBuilder builder = generateStream(iteratedValue, intermediateOps);
 
       final PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
@@ -1136,6 +1137,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
     public PsiVariable getVariable() {
       return myVariable;
+    }
+
+    public boolean isEmpty() {
+      return myStatements.length == 0;
     }
 
     @Contract("_, _ -> !null")
