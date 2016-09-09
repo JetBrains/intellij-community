@@ -196,8 +196,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
   }
 
   protected List<String> getRelativeSourePathsByType(final ReferenceType type) throws AbsentInformationException {
-    final List<String> paths = type.sourcePaths(myStratumId);
-    return paths.stream().map(this::getRelativePath).collect(Collectors.toCollection(ArrayList::new));
+    return type.sourcePaths(myStratumId).stream().map(this::getRelativePath).collect(Collectors.toList());
   }
 
   protected List<Location> getLocationsOfLine(final ReferenceType type, final String fileName,
