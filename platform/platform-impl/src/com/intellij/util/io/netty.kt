@@ -117,12 +117,11 @@ private fun doConnect(bootstrap: Bootstrap,
 
   bootstrap.validate()
 
-  val socket: Socket
   while (true) {
     try {
-      //noinspection IOResourceOpenedButNotSafelyClosed,SocketOpenedButNotSafelyClosed
-      socket = Socket(remoteAddress.address, remoteAddress.port)
-      break
+      val channel = OioSocketChannel(Socket(remoteAddress.address, remoteAddress.port))
+      BootstrapUtil.initAndRegister(channel, bootstrap).sync()
+      return channel
     }
     catch (e: IOException) {
       if (stopCondition.value(null) || promise != null && promise.state != Promise.State.PENDING) {
@@ -144,12 +143,7 @@ private fun doConnect(bootstrap: Bootstrap,
         return null
       }
     }
-
   }
-
-  val channel = OioSocketChannel(socket)
-  BootstrapUtil.initAndRegister(channel, bootstrap).sync()
-  return channel
 }
 
 private fun connectNio(bootstrap: Bootstrap,
