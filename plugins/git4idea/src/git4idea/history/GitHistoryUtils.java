@@ -572,16 +572,7 @@ public class GitHistoryUtils {
     }
 
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
-    GitLogParser.GitLogOption[] options = {HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL,
-      PARENTS, SUBJECT, BODY, RAW_BODY};
-    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS, options);
-    h.setStdoutSuppressed(true);
-    h.addParameters(parser.getPretty(), "--encoding=UTF-8");
-    h.addParameters("-M", /*find and report renames*/
-                    "--name-status",
-                    "-c" /*single diff for merge commits, only showing files that were modified from both parents*/);
-    h.addParameters(LOG_ALL);
-    h.endOptions();
+    GitLogParser parser = createParserForDetails(h, project, false, true, ArrayUtil.toStringArray(LOG_ALL));
 
     Ref<Throwable> parseError = new Ref<>();
     Consumer<StringBuilder> recordConsumer = builder -> {
@@ -880,18 +871,14 @@ public class GitHistoryUtils {
     }, parameters);
   }
 
-  @NotNull
-  public static <T> List<T> loadDetails(@NotNull final Project project,
-                                        @NotNull final VirtualFile root,
-                                        boolean withRefs,
-                                        boolean withChanges,
-                                        @NotNull NullableFunction<GitLogRecord, T> converter,
-                                        String... parameters)
-                                        throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
+  private static GitLogParser createParserForDetails(@NotNull GitTextHandler h,
+                                                     @NotNull Project project,
+                                                     boolean withRefs,
+                                                     boolean withChanges,
+                                                     String... parameters) {
     GitLogParser.NameStatus status = withChanges ? GitLogParser.NameStatus.STATUS : GitLogParser.NameStatus.NONE;
-    GitLogParser.GitLogOption[] options = { HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL,
-      PARENTS, SUBJECT, BODY, RAW_BODY };
+    GitLogParser.GitLogOption[] options = {HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL,
+      PARENTS, SUBJECT, BODY, RAW_BODY};
     if (withRefs) {
       options = ArrayUtil.append(options, REF_NAMES);
     }
@@ -903,9 +890,25 @@ public class GitHistoryUtils {
       h.addParameters("--decorate=full");
     }
     if (withChanges) {
-      h.addParameters("-M", "--name-status", "-c");
+      h.addParameters("-M", /*find and report renames*/
+                      "--name-status",
+                      "-c" /*single diff for merge commits, only showing files that were modified from both parents*/);
     }
     h.endOptions();
+
+    return parser;
+  }
+
+  @NotNull
+  public static <T> List<T> loadDetails(@NotNull final Project project,
+                                        @NotNull final VirtualFile root,
+                                        boolean withRefs,
+                                        boolean withChanges,
+                                        @NotNull NullableFunction<GitLogRecord, T> converter,
+                                        String... parameters)
+                                        throws VcsException {
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
+    GitLogParser parser = createParserForDetails(h, project, withRefs, withChanges, parameters);
 
     StopWatch sw = StopWatch.start("loading details");
     String output = h.run();
