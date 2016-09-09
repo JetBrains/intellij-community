@@ -563,9 +563,14 @@ public class GitHistoryUtils {
     }
   }
 
-  public static void readAllFullDetails(@NotNull Project project,
-                                        @NotNull VirtualFile root,
-                                        @NotNull Consumer<VcsFullCommitDetails> commitConsumer) throws VcsException {
+  /*
+  Unlike loadDetails, which accepts list of hashes in parameters, loads details for all commits in the repository.
+  To optimize memory consumption, git log command output is parsed on-the-fly and resulting commits are immediately fed to the consumer
+  and not stored in memory.
+   */
+  public static void loadAllDetails(@NotNull Project project,
+                                    @NotNull VirtualFile root,
+                                    @NotNull Consumer<VcsFullCommitDetails> commitConsumer) throws VcsException {
     final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
       return;

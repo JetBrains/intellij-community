@@ -319,7 +319,7 @@ public class GitLogProvider implements VcsLogProvider {
       return;
     }
 
-    GitHistoryUtils.readAllFullDetails(myProject, root, commitConsumer);
+    GitHistoryUtils.loadAllDetails(myProject, root, commitConsumer);
   }
 
   @NotNull
