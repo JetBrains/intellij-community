@@ -16,7 +16,6 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsAdd;
 
 import com.intellij.cvsSupport2.cvsoperations.common.CompositeOperation;
-import com.intellij.cvsSupport2.cvsoperations.common.CvsOperationOnFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 
@@ -81,7 +80,6 @@ public class AddFilesOperation extends CompositeOperation {
   }
 
   private int calculateAllFilesCount() {
-    return getSubOperations().stream().map(cvsOperation -> (AddFileOperation)cvsOperation)
-      .mapToInt(CvsOperationOnFiles::getFilesCount).sum();
+    return getSubOperations().stream().mapToInt(cvsOperation -> ((AddFileOperation)cvsOperation).getFilesCount()).sum();
   }
 }
