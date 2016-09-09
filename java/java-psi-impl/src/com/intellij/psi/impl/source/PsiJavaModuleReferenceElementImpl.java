@@ -18,11 +18,12 @@ package com.intellij.psi.impl.source;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiJavaModuleReferenceElementImpl extends CompositePsiElement implements PsiJavaModuleReferenceElement {
-  private final PsiJavaModuleReference myReference = new PsiJavaModuleReference(this);
-
   public PsiJavaModuleReferenceElementImpl() {
     super(JavaElementType.MODULE_REFERENCE);
   }
@@ -41,7 +42,15 @@ public class PsiJavaModuleReferenceElementImpl extends CompositePsiElement imple
 
   @Override
   public PsiPolyVariantReference getReference() {
-    return getParent() instanceof PsiJavaModule ? null : myReference;
+    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiJavaModuleReference>() {
+      @Nullable
+      @Override
+      public Result<PsiJavaModuleReference> compute() {
+        PsiJavaModuleReferenceElementImpl refElement = PsiJavaModuleReferenceElementImpl.this;
+        PsiJavaModuleReference ref = refElement.getParent() instanceof PsiJavaModule ? null : new PsiJavaModuleReference(refElement);
+        return Result.create(ref, refElement);
+      }
+    });
   }
 
   @Override

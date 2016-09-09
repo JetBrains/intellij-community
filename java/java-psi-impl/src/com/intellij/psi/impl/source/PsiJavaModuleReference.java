@@ -32,12 +32,7 @@ import java.util.Collection;
 
 public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleReferenceElement> {
   public PsiJavaModuleReference(@NotNull PsiJavaModuleReferenceElement element) {
-    super(element);
-  }
-
-  @Override
-  protected TextRange calculateDefaultRangeInElement() {
-    return new TextRange(0, getElement().getTextLength());
+    super(element, new TextRange(0, element.getTextLength()), false);
   }
 
   @NotNull
