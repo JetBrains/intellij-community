@@ -1014,9 +1014,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       // extract filter
       if(getSingleStatement() instanceof PsiIfStatement) {
         PsiIfStatement ifStatement = (PsiIfStatement)getSingleStatement();
-        if(ifStatement.getElseBranch() != null || ifStatement.getCondition() == null) return null;
-        replaceWith(ifStatement.getThenBranch());
-        return new FilterOp(ifStatement.getCondition(), myVariable, false);
+        if(ifStatement.getElseBranch() == null && ifStatement.getCondition() != null) {
+          replaceWith(ifStatement.getThenBranch());
+          return new FilterOp(ifStatement.getCondition(), myVariable, false);
+        }
       }
       // extract flatMap
       if(getSingleStatement() instanceof PsiForeachStatement) {
@@ -1047,7 +1048,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           }
         }
       }
-      if(myStatements.length > 1) {
+      if(myStatements.length >= 1) {
         PsiStatement first = myStatements[0];
         // extract map
         if(first instanceof PsiDeclarationStatement) {
@@ -1077,15 +1078,19 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         // extract filter with negation
         if(first instanceof PsiIfStatement) {
           PsiIfStatement ifStatement = (PsiIfStatement)first;
-          if(ifStatement.getElseBranch() != null || ifStatement.getCondition() == null) return null;
+          if(ifStatement.getCondition() == null) return null;
           PsiStatement branch = ifStatement.getThenBranch();
           if(branch instanceof PsiBlockStatement) {
             PsiStatement[] statements = ((PsiBlockStatement)branch).getCodeBlock().getStatements();
             if(statements.length == 1)
               branch = statements[0];
           }
-          if(!(branch instanceof PsiContinueStatement)) return null;
-          myStatements = Arrays.copyOfRange(myStatements, 1, myStatements.length);
+          if(!(branch instanceof PsiContinueStatement) || ((PsiContinueStatement)branch).getLabelIdentifier() != null) return null;
+          if(ifStatement.getElseBranch() != null) {
+            myStatements[0] = ifStatement.getElseBranch();
+          } else {
+            myStatements = Arrays.copyOfRange(myStatements, 1, myStatements.length);
+          }
           flatten();
           return new FilterOp(ifStatement.getCondition(), myVariable, true);
         }
