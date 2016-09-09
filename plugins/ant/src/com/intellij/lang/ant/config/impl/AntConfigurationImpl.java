@@ -440,14 +440,8 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     if (events.size() == 0) {
       return AntBuildTargetBase.EMPTY_ARRAY;
     }
-    final List<AntBuildTargetBase> targets = new ArrayList<>();
-    for (ExecutionEvent event : events) {
-      final MetaTarget target = (MetaTarget)getTargetForEvent(event);
-      if (target != null && buildFile.equals(target.getBuildFile())) {
-        targets.add(target);
-      }
-    }
-    return targets.toArray(new AntBuildTargetBase[targets.size()]);
+    return events.stream().map(event -> (MetaTarget)getTargetForEvent(event))
+      .filter(target -> target != null && buildFile.equals(target.getBuildFile())).toArray(AntBuildTarget[]::new);
   }
 
   public List<ExecutionEvent> getEventsForTarget(final AntBuildTarget target) {

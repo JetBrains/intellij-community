@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.Parame
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author nik
@@ -106,11 +107,7 @@ public class CompileScopeUtil {
     }
     final CompileScope scope = context.getCompileScope();
     if (shouldFetchFiles(scope)) {
-      final List<String> paths = new ArrayList<>();
-      for (VirtualFile file : scope.getFiles(null, true)) {
-        paths.add(file.getPath());
-      }
-      return paths;
+      return Arrays.stream(scope.getFiles(null, true)).map(VirtualFile::getPath).collect(Collectors.toList());
     }
     return Collections.emptyList();
   }

@@ -31,7 +31,6 @@ import com.intellij.debugger.jdi.LocalVariablesUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
-import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.lang.java.JavaLanguage;
@@ -55,7 +54,6 @@ import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.sun.jdi.*;
-import com.sun.jdi.event.Event;
 import com.sun.jdi.event.ExceptionEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -201,18 +199,13 @@ public class JavaStackFrame extends XStackFrame {
         children.add(JavaValue.create(returnValueDescriptor, evaluationContext, myNodeManager));
       }
       // add context exceptions
-      Set<ObjectReference> exceptions = new HashSet<>();
-      for (Pair<Breakpoint, Event> pair : DebuggerUtilsEx.getEventDescriptors(debuggerContext.getSuspendContext())) {
-        Event debugEvent = pair.getSecond();
-        if (debugEvent instanceof ExceptionEvent) {
-          ObjectReference exception = ((ExceptionEvent)debugEvent).exception();
-          if (exception != null) {
-            exceptions.add(exception);
-          }
-        }
-      }
-      exceptions.forEach(e -> children.add(
-        JavaValue.create(myNodeManager.getThrownExceptionObjectDescriptor(myDescriptor, e), evaluationContext, myNodeManager)));
+
+      DebuggerUtilsEx.getEventDescriptors(debuggerContext.getSuspendContext()).stream()
+        .map(pair -> pair.getSecond())
+        .filter(debugEvent -> debugEvent instanceof ExceptionEvent).map(debugEvent -> ((ExceptionEvent)debugEvent).exception())
+        .filter(Objects::nonNull).distinct()
+        .forEach(e -> children.add(
+          JavaValue.create(myNodeManager.getThrownExceptionObjectDescriptor(myDescriptor, e), evaluationContext, myNodeManager)));
 
       try {
         buildVariables(debuggerContext, evaluationContext, debugProcess, children, thisObjectReference, location);

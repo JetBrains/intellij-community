@@ -75,6 +75,7 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.stream.Collectors;
 
 public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Facade, ViewContextEx, PropertyChangeListener, SwitchProvider,
                                         QuickActionProvider, DockContainer.Dialog {
@@ -1059,11 +1060,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   private ArrayList<GridImpl> getGrids() {
-    ArrayList<GridImpl> result = new ArrayList<>();
-    for (TabInfo each : myTabs.getTabs()) {
-      result.add(getGridFor(each));
-    }
-    return result;
+    return myTabs.getTabs().stream().map(RunnerContentUi::getGridFor).collect(Collectors.toCollection(ArrayList::new));
   }
 
 
