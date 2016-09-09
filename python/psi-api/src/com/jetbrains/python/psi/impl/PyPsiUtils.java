@@ -17,6 +17,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.google.common.base.Preconditions;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Couple;
@@ -644,5 +645,23 @@ public class PyPsiUtils {
     }
 
     protected abstract void checkAddElement(PsiElement node);
+  }
+
+  /**
+   * Returns text of the given PSI element. Unlike obvious {@link PsiElement#getText()} this method unescapes text of the element if latter
+   * belongs to injected code fragment using {@link InjectedLanguageManager#getUnescapedText(PsiElement)}.
+   *
+   * @param element PSI element which text is needed
+   * @return text of the element with any host escaping removed
+   */
+  @NotNull
+  public static String getElementTextWithoutHostEscaping(@NotNull PsiElement element) {
+    final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(element.getProject());
+    if (manager.isInjectedFragment(element.getContainingFile())) {
+      return manager.getUnescapedText(element);
+    }
+    else {
+      return element.getText();
+    }
   }
 }
