@@ -28,7 +28,6 @@ import com.intellij.vcs.log.data.VcsLogStructureFilterImpl;
 import com.intellij.vcs.log.impl.VcsLogContentProvider;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsProjectLog;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcsUtil.VcsUtil;
 
 import java.util.Collections;
@@ -42,8 +41,8 @@ public class ShowGraphHistoryAction extends DumbAwareAction {
     VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
     VcsLogManager logManager = VcsProjectLog.getInstance(project).getLogManager();
     assert logManager != null;
-    VcsLogUiImpl ui = VcsLogContentProvider.openLogTab(logManager, project, file.getName());
-    ui.getFilterUi().setFilter(new VcsLogStructureFilterImpl(Collections.singleton(VcsUtil.getFilePath(file))));
+    VcsLogStructureFilterImpl fileFilter = new VcsLogStructureFilterImpl(Collections.singleton(VcsUtil.getFilePath(file)));
+    VcsLogContentProvider.openLogTab(logManager, project, file.getName(), fileFilter);
   }
 
   @Override
