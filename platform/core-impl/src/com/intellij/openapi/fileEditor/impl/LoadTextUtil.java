@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.BinaryFileDecompiler;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.CharsetUtil;
@@ -43,6 +44,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 
 public final class LoadTextUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.LoadTextUtil");
   @Nls private static final String AUTO_DETECTED_FROM_BOM = "auto-detected from BOM";
 
   private LoadTextUtil() { }
@@ -351,7 +353,12 @@ public final class LoadTextUtil {
       final BinaryFileDecompiler decompiler = BinaryFileTypeDecompilers.INSTANCE.forFileType(fileType);
       if (decompiler != null) {
         CharSequence text = decompiler.decompile(file);
-        StringUtil.assertValidSeparators(text);
+        try {
+          StringUtil.assertValidSeparators(text);
+        }
+        catch (AssertionError e) {
+          LOG.error(e);
+        }
         return text;
       }
 
