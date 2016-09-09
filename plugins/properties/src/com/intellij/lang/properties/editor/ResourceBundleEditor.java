@@ -62,7 +62,6 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
@@ -127,7 +126,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   private JPanel              myValuesPanel;
   private JPanel              myStructureViewPanel;
   private volatile boolean    myDisposed;
-  private VirtualFileListener myVfsListener;
+  private ResourceBundleEditorFileListener myVfsListener;
   private Editor              mySelectedEditor;
   private String              myPropertyToSelectWhenVisible;
   private ResourceBundleEditorHighlighter myHighlighter;
@@ -333,6 +332,10 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     }
   }
 
+  public void flush() {
+    myVfsListener.flush();
+  }
+
   @Nullable
   private static String getPropertyName(@NotNull Document document, int line) {
     int startOffset = document.getLineStartOffset(line);
@@ -379,7 +382,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
 
     ApplicationManager.getApplication().runWriteAction(() -> WriteCommandAction.runWriteCommandAction(myProject, () -> {
       try {
-
         if (currentValue.isEmpty() &&
             ResourceBundleEditorKeepEmptyValueToggleAction.keepEmptyProperties() &&
             !propertiesFile.equals(myResourceBundle.getDefaultPropertiesFile().getVirtualFile())) {
@@ -454,6 +456,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
         public void focusLost(final Editor editor) {
           if (!editor.isViewer() && propertiesFile.getContainingFile().isValid()) {
             writeEditorPropertyValue(null, editor, propertiesFile.getVirtualFile());
+            myVfsListener.flush();
           }
         }
       });
@@ -495,12 +498,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     valuesPanelComponent.add(new JPanel(), gc);
     selectionChanged();
     myValuesPanel.repaint();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        updateEditorsFromProperties(true);
-      }
-    });
+    updateEditorsFromProperties(true);
   }
 
   @NotNull
