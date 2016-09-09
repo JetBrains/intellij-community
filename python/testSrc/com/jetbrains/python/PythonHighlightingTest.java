@@ -285,6 +285,10 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON35, true, false);
   }
 
+  public void testImplicitOctLongInteger() {
+    doTest(LanguageLevel.PYTHON35, true, false);
+  }
+
   // ---
   private void doTest(final LanguageLevel languageLevel, final boolean checkWarnings, final boolean checkInfos) {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);

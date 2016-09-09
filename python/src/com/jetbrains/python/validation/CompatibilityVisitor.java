@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -238,42 +238,41 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyNumericLiteralExpression(final PyNumericLiteralExpression node) {
     super.visitPyNumericLiteralExpression(node);
-    int len = 0;
-    LocalQuickFix quickFix = null;
-    StringBuilder message = new StringBuilder(myCommonMessage);
-    String suffix = "";
-    for (int i = 0; i != myVersionsToProcess.size(); ++i) {
-      LanguageLevel languageLevel = myVersionsToProcess.get(i);
-      if (languageLevel.isPy3K()) {
-        if (!node.isIntegerLiteral()) {
-          continue;
+
+    if (node.isIntegerLiteral()) {
+      final String text = node.getText();
+
+      if (text.endsWith("l") || text.endsWith("L")) {
+        final StringBuilder message = new StringBuilder(myCommonMessage);
+        final String suffix = " not support a trailing \'l\' or \'L\'.";
+        int len = 0;
+
+        for (LanguageLevel languageLevel : myVersionsToProcess) {
+          if (languageLevel.isPy3K()) {
+            len = appendLanguageLevel(message, len, languageLevel);
+          }
         }
-        final String text = node.getText();
-        if (text.endsWith("l") || text.endsWith("L")) {
-          len = appendLanguageLevel(message, len, languageLevel);
-          suffix = " not support a trailing \'l\' or \'L\'.";
-          quickFix = new RemoveTrailingLQuickFix();
-        }
-        if (text.length() > 1 && text.charAt(0) == '0') {
-          final char c = Character.toLowerCase(text.charAt(1));
-          if (c != 'o' && c != 'b' && c != 'x') {
-            boolean isNull = true;
-            for (char a : text.toCharArray()) {
-              if ( a != '0') {
-                isNull = false;
-                break;
-              }
-            }
-            if (!isNull) {
+
+        commonRegisterProblem(message, suffix, len, node, new RemoveTrailingLQuickFix());
+      }
+
+      if (text.length() > 1 && text.charAt(0) == '0') {
+        final char secondChar = Character.toLowerCase(text.charAt(1));
+        if (secondChar != 'o' && secondChar != 'b' && secondChar != 'x' && text.chars().anyMatch(c -> c != '0')) {
+          final StringBuilder message = new StringBuilder(myCommonMessage);
+          final String suffix = " not support this syntax. It requires '0o' prefix for octal literals";
+          int len = 0;
+
+          for (LanguageLevel languageLevel : myVersionsToProcess) {
+            if (languageLevel.isPy3K()) {
               len = appendLanguageLevel(message, len, languageLevel);
-              quickFix = new ReplaceOctalNumericLiteralQuickFix();
-              suffix = " not support this syntax. It requires '0o' prefix for octal literals";
             }
           }
+
+          commonRegisterProblem(message, suffix, len, node, new ReplaceOctalNumericLiteralQuickFix());
         }
       }
     }
-    commonRegisterProblem(message, suffix, len, node, quickFix);
   }
 
   @Override
