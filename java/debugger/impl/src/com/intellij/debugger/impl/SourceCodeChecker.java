@@ -48,11 +48,11 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.sun.jdi.*;
+import one.util.streamex.IntStreamEx;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * @author egor
@@ -137,7 +137,7 @@ public class SourceCodeChecker {
           res = getLinesStream(locations, psiFile).allMatch(line -> startLine <= line && line <= endLine);
           if (!res) {
             LOG.debug("Source check failed: Method " + method.name() + ", source: " + ((NavigationItem)psiMethod).getName() +
-                      "\nLines: " + getLinesStream(locations, psiFile).mapToObj(Integer::toString).collect(Collectors.joining(", ")) +
+                      "\nLines: " + getLinesStream(locations, psiFile).joining(", ") +
                       "\nExpected range: " + startLine + "-" + endLine
             );
           }
@@ -164,8 +164,8 @@ public class SourceCodeChecker {
     return ThreeState.YES;
   }
 
-  private static IntStream getLinesStream(List<Location> locations, PsiFile psiFile) {
-    IntStream stream = locations.stream().mapToInt(Location::lineNumber);
+  private static IntStreamEx getLinesStream(List<Location> locations, PsiFile psiFile) {
+    IntStreamEx stream = StreamEx.of(locations).mapToInt(Location::lineNumber);
     if (psiFile instanceof PsiCompiledFile) {
       stream = stream.map(line -> DebuggerUtilsEx.bytecodeToSourceLine(psiFile, line));
     }

@@ -41,12 +41,12 @@ import com.intellij.util.ui.update.Update;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import gnu.trove.TIntObjectHashMap;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class HotSwapProgressImpl extends HotSwapProgress{
   static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("HotSwap", ToolWindowId.DEBUG);
@@ -131,7 +131,7 @@ public class HotSwapProgressImpl extends HotSwapProgress{
   }
 
   private String buildMessage(List<String> messages, boolean withRestart) {
-    StringBuilder res = new StringBuilder(messages.stream().map(m -> StringUtil.trimEnd(m, ';')).collect(Collectors.joining("\n")));
+    StringBuilder res = new StringBuilder(StreamEx.of(messages).map(m -> StringUtil.trimEnd(m, ';')).joining("\n"));
     if (mySession != null) {
       res.append("\n").append(DebuggerBundle.message("status.hot.swap.completed.stop"));
       if (withRestart) {
