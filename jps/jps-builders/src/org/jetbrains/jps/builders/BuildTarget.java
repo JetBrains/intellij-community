@@ -47,6 +47,10 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
     myTargetType = targetType;
   }
 
+  /**
+   * @return id of the target which must be unique among all targets of the same type
+   * @see BuildTargetLoader#createTarget(String)
+   */
   public abstract String getId();
 
   public final BuildTargetType<?> getTargetType() {
@@ -92,7 +96,7 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
   /**
    * Finds a source root by its serialized ID.
    *
-   * @param rootId    the serialized root ID.
+   * @param rootId    the serialized root ID (produced by {@link BuildRootDescriptor#getRootId()})
    * @param rootIndex the index of build roots.
    * @return the build root or null if no root with this ID exists.
    */
