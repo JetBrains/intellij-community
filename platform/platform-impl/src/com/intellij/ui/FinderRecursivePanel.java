@@ -73,7 +73,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
   @Nullable
   private JComponent myChild = null;
 
-  protected JBList myList;
+  protected JBList<T> myList;
   protected final CollectionListModel<T> myListModel = new CollectionListModel<>();
 
   private final MergingUpdateQueue myMergingUpdateQueue = new MergingUpdateQueue("FinderRecursivePanel", 100, true, this, this);
@@ -189,16 +189,11 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
       ScrollPaneFactory.createScrollPane(myList,
                                          ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                          ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    return ListWithFilter.wrap(myList, pane, new Function<T, String>() {
-      @Override
-      public String fun(T o) {
-        return getItemText(o);
-      }
-    });
+    return ListWithFilter.wrap(myList, pane, (Function<T, String>)o -> getItemText(o));
   }
 
-  protected JBList createList() {
-    final JBList list = new JBList(myListModel);
+  protected JBList<T> createList() {
+    final JBList<T> list = new JBList<>(myListModel);
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setEmptyText(getListEmptyText());
     list.setCellRenderer(createListCellRenderer());
@@ -330,8 +325,8 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     return false;
   }
 
-  protected ListCellRenderer createListCellRenderer() {
-    return new ColoredListCellRenderer() {
+  protected ListCellRenderer<T> createListCellRenderer() {
+    return new ColoredListCellRenderer<T>() {
 
       private final FileColorManager myFileColorManager = FileColorManager.getInstance(getProject());
 
@@ -372,7 +367,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
         setBackground(bg);
 
         if (hasChildren(t)) {
-          JPanel result = new JPanel(new BorderLayout(0, 0));
+          JPanel result = new JPanel(new BorderLayout());
           JLabel childrenLabel = new JLabel();
           childrenLabel.setOpaque(true);
           childrenLabel.setVisible(true);
@@ -432,7 +427,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
   @SuppressWarnings("unchecked")
   @Nullable
   public T getSelectedValue() {
-    return (T)myList.getSelectedValue();
+    return myList.getSelectedValue();
   }
 
   /**
@@ -467,12 +462,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     // load list items synchronously
     myList.setPaintBusy(true);
     try {
-      final List<T> listItems = ApplicationManager.getApplication().runReadAction(new Computable<List<T>>() {
-        @Override
-        public List<T> compute() {
-          return getListItems();
-        }
-      });
+      final List<T> listItems = ApplicationManager.getApplication().runReadAction((Computable<List<T>>)() -> getListItems());
       mergeListItems(myListModel, myList, listItems);
     }
     finally {
@@ -540,7 +530,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     });
   }
 
-  protected void mergeListItems(@NotNull CollectionListModel<T> listModel, @NotNull JList list, @NotNull List<T> newItems) {
+  protected void mergeListItems(@NotNull CollectionListModel<T> listModel, @NotNull JList<T> list, @NotNull List<T> newItems) {
     setMergeListItemsRunning(true);
 
     try {
@@ -554,7 +544,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
 
         int newSelectedIndex = -1;
 
-        T selection = (T)list.getSelectedValue();
+        T selection = list.getSelectedValue();
         if (selection != null) {
           newSelectedIndex = newItems.indexOf(selection);
         }
