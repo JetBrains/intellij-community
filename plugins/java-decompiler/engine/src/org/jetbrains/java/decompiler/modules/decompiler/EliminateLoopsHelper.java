@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,10 +135,7 @@ public class EliminateLoopsHelper {
           statLabeled.put(st.id, LowBreakHelper.isBreakEdgeLabeled(lstBreakEdges.get(i).getSource(), st) | statLabeled.get(st.id));
         }
 
-        int postcount = 0;
-        for (Boolean val : statLabeled.values()) {
-          postcount += val ? 1 : 0;
-        }
+        int postcount = statLabeled.values().stream().mapToInt(val -> val ? 1 : 0).sum();
 
         if (precount <= postcount) {
           return false;
