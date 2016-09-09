@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.ant;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
@@ -39,7 +40,7 @@ public final class AntIntrospector {
   //private static final ObjectCache<String, SoftReference<Object>> ourCache = new ObjectCache<String, SoftReference<Object>>(300);
   private static final HashMap<Class, Object> ourCache = new HashMap<>();
   private static final Object ourNullObject = new Object();
-  private static final Alarm ourCacheCleaner = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private static final Alarm ourCacheCleaner = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
   private static final int CACHE_CLEAN_TIMEOUT = 10000; // 10 seconds
   private final Class myTypeClass;
 

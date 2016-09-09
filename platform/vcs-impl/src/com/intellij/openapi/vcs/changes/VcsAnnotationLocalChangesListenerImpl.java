@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
@@ -57,7 +58,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
 
   private final MultiMap<VirtualFile, FileAnnotation> myFileAnnotationMap;
 
-  public VcsAnnotationLocalChangesListenerImpl(Project project, final ProjectLevelVcsManager vcsManager) {
+  public VcsAnnotationLocalChangesListenerImpl(@NotNull Project project, final ProjectLevelVcsManager vcsManager) {
     myLock = new Object();
     myUpdateStuff = createUpdateStuff();
     myUpdater = new ZipperUpdater(ApplicationManager.getApplication().isUnitTestMode() ? 10 : 300, Alarm.ThreadToUse.POOLED_THREAD, project);

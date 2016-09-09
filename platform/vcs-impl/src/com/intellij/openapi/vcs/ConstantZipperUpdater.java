@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.ZipperUpdater;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created with IntelliJ IDEA.
@@ -29,7 +30,7 @@ public class ConstantZipperUpdater {
   private final ZipperUpdater myZipperUpdater;
   private final Runnable myRunnable;
 
-  public ConstantZipperUpdater(final int delay, final Alarm.ThreadToUse threadToUse, final Disposable parentDisposable,
+  public ConstantZipperUpdater(final int delay, final Alarm.ThreadToUse threadToUse, @NotNull Disposable parentDisposable,
                                final Runnable runnable) {
     myRunnable = runnable;
     myZipperUpdater = new ZipperUpdater(delay, threadToUse, parentDisposable);

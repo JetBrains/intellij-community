@@ -58,7 +58,7 @@ public final class FloatingDecorator extends JDialog {
   private final MyUISettingsListener myUISettingsListener;
   private WindowInfoImpl myInfo;
 
-  private final Disposable myDisposable;
+  private final Disposable myDisposable = Disposer.newDisposable();
   private final Alarm myDelayAlarm; // Determines moment when tool window should become transparent
   private final Alarm myFrameTicker; // Determines moments of rendering of next frame
   private final MyAnimator myAnimator; // Renders alpha ratio
@@ -98,7 +98,7 @@ public final class FloatingDecorator extends JDialog {
     //
 
     myDelayAlarm=new Alarm();
-    myFrameTicker=new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+    myFrameTicker=new Alarm(Alarm.ThreadToUse.POOLED_THREAD,myDisposable);
     myAnimator=new MyAnimator();
     myCurrentFrame=0;
     myStartRatio=0.0f;
@@ -113,11 +113,7 @@ public final class FloatingDecorator extends JDialog {
 
     //workaround: we need to add this IdeGlassPane instance as dispatcher in IdeEventQueue
     ideGlassPane.addMousePreprocessor(new MouseAdapter() {
-    }, myDisposable = new Disposable() {
-      @Override
-      public void dispose() {
-      }
-    });
+    }, myDisposable);
 
     apply(info);
   }

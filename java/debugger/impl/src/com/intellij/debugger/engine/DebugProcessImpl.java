@@ -137,7 +137,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   protected DebuggerSession mySession;
   @Nullable protected MethodReturnValueWatcher myReturnValueWatcher;
   private final Disposable myDisposable = Disposer.newDisposable();
-  private final Alarm myStatusUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, myDisposable);
+  private final Alarm myStatusUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
 
   private final ThreadBlockedMonitor myThreadBlockedMonitor = new ThreadBlockedMonitor(this, myDisposable);
 

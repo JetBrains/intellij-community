@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
@@ -37,7 +38,7 @@ public class SmartStructureTracker extends TreeModelAdapter {
   private final JTree myEventTree;
   private final Alarm myAlarm;
 
-  public SmartStructureTracker(JTree eventTree, Disposable disposable) {
+  public SmartStructureTracker(JTree eventTree, @NotNull Disposable disposable) {
     myEventTree = eventTree;
     myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, disposable);
   }

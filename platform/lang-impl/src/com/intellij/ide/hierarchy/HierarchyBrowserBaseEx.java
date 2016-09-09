@@ -71,7 +71,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   private final Hashtable<String, JTree> myType2TreeMap = new Hashtable<>();
 
   private final RefreshAction myRefreshAction = new RefreshAction();
-  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD,this);
   private SmartPsiElementPointer mySmartPsiElementPointer;
   private final CardLayout myCardLayout;
   private final JPanel myTreePanel;

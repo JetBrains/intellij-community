@@ -65,7 +65,7 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
                                 @NotNull Consumer<Integer> modificationStampConsumer,
                                 @Nullable Condition<VirtualFile> changedFileFilter) {
     myProject = project;
-    myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, myProject);
+    myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
     myDelayMillis = delayMillis;
     myModificationStampConsumer = modificationStampConsumer;
     myChangedFileFilter = changedFileFilter;

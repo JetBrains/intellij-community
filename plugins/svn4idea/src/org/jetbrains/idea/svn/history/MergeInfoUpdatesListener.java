@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.integrate.Merger;
 import org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache;
@@ -41,10 +42,10 @@ public class MergeInfoUpdatesListener {
   private List<RootsAndBranches> myMergeInfoRefreshActions;
   private final ZipperUpdater myUpdater;
 
-  public MergeInfoUpdatesListener(final Project project, final MessageBusConnection connection) {
+  public MergeInfoUpdatesListener(@NotNull Project project, final MessageBusConnection connection) {
     myConnection = connection;
     myProject = project;
-    myUpdater = new ZipperUpdater(DELAY, myProject);
+    myUpdater = new ZipperUpdater(DELAY, project);
   }
 
   public void addPanel(final RootsAndBranches action) {

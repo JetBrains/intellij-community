@@ -92,7 +92,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     final long end = warmupEnd + 1000;
 
     ApplicationManagerEx.getApplicationEx().runProcessWithProgressSynchronously(() -> {
-      final Alarm alarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, getTestRootDisposable());
+      final Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
       ProgressIndicatorEx indicator = (ProgressIndicatorEx)ProgressIndicatorProvider.getGlobalProgressIndicator();
       prevTime = System.currentTimeMillis();
       assert indicator != null;

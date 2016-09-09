@@ -21,7 +21,6 @@ import com.intellij.lang.impl.PsiBuilderFactoryImpl;
 import com.intellij.mock.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -52,7 +51,6 @@ import com.intellij.psi.impl.source.text.BlockSupportImpl;
 import com.intellij.psi.impl.source.text.DiffLog;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.CachedValuesManagerImpl;
-import com.intellij.util.Function;
 import com.intellij.util.messages.MessageBus;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
@@ -178,6 +176,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     });
   }
 
+  @NotNull
   public MockProjectEx getProject() {
     return myProject;
   }

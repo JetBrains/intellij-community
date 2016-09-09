@@ -84,7 +84,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private MavenProjectsManagerState myState = new MavenProjectsManagerState();
 
-  private final Alarm myInitializationAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, myProject);
+  private final Alarm myInitializationAlarm;
 
   private final MavenEmbeddersManager myEmbeddersManager;
 
@@ -120,6 +120,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     super(project);
     myEmbeddersManager = new MavenEmbeddersManager(myProject);
     myModificationTracker = new MavenModificationTracker(this);
+    myInitializationAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
   }
 
   public MavenProjectsManagerState getState() {

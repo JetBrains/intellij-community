@@ -25,7 +25,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
 import com.intellij.util.AlarmFactory;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -33,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -143,8 +141,8 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     }
   }
 
-  protected Alarm createAlarm(@NotNull Alarm.ThreadToUse thread, Disposable parent) {
-    return AlarmFactory.getInstance().create(thread, parent);
+  protected Alarm createAlarm(@NotNull Alarm.ThreadToUse thread, @Nullable Disposable parent) {
+    return parent == null ? AlarmFactory.getInstance().create(thread) : AlarmFactory.getInstance().create(thread, parent);
   }
 
   public void setMergingTimeSpan(int timeSpan) {

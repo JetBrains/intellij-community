@@ -50,7 +50,7 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
 
   private void initFind() {
     SearchResults searchResults = new SearchResults(getEditor(), getProject());
-    myLivePreviewController = new LivePreviewController(searchResults, null);
+    myLivePreviewController = new LivePreviewController(searchResults, null, getTestRootDisposable());
     myFindModel.addObserver(findModel -> myLivePreviewController.updateInBackground(myFindModel, true));
     myLivePreviewController.on();
   }
