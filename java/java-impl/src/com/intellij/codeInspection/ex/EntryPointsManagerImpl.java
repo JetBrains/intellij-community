@@ -90,7 +90,7 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
   }
 
   public static JButton createConfigureAnnotationsButton() {
-    final JButton configureAnnotations = new JButton("Configure annotations...");
+    final JButton configureAnnotations = new JButton("Annotations...");
     configureAnnotations.setHorizontalAlignment(SwingConstants.LEFT);
     configureAnnotations.addActionListener(new ActionListener() {
       @Override
@@ -102,7 +102,7 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
   }
 
   public static JButton createConfigureClassPatternsButton() {
-    final JButton configureClassPatterns = new JButton("Configure code patterns...");
+    final JButton configureClassPatterns = new JButton("Code patterns...");
     configureClassPatterns.setHorizontalAlignment(SwingConstants.LEFT);
     configureClassPatterns.addActionListener(new ActionListener() {
       @Override

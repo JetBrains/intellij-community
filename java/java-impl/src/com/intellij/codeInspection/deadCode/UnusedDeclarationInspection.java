@@ -34,6 +34,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -144,11 +145,13 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
       gc.fill = GridBagConstraints.HORIZONTAL;
       gc.anchor = GridBagConstraints.NORTHWEST;
       gc.gridx = 0;
-      gc.gridy = GridBagConstraints.RELATIVE;
+      gc.gridy = 0;
+      gc.gridwidth = 2;
+      add(new JBLabel("When entry points are in test sources, mark callees as:"), gc);
+      gc.gridy++;
 
-      add(new JBLabel("When entry point is located in test sources:"), gc);
-      final JBRadioButton asEntryPoint = new JBRadioButton("Treat as entry point", isTestEntryPoints());
-      final JBRadioButton asUnused = new JBRadioButton("Mark callees as unused", !isTestEntryPoints());
+      final JBRadioButton asEntryPoint = new JBRadioButton("used", isTestEntryPoints());
+      final JBRadioButton asUnused = new JBRadioButton("unused", !isTestEntryPoints());
       final ButtonGroup group = new ButtonGroup();
       group.add(asEntryPoint);
       group.add(asUnused);
@@ -160,11 +163,28 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
       };
       asEntryPoint.addActionListener(listener);
       asUnused.addActionListener(listener);
-      add(asEntryPoint, gc);
-      add(asUnused, gc);
-      add(new TitledSeparator(), gc);
 
-      gc.insets = JBUI.insets(0, 20, 2, 0);
+      gc.gridwidth = 1;
+      gc.weightx = 0;
+      add(asEntryPoint, gc);
+      gc.gridx = 1;
+      gc.weightx = 1;
+      add(asUnused, gc);
+
+      gc.gridx = 0;
+      gc.gridy++;
+
+      gc.gridwidth = 2;
+      add(new TitledSeparator(), gc);
+      gc.gridy++;
+      add(new JBLabel("Entry points:"), gc);
+      gc.insets = JBUI.insets(5, 0, 0, 0);
+      gc.gridy++;
+
+      add(createBtnPanel(), gc);
+      gc.gridy++;
+      gc.insets = JBUI.insets(0, 5, 2, 0);
+
       myMainsCheckbox = new JCheckBox(InspectionsBundle.message("inspection.dead.code.option.main"));
       myMainsCheckbox.setSelected(ADD_MAINS_TO_ENTRIES);
       myMainsCheckbox.addActionListener(new ActionListener() {
@@ -176,6 +196,7 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
 
 
       add(myMainsCheckbox, gc);
+      gc.gridy++;
 
       myAppletToEntries = new JCheckBox(InspectionsBundle.message("inspection.dead.code.option.applet"));
       myAppletToEntries.setSelected(ADD_APPLET_TO_ENTRIES);
@@ -186,6 +207,7 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
         }
       });
       add(myAppletToEntries, gc);
+      gc.gridy++;
 
       myServletToEntries = new JCheckBox(InspectionsBundle.message("inspection.dead.code.option.servlet"));
       myServletToEntries.setSelected(ADD_SERVLET_TO_ENTRIES);
@@ -196,6 +218,7 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
         }
       });
       add(myServletToEntries, gc);
+      gc.gridy++;
 
       for (final EntryPoint extension : myExtensions) {
         if (extension.showUI()) {
@@ -208,6 +231,7 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
             }
           });
           add(extCheckbox, gc);
+          gc.gridy++;
         }
       }
 
@@ -221,16 +245,24 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
         }
       });
 
-      add(myNonJavaCheckbox, gc);
-
-      gc.fill = GridBagConstraints.NONE;
       gc.weighty = 1;
-      final JPanel btnPanel = new JPanel(new VerticalFlowLayout());
-      btnPanel.add(EntryPointsManagerImpl.createConfigureClassPatternsButton());
-      btnPanel.add(EntryPointsManagerImpl.createConfigureAnnotationsButton());
-      add(btnPanel, gc);
+      add(myNonJavaCheckbox, gc);
     }
 
+    private JPanel createBtnPanel() {
+      final JPanel btnPanel = new JPanel(new GridBagLayout());
+      GridBagConstraints constraints = new GridBagConstraints();
+      constraints.anchor = GridBagConstraints.NORTHWEST;
+      constraints.fill = GridBagConstraints.NONE;
+      constraints.weightx = 0;
+      btnPanel.add(EntryPointsManagerImpl.createConfigureClassPatternsButton(), constraints);
+      constraints.gridx = 1;
+      btnPanel.add(EntryPointsManagerImpl.createConfigureAnnotationsButton(), constraints);
+      constraints.fill = GridBagConstraints.HORIZONTAL;
+      constraints.weightx = 1;
+      btnPanel.add(Box.createHorizontalBox(), constraints);
+      return btnPanel;
+    }
   }
 
   private class UnusedVariablesGraphAnnotator extends RefGraphAnnotator {
