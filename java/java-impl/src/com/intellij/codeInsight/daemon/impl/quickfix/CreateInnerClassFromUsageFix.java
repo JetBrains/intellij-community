@@ -150,11 +150,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
       modifierList.setModifierProperty(PsiModifier.STATIC, true);
     }
     if (superClassName != null) {
-      PsiJavaCodeReferenceElement superClass =
-        elementFactory.createReferenceElementByFQClassName(superClassName, created.getResolveScope());
-      final PsiReferenceList extendsList = created.getExtendsList();
-      LOG.assertTrue(extendsList != null);
-      extendsList.add(superClass);
+      CreateFromUsageUtils.setupSuperClassReference(created, superClassName);
     }
     CreateFromUsageBaseFix.setupGenericParameters(created, ref);
 
