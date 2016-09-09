@@ -62,8 +62,6 @@ import java.util.Calendar;
 import java.util.Map;
 import java.util.function.IntConsumer;
 
-import static javax.xml.transform.OutputKeys.ENCODING;
-
 /**
  * @author stathik
  * @since Aug 4, 2003
@@ -71,6 +69,8 @@ import static javax.xml.transform.OutputKeys.ENCODING;
 public class ITNProxy {
   private static final String NEW_THREAD_VIEW_URL = "https://ea.jetbrains.com/browser/ea_reports/";
   private static final String NEW_THREAD_POST_URL = "https://ea-report.jetbrains.com/trackerRpc/idea/createScr";
+
+  private static final String ENCODING = "UTF8";
 
   public static void sendError(@Nullable Project project,
                                final String login,
