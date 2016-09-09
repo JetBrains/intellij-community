@@ -345,9 +345,11 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   }
 
   private static AntBuildTarget[] getTargetObjectsFromPaths(TreePath[] paths) {
-    return Arrays.stream(paths).map(path -> ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject())
+    return Arrays.stream(paths)
+      .map(path -> ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject())
       .filter(userObject -> userObject instanceof AntTargetNodeDescriptor)
-      .map(userObject -> ((AntTargetNodeDescriptor)userObject).getTarget()).toArray(AntBuildTarget[]::new);
+      .map(userObject -> ((AntTargetNodeDescriptor)userObject).getTarget())
+      .toArray(AntBuildTarget[]::new);
   }
 
   public boolean isBuildFileSelected() {

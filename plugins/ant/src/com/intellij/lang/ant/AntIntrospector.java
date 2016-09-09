@@ -18,6 +18,7 @@ package com.intellij.lang.ant;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.apache.tools.ant.IntrospectionHelper;
 import org.apache.tools.ant.TaskContainer;
 import org.jetbrains.annotations.NonNls;
@@ -90,7 +91,7 @@ public final class AntIntrospector {
 
   public Set<String> getExtensionPointTypes() {
     final List<Method> methods = invokeMethod("getExtensionPoints", true);
-    if (methods == null || methods.isEmpty()) {
+    if (ContainerUtil.isEmpty(methods)) {
       return Collections.emptySet();
     }
     return methods.stream().map(Method::getParameterTypes).flatMap(Arrays::stream).map(Class::getName).collect(Collectors.toSet());
