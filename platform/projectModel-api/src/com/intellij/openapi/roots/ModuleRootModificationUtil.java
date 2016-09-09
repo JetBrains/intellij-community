@@ -90,7 +90,7 @@ public class ModuleRootModificationUtil {
       entry.setScope(scope);
       entry.setExported(exported);
 
-      ApplicationManager.getApplication().invokeAndWait(() -> WriteAction.run(model::commit));
+      ApplicationManager.getApplication().invokeAndWait(() -> WriteAction.run(libraryModel::commit));
     });
   }
 
