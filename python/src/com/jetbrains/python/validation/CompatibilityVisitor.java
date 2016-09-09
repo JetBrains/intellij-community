@@ -239,9 +239,9 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   public void visitPyNumericLiteralExpression(final PyNumericLiteralExpression node) {
     super.visitPyNumericLiteralExpression(node);
 
-    if (node.isIntegerLiteral()) {
-      final String text = node.getText();
+    final String text = node.getText();
 
+    if (node.isIntegerLiteral()) {
       if (text.endsWith("l") || text.endsWith("L")) {
         final StringBuilder message = new StringBuilder(myCommonMessage);
         final String suffix = " not support a trailing \'l\' or \'L\'.";
@@ -272,6 +272,20 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
           commonRegisterProblem(message, suffix, len, node, new ReplaceOctalNumericLiteralQuickFix());
         }
       }
+    }
+
+    if (text.contains("_")) {
+      final StringBuilder message = new StringBuilder(myCommonMessage);
+      final String suffix = " not support underscores in numeric literals";
+      int len = 0;
+
+      for (LanguageLevel languageLevel : myVersionsToProcess) {
+        if (languageLevel.isOlderThan(LanguageLevel.PYTHON36)) {
+          len = appendLanguageLevel(message, len, languageLevel);
+        }
+      }
+
+      commonRegisterProblem(message, suffix, len, node, new PyRemoveUnderscoresInNumericLiteralsQuickFix());
     }
   }
 
