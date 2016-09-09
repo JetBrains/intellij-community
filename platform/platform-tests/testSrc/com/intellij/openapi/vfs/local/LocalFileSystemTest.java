@@ -17,7 +17,6 @@ package com.intellij.openapi.vfs.local;
 
 import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -85,6 +84,23 @@ public class LocalFileSystemTest extends PlatformTestCase {
   protected void tearDown() throws Exception {
     myFS = null;
     super.tearDown();
+  }
+
+  public void testBasics() throws IOException {
+    VirtualFile dir = myFS.refreshAndFindFileByIoFile(createTempDirectory(false));
+    assertTrue(dir.isValid());
+    assertEquals(0, dir.getChildren().length);
+
+    VirtualFile child = WriteAction.compute(() -> dir.createChildData(this, "child.txt"));
+    assertTrue(child.isValid());
+    assertTrue(new File(child.getPath()).exists());
+    assertEquals(1, dir.getChildren().length);
+    assertEquals(child, dir.getChildren()[0]);
+
+    WriteAction.run(() -> child.delete(this));
+    assertFalse(child.isValid());
+    assertFalse(new File(child.getPath()).exists());
+    assertEquals(0, dir.getChildren().length);
   }
 
   public void testChildrenAccessedButNotCached() throws Exception {
@@ -437,14 +453,10 @@ public class LocalFileSystemTest extends PlatformTestCase {
     File home = file.getParentFile();
     assertOrderedEquals(Collections.singletonList("file.txt"), home.list());
 
-    final VirtualFile vFile = myFS.refreshAndFindFileByIoFile(file);
+    VirtualFile vFile = myFS.refreshAndFindFileByIoFile(file);
     assertNotNull(vFile);
-    new WriteAction<Void>() {
-      @Override
-      protected void run(@NotNull Result<Void> result) throws Throwable {
-        vFile.rename(LocalFileSystemTest.class, "FILE.txt");
-      }
-    }.execute();
+    WriteAction.run(() -> vFile.rename(LocalFileSystemTest.class, "FILE.txt"));
+
     assertEquals("FILE.txt", vFile.getName());
     assertOrderedEquals(Collections.singletonList("FILE.txt"), home.list());
   }
@@ -596,43 +608,37 @@ public class LocalFileSystemTest extends PlatformTestCase {
     }
   }
 
-  public void testInvalidFileName() {
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        VirtualFile tempDir = myFS.refreshAndFindFileByIoFile(createTempDirectory());
-        assertNotNull(tempDir);
-        try {
-          tempDir.createChildData(this, "a/b");
-          fail("invalid file name should have been rejected");
-        }
-        catch (IOException e) {
-          assertEquals(VfsBundle.message("file.invalid.name.error", "a/b"), e.getMessage());
-        }
+  public void testInvalidFileName() throws IOException {
+    WriteAction.run(() -> {
+      VirtualFile tempDir = myFS.refreshAndFindFileByIoFile(createTempDirectory());
+      assertNotNull(tempDir);
+      try {
+        tempDir.createChildData(this, "a/b");
+        fail("invalid file name should have been rejected");
       }
-    }.execute();
+      catch (IOException e) {
+        assertEquals(VfsBundle.message("file.invalid.name.error", "a/b"), e.getMessage());
+      }
+    });
   }
 
-  public void testDuplicateViaRename() {
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        VirtualFile tempDir = myFS.refreshAndFindFileByIoFile(createTempDirectory());
-        assertNotNull(tempDir);
+  public void testDuplicateViaRename() throws IOException {
+    WriteAction.run(() -> {
+      VirtualFile tempDir = myFS.refreshAndFindFileByIoFile(createTempDirectory());
+      assertNotNull(tempDir);
 
-        VirtualFile file1 = tempDir.createChildData(this, "a.txt");
-        FileUtil.delete(VfsUtilCore.virtualToIoFile(file1));
+      VirtualFile file1 = tempDir.createChildData(this, "a.txt");
+      FileUtil.delete(VfsUtilCore.virtualToIoFile(file1));
 
-        VirtualFile file2 = tempDir.createChildData(this, "b.txt");
-        try {
-          file2.rename(this, "a.txt");
-          fail("duplicate file name should have been rejected");
-        }
-        catch (IOException e) {
-          assertEquals(VfsBundle.message("vfs.target.already.exists.error", file1.getPath()), e.getMessage());
-        }
+      VirtualFile file2 = tempDir.createChildData(this, "b.txt");
+      try {
+        file2.rename(this, "a.txt");
+        fail("duplicate file name should have been rejected");
       }
-    }.execute();
+      catch (IOException e) {
+        assertEquals(VfsBundle.message("vfs.target.already.exists.error", file1.getPath()), e.getMessage());
+      }
+    });
   }
 
   public void testBrokenSymlinkMove() throws IOException, InterruptedException {
@@ -641,22 +647,19 @@ public class LocalFileSystemTest extends PlatformTestCase {
       return;
     }
 
-    final File srcDir = IoTestUtil.createTestDir("src");
-    final File link = IoTestUtil.createSymLink(srcDir.getPath() + "/missing", srcDir.getPath() + "/link", false);
-    final File dstDir = IoTestUtil.createTestDir("dst");
+    File srcDir = IoTestUtil.createTestDir("src");
+    File link = IoTestUtil.createSymLink(srcDir.getPath() + "/missing", srcDir.getPath() + "/link", false);
+    File dstDir = IoTestUtil.createTestDir("dst");
 
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        VirtualFile file = myFS.refreshAndFindFileByIoFile(link);
-        assertNotNull(file);
+    WriteAction.run(() -> {
+      VirtualFile file = myFS.refreshAndFindFileByIoFile(link);
+      assertNotNull(file);
 
-        VirtualFile target = myFS.refreshAndFindFileByIoFile(dstDir);
-        assertNotNull(target);
+      VirtualFile target = myFS.refreshAndFindFileByIoFile(dstDir);
+      assertNotNull(target);
 
-        myFS.moveFile(this, file, target);
-      }
-    }.execute();
+      myFS.moveFile(this, file, target);
+    });
 
     assertOrderedEquals(ArrayUtil.EMPTY_STRING_ARRAY, srcDir.list());
     assertOrderedEquals(new String[]{link.getName()}, dstDir.list());
