@@ -180,6 +180,24 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                            fixes.toArray(new LocalQuickFix[fixes.size()]));
                   }
+                } else {
+                  if(tb.getSingleStatement() instanceof PsiReturnStatement) {
+                    PsiReturnStatement returnStatement = (PsiReturnStatement)tb.getSingleStatement();
+                    PsiExpression value = returnStatement.getReturnValue();
+                    if(isLiteral(value, Boolean.TRUE) || isLiteral(value, Boolean.FALSE)) {
+                      boolean foundResult = (boolean)((PsiLiteralExpression)value).getValue();
+                      PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(statement, PsiWhiteSpace.class, PsiComment.class);
+                      if(nextStatement instanceof PsiReturnStatement) {
+                        PsiReturnStatement nextReturnStatement = (PsiReturnStatement)nextStatement;
+                        if(isLiteral(nextReturnStatement.getReturnValue(), !foundResult)) {
+                          String methodName = foundResult ? "anyMatch" : "noneMatch";
+                          holder.registerProblem(iteratedValue, "Can be replaced with "+methodName+"() call",
+                                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                 new ReplaceWithMatchFix(methodName));
+                        }
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -799,6 +817,55 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       final StringBuilder builder = generateStream(iteratedValue, intermediateOps);
       builder.append(".count()");
       replaceWithNumericAddition(project, foreachStatement, var, builder, "long");
+    }
+  }
+
+  private static class ReplaceWithMatchFix extends MigrateToStreamFix {
+
+    private final String myMethodName;
+
+    public ReplaceWithMatchFix(String methodName) {
+      myMethodName = methodName;
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Replace with " + myMethodName + "()";
+    }
+
+    @Override
+    void migrate(@NotNull Project project,
+                 @NotNull ProblemDescriptor descriptor,
+                 @NotNull PsiForeachStatement foreachStatement,
+                 @NotNull PsiExpression iteratedValue,
+                 @NotNull PsiStatement body,
+                 @NotNull TerminalBlock tb,
+                 @NotNull List<String> intermediateOps) {
+      PsiReturnStatement returnStatement = (PsiReturnStatement)tb.getSingleStatement();
+      PsiExpression value = returnStatement.getReturnValue();
+      if(!isLiteral(value, Boolean.TRUE) && !isLiteral(value, Boolean.FALSE)) return;
+      boolean foundResult = (boolean)((PsiLiteralExpression)value).getValue();
+      PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(foreachStatement, PsiWhiteSpace.class, PsiComment.class);
+      if(!(nextStatement instanceof PsiReturnStatement)) return;
+      PsiReturnStatement nextReturnStatement = (PsiReturnStatement)nextStatement;
+      if(!isLiteral(nextReturnStatement.getReturnValue(), !foundResult)) return;
+      String methodName = foundResult ? "anyMatch" : "noneMatch";
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+      String streamText = generateStream(iteratedValue, intermediateOps).toString();
+      PsiExpression stream =
+        elementFactory.createExpressionFromText(streamText, foreachStatement);
+      if(!(stream instanceof PsiMethodCallExpression)) return;
+      PsiElement nameElement = ((PsiMethodCallExpression)stream).getMethodExpression().getReferenceNameElement();
+      if(nameElement != null && nameElement.getText().equals("filter")) {
+        nameElement.replace(elementFactory.createIdentifier(methodName));
+        streamText = stream.getText();
+      } else {
+        streamText += "."+methodName+"("+tb.getVariable().getName()+" -> true)";
+      }
+      PsiElement result = foreachStatement.replace(elementFactory.createStatementFromText("return " + streamText + ";", foreachStatement));
+      nextReturnStatement.delete();
+      simplifyAndFormat(project, result);
     }
   }
 
