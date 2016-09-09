@@ -38,6 +38,7 @@ public class TemplateContext {
   private static class ContextInterner {
     private static final Map<String, String> internMap = Arrays.stream(TemplateContextType.EP_NAME.getExtensions())
       .map(TemplateContextType::getContextId)
+      .distinct()
       .collect(Collectors.toMap(Function.identity(), Function.identity()));
   }
 

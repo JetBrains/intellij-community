@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Eugene Zhuravlev
@@ -89,17 +90,10 @@ public final class AntIntrospector {
 
   public Set<String> getExtensionPointTypes() {
     final List<Method> methods = invokeMethod("getExtensionPoints", true);
-    if (methods == null || methods.size() == 0) {
+    if (methods == null || methods.isEmpty()) {
       return Collections.emptySet();
     }
-    final Set<String> types = new HashSet<>();
-    for (Method method : methods) {
-      final Class<?>[] paramTypes = method.getParameterTypes();
-      for (Class<?> paramType : paramTypes) {
-        types.add(paramType.getName());
-      }
-    }
-    return types;
+    return methods.stream().map(Method::getParameterTypes).flatMap(Arrays::stream).map(Class::getName).collect(Collectors.toSet());
   }
   
   public Enumeration<String> getNestedElements() {

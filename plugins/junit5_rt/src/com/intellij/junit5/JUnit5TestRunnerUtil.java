@@ -57,7 +57,8 @@ public class JUnit5TestRunnerUtil {
             selectors.add(createSelector(line));
           }
           packageNameRef[0] = packageName.length() == 0 ? "<default package>" : packageName;
-          return builder.selectors(selectors).build();
+          return (selectors.isEmpty() ? builder.selectors(DiscoverySelectors.selectPackage(packageName))
+                                      : builder.selectors(selectors)).build();
         }
         finally {
           reader.close();

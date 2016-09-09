@@ -57,6 +57,7 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Konstantin Bulenkov
@@ -268,27 +269,18 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
 
   private class MyRootNode extends DefaultMutableTreeNode {
     private MyRootNode() {
-      final Vector vector = new Vector();
-      for (Set<VirtualFile> files : myDuplicates.values()) {
-        vector.add(new MyDuplicatesNode(this, files));
-      }
-      children = vector;
+      children =
+        myDuplicates.values().stream().map(files -> new MyDuplicatesNode(this, files)).collect(Collectors.toCollection(Vector::new));
     }
   }
 
 
-  private class MyDuplicatesNode extends DefaultMutableTreeNode {
-    private final Set<VirtualFile> myFiles;
+  private static class MyDuplicatesNode extends DefaultMutableTreeNode {
 
     public MyDuplicatesNode(DefaultMutableTreeNode node, Set<VirtualFile> files) {
       super(files);
-      myFiles = files;
       setParent(node);
-      final Vector vector = new Vector();
-      for (VirtualFile file : files) {
-        vector.add(new MyFileNode(this, file));
-      }
-      children = vector;
+      children = files.stream().map(file -> new MyFileNode(this, file)).collect(Collectors.toCollection(Vector::new));
     }
 
     @Override

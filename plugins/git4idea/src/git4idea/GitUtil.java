@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,6 +68,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.dvcs.DvcsUtil.joinShortNames;
@@ -507,14 +508,7 @@ public class GitUtil {
    * @return a set of git roots
    */
   public static Set<VirtualFile> gitRoots(final Collection<FilePath> filePaths) {
-    HashSet<VirtualFile> rc = new HashSet<>();
-    for (FilePath path : filePaths) {
-      final VirtualFile root = getGitRootOrNull(path);
-      if (root != null) {
-        rc.add(root);
-      }
-    }
-    return rc;
+    return filePaths.stream().map(GitUtil::getGitRootOrNull).filter(Objects::nonNull).collect(Collectors.toSet());
   }
 
   /**

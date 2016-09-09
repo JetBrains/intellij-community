@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project;
 
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.LinkedList;
 
 /**
  * The extenstion point for the custom compilers
@@ -98,14 +97,8 @@ public abstract class ChunkCustomCompilerExtension {
    */
   public static ChunkCustomCompilerExtension[] getCustomCompile(ModuleChunk chunk) {
     final ChunkCustomCompilerExtension[] extensions = Extensions.getRootArea().getExtensionPoint(EP_NAME).getExtensions();
-    LinkedList<ChunkCustomCompilerExtension> compilers = new LinkedList<>();
-    for (ChunkCustomCompilerExtension extension : extensions) {
-      if (extension.hasCustomCompile(chunk)) {
-        compilers.add(extension);
-      }
-    }
-    final ChunkCustomCompilerExtension[] rc = compilers.toArray(new ChunkCustomCompilerExtension[compilers.size()]);
-    Arrays.sort(rc, ChunkCustomCompilerExtension.COMPARATOR);
-    return rc;
+    return Arrays.stream(extensions)
+      .filter(extension -> extension.hasCustomCompile(chunk))
+      .sorted(COMPARATOR).toArray(ChunkCustomCompilerExtension[]::new);
   }
 }
