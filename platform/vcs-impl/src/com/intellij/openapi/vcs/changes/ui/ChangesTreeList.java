@@ -311,12 +311,11 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
               }
             }
           }
-        } else {
-          if (toSelect != null) {
-            int rowInTree = findRowContainingFile((TreeNode)model.getRoot(), toSelect);
-            if (rowInTree > -1) {
-              selectedTreeRow = rowInTree;
-            }
+        }
+        if (toSelect != null) {
+          int rowInTree = findRowContainingFile((TreeNode)model.getRoot(), toSelect);
+          if (rowInTree > -1) {
+            selectedTreeRow = rowInTree;
           }
         }
 
