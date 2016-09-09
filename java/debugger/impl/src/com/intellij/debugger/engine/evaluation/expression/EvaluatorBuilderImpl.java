@@ -247,14 +247,15 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     private Evaluator[] visitStatements(PsiStatement[] statements) {
-      Evaluator[] evaluators = new Evaluator[statements.length];
-      for (int i = 0; i < statements.length; i++) {
-        PsiStatement psiStatement = statements[i];
+      List<Evaluator> evaluators = new ArrayList<>();
+      for (PsiStatement psiStatement : statements) {
         psiStatement.accept(this);
-        evaluators[i] = new DisableGC(myResult);
+        if (myResult != null) { // for example declaration w/o initializer produces empty evaluator now
+          evaluators.add(new DisableGC(myResult));
+        }
         myResult = null;
       }
-      return evaluators;
+      return evaluators.toArray(new Evaluator[0]);
     }
 
     @Override
