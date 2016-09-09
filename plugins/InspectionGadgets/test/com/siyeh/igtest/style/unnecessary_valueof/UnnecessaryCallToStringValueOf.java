@@ -44,4 +44,10 @@ public class UnnecessaryCallToStringValueOf {
       org.slf4j.LoggerFactory.getLogger(UnnecessaryCallToStringValueOf.class).info("this: {}", String.valueOf(e));
     }
   }
+
+  void smarter() {
+    String f = <warning descr="'String.valueOf(\"statistics\")' can be simplified to '\"statistics\"'">String.valueOf("statistics")</warning> +
+               ':' +
+               <warning descr="'String.valueOf(1)' can be simplified to '1'">String.valueOf(1)</warning>;
+  }
 }
