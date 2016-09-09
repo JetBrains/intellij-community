@@ -55,7 +55,7 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
     final List<String> writeList = new ArrayList<>(myWriteAnnotations);
 
     final JPanel listPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(list, "Mark as entry point if annotated by", true);
-    final JPanel writeAnnotationsPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(writeList, "Mark field as implicitly write if annotated by", false);
+    final JPanel writtenAnnotationsPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(writeList, "Mark field as implicitly written if annotated by", false);
     new DialogWrapper(myProject) {
       {
         init();
@@ -66,7 +66,7 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
       protected JComponent createCenterPanel() {
         final JPanel panel = new JPanel(new VerticalFlowLayout());
         panel.add(listPanel);
-        panel.add(writeAnnotationsPanel);
+        panel.add(writtenAnnotationsPanel);
         return panel;
       }
 
