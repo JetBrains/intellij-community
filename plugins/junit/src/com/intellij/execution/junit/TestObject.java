@@ -52,7 +52,12 @@ import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.engine.JupiterTestEngine;
+import org.junit.platform.commons.JUnitException;
+import org.junit.platform.engine.TestEngine;
 import org.junit.platform.launcher.TestExecutionListener;
+import org.junit.platform.runner.JUnitPlatform;
+import org.junit.vintage.engine.VintageTestEngine;
 
 import java.io.File;
 import java.io.IOException;
@@ -143,8 +148,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     collectListeners(javaParameters, buf, IDEAJUnitListener.EP_NAME, "\n");
     if (buf.length() > 0) {
       try {
-        myListenersFile = FileUtil.createTempFile("junit_listeners_", "");
-        myListenersFile.deleteOnExit();
+        myListenersFile = FileUtil.createTempFile("junit_listeners_", "", true);
         javaParameters.getProgramParametersList().add("@@" + myListenersFile.getPath());
         FileUtil.writeToFile(myListenersFile, buf.toString().getBytes(CharsetToolkit.UTF8_CHARSET));
       }
@@ -160,28 +164,17 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       javaParameters.getProgramParametersList().add(JUnitStarter.JUNIT5_PARAMETER);
       javaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnit5IdeaTestRunner.class));
 
-      boolean excludeVintage = false;
+      final PathsList classPath = javaParameters.getClassPath();
+      classPath.add(PathUtil.getJarPathForClass(TestExecutionListener.class));
+      classPath.add(PathUtil.getJarPathForClass(JupiterTestEngine.class));
+      classPath.add(PathUtil.getJarPathForClass(JUnitException.class));
+      classPath.add(PathUtil.getJarPathForClass(TestEngine.class));
+      classPath.add(PathUtil.getJarPathForClass(JUnitPlatform.class));
       try {
         JUnitUtil.getTestCaseClass(sourceScope);
+        classPath.add(PathUtil.getJarPathForClass(VintageTestEngine.class));
       }
-      catch (JUnitUtil.NoJUnitException e) {
-        excludeVintage = true;
-      }
-
-      final PathsList classPath = javaParameters.getClassPath();
-      final List<String> paths = classPath.getPathList();
-      final String pathForClass = PathUtil.getJarPathForClass(TestExecutionListener.class);
-      final File libDirectory = new File(pathForClass).getParentFile();
-      final File[] libJars = libDirectory.listFiles();
-      if (libJars != null) {
-        for (File jarFile : libJars) {
-          final String filePath = jarFile.getAbsolutePath();
-          if (excludeVintage && filePath.contains("vintage")) continue;
-
-          if (!paths.contains(filePath)) {
-            classPath.add(filePath);
-          }
-        }
+      catch (JUnitUtil.NoJUnitException ignore) {
       }
     }
     
