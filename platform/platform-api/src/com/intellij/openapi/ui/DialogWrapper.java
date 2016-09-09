@@ -445,7 +445,6 @@ public abstract class DialogWrapper {
    *
    * @return south panel
    */
-  @Nullable
   protected JComponent createSouthPanel() {
     Action[] actions = filter(createActions());
     Action[] leftSideActions = createLeftSideActions();
