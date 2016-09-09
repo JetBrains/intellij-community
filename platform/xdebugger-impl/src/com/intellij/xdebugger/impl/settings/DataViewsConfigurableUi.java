@@ -43,6 +43,7 @@ public class DataViewsConfigurableUi {
 
   public DataViewsConfigurableUi() {
     UIUtil.configureNumericFormattedTextField(valueTooltipDelayTextField);
+    myShowValueTooltipCheckBox.addItemListener(e -> updateEnabledState());
   }
 
   private int getValueTooltipDelay() {
@@ -73,6 +74,11 @@ public class DataViewsConfigurableUi {
     myShowValueTooltipCheckBox.setSelected(Registry.is(DEBUGGER_VALUE_TOOLTIP_AUTO_SHOW_KEY));
     myShowValueTooltipOnCheckBox.setSelected(Registry.is(DEBUGGER_VALUE_TOOLTIP_AUTO_SHOW_ON_SELECTION_KEY));
     myTooltipLabel.setText(XDebuggerBundle.message("settings.tooltip.label", Registry.stringValue("ide.forcedShowTooltip")));
+    updateEnabledState();
+  }
+
+  private void updateEnabledState() {
+    valueTooltipDelayTextField.setEnabled(myShowValueTooltipCheckBox.isSelected());
   }
 
   public void apply(@NotNull XDebuggerDataViewSettings settings) {
