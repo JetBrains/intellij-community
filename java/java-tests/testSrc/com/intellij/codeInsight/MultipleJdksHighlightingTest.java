@@ -18,22 +18,24 @@ package com.intellij.codeInsight;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.AbstractList;
 import java.util.Collection;
 
@@ -239,6 +241,16 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
       assertNotNull(file);
       assertTrue(file.getPath(), FileUtil.startsWith(file.getPath(), FileUtil.toSystemIndependentName(jdkHome.getPath()), true));
     }
+  }
+
+  public void testFindUsagesInLibrarySource() throws IOException {
+    PsiTestUtil.addLibrary(myJava7Module, "lib", myFixture.getTempDirFixture().findOrCreateDir("lib").getPath(), new String[]{"/libClasses"}, new String[]{"/libSrc"});
+    PsiFile libSrc = myFixture.addFileToProject("lib/libSrc/Foo.java", "class C{{ new javax.swing.JScrollPane().getHorizontalScrollBar(); }}");
+    assertTrue(FileIndexFacade.getInstance(myFixture.getProject()).isInLibrarySource(libSrc.getVirtualFile()));
+
+    PsiReference ref = libSrc.findReferenceAt(libSrc.getText().indexOf("Horizontal"));
+    PsiMethod method = assertInstanceOf(ref.resolve(), PsiMethod.class);
+    assertContainsElements(MethodReferencesSearch.search(method).findAll(), ref);
   }
 
   private void doTestWithoutLibrary() {
