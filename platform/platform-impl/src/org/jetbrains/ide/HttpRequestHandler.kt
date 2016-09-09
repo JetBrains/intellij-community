@@ -32,7 +32,7 @@ abstract class HttpRequestHandler {
     val EP_NAME = ExtensionPointName.create<HttpRequestHandler>("com.intellij.httpRequestHandler")!!
 
     @JvmStatic
-    protected fun checkPrefix(uri: String, prefix: String): Boolean {
+    fun checkPrefix(uri: String, prefix: String): Boolean {
       if (uri.length > prefix.length && uri[0] == '/' && uri.regionMatches(1, prefix, 0, prefix.length, ignoreCase = true)) {
         if (uri.length - prefix.length == 1) {
           return true
