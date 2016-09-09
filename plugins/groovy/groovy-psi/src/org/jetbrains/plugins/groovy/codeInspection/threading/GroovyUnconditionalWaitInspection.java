@@ -75,8 +75,7 @@ public class GroovyUnconditionalWaitInspection extends BaseInspection {
     }
 
     @Override
-    public void visitSynchronizedStatement(
-        @NotNull GrSynchronizedStatement statement) {
+    public void visitSynchronizedStatement(@NotNull GrSynchronizedStatement statement) {
       super.visitSynchronizedStatement(statement);
       final GrCodeBlock body = statement.getBody();
       if (body != null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,7 +128,7 @@ public class ReachingDefinitionsCollector {
                                        GrControlFlowOwner flowOwner) {
     flowOwner.accept(new GroovyRecursiveElementVisitor() {
       @Override
-      public void visitClosure(GrClosableBlock closure) {
+      public void visitClosure(@NotNull GrClosableBlock closure) {
         addUsagesInClosure(imap, omap, closure, first, last);
         super.visitClosure(closure);
       }
@@ -140,7 +140,7 @@ public class ReachingDefinitionsCollector {
                                       final GrStatement last) {
         closure.accept(new GroovyRecursiveElementVisitor() {
           @Override
-          public void visitReferenceExpression(GrReferenceExpression refExpr) {
+          public void visitReferenceExpression(@NotNull GrReferenceExpression refExpr) {
             if (refExpr.isQualified()) {
               return;
             }

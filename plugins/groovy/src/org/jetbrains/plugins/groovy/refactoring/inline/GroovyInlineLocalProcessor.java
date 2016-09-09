@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,7 +161,7 @@ public class GroovyInlineLocalProcessor extends BaseRefactoringProcessor {
             writeInstructionNumber == -1 && prev.cardinality() == 0) {
           ((GrAnonymousClassDefinition)element).acceptChildren(new GroovyRecursiveElementVisitor() {
             @Override
-            public void visitField(GrField field) {
+            public void visitField(@NotNull GrField field) {
               GrExpression initializer = field.getInitializerGroovy();
               if (initializer != null) {
                 Instruction[] flow = new ControlFlowBuilder(field.getProject()).buildControlFlow(initializer);
@@ -170,7 +170,7 @@ public class GroovyInlineLocalProcessor extends BaseRefactoringProcessor {
             }
 
             @Override
-            public void visitMethod(GrMethod method) {
+            public void visitMethod(@NotNull GrMethod method) {
               GrOpenBlock block = method.getBlock();
               if (block != null) {
                 Instruction[] flow = block.getControlFlow();
@@ -179,7 +179,7 @@ public class GroovyInlineLocalProcessor extends BaseRefactoringProcessor {
             }
 
             @Override
-            public void visitClassInitializer(GrClassInitializer initializer) {
+            public void visitClassInitializer(@NotNull GrClassInitializer initializer) {
               GrOpenBlock block = initializer.getBlock();
               Instruction[] flow = block.getControlFlow();
               collectRefs(variable, flow, ControlFlowUtils.inferWriteAccessMap(flow, variable), -1, toInline);

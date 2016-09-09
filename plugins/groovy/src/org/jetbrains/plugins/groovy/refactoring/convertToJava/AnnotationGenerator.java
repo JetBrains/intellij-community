@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -45,12 +46,12 @@ public class AnnotationGenerator extends Generator {
   }
 
   @Override
-  public void visitExpression(GrExpression expression) {
+  public void visitExpression(@NotNull GrExpression expression) {
     expression.accept(expressionGenerator);
   }
 
   @Override
-  public void visitAnnotationArrayInitializer(GrAnnotationArrayInitializer arrayInitializer) {
+  public void visitAnnotationArrayInitializer(@NotNull GrAnnotationArrayInitializer arrayInitializer) {
     GrAnnotationMemberValue[] initializers = arrayInitializer.getInitializers();
     builder.append('{');
     for (GrAnnotationMemberValue initializer : initializers) {
@@ -67,7 +68,7 @@ public class AnnotationGenerator extends Generator {
   }
 
   @Override
-  public void visitAnnotation(GrAnnotation annotation) {
+  public void visitAnnotation(@NotNull GrAnnotation annotation) {
     builder.append('@');
     GrCodeReferenceElement classReference = annotation.getClassReference();
     GenerationUtil.writeCodeReferenceElement(builder, classReference);

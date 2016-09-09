@@ -56,7 +56,7 @@ public class GroovyEmptyFinallyBlockInspection extends BaseInspection {
   private static class Visitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitFinallyClause(GrFinallyClause finallyClause) {
+    public void visitFinallyClause(@NotNull GrFinallyClause finallyClause) {
       super.visitFinallyClause(finallyClause);
       final GrOpenBlock body = finallyClause.getBody();
       if (body == null || !isEmpty(body)) {

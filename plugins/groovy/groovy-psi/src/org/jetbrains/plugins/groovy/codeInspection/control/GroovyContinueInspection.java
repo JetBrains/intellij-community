@@ -54,7 +54,7 @@ public class GroovyContinueInspection extends BaseInspection {
   private static class Visitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitContinueStatement(GrContinueStatement continueStatement) {
+    public void visitContinueStatement(@NotNull GrContinueStatement continueStatement) {
       super.visitContinueStatement(continueStatement);
       registerError(continueStatement);
     }

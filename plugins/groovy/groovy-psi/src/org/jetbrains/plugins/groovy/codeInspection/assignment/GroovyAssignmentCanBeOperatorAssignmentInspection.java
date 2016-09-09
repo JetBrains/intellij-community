@@ -144,7 +144,7 @@ public class GroovyAssignmentCanBeOperatorAssignmentInspection
 
     @Override
     public void doFix(@NotNull Project project,
-                      ProblemDescriptor descriptor)
+                      @NotNull ProblemDescriptor descriptor)
         throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof GrAssignmentExpression)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.lexer;
 
-import com.intellij.lexer.*;
+import com.intellij.lexer.Lexer;
+import com.intellij.lexer.LexerBase;
+import com.intellij.lexer.LookAheadLexer;
+import com.intellij.lexer.MergingLexerAdapter;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -38,7 +41,7 @@ public class GroovyDocLexer extends MergingLexerAdapter {
   public GroovyDocLexer() {
     super(new LookAheadLexer(new AsteriskStripperLexer(new _GroovyDocLexer())) {
       @Override
-      protected void lookAhead(Lexer baseLexer) {
+      protected void lookAhead(@NotNull Lexer baseLexer) {
         if (baseLexer.getTokenType() == GroovyDocTokenTypes.mGDOC_INLINE_TAG_END) {
           advanceAs(baseLexer, GroovyDocTokenTypes.mGDOC_COMMENT_DATA);
           return;

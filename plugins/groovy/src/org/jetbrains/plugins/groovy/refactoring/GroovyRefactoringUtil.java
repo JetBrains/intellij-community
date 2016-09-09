@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -498,32 +498,32 @@ public abstract class GroovyRefactoringUtil {
     final Ref<Boolean> hasSideEffect = new Ref<>(false);
     statement.accept(new GroovyRecursiveElementVisitor() {
       @Override
-      public void visitMethodCallExpression(GrMethodCallExpression methodCallExpression) {
+      public void visitMethodCallExpression(@NotNull GrMethodCallExpression methodCallExpression) {
         hasSideEffect.set(true);
       }
 
       @Override
-      public void visitCallExpression(GrCallExpression callExpression) {
+      public void visitCallExpression(@NotNull GrCallExpression callExpression) {
         hasSideEffect.set(true);
       }
 
       @Override
-      public void visitApplicationStatement(GrApplicationStatement applicationStatement) {
+      public void visitApplicationStatement(@NotNull GrApplicationStatement applicationStatement) {
         hasSideEffect.set(true);
       }
 
       @Override
-      public void visitClosure(GrClosableBlock closure) {
+      public void visitClosure(@NotNull GrClosableBlock closure) {
         hasSideEffect.set(true);
       }
 
       @Override
-      public void visitUnaryExpression(GrUnaryExpression expression) {
+      public void visitUnaryExpression(@NotNull GrUnaryExpression expression) {
         hasSideEffect.set(true);
       }
 
       @Override
-      public void visitElement(GroovyPsiElement element) {
+      public void visitElement(@NotNull GroovyPsiElement element) {
         if (hasSideEffect.get()) return;
         super.visitElement(element);
       }
@@ -658,7 +658,7 @@ public abstract class GroovyRefactoringUtil {
   public static void collectTypeParameters(final Set<PsiTypeParameter> used, @NotNull final GroovyPsiElement element) {
     element.accept(new GroovyRecursiveElementVisitor() {
       @Override
-      public void visitCodeReferenceElement(GrCodeReferenceElement reference) {
+      public void visitCodeReferenceElement(@NotNull GrCodeReferenceElement reference) {
         super.visitCodeReferenceElement(reference);
         if (reference.getQualifier() == null) {
           final PsiElement resolved = reference.resolve();
@@ -672,7 +672,7 @@ public abstract class GroovyRefactoringUtil {
       }
 
       @Override
-      public void visitExpression(final GrExpression expression) {
+      public void visitExpression(@NotNull final GrExpression expression) {
         super.visitExpression(expression);
         final PsiType type = expression.getType();
         if (type != null) {

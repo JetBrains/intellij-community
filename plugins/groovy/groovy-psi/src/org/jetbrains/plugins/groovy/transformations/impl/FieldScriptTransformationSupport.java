@@ -34,7 +34,7 @@ public class FieldScriptTransformationSupport implements AstTransformationSuppor
     final GroovyScriptClass scriptClass = (GroovyScriptClass)context.getCodeClass();
     scriptClass.getContainingFile().accept(new GroovyRecursiveElementVisitor() {
       @Override
-      public void visitVariableDeclaration(GrVariableDeclaration element) {
+      public void visitVariableDeclaration(@NotNull GrVariableDeclaration element) {
         if (element.getModifierList().findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_FIELD) != null) {
           for (GrVariable variable : element.getVariables()) {
             context.addField(new GrScriptField(variable, scriptClass));
@@ -44,12 +44,12 @@ public class FieldScriptTransformationSupport implements AstTransformationSuppor
       }
 
       @Override
-      public void visitMethod(GrMethod method) {
+      public void visitMethod(@NotNull GrMethod method) {
         //skip methods
       }
 
       @Override
-      public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
+      public void visitTypeDefinition(@NotNull GrTypeDefinition typeDefinition) {
         //skip type defs
       }
     });

@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.codeInspection.utils;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
@@ -539,8 +538,7 @@ public class ControlFlowUtils {
     }
 
     @Override
-    public void visitReturnStatement(
-        @NotNull GrReturnStatement returnStatement) {
+    public void visitReturnStatement(@NotNull GrReturnStatement returnStatement) {
       if (m_found) {
         return;
       }
@@ -563,8 +561,7 @@ public class ControlFlowUtils {
     }
 
     @Override
-    public void visitBreakStatement(
-        @NotNull GrBreakStatement breakStatement) {
+    public void visitBreakStatement(@NotNull GrBreakStatement breakStatement) {
       if (m_found) {
         return;
       }
@@ -593,8 +590,7 @@ public class ControlFlowUtils {
     }
 
     @Override
-    public void visitContinueStatement(
-        @NotNull GrContinueStatement continueStatement) {
+    public void visitContinueStatement(@NotNull GrContinueStatement continueStatement) {
       if (m_found) {
         return;
       }

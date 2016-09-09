@@ -114,7 +114,7 @@ public class GrModifierFix extends GroovyFix {
   }
 
   @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
     final PsiModifierList modifierList = getModifierList(descriptor);
     modifierList.setModifierProperty(myModifier, myDoSet);
   }

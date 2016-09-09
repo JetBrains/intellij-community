@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ public class GroovySingletonAnnotationInspection extends BaseInspection {
 
   private static class Visitor extends BaseInspectionVisitor {
     @Override
-    public void visitAnnotation(GrAnnotation annotation) {
+    public void visitAnnotation(@NotNull GrAnnotation annotation) {
       super.visitAnnotation(annotation);
 
       PsiElement parent = annotation.getParent().getParent();

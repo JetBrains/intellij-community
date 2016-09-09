@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ public class GrIntroduceLocalVariableIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull final PsiElement element, final Project project, final Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull final PsiElement element, @NotNull final Project project, final Editor editor) throws IncorrectOperationException {
     setSelection(editor, getTargetExpression(element));
     final PsiFile file = element.getContainingFile();
     new GrIntroduceVariableHandler().invoke(project, editor, file, null);
