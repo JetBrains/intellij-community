@@ -397,7 +397,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       long time = System.currentTimeMillis();
 
       CommitsCounter counter = new CommitsCounter(indicator, myCommits.values().stream().mapToInt(TIntHashSet::size).sum());
-      LOG.info("Indexing " + counter.allCommits + " commits");
+      LOG.debug("Indexing " + counter.allCommits + " commits");
 
       for (VirtualFile root : myCommits.keySet()) {
         try {
@@ -413,11 +413,11 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         }
       }
 
-      LOG.info(StopWatch.formatTime(System.currentTimeMillis() - time) +
-               " for indexing " +
-               counter.newIndexedCommits +
-               " new commits out of " +
-               counter.allCommits);
+      LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - time) +
+                " for indexing " +
+                counter.newIndexedCommits +
+                " new commits out of " +
+                counter.allCommits);
       int leftCommits = counter.allCommits - counter.newIndexedCommits - counter.oldCommits;
       if (leftCommits > 0) {
         LOG.warn("Did not index " + leftCommits + " commits");
