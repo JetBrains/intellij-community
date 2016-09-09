@@ -719,7 +719,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         foreachStatement.delete();
         return;
       }
-      final String qualifierText = qualifierExpression != null ? qualifierExpression.getText() : "this";
+      final String qualifierText = qualifierExpression != null ? qualifierExpression.getText() + "." : "";
 
       JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
       final SuggestedNameInfo suggestedNameInfo = codeStyleManager
@@ -727,7 +727,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       String varName = codeStyleManager.suggestUniqueVariableName(suggestedNameInfo, qualifierExpression, false).names[0];
 
       PsiExpression forEachBody =
-        elementFactory.createExpressionFromText(qualifierText + ".add(" + varName + ")", qualifierExpression);
+        elementFactory.createExpressionFromText(qualifierText + "add(" + varName + ")", qualifierExpression);
       final String callText =
         builder.append(".forEach(").append(varName).append("->").append(forEachBody.getText()).append(");").toString();
       PsiElement result = foreachStatement.replace(elementFactory.createStatementFromText(callText, foreachStatement));
