@@ -48,6 +48,7 @@ import com.intellij.vcs.log.impl.FatalErrorConsumer;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.filter.VcsLogUserFilterImpl;
 import com.intellij.vcs.log.util.PersistentUtil;
+import com.intellij.vcs.log.util.StopWatch;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
@@ -412,8 +413,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         }
       }
 
-      LOG.info((System.currentTimeMillis() - time) / 1000.0 +
-               "sec for indexing " +
+      LOG.info(StopWatch.formatTime(System.currentTimeMillis() - time) +
+               " for indexing " +
                counter.newIndexedCommits +
                " new commits out of " +
                counter.allCommits);
