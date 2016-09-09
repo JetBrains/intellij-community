@@ -27,6 +27,8 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
@@ -703,6 +705,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       }
       intermediateOps
         .add(createMapperFunctionalExpressionText(tb.getVariable(), methodCallExpression.getArgumentList().getExpressions()[0]));
+      PsiType itemType = methodCallExpression.getArgumentList().getExpressionTypes()[0];
       final StringBuilder builder = generateStream(iteratedValue, intermediateOps);
 
       final PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
@@ -717,8 +720,26 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         return;
       }
       final String qualifierText = qualifierExpression != null ? qualifierExpression.getText() : "this";
-      final String callText = builder.append(".forEach(").append(qualifierText).append("::add);").toString();
+
+      JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+      final SuggestedNameInfo suggestedNameInfo = codeStyleManager
+        .suggestVariableName(VariableKind.LOCAL_VARIABLE, "item", null, null, false);
+      String varName = codeStyleManager.suggestUniqueVariableName(suggestedNameInfo, qualifierExpression, false).names[0];
+
+      PsiExpression forEachBody =
+        elementFactory.createExpressionFromText(qualifierText + ".add(" + varName + ")", qualifierExpression);
+      final String callText =
+        builder.append(".forEach(").append(varName).append("->").append(forEachBody.getText()).append(");").toString();
       PsiElement result = foreachStatement.replace(elementFactory.createStatementFromText(callText, foreachStatement));
+      PsiLambdaExpression lambda =
+        (PsiLambdaExpression)((PsiMethodCallExpression)((PsiExpressionStatement)result).getExpression()).getArgumentList()
+          .getExpressions()[0];
+      String methodReference =
+        LambdaCanBeMethodReferenceInspection.convertToMethodReference(lambda.getBody(), lambda.getParameterList().getParameters(),
+                                                                      lambda.getFunctionalInterfaceType(), lambda);
+      if(methodReference != null) {
+        lambda.replace(elementFactory.createExpressionFromText(methodReference, lambda));
+      }
       simplifyAndFormat(project, result);
     }
 
