@@ -23,6 +23,7 @@ import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor
 import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
 import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
+import org.assertj.core.api.Assertions.assertThat
 
 class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor = MultiModuleJava9ProjectDescriptor
@@ -45,7 +46,7 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
 
   fun testFileDuplicate() {
     addFile("pkg/module-info.java", """module M.bis { }""")
-    doTest("""<error descr="'module-info.java' already exists in the module">module M</error> { }""")
+    highlight("""<error descr="'module-info.java' already exists in the module">module M</error> { }""")
   }
 
   fun testWrongFileLocation() {
@@ -57,7 +58,7 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
   fun testDuplicateStatements() {
     addFile("pkg/main/C.java", "package pkg.main;\npublic class C { }")
     addFile("pkg/main/Impl.java", "package pkg.main;\npublic class Impl extends C { }")
-    doTest("""
+    highlight("""
         module M {
           requires M2;
           <error descr="Duplicate requires: M2">requires M2;</error>
@@ -73,7 +74,7 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
   fun testUnusedStatements() {
     addFile("pkg/main/C.java", "package pkg.main;\npublic class C { }")
     addFile("pkg/main/Impl.java", "package pkg.main;\npublic class Impl extends C { }")
-    doTest("""
+    highlight("""
         module M {
           provides pkg.main.<warning descr="Service interface provided but not exported or used">C</warning> with pkg.main.Impl;
         }""".trimIndent(), true)
@@ -81,7 +82,7 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
 
   fun testRequires() {
     addFile("module-info.java", "module M2 { requires M1 }", M2)
-    doTest("""
+    highlight("""
         module M1 {
           requires <error descr="Module not found: M.missing">M.missing</error>;
           requires <error descr="Cyclic dependence: M1">M1</error>;
@@ -94,7 +95,7 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
     addFile("pkg/empty/package-info.java", "package pkg.empty;")
     addFile("pkg/main/C.java", "package pkg.main;\nclass C { }")
     addFile("pkg/other/C.groovy", "package pkg.other\nclass C { }")
-    doTest("""
+    highlight("""
         module M {
           exports pkg.<error descr="Cannot resolve symbol 'missing'">missing</error>;
           exports <error descr="Package is empty: pkg.empty">pkg.empty</error>;
@@ -106,7 +107,7 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
   fun testUses() {
     addFile("pkg/main/C.java", "package pkg.main;\nclass C { }")
     addFile("pkg/main/E.java", "package pkg.main;\npublic enum E { }")
-    doTest("""
+    highlight("""
         module M {
           uses pkg.<error descr="Cannot resolve symbol 'main'">main</error>;
           uses pkg.main.<error descr="Cannot resolve symbol 'X'">X</error>;
@@ -122,7 +123,7 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
     addFile("pkg/main/Impl3.java", "package pkg.main;\npublic abstract class Impl3 implements C { }")
     addFile("pkg/main/Impl4.java", "package pkg.main;\npublic class Impl4 implements C {\n public Impl4(String s) { }\n}")
     addFile("pkg/main/Impl5.java", "package pkg.main;\npublic class Impl5 implements C {\n protected Impl5() { }\n}")
-    doTest("""
+    highlight("""
         module M {
           provides pkg.main.C with pkg.main.<error descr="'pkg.main.Impl1' is not public in 'pkg.main'. Cannot be accessed from outside package">Impl1</error>;
           provides pkg.main.C with pkg.main.<error descr="The service implementation type must be a subtype of the service interface type">Impl2</error>;
@@ -132,15 +133,36 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
         }""".trimIndent())
   }
 
+  fun testModuleRefFixes() {
+    fixes("module M { requires <caret>M.missing; }")
+    fixes("module M { requires <caret>M3; }", "AddModuleDependencyFix")
+  }
+
+  fun testPackageRefFixes() {
+    fixes("module M { exports <caret>pkg.missing; }")
+    addFile("pkg/m3/C3.java", "package pkg.m3;\npublic class C3 { }", M3)
+    fixes("module M { exports <caret>pkg.m3; }")
+  }
+
+  fun testClassRefFixes() {
+    addFile("pkg/m3/C3.java", "package pkg.m3;\npublic class C3 { }", M3)
+    fixes("module M { uses <caret>pkg.m3.C3; }", "AddModuleDependencyFix")
+  }
+
   //<editor-fold desc="Helpers.">
   private fun addFile(path: String, text: String, module: ModuleDescriptor = MAIN) = VfsTestUtil.createFile(module.root(), path, text)
 
-  private fun doTest(text: String, filter: Boolean = false) {
+  private fun highlight(text: String, filter: Boolean = false) {
     myFixture.configureByText("module-info.java", text)
     if (filter) {
       (myFixture as CodeInsightTestFixtureImpl).setVirtualFileFilter { it.name != PsiJavaModule.MODULE_INFO_FILE }
     }
     myFixture.checkHighlighting()
+  }
+
+  private fun fixes(text: String, vararg fixes: String) {
+    myFixture.configureByText("module-info.java", text)
+    assertThat(myFixture.getAllQuickFixes().map { it.javaClass.simpleName }).containsExactlyInAnyOrder(*fixes)
   }
   //</editor-fold>
 }

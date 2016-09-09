@@ -193,7 +193,11 @@ public class ModuleHighlightUtil {
       if (!(target instanceof PsiJavaModule)) {
         boolean missing = ref.multiResolve(true).length == 0;
         String message = JavaErrorMessages.message(missing ? "module.not.found" : "module.not.on.path", refElement.getReferenceText());
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refElement).description(message).create();
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refElement).description(message).create();
+        if (!missing) {
+          factory().registerOrderEntryFixes(new QuickFixActionRegistrarImpl(info), ref);
+        }
+        return info;
       }
       else if (target == container) {
         String message = JavaErrorMessages.message("module.cyclic.dependence", container.getModuleName());
