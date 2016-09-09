@@ -135,7 +135,7 @@ public class EliminateLoopsHelper {
           statLabeled.put(st.id, LowBreakHelper.isBreakEdgeLabeled(lstBreakEdges.get(i).getSource(), st) | statLabeled.get(st.id));
         }
 
-        int postcount = statLabeled.values().stream().mapToInt(val -> val ? 1 : 0).sum();
+        long postcount = statLabeled.values().stream().filter(Boolean::booleanValue).count();
 
         if (precount <= postcount) {
           return false;
