@@ -121,7 +121,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private static final float SPLITTER_PROPORTION_OPTION_DEFAULT = 0.5f;
   private static final float DETAILS_SPLITTER_PROPORTION_OPTION_DEFAULT = 0.6f;
-  private static final boolean DETAILS_SHOW_OPTION_DEFAULT = false;
+  private static final boolean DETAILS_SHOW_OPTION_DEFAULT = true;
 
   private static class MyUpdateButtonsRunnable implements Runnable {
     private CommitChangeListDialog myDialog;
