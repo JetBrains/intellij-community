@@ -59,8 +59,8 @@ public abstract class SplitterWithSecondHideable {
     Icon icon;
     Icon openIcon;
     if (vertical) {
-      icon = AllIcons.General.ComboArrow;
-      openIcon = AllIcons.General.ComboUpPassive;
+      icon = AllIcons.General.ComboArrowRight;
+      openIcon = AllIcons.General.ComboArrowDown;
     }
     else {
       icon = AllIcons.General.ComboArrowRight;
