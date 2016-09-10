@@ -159,7 +159,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     final VirtualFile sourceRoot = index.getSourceRootForFile(virtualFile);
     final VirtualFile folder = virtualFile.getParent();
-    if (sourceRoot != null && folder != null) {
+    if (sourceRoot != null && sourceRoot.isDirectory() && folder != null) {
       String relativePath = VfsUtilCore.getRelativePath(folder, sourceRoot, '/');
       if (relativePath == null) {
         LOG.error("Null relative path: folder=" + folder + "; root=" + sourceRoot);
