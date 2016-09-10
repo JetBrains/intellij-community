@@ -62,7 +62,7 @@ public abstract class CreateClassFix {
     return new CreateClassActionBase(GrCreateClassKind.CLASS, expression.getReferenceElement()) {
 
       @Override
-      protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+      protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
         final PsiFile file = element.getContainingFile();
         if (!(file instanceof GroovyFileBase)) return;
         GroovyFileBase groovyFile = (GroovyFileBase)file;
@@ -147,7 +147,7 @@ public abstract class CreateClassFix {
   public static IntentionAction createClassFixAction(final GrReferenceElement refElement, GrCreateClassKind type) {
     return new CreateClassActionBase(type, refElement) {
       @Override
-      protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+      protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
         final PsiFile file = element.getContainingFile();
         if (!(file instanceof GroovyFileBase)) return;
         GroovyFileBase groovyFile = (GroovyFileBase)file;

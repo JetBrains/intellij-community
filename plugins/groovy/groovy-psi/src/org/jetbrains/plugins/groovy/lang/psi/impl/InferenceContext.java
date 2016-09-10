@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public interface InferenceContext {
     @Override
     public <T extends PsiPolyVariantReference> GroovyResolveResult[] multiResolve(@NotNull T ref,
                                                                                   boolean incomplete,
-                                                                                  ResolveCache.PolyVariantResolver<T> resolver) {
+                                                                                  @NotNull ResolveCache.PolyVariantResolver<T> resolver) {
       ResolveResult[] results = ResolveCache.getInstance(ref.getElement().getProject()).resolveWithCaching(ref, resolver, true, incomplete);
       return results.length == 0 ? GroovyResolveResult.EMPTY_ARRAY : (GroovyResolveResult[])results;
     }
@@ -77,7 +77,7 @@ public interface InferenceContext {
 
   <T> T getCachedValue(@NotNull GroovyPsiElement element, @NotNull Computable<T> computable);
 
-  <T extends PsiPolyVariantReference> GroovyResolveResult[] multiResolve(@NotNull T ref, boolean incomplete, ResolveCache.PolyVariantResolver<T> resolver);
+  <T extends PsiPolyVariantReference> GroovyResolveResult[] multiResolve(@NotNull T ref, boolean incomplete, @NotNull ResolveCache.PolyVariantResolver<T> resolver);
 
   @Nullable
   <T extends GroovyPsiElement> PsiType getExpressionType(@NotNull T element, @NotNull Function<T, PsiType> calculator);

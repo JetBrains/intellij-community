@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyImportUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -38,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyImportUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyChangeContextUtil;
 
 import java.util.*;
@@ -118,13 +118,13 @@ public class GroovyMoveClassToInnerHandler implements MoveClassToInnerHandler {
       if (!(newClass instanceof GrTypeDefinition)) continue;
       ((GrTypeDefinition)newClass).accept(new GroovyRecursiveElementVisitor() {
         @Override
-        public void visitReferenceExpression(GrReferenceExpression reference) {
+        public void visitReferenceExpression(@NotNull GrReferenceExpression reference) {
           if (visitRef(reference)) return;
           super.visitReferenceExpression(reference);
         }
 
         @Override
-        public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
+        public void visitCodeReferenceElement(@NotNull GrCodeReferenceElement refElement) {
           visitRef(refElement);
           super.visitCodeReferenceElement(refElement);
         }

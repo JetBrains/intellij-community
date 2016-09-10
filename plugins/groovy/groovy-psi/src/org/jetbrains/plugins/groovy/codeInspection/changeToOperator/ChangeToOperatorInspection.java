@@ -50,7 +50,7 @@ public class ChangeToOperatorInspection extends BaseInspection {
   protected BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
-      public void visitMethodCallExpression(GrMethodCallExpression methodCallExpression) {
+      public void visitMethodCallExpression(@NotNull GrMethodCallExpression methodCallExpression) {
         super.visitMethodCallExpression(methodCallExpression);
         processMethodCall(methodCallExpression);
       }
@@ -87,7 +87,7 @@ public class ChangeToOperatorInspection extends BaseInspection {
           }
 
           @Override
-          protected void doFix(Project project, ProblemDescriptor descriptor) {
+          protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
             replaceExpression((GrExpression)descriptor.getPsiElement(), replacement);
           }
         };

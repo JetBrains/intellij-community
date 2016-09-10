@@ -395,7 +395,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return true;
   }
 
-  private void forceReload(VirtualFile virtualFile, @Nullable FileViewProvider viewProvider) {
+  void forceReload(VirtualFile virtualFile, @Nullable FileViewProvider viewProvider) {
     if (viewProvider instanceof SingleRootFileViewProvider) {
       ((SingleRootFileViewProvider)viewProvider).markInvalidated();
     }

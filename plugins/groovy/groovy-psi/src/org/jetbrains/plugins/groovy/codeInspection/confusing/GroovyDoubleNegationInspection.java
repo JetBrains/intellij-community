@@ -74,7 +74,7 @@ public class GroovyDoubleNegationInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor)
         throws IncorrectOperationException {
       final GrUnaryExpression expression =
           (GrUnaryExpression) descriptor.getPsiElement();
@@ -114,7 +114,7 @@ public class GroovyDoubleNegationInspection extends BaseInspection {
   private static class DoubleNegationVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitUnaryExpression(GrUnaryExpression expression) {
+    public void visitUnaryExpression(@NotNull GrUnaryExpression expression) {
       super.visitUnaryExpression(expression);
       final IElementType tokenType = expression.getOperationTokenType();
       if (!GroovyTokenTypes.mLNOT.equals(tokenType)) {
@@ -124,7 +124,7 @@ public class GroovyDoubleNegationInspection extends BaseInspection {
     }
 
     @Override
-    public void visitBinaryExpression(GrBinaryExpression expression) {
+    public void visitBinaryExpression(@NotNull GrBinaryExpression expression) {
       super.visitBinaryExpression(expression);
       final IElementType tokenType = expression.getOperationTokenType();
       if (!GroovyTokenTypes.mNOT_EQUAL.equals(tokenType)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,14 +82,14 @@ public class GrReassignedLocalVarsChecker {
       if (scope instanceof GroovyPsiElement) {
         ((GroovyPsiElement)scope).accept(new GroovyRecursiveElementVisitor() {
           @Override
-          public void visitClosure(GrClosableBlock closure) {
+          public void visitClosure(@NotNull GrClosableBlock closure) {
             if (getUsedVarsInsideBlock(closure).contains(name)) {
               isReassigned.set(true);
             }
           }
 
           @Override
-          public void visitElement(GroovyPsiElement element) {
+          public void visitElement(@NotNull GroovyPsiElement element) {
             if (isReassigned.get()) return;
             super.visitElement(element);
           }
@@ -152,17 +151,17 @@ public class GrReassignedLocalVarsChecker {
         block.acceptChildren(new GroovyRecursiveElementVisitor() {
 
           @Override
-          public void visitOpenBlock(GrOpenBlock openBlock) {
+          public void visitOpenBlock(@NotNull GrOpenBlock openBlock) {
             result.addAll(getUsedVarsInsideBlock(openBlock));
           }
 
           @Override
-          public void visitClosure(GrClosableBlock closure) {
+          public void visitClosure(@NotNull GrClosableBlock closure) {
             result.addAll(getUsedVarsInsideBlock(closure));
           }
 
           @Override
-          public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
+          public void visitReferenceExpression(@NotNull GrReferenceExpression referenceExpression) {
             if (referenceExpression.getQualifier() == null && referenceExpression.getReferenceName() != null) {
               result.add(referenceExpression.getReferenceName());
             }

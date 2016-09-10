@@ -155,6 +155,7 @@ public class IdeEventQueue extends EventQueue {
     });
 
     addDispatcher(new WindowsAltSuppressor(), null);
+    addDispatcher(new EditingCanceller(), null);
 
     abracadabraDaberBoreh();
   }
@@ -1107,6 +1108,29 @@ public class IdeEventQueue extends EventQueue {
       }
 
       return !dispatch;
+    }
+  }
+
+  //We have to stop editing with <ESC> (if any) and consume the event to prevent any further processing (dialog closing etc.)
+  private static class EditingCanceller implements EventDispatcher {
+    @Override
+    public boolean dispatch(AWTEvent e) {
+      if (e instanceof KeyEvent && e.getID() == KeyEvent.KEY_PRESSED && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ESCAPE) {
+        final Component owner = UIUtil.findParentByCondition(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner(),
+                                                             component -> component instanceof JTable || component instanceof JTree);
+
+        if (owner instanceof JTable && ((JTable)owner).isEditing()) {
+          //noinspection SSBasedInspection
+          SwingUtilities.invokeLater(() -> {((JTable)owner).editingCanceled(null);});
+          return true;
+        }
+        if (owner instanceof JTree && ((JTree)owner).isEditing()) {
+          //noinspection SSBasedInspection
+          SwingUtilities.invokeLater(((JTree)owner)::cancelEditing);
+          return true;
+        }
+      }
+      return false;
     }
   }
 

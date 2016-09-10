@@ -38,7 +38,7 @@ public class MakeClosureCallExplicitIntention extends Intention {
     }
 
     @Override
-    public void processIntention(@NotNull PsiElement element, Project project, Editor editor)
+    public void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor)
             throws IncorrectOperationException {
         final GrMethodCallExpression expression =
                 (GrMethodCallExpression) element;

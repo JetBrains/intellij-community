@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -227,7 +228,7 @@ public class GroovyImportUtil {
     if (annotations != null) {
       ((GroovyFile)file).acceptChildren(new GroovyElementVisitor() {
         @Override
-        public void visitImportStatement(GrImportStatement importStatement) {
+        public void visitImportStatement(@NotNull GrImportStatement importStatement) {
           final String annotationText = importStatement.getAnnotationList().getText();
           if (!StringUtil.isEmptyOrSpaces(annotationText)) {
             final String importRef = getImportReferenceText(importStatement);

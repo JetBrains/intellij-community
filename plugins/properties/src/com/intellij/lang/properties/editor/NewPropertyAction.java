@@ -160,7 +160,11 @@ class NewPropertyAction extends AnAction {
         }
       }
 
-      ApplicationManager.getApplication().runWriteAction(() -> WriteCommandAction.runWriteCommandAction(resourceBundle.getProject(), () -> myResourceBundleEditor.getPropertiesInsertDeleteManager().insertNewProperty(newPropertyName, "")));
+      final Runnable action = () -> {
+        myResourceBundleEditor.getPropertiesInsertDeleteManager().insertNewProperty(newPropertyName, "");
+        myResourceBundleEditor.flush();
+      };
+      ApplicationManager.getApplication().runWriteAction(() -> WriteCommandAction.runWriteCommandAction(resourceBundle.getProject(), action));
 
       myResourceBundleEditor.updateTreeRoot();
       myResourceBundleEditor.selectProperty(newPropertyName);

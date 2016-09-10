@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
@@ -79,7 +80,7 @@ public class GrUnresolvableLocalCollisionDetector {
   private static void visitDownstreamCollisions(final String newName, GroovyPsiElement place, final CollidingVariableVisitor visitor) {
     place.accept(new GroovyRecursiveElementVisitor() {
       @Override
-      public void visitVariableDeclaration(GrVariableDeclaration variableDeclaration) {
+      public void visitVariableDeclaration(@NotNull GrVariableDeclaration variableDeclaration) {
         final GrVariable[] variables = variableDeclaration.getVariables();
         for (GrVariable variable : variables) {
           if (variable.getName().equals(newName)) {
@@ -89,13 +90,13 @@ public class GrUnresolvableLocalCollisionDetector {
       }
 
       @Override
-      public void visitMethod(GrMethod method) {}
+      public void visitMethod(@NotNull GrMethod method) {}
 
       @Override
-      public void visitClosure(GrClosableBlock closure) {}
+      public void visitClosure(@NotNull GrClosableBlock closure) {}
 
       @Override
-      public void visitTypeDefinition(GrTypeDefinition typeDefinition) {}
+      public void visitTypeDefinition(@NotNull GrTypeDefinition typeDefinition) {}
     });
   }
 

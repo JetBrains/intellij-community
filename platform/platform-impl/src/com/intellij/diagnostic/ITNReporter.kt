@@ -134,7 +134,7 @@ private fun submit(event: IdeaLoggingEvent, parentComponent: Component, callback
           NotificationListener.URL_OPENING_LISTENER).setImportant(false).notify(project)
     }
   }) { e ->
-    Logger.getInstance(ITNReporter::class.java).info("reporting failed: " + e)
+    Logger.getInstance(ITNReporter::class.java).info("reporting failed: $e")
     ApplicationManager.getApplication().invokeLater {
       val msg = when (e) {
         is NoSuchEAPUserException -> DiagnosticBundle.message("error.report.authentication.failed")
