@@ -1029,7 +1029,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     JPanel rootPane = JBUI.Panels.simplePanel(mainPanel).addToBottom(panel);
 
     // TODO: there are no reason to use such heavy interface for a simple task.
-    myDetailsSplitter = new SplitterWithSecondHideable(true, "Details", rootPane,
+    myDetailsSplitter = new SplitterWithSecondHideable(true, "Diff", rootPane,
                                                        new SplitterWithSecondHideable.OnOffListener<Integer>() {
                                                          @Override
                                                          public void on(Integer integer) {
