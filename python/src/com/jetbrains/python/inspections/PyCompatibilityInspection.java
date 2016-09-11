@@ -145,24 +145,31 @@ public class PyCompatibilityInspection extends PyInspection {
     }
 
     @Override
-    protected final void registerProblem(@Nullable final PsiElement element,
-                                       @NotNull final String message,
-                                       @Nullable final LocalQuickFix quickFix, final boolean asError) {
-      if (element == null) return;
-      registerProblem(element, element.getTextRange(), message, quickFix, asError);
+    protected final void registerProblem(@Nullable PsiElement node,
+                                         @NotNull String message,
+                                         @Nullable LocalQuickFix localQuickFix,
+                                         boolean asError) {
+      if (node == null) return;
+      registerProblem(node, node.getTextRange(), message, localQuickFix, asError);
     }
 
     @Override
-    protected void registerProblem(@NotNull final PsiElement element, @NotNull TextRange range, String message,
-                                   @Nullable LocalQuickFix quickFix, boolean asError) {
+    protected void registerProblem(@NotNull PsiElement element,
+                                   @NotNull TextRange range,
+                                   @NotNull String message,
+                                   @Nullable LocalQuickFix quickFix,
+                                   boolean asError) {
       if (element.getTextLength() == 0) {
         return;
       }
+
       range = range.shiftRight(-element.getTextRange().getStartOffset());
-      if (quickFix != null)
+      if (quickFix != null) {
         myHolder.registerProblem(element, range, message, quickFix);
-      else
+      }
+      else {
         myHolder.registerProblem(element, range, message);
+      }
     }
 
     @Override
@@ -265,14 +272,15 @@ public class PyCompatibilityInspection extends PyInspection {
       if (node.getRelativeLevel() > 0) return;
 
       final QualifiedName name = node.getImportSourceQName();
-      if (name != null) {
+      final PyReferenceExpression source = node.getImportSource();
+      if (name != null && source != null) {
         final StringBuilder message = new StringBuilder("Python version ");
         final String moduleName = name.toString();
         final int len = appendLanguageLevels(message, myVersionsToProcess,
                                              level -> UnsupportedFeaturesUtil.MODULES.get(level).contains(moduleName) &&
                                                       !BACKPORTED_PACKAGES.contains(moduleName));
 
-        commonRegisterProblem(message, " not have module " + name, len, node.getImportSource(), null, false);
+        commonRegisterProblem(message, " not have module " + name, len, source, null, false);
       }
     }
 

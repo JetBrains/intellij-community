@@ -41,9 +41,14 @@ import java.util.function.Predicate;
  * User : catherine
  */
 public abstract class CompatibilityVisitor extends PyAnnotator {
+
+  @NotNull
   protected List<LanguageLevel> myVersionsToProcess;
+
+  @NotNull
   private String myCommonMessage = "Python version ";
 
+  @NotNull
   private static final Map<LanguageLevel, Set<String>> AVAILABLE_PREFIXES = Maps.newHashMap();
 
   static {
@@ -57,9 +62,10 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON36, Sets.newHashSet("R", "U", "B", "BR", "RB", "F", "FR", "RF"));
   }
 
+  @NotNull
   private static final Set<String> DEFAULT_PREFIXES = Sets.newHashSet(Sets.newHashSet("R", "U", "B", "BR", "RB"));
 
-  public CompatibilityVisitor(List<LanguageLevel> versionsToProcess) {
+  public CompatibilityVisitor(@NotNull List<LanguageLevel> versionsToProcess) {
     myVersionsToProcess = versionsToProcess;
   }
 
@@ -546,7 +552,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     }
   }
 
-  private void checkAsyncKeyword(PsiElement node) {
+  private void checkAsyncKeyword(@NotNull PsiElement node) {
     final ASTNode asyncNode = node.getNode().findChildByType(PyTokenTypes.ASYNC_KEYWORD);
     if (asyncNode != null) {
       for (LanguageLevel level : myVersionsToProcess) {
@@ -583,54 +589,76 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     }
   }
 
-  protected abstract void registerProblem(PsiElement node, String s, @Nullable LocalQuickFix localQuickFix, boolean asError);
-  protected abstract void registerProblem(PsiElement node, TextRange range, String s, @Nullable LocalQuickFix localQuickFix, boolean asError);
+  protected abstract void registerProblem(@Nullable PsiElement node,
+                                          @NotNull String message,
+                                          @Nullable LocalQuickFix localQuickFix,
+                                          boolean asError);
 
-  protected void registerProblem(final PsiElement node, final String s, @Nullable final LocalQuickFix localQuickFix) {
-    registerProblem(node, s, localQuickFix, true);
+  protected abstract void registerProblem(@NotNull PsiElement node,
+                                          @NotNull TextRange range,
+                                          @NotNull String message,
+                                          @Nullable LocalQuickFix localQuickFix,
+                                          boolean asError);
+
+  protected void registerProblem(@Nullable PsiElement node, @NotNull String message, @Nullable LocalQuickFix localQuickFix) {
+    registerProblem(node, message, localQuickFix, true);
   }
 
-  protected void registerProblem(final PsiElement node, final String s) {
-    registerProblem(node, s, null);
+  protected void registerProblem(@Nullable PsiElement node, @NotNull String message) {
+    registerProblem(node, message, null);
   }
 
-  protected void setVersionsToProcess(List<LanguageLevel> versionsToProcess) {
+  protected void setVersionsToProcess(@NotNull List<LanguageLevel> versionsToProcess) {
     myVersionsToProcess = versionsToProcess;
   }
 
-  protected void commonRegisterProblem(StringBuilder initMessage, String suffix,
-                                       int len, PyElement node, LocalQuickFix localQuickFix) {
+  protected void commonRegisterProblem(@NotNull StringBuilder initMessage,
+                                       @NotNull String suffix,
+                                       int len,
+                                       @NotNull PyElement node,
+                                       @Nullable LocalQuickFix localQuickFix) {
     commonRegisterProblem(initMessage, suffix, len, node, node.getTextRange(), localQuickFix, true);
   }
 
-  protected void commonRegisterProblem(StringBuilder initMessage, String suffix,
-                                       int len, PyElement node, TextRange range, LocalQuickFix localQuickFix) {
+  protected void commonRegisterProblem(@NotNull StringBuilder initMessage,
+                                       @NotNull String suffix,
+                                       int len,
+                                       @NotNull PyElement node,
+                                       @NotNull TextRange range,
+                                       @Nullable LocalQuickFix localQuickFix) {
     commonRegisterProblem(initMessage, suffix, len, node, range, localQuickFix, true);
   }
 
-  protected void commonRegisterProblem(StringBuilder initMessage, String suffix,
-                                       int len, PyElement node, TextRange range, @Nullable LocalQuickFix localQuickFix, boolean asError) {
+  protected void commonRegisterProblem(@NotNull StringBuilder initMessage,
+                                       @NotNull String suffix,
+                                       int len,
+                                       @NotNull PyElement node,
+                                       @NotNull TextRange range,
+                                       @Nullable LocalQuickFix localQuickFix,
+                                       boolean asError) {
     initMessage.append(" do");
-    if (len == 1)
+    if (len == 1) {
       initMessage.append("es");
+    }
     initMessage.append(suffix);
-    if (len != 0)
+    if (len != 0) {
       registerProblem(node, range, initMessage.toString(), localQuickFix, asError);
+    }
   }
 
-  protected void commonRegisterProblem(StringBuilder initMessage, String suffix,
-                                       int len, PyElement node, @Nullable LocalQuickFix localQuickFix, boolean asError) {
-    initMessage.append(" do");
-    if (len == 1)
-      initMessage.append("es");
-    initMessage.append(suffix);
-    if (len != 0)
-      registerProblem(node, node.getTextRange(), initMessage.toString(), localQuickFix, asError);
+  protected void commonRegisterProblem(@NotNull StringBuilder initMessage,
+                                       @NotNull String suffix,
+                                       int len,
+                                       @NotNull PyElement node,
+                                       @Nullable LocalQuickFix localQuickFix,
+                                       boolean asError) {
+    commonRegisterProblem(initMessage, suffix, len, node, node.getTextRange(), localQuickFix, asError);
   }
 
-  protected static int appendLanguageLevel(StringBuilder message, int len, LanguageLevel languageLevel) {
-    if (len != 0)
+  protected static int appendLanguageLevel(@NotNull StringBuilder message, int len, @NotNull LanguageLevel languageLevel) {
+    if (len != 0) {
       message.append(", ");
+    }
     message.append(languageLevel.toString());
     return ++len;
   }
