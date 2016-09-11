@@ -181,9 +181,9 @@ public class PyCompatibilityInspection extends PyInspection {
         final PyClass containingClass = function.getContainingClass();
         final String originalFunctionName = function.getName();
 
-        final StringBuilder message = containingClass != null && !PyNames.INIT.equals(originalFunctionName)
-                                      ? new StringBuilder("Class " + containingClass.getName() + " in python version ")
-                                      : new StringBuilder("Python version ");
+        final StringBuilder message = new StringBuilder(containingClass != null && !PyNames.INIT.equals(originalFunctionName)
+                                                        ? "Class " + containingClass.getName() + " in python version "
+                                                        : "Python version ");
 
         final String functionName = containingClass != null && PyNames.INIT.equals(originalFunctionName)
                                     ? node.getCallee().getText()
@@ -196,11 +196,9 @@ public class PyCompatibilityInspection extends PyInspection {
 
           if (UnsupportedFeaturesUtil.CLASS_METHODS.containsKey(className)) {
             final Map<LanguageLevel, Set<String>> unsupportedMethods = UnsupportedFeaturesUtil.CLASS_METHODS.get(className);
-            for (LanguageLevel languageLevel : myVersionsToProcess) {
-              if (unsupportedMethods.getOrDefault(languageLevel, Collections.emptySet()).contains(functionName)) {
-                len = appendLanguageLevel(message, len, languageLevel);
-              }
-            }
+
+            len += appendLanguageLevels(message, myVersionsToProcess,
+                                        level -> unsupportedMethods.getOrDefault(level, Collections.emptySet()).contains(functionName));
           }
         }
 
@@ -208,11 +206,8 @@ public class PyCompatibilityInspection extends PyInspection {
             !"print".equals(functionName) &&
             !"exec".equals(functionName) &&
             !myUsedImports.contains(functionName)) {
-          for (LanguageLevel languageLevel : myVersionsToProcess) {
-            if (UnsupportedFeaturesUtil.BUILTINS.get(languageLevel).contains(functionName)) {
-              len = appendLanguageLevel(message, len, languageLevel);
-            }
-          }
+          len +=
+            appendLanguageLevels(message, myVersionsToProcess, level -> UnsupportedFeaturesUtil.BUILTINS.get(level).contains(functionName));
         }
 
         commonRegisterProblem(message, " not have method " + functionName, len, node, null, false);
@@ -222,17 +217,13 @@ public class PyCompatibilityInspection extends PyInspection {
     @Override
     public void visitPyImportElement(PyImportElement importElement) {
       myUsedImports.add(importElement.getVisibleName());
-      PyIfStatement ifParent = PsiTreeUtil.getParentOfType(importElement, PyIfStatement.class);
-      if (ifParent != null)
-        return;
-      int len = 0;
-      String moduleName = "";
-      StringBuilder message = new StringBuilder("Python version ");
 
-      PyTryExceptStatement tryExceptStatement = PsiTreeUtil.getParentOfType(importElement, PyTryExceptStatement.class);
+      final PyIfStatement ifParent = PsiTreeUtil.getParentOfType(importElement, PyIfStatement.class);
+      if (ifParent != null) return;
+
+      final PyTryExceptStatement tryExceptStatement = PsiTreeUtil.getParentOfType(importElement, PyTryExceptStatement.class);
       if (tryExceptStatement != null) {
-        PyExceptPart[] parts = tryExceptStatement.getExceptParts();
-        for (PyExceptPart part : parts) {
+        for (PyExceptPart part : tryExceptStatement.getExceptParts()) {
           final PyExpression exceptClass = part.getExceptClass();
           if (exceptClass != null && exceptClass.getText().equals("ImportError")) {
             return;
@@ -242,50 +233,46 @@ public class PyCompatibilityInspection extends PyInspection {
 
       final PyFromImportStatement fromImportStatement = PsiTreeUtil.getParentOfType(importElement, PyFromImportStatement.class);
       if (fromImportStatement != null) {
-        for (int i = 0; i != myVersionsToProcess.size(); ++i) {
-          LanguageLevel languageLevel = myVersionsToProcess.get(i);
-          final QualifiedName qName = importElement.getImportedQName();
-          final QualifiedName sourceQName = fromImportStatement.getImportSourceQName();
-          if (qName != null && sourceQName != null && qName.matches("unicode_literals") &&
-              sourceQName.matches("__future__") && languageLevel.isOlderThan(LanguageLevel.PYTHON26)) {
-            len = appendLanguageLevel(message, len, languageLevel);
-          }
+        final QualifiedName qName = importElement.getImportedQName();
+        final QualifiedName sourceQName = fromImportStatement.getImportSourceQName();
+
+        if (qName != null && sourceQName != null && qName.matches("unicode_literals") && sourceQName.matches("__future__")) {
+          final StringBuilder message = new StringBuilder("Python version ");
+          final int len = appendLanguageLevels(message, myVersionsToProcess, level -> level.isOlderThan(LanguageLevel.PYTHON26));
+
+          commonRegisterProblem(message, " not have unicode_literals in __future__ module", len, importElement, null);
         }
-        commonRegisterProblem(message, " not have unicode_literals in __future__ module", len, importElement, null);
+
         return;
       }
 
-      for (int i = 0; i != myVersionsToProcess.size(); ++i) {
-        LanguageLevel languageLevel = myVersionsToProcess.get(i);
-        final QualifiedName qName = importElement.getImportedQName();
-        if (qName != null && !qName.matches("builtins") && !qName.matches("__builtin__")) {
-          moduleName = qName.toString();
-          if (UnsupportedFeaturesUtil.MODULES.get(languageLevel).contains(moduleName) && !BACKPORTED_PACKAGES.contains(moduleName)) {
-            len = appendLanguageLevel(message, len, languageLevel);
-          }
-        }
+      final QualifiedName qName = importElement.getImportedQName();
+      if (qName != null && !qName.matches("builtins") && !qName.matches("__builtin__")) {
+        final String moduleName = qName.toString();
+        final StringBuilder message = new StringBuilder("Python version ");
+        final int len = appendLanguageLevels(message, myVersionsToProcess,
+                                             level -> UnsupportedFeaturesUtil.MODULES.get(level).contains(moduleName) &&
+                                                      !BACKPORTED_PACKAGES.contains(moduleName));
+
+        commonRegisterProblem(message, " not have module " + moduleName, len, importElement, null);
       }
-      commonRegisterProblem(message, " not have module " + moduleName, len, importElement, null);
     }
 
     @Override
     public void visitPyFromImportStatement(PyFromImportStatement node) {
       super.visitPyFromImportStatement(node);
+
       if (node.getRelativeLevel() > 0) return;
-      int len = 0;
-      StringBuilder message = new StringBuilder("Python version ");
-      QualifiedName name = node.getImportSourceQName();
-      PyReferenceExpression source = node.getImportSource();
+
+      final QualifiedName name = node.getImportSourceQName();
       if (name != null) {
-        for (int i = 0; i != myVersionsToProcess.size(); ++i) {
-          LanguageLevel languageLevel = myVersionsToProcess.get(i);
-          final String moduleName = name.toString();
-          if (UnsupportedFeaturesUtil.MODULES.get(languageLevel).contains(moduleName) && !BACKPORTED_PACKAGES.contains(moduleName)) {
-            len = appendLanguageLevel(message, len, languageLevel);
-          }
-        }
-        commonRegisterProblem(message, " not have module " + name,
-                              len, source, null, false);
+        final StringBuilder message = new StringBuilder("Python version ");
+        final String moduleName = name.toString();
+        final int len = appendLanguageLevels(message, myVersionsToProcess,
+                                             level -> UnsupportedFeaturesUtil.MODULES.get(level).contains(moduleName) &&
+                                                      !BACKPORTED_PACKAGES.contains(moduleName));
+
+        commonRegisterProblem(message, " not have module " + name, len, node.getImportSource(), null, false);
       }
     }
 
