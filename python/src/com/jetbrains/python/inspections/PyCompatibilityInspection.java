@@ -60,12 +60,16 @@ import java.util.List;
  * Inspection to detect code incompatibility with python versions
  */
 public class PyCompatibilityInspection extends PyInspection {
-  public static List<String> BACKPORTED_PACKAGES = ImmutableList.<String>builder()
+
+  @NotNull
+  public static final List<String> BACKPORTED_PACKAGES = ImmutableList.<String>builder()
     .add("enum")
     .add("typing")
     .build();
 
   public static final int LATEST_INSPECTION_VERSION = 1;
+
+  @NotNull
   public static final List<LanguageLevel> DEFAULT_PYTHON_VERSIONS = ImmutableList.of(LanguageLevel.PYTHON27, LanguageLevel.getLatest());
 
   // Legacy DefaultJDOMExternalizer requires public fields for proper serialization
@@ -190,7 +194,7 @@ public class PyCompatibilityInspection extends PyInspection {
 
         final StringBuilder message = new StringBuilder(containingClass != null && !PyNames.INIT.equals(originalFunctionName)
                                                         ? "Class " + containingClass.getName() + " in python version "
-                                                        : "Python version ");
+                                                        : COMMON_MESSAGE);
 
         final String functionName = containingClass != null && PyNames.INIT.equals(originalFunctionName)
                                     ? node.getCallee().getText()
@@ -244,7 +248,7 @@ public class PyCompatibilityInspection extends PyInspection {
         final QualifiedName sourceQName = fromImportStatement.getImportSourceQName();
 
         if (qName != null && sourceQName != null && qName.matches("unicode_literals") && sourceQName.matches("__future__")) {
-          final StringBuilder message = new StringBuilder("Python version ");
+          final StringBuilder message = new StringBuilder(COMMON_MESSAGE);
           final int len = appendLanguageLevels(message, myVersionsToProcess, level -> level.isOlderThan(LanguageLevel.PYTHON26));
 
           commonRegisterProblem(message, " not have unicode_literals in __future__ module", len, importElement, null);
@@ -256,7 +260,7 @@ public class PyCompatibilityInspection extends PyInspection {
       final QualifiedName qName = importElement.getImportedQName();
       if (qName != null && !qName.matches("builtins") && !qName.matches("__builtin__")) {
         final String moduleName = qName.toString();
-        final StringBuilder message = new StringBuilder("Python version ");
+        final StringBuilder message = new StringBuilder(COMMON_MESSAGE);
         final int len = appendLanguageLevels(message, myVersionsToProcess,
                                              level -> UnsupportedFeaturesUtil.MODULES.get(level).contains(moduleName) &&
                                                       !BACKPORTED_PACKAGES.contains(moduleName));
@@ -274,7 +278,7 @@ public class PyCompatibilityInspection extends PyInspection {
       final QualifiedName name = node.getImportSourceQName();
       final PyReferenceExpression source = node.getImportSource();
       if (name != null && source != null) {
-        final StringBuilder message = new StringBuilder("Python version ");
+        final StringBuilder message = new StringBuilder(COMMON_MESSAGE);
         final String moduleName = name.toString();
         final int len = appendLanguageLevels(message, myVersionsToProcess,
                                              level -> UnsupportedFeaturesUtil.MODULES.get(level).contains(moduleName) &&

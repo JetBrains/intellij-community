@@ -43,13 +43,16 @@ import java.util.function.Predicate;
 public abstract class CompatibilityVisitor extends PyAnnotator {
 
   @NotNull
-  protected List<LanguageLevel> myVersionsToProcess;
-
-  @NotNull
-  private String myCommonMessage = "Python version ";
-
-  @NotNull
   private static final Map<LanguageLevel, Set<String>> AVAILABLE_PREFIXES = Maps.newHashMap();
+
+  @NotNull
+  private static final Set<String> DEFAULT_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB");
+
+  @NotNull
+  protected static final String COMMON_MESSAGE = "Python version ";
+
+  @NotNull
+  protected List<LanguageLevel> myVersionsToProcess;
 
   static {
     AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON24, Sets.newHashSet("R", "U", "UR"));
@@ -62,9 +65,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON36, Sets.newHashSet("R", "U", "B", "BR", "RB", "F", "FR", "RF"));
   }
 
-  @NotNull
-  private static final Set<String> DEFAULT_PREFIXES = Sets.newHashSet(Sets.newHashSet("R", "U", "B", "BR", "RB"));
-
   public CompatibilityVisitor(@NotNull List<LanguageLevel> versionsToProcess) {
     myVersionsToProcess = versionsToProcess;
   }
@@ -73,7 +73,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   public void visitPyAnnotation(PyAnnotation node) {
     final PsiElement parent = node.getParent();
     if (!(parent instanceof PyFunction || parent instanceof PyNamedParameter)) {
-      final StringBuilder message = new StringBuilder(myCommonMessage);
+      final StringBuilder message = new StringBuilder(COMMON_MESSAGE);
       int len = 0;
       for (LanguageLevel languageLevel : myVersionsToProcess) {
         if (languageLevel.isOlderThan(LanguageLevel.PYTHON36)) {
@@ -88,7 +88,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   public void visitPyDictCompExpression(PyDictCompExpression node) {
     super.visitPyDictCompExpression(node);
 
-    final StringBuilder message = new StringBuilder(myCommonMessage);
+    final StringBuilder message = new StringBuilder(COMMON_MESSAGE);
     final int len = appendLanguageLevels(message, myVersionsToProcess, level -> !level.supportsSetLiterals());
     commonRegisterProblem(message, " not support dictionary comprehensions", len, node, new ConvertDictCompQuickFix(), false);
   }
@@ -97,7 +97,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   public void visitPySetLiteralExpression(PySetLiteralExpression node) {
     super.visitPySetLiteralExpression(node);
 
-    final StringBuilder message = new StringBuilder(myCommonMessage);
+    final StringBuilder message = new StringBuilder(COMMON_MESSAGE);
     final int len = appendLanguageLevels(message, myVersionsToProcess, level -> !level.supportsSetLiterals());
     commonRegisterProblem(message, " not support set literal expressions", len, node, new ConvertSetLiteralQuickFix(), false);
   }
@@ -106,7 +106,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   public void visitPySetCompExpression(PySetCompExpression node) {
     super.visitPySetCompExpression(node);
 
-    final StringBuilder message = new StringBuilder(myCommonMessage);
+    final StringBuilder message = new StringBuilder(COMMON_MESSAGE);
     final int len = appendLanguageLevels(message, myVersionsToProcess, level -> !level.supportsSetLiterals());
     commonRegisterProblem(message, " not support set comprehensions", len, node, null, false);
   }
@@ -124,7 +124,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
         }
 
         if (element != null && "as".equals(element.getText())) {
-          registerProblem(node, myCommonMessage + "2.4, 2.5 do not support this syntax.");
+          registerProblem(node, COMMON_MESSAGE + "2.4, 2.5 do not support this syntax.");
         }
       }
 
@@ -134,7 +134,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       }
 
       if (element != null && ",".equals(element.getText())) {
-        final StringBuilder message = new StringBuilder(myCommonMessage);
+        final StringBuilder message = new StringBuilder(COMMON_MESSAGE);
         final int len = appendLanguageLevels(message, myVersionsToProcess, LanguageLevel::isPy3K);
 
         commonRegisterProblem(message, " not support this syntax.", len, node, new ReplaceExceptPartQuickFix());
@@ -153,7 +153,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       final QualifiedName qName = importElement.getImportedQName();
 
       if (qName != null) {
-        final StringBuilder message = new StringBuilder(myCommonMessage);
+        final StringBuilder message = new StringBuilder(COMMON_MESSAGE);
         final int len;
 
         if (qName.matches("builtins")) {
@@ -208,7 +208,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     super.visitPyBinaryExpression(node);
 
     if (node.isOperator("<>")) {
-      final StringBuilder message = new StringBuilder(myCommonMessage);
+      final StringBuilder message = new StringBuilder(COMMON_MESSAGE);
       final int len = appendLanguageLevels(message, myVersionsToProcess, LanguageLevel::isPy3K);
 
       commonRegisterProblem(message, " not support <>, use != instead.", len, node, new ReplaceNotEqOperatorQuickFix());
@@ -239,7 +239,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
     if (node.isIntegerLiteral()) {
       if (text.endsWith("l") || text.endsWith("L")) {
-        final StringBuilder message = new StringBuilder(myCommonMessage);
+        final StringBuilder message = new StringBuilder(COMMON_MESSAGE);
         final String suffix = " not support a trailing \'l\' or \'L\'.";
         final int len = appendLanguageLevels(message, myVersionsToProcess, LanguageLevel::isPy3K);
 
@@ -249,7 +249,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       if (text.length() > 1 && text.charAt(0) == '0') {
         final char secondChar = Character.toLowerCase(text.charAt(1));
         if (secondChar != 'o' && secondChar != 'b' && secondChar != 'x' && text.chars().anyMatch(c -> c != '0')) {
-          final StringBuilder message = new StringBuilder(myCommonMessage);
+          final StringBuilder message = new StringBuilder(COMMON_MESSAGE);
           final String suffix = " not support this syntax. It requires '0o' prefix for octal literals";
           int len = appendLanguageLevels(message, myVersionsToProcess, LanguageLevel::isPy3K);
 
@@ -259,7 +259,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     }
 
     if (text.contains("_")) {
-      final StringBuilder message = new StringBuilder(myCommonMessage);
+      final StringBuilder message = new StringBuilder(COMMON_MESSAGE);
       final String suffix = " not support underscores in numeric literals";
       final int len = appendLanguageLevels(message, myVersionsToProcess, level -> level.isOlderThan(LanguageLevel.PYTHON36));
 
@@ -277,7 +277,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       final String prefix = text.substring(0, prefixLength).toUpperCase();
       if (prefix.isEmpty()) continue;
 
-      final StringBuilder message = new StringBuilder(myCommonMessage);
+      final StringBuilder message = new StringBuilder(COMMON_MESSAGE);
       final int len =
         appendLanguageLevels(message, myVersionsToProcess,
                              level -> !AVAILABLE_PREFIXES.getOrDefault(level, DEFAULT_PREFIXES).contains(prefix));
@@ -291,7 +291,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   public void visitPyListCompExpression(final PyListCompExpression node) {
     super.visitPyListCompExpression(node);
 
-    final StringBuilder message = new StringBuilder(myCommonMessage);
+    final StringBuilder message = new StringBuilder(COMMON_MESSAGE);
     final int len =
       appendLanguageLevels(message, myVersionsToProcess, level -> UnsupportedFeaturesUtil.visitPyListCompExpression(node, level));
 
@@ -306,18 +306,18 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     super.visitPyRaiseStatement(node);
 
     // empty raise
-    StringBuilder message = new StringBuilder(myCommonMessage);
+    StringBuilder message = new StringBuilder(COMMON_MESSAGE);
     int len = appendLanguageLevels(message, myVersionsToProcess, level -> UnsupportedFeaturesUtil.raiseHasNoArgs(node, level));
     commonRegisterProblem(message, " not support this syntax. Raise with no arguments can only be used in an except block",
                           len, node, null, false);
 
     // raise 1, 2, 3
-    message = new StringBuilder(myCommonMessage);
+    message = new StringBuilder(COMMON_MESSAGE);
     len = appendLanguageLevels(message, myVersionsToProcess, level -> UnsupportedFeaturesUtil.raiseHasMoreThenOneArg(node, level));
     commonRegisterProblem(message, " not support this syntax.", len, node, new ReplaceRaiseStatementQuickFix());
 
     // raise exception from cause
-    message = new StringBuilder(myCommonMessage);
+    message = new StringBuilder(COMMON_MESSAGE);
     len = appendLanguageLevels(message, myVersionsToProcess, level -> UnsupportedFeaturesUtil.raiseHasFromKeyword(node, level));
     commonRegisterProblem(message, " not support this syntax.", len, node, new ReplaceRaiseStatementQuickFix());
   }
@@ -326,7 +326,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   public void visitPyReprExpression(PyReprExpression node) {
     super.visitPyReprExpression(node);
 
-    final StringBuilder message = new StringBuilder(myCommonMessage);
+    final StringBuilder message = new StringBuilder(COMMON_MESSAGE);
     final int len = appendLanguageLevels(message, myVersionsToProcess, LanguageLevel::isPy3K);
     commonRegisterProblem(message, " not support backquotes, use repr() instead", len, node, new ReplaceBackquoteExpressionQuickFix());
   }
@@ -336,7 +336,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   public void visitPyWithStatement(PyWithStatement node) {
     super.visitPyWithStatement(node);
     Set<PyWithItem> problemItems = new HashSet<>();
-    StringBuilder message = new StringBuilder(myCommonMessage);
+    StringBuilder message = new StringBuilder(COMMON_MESSAGE);
     for (int i = 0; i != myVersionsToProcess.size(); ++i) {
       LanguageLevel languageLevel = myVersionsToProcess.get(i);
       if (languageLevel == LanguageLevel.PYTHON24) {
@@ -460,7 +460,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
     final PsiElement firstChild = node.getFirstChild();
     if (firstChild != null && PyNames.SUPER.equals(firstChild.getText()) && ArrayUtil.isEmpty(node.getArguments())) {
-      final StringBuilder message = new StringBuilder(myCommonMessage);
+      final StringBuilder message = new StringBuilder(COMMON_MESSAGE);
       final int len = appendLanguageLevels(message, myVersionsToProcess, level -> !level.isPy3K());
 
       commonRegisterProblem(message, " not support this syntax. super() should have arguments in Python 2", len, node, null);
