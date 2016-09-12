@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.*;
@@ -108,7 +109,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     public void focusGained(Editor editor) {
       myCurrentEditor = (EditorEx)editor;
       if (GeneralSettings.getInstance().isSaveOnFrameDeactivation()) {
-        FileDocumentManager.getInstance().saveAllDocuments(); // PY-12487
+        TransactionGuard.submitTransaction(LanguageConsoleImpl.this, () -> FileDocumentManager.getInstance().saveAllDocuments()); // PY-12487
       }
     }
 
