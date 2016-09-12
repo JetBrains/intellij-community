@@ -110,8 +110,12 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     myProcessHandler.startNotify();
   }
 
+  protected Executor getExecutor() {
+    return DefaultRunExecutor.getRunExecutorInstance();
+  }
+
   protected void createContentDescriptorAndActions() {
-    final Executor defaultExecutor = DefaultRunExecutor.getRunExecutorInstance();
+    final Executor defaultExecutor = getExecutor();
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, false);
 

@@ -193,6 +193,12 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     return null;
   }
 
+  @Override
+  protected Executor getExecutor() {
+    PyConsoleToolWindowExecutor toolWindowExecutor = PyConsoleToolWindowExecutor.findInstance();
+    return toolWindowExecutor != null ? toolWindowExecutor : super.getExecutor();
+  }
+
   @NotNull
   public static Pair<Sdk, Module> findPythonSdkAndModule(@NotNull Project project, @Nullable Module contextModule) {
     Sdk sdk = null;
@@ -767,9 +773,6 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     runCompletions.getTemplatePresentation().setVisible(false);
     return runCompletions;
   }
-
-
-
 
 
   private AnAction createBackspaceHandlingAction() {

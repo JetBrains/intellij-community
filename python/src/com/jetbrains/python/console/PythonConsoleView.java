@@ -148,13 +148,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   }
 
   private void showConsole(@NotNull Runnable runnable) {
-    PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(getProject());
-    if (toolWindow != null && toolWindow.getToolWindow() != null && !toolWindow.getToolWindow().isVisible() && !ApplicationManager.getApplication().isUnitTestMode()) {
-      toolWindow.getToolWindow().activate(runnable);
-    }
-    else {
-      runnable.run();
-    }
+
+    runnable.run();
   }
 
   private void doExecute(String code) {
@@ -296,7 +291,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private void splitWindow() {
     Component console = getComponent(0);
     removeAll();
-    JBSplitter p = new JBSplitter(false, 2f/3);
+    JBSplitter p = new JBSplitter(false, 2f / 3);
     p.setFirstComponent((JComponent)console);
     p.setSecondComponent(mySplitView.getPanel());
     p.setShowDividerControls(true);
