@@ -47,9 +47,11 @@ import java.util.List;
 
 class GithubConnectionBuilder {
   @NotNull private final GithubAuthData myAuth;
+  @NotNull private final String myApiURL;
 
-  public GithubConnectionBuilder(@NotNull GithubAuthData auth) {
+  public GithubConnectionBuilder(@NotNull GithubAuthData auth, @NotNull String apiURL) {
     myAuth = auth;
+    myApiURL = apiURL;
   }
 
   @NotNull
@@ -78,7 +80,7 @@ class GithubConnectionBuilder {
       .setSocketTimeout(timeout);
 
     if (myAuth.isUseProxy()) {
-      IdeHttpClientHelpers.ApacheHttpClient4.setProxyForUrlIfEnabled(builder, myAuth.getHost());
+      IdeHttpClientHelpers.ApacheHttpClient4.setProxyForUrlIfEnabled(builder, myApiURL);
     }
 
     return builder.build();
@@ -106,7 +108,7 @@ class GithubConnectionBuilder {
     builder.setDefaultCredentialsProvider(provider);
 
     if (myAuth.isUseProxy()) {
-      IdeHttpClientHelpers.ApacheHttpClient4.setProxyCredentialsForUrlIfEnabled(provider, myAuth.getHost());
+      IdeHttpClientHelpers.ApacheHttpClient4.setProxyCredentialsForUrlIfEnabled(provider, myApiURL);
     }
 
     return provider;
@@ -115,7 +117,7 @@ class GithubConnectionBuilder {
   @NotNull
   private AuthScope getBasicAuthScope() {
     try {
-      URIBuilder builder = new URIBuilder(myAuth.getHost());
+      URIBuilder builder = new URIBuilder(myApiURL);
       return new AuthScope(builder.getHost(), builder.getPort(), AuthScope.ANY_REALM, AuthSchemes.BASIC);
     }
     catch (URISyntaxException e) {

@@ -50,7 +50,7 @@ import static org.jetbrains.plugins.github.api.GithubApiUtil.fromJson;
 public class GithubConnection {
   private static final Logger LOG = GithubUtil.LOG;
 
-  @NotNull private final String myHost;
+  @NotNull private final String myApiURL;
   @NotNull private final CloseableHttpClient myClient;
   private final boolean myReusable;
 
@@ -63,8 +63,8 @@ public class GithubConnection {
   }
 
   public GithubConnection(@NotNull GithubAuthData auth, boolean reusable) {
-    myHost = auth.getHost();
-    myClient = new GithubConnectionBuilder(auth).createClient();
+    myApiURL = GithubUrlUtil.getApiUrl(auth.getHost());
+    myClient = new GithubConnectionBuilder(auth, myApiURL).createClient();
     myReusable = reusable;
   }
 
@@ -105,8 +105,8 @@ public class GithubConnection {
   }
 
   @NotNull
-  public String getHost() {
-    return myHost;
+  String getApiURL() {
+    return myApiURL;
   }
 
   public void abort() {
@@ -122,16 +122,11 @@ public class GithubConnection {
   }
 
   @NotNull
-  private static String getRequestUrl(@NotNull String host, @NotNull String path) {
-    return GithubUrlUtil.getApiUrl(host) + path;
-  }
-
-  @NotNull
   private ResponsePage request(@NotNull String path,
                                @Nullable String requestBody,
                                @NotNull Collection<Header> headers,
                                @NotNull HttpVerb verb) throws IOException {
-    return doRequest(getRequestUrl(myHost, path), requestBody, headers, verb);
+    return doRequest(myApiURL + path, requestBody, headers, verb);
   }
 
   @NotNull
@@ -331,7 +326,7 @@ public class GithubConnection {
     public List<T> next(@NotNull GithubConnection connection) throws IOException {
       String url;
       if (myFirstRequest) {
-        url = getRequestUrl(connection.getHost(), myPath);
+        url = connection.getApiURL() + myPath;
         myFirstRequest = false;
       }
       else {
