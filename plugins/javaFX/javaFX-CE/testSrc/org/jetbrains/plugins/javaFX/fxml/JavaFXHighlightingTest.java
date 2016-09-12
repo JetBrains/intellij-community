@@ -490,6 +490,10 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     myFixture.testHighlighting(true, true, true, superclass + ".java");
   }
 
+  public void testResourceIdInFxAttribute() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     myFixture.testHighlighting(false, false, false, getTestName(true) + ".fxml");
   }

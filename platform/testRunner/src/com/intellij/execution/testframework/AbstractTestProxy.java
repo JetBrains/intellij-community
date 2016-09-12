@@ -148,7 +148,20 @@ public abstract class AbstractTestProxy extends CompositePrintable {
     final DiffHyperlink provider = getDiffViewerProvider();
     return provider == null ? Collections.<DiffHyperlink>emptyList() : Collections.singletonList(provider);
   }
-  
+
+  protected void addAfterLastPassed(Printable printable) {
+    int idx = 0;
+    synchronized (myNestedPrintables) {
+      for (Printable proxy : myNestedPrintables) {
+        if (proxy instanceof AbstractTestProxy && !((AbstractTestProxy)proxy).isPassed()) {
+          break;
+        }
+        idx++;
+      }
+    }
+    insert(printable, idx);
+  }
+
   @Nullable
   public DiffHyperlink getDiffViewerProvider() {
     return null;

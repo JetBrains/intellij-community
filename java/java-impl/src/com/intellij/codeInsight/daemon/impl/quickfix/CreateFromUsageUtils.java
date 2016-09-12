@@ -453,12 +453,7 @@ public class CreateFromUsageUtils {
             }
 
             if (superClassName != null && (classKind != CreateClassKind.ENUM || !superClassName.equals(CommonClassNames.JAVA_LANG_ENUM))) {
-              final PsiClass superClass =
-                facade.findClass(superClassName, targetClass.getResolveScope());
-              final PsiJavaCodeReferenceElement superClassReference = factory.createReferenceElementByFQClassName(superClassName, targetClass.getResolveScope());
-              final PsiReferenceList list = classKind == CreateClassKind.INTERFACE || superClass == null || !superClass.isInterface() ?
-                targetClass.getExtendsList() : targetClass.getImplementsList();
-              list.add(superClassReference);
+              setupSuperClassReference(targetClass, superClassName);
             }
             if (contextElement instanceof PsiJavaCodeReferenceElement) {
               CreateFromUsageBaseFix.setupGenericParameters(targetClass, (PsiJavaCodeReferenceElement)contextElement);
@@ -471,6 +466,17 @@ public class CreateFromUsageUtils {
           }
         }
       });
+  }
+
+  public static void setupSuperClassReference(PsiClass targetClass, String superClassName) {
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(targetClass.getProject());
+    PsiElementFactory factory = facade.getElementFactory();
+    final PsiClass superClass =
+      facade.findClass(superClassName, targetClass.getResolveScope());
+    final PsiJavaCodeReferenceElement superClassReference = factory.createReferenceElementByFQClassName(superClassName, targetClass.getResolveScope());
+    final PsiReferenceList list = targetClass.isInterface() || superClass == null || !superClass.isInterface() ?
+                                  targetClass.getExtendsList() : targetClass.getImplementsList();
+    list.add(superClassReference);
   }
 
   public static void scheduleFileOrPackageCreationFailedMessageBox(final IncorrectOperationException e, final String name, final PsiDirectory directory,

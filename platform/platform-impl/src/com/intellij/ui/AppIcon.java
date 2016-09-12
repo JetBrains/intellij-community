@@ -26,6 +26,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.UIUtil;
 import org.apache.sanselan.ImageWriteException;
@@ -256,7 +257,12 @@ public abstract class AppIcon {
       if (visible) {
         Icon okIcon = AllIcons.Mac.AppIconOk512;
 
-        int x = img.myImg.getWidth() - okIcon.getIconWidth();
+        int myImgWidth = img.myImg.getWidth();
+        if (myImgWidth != 128) {
+          okIcon = IconUtil.scale(okIcon, myImgWidth / 128);
+        }
+
+        int x = myImgWidth - okIcon.getIconWidth();
         int y = 0;
 
         okIcon.paintIcon(JOptionPane.getRootFrame(), img.myG2d, x, y);

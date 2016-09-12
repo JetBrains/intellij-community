@@ -581,7 +581,7 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   public void addStdOutput(final String output, final Key outputType) {
-    addLast(new Printable() {
+    addAfterLastPassed(new Printable() {
       public void printOn(final Printer printer) {
         printer.print(output, ConsoleViewContentType.getConsoleViewType(outputType));
       }
@@ -589,7 +589,7 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   public void addStdErr(final String output) {
-    addLast(new Printable() {
+    addAfterLastPassed(new Printable() {
       public void printOn(final Printer printer) {
         printer.print(output, ConsoleViewContentType.ERROR_OUTPUT);
       }
@@ -615,7 +615,7 @@ public class SMTestProxy extends AbstractTestProxy {
     }
     setStacktraceIfNotSet(stackTrace);
 
-    addLast(new Printable() {
+    addAfterLastPassed(new Printable() {
       public void printOn(final Printer printer) {
         String errorText = TestFailedState.buildErrorPresentationText(output, stackTrace);
         LOG.assertTrue(errorText != null);
@@ -634,7 +634,7 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   public void addSystemOutput(final String output) {
-    addLast(new Printable() {
+    addAfterLastPassed(new Printable() {
       public void printOn(final Printer printer) {
         printer.print(output, ConsoleViewContentType.SYSTEM_OUTPUT);
       }

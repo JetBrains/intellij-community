@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
+import com.intellij.codeInsight.generation.actions.CommentByLineCommentAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -672,7 +673,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
 
     CaretModel caretModel = myEditor.getCaretModel();
     caretModel.moveToOffset(text.indexOf("2.") + 2);
-    lineComment();
+    new CommentByLineCommentAction().actionPerformedImpl(getProject(), getEditor());
     
     assertEquals(myEditor.offsetToLogicalPosition(text.indexOf("3.") + 2), caretModel.getLogicalPosition());
   }

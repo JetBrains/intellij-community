@@ -26,7 +26,7 @@ import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -92,15 +92,21 @@ public class JavaConstructorCallElement extends JavaMethodCallElement {
   static List<? extends LookupElement> wrap(@NotNull LookupElement classItem, @NotNull PsiClass psiClass,
                                             @NotNull PsiElement position, @NotNull Supplier<PsiClassType> type) {
     if (Registry.is("java.completion.show.constructors") && isConstructorCallPlace(position)) {
-      PsiMethod[] constructors = psiClass.getConstructors();
-      if (constructors.length > 0) {
-        return JBIterable.of(constructors).
-          filter(c -> JavaResolveUtil.isAccessible(c, psiClass, c.getModifierList(), position, null, null)).
-          map(c -> new JavaConstructorCallElement(classItem, c, type)).
-          toList();
+      List<PsiMethod> constructors = ContainerUtil.filter(psiClass.getConstructors(), c -> shouldSuggestConstructor(psiClass, position, c));
+      if (!constructors.isEmpty()) {
+        return ContainerUtil.map(constructors, c -> new JavaConstructorCallElement(classItem, c, type));
       }
     }
     return Collections.singletonList(classItem);
+  }
+
+  private static boolean shouldSuggestConstructor(@NotNull PsiClass psiClass, @NotNull PsiElement position, PsiMethod constructor) {
+    return JavaResolveUtil.isAccessible(constructor, psiClass, constructor.getModifierList(), position, null, null) ||
+           willBeAccessibleInAnonymous(psiClass, constructor);
+  }
+
+  private static boolean willBeAccessibleInAnonymous(@NotNull PsiClass psiClass, PsiMethod constructor) {
+    return !constructor.hasModifierProperty(PsiModifier.PRIVATE) && psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
   }
 
   private static boolean isConstructorCallPlace(@NotNull PsiElement position) {
