@@ -21,36 +21,17 @@ import com.google.gson.JsonParser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.net.IdeHttpClientHelpers;
-import com.intellij.util.net.ssl.CertificateManager;
 import org.apache.http.*;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.Credentials;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.config.AuthSchemes;
-import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.*;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.config.ConnectionConfig;
-import org.apache.http.conn.ssl.X509HostnameVerifier;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.auth.BasicScheme;
-import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.protocol.HttpContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.github.api.data.GithubErrorMessage;
 import org.jetbrains.plugins.github.exceptions.*;
 import org.jetbrains.plugins.github.util.GithubAuthData;
-import org.jetbrains.plugins.github.util.GithubSettings;
 import org.jetbrains.plugins.github.util.GithubUrlUtil;
 import org.jetbrains.plugins.github.util.GithubUtil;
 
@@ -60,7 +41,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.net.URISyntaxException;
 import java.security.cert.CertificateException;
 import java.util.*;
 import java.util.List;
@@ -84,7 +64,7 @@ public class GithubConnection {
 
   public GithubConnection(@NotNull GithubAuthData auth, boolean reusable) {
     myHost = auth.getHost();
-    myClient = createClient(auth);
+    myClient = new GithubConnectionBuilder(auth).createClient();
     myReusable = reusable;
   }
 
@@ -139,91 +119,6 @@ public class GithubConnection {
 
   public void close() throws IOException {
     myClient.close();
-  }
-
-  @NotNull
-  private static CloseableHttpClient createClient(@NotNull GithubAuthData auth) {
-    HttpClientBuilder builder = HttpClients.custom();
-
-    builder
-      .setDefaultRequestConfig(createRequestConfig(auth))
-      .setDefaultConnectionConfig(createConnectionConfig(auth))
-      .setDefaultHeaders(createHeaders(auth))
-      .setSslcontext(CertificateManager.getInstance().getSslContext())
-      .setHostnameVerifier((X509HostnameVerifier)CertificateManager.HOSTNAME_VERIFIER);
-
-    setupCredentialsProvider(builder, auth);
-
-    return builder.build();
-  }
-
-  @NotNull
-  private static RequestConfig createRequestConfig(@NotNull GithubAuthData auth) {
-    RequestConfig.Builder builder = RequestConfig.custom();
-
-    int timeout = GithubSettings.getInstance().getConnectionTimeout();
-    builder
-      .setConnectTimeout(timeout)
-      .setSocketTimeout(timeout);
-
-    if (auth.isUseProxy()) {
-      IdeHttpClientHelpers.ApacheHttpClient4.setProxyForUrlIfEnabled(builder, auth.getHost());
-    }
-
-    return builder.build();
-  }
-
-  @NotNull
-  private static ConnectionConfig createConnectionConfig(@NotNull GithubAuthData auth) {
-    return ConnectionConfig.custom()
-      .setCharset(Consts.UTF_8)
-      .build();
-  }
-
-
-  @NotNull
-  private static CredentialsProvider setupCredentialsProvider(@NotNull HttpClientBuilder builder, @NotNull GithubAuthData auth) {
-    CredentialsProvider provider = new BasicCredentialsProvider();
-    // Basic authentication
-    GithubAuthData.BasicAuth basicAuth = auth.getBasicAuth();
-    if (basicAuth != null) {
-      AuthScope authScope = getBasicAuthScope(auth);
-
-      provider.setCredentials(authScope, new UsernamePasswordCredentials(basicAuth.getLogin(), basicAuth.getPassword()));
-      builder.addInterceptorFirst(new PreemptiveBasicAuthInterceptor(authScope));
-    }
-    builder.setDefaultCredentialsProvider(provider);
-
-    if (auth.isUseProxy()) {
-      IdeHttpClientHelpers.ApacheHttpClient4.setProxyCredentialsForUrlIfEnabled(provider, auth.getHost());
-    }
-
-    return provider;
-  }
-
-  @NotNull
-  private static AuthScope getBasicAuthScope(@NotNull GithubAuthData auth) {
-    try {
-      URIBuilder builder = new URIBuilder(auth.getHost());
-      return new AuthScope(builder.getHost(), builder.getPort(), AuthScope.ANY_REALM, AuthSchemes.BASIC);
-    }
-    catch (URISyntaxException e) {
-      return AuthScope.ANY;
-    }
-  }
-
-  @NotNull
-  private static Collection<? extends Header> createHeaders(@NotNull GithubAuthData auth) {
-    List<Header> headers = new ArrayList<>();
-    GithubAuthData.TokenAuth tokenAuth = auth.getTokenAuth();
-    if (tokenAuth != null) {
-      headers.add(new BasicHeader("Authorization", "token " + tokenAuth.getToken()));
-    }
-    GithubAuthData.BasicAuth basicAuth = auth.getBasicAuth();
-    if (basicAuth != null && basicAuth.getCode() != null) {
-      headers.add(new BasicHeader("X-GitHub-OTP", basicAuth.getCode()));
-    }
-    return headers;
   }
 
   @NotNull
@@ -537,23 +432,6 @@ public class GithubConnection {
     @NotNull
     public Header[] getHeaders() {
       return myHeaders;
-    }
-  }
-
-  private static class PreemptiveBasicAuthInterceptor implements HttpRequestInterceptor {
-    @NotNull private final AuthScope myBasicAuthScope;
-
-    public PreemptiveBasicAuthInterceptor(@NotNull AuthScope basicAuthScope) {
-      myBasicAuthScope = basicAuthScope;
-    }
-
-    @Override
-    public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
-      CredentialsProvider provider = (CredentialsProvider)context.getAttribute(HttpClientContext.CREDS_PROVIDER);
-      Credentials credentials = provider.getCredentials(myBasicAuthScope);
-      if (credentials != null) {
-        request.addHeader(new BasicScheme(Consts.UTF_8).authenticate(credentials, request, context));
-      }
     }
   }
 
