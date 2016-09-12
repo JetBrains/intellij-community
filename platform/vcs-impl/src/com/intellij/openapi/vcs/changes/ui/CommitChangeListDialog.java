@@ -271,7 +271,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                  final boolean isAlien,
                                  final String comment,
                                  @Nullable CommitResultHandler customResultHandler) {
-    super(project, true);
+    super(project, true, (Registry.is("ide.perProjectModality")) ? IdeModalityType.PROJECT : IdeModalityType.IDE);
     myCommitContext = new CommitContext();
     myProject = project;
     myVcsConfiguration = ObjectUtils.assertNotNull(VcsConfiguration.getInstance(myProject));
