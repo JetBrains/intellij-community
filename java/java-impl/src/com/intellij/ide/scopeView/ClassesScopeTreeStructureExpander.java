@@ -20,14 +20,12 @@ import com.intellij.ide.projectView.PsiClassChildrenSource;
 import com.intellij.ide.scopeView.nodes.ClassNode;
 import com.intellij.ide.scopeView.nodes.FieldNode;
 import com.intellij.ide.scopeView.nodes.MethodNode;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.ui.DependencyNodeComparator;
 import com.intellij.packageDependencies.ui.DirectoryNode;
 import com.intellij.packageDependencies.ui.FileNode;
-import com.intellij.packageDependencies.ui.PackageDependenciesNode;
 import com.intellij.psi.*;
 import com.intellij.util.ui.tree.TreeUtil;
 
@@ -74,7 +72,7 @@ public class ClassesScopeTreeStructureExpander implements ScopeTreeStructureExpa
               if (classNodes == null) {
                 classNodes = new HashSet<>();
               }
-              commitDocument((PsiFile)file);
+
               for (final PsiClass psiClass : psiClasses) {
                 if (psiClass != null && psiClass.isValid()) {
                   final ClassNode classNode = new ClassNode(psiClass);
@@ -155,9 +153,4 @@ public class ClassesScopeTreeStructureExpander implements ScopeTreeStructureExpa
     return new DependencyNodeComparator(ProjectView.getInstance(myProject).isSortByType(ScopeViewPane.ID));
   }
 
-  private void commitDocument(final PsiFile file) {
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-    final Document document = documentManager.getDocument(file);
-    documentManager.commitDocument(document);
-  }
 }
