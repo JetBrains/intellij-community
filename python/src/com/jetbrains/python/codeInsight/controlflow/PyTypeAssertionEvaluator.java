@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyConstantExpressionEvaluator;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -111,9 +112,10 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyBinaryExpression(PyBinaryExpression node) {
+    final PyExpression lhs = node.getLeftExpression();
+    final PyExpression rhs = node.getRightExpression();
+
     if (node.isOperator("isnot")) {
-      final PyExpression lhs = node.getLeftExpression();
-      final PyExpression rhs = node.getRightExpression();
       if (lhs instanceof PyReferenceExpression && rhs instanceof PyReferenceExpression) {
         final PyReferenceExpression target = (PyReferenceExpression)lhs;
         if (PyNames.NONE.equals(rhs.getName())) {
@@ -130,6 +132,22 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
         }
       }
     }
+
+    final Object leftValue = PyConstantExpressionEvaluator.evaluate(lhs);
+    final Object rightValue = PyConstantExpressionEvaluator.evaluate(rhs);
+
+    if (leftValue instanceof Boolean && rightValue instanceof Boolean) {
+      return;
+    }
+
+    if (node.isOperator(PyNames.IS) && (leftValue == Boolean.FALSE || rightValue == Boolean.FALSE) ||
+        node.isOperator("isnot") && (leftValue == Boolean.TRUE || rightValue == Boolean.TRUE)) {
+      myPositive = !myPositive;
+      super.visitPyBinaryExpression(node);
+      myPositive = !myPositive;
+      return;
+    }
+
     super.visitPyBinaryExpression(node);
   }
 
