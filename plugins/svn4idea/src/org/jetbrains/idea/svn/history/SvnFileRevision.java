@@ -107,6 +107,7 @@ public class SvnFileRevision implements VcsFileRevision {
   }
 
 
+  @NotNull
   public VcsRevisionNumber getRevisionNumber() {
     return myRevisionNumber;
   }
