@@ -63,11 +63,27 @@ new Gr().fo<caret>o()
      Use <a href="psi_element://Gr#bar()"><code>bar()</code></a> from class <a href="psi_element://Gr"><code>Gr</code></a> instead</body></html>'''
   }
 
+  void 'test untyped local variable'() {
+    doTest '''\
+def aa = 1
+a<caret>a
+''', '''\
+<html><head>    <style type="text/css">        #error {            background-color: #eeeeee;            margin-bottom: 10px;        }        p {            margin: 5px 0;        }    </style></head><body><PRE><a href="psi_element://java.lang.Object"><code>Object</code></a> <b>aa</b></PRE><p>[inferred type] <a href="psi_element://java.lang.Integer"><code>Integer</code></a></body></html>'''
+  }
+
+  void 'test implicit closure parameter'() {
+    doTest '''\
+List<String> ss = []
+ss.collect { i<caret>t }
+''', '''\
+<html><head>    <style type="text/css">        #error {            background-color: #eeeeee;            margin-bottom: 10px;        }        p {            margin: 5px 0;        }    </style></head><body><PRE><a href="psi_element://java.lang.Object"><code>Object</code></a> <b>it</b></PRE><p>[inferred type] <a href="psi_element://java.lang.String"><code>String</code></a></body></html>'''
+  }
+
   private void doTest(String text, String doc) {
     myFixture.configureByText '_.groovy', text
     def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
     def provider = new GroovyDocumentationProvider()
     def info = provider.generateDoc(ref.resolve(), ref.element)
-    assert info == doc
+    assertEquals(doc, info)
   }
 }
