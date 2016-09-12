@@ -31,7 +31,8 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.indexing.AdditionalIndexableFileSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,7 +44,13 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
   private final ProjectRootManager myProjectRootManager;
   private final PsiManager myManager;
 
-  private final Map<VirtualFile, GlobalSearchScope> myDefaultResolveScopesCache = new ConcurrentFactoryMap<VirtualFile, GlobalSearchScope>() {
+  private final Map<VirtualFile, GlobalSearchScope> myDefaultResolveScopesCache = new FactoryMap<VirtualFile, GlobalSearchScope>() {
+
+    @Override
+    protected Map<VirtualFile, GlobalSearchScope> createMap() {
+      return ContainerUtil.createConcurrentWeakKeySoftValueMap();
+    }
+
     @Override
     protected GlobalSearchScope create(@NotNull VirtualFile key) {
       GlobalSearchScope scope = null;
