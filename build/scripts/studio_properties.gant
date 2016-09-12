@@ -200,6 +200,18 @@ def getProperties(String home, String buildNumber) {
             }
           }
 
+          dir("url-assistant") {
+            dir("lib") {
+              jar("url-assistant.jar") {
+                module("url-assistant")
+              }
+              fileset(dir: "${home}/../vendor/google/url-assistant/lib") {
+                include(name: "**/*.jar")
+                include(name: "**/*.jar-NOTICE")
+              }
+            }
+          }
+
           dir("firebase") {
             dir("lib") {
               jar("firebase.jar") {
