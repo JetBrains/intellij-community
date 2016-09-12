@@ -136,19 +136,6 @@ public class PyTypeTest extends PyTestCase {
            "expr = u'foo'");
   }
 
-  // TODO: uncomment when we have a mock SDK for Python 3.x
-  // PY-1427
-  public void _testBytesLiteral() {  // PY-1427
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
-    try {
-      doTest("bytes",
-             "expr = b'foo'");
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
-  }
-
   public void testPropertyType() {
     doTest("property",
            "class C:\n" +
