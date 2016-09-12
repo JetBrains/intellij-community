@@ -17,6 +17,8 @@ package com.jetbrains.python.run;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Output;
+import com.intellij.execution.OutputListener;
 import com.intellij.execution.RunContentExecutor;
 import com.intellij.execution.configurations.EncodingEnvironmentUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -39,9 +41,11 @@ import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -71,11 +75,24 @@ public class PythonTask {
     this(module, runTabTitle, PythonSdkType.findPythonSdk(module));
   }
 
+  @NotNull
+  public static PythonTask create(@NotNull final Module module,
+                                  @NotNull final String runTabTitle,
+                                  @NotNull final Sdk sdk) {
+    // Ctor throws checked exception which is not good, so this wrapper saves user from dumb code
+    try {
+      return new PythonTask(module, runTabTitle, sdk);
+    }
+    catch (final ExecutionException ignored) {
+      throw new AssertionError("Exception thrown file should not be");
+    }
+  }
+
   public PythonTask(final Module module, final String runTabTitle, @Nullable final Sdk sdk) throws ExecutionException {
     myModule = module;
     myRunTabTitle = runTabTitle;
     mySdk = sdk;
-    if (mySdk == null) {
+    if (mySdk == null) { // TODO: Get rid of such a weird contract
       throw new ExecutionException("Cannot find Python interpreter for selected module");
     }
   }
@@ -167,11 +184,11 @@ public class PythonTask {
       NotNullFunction<String, String> escaperFunction = StringUtil.escaper(false, "|>$\"'& ");
       StringBuilder paramString;
       if (myHelper != null) {
-        paramString= new StringBuilder(escaperFunction.fun(homePath) + " " + escaperFunction.fun(myHelper.asParamString()));
+        paramString = new StringBuilder(escaperFunction.fun(homePath) + " " + escaperFunction.fun(myHelper.asParamString()));
         myHelper.addToPythonPath(cmd.getEnvironment());
       }
       else {
-        paramString= new StringBuilder(escaperFunction.fun(homePath) + " " + escaperFunction.fun(myRunnerScript));
+        paramString = new StringBuilder(escaperFunction.fun(homePath) + " " + escaperFunction.fun(myRunnerScript));
       }
       for (String p : myParameters) {
         paramString.append(" ").append(p);
@@ -245,5 +262,28 @@ public class PythonTask {
       .withAfterCompletion(myAfterCompletion)
       .withHelpId(myHelpId)
       .run();
+  }
+
+
+  /**
+   * Runs task with out console
+   * @return stdout
+   * @throws ExecutionException in case of error. Consider using {@link com.intellij.execution.util.ExecutionErrorDialog}
+   */
+  @NotNull  //TODO: DOC, ExecutionErrorDialog
+  public final String runNoConsole() throws ExecutionException {
+
+    final ProcessHandler process = createProcess(new HashMap<>());
+    final OutputListener listener = new OutputListener();
+    process.addProcessListener(listener);
+    process.startNotify();
+    process.waitFor();
+    final Output output = listener.getOutput();
+    final int exitCode = output.getExitCode();
+    if (exitCode == 0) {
+      return output.getStdout();
+    }
+    throw new ExecutionException(String.format("Error on python side. " +
+                                               "Exit code: %s, err: %s out: %s", exitCode, output.getStderr(), output.getStdout()));
   }
 }

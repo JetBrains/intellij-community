@@ -22,6 +22,7 @@ import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
@@ -140,7 +141,7 @@ public abstract class PythonRemoteInterpreterManager {
    *
    * @param callAfterCheck what to call after configuration completes (runs on AWT)
    */
-  public abstract void prepareRemoteSettingsIfNeeded(@NotNull final Project project,
+  public abstract void prepareRemoteSettingsIfNeeded(@NotNull final Module module,
                                                      @NotNull final Sdk sdk,
                                                      @NotNull final Runnable callAfterCheck);
 

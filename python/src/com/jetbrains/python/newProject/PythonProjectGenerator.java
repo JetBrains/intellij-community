@@ -67,7 +67,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> imp
     final PythonRemoteInterpreterManager remoteManager = PythonRemoteInterpreterManager.getInstance();
     final Sdk sdk = (settings != null ? settings.getSdk() : null);
     if (remoteManager != null && PythonSdkType.isRemote(sdk)) {
-      remoteManager.prepareRemoteSettingsIfNeeded(project, sdk, configureProject);
+      remoteManager.prepareRemoteSettingsIfNeeded(module, sdk, configureProject);
     }
     else {
       configureProject.run();
