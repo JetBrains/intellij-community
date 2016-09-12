@@ -15,12 +15,18 @@
  */
 package com.intellij.psi;
 
+import com.intellij.psi.javadoc.PsiDocComment;
+import org.jetbrains.annotations.Nullable;
+
 /**
- * Represents a PSI element which can have an attached JavaDoc comment.
+ * A valid target element for a Javadoc comment (class member, module declaration etc.)
+ *
+ * @since 2016.3
  */
-public interface PsiDocCommentOwner extends PsiMember, PsiJavaDocumentedElement {
+public interface PsiJavaDocumentedElement extends PsiElement {
   /**
-   * Returns {@code true} if the element is marked as deprecated via an annotation or a JavaDoc tag.
+   * Returns the JavaDoc comment for the element, or {@code null} when the element has no JavaDoc comment.
    */
-  boolean isDeprecated();
+  @Nullable
+  PsiDocComment getDocComment();
 }

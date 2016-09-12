@@ -462,9 +462,21 @@ public class PsiImplUtil {
     return AnnotationUtil.findAnnotation(owner, CommonClassNames.JAVA_LANG_DEPRECATED) != null;
   }
 
-  public static boolean isDeprecatedByDocTag(@NotNull PsiDocCommentOwner owner) {
+  public static boolean isDeprecatedByDocTag(@NotNull PsiJavaDocumentedElement owner) {
     PsiDocComment docComment = owner.getDocComment();
     return docComment != null && docComment.findTagByName("deprecated") != null;
+  }
+
+  @Nullable
+  public static PsiJavaDocumentedElement findDocCommentOwner(@NotNull PsiDocComment comment) {
+    PsiElement parent = comment.getParent();
+    if (parent instanceof PsiJavaDocumentedElement) {
+      PsiJavaDocumentedElement owner = (PsiJavaDocumentedElement)parent;
+      if (owner.getDocComment() == comment) {
+        return owner;
+      }
+    }
+    return null;
   }
 
   @Nullable
