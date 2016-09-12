@@ -165,6 +165,10 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   }
 
   public static void trackCrashes(@NotNull List<String> descriptions) {
+    if (descriptions.isEmpty()) {
+      return;
+    }
+
     CrashReport report = CrashReport.Builder.createForCrashes(descriptions).build();
     GoogleCrash.getInstance().submit(report);
     trackExceptionsAndActivity(0, 0, 0, 0, descriptions.size());
