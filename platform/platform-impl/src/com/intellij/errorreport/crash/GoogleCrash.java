@@ -31,6 +31,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.HttpResponseException;
+import org.apache.http.client.entity.GzipCompressingEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
@@ -170,7 +171,7 @@ public class GoogleCrash {
     builder.addTextBody("heapCommitted", Long.toString(usage.getCommitted()));
     builder.addTextBody("heapMax", Long.toString(usage.getMax()));
 
-    post.setEntity(builder.build());
+    post.setEntity(new GzipCompressingEntity(builder.build()));
     return post;
   }
 
