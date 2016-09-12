@@ -1964,8 +1964,13 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   private void doCheckDuplicateMethod(@NotNull GrMethod method, @NotNull PsiClass clazz) {
-    MethodSignature signature = GrClassImplUtil.getDuplicatedMethods(clazz).get(method);
-    if (signature == null) return;
+    Set<MethodSignature> duplicatedSignatures = GrClassImplUtil.getDuplicatedSignatures(clazz);
+    if (duplicatedSignatures.isEmpty()) return; // optimization
+
+    PsiSubstitutor substitutor = JavaPsiFacade.getElementFactory(method.getProject()).createRawSubstitutor(method);
+    MethodSignature signature = method.getSignature(substitutor);
+    if (!duplicatedSignatures.contains(signature)) return;
+
     String signaturePresentation = GroovyPresentationUtil.getSignaturePresentation(signature);
     GrMethod original = method instanceof GrReflectedMethod ? ((GrReflectedMethod)method).getBaseMethod() : method;
     myHolder.createErrorAnnotation(

@@ -619,23 +619,19 @@ public class GrClassImplUtil {
   }
 
   @NotNull
-  public static Map<PsiMethod, MethodSignature> getDuplicatedMethods(@NotNull PsiClass clazz) {
+  public static Set<MethodSignature> getDuplicatedSignatures(@NotNull PsiClass clazz) {
     return CachedValuesManager.getCachedValue(clazz, () -> {
       PsiElementFactory factory = JavaPsiFacade.getInstance(clazz.getProject()).getElementFactory();
-
       MostlySingularMultiMap<MethodSignature, PsiMethod> signatures = MostlySingularMultiMap.newMap();
       for (PsiMethod method : clazz.getMethods()) {
         MethodSignature signature = method.getSignature(factory.createRawSubstitutor(method));
         signatures.add(signature, method);
       }
 
-      Map<PsiMethod, MethodSignature> result = ContainerUtil.newHashMap();
+      Set<MethodSignature> result = ContainerUtil.newHashSet();
       for (MethodSignature signature : signatures.keySet()) {
         if (signatures.valuesForKey(signature) > 1) {
-          signatures.processForKey(signature, m -> {
-            result.put(m, signature);
-            return true;
-          });
+          result.add(signature);
         }
       }
 
