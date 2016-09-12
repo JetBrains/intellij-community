@@ -1619,6 +1619,7 @@
     <stripTrailingSpacesFilterFactory implementation="org.jetbrains.plugins.groovy.editor.GroovyStripTrailingSpacesFilterFactory"/>
     <generateAccessorProvider implementation="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateAccessorProvider"/>
     <consoleFilterProvider implementation="org.jetbrains.plugins.groovy.execution.filters.GrCompilationErrorsFilterProvider"/>
+    <outOfSourcesChecker implementation="org.jetbrains.plugins.groovy.projectRoots.GroovyOutOfSourcesChecker"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">
