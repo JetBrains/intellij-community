@@ -135,15 +135,14 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                   .findExitPointsAndStatements(controlFlow, tb.getStartOffset(controlFlow), tb.getEndOffset(controlFlow),
                                                new IntArrayList(), PsiContinueStatement.class,
                                                PsiBreakStatement.class, PsiReturnStatement.class, PsiThrowStatement.class);
+                int startOffset = controlFlow.getStartOffset(body);
+                int endOffset = controlFlow.getEndOffset(body);
+                final List<PsiVariable> nonFinalVariables = StreamEx
+                  .of(ControlFlowUtil.getUsedVariables(controlFlow, startOffset, endOffset))
+                  .remove(variable -> HighlightControlFlowUtil.isEffectivelyFinal(variable, body, null))
+                  .toList();
+
                 if (exitPoints.isEmpty()) {
-
-                  int startOffset = controlFlow.getStartOffset(body);
-                  int endOffset = controlFlow.getEndOffset(body);
-                  final List<PsiVariable> nonFinalVariables = StreamEx
-                    .of(ControlFlowUtil.getUsedVariables(controlFlow, startOffset, endOffset))
-                    .remove(variable -> HighlightControlFlowUtil.isEffectivelyFinal(variable, body, null))
-                    .toList();
-
                   if(getIncrementedVariable(tb, operations, nonFinalVariables) != null) {
                     registerProblem(holder, statement, "count", new ReplaceWithCountFix());
                   }
@@ -181,7 +180,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                     registerProblem(holder, statement, "forEach", fixes.toArray(new LocalQuickFix[fixes.size()]));
                   }
                 } else {
-                  if(tb.getSingleStatement() instanceof PsiReturnStatement) {
+                  if(nonFinalVariables.isEmpty() && tb.getSingleStatement() instanceof PsiReturnStatement) {
                     PsiReturnStatement returnStatement = (PsiReturnStatement)tb.getSingleStatement();
                     PsiExpression value = returnStatement.getReturnValue();
                     if(isLiteral(value, Boolean.TRUE) || isLiteral(value, Boolean.FALSE)) {
@@ -190,7 +189,19 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                       if(nextStatement instanceof PsiReturnStatement) {
                         PsiReturnStatement nextReturnStatement = (PsiReturnStatement)nextStatement;
                         if(isLiteral(nextReturnStatement.getReturnValue(), !foundResult)) {
-                          String methodName = foundResult ? "anyMatch" : "noneMatch";
+                          String methodName;
+                          if (foundResult) {
+                            methodName = "anyMatch";
+                          }
+                          else {
+                            methodName = "noneMatch";
+                            if(!operations.isEmpty()) {
+                              Operation lastOp = operations.get(operations.size() - 1);
+                              if(lastOp instanceof FilterOp && BoolUtils.isNegation(lastOp.getExpression())) {
+                                methodName = "allMatch";
+                              }
+                            }
+                          }
                           registerProblem(holder, statement, methodName, new ReplaceWithMatchFix(methodName));
                         }
                       }
@@ -889,6 +900,25 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       if(!(stream instanceof PsiMethodCallExpression)) return;
       PsiElement nameElement = ((PsiMethodCallExpression)stream).getMethodExpression().getReferenceNameElement();
       if(nameElement != null && nameElement.getText().equals("filter")) {
+        if(!foundResult) {
+          PsiExpression[] expressions = ((PsiMethodCallExpression)stream).getArgumentList().getExpressions();
+          if(expressions.length == 1 && expressions[0] instanceof PsiLambdaExpression) {
+            PsiLambdaExpression lambda = (PsiLambdaExpression)expressions[0];
+            PsiElement lambdaBody = lambda.getBody();
+            if(lambdaBody instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)lambdaBody)) {
+              PsiExpression negated = BoolUtils.getNegated((PsiExpression)lambdaBody);
+              LOG.assertTrue(negated != null);
+              String methodReferenceText = LambdaCanBeMethodReferenceInspection
+                .convertToMethodReference(negated, lambda.getParameterList().getParameters(), lambda.getFunctionalInterfaceType(), lambda);
+              if(methodReferenceText != null) {
+                lambda.replace(elementFactory.createExpressionFromText(methodReferenceText, lambda));
+              } else {
+                lambdaBody.replace(negated);
+              }
+              methodName = "allMatch";
+            }
+          }
+        }
         nameElement.replace(elementFactory.createIdentifier(methodName));
         streamText = stream.getText();
       } else {
