@@ -682,7 +682,7 @@ public final class GuiTests {
 
   @NotNull
   public static JButton findButton(@NotNull ContainerFixture<? extends Container> container, @NotNull final String text, Robot robot) {
-    return robot.finder().find(container.target(), new GenericTypeMatcher<JButton>(JButton.class) {
+    GenericTypeMatcher<JButton> matcher = new GenericTypeMatcher<JButton>(JButton.class) {
       @Override
       protected boolean isMatching(@NotNull JButton button) {
         String buttonText = button.getText();
@@ -691,7 +691,17 @@ public final class GuiTests {
         }
         return false;
       }
-    });
+    };
+
+    pause(new Condition("Finding for a button with text \"" + text + "\"") {
+      @Override
+      public boolean test() {
+        Collection<JButton> buttons = robot.finder().findAll(matcher);
+        return !buttons.isEmpty();
+      }
+    }, SHORT_TIMEOUT);
+
+    return robot.finder().find(container.target(), matcher);
   }
 
   /** Returns a full path to the GUI data directory in the user's AOSP source tree, if known, or null */

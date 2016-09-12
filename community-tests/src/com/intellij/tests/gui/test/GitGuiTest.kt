@@ -17,7 +17,6 @@ package com.intellij.tests.gui.test
 
 import com.intellij.dvcs.ui.CloneDvcsDialog
 import com.intellij.dvcs.ui.DvcsBundle
-import com.intellij.ide.IdeBundle
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.tests.gui.BelongsToTestGroups
@@ -69,7 +68,6 @@ class GitGuiTest : GuiTestCase() {
       GuiTests.findAndClickButton(this, "Next") //libraries
       GuiTests.findAndClickButton(this, "Next") //module dependencies
       GuiTests.findAndClickButton(this, "Next") //select sdk
-      MessagesFixture.findByTitle(myRobot, this.target(), IdeBundle.message("title.no.jdk.specified")).clickOk()
       GuiTests.findAndClickButton(this, "Finish")
     }
     val ideFrame = findIdeFrame()

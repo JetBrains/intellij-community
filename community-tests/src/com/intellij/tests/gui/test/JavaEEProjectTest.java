@@ -70,6 +70,7 @@ public class JavaEEProjectTest extends GuiTestCase {
     newProjectWizard.clickFinish();
 
     myProjectFrame = findIdeFrame(projectName, locationInFileSystem);
+    myProjectFrame.waitForBackgroundTasksToFinish();
 
     final ProjectViewFixture projectView = myProjectFrame.getProjectView();
     final ProjectViewFixture.PaneFixture paneFixture = projectView.selectProjectPane();

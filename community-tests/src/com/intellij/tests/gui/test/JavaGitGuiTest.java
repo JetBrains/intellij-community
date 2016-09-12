@@ -21,10 +21,10 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.tests.gui.fixtures.*;
 import com.intellij.tests.gui.framework.GuiTestCase;
-import com.intellij.tests.gui.framework.GuiTests;
 import com.intellij.ui.EditorComboBox;
 import org.fest.swing.edt.GuiActionRunner;
 import org.fest.swing.edt.GuiTask;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static com.intellij.tests.gui.framework.GuiTests.findAndClickButton;
@@ -34,6 +34,7 @@ import static com.intellij.tests.gui.framework.GuiTests.findAndClickButton;
  */
 public class JavaGitGuiTest extends GuiTestCase {
 
+  @Ignore
   @Test
   public void testGitImport(){
     String gitPath = "https://github.com/karashevich/test.git";

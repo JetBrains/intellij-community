@@ -15,13 +15,16 @@
  */
 package com.intellij.tests.gui.fixtures;
 
-import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.tests.gui.framework.GuiTests;
 import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.Robot;
 import org.fest.swing.fixture.ContainerFixture;
+import org.fest.swing.timing.Condition;
+import org.fest.swing.timing.Pause;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Collection;
 
 /**
  * Created by jetbrains on 22/08/16.
@@ -38,12 +41,22 @@ public class DialogFixture implements ContainerFixture<JDialog> {
 
   @NotNull
   public static DialogFixture find(@NotNull Robot robot, String title) {
-    JDialog dialog = robot.finder().find(new GenericTypeMatcher<JDialog>(JDialog.class) {
+    GenericTypeMatcher<JDialog> matcher = new GenericTypeMatcher<JDialog>(JDialog.class) {
       @Override
       protected boolean isMatching(@NotNull JDialog dialog) {
         return title.equals(dialog.getTitle()) && dialog.isShowing();
       }
-    });
+    };
+
+    Pause.pause(new Condition("Finding for DialogFixture with title \"" + title + "\"") {
+      @Override
+      public boolean test() {
+        Collection<JDialog> dialogs = robot.finder().findAll(matcher);
+        return !dialogs.isEmpty();
+      }
+    }, GuiTests.SHORT_TIMEOUT);
+
+    JDialog dialog = robot.finder().find(matcher);
     return new DialogFixture(robot, dialog);
   }
 

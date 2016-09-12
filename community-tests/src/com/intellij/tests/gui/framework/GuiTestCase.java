@@ -37,7 +37,7 @@ import com.intellij.tests.gui.fixtures.IdeFrameFixture;
 import com.intellij.tests.gui.fixtures.WelcomeFrameFixture;
 import com.intellij.tests.gui.fixtures.newProjectWizard.NewProjectWizardFixture;
 import com.intellij.util.net.HttpConfigurable;
-import org.fest.swing.core.BasicRobot;
+import org.fest.swing.core.AdvancedRobot;
 import org.fest.swing.core.Robot;
 import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.edt.GuiTask;
@@ -68,7 +68,6 @@ import static junit.framework.Assert.assertNotNull;
 import static org.fest.swing.edt.GuiActionRunner.execute;
 import static org.fest.swing.timing.Pause.pause;
 import static org.fest.util.Strings.quote;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -99,8 +98,9 @@ public abstract class GuiTestCase {
     assertNotNull(application); // verify that we are using the IDE's ClassLoader.
     setUpDefaultProjectCreationLocationPath();
 
-    myRobot = BasicRobot.robotWithCurrentAwtHierarchy();
-    myRobot.settings().delayBetweenEvents(30);
+    //myRobot = BasicRobot.robotWithCurrentAwtHierarchy();
+    myRobot = new AdvancedRobot();
+    //myRobot.settings().delayBetweenEvents(30);
 
     setIdeSettings();
     setUpSdks();
@@ -319,6 +319,11 @@ public abstract class GuiTestCase {
     //}
 
     return projectPath;
+  }
+
+  private void updateLocalProperties(File path) {
+
+
   }
 
   @NotNull
