@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -323,7 +324,8 @@ public class ModuleHighlightUtil {
   }
 
   private static TextRange range(PsiJavaModule module) {
-    return new TextRange(module.getTextOffset(), module.getNameElement().getTextRange().getEndOffset());
+    PsiKeyword kw = PsiTreeUtil.getChildOfType(module, PsiKeyword.class);
+    return new TextRange(kw != null ? kw.getTextOffset() : module.getTextOffset(), module.getNameElement().getTextRange().getEndOffset());
   }
 
   private static PsiElement range(PsiJavaCodeReferenceElement refElement) {
