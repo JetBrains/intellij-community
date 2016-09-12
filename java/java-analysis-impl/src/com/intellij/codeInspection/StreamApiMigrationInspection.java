@@ -15,15 +15,19 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -55,6 +59,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   private static final Logger LOG = Logger.getInstance("#" + StreamApiMigrationInspection.class.getName());
 
   public boolean REPLACE_TRIVIAL_FOREACH;
+
+  private HighlightDisplayKey myKey;
 
   @Nullable
   @Override
@@ -139,14 +145,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                     .toList();
 
                   if(getIncrementedVariable(tb, operations, nonFinalVariables) != null) {
-                    holder.registerProblem(iteratedValue, "Can be replaced with count() call",
-                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                           new ReplaceWithCountFix());
+                    registerProblem(holder, statement, "count", new ReplaceWithCountFix());
                   }
                   if(getAccumulatedVariable(tb, operations, nonFinalVariables) != null) {
-                    holder.registerProblem(iteratedValue, "Can be replaced with sum() call",
-                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                           new ReplaceWithSumFix());
+                    registerProblem(holder, statement, "sum", new ReplaceWithSumFix());
                   }
                   if(!nonFinalVariables.isEmpty()) {
                     return;
@@ -165,9 +167,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                         methodName = "forEach";
                       }
                     }
-                    holder.registerProblem(iteratedValue, "Can be replaced with " + methodName + " call",
-                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                           new ReplaceWithCollectFix(methodName));
+                    registerProblem(holder, statement, methodName, new ReplaceWithCollectFix(methodName));
                   }
                   // do not replace for(T e : arr) {} with Arrays.stream(arr).forEach(e -> {}) even if flag is set
                   else if (!operations.isEmpty() ||
@@ -178,9 +178,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                       //for .stream()
                       fixes.add(new ReplaceWithForeachCallFix("forEachOrdered"));
                     }
-                    holder.registerProblem(iteratedValue, "Can be replaced with forEach call",
-                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                           fixes.toArray(new LocalQuickFix[fixes.size()]));
+                    registerProblem(holder, statement, "forEach", fixes.toArray(new LocalQuickFix[fixes.size()]));
                   }
                 } else {
                   if(tb.getSingleStatement() instanceof PsiReturnStatement) {
@@ -193,9 +191,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                         PsiReturnStatement nextReturnStatement = (PsiReturnStatement)nextStatement;
                         if(isLiteral(nextReturnStatement.getReturnValue(), !foundResult)) {
                           String methodName = foundResult ? "anyMatch" : "noneMatch";
-                          holder.registerProblem(iteratedValue, "Can be replaced with "+methodName+"() call",
-                                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                                 new ReplaceWithMatchFix(methodName));
+                          registerProblem(holder, statement, methodName, new ReplaceWithMatchFix(methodName));
                         }
                       }
                     }
@@ -214,6 +210,33 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           .isRawSubstitutor(collectionClass, TypeConversionUtil.getSuperClassSubstitutor(collectionClass, (PsiClassType)iteratedValueType));
       }
     };
+  }
+
+  @NotNull
+  private TextRange getRange(PsiForeachStatement statement) {
+    if(myKey == null) {
+      myKey = HighlightDisplayKey.find(getShortName());
+    }
+    boolean wholeStatement = false;
+    if(myKey != null) {
+      InspectionProfile profile = InspectionProjectProfileManager.getInstance(statement.getProject()).getCurrentProfile();
+      HighlightDisplayLevel level = profile.getErrorLevel(myKey, statement);
+      wholeStatement = HighlightDisplayLevel.DO_NOT_SHOW.equals(level);
+    }
+    PsiExpression iteratedValue = statement.getIteratedValue();
+    LOG.assertTrue(iteratedValue != null);
+    PsiJavaToken rParenth = statement.getRParenth();
+    if(wholeStatement && rParenth != null) {
+      return new TextRange(statement.getTextOffset(), rParenth.getTextOffset() + 1);
+    }
+    return iteratedValue.getTextRange();
+  }
+
+  private void registerProblem(ProblemsHolder holder, PsiForeachStatement statement, String methodName, LocalQuickFix... fixes) {
+    PsiExpression iteratedValue = statement.getIteratedValue();
+    LOG.assertTrue(iteratedValue != null);
+    holder.registerProblem(statement, getRange(statement).shiftRight(-statement.getTextOffset()),
+                           "Can be replaced with '" + methodName + "' call", fixes);
   }
 
   @Contract("null, _ -> false")
@@ -494,8 +517,9 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiForeachStatement foreachStatement = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiForeachStatement.class);
-      if (foreachStatement != null) {
+      PsiElement element = descriptor.getPsiElement();
+      if (element instanceof PsiForeachStatement) {
+        PsiForeachStatement foreachStatement = (PsiForeachStatement)element;
         PsiStatement body = foreachStatement.getBody();
         final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
         if (body != null && iteratedValue != null) {
