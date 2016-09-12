@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.messages.SheetController;
 import org.fest.swing.core.GenericTypeMatcher;
+import org.fest.swing.core.Robot;
 import org.fest.swing.fixture.ContainerFixture;
 import org.fest.swing.fixture.JPanelFixture;
 import org.jdom.Document;
@@ -28,8 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-
-import org.fest.swing.core.Robot;
 
 import static com.google.common.base.Strings.nullToEmpty;
 import static com.intellij.openapi.util.JDOMUtil.loadDocument;
@@ -98,7 +97,7 @@ public class MessagesFixture {
         }
         return false;
       }
-    });
+    }, LONG_TIMEOUT);
 
     String sheetTitle = getTitle(sheetPanel, robot);
     assertThat(sheetTitle).as("Sheet title").isEqualTo(title);

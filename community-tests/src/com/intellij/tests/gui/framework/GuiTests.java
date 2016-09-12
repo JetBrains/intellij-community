@@ -731,6 +731,17 @@ public final class GuiTests {
   public static <T extends Component> T waitUntilFound(@NotNull final Robot robot,
                                                        @Nullable final Container root,
                                                        @NotNull final GenericTypeMatcher<T> matcher) {
+    return waitUntilFound(robot, root, matcher, SHORT_TIMEOUT);
+  }
+
+  /**
+   * Waits for a first component which passes the given matcher under the given root to become visible.
+   */
+  @NotNull
+  public static <T extends Component> T waitUntilFound(@NotNull final Robot robot,
+                                                       @Nullable final Container root,
+                                                       @NotNull final GenericTypeMatcher<T> matcher,
+                                                       @NotNull Timeout timeout) {
     final AtomicReference<T> reference = new AtomicReference<T>();
     pause(new Condition("Find component using " + matcher.toString()) {
       @Override
@@ -748,7 +759,7 @@ public final class GuiTests {
         }
         return found;
       }
-    }, SHORT_TIMEOUT);
+    }, timeout);
 
     return reference.get();
   }

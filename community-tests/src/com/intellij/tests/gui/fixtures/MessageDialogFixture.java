@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 import static com.google.common.base.Strings.nullToEmpty;
+import static com.intellij.tests.gui.framework.GuiTests.LONG_TIMEOUT;
 import static com.intellij.tests.gui.framework.GuiTests.waitUntilFound;
 import static org.fest.swing.edt.GuiActionRunner.execute;
 
@@ -33,7 +34,7 @@ class MessageDialogFixture extends IdeaDialogFixture<DialogWrapper> implements M
   @NotNull
   static MessageDialogFixture findByTitle(@NotNull Robot robot, @NotNull final String title) {
     final Ref<DialogWrapper> wrapperRef = new Ref<DialogWrapper>();
-    JDialog dialog = waitUntilFound(robot, new GenericTypeMatcher<JDialog>(JDialog.class) {
+    JDialog dialog = waitUntilFound(robot, null, new GenericTypeMatcher<JDialog>(JDialog.class) {
       @Override
       protected boolean isMatching(@NotNull JDialog dialog) {
           if (!title.equals(dialog.getTitle()) || !dialog.isShowing()) {
@@ -49,7 +50,7 @@ class MessageDialogFixture extends IdeaDialogFixture<DialogWrapper> implements M
           }
           return false;
         }
-    });
+    }, LONG_TIMEOUT);
     return new MessageDialogFixture(robot, dialog, wrapperRef.get());
   }
 
