@@ -37,8 +37,8 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntArrayList;
+import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
@@ -961,43 +961,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       myNegated = negated;
     }
 
-    @Contract("null -> false")
-    private static boolean isFloating(PsiExpression operand) {
-      if(operand == null) return false;
-      PsiType type = operand.getType();
-      return type instanceof PsiPrimitiveType && (type.equalsToText("double") || type.equalsToText("float"));
-    }
-
-    private static PsiExpression negate(PsiExpression expression, PsiElementFactory factory) {
-      if (expression instanceof PsiPrefixExpression &&
-          JavaTokenType.EXCL.equals(((PsiPrefixExpression)expression).getOperationTokenType())) {
-        return PsiUtil.skipParenthesizedExprDown(((PsiPrefixExpression)expression).getOperand());
-      }
-      if (expression instanceof PsiBinaryExpression) {
-        PsiBinaryExpression binOp = (PsiBinaryExpression)expression;
-        if(JavaTokenType.EQEQ.equals(binOp.getOperationTokenType()) || JavaTokenType.NE.equals(binOp.getOperationTokenType())) {
-          PsiExpression left = binOp.getLOperand();
-          PsiExpression right = binOp.getROperand();
-          // for float/double types == and != are not strictly opposite (NaNs are treated specially)
-          if (right != null && !isFloating(left) && !isFloating(right)) {
-            return factory.createExpressionFromText(
-              left.getText() + (JavaTokenType.EQEQ.equals(binOp.getOperationTokenType()) ? "!=" : "==") + right.getText(), expression);
-          }
-        }
-      }
-      String expString;
-      if (ParenthesesUtils.getPrecedence(expression) > ParenthesesUtils.PREFIX_PRECEDENCE) {
-        expString = "!(" + expression.getText() + ')';
-      }
-      else {
-        expString = '!' + expression.getText();
-      }
-      return factory.createExpressionFromText(expString, expression);
-    }
-
     @Override
     public String createReplacement(PsiElementFactory factory) {
-      PsiExpression expression = myNegated ? negate(myExpression, factory) : myExpression;
+      PsiExpression expression =
+        myNegated ? factory.createExpressionFromText(BoolUtils.getNegatedExpressionText(myExpression), myExpression) : myExpression;
       return ".filter(" + compoundLambdaOrMethodReference(myVariable, expression,
                                                           "java.util.function.Predicate",
                                                           new PsiType[] {myVariable.getType()}) + ")";

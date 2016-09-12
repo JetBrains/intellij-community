@@ -15,10 +15,9 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,6 +57,27 @@ public class ComparisonUtils {
     s_invertedComparisons.put(JavaTokenType.LT, ">=");
     s_invertedComparisons.put(JavaTokenType.GE, "<");
     s_invertedComparisons.put(JavaTokenType.LE, ">");
+  }
+
+  /**
+   * Returns the actual type of compared values in comparison expression after unboxing and promotion if applicable.
+   *
+   * @param expression the expression to get the type of compared values
+   * @return the resulting type or null if expression is not a comparison or type is not known.
+   */
+  @Nullable
+  public static PsiType getComparisonType(PsiExpression expression) {
+    if (!(expression instanceof PsiBinaryExpression)) return null;
+    PsiBinaryExpression binOp = (PsiBinaryExpression)expression;
+    IElementType tokenType = binOp.getOperationTokenType();
+    if (!isComparisonOperation(tokenType)) return null;
+    PsiExpression left = binOp.getLOperand();
+    PsiExpression right = binOp.getROperand();
+    PsiType lType = left.getType();
+    PsiType rType = right == null ? null : right.getType();
+    if (lType == null || rType == null) return null;
+    if (lType.equals(rType)) return lType;
+    return TypeConversionUtil.unboxAndBalanceTypes(lType, rType);
   }
 
   public static boolean isComparison(@Nullable PsiExpression expression) {
