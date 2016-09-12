@@ -78,38 +78,7 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
 
   @NotNull
   public TIntHashSet getCommitsWithAllKeys(@NotNull Collection<Integer> keys) throws StorageException {
-    TIntHashSet result = null;
-
-    for (Integer key : keys) {
-      TIntHashSet newResult = new TIntHashSet();
-      ValueContainer<T> data = myMapReduceIndex.getData(key);
-
-      ValueContainer.ValueIterator<T> valueIt = data.getValueIterator();
-      while (valueIt.hasNext()) {
-        valueIt.next();
-        ValueContainer.IntIterator inputIt = valueIt.getInputIdsIterator();
-        if (result != null && result.size() < inputIt.size()) {
-          ValueContainer.IntPredicate predicate = valueIt.getValueAssociationPredicate();
-          result.forEach(value -> {
-            if (predicate.contains(value)) {
-              newResult.add(value);
-            }
-            return true;
-          });
-        }
-        else {
-          while (inputIt.hasNext()) {
-            int integer = inputIt.next();
-            if (result == null || result.contains(integer)) {
-              newResult.add(integer);
-            }
-          }
-        }
-      }
-
-      result = newResult;
-    }
-
+    TIntHashSet result = FileBasedIndexImpl.collectInputIdsContainingAllKeys(myMapReduceIndex, keys);
     if (result == null) return new TIntHashSet();
     return result;
   }
