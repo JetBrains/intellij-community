@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import com.intellij.codeInsight.runner.JavaMainMethodProvider;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -88,5 +90,36 @@ public class PsiMethodUtil {
       }
     }
     return findMainMethod(aClass);
+  }
+
+  public static boolean isCompareToCall(final @NotNull PsiExpression expression) {
+    if (!(expression instanceof PsiMethodCallExpression)) {
+      return false;
+    }
+    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+    if (methodCallExpression.getMethodExpression().getQualifierExpression() == null) {
+      return false;
+    }
+    final PsiMethod psiMethod = methodCallExpression.resolveMethod();
+    if (psiMethod == null || !"compareTo".equals(psiMethod.getName()) || psiMethod.getParameterList().getParametersCount() != 1) {
+      return false;
+    }
+    if (methodCallExpression.getArgumentList().getExpressions().length != 1) {
+      return false;
+    }
+    final PsiClass containingClass = psiMethod.getContainingClass();
+    if (containingClass == null) {
+      return false;
+    }
+    final PsiClass javaLangComparable = JavaPsiFacade.getInstance(expression.getProject()).findClass(CommonClassNames.JAVA_LANG_COMPARABLE, GlobalSearchScope
+      .allScope(
+      expression.getProject()));
+    if (javaLangComparable == null) {
+      return false;
+    }
+    if (!containingClass.isInheritor(javaLangComparable, true)) {
+      return false;
+    }
+    return true;
   }
 }
