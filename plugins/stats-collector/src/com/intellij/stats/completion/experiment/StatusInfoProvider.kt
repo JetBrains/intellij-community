@@ -53,7 +53,7 @@ class StatusInfoProvider(private val requestSender: RequestService) {
             }
             
             serverStatus = map["status"]?.toString() ?: ""
-            dataServerUrl = map["url"]?.toString() ?: ""
+            dataServerUrl = map["urlForZipBase64Content"]?.toString() ?: ""
         }
     }
 
