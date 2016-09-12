@@ -1017,6 +1017,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     for (ConsoleListener listener : myConsoleListeners) {
       listener.handleConsoleInitialized(consoleView);
     }
+    myConsoleListeners.clear();
   }
 
 
