@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.xml.XmlName;
 import gnu.trove.THashMap;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -197,14 +198,7 @@ public class CustomAntElementsRegistry {
     if (generalError != null) {
       return true;
     }
-    for (Map.Entry<XmlName, AntDomNamedElement> entry : myDeclarations.entrySet()) {
-      if (typedef.equals(entry.getValue())) {
-        if (lookupError(entry.getKey()) != null)  {
-          return true;
-        }
-      }
-    }
-    return false;
+    return StreamEx.ofKeys(myDeclarations, typedef::equals).anyMatch(name -> lookupError(name) != null);
   }
 
   public List<String> getTypeLoadingErrors(AntDomTypeDef typedef) {
