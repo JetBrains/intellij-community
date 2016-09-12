@@ -107,6 +107,11 @@ public class CompileScopeTestBuilder {
     return new CompileScopeImpl(myTargetTypes, typesToForceBuild, myTargets, myFiles);
   }
 
+  /**
+   * Add all targets in the project to the scope. May lead to unpredictable results if some plugins add targets your test doesn't expect.
+   *
+   * @deprecated use {@link #allModules()} instead or directly add required target types via {@link #targetTypes}
+   */
   public CompileScopeTestBuilder all() {
     myTargetTypes.addAll(TargetTypeRegistry.getInstance().getTargetTypes());
     return this;

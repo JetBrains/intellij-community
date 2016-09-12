@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.TestFileSystemBuilder
 import com.intellij.util.io.TestFileSystemItem
+import org.jetbrains.jps.builders.CompileScopeTestBuilder
 import org.jetbrains.jps.builders.JpsBuildTestCase
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.util.JpsPathUtil
@@ -58,7 +59,7 @@ abstract class JpsRebuildTestCase: JpsBuildTestCase() {
 
   fun rebuild() {
     JpsJavaExtensionService.getInstance()!!.getOrCreateProjectExtension(myProject).outputUrl = JpsPathUtil.pathToUrl(FileUtil.toSystemIndependentName(myOutputDirectory.absolutePath));
-    rebuildAll();
+    doBuild(CompileScopeTestBuilder.rebuild().allModules().allArtifacts()).assertSuccessful()
   }
 
   override fun getAdditionalPathVariables(): MutableMap<String, String> =

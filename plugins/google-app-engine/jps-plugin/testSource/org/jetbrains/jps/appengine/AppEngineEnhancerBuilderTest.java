@@ -37,21 +37,21 @@ public class AppEngineEnhancerBuilderTest extends JpsBuildTestCase {
   public void testChangeFile() {
     String file = createFile("src/A.java", "class A{}");
     addAppEngineModule("a", true, PathUtil.getParentPath(file));
-    makeAll();
+    buildAllModules();
     assertEnhanced("out/production/a/A.class");
 
-    makeAll();
+    buildAllModules();
     assertEnhanced();
 
     change(file);
-    makeAll();
+    buildAllModules();
     assertEnhanced("out/production/a/A.class");
   }
 
   public void testDoNotRunEnhancerIfDisabled() {
     String file = createFile("src/A.java", "class A{}");
     addAppEngineModule("a", false, PathUtil.getParentPath(file));
-    makeAll();
+    buildAllModules();
     assertEnhanced();
   }
 
