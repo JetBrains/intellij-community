@@ -20,7 +20,7 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 /**
  * Base class for all {@link BuildTarget} implementations which are bound to sources of a module and need to be built each time 'Build Module'
- * action is invoked in IDE. If your target should be built only by explicit action extends {@link BuildTarget} directly instead.
+ * action is invoked in IDE. If your target should be built only by explicit action extend {@link BuildTarget} directly instead.
  *
  * @author Eugene Zhuravlev
  */
