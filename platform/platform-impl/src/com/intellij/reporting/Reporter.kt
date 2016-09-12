@@ -22,7 +22,7 @@ import org.apache.http.client.fluent.Request
 import org.apache.http.entity.ContentType
 
 
-private class StatsServerInfo(var status: String, var url: String) {
+private class StatsServerInfo(@JvmField var status: String, @JvmField var url: String) {
   fun isServiceAlive() = "ok" == status
 }
 
