@@ -386,7 +386,7 @@ public class DataManagerImpl extends DataManager {
       if (PlatformDataKeys.MODALITY_STATE.is(dataId)) {
         return component != null ? ModalityState.stateForComponent(component) : ModalityState.NON_MODAL;
       }
-      if (CommonDataKeys.EDITOR.is(dataId)) {
+      if (CommonDataKeys.EDITOR.is(dataId) || CommonDataKeys.HOST_EDITOR.is(dataId)) {
         Editor editor = (Editor)((DataManagerImpl)DataManager.getInstance()).getData(dataId, component);
         return validateEditor(editor);
       }
