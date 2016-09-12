@@ -70,9 +70,6 @@ class BaseStdIn:
         # which is not something we want.
         return '\n'
 
-    def isatty(self):
-        return False  # not really a file
-
     def write(self, *args, **kwargs):
         pass  # not available StdIn (but it can be expected to be in the stream interface)
 
