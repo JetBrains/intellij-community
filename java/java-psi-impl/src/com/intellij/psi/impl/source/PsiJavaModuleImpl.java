@@ -21,9 +21,11 @@ import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiJavaModuleStub;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> implements PsiJavaModule {
   public PsiJavaModuleImpl(@NotNull PsiJavaModuleStub stub) {
@@ -62,6 +64,12 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
     PsiJavaModuleReferenceElement newName = factory.createModuleFromText("module " + name + " {}").getNameElement();
     getNameElement().replace(newName);
     return this;
+  }
+
+  @Nullable
+  @Override
+  public PsiDocComment getDocComment() {
+    return PsiTreeUtil.getChildOfType(this, PsiDocComment.class);
   }
 
   @Override

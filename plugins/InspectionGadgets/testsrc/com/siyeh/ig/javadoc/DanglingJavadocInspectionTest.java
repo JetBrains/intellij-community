@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,12 @@
 package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.openapi.roots.LanguageLevelModuleExtension;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.pom.java.LanguageLevel.JDK_1_9;
 
 /**
  * @author Bas Leijdekkers
@@ -30,6 +34,11 @@ public class DanglingJavadocInspectionTest extends LightInspectionTestCase {
 
   public void testPackageInfo() {
     doNamedTest("package-info");
+  }
+
+  public void testModuleInfo() {
+    ModuleRootModificationUtil.updateModel(myModule, m -> m.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(JDK_1_9));
+    doNamedTest("module-info");
   }
 
   @Nullable
