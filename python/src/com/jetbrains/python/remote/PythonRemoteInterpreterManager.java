@@ -77,9 +77,9 @@ public abstract class PythonRemoteInterpreterManager {
    */
   @Deprecated
   public abstract PyRemoteProcessHandlerBase startRemoteProcessWithPid(@Nullable Project project,
-                                                                   @NotNull PyRemoteSdkCredentials data,
-                                                                   @NotNull GeneralCommandLine commandLine,
-                                                                   @NotNull PyRemotePathMapper pathMapper)
+                                                                       @NotNull PyRemoteSdkCredentials data,
+                                                                       @NotNull GeneralCommandLine commandLine,
+                                                                       @NotNull PyRemotePathMapper pathMapper)
     throws RemoteSdkException;
 
   public abstract void addRemoteSdk(Project project, Component parentComponent, Collection<Sdk> existingSdks,
@@ -134,6 +134,16 @@ public abstract class PythonRemoteInterpreterManager {
                                         RemoteProjectSettings settings,
                                         RemoteSdkCredentials data);
 
+  /**
+   * Prepares project (i.e. sets appropriate mappings) if sdk is remote.
+   * Do not call this method if sdk is not remote: id does nothing
+   *
+   * @param callAfterCheck what to call after configuration completes (runs on AWT)
+   */
+  public abstract void prepareRemoteSettingsIfNeeded(@NotNull final Project project,
+                                                     @NotNull final Sdk sdk,
+                                                     @NotNull final Runnable callAfterCheck);
+
   public abstract void copyFromRemote(Sdk sdk, @NotNull Project project,
                                       RemoteSdkCredentials data,
                                       List<PathMappingSettings.PathMapping> mappings);
@@ -174,10 +184,13 @@ public abstract class PythonRemoteInterpreterManager {
   public abstract SdkAdditionalData loadRemoteSdkData(Sdk sdk, Element additional);
 
   public abstract PyConsoleProcessHandler createConsoleProcessHandler(RemoteProcess process,
-                                                             PythonConsoleView view,
-                                                             PydevConsoleCommunication consoleCommunication,
-                                                             String commandLine,
-                                                             Charset charset, PyRemotePathMapper pathMapper, PyRemoteSocketToLocalHostProvider remoteSocketProvider);
+                                                                      PythonConsoleView view,
+                                                                      PydevConsoleCommunication consoleCommunication,
+                                                                      String commandLine,
+                                                                      Charset charset,
+                                                                      PyRemotePathMapper pathMapper,
+                                                                      PyRemoteSocketToLocalHostProvider remoteSocketProvider);
+
   @NotNull
   public abstract RemoteSdkCredentialsProducer<PyRemoteSdkCredentials> getRemoteSdkCredentialsProducer(Function<RemoteCredentials, PyRemoteSdkCredentials> credentialsTransformer,
                                                                                                        RemoteConnectionCredentialsWrapper connectionWrapper);
