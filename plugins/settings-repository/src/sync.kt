@@ -17,6 +17,7 @@ package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.*
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.stateStore
@@ -24,10 +25,9 @@ import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.Ref
 import com.intellij.util.SmartList
 import com.intellij.util.messages.MessageBus
-import com.intellij.util.ui.UIUtil
 import gnu.trove.THashSet
 import org.eclipse.jgit.errors.NoRemoteRepositoryException
 import java.util.*
@@ -168,7 +168,8 @@ internal fun updateStoragesFromStreamProvider(store: ComponentStoreImpl, updateR
     return false
   }
 
-  return UIUtil.invokeAndWaitIfNeeded(Computable {
+  val result = Ref.create(false)
+  ApplicationManager.getApplication().invokeAndWait(Runnable {
     val notReloadableComponents: Collection<String>
     updateStateStorage(changedComponentNames, changed, false)
     updateStateStorage(changedComponentNames, deleted, true)
@@ -178,7 +179,7 @@ internal fun updateStoragesFromStreamProvider(store: ComponentStoreImpl, updateR
     }
 
     if (changedComponentNames.isEmpty()) {
-      return@Computable false
+      return@Runnable
     }
 
     notReloadableComponents = store.getNotReloadableComponents(changedComponentNames)
@@ -189,8 +190,9 @@ internal fun updateStoragesFromStreamProvider(store: ComponentStoreImpl, updateR
       store.reinitComponents(changedComponentNames, changedStorageSet, notReloadableComponents)
     }
 
-    !notReloadableComponents.isEmpty() && askToRestart(store, notReloadableComponents, null, true)
-  })
+    result.set(!notReloadableComponents.isEmpty() && askToRestart(store, notReloadableComponents, null, true))
+  }, ModalityState.defaultModalityState())
+  return result.get()
 }
 
 private fun updateStateStorage(changedComponentNames: MutableSet<String>, stateStorages: Collection<StateStorage>, deleted: Boolean) {

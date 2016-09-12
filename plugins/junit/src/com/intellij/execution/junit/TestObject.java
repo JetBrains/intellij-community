@@ -130,7 +130,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
   @Nullable
   public SourceScope getSourceScope() {
-    return SourceScope.modulesWithDependencies(getConfiguration().getModules());
+    return SourceScope.modules(getConfiguration().getModules());
   }
 
   @Override

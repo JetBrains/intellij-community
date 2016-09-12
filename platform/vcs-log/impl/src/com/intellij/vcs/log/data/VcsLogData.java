@@ -93,7 +93,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
         if (!(e instanceof ProcessCanceledException)) {
           LOG.error(e);
         }
-      }, RECENT_COMMITS_COUNT);
+      }, RECENT_COMMITS_COUNT, this);
 
     myContainingBranchesGetter = new ContainingBranchesGetter(this, this);
   }
