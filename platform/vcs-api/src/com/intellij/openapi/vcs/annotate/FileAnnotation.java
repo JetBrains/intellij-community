@@ -321,7 +321,8 @@ public abstract class FileAnnotation {
 
     Map<VcsRevisionNumber, String> authorsMapping = new HashMap<>();
     for (VcsFileRevision revision : revisions) {
-      authorsMapping.put(revision.getRevisionNumber(), revision.getAuthor());
+      String author = revision.getAuthor();
+      if (author != null) authorsMapping.put(revision.getRevisionNumber(), author);
     }
 
     return () -> authorsMapping;

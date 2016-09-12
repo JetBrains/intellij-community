@@ -216,7 +216,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       Map<VcsRevisionNumber, String> authorsMap = authorsMappingProvider.getAuthors();
 
       Map<String, Color> authorColors = new HashMap<>();
-      for (String author : ContainerUtil.newTreeSet(authorsMap.values())) {
+      for (String author : ContainerUtil.sorted(authorsMap.values(), Comparing::compare)) {
         int index = authorColors.size();
         Color color = authorsColorPalette.get(index % authorsColorPalette.size());
         authorColors.put(author, color);
