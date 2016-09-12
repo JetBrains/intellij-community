@@ -15,15 +15,16 @@
  */
 package git4idea.fetch
 
+import com.intellij.dvcs.DvcsUtil.getShortRepositoryName
 import com.intellij.dvcs.MultiMessage
 import com.intellij.dvcs.MultiRootMessage
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION
-import git4idea.GitUtil.findRemoteByName
-import git4idea.GitUtil.mention
+import git4idea.GitUtil.*
 import git4idea.commands.Git
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRemote.ORIGIN
@@ -52,18 +53,42 @@ internal class GitFetchSupportImpl(val project: Project) : GitFetchSupport {
     val results = mutableMapOf<GitRepository, RepoResult>()
     for (repository in repositories) {
       val remote = getDefaultRemoteToFetch(repository)
-      if (remote != null) results[repository] = doFetch(repository, listOf(remote))
+      if (remote != null) {
+        val repoResult = withIndicator(repository) {
+          doFetch(repository, listOf(remote))
+        }
+        results[repository] = repoResult
+      }
       else LOG.info("No remote to fetch found in $repository")
     }
     return resultOf(results)
   }
 
   override fun fetch(repository: GitRepository, remote: GitRemote): GitFetchResult {
-    return fetch(repository, listOf(remote))
+    return withIndicator(repository) { fetch(repository, listOf(remote)) }
   }
 
   override fun fetch(repository: GitRepository, remotes: List<GitRemote>): GitFetchResult {
-    return resultOf(mapOf(Pair(repository, doFetch(repository, remotes))))
+    return withIndicator(repository) { resultOf(mapOf(Pair(repository, doFetch(repository, remotes)))) }
+  }
+
+  private fun <T> withIndicator(repository: GitRepository, operation: () -> T): T {
+    return withIndicator(getProgressTitle(repository), operation)
+  }
+
+  private fun <T> withIndicator(title: String, operation: () -> T): T {
+    val indicator = ProgressManager.getInstance().progressIndicator
+    val prevText = indicator?.text
+    indicator?.text = title
+    try {
+      return operation()
+    } finally {
+      indicator?.text = prevText
+    }
+  }
+
+  private fun getProgressTitle(repository: GitRepository): String {
+    return "Fetching ${if (justOneGitRepository(project)) "" else getShortRepositoryName(repository)}"
   }
 
   private fun doFetch(repository: GitRepository, remotes: List<GitRemote>): RepoResult {
