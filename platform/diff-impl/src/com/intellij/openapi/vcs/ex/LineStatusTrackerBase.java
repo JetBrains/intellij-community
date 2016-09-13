@@ -50,7 +50,7 @@ public abstract class LineStatusTrackerBase {
   // read access allowed from EDT or while holding LOCK
   private final Object LOCK = new Object();
 
-  @NotNull protected final Project myProject;
+  @Nullable protected final Project myProject;
   @NotNull protected final Document myDocument;
   @NotNull protected final Document myVcsDocument;
 
@@ -69,7 +69,7 @@ public abstract class LineStatusTrackerBase {
 
   @Nullable private DirtyRange myDirtyRange;
 
-  public LineStatusTrackerBase(@NotNull final Project project,
+  public LineStatusTrackerBase(@Nullable final Project project,
                                @NotNull final Document document) {
     myDocument = document;
     myProject = project;
@@ -238,7 +238,7 @@ public abstract class LineStatusTrackerBase {
     }
   }
 
-  @NotNull
+  @Nullable
   public Project getProject() {
     return myProject;
   }

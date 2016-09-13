@@ -66,8 +66,8 @@ public class LineStatusTracker extends LineStatusTrackerBase {
     myVirtualFile = virtualFile;
     myMode = mode;
 
-    myFileEditorManager = FileEditorManager.getInstance(myProject);
-    myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
+    myFileEditorManager = FileEditorManager.getInstance(project);
+    myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
   }
 
   public static LineStatusTracker createOn(@NotNull VirtualFile virtualFile,
@@ -75,6 +75,13 @@ public class LineStatusTracker extends LineStatusTrackerBase {
                                            @NotNull Project project,
                                            @NotNull Mode mode) {
     return new LineStatusTracker(project, document, virtualFile, mode);
+  }
+
+  @NotNull
+  @Override
+  public Project getProject() {
+    //noinspection ConstantConditions
+    return super.getProject();
   }
 
   @NotNull
@@ -167,7 +174,7 @@ public class LineStatusTracker extends LineStatusTrackerBase {
   @CalledInAwt
   protected void fireFileUnchanged() {
     // later to avoid saving inside document change event processing.
-    TransactionGuard.getInstance().submitTransactionLater(myProject, () -> {
+    TransactionGuard.getInstance().submitTransactionLater(getProject(), () -> {
       FileDocumentManager.getInstance().saveDocument(myDocument);
       List<Range> ranges = getRanges();
       if (ranges == null || ranges.isEmpty()) {

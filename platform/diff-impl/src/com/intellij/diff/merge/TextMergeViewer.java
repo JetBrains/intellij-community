@@ -1190,7 +1190,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     }
 
     private class MyLineStatusTracker extends LineStatusTrackerBase {
-      public MyLineStatusTracker(@NotNull Project project, @NotNull Document document) {
+      public MyLineStatusTracker(@Nullable Project project, @NotNull Document document) {
         super(project, document);
       }
 
