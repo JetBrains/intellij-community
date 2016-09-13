@@ -56,12 +56,6 @@ public class ProjectPaths {
     return getClasspathFiles(chunk, JpsJavaClasspathKind.compile(chunk.containsTests()), excludeMainModuleOutput, ClasspathPart.AFTER_JDK, true);
   }
 
-  // todo: implementation can be changed
-  @NotNull
-  public static Collection<File> getCompilationModulePath(ModuleChunk chunk) {
-    return getClasspathFiles(chunk, JpsJavaClasspathKind.compile(chunk.containsTests()), true, ClasspathPart.MODULE_PATH, true);
-  }
-
   @NotNull
   private static Collection<File> getClasspathFiles(ModuleChunk chunk,
                                                     JpsJavaClasspathKind kind,

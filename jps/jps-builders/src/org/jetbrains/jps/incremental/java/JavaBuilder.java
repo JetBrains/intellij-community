@@ -24,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PersistentEnumeratorBase;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -49,19 +50,15 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.javac.*;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsProject;
-import org.jetbrains.jps.model.java.JpsJavaExtensionService;
-import org.jetbrains.jps.model.java.JpsJavaSdkType;
-import org.jetbrains.jps.model.java.LanguageLevel;
+import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.java.compiler.*;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
-import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsModuleType;
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
-import org.jetbrains.jps.util.JpsPathUtil;
 
 import javax.tools.*;
 import java.io.*;
@@ -83,7 +80,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
   public static final Key<Boolean> IS_ENABLED = Key.create("_java_compiler_enabled_");
   private static final Key<JavaCompilingTool> COMPILING_TOOL = Key.create("_java_compiling_tool_");
   private static final Key<AtomicReference<String>> COMPILER_VERSION_INFO = Key.create("_java_compiler_version_info_");
-  private static final String MODULE_INFO_FILE = "module-info.java";
 
   private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Collections.singletonList(
     "-target"
@@ -116,9 +112,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
     ourDefaultRtJar = rtJar;
   }
-
-  // todo: remove this prop. when there appears a way to understand directly from the project model, whether we should use model_path
-  private static final boolean JAVA9_MODULE_PATH_ENABLED = Boolean.valueOf(System.getProperty("compiler.java9.use.module_path", "false"));
 
   private static boolean isRtJarPath(String path) {
     if (StringUtil.endsWithIgnoreCase(path, RT_JAR_PATH_SUFFIX)) {
@@ -194,13 +187,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
       if (!filesToCompile.isEmpty() || dirtyFilesHolder.hasRemovedFiles()) {
         // at the moment, there is no incremental compilation for module-info files, so they should be rebuilt on every change
+        JavaModuleIndex index = getJavaModuleIndex(context);
         for (JpsModule module : chunk.getModules()) {
-          for (JpsModuleSourceRoot root : module.getSourceRoots()) {
-            File descriptor = new File(JpsPathUtil.urlToOsPath(root.getUrl()), MODULE_INFO_FILE);
-            if (!filesToCompile.contains(descriptor) && descriptor.isFile()) {
-              filesToCompile.add(descriptor);
-            }
-          }
+          ContainerUtil.addIfNotNull(filesToCompile, index.getModuleInfoFile(module));
         }
       }
 
@@ -437,7 +426,15 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
       }
 
-      final Collection<File> modulePath = JAVA9_MODULE_PATH_ENABLED && targetLanguageLevel >= 9? ProjectPaths.getCompilationModulePath(chunk) : Collections.<File>emptyList();
+      Collection<File> modulePath = Collections.emptyList();
+      if (targetLanguageLevel >= 9) {
+        JavaModuleIndex index = getJavaModuleIndex(context);
+        if (index.hasJavaModules(chunk.getModules())) {
+          // in Java 9, named modules are not allowed to read classes from the classpath
+          modulePath = ContainerUtil.newArrayList(classpath);
+          classpath = Collections.emptyList();
+        }
+      }
 
       final ClassProcessingConsumer classesConsumer = new ClassProcessingConsumer(context, outputSink);
       final boolean rc;
@@ -970,6 +967,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
       map.put(outputDir, roots);
     }
     return map;
+  }
+
+  private static JavaModuleIndex getJavaModuleIndex(CompileContext context) {
+    File dir = context.getProjectDescriptor().dataManager.getDataPaths().getTargetsDataRoot();
+    return JpsJavaExtensionService.getInstance().getJavaModuleIndex(dir);
   }
 
   private static class DiagnosticSink implements DiagnosticOutputConsumer {
