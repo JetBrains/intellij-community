@@ -185,9 +185,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                     PsiExpression value = returnStatement.getReturnValue();
                     if(isLiteral(value, Boolean.TRUE) || isLiteral(value, Boolean.FALSE)) {
                       boolean foundResult = (boolean)((PsiLiteralExpression)value).getValue();
-                      PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(statement, PsiWhiteSpace.class, PsiComment.class);
-                      if(nextStatement instanceof PsiReturnStatement) {
-                        PsiReturnStatement nextReturnStatement = (PsiReturnStatement)nextStatement;
+                      PsiReturnStatement nextReturnStatement = getNextReturnStatement(statement);
+                      if(nextReturnStatement != null) {
                         if(isLiteral(nextReturnStatement.getReturnValue(), !foundResult)) {
                           String methodName;
                           if (foundResult) {
@@ -221,6 +220,22 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           .isRawSubstitutor(collectionClass, TypeConversionUtil.getSuperClassSubstitutor(collectionClass, (PsiClassType)iteratedValueType));
       }
     };
+  }
+
+  @Nullable
+  static PsiReturnStatement getNextReturnStatement(PsiStatement statement) {
+    PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(statement, PsiWhiteSpace.class, PsiComment.class);
+    if(nextStatement instanceof PsiReturnStatement) return (PsiReturnStatement)nextStatement;
+    PsiElement parent = statement.getParent();
+    if(parent instanceof PsiCodeBlock) {
+      PsiStatement[] statements = ((PsiCodeBlock)parent).getStatements();
+      if(statements.length == 0 || statements[statements.length-1] != statement) return null;
+      parent = parent.getParent();
+      if(!(parent instanceof PsiBlockStatement)) return null;
+      parent = parent.getParent();
+    }
+    if(parent instanceof PsiIfStatement) return getNextReturnStatement((PsiStatement)parent);
+    return null;
   }
 
   @NotNull
@@ -894,10 +909,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       PsiExpression value = returnStatement.getReturnValue();
       if(!isLiteral(value, Boolean.TRUE) && !isLiteral(value, Boolean.FALSE)) return;
       boolean foundResult = (boolean)((PsiLiteralExpression)value).getValue();
-      PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(foreachStatement, PsiWhiteSpace.class, PsiComment.class);
-      if(!(nextStatement instanceof PsiReturnStatement)) return;
-      PsiReturnStatement nextReturnStatement = (PsiReturnStatement)nextStatement;
-      if(!isLiteral(nextReturnStatement.getReturnValue(), !foundResult)) return;
+      PsiReturnStatement nextReturnStatement = getNextReturnStatement(foreachStatement);
+      if (nextReturnStatement == null || !isLiteral(nextReturnStatement.getReturnValue(), !foundResult)) return;
       String methodName = foundResult ? "anyMatch" : "noneMatch";
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
       String streamText = generateStream(iteratedValue, intermediateOps).toString();
@@ -930,8 +943,11 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       } else {
         streamText += "."+methodName+"("+tb.getVariable().getName()+" -> true)";
       }
+      boolean siblings = nextReturnStatement.getParent() == foreachStatement.getParent();
       PsiElement result = foreachStatement.replace(elementFactory.createStatementFromText("return " + streamText + ";", foreachStatement));
-      nextReturnStatement.delete();
+      if(siblings) {
+        nextReturnStatement.delete();
+      }
       simplifyAndFormat(project, result);
     }
   }
