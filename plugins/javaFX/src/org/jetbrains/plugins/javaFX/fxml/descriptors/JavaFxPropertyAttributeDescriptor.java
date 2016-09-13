@@ -6,6 +6,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -104,6 +105,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
 
   @Override
   public PsiElement getEnumeratedValueDeclaration(XmlElement xmlElement, String value) {
+    if (value != null && value.startsWith("%")) return xmlElement;
     final PsiClass aClass = getEnum();
     if (aClass != null) {
       final PsiField fieldByName = aClass.findFieldByName(value, true);
@@ -244,6 +246,25 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
       }
     }
     return null;
+  }
+
+  @Nullable
+  public static String validateLiteralOrEnumConstant(@NotNull XmlAttributeValue xmlAttributeValue, @NotNull String value) {
+    final PsiElement parent = xmlAttributeValue.getParent();
+    if (parent instanceof XmlAttribute) {
+      final XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();
+      if (descriptor instanceof JavaFxPropertyAttributeDescriptor) {
+        final PsiClass aClass = ((JavaFxPropertyAttributeDescriptor)descriptor).getEnum();
+        if (aClass != null) {
+          final PsiField field = aClass.findFieldByName(value, true);
+          if (field == null || !((JavaFxPropertyAttributeDescriptor)descriptor).isConstant(field)) {
+            return "Invalid enumerated value";
+          }
+          return null;
+        }
+      }
+    }
+    return validateLiteral(xmlAttributeValue, value);
   }
 
   @Override
