@@ -138,12 +138,9 @@ public abstract class PythonRemoteInterpreterManager {
   /**
    * Prepares project (i.e. sets appropriate mappings) if sdk is remote.
    * Do not call this method if sdk is not remote: id does nothing
-   *
-   * @param callAfterCheck what to call after configuration completes (runs on AWT)
    */
   public abstract void prepareRemoteSettingsIfNeeded(@NotNull final Module module,
-                                                     @NotNull final Sdk sdk,
-                                                     @NotNull final Runnable callAfterCheck);
+                                                     @NotNull final Sdk sdk);
 
   public abstract void copyFromRemote(Sdk sdk, @NotNull Project project,
                                       RemoteSdkCredentials data,

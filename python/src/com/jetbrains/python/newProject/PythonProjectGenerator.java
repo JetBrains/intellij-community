@@ -61,17 +61,14 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> imp
                                     @Nullable final T settings,
                                     @NotNull final Module module) {
     /*Instead of this method overwrite ``configureProject``*/
-    final Runnable configureProject = () -> configureProject(project, baseDir, settings, module);
 
     // If we deal with remote project -- use remote manager to configure it
     final PythonRemoteInterpreterManager remoteManager = PythonRemoteInterpreterManager.getInstance();
     final Sdk sdk = (settings != null ? settings.getSdk() : null);
     if (remoteManager != null && PythonSdkType.isRemote(sdk)) {
-      remoteManager.prepareRemoteSettingsIfNeeded(module, sdk, configureProject);
+      remoteManager.prepareRemoteSettingsIfNeeded(module, sdk);
     }
-    else {
-      configureProject.run();
-    }
+    configureProject(project, baseDir, settings, module);
   }
 
   /**
