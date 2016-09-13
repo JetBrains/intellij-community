@@ -121,7 +121,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   // we cannot store it back to properties file right now, so just append the backslash to the editor and wait for the subsequent chars
   private final Set<VirtualFile> myBackSlashPressed     = new THashSet<>();
   private final Alarm               mySelectionChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private final PropertiesAnchorizer myPropertiesAnchorizer;
 
   private JPanel              myValuesPanel;
   private JPanel              myStructureViewPanel;
@@ -149,8 +148,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     myResourceBundle = resourceBundle;
     myPropertiesInsertDeleteManager = new ResourceBundlePropertiesUpdateManager(resourceBundle);
 
-    myPropertiesAnchorizer = new PropertiesAnchorizer(myResourceBundle.getProject());
-    myStructureViewComponent = new ResourceBundleStructureViewComponent(myResourceBundle, this, myPropertiesAnchorizer);
+    myStructureViewComponent = new ResourceBundleStructureViewComponent(myResourceBundle, this);
     myStructureViewPanel.setLayout(new BorderLayout());
     myStructureViewPanel.add(myStructureViewComponent, BorderLayout.CENTER);
 
@@ -318,8 +316,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       if (value != null) {
         final IProperty property = PropertiesImplUtil.getProperty(value);
         if (propertyName.equals(property.getUnescapedKey())) {
-          final PropertiesAnchorizer.PropertyAnchor anchor = myPropertiesAnchorizer.get(property);
-          myStructureViewComponent.select(anchor, true);
+          myStructureViewComponent.select(property, true);
           selectionChanged();
           return;
         }
