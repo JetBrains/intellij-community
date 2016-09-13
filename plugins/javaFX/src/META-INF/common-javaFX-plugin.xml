@@ -1,5 +1,6 @@
 <idea-plugin>
   <depends>com.intellij.modules.java</depends>
+  <depends>com.intellij.properties</depends>
   <extensions defaultExtensionNs="com.intellij">
     <fileTypeFactory implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory"/>
     <fileEditorProvider implementation="org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderEditorProvider"/>
