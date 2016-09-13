@@ -80,7 +80,7 @@ public final class CommandProcessor implements Runnable {
       // definitely have some since runnables in command list may (and do) request some PSI activity
       final boolean queueNext = myCommandCount > 0;
       Application application = ApplicationManager.getApplication();
-      ModalityState modalityState = ModalityState.NON_MODAL;
+      ModalityState modalityState = Registry.is("ide.perProjectModality") ? ModalityState.current() : ModalityState.NON_MODAL;
       application.getInvokator().invokeLater(command, modalityState, expire == null ? application.getDisposed() : expire).doWhenDone(() -> {
         if (queueNext) {
           this.run();
