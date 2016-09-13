@@ -101,7 +101,7 @@ public class ParameterNameFoldingManager {
         continue;
       }
 
-      if (!(parameters[i].getType() instanceof PsiEllipsisType) && shouldInlineParameterName(i, callArguments, parameters, resolveResult)) {
+      if (shouldInlineParameterName(i, callArguments, parameters, resolveResult)) {
         descriptors.add(createFoldingDescriptor(callArguments[i], parameters[i]));
       }
       i++;
@@ -114,7 +114,8 @@ public class ParameterNameFoldingManager {
   private static NamedFoldingDescriptor createFoldingDescriptor(@NotNull PsiExpression callArgument, @NotNull PsiParameter methodParam) {
     PsiElement lParenOrCommaOrWhitespaceOrComment = callArgument.getPrevSibling();
     TextRange range = lParenOrCommaOrWhitespaceOrComment.getTextRange();
-    String placeholderText = StringUtil.last(lParenOrCommaOrWhitespaceOrComment.getText(), 1, false) + methodParam.getName() + ": ";
+    String paramName = methodParam.getName() + ((methodParam.getType() instanceof PsiEllipsisType) ? "..." : "");
+    String placeholderText = StringUtil.last(lParenOrCommaOrWhitespaceOrComment.getText(), 1, false) + paramName + ": ";
     return new NamedFoldingDescriptor(callArgument, range.getEndOffset()-1, range.getEndOffset(), null, placeholderText);
   }
 
@@ -146,10 +147,15 @@ public class ParameterNameFoldingManager {
       JavaCodeFoldingSettings settings = JavaCodeFoldingSettings.getInstance();
       if (paramName != null && paramName.length() >= settings.getInlineLiteralParameterMinNameLength()) {
         PsiType parameterType = resolveResult.getSubstitutor().substitute(parameter.getType());
-        return TypeConversionUtil.isAssignable(parameterType, argument.getType());
+        return TypeConversionUtil.isAssignable(parameterType, argument.getType()) || isVarArgs(parameterType, argument.getType());
       }
     }
     return false;
+  }
+  
+  public static boolean isVarArgs(@NotNull PsiType param, @NotNull PsiType argument) {
+    PsiType deepType = param.getDeepComponentType();
+    return param instanceof PsiEllipsisType && TypeConversionUtil.isAssignable(deepType, argument);
   }
 
   private static boolean hasLiteralExpression(@NotNull PsiExpression[] arguments) {
