@@ -115,21 +115,39 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     final PyExpression lhs = node.getLeftExpression();
     final PyExpression rhs = node.getRightExpression();
 
-    if (node.isOperator("isnot")) {
-      if (lhs instanceof PyReferenceExpression && rhs instanceof PyReferenceExpression) {
-        final PyReferenceExpression target = (PyReferenceExpression)lhs;
-        if (PyNames.NONE.equals(rhs.getName())) {
-          final boolean positive = myPositive;
-          pushAssertion(target, new InstructionTypeCallback() {
-            @Override
-            public PyType getType(TypeEvalContext context, @Nullable PsiElement anchor) {
-              final List<PyType> types = new ArrayList<>();
-              types.add(PyNoneType.INSTANCE);
-              return createAssertionType(context.getType(target), types, !positive, context);
-            }
-          });
-          return;
-        }
+    if (lhs instanceof PyReferenceExpression && rhs instanceof PyReferenceExpression) {
+      final boolean leftIsNone = PyNames.NONE.equals(lhs.getName());
+      final boolean rightIsNone = PyNames.NONE.equals(rhs.getName());
+
+      if (leftIsNone && rightIsNone) {
+        return;
+      }
+
+      final PyReferenceExpression target = (PyReferenceExpression)(rightIsNone ? lhs : rhs);
+      final boolean positive = myPositive;
+
+      if (node.isOperator(PyNames.IS)) {
+        pushAssertion(target, new InstructionTypeCallback() {
+          @Override
+          public PyType getType(TypeEvalContext context, @Nullable PsiElement anchor) {
+            final List<PyType> types = new ArrayList<>();
+            types.add(PyNoneType.INSTANCE);
+            return createAssertionType(context.getType(target), types, positive, context);
+          }
+        });
+        return;
+      }
+
+      if (node.isOperator("isnot")) {
+        pushAssertion(target, new InstructionTypeCallback() {
+          @Override
+          public PyType getType(TypeEvalContext context, @Nullable PsiElement anchor) {
+            final List<PyType> types = new ArrayList<>();
+            types.add(PyNoneType.INSTANCE);
+            return createAssertionType(context.getType(target), types, !positive, context);
+          }
+        });
+        return;
       }
     }
 
