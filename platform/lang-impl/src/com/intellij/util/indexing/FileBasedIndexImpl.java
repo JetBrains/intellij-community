@@ -73,6 +73,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.indexing.containers.TroveSetIntIterator;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -1104,10 +1105,14 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     return mainIntersection;
   }
 
-  @Nullable
-  public static <K, V, I> TIntHashSet collectInputIdsContainingAllKeys(@NotNull UpdatableIndex<K, V, I> index,
-                                                                       @NotNull Collection<K> dataKeys) throws StorageException {
-    return collectInputIdsContainingAllKeys(index, dataKeys, null, null);
+
+  @NotNull
+  public static <K, V, I> ValueContainer.IntIterator collectInputIdsContainingAllKeys(@NotNull UpdatableIndex<K, V, I> index,
+                                                                                      @NotNull Collection<K> dataKeys)
+    throws StorageException {
+    TIntHashSet result = collectInputIdsContainingAllKeys(index, dataKeys, null, null);
+    if (result == null) return TroveSetIntIterator.EMPTY;
+    return new TroveSetIntIterator(result);
   }
 
   private static boolean processVirtualFiles(@NotNull TIntHashSet ids,

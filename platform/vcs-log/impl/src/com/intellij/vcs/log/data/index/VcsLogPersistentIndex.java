@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
+import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
@@ -50,7 +51,6 @@ import com.intellij.vcs.log.ui.filter.VcsLogUserFilterImpl;
 import com.intellij.vcs.log.util.PersistentUtil;
 import com.intellij.vcs.log.util.StopWatch;
 import gnu.trove.TIntHashSet;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -291,28 +291,24 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   public TIntHashSet filterMessages(@NotNull String text) {
     if (myTrigramIndex != null) {
       try {
-        TIntHashSet commitsForSearch = myTrigramIndex.getCommitsForSubstring(text);
+        ValueContainer.IntIterator commitsForSearch = myTrigramIndex.getCommitsForSubstring(text);
         if (commitsForSearch != null) {
           TIntHashSet result = new TIntHashSet();
-          commitsForSearch.forEach(new TIntProcedure() {
-            @Override
-            public boolean execute(int commit) {
-              try {
-                String value = myMessagesIndex.get(commit);
-                if (value != null) {
-                  if (StringUtil.containsIgnoreCase(value, text)) {
-                    result.add(commit);
-                  }
+          while (commitsForSearch.hasNext()) {
+            int commit = commitsForSearch.next();
+            try {
+              String value = myMessagesIndex.get(commit);
+              if (value != null) {
+                if (StringUtil.containsIgnoreCase(value, text)) {
+                  result.add(commit);
                 }
               }
-              catch (IOException e) {
-                myFatalErrorsConsumer.consume(this, e);
-                return false;
-              }
-
-              return true;
             }
-          });
+            catch (IOException e) {
+              myFatalErrorsConsumer.consume(this, e);
+              break;
+            }
+          }
           return result;
         }
       }

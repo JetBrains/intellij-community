@@ -18,22 +18,20 @@ package com.intellij.vcs.log.data.index;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.TrigramBuilder;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.ScalarIndexExtension;
 import com.intellij.util.indexing.StorageException;
+import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.util.PersistentUtil;
 import gnu.trove.THashMap;
-import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Set;
 
 public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void> {
   private static final Logger LOG = Logger.getInstance(VcsLogMessagesTrigramIndex.class);
@@ -52,7 +50,7 @@ public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void> {
   }
 
   @Nullable
-  public TIntHashSet getCommitsForSubstring(@NotNull String string) throws StorageException {
+  public ValueContainer.IntIterator getCommitsForSubstring(@NotNull String string) throws StorageException {
     MyTrigramProcessor trigramProcessor = new MyTrigramProcessor();
     TrigramBuilder.processTrigrams(string, trigramProcessor);
 

@@ -77,10 +77,8 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
   }
 
   @NotNull
-  public TIntHashSet getCommitsWithAllKeys(@NotNull Collection<Integer> keys) throws StorageException {
-    TIntHashSet result = FileBasedIndexImpl.collectInputIdsContainingAllKeys(myMapReduceIndex, keys);
-    if (result == null) return new TIntHashSet();
-    return result;
+  public ValueContainer.IntIterator getCommitsWithAllKeys(@NotNull Collection<Integer> keys) throws StorageException {
+    return FileBasedIndexImpl.collectInputIdsContainingAllKeys(myMapReduceIndex, keys);
   }
 
   private void iterateCommitIds(int key, @NotNull Consumer<Integer> consumer) throws StorageException {
