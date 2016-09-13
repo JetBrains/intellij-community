@@ -142,8 +142,8 @@ public final class CompletionServiceImpl extends CompletionService{
 
     @Override
     public void stopHere() {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Completion stopped\n" + DebugUtil.currentStackTrace());
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("Completion stopped\n" + DebugUtil.currentStackTrace());
       }
       super.stopHere();
       if (myOriginal != null) {

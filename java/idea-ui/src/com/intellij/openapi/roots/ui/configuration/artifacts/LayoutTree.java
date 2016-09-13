@@ -150,19 +150,16 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
 
   public List<PackagingElementNode<?>> findNodes(final Collection<? extends PackagingElement<?>> elements) {
     final List<PackagingElementNode<?>> nodes = new ArrayList<>();
-    TreeUtil.traverseDepth(getRootNode(), new TreeUtil.Traverse() {
-      @Override
-      public boolean accept(Object node) {
-        final Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
-        if (userObject instanceof PackagingElementNode) {
-          final PackagingElementNode<?> packagingNode = (PackagingElementNode<?>)userObject;
-          final List<? extends PackagingElement<?>> nodeElements = packagingNode.getPackagingElements();
-          if (ContainerUtil.intersects(nodeElements, elements)) {
-            nodes.add(packagingNode);
-          }
+    TreeUtil.traverseDepth(getRootNode(), node -> {
+      final Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
+      if (userObject instanceof PackagingElementNode) {
+        final PackagingElementNode<?> packagingNode = (PackagingElementNode<?>)userObject;
+        final List<? extends PackagingElement<?>> nodeElements = packagingNode.getPackagingElements();
+        if (ContainerUtil.intersects(nodeElements, elements)) {
+          nodes.add(packagingNode);
         }
-        return true;
       }
+      return true;
     });
     return nodes;
   }

@@ -130,15 +130,12 @@ public class FrameworksTree extends CheckboxTree {
   @TestOnly
   public boolean selectFramework(final String id, final boolean checked) {
     TreeNode root = (TreeNode)getModel().getRoot();
-    return !TreeUtil.traverse(root, new TreeUtil.Traverse() {
-      @Override
-      public boolean accept(Object node) {
-        if (node instanceof FrameworkSupportNode && id.equals(((FrameworkSupportNode)node).getId())) {
-          ((FrameworkSupportNode)node).setChecked(checked);
-          return false;
-        }
-        return true;
+    return !TreeUtil.traverse(root, node -> {
+      if (node instanceof FrameworkSupportNode && id.equals(((FrameworkSupportNode)node).getId())) {
+        ((FrameworkSupportNode)node).setChecked(checked);
+        return false;
       }
+      return true;
     });
   }
 }

@@ -186,6 +186,10 @@ public class PyCompatibilityInspectionTest extends PyTestCase {
     doTest();
   }
 
+  public void testUnderscoresInNumericLiterals() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
   private void doTest(@NotNull LanguageLevel level) {
     runWithLanguageLevel(level, this::doTest);
   }

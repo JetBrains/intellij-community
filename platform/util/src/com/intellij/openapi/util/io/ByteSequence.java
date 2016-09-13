@@ -75,8 +75,8 @@ public class ByteSequence {
     final byte[] thisBytes = myBytes;
 
     int result = 1;
-    for (int i = myOffset; i < myOffset + len; i++) {
-      result = result * 31 + thisBytes[i];
+    for (int i = 0, j = myOffset; i < len; i++, j++) {
+      result = result * 31 + thisBytes[j];
     }
     return result;
   }

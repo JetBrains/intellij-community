@@ -569,8 +569,8 @@ public class JavaCompletionUtil {
     return !(constructor instanceof PsiCompiledElement) || !constructor.hasModifierProperty(PsiModifier.PRIVATE);
   }
 
-  public static Set<String> getAllLookupStrings(@NotNull PsiMember member) {
-    Set<String> allLookupStrings = ContainerUtil.newLinkedHashSet();
+  public static LinkedHashSet<String> getAllLookupStrings(@NotNull PsiMember member) {
+    LinkedHashSet<String> allLookupStrings = ContainerUtil.newLinkedHashSet();
     String name = member.getName();
     allLookupStrings.add(name);
     PsiClass containingClass = member.getContainingClass();

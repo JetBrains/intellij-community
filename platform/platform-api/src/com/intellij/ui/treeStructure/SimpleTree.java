@@ -477,11 +477,9 @@ public class SimpleTree extends Tree implements CellEditorListener {
   }
 
   private void debugTree(AbstractTreeBuilder aBuilder) {
-    TreeUtil.traverseDepth((TreeNode)aBuilder.getTree().getModel().getRoot(), new TreeUtil.Traverse() {
-      public boolean accept(Object node) {
-        System.out.println("Node: " + node);
-        return true;
-      }
+    TreeUtil.traverseDepth((TreeNode)aBuilder.getTree().getModel().getRoot(), node -> {
+      System.out.println("Node: " + node);
+      return true;
     });
   }
 

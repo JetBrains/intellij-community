@@ -532,6 +532,19 @@ public class SMTestProxy extends AbstractTestProxy {
     return filterChildren(filter, getChildren());
   }
 
+  protected void addAfterLastPassed(Printable printable) {
+    int idx = 0;
+    synchronized (myNestedPrintables) {
+      for (Printable proxy : myNestedPrintables) {
+        if (proxy instanceof SMTestProxy && !((SMTestProxy)proxy).isFinal()) {
+          break;
+        }
+        idx++;
+      }
+    }
+    insert(printable, idx);
+  }
+
   private static List<? extends SMTestProxy> filterChildren(@Nullable Filter<? super SMTestProxy> filter,
                                                             List<? extends SMTestProxy> allChildren) {
     if (filter == Filter.NO_FILTER || filter == null) {

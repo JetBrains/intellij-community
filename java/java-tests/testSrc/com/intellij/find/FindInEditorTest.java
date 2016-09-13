@@ -60,6 +60,8 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
     initFind();
     myFindModel.setStringToFind("a");
     checkResults();
+    myFindModel.setStringToFind("a2");
+    assertTrue(!myEditor.getSelectionModel().hasSelection());
   }
 
   public void testEmacsLikeFallback() throws Exception {

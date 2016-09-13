@@ -59,7 +59,6 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
   WindowsDistributionCustomizer createWindowsCustomizer(String projectHome) {
     return new PyCharmWindowsDistributionCustomizer() {
       {
-        buildZipWithBundledOracleJre = true
         installerImagesPath = "$projectHome/python/build/resources"
         fileAssociations = [".py"]
       }

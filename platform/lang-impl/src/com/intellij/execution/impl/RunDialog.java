@@ -119,7 +119,7 @@ public class RunDialog extends DialogWrapper implements RunConfigurable.RunDialo
   public static boolean editConfiguration(final Project project, final RunnerAndConfigurationSettings configuration, final String title, @Nullable final Executor executor) {
     final SingleConfigurationConfigurable<RunConfiguration> configurable =
       SingleConfigurationConfigurable.editSettings(configuration, executor);
-    final SingleConfigurableEditor dialog = new SingleConfigurableEditor(project, configurable, IdeModalityType.PROJECT) {
+    final SingleConfigurableEditor dialog = new SingleConfigurableEditor(project, configurable, IdeModalityType.IDE) {
       {
         if (executor != null) setOKButtonText(executor.getActionName());
         if (executor != null) setOKButtonIcon(executor.getIcon());
