@@ -26,6 +26,7 @@ import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.configurable.SendPeriod;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.*;
@@ -186,8 +187,10 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
     tracker.setMaxJournalTime(10, TimeUnit.MINUTES);
     tracker.setMaxJournalSize(1000);
 
+    ApplicationInfo application = ApplicationInfo.getInstance();
+
     // Update the publisher based on settings updated above, will initialize on first call.
-    AnalyticsPublisher.updatePublisher(logger, settings, scheduler);
+    AnalyticsPublisher.updatePublisher(logger, settings, scheduler, application.getStrictVersion());
   }
 
   @Override
