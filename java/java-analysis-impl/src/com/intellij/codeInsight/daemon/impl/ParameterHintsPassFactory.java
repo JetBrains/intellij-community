@@ -19,6 +19,7 @@ import com.intellij.codeHighlighting.EditorBoundHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
+import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.codeInsight.folding.impl.ParameterNameFoldingManager;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.components.AbstractProjectComponent;
@@ -61,7 +62,7 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
     public void doCollectInformation(@NotNull ProgressIndicator progress) {
       assert myDocument != null;
       myAnnotations.clear();
-      if (!Registry.is("editor.inline.parameter.hints") || !(myFile instanceof PsiJavaFile)) return;
+      if (!isEnabled() || !(myFile instanceof PsiJavaFile)) return;
       PsiJavaFile file = (PsiJavaFile) myFile;
 
       PsiClass[] classes = file.getClasses();
@@ -69,6 +70,10 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
         ProgressIndicatorProvider.checkCanceled();
         addElementsToFold(aClass);
       }
+    }
+
+    private static boolean isEnabled() {
+      return Registry.is("editor.inline.parameter.hints") || JavaCodeFoldingSettings.getInstance().isInlineParameterNamesForLiteralCallArguments();
     }
 
     private void addElementsToFold(PsiClass aClass) {
