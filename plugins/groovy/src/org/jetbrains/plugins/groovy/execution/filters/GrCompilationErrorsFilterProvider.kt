@@ -23,5 +23,5 @@ import com.intellij.openapi.project.Project
 
 class GrCompilationErrorsFilterProvider : ConsoleFilterProvider {
 
-  override fun getDefaultFilters(project: Project) = arrayOf(RegexpFilter(project, "${FILE_PATH_MACROS}: ${LINE_MACROS}.*"))
+  override fun getDefaultFilters(project: Project) = arrayOf(RegexpFilter(project, "(file:)?${FILE_PATH_MACROS}: ${LINE_MACROS}.*"))
 }
