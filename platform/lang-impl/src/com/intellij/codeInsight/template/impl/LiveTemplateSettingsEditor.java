@@ -417,18 +417,15 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     ((DefaultTreeModel)checkboxTree.getModel()).nodeStructureChanged(root);
 
-    TreeUtil.traverse(root, new TreeUtil.Traverse() {
-      @Override
-      public boolean accept(Object _node) {
-        final CheckedTreeNode node = (CheckedTreeNode)_node;
-        if (node.isChecked()) {
-          final TreeNode[] path = node.getPath();
-          if (path != null) {
-            checkboxTree.expandPath(new TreePath(path).getParentPath());
-          }
+    TreeUtil.traverse(root, _node -> {
+      final CheckedTreeNode node = (CheckedTreeNode)_node;
+      if (node.isChecked()) {
+        final TreeNode[] path = node.getPath();
+        if (path != null) {
+          checkboxTree.expandPath(new TreePath(path).getParentPath());
         }
-        return true;
       }
+      return true;
     });
 
     panel.add(ScrollPaneFactory.createScrollPane(checkboxTree));
