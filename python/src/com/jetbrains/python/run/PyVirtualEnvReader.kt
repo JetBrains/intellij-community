@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.run
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.EnvironmentUtil
@@ -26,7 +27,9 @@ import java.io.File
  */
 
 
-class PyVirtualEnvReader(virtualEnvSdkPath: String) : EnvironmentUtil.ShellEnvReader() {
+class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellEnvReader() {
+  private val LOG = Logger.getInstance("#com.jetbrains.python.run.PyVirtualEnvReader")
+
   val activate = findActivateScript(virtualEnvSdkPath, shell)
 
   override fun readShellEnv(): MutableMap<String, String> {
@@ -34,11 +37,17 @@ class PyVirtualEnvReader(virtualEnvSdkPath: String) : EnvironmentUtil.ShellEnvRe
       return super.readShellEnv()
     }
     else {
-      return readVirtualEnvOnWindows();
+      if (activate != null) {
+        return readVirtualEnvOnWindows(activate);
+      }
+      else {
+        LOG.error("Can't find activate script for $virtualEnvSdkPath")
+        return mutableMapOf();
+      }
     }
   }
 
-  private fun readVirtualEnvOnWindows(): MutableMap<String, String> {
+  private fun readVirtualEnvOnWindows(activate: String): MutableMap<String, String> {
     val activateFile = FileUtil.createTempFile("pycharm-virualenv-activate.", ".bat", false)
     val envFile = FileUtil.createTempFile("pycharm-virualenv-envs.", ".tmp", false)
     try {
