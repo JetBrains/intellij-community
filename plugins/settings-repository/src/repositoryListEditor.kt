@@ -53,9 +53,10 @@ internal fun createRepositoryListEditor(): ConfigurableUi<IcsSettings> {
     override fun isModified(settings: IcsSettings) = editor.isModified
 
     override fun getComponent() = panel {
-      label("Repository:")
-      editor.comboBox()
-      deleteButton()
+      row("Repository:") {
+        editor.comboBox()
+        deleteButton()
+      }
     }
 
     override fun apply(settings: IcsSettings) {

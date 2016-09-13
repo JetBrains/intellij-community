@@ -20,7 +20,6 @@ import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.ui.layout.*
 import com.intellij.ui.layout.CCFlags.*
-import com.intellij.ui.layout.LCFlags.*
 import javax.swing.JCheckBox
 
 internal class IcsConfigurable : ConfigurableBase<IcsConfigurableUi, IcsSettings>("ics", icsMessage("ics.settings"), "reference.settings.ics") {
@@ -56,7 +55,7 @@ internal class IcsConfigurableUi : ConfigurableUi<IcsSettings>, Disposable {
     saveSettings(settings, icsManager.settingsFile)
   }
 
-  override fun getComponent() = panel(noGrid, flowY) {
+  override fun getComponent() = verticalPanel {
     editors.get(0).component()
     autoSync()
     hint("Use VCS -> Sync Settings to sync when you want")

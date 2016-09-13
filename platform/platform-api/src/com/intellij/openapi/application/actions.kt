@@ -25,7 +25,7 @@ inline fun <T> runReadAction(crossinline runnable: () -> T): T = ApplicationMana
 /**
  * @exclude Internal use only
  */
-fun <T> invokeAndWaitIfNeed(runnable: () -> T): T {
+fun <T> invokeAndWaitIfNeed(modalityState: ModalityState? = null, runnable: () -> T): T {
   val app = ApplicationManager.getApplication()
   if (app == null) {
     if (SwingUtilities.isEventDispatchThread()) {
@@ -39,7 +39,7 @@ fun <T> invokeAndWaitIfNeed(runnable: () -> T): T {
   }
   else {
     var result: T? = null
-    app.invokeAndWait { result = runnable() }
+    app.invokeAndWait({ result = runnable() }, modalityState ?: ModalityState.defaultModalityState())
     return result as T
   }
 }

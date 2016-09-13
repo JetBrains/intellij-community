@@ -19,11 +19,9 @@ import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.OneTimeString
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeed
-import com.intellij.openapi.ui.dialog
 import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.*
-import com.intellij.ui.layout.CCFlags.*
-import com.intellij.ui.layout.LCFlags.*
 import com.intellij.util.PathUtilRt
 import com.intellij.util.text.nullize
 import com.intellij.util.text.trimMiddle
@@ -45,43 +43,40 @@ fun showAuthenticationForm(credentials: Credentials?, uri: String, host: String?
     username = path.substring(1, if (firstSlashIndex == -1) path.length else firstSlashIndex)
   }
 
-  val message = if (sshKeyFile == null) icsMessage("log.in.to", uri.trimMiddle(50)) else icsMessage("enter.your.password.for.ssh.key", PathUtilRt.getFileName(sshKeyFile))
+  val message = if (sshKeyFile == null) icsMessage("log.in.to", uri.trimMiddle(50)) else "Enter your password for the SSH key \"${PathUtilRt.getFileName(sshKeyFile)}\":"
 
   return invokeAndWaitIfNeed {
     val userField = JTextField(username)
     val passwordField = JPasswordField(credentials?.password?.toString())
 
-    val centerPanel = panel(fillX) {
-      label(message, wrap, span, bold = true, gapBottom = 10)
-
+    val centerPanel = panel {
+      noteRow(message)
       if (sshKeyFile == null && !isGitHub) {
-        label("Username:")
-        userField(grow, wrap)
+        row("Username:") { userField() }
       }
 
-      label(if (sshKeyFile == null && isGitHub) "Token:" else "Password:")
-      passwordField(grow, wrap)
+      row(if (sshKeyFile == null && isGitHub) "Token:" else "Password:") { passwordField() }
 
-      note?.let { note(it, skip) }
+      note?.let { noteRow(it) }
     }
 
     val authenticationForm = dialog(
         title = "Settings Repository",
-        centerPanel = centerPanel,
-        preferedFocusComponent = if (userField.parent == null) passwordField else userField,
+        panel = centerPanel,
+        focusedComponent = if (userField.parent == null) passwordField else userField,
         okActionEnabled = false)
 
     passwordField.document.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
-        authenticationForm.okActionEnabled(e.document.length != 0)
+        authenticationForm.isOKActionEnabled = e.document.length != 0
       }
     })
-    authenticationForm.okActionEnabled(false)
+    authenticationForm.isOKActionEnabled = false
 
     if (authenticationForm.showAndGet()) {
       username = sshKeyFile ?: userField.text.nullize(true)
-      val passwordChars = passwordField.password
-      Credentials(username, if (passwordChars == null || passwordChars.isEmpty()) (if (username == null) null else OneTimeString("x-oauth-basic")) else OneTimeString(passwordChars))
+      val passwordChars = passwordField.password.nullize()
+      Credentials(username, if (passwordChars == null) (if (username == null) null else OneTimeString("x-oauth-basic")) else OneTimeString(passwordChars))
     }
     else {
       null

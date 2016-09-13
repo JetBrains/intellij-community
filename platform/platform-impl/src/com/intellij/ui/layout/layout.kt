@@ -15,104 +15,69 @@
  */
 package com.intellij.ui.layout
 
-import com.intellij.BundleBase
 import com.intellij.ide.BrowserUtil
-import com.intellij.openapi.ui.ex.MultiLineLabel
-import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.Label
+import com.intellij.ui.components.RadioButton
 import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.ui.noteComponent
+import com.intellij.ui.components.noteComponent
+import com.intellij.ui.layout.LCFlags.*
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.UIUtil.ComponentStyle
+import com.intellij.util.ui.UIUtil.FontColor
 import net.miginfocom.layout.BoundSize
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.UnitValue
 import java.awt.Component
-import java.awt.Font
-import java.awt.event.ActionEvent
-import javax.swing.*
 
-inline fun panel(vararg layoutConstraints: LCFlags, title: String? = null, init: Panel.() -> Unit) = createPanel(title, layoutConstraints, init)
+inline fun panel(title: String? = null, init: LayoutBuilder.() -> Unit) = createPanel2(title, init)
 
-fun JPanel.label(text: String,
+inline fun verticalPanel(init: Panel.() -> Unit) = createUnsafePanel(layoutConstraints = arrayOf(noGrid, flowY, fillX), init = init)
+
+fun Panel.label(text: String,
                  vararg constraints: CCFlags,
                  style: ComponentStyle? = null,
-                 fontColor: UIUtil.FontColor? = null,
+                 fontColor: FontColor? = null,
                  bold: Boolean = false,
                  gapLeft: Int = 0,
                  gapBottom: Int = 0,
                  gapAfter: Int = 0,
                  split: Int = -1) {
-  val finalText = BundleBase.replaceMnemonicAmpersand(text)
-  val label: JLabel
-  if (fontColor == null) {
-    label = if (finalText.contains('\n')) MultiLineLabel(finalText) else JLabel(finalText)
-    style?.let { UIUtil.applyStyle(it, label) }
-  }
-  else {
-    label = JBLabel(finalText, style ?: ComponentStyle.REGULAR, fontColor)
-  }
-
-  if (bold) {
-    label.font = label.font.deriveFont(Font.BOLD)
-  }
-
-  add(label, createComponentConstraints(constraints, gapLeft = gapLeft, gapBottom = gapBottom, gapAfter = gapAfter, split = split))
+  add(Label(text, style, fontColor, bold), createComponentConstraints(constraints, gapLeft = gapLeft, gapBottom = gapBottom, gapAfter = gapAfter, split = split))
 }
 
-fun JPanel.link(text: String, vararg constraints: CCFlags, style: ComponentStyle? = null, action: () -> Unit) {
+fun Panel.link(text: String, vararg constraints: CCFlags, style: ComponentStyle? = null, action: () -> Unit) {
   val result = LinkLabel.create(text, action)
   style?.let { UIUtil.applyStyle(it, result) }
   add(result, constraints.create())
 }
 
-fun JPanel.link(text: String, url: String, vararg constraints: CCFlags, style: ComponentStyle? = null) {
+fun Panel.link(text: String, url: String, vararg constraints: CCFlags, style: ComponentStyle? = null) {
   val result = LinkLabel.create(text, { BrowserUtil.browse(url) })
   style?.let { UIUtil.applyStyle(it, result) }
   add(result, constraints.create())
 }
-
-fun JPanel.hint(text: String, vararg constraints: CCFlags) {
-  label(text, style = ComponentStyle.SMALL, fontColor = UIUtil.FontColor.BRIGHTER, constraints = *constraints, gapLeft = 3 * GAP)
+fun Panel.hint(text: String, vararg constraints: CCFlags) {
+  label(text, style = ComponentStyle.SMALL, fontColor = FontColor.BRIGHTER, constraints = *constraints, gapLeft = 3 * GAP)
 }
 
 /**
  * Hyperlinks are supported (`<a href=""></a>`), new lines and <br> are not supported.
  */
-fun JPanel.note(text: String, vararg constraints: CCFlags) {
+fun Panel.note(text: String, vararg constraints: CCFlags) {
   add(noteComponent(text), createComponentConstraints(constraints, gapTop = GAP))
 }
 
-fun JPanel.radioButton(text: String, vararg constraints: CCFlags) {
+fun Panel.radioButton(text: String, vararg constraints: CCFlags) {
   add(RadioButton(text), constraints.create())
 }
 
-fun JPanel.buttonGroup(vararg buttons: AbstractButton) {
-  val group = ButtonGroup()
-  buttons.forEach {
-    group.add(it)
-    add(it)
-  }
-}
-
-fun JPanel.button(text: String, vararg constraints: CCFlags, actionListener: (event: ActionEvent) -> Unit) {
-  val button = JButton(BundleBase.replaceMnemonicAmpersand(text))
-  button.addActionListener(actionListener)
-  add(button, constraints.create())
-}
-
-inline fun Panel.panel(title: String, layoutConstraints: Array<out LCFlags> = emptyArray(), vararg constraints: CCFlags, init: Panel.() -> Unit) {
-  add(createPanel(title, layoutConstraints, init), constraints.create())
-}
-
-fun JPanel.panel(title: String, wrappedComponent: Component, vararg constraints: CCFlags) {
-  val panel = TitledPanel(title)
+fun Panel.panel(title: String, wrappedComponent: Component, vararg constraints: CCFlags) {
+  val panel = com.intellij.ui.components.Panel(title)
   panel.add(wrappedComponent)
   add(panel, constraints.create())
 }
 
-fun RadioButton(text: String) = JRadioButton(BundleBase.replaceMnemonicAmpersand(text))
-
-private fun gapToBoundSize(value: Int, isHorizontal: Boolean): BoundSize {
+internal fun gapToBoundSize(value: Int, isHorizontal: Boolean): BoundSize {
   val unitValue = UnitValue(value.toFloat(), "", isHorizontal, UnitValue.STATIC, null)
   return BoundSize(unitValue, unitValue, null, false, null)
 }

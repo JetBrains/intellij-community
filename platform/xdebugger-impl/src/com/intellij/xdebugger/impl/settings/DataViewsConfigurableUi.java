@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-import static com.intellij.ui.layout.LayoutImplKt.TitledPanel;
+import static com.intellij.ui.components.ComponentsKt.Panel;
 
 public class DataViewsConfigurableUi {
   public static final String DEBUGGER_VALUE_TOOLTIP_AUTO_SHOW_KEY = "debugger.valueTooltipAutoShow";
@@ -91,6 +91,6 @@ public class DataViewsConfigurableUi {
   }
 
   private void createUIComponents() {
-    myEditorSettingsPanel = TitledPanel("Editor");
+    myEditorSettingsPanel = Panel("Editor");
   }
 }

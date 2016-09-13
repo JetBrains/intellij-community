@@ -1,12 +1,18 @@
 Use `panel` to create UI:
 
 ```kotlin
-panel(fillX) {
-  // child components
+panel {
+  row {
+    // child components
+  }
 }
 ```
+
+Rows are created vertically from top to bottom, in the same order as lines of code that call `row`.
+Inside one row, you add components from left to right in the same order calls to factory method or `()` appear in each row.
+
 There are two ways to add child components:
-* Using factory methods `label`, `button`, `radioButton`, `hint`, `link`, `note`, `panel`, etc. It allows you to create consistent UI and reuse common patterns (for example, `note` automatically adds required top gap).
+* Using factory methods `label`, `button`, `radioButton`, `hint`, `link`, etc. It allows you to create consistent UI and reuse common patterns.
   ```kotlin
   note("""Do not have an account? <a href="https://account.jetbrains.com/login">Sign Up</a>""", span, wrap)
   ```
@@ -14,7 +20,7 @@ There are two ways to add child components:
   ```kotlin
   val userField = JTextField(credentials?.userName)
   panel() {
-    userField(grow, wrap)
+    row { userField(grow, wrap) }
   }
   // use userField variable somehow
   ```
@@ -23,21 +29,19 @@ There are two ways to add child components:
   ```kotlin
   JTextField(credentials?.userName)(grow, wrap)
   ```
-   
+  
 Example:
 ```kotlin
-val panel = panel(fillX) {
-  label("Login to get notified when the submitted\nexceptions are fixed.", span, wrap)
-  label("Username:")
-  userField(grow, wrap)
-
-  label("Password:")
-  passwordField(grow, wrap)
-  rememberCheckBox(skip, split, grow)
-  link("Forgot password?", wrap, right) {
-    // custom action
+val panel = panel {
+  noteRow("Login to get notified when the submitted\nexceptions are fixed.")
+  row("Username:") { userField() }
+  row("Password:") { passwordField() }
+  row {
+    rememberCheckBox()
+    right {
+      link("Forgot password?") { /* custom action */ }
+    }
   }
-
-  note("""Do not have an account? <a href="https://example.com/login">Sign Up</a>""", span, wrap)
+  noteRow("""Do not have an account? <a href="https://account.jetbrains.com/login">Sign Up</a>""")
 }
 ```
