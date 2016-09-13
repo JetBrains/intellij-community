@@ -17,7 +17,9 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.management.ListenerNotFoundException;
 import javax.management.Notification;
@@ -27,6 +29,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryNotificationInfo;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 public class LowMemoryWatcherManager implements Disposable {
@@ -71,12 +74,24 @@ public class LowMemoryWatcherManager implements Disposable {
     public void handleNotification(Notification notification, Object __) {
       if (MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED.equals(notification.getType()) ||
           MemoryNotificationInfo.MEMORY_COLLECTION_THRESHOLD_EXCEEDED.equals(notification.getType())) {
+        if (Registry.is("low.memory.watcher.sync", true)) {
+          myJanitor.run();
+          return;
+        }
+
         synchronized (myJanitor) {
           if (mySubmitted == null) {
-            mySubmitted = AppExecutorUtil.getAppExecutorService().submit(myJanitor);
+            mySubmitted = myExecutor.getValue().submit(myJanitor);
           }
         }
       }
+    }
+  };
+  private final NotNullLazyValue<ExecutorService> myExecutor = new NotNullLazyValue<ExecutorService>() {
+    @NotNull
+    @Override
+    protected ExecutorService compute() {
+      return AppExecutorUtil.createBoundedApplicationPoolExecutor("lowMemoryWatcher", 1);
     }
   };
 
