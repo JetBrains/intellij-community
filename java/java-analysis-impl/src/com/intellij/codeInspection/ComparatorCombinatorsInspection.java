@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.PsiMethodUtil;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,7 +37,7 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
           PsiElement body = lambda.getBody();
           if(body instanceof PsiMethodCallExpression) {
             PsiMethodCallExpression methodCall = (PsiMethodCallExpression)body;
-            if(PsiMethodUtil.isCompareToCall(methodCall)) {
+            if(MethodUtils.isCompareToCall(methodCall)) {
               PsiExpression left = methodCall.getMethodExpression().getQualifierExpression();
               PsiExpression right = methodCall.getArgumentList().getExpressions()[0];
               if(left instanceof PsiMethodCallExpression && right instanceof PsiMethodCallExpression) {
@@ -95,7 +95,7 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
       PsiElement body = lambda.getBody();
       if (!(body instanceof PsiMethodCallExpression)) return;
       PsiMethodCallExpression methodCall = (PsiMethodCallExpression)body;
-      if (!PsiMethodUtil.isCompareToCall(methodCall)) return;
+      if (!MethodUtils.isCompareToCall(methodCall)) return;
       PsiExpression qualifier = methodCall.getMethodExpression().getQualifierExpression();
       if (!(qualifier instanceof PsiMethodCallExpression)) return;
       PsiMethodCallExpression call = (PsiMethodCallExpression)qualifier;

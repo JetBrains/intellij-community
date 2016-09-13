@@ -22,9 +22,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,7 +80,7 @@ public class ConvertCompareToToEqualsIntention extends BaseElementAtCaretIntenti
     PsiMethodCallExpression compareToExpression = null;
     boolean hasZero = false;
     for (PsiExpression psiExpression : binaryExpression.getOperands()) {
-      if (compareToExpression == null && PsiMethodUtil.isCompareToCall(psiExpression)) {
+      if (compareToExpression == null && MethodUtils.isCompareToCall(psiExpression)) {
         compareToExpression = (PsiMethodCallExpression)psiExpression;
         continue;
       }

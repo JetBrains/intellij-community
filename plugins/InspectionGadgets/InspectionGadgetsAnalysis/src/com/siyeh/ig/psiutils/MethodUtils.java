@@ -26,6 +26,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.HardcodedMethodConstants;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,22 +38,28 @@ public class MethodUtils {
 
   private MethodUtils() {}
 
+  @Contract("null -> false")
   public static boolean isComparatorCompare(@Nullable PsiMethod method) {
     return method != null && methodMatches(method, CommonClassNames.JAVA_UTIL_COMPARATOR, PsiType.INT, "compare", null, null);
   }
 
+  @Contract("null -> false")
   public static boolean isCompareTo(@Nullable PsiMethod method) {
-    return method != null && methodMatches(method, null, PsiType.INT, HardcodedMethodConstants.COMPARE_TO, PsiType.NULL);
+    return method != null && !methodMatches(method, null, PsiType.INT, HardcodedMethodConstants.COMPARE_TO, PsiType.NULL)
+      && InheritanceUtil.isInheritor(method.getContainingClass(), CommonClassNames.JAVA_LANG_COMPARABLE);
   }
 
+  @Contract("null -> false")
   public static boolean isHashCode(@Nullable PsiMethod method) {
     return method != null && methodMatches(method, null, PsiType.INT, HardcodedMethodConstants.HASH_CODE);
   }
 
+  @Contract("null -> false")
   public static boolean isFinalize(@Nullable PsiMethod method) {
     return method != null && methodMatches(method, null, PsiType.VOID, HardcodedMethodConstants.FINALIZE);
   }
 
+  @Contract("null -> false")
   public static boolean isToString(@Nullable PsiMethod method) {
     if (method == null) {
       return false;
@@ -61,6 +68,7 @@ public class MethodUtils {
     return methodMatches(method, null, stringType, HardcodedMethodConstants.TO_STRING);
   }
 
+  @Contract("null -> false")
   public static boolean isEquals(@Nullable PsiMethod method) {
     if (method == null) {
       return false;
@@ -354,5 +362,18 @@ public class MethodUtils {
     final PsiReturnStatement returnStatement = (PsiReturnStatement)lastStatement;
     final PsiExpression returnValue = returnStatement.getReturnValue();
     return returnValue instanceof PsiThisExpression;
+  }
+
+  @Contract("null -> false")
+  public static boolean isCompareToCall(final @Nullable PsiExpression expression) {
+    if (!(expression instanceof PsiMethodCallExpression)) {
+      return false;
+    }
+    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+    if (methodCallExpression.getMethodExpression().getQualifierExpression() == null) {
+      return false;
+    }
+    final PsiMethod psiMethod = methodCallExpression.resolveMethod();
+    return isCompareTo(psiMethod);
   }
 }
