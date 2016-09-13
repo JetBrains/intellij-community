@@ -144,10 +144,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
                 if (exitPoints.isEmpty()) {
                   if(getIncrementedVariable(tb, operations, nonFinalVariables) != null) {
-                    registerProblem(holder, statement, "count", new ReplaceWithCountFix());
+                    registerProblem(holder, isOnTheFly, statement, "count", new ReplaceWithCountFix());
                   }
                   if(getAccumulatedVariable(tb, operations, nonFinalVariables) != null) {
-                    registerProblem(holder, statement, "sum", new ReplaceWithSumFix());
+                    registerProblem(holder, isOnTheFly, statement, "sum", new ReplaceWithSumFix());
                   }
                   if(!nonFinalVariables.isEmpty()) {
                     return;
@@ -166,7 +166,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                         methodName = "forEach";
                       }
                     }
-                    registerProblem(holder, statement, methodName, new ReplaceWithCollectFix(methodName));
+                    registerProblem(holder, isOnTheFly, statement, methodName, new ReplaceWithCollectFix(methodName));
                   }
                   // do not replace for(T e : arr) {} with Arrays.stream(arr).forEach(e -> {}) even if flag is set
                   else if (!operations.isEmpty() ||
@@ -177,7 +177,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                       //for .stream()
                       fixes.add(new ReplaceWithForeachCallFix("forEachOrdered"));
                     }
-                    registerProblem(holder, statement, "forEach", fixes.toArray(new LocalQuickFix[fixes.size()]));
+                    registerProblem(holder, isOnTheFly, statement, "forEach", fixes.toArray(new LocalQuickFix[fixes.size()]));
                   }
                 } else {
                   if(nonFinalVariables.isEmpty() && tb.getSingleStatement() instanceof PsiReturnStatement) {
@@ -202,7 +202,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                               }
                             }
                           }
-                          registerProblem(holder, statement, methodName, new ReplaceWithMatchFix(methodName));
+                          registerProblem(holder, isOnTheFly, statement, methodName, new ReplaceWithMatchFix(methodName));
                         }
                       }
                     }
@@ -224,15 +224,17 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   }
 
   @NotNull
-  private TextRange getRange(PsiForeachStatement statement) {
-    if(myKey == null) {
-      myKey = HighlightDisplayKey.find(getShortName());
-    }
+  private TextRange getRange(PsiForeachStatement statement, boolean isOnTheFly) {
     boolean wholeStatement = false;
-    if(myKey != null) {
-      InspectionProfile profile = InspectionProjectProfileManager.getInstance(statement.getProject()).getCurrentProfile();
-      HighlightDisplayLevel level = profile.getErrorLevel(myKey, statement);
-      wholeStatement = HighlightDisplayLevel.DO_NOT_SHOW.equals(level);
+    if(isOnTheFly) {
+      if (myKey == null) {
+        myKey = HighlightDisplayKey.find(getShortName());
+      }
+      if (myKey != null) {
+        InspectionProfile profile = InspectionProjectProfileManager.getInstance(statement.getProject()).getCurrentProfile();
+        HighlightDisplayLevel level = profile.getErrorLevel(myKey, statement);
+        wholeStatement = HighlightDisplayLevel.DO_NOT_SHOW.equals(level);
+      }
     }
     PsiExpression iteratedValue = statement.getIteratedValue();
     LOG.assertTrue(iteratedValue != null);
@@ -243,10 +245,14 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     return iteratedValue.getTextRange();
   }
 
-  private void registerProblem(ProblemsHolder holder, PsiForeachStatement statement, String methodName, LocalQuickFix... fixes) {
+  private void registerProblem(ProblemsHolder holder,
+                               boolean isOnTheFly,
+                               PsiForeachStatement statement,
+                               String methodName,
+                               LocalQuickFix... fixes) {
     PsiExpression iteratedValue = statement.getIteratedValue();
     LOG.assertTrue(iteratedValue != null);
-    holder.registerProblem(statement, getRange(statement).shiftRight(-statement.getTextOffset()),
+    holder.registerProblem(statement, getRange(statement, isOnTheFly).shiftRight(-statement.getTextOffset()),
                            "Can be replaced with '" + methodName + "' call", fixes);
   }
 
