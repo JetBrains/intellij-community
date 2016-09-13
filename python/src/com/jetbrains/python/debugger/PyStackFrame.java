@@ -30,6 +30,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.*;
+import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +45,7 @@ public class PyStackFrame extends XStackFrame {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.pydev.PyStackFrame");
 
   private static final Object STACK_FRAME_EQUALITY_OBJECT = new Object();
+  public static final String DOUBLE_UNDERSCORE = "__";
 
   private Project myProject;
   private final PyFrameAccessor myDebugProcess;
@@ -144,19 +146,26 @@ public class PyStackFrame extends XStackFrame {
 
     XValueChildrenList filteredChildren = new XValueChildrenList();
     final HashMap<String, XValue> returnedValues = new HashMap<>();
+    final HashMap<String, XValue> specialValues = new HashMap<>();
     for (int i = 0; i < children.size(); i++) {
       XValue value = children.getValue(i);
       String name = children.getName(i);
       if ((value instanceof PyDebugValue) && ((PyDebugValue)value).isReturnedVal()) {
         returnedValues.put(name, value);
       }
+      else if (name.startsWith(DOUBLE_UNDERSCORE) && (name.endsWith(DOUBLE_UNDERSCORE))) {
+        specialValues.put(name, value);
+      }
       else {
         filteredChildren.add(name, value);
       }
     }
-    node.addChildren(filteredChildren, returnedValues.isEmpty());
+    node.addChildren(filteredChildren, returnedValues.isEmpty() && specialValues.isEmpty());
     if (!returnedValues.isEmpty()) {
       addReturnedValuesGroup(node, returnedValues);
+    }
+    if (!specialValues.isEmpty()) {
+      addSpecialValuesGroup(node, specialValues);
     }
   }
 
@@ -176,6 +185,27 @@ public class PyStackFrame extends XStackFrame {
       @Override
       public Icon getIcon() {
         return AllIcons.Debugger.WatchLastReturnValue;
+      }
+    });
+    node.addChildren(XValueChildrenList.topGroups(group), true);
+  }
+
+  private static void addSpecialValuesGroup(@NotNull final XCompositeNode node, Map<String, XValue> specialValues) {
+    final ArrayList<XValueGroup> group = Lists.newArrayList();
+    group.add(new XValueGroup("Special Variables") {
+      @Override
+      public void computeChildren(@NotNull XCompositeNode node) {
+        XValueChildrenList list = new XValueChildrenList();
+        for (Map.Entry<String, XValue> entry : specialValues.entrySet()) {
+          list.add(entry.getKey(), entry.getValue());
+        }
+        node.addChildren(list, true);
+      }
+
+      @Nullable
+      @Override
+      public Icon getIcon() {
+        return PythonIcons.Python.Debug.SpecialVar;
       }
     });
     node.addChildren(XValueChildrenList.topGroups(group), true);

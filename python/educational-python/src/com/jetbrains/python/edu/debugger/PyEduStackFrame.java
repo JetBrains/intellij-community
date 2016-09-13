@@ -13,6 +13,7 @@ import com.jetbrains.python.debugger.PyFrameAccessor;
 import com.jetbrains.python.debugger.PyStackFrame;
 import com.jetbrains.python.debugger.PyStackFrameInfo;
 import icons.PythonEducationalIcons;
+import icons.PythonIcons;
 import icons.PythonPsiApiIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,7 +98,7 @@ public class PyEduStackFrame extends PyStackFrame {
       @Nullable
       @Override
       public Icon getIcon() {
-        return PythonEducationalIcons.SpecialVar;
+        return PythonIcons.Python.Debug.SpecialVar;
       }
 
       @Override
