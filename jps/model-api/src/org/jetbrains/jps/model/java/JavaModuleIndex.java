@@ -25,7 +25,7 @@ import java.util.Set;
 public abstract class JavaModuleIndex {
   /**
    * Returns a path to a module descriptor (module-info.java file) for the given module,
-   * or {@code null} when there are no descriptor.
+   * or {@code null} when there is no descriptor.
    */
   public abstract @Nullable File getModuleInfoFile(@NotNull JpsModule module);
 
