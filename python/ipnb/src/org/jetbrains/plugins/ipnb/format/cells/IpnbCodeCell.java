@@ -17,7 +17,7 @@ public class IpnbCodeCell extends IpnbEditableCell {
                       @NotNull final List<String> input,
                       @Nullable final Integer number,
                       @NotNull final List<IpnbOutputCell> cellOutputs,
-                      @Nullable Map<String, Object> metadata) {
+                      @NotNull Map<String, Object> metadata) {
     super(input, metadata);
     myLanguage = language;
     myPromptNumber = number;
