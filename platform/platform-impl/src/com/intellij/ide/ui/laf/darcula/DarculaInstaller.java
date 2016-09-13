@@ -64,7 +64,7 @@ public class DarculaInstaller {
   }
 
   protected static void update() {
-    UISettings.getInstance().fireUISettingsChanged();
+    UISettings.getShadowInstance().fireUISettingsChanged();
     ActionToolbarImpl.updateAllToolbarsImmediately();
   }
 }
