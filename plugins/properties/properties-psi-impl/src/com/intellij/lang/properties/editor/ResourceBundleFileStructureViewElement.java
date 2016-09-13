@@ -38,13 +38,12 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentMap;
 
 public class ResourceBundleFileStructureViewElement implements StructureViewTreeElement, ResourceBundleEditorViewElement {
   private final ResourceBundle myResourceBundle;
 
   private volatile boolean myShowOnlyIncomplete;
-  private final ConcurrentMap<String, ResourceBundlePropertyStructureViewElement> myElements = ContainerUtil.newConcurrentMap();
+  private final Map<String, ResourceBundlePropertyStructureViewElement> myElements = ContainerUtil.newHashMap();
 
   public ResourceBundleFileStructureViewElement(final ResourceBundle resourceBundle) {
     myResourceBundle = resourceBundle;
