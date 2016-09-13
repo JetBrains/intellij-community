@@ -108,7 +108,7 @@ fun CheckBox(text: String, selected: Boolean = false, toolTip: String? = null): 
 }
 
 @JvmOverloads
-fun Panel(title: String? = null, layout: LayoutManager2 = BorderLayout()): JPanel {
+fun Panel(title: String? = null, layout: LayoutManager2? = BorderLayout()): JPanel {
   val panel = JPanel(layout)
   title?.let { setTitledBorder(it, panel) }
   return panel
@@ -124,12 +124,6 @@ fun dialog(title: String,
            errorText: String? = null,
            ok: (() -> Unit)? = null): DialogWrapper {
   return object: DialogWrapper(project, parent, true, IdeModalityType.PROJECT) {
-//    var okActionEnabled: Boolean
-//      get() = okAction.isEnabled
-//      set(value) {
-//        okAction.isEnabled = value
-//      }
-
     init {
       setTitle(title)
       setResizable(resizable)

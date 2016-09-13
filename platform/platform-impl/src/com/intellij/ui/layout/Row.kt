@@ -26,7 +26,7 @@ import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-class Row(private val buttonGroup: ButtonGroup?, internal val labeled: Boolean = false, internal val spanned: Boolean = false) {
+class Row(private val buttonGroup: ButtonGroup?, internal val labeled: Boolean = false, internal val noGrid: Boolean = false) {
   var rightIndex = Int.MAX_VALUE
   val components = SmartList<JComponent>()
 

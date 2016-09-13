@@ -62,7 +62,7 @@ inline fun createPanel2(title: String?, init: LayoutBuilder.() -> Unit): JPanel 
   val builder = createLayoutBuilder()
   builder.init()
 
-  val panel = com.intellij.ui.components.Panel(title, MigLayout(c().fillX()))
+  val panel = com.intellij.ui.components.Panel(title, layout = null)
   builder.`$`.build(panel)
   return panel
 }

@@ -19,6 +19,7 @@ import com.intellij.ui.components.noteComponent
 import com.intellij.util.SmartList
 import net.miginfocom.layout.BoundSize
 import net.miginfocom.layout.CC
+import net.miginfocom.swing.MigLayout
 import java.awt.Container
 import javax.swing.JComponent
 import javax.swing.text.JTextComponent
@@ -37,7 +38,7 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
     // add empty row
     addRow(Row(null))
 
-    val row = Row(null, spanned = true)
+    val row = Row(null, noGrid = true)
     row.apply { (noteComponent(text))() }
     addRow(row)
   }
@@ -45,6 +46,9 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
   override fun build(container: Container) {
     val labeled = rows.firstOrNull(Row::labeled) != null
     var gapTop = -1
+
+    container.layout = MigLayout(c().fillX())
+
     for (row in rows) {
       val lastComponent = row.components.lastOrNull()
       if (lastComponent == null) {
@@ -67,19 +71,29 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
           gapTop = -1
         }
 
-        if (isAddGrowX(component)) {
-          cc.growX()
+        if (row.noGrid) {
+          if (component === lastComponent) {
+            cc.wrap()
+          }
+          if (component === row.components.first()) {
+            // rowConstraints.noGrid() doesn't work correctly
+            cc.spanX()
+          }
         }
+        else {
+          if (isAddGrowX(component)) {
+            cc.growX()
+          }
 
-        if (component === lastComponent) {
-          cc.wrap()
-          // Set span for last component because cell count in other rows may be greater — but we expect that last component
-          // Spanned row always contains only one component, so, handled as general case.
-          cc.spanX()
-        }
+          if (component === lastComponent) {
+            cc.wrap()
+            // set span for last component because cell count in other rows may be greater — but we expect that last component can grow
+            cc.spanX()
+          }
 
-        if (labeled && !row.spanned && !row.labeled && component === row.components.first()) {
-          cc.skip()
+          if (labeled && !row.noGrid && !row.labeled && component === row.components.first()) {
+            cc.skip()
+          }
         }
 
         if (index >= row.rightIndex) {
