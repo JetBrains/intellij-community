@@ -9,7 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="testng_rt" />
     <orderEntry type="module" module-name="junit_rt" />
-    <orderEntry type="library" name="TestNG" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="TestNG" level="project" />
     <orderEntry type="library" name="Coverage" level="project" />
   </component>
 </module>
