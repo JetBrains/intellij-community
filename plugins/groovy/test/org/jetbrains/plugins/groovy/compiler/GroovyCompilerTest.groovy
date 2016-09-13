@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.compiler.CompilerConfiguration
@@ -47,6 +46,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.config.GroovyFacetUtil
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+
 /**
  * @author peter
  */
@@ -56,6 +56,11 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
     super.setUp()
     Logger.getInstance("#org.jetbrains.plugins.groovy.compiler.GroovyCompilerTest").info(testStartMessage)
     addGroovyLibrary(myModule)
+  }
+
+  @Override
+  protected boolean shouldRunTest() {
+    return false
   }
 
   void testPlainGroovy() throws Throwable {
