@@ -45,6 +45,8 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.lang.reflect.Field;
 
+import static com.intellij.util.ui.JBUI.emptyInsets;
+
 public class JBScrollPane extends JScrollPane {
   /**
    * This key is used to specify which colors should use the scroll bars on the pane.
@@ -534,7 +536,7 @@ public class JBScrollPane extends JScrollPane {
    * ScrollBar flipping and non-opaque ScrollBars.
    */
   private static class Layout extends ScrollPaneLayout {
-    private static final Insets EMPTY_INSETS = new Insets(0, 0, 0, 0);
+    private static final Insets EMPTY_INSETS = emptyInsets();
 
     @Override
     public void layoutContainer(Container parent) {
@@ -590,7 +592,9 @@ public class JBScrollPane extends JScrollPane {
       boolean isEmpty = bounds.width < 0 || bounds.height < 0;
       Component view = viewport == null ? null : viewport.getView();
       Dimension viewPreferredSize = view == null ? new Dimension() : view.getPreferredSize();
-      if (view instanceof JComponent) JBViewport.fixPreferredSize(viewPreferredSize, (JComponent)view, vsb, hsb);
+      if (view instanceof JComponent && !view.isPreferredSizeSet()) {
+        JBInsets.removeFrom(viewPreferredSize, JBViewport.getViewInsets((JComponent)view));
+      }
       Dimension viewportExtentSize = viewport == null ? new Dimension() : viewport.toViewCoordinates(bounds.getSize());
       // If the view is tracking the viewports width we don't bother with a horizontal scrollbar.
       // If the view is tracking the viewports height we don't bother with a vertical scrollbar.

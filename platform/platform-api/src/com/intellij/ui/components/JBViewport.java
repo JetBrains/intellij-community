@@ -21,6 +21,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.ComponentWithEmptyText;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
@@ -35,6 +36,8 @@ import javax.swing.plaf.basic.BasicTreeUI;
 import java.awt.*;
 import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
+
+import static com.intellij.util.ui.JBUI.emptyInsets;
 
 public class JBViewport extends JViewport implements ZoomableViewport {
   private static final ViewportLayout ourLayoutManager = new ViewportLayout() {
@@ -204,6 +207,15 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     return myPaintingNow;
   }
 
+  @Override
+  public void scrollRectToVisible(Rectangle bounds) {
+    Component view = getView();
+    if (view instanceof JComponent) {
+      JBInsets.addTo(bounds, getViewInsets((JComponent)view));
+    }
+    super.scrollRectToVisible(bounds);
+  }
+
   /**
    * Returns the alignment of the specified scroll bar
    * if and only if the specified scroll bar
@@ -223,20 +235,15 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     return !SystemInfo.isMac && (view instanceof JList || view instanceof JTree || Registry.is("ide.scroll.align.component"));
   }
 
-  static void fixPreferredSize(Dimension size, JComponent view, JScrollBar vsb, JScrollBar hsb) {
-    if (!view.isPreferredSizeSet()) {
-      Border border = view.getBorder();
-      if (border instanceof ViewBorder) {
-        Alignment va = getAlignment(vsb);
-        if (va == Alignment.LEFT || va == Alignment.RIGHT && isAlignmentNeeded(view)) {
-          size.width -= vsb.getWidth();
-        }
-        Alignment ha = getAlignment(hsb);
-        if (ha == Alignment.TOP || ha == Alignment.BOTTOM && isAlignmentNeeded(view)) {
-          size.height -= hsb.getHeight();
-        }
-      }
+  static Insets getViewInsets(JComponent view) {
+    Border border = view.getBorder();
+    if (border instanceof ViewBorder) {
+      ViewBorder vb = (ViewBorder)border;
+      Insets insets = emptyInsets();
+      vb.addViewInsets(view, insets);
+      return insets;
     }
+    return null;
   }
 
   private static void doLayout(JScrollPane pane, JViewport viewport, Component view) {
@@ -322,7 +329,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
    * This border is used to add additional space for a view.
    */
   private static class ViewBorder extends AbstractBorder {
-    private final Insets myInsets = new Insets(0, 0, 0, 0);
+    private final Insets myInsets = emptyInsets();
     private final Border myBorder;
 
     ViewBorder(Border border) {
@@ -332,7 +339,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     @Override
     public Insets getBorderInsets(Component view, Insets insets) {
       if (insets == null) {
-        insets = new Insets(0, 0, 0, 0);
+        insets = emptyInsets();
       }
       else {
         insets.set(0, 0, 0, 0);
