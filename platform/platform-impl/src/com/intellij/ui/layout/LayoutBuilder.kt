@@ -16,7 +16,6 @@
 package com.intellij.ui.layout
 
 import com.intellij.ui.components.Label
-import java.awt.Container
 import javax.swing.ButtonGroup
 import javax.swing.JLabel
 
@@ -39,12 +38,4 @@ class LayoutBuilder(val `$`: LayoutBuilderImpl, val buttonGroup: ButtonGroup? = 
   inline fun buttonGroup(init: LayoutBuilder.() -> Unit) {
     LayoutBuilder(`$`, buttonGroup).init()
   }
-}
-
-interface LayoutBuilderImpl {
-  fun newRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null): Row
-
-  fun build(container: Container, layoutConstraints: Array<out LCFlags>)
-
-  fun noteRow(text: String)
 }
