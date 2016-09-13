@@ -515,6 +515,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON35);
   }
 
+  public void testVariableAnnotations() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
   public void doTest(LanguageLevel languageLevel) {
     LanguageLevel prev = myLanguageLevel;
     myLanguageLevel = languageLevel;
