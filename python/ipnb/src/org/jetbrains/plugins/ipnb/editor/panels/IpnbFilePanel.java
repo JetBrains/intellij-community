@@ -34,7 +34,6 @@ import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel;
 import org.jetbrains.plugins.ipnb.format.IpnbFile;
 import org.jetbrains.plugins.ipnb.format.IpnbParser;
 import org.jetbrains.plugins.ipnb.format.cells.*;
-import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,8 +41,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, Disposable {
@@ -114,7 +111,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
           public void run() {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               public void run() {
-                createAndAddCell(true);
+                createAndAddCell(true, IpnbCodeCell.createEmptyCodeCell());
                 saveToFile();
               }
             });
@@ -210,9 +207,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     }
   }
 
-  public void createAndAddCell(final boolean below) {
-    final IpnbCodeCell cell = new IpnbCodeCell("python", Collections.emptyList(), null, new ArrayList<>(),
-                                               null);
+  public void createAndAddCell(final boolean below, IpnbCodeCell cell) {
     final IpnbCodePanel codePanel = new IpnbCodePanel(myProject, myParent, cell);
 
     addCell(codePanel, below);

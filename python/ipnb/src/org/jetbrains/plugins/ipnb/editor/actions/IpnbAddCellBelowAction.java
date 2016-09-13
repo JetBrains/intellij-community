@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
+import org.jetbrains.plugins.ipnb.format.cells.IpnbCodeCell;
 
 public class IpnbAddCellBelowAction extends AnAction {
 
@@ -28,7 +29,7 @@ public class IpnbAddCellBelowAction extends AnAction {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            ipnbFilePanel.createAndAddCell(true);
+            ipnbFilePanel.createAndAddCell(true, IpnbCodeCell.createEmptyCodeCell());
             ipnbFilePanel.saveToFile();
           }
         });
