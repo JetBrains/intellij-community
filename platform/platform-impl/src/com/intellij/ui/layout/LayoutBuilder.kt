@@ -26,12 +26,12 @@ class LayoutBuilder(val `$`: LayoutBuilderImpl, val buttonGroup: ButtonGroup? = 
   }
 
   inline fun row(label: JLabel? = null, init: Row.() -> Unit) {
-    val row = Row(buttonGroup, label != null)
-    label?.let { row.apply { label() } }
-    row.init()
-    `$`.addRow(row)
+    `$`.newRow(label, buttonGroup).init()
   }
 
+  /**
+   * Hyperlinks are supported (`<a href=""></a>`), new lines and <br> are supported only if no links (file issue if need).
+   */
   fun noteRow(text: String) {
     `$`.noteRow(text)
   }
@@ -42,9 +42,9 @@ class LayoutBuilder(val `$`: LayoutBuilderImpl, val buttonGroup: ButtonGroup? = 
 }
 
 interface LayoutBuilderImpl {
-  fun addRow(row: Row)
+  fun newRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null): Row
 
-  fun build(container: Container)
+  fun build(container: Container, layoutConstraints: Array<out LCFlags>)
 
   fun noteRow(text: String)
 }

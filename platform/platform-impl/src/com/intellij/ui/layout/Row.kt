@@ -18,23 +18,22 @@ package com.intellij.ui.layout
 import com.intellij.BundleBase
 import com.intellij.ui.components.Label
 import com.intellij.ui.components.Link
-import com.intellij.util.SmartList
+import com.intellij.ui.components.Panel
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.UIUtil.ComponentStyle
+import com.intellij.util.ui.UIUtil.FontColor
+import java.awt.Component
 import java.awt.event.ActionEvent
-import javax.swing.ButtonGroup
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-class Row(private val buttonGroup: ButtonGroup?, internal val labeled: Boolean = false, internal val noGrid: Boolean = false) {
-  var rightIndex = Int.MAX_VALUE
-  val components = SmartList<JComponent>()
-
-  fun label(text: String, style: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null, bold: Boolean = false) {
-    Label(text, style, fontColor, bold)()
+abstract class Row() {
+  fun label(text: String, gapLeft: Int = 0, style: ComponentStyle? = null, fontColor: FontColor? = null, bold: Boolean = false) {
+    Label(text, style, fontColor, bold)(gapLeft = gapLeft)
   }
 
-  fun link(text: String, style: UIUtil.ComponentStyle? = null, action: () -> Unit) {
+  fun link(text: String, style: ComponentStyle? = null, action: () -> Unit) {
     val result = Link(text, action = action)
     style?.let { UIUtil.applyStyle(it, result) }
     result()
@@ -46,21 +45,24 @@ class Row(private val buttonGroup: ButtonGroup?, internal val labeled: Boolean =
     button()
   }
 
-  operator fun JComponent.invoke() {
-    if (buttonGroup != null && this is JButton) {
-      buttonGroup.add(this)
-    }
-    this@Row.components.add(this)
+  fun hint(text: String) {
+    label(text, style = ComponentStyle.SMALL, fontColor = FontColor.BRIGHTER, gapLeft = 3 * HORIZONTAL_GAP)
   }
+
+  fun panel(title: String, wrappedComponent: Component, vararg constraints: CCFlags) {
+    val panel = Panel(title)
+    panel.add(wrappedComponent)
+    panel(*constraints)
+  }
+
+  abstract operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int = 0)
 
   inline fun right(init: Row.() -> Unit) {
-    if (rightIndex != Int.MAX_VALUE) {
-      throw IllegalStateException("right allowed only once")
-    }
-    rightIndex = components.size
-
+    alignRight()
     init()
   }
+
+  protected abstract fun alignRight()
 
   @Deprecated(message = "Nested row is prohibited", level = DeprecationLevel.ERROR)
   fun row(label: String, init: Row.() -> Unit) {

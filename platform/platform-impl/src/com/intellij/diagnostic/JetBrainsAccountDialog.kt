@@ -39,7 +39,7 @@ fun showJetBrainsAccountDialog(parent: Component, project: Project? = null): Dia
   // if no user name - never stored and so, defaults to remember. if user name set, but no password, so, previously was stored without password
   val rememberCheckBox = CheckBox(CommonBundle.message("checkbox.remember.password"), selected = credentials?.userName == null || !credentials?.password.isNullOrEmpty())
 
-  val panel = panel() {
+  val panel = panel {
     noteRow("Login to JetBrains Account to get notified when the submitted\nexceptions are fixed.")
     row("Username:") { userField() }
     row("Password:") { passwordField() }

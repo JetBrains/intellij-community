@@ -20,12 +20,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ex.MultiLineLabel
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
-import com.intellij.ui.BrowserHyperlinkListener
-import com.intellij.ui.SimpleColoredComponent
-import com.intellij.ui.SimpleTextAttributes
-import com.intellij.ui.UI
+import com.intellij.ui.*
 import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.ui.layout.*
 import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.UIUtil
 import java.awt.*
@@ -112,6 +108,12 @@ fun Panel(title: String? = null, layout: LayoutManager2? = BorderLayout()): JPan
   val panel = JPanel(layout)
   title?.let { setTitledBorder(it, panel) }
   return panel
+}
+
+private fun setTitledBorder(title: String, panel: JPanel) {
+  val border = IdeBorderFactory.createTitledBorder(title, false)
+  panel.border = border
+  border.acceptMinimumSize(panel)
 }
 
 fun dialog(title: String,

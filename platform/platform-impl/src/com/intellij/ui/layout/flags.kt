@@ -43,19 +43,18 @@ enum class LCFlags {
   debug
 }
 
-/**
- * Use [right] to set `align: right`.
- */
 enum class CCFlags {
   /**
    * Wrap to the next line/column **after** the component that this constraint belongs to.
    */
-  wrap,
+  // use row instead
+  //wrap,
 
   /**
    * Span cells in both x and y.
    */
-  span, spanX, spanY,
+  // use row instead
+  //span, spanX, spanY,
 
   /**
    * Splits the cell in a number of sub cells. Basically this means that the next count number of components will be put in the same cell, next to each other with default gaps.
@@ -64,13 +63,20 @@ enum class CCFlags {
    * "skip", "wrap" and "newline" will break out of the split cell. The latter two will move to a new row/column as usual.
    * "skip" will skip out if the splitting and continue in the next cell.
    */
-  split,
+  // use row instead
+  //split,
 
-  grow, push, pushY, pushX, right,
+  grow,
+
+  push, pushY, pushX,
+
+  // use right { } instead
+  //right,
 
   /**
    * Skips a number of cells in the flow. This is used to jump over a number of cells before the next free cell is looked for.
    * The skipping is done before this component is put in a cell and thus this cells is affected by it. "count" defaults to 1 if not specified.
    */
-  skip
+  // use row instead
+  //skip
 }

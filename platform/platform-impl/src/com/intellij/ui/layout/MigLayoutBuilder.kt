@@ -15,39 +15,58 @@
  */
 package com.intellij.ui.layout
 
+import com.intellij.codeInspection.SmartHashMap
 import com.intellij.ui.components.noteComponent
 import com.intellij.util.SmartList
-import net.miginfocom.layout.BoundSize
-import net.miginfocom.layout.CC
+import net.miginfocom.layout.*
 import net.miginfocom.swing.MigLayout
+import java.awt.Component
 import java.awt.Container
-import javax.swing.JComponent
+import javax.swing.*
 import javax.swing.text.JTextComponent
 
 /**
- * Automatically add `grow` to text components (see isAddGrowX).
+ * Automatically add `growX` to JTextComponent (see isAddGrowX).
+ * Automatically add `grow` and `push` to JPanel (see isAddGrowX).
  */
 internal class MigLayoutBuilder : LayoutBuilderImpl {
-  private val rows = SmartList<Row>()
+  private val rows = SmartList<MigLayoutRow>()
 
-  override fun addRow(row: Row) {
+  private val componentConstraints: MutableMap<Component, CC> = SmartHashMap()
+
+  override fun newRow(label: JLabel?, buttonGroup: ButtonGroup?): Row {
+    val row = MigLayoutRow(componentConstraints, label != null, buttonGroup = buttonGroup)
     rows.add(row)
+
+    label?.let { row.apply { label() } }
+
+    return row
   }
 
   override fun noteRow(text: String) {
     // add empty row
-    addRow(Row(null))
+    newRow()
 
-    val row = Row(null, noGrid = true)
-    row.apply { (noteComponent(text))() }
-    addRow(row)
+    val row = MigLayoutRow(componentConstraints, noGrid = true)
+    rows.add(row)
+    row.apply { noteComponent(text)() }
   }
 
-  override fun build(container: Container) {
-    val labeled = rows.firstOrNull(Row::labeled) != null
+  override fun build(container: Container, layoutConstraints: Array<out LCFlags>) {
+    val labeled = rows.firstOrNull(MigLayoutRow::labeled) != null
     var gapTop = -1
 
-    container.layout = MigLayout(c().fillX())
+    val lc = c()
+    if (layoutConstraints.isEmpty()) {
+      lc.fillX()
+    }
+    else {
+      lc.apply(layoutConstraints)
+    }
+
+    container.layout = MigLayout(lc)
+
+    val noGrid = layoutConstraints.contains(LCFlags.noGrid)
 
     for (row in rows) {
       val lastComponent = row.components.lastOrNull()
@@ -57,53 +76,188 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
           continue
         }
 
-        // https://docs.google.com/document/d/1DKnLkO-7_onA7_NCw669aeMH5ltNvw-QMiQHnXu8k_Y/edit#heading=h.c3849zu3vjhq
+        // https://goo.gl/LDylKm
         // gap = 10u where u = 4px
         gapTop = VERTICAL_GAP * 3
       }
 
       for ((index, component) in row.components.withIndex()) {
         // MigLayout in any case always creates CC, so, create instance even if it is not required
-        val cc = CC()
+        val cc = componentConstraints.get(component) ?: CC()
 
         if (gapTop != -1) {
           cc.vertical.gapBefore = gapToBoundSize(gapTop, false)
           gapTop = -1
         }
 
-        if (row.noGrid) {
-          if (component === lastComponent) {
-            cc.wrap()
-          }
-          if (component === row.components.first()) {
-            // rowConstraints.noGrid() doesn't work correctly
-            cc.spanX()
-          }
+        if (component is JTextComponent) {
+          cc.growX()
+        }
+        else if (component is JPanel) {
+//          cc.grow().push()
+        }
+
+        if (noGrid) {
+
         }
         else {
-          if (isAddGrowX(component)) {
-            cc.growX()
+          if (row.noGrid) {
+            if (component === lastComponent) {
+              cc.wrap()
+            }
+            if (component === row.components.first()) {
+              // rowConstraints.noGrid() doesn't work correctly
+              cc.spanX()
+            }
+          }
+          else {
+            if (component === lastComponent) {
+              cc.wrap()
+              // set span for last component because cell count in other rows may be greater — but we expect that last component can grow
+              cc.spanX()
+            }
+
+            if (labeled && !row.noGrid && !row.labeled && component === row.components.first()) {
+              cc.skip()
+            }
           }
 
-          if (component === lastComponent) {
-            cc.wrap()
-            // set span for last component because cell count in other rows may be greater — but we expect that last component can grow
-            cc.spanX()
+          if (index >= row.rightIndex) {
+            cc.horizontal.gapBefore = BoundSize(null, null, null, true, null)
           }
-
-          if (labeled && !row.noGrid && !row.labeled && component === row.components.first()) {
-            cc.skip()
-          }
-        }
-
-        if (index >= row.rightIndex) {
-          cc.horizontal.gapBefore = BoundSize(null, null, null, true, null)
         }
 
         container.add(component, cc)
       }
     }
+
+    // do not hold components
+    componentConstraints.clear()
   }
 }
 
-private fun isAddGrowX(component: JComponent) = component is JTextComponent
+private class MigLayoutRow(private val componentConstraints: MutableMap<Component, CC>, val labeled: Boolean = false, val noGrid: Boolean = false, private val buttonGroup: ButtonGroup? = null) : Row() {
+  val components = SmartList<Component>()
+  var rightIndex = Int.MAX_VALUE
+
+  override operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int) {
+    addComponent(this, constraints, gapLeft = gapLeft)
+  }
+
+  private fun addComponent(component: Component, constraints: Array<out CCFlags>, gapLeft: Int) {
+    if (buttonGroup != null && component is JButton) {
+      buttonGroup.add(component)
+    }
+
+    createComponentConstraints(constraints, gapLeft = gapLeft)?.let {
+      componentConstraints.put(component, it)
+    }
+    components.add(component)
+  }
+
+  override fun alignRight() {
+    if (rightIndex != Int.MAX_VALUE) {
+      throw IllegalStateException("right allowed only once")
+    }
+    rightIndex = components.size
+  }
+}
+
+private fun createComponentConstraints(constraints: Array<out CCFlags>? = null,
+                                       gapLeft: Int = 0,
+                                       gapAfter: Int = 0,
+                                       gapTop: Int = 0,
+                                       gapBottom: Int = 0,
+                                       split: Int = -1): CC? {
+  var _cc = constraints?.create()
+  fun cc(): CC {
+    if (_cc == null) {
+      _cc = CC()
+    }
+    return _cc!!
+  }
+
+  if (gapLeft != 0) {
+    cc().horizontal.gapBefore = gapToBoundSize(gapLeft, true)
+  }
+  if (gapAfter != 0) {
+    cc().horizontal.gapAfter = gapToBoundSize(gapAfter, true)
+  }
+
+  if (gapTop != 0) {
+    cc().vertical.gapBefore = gapToBoundSize(gapTop, false)
+  }
+  if (gapBottom != 0) {
+    cc().vertical.gapAfter = gapToBoundSize(gapBottom, false)
+  }
+
+  if (split != -1) {
+    cc().split = split
+  }
+  return _cc
+}
+
+private fun gapToBoundSize(value: Int, isHorizontal: Boolean): BoundSize {
+  val unitValue = UnitValue(value.toFloat(), "", isHorizontal, UnitValue.STATIC, null)
+  return BoundSize(unitValue, unitValue, null, false, null)
+}
+
+// default values differs to MigLayout - IntelliJ Platform defaults are used
+// see com.intellij.uiDesigner.core.AbstractLayout.DEFAULT_HGAP and DEFAULT_VGAP (multiplied by 2 to achieve the same look (it seems in terms of MigLayout gap is both left and right space))
+private fun c(insets: String? = "0", gap: String? = "${HORIZONTAL_GAP * 2} $VERTICAL_GAP"): LC {
+  // no setter for gap, so, create string to parse
+  val lc = if (gap == null) LC() else ConstraintParser.parseLayoutConstraint("gap ${gap}")
+  insets?.let {
+    lc.insets(it)
+  }
+  return lc
+}
+
+private fun Array<out CCFlags>.create() = if (isEmpty()) null else CC().apply(this)
+
+private fun CC.apply(flags: Array<out CCFlags>): CC {
+  for (flag in flags) {
+    when (flag) {
+      //CCFlags.wrap -> isWrap = true
+      CCFlags.grow -> grow()
+
+    // If you have more than one component in a cell the alignment keywords will not work since the behavior would be indeterministic.
+    // You can however accomplish the same thing by setting a gap before and/or after the components.
+    // That gap may have a minimum size of 0 and a preferred size of a really large value to create a "pushing" gap.
+    // There is even a keyword for this: "push". So "gapleft push" will be the same as "align right" and work for multi-component cells as well.
+      //CCFlags.right -> horizontal.gapBefore = BoundSize(null, null, null, true, null)
+
+      CCFlags.push -> push()
+      CCFlags.pushX -> pushX()
+      CCFlags.pushY -> pushY()
+
+      //CCFlags.span -> span()
+      //CCFlags.spanX -> spanX()
+      //CCFlags.spanY -> spanY()
+
+      //CCFlags.split -> split()
+
+      //CCFlags.skip -> skip()
+    }
+  }
+  return this
+}
+
+private fun LC.apply(flags: Array<out LCFlags>): LC {
+  for (flag in flags) {
+    when (flag) {
+      LCFlags.noGrid -> isNoGrid = true
+
+      LCFlags.flowY -> isFlowX = false
+
+      LCFlags.fill -> fill()
+      LCFlags.fillX -> isFillX = true
+      LCFlags.fillY -> isFillY = true
+
+      LCFlags.lcWrap -> wrapAfter = 0
+
+      LCFlags.debug -> debug()
+    }
+  }
+  return this
+}
