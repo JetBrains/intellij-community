@@ -913,7 +913,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
             PsiElement lambdaBody = lambda.getBody();
             if(lambdaBody instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)lambdaBody)) {
               PsiExpression negated = BoolUtils.getNegated((PsiExpression)lambdaBody);
-              LOG.assertTrue(negated != null);
+              LOG.assertTrue(negated != null, lambdaBody.getText());
               String methodReferenceText = LambdaCanBeMethodReferenceInspection
                 .convertToMethodReference(negated, lambda.getParameterList().getParameters(), lambda.getFunctionalInterfaceType(), lambda);
               if(methodReferenceText != null) {
