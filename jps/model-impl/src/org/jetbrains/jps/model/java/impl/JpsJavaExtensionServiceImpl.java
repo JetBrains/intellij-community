@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,8 @@ import java.util.List;
  * @author nik
  */
 public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
+  private JavaModuleIndex myModuleIndex = null;
+
   @NotNull
   @Override
   public JpsJavaProjectExtension getOrCreateProjectExtension(@NotNull JpsProject project) {
@@ -231,5 +233,14 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
   @Override
   protected JpsJavaDependenciesEnumerator enumerateDependencies(JpsModule module) {
     return new JpsJavaDependenciesEnumeratorImpl(Collections.singletonList(module));
+  }
+
+  @NotNull
+  @Override
+  public JavaModuleIndex getJavaModuleIndex(@NotNull File indexDir) {
+    if (myModuleIndex == null) {
+      myModuleIndex = JavaModuleIndexImpl.load(indexDir);
+    }
+    return myModuleIndex;
   }
 }

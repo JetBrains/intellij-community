@@ -106,6 +106,9 @@
     <packaging.artifactType implementation="com.intellij.packaging.impl.artifacts.PlainArtifactType" order="last"/>
     <compiler.buildTargetScopeProvider implementation="com.intellij.packaging.impl.compiler.ArtifactBuildTargetScopeProvider"/>
     <compiler implementation="com.intellij.packaging.impl.compiler.ArtifactsCompiler" id="artifactsCompiler"/>
+
+    <compiler.task execute="BEFORE" implementation="com.intellij.compiler.impl.JavaModuleIndexBuildTask"/>
+
     <gotoRelatedProvider implementation="com.intellij.testIntegration.GotoTestRelatedProvider"/>
 
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
