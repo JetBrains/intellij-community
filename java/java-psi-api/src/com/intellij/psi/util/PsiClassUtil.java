@@ -32,7 +32,6 @@ public class PsiClassUtil {
   }
   public static boolean isRunnableClass(final PsiClass aClass, final boolean mustBePublic, boolean mustNotBeAbstract) {
     if (aClass instanceof PsiAnonymousClass) return false;
-    if (aClass.isInterface()) return false;
     if (mustBePublic && !aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
       if (mustNotBeAbstract || !aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         return false;

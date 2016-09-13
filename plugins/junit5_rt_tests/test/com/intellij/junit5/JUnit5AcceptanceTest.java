@@ -57,4 +57,13 @@ class JUnit5AcceptanceTest {
       assertTrue(JUnitUtil.isTestAnnotated(factoryMethod));
     });
   }
+
+  @Test
+  void testDefaultMethodInInterface() {
+    TestRunnerUtil.replaceIdeEventQueueSafely();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      PsiClass aClass = myFixture.addClass("interface MyTest {@org.junit.jupiter.api.Test default void method() {}}");
+      assertTrue(JUnitUtil.isTestClass(aClass, false, false));
+    });
+  }
 }
