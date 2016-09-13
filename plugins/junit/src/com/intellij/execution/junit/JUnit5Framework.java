@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +34,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class JUnit4Framework extends JavaTestFramework {
+public class JUnit5Framework extends JavaTestFramework {
   @NotNull
   public String getName() {
-    return "JUnit4";
+    return "JUnit5";
   }
 
   @NotNull
@@ -47,13 +47,13 @@ public class JUnit4Framework extends JavaTestFramework {
   }
 
   protected String getMarkerClassFQName() {
-    return JUnitUtil.TEST_ANNOTATION;
+    return JUnitUtil.TEST5_ANNOTATION;
   }
 
   @Nullable
   @Override
   public ExternalLibraryDescriptor getFrameworkLibraryDescriptor() {
-    return JUnitExternalLibraryDescriptor.JUNIT4;
+    return JUnitExternalLibraryDescriptor.JUNIT5;
   }
 
   @Nullable
@@ -70,7 +70,7 @@ public class JUnit4Framework extends JavaTestFramework {
   @Override
   protected PsiMethod findSetUpMethod(@NotNull PsiClass clazz) {
     for (PsiMethod each : clazz.getMethods()) {
-      if (AnnotationUtil.isAnnotated(each, JUnitUtil.BEFORE_ANNOTATION_NAME, false)) return each;
+      if (AnnotationUtil.isAnnotated(each, JUnitUtil.BEFORE_EACH_ANNOTATION_NAME, false)) return each;
     }
     return null;
   }
@@ -79,7 +79,7 @@ public class JUnit4Framework extends JavaTestFramework {
   @Override
   protected PsiMethod findTearDownMethod(@NotNull PsiClass clazz) {
     for (PsiMethod each : clazz.getMethods()) {
-      if (AnnotationUtil.isAnnotated(each, JUnitUtil.AFTER_ANNOTATION_NAME, false)) return each;
+      if (AnnotationUtil.isAnnotated(each, JUnitUtil.AFTER_EACH_ANNOTATION_NAME, false)) return each;
     }
     return null;
   }
@@ -87,12 +87,6 @@ public class JUnit4Framework extends JavaTestFramework {
   @Override
   @Nullable
   protected PsiMethod findOrCreateSetUpMethod(PsiClass clazz) throws IncorrectOperationException {
-    String beforeClassAnnotationName = JUnitUtil.BEFORE_CLASS_ANNOTATION_NAME;
-    String beforeAnnotationName = JUnitUtil.BEFORE_ANNOTATION_NAME;
-    return findOrCreateSetUpMethod(clazz, beforeClassAnnotationName, beforeAnnotationName);
-  }
-
-  private PsiMethod findOrCreateSetUpMethod(PsiClass clazz, String beforeClassAnnotationName, String beforeAnnotationName) {
     PsiMethod method = findSetUpMethod(clazz);
     if (method != null) return method;
 
@@ -102,14 +96,14 @@ public class JUnit4Framework extends JavaTestFramework {
     method = createSetUpPatternMethod(factory);
     PsiMethod existingMethod = clazz.findMethodBySignature(method, false);
     if (existingMethod != null) {
-      if (AnnotationUtil.isAnnotated(existingMethod, beforeClassAnnotationName, false)) return existingMethod;
+      if (AnnotationUtil.isAnnotated(existingMethod, JUnitUtil.BEFORE_ALL_ANNOTATION_NAME, false)) return existingMethod;
       int exit = ApplicationManager.getApplication().isUnitTestMode() ?
                  Messages.OK :
-                 Messages.showOkCancelDialog("Method setUp already exist but is not annotated as @Before. Annotate?",
-                                             CommonBundle.getWarningTitle(),
-                                             Messages.getWarningIcon());
+                       Messages.showOkCancelDialog("Method setUp already exist but is not annotated as @BeforeEach. Annotate?",
+                                                   CommonBundle.getWarningTitle(),
+                                                   Messages.getWarningIcon());
       if (exit == Messages.OK) {
-        new AddAnnotationFix(beforeAnnotationName, existingMethod).invoke(existingMethod.getProject(), null, existingMethod.getContainingFile());
+        new AddAnnotationFix(JUnitUtil.BEFORE_EACH_ANNOTATION_NAME, existingMethod).invoke(existingMethod.getProject(), null, existingMethod.getContainingFile());
         return existingMethod;
       }
     }
@@ -141,57 +135,24 @@ public class JUnit4Framework extends JavaTestFramework {
   }
 
   public FileTemplateDescriptor getSetUpMethodFileTemplateDescriptor() {
-    return new FileTemplateDescriptor("JUnit4 SetUp Method.java");
+    return new FileTemplateDescriptor("JUnit5 SetUp Method.java");
   }
 
   public FileTemplateDescriptor getTearDownMethodFileTemplateDescriptor() {
-    return new FileTemplateDescriptor("JUnit4 TearDown Method.java");
+    return new FileTemplateDescriptor("JUnit5 TearDown Method.java");
   }
 
   public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
-    return new FileTemplateDescriptor("JUnit4 Test Method.java");
-  }
-
-  @Override
-  public FileTemplateDescriptor getParametersMethodFileTemplateDescriptor() {
-    return new FileTemplateDescriptor("JUnit4 Parameters Method.java");
+    return new FileTemplateDescriptor("JUnit5 Test Method.java");
   }
 
   @Override
   public char getMnemonic() {
-    return '4';
+    return '5';
   }
 
   @Override
   public FileTemplateDescriptor getTestClassFileTemplateDescriptor() {
-    return new FileTemplateDescriptor("JUnit4 Test Class.java");
-  }
-
-  @Override
-  public boolean isParameterized(PsiClass clazz) {
-    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(clazz, JUnitUtil.RUN_WITH);
-    if (annotation != null) {
-      final PsiAnnotationMemberValue value = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
-      if (value instanceof PsiClassObjectAccessExpression) {
-        final PsiTypeElement operand = ((PsiClassObjectAccessExpression)value).getOperand();
-        final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(operand.getType());
-        return psiClass != null && "org.junit.runners.Parameterized".equals(psiClass.getQualifiedName());
-      }
-    }
-    return false;
-  }
-
-  @Override
-  public PsiMethod findParametersMethod(PsiClass clazz) {
-    final PsiMethod[] methods = clazz.getAllMethods();
-    for (PsiMethod method : methods) {
-      if (method.hasModifierProperty(PsiModifier.PUBLIC) && 
-          method.hasModifierProperty(PsiModifier.STATIC) &&
-          AnnotationUtil.isAnnotated(method, "org.junit.runners.Parameterized.Parameters", false)) {
-        //todo check return value
-        return method;
-      }
-    }
-    return null;
+    return new FileTemplateDescriptor("JUnit5 Test Class.java");
   }
 }
