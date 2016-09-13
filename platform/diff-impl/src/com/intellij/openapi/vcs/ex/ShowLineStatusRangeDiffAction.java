@@ -33,10 +33,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ShowLineStatusRangeDiffAction extends DumbAwareAction {
-  private final LineStatusTracker myLineStatusTracker;
+  private final LineStatusTrackerBase myLineStatusTracker;
   private final Range myRange;
 
-  public ShowLineStatusRangeDiffAction(@NotNull LineStatusTracker lineStatusTracker, @NotNull Range range, @Nullable Editor editor) {
+  public ShowLineStatusRangeDiffAction(@NotNull LineStatusTrackerBase lineStatusTracker, @NotNull Range range, @Nullable Editor editor) {
     myLineStatusTracker = lineStatusTracker;
     myRange = range;
     ActionUtil.copyFrom(this, "ChangesView.Diff");

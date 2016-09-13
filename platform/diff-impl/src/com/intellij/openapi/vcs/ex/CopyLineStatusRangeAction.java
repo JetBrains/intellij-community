@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.datatransfer.StringSelection;
 
 public class CopyLineStatusRangeAction extends DumbAwareAction {
-  private final LineStatusTracker myLineStatusTracker;
+  private final LineStatusTrackerBase myLineStatusTracker;
   private final Range myRange;
 
-  CopyLineStatusRangeAction(@NotNull LineStatusTracker lineStatusTracker, @NotNull Range range) {
+  public CopyLineStatusRangeAction(@NotNull LineStatusTrackerBase lineStatusTracker, @NotNull Range range) {
     myLineStatusTracker = lineStatusTracker;
     myRange = range;
     ActionUtil.copyFrom(this, IdeActions.ACTION_COPY);
