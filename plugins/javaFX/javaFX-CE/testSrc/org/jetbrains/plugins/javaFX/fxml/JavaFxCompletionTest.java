@@ -330,6 +330,21 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
     }
   }
 
+  public void testResourceProperty() {
+    myFixture.addFileToProject("messages.properties", "double.key=123.456\n" +
+                                                      "string.key=Some text\n");
+    configureAndComplete();
+    assertSameElements(myFixture.getLookupElementStrings(), "double.key", "string.key");
+  }
+
+
+  public void testResourcePropertyManyFiles() {
+    myFixture.addFileToProject("messages1.properties", "double.key=123.456\n");
+    myFixture.addFileToProject("messages2.properties", "string.key=Some text\n");
+    configureAndComplete();
+    assertSameElements(myFixture.getLookupElementStrings(), "double.key", "string.key");
+  }
+
   private void doTest() throws Exception {
     doTest(null);
   }

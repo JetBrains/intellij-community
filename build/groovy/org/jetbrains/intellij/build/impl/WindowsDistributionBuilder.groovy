@@ -25,20 +25,20 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 /**
  * @author nik
  */
-class WindowsDistributionBuilder {
-  private final BuildContext buildContext
+class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   private final WindowsDistributionCustomizer customizer
-  final String winDistPath
+  private final File ideaProperties
 
-  WindowsDistributionBuilder(BuildContext buildContext, WindowsDistributionCustomizer customizer) {
+  WindowsDistributionBuilder(BuildContext buildContext, WindowsDistributionCustomizer customizer, File ideaProperties) {
+    super(BuildOptions.OS_WINDOWS, "Windows", buildContext)
     this.customizer = customizer
-    this.buildContext = buildContext
-    winDistPath = "$buildContext.paths.buildOutputRoot/dist.win"
+    this.ideaProperties = ideaProperties
   }
 
-  //todo[nik] rename
-  void layoutWin(File ideaProperties) {
+  @Override
+  String copyFilesForOsDistribution() {
     buildContext.messages.progress("Building distributions for Windows")
+    String winDistPath = "$buildContext.paths.buildOutputRoot/dist.win"
     buildContext.ant.copy(todir: "$winDistPath/bin") {
       fileset(dir: "$buildContext.paths.communityHome/bin/win") {
         if (!buildContext.includeBreakGenLibraries()) {
@@ -62,26 +62,30 @@ class WindowsDistributionBuilder {
       buildContext.ant.copy(file: customizer.icoPath, tofile: "$winDistPath/bin/${buildContext.productProperties.baseFileName}.ico")
     }
     if (customizer.includeBatchLaunchers) {
-      winScripts()
+      generateScripts(winDistPath)
     }
-    winVMOptions()
-    buildWinLauncher(JvmArchitecture.x32)
-    buildWinLauncher(JvmArchitecture.x64)
+    generateVMOptions(winDistPath)
+    buildWinLauncher(JvmArchitecture.x32, winDistPath)
+    buildWinLauncher(JvmArchitecture.x64, winDistPath)
     customizer.copyAdditionalFiles(buildContext, winDistPath)
     new File(winDistPath, "bin").listFiles(FileFilters.filesWithExtension("exe"))?.each {
       buildContext.signExeFile(it.absolutePath)
     }
+    return winDistPath
+  }
 
+  @Override
+  void buildArtifacts(String winDistPath) {
     def arch = customizer.bundledJreArchitecture
     def jreDirectoryPath = arch != null ? buildContext.bundledJreManager.extractWinJre(arch) : null
     if (customizer.buildZipArchive) {
-      buildWinZip(jreDirectoryPath, buildContext.productProperties.buildCrossPlatformDistribution ? ".win" : "")
+      buildWinZip(jreDirectoryPath, buildContext.productProperties.buildCrossPlatformDistribution ? ".win" : "", winDistPath)
     }
 
     if (arch != null && customizer.buildZipWithBundledOracleJre) {
       String oracleJrePath = buildContext.bundledJreManager.extractOracleWinJre(arch)
       if (oracleJrePath != null) {
-        buildWinZip(oracleJrePath, "-oracle-win")
+        buildWinZip(oracleJrePath, "-oracle-win", winDistPath)
       }
       else {
         buildContext.messages.warning("Skipping building Windows zip archive with bundled Oracle JRE because JRE archive is missing")
@@ -93,8 +97,7 @@ class WindowsDistributionBuilder {
     }
   }
 
-  //todo[nik] rename
-  private void winScripts() {
+  private void generateScripts(String winDistPath) {
     String fullName = buildContext.applicationInfo.productName
     //todo[nik] looks like names without .exe were also supported, do we need this?
     String vmOptionsFileName = "${buildContext.productProperties.baseFileName}%BITS%.exe"
@@ -136,8 +139,7 @@ class WindowsDistributionBuilder {
     buildContext.ant.fixcrlf(srcdir: "$winDistPath/bin", includes: "*.bat", eol: "dos")
   }
 
-  //todo[nik] rename
-  private void winVMOptions() {
+  private void generateVMOptions(String winDistPath) {
     JvmArchitecture.values().each {
       def yourkitSessionName = buildContext.applicationInfo.isEAP && buildContext.productProperties.enableYourkitAgentInEAP ? buildContext.systemSelector : null
       def fileName = "${buildContext.productProperties.baseFileName}${it.fileSuffix}.exe.vmoptions"
@@ -147,7 +149,7 @@ class WindowsDistributionBuilder {
     buildContext.ant.fixcrlf(srcdir: "$winDistPath/bin", includes: "*.vmoptions", eol: "dos")
   }
 
-  private void buildWinLauncher(JvmArchitecture arch) {
+  private void buildWinLauncher(JvmArchitecture arch, String winDistPath) {
     buildContext.messages.block("Build Windows executable ${arch.name()}") {
       String exeFileName = "${buildContext.productProperties.baseFileName}${arch.fileSuffix}.exe"
       def launcherPropertiesPath = "${buildContext.paths.temp}/launcher${arch.fileSuffix}.properties"
@@ -201,7 +203,7 @@ IDS_VM_OPTIONS=$vmOptions
     }
   }
 
-  private void buildWinZip(String jreDirectoryPath, String zipNameSuffix) {
+  private void buildWinZip(String jreDirectoryPath, String zipNameSuffix, String winDistPath) {
     buildContext.messages.block("Build Windows ${zipNameSuffix}.zip distribution") {
       def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.baseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${zipNameSuffix}.zip"
       def zipPrefix = customizer.rootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)

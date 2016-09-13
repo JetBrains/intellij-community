@@ -490,7 +490,9 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     myFixture.testHighlighting(true, true, true, superclass + ".java");
   }
 
-  public void testResourceIdInFxAttribute() throws Exception {
+  public void testResourceKeyInAttribute() throws Exception {
+    myFixture.addFileToProject("messages.properties", "string.key=My text\n" +
+                                                      "double.key=123.456\n");
     doTest();
   }
 

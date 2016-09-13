@@ -35,8 +35,8 @@ public class Range {
   // index of first line is 0
   private int myLine1;
   private int myLine2;
-  private final int myVcsLine1;
-  private final int myVcsLine2;
+  private int myVcsLine1;
+  private int myVcsLine2;
 
   @Nullable private final List<InnerRange> myInnerRanges;
 
@@ -106,6 +106,11 @@ public class Range {
         range.shift(shift);
       }
     }
+  }
+
+  public void vcsShift(int shift) {
+    myVcsLine1 += shift;
+    myVcsLine2 += shift;
   }
 
   @Nullable

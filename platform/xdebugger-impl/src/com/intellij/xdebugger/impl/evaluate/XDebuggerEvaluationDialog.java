@@ -122,7 +122,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        doOKAction();
+        //doOKAction(); // do not evaluate on add to watches
         addToWatches();
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(ADD_WATCH_KEYSTROKE), getRootPane(), myDisposable);

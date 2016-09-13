@@ -72,6 +72,8 @@ abstract class BuildTasks {
 
   abstract void buildUpdaterJar()
 
+  abstract void buildUnpackedDistribution(String targetDirectory)
+
   static BuildTasks create(BuildContext context) {
     return new BuildTasksImpl(context)
   }

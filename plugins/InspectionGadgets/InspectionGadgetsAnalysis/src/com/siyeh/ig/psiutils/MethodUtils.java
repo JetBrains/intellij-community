@@ -45,7 +45,7 @@ public class MethodUtils {
 
   @Contract("null -> false")
   public static boolean isCompareTo(@Nullable PsiMethod method) {
-    return method != null && !methodMatches(method, null, PsiType.INT, HardcodedMethodConstants.COMPARE_TO, PsiType.NULL)
+    return method != null && methodMatches(method, null, PsiType.INT, HardcodedMethodConstants.COMPARE_TO, PsiType.NULL)
       && InheritanceUtil.isInheritor(method.getContainingClass(), CommonClassNames.JAVA_LANG_COMPARABLE);
   }
 
@@ -370,7 +370,8 @@ public class MethodUtils {
       return false;
     }
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
-    if (methodCallExpression.getMethodExpression().getQualifierExpression() == null) {
+    if (methodCallExpression.getMethodExpression().getQualifierExpression() == null ||
+      !HardcodedMethodConstants.COMPARE_TO.equals(methodCallExpression.getMethodExpression().getReferenceName())) {
       return false;
     }
     final PsiMethod psiMethod = methodCallExpression.resolveMethod();

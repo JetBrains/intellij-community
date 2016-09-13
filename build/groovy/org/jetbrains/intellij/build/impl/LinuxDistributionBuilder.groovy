@@ -16,25 +16,26 @@
 package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.LinuxDistributionCustomizer
 
 /**
  * @author nik
  */
-class LinuxDistributionBuilder {
-  private final BuildContext buildContext
-  final String unixDistPath
+class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   private final LinuxDistributionCustomizer customizer
+  private final File ideaProperties
 
-  LinuxDistributionBuilder(BuildContext buildContext, LinuxDistributionCustomizer customizer) {
+  LinuxDistributionBuilder(BuildContext buildContext, LinuxDistributionCustomizer customizer, File ideaProperties) {
+    super(BuildOptions.OS_LINUX, "Linux", buildContext)
     this.customizer = customizer
-    this.buildContext = buildContext
-    unixDistPath = "$buildContext.paths.buildOutputRoot/dist.unix"
+    this.ideaProperties = ideaProperties
   }
 
-  //todo[nik] rename
-  void layoutUnix(File ideaProperties) {
+  @Override
+  String copyFilesForOsDistribution() {
+    String unixDistPath = "$buildContext.paths.buildOutputRoot/dist.unix"
     buildContext.messages.progress("Building distributions for Linux")
     buildContext.ant.copy(todir: "$unixDistPath/bin") {
       fileset(dir: "$buildContext.paths.communityHome/bin/linux") {
@@ -59,24 +60,28 @@ class LinuxDistributionBuilder {
     if (customizer.iconPngPath != null) {
       buildContext.ant.copy(file: customizer.iconPngPath, tofile: "$unixDistPath/bin/${buildContext.productProperties.baseFileName}.png")
     }
-
-    unixScripts()
-    unixVMOptions()
-    unixReadme()
+    generateScripts(unixDistPath)
+    generateVMOptions(unixDistPath)
+    generateReadme(unixDistPath)
     customizer.copyAdditionalFiles(buildContext, unixDistPath)
+    return unixDistPath
+  }
+
+  @Override
+  void buildArtifacts(String osSpecificDistPath) {
     if (customizer.buildTarGzWithoutBundledJre) {
-      buildTarGz(null)
+      buildTarGz(null, osSpecificDistPath)
     }
     def jreDirectoryPath = buildContext.bundledJreManager.extractLinuxJre()
     if (jreDirectoryPath != null) {
-      buildTarGz(jreDirectoryPath)
+      buildTarGz(jreDirectoryPath, osSpecificDistPath)
     }
     else {
       buildContext.messages.info("Skipping building Linux distribution with bundled JRE because JRE archive is missing")
     }
   }
 
-  private void unixScripts() {
+  private void generateScripts(String unixDistPath) {
     String name = "${buildContext.productProperties.baseFileName}.sh"
     String fullName = buildContext.applicationInfo.productName
     String vmOptionsFileName = buildContext.productProperties.baseFileName
@@ -116,7 +121,7 @@ class LinuxDistributionBuilder {
     buildContext.ant.fixcrlf(srcdir: "${unixDistPath}/bin", includes: "*.sh", eol: "unix")
   }
 
-  private void unixVMOptions() {
+  private void generateVMOptions(String unixDistPath) {
     JvmArchitecture.values().each {
       def fileName = "${buildContext.productProperties.baseFileName}${it.fileSuffix}.vmoptions"
       //todo[nik] why we don't add yourkit agent on unix?
@@ -125,7 +130,7 @@ class LinuxDistributionBuilder {
     }
   }
 
-  private void unixReadme() {
+  private void generateReadme(String unixDistPath) {
     String fullName = buildContext.applicationInfo.productName
     BuildUtils.copyAndPatchFile("$buildContext.paths.communityHome/build/Install-Linux-tar.txt", "$unixDistPath/Install-Linux-tar.txt",
                      ["product_full"   : fullName,
@@ -134,7 +139,7 @@ class LinuxDistributionBuilder {
     buildContext.ant.fixcrlf(file: "$unixDistPath/bin/Install-Linux-tar.txt", eol: "unix")
   }
 
-  private void buildTarGz(String jreDirectoryPath) {
+  private void buildTarGz(String jreDirectoryPath, String unixDistPath) {
     def tarRoot = customizer.rootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
     def suffix = jreDirectoryPath != null ? "" : "-no-jdk"
     def tarPath = "$buildContext.paths.artifacts/${buildContext.productProperties.baseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${suffix}.tar"
