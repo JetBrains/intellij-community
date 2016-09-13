@@ -42,12 +42,6 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
     setTitle(IdeBundle.message("update.notifications.title"));
   }
 
-  protected AbstractUpdateDialog(Component parent, boolean enableLink) {
-    super(parent, true);
-    myEnableLink = enableLink;
-    setTitle(IdeBundle.message("update.notifications.title"));
-  }
-
   @Override
   protected void init() {
     setOKButtonText(getOkButtonText());
