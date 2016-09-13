@@ -67,14 +67,16 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
           listener.onVisiblePackChange(state.getVisiblePack());
         }
       }
-    }) {
+    }, true) {
+      @NotNull
       @Override
-      protected void startNewBackgroundTask() {
+      protected ProgressIndicator startNewBackgroundTask() {
+        ProgressIndicator indicator = myLogData.getProgress().createProgressIndicator();
         UIUtil.invokeLaterIfNeeded(() -> {
           MyTask task = new MyTask(project, "Applying filters...");
-          ProgressManager.getInstance().runProcessWithProgressAsynchronously(task,
-                                                                             myLogData.getProgress().createProgressIndicator());
+          ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, indicator);
         });
+        return indicator;
       }
     };
 
@@ -142,6 +144,9 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
           state = computeState(state, requests);
         }
         catch (ProcessCanceledException reThrown) {
+          LOG.debug("Filtering cancelled");
+          // need to start new bg task if cancelled
+          myTaskController.taskCompleted(null);
           throw reThrown;
         }
         catch (Throwable t) {

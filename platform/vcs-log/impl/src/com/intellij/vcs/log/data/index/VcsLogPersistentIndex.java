@@ -475,11 +475,13 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
   private class MySingleTaskController extends SingleTaskController<IndexingRequest, Void> {
     public MySingleTaskController() {
-      super(EmptyConsumer.getInstance());
+      super(EmptyConsumer.getInstance(), false);
     }
 
+    @NotNull
     @Override
-    protected void startNewBackgroundTask() {
+    protected ProgressIndicator startNewBackgroundTask() {
+      ProgressIndicator indicator = myProgress.createProgressIndicator(false);
       ApplicationManager.getApplication().invokeLater(() -> {
         Task.Backgroundable task = new Task.Backgroundable(VcsLogPersistentIndex.this.myProject, "Indexing Commit Data", true,
                                                            PerformInBackgroundOption.ALWAYS_BACKGROUND) {
@@ -503,9 +505,9 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
             taskCompleted(null);
           }
         };
-        ProgressIndicator indicator = myProgress.createProgressIndicator(false);
         ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, indicator);
       });
+      return indicator;
     }
   }
 

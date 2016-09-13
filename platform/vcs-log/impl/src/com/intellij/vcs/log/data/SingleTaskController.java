@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,13 +42,15 @@ public abstract class SingleTaskController<Request, Result> {
 
   @NotNull private final Consumer<Result> myResultHandler;
   @NotNull private final Object LOCK = new Object();
+  private final boolean myCancelRunning;
 
   @NotNull private List<Request> myAwaitingRequests;
-  private boolean myActive;
+  @Nullable private ProgressIndicator myRunningTask;
 
-  public SingleTaskController(@NotNull Consumer<Result> handler) {
+  public SingleTaskController(@NotNull Consumer<Result> handler, boolean cancelRunning) {
     myResultHandler = handler;
     myAwaitingRequests = ContainerUtil.newArrayList();
+    myCancelRunning = cancelRunning;
   }
 
   /**
@@ -59,19 +62,27 @@ public abstract class SingleTaskController<Request, Result> {
     synchronized (LOCK) {
       myAwaitingRequests.add(requests);
       LOG.debug("Added requests: " + requests);
-      if (!myActive) {
-        startNewBackgroundTask();
-        LOG.debug("Started a new bg task");
-        myActive = true;
+      if (myRunningTask != null && myCancelRunning) {
+        cancelTask(myRunningTask);
+        LOG.debug("Canceled task " + myRunningTask);
+      }
+      if (myRunningTask == null) {
+        myRunningTask = startNewBackgroundTask();
+        LOG.debug("Started a new bg task " + myRunningTask);
       }
     }
+  }
+
+  private void cancelTask(@NotNull ProgressIndicator t) {
+    t.cancel();
   }
 
   /**
    * Starts new task on a background thread. <br/>
    * <b>NB:</b> Don't invoke StateController methods inside this method, otherwise a deadlock will happen.
    */
-  protected abstract void startNewBackgroundTask();
+  @NotNull
+  protected abstract ProgressIndicator startNewBackgroundTask();
 
   /**
    * Returns all awaiting requests and clears the queue. <br/>
@@ -99,12 +110,12 @@ public abstract class SingleTaskController<Request, Result> {
     }
     synchronized (LOCK) {
       if (myAwaitingRequests.isEmpty()) {
-        myActive = false;
+        myRunningTask = null;
         LOG.debug("No more requests");
       }
       else {
-        startNewBackgroundTask();
-        LOG.debug("Restarted a bg task");
+        myRunningTask = startNewBackgroundTask();
+        LOG.debug("Restarted a bg task " + myRunningTask);
       }
     }
   }
