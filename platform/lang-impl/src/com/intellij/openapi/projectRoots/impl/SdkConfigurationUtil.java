@@ -239,12 +239,8 @@ public class SdkConfigurationUtil {
    */
   @Nullable
   public static Sdk createAndAddSDK(final String path, SdkType sdkType) {
-    VirtualFile sdkHome = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-      @Override
-      public VirtualFile compute() {
-        return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-      }
-    });
+    VirtualFile sdkHome = ApplicationManager.getApplication().runWriteAction(
+      (Computable<VirtualFile>)() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(path));
     if (sdkHome != null) {
       final Sdk newSdk = setupSdk(ProjectJdkTable.getInstance().getAllJdks(), sdkHome, sdkType, true, null, null);
       if (newSdk != null) {
