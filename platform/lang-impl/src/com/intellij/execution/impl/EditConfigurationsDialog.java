@@ -38,7 +38,7 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor implement
   }
 
   public EditConfigurationsDialog(final Project project, @Nullable final ConfigurationFactory factory) {
-    super(project, new RunConfigurable(project).selectConfigurableOnShow(factory == null), "#com.intellij.execution.impl.EditConfigurationsDialog", IdeModalityType.PROJECT);
+    super(project, new RunConfigurable(project).selectConfigurableOnShow(factory == null), "#com.intellij.execution.impl.EditConfigurationsDialog", IdeModalityType.IDE);
     ((RunConfigurable)getConfigurable()).setRunDialog(this);
     setTitle(ExecutionBundle.message("run.debug.dialog.title"));
     setHorizontalStretch(1.3F);
