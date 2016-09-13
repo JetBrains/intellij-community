@@ -189,7 +189,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
   private void downloadPatchAndRestart() {
     boolean updatePlugins =
-      !ContainerUtil.isEmpty(myUpdatedPlugins) && new PluginUpdateInfoDialog(getContentPanel(), myUpdatedPlugins).showAndGet();
+      !ContainerUtil.isEmpty(myUpdatedPlugins) && new PluginUpdateInfoDialog(myUpdatedPlugins).showAndGet();
 
     new Task.Modal(null, IdeBundle.message("update.notifications.title"), true) {
       @Override

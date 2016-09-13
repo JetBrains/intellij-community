@@ -47,8 +47,8 @@ class PluginUpdateInfoDialog extends AbstractUpdateDialog {
   /**
    * Used from {@link UpdateInfoDialog} when both platform and plugin updates are available.
    */
-  PluginUpdateInfoDialog(Component parent, @NotNull Collection<PluginDownloader> updatePlugins) {
-    super(parent, false);
+  PluginUpdateInfoDialog(@NotNull Collection<PluginDownloader> updatePlugins) {
+    super(false);
     myUploadedPlugins = updatePlugins;
     myPlatformUpdate = true;
     init();
