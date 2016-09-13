@@ -231,8 +231,9 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     return null;
   }
 
-  private static boolean isAlignmentNeeded(JComponent view) {
-    return !SystemInfo.isMac && (view instanceof JList || view instanceof JTree || Registry.is("ide.scroll.align.component"));
+  private static boolean isAlignmentNeeded(JComponent view, boolean horizontal) {
+    return (!SystemInfo.isMac || horizontal && Registry.is("mac.scroll.horizontal.gap")) &&
+           (view instanceof JList || view instanceof JTree || Registry.is("ide.scroll.align.component"));
   }
 
   static Insets getViewInsets(JComponent view) {
@@ -397,7 +398,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
               if (va == Alignment.LEFT) {
                 insets.left += vsb.getWidth();
               }
-              else if (va == Alignment.RIGHT && isAlignmentNeeded(view)) {
+              else if (va == Alignment.RIGHT && isAlignmentNeeded(view, false)) {
                 insets.right += vsb.getWidth();
               }
             }
@@ -408,7 +409,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
               if (ha == Alignment.TOP) {
                 insets.top += hsb.getHeight();
               }
-              else if (ha == Alignment.BOTTOM && isAlignmentNeeded(view)) {
+              else if (ha == Alignment.BOTTOM && isAlignmentNeeded(view, true)) {
                 insets.bottom += hsb.getHeight();
               }
             }
