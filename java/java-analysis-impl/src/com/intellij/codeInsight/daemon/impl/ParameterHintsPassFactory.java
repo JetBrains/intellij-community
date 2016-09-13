@@ -20,8 +20,6 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
-import com.intellij.codeInsight.folding.impl.ParameterNameFoldingManager;
-import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
@@ -35,7 +33,10 @@ import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 public class ParameterHintsPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
   private static final Key<Boolean> REPEATED_PASS = Key.create("RepeatedParameterHintsPass");
@@ -130,12 +131,8 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
 
     private void inlineLiteralArgumentsNames(@NotNull PsiCallExpression expression) {
       ParameterNameFoldingManager manager = new ParameterNameFoldingManager(expression);
-      List<FoldingDescriptor> descriptors = manager.getDescriptors();
-      for (FoldingDescriptor descriptor : descriptors) {
-        String text = descriptor.getPlaceholderText();
-        assert text != null;
-        int colonPos = text.indexOf(':');
-        myAnnotations.put(descriptor.getRange().getEndOffset(), text.substring(1, colonPos));
+      for (InlayInfo info : manager.getDescriptors()) {
+        myAnnotations.put(info.getOffset(), info.getText());
       }
     }
 
