@@ -174,7 +174,7 @@ public class CompilerTester {
     return runCompiler(callback -> CompilerManager.getInstance(getProject()).compile(files, callback));
   }
 
-  private List<CompilerMessage> runCompiler(final Consumer<ErrorReportingCallback> runnable) {
+  public List<CompilerMessage> runCompiler(final Consumer<CompileStatusNotification> runnable) {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
 
