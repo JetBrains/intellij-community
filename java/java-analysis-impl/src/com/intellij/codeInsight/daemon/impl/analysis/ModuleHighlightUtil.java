@@ -192,13 +192,7 @@ public class ModuleHighlightUtil {
       assert ref != null : refElement.getParent();
       PsiElement target = ref.resolve();
       if (!(target instanceof PsiJavaModule)) {
-        boolean missing = ref.multiResolve(true).length == 0;
-        String message = JavaErrorMessages.message(missing ? "module.not.found" : "module.not.on.path", refElement.getReferenceText());
-        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refElement).description(message).create();
-        if (!missing) {
-          factory().registerOrderEntryFixes(new QuickFixActionRegistrarImpl(info), ref);
-        }
-        return info;
+        return moduleResolveError(refElement, ref);
       }
       else if (target == container) {
         String message = JavaErrorMessages.message("module.cyclic.dependence", container.getModuleName());
@@ -256,8 +250,7 @@ public class ModuleHighlightUtil {
       assert ref != null : statement;
       PsiElement target = ref.resolve();
       if (!(target instanceof PsiJavaModule)) {
-        String message = JavaErrorMessages.message("module.not.found", refText);
-        results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refElement).description(message).create());
+        results.add(moduleResolveError(refElement, ref));
       }
       else if (!targets.add(refText)) {
         String message = JavaErrorMessages.message("module.duplicate.export", refText);
@@ -317,6 +310,16 @@ public class ModuleHighlightUtil {
     }
 
     return null;
+  }
+
+  private static HighlightInfo moduleResolveError(PsiJavaModuleReferenceElement refElement, PsiPolyVariantReference ref) {
+    boolean missing = ref.multiResolve(true).length == 0;
+    String message = JavaErrorMessages.message(missing ? "module.not.found" : "module.not.on.path", refElement.getReferenceText());
+    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refElement).description(message).create();
+    if (!missing) {
+      factory().registerOrderEntryFixes(new QuickFixActionRegistrarImpl(info), ref);
+    }
+    return info;
   }
 
   private static QuickFixFactory factory() {
