@@ -8,6 +8,7 @@ import com.android.utils.ILogger;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.ConsentOptionsProvider;
 import com.intellij.internal.statistic.configurable.SendPeriod;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -150,8 +151,10 @@ public final class UsageStatisticsPersistenceComponent implements PersistentStat
     tracker.setMaxJournalTime(10, TimeUnit.MINUTES);
     tracker.setMaxJournalSize(1000);
 
+    ApplicationInfo application = ApplicationInfo.getInstance();
+
     // Update the publisher based on settings updated above, will initialize on first call.
-    AnalyticsPublisher.updatePublisher(logger, settings, scheduler);
+    AnalyticsPublisher.updatePublisher(logger, settings, scheduler, application.getStrictVersion());
   }
 
   public boolean isAllowed() {
