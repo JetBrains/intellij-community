@@ -42,18 +42,18 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
           PsiElement body = lambda.getBody();
           if(body instanceof PsiMethodCallExpression) {
             PsiMethodCallExpression methodCall = (PsiMethodCallExpression)body;
-            if(MethodUtils.isCompareToCall(methodCall)) {
+            PsiExpression[] args = methodCall.getArgumentList().getExpressions();
+            if(args.length == 1 && MethodUtils.isCompareToCall(methodCall)) {
               PsiExpression left = methodCall.getMethodExpression().getQualifierExpression();
-              PsiExpression right = methodCall.getArgumentList().getExpressions()[0];
+              PsiExpression right = args[0];
               if(areEquivalent(lambda.getParameterList().getParameters(), left, right)) {
                 holder.registerProblem(lambda, "Can be replaced with Comparator.comparing", new ReplaceWithComparatorFix("comparing"));
               }
             } else {
               PsiMethod method = methodCall.resolveMethod();
-              if(method != null && method.getName().equals("compare")) {
-                PsiExpression[] args = methodCall.getArgumentList().getExpressions();
+              if(args.length == 2 && method != null && method.getName().equals("compare")) {
                 PsiClass compareClass = method.getContainingClass();
-                if(args.length == 2 && compareClass != null) {
+                if(compareClass != null) {
                   String replacementMethodName;
                   if(CommonClassNames.JAVA_LANG_DOUBLE.equals(compareClass.getQualifiedName())) {
                     replacementMethodName = "comparingDouble";

@@ -370,7 +370,8 @@ public class MethodUtils {
       return false;
     }
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
-    if (methodCallExpression.getMethodExpression().getQualifierExpression() == null) {
+    if (methodCallExpression.getMethodExpression().getQualifierExpression() == null ||
+      !HardcodedMethodConstants.COMPARE_TO.equals(methodCallExpression.getMethodExpression().getReferenceName())) {
       return false;
     }
     final PsiMethod psiMethod = methodCallExpression.resolveMethod();
