@@ -674,7 +674,6 @@
                          id="editor.preferences.import"
                          parentId="preferences.editor"
                          key="auto.import" bundle="messages.ApplicationBundle"
-                         groupId="editor"
                          groupWeight="1"/>
 
     <editorTabColorProvider implementation="com.intellij.ui.tabs.EditorTabColorProviderImpl"/>
