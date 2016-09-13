@@ -1,0 +1,403 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.codeInsight.daemon.inlays
+
+import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
+import com.intellij.codeInsight.folding.JavaCodeFoldingSettings
+import com.intellij.codeInsight.folding.impl.JavaCodeFoldingSettingsImpl
+import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.psi.PsiFile
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.util.DocumentUtil
+import org.assertj.core.api.Assertions.assertThat
+
+
+class InlayParameterHintsTest: LightCodeInsightFixtureTestCase() {
+
+  lateinit var registryStateBefore: String
+  lateinit var myFoldingSettings: JavaCodeFoldingSettingsImpl
+  lateinit var myFoldingStateToRestore: JavaCodeFoldingSettingsImpl
+  
+  override fun setUp() {
+    super.setUp()
+    val registry = Registry.get("editor.inline.parameter.hints")
+    registryStateBefore = registry.asString()
+    registry.setValue(true)
+    
+    myFoldingSettings = JavaCodeFoldingSettings.getInstance() as JavaCodeFoldingSettingsImpl
+    myFoldingStateToRestore = JavaCodeFoldingSettingsImpl()
+    myFoldingStateToRestore.loadState(myFoldingSettings)
+  }
+
+  override fun tearDown() {
+    Registry.get("editor.inline.parameter.hints").setValue(registryStateBefore)
+    myFoldingSettings.loadState(myFoldingStateToRestore)
+    super.tearDown()
+  }
+
+  fun `test insert literal arguments`() {
+    setup("""
+class Groo {
+
+ public void test(File file) {
+  boolean testNow = System.currentTimeMillis() > 34000;
+  int times = 1;
+  float pi = 4;
+  String title = "Testing...";
+  char ch = 'q';
+
+  configure(true, false, 555, 3.141f, "Huge Title", 'c', null);
+  configure(testNow, shouldIgnoreRoots(), fourteen, pi, title, c, file);
+ }
+
+ public void configure(boolean testNow, boolean shouldIgnoreRoots, int times, float pii, String title, char terminate, File file) {
+  System.out.println();
+  System.out.println();
+ }
+
+}""")
+
+    onLineStartingWith("configure(true").assertInlays(
+        "testNow->true",
+        "shouldIgnoreRoots->false",
+        "times->555",
+        "pii->3.141f",
+        """title->"Huge Title"""",
+        "terminate->'c'",
+        "file->null"
+    )
+
+    onLineStartingWith("configure(testNow").assertNoInlays()
+  }
+
+  fun `test do not show hints on setters`() {
+    setup("""class Groo {
+
+ public void test() {
+  setTestNow(false);
+  System.out.println("");
+ }
+
+ public void setTestNow(boolean testNow) {
+  System.out.println("");
+  System.out.println("");
+ }
+
+}""")
+    
+    onLineStartingWith("setTestNow").assertNoInlays()
+  }
+  
+  fun `test single varargs hint`() {
+    setup("""
+public class VarArgTest {
+
+  public void main() {
+    System.out.println("AAA");
+    testBooleanVarargs(13, false);
+  }
+
+  public boolean testBooleanVarargs(int test, Boolean... booleans) {
+    int temp = test;
+    return false;
+  }
+}
+""")
+    
+    onLineStartingWith("testBooleanVarargs")
+        .assertInlays("test->13", "booleans...->false")
+  }
+  
+  fun `test no hint if varargs null`() {
+    setup("""
+public class VarArgTest {
+
+  public void main() {
+    System.out.println("AAA");
+    testBooleanVarargs(13);
+  }
+
+  public boolean testBooleanVarargs(int test, Boolean... booleans) {
+    int temp = test;
+    return false;
+  }
+}
+""")
+    
+    onLineStartingWith("testBooleanVarargs").assertNoInlays()
+  }
+  
+  fun `test multiple vararg hint`() {
+    setup("""
+public class VarArgTest {
+
+  public void main() {
+    System.out.println("AAA");
+    testBooleanVarargs(13, false, true, false);
+  }
+
+  public boolean testBooleanVarargs(int test, Boolean... booleans) {
+    int temp = test;
+    return false;
+  }
+}
+""")
+    
+    onLineStartingWith("testBooleanVarargs")
+        .assertInlays("test->13", "booleans...->false")
+  }
+  
+  fun `test do not inline if parameter length is one or two`() {
+    setup("""
+public class CharSymbol {
+
+  public void main() {
+    System.out.println("AAA");
+    count(1, false);
+  }
+
+  public void count(int t, boolean fa) {
+    int temp = test;
+    boolean isFast = fast;
+  }
+}
+""")
+    
+    onLineStartingWith("count").assertNoInlays()
+  }
+  
+  fun `test do not inline known subsequent parameter names`() {
+    setup("""
+public class Test {
+  public void main() {
+    test1(1, 2);
+    test2(1, 2);
+    test3(1, 2);
+    doTest("first", "second");
+  }
+
+  public void test1(int first, int second) {
+    int start = first;
+    int end = second;
+  }
+
+  public void test2(int key, int value) {
+    int start = key;
+    int end = value;
+  }
+
+  public void test3(int key, int value) {
+    int start = key;
+    int end = value;
+  }
+}
+""")
+    
+    onLineStartingWith("test1").assertNoInlays()
+    onLineStartingWith("test2").assertNoInlays()
+    onLineStartingWith("test3").assertNoInlays()
+    onLineStartingWith("doTest").assertNoInlays()
+  }
+  
+  fun `test show if can be assigned`() {
+    setup("""
+public class CharSymbol {
+
+  public void main() {
+    Object obj = new Object();
+    count(100, false, "Hi!");
+  }
+
+  public void count(Integer test, Boolean boo, CharSequence seq) {
+    int a = test;
+    Object obj = new Object();
+  }
+}
+""")
+    
+    onLineStartingWith("count(1")
+        .assertInlays("test->100", "boo->false", """seq->"Hi!"""")
+  }
+  
+  fun `test inline positive and negative numbers`() {
+    setup("""
+public class CharSymbol {
+
+  public void main() {
+    Object obj = new Object();
+    count(-1, obj);
+    count(+1, obj);
+  }
+
+  public void count(int test, Object obj) {
+    Object tmp = obj;
+    boolean isFast = false;
+  }
+}
+""")
+    
+    onLineStartingWith("count(-")
+        .assertInlays("test->-")
+    
+    onLineStartingWith("count(+")
+        .assertInlays("test->+")
+  }
+  
+  fun `test inline literal arguments with crazy settings`() {
+    val foldingSettings = JavaCodeFoldingSettings.getInstance()
+    foldingSettings.isInlineParameterNamesForLiteralCallArguments = true;
+    foldingSettings.inlineLiteralParameterMinArgumentsToFold = 1;
+    foldingSettings.inlineLiteralParameterMinNameLength = 1;
+    
+    setup("""
+public class Test {
+  public void main(boolean isActive, boolean requestFocus, int xoo) {
+    System.out.println("AAA");
+    main(true,false, /*comment*/2);
+  }
+}
+""")
+    
+    onLineStartingWith("System")
+        .assertInlays("""x->"AAA"""")
+    
+    onLineStartingWith("main(t")
+        .assertInlays("isActive->true", "requestFocus->false", "xoo->2")
+  }
+  
+  fun `test hints for generic arguments`() {
+    val foldingSettings = JavaCodeFoldingSettings.getInstance()
+    foldingSettings.isInlineParameterNamesForLiteralCallArguments = true
+    foldingSettings.inlineLiteralParameterMinArgumentsToFold = 1
+    foldingSettings.inlineLiteralParameterMinNameLength = 1
+    
+    setup("""
+import java.util.*;
+public class Test {
+  public void main(Comparator<Integer> c, List<String> l) {
+    c.compare(0, /** ddd */3);
+    l.add(1, "uuu");
+  }
+}
+""")
+    
+    onLineStartingWith("c.compare")
+        .assertInlays("o1->0", "o2->3")
+    
+    onLineStartingWith("l.add")
+        .assertInlays("index->1", """element->"uuu"""")
+  }
+  
+  fun `test inline constructor literal arguments names`() {
+    setup("""
+public class Test {
+
+  public void main() {
+    System.out.println("AAA");
+    Checker r = new Checker(true, false) {
+        @Override
+        void test() {
+        }
+    };
+  }
+
+  abstract class Checker {
+    Checker(boolean isActive, boolean requestFocus) {}
+    abstract void test();
+  }
+}
+""")
+    
+    onLineStartingWith("Checker r")
+        .assertInlays("isActive->true", "requestFocus->false")
+  }
+  
+  fun `test inline anonymous class constructor parameters`() {
+    setup("""
+public class Test {
+
+  Test(int counter, boolean shouldTest) {
+    System.out.println();
+    System.out.println();
+  }
+
+  public static void main() {
+    System.out.println();
+    Test t = new Test(10, false);
+  }
+
+}
+""")
+    
+    onLineStartingWith("Test t")
+        .assertInlays("counter->10", "shouldTest->false")
+  }
+
+  private fun onLineStartingWith(text: String): InlayAssert {
+    val range = getLineRangeStartingWith(text)
+    val inlays = myFixture.editor.inlayModel.getInlineElementsInRange(range.startOffset, range.endOffset)
+    return InlayAssert(myFixture.file, inlays)
+  }
+  
+  private fun getInlays(range: TextRange): List<Inlay> {
+    val inlays = myFixture.editor.inlayModel
+    return inlays.getInlineElementsInRange(range.startOffset, range.endOffset)
+  }
+  
+  private fun getLineRangeStartingWith(text: String): TextRange {
+    val document = myFixture.editor.document
+    val startOffset = document.charsSequence.indexOf(text)
+    val lineNumber = document.getLineNumber(startOffset)
+    return DocumentUtil.getLineTextRange(document, lineNumber)
+  }
+
+  private fun setup(text: String) {
+    myFixture.configureByText("a.java", text)
+    myFixture.doHighlighting()
+  }
+  
+}
+
+private class InlayAssert(private val file: PsiFile, private val inlays: List<Inlay>) {
+
+  fun assertNoInlays() {
+    assertThat(inlays).hasSize(0)
+  }
+  
+  fun assertInlays(vararg expectedInlays: String) {
+    assertThat(expectedInlays.size).isNotEqualTo(0)
+    
+    val hintManager = ParameterHintsPresentationManager.getInstance()
+    val hints = inlays.filter { hintManager.isParameterHint(it) }.map { it.offset to hintManager.getHintText(it) }
+    val hintOffsets = hints.map { it.first }
+    val hintNames = hints.map { it.second }
+
+    assertThat(hints.size).isEqualTo(expectedInlays.size)
+
+    val expect = expectedInlays.map { it.substringBefore("->") to it.substringAfter("->") }
+    val expectedHintNames = expect.map { it.first }
+    val expectedWordsAfter = expect.map { it.second }
+
+    assertThat(hintNames).isEqualTo(expectedHintNames)
+
+    val wordsAfter = hintOffsets.mapNotNull { file.findElementAt(it) }.map { it.text }
+
+    assertThat(wordsAfter).isEqualTo(expectedWordsAfter)
+  }
+  
+}
