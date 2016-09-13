@@ -16,6 +16,8 @@
 package com.intellij.diff.merge;
 
 import com.intellij.diff.DiffContext;
+import com.intellij.diff.DiffDialogHints;
+import com.intellij.diff.DiffManager;
 import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.actions.ProxyUndoRedoAction;
 import com.intellij.diff.comparison.ComparisonManager;
@@ -55,6 +57,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -103,7 +106,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     final DocumentContent right = ThreeSide.RIGHT.select(contents);
     final DocumentContent output = mergeRequest.getOutputContent();
 
-    return ContainerUtil.<DiffContent>list(left, output, right);
+    return ContainerUtil.list(left, output, right);
   }
 
   @NotNull
@@ -223,10 +226,15 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       group.add(new MyToggleAutoScrollAction());
       group.add(myEditorSettingsAction);
 
-      group.add(Separator.getInstance());
-      group.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_BASE));
-      group.add(new TextShowPartialDiffAction(PartialDiffMode.BASE_RIGHT));
-      group.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_RIGHT));
+      DefaultActionGroup diffGroup = new DefaultActionGroup("Compare With", true);
+      diffGroup.getTemplatePresentation().setIcon(AllIcons.Diff.Diff);
+      diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_BASE));
+      diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.BASE_RIGHT));
+      diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_RIGHT));
+      diffGroup.add(new ShowDiffWithBaseAction(ThreeSide.LEFT));
+      diffGroup.add(new ShowDiffWithBaseAction(ThreeSide.BASE));
+      diffGroup.add(new ShowDiffWithBaseAction(ThreeSide.RIGHT));
+      group.add(diffGroup);
 
       group.add(Separator.getInstance());
       group.add(new ApplyNonConflictsAction(ThreeSide.BASE));
@@ -1143,6 +1151,35 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       @Override
       public void actionPerformed(AnActionEvent e) {
         applyNonConflictedChanges(mySide);
+      }
+    }
+
+    private class ShowDiffWithBaseAction extends DumbAwareAction {
+      @NotNull private final ThreeSide mySide;
+
+      public ShowDiffWithBaseAction(@NotNull ThreeSide side) {
+        mySide = side;
+        String actionId = mySide.select("Diff.CompareWithBase.Left", "Diff.CompareWithBase.Result", "Diff.CompareWithBase.Right");
+        ActionUtil.copyFrom(this, actionId);
+      }
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        DiffContent baseContent = ThreeSide.BASE.select(myMergeRequest.getContents());
+        String baseTitle = ThreeSide.BASE.select(myMergeRequest.getContentTitles());
+
+        DiffContent otherContent = mySide.select(myRequest.getContents());
+        String otherTitle = mySide.select(myRequest.getContentTitles());
+
+        SimpleDiffRequest request = new SimpleDiffRequest(myRequest.getTitle(), baseContent, otherContent, baseTitle, otherTitle);
+
+        ThreeSide currentSide = getCurrentSide();
+        LogicalPosition currentPosition = DiffUtil.getCaretPosition(getCurrentEditor());
+
+        LogicalPosition resultPosition = transferPosition(currentSide, mySide, currentPosition);
+        request.putUserData(DiffUserDataKeys.SCROLL_TO_LINE, Pair.create(Side.RIGHT, resultPosition.line));
+
+        DiffManager.getInstance().showDiff(myProject, request, new DiffDialogHints(null, myPanel));
       }
     }
 
