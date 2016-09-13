@@ -37,6 +37,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -141,6 +142,10 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
       result.consume(element);
     }
 
+    for (LookupElement element : collectStaticVariants(functionalInterfaceType, params, originalPosition, substitutor, expectedReturnType)) {
+      result.consume(element);
+    }
+
     Consumer<PsiType> consumer = eachReturnType -> {
       PsiClass psiClass = PsiUtil.resolveClassInType(eachReturnType);
       if (psiClass == null || psiClass instanceof PsiTypeParameter) return;
@@ -178,6 +183,33 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
                       .withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
   }
 
+  @NotNull
+  private static LookupElement createMethodRefOnThis(PsiType functionalInterfaceType, PsiMethod psiMethod) {
+    return LookupElementBuilder
+      .create(psiMethod)
+      .withPresentableText("this::" + psiMethod.getName())
+      .withInsertHandler((context, item) -> context.getDocument().insertString(context.getStartOffset(), "this::"))
+      .withTypeText(functionalInterfaceType.getPresentableText())
+      .withIcon(AllIcons.Nodes.MethodReference)
+      .withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
+  }
+
+  @NotNull
+  private static LookupElement createMethodRefOnClass(PsiType functionalInterfaceType, PsiMethod psiMethod, PsiClass qualifierClass) {
+    String presentableText = qualifierClass.getName() + "::" + psiMethod.getName();
+    return LookupElementBuilder
+      .create(psiMethod)
+      .withLookupString(presentableText)
+      .withPresentableText(presentableText)
+      .withInsertHandler((context, item) -> {
+        context.getDocument().insertString(context.getStartOffset(), "::");
+        JavaCompletionUtil.insertClassReference(qualifierClass, context.getFile(), context.getStartOffset());
+      })
+      .withTypeText(functionalInterfaceType.getPresentableText())
+      .withIcon(AllIcons.Nodes.MethodReference)
+      .withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
+  }
+
   private static List<LookupElement> collectThisVariants(PsiType functionalInterfaceType,
                                                          PsiParameter[] params,
                                                          PsiElement originalPosition,
@@ -186,17 +218,27 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(originalPosition, PsiClass.class);
     if (psiClass != null) {
       for (PsiMethod psiMethod : psiClass.getMethods()) {
-        final PsiType returnType = psiMethod.getReturnType();
-        if (isInstanceMethodWithAppropriateReturnType(expectedReturnType, psiMethod, returnType) &&
+        if (!psiMethod.hasModifierProperty(PsiModifier.STATIC) &&
+            hasAppropriateReturnType(expectedReturnType, psiMethod) &&
             areParameterTypesAppropriate(psiMethod, params, substitutor, 0)) {
-          LookupElement methodRefLookupElement = LookupElementBuilder
-            .create(psiMethod)
-            .withPresentableText("this::" + psiMethod.getName())
-            .withInsertHandler((context, item) -> context.getDocument().insertString(context.getStartOffset(), "this::"))
-            .withTypeText(functionalInterfaceType.getPresentableText())
-            .withIcon(AllIcons.Nodes.MethodReference)
-            .withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
-          result.add(methodRefLookupElement);
+          result.add(createMethodRefOnThis(functionalInterfaceType, psiMethod));
+        }
+      }
+    }
+    return result;
+  }
+
+  private static List<LookupElement> collectStaticVariants(PsiType functionalInterfaceType,
+                                                           PsiParameter[] params,
+                                                           PsiElement originalPosition,
+                                                           PsiSubstitutor substitutor, PsiType expectedReturnType) {
+    List<LookupElement> result = new ArrayList<>();
+    for (PsiClass psiClass : JBIterable.generate(PsiTreeUtil.getParentOfType(originalPosition, PsiClass.class), PsiClass::getContainingClass)) {
+      for (PsiMethod psiMethod : psiClass.getMethods()) {
+        if (psiMethod.hasModifierProperty(PsiModifier.STATIC) &&
+            hasAppropriateReturnType(expectedReturnType, psiMethod) &&
+            areParameterTypesAppropriate(psiMethod, params, substitutor, 0)) {
+          result.add(createMethodRefOnClass(functionalInterfaceType, psiMethod, psiClass));
         }
       }
     }
@@ -215,24 +257,14 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
     if (paramClass != null && !paramClass.hasTypeParameters()) {
       final Set<String> visited = new HashSet<>();
       for (PsiMethod psiMethod : paramClass.getAllMethods()) {
-        final PsiType returnType = psiMethod.getReturnType();
         PsiClass containingClass = psiMethod.getContainingClass();
         PsiClass qualifierClass = containingClass != null ? containingClass : paramClass;
         if (visited.add(psiMethod.getName()) &&
-            isInstanceMethodWithAppropriateReturnType(expectedReturnType, psiMethod, returnType) &&
+            !psiMethod.hasModifierProperty(PsiModifier.STATIC) &&
+            hasAppropriateReturnType(expectedReturnType, psiMethod) &&
             areParameterTypesAppropriate(psiMethod, params, substitutor, 1) &&
             JavaResolveUtil.isAccessible(psiMethod, null, psiMethod.getModifierList(), originalPosition, null, null)) {
-          LookupElement methodRefLookupElement = LookupElementBuilder
-            .create(psiMethod)
-            .withPresentableText(qualifierClass.getName() + "::" + psiMethod.getName())
-            .withInsertHandler((context, item) -> {
-              int startOffset = context.getStartOffset();
-              context.getDocument().insertString(startOffset, "::");
-              JavaCompletionUtil.insertClassReference(qualifierClass, context.getFile(), startOffset);
-            })
-            .withTypeText(functionalInterfaceType.getPresentableText())
-            .withIcon(AllIcons.Nodes.MethodReference)
-            .withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
+          LookupElement methodRefLookupElement = createMethodRefOnClass(functionalInterfaceType, psiMethod, qualifierClass);
           if (prioritize && containingClass == paramClass) {
             methodRefLookupElement = PrioritizedLookupElement.withPriority(methodRefLookupElement, 1);
           }
@@ -243,10 +275,9 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
     return result;
   }
 
-  private static boolean isInstanceMethodWithAppropriateReturnType(PsiType expectedReturnType, PsiMethod psiMethod, PsiType returnType) {
-    return returnType != null &&
-           !psiMethod.hasModifierProperty(PsiModifier.STATIC) &&
-           TypeConversionUtil.isAssignable(expectedReturnType, returnType);
+  private static boolean hasAppropriateReturnType(PsiType expectedReturnType, PsiMethod psiMethod) {
+    PsiType returnType = psiMethod.getReturnType();
+    return returnType != null && TypeConversionUtil.isAssignable(expectedReturnType, returnType);
   }
 
   private static boolean areParameterTypesAppropriate(PsiMethod psiMethod, PsiParameter[] params, PsiSubstitutor substitutor, int offset) {
