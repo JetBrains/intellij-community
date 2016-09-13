@@ -40,6 +40,26 @@ class OutputTest : BaseSMTRunnerTestCase() {
     assertEquals("inside test\n", printer.stdOut)
   }
 
+  fun testBeforeAfterFailedOrder() {
+    val suite = createTestProxy("parent")
+    val child = createTestProxy("child", suite)
+
+    suite.addStdOutput("before test started\n", ProcessOutputTypes.STDOUT)
+    child.setStarted()
+    child.addStdOutput("inside test\n", ProcessOutputTypes.STDOUT)
+    child.setTestFailed("fail", null, false)
+    suite.addStdOutput("after test finished\n", ProcessOutputTypes.STDOUT)
+
+    val printer = MockPrinter(true)
+    suite.printOn(printer)
+
+    assertEquals("before test started\ninside test\nafter test finished\n", printer.stdOut)
+    printer.resetIfNecessary()
+
+    child.printOn(printer)
+    assertEquals("inside test\n", printer.stdOut)
+  }
+
   fun testBeforeAfterOrderWhenFlushed() {
     val suite = createTestProxy("parent")
     val child = createTestProxy("child", suite)
