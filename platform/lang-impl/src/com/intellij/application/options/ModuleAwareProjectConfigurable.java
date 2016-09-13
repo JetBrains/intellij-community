@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -51,7 +52,7 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
   private final String myDisplayName;
   private final String myHelpTopic;
   private final Map<Module, T> myModuleConfigurables = new HashMap<>();
-  private final static String ourProjectItemKey = "thisisnotthemoduleyouarelookingfor";
+  private final static String PROJECT_ITEM_KEY = "thisisnotthemoduleyouarelookingfor";
 
   public ModuleAwareProjectConfigurable(@NotNull Project project, String displayName, String helpTopic) {
     myProject = project;
@@ -131,7 +132,7 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
     if (projectConfigurable != null) {
       myModuleConfigurables.put(null, projectConfigurable);
       final JComponent component = projectConfigurable.createComponent();
-      cardPanel.add(component, ourProjectItemKey);
+      cardPanel.add(component, PROJECT_ITEM_KEY);
       listDataModel.add(0, null);
     }
 
@@ -145,14 +146,14 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
       @Override
       public void valueChanged(ListSelectionEvent e) {
         final Module value = (Module)moduleList.getSelectedValue();
-        layout.show(cardPanel, value == null ? ourProjectItemKey : value.getName());
+        layout.show(cardPanel, value == null ? PROJECT_ITEM_KEY : value.getName());
       }
     });
 
     if (moduleList.getItemsCount() > 0) {
       moduleList.setSelectedIndex(0);
       Module module = listDataModel.getElementAt(0);
-      layout.show(cardPanel, module == null ? ourProjectItemKey : module.getName());
+      layout.show(cardPanel, module == null ? PROJECT_ITEM_KEY : module.getName());
     }
     return splitter;
   }
@@ -173,23 +174,19 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
   }
 
   /**
-   * Name for project-wide settings in modules list
-   *
-   * @return
+   * @return Name for project-wide settings in modules list
    */
   @NotNull
   protected String getProjectConfigurableItemName() {
-    return "Common";
+    return myProject.getName();
   }
 
   /**
-   * Icon for project-wide sttings in modules list
-   *
-   * @return
+   * @return Icon for project-wide sttings in modules list
    */
   @Nullable
   protected Icon getProjectConfigurableItemIcon() {
-    return null;
+    return AllIcons.Nodes.Project;
   }
 
   @NotNull
