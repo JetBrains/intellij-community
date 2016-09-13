@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.projectView.impl;
 
-import com.intellij.ide.projectView.NestingRulesProvider;
+import com.intellij.ide.projectView.ProjectViewNestingRulesProvider;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.NestingTreeNode;
@@ -47,11 +47,11 @@ import java.util.*;
  * Nesting logic is based on file names only. Rules about files that should be nested are provided by
  * <code>com.intellij.projectViewNestingRulesProvider</code> extensions.
  *
- * @see NestingRulesProvider
+ * @see ProjectViewNestingRulesProvider
  */
 public class NestingTreeStructureProvider implements TreeStructureProvider, DumbAware {
 
-  private static ExtensionPointName<NestingRulesProvider> EP_NAME =
+  private static ExtensionPointName<ProjectViewNestingRulesProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.projectViewNestingRulesProvider");
 
   private static final Logger LOG = Logger.getInstance(NestingTreeStructureProvider.class);
@@ -65,7 +65,7 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
       final MultiMap<String, String> childToParentSuffix = new MultiMap<>();
       final MultiMap<String, String> parentToChildSuffix = new MultiMap<>();
 
-      final NestingRulesProvider.Consumer consumer = new NestingRulesProvider.Consumer() {
+      final ProjectViewNestingRulesProvider.Consumer consumer = new ProjectViewNestingRulesProvider.Consumer() {
         @Override
         public void addNestingRule(@NotNull final String parentFileSuffix, @NotNull final String childFileSuffix) {
           LOG.assertTrue(!parentFileSuffix.isEmpty() && !childFileSuffix.isEmpty(), "file suffix must not be empty");
@@ -90,7 +90,7 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
         }
       };
 
-      for (NestingRulesProvider provider : EP_NAME.getExtensions()) {
+      for (ProjectViewNestingRulesProvider provider : EP_NAME.getExtensions()) {
         provider.addFileNestingRules(consumer);
       }
     }

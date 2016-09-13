@@ -880,7 +880,7 @@
     </extensionPoint>
 
     <extensionPoint name="projectViewNestingRulesProvider"
-                    interface="com.intellij.ide.projectView.NestingRulesProvider"/>
+                    interface="com.intellij.ide.projectView.ProjectViewNestingRulesProvider"/>
   </extensionPoints>
 </idea-plugin>
 

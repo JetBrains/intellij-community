@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
  * &nbsp;&nbsp;&nbsp;&nbsp;&lt;projectViewNestingRulesProvider implementation="my.package.MyRulesProvider"/&gt;
  * &lt;/extensions&gt;</pre>
  */
-public interface NestingRulesProvider {
+public interface ProjectViewNestingRulesProvider {
   /**
    * Implementations of this method should pass the longest possible file name suffix to the consumer.
    * Usually this suffix starts with a dot. For example ".js"->".min.js".
