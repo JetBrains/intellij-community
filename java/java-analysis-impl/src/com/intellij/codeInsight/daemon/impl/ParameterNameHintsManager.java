@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public class ParameterNameFoldingManager {
+public class ParameterNameHintsManager {
   private static final List<Couple<String>> COMMONLY_USED_PARAMETER_PAIR = ContainerUtil.newArrayList(
     Couple.of("begin", "end"),
     Couple.of("start", "end"),
@@ -42,7 +42,7 @@ public class ParameterNameFoldingManager {
   @NotNull
   private final List<InlayInfo> myDescriptors;
 
-  public ParameterNameFoldingManager(@NotNull PsiCallExpression callExpression) {
+  public ParameterNameHintsManager(@NotNull PsiCallExpression callExpression) {
     PsiExpression[] callArguments = getArguments(callExpression);
     JavaResolveResult resolveResult = callExpression.resolveMethodGenerics();
 

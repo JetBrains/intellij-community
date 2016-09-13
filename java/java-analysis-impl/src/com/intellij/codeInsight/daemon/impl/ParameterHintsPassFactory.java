@@ -130,7 +130,7 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
     }
 
     private void inlineLiteralArgumentsNames(@NotNull PsiCallExpression expression) {
-      ParameterNameFoldingManager manager = new ParameterNameFoldingManager(expression);
+      ParameterNameHintsManager manager = new ParameterNameHintsManager(expression);
       for (InlayInfo info : manager.getDescriptors()) {
         myAnnotations.put(info.getOffset(), info.getText());
       }
