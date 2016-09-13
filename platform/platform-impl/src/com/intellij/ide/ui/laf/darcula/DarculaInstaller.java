@@ -28,8 +28,8 @@ import com.intellij.ui.JBColor;
  * @author Konstantin Bulenkov
  */
 public class DarculaInstaller {
-  public static final String DARCULA_EDITOR_THEME_KEY = "Darcula.savedEditorTheme";
-  public static final String DEFAULT_EDITOR_THEME_KEY = "Default.savedEditorTheme";
+  private static final String DARCULA_EDITOR_THEME_KEY = "Darcula.savedEditorTheme";
+  private static final String DEFAULT_EDITOR_THEME_KEY = "Default.savedEditorTheme";
 
   public static void uninstall() {
     performImpl(false);
