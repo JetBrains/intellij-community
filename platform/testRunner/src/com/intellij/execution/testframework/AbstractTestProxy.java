@@ -148,7 +148,7 @@ public abstract class AbstractTestProxy extends CompositePrintable {
     final DiffHyperlink provider = getDiffViewerProvider();
     return provider == null ? Collections.<DiffHyperlink>emptyList() : Collections.singletonList(provider);
   }
-  
+
   @Nullable
   public DiffHyperlink getDiffViewerProvider() {
     return null;

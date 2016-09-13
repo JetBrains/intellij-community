@@ -18,6 +18,7 @@ package org.jetbrains.io
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.IconLoader
+import com.intellij.util.io.isWriteFromBrowserWithoutOrigin
 import com.intellij.util.ui.UIUtil
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandler
@@ -82,7 +83,7 @@ internal class DelegatingHttpRequestHandler : DelegatingHttpRequestHandlerBase()
   @Suppress("OverridingDeprecatedMember")
   override fun exceptionCaught(context: ChannelHandlerContext, cause: Throwable) {
     try {
-      context.channel().attr(PREV_HANDLER).remove()
+      context.channel().attr(PREV_HANDLER).set(null)
     }
     finally {
       @Suppress("DEPRECATION")

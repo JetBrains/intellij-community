@@ -497,7 +497,7 @@ public class DarculaLaf extends BasicLookAndFeel {
     if (application != null) {
       Disposer.register(application, myDisposable);
     }
-    myMnemonicAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, myDisposable);
+    myMnemonicAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
     IdeEventQueue.getInstance().addDispatcher(e -> {
       if (e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT) {
         myAltPressed = e.getID() == KeyEvent.KEY_PRESSED;

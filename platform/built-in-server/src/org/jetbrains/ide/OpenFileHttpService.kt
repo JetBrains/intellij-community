@@ -32,8 +32,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.ui.AppUIUtil
-import com.intellij.util.exists
-import com.intellij.util.systemIndependentPath
+import com.intellij.util.io.exists
+import com.intellij.util.io.systemIndependentPath
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
 import org.jetbrains.builtInWebServer.WebServerPathToFileManager

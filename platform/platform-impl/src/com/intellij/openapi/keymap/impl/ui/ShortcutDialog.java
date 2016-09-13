@@ -163,7 +163,6 @@ abstract class ShortcutDialog<T extends Shortcut> extends DialogWrapper {
     if (!Registry.is("ide.scroll.new.layout")) {
       scroll.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
     }
-    scroll.getVerticalScrollBar().setUnitIncrement(JBUI.scale(10));
     scroll.getVerticalScrollBar().setOpaque(false);
     scroll.getViewport().setOpaque(false);
     scroll.setOpaque(false);

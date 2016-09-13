@@ -2676,7 +2676,7 @@ public class StringUtil extends StringUtilRt {
       String context =
         String.valueOf(last(s.subSequence(0, slashRIndex), 10, true)) + first(s.subSequence(slashRIndex, s.length()), 10, true);
       context = escapeStringCharacters(context);
-      LOG.error("Wrong line separators: '" + context + "' at offset " + slashRIndex);
+      throw new AssertionError("Wrong line separators: '" + context + "' at offset " + slashRIndex);
     }
   }
 

@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.util.PathUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import git4idea.config.SSHConnectionSettings;
@@ -34,6 +35,8 @@ import java.awt.*;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static com.intellij.credentialStore.CredentialAttributesKt.CredentialAttributes;
 
 /**
  * Swing GUI handler for the SSH events
@@ -69,10 +72,12 @@ public class GitSSHGUIHandler {
   @Nullable
   public String askPassphrase(final String username, final String keyPath, boolean resetPassword, final String lastError) {
     String error = processLastError(resetPassword, lastError);
-    return PasswordSafePromptDialog.askPassphrase(myProject, GitBundle.getString("ssh.ask.passphrase.title"),
-                                                  GitBundle.message("ssh.askPassphrase.message", keyPath, username),
-                                                  GitSSHGUIHandler.class, "PASSPHRASE:" + keyPath, resetPassword, error
-    );
+    return PasswordSafePromptDialog.askPassword(myProject,
+                                                GitBundle.getString("ssh.ask.passphrase.title"),
+                                                "Password for the SSH key \"" + PathUtil.getFileName(keyPath) + "\":",
+                                                CredentialAttributes(GitSSHGUIHandler.class, "PASSPHRASE:" + keyPath),
+                                                resetPassword,
+                                                error);
   }
 
   /**

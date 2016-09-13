@@ -31,7 +31,13 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.*
+import com.intellij.util.ArrayUtil
+import com.intellij.util.LineSeparator
+import com.intellij.util.io.delete
+import com.intellij.util.io.exists
+import com.intellij.util.io.readChars
+import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.loadElement
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jdom.Parent

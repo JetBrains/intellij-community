@@ -24,24 +24,24 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.Predicate;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import java.awt.*;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -55,6 +55,13 @@ public class SpecialAnnotationsUtil {
   public static JPanel createSpecialAnnotationsListControl(final List<String> list,
                                                            final String borderTitle,
                                                            final boolean acceptPatterns) {
+    return createSpecialAnnotationsListControl(list, borderTitle, acceptPatterns, aClass -> aClass.isAnnotationType());
+  }
+
+  public static JPanel createSpecialAnnotationsListControl(final List<String> list,
+                                                           final String borderTitle,
+                                                           final boolean acceptPatterns,
+                                                           final Condition<PsiClass> isApplicable) {
     final SortedListModel<String> listModel = new SortedListModel<>((o1, o2) -> o1.compareTo(o2));
     final JList injectionList = new JBList(listModel);
     for (String s : list) {
@@ -96,7 +103,7 @@ public class SpecialAnnotationsUtil {
                                                 GlobalSearchScope.allScope(project), new ClassFilter() {
               @Override
               public boolean isAccepted(PsiClass aClass) {
-                return aClass.isAnnotationType();
+                return isApplicable.value(aClass);
               }
             }, null);
           chooser.showDialog();

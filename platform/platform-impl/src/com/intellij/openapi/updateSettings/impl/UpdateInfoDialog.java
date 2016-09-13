@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.updateSettings.impl;
 
+import com.intellij.execution.CommandLineUtil;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -33,6 +34,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
@@ -52,11 +54,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.Pair.pair;
 
@@ -188,7 +189,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
   private void downloadPatchAndRestart() {
     boolean updatePlugins =
-      !ContainerUtil.isEmpty(myUpdatedPlugins) && new PluginUpdateInfoDialog(getContentPanel(), myUpdatedPlugins).showAndGet();
+      !ContainerUtil.isEmpty(myUpdatedPlugins) && new PluginUpdateInfoDialog(myUpdatedPlugins).showAndGet();
 
     new Task.Modal(null, IdeBundle.message("update.notifications.title"), true) {
       @Override
@@ -238,10 +239,12 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   private static void showPatchInstructions(String[] command) {
     String product = ApplicationNamesInfo.getInstance().getLowercaseProductName();
     String version = ApplicationInfo.getInstance().getFullVersion();
-    File file = new File(SystemProperties.getUserHome(), product + "-" + version + "-patch.txt");
+    File file = new File(SystemProperties.getUserHome(), product + "-" + version + "-patch." + (SystemInfo.isWindows ? "cmd" : "sh"));
     try {
-      String text = Stream.of(command).map(s -> s.indexOf(' ') > 0 ? '"' + s + '"' : s).collect(Collectors.joining(" "));
+      String text = (SystemInfo.isWindows ? "@echo off\n\n" : "#!/bin/sh\n\n") +
+                    StringUtil.join(CommandLineUtil.toCommandLine(Arrays.asList(command)), " ");
       FileUtil.writeToFile(file, text);
+      FileUtil.setExecutableAttribute(file.getPath(), true);
     }
     catch (Exception e) {
       Logger.getInstance(UpdateInstaller.class).error(e);

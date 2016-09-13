@@ -37,6 +37,11 @@ import java.util.Map;
 public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider<PsiJavaCodeReferenceElement> {
   @Override
   public void registerFixes(@NotNull PsiJavaCodeReferenceElement ref, @NotNull QuickFixActionRegistrar registrar) {
+    if (PsiUtil.isModuleFile(ref.getContainingFile())) {
+      OrderEntryFix.registerFixes(registrar, ref);
+      return;
+    }
+
     registrar.register(new ImportClassFix(ref));
     registrar.register(new StaticImportConstantFix(ref));
     registrar.register(QuickFixFactory.getInstance().createSetupJDKFix());

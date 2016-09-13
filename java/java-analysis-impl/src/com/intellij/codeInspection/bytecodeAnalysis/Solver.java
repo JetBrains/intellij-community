@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,14 +72,14 @@ class ResultUtil {
       Final f1 = (Final)r1;
       Pending pending = (Pending) r2;
       Set<Product> sum1 = new HashSet<>(pending.sum);
-      sum1.add(new Product(f1.value, Collections.<Key>emptySet()));
+      sum1.add(new Product(f1.value, Collections.emptySet()));
       return new Pending(sum1);
     }
     if (r1 instanceof Pending && r2 instanceof Final) {
       Final f2 = (Final)r2;
       Pending pending = (Pending) r1;
       Set<Product> sum1 = new HashSet<>(pending.sum);
-      sum1.add(new Product(f2.value, Collections.<Key>emptySet()));
+      sum1.add(new Product(f2.value, Collections.emptySet()));
       return new Pending(sum1);
     }
     Pending pending1 = (Pending) r1;
@@ -92,10 +92,7 @@ class ResultUtil {
   }
 
   private static void checkLimit(Set<Product> sum) throws AnalyzerException {
-    int size = 0;
-    for (Product prod : sum) {
-      size += prod.ids.size();
-    }
+    int size = sum.stream().mapToInt(prod -> prod.ids.size()).sum();
     if (size > Analysis.EQUATION_SIZE_LIMIT) {
       throw new AnalyzerException(null, "Equation size is too big");
     }

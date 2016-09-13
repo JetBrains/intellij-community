@@ -60,7 +60,8 @@ public class UiUtils {
             editTableCell(table, lastRowIndex, 0);
           });
         }
-      }).setRemoveAction(new RemoveAction(table))
+      })
+      .setRemoveAction(button -> TableUtil.removeSelectedItems(table))
       .disableUpDownActions().createPanel();
     panel.setPreferredSize(JBUI.size(150, 100));
     return panel;
@@ -108,7 +109,7 @@ public class UiUtils {
           }
           editTableCell(table, rowIndex, table.getColumnCount() > 1 && project != null ? 1 : 0);
         }
-      }).setRemoveAction(new RemoveAction(table))
+      }).setRemoveAction(button -> TableUtil.removeSelectedItems(table))
       .disableUpDownActions().createPanel();
     panel.setPreferredSize(JBUI.size(150, 100));
     return panel;
@@ -184,47 +185,6 @@ public class UiUtils {
                                                                false, JBUI.insetsTop(10)));
     optionsPanel.add(panel);
     return optionsPanel;
-  }
-
-  private static class RemoveAction implements AnActionButtonRunnable {
-
-    private final ListTable table;
-
-    public RemoveAction(ListTable table) {
-      this.table = table;
-    }
-
-    @Override
-    public void run(AnActionButton button) {
-      EventQueue.invokeLater(() -> {
-        final TableCellEditor editor = table.getCellEditor();
-        if (editor != null) {
-          editor.stopCellEditing();
-        }
-        final ListSelectionModel selectionModel = table.getSelectionModel();
-        final int minIndex = selectionModel.getMinSelectionIndex();
-        final int maxIndex = selectionModel.getMaxSelectionIndex();
-        if (minIndex == -1 || maxIndex == -1) {
-          return;
-        }
-        final ListWrappingTableModel tableModel = table.getModel();
-        for (int i = minIndex; i <= maxIndex; i++) {
-          tableModel.removeRow(minIndex);
-        }
-        final int count = tableModel.getRowCount();
-        if (count <= minIndex) {
-          selectionModel.setSelectionInterval(count - 1, count - 1);
-        }
-        else if (minIndex <= 0) {
-          if (count > 0) {
-            selectionModel.setSelectionInterval(0, 0);
-          }
-        }
-        else {
-          selectionModel.setSelectionInterval(minIndex - 1, minIndex - 1);
-        }
-      });
-    }
   }
 
   private static class SubclassFilter implements ClassFilter {

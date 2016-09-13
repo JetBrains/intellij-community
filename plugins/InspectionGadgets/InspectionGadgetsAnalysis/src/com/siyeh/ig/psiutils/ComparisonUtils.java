@@ -15,10 +15,10 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.TypeConversionUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,6 +58,37 @@ public class ComparisonUtils {
     s_invertedComparisons.put(JavaTokenType.LT, ">=");
     s_invertedComparisons.put(JavaTokenType.GE, "<");
     s_invertedComparisons.put(JavaTokenType.LE, ">");
+  }
+
+  /**
+   * Returns the actual type of compared values in comparison expression after unboxing and promotion if applicable.
+   *
+   * @param expression the expression to get the type of compared values
+   * @return the resulting type or null if expression is not a comparison or type is not known.
+   */
+  @Contract("null -> null")
+  @Nullable
+  public static PsiType getComparisonType(PsiExpression expression) {
+    if(!(expression instanceof PsiPolyadicExpression)) return null;
+    PsiPolyadicExpression operation = (PsiPolyadicExpression)expression;
+    IElementType tokenType = operation.getOperationTokenType();
+    if (!isComparisonOperation(tokenType)) return null;
+    PsiType lType;
+    PsiType rType;
+    if(operation instanceof PsiBinaryExpression) {
+      PsiExpression left = ((PsiBinaryExpression)operation).getLOperand();
+      PsiExpression right = ((PsiBinaryExpression)operation).getROperand();
+      lType = left.getType();
+      rType = right == null ? null : right.getType();
+    } else {
+      PsiExpression[] operands = operation.getOperands();
+      if(operands.length <= 2) return null;
+      lType = PsiType.BOOLEAN;
+      rType = operands[operands.length-1].getType();
+    }
+    if (lType == null || rType == null) return null;
+    if (lType.equals(rType)) return lType;
+    return TypeConversionUtil.unboxAndBalanceTypes(lType, rType);
   }
 
   public static boolean isComparison(@Nullable PsiExpression expression) {

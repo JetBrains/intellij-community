@@ -27,15 +27,15 @@ import javax.swing.*;
  */
 public abstract class TabbedConfigurable extends CompositeConfigurable<Configurable> {
   protected TabbedPaneWrapper myTabbedPane;
-  private final Disposable myParent;
+  private final Disposable myParentDisposable;
 
-  protected TabbedConfigurable(@NotNull Disposable parent) {
-    myParent = parent;
+  protected TabbedConfigurable(@NotNull Disposable parentDisposable) {
+    myParentDisposable = parentDisposable;
   }
 
   @Override
   public JComponent createComponent() {
-    myTabbedPane = new TabbedPaneWrapper(myParent);
+    myTabbedPane = new TabbedPaneWrapper(myParentDisposable);
     createConfigurableTabs();
     final JComponent component = myTabbedPane.getComponent();
     component.setPreferredSize(JBUI.size(500, 400));
@@ -52,5 +52,9 @@ public abstract class TabbedConfigurable extends CompositeConfigurable<Configura
   public void disposeUIResources() {
     myTabbedPane = null;
     super.disposeUIResources();
+  }
+
+  public Disposable getParentDisposable() {
+    return myParentDisposable;
   }
 }

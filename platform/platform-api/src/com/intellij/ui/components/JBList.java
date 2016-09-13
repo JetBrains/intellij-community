@@ -19,6 +19,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
@@ -31,7 +32,9 @@ import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
 import javax.swing.*;
+import javax.swing.plaf.ListUI;
 import javax.swing.plaf.UIResource;
+import javax.swing.plaf.basic.BasicListUI;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
@@ -112,6 +115,29 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     if (myBusyIcon != null) {
       myBusyIcon.updateLocation(this);
     }
+  }
+
+  @Override
+  public void repaint(long tm, int x, int y, int width, int height) {
+    if (width > 0 && height > 0) {
+      ListUI ui = getUI();
+      if (ui instanceof WideSelectionListUI) {
+        x = 0;
+        width = getWidth();
+      }
+      super.repaint(tm, x, y, width, height);
+    }
+  }
+
+  @Override
+  public void setUI(ListUI ui) {
+    if (ui != null && Registry.is("ide.wide.selection.list.ui")) {
+      Class<? extends ListUI> type = ui.getClass();
+      if (type == BasicListUI.class) {
+        ui = new WideSelectionListUI();
+      }
+    }
+    super.setUI(ui);
   }
 
   public void setPaintBusy(boolean paintBusy) {

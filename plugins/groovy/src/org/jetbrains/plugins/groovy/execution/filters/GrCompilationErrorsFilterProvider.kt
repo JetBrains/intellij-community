@@ -16,19 +16,12 @@
 package org.jetbrains.plugins.groovy.execution.filters
 
 import com.intellij.execution.filters.ConsoleFilterProvider
-import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.RegexpFilter
 import com.intellij.execution.filters.RegexpFilter.FILE_PATH_MACROS
 import com.intellij.execution.filters.RegexpFilter.LINE_MACROS
 import com.intellij.openapi.project.Project
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_OBJECT
 
 class GrCompilationErrorsFilterProvider : ConsoleFilterProvider {
 
-  override fun getDefaultFilters(project: Project): Array<Filter> {
-    JavaPsiFacade.getInstance(project).findClass(GROOVY_OBJECT, GlobalSearchScope.allScope(project)) ?: return Filter.EMPTY_ARRAY
-    return arrayOf(RegexpFilter(project, "${FILE_PATH_MACROS}: ${LINE_MACROS}.*"))
-  }
+  override fun getDefaultFilters(project: Project) = arrayOf(RegexpFilter(project, "(file:)?${FILE_PATH_MACROS}: ${LINE_MACROS}.*"))
 }

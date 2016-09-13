@@ -26,7 +26,8 @@ import com.intellij.openapi.vcs.merge.MultipleFileMergeDialog
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
-import com.intellij.util.*
+import com.intellij.util.PathUtilRt
+import com.intellij.util.io.*
 import java.io.IOException
 import java.io.InputStream
 import java.nio.file.Path

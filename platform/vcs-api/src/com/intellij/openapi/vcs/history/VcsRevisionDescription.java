@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.history;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
@@ -27,6 +28,7 @@ import java.util.Date;
  * To change this template use File | Settings | File Templates.
  */
 public interface VcsRevisionDescription {
+  @NotNull
   VcsRevisionNumber getRevisionNumber();
 
   Date getRevisionDate();

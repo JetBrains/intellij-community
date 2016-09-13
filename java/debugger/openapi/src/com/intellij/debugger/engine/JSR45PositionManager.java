@@ -35,6 +35,7 @@ import java.io.File;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * @author Eugene Zhuravlev
@@ -195,12 +196,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
   }
 
   protected List<String> getRelativeSourePathsByType(final ReferenceType type) throws AbsentInformationException {
-    final List<String> paths = type.sourcePaths(myStratumId);
-    final ArrayList<String> relativePaths = new ArrayList<>();
-    for (String path : paths) {
-      relativePaths.add(getRelativePath(path));
-    }
-    return relativePaths;
+    return type.sourcePaths(myStratumId).stream().map(this::getRelativePath).collect(Collectors.toList());
   }
 
   protected List<Location> getLocationsOfLine(final ReferenceType type, final String fileName,

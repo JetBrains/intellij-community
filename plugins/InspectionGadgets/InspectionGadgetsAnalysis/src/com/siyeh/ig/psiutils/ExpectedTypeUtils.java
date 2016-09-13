@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -439,8 +439,8 @@ public class ExpectedTypeUtils {
     @NotNull
     private static JavaResolveResult findCalledMethod(PsiExpressionList expressionList) {
       final PsiElement parent = expressionList.getParent();
-      if (parent instanceof PsiCallExpression) {
-        final PsiCallExpression call = (PsiCallExpression)parent;
+      if (parent instanceof PsiCall) {
+        final PsiCall call = (PsiCall)parent;
         return call.resolveMethodGenerics();
       }
       else if (parent instanceof PsiAnonymousClass) {

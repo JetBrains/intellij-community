@@ -49,13 +49,12 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
     val element: Element?
     // we don't use local data if has stream provider
     if (provider != null && provider.isApplicable(fileSpec, roamingType)) {
-      try {
-        element = loadDataFromProvider()
-        dataLoadedFromProvider(element)
+      element = try {
+        loadDataFromProvider().apply { dataLoadedFromProvider(this) }
       }
       catch (e: Exception) {
         LOG.error(e)
-        element = null
+        null
       }
     }
     else {

@@ -18,7 +18,6 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.impl.scopes.ModulesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -58,13 +57,13 @@ public class JavaModuleGraphBuilder {
     return ((JavaModuleGraph)graph).myCycles.stream().filter(set -> set.contains(module)).findFirst().orElse(null);
   }
 
+  // Discovers relationships between Java modules in the project.
+  // Library/JDK modules are excluded - in assumption there can't be any lib -> src dependencies.
   private static Graph<PsiJavaModule> build(Project project) {
     Set<PsiJavaModule> projectModules = ContainerUtil.newHashSet();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
-      Collection<VirtualFile> files = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, new ModulesScope(module));
-      if (files.size() > 1) {
-        return null;
-      }
+      Collection<VirtualFile> files = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, module.getModuleScope(false));
+      if (files.size() > 1) return null;  // aborts the process when there are incorrect modules in the project
       VirtualFile vFile = ContainerUtil.getFirstItem(files);
       if (vFile != null) {
         PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
@@ -94,9 +93,12 @@ public class JavaModuleGraphBuilder {
     if (refElement != null) {
       PsiPolyVariantReference ref = refElement.getReference();
       if (ref != null) {
-        PsiElement target = ref.resolve();
-        if (target instanceof PsiJavaModule) {
-          return (PsiJavaModule)target;
+        ResolveResult[] results = ref.multiResolve(true);
+        if (results.length == 1) {
+          PsiElement target = results[0].getElement();
+          if (target instanceof PsiJavaModule) {
+            return (PsiJavaModule)target;
+          }
         }
       }
     }

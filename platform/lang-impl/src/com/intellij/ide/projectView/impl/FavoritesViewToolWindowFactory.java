@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,12 +32,10 @@ import org.jetbrains.annotations.NotNull;
 public class FavoritesViewToolWindowFactory implements ToolWindowFactory, DumbAware {
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
-    if (toolWindow != null) {
-      final ContentManager contentManager = toolWindow.getContentManager();
-      final FavoritesTreeViewPanel panel = new FavoritesPanel(project).getPanel();
-      panel.setupToolWindow((ToolWindowEx)toolWindow);
-      final Content content = contentManager.getFactory().createContent(panel, null, false);
-      contentManager.addContent(content);
-    }
+    final ContentManager contentManager = toolWindow.getContentManager();
+    final FavoritesTreeViewPanel panel = new FavoritesPanel(project).getPanel();
+    panel.setupToolWindow((ToolWindowEx)toolWindow);
+    final Content content = contentManager.getFactory().createContent(panel, null, false);
+    contentManager.addContent(content);
   }
 }

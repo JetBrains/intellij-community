@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsOutgoingChangesProvider;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
@@ -78,12 +79,6 @@ public class IdeaTextPatchBuilder {
 
   @NotNull
   public static List<FilePatch> buildPatch(final Project project, final Collection<Change> changes, final String basePath, final boolean reversePatch) throws VcsException {
-    return buildPatch(project, changes, basePath, reversePatch, false);
-  }
-
-  @NotNull
-  public static List<FilePatch> buildPatch(final Project project, final Collection<Change> changes, final String basePath,
-                                           final boolean reversePatch, final boolean includeBaseText) throws VcsException {
     final Collection<BeforeAfter<AirContentRevision>> revisions;
     if (project != null) {
       revisions = revisionsConvertor(project, new ArrayList<>(changes));
@@ -93,11 +88,8 @@ public class IdeaTextPatchBuilder {
         revisions.add(new BeforeAfter<>(convertRevisionToAir(change.getBeforeRevision()), convertRevisionToAir(change.getAfterRevision())));
       }
     }
-    return TextPatchBuilder.buildPatch(revisions, basePath, reversePatch, SystemInfo.isFileSystemCaseSensitive, new Runnable() {
-      public void run() {
-        ProgressManager.checkCanceled();
-      }
-    }, includeBaseText);
+    return TextPatchBuilder.buildPatch(revisions, basePath, reversePatch, SystemInfo.isFileSystemCaseSensitive,
+                                       () -> ProgressManager.checkCanceled());
   }
 
   @Nullable
@@ -159,11 +151,6 @@ public class IdeaTextPatchBuilder {
     public PathDescription getPath() {
       return myDescription;
     }
-
-    @Override
-    public Charset getCharset() {
-      return null;
-    }
   }
 
   private static class TextAirContentRevision implements AirContentRevision {
@@ -209,6 +196,13 @@ public class IdeaTextPatchBuilder {
     @Override
     public Charset getCharset() {
       return myRevision.getFile().getCharset();
+    }
+
+    @Nullable
+    @Override
+    public String getLineSeparator() {
+      VirtualFile virtualFile = myRevision.getFile().getVirtualFile();
+      return virtualFile != null ? virtualFile.getDetectedLineSeparator() : null;
     }
   }
 }

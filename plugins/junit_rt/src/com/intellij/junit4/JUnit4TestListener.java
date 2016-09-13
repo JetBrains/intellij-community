@@ -86,7 +86,7 @@ public class JUnit4TestListener extends RunListener {
     dumpQueue(true);
     for (int i = myStartedSuites.size() - 1; i>= 0; i--) {
       Object parent = JUnit4ReflectionUtil.getClassName((Description)myStartedSuites.get(i));
-      myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(getShortName((String)parent)) + "\']");
+      myPrintStream.print("\n##teamcity[testSuiteFinished name=\'" + escapeName(getShortName((String)parent)) + "\']");
     }
     myStartedSuites.clear();
   }
@@ -131,7 +131,7 @@ public class JUnit4TestListener extends RunListener {
     for (int i = myStartedSuites.size() - 1; i >= idx; i--) {
       currentClass = (Description)myStartedSuites.remove(i);
       myFinishedCount = 0;
-      myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(getShortName(JUnit4ReflectionUtil.getClassName(currentClass))) + "\']");
+      myPrintStream.println("\n##teamcity[testSuiteFinished name=\'" + escapeName(getShortName(JUnit4ReflectionUtil.getClassName(currentClass))) + "\']");
     }
 
     for (int i = idx; i < parentsHierarchy.size(); i++) {
@@ -139,7 +139,7 @@ public class JUnit4TestListener extends RunListener {
       final String fqName = JUnit4ReflectionUtil.getClassName(descriptionFromHistory);
       final String className = getShortName(fqName);
       if (!className.equals(myRootName)) {
-        myPrintStream.println("##teamcity[testSuiteStarted name=\'" + escapeName(className) + "\'" + (parents == null ? getClassLocation(fqName) : "") + "]");
+        myPrintStream.println("\n##teamcity[testSuiteStarted name=\'" + escapeName(className) + "\'" + (parents == null ? getClassLocation(fqName) : "") + "]");
         myStartedSuites.add(descriptionFromHistory);
       }
     }
@@ -252,7 +252,7 @@ public class JUnit4TestListener extends RunListener {
     }
 
     myCurrentTest = description;
-    myPrintStream.println("##teamcity[testStarted name=\'" + escapeName(CLASS_CONFIGURATION) + "\' " + getClassLocation(JUnit4ReflectionUtil.getClassName(description)) + " ]");
+    myPrintStream.println("\n##teamcity[testStarted name=\'" + escapeName(CLASS_CONFIGURATION) + "\' " + getClassLocation(JUnit4ReflectionUtil.getClassName(description)) + " ]");
   }
 
   private void testFailure(Failure failure, Description description, String messageName, String methodName) {

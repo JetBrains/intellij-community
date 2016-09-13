@@ -19,10 +19,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.classFilter.ClassFilter;
+import one.util.streamex.StreamEx;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.stream.Collectors;
 
 /**
  * @author egor
@@ -94,10 +94,8 @@ public class ClassFiltersField extends TextFieldWithBrowseButton {
   }
 
   private void updateEditor() {
-    String enabledStr =
-      Arrays.stream(myClassFilters).filter(ClassFilter::isEnabled).map(ClassFilter::getPattern).collect(Collectors.joining(" "));
-    String disabledStr =
-      Arrays.stream(myClassExclusionFilters).filter(ClassFilter::isEnabled).map(f -> "-" + f.getPattern()).collect(Collectors.joining(" "));
+    String enabledStr = StreamEx.of(myClassFilters).filter(ClassFilter::isEnabled).map(ClassFilter::getPattern).joining(" ");
+    String disabledStr = StreamEx.of(myClassExclusionFilters).filter(ClassFilter::isEnabled).map(f -> "-" + f.getPattern()).joining(" ");
     if (!enabledStr.isEmpty() && !disabledStr.isEmpty()) {
       enabledStr += " ";
     }

@@ -524,6 +524,7 @@
     <quoteHandler fileType="Groovy" className="org.jetbrains.plugins.groovy.editor.GroovyQuoteHandler"/>
 
     <compileServer.plugin classpath="groovy-jps-plugin.jar;groovy-rt-constants.jar"/>
+    <compiler.buildTargetScopeProvider implementation="org.jetbrains.plugins.groovy.compiler.GroovyTargetScopeProvider"/>
 
     <indexPatternBuilder implementation="org.jetbrains.plugins.groovy.util.GroovyIndexPatternBuilder"/>
     <todoIndexer filetype="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovyTodoIndexer"/>
@@ -1619,6 +1620,7 @@
     <stripTrailingSpacesFilterFactory implementation="org.jetbrains.plugins.groovy.editor.GroovyStripTrailingSpacesFilterFactory"/>
     <generateAccessorProvider implementation="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateAccessorProvider"/>
     <consoleFilterProvider implementation="org.jetbrains.plugins.groovy.execution.filters.GrCompilationErrorsFilterProvider"/>
+    <outOfSourcesChecker implementation="org.jetbrains.plugins.groovy.projectRoots.GroovyOutOfSourcesChecker"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">
@@ -1631,6 +1633,19 @@
             description="Execute Groovy code in console">
       <keyboard-shortcut first-keystroke="control ENTER" keymap="$default"/>
     </action>
+
+    <group id="Groovy.CheckResources" class="org.jetbrains.plugins.groovy.compiler.CheckResourcesAction$Group"
+           popup="true"
+           text="Gr_oovy Resources"
+           description="Run the compiler for Groovy files in resource roots to check for compilation issues">
+      <action class="org.jetbrains.plugins.groovy.compiler.CheckResourcesAction$Make" id="Groovy.CheckResources.Make"
+              text="_Build Resources"
+              description="Run the incremental compiler for Groovy files in resource roots to check for compilation issues"/>
+      <action class="org.jetbrains.plugins.groovy.compiler.CheckResourcesAction$Rebuild" id="Groovy.CheckResources.Rebuild"
+              text="_Rebuild Resources"
+              description="Run the compiler for all Groovy files in resource roots to check for compilation issues"/>
+      <add-to-group group-id="BuildMenu"/>
+    </group>
 
     <action id="Groovy.NewClass" class="org.jetbrains.plugins.groovy.actions.NewGroovyClassAction"
             text="Groovy Class" description="Create new Groovy class">

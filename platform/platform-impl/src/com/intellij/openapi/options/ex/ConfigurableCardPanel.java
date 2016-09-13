@@ -91,7 +91,6 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
             if (ConfigurableWrapper.cast(Configurable.NoScroll.class, configurable) == null) {
               JScrollPane scroll = ScrollPaneFactory.createScrollPane(null, true);
               scroll.setViewport(new GradientViewport(component, JBUI.insetsTop(5), true));
-              scroll.getVerticalScrollBar().setUnitIncrement(JBUI.scale(10));
               component = scroll;
             }
           }

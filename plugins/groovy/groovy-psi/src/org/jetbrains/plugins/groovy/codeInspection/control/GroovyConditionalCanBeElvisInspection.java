@@ -62,7 +62,7 @@ public class GroovyConditionalCanBeElvisInspection extends BaseInspection {
       }
 
       @Override
-      public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+      public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
         final GrConditionalExpression expr = (GrConditionalExpression)descriptor.getPsiElement();
 
         final GrExpression condition = expr.getCondition();
@@ -201,7 +201,7 @@ public class GroovyConditionalCanBeElvisInspection extends BaseInspection {
 
   private static class Visitor extends BaseInspectionVisitor {
     @Override
-    public void visitConditionalExpression(GrConditionalExpression expression) {
+    public void visitConditionalExpression(@NotNull GrConditionalExpression expression) {
       super.visitConditionalExpression(expression);
       if (checkPsiElement(expression)) {
         registerError(expression);

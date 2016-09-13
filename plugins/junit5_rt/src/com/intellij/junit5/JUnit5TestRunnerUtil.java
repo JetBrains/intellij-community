@@ -15,26 +15,29 @@
  */
 package com.intellij.junit5;
 
+import org.junit.platform.commons.util.AnnotationUtils;
 import org.junit.platform.engine.DiscoverySelector;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
-import org.junit.platform.engine.discovery.MethodSelector;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
 
 public class JUnit5TestRunnerUtil {
+
+  public static final String DISABLED_ANNO = "org.junit.jupiter.api.Disabled";
 
   public static LauncherDiscoveryRequest buildRequest(String[] suiteClassNames, String[] packageNameRef) {
     if (suiteClassNames.length == 0) {
       return null;
     }
 
-    final LauncherDiscoveryRequestBuilder builder = LauncherDiscoveryRequestBuilder.request();
+    LauncherDiscoveryRequestBuilder builder = LauncherDiscoveryRequestBuilder.request();
 
 
     if (suiteClassNames.length == 1 && suiteClassNames[0].charAt(0) == '@') {
@@ -46,7 +49,7 @@ public class JUnit5TestRunnerUtil {
           if (packageName == null) return null;
 
           //todo category?
-          final String categoryName = reader.readLine();
+          reader.readLine();
           String line;
 
           List<DiscoverySelector> selectors = new ArrayList<>();
@@ -54,7 +57,8 @@ public class JUnit5TestRunnerUtil {
             selectors.add(createSelector(line));
           }
           packageNameRef[0] = packageName.length() == 0 ? "<default package>" : packageName;
-          return builder.selectors(selectors).build();
+          return (selectors.isEmpty() ? builder.selectors(DiscoverySelectors.selectPackage(packageName))
+                                      : builder.selectors(selectors)).build();
         }
         finally {
           reader.close();
@@ -66,10 +70,31 @@ public class JUnit5TestRunnerUtil {
       }
     }
     else {
-        return builder.selectors(createSelector(suiteClassNames[0])).build();
+      boolean disableDisabledCondition = isDisabledConditionDisabled(suiteClassNames[0]);
+      if (disableDisabledCondition) {
+        builder = builder.configurationParameter("junit.conditions.deactivate", "org.junit.*DisabledCondition");
+      }
+      return builder.selectors(createSelector(suiteClassNames[0])).build();
     }
 
     return null;
+  }
+
+  public static boolean isDisabledConditionDisabled(String name) {
+    int commaIdx = name.indexOf(",");
+    boolean disableDisabledCondition = true;
+    if (commaIdx < 0) {
+      try {
+        ClassLoader loader = JUnit5TestRunnerUtil.class.getClassLoader();
+        Class<?> aClass = Class.forName(name, false, loader);
+        Class<? extends Annotation> disabledAnnotation = (Class<? extends Annotation>)Class.forName(DISABLED_ANNO, false, loader);
+        disableDisabledCondition = AnnotationUtils.findAnnotation(aClass, disabledAnnotation).isPresent();
+      }
+      catch (ClassNotFoundException e) {
+        disableDisabledCondition = false;
+      }
+    }
+    return disableDisabledCondition;
   }
 
   protected static DiscoverySelector createSelector(String line) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2015 Bas Leijdekkers
+ * Copyright 2008-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,21 +129,23 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
           return;
         }
       }
-      final boolean throwable = TypeUtils.expressionHasTypeOrSubtype(argument, "java.lang.Throwable");
-      if (ExpressionUtils.isConversionToStringNecessary(expression, throwable)) {
-        return;
-      }
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      final PsiClass aClass = method.getContainingClass();
-      if (aClass == null) {
-        return;
-      }
-      final String qualifiedName = aClass.getQualifiedName();
-      if (!CommonClassNames.JAVA_LANG_STRING.equals(qualifiedName)) {
-        return;
+      else if (!TypeUtils.isJavaLangString(argumentType)) {
+        final boolean throwable = TypeUtils.expressionHasTypeOrSubtype(argument, "java.lang.Throwable");
+        if (ExpressionUtils.isConversionToStringNecessary(expression, throwable)) {
+          return;
+        }
+        final PsiMethod method = expression.resolveMethod();
+        if (method == null) {
+          return;
+        }
+        final PsiClass aClass = method.getContainingClass();
+        if (aClass == null) {
+          return;
+        }
+        final String qualifiedName = aClass.getQualifiedName();
+        if (!CommonClassNames.JAVA_LANG_STRING.equals(qualifiedName)) {
+          return;
+        }
       }
       registerError(expression, calculateReplacementText(argument));
     }

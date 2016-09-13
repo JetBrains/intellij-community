@@ -26,6 +26,7 @@ import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsAdapter;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SettingsEditor;
@@ -77,7 +78,8 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
       final String frameworkPrefix = ((JavaTestConfigurationBase)configuration).getFrameworkPrefix();
       final String moduleName = ((JavaTestConfigurationBase)configuration).getConfigurationModule().getModuleName();
 
-      final Alarm processTracesAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, null);
+      Disposable disposable = Disposer.newDisposable();
+      final Alarm processTracesAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable);
       final MessageBusConnection connection = configuration.getProject().getMessageBus().connect();
       connection.subscribe(SMTRunnerEventsListener.TEST_STATUS, new SMTRunnerEventsAdapter() {
         private List<String> myCompletedMethodNames = new ArrayList<>();
@@ -106,7 +108,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
             processTracesAlarm.cancelAllRequests();
             processTracesAlarm.addRequest(() -> {
               processAvailableTraces(configuration);
-              Disposer.dispose(processTracesAlarm);
+              Disposer.dispose(disposable);
             }, 0);
             connection.disconnect();
           }

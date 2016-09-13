@@ -16,20 +16,35 @@
 package org.jetbrains.jps.incremental.groovy;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.incremental.BuilderService;
 import org.jetbrains.jps.incremental.ModuleLevelBuilder;
+import org.jetbrains.jps.incremental.TargetBuilder;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author peter
  */
 public class GroovyBuilderService extends BuilderService {
+
+  @NotNull
+  @Override
+  public List<? extends BuildTargetType<?>> getTargetTypes() {
+    return CheckResourcesTarget.TARGET_TYPES;
+  }
+
+  @NotNull
+  @Override
+  public List<? extends TargetBuilder<?, ?>> createBuilders() {
+    return Collections.singletonList(new GroovyResourceChecker());
+  }
+
   @NotNull
   @Override
   public List<? extends ModuleLevelBuilder> createModuleLevelBuilders() {
     return Arrays.asList(new GroovyBuilder(true), new GroovyBuilder(false), new GreclipseBuilder());
   }
-
 }

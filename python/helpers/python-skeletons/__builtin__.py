@@ -2349,6 +2349,12 @@ class set(object):
         """
         return False
 
+    def __iter__(self):
+        """
+        :rtype: collections.Iterator[T]
+        """
+        pass
+
 
 class frozenset(object):
     """frozenset object."""
@@ -2488,6 +2494,12 @@ class frozenset(object):
         """
         return False
 
+    def __iter__(self):
+        """
+        :rtype: collections.Iterator[T]
+        """
+        pass
+
 
 class tuple(object):
     """Tuple object."""
@@ -2541,6 +2553,12 @@ class tuple(object):
         :rtype: int
         """
         return 0
+
+    def __iter__(self):
+        """
+        :rtype: collections.Iterator[object | unknown]
+        """
+        pass
 
 
 class dict(object):
@@ -2812,6 +2830,12 @@ class file(object):
 
         :type sequence: collections.Iterable[bytes]
         :rtype: None
+        """
+        pass
+
+    def __iter__(self):
+        """
+        :rtype: collections.Iterator[bytes]
         """
         pass
 

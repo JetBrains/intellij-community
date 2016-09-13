@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -111,8 +112,8 @@ public class JavaFxAntGenerator {
 
     createJarTag.add(createResourcesTag(preloaderFiles, false, allButPreloader, allButSelf, all));
 
-    List<JavaFxManifestAttribute> manifestAttributes = packager.getCustomManifestAttributes();
-    if (manifestAttributes != null) {
+    final List<JavaFxManifestAttribute> manifestAttributes = getManifestAttributes(packager);
+    if (!manifestAttributes.isEmpty()) {
       final SimpleTag manifestTag = new SimpleTag("manifest");
       for (JavaFxManifestAttribute pair : manifestAttributes) {
         manifestTag.add(new SimpleTag("attribute",
@@ -162,6 +163,28 @@ public class JavaFxAntGenerator {
 
     topLevelTagsCollector.add(deployTag);
     return topLevelTagsCollector;
+  }
+
+  @NotNull
+  private static List<JavaFxManifestAttribute> getManifestAttributes(@NotNull AbstractJavaFxPackager packager) {
+    final List<JavaFxManifestAttribute> manifestAttributes = new ArrayList<JavaFxManifestAttribute>();
+    final String title = packager.getTitle();
+    if (title != null) {
+      manifestAttributes.add(new JavaFxManifestAttribute("Implementation-Title", title));
+    }
+    final String version = packager.getVersion();
+    if (version != null) {
+      manifestAttributes.add(new JavaFxManifestAttribute("Implementation-Version", version));
+    }
+    final String vendor = packager.getVendor();
+    if (vendor != null) {
+      manifestAttributes.add(new JavaFxManifestAttribute("Implementation-Vendor", vendor));
+    }
+    final List<JavaFxManifestAttribute> customManifestAttributes = packager.getCustomManifestAttributes();
+    if (customManifestAttributes != null) {
+      manifestAttributes.addAll(customManifestAttributes);
+    }
+    return manifestAttributes;
   }
 
   private static SimpleTag appendApplicationIconPath(List<SimpleTag> topLevelTagsCollector,

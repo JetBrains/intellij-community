@@ -171,18 +171,15 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     @Nullable
     protected UnnamedConfigurable getItemConfigurable(final T item) {
       final Ref<UnnamedConfigurable> result = new Ref<>();
-      TreeUtil.traverse((TreeNode)myTree.getModel().getRoot(), new TreeUtil.Traverse() {
-        @Override
-        public boolean accept(Object node) {
-          final NamedConfigurable configurable = (NamedConfigurable)((DefaultMutableTreeNode)node).getUserObject();
-          if (configurable.getEditableObject() == item) {
-            //noinspection unchecked
-            result.set(((ItemConfigurable)configurable).myConfigurable);
-            return false;
-          }
-          else {
-            return true;
-          }
+      TreeUtil.traverse((TreeNode)myTree.getModel().getRoot(), node -> {
+        final NamedConfigurable configurable = (NamedConfigurable)((DefaultMutableTreeNode)node).getUserObject();
+        if (configurable.getEditableObject() == item) {
+          //noinspection unchecked
+          result.set(((ItemConfigurable)configurable).myConfigurable);
+          return false;
+        }
+        else {
+          return true;
         }
       });
       return result.get();

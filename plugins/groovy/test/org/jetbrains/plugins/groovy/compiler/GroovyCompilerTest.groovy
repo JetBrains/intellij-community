@@ -15,6 +15,7 @@
  */
 
 package org.jetbrains.plugins.groovy.compiler
+
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.compiler.server.BuildManager
@@ -28,8 +29,6 @@ import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.PluginPathManager
-import com.intellij.openapi.compiler.CompilerMessage
-import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription
 import com.intellij.openapi.compiler.options.ExcludesConfiguration
 import com.intellij.openapi.diagnostic.Logger
@@ -97,11 +96,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
     setFileText(file, barText)
     make()
     assertOutput("Foo", "239")
-  }
-
-  protected static void shouldFail(Closure<List<CompilerMessage>> action) {
-    def messages = action()
-    assert messages.find { it.category == CompilerMessageCategory.ERROR }
   }
 
   void testRenameToJava() throws Throwable {

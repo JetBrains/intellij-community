@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vcs.history;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Date;
 
 /**
@@ -30,7 +32,7 @@ public class VcsRevisionDescriptionImpl implements VcsRevisionDescription {
   private String myAuthor;
   private String myMessage;
 
-  public VcsRevisionDescriptionImpl(VcsRevisionNumber number, Date date, String author, String message) {
+  public VcsRevisionDescriptionImpl(@NotNull VcsRevisionNumber number, Date date, String author, String message) {
     myNumber = number;
     myDate = date;
     myAuthor = author;
@@ -41,6 +43,7 @@ public class VcsRevisionDescriptionImpl implements VcsRevisionDescription {
     myNumber = number;
   }
 
+  @NotNull
   @Override
   public VcsRevisionNumber getRevisionNumber() {
     return myNumber;

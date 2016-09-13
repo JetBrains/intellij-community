@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-20164 Bas Leijdekkers
+ * Copyright 2005-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -504,25 +504,18 @@ public class ExpressionUtils {
         return true;
       }
       final PsiExpression[] operands = polyadicExpression.getOperands();
-      int index = -1;
+      boolean expressionSeen = false;
       for (int i = 0, length = operands.length; i < length; i++) {
         final PsiExpression operand = operands[i];
         if (PsiTreeUtil.isAncestor(operand, expression, false)) {
-          index = i;
-          break;
+          if (i > 0) return true;
+          expressionSeen = true;
+        }
+        else if ((!expressionSeen || i == 1) && TypeUtils.isJavaLangString(operand.getType())) {
+          return false;
         }
       }
-      if (index > 0) {
-        if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING, operands[index - 1].getType())) {
-          return true;
-        }
-      } else if (operands.length > 1) {
-        if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING, operands[index + 1].getType())) {
-          return true;
-        }
-      } else {
-        return true;
-      }
+      return true;
     } else if (parent instanceof PsiExpressionList) {
       final PsiExpressionList expressionList = (PsiExpressionList)parent;
       final PsiElement grandParent = expressionList.getParent();

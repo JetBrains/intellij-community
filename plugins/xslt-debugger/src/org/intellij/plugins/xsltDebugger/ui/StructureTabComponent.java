@@ -19,7 +19,7 @@ public class StructureTabComponent extends AbstractTabComponent {
   private final JComponent myComponent;
   private final GeneratedStructureModel myEventModel;
 
-  private StructureTabComponent(Disposable disposable) {
+  private StructureTabComponent(@NotNull Disposable disposable) {
     super("Structure");
 
     myEventModel = new GeneratedStructureModel();
@@ -42,7 +42,7 @@ public class StructureTabComponent extends AbstractTabComponent {
     return myEventModel;
   }
 
-  public static StructureTabComponent create(ProcessHandler process, Disposable disposable) {
+  public static StructureTabComponent create(ProcessHandler process, @NotNull Disposable disposable) {
     final StructureTabComponent component = new StructureTabComponent(disposable);
     process.putUserData(KEY, component);
     return component;

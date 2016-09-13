@@ -59,7 +59,7 @@ public class GroovyNestedSynchronizedStatementInspection extends BaseInspection 
   private static class Visitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitSynchronizedStatement(GrSynchronizedStatement synchronizedStatement) {
+    public void visitSynchronizedStatement(@NotNull GrSynchronizedStatement synchronizedStatement) {
       super.visitSynchronizedStatement(synchronizedStatement);
       final GrStatement parent = PsiTreeUtil.getParentOfType(synchronizedStatement, GrSynchronizedStatement.class, GrClosableBlock.class);
       if ((parent instanceof GrSynchronizedStatement)) {

@@ -75,7 +75,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
     return SystemInfo.isMac ? 10 : 0;
   }
 
-  public static InspectionsConfigTreeTable create(final InspectionsConfigTreeTableSettings settings, Disposable parentDisposable) {
+  public static InspectionsConfigTreeTable create(final InspectionsConfigTreeTableSettings settings, @NotNull Disposable parentDisposable) {
     return new InspectionsConfigTreeTable(new InspectionsConfigTreeTableModel(settings, parentDisposable));
   }
 
@@ -213,7 +213,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
 
     private Alarm myUpdateAlarm;
 
-    public InspectionsConfigTreeTableModel(final InspectionsConfigTreeTableSettings settings, Disposable parentDisposable) {
+    public InspectionsConfigTreeTableModel(final InspectionsConfigTreeTableSettings settings, @NotNull Disposable parentDisposable) {
       super(settings.getRoot());
       mySettings = settings;
       myUpdateRunnable = () -> {

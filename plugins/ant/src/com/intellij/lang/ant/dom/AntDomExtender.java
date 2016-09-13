@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -539,13 +539,9 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
     }
 
     public boolean isContainer() {
-      for (AntDomMacrodefElement element : myMacrodef.getMacroElements()) {
-        final GenericAttributeValue<Boolean> implicit = element.isImplicit();
-        if (implicit != null && Boolean.TRUE.equals(implicit.getValue())) {
-          return true;
-        }
-      }
-      return false;
+      return myMacrodef.getMacroElements().stream()
+        .map(AntDomMacrodefElement::isImplicit)
+        .anyMatch(implicit -> implicit != null && Boolean.TRUE.equals(implicit.getValue()));
     }
   }
 
@@ -559,13 +555,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
     }
 
     public boolean isContainer() {
-      final List<AbstractIntrospector> contexts = getContexts();
-      for (AbstractIntrospector context : contexts) {
-        if (!context.isContainer()) {
-          return false;
-        }
-      }
-      return true;
+      return getContexts().stream().allMatch(AbstractIntrospector::isContainer);
     }
 
     @NotNull

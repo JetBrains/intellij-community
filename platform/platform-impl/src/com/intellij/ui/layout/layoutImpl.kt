@@ -15,104 +15,26 @@
  */
 package com.intellij.ui.layout
 
-import com.intellij.ui.IdeBorderFactory
-import net.miginfocom.layout.CC
-import net.miginfocom.layout.ConstraintParser
-import net.miginfocom.layout.LC
-import net.miginfocom.swing.MigLayout
-import java.awt.Component
-import java.awt.LayoutManager
-import javax.swing.JPanel
+import java.awt.Container
+import javax.swing.ButtonGroup
+import javax.swing.JLabel
 
 // see com.intellij.uiDesigner.core.AbstractLayout.DEFAULT_HGAP and DEFAULT_VGAP
 // https://docs.google.com/document/d/1DKnLkO-7_onA7_NCw669aeMH5ltNvw-QMiQHnXu8k_Y/edit
 
-internal const val GAP = 10
+internal const val HORIZONTAL_GAP = 10
+internal const val VERTICAL_GAP = 5
 
-// default values differs to MigLayout - IntelliJ Platform defaults are used
-// see com.intellij.uiDesigner.core.AbstractLayout.DEFAULT_HGAP and DEFAULT_VGAP (multiplied by 2 to achieve the same look (it seems in terms of MigLayout gap is both left and right space))
-fun c(insets: String? = "0", gap: String? = "20 5"): LC {
-  // no setter for gap, so, create string to parse
-  val lc = if (gap == null) LC() else ConstraintParser.parseLayoutConstraint("gap ${gap}")
-  insets?.let {
-    lc.insets(it)
-  }
-  return lc
-}
+fun createLayoutBuilder() = LayoutBuilder(MigLayoutBuilder())
 
-// do not use directly
-inline fun createPanel(title: String?, layoutConstraints: Array<out LCFlags>, init: Panel.() -> Unit): JPanel {
-  val panel = Panel(MigLayout(c().apply(layoutConstraints)))
-  if (title != null) {
-    setTitledBorder(title, panel)
-  }
+// cannot use the same approach as in case of Row because cannot access to `build` method in inlined `panel` method,
+// in any case Kotlin compiler does the same thing —
+// "When a protected member is accessed from an inline function, a public accessor method is created to provide an access to that protected member from the outside of the class where the function will be inlined to."
+// (https://youtrack.jetbrains.com/issue/KT-12215)
+interface LayoutBuilderImpl {
+  fun newRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null): Row
 
-  panel.init()
-  return panel
-}
+  fun build(container: Container, layoutConstraints: Array<out LCFlags>)
 
-fun setTitledBorder(title: String, panel: JPanel) {
-  val border = IdeBorderFactory.createTitledBorder(title, false)
-  panel.border = border
-  border.acceptMinimumSize(panel)
-}
-
-// we have to use own class because we want to use method `add`, but Kotlin cannot select proper method implementation (not Kotlin bug, but intentional change)
-// and it is required to add invoke operator fun to Component, but use JPanel as receiver
-class Panel(layout: LayoutManager) : JPanel(layout) {
-  operator fun Component.invoke(vararg constraints: CCFlags) {
-    add(this, constraints.create())
-  }
-
-  operator fun Component.invoke(constraints: CC? = null) {
-    add(this, constraints)
-  }
-
-  fun add(component: Component, vararg constraints: CCFlags) {
-    add(component, constraints.create())
-  }
-}
-
-fun Array<out CCFlags>.create() = if (isEmpty()) null else CC().apply(this)
-
-fun CC.apply(flags: Array<out CCFlags>): CC {
-  for (flag in flags) {
-    when (flag) {
-      CCFlags.wrap -> isWrap = true
-      CCFlags.grow -> grow()
-      CCFlags.right -> alignX("right")
-
-      CCFlags.push -> push()
-      CCFlags.pushX -> pushX()
-      CCFlags.pushY -> pushY()
-
-      CCFlags.span -> span()
-      CCFlags.spanX -> spanX()
-      CCFlags.spanY -> spanY()
-
-      CCFlags.split -> split()
-
-      CCFlags.skip -> skip()
-    }
-  }
-  return this
-}
-
-fun LC.apply(flags: Array<out LCFlags>): LC {
-  for (flag in flags) {
-    when (flag) {
-      LCFlags.noGrid -> isNoGrid = true
-
-      LCFlags.flowY -> isFlowX = false
-
-      LCFlags.fill -> fill()
-      LCFlags.fillX -> isFillX = true
-      LCFlags.fillY -> isFillY = true
-
-      LCFlags.lcWrap -> wrapAfter = 0
-
-      LCFlags.debug -> debug()
-    }
-  }
-  return this
+  fun noteRow(text: String)
 }

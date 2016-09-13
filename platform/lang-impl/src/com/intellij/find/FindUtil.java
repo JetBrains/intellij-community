@@ -22,10 +22,7 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
@@ -154,6 +151,17 @@ public class FindUtil {
     model.setSearchContext(with.getSearchContext());
     if (with.isReplaceState()) {
       model.setPreserveCase(with.isPreserveCase());
+    }
+  }
+
+  public static void useFindStringFromFindInFileModel(FindModel findModel, Editor editor) {
+    if (editor != null) {
+      EditorSearchSession editorSearchSession = EditorSearchSession.get(editor);
+      if (editorSearchSession != null) {
+        FindModel currentFindModel = editorSearchSession.getFindModel();
+        findModel.setStringToFind(currentFindModel.getStringToFind());
+        if (findModel.isReplaceState()) findModel.setStringToReplace(currentFindModel.getStringToReplace());
+      }
     }
   }
 

@@ -55,6 +55,14 @@ class ProductModulesLayout {
   List<String> pluginModulesToPublish = []
 
   /**
+   * Describes non-trivial layout of all plugins which may be included into the product. The actual list of the plugins need to be bundled
+   * with the product is specified by {@link #bundledPluginModules}. There is no need to specify layout for plugins where it's trivial,
+   * i.e. for plugins which include an output of a single module and its module libraries, it's enough to specify module names of such plugins
+   * in {@link #bundledPluginModules}.
+   */
+  List<PluginLayout> allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS
+
+  /**
    * Names of the project libraries which JARs' contents should be extracted into {@link #mainJarName} JAR.
    */
   List<String> projectLibrariesToUnpackIntoMainJar = []
@@ -92,12 +100,13 @@ class ProductModulesLayout {
   boolean prepareCustomPluginRepositoryForPublishedPlugins = false
 
   /**
-   * @param allPlugins descriptions of layout of all plugins which may be included into the product
    * @return list of all modules which output is included into the plugin's JARs
    */
-  List<String> getIncludedPluginModules(List<PluginLayout> allPlugins) {
+  List<String> getIncludedPluginModules() {
     Set<String> enabledPluginModules = getEnabledPluginModules()
-    allPlugins.findAll { enabledPluginModules.contains(it.mainModule) }.collectMany { it.getActualModules(enabledPluginModules).values() }
+    def modulesFromNonTrivialPlugins = allNonTrivialPlugins.findAll { enabledPluginModules.contains(it.mainModule) }.
+      collectMany { it.getActualModules(enabledPluginModules).values() }
+    (enabledPluginModules + modulesFromNonTrivialPlugins) as List<String>
   }
 
   List<String> getIncludedPlatformModules() {

@@ -71,7 +71,7 @@ public class GrUnnecessarySemicolonInspection extends GroovySuppressableInspecti
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       @Override
-      public void visitElement(@NotNull PsiElement element) {
+      public void visitElement(PsiElement element) {
         if (element.getNode().getElementType() != mSEMI) return;
         if (!isSemicolonUnnecessary(element)) return;
         holder.registerProblem(element, "Semicolon is unnecessary", ProblemHighlightType.LIKE_UNUSED_SYMBOL, FIX);

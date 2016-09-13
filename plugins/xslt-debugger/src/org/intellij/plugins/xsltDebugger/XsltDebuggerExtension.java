@@ -48,6 +48,7 @@ import org.intellij.lang.xpath.xslt.run.XsltRunnerExtension;
 import org.intellij.plugins.xsltDebugger.ui.OutputTabComponent;
 import org.intellij.plugins.xsltDebugger.ui.StructureTabComponent;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -86,7 +87,7 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
 
   public boolean createTabs(Project project,
                             AdditionalTabComponentManager manager,
-                            AdditionalTabComponent outputConsole,
+                            @NotNull AdditionalTabComponent outputConsole,
                             ProcessHandler process) {
     if (manager instanceof RunTab) {
       LogConsoleManagerBase runTab = ((RunTab)manager).getLogConsoleManager();

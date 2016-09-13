@@ -27,8 +27,8 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NamedJDOMExternalizable
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.util.delete
-import com.intellij.util.outputStream
+import com.intellij.util.io.delete
+import com.intellij.util.io.outputStream
 import org.jdom.Element
 
 private class ApplicationPathMacroManager : BasePathMacroManager(null)

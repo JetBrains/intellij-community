@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.Function;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.UIUtil;
@@ -57,8 +56,6 @@ public abstract class LineStatusMarkerRenderer implements ActiveGutterRenderer {
     highlighter.setThinErrorStripeMark(true);
     highlighter.setGreedyToLeft(true);
     highlighter.setGreedyToRight(true);
-
-    highlighter.setErrorStripeTooltip(getTooltipText(range));
 
     return highlighter;
   }
@@ -122,24 +119,6 @@ public abstract class LineStatusMarkerRenderer implements ActiveGutterRenderer {
         return LineStatusMarkerRenderer.getErrorStripeColor(range, null);
       }
     };
-  }
-
-  @NotNull
-  private static String getTooltipText(@NotNull Range range) {
-    if (range.getLine1() == range.getLine2()) {
-      if (range.getVcsLine1() + 1 == range.getVcsLine2()) {
-        return VcsBundle.message("tooltip.text.line.before.deleted", range.getLine1() + 1);
-      }
-      else {
-        return VcsBundle.message("tooltip.text.lines.before.deleted", range.getLine1() + 1, range.getVcsLine2() - range.getVcsLine1());
-      }
-    }
-    else if (range.getLine1() + 1 == range.getLine2()) {
-      return VcsBundle.message("tooltip.text.line.changed", range.getLine1() + 1);
-    }
-    else {
-      return VcsBundle.message("tooltip.text.lines.changed", range.getLine1() + 1, range.getLine2());
-    }
   }
 
   //

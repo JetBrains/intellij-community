@@ -19,10 +19,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.io.CharSequenceBackedByChars
+import com.intellij.util.io.addChannelListener
 import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
 import org.jetbrains.annotations.PropertyKey
-import org.jetbrains.io.addChannelListener
 import java.io.File
 import java.io.FileOutputStream
 import java.nio.CharBuffer

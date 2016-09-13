@@ -228,8 +228,10 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends Module
       List<PsiElement> elements = new ArrayList<>();
       for (Location<?> location : locations) {
         final PsiElement psiElement = location.getPsiElement();
-        classes.add(getQName(psiElement, location));
-        elements.add(psiElement);
+        if (psiElement instanceof PsiNamedElement) {
+          classes.add(getQName(psiElement, location));
+          elements.add(psiElement);
+        }
       }
       return elements.toArray(new PsiElement[elements.size()]);
     }

@@ -20,3 +20,5 @@ import com.intellij.openapi.util.text.StringUtil
 fun String?.nullize(nullizeSpaces: Boolean = false): String? = StringUtil.nullize(this, nullizeSpaces)
 
 fun String.trimMiddle(maxLength: Int): String? = StringUtil.trimMiddle(this, maxLength)
+
+fun CharArray.nullize() = if (isEmpty()) null else this

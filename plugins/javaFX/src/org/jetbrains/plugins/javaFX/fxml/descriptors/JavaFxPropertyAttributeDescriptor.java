@@ -133,6 +133,9 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
     else if (StringUtil.trimLeading(value).startsWith("$")) {
       return "Spaces aren't allowed before property or expression";
     }
+    else if (value.startsWith("%")) {
+      return null;
+    }
     else {
       return validateLiteral(xmlAttributeValue, value);
     }

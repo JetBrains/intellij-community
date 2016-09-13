@@ -46,14 +46,14 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.Alarm;
-import com.intellij.util.Producer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.*;
 import java.util.List;
 
@@ -81,7 +81,7 @@ public class SearchDialog extends DialogWrapper {
 
   protected SearchModel model;
   private JCheckBox openInNewTab;
-  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private final Alarm myAlarm;
 
   public static final String USER_DEFINED = SSRBundle.message("new.template.defaultname");
   protected final ExistingTemplatesComponent existingTemplatesComponent;
@@ -121,6 +121,7 @@ public class SearchDialog extends DialogWrapper {
     model = new SearchModel(createConfiguration());
 
     init();
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD,myDisposable);
   }
 
   public void setUseLastConfiguration(boolean useLastConfiguration) {

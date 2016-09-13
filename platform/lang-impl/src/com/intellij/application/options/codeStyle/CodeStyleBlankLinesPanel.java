@@ -90,7 +90,6 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
 
     optionsPanel.setBorder(JBUI.Borders.empty(0, 10));
     JScrollPane scroll = ScrollPaneFactory.createScrollPane(optionsPanel, true);
-    scroll.getVerticalScrollBar().setUnitIncrement(10);
     scroll.setMinimumSize(new Dimension(optionsPanel.getPreferredSize().width + scroll.getVerticalScrollBar().getPreferredSize().width + 5, -1));
     scroll.setPreferredSize(scroll.getMinimumSize());
 

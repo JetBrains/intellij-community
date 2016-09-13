@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,8 +83,7 @@ public class ShowImageDuplicatesAction extends AnAction {
     if (indicator == null || indicator.isCanceled()) return;
     indicator.setText("MD5 check");
 
-    int count = 0;
-    for (Set set : duplicates.values()) count+=set.size();
+    int count = duplicates.values().stream().mapToInt(Set::size).sum();
     final Map<String, Set<VirtualFile>> realDuplicates = new HashMap<>();
     int seek = 0;
     for (Set<VirtualFile> files : duplicates.values()) {

@@ -34,7 +34,7 @@ public class GrRemoveModifierFix extends GrModifierFix {
   }
 
   @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
     CodeStyleManager.getInstance(project).performActionWithFormatterDisabled((Runnable)() -> super.doFix(project, descriptor));
   }
 }

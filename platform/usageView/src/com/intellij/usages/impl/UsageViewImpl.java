@@ -248,6 +248,16 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
               });
             }
           });
+
+          myTree.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+              if (rulesChanged) {
+                rulesChanged = false;
+                rulesChanged();
+              }
+            }
+          });
         }
       });
     }
@@ -292,12 +302,12 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     };
   }
 
-  protected boolean searchHasBeenCancelled() {
+  boolean searchHasBeenCancelled() {
     ProgressIndicator progress = associatedProgress;
     return progress != null && progress.isCanceled();
   }
 
-  protected void cancelCurrentSearch() {
+  void cancelCurrentSearch() {
     ProgressIndicator progress = associatedProgress;
     if (progress != null) {
       ProgressWrapper.unwrap(progress).cancel();
@@ -704,8 +714,18 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return list.toArray(new AnAction[list.size()]);
   }
 
+  private boolean shouldTreeReactNowToRuleChanges() {
+    return myPresentation.isDetachedMode() || myTree.isShowing();
+  }
+
+  private boolean rulesChanged;
   private void rulesChanged() {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (!shouldTreeReactNowToRuleChanges()) {
+      rulesChanged = true;
+      return;
+    }
+
     final List<UsageState> states = new ArrayList<>();
     captureUsagesExpandState(new TreePath(myTree.getModel().getRoot()), states);
     final List<Usage> allUsages = new ArrayList<>(myUsageNodes.keySet());
@@ -786,7 +806,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     TreeUtil.expand(myTree, 2);
   }
 
-  public DefaultMutableTreeNode getModelRoot() {
+  DefaultMutableTreeNode getModelRoot() {
     return (DefaultMutableTreeNode)myTree.getModel().getRoot();
   }
 
@@ -910,12 +930,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private final TransferToEDTQueue<Runnable> myTransferToEDTQueue;
   void drainQueuedUsageNodes() {
     assert !ApplicationManager.getApplication().isDispatchThread() : Thread.currentThread();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        myTransferToEDTQueue.drain();
-      }
-    });
+    UIUtil.invokeAndWaitIfNeeded((Runnable)myTransferToEDTQueue::drain);
   }
   private final Consumer<Runnable> edtQueue = new Consumer<Runnable>() {
     @Override
@@ -1233,9 +1248,10 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     addButtonToLowerPane(newPerformOperationRunnable(processRunnable, commandName, cannotMakeString, checkReadOnlyStatus), shortDescription);
   }
 
-  public MyPerformOperationRunnable newPerformOperationRunnable(Runnable processRunnable,
-                                                                String commandName,
-                                                                String cannotMakeString, boolean checkReadOnlyStatus) {
+  @NotNull
+  private MyPerformOperationRunnable newPerformOperationRunnable(Runnable processRunnable,
+                                                                 String commandName,
+                                                                 String cannotMakeString, boolean checkReadOnlyStatus) {
     return new MyPerformOperationRunnable(cannotMakeString, processRunnable, commandName, checkReadOnlyStatus);
   }
 
@@ -1443,7 +1459,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return result.toArray(new Navigatable[result.size()]);
   }
 
-  public boolean areTargetsValid() {
+  boolean areTargetsValid() {
     return myModel.areTargetsValid();
   }
 

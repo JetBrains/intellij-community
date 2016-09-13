@@ -34,6 +34,8 @@ import org.jetbrains.ide.CustomPortServerManager;
 import java.net.InetSocketAddress;
 import java.util.Map;
 
+import static com.intellij.util.io.NettyKt.serverBootstrap;
+
 public final class SubServer implements CustomPortServerManager.CustomPortService, Disposable {
   private ChannelRegistrar channelRegistrar;
 
@@ -57,7 +59,7 @@ public final class SubServer implements CustomPortServerManager.CustomPortServic
       channelRegistrar = new ChannelRegistrar();
     }
 
-    ServerBootstrap bootstrap = NettyKt.serverBootstrap(server.getEventLoopGroup());
+    ServerBootstrap bootstrap = serverBootstrap(server.getEventLoopGroup());
     Map<String, Object> xmlRpcHandlers = user.createXmlRpcHandlers();
     if (xmlRpcHandlers == null) {
       BuiltInServer.configureChildHandler(bootstrap, channelRegistrar, null);

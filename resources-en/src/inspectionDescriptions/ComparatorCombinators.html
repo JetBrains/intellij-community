@@ -1,0 +1,10 @@
+<html>
+<body>
+Inspection looks for Comparators defined as lambda expressions which could be expressed using
+methods like <code>Comparator.comparing()</code>.
+<!-- tooltip end -->
+<p>Some comparators like <code>(person1, person2) -> person1.getName().compareTo(person2.getName())</code>
+  could be simplified like this: <code>Comparator.comparing(Person::getName)</code>.</p>
+<small>New in 2016.3</small>
+</body>
+</html>

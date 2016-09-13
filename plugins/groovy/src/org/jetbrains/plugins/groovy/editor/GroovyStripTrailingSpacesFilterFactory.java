@@ -48,12 +48,12 @@ public class GroovyStripTrailingSpacesFilterFactory extends PsiBasedStripTrailin
     protected void process(@NotNull PsiFile psiFile) {
       psiFile.accept(new GroovyPsiElementVisitor(new GroovyRecursiveElementVisitor() {
         @Override
-        public void visitGStringExpression(GrString gstring) {
+        public void visitGStringExpression(@NotNull GrString gstring) {
           disableRange(gstring.getTextRange(), false);
         }
 
         @Override
-        public void visitLiteralExpression(GrLiteral literal) {
+        public void visitLiteralExpression(@NotNull GrLiteral literal) {
           disableRange(literal.getTextRange(), false);
         }
       }));

@@ -202,13 +202,13 @@ public class CoreJavaFileManager implements JavaFileManager {
 
   @NotNull
   @Override
-  public Collection<PsiJavaModule> findModules(@NotNull String moduleName) {
+  public Collection<PsiJavaModule> findModules(@NotNull String moduleName, @NotNull GlobalSearchScope scope) {
     Collection<PsiJavaModule> result = null;
 
     for (VirtualFile root : roots()) {
       VirtualFile moduleInfo = root.findChild(PsiJavaModule.MODULE_INFO_FILE);
-      if (moduleInfo == null)moduleInfo = root.findChild(PsiJavaModule.MODULE_INFO_CLS_FILE);
-      if (moduleInfo != null) {
+      if (moduleInfo == null) moduleInfo = root.findChild(PsiJavaModule.MODULE_INFO_CLS_FILE);
+      if (moduleInfo != null && scope.accept(moduleInfo)) {
         PsiFile file = myPsiManager.findFile(moduleInfo);
         if (file instanceof PsiJavaFile) {
           PsiJavaModule module = ((PsiJavaFile)file).getModuleDeclaration();

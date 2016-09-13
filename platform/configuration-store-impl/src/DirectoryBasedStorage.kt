@@ -25,8 +25,12 @@ import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.*
+import com.intellij.util.LineSeparator
+import com.intellij.util.SmartList
+import com.intellij.util.SystemProperties
 import com.intellij.util.containers.SmartHashSet
+import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.isEmpty
 import gnu.trove.THashMap
 import org.jdom.Element
 import java.io.IOException

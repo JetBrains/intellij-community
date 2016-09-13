@@ -21,7 +21,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.module.impl.scopes.ModulesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
@@ -110,7 +109,7 @@ class JavaModuleCompletion {
       Module module = ModuleUtilCore.findModuleForPsiElement(context);
       PsiPackage topPackage = JavaPsiFacade.getInstance(context.getProject()).findPackage("");
       if (module != null && topPackage != null) {
-        processPackage(topPackage, new ModulesScope(module), result);
+        processPackage(topPackage, module.getModuleScope(false), result);
       }
     }
     else if (statement instanceof PsiUsesStatement) {
@@ -127,13 +126,13 @@ class JavaModuleCompletion {
         if (service instanceof PsiClass && module != null) {
           Predicate<PsiClass> filter = psiClass -> !psiClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
                                                    InheritanceUtil.isInheritorOrSelf(psiClass, (PsiClass)service, true);
-          processClasses(context.getProject(), new ModulesScope(module), resultSet, filter, TailType.SEMICOLON);
+          processClasses(context.getProject(), module.getModuleScope(false), resultSet, filter, TailType.SEMICOLON);
         }
       }
     }
   }
 
-  private static void processPackage(PsiPackage pkg, ModulesScope scope, Consumer<LookupElement> result) {
+  private static void processPackage(PsiPackage pkg, GlobalSearchScope scope, Consumer<LookupElement> result) {
     String packageName = pkg.getQualifiedName();
     if (isQualified(packageName) && !PsiUtil.isPackageEmpty(pkg.getDirectories(scope), packageName)) {
       result.consume(new OverrideableSpace(lookupElement(pkg), TailType.SEMICOLON));

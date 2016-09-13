@@ -16,20 +16,14 @@
 
 package com.intellij.find.findInProject;
 
-import com.intellij.find.FindManager;
-import com.intellij.find.FindModel;
-import com.intellij.find.FindSettings;
-import com.intellij.find.FindUtil;
+import com.intellij.find.*;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
@@ -76,9 +70,9 @@ public class FindInProjectManager {
       FindModel.initStringToFindNoMultiline(findModel, text);
     }
     else {
-      Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-      FindUtil.initStringToFindWithSelection(findModel, editor);
+      FindInProjectUtil.initStringToFindFromDataContext(findModel, dataContext);
     }
+
     if (Registry.is("ide.find.as.popup")) {
       findManager.showFindPopup(findModel, dataContext);
       return;

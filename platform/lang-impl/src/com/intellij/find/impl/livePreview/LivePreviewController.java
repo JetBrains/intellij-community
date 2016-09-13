@@ -17,6 +17,7 @@ package com.intellij.find.impl.livePreview;
 
 import com.intellij.find.*;
 import com.intellij.find.impl.FindResultImpl;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -27,7 +28,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.util.Alarm;
@@ -46,7 +46,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
 
   private int myUserActivityDelay = USER_ACTIVITY_TRIGGERING_DELAY;
 
-  private final Alarm myLivePreviewAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private final Alarm myLivePreviewAlarm;
   protected SearchResults mySearchResults;
   private LivePreview myLivePreview;
   private final boolean myReplaceDenied = false;
@@ -112,10 +112,11 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
     return myReplaceDenied;
   }
 
-  public LivePreviewController(SearchResults searchResults, @Nullable EditorSearchSession component) {
+  public LivePreviewController(SearchResults searchResults, @Nullable EditorSearchSession component, @NotNull Disposable parentDisposable) {
     mySearchResults = searchResults;
     myComponent = component;
     getEditor().getDocument().addDocumentListener(myDocumentListener);
+    myLivePreviewAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable);
   }
 
   public int getUserActivityDelay() {

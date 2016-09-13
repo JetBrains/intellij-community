@@ -20,7 +20,8 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.*
+import com.intellij.util.SmartList
+import com.intellij.util.io.*
 import com.intellij.util.text.nullize
 import org.eclipse.jgit.api.AddCommand
 import org.eclipse.jgit.api.errors.NoHeadException
@@ -33,10 +34,6 @@ import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.lib.RepositoryState
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.transport.*
-import org.jetbrains.jgit.dirCache.AddLoadedFile
-import org.jetbrains.jgit.dirCache.DeleteDirectory
-import org.jetbrains.jgit.dirCache.deletePath
-import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.settingsRepository.*
 import org.jetbrains.settingsRepository.RepositoryManager.Updater
 import java.io.IOException

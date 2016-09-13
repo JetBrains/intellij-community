@@ -66,8 +66,7 @@ public class GroovyAccessToStaticFieldLockedOnInstanceInspection
       extends BaseInspectionVisitor {
 
     @Override
-    public void visitReferenceExpression(
-        @NotNull GrReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull GrReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       boolean isLockedOnInstance = false;
       boolean isLockedOnClass = false;

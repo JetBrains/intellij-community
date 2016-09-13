@@ -83,6 +83,7 @@ public class UnifiedDiffWriter {
           additionalMap.put(extension.getName(), charSequence);
         }
       }
+      String fileContentLineSeparator = ObjectUtils.coalesce(patch.getLineSeparator(), lineSeparator, "\n");
       writeFileHeading(patch, writer, lineSeparator, additionalMap);
       for(PatchHunk hunk: patch.getHunks()) {
         writeHunkStart(writer, hunk.getStartLineBefore(), hunk.getEndLineBefore(), hunk.getStartLineAfter(), hunk.getEndLineAfter(),
@@ -107,7 +108,7 @@ public class UnifiedDiffWriter {
             writer.write(lineSeparator + NO_NEWLINE_SIGNATURE + lineSeparator);
           }
           else {
-            writer.write(lineSeparator);
+            writer.write(fileContentLineSeparator);
           }
         }
       }

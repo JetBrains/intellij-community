@@ -121,7 +121,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private static final float SPLITTER_PROPORTION_OPTION_DEFAULT = 0.5f;
   private static final float DETAILS_SPLITTER_PROPORTION_OPTION_DEFAULT = 0.6f;
-  private static final boolean DETAILS_SHOW_OPTION_DEFAULT = false;
+  private static final boolean DETAILS_SHOW_OPTION_DEFAULT = true;
 
   private static class MyUpdateButtonsRunnable implements Runnable {
     private CommitChangeListDialog myDialog;
@@ -271,7 +271,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                  final boolean isAlien,
                                  final String comment,
                                  @Nullable CommitResultHandler customResultHandler) {
-    super(project, true);
+    super(project, true, (Registry.is("ide.perProjectModality")) ? IdeModalityType.PROJECT : IdeModalityType.IDE);
     myCommitContext = new CommitContext();
     myProject = project;
     myVcsConfiguration = ObjectUtils.assertNotNull(VcsConfiguration.getInstance(myProject));
@@ -1009,7 +1009,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     JPanel mainPanel;
     if (myAdditionalOptionsPanel != null) {
       JScrollPane optionsPane = ScrollPaneFactory.createScrollPane(myAdditionalOptionsPanel, true);
-      optionsPane.getVerticalScrollBar().setUnitIncrement(10);
       if (!Registry.is("ide.scroll.new.layout")) {
         optionsPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         optionsPane.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
@@ -1030,7 +1029,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     JPanel rootPane = JBUI.Panels.simplePanel(mainPanel).addToBottom(panel);
 
     // TODO: there are no reason to use such heavy interface for a simple task.
-    myDetailsSplitter = new SplitterWithSecondHideable(true, "Details", rootPane,
+    myDetailsSplitter = new SplitterWithSecondHideable(true, "Diff", rootPane,
                                                        new SplitterWithSecondHideable.OnOffListener<Integer>() {
                                                          @Override
                                                          public void on(Integer integer) {

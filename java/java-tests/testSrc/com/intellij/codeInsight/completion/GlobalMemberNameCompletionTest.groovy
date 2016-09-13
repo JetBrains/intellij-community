@@ -17,6 +17,8 @@ package com.intellij.codeInsight.completion
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.lang.java.JavaLanguage
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 /**
  * @author peter
@@ -269,4 +271,32 @@ class Foo {
     myFixture.checkResult text
   }
 
+  void "test no global reformatting"() {
+    CodeStyleSettingsManager.getSettings(project).getCommonSettings(JavaLanguage.INSTANCE).ALIGN_MULTILINE_BINARY_OPERATION = true
+
+    myFixture.addClass("package foo; public interface Foo { int XCONST = 42; }")
+    def file = myFixture.addFileToProject "a.java", '''
+class Zoo {
+    void zoo(int i) {
+        if (i == XCONS<caret> ||
+            CONTAINERS.contains(myElementType)) {
+        } 
+    }
+}
+'''
+    myFixture.configureFromExistingVirtualFile(file.virtualFile)
+    myFixture.complete(CompletionType.BASIC, 2)
+    myFixture.type('\n')
+    myFixture.checkResult '''\
+import foo.Foo;
+
+class Zoo {
+    void zoo(int i) {
+        if (i == Foo.XCONST<caret> ||
+            CONTAINERS.contains(myElementType)) {
+        } 
+    }
+}
+'''
+  }
 }

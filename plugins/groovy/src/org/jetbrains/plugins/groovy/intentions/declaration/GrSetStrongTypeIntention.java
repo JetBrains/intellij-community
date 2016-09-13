@@ -63,7 +63,7 @@ public class GrSetStrongTypeIntention extends Intention {
   private static final Logger LOG = Logger.getInstance(GrSetStrongTypeIntention.class);
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, Project project, final Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, final Editor editor) throws IncorrectOperationException {
     PsiElement parent = element.getParent();
 
     PsiElement elementToBuildTemplate;

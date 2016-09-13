@@ -374,7 +374,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
   @Override
   public PsiComment findExistingDocComment(final PsiComment comment) {
     if (comment instanceof PsiDocComment) {
-      final PsiDocCommentOwner owner = ((PsiDocComment)comment).getOwner();
+      final PsiJavaDocumentedElement owner = ((PsiDocComment)comment).getOwner();
       if (owner != null) {
         return owner.getDocComment();
       }
@@ -395,12 +395,11 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
 
   @Override
   public String generateDocumentationContentStub(PsiComment _comment) {
-    PsiDocCommentOwner commentOwner = ((PsiDocComment)_comment).getOwner();
-    assert commentOwner != null;
-    final Project project = commentOwner.getProject();
+    final PsiJavaDocumentedElement commentOwner = ((PsiDocComment)_comment).getOwner();
+    final Project project = _comment.getProject();
     final StringBuilder builder = new StringBuilder();
-    final CodeDocumentationAwareCommenter commenter = (CodeDocumentationAwareCommenter)LanguageCommenters.INSTANCE
-      .forLanguage(commentOwner.getLanguage());
+    final CodeDocumentationAwareCommenter commenter =
+      (CodeDocumentationAwareCommenter)LanguageCommenters.INSTANCE.forLanguage(_comment.getLanguage());
     if (commentOwner instanceof PsiMethod) {
       PsiMethod psiMethod = (PsiMethod)commentOwner;
       generateParametersTakingDocFromSuperMethods(project, builder, commenter, psiMethod);

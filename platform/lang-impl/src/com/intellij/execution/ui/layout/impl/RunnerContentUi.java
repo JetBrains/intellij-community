@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,7 @@ import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,6 +76,7 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.stream.Collectors;
 
 public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Facade, ViewContextEx, PropertyChangeListener, SwitchProvider,
                                         QuickActionProvider, DockContainer.Dialog {
@@ -213,7 +215,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         }
         return null;
       }
-    }).setTabLabelActionsAutoHide(false).setProvideSwitchTargets(false).setInnerInsets(new Insets(0, 0, 0, 0))
+    }).setTabLabelActionsAutoHide(false).setProvideSwitchTargets(false).setInnerInsets(JBUI.emptyInsets())
       .setToDrawBorderIfTabsHidden(false).setTabDraggingEnabled(isMoveToGridActionEnabled()).setUiDecorator(null).getJBTabs();
     rebuildTabPopup();
 
@@ -792,12 +794,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   private static boolean hasContent(ContentManager manager, Content content) {
-    for (Content c : manager.getContents()) {
-      if (c == content) {
-        return true;
-      }
-    }
-    return false;
+    return StreamEx.of(manager.getContents()).has(content);
   }
 
   private static void moveFollowingTabs(int index, final JBRunnerTabs tabs) {
@@ -904,10 +901,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     for (TabInfo each : tabs) {
       hasToolbarContent |= updateTabUI(each, usedNames);
     }
-    int tabsCount = tabs.size();
-    for (RunnerContentUi child : myChildren) {
-      tabsCount += child.myTabs.getTabCount();
-    }
+    int tabsCount = tabs.size() + myChildren.stream().mapToInt(child -> child.myTabs.getTabCount()).sum();
     myTabs.getPresentation().setHideTabs(!hasToolbarContent && tabsCount <= 1 && myOriginal == null);
     myTabs.updateTabActions(validateNow);
 
@@ -1062,11 +1056,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   private ArrayList<GridImpl> getGrids() {
-    ArrayList<GridImpl> result = new ArrayList<>();
-    for (TabInfo each : myTabs.getTabs()) {
-      result.add(getGridFor(each));
-    }
-    return result;
+    return myTabs.getTabs().stream().map(RunnerContentUi::getGridFor).collect(Collectors.toCollection(ArrayList::new));
   }
 
 
@@ -1780,12 +1770,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   private boolean isUsed(int i) {
-    for (RunnerContentUi child : myChildren) {
-      if (child.getWindow() == i) {
-        return true;
-      }
-    }
-    return false;
+    return myChildren.stream().anyMatch(child -> child.getWindow() == i);
   }
 
   private DockManagerImpl getDockManager() {

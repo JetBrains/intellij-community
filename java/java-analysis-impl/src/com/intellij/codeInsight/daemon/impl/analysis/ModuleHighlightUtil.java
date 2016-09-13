@@ -19,15 +19,11 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.GoToSymbolFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.MoveFileFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.module.impl.scopes.ModulesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.TextRange;
@@ -36,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -75,7 +72,7 @@ public class ModuleHighlightUtil {
     Module module = ModuleUtilCore.findModuleForPsiElement(element);
     if (module != null) {
       Project project = file.getProject();
-      Collection<VirtualFile> others = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, new ModulesScope(module));
+      Collection<VirtualFile> others = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, module.getModuleScope(false));
       if (others.size() > 1) {
         String message = JavaErrorMessages.message("module.file.duplicate");
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(element)).description(message).create();
@@ -194,8 +191,7 @@ public class ModuleHighlightUtil {
       assert ref != null : refElement.getParent();
       PsiElement target = ref.resolve();
       if (!(target instanceof PsiJavaModule)) {
-        String message = JavaErrorMessages.message("module.not.found", refElement.getReferenceText());
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refElement).description(message).create();
+        return moduleResolveError(refElement, ref);
       }
       else if (target == container) {
         String message = JavaErrorMessages.message("module.cyclic.dependence", container.getModuleName());
@@ -226,7 +222,7 @@ public class ModuleHighlightUtil {
         Module module = ModuleUtilCore.findModuleForPsiElement(refElement);
         if (module != null) {
           String packageName = ((PsiPackage)target).getQualifiedName();
-          PsiDirectory[] directories = ((PsiPackage)target).getDirectories(new ModulesScope(module));
+          PsiDirectory[] directories = ((PsiPackage)target).getDirectories(module.getModuleScope(false));
           if (directories.length == 0) {
             String message = JavaErrorMessages.message("package.not.found", packageName);
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).description(message).create();
@@ -253,8 +249,7 @@ public class ModuleHighlightUtil {
       assert ref != null : statement;
       PsiElement target = ref.resolve();
       if (!(target instanceof PsiJavaModule)) {
-        String message = JavaErrorMessages.message("module.not.found", refText);
-        results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refElement).description(message).create());
+        results.add(moduleResolveError(refElement, ref));
       }
       else if (!targets.add(refText)) {
         String message = JavaErrorMessages.message("module.duplicate.export", refText);
@@ -316,12 +311,23 @@ public class ModuleHighlightUtil {
     return null;
   }
 
+  private static HighlightInfo moduleResolveError(PsiJavaModuleReferenceElement refElement, PsiPolyVariantReference ref) {
+    boolean missing = ref.multiResolve(true).length == 0;
+    String message = JavaErrorMessages.message(missing ? "module.not.found" : "module.not.on.path", refElement.getReferenceText());
+    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refElement).description(message).create();
+    if (!missing) {
+      factory().registerOrderEntryFixes(new QuickFixActionRegistrarImpl(info), ref);
+    }
+    return info;
+  }
+
   private static QuickFixFactory factory() {
     return QuickFixFactory.getInstance();
   }
 
   private static TextRange range(PsiJavaModule module) {
-    return new TextRange(module.getTextOffset(), module.getNameElement().getTextRange().getEndOffset());
+    PsiKeyword kw = PsiTreeUtil.getChildOfType(module, PsiKeyword.class);
+    return new TextRange(kw != null ? kw.getTextOffset() : module.getTextOffset(), module.getNameElement().getTextRange().getEndOffset());
   }
 
   private static PsiElement range(PsiJavaCodeReferenceElement refElement) {

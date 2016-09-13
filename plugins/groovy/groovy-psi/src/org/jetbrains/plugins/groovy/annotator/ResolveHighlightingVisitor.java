@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ class ResolveHighlightingVisitor extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
+  public void visitReferenceExpression(@NotNull GrReferenceExpression referenceExpression) {
     final int size = myInfos.size();
     super.visitReferenceExpression(referenceExpression);
     if (size == myInfos.size()) {
@@ -52,7 +52,7 @@ class ResolveHighlightingVisitor extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
+  public void visitCodeReferenceElement(@NotNull GrCodeReferenceElement refElement) {
     final int size = myInfos.size();
     super.visitCodeReferenceElement(refElement);
     if (size == myInfos.size()) {

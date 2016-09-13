@@ -61,7 +61,7 @@ public class ModuleParser {
       parseModuleContent(builder);
     }
 
-    module.done(JavaElementType.MODULE);
+    JavaParserUtil.done(module, JavaElementType.MODULE);
 
     if (builder.getTokenType() != null) {
       parseExtras(builder, JavaErrorMessages.message("unexpected.tokens"));

@@ -15,10 +15,11 @@
  */
 package org.intellij.lang.xpath.xslt.run;
 
-import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.AppExecutorUtil;
 
-import java.io.Reader;
 import java.io.IOException;
+import java.io.Reader;
+import java.util.concurrent.TimeUnit;
 
 /* Copied from com.intellij.execution.process.OSProcessHandler.ReadProcessThread */
 @SuppressWarnings({"ALL"})
@@ -28,7 +29,6 @@ abstract class ReadProcessThread extends Thread {
   private final Reader myReader;
 
   private final StringBuffer myBuffer = new StringBuffer();
-  private final Alarm myAlarm;
 
   private boolean myIsClosed = false;
 
@@ -37,18 +37,18 @@ abstract class ReadProcessThread extends Thread {
     super("ReadProcessThread "+reader.getClass().getName());
     setPriority(Thread.MAX_PRIORITY);
     myReader = reader;
-    myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   }
 
   public void run() {
-    myAlarm.addRequest(new Runnable() {
+    AppExecutorUtil.getAppScheduledExecutorService().schedule(
+      new Runnable() {
       public void run() {
         if(!isClosed()) {
-          myAlarm.addRequest(this, NOTIFY_TEXT_DELAY);
+          AppExecutorUtil.getAppScheduledExecutorService().schedule(this, NOTIFY_TEXT_DELAY,TimeUnit.MILLISECONDS);
           checkTextAvailable();
         }
       }
-    }, NOTIFY_TEXT_DELAY);
+    }, NOTIFY_TEXT_DELAY, TimeUnit.MILLISECONDS);
 
     try {
       while (!isClosed()) {

@@ -17,6 +17,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +85,8 @@ public class BoolUtils {
       }
       return ParenthesesUtils.getText(negated, precedence);
     }
-    else if (ComparisonUtils.isComparison(expression)) {
+    else if (ComparisonUtils.isComparison(expression) &&
+             !TypeConversionUtil.isFloatOrDoubleType(ComparisonUtils.getComparisonType(expression))) {
       final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
       final String negatedComparison = ComparisonUtils.getNegatedComparison(polyadicExpression.getOperationTokenType());
       final StringBuilder result = new StringBuilder();

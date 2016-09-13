@@ -15,14 +15,26 @@
  */
 package com.intellij.codeInsight.completion
 
-import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.MultiModuleJava9ProjectDescriptor
 import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor
+import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
+import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2
+import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MAIN
 import org.assertj.core.api.Assertions.assertThat
 
 class ModuleCompletionTest : LightFixtureCompletionTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor = MultiModuleJava9ProjectDescriptor
+
+  override fun setUp() {
+    super.setUp()
+    addFile("module-info.java", "module M2 { }", M2)
+  }
+
+  override fun tearDown() {
+    MultiModuleJava9ProjectDescriptor.cleanupSourceRoots()
+    super.tearDown()
+  }
 
   fun testFileHeader() = complete("<caret>", "module <caret>")
   fun testStatements1() = variants("module M { <caret> }", "requires", "exports", "uses", "provides")
@@ -52,7 +64,7 @@ class ModuleCompletionTest : LightFixtureCompletionTestCase() {
   }
 
   //<editor-fold desc="Helpers.">
-  private fun addFile(path: String, text: String) = VfsTestUtil.createFile(LightPlatformTestCase.getSourceRoot(), path, text)
+  private fun addFile(path: String, text: String, module: ModuleDescriptor = MAIN) = VfsTestUtil.createFile(module.root(), path, text)
 
   private fun complete(text: String, expected: String) {
     myFixture.configureByText("module-info.java", text)

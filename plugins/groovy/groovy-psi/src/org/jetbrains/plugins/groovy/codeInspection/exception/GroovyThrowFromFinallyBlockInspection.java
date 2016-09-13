@@ -54,7 +54,7 @@ public class GroovyThrowFromFinallyBlockInspection extends BaseInspection {
   private static class Visitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitThrowStatement(GrThrowStatement throwStatement) {
+    public void visitThrowStatement(@NotNull GrThrowStatement throwStatement) {
       super.visitThrowStatement(throwStatement);
       if (!ControlFlowUtils.isInFinallyBlock(throwStatement)) {
         return;

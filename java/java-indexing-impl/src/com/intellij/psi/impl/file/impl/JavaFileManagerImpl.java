@@ -179,8 +179,7 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
 
   @NotNull
   @Override
-  public Collection<PsiJavaModule> findModules(@NotNull String moduleName) {
-    Project project = myManager.getProject();
-    return JavaModuleNameIndex.getInstance().get(moduleName, project, GlobalSearchScope.allScope(project));
+  public Collection<PsiJavaModule> findModules(@NotNull String moduleName, @NotNull GlobalSearchScope scope) {
+    return JavaModuleNameIndex.getInstance().get(moduleName, myManager.getProject(), scope);
   }
 }

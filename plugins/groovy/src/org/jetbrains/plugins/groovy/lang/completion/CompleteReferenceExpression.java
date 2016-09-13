@@ -191,7 +191,7 @@ public class CompleteReferenceExpression {
     if (file instanceof GroovyFile) {
       ((GroovyFile)file).accept(new GroovyRecursiveElementVisitor() {
         @Override
-        public void visitAssignmentExpression(GrAssignmentExpression expression) {
+        public void visitAssignmentExpression(@NotNull GrAssignmentExpression expression) {
           super.visitAssignmentExpression(expression);
 
           final GrExpression value = expression.getLValue();
@@ -208,7 +208,7 @@ public class CompleteReferenceExpression {
         }
 
         @Override
-        public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
+        public void visitTypeDefinition(@NotNull GrTypeDefinition typeDefinition) {
           //don't go into classes
         }
       });

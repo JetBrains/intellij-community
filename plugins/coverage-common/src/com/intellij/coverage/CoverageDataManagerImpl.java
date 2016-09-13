@@ -624,7 +624,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   }
 
   private class CoverageEditorFactoryListener implements EditorFactoryListener {
-    private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, myProject);
+    private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myProject);
     private final Map<Editor, Runnable> myCurrentEditors = new HashMap<>();
 
     public void editorCreated(@NotNull EditorFactoryEvent event) {

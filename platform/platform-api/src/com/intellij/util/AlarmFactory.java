@@ -16,10 +16,8 @@
 package com.intellij.util;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Serves the same purposes as {@link EdtInvocationManager} - allows to enhance intellij threading model in particular environment.
@@ -52,7 +50,7 @@ public class AlarmFactory {
   }
 
   @NotNull
-  public Alarm create(@NotNull Alarm.ThreadToUse threadToUse, @Nullable Disposable parentDisposable) {
+  public Alarm create(@NotNull Alarm.ThreadToUse threadToUse, @NotNull Disposable parentDisposable) {
     return new Alarm(threadToUse, parentDisposable);
   }
 }

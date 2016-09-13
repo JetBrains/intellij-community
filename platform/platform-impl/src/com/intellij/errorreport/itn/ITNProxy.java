@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Calendar;
 import java.util.Map;
+import java.util.function.IntConsumer;
 
 /**
  * @author stathik
@@ -68,14 +69,15 @@ import java.util.Map;
 public class ITNProxy {
   private static final String NEW_THREAD_VIEW_URL = "https://ea.jetbrains.com/browser/ea_reports/";
   private static final String NEW_THREAD_POST_URL = "https://ea-report.jetbrains.com/trackerRpc/idea/createScr";
+
   private static final String ENCODING = "UTF8";
 
   public static void sendError(@Nullable Project project,
                                final String login,
                                final String password,
                                @NotNull final ErrorBean error,
-                               @NotNull final Consumer<Integer> callback,
-                               @NotNull final Consumer<Exception> errback) {
+                               @NotNull final IntConsumer callback,
+                               @NotNull final Consumer<Exception> errorCallback) {
     if (StringUtil.isEmpty(login)) {
       return;
     }
@@ -84,11 +86,10 @@ public class ITNProxy {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          int threadId = postNewThread(login, password, error);
-          callback.consume(threadId);
+          callback.accept(postNewThread(login, password, error));
         }
         catch (Exception ex) {
-          errback.consume(ex);
+          errorCallback.consume(ex);
         }
       }
     };
@@ -123,8 +124,7 @@ public class ITNProxy {
     String response;
     InputStream is = connection.getInputStream();
     try {
-      byte[] bytes = FileUtil.loadBytes(is);
-      response = new String(bytes, ENCODING);
+      response = FileUtil.loadTextAndClose(is);
     }
     finally {
       is.close();

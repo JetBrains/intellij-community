@@ -15,10 +15,10 @@
  */
 package com.intellij.credentialStore
 
+import com.intellij.credentialStore.windows.WindowsCryptUtils
 import com.intellij.ide.ApplicationLoadListener
 import com.intellij.ide.passwordSafe.impl.providers.ByteArrayWrapper
 import com.intellij.ide.passwordSafe.impl.providers.EncryptionUtil
-import com.intellij.ide.passwordSafe.impl.providers.masterKey.windows.WindowsCryptUtils
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.ServiceManager
@@ -26,7 +26,7 @@ import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.exists
+import com.intellij.util.io.exists
 import gnu.trove.THashMap
 import java.nio.file.Paths
 import java.util.function.Function

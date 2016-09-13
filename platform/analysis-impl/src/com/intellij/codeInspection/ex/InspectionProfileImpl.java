@@ -58,6 +58,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author max
@@ -887,11 +888,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @NotNull
   public List<ScopeToolState> getDefaultStates(@Nullable Project project) {
     initInspectionTools(project);
-    final List<ScopeToolState> result = new ArrayList<>();
-    for (Tools tools : myTools.values()) {
-      result.add(tools.getDefaultState());
-    }
-    return result;
+    return myTools.values().stream().map(Tools::getDefaultState).collect(Collectors.toList());
   }
 
   @NotNull

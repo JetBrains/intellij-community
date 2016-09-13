@@ -26,19 +26,21 @@ import java.time.LocalDate
 /**
  * @author nik
  */
-class MacDistributionBuilder {
-  private final BuildContext buildContext
-  final String macDistPath
+class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   private final MacDistributionCustomizer customizer
+  private final File ideaProperties
 
-  MacDistributionBuilder(BuildContext buildContext, MacDistributionCustomizer customizer) {
+  MacDistributionBuilder(BuildContext buildContext, MacDistributionCustomizer customizer, File ideaProperties) {
+    super(BuildOptions.OS_MAC, "Mac OS", buildContext)
+    this.ideaProperties = ideaProperties
     this.customizer = customizer
-    this.buildContext = buildContext
-    macDistPath = "$buildContext.paths.buildOutputRoot/dist.mac"
+
   }
 
-  void layoutMac(File ideaPropertiesFile) {
+  @Override
+  String copyFilesForOsDistribution() {
     buildContext.messages.progress("Building distributions for Mac OS")
+    String macDistPath = "$buildContext.paths.buildOutputRoot/dist.mac"
     def docTypes = (customizer.associateIpr ? """
       <dict>
         <key>CFBundleTypeExtensions</key>
@@ -58,7 +60,7 @@ class MacDistributionBuilder {
       customIdeaProperties["idea.jre.check"] = "true"
     }
     customIdeaProperties.putAll(customizer.customIdeaProperties(buildContext.applicationInfo))
-    layoutMacApp(ideaPropertiesFile, customIdeaProperties, docTypes)
+    layoutMacApp(ideaProperties, customIdeaProperties, docTypes, macDistPath)
     customizer.copyAdditionalFiles(buildContext, macDistPath)
 
     if (!customizer.binariesToSign.empty) {
@@ -71,8 +73,12 @@ class MacDistributionBuilder {
         }
       }
     }
+    return macDistPath
+  }
 
-    def macZipPath = buildMacZip()
+  @Override
+  void buildArtifacts(String osSpecificDistPath) {
+    def macZipPath = buildMacZip(osSpecificDistPath)
     if (buildContext.proprietaryBuildTools.macHostProperties == null) {
       buildContext.messages.info("A Mac OS build agent isn't configured, dmg artifact won't be produced")
       buildContext.notifyArtifactBuilt(macZipPath)
@@ -85,7 +91,7 @@ class MacDistributionBuilder {
     }
   }
 
-  private void layoutMacApp(File ideaPropertiesFile, Map<String, String> customIdeaProperties, String docTypes) {
+  private void layoutMacApp(File ideaPropertiesFile, Map<String, String> customIdeaProperties, String docTypes, String macDistPath) {
     String target = macDistPath
     def macCustomizer = customizer
     buildContext.ant.copy(todir: "$target/bin") {
@@ -227,7 +233,7 @@ class MacDistributionBuilder {
     buildContext.ant.fixcrlf(srcdir: "$target/bin", includes: "*.py", eol: "unix")
   }
 
-  private String buildMacZip() {
+  private String buildMacZip(String macDistPath) {
     return buildContext.messages.block("Build zip archive for Mac OS") {
       def extraBins = customizer.extraExecutables
       def allPaths = [buildContext.paths.distAll, macDistPath]

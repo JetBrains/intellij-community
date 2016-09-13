@@ -68,6 +68,7 @@ sqlite-jdbc-3.6.20.1.jar
 swingx-core-1.6.2.jar
 slf4j-api-1.7.10.jar
 slf4j-log4j12-1.7.10.jar
+streamex-0.6.2.jar
 trove4j.jar
 velocity.jar
 winp-1.23.jar

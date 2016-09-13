@@ -56,7 +56,7 @@ public class GroovyNegatedConditionalInspection extends BaseInspection {
   private static class Visitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitConditionalExpression(GrConditionalExpression grConditionalExpression) {
+    public void visitConditionalExpression(@NotNull GrConditionalExpression grConditionalExpression) {
       super.visitConditionalExpression(grConditionalExpression);
       final GrExpression condition = grConditionalExpression.getCondition();
       if (!BoolUtils.isNegation(condition)) {

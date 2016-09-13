@@ -74,7 +74,7 @@ public class GroovyNonShortCircuitBooleanInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor)
         throws IncorrectOperationException {
       final GrBinaryExpression expression =
           (GrBinaryExpression) descriptor.getPsiElement();

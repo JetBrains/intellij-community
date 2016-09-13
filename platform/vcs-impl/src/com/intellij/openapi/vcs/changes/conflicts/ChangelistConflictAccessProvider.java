@@ -69,7 +69,7 @@ public class ChangelistConflictAccessProvider extends WritingAccessProvider {
       do {
         dialog = new ChangelistConflictDialog(myProject, new ArrayList<>(changeLists), denied);
         dialog.show();
-      } while (dialog.isOK() && !dialog.getResolution().resolveConflict(myProject, changes));
+      } while (dialog.isOK() && !dialog.getResolution().resolveConflict(myProject, changes, null));
       IdeEventQueue.getInstance().setEventCount(savedEventCount);
 
       if (dialog.isOK()) {

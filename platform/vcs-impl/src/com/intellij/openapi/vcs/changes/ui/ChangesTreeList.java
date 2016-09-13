@@ -311,12 +311,11 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
               }
             }
           }
-        } else {
-          if (toSelect != null) {
-            int rowInTree = findRowContainingFile((TreeNode)model.getRoot(), toSelect);
-            if (rowInTree > -1) {
-              selectedTreeRow = rowInTree;
-            }
+        }
+        if (toSelect != null) {
+          int rowInTree = findRowContainingFile((TreeNode)model.getRoot(), toSelect);
+          if (rowInTree > -1) {
+            selectedTreeRow = rowInTree;
           }
         }
 
@@ -335,21 +334,18 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
 
   private int findRowContainingFile(@NotNull TreeNode root, @NotNull final VirtualFile toSelect) {
     final Ref<Integer> row = Ref.create(-1);
-    TreeUtil.traverse(root, new TreeUtil.Traverse() {
-      @Override
-      public boolean accept(Object node) {
-        if (node instanceof DefaultMutableTreeNode) {
-          Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
-          if (userObject instanceof Change) {
-            if (matches((Change)userObject, toSelect)) {
-              TreeNode[] path = ((DefaultMutableTreeNode)node).getPath();
-              row.set(getRowForPath(new TreePath(path)));
-            }
+    TreeUtil.traverse(root, node -> {
+      if (node instanceof DefaultMutableTreeNode) {
+        Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
+        if (userObject instanceof Change) {
+          if (matches((Change)userObject, toSelect)) {
+            TreeNode[] path = ((DefaultMutableTreeNode)node).getPath();
+            row.set(getRowForPath(new TreePath(path)));
           }
         }
-
-        return row.get() == -1;
       }
+
+      return row.get() == -1;
     });
     return row.get();
   }
@@ -638,16 +634,13 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
 
   public void select(final List<T> changes) {
     final List<TreePath> treeSelection = new ArrayList<>(changes.size());
-    TreeUtil.traverse(getRoot(), new TreeUtil.Traverse() {
-      @Override
-      public boolean accept(Object node) {
-        @SuppressWarnings("unchecked")
-        final T change = (T) ((DefaultMutableTreeNode) node).getUserObject();
-        if (changes.contains(change)) {
-          treeSelection.add(new TreePath(((DefaultMutableTreeNode) node).getPath()));
-        }
-        return true;
+    TreeUtil.traverse(getRoot(), node -> {
+      @SuppressWarnings("unchecked")
+      final T change = (T) ((DefaultMutableTreeNode) node).getUserObject();
+      if (changes.contains(change)) {
+        treeSelection.add(new TreePath(((DefaultMutableTreeNode) node).getPath()));
       }
+      return true;
     });
     setSelectionPaths(treeSelection.toArray(new TreePath[treeSelection.size()]));
     if (treeSelection.size() == 1) scrollPathToVisible(treeSelection.get(0));

@@ -29,8 +29,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SingleAlarm
-import com.intellij.util.exists
-import com.intellij.util.move
+import com.intellij.util.io.exists
+import com.intellij.util.io.move
 import org.jetbrains.settingsRepository.git.GitRepositoryManager
 import org.jetbrains.settingsRepository.git.GitRepositoryService
 import org.jetbrains.settingsRepository.git.processChildren
@@ -56,12 +56,12 @@ class IcsManager(dir: Path) {
   val repositoryManager: RepositoryManager = GitRepositoryManager(credentialsStore, dir.resolve("repository"))
 
   init {
-    try {
-      settings = loadSettings(settingsFile)
+    settings = try {
+      loadSettings(settingsFile)
     }
     catch (e: Exception) {
-      settings = IcsSettings()
       LOG.error(e)
+      IcsSettings()
     }
   }
 

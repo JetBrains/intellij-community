@@ -1,4 +1,4 @@
-// "Replace with collect" "true"
+// "Replace with forEach" "true"
 
 import java.util.List;
 

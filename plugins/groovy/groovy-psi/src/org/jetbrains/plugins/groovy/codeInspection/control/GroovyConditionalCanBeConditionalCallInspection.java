@@ -67,7 +67,7 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
       final GrConditionalExpression expression = (GrConditionalExpression) descriptor.getPsiElement();
       final GrBinaryExpression binaryCondition = (GrBinaryExpression)PsiUtil.skipParentheses(expression.getCondition(), false);
       final GrMethodCallExpression call;
@@ -93,7 +93,7 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
   private static class Visitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitConditionalExpression(GrConditionalExpression expression) {
+    public void visitConditionalExpression(@NotNull GrConditionalExpression expression) {
       super.visitConditionalExpression(expression);
       GrExpression condition = expression.getCondition();
       final GrExpression thenBranch = expression.getThenBranch();

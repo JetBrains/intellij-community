@@ -15,11 +15,13 @@
  */
 package com.intellij.vcs.log.data;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -65,7 +67,8 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
                              @NotNull TopCommitsCache topCommitsDetailsCache,
                              @NotNull Consumer<DataPack> dataPackUpdateHandler,
                              @NotNull Consumer<Exception> exceptionHandler,
-                             int recentCommitsCount) {
+                             int recentCommitsCount,
+                             @NotNull Disposable parentDisposable) {
     myProject = project;
     myHashMap = hashMap;
     myProviders = providers;
@@ -74,6 +77,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
     myExceptionHandler = exceptionHandler;
     myRecentCommitCount = recentCommitsCount;
     myProgress = new VcsLogProgress();
+    Disposer.register(parentDisposable, myProgress);
 
     mySingleTaskController = new SingleTaskController<RefreshRequest, DataPack>(dataPack -> {
       myDataPack = dataPack;

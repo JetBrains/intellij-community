@@ -233,6 +233,10 @@ public abstract class SourcePosition implements Navigatable{
         public PsiElement compute() {
           PsiElement rootElement = psiFile;
 
+          if (!psiFile.isValid()) {
+            return null;
+          }
+
           List<PsiFile> allFiles = psiFile.getViewProvider().getAllFiles();
           if (allFiles.size() > 1) { // jsp & gsp
             PsiClassOwner owner = ContainerUtil.findInstance(allFiles, PsiClassOwner.class);

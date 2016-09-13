@@ -28,6 +28,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Result
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.compiler.CompilerMessage
+import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -251,4 +252,10 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
     configuration.setScriptPath(scriptPath)
     return configuration
   }
+
+  protected static void shouldFail(Closure<List<CompilerMessage>> action) {
+    def messages = action()
+    assert messages.find { it.category == CompilerMessageCategory.ERROR }
+  }
+
 }

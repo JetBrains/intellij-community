@@ -339,6 +339,8 @@ class CommunityLibraryLicenses {
                        url: "http://sphinxcontrib-napoleon.readthedocs.org/"),
     new LibraryLicense(name: "sqljet", version: "bundled with SVNKit", libraryName: "sqljet.jar", license: "link (commercial license)",
                        url: "http://sqljet.com", licenseUrl: "http://svnkit.com/license.html"),
+    new LibraryLicense(name: "StreamEx", version: "0.6.2", libraryName: "StreamEx", license: "Apache 2.0",
+                       url: "https://github.com/amaembo/streamex", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "svnkit-javahl", version: "bundled with SVNKit", libraryName: "svnkit-javahl.jar",
                        license: "link (commercial license)", url: "http://www.svnkit.com/", licenseUrl: "http://svnkit.com/license.html"),
     new LibraryLicense(name: "SVNKit", libraryName: "svnkit.jar", version: "1.8.12", license: "link (commercial license)",
