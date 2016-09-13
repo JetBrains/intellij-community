@@ -50,7 +50,6 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
   WindowsDistributionCustomizer createWindowsCustomizer(String projectHome) {
     return new PyCharmWindowsDistributionCustomizer() {
       {
-        buildZipWithBundledOracleJre = true
         installerImagesPath = "$pythonCommunityPath/educational-python/build/resources"
         customNsiConfigurationFiles = [
           "$pythonCommunityPath/educational-python/build/desktop.ini",
