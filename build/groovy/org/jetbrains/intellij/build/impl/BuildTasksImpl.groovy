@@ -271,6 +271,7 @@ idea.fatal.error.notification=disabled
     compileModules(buildContext.productProperties.productLayout.includedPluginModules + distributionJARsBuilder.platformModules)
     buildContext.messages.block("Build platform and plugin JARs") {
       distributionJARsBuilder.buildJARs()
+      distributionJARsBuilder.buildAdditionalArtifacts()
     }
     if (buildContext.productProperties.scrambleMainJar) {
       if (buildContext.proprietaryBuildTools.scrambleTool != null) {
@@ -445,6 +446,35 @@ idea.fatal.error.notification=disabled
       jar("updater.jar") {
         module("updater")
       }
+    }
+  }
+
+  @Override
+  void buildUnpackedDistribution(String targetDirectory) {
+    def jarsBuilder = new DistributionJARsBuilder(buildContext)
+    jarsBuilder.buildJARs()
+/*
+    //todo[nik] uncomment this to update os-specific files (e.g. in 'bin' directory) as well
+    layoutShared()
+    def propertiesFile = patchIdeaPropertiesFile()
+    OsSpecificDistributionBuilder builder;
+    if (SystemInfo.isWindows) {
+      builder = new WindowsDistributionBuilder(buildContext, buildContext.windowsDistributionCustomizer, propertiesFile)
+    }
+    else if (SystemInfo.isLinux) {
+      builder = new LinuxDistributionBuilder(buildContext, buildContext.linuxDistributionCustomizer, propertiesFile)
+    }
+    else if (SystemInfo.isMac) {
+      builder = new MacDistributionBuilder(buildContext, buildContext.macDistributionCustomizer, propertiesFile)
+    }
+    else {
+      buildContext.messages.error("Update from source isn't supported for '$SystemInfo.OS_NAME'")
+      return
+    }
+    def osSpecificDistPath = builder.copyFilesForOsDistribution()
+*/
+    buildContext.ant.copy(todir: targetDirectory) {
+      fileset(dir: buildContext.paths.distAll)
     }
   }
 

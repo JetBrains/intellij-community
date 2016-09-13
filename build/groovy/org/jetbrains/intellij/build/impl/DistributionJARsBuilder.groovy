@@ -136,7 +136,9 @@ class DistributionJARsBuilder {
   void buildJARs() {
     buildLib()
     buildPlugins()
+  }
 
+  void buildAdditionalArtifacts() {
     def productProperties = buildContext.productProperties
     if (productProperties.generateLibrariesLicensesTable) {
       buildContext.messages.block("Generate table of licenses for used third-party libraries") {
