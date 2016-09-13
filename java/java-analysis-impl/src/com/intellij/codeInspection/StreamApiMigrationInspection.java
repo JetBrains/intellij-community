@@ -771,8 +771,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         simplifyAndFormat(project, result);
         return;
       }
-      intermediateOps
-        .add(createMapperFunctionalExpressionText(tb.getVariable(), methodCallExpression.getArgumentList().getExpressions()[0]));
+      PsiExpression itemToAdd = methodCallExpression.getArgumentList().getExpressions()[0];
+      intermediateOps.add(createMapperFunctionalExpressionText(tb.getVariable(), itemToAdd));
       final StringBuilder builder = generateStream(iteratedValue, intermediateOps);
 
       final PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
@@ -790,8 +790,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
       JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
       final SuggestedNameInfo suggestedNameInfo = codeStyleManager
-        .suggestVariableName(VariableKind.LOCAL_VARIABLE, "item", null, null, false);
-      String varName = codeStyleManager.suggestUniqueVariableName(suggestedNameInfo, qualifierExpression, false).names[0];
+        .suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, itemToAdd.getType(), false);
+      String varName = codeStyleManager.suggestUniqueVariableName(suggestedNameInfo, methodCallExpression, false).names[0];
 
       PsiExpression forEachBody =
         elementFactory.createExpressionFromText(qualifierText + "add(" + varName + ")", qualifierExpression);

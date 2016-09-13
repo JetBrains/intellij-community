@@ -10,6 +10,6 @@ public class Collect {
 
   Set<String> names = new HashSet<>();
   void collectNames(List<Person> persons){
-      persons.stream().map(Person::getName).forEach(item -> names.add(item));
+      persons.stream().map(Person::getName).forEach(s -> names.add(s));
   }
 }
