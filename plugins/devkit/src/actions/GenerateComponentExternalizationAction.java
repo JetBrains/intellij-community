@@ -110,8 +110,6 @@ public class GenerateComponentExternalizationAction extends AnAction {
     Project project = CommonDataKeys.PROJECT.getData(context);
     if (editor == null || project == null) return null;
 
-    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-
     PsiFile file = CommonDataKeys.PSI_FILE.getData(context);
     if (file == null) return null;
 
@@ -126,7 +124,6 @@ public class GenerateComponentExternalizationAction extends AnAction {
 
     PsiClass persistenceStateComponentClass = javaPsiFacade.findClass(PERSISTENCE_STATE_COMPONENT, file.getResolveScope());
     if (persistenceStateComponentClass == null || contextClass.isInheritor(persistenceStateComponentClass, true)) return null;
-
 
     return contextClass;
   }
