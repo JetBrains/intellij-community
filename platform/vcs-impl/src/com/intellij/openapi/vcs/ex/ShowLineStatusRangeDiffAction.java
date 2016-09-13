@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -32,15 +33,18 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ShowLineStatusRangeDiffAction extends BaseLineStatusRangeAction {
+public class ShowLineStatusRangeDiffAction extends DumbAwareAction {
+  private final LineStatusTracker myLineStatusTracker;
+  private final Range myRange;
+
   public ShowLineStatusRangeDiffAction(@NotNull LineStatusTracker lineStatusTracker, @NotNull Range range, @Nullable Editor editor) {
-    super(lineStatusTracker, range);
+    myLineStatusTracker = lineStatusTracker;
+    myRange = range;
     ActionUtil.copyFrom(this, "ChangesView.Diff");
   }
 
-  @Override
-  public boolean isEnabled() {
-    return true;
+  public void update(final AnActionEvent e) {
+    e.getPresentation().setEnabled(myLineStatusTracker.isValid());
   }
 
   @Override
@@ -48,6 +52,7 @@ public class ShowLineStatusRangeDiffAction extends BaseLineStatusRangeAction {
     DiffManager.getInstance().showDiff(e.getProject(), createDiffData());
   }
 
+  @NotNull
   private DiffRequest createDiffData() {
     Range range = expand(myRange, myLineStatusTracker.getDocument(), myLineStatusTracker.getVcsDocument());
 

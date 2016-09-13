@@ -19,17 +19,24 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.DumbAwareAction;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.StringSelection;
 
-public class CopyLineStatusRangeAction extends BaseLineStatusRangeAction {
-  CopyLineStatusRangeAction(final LineStatusTracker lineStatusTracker, final Range range) {
-    super(lineStatusTracker, range);
+public class CopyLineStatusRangeAction extends DumbAwareAction {
+  private final LineStatusTracker myLineStatusTracker;
+  private final Range myRange;
+
+  CopyLineStatusRangeAction(@NotNull LineStatusTracker lineStatusTracker, @NotNull Range range) {
+    myLineStatusTracker = lineStatusTracker;
+    myRange = range;
     ActionUtil.copyFrom(this, IdeActions.ACTION_COPY);
   }
 
-  public boolean isEnabled() {
-    return Range.DELETED == myRange.getType() || Range.MODIFIED == myRange.getType();
+  public void update(final AnActionEvent e) {
+    boolean enabled = Range.DELETED == myRange.getType() || Range.MODIFIED == myRange.getType();
+    e.getPresentation().setEnabled(myLineStatusTracker.isValid() && enabled);
   }
 
   public void actionPerformed(final AnActionEvent e) {
