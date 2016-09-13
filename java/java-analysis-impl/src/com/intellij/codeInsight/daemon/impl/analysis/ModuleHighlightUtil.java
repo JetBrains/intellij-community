@@ -24,7 +24,6 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.module.impl.scopes.ModulesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.TextRange;
@@ -73,7 +72,7 @@ public class ModuleHighlightUtil {
     Module module = ModuleUtilCore.findModuleForPsiElement(element);
     if (module != null) {
       Project project = file.getProject();
-      Collection<VirtualFile> others = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, new ModulesScope(module));
+      Collection<VirtualFile> others = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, module.getModuleScope(false));
       if (others.size() > 1) {
         String message = JavaErrorMessages.message("module.file.duplicate");
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(element)).description(message).create();
@@ -223,7 +222,7 @@ public class ModuleHighlightUtil {
         Module module = ModuleUtilCore.findModuleForPsiElement(refElement);
         if (module != null) {
           String packageName = ((PsiPackage)target).getQualifiedName();
-          PsiDirectory[] directories = ((PsiPackage)target).getDirectories(new ModulesScope(module));
+          PsiDirectory[] directories = ((PsiPackage)target).getDirectories(module.getModuleScope(false));
           if (directories.length == 0) {
             String message = JavaErrorMessages.message("package.not.found", packageName);
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).description(message).create();

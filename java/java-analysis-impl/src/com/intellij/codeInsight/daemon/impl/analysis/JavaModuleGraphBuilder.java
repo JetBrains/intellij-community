@@ -18,7 +18,6 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.impl.scopes.ModulesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -63,7 +62,7 @@ public class JavaModuleGraphBuilder {
   private static Graph<PsiJavaModule> build(Project project) {
     Set<PsiJavaModule> projectModules = ContainerUtil.newHashSet();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
-      Collection<VirtualFile> files = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, new ModulesScope(module));
+      Collection<VirtualFile> files = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, module.getModuleScope(false));
       if (files.size() > 1) return null;  // aborts the process when there are incorrect modules in the project
       VirtualFile vFile = ContainerUtil.getFirstItem(files);
       if (vFile != null) {
