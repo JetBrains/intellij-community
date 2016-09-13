@@ -730,11 +730,6 @@ public abstract class LineStatusTrackerBase {
   }
 
   @CalledWithWriteLock
-  public void rollbackAllChanges() {
-    rollbackChanges(myRanges);
-  }
-
-  @CalledWithWriteLock
   private void runBulkRollback(@NotNull Runnable task) {
     myApplication.assertWriteAccessAllowed();
     if (!tryValidate()) return;
