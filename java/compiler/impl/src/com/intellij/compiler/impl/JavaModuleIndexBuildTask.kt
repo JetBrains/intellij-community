@@ -23,7 +23,6 @@ import com.intellij.openapi.compiler.CompileTask
 import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.impl.scopes.ModulesScope
 import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.util.containers.ContainerUtil
@@ -37,7 +36,7 @@ class JavaModuleIndexBuildTask : CompileTask {
     val map = runReadAction {
       val map = mutableMapOf<String, String?>()
       for (module in ModuleManager.getInstance(project).modules) {
-        val files = FilenameIndex.getVirtualFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, ModulesScope(module))
+        val files = FilenameIndex.getVirtualFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, module.getModuleScope(false))
         if (files.size > 1) {
           val message = IdeBundle.message("compiler.multiple.module.descriptors", module.name)
           context.addMessage(CompilerMessageCategory.ERROR, message, null, 0, 0)
