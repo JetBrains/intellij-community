@@ -71,13 +71,6 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
            ((PsiReferenceExpression)right).resolve() == parameters[1];
   }
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Use Comparator combinators";
-  }
-
   static class ReplaceWithComparatorFix implements LocalQuickFix {
 
     @Nls
