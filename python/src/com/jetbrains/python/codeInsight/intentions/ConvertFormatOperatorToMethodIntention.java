@@ -236,9 +236,13 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
     if (languageLevel.isOlderThan(LanguageLevel.PYTHON26)) {
       return false;
     }
-    if (binaryExpression.getLeftExpression() instanceof PyStringLiteralExpression && binaryExpression.getOperator() == PyTokenTypes.PERC) {
-      setText(PyBundle.message("INTN.replace.with.method"));
-      return true;
+    if (binaryExpression.getLeftExpression() instanceof PyStringLiteralExpression 
+        && binaryExpression.getOperator() == PyTokenTypes.PERC) {
+      final PyStringLiteralExpression str = (PyStringLiteralExpression)binaryExpression.getLeftExpression();
+      if (!(str.getText().length() > 0 && Character.toUpperCase(str.getText().charAt(0)) == 'B')) {
+        setText(PyBundle.message("INTN.replace.with.method"));
+        return true;        
+      }
     }
     return false;
   }
