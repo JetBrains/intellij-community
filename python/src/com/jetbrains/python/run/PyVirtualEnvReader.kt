@@ -18,6 +18,7 @@ package com.jetbrains.python.run
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.EnvironmentUtil
+import com.intellij.util.LineSeparator
 import java.io.File
 
 /**
@@ -45,7 +46,7 @@ class PyVirtualEnvReader(virtualEnvSdkPath: String) : EnvironmentUtil.ShellEnvRe
       FileUtil.appendToFile(activateFile, "\n\nset")
       val command = listOf<String>(activateFile.path, ">", envFile.absolutePath)
 
-      return runProcessAndReadEnvs(command, envFile, "\r\n")
+      return runProcessAndReadEnvs(command, envFile, LineSeparator.CRLF.separatorString)
     }
     finally {
       FileUtil.delete(activateFile)
