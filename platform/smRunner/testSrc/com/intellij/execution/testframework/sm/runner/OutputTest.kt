@@ -22,7 +22,9 @@ import com.intellij.openapi.util.Disposer
 class OutputTest : BaseSMTRunnerTestCase() {
   fun testBeforeAfterOrder() {
     val suite = createTestProxy("parent")
+    suite.setTreeBuildBeforeStart()
     val child = createTestProxy("child", suite)
+    child.setTreeBuildBeforeStart()
 
     suite.addStdOutput("before test started\n", ProcessOutputTypes.STDOUT)
     child.setStarted()
@@ -42,7 +44,9 @@ class OutputTest : BaseSMTRunnerTestCase() {
 
   fun testBeforeAfterFailedOrder() {
     val suite = createTestProxy("parent")
+    suite.setTreeBuildBeforeStart()
     val child = createTestProxy("child", suite)
+    child.setTreeBuildBeforeStart()
 
     suite.addStdOutput("before test started\n", ProcessOutputTypes.STDOUT)
     child.setStarted()
@@ -62,7 +66,9 @@ class OutputTest : BaseSMTRunnerTestCase() {
 
   fun testBeforeAfterOrderWhenFlushed() {
     val suite = createTestProxy("parent")
+    suite.setTreeBuildBeforeStart()
     val child = createTestProxy("child", suite)
+    child.setTreeBuildBeforeStart()
 
     try {
       suite.addStdOutput("before test started\n", ProcessOutputTypes.STDOUT)
