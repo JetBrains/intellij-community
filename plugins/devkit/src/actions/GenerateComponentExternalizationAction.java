@@ -105,7 +105,7 @@ public class GenerateComponentExternalizationAction extends AnAction {
   }
 
   @Nullable
-  private PsiClass getComponentInContext(DataContext context) {
+  private static PsiClass getComponentInContext(DataContext context) {
     Editor editor = CommonDataKeys.EDITOR.getData(context);
     Project project = CommonDataKeys.PROJECT.getData(context);
     if (editor == null || project == null) return null;
@@ -120,11 +120,12 @@ public class GenerateComponentExternalizationAction extends AnAction {
       return null;
     }
 
-    PsiClass componentClass = JavaPsiFacade.getInstance(file.getProject()).findClass(BASE_COMPONENT, file.getResolveScope());
+    final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(file.getProject());
+    PsiClass componentClass = javaPsiFacade.findClass(BASE_COMPONENT, file.getResolveScope());
     if (componentClass == null || !contextClass.isInheritor(componentClass, true)) return null;
 
-    PsiClass externClass = JavaPsiFacade.getInstance(file.getProject()).findClass(PERSISTENCE_STATE_COMPONENT, file.getResolveScope());
-    if (externClass == null || contextClass.isInheritor(externClass, true)) return null;
+    PsiClass persistenceStateComponentClass = javaPsiFacade.findClass(PERSISTENCE_STATE_COMPONENT, file.getResolveScope());
+    if (persistenceStateComponentClass == null || contextClass.isInheritor(persistenceStateComponentClass, true)) return null;
 
 
     return contextClass;
@@ -135,8 +136,7 @@ public class GenerateComponentExternalizationAction extends AnAction {
     final PsiClass target = getComponentInContext(e.getDataContext());
 
     final Presentation presentation = e.getPresentation();
-    presentation.setEnabled(target != null);
-    presentation.setVisible(target != null);
+    presentation.setEnabledAndVisible(target != null);
   }
 }
 
