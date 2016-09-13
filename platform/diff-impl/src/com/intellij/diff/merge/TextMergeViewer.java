@@ -58,9 +58,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.ex.LineStatusMarkerPopup;
-import com.intellij.openapi.vcs.ex.LineStatusMarkerRenderer;
-import com.intellij.openapi.vcs.ex.LineStatusTrackerBase;
+import com.intellij.openapi.vcs.ex.*;
 import com.intellij.openapi.vcs.ex.Range;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
@@ -1275,13 +1273,19 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
         final MyShowPrevChangeMarkerAction localShowPrevAction = new MyShowPrevChangeMarkerAction(myRange);
         final MyShowNextChangeMarkerAction localShowNextAction = new MyShowNextChangeMarkerAction(myRange);
+        final ShowLineStatusRangeDiffAction showDiff = new ShowLineStatusRangeDiffAction(myTracker, myRange, myEditor);
+        final CopyLineStatusRangeAction copyRange = new CopyLineStatusRangeAction(myTracker, myRange);
 
         group.add(localShowPrevAction);
         group.add(localShowNextAction);
+        group.add(showDiff);
+        group.add(copyRange);
 
         JComponent editorComponent = myEditor.getComponent();
-        localShowPrevAction.registerCustomShortcutSet(localShowPrevAction.getShortcutSet(), editorComponent);
-        localShowNextAction.registerCustomShortcutSet(localShowNextAction.getShortcutSet(), editorComponent);
+        DiffUtil.registerAction(localShowPrevAction, editorComponent);
+        DiffUtil.registerAction(localShowNextAction, editorComponent);
+        DiffUtil.registerAction(showDiff, editorComponent);
+        DiffUtil.registerAction(copyRange, editorComponent);
 
         final List<AnAction> actionList = ActionUtil.getActions(editorComponent);
         Disposer.register(parentDisposable, new Disposable() {
@@ -1289,6 +1293,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
           public void dispose() {
             actionList.remove(localShowPrevAction);
             actionList.remove(localShowNextAction);
+            actionList.remove(showDiff);
+            actionList.remove(copyRange);
           }
         });
 
