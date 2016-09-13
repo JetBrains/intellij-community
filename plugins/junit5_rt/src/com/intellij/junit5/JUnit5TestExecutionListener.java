@@ -19,6 +19,7 @@ import com.intellij.junit4.ExpectedPatterns;
 import com.intellij.rt.execution.junit.ComparisonFailureData;
 import com.intellij.rt.execution.junit.MapSerializerUtil;
 import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.engine.reporting.ReportEntry;
 import org.junit.platform.engine.support.descriptor.JavaClassSource;
 import org.junit.platform.engine.support.descriptor.JavaMethodSource;
 import org.junit.platform.launcher.TestExecutionListener;
@@ -51,6 +52,14 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   public JUnit5TestExecutionListener(PrintStream printStream) {
     myPrintStream = printStream;
     myPrintStream.println("##teamcity[enteredTheMatrix]");
+  }
+
+  @Override
+  public void reportingEntryPublished(TestIdentifier testIdentifier, ReportEntry entry) {
+    StringBuilder builder = new StringBuilder();
+    builder.append("timestamp = ").append(entry.getTimestamp());
+    entry.getKeyValuePairs().forEach((key, value) -> builder.append(", ").append(key).append(" = ").append(value));
+    myPrintStream.println(builder.toString());
   }
 
   @Override
@@ -100,6 +109,11 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
 
   private static String idAndName(TestIdentifier testIdentifier, String displayName) {
     return " id=\'" + testIdentifier.getUniqueId().toString() + "\' name=\'" + escapeName(displayName);
+  }
+
+  @Override
+  public void dynamicTestRegistered(TestIdentifier testIdentifier) {
+    int i = 0;
   }
 
   @Override
