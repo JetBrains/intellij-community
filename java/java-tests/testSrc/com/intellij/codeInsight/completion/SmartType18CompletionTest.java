@@ -146,6 +146,8 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
 
   public void testStaticMethodReference() { doTest(false); }
 
+  public void testOuterMethodReference() { doTest(true); }
+
   public void testMethodReferenceOnAncestor() { doTest(true); }
 
   public void testNoLambdaSuggestionForGenericsFunctionalInterfaceMethod() throws Exception {

@@ -39,6 +39,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -184,11 +185,12 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
   }
 
   @NotNull
-  private static LookupElement createMethodRefOnThis(PsiType functionalInterfaceType, PsiMethod psiMethod) {
+  private static LookupElement createMethodRefOnThis(PsiType functionalInterfaceType, PsiMethod psiMethod, @Nullable PsiClass outerClass) {
+    String fullString = (outerClass == null ? "" : outerClass.getName() + ".") + "this::" + psiMethod.getName();
     return LookupElementBuilder
-      .create(psiMethod)
-      .withPresentableText("this::" + psiMethod.getName())
-      .withInsertHandler((context, item) -> context.getDocument().insertString(context.getStartOffset(), "this::"))
+      .create(psiMethod, fullString)
+      .withLookupString(psiMethod.getName())
+      .withPresentableText(fullString)
       .withTypeText(functionalInterfaceType.getPresentableText())
       .withIcon(AllIcons.Nodes.MethodReference)
       .withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
@@ -215,15 +217,23 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
                                                          PsiElement originalPosition,
                                                          PsiSubstitutor substitutor, PsiType expectedReturnType) {
     List<LookupElement> result = new ArrayList<>();
-    final PsiClass psiClass = PsiTreeUtil.getParentOfType(originalPosition, PsiClass.class);
-    if (psiClass != null) {
+
+    Iterable<PsiClass> instanceClasses = JBIterable
+      .generate(originalPosition, PsiElement::getParent)
+      .filter(PsiMember.class)
+      .takeWhile(m -> !m.hasModifierProperty(PsiModifier.STATIC))
+      .filter(PsiClass.class);
+
+    boolean first = true;
+    for (PsiClass psiClass : instanceClasses) {
       for (PsiMethod psiMethod : psiClass.getMethods()) {
         if (!psiMethod.hasModifierProperty(PsiModifier.STATIC) &&
             hasAppropriateReturnType(expectedReturnType, psiMethod) &&
             areParameterTypesAppropriate(psiMethod, params, substitutor, 0)) {
-          result.add(createMethodRefOnThis(functionalInterfaceType, psiMethod));
+          result.add(createMethodRefOnThis(functionalInterfaceType, psiMethod, first ? null : psiClass));
         }
       }
+      first = false;
     }
     return result;
   }
