@@ -278,7 +278,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
     }
   }
 
-  private final static String getSchemeDisplayName(@NotNull String schemeName) {
+  private static String getSchemeDisplayName(@NotNull String schemeName) {
     return 
       schemeName.startsWith(DefaultColorsScheme.EDITABLE_COPY_PREFIX) ? 
       schemeName.substring(DefaultColorsScheme.EDITABLE_COPY_PREFIX.length()) : 
