@@ -144,9 +144,9 @@ class NewPropertyAction extends AnAction {
                                              null,
                                              nameValidator);
       keyToInsert = keyNameAndInsertPlaceModification.getFirst();
-      final Boolean insertAfterSelecterProperty = keyNameAndInsertPlaceModification.getSecond();
-      PropertiesComponent.getInstance().setValue(ADD_NEW_PROPERTY_AFTER_SELECTED_PROP, insertAfterSelecterProperty, false);
-      anchor = insertAfterSelecterProperty ? selectedProperty : null;
+      final Boolean insertAfterSelectedProperty = keyNameAndInsertPlaceModification.getSecond();
+      PropertiesComponent.getInstance().setValue(ADD_NEW_PROPERTY_AFTER_SELECTED_PROP, insertAfterSelectedProperty, false);
+      anchor = insertAfterSelectedProperty ? selectedProperty : null;
     }
     if (keyToInsert != null) {
       final ResourceBundlePropertiesUpdateManager updateManager = resourceBundleEditor.getPropertiesInsertDeleteManager();
