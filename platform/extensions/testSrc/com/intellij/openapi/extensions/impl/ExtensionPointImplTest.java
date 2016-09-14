@@ -24,6 +24,7 @@ import org.junit.After;
 import org.junit.Test;
 import org.picocontainer.defaults.DefaultPicoContainer;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static org.hamcrest.Matchers.*;
@@ -246,6 +247,20 @@ public class ExtensionPointImplTest {
     extensionPoint.getExtensions();
     assertThat(extensions, contains("first", "second", ""));
     assertThat(ourTestLog.errors(), empty());
+  }
+
+  @Test
+  public void clientsCannotModifyCachedExtensions() {
+    ExtensionPoint<Integer> extensionPoint = buildExtensionPoint(Integer.class);
+    extensionPoint.registerExtension(4);
+    extensionPoint.registerExtension(2);
+
+    Integer[] extensions = extensionPoint.getExtensions();
+    assertEquals(ContainerUtil.newArrayList(4, 2), Arrays.asList(extensions));
+    Arrays.sort(extensions);
+    assertEquals(ContainerUtil.newArrayList(2, 4), Arrays.asList(extensions));
+
+    assertEquals(ContainerUtil.newArrayList(4, 2), Arrays.asList(extensionPoint.getExtensions()));
   }
 
   private static <T> ExtensionPoint<T> buildExtensionPoint(Class<T> aClass) {
