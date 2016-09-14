@@ -36,16 +36,15 @@ public interface Filter {
   Filter[] EMPTY_ARRAY = new Filter[0];
 
   class Result extends ResultItem {
-
     private static final Map<TextAttributesKey, TextAttributes> GRAYED_BY_NORMAL_CACHE = ContainerUtil.newConcurrentMap(2);
     static {
-      EditorColorsManager.getInstance().addEditorColorsListener(new EditorColorsListener() {
+      ApplicationManager.getApplication().getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
         @Override
         public void globalSchemeChange(EditorColorsScheme scheme) {
           // invalidate cache on Appearance Theme/Editor Scheme change
           GRAYED_BY_NORMAL_CACHE.clear();
         }
-      }, ApplicationManager.getApplication());
+      });
     }
 
     protected NextAction myNextAction = NextAction.EXIT;

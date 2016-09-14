@@ -1208,7 +1208,9 @@ public class FileUtil extends FileUtilRt {
       char c = name.charAt(i);
       boolean appendReplacement = true;
       if (c > 0 && c < 255) {
-        if (strict ? Character.isLetterOrDigit(c) || c == '_' : Character.isJavaIdentifierPart(c) || c == ' ' || c == '@' || c == '-') {
+        if (strict
+            ? (Character.isLetterOrDigit(c) || (c == '_'))
+            : (Character.isJavaIdentifierPart(c) || (c == ' ') || (c == '@') || (c == '-'))) {
           continue;
         }
       }

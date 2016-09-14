@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.coverage;
 
 import com.intellij.CommonBundle;
@@ -18,7 +33,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.colors.EditorColorsAdapter;
+import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
@@ -92,14 +107,14 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   private final Object ANNOTATORS_LOCK = new Object();
   private final Map<Editor, SrcFileAnnotator> myAnnotators = new HashMap<>();
 
-  public CoverageDataManagerImpl(final Project project) {
+  public CoverageDataManagerImpl(@NotNull Project project) {
     myProject = project;
-    EditorColorsManager.getInstance().addEditorColorsListener(new EditorColorsAdapter() {
+    project.getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
       @Override
       public void globalSchemeChange(EditorColorsScheme scheme) {
         chooseSuitesBundle(myCurrentSuitesBundle);
       }
-    }, project);
+    });
     addSuiteListener(new CoverageViewSuiteListener(this, myProject), myProject);
   }
 

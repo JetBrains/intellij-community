@@ -18,13 +18,11 @@ package com.intellij.openapi.editor.colors.impl;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.ui.LafManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -39,7 +37,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ComponentTreeEventDispatcher;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.JdomKt;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.UIUtil;
@@ -66,7 +63,6 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   @NonNls private static final String SCHEME_NODE_NAME = "scheme";
   private static final String DEFAULT_NAME = "Default";
 
-  private final EventDispatcher<EditorColorsListener> myDispatcher = EventDispatcher.create(EditorColorsListener.class);
   private final ComponentTreeEventDispatcher<EditorColorsListener> myTreeDispatcher = ComponentTreeEventDispatcher.create(EditorColorsListener.class);
 
   private final DefaultColorSchemesManager myDefaultColorSchemeManager;
@@ -178,14 +174,13 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   }
 
   public void schemeChangedOrSwitched(@Nullable EditorColorsScheme newScheme) {
-    EditorFactory.getInstance().refreshAllEditors();
     // refreshAllEditors is not enough - for example, change "Errors and warnings -> Typo" from green (default) to red
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       DaemonCodeAnalyzer.getInstance(project).restart();
     }
 
     // we need to push events to components that use editor font, e.g. HTML editor panes
-    myDispatcher.getMulticaster().globalSchemeChange(newScheme);
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).globalSchemeChange(newScheme);
     myTreeDispatcher.getMulticaster().globalSchemeChange(newScheme);
   }
 
@@ -304,21 +299,6 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   @Override
   public EditorColorsScheme getScheme(@NotNull String schemeName) {
     return mySchemeManager.findSchemeByName(schemeName);
-  }
-
-  @Override
-  public void addEditorColorsListener(@NotNull EditorColorsListener listener) {
-    myDispatcher.addListener(listener);
-  }
-
-  @Override
-  public void addEditorColorsListener(@NotNull EditorColorsListener listener, @NotNull Disposable disposable) {
-    myDispatcher.addListener(listener, disposable);
-  }
-
-  @Override
-  public void removeEditorColorsListener(@NotNull EditorColorsListener listener) {
-    myDispatcher.removeListener(listener);
   }
 
   @Override

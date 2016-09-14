@@ -142,16 +142,16 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     myDispatcher.removeListener(listener);
   }
 
-  public DebuggerManagerImpl(Project project, StartupManager startupManager, EditorColorsManager colorsManager) {
+  public DebuggerManagerImpl(Project project, StartupManager startupManager) {
     myProject = project;
     myBreakpointManager = new BreakpointManager(myProject, startupManager, this);
     if (!project.isDefault()) {
-      colorsManager.addEditorColorsListener(new EditorColorsListener() {
+      project.getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
         @Override
         public void globalSchemeChange(EditorColorsScheme scheme) {
           getBreakpointManager().updateBreakpointsUI();
         }
-      }, project);
+      });
     }
   }
 
