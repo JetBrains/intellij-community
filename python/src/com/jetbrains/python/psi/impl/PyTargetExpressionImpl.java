@@ -215,6 +215,16 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   }
 
   @Nullable
+  @Override
+  public PyAnnotation getAnnotation() {
+    final PsiElement parent = getParent();
+    if (parent instanceof PyAssignmentStatement || parent instanceof PyTypeDeclarationStatement) {
+      return ((PyAnnotationOwner)parent).getAnnotation();
+    }
+    return null;
+  }
+
+  @Nullable
   private static PyType getWithItemVariableType(TypeEvalContext context, PyWithItem item) {
     final PyExpression expression = item.getExpression();
     if (expression != null) {

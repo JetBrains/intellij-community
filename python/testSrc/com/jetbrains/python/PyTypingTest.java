@@ -711,7 +711,22 @@ public class PyTypingTest extends PyTestCase {
            "    sublist = x[0]\n" +
            "    expr = sublist[0]\n");
   }
-  
+
+  public void testLocalVariableAnnotation() {
+    doTest("int",
+           "def f():\n" +
+           "    x: int = undefined()\n" +
+           "    expr = x");
+  }
+
+  public void testInstanceAttributeAnnotation() {
+    doTest("int",
+           "class C:\n" +
+           "    attr: int\n" +
+           "    \n" +
+           "expr = C().attr");
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
