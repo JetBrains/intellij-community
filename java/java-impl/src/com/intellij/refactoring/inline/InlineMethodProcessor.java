@@ -132,11 +132,12 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     if (myReference != null) {
       usages.add(new UsageInfo(myReference));
     }
-    for (PsiReference reference : ReferencesSearch.search(myMethod)) {
+    GlobalSearchScope searchScope = GlobalSearchScope.projectScope(myProject);
+    for (PsiReference reference : ReferencesSearch.search(myMethod, searchScope)) {
       usages.add(new UsageInfo(reference.getElement()));
     }
 
-    OverridingMethodsSearch.search(myMethod, false).forEach(method -> {
+    OverridingMethodsSearch.search(myMethod, searchScope, false).forEach(method -> {
       if (AnnotationUtil.isAnnotated(method, Override.class.getName(), false)) {
         usages.add(new UsageInfo(method));
       }
@@ -159,7 +160,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       if (mySearchForTextOccurrences) {
         String stringToSearch = ElementDescriptionUtil.getElementDescription(myMethod, NonCodeSearchDescriptionLocation.NON_JAVA);
         TextOccurrencesUtil
-          .addTextOccurences(myMethod, stringToSearch, GlobalSearchScope.projectScope(myProject), usages, infoFactory);
+          .addTextOccurences(myMethod, stringToSearch, searchScope, usages, infoFactory);
       }
     }
 

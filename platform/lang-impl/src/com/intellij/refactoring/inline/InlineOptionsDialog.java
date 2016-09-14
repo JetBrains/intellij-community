@@ -75,7 +75,7 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
     new RadioUpDownListener(myRbInlineAll, myRbInlineThisOnly);
 
     myRbInlineThisOnly.setEnabled(myInvokedOnReference);
-    final boolean writable = myElement.isWritable();
+    final boolean writable = allowInlineAll();
     myRbInlineAll.setEnabled(writable);
     if(myInvokedOnReference) {
       if (canInlineThisOnly()) {
@@ -110,6 +110,10 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
       }
     );
     return optionsPanel;
+  }
+
+  protected boolean allowInlineAll() {
+    return myElement.isWritable();
   }
 
   protected abstract String getNameLabelText();
