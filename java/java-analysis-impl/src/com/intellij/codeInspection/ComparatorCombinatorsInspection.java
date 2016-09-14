@@ -16,20 +16,23 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.MethodUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Objects;
 
 public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectionTool {
+  private static final Logger LOG = Logger.getInstance("#" + ComparatorCombinatorsInspection.class.getName());
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
@@ -40,7 +43,7 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
         super.visitLambdaExpression(lambda);
         PsiType type = lambda.getFunctionalInterfaceType();
         if(type instanceof PsiClassType && ((PsiClassType)type).rawType().equalsToText(CommonClassNames.JAVA_UTIL_COMPARATOR)) {
-          PsiElement body = lambda.getBody();
+          PsiElement body = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
           if(body instanceof PsiMethodCallExpression) {
             PsiMethodCallExpression methodCall = (PsiMethodCallExpression)body;
             PsiExpression[] args = methodCall.getArgumentList().getExpressions();
@@ -80,40 +83,24 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
   }
 
   private static boolean areEquivalent(PsiParameter[] parameters, PsiExpression left, PsiExpression right) {
-    if(left == null && right == null) return true;
-    if(left instanceof PsiMethodCallExpression && right instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression leftCall = (PsiMethodCallExpression)left;
-      PsiMethodCallExpression rightCall = (PsiMethodCallExpression)right;
-      PsiMethod leftMethod = leftCall.resolveMethod();
-      PsiMethod rightMethod = rightCall.resolveMethod();
-      if(leftMethod == null || leftMethod != rightMethod) return false;
-      PsiExpression[] leftArgs = leftCall.getArgumentList().getExpressions();
-      PsiExpression[] rightArgs = rightCall.getArgumentList().getExpressions();
-      return leftArgs.length == rightArgs.length &&
-             areEquivalent(parameters, leftCall.getMethodExpression(), rightCall.getMethodExpression()) &&
-             !StreamEx.zip(leftArgs, rightArgs, (leftArg, rightArg) -> areEquivalent(parameters, leftArg, rightArg)).has(Boolean.FALSE);
+    if (PsiTreeUtil.collectElements(left, e -> e instanceof PsiReferenceExpression &&
+                                               ((PsiReferenceExpression)e).resolve() == parameters[1]).length != 0 ||
+        PsiTreeUtil.collectElements(right, e -> e instanceof PsiReferenceExpression &&
+                                                ((PsiReferenceExpression)e).resolve() == parameters[0]).length != 0) {
+      return false;
     }
-    if(left instanceof PsiReferenceExpression && right instanceof PsiReferenceExpression) {
-      PsiReferenceExpression leftRef = (PsiReferenceExpression)left;
-      PsiReferenceExpression rightRef = (PsiReferenceExpression)right;
-      PsiElement leftElement = leftRef.resolve();
-      PsiElement rightElement = rightRef.resolve();
-      if(leftElement instanceof PsiParameter) {
-        return leftElement == parameters[0] && rightElement == parameters[1];
-      }
-      if(leftElement != rightElement) return false;
-      PsiType[] leftTypes = leftRef.getTypeParameters();
-      PsiType[] rightTypes = leftRef.getTypeParameters();
-      return leftTypes.length == rightTypes.length && !StreamEx.zip(leftTypes, rightTypes, Objects::equals).has(Boolean.FALSE)
-        && areEquivalent(parameters, leftRef.getQualifierExpression(), rightRef.getQualifierExpression());
+    PsiExpression copy = (PsiExpression)right.copy();
+    PsiElement[] rightRefs = PsiTreeUtil.collectElements(copy, e -> e instanceof PsiReferenceExpression &&
+                                                                   ((PsiReferenceExpression)e).resolve() == parameters[1]);
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(left.getProject());
+    String paramName = parameters[0].getName();
+    if(paramName== null) return false;
+    for(PsiElement ref : rightRefs) {
+      PsiElement nameElement = ((PsiReferenceExpression)ref).getReferenceNameElement();
+      LOG.assertTrue(nameElement != null);
+      nameElement.replace(factory.createIdentifier(paramName));
     }
-    if(left instanceof PsiTypeCastExpression && right instanceof PsiTypeCastExpression) {
-      PsiTypeCastExpression leftCast = (PsiTypeCastExpression)left;
-      PsiTypeCastExpression rightCast = (PsiTypeCastExpression)right;
-      return leftCast.getCastType() == rightCast.getCastType() &&
-             areEquivalent(parameters, leftCast.getOperand(), rightCast.getOperand());
-    }
-    return false;
+    return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(left, copy);
   }
 
   static class ReplaceWithComparatorFix implements LocalQuickFix {
@@ -142,7 +129,7 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
       PsiElement element = descriptor.getStartElement();
       if (!(element instanceof PsiLambdaExpression)) return;
       PsiLambdaExpression lambda = (PsiLambdaExpression)element;
-      PsiElement body = lambda.getBody();
+      PsiElement body = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
       if (!(body instanceof PsiMethodCallExpression)) return;
       PsiMethodCallExpression methodCall = (PsiMethodCallExpression)body;
       PsiExpression keyExtractor = null;
