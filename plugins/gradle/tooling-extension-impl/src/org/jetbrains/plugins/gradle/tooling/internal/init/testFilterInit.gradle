@@ -92,7 +92,7 @@ gradle.taskGraph.beforeTask { Task task ->
   }
 }
 
-static def logTestEvent(def testEventType, TestDescriptorInternal testDescriptor, def testEvent, def testResult) {
+static def logTestEvent(testEventType, TestDescriptorInternal testDescriptor, testEvent, testResult) {
   def writer = new StringWriter()
   def xml = new MarkupBuilder(writer)
   xml.event(type: testEventType){
@@ -110,26 +110,34 @@ static def logTestEvent(def testEventType, TestDescriptorInternal testDescriptor
         def errorMsg = escapeCdata(testResult.exception?.message?:'')
         def stackTrace = escapeCdata(getStackTrace(testResult.exception))
         result(resultType: testResult.resultType ?: '', startTime: testResult.startTime, endTime: testResult.endTime){
-          if(testResult.exception?.message?.trim()) xml.mkp.yieldUnescaped("<errorMsg>$errorMsg</errorMsg>")
-          if(testResult.exception) xml.mkp.yieldUnescaped("<stackTrace>$stackTrace</stackTrace>")
+          def exception = testResult.exception
+          if(exception?.message?.trim()) xml.mkp.yieldUnescaped("<errorMsg>$errorMsg</errorMsg>")
+          if(exception) xml.mkp.yieldUnescaped("<stackTrace>$stackTrace</stackTrace>")
 
-          if('junit.framework.ComparisonFailure'.equals(testResult.exception?.class?.name) ||
-             'org.junit.ComparisonFailure'.equals(testResult.exception?.class?.name)) {
-            def expected = escapeCdata(testResult.exception.fExpected)
-            def actual = escapeCdata(testResult.exception.fActual)
+          if('junit.framework.ComparisonFailure'.equals(exception?.class?.name) ||
+             'org.junit.ComparisonFailure'.equals(exception?.class?.name)) {
+            def expected = escapeCdata(exception.fExpected)
+            def actual = escapeCdata(exception.fActual)
             failureType('comparison')
             xml.mkp.yieldUnescaped("<expected>$expected</expected>")
             xml.mkp.yieldUnescaped("<actual>$actual</actual>")
             return
           }
           try {
-            if ('com.intellij.rt.execution.junit.FileComparisonFailure'.equals(testResult.exception?.class?.name)) {
-              def expected = escapeCdata(testResult.exception.expected)
-              def actual = escapeCdata(testResult.exception.actual)
-              def filePath = escapeCdata(testResult.exception.filePath)
+            def fileComparisonFailure
+            if ('com.intellij.rt.execution.junit.FileComparisonFailure'.equals(exception?.class?.name)) {
+              fileComparisonFailure = exception
+            } else if ('com.intellij.rt.execution.junit.FileComparisonFailure'.equals(exception?.cause?.class?.name)) {
+              fileComparisonFailure = exception.cause
+            }
+
+            if (fileComparisonFailure) {
+              def expected = escapeCdata(fileComparisonFailure.expected)
+              def actual = escapeCdata(fileComparisonFailure.actual)
+              def filePath = escapeCdata(fileComparisonFailure.filePath)
               def actualFilePath
-              if (testResult.exception.hasProperty('actualFilePath')) {
-                actualFilePath = escapeCdata(testResult.exception.actualFilePath)
+              if (exception.hasProperty('actualFilePath')) {
+                actualFilePath = escapeCdata(fileComparisonFailure.actualFilePath)
               }
               failureType('comparison')
               xml.mkp.yieldUnescaped("<expected>$expected</expected>")
@@ -141,8 +149,7 @@ static def logTestEvent(def testEventType, TestDescriptorInternal testDescriptor
           }
           catch (ignore) {
           }
-          if ('junit.framework.AssertionFailedError'.equals(testResult.exception?.class?.name) ||
-                    testResult.exception instanceof AssertionError) {
+          if ('junit.framework.AssertionFailedError'.equals(exception?.class?.name) || exception instanceof AssertionError) {
             failureType('assertionFailed')
             return
           }
