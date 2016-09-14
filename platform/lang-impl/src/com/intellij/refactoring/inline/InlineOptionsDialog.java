@@ -133,7 +133,7 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
     final String name = nameIdentifierOwner.getName();
     final boolean isCheapToSearch =
      name != null && searchHelper.isCheapEnoughToSearch(name, scope, null, progressManager.getProgressIndicator()) != PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
-    return isCheapToSearch ? ReferencesSearch.search(nameIdentifierOwner).findAll().size() : - 1;
+    return isCheapToSearch ? ReferencesSearch.search(nameIdentifierOwner, scope).findAll().size() : - 1;
   }
 
 }
