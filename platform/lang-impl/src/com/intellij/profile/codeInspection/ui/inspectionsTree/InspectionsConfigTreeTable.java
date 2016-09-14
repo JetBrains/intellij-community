@@ -205,6 +205,21 @@ public class InspectionsConfigTreeTable extends TreeTable {
     public abstract void updateRightPanel();
   }
 
+  public static void setToolEnabled(boolean newState,
+                                    @NotNull InspectionProfileImpl profile,
+                                    @NotNull String toolId,
+                                    @NotNull Project project) {
+    if (newState) {
+      profile.enableTool(toolId, project);
+    }
+    else {
+      profile.disableTool(toolId, project);
+    }
+    for (ScopeToolState scopeToolState : profile.getTools(toolId, project).getTools()) {
+      scopeToolState.setEnabled(newState);
+    }
+  }
+
   private static class InspectionsConfigTreeTableModel extends DefaultTreeModel implements TreeTableModel {
 
     private final InspectionsConfigTreeTableSettings mySettings;
@@ -303,7 +318,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
       final boolean doEnable = (Boolean) aValue;
       final InspectionProfileImpl profile = mySettings.getInspectionProfile();
       for (final InspectionConfigTreeNode aNode : InspectionsAggregationUtil.getInspectionsNodes((InspectionConfigTreeNode)node)) {
-        setToolEnabled(doEnable, profile, aNode.getKey());
+        setToolEnabled(doEnable, profile, aNode.getKey().toString(), mySettings.getProject());
         aNode.dropCache();
         mySettings.onChanged(aNode);
       }
@@ -337,7 +352,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
 
       final InspectionProfileImpl profile = mySettings.getInspectionProfile();
       for (HighlightDisplayKey tool : tools) {
-        setToolEnabled(newState, profile, tool);
+        setToolEnabled(newState, profile, tool.toString(), mySettings.getProject());
       }
 
       for (InspectionConfigTreeNode node : nodes) {
@@ -354,19 +369,6 @@ public class InspectionsConfigTreeTable extends TreeTable {
           myUpdateAlarm.cancelAllRequests();
           myUpdateAlarm.addRequest(myUpdateRunnable, 10, ModalityState.stateForComponent(myTreeTable));
         }
-      }
-    }
-
-    private void setToolEnabled(boolean newState, InspectionProfileImpl profile, HighlightDisplayKey tool) {
-      final String toolId = tool.toString();
-      if (newState) {
-        profile.enableTool(toolId, mySettings.getProject());
-      }
-      else {
-        profile.disableTool(toolId, mySettings.getProject());
-      }
-      for (ScopeToolState scopeToolState : profile.getTools(toolId, mySettings.getProject()).getTools()) {
-        scopeToolState.setEnabled(newState);
       }
     }
 
