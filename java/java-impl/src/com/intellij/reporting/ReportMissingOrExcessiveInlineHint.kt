@@ -95,7 +95,7 @@ class ReportMissingOrExcessiveInlineHint : AnAction() {
     ApplicationManager.getApplication().executeOnPooledThread {
       val text = file.readText()
       LOG.debug("File text $text")
-      if (StatsSender.send(text)) {
+      if (StatsSender.send(text, compress = false)) {
         file.delete()
         LOG.debug("File deleted")
       }
