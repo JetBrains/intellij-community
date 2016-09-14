@@ -22,7 +22,6 @@ import com.intellij.application.options.SkipSelfSearchComponent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
-import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.colors.impl.EmptyColorScheme;
 import com.intellij.openapi.extensions.Extensions;
@@ -169,7 +168,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
 
   private void showSaveAsDialog() {
     List<String> names = ContainerUtil.newArrayList(myOptions.getSchemeNames());
-    String selectedName = getSchemeDisplayName(myOptions.getSelectedScheme().getName());
+    String selectedName = AbstractColorsScheme.getDisplayName(myOptions.getSelectedScheme());
     SaveSchemeDialog dialog = new SaveSchemeDialog(this, ApplicationBundle.message("title.save.color.scheme.as"), names, selectedName);
     if (dialog.showAndGet()) {
       myOptions.saveSchemeAs(dialog.getSchemeName());
@@ -274,14 +273,8 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
 
     @Override
     public String toString() {
-      return getSchemeDisplayName(getSchemeName());
+      return AbstractColorsScheme.getDisplayName(myScheme);
     }
   }
-
-  private static String getSchemeDisplayName(@NotNull String schemeName) {
-    return 
-      schemeName.startsWith(DefaultColorsScheme.EDITABLE_COPY_PREFIX) ? 
-      schemeName.substring(DefaultColorsScheme.EDITABLE_COPY_PREFIX.length()) : 
-      schemeName;
-  }
+  
 }

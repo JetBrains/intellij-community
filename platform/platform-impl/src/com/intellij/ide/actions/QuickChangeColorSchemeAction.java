@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +42,7 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
                                 final EditorColorsScheme current,
                                 final EditorColorsScheme scheme,
                                 final boolean addScheme) {
-    group.add(new DumbAwareAction(scheme.getName(), "", scheme == current ? ourCurrentAction : ourNotCurrentAction) {
+    group.add(new DumbAwareAction(AbstractColorsScheme.getDisplayName(scheme), "", scheme == current ? ourCurrentAction : ourNotCurrentAction) {
       @Override
       public void actionPerformed(@Nullable AnActionEvent e) {
         if (addScheme) {

@@ -853,4 +853,12 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   public static boolean isVisible(@NotNull EditorColorsScheme scheme) {
     return !(scheme instanceof AbstractColorsScheme) || ((AbstractColorsScheme)scheme).isVisible();
   }
+  
+  public static String getDisplayName(@NotNull EditorColorsScheme scheme) {
+    String schemeName = scheme.getName();
+    return 
+      schemeName.startsWith(DefaultColorsScheme.EDITABLE_COPY_PREFIX) ? 
+      schemeName.substring(DefaultColorsScheme.EDITABLE_COPY_PREFIX.length()) : 
+      schemeName; 
+  }
 }
