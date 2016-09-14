@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.ui.layout.*
-import com.intellij.ui.layout.CCFlags.*
 import javax.swing.JCheckBox
 
 internal class IcsConfigurable : ConfigurableBase<IcsConfigurableUi, IcsSettings>("ics", icsMessage("ics.settings"), "reference.settings.ics") {
@@ -59,6 +58,6 @@ internal class IcsConfigurableUi : ConfigurableUi<IcsSettings>, Disposable {
     editors.get(0).component()
     autoSync()
     hint("Use VCS -> Sync Settings to sync when you want")
-    panel("Read-only Sources", editors.get(1).component, grow, push)
+    panel("Read-only Sources", editors.get(1).component)
   }
 }
