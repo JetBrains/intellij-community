@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
+package org.jetbrains.plugins.javaFX.resources;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;

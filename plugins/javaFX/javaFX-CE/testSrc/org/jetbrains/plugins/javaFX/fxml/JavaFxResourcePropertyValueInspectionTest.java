@@ -2,7 +2,7 @@ package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.openapi.application.PluginPathManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxResourcePropertyValueInspection;
+import org.jetbrains.plugins.javaFX.resources.JavaFxResourcePropertyValueInspection;
 
 /**
  * @author Pavel.Dolgov

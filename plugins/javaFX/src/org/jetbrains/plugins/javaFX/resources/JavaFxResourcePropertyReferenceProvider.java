@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.javaFX.fxml.refs;
+package org.jetbrains.plugins.javaFX.resources;
 
 import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.openapi.util.TextRange;
