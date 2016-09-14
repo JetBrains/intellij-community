@@ -1120,13 +1120,11 @@ public class IdeEventQueue extends EventQueue {
                                                              component -> component instanceof JTable || component instanceof JTree);
 
         if (owner instanceof JTable && ((JTable)owner).isEditing()) {
-          //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(() -> {((JTable)owner).editingCanceled(null);});
+          ((JTable)owner).editingCanceled(null);
           return true;
         }
         if (owner instanceof JTree && ((JTree)owner).isEditing()) {
-          //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(((JTree)owner)::cancelEditing);
+          ((JTree)owner).cancelEditing();
           return true;
         }
       }
