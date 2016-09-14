@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ import com.intellij.ui.content.MessageView;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MutableErrorTreeView;
 import com.intellij.util.ui.StatusText;
@@ -131,13 +130,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     root.setUserObject(myErrorViewStructure.createDescriptor(myErrorViewStructure.getRootElement(), null));
     final DefaultTreeModel treeModel = new DefaultTreeModel(root);
-    myTree = new Tree(treeModel) {
-      @Override
-      public void setRowHeight(int i) {
-        super.setRowHeight(0);
-        // this is needed in order to make UI calculate the height for each particular row
-      }
-    };
+    myTree = createTree(treeModel);
     myTree.getEmptyText().setText(IdeBundle.message("errortree.noMessages"));
     myBuilder = new ErrorViewTreeBuilder(myTree, treeModel, myErrorViewStructure);
 
@@ -178,6 +171,17 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     });
 
     EditSourceOnDoubleClickHandler.install(myTree);
+  }
+
+  @NotNull
+  protected Tree createTree(@NotNull final DefaultTreeModel treeModel) {
+    return new Tree(treeModel) {
+      @Override
+      public void setRowHeight(int i) {
+        super.setRowHeight(0);
+        // this is needed in order to make UI calculate the height for each particular row
+      }
+    };
   }
 
   protected ErrorViewStructure createErrorViewStructure(Project project, boolean canHideWarnings) {
