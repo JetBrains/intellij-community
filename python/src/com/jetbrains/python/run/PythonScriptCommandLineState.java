@@ -123,7 +123,8 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
                                          CommandLinePatcher[] patchers,
                                          PyConsoleOptions.PyConsoleSettings consoleSettings,
                                          String... statementsToExecute) {
-      super(project, sdk, consoleType, workingDir, environmentVariables, consoleSettings, statementsToExecute);
+      super(project, sdk, consoleType, workingDir, environmentVariables, consoleSettings, () -> {
+      }, statementsToExecute);
       myPatchers = patchers;
     }
 

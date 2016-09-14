@@ -68,7 +68,6 @@ import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.remote.RemoteProcess;
 import com.intellij.remote.Tunnelable;
@@ -109,7 +108,6 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.nio.charset.Charset;
 import java.util.*;
 import java.util.List;
 
@@ -131,7 +129,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   private final String myTitle;
   private final String myWorkingDir;
   private final Executor myExecutor;
-
+  private final Runnable myRunRunAction;
   @NotNull
   private Sdk mySdk;
   private GeneralCommandLine myGeneralCommandLine;
@@ -159,9 +157,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
                                 @NotNull final PyConsoleType consoleType,
                                 @Nullable final String workingDir,
                                 Map<String, String> environmentVariables,
-                                @NotNull
-                                  PyConsoleOptions.PyConsoleSettings settingsProvider,
-                                String... statementsToExecute) {
+                                @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
+                                @NotNull Runnable rerunAction, String... statementsToExecute) {
     myProject = project;
     mySdk = sdk;
     myTitle = consoleType.getTitle();
@@ -170,6 +167,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     myEnvironmentVariables = environmentVariables;
     myConsoleSettings = settingsProvider;
     myStatementsToExecute = statementsToExecute;
+    myRunRunAction = rerunAction;
     PyConsoleToolWindowExecutor toolWindowExecutor = PyConsoleToolWindowExecutor.findInstance();
     myExecutor = toolWindowExecutor != null ? toolWindowExecutor : DefaultRunExecutor.getRunExecutorInstance();
   }
@@ -306,6 +304,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     actionGroup.add(createCloseAction(contentDescriptor));
 
     ExecutionManager.getInstance(myProject).getContentManager().showRunContent(myExecutor, contentDescriptor);
+
   }
 
   private static int[] findAvailablePorts(Project project, PyConsoleType consoleType) {
@@ -919,7 +918,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
           myProcessHandler.waitFor();
         }
 
-        UIUtil.invokeLaterIfNeeded(() -> PydevConsoleRunnerImpl.this.run());
+        UIUtil.invokeLaterIfNeeded(() -> {
+
+          myRunRunAction.run();
+        });
       }
     }.queue();
   }

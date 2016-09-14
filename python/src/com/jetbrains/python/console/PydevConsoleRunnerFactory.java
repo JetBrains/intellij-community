@@ -16,6 +16,8 @@
 package com.jetbrains.python.console;
 
 import com.google.common.collect.Maps;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionId;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -107,10 +109,20 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
     }
 
     Map<String, String> envs = Maps.newHashMap(settingsProvider.getEnvs());
+    putIPythonEnvFlag(project, envs);
+
+    //The transaction is needed due the the FileDocumentManager.getInstance().saveAllDocuments() call in PydevConsoleRunnerImpl
+    Runnable rerunAction = () -> TransactionGuard.submitTransaction(project, () -> {
+      PydevConsoleRunnerImpl runner = createConsoleRunner(project, module);
+      runner.run();
+    });
+
+    return createConsoleRunner(project, sdk, workingDir, envs, PyConsoleType.PYTHON, settingsProvider, rerunAction, setupFragment);
+  }
+
+  public static void putIPythonEnvFlag(@NotNull Project project, Map<String, String> envs) {
     String ipythonEnabled = PyConsoleOptions.getInstance(project).isIpythonEnabled() ? "True" : "False";
     envs.put(PythonEnvUtil.IPYTHONENABLE, ipythonEnabled);
-    
-    return createConsoleRunner(project, sdk, workingDir, envs, PyConsoleType.PYTHON, settingsProvider, setupFragment);
   }
 
   protected PydevConsoleRunnerImpl createConsoleRunner(Project project,
@@ -119,7 +131,7 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
                                                        Map<String, String> envs,
                                                        PyConsoleType consoleType,
                                                        PyConsoleOptions.PyConsoleSettings settingsProvider,
-                                                       String... setupFragment) {
-    return new PydevConsoleRunnerImpl(project, sdk, consoleType, workingDir, envs, settingsProvider, setupFragment);
+                                                       Runnable rerunAction, String... setupFragment) {
+    return new PydevConsoleRunnerImpl(project, sdk, consoleType, workingDir, envs, settingsProvider, rerunAction, setupFragment);
   }
 }

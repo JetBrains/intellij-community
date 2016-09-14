@@ -146,7 +146,8 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     PydevConsoleRunner consoleRunner =
       new PydevConsoleRunnerImpl(project, sdk, PyConsoleType.PYTHON, myFixture.getTempDirPath(), Maps.newHashMap(),
                                  PyConsoleOptions.getInstance(project).getPythonConsoleSettings(),
-                                 new String[]{});
+                                 () -> {
+                                 }, new String[]{});
     before();
 
     myConsoleInitSemaphore = new Semaphore(0);
