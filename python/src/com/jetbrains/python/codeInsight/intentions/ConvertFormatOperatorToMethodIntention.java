@@ -34,10 +34,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeChecker;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -272,7 +269,9 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
     final String separator = getSeparator(leftExpression);
     target.append(separator).append(".format");
 
-    if (rhs instanceof PyDictLiteralExpression) target.append("(**").append(paramText).append(")");
+    if (rhs instanceof PyReferenceExpression && rhsType instanceof PyTupleType) {
+      target.append("(*").append(paramText).append(")");
+    }
     else if (rhs instanceof PyCallExpression) { // potential dict(foo=1) -> format(foo=1)
       final PyCallExpression callExpression = (PyCallExpression)rhs;
       final PyExpression callee = callExpression.getCallee();
@@ -292,6 +291,11 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
             target.append(paramText).append(")");
           }
         }
+      }
+    }
+    else if (rhsType instanceof PyCollectionType) {
+      if ("dict".equals(rhsType.getName())) {
+        target.append("(**").append(paramText).append(")");
       }
     }
     else target.append("(").append(paramText).append(")"); // tuple is ok as is
