@@ -230,7 +230,7 @@ class BuildContextImpl extends BuildContext {
   @Override
   File findFileInModuleSources(String moduleName, String relativePath) {
     getSourceRootsWithPrefixes(findRequiredModule(moduleName)).collect {
-      new File(it.first, "$it.second$relativePath")
+      new File(it.first, "${StringUtil.trimStart(relativePath, it.second)}")
     }.find {it.exists()}
   }
 
