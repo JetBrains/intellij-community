@@ -358,11 +358,10 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
       final LocalSearchScope derivedScope = new LocalSearchScope(inheritingClass);
       final PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(ownerClass, inheritingClass, PsiSubstitutor.EMPTY);
       if (substitutor == null) return;
-      final LocalSearchScope baseScope = new LocalSearchScope(ownerClass);
-      ReferencesSearch.search(typeParameter, baseScope).forEach(ref -> {
-        final PsiElement element = ref.getElement();
-        final PsiElement parent = element.getParent();
-        if (parent instanceof PsiTypeElement) {
+      ownerClass.accept(new JavaRecursiveElementVisitor() {
+        @Override
+        public void visitTypeElement(PsiTypeElement parent) {
+          super.visitTypeElement(parent);
           final PsiElement pparent = parent.getParent();
           if (pparent instanceof PsiMethod && parent.equals(((PsiMethod)pparent).getReturnTypeElement())) {
             final PsiMethod method = (PsiMethod)pparent;
@@ -393,8 +392,6 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
             }
           }
         }
-
-        return true;
       });
     }
   }
