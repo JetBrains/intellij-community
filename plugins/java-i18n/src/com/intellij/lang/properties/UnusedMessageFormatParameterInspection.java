@@ -20,7 +20,6 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
@@ -39,7 +38,7 @@ import java.util.Set;
  * User: anna
  * Date: 07-Sep-2005
  */
-public class UnusedMessageFormatParameterInspection extends PropertySuppressableInspectionBase {
+public class UnusedMessageFormatParameterInspection extends PropertiesInspectionBase {
   public static final String REGEXP = "regexp";
   @NotNull
   public String getGroupDisplayName() {
