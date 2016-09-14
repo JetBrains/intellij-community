@@ -20,11 +20,11 @@ import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.ComboBox;
@@ -289,10 +289,11 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     }
     myComponent.updateCombo();
 
-    EditorUtil.reinitSettings();
-
     if (updateEditorScheme) {
-      EditorColorsManagerImpl.schemeChangedOrSwitched();
+      ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).schemeChangedOrSwitched(null);
+    }
+    else {
+      EditorFactory.getInstance().refreshAllEditors();
     }
   }
 

@@ -274,7 +274,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       boolean refreshEditors = activeSchemeModified && schemeManager.getCurrentScheme() == activeOriginalScheme;
       schemeManager.setSchemes(includingInvisible(result, schemeManager), activeOriginalScheme);
       if (refreshEditors) {
-        EditorColorsManagerImpl.schemeChangedOrSwitched();
+        ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).schemeChangedOrSwitched(null);
       }
 
       final boolean isEditorThemeDark = ColorUtil.isDark(activeOriginalScheme.getDefaultBackground());
