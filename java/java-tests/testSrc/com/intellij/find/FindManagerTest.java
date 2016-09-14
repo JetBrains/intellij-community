@@ -920,6 +920,13 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     runAsyncTest("/*" + text + "*/", findModel);
   }
 
+  public void testProperInsensitiveSearchForRegExp() throws Exception {
+    createFile("a.java", "Цитрус цитрус");
+    FindModel findModel = FindManagerTestUtils.configureFindModel("цитрус");
+    findModel.setRegularExpressions(true);
+    assertSize(2, findUsages(findModel));
+  }
+
   private void runAsyncTest(String text, FindModel findModel) throws InterruptedException {
     final Ref<FindResult> result = new Ref<>();
     final CountDownLatch progressStarted = new CountDownLatch(1);
