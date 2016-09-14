@@ -348,6 +348,29 @@ public class Test {
         .assertInlays("counter->10", "shouldTest->false")
   }
 
+  fun `test inline if one of vararg params is literal`() {
+    setup("""
+public class VarArgTest {
+
+  public void main() {
+    System.out.println("AAA");
+    int test = 13;
+    boolean isCheck = false;
+    boolean isOk = true;
+    testBooleanVarargs(test, isCheck, true, isOk);
+  }
+
+  public boolean testBooleanVarargs(int test, Boolean... booleans) {
+    int temp = test;
+    return false;
+  }
+}
+""")
+    
+    onLineStartingWith("testBooleanVarargs")
+        .assertInlays("booleans...->isCheck")
+  }
+
   private fun onLineStartingWith(text: String): InlayAssert {
     val range = getLineRangeStartingWith(text)
     val inlays = myFixture.editor.inlayModel.getInlineElementsInRange(range.startOffset, range.endOffset)

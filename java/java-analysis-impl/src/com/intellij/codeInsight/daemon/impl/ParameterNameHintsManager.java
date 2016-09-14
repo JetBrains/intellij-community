@@ -133,20 +133,41 @@ public class ParameterNameHintsManager {
                                                    @NotNull PsiExpression[] callArguments,
                                                    @NotNull PsiParameter[] parameters,
                                                    @NotNull JavaResolveResult resolveResult) {
-    PsiExpression argument = callArguments[paramIndex];
-    if (isLiteralExpression(argument) && argument.getType() != null) {
-      PsiParameter parameter = parameters[paramIndex];
-      String paramName = parameter.getName();
-      JavaCodeFoldingSettings settings = JavaCodeFoldingSettings.getInstance();
-      if (paramName != null && paramName.length() >= settings.getInlineLiteralParameterMinNameLength()) {
-        PsiType parameterType = resolveResult.getSubstitutor().substitute(parameter.getType());
-        return TypeConversionUtil.isAssignable(parameterType, argument.getType()) || isVarArgs(parameterType, argument.getType());
-      }
+    final PsiExpression argument = callArguments[paramIndex];
+    if (argument.getType() == null) return false;
+    
+    final PsiParameter parameter = parameters[paramIndex];
+    if (!hasProperLength(parameter.getName())) return false;
+
+    PsiType argType = argument.getType();
+    PsiType paramType = parameter.getType();
+
+    if (isVarargParam(paramType, argType) && hasLiteralInVarargs(paramIndex, callArguments)) {
+      return true;
+    }
+
+    if (isLiteralExpression(argument)) {
+      PsiType parameterType = resolveResult.getSubstitutor().substitute(paramType);
+      return TypeConversionUtil.isAssignable(parameterType, argType);
+    }
+
+    return false;
+  }
+
+  private static boolean hasProperLength(@Nullable String paramName) {
+    JavaCodeFoldingSettings settings = JavaCodeFoldingSettings.getInstance();
+    return paramName != null && paramName.length() >= settings.getInlineLiteralParameterMinNameLength();
+  }
+
+  private static boolean hasLiteralInVarargs(int index, PsiExpression[] callArguments) {
+    for (int i = index; i < callArguments.length; i++) {
+      PsiExpression arg = callArguments[i];
+      if (isLiteralExpression(arg)) return true;
     }
     return false;
   }
-  
-  public static boolean isVarArgs(@NotNull PsiType param, @NotNull PsiType argument) {
+
+  private static boolean isVarargParam(@NotNull PsiType param, @NotNull PsiType argument) {
     PsiType deepType = param.getDeepComponentType();
     return param instanceof PsiEllipsisType && TypeConversionUtil.isAssignable(deepType, argument);
   }
