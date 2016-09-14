@@ -226,6 +226,8 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
 
     boolean first = true;
     for (PsiClass psiClass : instanceClasses) {
+      if (!first && psiClass.getName() == null) continue;
+
       for (PsiMethod psiMethod : psiClass.getMethods()) {
         if (!psiMethod.hasModifierProperty(PsiModifier.STATIC) &&
             hasAppropriateReturnType(expectedReturnType, psiMethod) &&
