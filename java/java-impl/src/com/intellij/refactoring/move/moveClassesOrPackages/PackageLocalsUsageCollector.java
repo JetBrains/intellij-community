@@ -53,8 +53,7 @@ class PackageLocalsUsageCollector extends JavaRecursiveElementWalkingVisitor {
 
   private void visitResolvedReference(PsiElement resolved, PsiJavaCodeReferenceElement reference) {
     if (resolved instanceof PsiModifierListOwner) {
-      final PsiModifierList modifierList = ((PsiModifierListOwner)resolved).getModifierList();
-      if (PsiModifier.PACKAGE_LOCAL.equals(VisibilityUtil.getVisibilityModifier(modifierList))) {
+      if (((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
         PsiFile aFile = resolved.getContainingFile();
         if (aFile != null && !isInsideMoved(resolved)) {
           final PsiDirectory containingDirectory = aFile.getContainingDirectory();
