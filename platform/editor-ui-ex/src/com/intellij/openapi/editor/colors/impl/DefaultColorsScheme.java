@@ -28,7 +28,7 @@ import java.awt.*;
 
 public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnlyColorsScheme {
   
-  public final static String EDITABLE_COPY_PREFIX = "#_user_";
+  public final static String EDITABLE_COPY_PREFIX = "_@user_";
   
   private String myName;
 
