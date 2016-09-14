@@ -83,10 +83,10 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
   }
 
   private static boolean areEquivalent(PsiParameter[] parameters, PsiExpression left, PsiExpression right) {
-    if (PsiTreeUtil.collectElements(left, e -> e instanceof PsiReferenceExpression &&
-                                               ((PsiReferenceExpression)e).resolve() == parameters[1]).length != 0 ||
-        PsiTreeUtil.collectElements(right, e -> e instanceof PsiReferenceExpression &&
-                                                ((PsiReferenceExpression)e).resolve() == parameters[0]).length != 0) {
+    if (!PsiTreeUtil.processElements(left, e -> !(e instanceof PsiReferenceExpression) ||
+                                               ((PsiReferenceExpression)e).resolve() != parameters[1]) ||
+        !PsiTreeUtil.processElements(right, e -> !(e instanceof PsiReferenceExpression) ||
+                                                ((PsiReferenceExpression)e).resolve() != parameters[0])) {
       return false;
     }
     PsiExpression copy = (PsiExpression)right.copy();
