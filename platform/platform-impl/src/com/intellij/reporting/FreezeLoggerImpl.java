@@ -13,25 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.editor.actionSystem;
+package com.intellij.reporting;
 
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FreezeLogger {
+public class FreezeLoggerImpl extends FreezeLogger {
   
-  private static final Logger LOG = Logger.getInstance(FreezeLogger.class);
+  private static final Logger LOG = Logger.getInstance(FreezeLoggerImpl.class);
   private static final Alarm ALARM = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
   private static final int MAX_ALLOWED_TIME = 500;
   
-  public static void runUnderPerformanceMonitor(@Nullable Project project, @NotNull Runnable action) {
+  @Override
+  public void runUnderPerformanceMonitor(@Nullable Project project, @NotNull Runnable action) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       action.run();
       return;
@@ -64,8 +67,35 @@ public class FreezeLogger {
     final String msg = "Typing freeze report, (DumbMode=" + isInDumbMode + ") thread dumps attached. EDT stacktrace:\n"
                  + edtTrace
                  + "\n\n\n";
-    
-    LOG.error(msg, dumps);
+
+    if (Registry.is("typing.freeze.report.dumps")) {
+      ThreadDumpInfo info = new ThreadDumpInfo(dumps, isInDumbMode);
+      String report = ReporterKt.createReportLine("typing-freeze-dumps", info);
+      if (!StatsSender.INSTANCE.send(report, true)) {
+        LOG.debug("Error while reporting thread dump");
+      }
+    }
+    else {
+      LOG.error(msg, dumps);
+    }
   }
   
+}
+
+class ThreadDumpInfo {
+  public final String dump;
+  public final String version;
+  public final String product;
+  public final String buildNumber;
+  public final boolean isEAP;
+  public final boolean isInDumbMode;
+
+  public ThreadDumpInfo(String dump, boolean isInDumbMode) {
+    this.dump = dump;
+    this.product = ApplicationInfo.getInstance().getVersionName();
+    this.version = ApplicationInfo.getInstance().getFullVersion();
+    this.buildNumber = ApplicationInfo.getInstance().getBuild().toString();
+    this.isEAP = ApplicationManager.getApplication().isEAP();
+    this.isInDumbMode = isInDumbMode;
+  }
 }
