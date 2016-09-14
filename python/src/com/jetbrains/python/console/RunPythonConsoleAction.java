@@ -51,6 +51,6 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
 
   public void actionPerformed(final AnActionEvent e) {
     PydevConsoleRunner runner = PythonConsoleRunnerFactory.getInstance().createConsoleRunner(e.getData(CommonDataKeys.PROJECT), e.getData(LangDataKeys.MODULE));
-    runner.open();
+    runner.runSync();
   }
 }

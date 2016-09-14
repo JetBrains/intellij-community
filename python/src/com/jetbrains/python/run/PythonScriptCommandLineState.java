@@ -23,6 +23,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.ParamsGroup;
+import com.intellij.execution.console.ConsoleExecuteAction;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -34,12 +35,15 @@ import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.console.PyConsoleOptions;
 import com.jetbrains.python.console.PyConsoleType;
 import com.jetbrains.python.console.PydevConsoleRunner;
+import com.jetbrains.python.console.PydevConsoleRunnerImpl;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.execution.runners.AbstractConsoleRunnerWithHistory.registerActionShortcuts;
 
 /**
  * @author yole
@@ -107,7 +111,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
   /**
    * @author traff
    */
-  public class PythonScriptWithConsoleRunner extends PydevConsoleRunner {
+  public class PythonScriptWithConsoleRunner extends PydevConsoleRunnerImpl {
 
     private CommandLinePatcher[] myPatchers;
 
@@ -125,7 +129,8 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
 
     @Override
     protected void createContentDescriptorAndActions() {
-      AnAction a = createConsoleExecAction(myConsoleExecuteActionHandler);
+      AnAction a = new ConsoleExecuteAction(super.getConsoleView(), myConsoleExecuteActionHandler,
+                                            myConsoleExecuteActionHandler.getEmptyExecuteAction(), myConsoleExecuteActionHandler);
       registerActionShortcuts(Lists.newArrayList(a), getConsoleView().getConsoleEditor().getComponent());
     }
 
