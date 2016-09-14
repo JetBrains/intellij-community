@@ -60,6 +60,7 @@ public class PythonTask {
    * Mils we wait to process to be stopped when "rerun" called
    */
   private static final long TIME_TO_WAIT_PROCESS_STOP = 2000L;
+  private static final int TIMEOUT_TO_WAIT_FOR_TASK = 30000;
   protected final Module myModule;
   private final Sdk mySdk;
   private String myWorkingDirectory;
@@ -270,14 +271,14 @@ public class PythonTask {
    * @return stdout
    * @throws ExecutionException in case of error. Consider using {@link com.intellij.execution.util.ExecutionErrorDialog}
    */
-  @NotNull  //TODO: DOC, ExecutionErrorDialog
+  @NotNull
   public final String runNoConsole() throws ExecutionException {
 
     final ProcessHandler process = createProcess(new HashMap<>());
     final OutputListener listener = new OutputListener();
     process.addProcessListener(listener);
     process.startNotify();
-    process.waitFor();
+    process.waitFor(TIMEOUT_TO_WAIT_FOR_TASK);
     final Output output = listener.getOutput();
     final int exitCode = output.getExitCode();
     if (exitCode == 0) {
