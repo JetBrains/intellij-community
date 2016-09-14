@@ -284,4 +284,8 @@ public class PyElementVisitor extends PsiElementVisitor {
   public void visitPyTypeDeclarationStatement(PyTypeDeclarationStatement node) {
     visitPyStatement(node);
   }
+
+  public void visitPyAnnotation(PyAnnotation node) {
+    visitPyElement(node);
+  }
 }

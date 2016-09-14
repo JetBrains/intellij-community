@@ -61,6 +61,21 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
+  public void visitPyAnnotation(PyAnnotation node) {
+    final PsiElement parent = node.getParent();
+    if (!(parent instanceof PyFunction || parent instanceof PyNamedParameter)) {
+      final StringBuilder message = new StringBuilder(myCommonMessage);
+      int len = 0;
+      for (LanguageLevel languageLevel : myVersionsToProcess) {
+        if (languageLevel.isOlderThan(LanguageLevel.PYTHON36)) {
+          len = appendLanguageLevel(message, len, languageLevel);
+        }
+      }
+      commonRegisterProblem(message, " not support variable annotations", len, node, null);
+    }
+  }
+
+  @Override
   public void visitPyDictCompExpression(PyDictCompExpression node) {
     super.visitPyDictCompExpression(node);
     int len = 0;
