@@ -56,12 +56,12 @@ public class ReplaceInefficientStreamCountInspection extends BaseJavaBatchLocalI
           if (qualifierCall == null) return;
           final PsiMethod qualifier = qualifierCall.resolveMethod();
           if (isCallOf(qualifier, CommonClassNames.JAVA_UTIL_COLLECTION, STREAM_METHOD, 0)) {
-            final StreamCountFix fix = new StreamCountFix();
+            final CountFix fix = new CountFix(false);
             holder.registerProblem(methodCall, getCallChainRange(methodCall, qualifierCall), fix.getMessage(), fix);
           }
           else if (isCallOf(qualifier, CommonClassNames.JAVA_UTIL_STREAM_STREAM, FLAT_MAP_METHOD, 1) &&
                    doesFlatMapCallCollectionStream(qualifierCall)) {
-            FlatMapCountFix fix = new FlatMapCountFix();
+            final CountFix fix = new CountFix(true);
             holder.registerProblem(methodCall, getCallChainRange(methodCall, qualifierCall), fix.getMessage(), fix);
           }
         }
@@ -70,7 +70,11 @@ public class ReplaceInefficientStreamCountInspection extends BaseJavaBatchLocalI
   }
 
   boolean doesFlatMapCallCollectionStream(PsiMethodCallExpression flatMapCall) {
-    PsiElement parameter = flatMapCall.getArgumentList().getExpressions()[0];
+    PsiExpression[] parameters = flatMapCall.getArgumentList().getExpressions();
+    if(parameters.length != 1) {
+      return false;
+    }
+    PsiElement parameter = parameters[0];
     if (parameter instanceof PsiMethodReferenceExpression) {
       PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)parameter;
       PsiElement resolvedMethodRef = methodRef.resolve();
@@ -107,60 +111,71 @@ public class ReplaceInefficientStreamCountInspection extends BaseJavaBatchLocalI
     return PsiUtil.skipParenthesizedExprDown(expression);
   }
 
-  private static class StreamCountFix extends ReplaceStreamMethodFix {
-    public StreamCountFix() {
-      super(COUNT_METHOD, SIZE_METHOD, false);
-    }
+  private static class CountFix implements LocalQuickFix {
+    private final boolean myFlatMapMode;
 
-    @Override
-    protected void replaceMethodCall(@NotNull PsiMethodCallExpression methodCall,
-                                     @NotNull PsiMethodCallExpression qualifierCall,
-                                     @Nullable PsiExpression qualifierExpression) {
-      super.replaceMethodCall(methodCall, qualifierCall, qualifierExpression);
-      PsiElement parent = methodCall.getParent();
-      if (parent != null && !(parent instanceof PsiExpressionStatement)) {
-        Project project = methodCall.getProject();
-        PsiExpression expression =
-          JavaPsiFacade.getElementFactory(project).createExpressionFromText("(long) " + methodCall.getText(), methodCall);
-        PsiElement replacement = methodCall.replace(expression);
-        if (replacement instanceof PsiTypeCastExpression && RedundantCastUtil.isCastRedundant((PsiTypeCastExpression)replacement)) {
-          RedundantCastUtil.removeCast((PsiTypeCastExpression)replacement);
-        }
-      }
+    CountFix(boolean flatMapMode) {
+      myFlatMapMode = flatMapMode;
     }
-  }
-
-  private static class FlatMapCountFix implements LocalQuickFix {
 
     @Nls
     @NotNull
     @Override
     public String getName() {
-      return getFamilyName();
+      return myFlatMapMode
+             ? "Replace Stream.flatMap().count() with Stream.mapToLong().sum()"
+             : "Replace Collection.stream().count() with Collection.size()";
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace Stream.flatMap().count() with Stream.mapToLong().sum()";
+      return "Replace inefficient Stream.count()";
     }
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getStartElement();
       if (!(element instanceof PsiMethodCallExpression)) return;
-      PsiElement countName = ((PsiMethodCallExpression)element).getMethodExpression().getReferenceNameElement();
+      PsiMethodCallExpression countCall = (PsiMethodCallExpression)element;
+      PsiElement countName = countCall.getMethodExpression().getReferenceNameElement();
       if (countName == null) return;
-      PsiMethodCallExpression qualifierCall = getQualifierMethodCall((PsiMethodCallExpression)element);
+      PsiMethodCallExpression qualifierCall = getQualifierMethodCall(countCall);
       if (qualifierCall == null) return;
       PsiMethod qualifier = qualifierCall.resolveMethod();
+      if (!FileModificationService.getInstance().preparePsiElementForWrite(element.getContainingFile())) return;
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      if(myFlatMapMode) {
+        replaceFlatMap(countName, qualifierCall, qualifier, factory);
+      }
+      else {
+        replaceSimpleCount(countCall, qualifierCall, qualifier, factory);
+      }
+    }
+
+    private static void replaceSimpleCount(PsiMethodCallExpression countCall,
+                                           PsiMethodCallExpression qualifierCall,
+                                           PsiMethod qualifier,
+                                           PsiElementFactory factory) {
+      if (!isCallOf(qualifier, CommonClassNames.JAVA_UTIL_COLLECTION, STREAM_METHOD, 0)) return;
+      PsiExpression qualifierExpression = qualifierCall.getMethodExpression().getQualifierExpression();
+      if(qualifierExpression == null) return;
+      String replacementText = "(long) "+qualifierExpression.getText()+"."+SIZE_METHOD+"()";
+      PsiElement replacement = countCall.replace(factory.createExpressionFromText(replacementText, countCall));
+      if (replacement instanceof PsiTypeCastExpression && RedundantCastUtil.isCastRedundant((PsiTypeCastExpression)replacement)) {
+        RedundantCastUtil.removeCast((PsiTypeCastExpression)replacement);
+      }
+    }
+
+    private static void replaceFlatMap(PsiElement countName,
+                                       PsiMethodCallExpression qualifierCall,
+                                       PsiMethod qualifier,
+                                       PsiElementFactory factory) {
       if (!isCallOf(qualifier, CommonClassNames.JAVA_UTIL_STREAM_STREAM, FLAT_MAP_METHOD, 1)) return;
       PsiElement flatMapName = qualifierCall.getMethodExpression().getReferenceNameElement();
       if (flatMapName == null) return;
       PsiElement parameter = qualifierCall.getArgumentList().getExpressions()[0];
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(element.getContainingFile())) return;
-      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       PsiElement streamCallName = null;
       if (parameter instanceof PsiMethodReferenceExpression) {
         PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)parameter;
@@ -183,7 +198,8 @@ public class ReplaceInefficientStreamCountInspection extends BaseJavaBatchLocalI
     }
 
     public String getMessage() {
-      return "Stream.flatMap().count() can be replaced with Stream.mapToLong().sum()";
+      return myFlatMapMode ? "Stream.flatMap().count() can be replaced with Stream.mapToLong().sum()" :
+             "Collection.stream().count() can be replaced with Collection.size()";
     }
   }
 }
