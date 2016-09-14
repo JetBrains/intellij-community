@@ -80,7 +80,9 @@ class BuildTasksImpl extends BuildTasks {
               zipfileset(dir: root.file.absolutePath, prefix: root.properties.packagePrefix.replace('.', '/'), erroronmissingdir: false)
           }
           module.getSourceRoots(JavaResourceRootType.RESOURCE).each { root ->
-            buildContext.ant.zipfileset(dir: root.file.absolutePath, prefix: root.properties.relativeOutputPath, erroronmissingdir: false)
+            buildContext.ant.zipfileset(dir: root.file.absolutePath, prefix: root.properties.relativeOutputPath, erroronmissingdir: false) {
+              exclude(name: "**/*.png")
+            }
           }
         }
       }
