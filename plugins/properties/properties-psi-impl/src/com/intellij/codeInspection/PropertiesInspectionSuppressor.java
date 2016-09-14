@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,44 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.lang.properties;
+package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInspection.CustomSuppressableInspectionTool;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.SuppressIntentionAction;
+import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertiesList;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: cdr
- */
-public abstract class PropertySuppressableInspectionBase extends LocalInspectionTool implements CustomSuppressableInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.PropertySuppressableInspectionBase");
-  @Override
-  @NotNull
-  public String getGroupDisplayName() {
-    return PropertiesBundle.message("properties.files.inspection.group.display.name");
-  }
+public class PropertiesInspectionSuppressor implements InspectionSuppressor {
+  private final static Logger LOG = Logger.getInstance(PropertiesInspectionSuppressor.class);
 
   @Override
   @NotNull
-  public SuppressIntentionAction[] getSuppressActions(final PsiElement element) {
-    return new SuppressIntentionAction[] {new SuppressSinglePropertyFix(getShortName()), new SuppressForFile(getShortName())};
+  public SuppressQuickFix[] getSuppressActions(final PsiElement element, @NotNull final String toolId) {
+    return new SuppressQuickFix[] {new SuppressSinglePropertyFix(toolId), new SuppressForFile(toolId)};
   }
 
   @Override
-  public boolean isSuppressedFor(@NotNull PsiElement element) {
+  public boolean isSuppressedFor(@NotNull PsiElement element, @NotNull String toolId) {
     Property property = PsiTreeUtil.getParentOfType(element, Property.class, false);
     PropertiesFile file;
     if (property == null) {
@@ -67,7 +56,7 @@ public abstract class PropertySuppressableInspectionBase extends LocalInspection
       while (prev instanceof PsiWhiteSpace || prev instanceof PsiComment) {
         if (prev instanceof PsiComment) {
           @NonNls String text = prev.getText();
-          if (text.contains("suppress") && text.contains("\"" + getShortName() + "\"")) return true;
+          if (text.contains("suppress") && text.contains("\"" + toolId + "\"")) return true;
         }
         prev = prev.getPrevSibling();
       }
@@ -78,13 +67,13 @@ public abstract class PropertySuppressableInspectionBase extends LocalInspection
 
     while (leaf instanceof PsiComment) {
       @NonNls String text = leaf.getText();
-      if (text.contains("suppress") && text.contains("\"" + getShortName() + "\"") && text.contains("file")) {
+      if (text.contains("suppress") && text.contains("\"" + toolId + "\"") && text.contains("file")) {
         return true;
       }
       leaf = leaf.getNextSibling();
       if (leaf instanceof PsiWhiteSpace) leaf = leaf.getNextSibling();
       // comment before first property get bound to the file, not property
-      if (leaf instanceof PropertiesList && leaf.getFirstChild() == property && text.contains("suppress") && text.contains("\"" + getShortName() + "\"")) {
+      if (leaf instanceof PropertiesList && leaf.getFirstChild() == property && text.contains("suppress") && text.contains("\"" + toolId + "\"")) {
         return true;
       }
     }
@@ -92,17 +81,18 @@ public abstract class PropertySuppressableInspectionBase extends LocalInspection
     return false;
   }
 
-  private static class SuppressSinglePropertyFix extends SuppressIntentionAction {
+  private static class SuppressSinglePropertyFix implements SuppressQuickFix {
     private final String shortName;
 
     private SuppressSinglePropertyFix(String shortName) {
       this.shortName = shortName;
     }
 
-    @Override
+    @Nls
     @NotNull
-    public String getText() {
-      return PropertiesBundle.message("unused.property.suppress.for.property");
+    @Override
+    public String getName() {
+      return getFamilyName();
     }
 
     @Override
@@ -112,13 +102,8 @@ public abstract class PropertySuppressableInspectionBase extends LocalInspection
     }
 
     @Override
-    public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
-      final Property property = PsiTreeUtil.getParentOfType(element, Property.class);
-      return property != null && property.isValid();
-    }
-
-    @Override
-    public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getStartElement();
       final PsiFile file = element.getContainingFile();
       if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
@@ -134,19 +119,32 @@ public abstract class PropertySuppressableInspectionBase extends LocalInspection
       doc.insertString(lineStart, "# suppress inspection \"" + shortName +
                                   "\"\n");
     }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project, @NotNull PsiElement context) {
+      final Property property = PsiTreeUtil.getParentOfType(context, Property.class);
+      return property != null && property.isValid();
+    }
+
+    @Override
+    public boolean isSuppressAll() {
+      return false;
+    }
   }
 
-  private static class SuppressForFile extends SuppressIntentionAction {
+
+
+  private static class SuppressForFile implements SuppressQuickFix {
     private final String shortName;
 
     private SuppressForFile(String shortName) {
       this.shortName = shortName;
     }
-
-    @Override
+    @Nls
     @NotNull
-    public String getText() {
-      return PropertiesBundle.message("unused.property.suppress.for.file");
+    @Override
+    public String getName() {
+      return getFamilyName();
     }
 
     @Override
@@ -156,12 +154,8 @@ public abstract class PropertySuppressableInspectionBase extends LocalInspection
     }
 
     @Override
-    public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
-      return element.isValid() && element.getContainingFile() instanceof PropertiesFile;
-    }
-
-    @Override
-    public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getStartElement();
       final PsiFile file = element.getContainingFile();
       if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
@@ -171,6 +165,21 @@ public abstract class PropertySuppressableInspectionBase extends LocalInspection
       doc.insertString(0, "# suppress inspection \"" +
                           shortName +
                           "\" for whole file\n");
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project, @NotNull PsiElement context) {
+      return context.isValid() && context.getContainingFile() instanceof PropertiesFile;
+    }
+
+    @Override
+    public boolean isSuppressAll() {
+      return false;
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return true;
     }
   }
 }

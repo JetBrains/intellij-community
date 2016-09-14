@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -815,7 +815,7 @@ public class XmlUtil {
     else {
       final XmlAttribute[] attributes = tag.getAttributes();
       ContainerUtil.sort(list);
-      Arrays.sort(attributes, (attr1, attr2) -> attr1.getName().compareTo(attr2.getName()));
+      Arrays.sort(attributes, Comparator.comparing(XmlAttribute::getName));
 
       final Iterator<MyAttributeInfo> iter = list.iterator();
       list = new ArrayList<>();

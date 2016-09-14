@@ -37,7 +37,7 @@ public abstract class ChunkCustomCompilerExtension {
    * Comparator that compares extensions using names. It is used for make order of elements predictable.
    */
   protected static final Comparator<ChunkCustomCompilerExtension> COMPARATOR =
-    (o1, o2) -> o1.getClass().getName().compareTo(o2.getClass().getName());
+    Comparator.comparing(o -> o.getClass().getName());
 
   /**
    * Generate custom compile task inside compile target. Note that if more

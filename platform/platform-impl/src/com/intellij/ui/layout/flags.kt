@@ -66,8 +66,17 @@ enum class CCFlags {
   // use row instead
   //split,
 
-  grow,
+  /**
+   * Sets how keen the component should be to grow in relation to other component **in the same cell**. Use `push` in addition if need.
+   * The weight (defaults to 100 if not specified) is purely a relative value to other components' weight. Twice the weight will get double the extra space.
+   * If this constraint is not set the grow weight is set to 0 and the component will not grow (unless fill is set in the row/column in which case "grow 0" can be used to explicitly make it not grow).
+   * Grow weight will only be compared against the weights in the same grow priority group and for the same cell.
+   */
+  grow, growX, growY,
 
+  /**
+   * Makes the row and/or column that the component is residing in grow with `weight`.
+   */
   push, pushY, pushX,
 
   // use right { } instead

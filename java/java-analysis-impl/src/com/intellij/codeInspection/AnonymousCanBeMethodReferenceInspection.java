@@ -84,7 +84,9 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalI
           final PsiMethod method = aClass.getMethods()[0];
           final PsiCodeBlock body = method.getBody();
           final PsiExpression methodRefCandidate =
-            LambdaCanBeMethodReferenceInspection.canBeMethodReferenceProblem(body, method.getParameterList().getParameters(), aClass.getBaseClassType(), aClass.getParent());
+            new LambdaCanBeMethodReferenceInspection()
+              .canBeMethodReferenceProblem(body, method.getParameterList().getParameters(), aClass.getBaseClassType(),
+                                           aClass.getParent());
           if (methodRefCandidate instanceof PsiCallExpression) {
             final PsiCallExpression callExpression = (PsiCallExpression)methodRefCandidate;
             final PsiMethod resolveMethod = callExpression.resolveMethod();
@@ -133,8 +135,8 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalI
           if (methods.length != 1) return;
 
           final PsiParameter[] parameters = methods[0].getParameterList().getParameters();
-          final String methodRefText =
-            LambdaCanBeMethodReferenceInspection.convertToMethodReference(methods[0].getBody(), parameters, anonymousClass.getBaseClassType(), anonymousClass.getParent());
+          final String methodRefText = LambdaCanBeMethodReferenceInspection
+            .convertToMethodReference(methods[0].getBody(), parameters, anonymousClass.getBaseClassType(), anonymousClass.getParent());
 
           replaceWithMethodReference(project, methodRefText, anonymousClass.getBaseClassType(), anonymousClass.getParent());
         }

@@ -286,16 +286,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
         return PsiSearchScopeUtil.isInScope(scope, aClass);
       }
     });
-    Arrays.sort(array, new Comparator<PsiClass>() {
-      @Override
-      public int compare(PsiClass o1, PsiClass o2) {
-        VirtualFile file1 = PsiUtilCore.getVirtualFile(o1);
-        VirtualFile file2 = PsiUtilCore.getVirtualFile(o2);
-        if (file1 == null) return file2 == null ? 0 : -1;
-        if (file2 == null) return 1;
-        return scope.compare(file2, file1);
-      }
-    });
+    Arrays.sort(array, PsiClassUtil.createScopeComparator(scope));
     return array;
   }
 

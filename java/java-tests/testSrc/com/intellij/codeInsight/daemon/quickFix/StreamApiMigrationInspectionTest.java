@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
-import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.StreamApiMigrationInspection;
 import org.jetbrains.annotations.NotNull;
@@ -26,8 +25,7 @@ public class StreamApiMigrationInspectionTest extends LightQuickFixParameterized
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
-      new StreamApiMigrationInspection(),
-      new LambdaCanBeMethodReferenceInspection()
+      new StreamApiMigrationInspection()
     };
   }
 

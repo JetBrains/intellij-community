@@ -12,25 +12,19 @@ import com.intellij.diff.contents.FileContentImpl;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.ErrorDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
-import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.LineCol;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.diff.DiffTool;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -51,7 +45,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
@@ -78,9 +71,7 @@ public class MigrateToNewDiffUtil {
     DiffRequest request = convertRequestFair(oldRequest);
     if (request != null) return request;
 
-    ErrorDiffRequest erorRequest = new ErrorDiffRequest(new MyDiffRequestProducer(oldRequest), "Can't convert from old-style request");
-    erorRequest.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS, Collections.<AnAction>singletonList(new MyShowDiffAction(oldRequest)));
-    return erorRequest;
+    return new ErrorDiffRequest(new MyDiffRequestProducer(oldRequest), "Can't convert from old-style request");
   }
 
   @Nullable
@@ -100,8 +91,6 @@ public class MigrateToNewDiffUtil {
     }
 
     SimpleDiffRequest newRequest = new SimpleDiffRequest(oldRequest.getWindowTitle(), newContents, Arrays.asList(titles));
-
-    newRequest.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS, Collections.<AnAction>singletonList(new MyShowDiffAction(oldRequest)));
 
     DiffNavigationContext navigationContext = (DiffNavigationContext)oldRequest.getGenericData().get(DiffTool.SCROLL_TO_LINE.getName());
     if (navigationContext != null) {
@@ -266,31 +255,6 @@ public class MigrateToNewDiffUtil {
     }
   }
 
-  private static class MyShowDiffAction extends DumbAwareAction {
-    @NotNull private final com.intellij.openapi.diff.DiffRequest myRequest;
-
-    public MyShowDiffAction(@NotNull com.intellij.openapi.diff.DiffRequest request) {
-      super("Show in old diff tool", null, AllIcons.Diff.Diff);
-      setEnabledInModalContext(true);
-      myRequest = request;
-      request.addHint(DO_NOT_TRY_MIGRATE);
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      if (!Registry.is("diff.show.old.diff.action.enabled")) {
-        e.getPresentation().setEnabledAndVisible(false);
-        return;
-      }
-      e.getPresentation().setVisible(true);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      DiffManager.getInstance().getDiffTool().show(myRequest);
-    }
-  }
-
   private static class MyDiffRequestProducer implements DiffRequestProducer {
     @NotNull private final com.intellij.openapi.diff.DiffRequest myRequest;
 
@@ -308,9 +272,7 @@ public class MigrateToNewDiffUtil {
     @Override
     public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
       throws DiffRequestProducerException, ProcessCanceledException {
-      ErrorDiffRequest errorRequest = new ErrorDiffRequest(this, "Can't convert from old-style request");
-      errorRequest.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS, Collections.<AnAction>singletonList(new MyShowDiffAction(myRequest)));
-      return errorRequest;
+      return new ErrorDiffRequest(this, "Can't convert from old-style request");
     }
   }
 }

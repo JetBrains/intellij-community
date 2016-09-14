@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -45,11 +44,11 @@ import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.xml.XmlContentDFA;
+import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
@@ -82,7 +81,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
       XmlElementDescriptor currentTagDescriptor = contextTag.getDescriptor();
       assert currentTagDescriptor != null;
       final XmlElementDescriptor[] descriptors = currentTagDescriptor.getElementsDescriptors(contextTag);
-      Arrays.sort(descriptors, (o1, o2) -> o1.getName().compareTo(o2.getName()));
+      Arrays.sort(descriptors, Comparator.comparing(PsiMetaData::getName));
       final JBList list = new JBList(descriptors);
       list.setCellRenderer(new MyListCellRenderer());
       Runnable runnable = () -> {

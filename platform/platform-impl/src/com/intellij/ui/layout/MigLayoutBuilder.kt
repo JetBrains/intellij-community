@@ -16,6 +16,10 @@
 package com.intellij.ui.layout
 
 import com.intellij.codeInspection.SmartHashMap
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.project.DumbAware
 import com.intellij.ui.components.noteComponent
 import com.intellij.util.SmartList
 import net.miginfocom.layout.*
@@ -59,6 +63,7 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
     val lc = c()
     if (layoutConstraints.isEmpty()) {
       lc.fillX()
+      // not fillY because it leads to enormously large cells - we use cc `push` in addition to cc `grow` as a more robust and easy solution
     }
     else {
       lc.apply(layoutConstraints)
@@ -90,35 +95,28 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
           gapTop = -1
         }
 
-        if (component is JTextComponent) {
-          cc.growX()
-        }
-        else if (component is JPanel) {
-//          cc.grow().push()
-        }
+        addGrowIfNeed(cc, component)
 
-        if (noGrid) {
+        if (!noGrid) {
+          if (component === lastComponent) {
+            cc.wrap()
+          }
 
-        }
-        else {
           if (row.noGrid) {
-            if (component === lastComponent) {
-              cc.wrap()
-            }
             if (component === row.components.first()) {
               // rowConstraints.noGrid() doesn't work correctly
               cc.spanX()
             }
           }
           else {
+            if (component === row.components.first()) {
+              if (labeled && !row.labeled) {
+                cc.skip()
+              }
+            }
             if (component === lastComponent) {
-              cc.wrap()
               // set span for last component because cell count in other rows may be greater — but we expect that last component can grow
               cc.spanX()
-            }
-
-            if (labeled && !row.noGrid && !row.labeled && component === row.components.first()) {
-              cc.skip()
             }
           }
 
@@ -133,6 +131,16 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
 
     // do not hold components
     componentConstraints.clear()
+  }
+}
+
+private fun addGrowIfNeed(cc: CC, component: Component) {
+  if (component is JTextComponent) {
+    cc.growX()
+  }
+  else if (component is JPanel && component.componentCount == 1 &&
+      (component.getComponent(0) as? JComponent)?.getClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY) != null) {
+    cc.grow().push()
   }
 }
 
@@ -204,9 +212,11 @@ private fun gapToBoundSize(value: Int, isHorizontal: Boolean): BoundSize {
 
 // default values differs to MigLayout - IntelliJ Platform defaults are used
 // see com.intellij.uiDesigner.core.AbstractLayout.DEFAULT_HGAP and DEFAULT_VGAP (multiplied by 2 to achieve the same look (it seems in terms of MigLayout gap is both left and right space))
-private fun c(insets: String? = "0", gap: String? = "${HORIZONTAL_GAP * 2} $VERTICAL_GAP"): LC {
+private fun c(insets: String? = "0", gridGapX: Int = HORIZONTAL_GAP * 2, gridGapY: Int = VERTICAL_GAP): LC {
   // no setter for gap, so, create string to parse
-  val lc = if (gap == null) LC() else ConstraintParser.parseLayoutConstraint("gap ${gap}")
+  val lc = LC()
+  lc.gridGapX = gapToBoundSize(gridGapX, true)
+  lc.gridGapY = gapToBoundSize(gridGapY, false)
   insets?.let {
     lc.insets(it)
   }
@@ -220,6 +230,8 @@ private fun CC.apply(flags: Array<out CCFlags>): CC {
     when (flag) {
       //CCFlags.wrap -> isWrap = true
       CCFlags.grow -> grow()
+      CCFlags.growX -> growX()
+      CCFlags.growY -> growY()
 
     // If you have more than one component in a cell the alignment keywords will not work since the behavior would be indeterministic.
     // You can however accomplish the same thing by setting a gap before and/or after the components.
@@ -260,4 +272,15 @@ private fun LC.apply(flags: Array<out LCFlags>): LC {
     }
   }
   return this
+}
+
+private class DebugMigLayoutAction : ToggleAction(), DumbAware {
+  private var debugEnabled = false
+
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
+    debugEnabled = state
+    LayoutUtil.setGlobalDebugMillis(if (debugEnabled) 300 else 0)
+  }
+
+  override fun isSelected(e: AnActionEvent) = debugEnabled
 }

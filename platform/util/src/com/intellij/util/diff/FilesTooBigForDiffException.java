@@ -9,9 +9,9 @@ import com.intellij.openapi.util.registry.Registry;
  */
 public class FilesTooBigForDiffException extends Exception {
   // Limit for memory consumption in IntLCS algorithm. ~ 2000 changed lines, 50Mb memory
-  public static int MAX_BUFFER_LEN = Registry.intValue("diff.maximum.changes.array.size");
+  public static final int MAX_BUFFER_LEN = Registry.intValue("diff.maximum.changes.array.size");
   // Do not try to compare two lines by-word after this much fails.
-  public static int MAX_BAD_LINES = Registry.intValue("diff.maximum.line.word.attempt");
+  public static final int MAX_BAD_LINES = 3;
 
   private final int myNumLines;
 

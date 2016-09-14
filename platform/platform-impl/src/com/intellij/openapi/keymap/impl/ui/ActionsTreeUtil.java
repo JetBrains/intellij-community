@@ -91,7 +91,7 @@ public class ActionsTreeUtil {
     ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
     final List<IdeaPluginDescriptor> plugins = new ArrayList<>();
     Collections.addAll(plugins, PluginManagerCore.getPlugins());
-    Collections.sort(plugins, (o1, o2) -> o1.getName().compareTo(o2.getName()));
+    Collections.sort(plugins, Comparator.comparing(IdeaPluginDescriptor::getName));
 
     List<PluginId> collected = new ArrayList<>();
     for (IdeaPluginDescriptor plugin : plugins) {

@@ -40,6 +40,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
@@ -178,7 +179,8 @@ public class GroovyPositionManager implements PositionManager {
       GroovyPsiElement sourceImage = findReferenceTypeSourceImage(position);
       if (sourceImage instanceof GrTypeDefinition) {
         return getClassNameForJvm((GrTypeDefinition)sourceImage);
-      } else if (sourceImage == null) {
+      }
+      else if (sourceImage == null) {
         return getScriptQualifiedName(position);
       }
       return null;
@@ -259,7 +261,7 @@ public class GroovyPositionManager implements PositionManager {
     String runtimeName = dollar >= 0 ? originalQName.substring(0, dollar) : originalQName;
     String qName = getOriginalQualifiedName(refType, runtimeName);
 
-    GlobalSearchScope searchScope = addModuleContent(myDebugProcess.getSearchScope());
+    GlobalSearchScope searchScope = myDebugProcess.getSearchScope();
     GroovyShortNamesCache cache = GroovyShortNamesCache.getGroovyShortNamesCache(project);
     try {
       List<PsiClass> classes = cache.getClassesByFQName(qName, searchScope, true);
@@ -269,7 +271,12 @@ public class GroovyPositionManager implements PositionManager {
       if (classes.isEmpty()) {
         classes = cache.getClassesByFQName(qName, GlobalSearchScope.projectScope(project), false);
       }
-      PsiClass clazz = classes.size() == 1 ? classes.get(0) : null;
+      if (classes.isEmpty()) {
+        classes = cache.getClassesByFQName(qName, addModuleContent(searchScope), false);
+      }
+      if (classes.isEmpty()) return null;
+      classes.sort(PsiClassUtil.createScopeComparator(searchScope));
+      PsiClass clazz = classes.get(0);
       if (clazz != null) return clazz.getContainingFile();
     }
     catch (ProcessCanceledException e) {
@@ -405,8 +412,9 @@ public class GroovyPositionManager implements PositionManager {
         }
         //noinspection LoopStatementThatDoesntLoop
         for (Location location : fromClass.allLineLocations()) {
-          final SourcePosition candidateFirstPosition = SourcePosition.createFromLine(toFind.getContainingFile(), location.lineNumber() - 1)
-            ;
+          final SourcePosition candidateFirstPosition = SourcePosition.createFromLine(
+            toFind.getContainingFile(), location.lineNumber() - 1
+          );
           if (toFind.equals(findReferenceTypeSourceImage(candidateFirstPosition))) {
             return fromClass;
           }

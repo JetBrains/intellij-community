@@ -1,0 +1,8 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <psi.referenceContributor implementation="org.jetbrains.plugins.javaFX.resources.FxmlResourceReferencesContributor"/>
+
+    <localInspection language="XML" shortName="JavaFxResourcePropertyValue" displayName="The value from properties file is incompatible with the attribute type" groupName="JavaFX"
+                     enabledByDefault="true" level="WARNING" implementationClass="org.jetbrains.plugins.javaFX.resources.JavaFxResourcePropertyValueInspection"/>
+  </extensions>
+</idea-plugin>

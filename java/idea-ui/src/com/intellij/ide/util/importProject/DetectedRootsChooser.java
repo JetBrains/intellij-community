@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 package com.intellij.ide.util.importProject;
 
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.EventDispatcher;
@@ -220,7 +220,7 @@ public class DetectedRootsChooser {
     column.setMaxWidth(width);
     myTable.updateColumnSizes();
     List<DetectedRootData> sortedRoots = new ArrayList<>(roots);
-    Collections.sort(sortedRoots, (o1, o2) -> o1.getDirectory().compareTo(o2.getDirectory()));
+    Collections.sort(sortedRoots, Comparator.comparing(DetectedRootData::getDirectory));
     myModel.setItems(sortedRoots);
   }
 

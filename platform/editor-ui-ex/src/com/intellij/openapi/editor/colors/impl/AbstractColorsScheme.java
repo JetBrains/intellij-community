@@ -70,6 +70,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   private float myConsoleLineSpacing = -1;
   
   private boolean myIsSaveNeeded;
+  
+  private boolean myCanBeDeleted = true;
 
   // version influences XML format and triggers migration
   private int myVersion = CURR_VERSION;
@@ -834,5 +836,21 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   @Override
   public Properties getMetaProperties() {
     return myMetaInfo;
+  }
+  
+  public boolean canBeDeleted() {
+    return myCanBeDeleted;
+  }
+  
+  public void setCanBeDeleted(boolean canBeDeleted) {
+    myCanBeDeleted = canBeDeleted;
+  }
+  
+  public boolean isVisible() {
+    return true;
+  }
+
+  public static boolean isVisible(@NotNull EditorColorsScheme scheme) {
+    return !(scheme instanceof AbstractColorsScheme) || ((AbstractColorsScheme)scheme).isVisible();
   }
 }

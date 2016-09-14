@@ -78,6 +78,8 @@ public class SMTestProxy extends AbstractTestProxy {
   private Printer myPreferredPrinter = null;
   private String myPresentableName;
   private boolean myConfig = false;
+  //false:: printables appear as soon as they are discovered in the output; true :: predefined test structure
+  private boolean myTreeBuildBeforeStart = false;
 
   public SMTestProxy(String testName, boolean isSuite, @Nullable String locationUrl) {
     this(testName, isSuite, locationUrl, false);
@@ -533,16 +535,25 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   protected void addAfterLastPassed(Printable printable) {
-    int idx = 0;
-    synchronized (myNestedPrintables) {
-      for (Printable proxy : myNestedPrintables) {
-        if (proxy instanceof SMTestProxy && !((SMTestProxy)proxy).isFinal()) {
-          break;
+    if (myTreeBuildBeforeStart) {
+      int idx = 0;
+      synchronized (myNestedPrintables) {
+        for (Printable proxy : myNestedPrintables) {
+          if (proxy instanceof SMTestProxy && !((SMTestProxy)proxy).isFinal()) {
+            break;
+          }
+          idx++;
         }
-        idx++;
       }
+      insert(printable, idx);
     }
-    insert(printable, idx);
+    else {
+      addLast(printable);
+    }
+  }
+
+  public void setTreeBuildBeforeStart() {
+    myTreeBuildBeforeStart = true;
   }
 
   private static List<? extends SMTestProxy> filterChildren(@Nullable Filter<? super SMTestProxy> filter,

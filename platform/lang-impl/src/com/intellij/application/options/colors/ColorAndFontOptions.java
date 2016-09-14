@@ -32,7 +32,10 @@ import com.intellij.openapi.editor.colors.impl.*;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SchemeManager;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.colors.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -136,7 +139,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     return mySelectedScheme;
   }
 
-  private MyColorScheme getScheme(String name) {
+  MyColorScheme getScheme(String name) {
     return mySchemes.get(name);
   }
 
@@ -167,6 +170,10 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
   public static boolean isReadOnly(@NotNull final EditorColorsScheme scheme) {
     return ((MyColorScheme)scheme).isReadOnly();
+  }
+  
+  public static boolean canBeDeleted(@NotNull final EditorColorsScheme scheme) {
+    return scheme instanceof  MyColorScheme && ((MyColorScheme)scheme).canBeDeleted();
   }
 
   @NotNull
@@ -265,9 +272,9 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
       // refresh only if scheme is not switched
       boolean refreshEditors = activeSchemeModified && schemeManager.getCurrentScheme() == activeOriginalScheme;
-      schemeManager.setSchemes(result, activeOriginalScheme);
+      schemeManager.setSchemes(includingInvisible(result, schemeManager), activeOriginalScheme);
       if (refreshEditors) {
-        EditorColorsManagerImpl.schemeChangedOrSwitched();
+        ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).schemeChangedOrSwitched(null);
       }
 
       final boolean isEditorThemeDark = ColorUtil.isDark(activeOriginalScheme.getDefaultBackground());
@@ -278,6 +285,16 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     finally {
       myApplyCompleted = true;
     }
+  }
+
+  private static List<EditorColorsScheme> includingInvisible(@NotNull List<EditorColorsScheme> schemeList,
+                                                             @NotNull SchemeManager<EditorColorsScheme> schemeManager) {
+    for (EditorColorsScheme scheme : schemeManager.getAllSchemes()) {
+      if (!AbstractColorsScheme.isVisible(scheme)) {
+        schemeList.add(scheme);
+      }
+    }
+    return schemeList;
   }
 
   private static void changeLafIfNecessary(boolean isDarkEditorTheme) {
@@ -1069,6 +1086,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       }
 
       return false;
+    }
+
+    @Override
+    public boolean canBeDeleted() {
+      return (myParentScheme instanceof AbstractColorsScheme) && ((AbstractColorsScheme)myParentScheme).canBeDeleted();
     }
 
     private boolean isFontModified() {

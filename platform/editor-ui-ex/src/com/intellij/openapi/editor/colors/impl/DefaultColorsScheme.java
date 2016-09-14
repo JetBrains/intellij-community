@@ -27,6 +27,9 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnlyColorsScheme {
+  
+  public final static String EDITABLE_COPY_PREFIX = "#_user_";
+  
   private String myName;
 
   public DefaultColorsScheme() {
@@ -92,5 +95,23 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
     newScheme.setName(DEFAULT_SCHEME_NAME);
     newScheme.setDefaultMetaInfo(this);
     return newScheme;
+  }
+
+  /**
+   * Tells if there is an editable user copy of the scheme to be edited.
+   * 
+   * @return True if the editable copy shall exist, false if the scheme is non-editable.
+   */
+  public boolean hasEditableCopy() {
+    return true;
+  }
+  
+  public String getEditableCopyName() {
+    return EDITABLE_COPY_PREFIX + myName;
+  }
+
+  @Override
+  public boolean isVisible() {
+    return false;
   }
 }

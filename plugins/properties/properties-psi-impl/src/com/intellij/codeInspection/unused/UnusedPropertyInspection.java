@@ -49,7 +49,7 @@ import java.util.function.Function;
 /**
  * @author cdr
  */
-public class UnusedPropertyInspection extends PropertySuppressableInspectionBase implements ResourceBundleEditorInspection {
+public class UnusedPropertyInspection extends PropertiesInspectionBase implements ResourceBundleEditorInspection {
   private static final Logger LOG = Logger.getInstance(UnusedPropertyInspection.class);
 
   @Override

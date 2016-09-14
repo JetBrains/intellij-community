@@ -109,9 +109,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
       @Override
       public void onCurrentSchemeSwitched(@Nullable EditorColorsScheme oldScheme, @Nullable EditorColorsScheme newScheme) {
         LafManager.getInstance().updateUI();
-        schemeChangedOrSwitched();
-
-        fireChanges(newScheme);
+        schemeChangedOrSwitched(newScheme);
       }
 
       @NotNull
@@ -137,6 +135,8 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
       scheme = getScheme(wizardEditorScheme);
       LOG.assertTrue(scheme != null, "Wizard scheme " + wizardEditorScheme + " not found");
     }
+    
+    initEditableDefaultSchemesCopies();
     setGlobalSchemeInner(scheme == null ? getDefaultScheme() : scheme);
   }
 
@@ -147,6 +147,22 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
     loadAdditionalTextAttributes();
   }
 
+
+  private void initEditableDefaultSchemesCopies() {
+    for (DefaultColorsScheme defaultScheme : myDefaultColorSchemeManager.getAllSchemes()) {
+      if (defaultScheme.hasEditableCopy()) {
+        String editableCopyName = defaultScheme.getEditableCopyName();
+        AbstractColorsScheme editableCopy = (AbstractColorsScheme)getScheme(editableCopyName);
+        if (editableCopy == null) {
+          editableCopy = (AbstractColorsScheme)defaultScheme.clone();
+          editableCopy.setName(editableCopyName);
+          addColorsScheme(editableCopy);
+        }
+        editableCopy.setCanBeDeleted(false);
+      }
+    }
+  }
+
   private void loadBundledSchemes() {
     if (!isUnitTestOrHeadlessMode()) {
       for (BundledColorSchemeEP ep : BundledColorSchemeEP.EP_NAME.getExtensions()) {
@@ -155,15 +171,22 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
     }
   }
 
+  @Deprecated
   public static void schemeChangedOrSwitched() {
+    EditorColorsManagerImpl manager = (EditorColorsManagerImpl)getInstance();
+    manager.schemeChangedOrSwitched(manager.getGlobalScheme());
+  }
+
+  public void schemeChangedOrSwitched(@Nullable EditorColorsScheme newScheme) {
     EditorFactory.getInstance().refreshAllEditors();
     // refreshAllEditors is not enough - for example, change "Errors and warnings -> Typo" from green (default) to red
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       DaemonCodeAnalyzer.getInstance(project).restart();
     }
+
     // we need to push events to components that use editor font, e.g. HTML editor panes
-    EditorColorsManagerImpl instance = (EditorColorsManagerImpl)getInstance();
-    instance.myTreeDispatcher.getMulticaster().globalSchemeChange(instance.getGlobalScheme());
+    myDispatcher.getMulticaster().globalSchemeChange(newScheme);
+    myTreeDispatcher.getMulticaster().globalSchemeChange(newScheme);
   }
 
   static class ReadOnlyColorsSchemeImpl extends EditorColorsSchemeImpl implements ReadOnlyColorsScheme {
@@ -246,7 +269,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   private static EditorColorsScheme[] getAllVisibleSchemes(@NotNull Collection<EditorColorsScheme> schemes) {
     List<EditorColorsScheme> visibleSchemes = new ArrayList<>(schemes.size() - 1);
     for (EditorColorsScheme scheme : schemes) {
-      if (!(scheme instanceof EmptyColorScheme)) {
+      if (AbstractColorsScheme.isVisible(scheme)) {
         visibleSchemes.add(scheme);
       }
     }
@@ -263,8 +286,12 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   }
 
   @NotNull
-  private DefaultColorsScheme getDefaultScheme() {
-    return myDefaultColorSchemeManager.getFirstScheme();
+  private EditorColorsScheme getDefaultScheme() {
+    DefaultColorsScheme defaultScheme = myDefaultColorSchemeManager.getFirstScheme();
+    String editableCopyName = defaultScheme.getEditableCopyName();
+    EditorColorsScheme editableCopy = getScheme(editableCopyName);
+    assert editableCopy != null : "An editable copy of " + defaultScheme.getName() + " has not been initialized.";
+    return editableCopy;
   }
 
   @NotNull
@@ -277,11 +304,6 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   @Override
   public EditorColorsScheme getScheme(@NotNull String schemeName) {
     return mySchemeManager.findSchemeByName(schemeName);
-  }
-
-  private void fireChanges(EditorColorsScheme scheme) {
-    myDispatcher.getMulticaster().globalSchemeChange(scheme);
-    myTreeDispatcher.getMulticaster().globalSchemeChange(scheme);
   }
 
   @Override

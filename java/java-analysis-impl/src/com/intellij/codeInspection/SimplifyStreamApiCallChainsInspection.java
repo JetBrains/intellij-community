@@ -103,7 +103,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
             fix = new ReplaceWithStreamEmptyFix(EMPTY_SET_METHOD);
           }
           if (fix != null) {
-            holder.registerProblem(methodCall, null, fix.getMessage(), fix);
+            holder.registerProblem(methodCall, null, fix.getMessage(), new SimplifyCallChainFix(fix));
           }
         }
         else if (isCallOf(method, CommonClassNames.JAVA_UTIL_STREAM_STREAM, COLLECT_METHOD, 1)) {
@@ -140,7 +140,8 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
               if(nameElement != null) {
                 range = new TextRange(nameElement.getTextOffset(), range.getEndOffset());
               }
-              holder.registerProblem(methodCall, range.shiftRight(-methodCall.getTextOffset()), fix.getMessage(), fix);
+              holder.registerProblem(methodCall, range.shiftRight(-methodCall.getTextOffset()), fix.getMessage(),
+                                     new SimplifyCallChainFix(fix));
             }
           }
         }
@@ -160,7 +161,8 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
           final PsiMethod qualifier = qualifierCall.resolveMethod();
           if (isCallOf(qualifier, CommonClassNames.JAVA_UTIL_COLLECTION, STREAM_METHOD, 0)) {
             final ReplaceStreamMethodFix fix = new ReplaceStreamMethodFix(name, FOR_EACH_METHOD, true);
-            holder.registerProblem(methodCall, getCallChainRange(methodCall, qualifierCall), fix.getMessage(), fix);
+            holder
+              .registerProblem(methodCall, getCallChainRange(methodCall, qualifierCall), fix.getMessage(), new SimplifyCallChainFix(fix));
           }
         }
       }
@@ -221,14 +223,39 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     return false;
   }
 
-  private static abstract class CallChainFixBase implements LocalQuickFix {
+  interface CallChainFix {
+    String getName();
+    void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor);
+  }
+
+  private static class SimplifyCallChainFix implements LocalQuickFix {
+    private final CallChainFix myFix;
+
+    SimplifyCallChainFix(CallChainFix fix) {
+      myFix = fix;
+    }
+
     @Nls
     @NotNull
     @Override
     public String getName() {
-      return getFamilyName();
+      return myFix.getName();
     }
 
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Simplify stream call chain";
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      myFix.applyFix(project, descriptor);
+    }
+  }
+
+  private static abstract class CallChainFixBase implements CallChainFix {
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getStartElement();
@@ -261,7 +288,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     }
 
     @NotNull
-    String getMessage() {
+    public String getMessage() {
       return myQualifierCall + ".stream() can be replaced with " + ClassUtil.extractClassName(myClassName) + "." + myMethodName + "()";
     }
 
@@ -302,13 +329,6 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     private ReplaceWithStreamOfFix(String qualifierCall) {
       super(qualifierCall, CommonClassNames.JAVA_UTIL_STREAM_STREAM, OF_METHOD);
     }
-
-    @Nls
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return "Replace with Stream.of()";
-    }
   }
 
   private static class ReplaceSingletonWithStreamOfFix extends ReplaceWithStreamOfFix {
@@ -338,25 +358,11 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     private ArraysAsListSingleArrayFix() {
       super("Arrays.asList()", CommonClassNames.JAVA_UTIL_ARRAYS, STREAM_METHOD);
     }
-
-    @Nls
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return "Replace Arrays.asList().stream() with Arrays.stream()";
-    }
   }
 
   private static class ReplaceWithStreamEmptyFix extends ReplaceCollectionStreamFix {
     private ReplaceWithStreamEmptyFix(String qualifierMethodName) {
       super("Collections." + qualifierMethodName + "()", CommonClassNames.JAVA_UTIL_STREAM_STREAM, EMPTY_METHOD);
-    }
-
-    @Nls
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return "Replace with Stream.empty()";
     }
   }
 
@@ -374,14 +380,14 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     @Nls
     @NotNull
     @Override
-    public String getFamilyName() {
+    public String getName() {
       return "Replace Collection.stream()." + myStreamMethod +
              "() with Collection." + myCollectionMethod + "()" +
              (myChangeSemantics ? " (may change semantics)" : "");
     }
 
     @NotNull
-    String getMessage() {
+    public String getMessage() {
       return "Collection.stream()." + myStreamMethod +
              "() can be replaced with Collection." + myCollectionMethod + "()" +
              (myChangeSemantics ? " (may change semantics)" : "");
@@ -405,7 +411,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     }
   }
 
-  private static class ReplaceCollectorFix implements LocalQuickFix {
+  private static class ReplaceCollectorFix implements CallChainFix {
     private final String myCollector;
     private final String myStreamSequence;
     private final String myStreamSequenceStripped;
@@ -422,13 +428,6 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     @NotNull
     @Override
     public String getName() {
-      return getFamilyName();
-    }
-
-    @Nls
-    @NotNull
-    @Override
-    public String getFamilyName() {
       return "Replace Stream.collect(" + myCollector +
              "()) with Stream." + myStreamSequenceStripped +
              (myChangeSemantics ? " (may change semantics when result is null)" : "");
@@ -481,9 +480,9 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     }
 
     @NotNull
-    String getMessage() {
+    public String getMessage() {
       return "Stream.collect(" + myCollector +
-             "()) can be replaced with Stream." + myStreamSequenceStripped + "()" +
+             "()) can be replaced with Stream." + myStreamSequenceStripped +
              (myChangeSemantics ? " (may change semantics when result is null)" : "");
     }
   }

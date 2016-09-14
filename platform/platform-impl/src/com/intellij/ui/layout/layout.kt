@@ -19,6 +19,17 @@ import com.intellij.ui.components.Panel
 import com.intellij.ui.layout.LCFlags.*
 import javax.swing.JPanel
 
+/**
+ * Claims all available space in the container for the columns ([LCFlags.fillX]).
+ * At least one component need to have a [CCFlags.grow] constraint for it to fill the container.
+ *
+ * See [docs](https://github.com/JetBrains/intellij-community/tree/master/platform/platform-impl/src/com/intellij/ui/layout)
+ *
+ * Check `Tools -> Internal Actions -> UI -> MigLayout Debug Mode` to turn on debug painting.
+ *
+ * JTextComponent component automatically has [CCFlags.growX].
+ * ToolbarDecorator component automatically has [CCFlags.grow] and [CCFlags.push].
+ */
 inline fun panel(vararg constraints: LCFlags, title: String? = null, init: LayoutBuilder.() -> Unit): JPanel {
   val builder = createLayoutBuilder()
   builder.init()

@@ -197,7 +197,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         }
       }
     }
-    return result;
+    return result.length == 0 ? result : result.clone();
   }
 
   @Override
