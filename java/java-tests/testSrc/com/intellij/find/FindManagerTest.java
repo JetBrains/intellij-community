@@ -927,6 +927,14 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertSize(2, findUsages(findModel));
   }
 
+  public void testProperHandlingOfEmptyLinesWhenReplacingWithRegExp() throws Exception {
+    doTestRegexpReplace(
+      "foo\n\n\n",
+      "^",
+      "// ",
+      "// foo\n// \n// \n");
+  }
+
   private void runAsyncTest(String text, FindModel findModel) throws InterruptedException {
     final Ref<FindResult> result = new Ref<>();
     final CountDownLatch progressStarted = new CountDownLatch(1);

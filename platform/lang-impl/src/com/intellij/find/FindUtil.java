@@ -570,6 +570,7 @@ public class FindUtil {
         TextRange textRange = doReplace(project, document, model, result, toReplace, toPrompt, rangesToChange);
         replaced = true;
         newOffset = model.isForward() ? textRange.getEndOffset() : textRange.getStartOffset();
+        if (textRange.isEmpty()) ++newOffset;
         occurrences++;
       }
       else {
