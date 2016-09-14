@@ -16,6 +16,7 @@
 package com.intellij.errorreport.crash;
 
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.testFramework.PlatformTestUtil;
 import groovy.json.internal.Charsets;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
@@ -40,12 +41,16 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Constructor;
 import java.net.ServerSocket;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 
@@ -148,6 +153,16 @@ public class GoogleCrashTest {
     // check that the crash count and descriptions made through
     assertEquals(descriptions.size(), Integer.parseInt(attributes.get("numCrashes")));
     assertEquals("2.3.0.0\n1.8.0_73-b02\n\n2.3.0.1\n1.8.0_73-b02", attributes.get("crashDesc"));
+
+    Path testData = Paths.get(PlatformTestUtil.getPlatformTestDataPath());
+    List<String> threadDump = Files.readAllLines(testData.resolve(Paths.get("threadDumps", "1.txt")));
+    report = CrashReport.Builder.createForPerfReport("td.txt", threadDump).build();
+
+    attributes.clear();
+
+    reportId = myReporter.submit(report);
+    assertEquals(expectedReportId, reportId.get());
+    assertEquals(threadDump.stream().collect(Collectors.joining("\n")), attributes.get("td.txt"));
   }
 
   @Test(expected = ExecutionException.class)
