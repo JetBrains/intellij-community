@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.IdeaCommunityBuilder
 
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
@@ -45,4 +46,13 @@ target('build-dist-jars' : 'Target to build jars from locally compiled classes')
   options.outputRootPath = out
   options.useCompiledClassesFromProjectOutput = true
   new IdeaCommunityBuilder(home, binding, options).buildDistJars()
+}
+
+target('update-from-sources': 'Update locally installed distribution from compiled classes') {
+  def options = new BuildOptions()
+  options.useCompiledClassesFromProjectOutput = true
+  options.buildStepsToSkip << BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP
+  //when IDEA CE is updated from IDEA UE sources project should be loaded from IDEA UE directory
+  String projectHome = isDefined("devIdeaHome") ? devIdeaHome : home
+  new IdeaCommunityBuilder(home, binding, options, projectHome).buildUnpackedDistribution(deploy)
 }
