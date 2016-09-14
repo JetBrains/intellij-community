@@ -48,7 +48,7 @@ class GroovyBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
 
   override fun getElementInfo(e: PsiElement) = when (e) {
     is GrVariableDeclaration -> e.variables.single().name
-    is GrClosableBlock -> (e.parent as? GrMethodCall)?.invokedExpression?.text + "{}"
+    is GrClosableBlock -> (e.parent as? GrMethodCall)?.invokedExpression?.text?:"" + "{}"
     is GrAnonymousClassDefinition -> "new ${e.baseClassReferenceGroovy.referenceName}"
     is GrMethod -> "${e.name}()"
     is GrMember -> e.name!!
