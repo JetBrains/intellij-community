@@ -160,7 +160,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
 
     if (currentModel != null) {
       if (currentModel.isReplaceState()) {
-        FindManager findManager = FindManager.getInstance(editor.getProject());
+        FindManager findManager = FindManager.getInstance(mySearchResults.getProject());
         try {
           stringToReplace = findManager.getStringToReplace(foundString, currentModel,
                                                            findResult.getStartOffset(), documentText);
@@ -175,9 +175,10 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
 
   @Nullable
   public TextRange performReplace(final FindResult occurrence, final String replacement, final Editor editor) {
-    if (myReplaceDenied || !ReadonlyStatusHandler.ensureDocumentWritable(editor.getProject(), editor.getDocument())) return null;
+    Project project = mySearchResults.getProject();
+    if (myReplaceDenied || !ReadonlyStatusHandler.ensureDocumentWritable(project, editor.getDocument())) return null;
     FindModel findModel = mySearchResults.getFindModel();
-    TextRange result = FindUtil.doReplace(editor.getProject(),
+    TextRange result = FindUtil.doReplace(project,
                                           editor.getDocument(),
                                           findModel,
                                           new FindResultImpl(occurrence.getStartOffset(), occurrence.getEndOffset()),
@@ -190,7 +191,8 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
   }
 
   public void performReplaceAll(Editor e) {
-    if (!ReadonlyStatusHandler.ensureDocumentWritable(e.getProject(), e.getDocument())) return;
+    Project project = mySearchResults.getProject();
+    if (!ReadonlyStatusHandler.ensureDocumentWritable(project, e.getDocument())) return;
     if (mySearchResults.getFindModel() != null) {
       final FindModel copy = new FindModel();
       copy.copyFrom(mySearchResults.getFindModel());
@@ -204,7 +206,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
       } else {
         offset = selectionModel.getBlockSelectionStarts()[0];
       }
-      FindUtil.replace(e.getProject(), e, offset, copy, this);
+      FindUtil.replace(project, e, offset, copy, this);
     }
   }
 
