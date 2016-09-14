@@ -1,0 +1,14 @@
+buildscript {
+  repositories { jcenter() }
+  dependencies {
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:+"
+  }
+}
+
+apply plugin: 'kotlin'
+
+repositories { jcenter() }
+dependencies {
+  compile "org.jetbrains.kotlin:kotlin-stdlib:1.0.+"
+  testCompile "junit:junit:4.+"
+}
