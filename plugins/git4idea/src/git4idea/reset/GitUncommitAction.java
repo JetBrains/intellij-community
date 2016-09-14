@@ -52,7 +52,7 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static git4idea.GitUtil.HEAD;
 import static git4idea.GitUtil.getRepositoryManager;
-import static git4idea.reset.GitResetMode.MIXED;
+import static git4idea.reset.GitResetMode.SOFT;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 
@@ -201,7 +201,7 @@ public class GitUncommitAction extends DumbAwareAction {
         }
 
         // TODO change notification title
-        new GitResetOperation(project, singletonMap(repository, commit.getParents().get(0)), MIXED, indicator).execute();
+        new GitResetOperation(project, singletonMap(repository, commit.getParents().get(0)), SOFT, indicator).execute();
 
         ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(project);
         changeListManager.invokeAfterUpdate(() -> {
