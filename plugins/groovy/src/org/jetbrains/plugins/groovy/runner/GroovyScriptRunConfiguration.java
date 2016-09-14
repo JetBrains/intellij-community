@@ -38,12 +38,15 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.DelegatingGlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.util.ObjectUtils;
@@ -421,5 +424,28 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
 
   public void setScriptPath(@Nullable String scriptPath) {
     this.scriptPath = scriptPath;
+  }
+
+  @Override
+  public GlobalSearchScope getScope() {
+    GlobalSearchScope superScope = super.getScope();
+
+    String path = getScriptPath();
+    if (path == null) return superScope;
+
+    VirtualFile scriptFile = LocalFileSystem.getInstance().findFileByPath(path);
+    if (scriptFile == null) return superScope;
+
+    GlobalSearchScope fileScope = GlobalSearchScope.fileScope(getProject(), scriptFile);
+    if (superScope == null) return fileScope;
+
+    return new DelegatingGlobalSearchScope(fileScope.union(superScope)) {
+      @Override
+      public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
+        if (file1.equals(scriptFile)) return 1;
+        if (file2.equals(scriptFile)) return -1;
+        return super.compare(file1, file2);
+      }
+    };
   }
 }
