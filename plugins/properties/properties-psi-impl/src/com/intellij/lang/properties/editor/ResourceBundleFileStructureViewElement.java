@@ -43,7 +43,7 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
   private final ResourceBundle myResourceBundle;
 
   private volatile boolean myShowOnlyIncomplete;
-  private final Map<String, ResourceBundlePropertyStructureViewElement> myElements = ContainerUtil.newHashMap();
+  private final Map<String, ResourceBundlePropertyStructureViewElement> myElements = ContainerUtil.newLinkedHashMap();
 
   public ResourceBundleFileStructureViewElement(final ResourceBundle resourceBundle) {
     myResourceBundle = resourceBundle;
@@ -83,7 +83,12 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
       myElements.remove(remain);
     }
 
-    return myElements.values().toArray(new StructureViewTreeElement[myElements.size()]);
+    StructureViewTreeElement[] result = new StructureViewTreeElement[propertyNames.size()];
+    int i = 0;
+    for (String key : propertyNames.keySet()) {
+      result[i++] = myElements.get(key);
+    }
+    return result;
   }
 
   public static MultiMap<String, IProperty> getPropertiesMap(ResourceBundle resourceBundle, boolean onlyIncomplete) {

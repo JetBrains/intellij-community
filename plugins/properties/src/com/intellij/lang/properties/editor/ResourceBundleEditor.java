@@ -615,7 +615,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   }
 
   @Nullable
-  private IProperty getSelectedProperty() {
+  IProperty getSelectedProperty() {
     final Collection<DefaultMutableTreeNode> selectedNode = getSelectedNodes();
     if (selectedNode.isEmpty()) {
       return null;
