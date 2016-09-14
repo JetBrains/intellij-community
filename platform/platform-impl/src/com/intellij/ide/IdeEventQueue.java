@@ -418,7 +418,9 @@ public class IdeEventQueue extends EventQueue {
   @Nullable
   static AccessToken startActivity(AWTEvent e) {
     if (ourTransactionGuard == null && appIsLoaded()) {
-      ourTransactionGuard = (TransactionGuardImpl)TransactionGuard.getInstance();
+      if (ApplicationManager.getApplication() != null && !ApplicationManager.getApplication().isDisposed()) {
+        ourTransactionGuard = (TransactionGuardImpl)TransactionGuard.getInstance();
+      }
     }
     return ourTransactionGuard == null
            ? null
