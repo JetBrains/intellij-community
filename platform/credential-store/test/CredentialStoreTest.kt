@@ -55,6 +55,11 @@ internal class CredentialStoreTest {
     testEmptyAccountName(KeePassCredentialStore())
   }
 
+  @Test
+  fun `keepass - testChangedAccountName`() {
+    testChangedAccountName(KeePassCredentialStore())
+  }
+
   private fun doTest(store: CredentialStore) {
     val pass = randomString()
     store.setPassword(CredentialAttributes(TEST_SERVICE_NAME, "test"), pass)
@@ -75,7 +80,7 @@ internal class CredentialStoreTest {
   private fun testEmptyAccountName(store: CredentialStore) {
     val serviceNameOnlyAttributes = CredentialAttributes("Test IJ — ${randomString()}")
     try {
-      val credentials = Credentials(randomString(), OneTimeString("pass"))
+      val credentials = Credentials(randomString(), "pass")
       store.set(serviceNameOnlyAttributes, credentials)
       assertThat(store.get(serviceNameOnlyAttributes)).isEqualTo(credentials)
     }
@@ -91,6 +96,22 @@ internal class CredentialStoreTest {
     }
     finally {
       store.set(attributes, null)
+    }
+  }
+
+  private fun testChangedAccountName(store: CredentialStore) {
+    val serviceNameOnlyAttributes = CredentialAttributes("Test IJ — ${randomString()}")
+    try {
+      val credentials = Credentials(randomString(), "pass")
+      val newUserName = randomString()
+      val newPassword = randomString()
+      store.set(serviceNameOnlyAttributes, credentials)
+      assertThat(store.get(serviceNameOnlyAttributes)).isEqualTo(credentials)
+      store.set(CredentialAttributes(serviceNameOnlyAttributes.serviceName, newUserName), Credentials(newUserName, newPassword))
+      assertThat(store.get(serviceNameOnlyAttributes)).isEqualTo(Credentials(newUserName, newPassword))
+    }
+    finally {
+      store.set(serviceNameOnlyAttributes, null)
     }
   }
 }
