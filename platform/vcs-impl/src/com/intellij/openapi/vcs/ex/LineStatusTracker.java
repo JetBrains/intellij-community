@@ -37,7 +37,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -645,36 +644,34 @@ public class LineStatusTracker {
       }
     }
 
-    if (Registry.is("diff.status.tracker.skip.spaces")) {
-      // Expand on ranges, that are separated from changed lines only by whitespaces
+    // Expand on ranges, that are separated from changed lines only by whitespaces
 
-      while (lastBefore != -1) {
-        int firstChangedLine = beforeChangedLine1;
-        if (lastBefore + 1 < myRanges.size()) {
-          Range firstChanged = myRanges.get(lastBefore + 1);
-          firstChangedLine = Math.min(firstChangedLine, firstChanged.getLine1());
-        }
-
-        if (!isLineRangeEmpty(myDocument, myRanges.get(lastBefore).getLine2(), firstChangedLine)) {
-          break;
-        }
-
-        lastBefore--;
+    while (lastBefore != -1) {
+      int firstChangedLine = beforeChangedLine1;
+      if (lastBefore + 1 < myRanges.size()) {
+        Range firstChanged = myRanges.get(lastBefore + 1);
+        firstChangedLine = Math.min(firstChangedLine, firstChanged.getLine1());
       }
 
-      while (firstAfter != myRanges.size()) {
-        int firstUnchangedLineAfter = beforeChangedLine2 + linesShift;
-        if (firstAfter > 0) {
-          Range lastChanged = myRanges.get(firstAfter - 1);
-          firstUnchangedLineAfter = Math.max(firstUnchangedLineAfter, lastChanged.getLine2() + linesShift);
-        }
-
-        if (!isLineRangeEmpty(myDocument, firstUnchangedLineAfter, myRanges.get(firstAfter).getLine1() + linesShift)) {
-          break;
-        }
-
-        firstAfter++;
+      if (!isLineRangeEmpty(myDocument, myRanges.get(lastBefore).getLine2(), firstChangedLine)) {
+        break;
       }
+
+      lastBefore--;
+    }
+
+    while (firstAfter != myRanges.size()) {
+      int firstUnchangedLineAfter = beforeChangedLine2 + linesShift;
+      if (firstAfter > 0) {
+        Range lastChanged = myRanges.get(firstAfter - 1);
+        firstUnchangedLineAfter = Math.max(firstUnchangedLineAfter, lastChanged.getLine2() + linesShift);
+      }
+
+      if (!isLineRangeEmpty(myDocument, firstUnchangedLineAfter, myRanges.get(firstAfter).getLine1() + linesShift)) {
+        break;
+      }
+
+      firstAfter++;
     }
 
     for (int i = 0; i < myRanges.size(); i++) {

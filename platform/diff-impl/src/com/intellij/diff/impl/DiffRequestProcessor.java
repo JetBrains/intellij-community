@@ -417,7 +417,6 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     DiffUtil.addActionBlock(myToolbarGroup,
                             new ShowInExternalToolAction(),
-                            new ShowOldDiffAction(),
                             ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP));
   }
 
