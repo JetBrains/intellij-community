@@ -18,7 +18,6 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.impl.FileTypeRenderer;
@@ -46,6 +45,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -73,9 +73,9 @@ public class SearchDialog extends DialogWrapper {
   private JCheckBox recursiveMatching;
   private JCheckBox caseSensitiveMatch;
 
-  private JComboBox fileTypes;
-  private JComboBox contexts;
-  private JComboBox dialects;
+  private JComboBox<FileType> fileTypes;
+  private JComboBox<String> contexts;
+  private JComboBox<Language> dialects;
   private JLabel status;
   private JLabel statusText;
 
@@ -212,9 +212,8 @@ public class SearchDialog extends DialogWrapper {
     }
     Collections.sort(types, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
 
-    final DefaultComboBoxModel comboBoxModel = new DefaultComboBoxModel(types.toArray(new FileType[types.size()]));
-    comboBoxModel.setSelectedItem(ourFtSearchVariant);
-    fileTypes = new ComboBox(comboBoxModel);
+    final DefaultComboBoxModel<FileType> comboBoxModel = new DefaultComboBoxModel<>(types.toArray(new FileType[types.size()]));
+    fileTypes = new ComboBox<>(comboBoxModel);
     fileTypes.setRenderer(new FileTypeRenderer());
     new ComboboxSpeedSearch(fileTypes) {
       @Override
@@ -222,26 +221,18 @@ public class SearchDialog extends DialogWrapper {
         return ((FileType)element).getName();
       }
     };
-    fileTypes.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        updateDialectsAndContexts();
-        updateEditor();
-      }
-    });
-
-    contexts = new JComboBox(new DefaultComboBoxModel());
+    contexts = new ComboBox<>();
     contexts.setPreferredSize(new Dimension(60, -1));
 
-    dialects = new JComboBox(new DefaultComboBoxModel());
-    dialects.setRenderer(new ListCellRendererWrapper() {
+    dialects = new ComboBox<>();
+    dialects.setRenderer(new ListCellRendererWrapper<Language>() {
       @Override
-      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      public void customize(JList list, Language value, int index, boolean selected, boolean hasFocus) {
         if (value == null) {
           setText("None");
         }
-        else if (value instanceof Language) {
-          setText(((Language)value).getDisplayName());
+        else {
+          setText(value.getDisplayName());
         }
       }
     });
@@ -282,10 +273,13 @@ public class SearchDialog extends DialogWrapper {
     fileTypes.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
-        if (e.getStateChange() == ItemEvent.SELECTED) initiateValidation();
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+          updateDialectsAndContexts();
+          updateEditor();
+          initiateValidation();
+        }
       }
     });
-
     dialects.setSelectedItem(ourDialect);
     contexts.setSelectedItem(ourContext);
 
@@ -309,11 +303,11 @@ public class SearchDialog extends DialogWrapper {
     if (fileType instanceof LanguageFileType) {
       Language language = ((LanguageFileType)fileType).getLanguage();
       Language[] languageDialects = LanguageUtil.getLanguageDialects(language);
-      Arrays.sort(languageDialects, (o1, o2) -> o1.getDisplayName().compareTo(o2.getDisplayName()));
+      Arrays.sort(languageDialects, Comparator.comparing(Language::getDisplayName));
       Language[] variants = new Language[languageDialects.length + 1];
       variants[0] = null;
       System.arraycopy(languageDialects, 0, variants, 1, languageDialects.length);
-      dialects.setModel(new DefaultComboBoxModel(variants));
+      dialects.setModel(new DefaultComboBoxModel<>(variants));
       dialects.setEnabled(variants.length > 1);
     }
 
@@ -322,7 +316,7 @@ public class SearchDialog extends DialogWrapper {
     if (profile instanceof StructuralSearchProfileBase) {
       final String[] contextNames = ((StructuralSearchProfileBase)profile).getContextNames();
       if (contextNames.length > 0) {
-        contexts.setModel(new DefaultComboBoxModel(contextNames));
+        contexts.setModel(new DefaultComboBoxModel<>(contextNames));
         contexts.setSelectedItem(contextNames[0]);
         contexts.setEnabled(true);
         return;
@@ -369,25 +363,6 @@ public class SearchDialog extends DialogWrapper {
       ourFtSearchVariant = detectedFileType != null ?
                            detectedFileType :
                            StructuralSearchUtil.getDefaultFileType();
-
-      // todo: detect dialect
-
-      /*if (file.getLanguage() == StdLanguages.HTML ||
-          (file.getFileType() == StdFileTypes.JSP &&
-           contextLanguage == StdLanguages.HTML
-          )
-        ) {
-        ourFileType = "html";
-      }
-      else if (file.getLanguage() == StdLanguages.XHTML ||
-               (file.getFileType() == StdFileTypes.JSPX &&
-                contextLanguage == StdLanguages.HTML
-               )) {
-        ourFileType = "xml";
-      }
-      else {
-        ourFileType = DEFAULT_TYPE_NAME;
-      }*/
     }
   }
 
@@ -531,10 +506,10 @@ public class SearchDialog extends DialogWrapper {
 
       TitledSeparator separator = new TitledSeparator(SSRBundle.message("search.dialog.scope.label"), myScopeChooserCombo.getComboBox());
       scopePanel.add(separator, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                                       new Insets(5, 0, 0, 0), 0, 0));
+                                                       JBUI.insetsTop(5), 0, 0));
 
       scopePanel.add(myScopeChooserCombo, new GridBagConstraints(0, 1, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                                                 new Insets(0, 10, 0, 0), 0, 0));
+                                                                 JBUI.insetsLeft(10), 0, 0));
 
       allOptions.add(
         scopePanel,
@@ -703,8 +678,11 @@ public class SearchDialog extends DialogWrapper {
     return getVarsFrom(searchCriteriaEdit);
   }
 
-  protected static ArrayList<Variable> getVarsFrom(Editor searchCriteriaEdit) {
+  protected static List<Variable> getVarsFrom(Editor searchCriteriaEdit) {
     SubstitutionShortInfoHandler handler = searchCriteriaEdit.getUserData(UIUtil.LISTENER_KEY);
+    if (handler == null) {
+      return Collections.emptyList();
+    }
     return new ArrayList<>(handler.getVariables());
   }
 
@@ -732,7 +710,7 @@ public class SearchDialog extends DialogWrapper {
     );
 
     if (!useLastConfiguration) {
-      final Editor editor = FileEditorManager.getInstance(searchContext.getProject()).getSelectedTextEditor();
+      final Editor editor = searchContext.getEditor();
       boolean setSomeText = false;
 
       if (editor != null) {
