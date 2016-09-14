@@ -28,7 +28,7 @@ internal class CredentialStoreTest {
   }
 
   @Test
-  fun keepass() {
+  fun KeePass() {
     doTest(KeePassCredentialStore())
   }
 
@@ -42,6 +42,15 @@ internal class CredentialStoreTest {
   }
 
   @Test
+  fun `mac - changedAccountName`() {
+    if (!SystemInfo.isMacIntel64 || UsefulTestCase.IS_UNDER_TEAMCITY) {
+      return
+    }
+
+    testChangedAccountName(KeyChainCredentialStore())
+  }
+
+  @Test
   fun `linux - testEmptyAccountName`() {
     if (!SystemInfo.isLinux || UsefulTestCase.IS_UNDER_TEAMCITY) {
       return
@@ -51,12 +60,12 @@ internal class CredentialStoreTest {
   }
 
   @Test
-  fun `keepass - testEmptyAccountName`() {
+  fun `KeePass - testEmptyAccountName`() {
     testEmptyAccountName(KeePassCredentialStore())
   }
 
   @Test
-  fun `keepass - testChangedAccountName`() {
+  fun `KeePass - changedAccountName`() {
     testChangedAccountName(KeePassCredentialStore())
   }
 
@@ -103,12 +112,16 @@ internal class CredentialStoreTest {
     val serviceNameOnlyAttributes = CredentialAttributes("Test IJ — ${randomString()}")
     try {
       val credentials = Credentials(randomString(), "pass")
-      val newUserName = randomString()
+      var newUserName = randomString()
       val newPassword = randomString()
       store.set(serviceNameOnlyAttributes, credentials)
       assertThat(store.get(serviceNameOnlyAttributes)).isEqualTo(credentials)
       store.set(CredentialAttributes(serviceNameOnlyAttributes.serviceName, newUserName), Credentials(newUserName, newPassword))
       assertThat(store.get(serviceNameOnlyAttributes)).isEqualTo(Credentials(newUserName, newPassword))
+
+      newUserName = randomString()
+      store.set(CredentialAttributes(serviceNameOnlyAttributes.serviceName, newUserName), Credentials(newUserName, newPassword))
+      assertThat(store.get(serviceNameOnlyAttributes)!!.userName).isEqualTo(newUserName)
     }
     finally {
       store.set(serviceNameOnlyAttributes, null)

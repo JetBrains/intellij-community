@@ -27,11 +27,15 @@ import javax.crypto.spec.SecretKeySpec
 
 internal val LOG = Logger.getInstance(CredentialStore::class.java)
 
+internal val SERVICE_NAME_PREFIX = "IntelliJ Platform"
+
 private fun toOldKey(hash: ByteArray) = "old-hashed-key|" + Base64.getEncoder().encodeToString(hash)
 
-internal fun toOldKeyAsIdentity(hash: ByteArray) = CredentialAttributes("IntelliJ Platform", toOldKey(hash))
+internal fun toOldKeyAsIdentity(hash: ByteArray) = CredentialAttributes(SERVICE_NAME_PREFIX, toOldKey(hash))
 
-fun toOldKey(requestor: Class<*>, userName: String) = CredentialAttributes("IntelliJ Platform", toOldKey(MessageDigest.getInstance("SHA-256").digest("${requestor.name}/$userName".toByteArray())))
+fun toOldKey(requestor: Class<*>, userName: String): CredentialAttributes {
+  return CredentialAttributes(SERVICE_NAME_PREFIX, toOldKey(MessageDigest.getInstance("SHA-256").digest("${requestor.name}/$userName".toByteArray())))
+}
 
 fun joinData(user: String?, password: OneTimeString?): ByteArray? {
   if (user == null && password == null) {
