@@ -183,11 +183,7 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
       PsiParameter[] parameters = lambda.getParameterList().getParameters();
       PsiElement body = lambda.getBody();
       if(body == null) return;
-      String methodReference =
-        LambdaCanBeMethodReferenceInspection.convertToMethodReference(body, parameters, lambda.getFunctionalInterfaceType(), lambda);
-      if(methodReference != null) {
-        lambda.replace(factory.createExpressionFromText(methodReference, lambda));
-      } else {
+      if(LambdaCanBeMethodReferenceInspection.replaceLambdaWithMethodReference(factory, lambda) == lambda) {
         PsiParameter parameter = parameters[0];
         String name = parameter.getName();
         String nameCandidate = null;
