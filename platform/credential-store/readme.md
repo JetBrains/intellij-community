@@ -17,7 +17,7 @@ Windows: file in the [KeePass](http://keepass.info) format (key encrypted using 
 The combined name of your service and name of service that requires authentication.
  
 * In the reverse-DNS format: `com.apple.facetime: registrationV1`.
-* Or in the prefixed human-readable format: `IntelliJ Platform Setttings Repository — github.com`, where `IntelliJ Platform` is a required prefix. You must always use this prefix.
+* Or in the prefixed human-readable format: `IntelliJ Platform Settings Repository — github.com`, where `IntelliJ Platform` is a required prefix. You must always use this prefix.
 
 ## Credentials
 
