@@ -147,11 +147,15 @@ public class PyStackFrame extends XStackFrame {
     XValueChildrenList filteredChildren = new XValueChildrenList();
     final HashMap<String, XValue> returnedValues = new HashMap<>();
     final HashMap<String, XValue> specialValues = new HashMap<>();
+    final HashMap<String, XValue> ipythonHidden = new HashMap<>();
     for (int i = 0; i < children.size(); i++) {
       XValue value = children.getValue(i);
       String name = children.getName(i);
       if ((value instanceof PyDebugValue) && ((PyDebugValue)value).isReturnedVal()) {
         returnedValues.put(name, value);
+      }
+      else if ((value instanceof PyDebugValue) && ((PyDebugValue)value).isIPythonHidden()) {
+        ipythonHidden.put(name, value);
       }
       else if (name.startsWith(DOUBLE_UNDERSCORE) && (name.endsWith(DOUBLE_UNDERSCORE))) {
         specialValues.put(name, value);
@@ -160,12 +164,15 @@ public class PyStackFrame extends XStackFrame {
         filteredChildren.add(name, value);
       }
     }
-    node.addChildren(filteredChildren, returnedValues.isEmpty() && specialValues.isEmpty());
+    node.addChildren(filteredChildren, returnedValues.isEmpty() && specialValues.isEmpty() && ipythonHidden.isEmpty());
     if (!returnedValues.isEmpty()) {
       addReturnedValuesGroup(node, returnedValues);
     }
     if (!specialValues.isEmpty()) {
       addSpecialValuesGroup(node, specialValues);
+    }
+    if (!ipythonHidden.isEmpty()) {
+      addIPythonVariablesGroup(node, ipythonHidden);
     }
   }
 
@@ -193,6 +200,27 @@ public class PyStackFrame extends XStackFrame {
   private static void addSpecialValuesGroup(@NotNull final XCompositeNode node, Map<String, XValue> specialValues) {
     final ArrayList<XValueGroup> group = Lists.newArrayList();
     group.add(new XValueGroup("Special Variables") {
+      @Override
+      public void computeChildren(@NotNull XCompositeNode node) {
+        XValueChildrenList list = new XValueChildrenList();
+        for (Map.Entry<String, XValue> entry : specialValues.entrySet()) {
+          list.add(entry.getKey(), entry.getValue());
+        }
+        node.addChildren(list, true);
+      }
+
+      @Nullable
+      @Override
+      public Icon getIcon() {
+        return PythonIcons.Python.Debug.SpecialVar;
+      }
+    });
+    node.addChildren(XValueChildrenList.topGroups(group), true);
+  }
+
+  private static void addIPythonVariablesGroup(@NotNull final XCompositeNode node, Map<String, XValue> specialValues) {
+    final ArrayList<XValueGroup> group = Lists.newArrayList();
+    group.add(new XValueGroup("IPython Variables") {
       @Override
       public void computeChildren(@NotNull XCompositeNode node) {
         XValueChildrenList list = new XValueChildrenList();
