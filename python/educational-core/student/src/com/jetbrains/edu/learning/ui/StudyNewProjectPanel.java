@@ -30,7 +30,7 @@ import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
-import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.stepic.EduStepicAuthorizedClient;
 import com.jetbrains.edu.learning.stepic.LoginDialog;
 import com.jetbrains.edu.learning.stepic.StepicUser;
 import icons.InteractiveLearningIcons;
@@ -344,13 +344,12 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
         ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
 
-        final StepicUser stepicUser = StudyUtils.execCancelable(() -> EduStepicConnector.login(myLoginPanel.getLogin(),
-                                                                                               myLoginPanel.getPassword()));
+        final StepicUser stepicUser = StudyUtils.execCancelable(() -> EduStepicAuthorizedClient.login(myLoginPanel.getLogin(),
+                                                                                                      myLoginPanel.getPassword()));
         if (stepicUser != null) {
           stepicUser.setEmail(myLoginPanel.getLogin());
           stepicUser.setPassword(myLoginPanel.getPassword());
           myGenerator.myUser = stepicUser;
-          myGenerator.setEnrolledCoursesIds(EduStepicConnector.getEnrolledCoursesIds());
 
           final List<CourseInfo> courses = myGenerator.getCourses(true);
           if (courses != null && myRefreshCourseList) {

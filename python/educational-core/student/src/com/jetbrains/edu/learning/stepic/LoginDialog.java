@@ -44,13 +44,11 @@ public class LoginDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     if (!validateLoginAndPasswordFields()) return;
-    final StepicUser user = EduStepicConnector.login(myLoginPanel.getLogin(), myLoginPanel.getPassword());
-    if (user != null) {
+    final Project project = ProjectUtil.guessCurrentProject(myLoginPanel.getContentPanel());
+    final StepicUser stepicUser = EduStepicAuthorizedClient.login(myLoginPanel.getLogin(), myLoginPanel.getPassword());
+    if (stepicUser != null) {
+      StudyTaskManager.getInstance(project).setUser(stepicUser);
       doJustOkAction();
-      final Project project = ProjectUtil.guessCurrentProject(myLoginPanel.getContentPanel());
-      user.setEmail(myLoginPanel.getLogin());
-      user.setPassword(myLoginPanel.getPassword());
-      StudyTaskManager.getInstance(project).setUser(user);
     }
     else {
       setErrorText("Login failed");

@@ -435,4 +435,25 @@ public class StepicWrappers {
       enrollment = new Enrollment(courseId);
     }
   }
+
+  static class TokenInfo {
+    @Expose String accessToken;
+    @Expose String refreshToken;
+    @Expose String tokenType;
+    @Expose String scope;
+    @Expose int expiresIn;
+
+    public TokenInfo() {
+      accessToken = "";
+      refreshToken = "";
+    }
+
+    public String getAccessToken() {
+      return accessToken;
+    }
+
+    public String getRefreshToken() {
+      return refreshToken;
+    }
+  }
 }
