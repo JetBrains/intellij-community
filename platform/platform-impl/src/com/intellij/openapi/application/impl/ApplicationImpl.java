@@ -1229,6 +1229,29 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return myLock.isWriteLocked();
   }
 
+  public void executeSuspendingWriteAction(Runnable runnable) {
+    assertIsDispatchThread();
+    if (!myLock.isWriteLocked()) {
+      runnable.run();
+      return;
+    }
+
+    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+      List<Class> savedStack = new ArrayList<>(myWriteActionsStack);
+      myWriteActionsStack.clear();
+      myLock.writeUnlock();
+      try {
+        runnable.run();
+      } finally {
+        boolean stackWasEmpty = myWriteActionsStack.isEmpty();
+        myWriteActionsStack.clear();
+        myWriteActionsStack.addAll(savedStack);
+        myLock.writeLock();
+        LOG.assertTrue(stackWasEmpty);
+      }
+    });
+  }
+
   public void editorPaintStart() {
     myInEditorPaintCounter++;
   }
