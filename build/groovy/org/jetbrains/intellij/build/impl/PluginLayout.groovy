@@ -16,9 +16,6 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.MultiValuesMap
-import groovy.transform.Immutable
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.jps.util.JpsPathUtil
 
 /**
  * Described layout of a plugin in the product distribution
@@ -69,11 +66,6 @@ class PluginLayout extends BaseLayout {
     return result
   }
 
-  @Override
-  String basePath(BuildContext buildContext) {
-    JpsPathUtil.urlToPath(buildContext.findRequiredModule(mainModule).contentRootsList.urls.first())
-  }
-
   static class PluginLayoutSpec extends BaseLayoutSpec {
     private final PluginLayout layout
     /**
@@ -93,6 +85,30 @@ class PluginLayout extends BaseLayout {
     }
 
     /**
+     * @param resourcePath path to resource file or directory relative to the plugin's main module content root
+     * @param relativeOutputPath target path relative to the plugin root directory
+     */
+    void withResource(String resourcePath, String relativeOutputPath) {
+      withResourceFromModule(layout.mainModule, resourcePath, relativeOutputPath)
+    }
+
+    /**
+     * @param resourcePath path to resource file or directory relative to {@code moduleName} module content root
+     * @param relativeOutputPath target path relative to the plugin root directory
+     */
+    void withResourceFromModule(String moduleName, String resourcePath, String relativeOutputPath) {
+      layout.resourcePaths << new ModuleResourceData(moduleName, resourcePath, relativeOutputPath, false)
+    }
+
+    /**
+     * @param resourcePath path to resource file or directory relative to the plugin's main module content root
+     * @param relativeOutputFile target path relative to the plugin root directory
+     */
+    void withResourceArchive(String resourcePath, String relativeOutputFile) {
+      layout.resourcePaths << new ModuleResourceData(layout.mainModule, resourcePath, relativeOutputFile, true)
+    }
+
+    /**
      * Register an optional module which may be excluded from the plugin distribution in some products. These modules are included in plugin
      * distribution only if they are added to {@link org.jetbrains.intellij.build.ProductModulesLayout#bundledPluginModules} list.
      */
@@ -105,13 +121,20 @@ class PluginLayout extends BaseLayout {
       withModule(moduleName, "jps/${moduleName}.jar")
     }
 
-
     /**
      * Do not create 'resources_en.jar' and pack all resources into corresponding module JARs.
      * <strong>Do not use this for new plugins, this method is temporary added to keep layout of old plugins</strong>.
      */
     void doNotCreateSeparateJarForLocalizableResources() {
       layout.doNotCreateSeparateJarForLocalizableResources = true
+    }
+
+    /**
+     * Do not automatically include module libraries from {@code moduleNames}
+     * <strong>Do not use this for new plugins, this method is temporary added to keep layout of old plugins</strong>.
+     */
+    void doNotCopyModuleLibrariesAutomatically(List<String> moduleNames) {
+      layout.modulesWithExcludedModuleLibraries.addAll(moduleNames)
     }
   }
 }

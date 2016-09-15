@@ -17,12 +17,15 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import org.jetbrains.intellij.build.impl.PlatformLayout
+
+import java.util.function.Consumer
 
 /**
  * @author nik
  */
 @CompileStatic
-class IdeaCommunityProperties extends ProductProperties {
+class IdeaCommunityProperties extends BaseIdeaProperties {
   IdeaCommunityProperties(String home) {
     baseFileName = "idea"
     platformPrefix = "Idea"
@@ -31,11 +34,25 @@ class IdeaCommunityProperties extends ProductProperties {
     additionalIDEPropertiesFilePaths = ["$home/build/conf/ideaCE.properties".toString()]
     toolsJarRequired = true
     buildCrossPlatformDistribution = true
+
+    productLayout.platformApiModules = CommunityRepositoryModules.PLATFORM_API_MODULES + JAVA_API_MODULES
+    productLayout.platformImplementationModules = CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES + JAVA_IMPLEMENTATION_MODULES +
+                                                  ["duplicates-analysis", "structuralsearch", "structuralsearch-java", "typeMigration", "platform-main"] -
+                                                  ["jps-model-impl", "jps-model-serialization"]
+    productLayout.additionalPlatformJars.put("resources.jar", "community-resources")
+    productLayout.bundledPluginModules = BUNDLED_PLUGIN_MODULES
+    productLayout.mainModule = "community-main"
+    productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
+      CommunityRepositoryModules.androidPlugin([:]),
+      CommunityRepositoryModules.groovyPlugin([])
+    ]
+    productLayout.classesLoadingOrderFilePath = "$home/build/order.txt"
   }
 
   @Override
   @CompileDynamic
   void copyAdditionalFiles(BuildContext buildContext, String targetDirectory) {
+    super.copyAdditionalFiles(buildContext, targetDirectory)
     buildContext.ant.copy(todir: targetDirectory) {
       fileset(file: "$buildContext.paths.communityHome/LICENSE.txt")
       fileset(file: "$buildContext.paths.communityHome/NOTICE.txt")

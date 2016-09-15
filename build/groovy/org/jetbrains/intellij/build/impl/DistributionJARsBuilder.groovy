@@ -19,6 +19,7 @@ import com.intellij.openapi.util.MultiValuesMap
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
@@ -26,6 +27,7 @@ import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
+import org.jetbrains.jps.util.JpsPathUtil
 
 /**
  * @author nik
@@ -82,7 +84,7 @@ class DistributionJARsBuilder {
       JpsJavaExtensionService.dependencies(buildContext.findRequiredModule(it)).productionOnly().getModules().collect {it.name}
     }
 
-    platform = PlatformLayout.platform {
+    platform = PlatformLayout.platform(productLayout.platformLayoutCustomizer) {
       productLayout.additionalPlatformJars.entrySet().each {
         def jarName = it.key
         it.value.each {
@@ -110,12 +112,12 @@ class DistributionJARsBuilder {
       withModule("platform-resources", "resources.jar")
       withModule("colorSchemes", "resources.jar")
       withModule("platform-resources-en", productLayout.mainJarName)
-      if (allProductDependencies.contains("coverage-common")) {
+      if (allProductDependencies.contains("coverage-common") && !productLayout.bundledPluginModules.contains("coverage")) {
         withModule("coverage-common", productLayout.mainJarName)
       }
 
       projectLibrariesUsedByPlugins.each {
-        if (!productLayout.projectLibrariesToUnpackIntoMainJar.contains(it.name)) {
+        if (!productLayout.projectLibrariesToUnpackIntoMainJar.contains(it.name) && !layout.excludedProjectLibraries.contains(it.name)) {
           withProjectLibrary(it.name)
         }
       }
@@ -136,6 +138,35 @@ class DistributionJARsBuilder {
   void buildJARs() {
     buildLib()
     buildPlugins()
+
+    def loadingOrderFilePath = buildContext.productProperties.productLayout.classesLoadingOrderFilePath
+    if (loadingOrderFilePath != null) {
+      reorderJARs(loadingOrderFilePath)
+    }
+  }
+
+  void reorderJARs(String loadingOrderFilePath) {
+    buildContext.messages.block("Reorder JARs") {
+      String targetDirectory = buildContext.paths.distAll
+      buildContext.messages.progress("Reordering *.jar files in $targetDirectory")
+      File ignoredJarsFile = new File(buildContext.paths.temp, "reorder-jars/required_for_dist.txt")
+      ignoredJarsFile.parentFile.mkdirs()
+      ignoredJarsFile.text = new File(buildContext.paths.distAll, "lib").list()
+        .findAll {it.endsWith(".jar") && !platform.moduleJars.containsKey(it)}
+        .join("\n")
+
+      buildContext.ant.java(classname: "com.intellij.util.io.zip.ReorderJarsMain", fork: true, failonerror: true) {
+        arg(value: loadingOrderFilePath)
+        arg(value: targetDirectory)
+        arg(value: targetDirectory)
+        arg(value: ignoredJarsFile.parent)
+        classpath {
+          buildContext.projectBuilder.moduleRuntimeClasspath(buildContext.findRequiredModule("util"), false).each {
+            pathelement(location: it)
+          }
+        }
+      }
+    }
   }
 
   void buildAdditionalArtifacts() {
@@ -153,6 +184,11 @@ class DistributionJARsBuilder {
           module("internalUtilities")
         }
       }
+    }
+
+    if (productProperties.buildSourcesArchive) {
+      def archiveName = "${productProperties.baseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}-sources.zip"
+      BuildTasks.create(buildContext).zipSourcesOfModules(usedModules, "$buildContext.paths.artifacts/$archiveName")
     }
   }
 
@@ -197,39 +233,39 @@ class DistributionJARsBuilder {
     def ant = buildContext.ant
     def productLayout = buildContext.productProperties.productLayout
     def layoutBuilder = createLayoutBuilder()
-
-    if (buildContext.productProperties.setPluginAndIDEVersionInPluginXml) {
-      def pluginsToBuild = getPluginsByModules(productLayout.pluginModulesToPublish)
-      pluginsToBuild.each { plugin ->
-        def moduleOutput = buildContext.projectBuilder.moduleOutput(buildContext.findRequiredModule(plugin.mainModule))
-        def pluginXmlPath = "$moduleOutput/META-INF/plugin.xml"
-        if (!new File(pluginXmlPath)) {
-          buildContext.messages.error("plugin.xml not found in $plugin.mainModule module: $pluginXmlPath")
-        }
-        def patchedPluginXmlDir = "$buildContext.paths.temp/patched-plugin-xml/$plugin.mainModule"
-        ant.copy(file: pluginXmlPath, todir: "$patchedPluginXmlDir/META-INF")
-        setPluginVersionAndSince("$patchedPluginXmlDir/META-INF/plugin.xml", buildContext.buildNumber,
-                                 productLayout.prepareCustomPluginRepositoryForPublishedPlugins)
-        layoutBuilder.patchModuleOutput(plugin.mainModule, patchedPluginXmlDir)
-      }
-    }
-
     buildPlugins(layoutBuilder, getPluginsByModules(productLayout.bundledPluginModules), "$buildContext.paths.distAll/plugins")
     usedModules.addAll(layoutBuilder.usedModules)
 
-    def pluginsToPublishDir = "$buildContext.paths.temp/plugins-to-publish"
-    def pluginsToPublish = getPluginsByModules(productLayout.pluginModulesToPublish)
-    buildPlugins(layoutBuilder, pluginsToPublish, pluginsToPublishDir)
-    def nonBundledPluginsArtifacts = "$buildContext.paths.artifacts/plugins"
-    pluginsToPublish.each { plugin ->
-      def directory = plugin.directoryName
-      String suffix = productLayout.prepareCustomPluginRepositoryForPublishedPlugins ? "" : "-${buildContext.buildNumber}"
-      ant.zip(destfile: "$nonBundledPluginsArtifacts/$directory${suffix}.zip") {
-        zipfileset(dir: "$pluginsToPublishDir/$directory", prefix: directory)
+    buildContext.executeStep("Build non-bundled plugins", BuildOptions.NON_BUNDLED_PLUGINS_STEP) {
+      def pluginsToPublish = getPluginsByModules(productLayout.pluginModulesToPublish)
+      if (buildContext.productProperties.setPluginAndIDEVersionInPluginXml) {
+        pluginsToPublish.each { plugin ->
+          def moduleOutput = buildContext.projectBuilder.moduleOutput(buildContext.findRequiredModule(plugin.mainModule))
+          def pluginXmlPath = "$moduleOutput/META-INF/plugin.xml"
+          if (!new File(pluginXmlPath)) {
+            buildContext.messages.error("plugin.xml not found in $plugin.mainModule module: $pluginXmlPath")
+          }
+          def patchedPluginXmlDir = "$buildContext.paths.temp/patched-plugin-xml/$plugin.mainModule"
+          ant.copy(file: pluginXmlPath, todir: "$patchedPluginXmlDir/META-INF")
+          setPluginVersionAndSince("$patchedPluginXmlDir/META-INF/plugin.xml", buildContext.buildNumber,
+                                   productLayout.prepareCustomPluginRepositoryForPublishedPlugins)
+          layoutBuilder.patchModuleOutput(plugin.mainModule, patchedPluginXmlDir)
+        }
       }
-    }
-    if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
-      new PluginRepositoryXmlGenerator(buildContext).generate(pluginsToPublish, nonBundledPluginsArtifacts)
+
+      def pluginsToPublishDir = "$buildContext.paths.temp/plugins-to-publish"
+      buildPlugins(layoutBuilder, pluginsToPublish, pluginsToPublishDir)
+      def nonBundledPluginsArtifacts = "$buildContext.paths.artifacts/plugins"
+      pluginsToPublish.each { plugin ->
+        def directory = plugin.directoryName
+        String suffix = productLayout.prepareCustomPluginRepositoryForPublishedPlugins ? "" : "-${buildContext.buildNumber}"
+        ant.zip(destfile: "$nonBundledPluginsArtifacts/$directory${suffix}.zip") {
+          zipfileset(dir: "$pluginsToPublishDir/$directory", prefix: directory)
+        }
+      }
+      if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
+        new PluginRepositoryXmlGenerator(buildContext).generate(pluginsToPublish, nonBundledPluginsArtifacts)
+      }
     }
   }
 
@@ -300,7 +336,8 @@ class DistributionJARsBuilder {
         }
 
         //include all module libraries from the plugin modules added to IDE classpath to layout
-        moduleJars.entrySet().findAll { !it.key.contains("/") }.collectMany { it.value }.each { moduleName ->
+        moduleJars.entrySet().findAll { !it.key.contains("/") }.collectMany { it.value }
+                             .findAll {!layout.modulesWithExcludedModuleLibraries.contains(it)}.each { moduleName ->
           findModule(moduleName).dependenciesList.dependencies.
             findAll { it instanceof JpsLibraryDependency && it?.libraryReference?.parentReference?.resolve() instanceof JpsModule }.
             findAll { JpsJavaExtensionService.instance.getDependencyExtension(it)?.scope?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) ?: false }.
@@ -315,25 +352,36 @@ class DistributionJARsBuilder {
           }
         }
       }
-      layout.resourcePaths.entrySet().each {
-        def path = FileUtil.toSystemIndependentName(new File("${layout.basePath(buildContext)}/$it.key").absolutePath)
-        dir(it.value) {
-          if (new File(path).isFile()) {
-            ant.fileset(file: path)
-          }
-          else {
-            ant.fileset(dir: path)
+      layout.resourcePaths.each {
+        def path = FileUtil.toSystemIndependentName(new File("${basePath(buildContext, it.moduleName)}/$it.resourcePath").absolutePath)
+        if (it.packToZip) {
+          zip(it.relativeOutputPath) {
+            if (new File(path).isFile()) {
+              ant.fileset(file: path)
+            }
+            else {
+              ant.fileset(dir: path)
+            }
           }
         }
-      }
-      layout.resourceArchivePaths.entrySet().each {
-        def path = "${layout.basePath(buildContext)}/$it.key"
-        zip(it.value) {
-          ant.fileset(dir: path)
+        else {
+          dir(it.relativeOutputPath) {
+            if (new File(path).isFile()) {
+              ant.fileset(file: path)
+            }
+            else {
+              ant.fileset(dir: path)
+            }
+          }
         }
       }
     }
   }
+
+  static String basePath(BuildContext buildContext, String moduleName) {
+    JpsPathUtil.urlToPath(buildContext.findRequiredModule(moduleName).contentRootsList.urls.first())
+  }
+
 
   private LayoutBuilder createLayoutBuilder() {
     new LayoutBuilder(buildContext.ant, buildContext.project, COMPRESS_JARS)

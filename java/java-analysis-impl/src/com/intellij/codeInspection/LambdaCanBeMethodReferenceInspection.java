@@ -33,6 +33,7 @@ import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -260,11 +261,6 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
     return expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).resolve() == parameter;
   }
 
-  @Contract("null -> false")
-  static boolean isNull(PsiElement element) {
-    return element instanceof PsiLiteralExpression && ((PsiLiteralExpression)element).getValue() == null;
-  }
-
   @Nullable
   private PsiExpression extractMethodReferenceCandidateExpression(PsiElement body) {
     final PsiExpression expression = LambdaUtil.extractSingleExpressionFromBody(body);
@@ -287,8 +283,8 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
     else if (expression instanceof PsiBinaryExpression && REPLACE_NULL_CHECK) {
       IElementType tokenType = ((PsiBinaryExpression)expression).getOperationTokenType();
       if (JavaTokenType.EQEQ.equals(tokenType) || JavaTokenType.NE.equals(tokenType)) {
-        if (isNull(((PsiBinaryExpression)expression).getLOperand()) ||
-            isNull(((PsiBinaryExpression)expression).getROperand())) {
+        if (ExpressionUtils.isNullLiteral(((PsiBinaryExpression)expression).getLOperand()) ||
+            ExpressionUtils.isNullLiteral(((PsiBinaryExpression)expression).getROperand())) {
           return expression;
         }
       }
@@ -431,9 +427,9 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
     else if (element instanceof PsiBinaryExpression) {
       PsiBinaryExpression nullCheck = (PsiBinaryExpression)element;
       PsiExpression operand;
-      if (isNull(nullCheck.getROperand())) {
+      if (ExpressionUtils.isNullLiteral(nullCheck.getROperand())) {
         operand = nullCheck.getLOperand();
-      } else if(isNull(nullCheck.getLOperand())) {
+      } else if(ExpressionUtils.isNullLiteral(nullCheck.getLOperand())) {
         operand = nullCheck.getROperand();
       } else return null;
       if(isSoleParameter(parameters, operand)) {

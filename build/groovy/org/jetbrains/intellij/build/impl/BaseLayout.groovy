@@ -17,6 +17,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.MultiValuesMap
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.jps.util.JpsPathUtil
 
 /**
  * Describes layout of a plugin or the platform JARs in the product distribution
@@ -26,10 +27,7 @@ import org.jetbrains.intellij.build.BuildContext
 abstract class BaseLayout {
   /** JAR name (or path relative to 'lib' directory) to module name */
   final MultiValuesMap<String, String> moduleJars = new MultiValuesMap<>(true)
-  /** source directory -> relative path to a target directory under the plugin directory */
-  final Map<String, String> resourcePaths = [:]
-  /** source directory -> relative path to a zip file under the plugin directory */
-  final Map<String, String> resourceArchivePaths = [:]
+  final List<ModuleResourceData> resourcePaths = []
   /** module name to entries which should be excluded from its output */
   final MultiValuesMap<String, String> moduleExcludes = new MultiValuesMap<>(true)
   final List<String> includedProjectLibraries = []
@@ -37,10 +35,9 @@ abstract class BaseLayout {
   /** JAR name -> name of project library which content should be unpacked */
   final MultiValuesMap<String, String> projectLibrariesToUnpack = new MultiValuesMap<>()
   protected final Set<String> modulesWithLocalizableResourcesInCommonJar = new LinkedHashSet<>()
+  final List<String> modulesWithExcludedModuleLibraries = []
 
   boolean packLocalizableResourcesInCommonJar(String moduleName) {
     return modulesWithLocalizableResourcesInCommonJar.contains(moduleName)
   }
-
-  abstract String basePath(BuildContext buildContext)
 }

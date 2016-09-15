@@ -54,6 +54,7 @@ class BuildOptions {
   static final WINDOWS_EXE_INSTALLER_STEP = "windows_exe_installer"
   static final CROSS_PLATFORM_DISTRIBUTION_STEP = "cross_platform_dist"
   static final SCRAMBLING_STEP = "scramble"
+  static final NON_BUNDLED_PLUGINS_STEP = "non_bundled_plugins"
 
   /**
    * Pass 'true' to this system property to produce an additional dmg archive for Mac OS without bundled JRE

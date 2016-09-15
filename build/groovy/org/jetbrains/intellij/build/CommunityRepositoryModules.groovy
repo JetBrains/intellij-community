@@ -155,6 +155,171 @@ class CommunityRepositoryModules {
     plugin("student-python") {
       withResource("resources/courses", "lib/courses")
       excludeFromModule("student-python", "courses")
-    }
+    },
+    plugin("maven") {
+      withModule("maven-jps-plugin")
+      withModule("aether-dependency-resolver")
+      withModule("maven-server-api")
+      withModule("maven2-server-impl")
+      withModule("maven3-server-common")
+      withModule("maven30-server-impl")
+      withModule("maven3-server-impl")
+      withModule("maven-artifact-resolver-m2", "artifact-resolver-m2.jar")
+      withModule("maven-artifact-resolver-common", "artifact-resolver-m2.jar")
+      withModule("maven-artifact-resolver-m3", "artifact-resolver-m3.jar")
+      withModule("maven-artifact-resolver-common", "artifact-resolver-m3.jar")
+      withModule("maven-artifact-resolver-m31", "artifact-resolver-m31.jar")
+      withModule("maven-artifact-resolver-common", "artifact-resolver-m31.jar")
+      withResource("maven3-server-impl/lib/maven3", "lib/maven3")
+      withResource("maven3-server-common/lib", "lib/maven3-server-lib")
+      withResource("maven2-server-impl/lib/maven2", "lib/maven2")
+      withModuleLibrary("JAXB", "maven2-server-impl", "maven2-server-lib")
+      [
+        "activation-1.1.jar",
+        "archetype-common-2.0-alpha-4-SNAPSHOT.jar",
+        "commons-beanutils.jar",
+        "maven-dependency-tree-1.2.jar",
+        "mercury-artifact-1.0-alpha-6.jar",
+        "nexus-indexer-1.2.3.jar",
+        "plexus-utils-1.5.5.jar"
+      ].each {withResource("maven2-server-impl/lib/$it", "lib/maven2-server-lib")}
+      doNotCopyModuleLibrariesAutomatically([
+        "maven2-server-impl", "maven3-server-common", "maven3-server-impl", "maven30-server-impl",
+        "maven-artifact-resolver-common", "maven-artifact-resolver-m2", "maven-artifact-resolver-m3", "maven-artifact-resolver-m31"
+      ])
+    },
+    plugin("gradle") {
+      withModule("gradle-jps-plugin")
+      withModule("gradle-tooling-extension-api")
+      withModule("gradle-tooling-extension-impl")
+      withProjectLibrary("Kryo")
+      withProjectLibrary("Gradle")
+      //todo[nik] add these jars to some library instead?
+      withResource("lib/native-platform-freebsd-amd64-0.10.jar", "lib")
+      withResource("lib/native-platform-freebsd-i386-0.10.jar", "lib")
+      withResource("lib/native-platform-linux-amd64-0.10.jar", "lib")
+      withResource("lib/native-platform-linux-i386-0.10.jar", "lib")
+      withResource("lib/native-platform-osx-amd64-0.10.jar", "lib")
+      withResource("lib/native-platform-osx-i386-0.10.jar", "lib")
+      withResource("lib/native-platform-windows-amd64-0.10.jar", "lib")
+      withResource("lib/native-platform-windows-i386-0.10.jar", "lib")
+    },
+    plugin("junit") {
+      mainJarName = "idea-junit.jar"
+      withModule("junit_rt", "junit-rt.jar")
+      withModule("junit5_rt", "junit5-rt.jar")
+      withProjectLibrary("junit5_rt")
+      withProjectLibrary("opentest4j")
+      withModuleLibrary("junit-jupiter-api-5.0.0-M2.jar", "junit5_rt_tests", "")
+    },
+    plugin("ByteCodeViewer") {
+      mainJarName = "byteCodeViewer.jar"
+    },
+    plugin("testng") {
+      mainJarName = "testng-plugin.jar"
+      withModule("testng_rt", mainJarName)
+      withProjectLibrary("TestNG")
+    },
+    plugin("devkit") {
+      withModule("devkit-jps-plugin")
+    },
+    plugin("eclipse") {
+      withModule("eclipse-jps-plugin", "eclipse-jps-plugin.jar", false)
+      withModule("common-eclipse-util")
+    },
+    plugin("coverage") {
+      withModule("coverage-common", mainJarName)
+      withModule("coverage_rt")
+      withProjectLibrary("JaCoCo") //todo[nik] convert to module library
+    },
+    plugin("java-decompiler-plugin") {
+      directoryName = "java-decompiler"
+      mainJarName = "java-decompiler.jar"
+      withModule("java-decompiler-engine", mainJarName)
+      doNotCreateSeparateJarForLocalizableResources()
+    },
+    javaFXPlugin("javaFX-CE")
   ]
+
+  static PluginLayout androidPlugin(Map<String, String> additionalModulesToJars) {
+    plugin("android") {
+      withModule("android-common", "android-common.jar", false)
+      withModule("android-rt", "android-rt.jar", false)
+      withModule("common")
+      withModule("sdklib")
+      withModule("sdk-common")
+      withModule("layoutlib-api")
+      withModule("manifest-merger")
+      withModule("repository")
+      withModule("assetstudio", "sdk-tools.jar")
+      withModule("ddmlib", "sdk-tools.jar")
+      withModule("dvlib", "sdk-tools.jar")
+      withModule("draw9patch", "sdk-tools.jar")
+      withModule("lint-api", "sdk-tools.jar")
+      withModule("lint-checks", "sdk-tools.jar")
+      withModule("ninepatch", "sdk-tools.jar")
+      withModule("perflib", "sdk-tools.jar")
+      withModule("rpclib", "sdk-tools.jar")
+      withModule("chartlib", "sdk-tools.jar")
+      withModule("builder-model", "sdk-tools.jar")
+      withModule("builder-test-api", "sdk-tools.jar")
+      withModule("instant-run-common", "sdk-tools.jar")
+      withModule("instant-run-client", "sdk-tools.jar")
+      withModule("instant-run-runtime", "sdk-tools.jar")
+      withModule("android-gradle-jps", "jps/android-gradle-jps.jar", false)
+      withModule("android-jps-plugin", "jps/android-jps-plugin.jar", false)
+      withProjectLibrary("freemarker-2.3.20") //todo[nik] move to module libraries
+      withProjectLibrary("builder-model") //todo[nik] move to module libraries
+      withProjectLibrary("jgraphx-3.4.0.1") //todo[nik] move to module libraries
+      withProjectLibrary("kxml2") //todo[nik] move to module libraries
+      withProjectLibrary("lombok-ast") //todo[nik] move to module libraries
+      withResource("device-art-resources", "lib/device-art-resources")
+      withResourceFromModule("sdklib", "../templates", "lib/templates")
+      withResourceArchive("annotations", "lib/androidAnnotations.jar")
+      withResource("lib/antlr4-annotations-4.5.jar", "lib")
+      withResource("lib/antlr4-runtime-4.5.jar", "lib")
+      withResource("lib/asm-5.0.3.jar", "lib")
+      withResource("lib/asm-analysis-5.0.3.jar", "lib")
+      withResource("lib/asm-tree-5.0.3.jar", "lib")
+      withResource("lib/commons-io-2.4.jar", "lib")
+      withResource("lib/commons-compress-1.0.jar", "lib")
+      withResource("lib/javawriter-2.2.1.jar", "lib")
+      withResource("lib/juniversalchardet-1.0.3.jar", "lib")
+      withResource("lib/androidWidgets", "lib/androidWidgets")
+      additionalModulesToJars.entrySet().each {
+        withModule(it.key, it.value)
+      }
+    }
+  }
+
+  static PluginLayout javaFXPlugin(String mainModuleName) {
+    plugin(mainModuleName) {
+      directoryName = "javaFX"
+      mainJarName = "javaFX.jar"
+      withModule("javaFX", mainJarName)
+      withModule("javaFX-jps-plugin")
+      withModule("common-javaFX-plugin")
+      withProjectLibrary("SceneBuilderKit") //todo[nik] move to module libraries
+    }
+  }
+
+  static PluginLayout groovyPlugin(List<String> additionalModules) {
+    plugin("jetgroovy") {
+      directoryName = "Groovy"
+      mainJarName = "Groovy.jar"
+      withModule("groovy-psi", mainJarName)
+      withModule("structuralsearch-groovy", mainJarName)
+      excludeFromModule("groovy-psi", "standardDsls")
+      withModule("groovy-jps-plugin")
+      withModule("groovy_rt")
+      withModule("groovy-rt-constants")
+      withResource("groovy-psi/resources/standardDsls", "lib/standardDsls")
+      withResource("hotswap/gragent.jar", "lib/agent")
+      withResource("groovy-psi/resources/conf", "lib")
+      additionalModules.each {
+        withModule(it)
+      }
+      doNotCreateSeparateJarForLocalizableResources()
+    }
+  }
 }

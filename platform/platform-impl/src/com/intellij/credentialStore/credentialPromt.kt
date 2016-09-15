@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.passwordSafe.ui
+@file:JvmName("CredentialPromptDialog")
+package com.intellij.credentialStore
 
 import com.intellij.CommonBundle
-import com.intellij.credentialStore.CredentialAttributes
-import com.intellij.credentialStore.Credentials
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeed
@@ -28,6 +27,14 @@ import com.intellij.ui.layout.*
 import com.intellij.util.text.nullize
 import javax.swing.JPasswordField
 
+/**
+ * @param project The context project (might be null)
+ * @param dialogTitle The dialog title
+ * @param passwordFieldLabel The password field label, describing a resource, for which password is asked
+ * @param resetPassword if true, the old password is removed from database and new password will be asked.
+ * @param error The error to show in the dialog
+ * @return null if dialog was cancelled or password (stored in database or a entered by user)
+ */
 @JvmOverloads
 fun askPassword(project: Project?,
                 dialogTitle: String,
@@ -57,7 +64,7 @@ fun askPassword(project: Project?,
     }
 
     val panel = panel {
-      row { label(passwordFieldLabel) }
+      row { label(if (passwordFieldLabel.endsWith(":")) passwordFieldLabel else "$passwordFieldLabel:") }
       row { passwordField() }
       rememberCheckBox?.let {
         row { it() }

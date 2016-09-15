@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -121,6 +122,9 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
         return;
       }
       final PsiExpression argument = ParenthesesUtils.stripParentheses(arguments[0]);
+      if (argument == null) {
+        return;
+      }
       final PsiType argumentType = argument.getType();
       if (argumentType instanceof PsiArrayType) {
         final PsiArrayType arrayType = (PsiArrayType)argumentType;
@@ -147,9 +151,21 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
           return;
         }
       }
-      if (argument instanceof PsiReferenceExpression || argument instanceof PsiMethodCallExpression){
-        // don't warn because unwrapping when null would change semantics
-        return;
+      if (argument instanceof PsiReferenceExpression) {
+        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)argument;
+        final PsiElement target = referenceExpression.resolve();
+        if (!(target instanceof PsiModifierListOwner) || !NullableNotNullManager.isNotNull((PsiModifierListOwner)target)) {
+          // don't warn because unwrapping when null would change semantics
+          return;
+        }
+      }
+      else if (argument instanceof PsiMethodCallExpression){
+        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)argument;
+        final PsiMethod method1 = methodCallExpression.resolveMethod();
+        if (method1 == null || !NullableNotNullManager.isNotNull(method1)) {
+          // don't warn because unwrapping when null would change semantics
+          return;
+        }
       }
       registerError(expression, calculateReplacementText(argument));
     }

@@ -80,7 +80,9 @@ class BuildTasksImpl extends BuildTasks {
               zipfileset(dir: root.file.absolutePath, prefix: root.properties.packagePrefix.replace('.', '/'), erroronmissingdir: false)
           }
           module.getSourceRoots(JavaResourceRootType.RESOURCE).each { root ->
-            buildContext.ant.zipfileset(dir: root.file.absolutePath, prefix: root.properties.relativeOutputPath, erroronmissingdir: false)
+            buildContext.ant.zipfileset(dir: root.file.absolutePath, prefix: root.properties.relativeOutputPath, erroronmissingdir: false) {
+              exclude(name: "**/*.png")
+            }
           }
         }
       }
@@ -454,9 +456,9 @@ idea.fatal.error.notification=disabled
   void buildUnpackedDistribution(String targetDirectory) {
     def jarsBuilder = new DistributionJARsBuilder(buildContext)
     jarsBuilder.buildJARs()
+    layoutShared()
 /*
     //todo[nik] uncomment this to update os-specific files (e.g. in 'bin' directory) as well
-    layoutShared()
     def propertiesFile = patchIdeaPropertiesFile()
     OsSpecificDistributionBuilder builder;
     if (SystemInfo.isWindows) {

@@ -17,7 +17,10 @@ package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.MultiValuesMap
 import groovy.transform.CompileStatic
+import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
+
+import java.util.function.Consumer
 
 /**
  * @author nik
@@ -72,12 +75,17 @@ class ProductModulesLayout {
    */
   MultiValuesMap<String, String> additionalPlatformJars = new MultiValuesMap<>(true)
 
-  /** Module name to entries which should be excluded from its output.
+  /**
+   * Module name to entries which should be excluded from its output.
    * <strong>This is a temporary property added to keep layout of some products. If some directory from a module shouldn't be included into the
    * product JAR it's strongly recommended to move that directory outside of the module source roots.</strong>
    */
   MultiValuesMap<String, String> moduleExcludes = new MultiValuesMap<>(true)
 
+  /**
+   * Additional customizations of platform JARs. <strong>This is a temporary property added to keep layout of some products.</strong>
+   */
+  Consumer<PlatformLayout> platformLayoutCustomizer = {} as Consumer<PlatformLayout>
   /**
    * Name of the module which classpath will be used to build searchable options index
    */
@@ -98,6 +106,12 @@ class ProductModulesLayout {
    * This descriptor and the plugin *.zip files need to be uploaded to the URL specified in 'plugins@builtin-url' attribute in *ApplicationInfo.xml file.
    */
   boolean prepareCustomPluginRepositoryForPublishedPlugins = false
+
+  /**
+   * Specifies path to a text file containing list of classes in order they are loaded by the product. Entries in the produces *.jar files
+   * will be reordered accordingly to reduct IDE startup time. If {@code null} no reordering will be performed.
+   */
+  String classesLoadingOrderFilePath = null
 
   /**
    * @return list of all modules which output is included into the plugin's JARs
