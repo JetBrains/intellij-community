@@ -122,10 +122,6 @@ class DefaultScrollBarUI extends ScrollBarUI {
 
   void paintTrack(Graphics2D g, int x, int y, int width, int height, JComponent c) {
     RegionPainter<Float> p = ScrollColorProducer.isDark(c) ? ScrollPainter.Track.DARCULA : ScrollPainter.Track.DEFAULT;
-    if (!isTrackExpandable() && Registry.is("ide.scroll.background.wide")) {
-      p.paint(g, x, y, width, height, myTrackAnimator.myValue);
-      return; // temporary registry key for designer
-    }
     paint(p, g, x, y, width, height, c, myTrackAnimator.myValue, false);
   }
 
