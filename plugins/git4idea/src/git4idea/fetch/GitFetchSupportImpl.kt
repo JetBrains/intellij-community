@@ -30,6 +30,9 @@ import com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION
 import com.intellij.util.concurrency.AppExecutorUtil
 import git4idea.GitUtil.*
 import git4idea.commands.Git
+import git4idea.commands.GitAuthenticationGate
+import git4idea.commands.GitImpl
+import git4idea.commands.GitRestrictingAuthenticationGate
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRemote.ORIGIN
 import git4idea.repo.GitRepository
@@ -41,7 +44,12 @@ import java.util.regex.Pattern
 private val LOG = logger<GitFetchSupportImpl>()
 private val PRUNE_PATTERN = Pattern.compile("\\s*x\\s*\\[deleted\\].*->\\s*(\\S*)") // x [deleted]  (none) -> origin/branch
 
-internal class GitFetchSupportImpl(val project: Project) : GitFetchSupport {
+internal class GitFetchSupportImpl(git: Git,
+                                   private val project: Project,
+                                   private val progressManager : ProgressManager,
+                                   private val vcsNotifier : VcsNotifier) : GitFetchSupport {
+
+  private val git = git as GitImpl
 
   override fun getDefaultRemoteToFetch(repository: GitRepository): GitRemote? {
     val remotes = repository.remotes
@@ -69,7 +77,7 @@ internal class GitFetchSupportImpl(val project: Project) : GitFetchSupport {
   private fun doFetch(remotes: Map<GitRepository, GitRemote>): GitFetchResult {
     val tasks = fetchInParallel(remotes)
     val results = waitForFetchTasks(tasks)
-    return FetchResultImpl(project, results)
+    return FetchResultImpl(project, vcsNotifier, results)
   }
 
   override fun fetch(repository: GitRepository, remote: GitRemote): GitFetchResult {
@@ -85,7 +93,8 @@ internal class GitFetchSupportImpl(val project: Project) : GitFetchSupport {
     val maxThreads = getMaxThreads(remotes.size)
     LOG.debug("Fetching $remotes using $maxThreads threads")
     val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("GitFetch pool", maxThreads)
-    val commonIndicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
+    val commonIndicator = progressManager.progressIndicator ?: EmptyProgressIndicator()
+    val authenticationGate = GitRestrictingAuthenticationGate()
     for ((repository, remote) in remotes) {
       LOG.debug("Fetching $remote in $repository")
       val task: Future<RepoResult> = executor.submit<RepoResult> {
@@ -93,7 +102,7 @@ internal class GitFetchSupportImpl(val project: Project) : GitFetchSupport {
         lateinit var result: RepoResult
         ProgressManager.getInstance().executeProcessUnderProgress({
           commonIndicator.checkCanceled()
-          val fetchResult = doFetch(repository, remote)
+          val fetchResult = doFetch(repository, remote, authenticationGate)
           result = resultOf(remote, fetchResult)
         }, commonIndicator)
         result
@@ -140,7 +149,7 @@ internal class GitFetchSupportImpl(val project: Project) : GitFetchSupport {
   }
 
   private fun <T> withIndicator(title: String, operation: () -> T): T {
-    val indicator = ProgressManager.getInstance().progressIndicator
+    val indicator = progressManager.progressIndicator
     val prevText = indicator?.text
     indicator?.text = title
     try {
@@ -162,8 +171,8 @@ internal class GitFetchSupportImpl(val project: Project) : GitFetchSupport {
     return RepoResultPerRemote(results)
   }
 
-  private fun doFetch(repository: GitRepository, remote: GitRemote): SingleRemoteResult {
-    val result = Git.getInstance().fetch(repository, remote, emptyList())
+  private fun doFetch(repository: GitRepository, remote: GitRemote, authenticationGate: GitAuthenticationGate? = null): SingleRemoteResult {
+    val result = git.fetch(repository, remote, emptyList(), authenticationGate)
     val pruned = result.output.mapNotNull { getPrunedRef(it) }
     val error = if (result.success()) null else result.errorOutputAsJoinedString
     return SingleRemoteResult(error, pruned)
@@ -178,7 +187,7 @@ internal class GitFetchSupportImpl(val project: Project) : GitFetchSupport {
     return RepoResultPerRemote(mapOf(Pair(remote, remoteResult)))
   }
 
-  private fun resultOf(results: Map<GitRepository, RepoResult>) = FetchResultImpl(project, results)
+  private fun resultOf(results: Map<GitRepository, RepoResult>) = FetchResultImpl(project, vcsNotifier, results)
 
   private interface RepoResult {
     fun totallySuccessful(): Boolean
@@ -189,6 +198,12 @@ internal class GitFetchSupportImpl(val project: Project) : GitFetchSupport {
   private class ErrorRepoResult(val error: String) : RepoResult {
     override fun totallySuccessful() = false
     override fun error() = error
+    override fun prunedRefs() = ""
+  }
+
+  private class CancelledRepoResult() : RepoResult {
+    override fun totallySuccessful() = false
+    override fun error() = "cancelled"
     override fun prunedRefs() = ""
   }
 
@@ -227,6 +242,7 @@ internal class GitFetchSupportImpl(val project: Project) : GitFetchSupport {
   }
 
   private class FetchResultImpl(val project: Project,
+                                val vcsNotifier : VcsNotifier,
                                 val results: Map<GitRepository, RepoResult>) : GitFetchResult {
 
     override fun showNotification() {
@@ -262,7 +278,7 @@ internal class GitFetchSupportImpl(val project: Project) : GitFetchSupport {
       val title = if (failed.isEmpty()) "<b>Fetch Successful</b>" else "<b>$failureTitle</b>$mentionFailedRepos"
       val message = title + prefixWithBr(errorMessage.asString()) + prefixWithBr(prunedRefs.asString())
       val notification = STANDARD_NOTIFICATION.createNotification("", message, type, null)
-      VcsNotifier.getInstance(project).notify(notification)
+      vcsNotifier.notify(notification)
     }
 
     private fun prefixWithBr(text: String): String = if (text.isNotEmpty()) "<br/>$text" else ""

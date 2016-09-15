@@ -41,6 +41,7 @@ public class GitLineHandler extends GitTextHandler {
    */
   @NotNull private Collection<String> myUrls = Collections.emptyList();
   private boolean myIgnoreAuthenticationRequest;
+  @Nullable private GitAuthenticationGate myAuthenticationGate;
 
   public GitLineHandler(@NotNull Project project, @NotNull File directory, @NotNull GitCommand command) {
     super(project, directory, command);
@@ -90,6 +91,15 @@ public class GitLineHandler extends GitTextHandler {
 
   public void setIgnoreAuthenticationRequest(boolean ignoreAuthenticationRequest) {
     myIgnoreAuthenticationRequest = ignoreAuthenticationRequest;
+  }
+
+  @Nullable
+  public GitAuthenticationGate getAuthenticationGate() {
+    return myAuthenticationGate;
+  }
+
+  public void setAuthenticationGate(@NotNull GitAuthenticationGate authenticationGate) {
+    myAuthenticationGate = authenticationGate;
   }
 
   @Override

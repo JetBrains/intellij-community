@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.UUID;
 
+import static com.intellij.util.ObjectUtils.notNull;
+
 /**
  * Manager for Git remotes authentication.
  * Provides necessary handlers and watcher for http auth failure.
@@ -69,8 +71,11 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
   private void prepareHttpAuth() throws IOException {
     GitHttpAuthService service = ServiceManager.getService(GitHttpAuthService.class);
     myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_ENV, service.getScriptPath().getPath());
-    GitHttpAuthenticator httpAuthenticator =
-      service.createAuthenticator(myProject, myHandler.getUrls(), myHandler.isIgnoreAuthenticationRequest());
+    GitAuthenticationGate authenticationGate = notNull(myHandler.getAuthenticationGate(), GitPassthroughAuthenticationGate.getInstance());
+    GitHttpAuthenticator httpAuthenticator = service.createAuthenticator(myProject,
+                                                                         myHandler.getUrls(),
+                                                                         authenticationGate,
+                                                                         myHandler.isIgnoreAuthenticationRequest());
     myHttpHandler = service.registerHandler(httpAuthenticator, myProject);
     myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV, myHttpHandler.toString());
     int port = service.getXmlRcpPort();
@@ -125,7 +130,9 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
     GitXmlRpcSshService ssh = ServiceManager.getService(GitXmlRpcSshService.class);
     myHandler.addCustomEnvironmentVariable(GitSSHHandler.GIT_SSH_ENV, ssh.getScriptPath().getPath());
     myHandler.addCustomEnvironmentVariable(GitSSHHandler.GIT_SSH_VAR, "ssh");
-    mySshHandler = ssh.registerHandler(new GitSSHGUIHandler(myProject, myHandler.isIgnoreAuthenticationRequest()), myProject);
+    GitAuthenticationGate authenticationGate = notNull(myHandler.getAuthenticationGate(), GitPassthroughAuthenticationGate.getInstance());
+    GitSSHGUIHandler guiHandler = new GitSSHGUIHandler(myProject, authenticationGate, myHandler.isIgnoreAuthenticationRequest());
+    mySshHandler = ssh.registerHandler(guiHandler, myProject);
     myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_HANDLER_ENV, mySshHandler.toString());
     int port = ssh.getXmlRcpPort();
     myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_PORT_ENV, Integer.toString(port));
@@ -161,7 +168,9 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
     GitXmlRpcNativeSshService service = ServiceManager.getService(GitXmlRpcNativeSshService.class);
 
     boolean doNotRememberPasswords = myHandler.getUrls().size() > 1;
+    GitAuthenticationGate authenticationGate = notNull(myHandler.getAuthenticationGate(), GitPassthroughAuthenticationGate.getInstance());
     GitNativeSshGuiAuthenticator authenticator = new GitNativeSshGuiAuthenticator(myProject,
+                                                                                  authenticationGate,
                                                                                   myHandler.isIgnoreAuthenticationRequest(),
                                                                                   doNotRememberPasswords);
 
