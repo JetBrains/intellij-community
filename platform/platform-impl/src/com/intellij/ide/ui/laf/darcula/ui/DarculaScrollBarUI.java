@@ -34,8 +34,9 @@ public class DarculaScrollBarUI extends ButtonlessScrollBarUI {
   public static ComponentUI createUI(JComponent c) {
     if (Registry.is("ide.scroll.new.layout")) {
       try {
-        if (!SystemInfo.isMac) return (ComponentUI)newInstance(Class.forName("com.intellij.ui.components.DefaultScrollBarUI"));
-        if (Registry.is("mac.scroll.new.ui")) return (ComponentUI)newInstance(Class.forName("com.intellij.ui.components.MacScrollBarUI"));
+        return (ComponentUI)newInstance(Class.forName(SystemInfo.isMac
+                                                      ? "com.intellij.ui.components.MacScrollBarUI"
+                                                      : "com.intellij.ui.components.DefaultScrollBarUI"));
       }
       catch (Exception ignore) {
       }

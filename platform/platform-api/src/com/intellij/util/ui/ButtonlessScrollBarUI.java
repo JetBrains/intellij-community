@@ -29,9 +29,7 @@ import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.util.Alarm;
-import com.intellij.util.NotNullProducer;
 import com.intellij.util.ReflectionUtil;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -788,33 +786,12 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
     thumbBounds = getMacScrollBarBounds(thumbBounds, true);
     Graphics2D g2d = (Graphics2D)g;
-    if (Registry.is("mac.scroll.new.ui")) {
-      float value = (float)(1 - myMacScrollbarFadeLevel);
-      if (!myMacScrollbarHidden || alwaysPaintThumb()) {
-        RegionPainter<Float> painter = isDark() ? JBScrollPane.MAC_THUMB_DARK_PAINTER : JBScrollPane.MAC_THUMB_PAINTER;
-        painter.paint(g2d, thumbBounds.x - 2, thumbBounds.y - 2, thumbBounds.width + 4, thumbBounds.height + 4, value);
-      }
-      return;
-    }
-    RenderingHints oldHints = g2d.getRenderingHints();
-    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-    JBColor baseColor = new JBColor(() -> !isDark() ? Gray._0 : Gray._128);
-    
-    int arc = Math.min(thumbBounds.width, thumbBounds.height);
-
-    if (alwaysPaintThumb()) {
-      //noinspection UseJBColor
-      g2d.setColor(new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), isDark() ? 100 : 40));
-      g2d.fillRoundRect(thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height, arc, arc);
-      //g2d.drawRoundRect(thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height, arc, arc);
+    float value = (float)(1 - myMacScrollbarFadeLevel);
+    if (!myMacScrollbarHidden || alwaysPaintThumb()) {
+      RegionPainter<Float> painter = isDark() ? JBScrollPane.MAC_THUMB_DARK_PAINTER : JBScrollPane.MAC_THUMB_PAINTER;
+      painter.paint(g2d, thumbBounds.x - 2, thumbBounds.y - 2, thumbBounds.width + 4, thumbBounds.height + 4, value);
     }
-
-    if (!myMacScrollbarHidden) {
-      g2d.setColor(adjustColor(baseColor));
-      g2d.fillRoundRect(thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height, arc, arc);
-    }
-    g2d.setRenderingHints(oldHints);
   }
   
   protected boolean isDark() {
