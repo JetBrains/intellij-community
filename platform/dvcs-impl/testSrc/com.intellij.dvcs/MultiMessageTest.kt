@@ -88,13 +88,28 @@ class MultiMessageTest {
   }
 
   @Test
+  fun `test two roots with different messages and prefix notation`() {
+    val idea = project.baseDir
+    val community = createSubDir(idea, "community")
+
+    val multiRootMessage = MultiRootMessage(project, listOf(idea, community), true, false)
+    multiRootMessage.append(idea, "Could not read from remote repository.")
+    multiRootMessage.append(community, "Authentication failed for 'https://login@bitbucket.org/login/repo.git/'")
+    assertEquals(
+        """
+        idea: Could not read from remote repository.
+        community: Authentication failed for 'https://login@bitbucket.org/login/repo.git/'
+        """.trimIndent(), multiRootMessage.asString())
+  }
+
+  @Test
   fun `test html message for three roots with same message, and one root with another`() {
     val idea = project.baseDir
     val community = createSubDir(idea, "community")
     val contrib = createSubDir(idea, "contrib")
     val android = createSubDir(community, "android")
 
-    val multiRootMessage = MultiRootMessage(project, setOf(idea, community, contrib, android), true)
+    val multiRootMessage = MultiRootMessage(project, setOf(idea, community, contrib, android), false, true)
     multiRootMessage.append(idea, "Pruned obsolete remote references: origin/fix1, origin/fix2")
     multiRootMessage.append(community, "Pruned obsolete remote references: origin/fix3")
     multiRootMessage.append(contrib, "Pruned obsolete remote references: origin/fix3")
@@ -106,7 +121,7 @@ class MultiMessageTest {
         """.trimIndent(), multiRootMessage.asString())
   }
 
-  private fun multiRootMessage(vararg roots : VirtualFile) = MultiRootMessage(project, roots.asList(), false)
+  private fun multiRootMessage(vararg roots : VirtualFile) = MultiRootMessage(project, roots.asList(), false, false)
 
   private fun createSubDir(parent: VirtualFile, name: String): VirtualFile {
     val vf = MockVirtualFile(true, name)

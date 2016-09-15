@@ -203,7 +203,7 @@ internal class GitFetchSupportImpl(val project: Project) : GitFetchSupport {
     override fun totallySuccessful() = results.values.all { it.success() }
 
     override fun error(): String? {
-      val errorMessage = multiRemoteMessage()
+      val errorMessage = multiRemoteMessage(true)
       for ((remote, result) in results) {
         if (result.error != null) errorMessage.append(remote, result.error)
       }
@@ -211,14 +211,15 @@ internal class GitFetchSupportImpl(val project: Project) : GitFetchSupport {
     }
 
     override fun prunedRefs(): String {
-      val prunedRefs = multiRemoteMessage()
+      val prunedRefs = multiRemoteMessage(false)
       for ((remote, result) in results) {
         if (result.prunedRefs.isNotEmpty()) prunedRefs.append(remote, result.prunedRefs.joinToString("\n"))
       }
       return prunedRefs.asString()
     }
 
-    private fun multiRemoteMessage() = MultiMessage(results.keys, GitRemote::getName, GitRemote::getName)
+    private fun multiRemoteMessage(remoteInPrefix: Boolean) =
+        MultiMessage(results.keys, GitRemote::getName, GitRemote::getName, remoteInPrefix)
   }
 
   private class SingleRemoteResult(val error: String?, val prunedRefs: List<String>) {
@@ -245,7 +246,7 @@ internal class GitFetchSupportImpl(val project: Project) : GitFetchSupport {
     private fun doShowNotification(failureTitle: String = "Fetch Failed") {
       val roots = results.keys.map { it.root }
       val errorMessage = MultiRootMessage(project, roots, true)
-      val prunedRefs = MultiRootMessage(project, roots, true)
+      val prunedRefs = MultiRootMessage(project, roots)
 
       val failed = results.filterValues { !it.totallySuccessful() }
 
