@@ -218,7 +218,7 @@ public class CCStepicConnector {
     final Lesson lesson = task.getLesson();
     final int lessonId = lesson.getId();
 
-    final HttpPut request = new HttpPut(EduStepicNames.STEPIC_API_URL + "/step-sources/" + String.valueOf(task.getStepicId()));
+    final HttpPut request = new HttpPut(EduStepicNames.STEPIC_API_URL + "/step-sources/" + String.valueOf(task.getStepId()));
     final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().
       registerTypeAdapter(AnswerPlaceholder.class, new StudySerializationUtils.Json.StepicAnswerPlaceholderAdapter()).create();
     ApplicationManager.getApplication().invokeLater(() -> {
@@ -352,7 +352,7 @@ public class CCStepicConnector {
 
         final JsonObject postedTask = new Gson().fromJson(responseString, JsonObject.class);
         final JsonObject stepSource = postedTask.getAsJsonArray("step-sources").get(0).getAsJsonObject();
-        task.setStepicId(stepSource.getAsJsonPrimitive("id").getAsInt());
+        task.setStepId(stepSource.getAsJsonPrimitive("id").getAsInt());
       }
       catch (IOException e) {
         LOG.error(e.getMessage());

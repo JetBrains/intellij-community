@@ -190,7 +190,7 @@ public class StudyProjectComponent implements ProjectComponent {
       final ArrayList<Task> tasks = new ArrayList<>();
       for (Task task : lesson.getTaskList()) {
         index += 1;
-        final Task studentTask = studentLesson.getTask(task.getStepicId());
+        final Task studentTask = studentLesson.getTask(task.getStepId());
         if (studentTask != null && StudyStatus.Solved.equals(studentTask.getStatus())) {
           studentTask.setIndex(index);
           tasks.add(studentTask);

@@ -215,7 +215,7 @@ public class EduStepicConnector {
     final StepicWrappers.Step block = step.block;
     if (!block.name.equals(PYCHARM_PREFIX)) return;
     final Task task = new Task();
-    task.setStepicId(stepicId);
+    task.setStepId(stepicId);
     task.setUpdateDate(step.update_date);
     task.setName(block.options != null ? block.options.title : PYCHARM_PREFIX);
     task.setText(block.text);
@@ -237,12 +237,12 @@ public class EduStepicConnector {
   }
 
   public static void postAttempt(@NotNull final Task task, boolean passed, @NotNull final Project project) {
-    if (task.getStepicId() <= 0) {
+    if (task.getStepId() <= 0) {
       return;
     }
 
     final HttpPost attemptRequest = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.ATTEMPTS);
-    String attemptRequestBody = new Gson().toJson(new StepicWrappers.AttemptWrapper(task.getStepicId()));
+    String attemptRequestBody = new Gson().toJson(new StepicWrappers.AttemptWrapper(task.getStepId()));
     attemptRequest.setEntity(new StringEntity(attemptRequestBody, ContentType.APPLICATION_JSON));
 
     try {
