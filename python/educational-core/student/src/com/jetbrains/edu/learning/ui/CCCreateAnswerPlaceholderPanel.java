@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CCCreateAnswerPlaceholderPanel {
-  private static String ourFirstHintText = "Type here to add hint";
+  private static final String ourFirstHintText = "Type here to add hint";
 
   private JPanel myPanel;
   private JTextArea myHintTextArea;

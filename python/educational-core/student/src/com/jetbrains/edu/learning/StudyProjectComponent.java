@@ -97,26 +97,19 @@ public class StudyProjectComponent implements ProjectComponent {
     }
 
     StudyUtils.registerStudyToolWindow(course, myProject);
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new DumbAwareRunnable() {
-          @Override
-          public void run() {
-            Course course = StudyTaskManager.getInstance(myProject).getCourse();
-            if (course != null) {
-              final UISettings instance = UISettings.getInstance();
-              if (instance != null) {
-                instance.HIDE_TOOL_STRIPES = false;
-                instance.fireUISettingsChanged();
-              }
-              registerShortcuts();
-              EduUsagesCollector.projectTypeOpened(course.isAdaptive() ? EduNames.ADAPTIVE : EduNames.STUDY);
-            }
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> ApplicationManager.getApplication().invokeLater(
+      (DumbAwareRunnable)() -> ApplicationManager.getApplication().runWriteAction((DumbAwareRunnable)() -> {
+        Course course1 = StudyTaskManager.getInstance(myProject).getCourse();
+        if (course1 != null) {
+          final UISettings instance = UISettings.getInstance();
+          if (instance != null) {
+            instance.HIDE_TOOL_STRIPES = false;
+            instance.fireUISettingsChanged();
           }
-        });
-      }
-    }));
+          registerShortcuts();
+          EduUsagesCollector.projectTypeOpened(course1.isAdaptive() ? EduNames.ADAPTIVE : EduNames.STUDY);
+        }
+      })));
   }
 
   private void registerShortcuts() {

@@ -180,8 +180,7 @@ public class EduStepicAuthorizedClient {
     parameters.add(new BasicNameValuePair("grant_type", "refresh_token"));
     parameters.add(new BasicNameValuePair("refresh_token", refreshToken));
 
-    final StepicWrappers.TokenInfo tokenInfo = postCredentials(parameters);
-    return tokenInfo;
+    return postCredentials(parameters);
   }
 
   @Nullable
