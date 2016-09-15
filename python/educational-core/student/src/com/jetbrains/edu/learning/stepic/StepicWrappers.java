@@ -119,12 +119,12 @@ public class StepicWrappers {
     String python27;
 
     @Nullable
-    public String getTemplateForLanguage(@NotNull final String langauge) {
-      if (langauge.equals(EduAdaptiveStepicConnector.PYTHON2)) {
+    public String getTemplateForLanguage(@NotNull final String language) {
+      if (language.equals(EduAdaptiveStepicConnector.PYTHON2)) {
         return python27;
       }
 
-      if (langauge.equals(EduAdaptiveStepicConnector.PYTHON3)) {
+      if (language.equals(EduAdaptiveStepicConnector.PYTHON3)) {
         return python3;
       }
 
