@@ -186,10 +186,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                   if(nonFinalVariables.isEmpty() && tb.getSingleStatement() instanceof PsiReturnStatement) {
                     PsiReturnStatement returnStatement = (PsiReturnStatement)tb.getSingleStatement();
                     PsiExpression value = returnStatement.getReturnValue();
-                    if(isLiteral(value, Boolean.TRUE) || isLiteral(value, Boolean.FALSE)) {
-                      boolean foundResult = (boolean)((PsiLiteralExpression)value).getValue();
-                      PsiReturnStatement nextReturnStatement = getNextReturnStatement(statement);
-                      if(nextReturnStatement != null) {
+                    PsiReturnStatement nextReturnStatement = getNextReturnStatement(statement);
+                    if(nextReturnStatement != null) {
+                      if(isLiteral(value, Boolean.TRUE) || isLiteral(value, Boolean.FALSE)) {
+                        boolean foundResult = (boolean)((PsiLiteralExpression)value).getValue();
                         if(isLiteral(nextReturnStatement.getReturnValue(), !foundResult)) {
                           String methodName;
                           if (foundResult) {
@@ -205,7 +205,11 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                             }
                           }
                           registerProblem(holder, isOnTheFly, statement, methodName, new ReplaceWithMatchFix(methodName));
+                          return;
                         }
+                      }
+                      if(nextReturnStatement.getReturnValue() instanceof PsiLiteralExpression) {
+                        registerProblem(holder, isOnTheFly, statement, "findFirst", new ReplaceWithFindFirstFix());
                       }
                     }
                   }
@@ -884,6 +888,43 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       }
       boolean siblings = nextReturnStatement.getParent() == foreachStatement.getParent();
       PsiElement result = foreachStatement.replace(elementFactory.createStatementFromText("return " + streamText + ";", foreachStatement));
+      if(siblings) {
+        nextReturnStatement.delete();
+      }
+      simplifyAndFormat(project, result);
+    }
+  }
+
+  private static class ReplaceWithFindFirstFix extends MigrateToStreamFix {
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Replace with findFirst()";
+    }
+
+    @Override
+    void migrate(@NotNull Project project,
+                 @NotNull ProblemDescriptor descriptor,
+                 @NotNull PsiForeachStatement foreachStatement,
+                 @NotNull PsiExpression iteratedValue,
+                 @NotNull PsiStatement body,
+                 @NotNull TerminalBlock tb,
+                 @NotNull List<String> intermediateOps) {
+      PsiReturnStatement returnStatement = (PsiReturnStatement)tb.getSingleStatement();
+      PsiExpression value = returnStatement.getReturnValue();
+      if(value == null) return;
+      PsiReturnStatement nextReturnStatement = getNextReturnStatement(foreachStatement);
+      if(nextReturnStatement == null) return;
+      PsiExpression orElseExpression = nextReturnStatement.getReturnValue();
+      if(!(orElseExpression instanceof PsiLiteralExpression)) return;
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+      StringBuilder builder = generateStream(iteratedValue, intermediateOps).append(".findFirst()");
+      if (!(value instanceof PsiReferenceExpression) || ((PsiReferenceExpression)value).resolve() != tb.getVariable()) {
+        builder.append(".map(").append(tb.getVariable().getName()).append(" -> ").append(value.getText()).append(")");
+      }
+      builder.append(".orElse(").append(orElseExpression.getText()).append(")");
+      boolean siblings = nextReturnStatement.getParent() == foreachStatement.getParent();
+      PsiElement result = foreachStatement.replace(elementFactory.createStatementFromText("return " + builder + ";", foreachStatement));
       if(siblings) {
         nextReturnStatement.delete();
       }
