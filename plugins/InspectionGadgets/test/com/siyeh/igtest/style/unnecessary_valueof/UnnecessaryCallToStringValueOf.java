@@ -53,9 +53,15 @@ public class UnnecessaryCallToStringValueOf {
 
   void regression() {
     String s = "" + Integer.valueOf("asdf") + String.valueOf((nothing()));
+    String t = "" + <warning descr="'String.valueOf(something())' can be simplified to 'something()'">String.valueOf(something())</warning>;
   }
 
   Object nothing() {
     return null;
+  }
+
+  @org.jetbrains.annotations.NotNull
+  Object something() {
+    return new Object();
   }
 }
