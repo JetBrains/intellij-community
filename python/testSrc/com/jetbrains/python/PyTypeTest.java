@@ -136,19 +136,6 @@ public class PyTypeTest extends PyTestCase {
            "expr = u'foo'");
   }
 
-  // TODO: uncomment when we have a mock SDK for Python 3.x
-  // PY-1427
-  public void _testBytesLiteral() {  // PY-1427
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
-    try {
-      doTest("bytes",
-             "expr = b'foo'");
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
-  }
-
   public void testPropertyType() {
     doTest("property",
            "class C:\n" +
@@ -321,6 +308,90 @@ public class PyTypeTest extends PyTestCase {
            "        x = 1 if c else 'foo'\n" +
            "        self.assertIsInstance(x, int)\n" +
            "        expr = x\n");
+  }
+
+  // PY-20679
+  public void testIsInstanceViaTrue() {
+    doTest("str",
+           "a = None\n" +
+           "if isinstance(a, str) is True:\n" +
+           "    expr = a\n" +
+           "raise TypeError('Invalid type')");
+
+    doTest("str",
+           "a = None\n" +
+           "if True is isinstance(a, str):\n" +
+           "    expr = a\n" +
+           "raise TypeError('Invalid type')");
+  }
+
+  // PY-20679
+  public void testIsInstanceViaFalse() {
+    doTest("str",
+           "a = None\n" +
+           "if isinstance(a, str) is not False:\n" +
+           "    expr = a\n" +
+           "raise TypeError('Invalid type')");
+
+    doTest("str",
+           "a = None\n" +
+           "if False is not isinstance(a, str):\n" +
+           "    expr = a\n" +
+           "raise TypeError('Invalid type')");
+
+    doTest("str",
+           "a = None\n" +
+           "if not isinstance(a, str) is False:\n" +
+           "    expr = a\n" +
+           "raise TypeError('Invalid type')");
+
+    doTest("str",
+           "a = None\n" +
+           "if not False is isinstance(a, str):\n" +
+           "    expr = a\n" +
+           "raise TypeError('Invalid type')");
+  }
+
+  // PY-20679
+  public void testNotIsInstanceViaTrue() {
+    doTest("str",
+           "a = None\n" +
+           "if not isinstance(a, str) is True:\n" +
+           "    raise TypeError('Invalid type')\n" +
+           "expr = a");
+
+    doTest("str",
+           "a = None\n" +
+           "if not True is isinstance(a, str):\n" +
+           "    raise TypeError('Invalid type')\n" +
+           "expr = a");
+
+    doTest("str",
+           "a = None\n" +
+           "if isinstance(a, str) is not True:\n" +
+           "    raise TypeError('Invalid type')\n" +
+           "expr = a");
+
+    doTest("str",
+           "a = None\n" +
+           "if True is not isinstance(a, str):\n" +
+           "    raise TypeError('Invalid type')\n" +
+           "expr = a");
+  }
+
+  // PY-20679
+  public void testNotIsInstanceViaFalse() {
+    doTest("str",
+           "a = None\n" +
+           "if isinstance(a, str) is False:\n" +
+           "    raise TypeError('Invalid type')\n" +
+           "expr = a");
+
+    doTest("str",
+           "a = None\n" +
+           "if False is isinstance(a, str):\n" +
+           "    raise TypeError('Invalid type')\n" +
+           "expr = a");
   }
 
   // PY-4279
@@ -1108,6 +1179,46 @@ public class PyTypeTest extends PyTestCase {
            "xs = {1}\n" +
            "for expr in xs:\n" +
            "    print(expr)");
+  }
+
+  public void testIsNotNone() {
+    doTest("int",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if x is not None:\n" +
+           "        expr = x\n");
+
+    doTest("int",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if None is not x:\n" +
+           "        expr = x\n");
+
+    doTest("int",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if not x is None:\n" +
+           "        expr = x\n");
+
+    doTest("int",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if not None is x:\n" +
+           "        expr = x\n");
+  }
+
+  public void testIsNone() {
+    doTest("None",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if x is None:\n" +
+           "        expr = x\n");
+
+    doTest("None",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if None is x:\n" +
+           "        expr = x\n");
   }
 
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
