@@ -532,7 +532,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
 
     mySelectedScheme = mySchemes.get(EditorColorsManager.getInstance().getGlobalScheme().getName());
-    //assert mySelectedScheme != null : EditorColorsManager.getInstance().getGlobalScheme().getName() + "; myschemes=" + mySchemes;
+    assert mySelectedScheme != null : EditorColorsManager.getInstance().getGlobalScheme().getName() + "; myschemes=" + mySchemes;
   }
 
   private static void initScheme(@NotNull MyColorScheme scheme) {
