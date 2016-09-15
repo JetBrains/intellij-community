@@ -55,6 +55,7 @@ import org.jetbrains.annotations.PropertyKey;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
@@ -452,6 +453,9 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
     }
     if (place.contains("Toolbar")) {
       return InvocationKind.TOOLBAR;
+    }
+    if (event.getInputEvent() instanceof MouseEvent) {
+      return InvocationKind.MOUSE;
     }
     return InvocationKind.UNKNOWN_INVOCATION_KIND;
   }
