@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -85,8 +84,7 @@ public class BoolUtils {
       }
       return ParenthesesUtils.getText(negated, precedence);
     }
-    else if (ComparisonUtils.isComparison(expression) &&
-             !TypeConversionUtil.isFloatOrDoubleType(ComparisonUtils.getComparisonType(expression))) {
+    else if (ComparisonUtils.isComparison(expression)) {
       final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
       final String negatedComparison = ComparisonUtils.getNegatedComparison(polyadicExpression.getOperationTokenType());
       final StringBuilder result = new StringBuilder();
@@ -94,6 +92,10 @@ public class BoolUtils {
       final boolean isEven = (operands.length & 1) != 1;
       for (int i = 0, length = operands.length; i < length; i++) {
         final PsiExpression operand = operands[i];
+        if (TypeUtils.hasFloatingPointType(operand)) {
+          // preserve semantics for NaNs
+          return "!(" + polyadicExpression.getText() + ')';
+        }
         if (i > 0) {
           if (isEven && (i & 1) != 1) {
             final PsiJavaToken token = polyadicExpression.getTokenBeforeOperand(operand);

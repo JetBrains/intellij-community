@@ -13,24 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.controlflow;
+package com.intellij.reporting;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Bas Leijdekkers
- */
-public class DoubleNegationInspectionTest extends LightInspectionTestCase {
+public abstract class FreezeLogger {
 
-  public void testDoubleNegation() {
-    doTest();
+  public static FreezeLogger getInstance() {
+    return ServiceManager.getService(FreezeLogger.class);
   }
-
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new DoubleNegationInspection();
-  }
+  
+  public abstract void runUnderPerformanceMonitor(@Nullable Project project, @NotNull Runnable action);
+  
 }

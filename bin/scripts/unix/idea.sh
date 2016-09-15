@@ -51,7 +51,11 @@ if [ -x "$READLINK" ]; then
 fi
 
 IDE_BIN_HOME=`dirname "$SCRIPT_LOCATION"`
-IDE_HOME=`dirname "$IDE_BIN_HOME"`
+if [ "$IDE_BIN_HOME" = "." ]; then
+  IDE_HOME=".."
+else
+  IDE_HOME=`dirname "$IDE_BIN_HOME"`
+fi
 
 # ---------------------------------------------------------------------
 # Locate a JDK installation directory which will be used to run the IDE.

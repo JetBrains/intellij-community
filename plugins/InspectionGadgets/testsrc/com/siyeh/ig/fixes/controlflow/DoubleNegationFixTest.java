@@ -13,24 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.controlflow;
+package com.siyeh.ig.fixes.controlflow;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.controlflow.DoubleNegationInspection;
 
 /**
  * @author Bas Leijdekkers
  */
-public class DoubleNegationInspectionTest extends LightInspectionTestCase {
+public class DoubleNegationFixTest extends IGQuickFixesTestCase {
 
-  public void testDoubleNegation() {
-    doTest();
-  }
-
-  @Nullable
   @Override
-  protected InspectionProfileEntry getInspection() {
-    return new DoubleNegationInspection();
+  protected void setUp() throws Exception {
+    super.setUp();
+    myFixture.enableInspections(new DoubleNegationInspection());
+    myRelativePath = "controlflow/double_negation";
+    myDefaultHint = InspectionGadgetsBundle.message("double.negation.quickfix");
   }
+
+  public void testDoubleDoubleNegation() { doTest(); }
 }
