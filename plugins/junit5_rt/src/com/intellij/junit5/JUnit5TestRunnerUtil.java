@@ -19,6 +19,7 @@ import org.junit.platform.commons.util.AnnotationUtils;
 import org.junit.platform.engine.DiscoverySelector;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
+import org.junit.platform.launcher.TagFilter;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 
 import java.io.BufferedReader;
@@ -27,6 +28,10 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 public class JUnit5TestRunnerUtil {
 
@@ -48,8 +53,7 @@ public class JUnit5TestRunnerUtil {
           final String packageName = reader.readLine();
           if (packageName == null) return null;
 
-          //todo category?
-          reader.readLine();
+          String tagName = reader.readLine();
           String line;
 
           List<DiscoverySelector> selectors = new ArrayList<>();
@@ -57,8 +61,12 @@ public class JUnit5TestRunnerUtil {
             selectors.add(createSelector(line));
           }
           packageNameRef[0] = packageName.length() == 0 ? "<default package>" : packageName;
-          return (selectors.isEmpty() ? builder.selectors(DiscoverySelectors.selectPackage(packageName))
-                                      : builder.selectors(selectors)).build();
+          builder = selectors.isEmpty() ? builder.selectors(DiscoverySelectors.selectPackage(packageName))
+                                        : builder.selectors(selectors);
+          if (tagName != null && !tagName.isEmpty()) {
+            builder = builder.filters(TagFilter.includeTags(tagName));
+          }
+          return builder.build();
         }
         finally {
           reader.close();
@@ -74,6 +82,7 @@ public class JUnit5TestRunnerUtil {
       if (disableDisabledCondition) {
         builder = builder.configurationParameter("junit.conditions.deactivate", "org.junit.*DisabledCondition");
       }
+
       return builder.selectors(createSelector(suiteClassNames[0])).build();
     }
 
