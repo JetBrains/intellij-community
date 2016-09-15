@@ -438,9 +438,15 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
     boolean changeModalityState = appStarted && myDialog.isModal()
                                   && !isProgressDialog(); // ProgressWindow starts a modality state itself
+    Project project = myProject;
+
     if (changeModalityState) {
       commandProcessor.enterModal();
-      LaterInvocator.enterModal(myDialog);
+      if (Registry.is("ide.perProjectModality")) {
+        LaterInvocator.enterModal(project, myDialog.getWindow());
+      } else {
+        LaterInvocator.enterModal(myDialog);
+      }
     }
 
     if (appStarted) {
@@ -453,7 +459,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     finally {
       if (changeModalityState) {
         commandProcessor.leaveModal();
-        LaterInvocator.leaveModal(myDialog);
+        if (Registry.is("ide.perProjectModality")) {
+          LaterInvocator.leaveModal(project, myDialog.getWindow());
+        } else {
+          LaterInvocator.leaveModal(myDialog);
+        }
       }
 
       myDialog.getFocusManager().doWhenFocusSettlesDown(result.createSetDoneRunnable());
