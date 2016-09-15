@@ -11,4 +11,14 @@ repositories { jcenter() }
 dependencies {
   compile "org.jetbrains.kotlin:kotlin-stdlib:1.0.+"
   testCompile "junit:junit:4.+"
+  testCompile "org.assertj:assertj-core:3.+"
+}
+
+jar {
+  manifest {
+    attributes "Main-Class" : "org.jetbrains.updater.mock.MainKt"
+  }
+  from {
+    configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+  }
 }
