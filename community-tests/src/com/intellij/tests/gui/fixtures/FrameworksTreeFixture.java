@@ -22,6 +22,8 @@ import com.intellij.ide.util.newProjectWizard.FrameworksTree;
 import com.intellij.ui.CheckboxTreeBase;
 import com.intellij.ui.treeStructure.Tree;
 import org.fest.swing.core.Robot;
+import org.fest.swing.edt.GuiActionRunner;
+import org.fest.swing.edt.GuiTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -66,7 +68,12 @@ public class FrameworksTreeFixture {
       if (frameworkSupportElement.getText().equals(frameworkName)) {
         //scroll tree to path
         final TreePath treePath = myFrameworksTree.getPathForRow(i);
-        myFrameworksTree.scrollPathToVisible(treePath);
+        GuiActionRunner.execute(new GuiTask() {
+          @Override
+          protected void executeInEDT() throws Throwable {
+            myFrameworksTree.scrollPathToVisible(treePath);
+          }
+        });
 
         final JCheckBox checkbox = frameworkSupportElement.getCheckbox();
         myRobot.click(checkbox);

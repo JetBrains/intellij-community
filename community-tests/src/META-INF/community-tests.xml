@@ -2,5 +2,11 @@
   <extensions defaultExtensionNs="com.intellij">
     <uiDropperActions implementation="com.intellij.tests.gui.script.ScriptRecorder"/>
   </extensions>
+  <actions>
+    <action class="com.intellij.tests.gui.script.ScriptRunnerAction" id="ScriptRunnerAction" text="Script Runner Action"
+            description="Add GUI tests to action list"/>
+    <action class="com.intellij.tests.gui.script.ScriptCompileAction" id="ScriptCompileAction" text="Script Compile Action"
+            description="Compile current script"/>
+  </actions>
 </idea-plugin>
 

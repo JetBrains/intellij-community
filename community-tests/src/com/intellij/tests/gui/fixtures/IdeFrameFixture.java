@@ -22,13 +22,12 @@ import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.FileContentQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -65,7 +64,8 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.ide.impl.ProjectUtil.closeAndDispose;
-import static com.intellij.openapi.util.io.FileUtil.*;
+import static com.intellij.openapi.util.io.FileUtil.getRelativePath;
+import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
 import static com.intellij.openapi.vfs.VfsUtilCore.urlToPath;
 import static com.intellij.tests.gui.framework.GuiTests.*;
@@ -75,7 +75,8 @@ import static org.fest.assertions.Assertions.assertThat;
 import static org.fest.swing.edt.GuiActionRunner.execute;
 import static org.fest.swing.timing.Pause.pause;
 import static org.fest.util.Strings.quote;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 
 /**
  * Created by karashevich on 30/05/16.
@@ -92,7 +93,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
       protected boolean isMatching(@NotNull IdeFrameImpl frame) {
         Project project = frame.getProject();
         if (projectPath == null && project != null) return true;
-        if (project != null && toSystemIndependentName(projectPath.getPath()).equals(project.getBasePath())) {
+        if (project != null && PathManager.getAbsolutePath(projectPath.getPath()).equals(PathManager.getAbsolutePath(project.getBasePath()))) {
           return projectName == null || projectName.equals(project.getName());
         }
         return false;

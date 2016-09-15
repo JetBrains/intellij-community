@@ -187,6 +187,11 @@ public final class GuiTests {
     return jdkHome;
   }
 
+  public static void setupGitPath(){
+    //GitVcsApplicationSettings settings = GitVcsApplicationSettings.getInstance();
+    //settings.setPathToGit(GitExecutor.PathHolder.GIT_EXECUTABLE);
+  }
+
   public static void setUpSdks() {
 
     String jdkHome = getSystemPropertyOrEnvironmentVariable(JDK_HOME_FOR_TESTS);

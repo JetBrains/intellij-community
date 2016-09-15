@@ -88,6 +88,19 @@ public abstract class GuiTestCase {
     return myTestName;
   }
 
+
+  public void setRobot(Robot robot){
+    myRobot = robot;
+  }
+
+  public GuiTestCase(){
+
+  }
+
+  public GuiTestCase(Robot robot) {
+    myRobot = robot;
+  }
+
   @Before
   public void setUp() throws Exception {
     if (!canRunGuiTests()) {
@@ -104,6 +117,7 @@ public abstract class GuiTestCase {
 
     setIdeSettings();
     setUpSdks();
+
 
     // There is a race condition between reloading the configuration file after file deletion detected and the serialization of IDEA model
     // we just customized so that modules can't be loaded correctly.
