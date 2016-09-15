@@ -64,7 +64,7 @@ fun askPassword(project: Project?,
     }
 
     val panel = panel {
-      row { label(passwordFieldLabel) }
+      row { label(if (passwordFieldLabel.endsWith(":")) passwordFieldLabel else "$passwordFieldLabel:") }
       row { passwordField() }
       rememberCheckBox?.let {
         row { it() }

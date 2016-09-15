@@ -16,7 +16,6 @@
 package git4idea.commands;
 
 import com.intellij.credentialStore.CredentialPromptDialog;
-import com.intellij.ide.passwordSafe.ui.PasswordSafePromptDialog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
@@ -152,9 +151,12 @@ public class GitSSHGUIHandler {
   @Nullable
   public String askPassword(final String username, boolean resetPassword, final String lastError) {
     String error = processLastError(resetPassword, lastError);
-    return PasswordSafePromptDialog.askPassword(myProject, GitBundle.getString("ssh.password.title"),
-                                                GitBundle.message("ssh.password.message", username),
-                                                GitSSHGUIHandler.class, "PASSWORD:" + username, resetPassword, error);
+    return CredentialPromptDialog.askPassword(myProject,
+                                              GitBundle.getString("ssh.password.title"),
+                                              GitBundle.message("ssh.password.message", username),
+                                              CredentialAttributes(GitSSHGUIHandler.class, "PASSWORD:" + username),
+                                              resetPassword,
+                                              error);
   }
 
   /**
