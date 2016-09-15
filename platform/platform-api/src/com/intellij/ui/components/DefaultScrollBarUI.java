@@ -101,7 +101,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
   }
 
   boolean isTrackExpandable() {
-    return Registry.is("ide.scroll.bar.expand.animation");
+    return false;
   }
 
   boolean isTrackContains(int x, int y) {
